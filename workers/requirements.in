@@ -1,0 +1,5 @@
+django
+celery
+psycopg2
+requests
+bioinformatics-mill-models

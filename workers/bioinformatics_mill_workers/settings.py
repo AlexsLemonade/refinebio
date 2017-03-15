@@ -84,14 +84,18 @@ DATABASES = {
         'NAME': 'bioinformatics_mill',
         'USER': 'bioinformatics_mill_user',
         'PASSWORD': 'bioinformatics_password',
-        'HOST': 'localhost',
+        'HOST': 'database',
         'PORT': '',
+        'OPTIONS': {
+            'connect_timeout': 5,
+        }
     }
 }
 
 
 # Celery
-CELERY_BROKER_URL = 'amqp://guest:guest@localhost//'
+# CELERY_BROKER_URL = 'amqp://guest:guest@localhost//'
+CELERY_BROKER_URL = 'amqp://guest@rabbit'
 
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
