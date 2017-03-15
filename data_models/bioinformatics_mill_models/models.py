@@ -1,6 +1,8 @@
 from django.db import models
+from django.utils import timezone
 
 # Create your models here.
+
 
 class TimeTrackedModel(models.Model):
     created_at = models.DateTimeField(editable=False)
@@ -9,12 +11,13 @@ class TimeTrackedModel(models.Model):
     def save(self, *args, **kwargs):
         ''' On save, update timestamps '''
         if not self.id:
-            self.created = timezone.now()
-        self.modified = timezone.now()
-        return super(User, self).save(*args, **kwargs)
+            self.created_at = timezone.now()
+        self.updated_at = timezone.now()
+        return super(TimeTrackedModel, self).save(*args, **kwargs)
 
     class Meta:
         abstract = True
+
 
 class Batch(TimeTrackedModel):
     source_type = models.CharField(max_length=256)
