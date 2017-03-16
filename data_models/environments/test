@@ -1,0 +1,8 @@
+DJANGO_SECRET_KEY="!f3p74+hi5omz+)m((+8597&&01h-&bf(0#d1mwvak&clmv*%g"
+DJANGO_DEBUG="True"
+
+DATABASE_NAME="bioinformatics_mill"
+DATABASE_USER="bioinformatics_mill_user"
+DATABASE_PASSWORD="bioinformatics_password"
+DATABASE_HOST='database'
+DATABASE_PORT=5432
