@@ -1,8 +1,6 @@
 from django.db import models
 from django.utils import timezone
 
-# Create your models here.
-
 
 class TimeTrackedModel(models.Model):
     created_at = models.DateTimeField(editable=False)
@@ -19,6 +17,8 @@ class TimeTrackedModel(models.Model):
         abstract = True
 
 
+# This model is still has a prototypical status, but I needed something to
+# test with and it's at least in the right ballpark
 class Batch(TimeTrackedModel):
     source_type = models.CharField(max_length=256)
     size_in_bytes = models.IntegerField()

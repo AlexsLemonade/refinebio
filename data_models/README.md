@@ -25,3 +25,11 @@ Next you should install the package locally:
 python setup.py sdist
 pip install --user dist/bioinformatics-mill-models-0.1.tar.gz
 ```
+
+After merging your changes into the master branch be sure to release the package with:
+
+```
+twine upload dist/*
+```
+
+(If you are not already set up within pypi.org to be able to modify this package please contact @kurtwheeler.)
