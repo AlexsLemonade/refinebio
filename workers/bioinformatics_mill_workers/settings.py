@@ -88,9 +88,6 @@ WSGI_APPLICATION = 'bioinformatics_mill_workers.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
 
-# TODO: MAKE THESE SECRET!!!
-# this may be useful:
-# http://www.marinamele.com/taskbuster-django-tutorial/install-and-configure-posgresql-for-django
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
