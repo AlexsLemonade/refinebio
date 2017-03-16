@@ -7,16 +7,13 @@ WORKDIR /home/user
 
 ENV CELERY_VERSION 4.0.2
 
-COPY workers/ .
+COPY workers/requirements.in .
 
 RUN pip install pip-tools && \
     pip-compile requirements.in && \
     pip install -r requirements.txt
 
-RUN { \
-        echo 'import os'; \
-        echo "BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'amqp://')"; \
-} > celeryconfig.py
+COPY workers/ .
 
 USER user
 
