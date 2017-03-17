@@ -17,6 +17,25 @@ class TimeTrackedModel(models.Model):
         abstract = True
 
 
+class SurveyJob(TimeTrackedModel):
+    source_type = models.CharField(max_length=256)
+
+    # The start time of the query used to replicate
+    replication_started_at = models.DateTimeField()
+
+    # The end time of the query used to replicate
+    replication_ended_at = models.DateTimeField()
+
+    # The start time of the job
+    start_time = models.DateTimeField()
+
+    # The end time of the job
+    end_time = models.DateTimeField()
+
+    class Meta:
+        db_table = "survey_jobs"
+
+
 # This model is still has a prototypical status, but I needed something to
 # test with and it's at least in the right ballpark
 class Batch(TimeTrackedModel):
@@ -87,22 +106,3 @@ class DownloaderJob(TimeTrackedModel):
 
     class Meta:
         db_table = "downloader_jobs"
-
-
-class SurveyJob(TimeTrackedModel):
-    source_type = models.CharField(max_length=256)
-
-    # The start time of the query used to replicate
-    replication_started_at = models.DateTimeField()
-
-    # The end time of the query used to replicate
-    replication_ended_at = models.DateTimeField()
-
-    # The start time of the job
-    start_time = models.DateTimeField()
-
-    # The end time of the job
-    end_time = models.DateTimeField()
-
-    class Meta:
-        db_table = "survey_jobs"
