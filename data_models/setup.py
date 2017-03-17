@@ -11,7 +11,6 @@ setup(
     include_package_data=True,
     license='BSD License',
     description='An abstracted database model for the Bioinformatics Mill project',
-    # long_description=README,
     url='https://www.greenelab.com',
     author='Kurt Wheeler',
     author_email='kurt.wheeler91@gmail.com',
@@ -19,10 +18,9 @@ setup(
         'Environment :: Web Environment',
         'Framework :: Django',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: BSD License',  # example license
+        'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        # Replace these appropriately if you are stuck on Python 2.
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
