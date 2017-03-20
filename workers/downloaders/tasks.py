@@ -28,7 +28,7 @@ def save_test_batch():
         accession_code="E-MEXP-123",
         internal_location="expression_data/array_express/E-MEXP-123",
         organism=1,
-        status=BatchStatuses.NEW
+        status=BatchStatuses.NEW.value
     )
 
     test_batch.save()
