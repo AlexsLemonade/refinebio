@@ -11,6 +11,10 @@ RUN pip install pip-tools && \
     pip-compile requirements.in && \
     pip install -r requirements.txt
 
+COPY data_models/dist/* .
+
+RUN pip install --user bioinformatics-mill-models-*
+
 COPY workers/ .
 
 USER user
