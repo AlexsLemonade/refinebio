@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from enum import Enum
 
 
 class TimeTrackedModel(models.Model):
@@ -53,14 +54,13 @@ class Batch(TimeTrackedModel):
     processed_format = models.CharField(max_length=256, null=True)
     pipeline_required = models.CharField(max_length=256)
     accession_code = models.CharField(max_length=32)
+    status = models.CharField(max_length=20)
 
     # This field where denote where in our system the file can be found
     internal_location = models.CharField(max_length=256, null=True)
 
     # This will utilize the organism taxonomy ID from NCBI
     organism = models.IntegerField()
-
-    status = models.CharField(max_length=10)
 
     class Meta:
         db_table = "batches"
