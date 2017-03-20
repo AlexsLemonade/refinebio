@@ -1,6 +1,7 @@
 import abc
 import datetime
 from enum import Enum
+from typing import List
 from bioinformatics_mill_models.models import (
     Batch,
     BatchStatuses,
@@ -24,6 +25,9 @@ class DiscoveryPipeline(PipelineEnums):
 class ExternalSourceSurveyor:
     __metaclass__ = abc.ABCMeta
 
+    def __init__(self, survey_job: SurveyJob):
+        self.survey_job = survey_job
+
     @abc.abstractproperty
     def source_type(self):
         return
@@ -37,8 +41,9 @@ class ExternalSourceSurveyor:
         Must return a member of PipelineEnums."""
         return
 
-    def handle_batch(self, batch: Batch, key_values: BatchKeyValue):
-        batch.source_type = self.source_type
+    def handle_batch(self, batch: Batch, key_values: BatchKeyValue = None):
+        batch.survey_job = self.survey_job
+        batch.source_type = self.source_type()
         batch.status = BatchStatuses.NEW.value
         batch.internal_location = None
 
@@ -50,7 +55,7 @@ class ExternalSourceSurveyor:
                 "unless the pipeline returned by determine_pipeline" + \
                 "is of the type DiscoveryPipeline."
             # Also should be more specific
-            raise Exception, message
+            raise Exception(message)
 
         if(batch.save()):  # This is also where we will queue the downloader job
             return True
@@ -74,6 +79,7 @@ class ExternalSourceSurveyor:
             organism
 
         The following fields will be set by handle_batch:
+            survey_job
             source_type
             pipeline_required
             status

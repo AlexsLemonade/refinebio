@@ -5,7 +5,7 @@ WORKDIR /home/user
 
 ENV CELERY_VERSION 4.0.2
 
-COPY workers/requirements.in .
+COPY foreman/requirements.in .
 
 RUN pip install pip-tools && \
     pip-compile requirements.in && \
@@ -16,8 +16,8 @@ COPY data_models/dist/bioinformatics-mill-models-* data_models/
 # Get the latest version from the dist directory.
 RUN pip install data_models/$(ls data_models | sort -r | head -1)
 
-COPY workers/ .
+COPY foreman/ .
 
 USER user
 
-CMD ["celery", "-A", "bioinformatics_mill_workers", "-c", "1", "worker"]
+CMD ./manage.py start

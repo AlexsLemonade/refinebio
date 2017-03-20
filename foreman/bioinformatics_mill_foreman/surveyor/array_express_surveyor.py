@@ -1,4 +1,6 @@
-from bioinformatics_mill_models.models import Batch, SurveyJob
+import requests
+from typing import List
+from bioinformatics_mill_models.models import Batch, BatchKeyValue, SurveyJob
 from .external_source import ExternalSourceSurveyor, ProcessorPipeline
 
 
@@ -16,9 +18,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
     def survey(self, survey_job: SurveyJob):
         accession_code = 'A-AFFY-1'
-        parameters = {'raw': 'true', 'array': platform}
+        parameters = {'raw': 'true', 'array': accession_code}
 
-        r = requests.get(FILES_URL, params=parameters)
+        r = requests.get(self.FILES_URL, params=parameters)
         response_dictionary = r.json()
 
         try:
@@ -41,6 +43,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                         self.handle_batch(Batch(size_in_bytes=0,
                                                 download_url=url,
                                                 raw_format="MICRO_ARRAY",
+                                                processed_format="PCL",
                                                 accession_code=accession_code,
                                                 organism=1))
 
@@ -50,7 +53,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     self.handle_batch(Batch(size_in_bytes=0,
                                             download_url=url,
                                             raw_format="MICRO_ARRAY",
+                                            processed_format="PCL",
                                             accession_code=accession_code,
                                             organism=1))
-
-            break
