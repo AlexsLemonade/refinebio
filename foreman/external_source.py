@@ -64,7 +64,7 @@ class ExternalSourceSurveyor:
            downloaded.
         2. Create a Batch object for each discovered batch and optionally
            a list of BatchKeyValues.
-        3. Call self.handle_batch for Batch object that is created.
+        3. Call self.handle_batch for each Batch object that is created.
 
         Each Batch object should have the following fields populated:
             size_in_bytes

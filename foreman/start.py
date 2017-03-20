@@ -2,7 +2,7 @@ from bioinformatics_mill_models.models import SurveyJob
 
 
 def get_surveyor_for_source(source_type):
-    """Factory method for ExternalSources."""
+    """Factory method for ExternalSourceSurveyors."""
     if(source_type == "ARRAY_EXPRESS"):
         return ArrayExpressSurveyor()
     else:
@@ -36,16 +36,15 @@ def run_job(survey_job: SurveyJob):
         log_message = log_message + " because: " + str(e)
         print log_message
 
-        survey_job.success = False
-        survey_job.save()
+        end_job(survey_job, False)
         return survey_job
 
     start_job(survey_job)
     job_success = surveyor.survey(survey_job)
-    end_job(survey_job)
+    end_job(survey_job, job_success)
     return survey_job
 
 
 def __main__():
-    # init and run a test job
+    run_job(SurveyJob(source_type="ARRAY_EXPRESS"))
     return
