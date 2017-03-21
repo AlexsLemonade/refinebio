@@ -7,4 +7,4 @@ docker run \
        --link some-rabbit:rabbit \
        --add-host=database:$HOST_IP \
        --env-file foreman/environments/dev \
-       bm_surveyor
+       dr_surveyor

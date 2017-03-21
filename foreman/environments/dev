@@ -3,7 +3,7 @@ DJANGO_DEBUG=True
 
 DATABASE_NAME=data_refinery
 DATABASE_USER=data_refinery_user
-DATABASE_PASSWORD=data_password
+DATABASE_PASSWORD=data_refinery_password
 DATABASE_HOST=database
 DATABASE_PORT=5432
 
