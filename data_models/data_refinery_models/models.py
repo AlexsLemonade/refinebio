@@ -17,12 +17,12 @@ class TimeTrackedModel(models.Model):
         abstract = True
 
 
-# This model is still has a prototypical status, but I needed something to
+# This model still has a prototypical status, but I needed something to
 # test with and it's at least in the right ballpark
 class Batch(TimeTrackedModel):
     source_type = models.CharField(max_length=256)
     size_in_bytes = models.IntegerField()
-    download_url = models.CharField(max_length=256)
+    download_url = models.CharField(max_length=2048)
     raw_format = models.CharField(max_length=256)
     processed_format = models.CharField(max_length=256)
     processor_required = models.IntegerField()

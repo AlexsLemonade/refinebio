@@ -5,7 +5,7 @@ WORKDIR /home/user
 
 ENV CELERY_VERSION 4.0.2
 
-COPY workers/requirements.in .
+COPY workers/requirements.txt .
 
 RUN pip install -r requirements.txt
 
