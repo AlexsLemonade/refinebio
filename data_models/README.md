@@ -12,24 +12,18 @@ python manage.py migrate
 
 ## Developing
 
-After making changes to any model files within this directory two things should happen before you can utilize those changes in other projects that rely on the model. First you should make and run migrations:
+After making changes to any model files within this directory two things should
+happen before you can utilize those changes in other projects that rely on the
+model. First you should make and run migrations:
 
 ```
-python manage.py makemigrations
-python manage.py migrate
+./make_migrations.sh
 ```
 
-Next you should install the package locally:
+Next you should generate the package:
 
 ```
 python setup.py sdist
-pip install --user dist/data-refinery-models-0.1.tar.gz
 ```
 
-After merging your changes into the master branch be sure to release the package with:
-
-```
-twine upload dist/*
-```
-
-(If you are not already set up within pypi.org to be able to modify this package please contact @kurtwheeler.)
+The Dockerfiles know how to find the package and install it in the container.
