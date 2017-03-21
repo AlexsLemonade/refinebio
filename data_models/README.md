@@ -1,4 +1,4 @@
-To initialize the database for the Bioinformatics Mill project run:
+To initialize the database for the Data Refinery project run:
 
 ```
 sudo -u postgres install.sh
@@ -23,7 +23,7 @@ Next you should install the package locally:
 
 ```
 python setup.py sdist
-pip install --user dist/bioinformatics-mill-models-0.1.tar.gz
+pip install --user dist/data-refinery-models-0.1.tar.gz
 ```
 
 After merging your changes into the master branch be sure to release the package with:

@@ -11,8 +11,14 @@ RUN pip install pip-tools && \
     pip-compile requirements.in && \
     pip install -r requirements.txt
 
+
+COPY data_models/dist/data-refinery-models-* data_models/
+
+# Get the latest version from the dist directory.
+RUN pip install data_models/$(ls data_models | sort -r | head -1)
+
 COPY workers/ .
 
 USER user
 
-CMD ["celery", "-A", "bioinformatics_mill_workers", "-c", "1", "worker"]
+CMD ["celery", "-A", "data_refinery_workers", "-c", "1", "worker"]
