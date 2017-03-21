@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
                 ('key', models.CharField(max_length=256)),
                 ('value', models.CharField(max_length=256)),
                 ('batch_id', models.ForeignKey(
-                    on_delete=django.db.models.deletion.CASCADE, to='bioinformatics_mill_models.Batch')),
+                    on_delete=django.db.models.deletion.CASCADE, to='data_refinery_models.Batch')),
             ],
             options={
                 'db_table': 'batch_key_values',
@@ -66,7 +66,7 @@ class Migration(migrations.Migration):
                 ('num_retries', models.IntegerField()),
                 ('worker_id', models.CharField(max_length=256)),
                 ('batch_id', models.ForeignKey(
-                    on_delete=django.db.models.deletion.CASCADE, to='bioinformatics_mill_models.Batch')),
+                    on_delete=django.db.models.deletion.CASCADE, to='data_refinery_models.Batch')),
             ],
             options={
                 'db_table': 'downloader_jobs',
@@ -86,7 +86,7 @@ class Migration(migrations.Migration):
                 ('num_retries', models.IntegerField()),
                 ('worker_id', models.CharField(max_length=256)),
                 ('batch_id', models.ForeignKey(
-                    on_delete=django.db.models.deletion.CASCADE, to='bioinformatics_mill_models.Batch')),
+                    on_delete=django.db.models.deletion.CASCADE, to='data_refinery_models.Batch')),
             ],
             options={
                 'db_table': 'processor_jobs',
@@ -113,6 +113,6 @@ class Migration(migrations.Migration):
             model_name='batch',
             name='survey_job',
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to='bioinformatics_mill_models.SurveyJob'),
+                on_delete=django.db.models.deletion.CASCADE, to='data_refinery_models.SurveyJob'),
         ),
     ]

@@ -14,7 +14,7 @@ COPY data_models/dist/data-refinery-models-* data_models/
 # Get the latest version from the dist directory.
 RUN pip install data_models/$(ls data_models | sort -r | head -1)
 
-COPY data_models/dist/bioinformatics-mill-models-* data_models/
+COPY data_models/dist/data-refinery-models-* data_models/
 
 # Get the latest version from the dist directory.
 RUN pip install data_models/$(ls data_models | sort -r | head -1)
