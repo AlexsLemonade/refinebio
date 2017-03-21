@@ -28,7 +28,7 @@ class Batch(TimeTrackedModel):
     processor_required = models.IntegerField()
     accession_code = models.CharField(max_length=256)
 
-    # This field where denote where in our system the file can be found
+    # This field will denote where in our system the file can be found
     internal_location = models.CharField(max_length=256)
 
     # This will at some be a meaningful integer->organism lookup thing
