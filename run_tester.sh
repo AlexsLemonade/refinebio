@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# convenience script for running the foreman docker container
+# convenience script for running the tester docker container
 
 HOST_IP=$(ifconfig eth0 | grep "inet " | awk -F'[: ]+' '{ print $4 }')
 docker run \

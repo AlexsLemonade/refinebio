@@ -1,7 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task
 
-from bioinformatics_mill_models.models import Batch, BatchStatuses, SurveyJob
+from data_refinery_models.models import Batch, BatchStatuses, SurveyJob
 
 
 @shared_task

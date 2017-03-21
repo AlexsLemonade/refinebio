@@ -49,7 +49,7 @@ class Batch(TimeTrackedModel):
     survey_job = models.ForeignKey(SurveyJob)
     source_type = models.CharField(max_length=256)
     size_in_bytes = models.IntegerField()
-    download_url = models.CharField(max_length=256)
+    download_url = models.CharField(max_length=2048)
     raw_format = models.CharField(max_length=256, null=True)
     processed_format = models.CharField(max_length=256, null=True)
     pipeline_required = models.CharField(max_length=256)

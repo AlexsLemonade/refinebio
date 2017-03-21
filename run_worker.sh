@@ -8,4 +8,4 @@ docker run \
        --name worker1 \
        --add-host=database:$HOST_IP \
        --env-file workers/environments/dev \
-       -d bm_worker
+       -d dr_worker

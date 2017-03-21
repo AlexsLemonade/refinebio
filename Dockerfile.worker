@@ -5,13 +5,16 @@ WORKDIR /home/user
 
 ENV CELERY_VERSION 4.0.2
 
-COPY workers/requirements.in .
+COPY workers/requirements.txt .
 
-RUN pip install pip-tools && \
-    pip-compile requirements.in && \
-    pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
-COPY data_models/dist/bioinformatics-mill-models-* data_models/
+COPY data_models/dist/data-refinery-models-* data_models/
+
+# Get the latest version from the dist directory.
+RUN pip install data_models/$(ls data_models | sort -r | head -1)
+
+COPY data_models/dist/data-refinery-models-* data_models/
 
 # Get the latest version from the dist directory.
 RUN pip install data_models/$(ls data_models | sort -r | head -1)
@@ -20,4 +23,4 @@ COPY workers/ .
 
 USER user
 
-CMD ["celery", "-A", "bioinformatics_mill_workers", "-c", "1", "worker"]
+CMD ["celery", "-A", "data_refinery_workers", "-c", "1", "worker"]

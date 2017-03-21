@@ -1,5 +1,5 @@
 """
-WSGI config for bioinformatics_mill_models project.
+WSGI config for data_refinery_workers project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,7 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "bioinformatics_mill_models.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE",
+                      "data_refinery_workers.settings")
 
 application = get_wsgi_application()

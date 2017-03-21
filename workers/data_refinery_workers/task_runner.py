@@ -4,9 +4,9 @@ from celery import Celery
 
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE',
-                      'bioinformatics_mill_workers.settings')
+                      'data_refinery_workers.settings')
 
-app = Celery('bioinformatics_mill_workers')
+app = Celery('data_refinery_workers')
 
 # Using a string here means the worker don't have to serialize
 # the configuration object to child processes.
