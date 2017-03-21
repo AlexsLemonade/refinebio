@@ -2,7 +2,7 @@ import abc
 import datetime
 from enum import Enum
 from typing import List
-from bioinformatics_mill_models.models import (
+from data_refinery_models.models import (
     Batch,
     BatchStatuses,
     BatchKeyValue,

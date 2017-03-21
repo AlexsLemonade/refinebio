@@ -1,9 +1,9 @@
 DJANGO_SECRET_KEY=#29)1-w_!5x40ibbl0me3p^!f_j@_gpvre1cf+pj3cijp2h_18
 DJANGO_DEBUG=True
 
-DATABASE_NAME=bioinformatics_mill
-DATABASE_USER=bioinformatics_mill_user
-DATABASE_PASSWORD=bioinformatics_password
+DATABASE_NAME=data_refinery
+DATABASE_USER=data_refinery_user
+DATABASE_PASSWORD=data_password
 DATABASE_HOST=database
 DATABASE_PORT=5432
 

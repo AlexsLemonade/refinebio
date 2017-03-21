@@ -1,5 +1,5 @@
 import datetime
-from bioinformatics_mill_models.models import SurveyJob
+from data_refinery_models.models import SurveyJob
 from .array_express_surveyor import ArrayExpressSurveyor
 
 

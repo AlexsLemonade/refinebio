@@ -1,6 +1,6 @@
 import requests
 from typing import List
-from bioinformatics_mill_models.models import Batch, BatchKeyValue, SurveyJob
+from data_refinery_models.models import Batch, BatchKeyValue, SurveyJob
 from .external_source import ExternalSourceSurveyor, ProcessorPipeline
 
 
