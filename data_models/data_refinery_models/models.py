@@ -31,7 +31,7 @@ class Batch(TimeTrackedModel):
     # This field will denote where in our system the file can be found
     internal_location = models.CharField(max_length=256)
 
-    # This will at some be a meaningful integer->organism lookup thing
+    # This will utilize the organism taxonomy ID from NCBI
     organism = models.IntegerField()
 
     STATUSES = (
