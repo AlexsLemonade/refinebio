@@ -1,0 +1,21 @@
+FROM python:3.5-slim
+
+RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
+WORKDIR /home/user
+
+ENV CELERY_VERSION 4.0.2
+
+COPY workers/requirements.txt .
+
+RUN pip install -r requirements.txt
+
+COPY data_models/dist/data-refinery-models-* data_models/
+
+# Get the latest version from the dist directory.
+RUN pip install data_models/$(ls data_models | sort -r | head -1)
+
+COPY workers/ .
+
+USER user
+
+CMD ["celery", "-A", "data_refinery_workers", "-c", "1", "worker"]
