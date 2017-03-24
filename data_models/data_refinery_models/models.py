@@ -66,11 +66,13 @@ class Batch(TimeTrackedModel):
         db_table = "batches"
 
 
-# This table is used for tacking fields onto a Batch record that would
-# be sparsly populated if it was its own column.
-# I.e. one source may have an extra field or two that are worth tracking
-# but are specific to that source.
 class BatchKeyValue(TimeTrackedModel):
+    """
+    This table is used for tracking fields onto a Batch record that would
+    be sparsely populated if it was its own column.
+    I.e. one source may have an extra field or two that are worth tracking
+    but are specific to that source.
+    """
     batch_id = models.ForeignKey(Batch, on_delete=models.CASCADE)
     key = models.CharField(max_length=256)
     value = models.CharField(max_length=256)
@@ -95,7 +97,7 @@ class ProcessorJob(TimeTrackedModel):
     #     # retry the job
     num_retries = models.IntegerField(default=0)
 
-    # This point of this field is to identify what worker ran the job.
+    # This point of this field is to identify which worker ran the job.
     # A few fields may actually be required or something other than just an id.
     worker_id = models.CharField(max_length=256)
 
