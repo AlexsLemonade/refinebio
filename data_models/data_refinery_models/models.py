@@ -20,6 +20,7 @@ class TimeTrackedModel(models.Model):
 
 class SurveyJob(TimeTrackedModel):
     source_type = models.CharField(max_length=256)
+    success = models.NullBooleanField(null=True)
 
     # The start time of the query used to replicate
     replication_started_at = models.DateTimeField(null=True)

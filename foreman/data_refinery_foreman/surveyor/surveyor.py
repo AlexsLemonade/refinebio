@@ -1,6 +1,11 @@
 import datetime
+import traceback
 from data_refinery_models.models import SurveyJob
 from .array_express_surveyor import ArrayExpressSurveyor
+
+
+def SourceNotSupportedError(Exception):
+    pass
 
 
 def _get_surveyor_for_source(survey_job: SurveyJob):
@@ -10,7 +15,8 @@ def _get_surveyor_for_source(survey_job: SurveyJob):
     else:
         # Probably should be more specific, but I'm not sure what exception to
         # use yet
-        raise Exception("Source " + source_type + " is not supported.")
+        raise SourceNotSupportedError(
+            "Source " + source_type + " is not supported.")
 
 
 def _start_job(survey_job: SurveyJob):
@@ -35,7 +41,7 @@ def run_job(survey_job: SurveyJob):
     try:
         surveyor = _get_surveyor_for_source(survey_job)
     # once again, should be more specific
-    except Exception as e:
+    except SourceNotSupportedError as e:
         # This should be logging, not printing. I need to set that up.
         log_message = "Unable to run survey job # " + survey_job.id
         log_message = log_message + " because: " + str(e)
@@ -44,11 +50,18 @@ def run_job(survey_job: SurveyJob):
         _end_job(survey_job, False)
         return survey_job
 
-    job_success = surveyor.survey(survey_job)
+    try:
+        job_success = surveyor.survey(survey_job)
+    except Exception as e:
+        print("Exception caught while running job # " + survey_job.id +
+              " with message: " + str(e))
+        print(traceback.format_exc())
+        job_success = False
+
     _end_job(survey_job, job_success)
     return survey_job
 
 
-def go():
+def test():
     run_job(SurveyJob(source_type="ARRAY_EXPRESS"))
     return

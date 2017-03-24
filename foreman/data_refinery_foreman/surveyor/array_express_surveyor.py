@@ -17,6 +17,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         return ProcessorPipeline.MICRO_ARRAY_TO_PCL
 
     def survey(self, survey_job: SurveyJob):
+        # Obviously this shouldn't be hardcoded in but the Array Express
+        # Surveyor is not finished yet and is currently a POC
         accession_code = 'A-AFFY-1'
         parameters = {'raw': 'true', 'array': accession_code}
 
@@ -26,8 +28,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         try:
             experiments = response_dictionary['files']['experiment']
         except KeyError:  # If the platform does not exist or has no files...
-            logger.info('No files were found with this platform accession code. ' +
-                        'Try another accession code.')
+            print('No files were found with this platform accession code. ' +
+                  'Try another accession code.')
 
         for experiment in experiments:
             data_files = experiment['file']
@@ -40,6 +42,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 for data_file in data_files:
                     if (data_file['kind'] == 'raw'):
                         url = data_file['url'].replace("\\", "")
+                        # This is another place where this is still a POC.
+                        # More work will need to be done to determine some
+                        # of these additional metadata fields.
                         self.handle_batch(Batch(size_in_bytes=0,
                                                 download_url=url,
                                                 raw_format="MICRO_ARRAY",
@@ -56,3 +61,5 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                                             processed_format="PCL",
                                             accession_code=accession_code,
                                             organism=1))
+
+        return True

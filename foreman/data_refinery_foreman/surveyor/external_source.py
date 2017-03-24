@@ -85,10 +85,10 @@ class ExternalSourceSurveyor:
             status
 
         The processed_format should be set if it is already known what it
-        will be. If it is not set then the determine_pipeline method return a
-        DiscoveryPipeline (a pipeline that determines what the raw_format
-        of the data is, what the processed_format should be, and which pipeline
-        to use to transform it).
+        will be. If it is not set then the determine_pipeline method must
+        return a DiscoveryPipeline (a pipeline that determines what the
+        raw_format of the data is, what the processed_format should be, and
+        which pipeline to use to transform it).
 
         Return:
         This method should return True if the job completed successfully with

@@ -4,4 +4,4 @@ from data_refinery_foreman.surveyor import surveyor
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        surveyor.go()
+        surveyor.test()
