@@ -5,11 +5,9 @@ WORKDIR /home/user
 
 ENV CELERY_VERSION 4.0.2
 
-COPY foreman/requirements.in .
+COPY foreman/requirements.txt .
 
-RUN pip install pip-tools && \
-    pip-compile requirements.in && \
-    pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
 COPY data_models/dist/data-refinery-models-* data_models/
 
