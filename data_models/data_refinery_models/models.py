@@ -83,10 +83,13 @@ class BatchKeyValue(TimeTrackedModel):
 
 class ProcessorJob(TimeTrackedModel):
     batch_id = models.ForeignKey(Batch, on_delete=models.CASCADE)
-    pipeline_applied = models.CharField(max_length=256)
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
     success = models.NullBooleanField(null=True)
+
+    # This field will contain an enumerated value specifying which processor
+    # pipeline was applied during the processor job.
+    pipeline_applied = models.CharField(max_length=256)
 
     # This field represents how many times this job has been retried. It starts
     # at 0 and each time the job has to be retried it will be incremented.
