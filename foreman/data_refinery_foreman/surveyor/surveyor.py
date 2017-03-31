@@ -1,6 +1,6 @@
 import datetime
 import traceback
-from data_refinery_models.models import SurveyJob
+from data_refinery_models.models import SurveyJob, SurveyJobKeyValue
 from .array_express_surveyor import ArrayExpressSurveyor
 
 
@@ -50,7 +50,7 @@ def run_job(survey_job: SurveyJob):
     try:
         job_success = surveyor.survey(survey_job)
     except Exception as e:
-        print("Exception caught while running job # " + survey_job.id +
+        print("Exception caught while running job #" + str(survey_job.id) +
               " with message: " + str(e))
         print(traceback.format_exc())
         job_success = False
@@ -60,5 +60,11 @@ def run_job(survey_job: SurveyJob):
 
 
 def test():
-    run_job(SurveyJob(source_type="ARRAY_EXPRESS"))
+    survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
+    survey_job.save()
+    key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                       key="accession_code",
+                                       value="A-AFFY-1")
+    key_value_pair.save()
+    run_job(survey_job)
     return

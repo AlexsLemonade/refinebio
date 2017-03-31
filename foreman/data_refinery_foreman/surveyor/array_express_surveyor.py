@@ -1,6 +1,10 @@
 import requests
 from typing import List
-from data_refinery_models.models import Batch, BatchKeyValue, SurveyJob
+from data_refinery_models.models import(
+    Batch,
+    BatchKeyValue,
+    SurveyJob,
+    SurveyJobKeyValue)
 from .external_source import ExternalSourceSurveyor, ProcessorPipeline
 
 
@@ -17,9 +21,13 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         return ProcessorPipeline.MICRO_ARRAY_TO_PCL
 
     def survey(self, survey_job: SurveyJob):
-        # Obviously this shouldn't be hardcoded in but the Array Express
-        # Surveyor is not finished yet and is currently a POC
-        accession_code = 'A-AFFY-1'
+        accession_code = (SurveyJobKeyValue
+                          .objects
+                          .filter(survey_job_id=survey_job.id,
+                                  key__exact="accession_code")
+                          [:1]
+                          .get()
+                          .value)
         parameters = {'raw': 'true', 'array': accession_code}
 
         r = requests.get(self.FILES_URL, params=parameters)
@@ -28,8 +36,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         try:
             experiments = response_dictionary['files']['experiment']
         except KeyError:  # If the platform does not exist or has no files...
-            print('No files were found with this platform accession code. ' +
-                  'Try another accession code.')
+            print('No files were found with this platform accession code: ' +
+                  accession_code)
+            return True
 
         for experiment in experiments:
             data_files = experiment['file']
