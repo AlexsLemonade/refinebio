@@ -5,17 +5,17 @@ WORKDIR /home/user
 
 ENV CELERY_VERSION 4.0.2
 
-COPY workers/requirements.txt .
+COPY foreman/requirements.txt .
 
 RUN pip install -r requirements.txt
 
 COPY data_models/dist/data-refinery-models-* data_models/
 
 # Get the latest version from the dist directory.
-RUN pip install data_models/$(ls data_models/ -1 | tail -1)
+RUN pip install data_models/$(ls data_models -1 | tail -1)
 
-COPY workers/ .
+COPY foreman/ .
 
 USER user
 
-CMD ./manage.py shell < master.py
+CMD ./manage.py start
