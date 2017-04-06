@@ -10,14 +10,21 @@ from data_refinery_models.models import (
 
 
 class PipelineEnums(Enum):
+    """An abstract class to enumerate valid processor pipelines.
+
+    Enumerations which extend this class are valid values for the
+    pipeline_required field of the Batches table."""
     pass
 
 
 class ProcessorPipeline(PipelineEnums):
+    """Pipelines which perform some kind of processing on the data."""
     MICRO_ARRAY_TO_PCL = "MICRO_ARRAY_TO_PCL"
 
 
 class DiscoveryPipeline(PipelineEnums):
+    """Pipelines which discover what kind of processing is appropriate
+    for the data."""
     pass
 
 

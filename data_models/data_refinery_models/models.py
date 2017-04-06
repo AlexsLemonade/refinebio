@@ -38,6 +38,19 @@ class SurveyJob(TimeTrackedModel):
     class Meta:
         db_table = "survey_jobs"
 
+class SurveyJobKeyValue(TimeTrackedModel):
+    """
+    This table is used for tracking fields onto a SurveyJob record that
+    would be sparsely populated if it was its own column.
+    I.e. one source may have an extra field or two that are worth
+    tracking but are specific to that source.
+    """
+    survey_job = models.ForeignKey(SurveyJob, on_delete=models.CASCADE)
+    key = models.CharField(max_length=256)
+    value = models.CharField(max_length=256)
+
+    class Meta:
+        db_table = "survey_job_key_values"
 
 class BatchStatuses(Enum):
     NEW = "NEW"
@@ -75,7 +88,7 @@ class BatchKeyValue(TimeTrackedModel):
     I.e. one source may have an extra field or two that are worth tracking
     but are specific to that source.
     """
-    batch_id = models.ForeignKey(Batch, on_delete=models.CASCADE)
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE)
     key = models.CharField(max_length=256)
     value = models.CharField(max_length=256)
 
@@ -84,7 +97,7 @@ class BatchKeyValue(TimeTrackedModel):
 
 
 class ProcessorJob(TimeTrackedModel):
-    batch_id = models.ForeignKey(Batch, on_delete=models.CASCADE)
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE)
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
     success = models.NullBooleanField(null=True)
@@ -111,7 +124,7 @@ class ProcessorJob(TimeTrackedModel):
 
 
 class DownloaderJob(TimeTrackedModel):
-    batch_id = models.ForeignKey(Batch, on_delete=models.CASCADE)
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE)
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
     success = models.NullBooleanField(null=True)
