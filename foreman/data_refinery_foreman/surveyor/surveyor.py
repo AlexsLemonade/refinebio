@@ -14,13 +14,13 @@ def _get_surveyor_for_source(survey_job: SurveyJob):
         return ArrayExpressSurveyor(survey_job)
     else:
         raise SourceNotSupportedError(
-            "Source " + source_type + " is not supported.")
+            "Source " + survey_job.source_type + " is not supported.")
 
 
 def _start_job(survey_job: SurveyJob):
     survey_job.start_time = datetime.datetime.now(datetime.timezone.utc)
 
-    if(survey_job.replication_ended_at == None):
+    if survey_job.replication_ended_at is None:
         survey_job.replication_ended_at = datetime.datetime.now(
             datetime.timezone.utc)
 
