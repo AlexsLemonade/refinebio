@@ -16,6 +16,8 @@ psql data_refinery -c 'ALTER USER data_refinery_user CREATEDB;'
 # See https://www.howtogeek.com/177621/the-beginners-guide-to-iptables-the-linux-firewall/
 # for more information.
 iptables -A INPUT -s 172.17.0.0/16 -j ACCEPT
+/sbin/iptables-save > /etc/iptables/rules
+
 
 # See http://stackoverflow.com/questions/31249112/allow-docker-container-to-connect-to-a-local-host-postgres-database
 # and https://blog.jsinh.in/how-to-enable-remote-access-to-postgresql-database-server/#.WNFiBCErLmG
