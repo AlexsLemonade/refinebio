@@ -34,9 +34,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         for experiment in experiments:
             data_files = experiment['file']
 
-            # If there is only one file object in data_files, ArrayExpress does not
-            # put it in a list of size 1 - This breaks the code if we attempt to
-            # iterate over it like a list. The next section handles both cases.
+            # If there is only one file object in data_files,
+            # ArrayExpress does not put it in a list of size 1
+            # This breaks the code if we attempt to iterate over it like
+            # a list. The next section handles both cases.
 
             if (type(data_files) == list):
                 for data_file in data_files:
