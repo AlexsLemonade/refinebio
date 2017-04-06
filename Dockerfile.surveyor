@@ -3,8 +3,6 @@ FROM python:3.5-slim
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
-ENV CELERY_VERSION 4.0.2
-
 COPY foreman/requirements.txt .
 
 RUN pip install -r requirements.txt
