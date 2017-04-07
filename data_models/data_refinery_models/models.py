@@ -38,6 +38,7 @@ class SurveyJob(TimeTrackedModel):
     class Meta:
         db_table = "survey_jobs"
 
+
 class SurveyJobKeyValue(TimeTrackedModel):
     """
     This table is used for tracking fields onto a SurveyJob record that
@@ -51,6 +52,7 @@ class SurveyJobKeyValue(TimeTrackedModel):
 
     class Meta:
         db_table = "survey_job_key_values"
+
 
 class BatchStatuses(Enum):
     NEW = "NEW"

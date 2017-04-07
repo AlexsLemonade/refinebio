@@ -1,10 +1,10 @@
-import datetime
 import traceback
+from django.utils import timezone
 from data_refinery_models.models import SurveyJob, SurveyJobKeyValue
 from .array_express_surveyor import ArrayExpressSurveyor
 
 
-def SourceNotSupportedError(Exception):
+class SourceNotSupportedError(BaseException):
     pass
 
 
@@ -18,18 +18,19 @@ def _get_surveyor_for_source(survey_job: SurveyJob):
 
 
 def _start_job(survey_job: SurveyJob):
-    survey_job.start_time = datetime.datetime.now(datetime.timezone.utc)
+    survey_job.start_time = timezone.now()
 
+    # If the end of the replication range is not already set,
+    # set it to the current time.
     if survey_job.replication_ended_at is None:
-        survey_job.replication_ended_at = datetime.datetime.now(
-            datetime.timezone.utc)
+        survey_job.replication_ended_at = timezone.now()
 
     survey_job.save()
 
 
 def _end_job(survey_job: SurveyJob, success=True):
     survey_job.success = success
-    survey_job.end_time = datetime.datetime.now(datetime.timezone.utc)
+    survey_job.end_time = timezone.now()
     survey_job.save()
 
 
@@ -40,8 +41,8 @@ def run_job(survey_job: SurveyJob):
         surveyor = _get_surveyor_for_source(survey_job)
     except SourceNotSupportedError as e:
         # This should be logging, not printing. I need to set that up.
-        log_message = "Unable to run survey job # " + survey_job.id
-        log_message = log_message + " because: " + str(e)
+        log_message = ("Unable to run survey job # " + str(survey_job.id) +
+                       " because: " + str(e))
         print(log_message)
 
         _end_job(survey_job, False)
