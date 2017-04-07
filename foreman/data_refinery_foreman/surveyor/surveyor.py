@@ -1,7 +1,7 @@
 import traceback
 from django.utils import timezone
 from data_refinery_models.models import SurveyJob, SurveyJobKeyValue
-from .array_express_surveyor import ArrayExpressSurveyor
+from .array_express import ArrayExpressSurveyor
 
 
 class SourceNotSupportedError(BaseException):

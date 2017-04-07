@@ -6,9 +6,7 @@ from data_refinery_models.models import (
     SurveyJob,
     SurveyJobKeyValue
 )
-import data_refinery_foreman.surveyor as surveyor
-from data_refinery_foreman.surveyor.array_express_surveyor \
-    import ArrayExpressSurveyor
+from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
 
 
 class SurveyTestCase(TestCase):
@@ -91,7 +89,7 @@ class SurveyTestCase(TestCase):
         SurveyJobKeyValue.objects.all().delete()
         Batch.objects.all().delete
 
-    @patch('data_refinery_foreman.surveyor.array_express_surveyor.requests.get')
+    @patch('data_refinery_foreman.surveyor.array_express.requests.get')
     def test_multiple_experiements(self, mock_get):
         """Multiple experiments are turned into multiple batches"""
         mock_get.return_value = Mock(ok=True)
@@ -102,6 +100,9 @@ class SurveyTestCase(TestCase):
         self.assertTrue(ae_surveyor.survey(self.survey_job))
         self.assertEqual(2, Batch.objects.all().count())
 
+    # Note that this json has the `file` key mapped to a dictionary
+    # instead of a list. This is behavior exhibited by the API
+    # and is being tested on purpose here.
     experiment_json = """
     {
     "files": {
@@ -129,8 +130,8 @@ class SurveyTestCase(TestCase):
 }
 """
 
-    @patch('data_refinery_foreman.surveyor.array_express_surveyor.requests.get')
-    def test_multiple_experiements(self, mock_get):
+    @patch('data_refinery_foreman.surveyor.array_express.requests.get')
+    def test_single_experiment(self, mock_get):
         """A single experiment is turned into a single batch."""
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.json.return_value = json.loads(
