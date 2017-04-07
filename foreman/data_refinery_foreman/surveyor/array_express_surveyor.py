@@ -46,7 +46,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
             # If there is only one file object in data_files,
             # ArrayExpress does not put it in a list of size 1
-            if (type(data_files != list)):
+            if (type(data_files) != list):
                 data_files = [data_files]
 
             for data_file in data_files:
