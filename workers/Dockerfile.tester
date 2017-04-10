@@ -16,4 +16,4 @@ COPY workers/ .
 
 USER user
 
-CMD ./manage.py shell < data_refinery_workers/master.py
+CMD ./manage.py queue_task
