@@ -3,6 +3,11 @@ from django.utils import timezone
 from data_refinery_models.models import SurveyJob, SurveyJobKeyValue
 from .array_express import ArrayExpressSurveyor
 
+# Import and set logger
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 class SourceNotSupportedError(BaseException):
     pass
@@ -40,10 +45,9 @@ def run_job(survey_job: SurveyJob):
     try:
         surveyor = _get_surveyor_for_source(survey_job)
     except SourceNotSupportedError as e:
-        # This should be logging, not printing. I need to set that up.
-        log_message = ("Unable to run survey job # " + str(survey_job.id) +
-                       " because: " + str(e))
-        print(log_message)
+        logger.error("Unable to run survey job #%d because: %s",
+                     survey_job.id,
+                     e)
 
         _end_job(survey_job, False)
         return survey_job
@@ -51,9 +55,10 @@ def run_job(survey_job: SurveyJob):
     try:
         job_success = surveyor.survey(survey_job)
     except Exception as e:
-        print("Exception caught while running job #" + str(survey_job.id) +
-              " with message: " + str(e))
-        print(traceback.format_exc())
+        logger.error("Exception caught while running job #%d with message: %s",
+                     survey_job.id,
+                     e)
+        logger.error(traceback.format_exc())
         job_success = False
 
     _end_job(survey_job, job_success)

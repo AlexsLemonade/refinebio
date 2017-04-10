@@ -2,6 +2,12 @@
 
 # script for executing Django Unittests within Docker container.
 
+# This script should always run as if it were being called from
+# the directory it lives in.
+cd "$( dirname "${BASH_SOURCE[0]}" )"
+
+# However in order to give Docker access to all the code we have to
+# move up a level
 cd ..
 
 docker build -t foreman_tests -f foreman/Dockerfile.tests .
