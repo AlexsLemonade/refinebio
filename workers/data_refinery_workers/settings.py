@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'data_refinery_models',
-    'downloaders',
+    'data_refinery_workers.downloaders',
 ]
 
 MIDDLEWARE = [

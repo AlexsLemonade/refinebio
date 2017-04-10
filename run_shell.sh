@@ -6,6 +6,12 @@
 # This can be changed by modifying the --env-file command line arg
 # and by modifying the Dockerfile.shell file appropriately.
 
+# This script should always run as if it were being called from
+# the directory it lives in.
+cd "$( dirname "${BASH_SOURCE[0]}" )"
+
+docker build -t dr_shell -f Dockerfile.shell .
+
 HOST_IP=$(ifconfig eth0 | grep "inet " | awk -F'[: ]+' '{ print $4 }')
 docker run \
        --link some-rabbit:rabbit \
