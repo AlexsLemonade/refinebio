@@ -119,7 +119,7 @@ class ProcessorJob(TimeTrackedModel):
 
     # This point of this field is to identify which worker ran the job.
     # A few fields may actually be required or something other than just an id.
-    worker_id = models.CharField(max_length=256)
+    worker_id = models.CharField(max_length=256, null=True)
 
     class Meta:
         db_table = "processor_jobs"
@@ -134,7 +134,7 @@ class DownloaderJob(TimeTrackedModel):
     # These two fields are analagous to the fields with the same names
     # in ProcessorJob, see their descriptions for more information
     num_retries = models.IntegerField(default=0)
-    worker_id = models.CharField(max_length=256)
+    worker_id = models.CharField(max_length=256, null=True)
 
     class Meta:
         db_table = "downloader_jobs"
