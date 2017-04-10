@@ -10,6 +10,6 @@ HOST_IP=$(ifconfig eth0 | grep "inet " | awk -F'[: ]+' '{ print $4 }')
 docker run \
        --link some-rabbit:rabbit \
        --add-host=database:$HOST_IP \
-       --env-file /home/kurt/Development/data_refinery/foreman/environments/dev \
+       --env-file foreman/environments/dev \
        -v /tmp:/tmp \
        -i dr_shell
