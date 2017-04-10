@@ -6,7 +6,10 @@ from data_refinery_models.models import (
     SurveyJob,
     SurveyJobKeyValue
 )
-from .external_source import ExternalSourceSurveyor, ProcessorPipeline
+from data_refinery_foreman.surveyor.external_source import (
+    ExternalSourceSurveyor,
+    ProcessorPipeline
+)
 
 # Import and set logger
 import logging
