@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script for executing Django Unittests within Docker container.
+# Script for running the Data Refinery Surveyor container
 
 # This script should always run as if it were being called from
 # the directory it lives in.
@@ -10,10 +10,11 @@ cd "$( dirname "${BASH_SOURCE[0]}" )"
 # move up a level
 cd ..
 
-docker build -t foreman_tests -f foreman/Dockerfile.tests .
+docker build -t dr_surveyor -f foreman/Dockerfile.surveyor .
 
 HOST_IP=$(ifconfig eth0 | grep "inet " | awk -F'[: ]+' '{ print $4 }')
 docker run \
+       --link some-rabbit:rabbit \
        --add-host=database:$HOST_IP \
-       --env-file foreman/environments/test \
-       -i foreman_tests "$@"
+       --env-file foreman/environments/dev \
+       dr_surveyor

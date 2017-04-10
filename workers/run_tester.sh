@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script for executing Django Unittests within Docker container.
+# Script for running a simple tester container to test the worker.
 
 # This script should always run as if it were being called from
 # the directory it lives in.
@@ -10,10 +10,11 @@ cd "$( dirname "${BASH_SOURCE[0]}" )"
 # move up a level
 cd ..
 
-docker build -t foreman_tests -f foreman/Dockerfile.tests .
+docker build -t test_master -f workers/Dockerfile.tester .
 
 HOST_IP=$(ifconfig eth0 | grep "inet " | awk -F'[: ]+' '{ print $4 }')
 docker run \
+       --link some-rabbit:rabbit \
        --add-host=database:$HOST_IP \
-       --env-file foreman/environments/test \
-       -i foreman_tests "$@"
+       --env-file workers/environments/dev \
+       test_master
