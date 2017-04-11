@@ -18,4 +18,6 @@ docker run \
        --name worker1 \
        --add-host=database:$HOST_IP \
        --env-file workers/environments/dev \
-       -d dr_worker
+       --volume /home/kurt/Development/data_refinery/workers/volume:/home/user/data_store \
+       --detach \
+       dr_worker

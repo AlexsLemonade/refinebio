@@ -17,5 +17,5 @@ docker run \
        --link some-rabbit:rabbit \
        --add-host=database:$HOST_IP \
        --env-file workers/environments/dev \
-       -v /tmp:/tmp \
-       -i dr_shell
+       --volume /tmp:/tmp \
+       --interactive dr_shell

@@ -100,6 +100,27 @@ DATABASES = {
 # Celery
 CELERY_BROKER_URL = get_env_variable('CELERY_BROKER_URL')
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler"
+        },
+    },
+    "loggers": {
+        "data_refinery_workers.downloaders": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            # Apparently this will prevent double logging when calling
+            # another method from a task. Source:
+            # http://stackoverflow.com/a/31251707/6095378
+            "propagate": False
+        }
+    }
+}
+
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
 
