@@ -10,6 +10,10 @@ from data_refinery_models.models import (
 )
 
 
+class InvalidProcessedFormatError(BaseException):
+    pass
+
+
 class PipelineEnums(Enum):
     """An abstract class to enumerate valid processor pipelines.
 
@@ -41,8 +45,9 @@ class ExternalSourceSurveyor:
 
     @abc.abstractproperty
     def downloader_task(self):
-        """This property should return the Celery Downloader Task which
-        should be queued to download Batches discovered by this surveyor."""
+        """This property should return the Celery Downloader Task from the
+        data_refinery_workers project which should be queued to download
+        Batches discovered by this surveyor."""
         return
 
     @abc.abstractmethod
@@ -69,7 +74,7 @@ class ExternalSourceSurveyor:
                        "unless the pipeline returned by determine_pipeline" +
                        "is of the type DiscoveryPipeline.")
             # Should be more specific
-            raise Exception(message)
+            raise InvalidProcessedFormatError(message)
 
         batch.save()
         downloader_job = DownloaderJob(batch=batch)
