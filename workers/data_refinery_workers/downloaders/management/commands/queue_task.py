@@ -30,7 +30,7 @@ class Command(BaseCommand):
             survey_job=survey_job,
             source_type="ARRAY_EXPRESS",
             size_in_bytes=0,
-            download_url="http://www.ebi.ac.uk/arrayexpress/files/E-GEOD-96/E-GEOD-96.raw.1.zip",  # noqa
+            download_url="http://www.ebi.ac.uk/arrayexpress/files/E-MTAB-3050/E-MTAB-3050.raw.1.zip",  # noqa
             raw_format="MICRO_ARRAY",
             processed_format="PCL",
             pipeline_required="MICRO_ARRAY_TO_PCL",

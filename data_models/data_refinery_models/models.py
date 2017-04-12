@@ -56,9 +56,7 @@ class SurveyJobKeyValue(TimeTrackedModel):
 
 class BatchStatuses(Enum):
     NEW = "NEW"
-    DOWNLOADING = "DOWNLOADING"
     DOWNLOADED = "DOWNLOADED"
-    PROCESSING = "PROCESSING"
     PROCESSED = "PROCESSED"
 
 

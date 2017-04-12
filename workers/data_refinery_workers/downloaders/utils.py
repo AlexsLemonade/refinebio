@@ -1,5 +1,5 @@
 from django.utils import timezone
-from data_refinery_models.models import Batch, DownloaderJob
+from data_refinery_models.models import Batch, BatchStatuses, DownloaderJob
 
 
 def start_job(job: DownloaderJob):
@@ -15,3 +15,6 @@ def end_job(job: DownloaderJob, batch: Batch, success):
     job.success = success
     job.end_time = timezone.now()
     job.save()
+
+    batch.status = BatchStatuses.DOWNLOADED.value
+    batch.save()
