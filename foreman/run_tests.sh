@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script for executing Django Unittests within Docker container.
+# Script for executing Django PyUnit tests within a Docker container.
 
 # This script should always run as if it were being called from
 # the directory it lives in.
