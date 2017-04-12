@@ -45,7 +45,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         try:
             experiments = response_dictionary["files"]["experiment"]
         except KeyError:  # If the platform does not exist or has no files...
-            logging.info(
+            logger.info(
                 "No files were found with this platform accession code: %s",
                 accession_code
             )
