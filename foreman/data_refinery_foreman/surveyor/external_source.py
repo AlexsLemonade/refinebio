@@ -73,7 +73,6 @@ class ExternalSourceSurveyor:
             message = ("Batches must have the processed_format field set " +
                        "unless the pipeline returned by determine_pipeline" +
                        "is of the type DiscoveryPipeline.")
-            # Should be more specific
             raise InvalidProcessedFormatError(message)
 
         batch.save()
