@@ -47,7 +47,6 @@ def download_array_express(job_id):
         target_file = open(target_file_name, "wb")
         request = requests.get(batch.download_url, stream=True)
 
-        raise Exception("test")
         for chunk in request.iter_content(CHUNK_SIZE):
             if chunk:
                 target_file.write(chunk)
