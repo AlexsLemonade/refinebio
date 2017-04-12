@@ -4,9 +4,8 @@ RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
 # To use this container to interact with a different project change
-# "workers" to the project name you'd like to interact with.
-# TODO: SET ME BACK TO FOREMAN!!!
-COPY workers/requirements.txt .
+# "foreman" to the project name you'd like to interact with.
+COPY foreman/requirements.txt .
 
 RUN pip install -r requirements.txt
 
@@ -15,7 +14,7 @@ COPY data_models/dist/data-refinery-models-* data_models/
 # Get the latest version from the dist directory.
 RUN pip install data_models/$(ls data_models -1 | tail -1)
 
-COPY workers/ .
+COPY foreman/ .
 
 USER user
 
