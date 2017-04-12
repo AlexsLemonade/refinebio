@@ -1,4 +1,4 @@
-FROM python:3.5
+FROM python:3.6.1-slim
 
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
@@ -11,4 +11,4 @@ COPY . .
 
 USER user
 
-ENTRYPOINT ["python3.5", "manage.py", "test", "--no-input"]
+ENTRYPOINT ["python3.6", "manage.py", "test", "--no-input"]
