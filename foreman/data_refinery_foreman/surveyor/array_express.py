@@ -10,6 +10,8 @@ from data_refinery_foreman.surveyor.external_source import (
     ExternalSourceSurveyor,
     ProcessorPipeline
 )
+from data_refinery_workers.downloaders.array_express \
+    import download_array_express
 
 # Import and set logger
 import logging
@@ -23,6 +25,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
     def source_type(self):
         return "ARRAY_EXPRESS"
+
+    def downloader_task(self):
+        return download_array_express
 
     def determine_pipeline(self,
                            batch: Batch,
@@ -51,6 +56,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             )
             return True
 
+        logger.info("Found %d new experiments for Survey Job #%d.",
+                    len(experiments),
+                    survey_job.id)
+
         for experiment in experiments:
             data_files = experiment["file"]
 
@@ -65,7 +74,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     # This is another place where this is still a POC.
                     # More work will need to be done to determine some
                     # of these additional metadata fields.
-                    self.handle_batch(Batch(size_in_bytes=0,
+                    self.handle_batch(Batch(size_in_bytes=data_file["size"],
                                             download_url=url,
                                             raw_format="MICRO_ARRAY",
                                             processed_format="PCL",

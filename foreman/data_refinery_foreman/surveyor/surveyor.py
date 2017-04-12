@@ -23,6 +23,10 @@ def _get_surveyor_for_source(survey_job: SurveyJob):
 
 
 def _start_job(survey_job: SurveyJob):
+    logger.info("Starting Survey Job #%d for source type: %s.",
+                survey_job.id,
+                survey_job.source_type)
+
     survey_job.start_time = timezone.now()
 
     # If the end of the replication range is not already set,

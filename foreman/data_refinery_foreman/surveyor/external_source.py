@@ -5,6 +5,7 @@ from data_refinery_models.models import (
     Batch,
     BatchStatuses,
     BatchKeyValue,
+    DownloaderJob,
     SurveyJob
 )
 
@@ -38,6 +39,12 @@ class ExternalSourceSurveyor:
     def source_type(self):
         return
 
+    @abc.abstractproperty
+    def downloader_task(self):
+        """This property should return the Celery Downloader Task which
+        should be queued to download Batches discovered by this surveyor."""
+        return
+
     @abc.abstractmethod
     def determine_pipeline(self,
                            batch: Batch,
@@ -51,7 +58,8 @@ class ExternalSourceSurveyor:
         batch.survey_job = self.survey_job
         batch.source_type = self.source_type()
         batch.status = BatchStatuses.NEW.value
-        batch.internal_location = None
+        batch.internal_location = (self.source_type() + "/"
+                                   + batch.accession_code + "/")
 
         pipeline_required = self.determine_pipeline(batch, key_values)
         if(pipeline_required is DiscoveryPipeline or batch.processed_format):
@@ -60,14 +68,13 @@ class ExternalSourceSurveyor:
             message = ("Batches must have the processed_format field set " +
                        "unless the pipeline returned by determine_pipeline" +
                        "is of the type DiscoveryPipeline.")
-            # Also should be more specific
+            # Should be more specific
             raise Exception(message)
 
-        # This is also where we will queue the downloader job
-        if(batch.save()):
-            return True
-        else:
-            return False
+        batch.save()
+        downloader_job = DownloaderJob(batch=batch)
+        downloader_job.save()
+        self.downloader_task().delay(downloader_job.id)
 
     @abc.abstractmethod
     def survey(self, survey_job: SurveyJob):
