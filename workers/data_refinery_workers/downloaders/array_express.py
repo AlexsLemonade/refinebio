@@ -10,6 +10,7 @@ logger = get_task_logger(__name__)
 
 # chunk_size is in bytes
 CHUNK_SIZE = 4096
+# This path is within the Docker container
 ROOT_URI = "/home/user/data_store/"
 
 
@@ -31,12 +32,6 @@ def end_job(job: DownloaderJob, batch: Batch):
     job.save()
 
 
-# Yes this is tiny, however once I'm hitting S3 this'll
-# make things easier probably
-def ensure_path_exists(path):
-    os.makedirs(path, exist_ok=True)
-
-
 @shared_task
 def download_array_express(job_id):
     job = (DownloaderJob
@@ -54,14 +49,15 @@ def download_array_express(job_id):
              .get())
 
     target_directory = ROOT_URI + batch.internal_location
-    ensure_path_exists(target_directory)
+    os.makedirs(target_directory, exist_ok=True)
 
     filename = batch.download_url.split('/')[-1]
     target_file_name = target_directory + filename
 
-    logger.info("Downloading file from %s to %s.",
+    logger.info("Downloading file from %s to %s. (Batch #%d)",
                 batch.download_url,
-                target_file_name)
+                target_file_name,
+                batch.id)
 
     target_file = open(target_file_name, "wb")
     request = requests.get(batch.download_url, stream=True)
