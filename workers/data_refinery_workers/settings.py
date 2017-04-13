@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'data_refinery_models',
     'data_refinery_workers.downloaders',
+    'data_refinery_workers.processors',
 ]
 
 MIDDLEWARE = [
