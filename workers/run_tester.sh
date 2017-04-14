@@ -11,7 +11,7 @@ cd $script_directory
 # move up a level
 cd ..
 
-docker build -t test_master -f workers/Dockerfile.new_tester .
+docker build -t test_master -f workers/Dockerfile.tester .
 
 HOST_IP=$(ifconfig eth0 | grep "inet " | awk -F'[: ]+' '{ print $4 }')
 docker run \

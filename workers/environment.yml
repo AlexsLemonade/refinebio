@@ -1,0 +1,12 @@
+name: workers
+dependencies:
+  - r::r-base=3.3.1
+  - bioconda::bioconductor-affy=1.50.0
+  - bioconda::bioconductor-affyio=1.42.0
+  - python=3.6
+  - r::rpy2=2.8.5
+  - pip:
+    - celery==4.0.2
+    - django==1.10.6
+    - requests==2.13.0
+    - psycopg2==2.7.1

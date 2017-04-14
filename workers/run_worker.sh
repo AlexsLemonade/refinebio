@@ -20,8 +20,7 @@ fi
 
 HOST_IP=$(ifconfig eth0 | grep "inet " | awk -F'[: ]+' '{ print $4 }')
 
-# docker build -t dr_worker -f workers/Dockerfile.worker .
-docker build -t dr_conda -f workers/Dockerfile.conda .
+docker build -t dr_worker -f workers/Dockerfile.worker .
 docker run \
        --link some-rabbit:rabbit \
        --name worker1 \
