@@ -18,9 +18,10 @@ if [ ! -d "$volume_directory" ]; then
     chmod 775 $volume_directory
 fi
 
-docker build -t dr_worker -f workers/Dockerfile.worker .
-
 HOST_IP=$(ifconfig eth0 | grep "inet " | awk -F'[: ]+' '{ print $4 }')
+
+# docker build -t dr_worker -f workers/Dockerfile.worker .
+docker build -t dr_conda -f workers/Dockerfile.conda .
 docker run \
        --link some-rabbit:rabbit \
        --name worker1 \
@@ -28,4 +29,4 @@ docker run \
        --env-file workers/environments/dev \
        --volume $volume_directory:/home/user/data_store \
        --detach \
-       dr_worker
+       dr_conda
