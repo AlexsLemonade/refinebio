@@ -28,4 +28,4 @@ docker run \
        --env-file workers/environments/dev \
        --volume $volume_directory:/home/user/data_store \
        --detach \
-       dr_conda
+       dr_worker

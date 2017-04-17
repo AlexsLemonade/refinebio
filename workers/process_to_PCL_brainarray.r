@@ -1,18 +1,3 @@
-##The first argument is the directory to process
-## processDir = commandArgs( trailingOnly = TRUE)[1]
-## organismCode = commandArgs( trailingOnly = TRUE)[2]
-## outputFile = commandArgs( trailingOnly = TRUE)[3]
-
-
-## source("http://bioconductor.org/biocLite.R")
-
-
-##the affy libraries are for working with CEL files
-## library("affy")
-## library("affyio")
-
-
-
 processCelFiles <- function(processDir, organismCode, outputFile) {
     ##files now holds a list of all celfiles in the directory to be processed
     files = list.celfiles(processDir)
@@ -33,7 +18,7 @@ processCelFiles <- function(processDir, organismCode, outputFile) {
     ##so they were hand defined but this loop should map them.
     mapping <- list()
     for (level in ptype_levels) {
-        stripversion = gsub('-v1', '', level)
+        stripversion = gsub('v2', '', level)
         striphyphen = gsub('-', '', stripversion)
         stripped = gsub('_', '', striphyphen)
         mapping[[level]] <- paste(stripped, organismCode, 'ENTREZG', sep='_')
