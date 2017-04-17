@@ -1,4 +1,6 @@
 processCelFiles <- function(processDir, organismCode, outputFile) {
+    library("affy")
+    library("affyio")
     ##files now holds a list of all celfiles in the directory to be processed
     files = list.celfiles(processDir)
 

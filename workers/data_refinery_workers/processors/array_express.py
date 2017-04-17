@@ -22,12 +22,6 @@ def pcl_to_cel(kwargs: Dict):
         "/home/user/data_store/processed/ARRAY_EXPRESS/A-AFFY-1/",
         exist_ok=True)
 
-    ro.r['install.packages'](
-        "/home/user/r_sources/hgu95ahsentrezgcdf_19.0.0.tar.gz",
-        repos=ro.r['as.null'](),
-        type="source")
-    ro.r('library("affy")')
-    ro.r('library("affyio")')
     ro.r('source("/home/user/process_to_PCL_brainarray.r")')
     ro.r['processCelFiles'](
         "/home/user/data_store/raw/ARRAY_EXPRESS/A-AFFY-1/",
