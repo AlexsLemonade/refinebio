@@ -31,7 +31,7 @@ def download_array_express(job_id):
              .get())
 
     success = True
-    target_directory = ROOT_URI + batch.internal_location
+    target_directory = ROOT_URI + "raw/" + batch.internal_location
     os.makedirs(target_directory, exist_ok=True)
 
     filename = batch.download_url.split('/')[-1]

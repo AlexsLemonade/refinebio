@@ -35,7 +35,7 @@ class Command(BaseCommand):
             processed_format="PCL",
             pipeline_required="MICRO_ARRAY_TO_PCL",
             accession_code="A-AFFY-1",
-            internal_location="expression_data/array_express/A-AFFY-1/",
+            internal_location="A-AFFY-1/MICRO_ARRAY_TO_PCL/",
             organism=1,
             status=BatchStatuses.NEW.value
         )
