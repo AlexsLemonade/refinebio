@@ -15,10 +15,6 @@ COPY workers/environment.yml .
 
 RUN conda env create -f environment.yml
 
-COPY workers/install_cdf_packages.r .
-
-RUN $HOME/miniconda/envs/workers/bin/Rscript install_cdf_packages.r
-
 COPY data_models/dist/data-refinery-models-* data_models/
 
 ENV PATH "/home/user/miniconda/envs/workers/bin:$PATH"
