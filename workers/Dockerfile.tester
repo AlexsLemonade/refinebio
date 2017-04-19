@@ -1,23 +1,15 @@
-FROM buildpack-deps:xenial
+FROM continuumio/miniconda3:4.3.11
 
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
-
-env HOME /home/user
-
-COPY workers/miniconda.sh .
-
-RUN bash miniconda.sh -b -p $HOME/miniconda
-
-ENV PATH "$PATH:$HOME/miniconda/bin"
 
 COPY workers/environment.yml .
 
 RUN conda env create -f environment.yml
 
-COPY data_models/dist/data-refinery-models-* data_models/
+ENV PATH "/opt/conda/envs/workers/bin:$PATH"
 
-ENV PATH "/home/user/miniconda/envs/workers/bin:$PATH"
+COPY data_models/dist/data-refinery-models-* data_models/
 
 # Get the latest version from the dist directory.
 RUN pip install data_models/$(ls data_models -1 | tail -1)
