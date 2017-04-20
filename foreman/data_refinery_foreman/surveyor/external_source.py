@@ -1,5 +1,4 @@
 import abc
-import datetime
 from enum import Enum
 from typing import List
 from data_refinery_models.models import (
@@ -55,16 +54,17 @@ class ExternalSourceSurveyor:
         batch.internal_location = None
 
         pipeline_required = self.determine_pipeline(batch, key_values)
-        if(pipeline_required is DiscoveryPipeline or batch.processed_format):
+        if (pipeline_required is DiscoveryPipeline) or batch.processed_format:
             batch.pipeline_required = pipeline_required.value
         else:
-            message = "Batches must have the processed_format field set " + \
-                "unless the pipeline returned by determine_pipeline" + \
-                "is of the type DiscoveryPipeline."
+            message = ("Batches must have the processed_format field set " +
+                       "unless the pipeline returned by determine_pipeline" +
+                       "is of the type DiscoveryPipeline.")
             # Also should be more specific
             raise Exception(message)
 
-        if(batch.save()):  # This is also where we will queue the downloader job
+        # This is also where we will queue the downloader job
+        if batch.save():
             return True
         else:
             return False

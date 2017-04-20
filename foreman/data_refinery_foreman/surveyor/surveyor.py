@@ -1,35 +1,41 @@
-import datetime
 import traceback
+from django.utils import timezone
 from data_refinery_models.models import SurveyJob, SurveyJobKeyValue
-from .array_express_surveyor import ArrayExpressSurveyor
+from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
+
+# Import and set logger
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
-def SourceNotSupportedError(Exception):
+class SourceNotSupportedError(BaseException):
     pass
 
 
 def _get_surveyor_for_source(survey_job: SurveyJob):
     """Factory method for ExternalSourceSurveyors."""
-    if(survey_job.source_type == "ARRAY_EXPRESS"):
+    if survey_job.source_type == "ARRAY_EXPRESS":
         return ArrayExpressSurveyor(survey_job)
     else:
         raise SourceNotSupportedError(
-            "Source " + source_type + " is not supported.")
+            "Source " + survey_job.source_type + " is not supported.")
 
 
 def _start_job(survey_job: SurveyJob):
-    survey_job.start_time = datetime.datetime.now(datetime.timezone.utc)
+    survey_job.start_time = timezone.now()
 
-    if(survey_job.replication_ended_at == None):
-        survey_job.replication_ended_at = datetime.datetime.now(
-            datetime.timezone.utc)
+    # If the end of the replication range is not already set,
+    # set it to the current time.
+    if survey_job.replication_ended_at is None:
+        survey_job.replication_ended_at = timezone.now()
 
     survey_job.save()
 
 
 def _end_job(survey_job: SurveyJob, success=True):
     survey_job.success = success
-    survey_job.end_time = datetime.datetime.now(datetime.timezone.utc)
+    survey_job.end_time = timezone.now()
     survey_job.save()
 
 
@@ -39,10 +45,9 @@ def run_job(survey_job: SurveyJob):
     try:
         surveyor = _get_surveyor_for_source(survey_job)
     except SourceNotSupportedError as e:
-        # This should be logging, not printing. I need to set that up.
-        log_message = "Unable to run survey job # " + survey_job.id
-        log_message = log_message + " because: " + str(e)
-        print(log_message)
+        logger.error("Unable to run survey job #%d because: %s",
+                     survey_job.id,
+                     e)
 
         _end_job(survey_job, False)
         return survey_job
@@ -50,9 +55,10 @@ def run_job(survey_job: SurveyJob):
     try:
         job_success = surveyor.survey(survey_job)
     except Exception as e:
-        print("Exception caught while running job #" + str(survey_job.id) +
-              " with message: " + str(e))
-        print(traceback.format_exc())
+        logger.error("Exception caught while running job #%d with message: %s",
+                     survey_job.id,
+                     e)
+        logger.error(traceback.format_exc())
         job_success = False
 
     _end_job(survey_job, job_success)

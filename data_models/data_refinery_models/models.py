@@ -8,10 +8,11 @@ class TimeTrackedModel(models.Model):
     updated_at = models.DateTimeField()
 
     def save(self, *args, **kwargs):
-        ''' On save, update timestamps '''
+        """ On save, update timestamps """
+        current_time = timezone.now()
         if not self.id:
-            self.created_at = timezone.now()
-        self.updated_at = timezone.now()
+            self.created_at = current_time
+        self.updated_at = current_time
         return super(TimeTrackedModel, self).save(*args, **kwargs)
 
     class Meta:
@@ -37,6 +38,7 @@ class SurveyJob(TimeTrackedModel):
     class Meta:
         db_table = "survey_jobs"
 
+
 class SurveyJobKeyValue(TimeTrackedModel):
     """
     This table is used for tracking fields onto a SurveyJob record that
@@ -50,6 +52,7 @@ class SurveyJobKeyValue(TimeTrackedModel):
 
     class Meta:
         db_table = "survey_job_key_values"
+
 
 class BatchStatuses(Enum):
     NEW = "NEW"
