@@ -15,7 +15,7 @@ class SourceNotSupportedError(BaseException):
 
 def _get_surveyor_for_source(survey_job: SurveyJob):
     """Factory method for ExternalSourceSurveyors."""
-    if(survey_job.source_type == "ARRAY_EXPRESS"):
+    if survey_job.source_type == "ARRAY_EXPRESS":
         return ArrayExpressSurveyor(survey_job)
     else:
         raise SourceNotSupportedError(
@@ -23,6 +23,10 @@ def _get_surveyor_for_source(survey_job: SurveyJob):
 
 
 def _start_job(survey_job: SurveyJob):
+    logger.info("Starting Survey Job #%d for source type: %s.",
+                survey_job.id,
+                survey_job.source_type)
+
     survey_job.start_time = timezone.now()
 
     # If the end of the replication range is not already set,

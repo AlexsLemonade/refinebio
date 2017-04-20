@@ -1,5 +1,4 @@
 from __future__ import absolute_import, unicode_literals
-import os
 import requests
 from celery import shared_task
 from celery.utils.log import get_task_logger
@@ -10,8 +9,6 @@ logger = get_task_logger(__name__)
 
 # chunk_size is in bytes
 CHUNK_SIZE = 4096
-# This path is within the Docker container.
-ROOT_URI = "/home/user/data_store/"
 
 
 @shared_task
@@ -31,20 +28,16 @@ def download_array_express(job_id):
              .get())
 
     success = True
-    target_directory = ROOT_URI + "raw/" + batch.internal_location
-    os.makedirs(target_directory, exist_ok=True)
-
-    filename = batch.download_url.split('/')[-1]
-    target_file_name = target_directory + filename
+    target_file_path = utils.prepare_destination(batch)
 
     logger.info("Downloading file from %s to %s. (Batch #%d, Job #%d)",
                 batch.download_url,
-                target_file_name,
+                target_file_path,
                 batch.id,
                 job_id)
 
     try:
-        target_file = open(target_file_name, "wb")
+        target_file = open(target_file_path, "wb")
         request = requests.get(batch.download_url, stream=True)
 
         for chunk in request.iter_content(CHUNK_SIZE):
