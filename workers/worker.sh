@@ -4,7 +4,7 @@
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+script_directory=`dirname "${BASH_SOURCE[0]}"`
 cd $script_directory
 
 # However in order to give Docker access to all the code we have to
@@ -18,9 +18,10 @@ if [ ! -d "$volume_directory" ]; then
     chmod 775 $volume_directory
 fi
 
-HOST_IP=$(ifconfig eth0 | grep "inet " | awk -F'[: ]+' '{ print $4 }')
-
 docker build -t dr_worker -f workers/Dockerfile.worker .
+
+HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
+
 docker run \
        --link some-rabbit:rabbit \
        --name worker1 \
