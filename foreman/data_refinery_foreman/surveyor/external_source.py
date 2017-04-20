@@ -54,7 +54,7 @@ class ExternalSourceSurveyor:
         batch.internal_location = None
 
         pipeline_required = self.determine_pipeline(batch, key_values)
-        if(pipeline_required is DiscoveryPipeline or batch.processed_format):
+        if (pipeline_required is DiscoveryPipeline) or batch.processed_format:
             batch.pipeline_required = pipeline_required.value
         else:
             message = ("Batches must have the processed_format field set " +
@@ -64,7 +64,7 @@ class ExternalSourceSurveyor:
             raise Exception(message)
 
         # This is also where we will queue the downloader job
-        if(batch.save()):
+        if batch.save():
             return True
         else:
             return False
