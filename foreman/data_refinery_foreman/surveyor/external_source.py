@@ -67,7 +67,7 @@ class ExternalSourceSurveyor:
                                    + batch.accession_code + "/")
 
         pipeline_required = self.determine_pipeline(batch, key_values)
-        if(pipeline_required is DiscoveryPipeline or batch.processed_format):
+        if (pipeline_required is DiscoveryPipeline) or batch.processed_format:
             batch.pipeline_required = pipeline_required.value
         else:
             message = ("Batches must have the processed_format field set " +

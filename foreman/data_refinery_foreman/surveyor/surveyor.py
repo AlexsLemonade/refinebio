@@ -15,7 +15,7 @@ class SourceNotSupportedError(BaseException):
 
 def _get_surveyor_for_source(survey_job: SurveyJob):
     """Factory method for ExternalSourceSurveyors."""
-    if(survey_job.source_type == "ARRAY_EXPRESS"):
+    if survey_job.source_type == "ARRAY_EXPRESS":
         return ArrayExpressSurveyor(survey_job)
     else:
         raise SourceNotSupportedError(
