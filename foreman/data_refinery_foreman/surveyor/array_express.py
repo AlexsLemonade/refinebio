@@ -10,8 +10,6 @@ from data_refinery_foreman.surveyor.external_source import (
     ExternalSourceSurveyor,
     ProcessorPipeline
 )
-from data_refinery_workers.downloaders.array_express \
-    import download_array_express
 
 # Import and set logger
 import logging
@@ -27,12 +25,13 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         return "ARRAY_EXPRESS"
 
     def downloader_task(self):
-        return download_array_express
+        return ("data_refinery_workers.downloaders"
+                + ".array_express.download_array_express")
 
     def determine_pipeline(self,
                            batch: Batch,
                            key_values: List[BatchKeyValue] = []):
-        return ProcessorPipeline.MICRO_ARRAY_TO_PCL
+        return ProcessorPipeline.AFFY_TO_PCL
 
     def survey(self, survey_job: SurveyJob):
         accession_code = (SurveyJobKeyValue

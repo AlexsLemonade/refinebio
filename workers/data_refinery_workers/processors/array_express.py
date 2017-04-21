@@ -41,7 +41,7 @@ def cel_to_pcl(kwargs: Dict):
 
 
 @shared_task
-def process_array_express(job_id):
+def affy_to_pcl(job_id):
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
                         cel_to_pcl,

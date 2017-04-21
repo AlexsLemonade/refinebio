@@ -8,6 +8,7 @@ from data_refinery_models.models import (
     DownloaderJob,
     SurveyJob
 )
+from data_refinery_foreman.surveyor.message_queue import app
 
 
 class InvalidProcessedFormatError(BaseException):
@@ -24,7 +25,7 @@ class PipelineEnums(Enum):
 
 class ProcessorPipeline(PipelineEnums):
     """Pipelines which perform some kind of processing on the data."""
-    MICRO_ARRAY_TO_PCL = "MICRO_ARRAY_TO_PCL"
+    AFFY_TO_PCL = "AFFY_TO_PCL"
 
 
 class DiscoveryPipeline(PipelineEnums):
@@ -45,9 +46,9 @@ class ExternalSourceSurveyor:
 
     @abc.abstractproperty
     def downloader_task(self):
-        """This property should return the Celery Downloader Task from the
-        data_refinery_workers project which should be queued to download
-        Batches discovered by this surveyor."""
+        """This property should return the Celery Downloader Task name
+        from the data_refinery_workers project which should be queued
+        to download Batches discovered by this surveyor."""
         return
 
     @abc.abstractmethod
@@ -63,8 +64,6 @@ class ExternalSourceSurveyor:
         batch.survey_job = self.survey_job
         batch.source_type = self.source_type()
         batch.status = BatchStatuses.NEW.value
-        batch.internal_location = (batch.accession_code + "/"
-                                   + batch.pipeline_required + "/")
 
         pipeline_required = self.determine_pipeline(batch, key_values)
         if (pipeline_required is DiscoveryPipeline) or batch.processed_format:
@@ -75,10 +74,13 @@ class ExternalSourceSurveyor:
                        "is of the type DiscoveryPipeline.")
             raise InvalidProcessedFormatError(message)
 
+        batch.internal_location = (batch.accession_code + "/"
+                                   + batch.pipeline_required + "/")
+
         batch.save()
         downloader_job = DownloaderJob(batch=batch)
         downloader_job.save()
-        self.downloader_task().delay(downloader_job.id)
+        app.send_task(self.downloader_task(), args=[downloader_job.id])
 
     @abc.abstractmethod
     def survey(self, survey_job: SurveyJob):
