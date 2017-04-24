@@ -1,3 +1,0 @@
-FROM dr_worker
-
-CMD ./manage.py queue_task

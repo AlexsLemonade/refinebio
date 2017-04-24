@@ -11,7 +11,7 @@ cd $script_directory
 # move up a level
 cd ..
 
-docker build -t foreman -f foreman/Dockerfile .
+docker build -t dr_foreman -f foreman/Dockerfile .
 
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
@@ -19,4 +19,4 @@ docker run \
        --link some-rabbit:rabbit \
        --add-host=database:$HOST_IP \
        --env-file foreman/environments/dev \
-       foreman
+       dr_foreman
