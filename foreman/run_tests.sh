@@ -11,11 +11,11 @@ cd $script_directory
 # move up a level
 cd ..
 
-docker build -t foreman_tests -f foreman/Dockerfile.tests .
+docker build -t foreman -f foreman/Dockerfile .
 
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
 docker run \
        --add-host=database:$HOST_IP \
        --env-file foreman/environments/test \
-       -i foreman_tests "$@"
+       -i foreman test --no-input "$@"

@@ -13,9 +13,10 @@ COPY data_models/dist/data-refinery-models-* data_models/
 RUN pip install \
     data_models/$(ls data_models -1 | sort --version-sort | tail -1)
 
-
 COPY foreman/ .
 
 USER user
 
-CMD ./manage.py start
+ENTRYPOINT ["python3.6", "manage.py"]
+
+CMD ["start"]
