@@ -6,3 +6,4 @@
 #
 django==1.10.6
 psycopg2==2.7.1
+requests==2.13.0
