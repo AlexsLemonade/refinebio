@@ -43,5 +43,5 @@ class Command(BaseCommand):
 
         downloader_job = DownloaderJob(batch=batch)
         downloader_job.save()
-        logger.info("Queuing a task.")
+        logger.info("Queuing a test task.")
         download_array_express.delay(downloader_job.id)
