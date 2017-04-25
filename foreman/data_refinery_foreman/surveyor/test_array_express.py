@@ -135,7 +135,8 @@ class SurveyTestCase(TestCase):
         """A single experiment is turned into a single batch."""
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.json.return_value = json.loads(
-            self.experiment_json)
+            self.experiment_json
+        )
 
         ae_surveyor = ArrayExpressSurveyor(self.survey_job)
         self.assertTrue(ae_surveyor.survey(self.survey_job))

@@ -10,9 +10,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 NCBI_ROOT_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
-ESEARCH_URL = NCBI_ROOT_URL + "esearch.fcgi?db=taxonomy"
-SCIENTIFIC_NAME_URL = ESEARCH_URL + "&field=scin"
-EFETCH_URL = NCBI_ROOT_URL + "efetch.fcgi?db=taxonomy"
+ESEARCH_URL = NCBI_ROOT_URL + "esearch.fcgi"
+EFETCH_URL = NCBI_ROOT_URL + "efetch.fcgi"
 
 
 class UnscientifcNameError(BaseException):
@@ -24,7 +23,8 @@ class InvalidNCBITaxonomyId(BaseException):
 
 
 def get_scientific_name(taxonomy_id: int):
-    response = requests.get(EFETCH_URL + "&id=" + str(taxonomy_id))
+    parameters = {"db": "taxonomy", "id": str(taxonomy_id)}
+    response = requests.get(EFETCH_URL, parameters)
 
     root = ElementTree.fromstring(response.text)
     taxon_list = root.findall("Taxon")
@@ -35,12 +35,13 @@ def get_scientific_name(taxonomy_id: int):
                      taxonomy_id)
         raise InvalidNCBITaxonomyId
 
-    return taxon_list[0].find("ScientificName").text
+    return taxon_list[0].find("ScientificName").text.upper()
 
 
 def get_taxonomy_id(organism_name: str):
     escaped_name = urllib.parse.quote(organism_name)
-    response = requests.get(ESEARCH_URL + "&term=" + escaped_name)
+    parameters = {"db": "taxonomy", "term": escaped_name}
+    response = requests.get(ESEARCH_URL, parameters)
 
     root = ElementTree.fromstring(response.text)
     id_list = root.find("IdList").findall("Id")
@@ -60,7 +61,8 @@ def get_taxonomy_id(organism_name: str):
 
 def get_taxonomy_id_scientific(organism_name: str):
     escaped_name = urllib.parse.quote(organism_name)
-    response = requests.get(SCIENTIFIC_NAME_URL + "&term=" + escaped_name)
+    parameters = {"db": "taxonomy", "field": "scin", "term": escaped_name}
+    response = requests.get(ESEARCH_URL, parameters)
 
     root = ElementTree.fromstring(response.text)
     id_list = root.find("IdList").findall("Id")
@@ -80,9 +82,10 @@ class Organism(TimeTrackedModel):
     taxonomy_id = models.IntegerField()
     is_scientific_name = models.BooleanField(default=False)
 
-    def get_name_for_id(self, taxonomy_id: int):
+    @classmethod
+    def get_name_for_id(cls, taxonomy_id: int):
         try:
-            organism = (self.objects
+            organism = (cls.objects
                         .filter(taxonomy_id=taxonomy_id)
                         .order_by("-is_scientific_name")
                         [0])
@@ -95,10 +98,11 @@ class Organism(TimeTrackedModel):
 
         return organism.name
 
-    def get_id_for_name(self, name: str):
+    @classmethod
+    def get_id_for_name(cls, name: str):
         name = name.upper()
         try:
-            organism = (self.objects
+            organism = (cls.objects
                         .filter(name=name)
                         [0])
         except IndexError:
