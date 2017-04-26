@@ -34,7 +34,7 @@ def cel_to_pcl(kwargs: Dict):
     experiment_code = raw_file_name.split('/')[0]
     new_name = experiment_code + ".pcl"
 
-    ro.r('source("/home/user/r_processors/cel_to_pcl.r")')
+    ro.r('source("/home/user/r_processors/process_cel_to_pcl.R")')
     ro.r['ProcessCelFiles'](
         temp_directory,
         "Hs",  # temporary until organism discovery is working
