@@ -2,7 +2,6 @@ import os
 from django.utils import timezone
 from data_refinery_models.models import Batch, BatchStatuses, DownloaderJob
 
-
 # This path is within the Docker container.
 ROOT_URI = "/home/user/data_store/raw/"
 
@@ -21,8 +20,9 @@ def end_job(job: DownloaderJob, batch: Batch, success):
     job.end_time = timezone.now()
     job.save()
 
-    batch.status = BatchStatuses.DOWNLOADED.value
-    batch.save()
+    if batch is not None:
+        batch.status = BatchStatuses.DOWNLOADED.value
+        batch.save()
 
 
 def prepare_destination(batch: Batch):
