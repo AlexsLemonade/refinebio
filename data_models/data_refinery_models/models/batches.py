@@ -27,26 +27,12 @@ class Batch(TimeTrackedModel):
     # api Revision?!? -- if so probably better as a KV record
     file_name = models.CharField(max_length=1024)
 
-    # This field will denote where in our system the file can be found
+    # This field will denote where in our system the file can be found.
     internal_location = models.CharField(max_length=256, null=True)
 
-    # This corresponds to the organism taxonomy ID from NCBI
-    # This looks like it may not always be easy... but
-    # https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=taxonomy&term=homo+sapiens&field=scin # noqa
-    # will get us the ID.
-    # This is probably worth more discussion. However an idea we could play
-    # with is creating some kind of internal database that is caching
-    # organism code -> scientific name
-    # This would allow us to beef up the discovery of organism codes if there
-    # are organisms which aren't returned by that query.
-    # If our code cannot figure it out then it could store the organism_name,
-    # set the organism_id to 0, and then notify us so we can figure out how
-    # to handle the new special case.
-    # Initial data model idea looks like:
-    #     organism_id -- NCBI taxonomy ID
-    #     organism_name -- name of the organism used to lookup the id
-    #     scientific_name -- boolean indicating if this is the scientific name
+    # This corresponds to the organism taxonomy ID from NCBI.
     organism_id = models.IntegerField()
+    # This is the organism name as it appeared in the experiment.
     organism_name = models.CharField(max_length=256)
 
     class Meta:
