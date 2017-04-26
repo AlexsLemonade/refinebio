@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 import requests
 from celery import shared_task
 from celery.utils.log import get_task_logger
+from django.core.exceptions import ObjectDoesNotExist
 from data_refinery_models.models import Batch, DownloaderJob
 from data_refinery_workers.downloaders import utils
 
@@ -13,21 +14,22 @@ CHUNK_SIZE = 4096
 
 @shared_task
 def download_array_express(job_id):
-    job = (DownloaderJob
-           .objects
-           .filter(id=job_id)
-           [:1]
-           .get())
-
-    utils.start_job(job)
-
-    batch = (Batch
-             .objects
-             .filter(id=job.batch_id)
-             [:1]
-             .get())
+    try:
+        job = DownloaderJob.objects.get(id=job_id)
+    except ObjectDoesNotExist:
+        logger.error("Cannot find downloader job record with ID %d.", job_id)
+        return
 
     success = True
+    utils.start_job(job)
+
+    try:
+        batch = Batch.objects.get(id=job.batch_id)
+    except ObjectDoesNotExist:
+        logger.error("Cannot find batch record with ID %d.", job.batch_id)
+        utils.end_job(job, None, False)
+        return
+
     target_file_path = utils.prepare_destination(batch)
 
     logger.info("Downloading file from %s to %s. (Batch #%d, Job #%d)",

@@ -17,4 +17,6 @@ COPY foreman/ .
 
 USER user
 
-CMD ./manage.py start
+ENTRYPOINT ["python3.6", "manage.py"]
+
+CMD ["start"]

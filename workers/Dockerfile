@@ -18,4 +18,4 @@ COPY workers/ .
 
 USER user
 
-CMD ["celery", "-l", "info", "-A", "data_refinery_workers", "-c", "1", "worker"]
+ENTRYPOINT ["celery", "-l", "info", "-A", "data_refinery_workers", "-c", "1", "worker"]
