@@ -1,10 +1,8 @@
-FROM python:3.5
+FROM python:3.6.1-slim
 
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
-# To use this container to interact with a different project change
-# "foreman" to the project name you'd like to interact with.
 COPY foreman/requirements.txt .
 
 RUN pip install -r requirements.txt
@@ -19,4 +17,6 @@ COPY foreman/ .
 
 USER user
 
-CMD ./manage.py shell
+ENTRYPOINT ["python3.6", "manage.py"]
+
+CMD ["start"]
