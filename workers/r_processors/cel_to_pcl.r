@@ -4,10 +4,11 @@ ProcessCelFiles <- function (process.dir, organism.code, output.file) {
 
 
   # ptype is now a vector with the type of each array
-  ptype <- sapply(files,
-                  function (f) affyio::read.celfile.header(paste(process.dir,
-                                                                 f,
-                                                                 sep = "/"))[1])
+  ptype <-
+    sapply(files,
+           function (f) affyio::read.celfile.header(paste(process.dir,
+                                                          f,
+                                                          sep = "/"))[1])
 
 
   # ptype levels are the levels of that vector
