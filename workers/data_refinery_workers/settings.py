@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'data_refinery_models',
-    'downloaders',
+    'data_refinery_workers.downloaders',
 ]
 
 MIDDLEWARE = [
@@ -99,6 +99,7 @@ DATABASES = {
 
 # Celery
 CELERY_BROKER_URL = get_env_variable('CELERY_BROKER_URL')
+
 
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
