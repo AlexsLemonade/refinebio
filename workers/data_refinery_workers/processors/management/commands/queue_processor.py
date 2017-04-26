@@ -15,9 +15,13 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# Just a temporary way to queue a processor job
-# without running the surveyor.
 class Command(BaseCommand):
+    """This command is intended for development purposes.
+    It creates the database records necessary for a processor job to
+    run and queues one. It assumes that the file
+    /home/user/data_store/raw/A-AFFY-1/MICRO_ARRAY_TO_PCL/E-MTAB-3050.raw.1.zip
+    exists."""
+
     def handle(self, *args, **options):
         # Create all the dummy data that would have been created
         # before a processor job could have been generated.

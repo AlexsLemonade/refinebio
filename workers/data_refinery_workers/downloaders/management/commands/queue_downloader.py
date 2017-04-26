@@ -15,9 +15,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# Just a temporary way to queue a celery task
-# without running the surveyor.
 class Command(BaseCommand):
+    """This command is intended for development purposes.
+    It creates the database records necessary for a downloader job to
+    run and queues one."""
+
     def handle(self, *args, **options):
         # Create all the dummy data that would have been created
         # before a downloader job could have been generated.
