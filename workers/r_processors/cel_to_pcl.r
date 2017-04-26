@@ -1,14 +1,13 @@
 ProcessCelFiles <- function (process.dir, organism.code, output.file) {
-  library("affy")
-  library("affyio")
   # files now holds a list of all celfiles in the directory to be processed
-  files <- list.celfiles(process.dir)
+  files <- affy::list.celfiles(process.dir)
 
 
   # ptype is now a vector with the type of each array
-  ptype <- sapply(files, function (f) read.celfile.header(paste(process.dir,
-                                                                f,
-                                                                sep="/"))[1])
+  ptype <- sapply(files,
+                  function (f) affyio::read.celfile.header(paste(process.dir,
+                                                                 f,
+                                                                 sep = "/"))[1])
 
 
   # ptype levels are the levels of that vector
@@ -27,17 +26,17 @@ ProcessCelFiles <- function (process.dir, organism.code, output.file) {
     strip.version <- gsub('v2', '', level)
     strip.hyphen <- gsub('-', '', strip.version)
     stripped <- gsub('_', '', strip.hyphen)
-    mapping[[level]] <- paste(stripped, organism.code, 'ENTREZG', sep='_')
+    mapping[[level]] <- paste(stripped, organism.code, 'ENTREZG', sep = '_')
   }
 
 
   for (level in ptype.levels) {
     # pfiles vector only contains files of this type
-    pfiles <- paste(process.dir, subset(files, ptype==level), sep="/")
+    pfiles <- file.path(process.dir, subset(files, ptype == level))
     # ReadAffy loads the array data using the custom CDF
-    data <- ReadAffy(cdfname=mapping[[level]], filenames=pfiles)
-    express <- rma(data)
+    data <- affy::ReadAffy(cdfname = mapping[[level]], filenames = pfiles)
+    express <- affy::rma(data)
 
-    write.exprs(express, file=output.file)
+    write.exprs(express, file = output.file)
   }
 }
