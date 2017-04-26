@@ -32,7 +32,7 @@ def cel_to_pcl(kwargs: Dict):
     new_name = experiment_code + ".pcl"
 
     ro.r('source("/home/user/r_processors/cel_to_pcl.r")')
-    ro.r['processCelFiles'](
+    ro.r['ProcessCelFiles'](
         temp_directory,
         "Hs",  # temporary until organism discovery is working
         target_directory + new_name)
@@ -45,5 +45,5 @@ def process_array_express(job_id):
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
                         cel_to_pcl,
-                        utils.cleanup_temp_data,
+                        # utils.cleanup_temp_data,
                         utils.end_job])

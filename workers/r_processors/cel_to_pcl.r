@@ -1,17 +1,17 @@
-processCelFiles <- function(processDir, organismCode, outputFile) {
+ProcessCelFiles <- function(process.dir, organism.code, output.file) {
     library("affy")
     library("affyio")
     ##files now holds a list of all celfiles in the directory to be processed
-    files = list.celfiles(processDir)
+    files = list.celfiles(process.dir)
 
 
     ##ptype is now a vector with the type of each array
-    ptype = sapply(files, function(f) read.celfile.header(paste(processDir, f, sep="/"))[1])
+    ptype = sapply(files, function(f) read.celfile.header(paste(process.dir, f, sep="/"))[1])
 
 
     ##ptype levels are the levels of that vector (i.e. the types of arrays present)
     ##this is important because only arrays of the same type can be processed together
-    ptype_levels = levels(as.factor(unlist(ptype)))
+    ptype.levels = levels(as.factor(unlist(ptype)))
 
 
     ##mapping holds the three major human platforms, the ReadAffy function used below
@@ -19,24 +19,22 @@ processCelFiles <- function(processDir, organismCode, outputFile) {
     ##to the brainarray CDFs for Entrez.  I was only using three human platforms before
     ##so they were hand defined but this loop should map them.
     mapping <- list()
-    for (level in ptype_levels) {
-        stripversion = gsub('v2', '', level)
-        striphyphen = gsub('-', '', stripversion)
-        stripped = gsub('_', '', striphyphen)
-        mapping[[level]] <- paste(stripped, organismCode, 'ENTREZG', sep='_')
+    for (level in ptype.levels) {
+        strip.version = gsub('v2', '', level)
+        strip.hyphen = gsub('-', '', strip.version)
+        stripped = gsub('_', '', strip.hyphen)
+        mapping[[level]] <- paste(stripped, organism.code, 'ENTREZG', sep='_')
     }
 
 
-    for (level in ptype_levels) {
+    for (level in ptype.levels) {
         ##pfiles vector only contains files of this type
-        pfiles = paste(processDir, subset(files, ptype==level), sep="/")
+        pfiles = paste(process.dir, subset(files, ptype==level), sep="/")
         ##ReadAffy loads the array data using the custom CDF
-        Data = ReadAffy(cdfname=mapping[[level]], filenames = pfiles)
-        ##expresso processes the data
-        ##express = expresso(Data, normalize.method="quantiles", bgcorrect.method="rma",pmcorrect.method="pmonly",summary.method="medianpolish")
-        express = rma(Data)
+        data = ReadAffy(cdfname=mapping[[level]], filenames = pfiles)
+        express = rma(data)
         ##this line writes out the PCL file.  It will be named ENTREZG_$(level)_$(processDir).pcl
         ##write.exprs(express, file=paste(paste("ENTREZG", level, processDir, sep="_"), "pcl", sep="."))
-        write.exprs(express, file=outputFile)
+        write.exprs(express, file=output.file)
     }
 }
