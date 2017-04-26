@@ -29,12 +29,3 @@ docker logs worker1
 # Review the output and make changes
 docker stop worker1 && docker container prune -f
 ```
-
-Once you're ready to run your task within the context of the Data Refinery
-Project you should be sure to run:
-
-```
-python setup.py sdist
-```
-
-The Dockerfiles know how to find the package and install it in the container.

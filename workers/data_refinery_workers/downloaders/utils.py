@@ -14,7 +14,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 # This path is within the Docker container.
 ROOT_URI = "/home/user/data_store/raw/"
 
@@ -33,8 +32,9 @@ def end_job(job: DownloaderJob, batch: Batch, success):
     job.end_time = timezone.now()
     job.save()
 
-    batch.status = BatchStatuses.DOWNLOADED.value
-    batch.save()
+    if batch is not None:
+        batch.status = BatchStatuses.DOWNLOADED.value
+        batch.save()
 
     logger.info("Creating processor job for batch #%d.", batch.id)
     processor_job = ProcessorJob(batch=batch)
