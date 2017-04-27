@@ -1,10 +1,12 @@
 import requests
 from typing import List
+
 from data_refinery_models.models import (
     Batch,
     BatchKeyValue,
     SurveyJob,
-    SurveyJobKeyValue
+    SurveyJobKeyValue,
+    Organism
 )
 from data_refinery_foreman.surveyor.external_source import (
     ExternalSourceSurveyor,
@@ -16,11 +18,11 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+EXPERIMENTS_URL = "https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/"
+SAMPLES_URL = EXPERIMENTS_URL + "{}/samples"
+
 
 class ArrayExpressSurveyor(ExternalSourceSurveyor):
-    # Files API endpoint for ArrayExpress
-    FILES_URL = "http://www.ebi.ac.uk/arrayexpress/json/v2/files"
-
     def source_type(self):
         return "ARRAY_EXPRESS"
 
@@ -34,50 +36,59 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         return ProcessorPipeline.AFFY_TO_PCL
 
     def survey(self, survey_job: SurveyJob):
-        accession_code = (SurveyJobKeyValue
-                          .objects
-                          .filter(survey_job_id=survey_job.id,
-                                  key__exact="accession_code")
-                          [:1]
-                          .get()
-                          .value)
-        parameters = {"raw": "true", "array": accession_code}
+        experiment_accession_code = (
+            SurveyJobKeyValue
+            .objects
+            .get(survey_job_id=survey_job.id,
+                 key__exact="experiment_accession_code")
+            .value
+        )
 
-        r = requests.get(self.FILES_URL, params=parameters)
-        response_dictionary = r.json()
+        experiment_request = requests.get(self.EXPERIMENTS_URL
+                                          + experiment_accession_code)
+        experiment = experiment_request.json()["experiments"]["experiment"][0]
 
-        try:
-            experiments = response_dictionary["files"]["experiment"]
-        except KeyError:  # If the platform does not exist or has no files...
-            logger.info(
-                "No files were found with this platform accession code: %s",
-                accession_code
-            )
-            return True
+        if len(experiment["arraydesign"]) > 1:
+            logger.warn("Experiment %s has more than one arraydesign listed.",
+                        experiment_accession_code)
 
-        logger.info("Found %d new experiments for Survey Job #%d.",
-                    len(experiments),
-                    survey_job.id)
+        platform_accession_code = experiment["arraydesign"][0]["accession"]
 
-        for experiment in experiments:
-            data_files = experiment["file"]
+        r = requests.get(self.SAMPLES_URL.format(experiment_accession_code))
+        samples = r.json()["experiment"]["sample"]
 
-            # If there is only one file object in data_files,
-            # ArrayExpress does not put it in a list of size 1
-            if (type(data_files) != list):
-                data_files = [data_files]
+        for sample in samples:
+            if "file" not in sample:
+                continue
 
-            for data_file in data_files:
-                if (data_file["kind"] == "raw"):
-                    url = data_file["url"].replace("\\", "")
-                    # This is another place where this is still a POC.
-                    # More work will need to be done to determine some
-                    # of these additional metadata fields.
-                    self.handle_batch(Batch(size_in_bytes=data_file["size"],
-                                            download_url=url,
-                                            raw_format="MICRO_ARRAY",
-                                            processed_format="PCL",
-                                            accession_code=accession_code,
-                                            organism=1))
+            organism_name = "UNKNOWN"
+            for characteristic in sample["characteristic"]:
+                if characteristic["category"].upper() == "ORGANISM":
+                    organism_name = characteristic["value"].upper()
 
-        return True
+            if organism_name == "UNKNOWN":
+                logger.error("Sample from experiment %s "
+                             + "did not specify the organism name.",
+                             experiment_accession_code)
+                organism_id = 0
+            else:
+                organism_id = Organism.get_id_for_name(organism_name)
+
+            for sample_file in sample["file"]:
+                if sample_file["type"] != "data":
+                    continue
+
+                self.handle_batch(Batch(
+                    size_in_bytes=-1,  # Will have to be determined later
+                    download_url=sample_file["url"],
+                    raw_format=sample_file["name"].split(".")[-1],
+                    processed_format="PCL",
+                    platform_accession_code=platform_accession_code,
+                    experiment_accession_code=experiment_accession_code,
+                    organism_id=organism_id,
+                    organism_name=organism_name,
+                    experiment_title=experiment["name"],
+                    release_date=experiment["releasedate"],
+                    last_uploaded_date=experiment["lastupdatedate"],
+                    name=sample_file["name"]
+                ))

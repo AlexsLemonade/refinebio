@@ -73,8 +73,8 @@ def test():
     survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
     survey_job.save()
     key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                       key="accession_code",
-                                       value="A-AFFY-1")
+                                       key="experiment_accession_code",
+                                       value="E-MTAB-3050")
     key_value_pair.save()
     run_job(survey_job)
     return

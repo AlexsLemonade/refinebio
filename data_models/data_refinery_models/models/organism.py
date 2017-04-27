@@ -1,5 +1,4 @@
 import requests
-import urllib
 from xml.etree import ElementTree
 from django.db import models
 from data_refinery_models.models.base_models import TimeTrackedModel
@@ -39,8 +38,7 @@ def get_scientific_name(taxonomy_id: int):
 
 
 def get_taxonomy_id(organism_name: str):
-    escaped_name = urllib.parse.quote(organism_name)
-    parameters = {"db": "taxonomy", "term": escaped_name}
+    parameters = {"db": "taxonomy", "term": organism_name}
     response = requests.get(ESEARCH_URL, parameters)
 
     root = ElementTree.fromstring(response.text)
@@ -60,8 +58,7 @@ def get_taxonomy_id(organism_name: str):
 
 
 def get_taxonomy_id_scientific(organism_name: str):
-    escaped_name = urllib.parse.quote(organism_name)
-    parameters = {"db": "taxonomy", "field": "scin", "term": escaped_name}
+    parameters = {"db": "taxonomy", "field": "scin", "term": organism_name}
     response = requests.get(ESEARCH_URL, parameters)
 
     root = ElementTree.fromstring(response.text)

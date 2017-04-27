@@ -74,7 +74,7 @@ class ExternalSourceSurveyor:
                        "is of the type DiscoveryPipeline.")
             raise InvalidProcessedFormatError(message)
 
-        batch.internal_location = (batch.accession_code + "/"
+        batch.internal_location = (batch.platform_accession_code + "/"
                                    + batch.pipeline_required + "/")
 
         batch.save()

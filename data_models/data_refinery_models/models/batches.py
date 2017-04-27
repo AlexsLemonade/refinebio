@@ -20,12 +20,12 @@ class Batch(TimeTrackedModel):
     pipeline_required = models.CharField(max_length=256)
     platform_accession_code = models.CharField(max_length=32)
     experiment_accession_code = models.CharField(max_length=32)
-    experiment_title = models.CharField(max_length=32)
+    experiment_title = models.CharField(max_length=256)
     status = models.CharField(max_length=20)
     release_date = models.DateTimeField()
     last_uploaded_date = models.DateTimeField()
     # api Revision?!? -- if so probably better as a KV record
-    file_name = models.CharField(max_length=1024)
+    name = models.CharField(max_length=1024)
 
     # This field will denote where in our system the file can be found.
     internal_location = models.CharField(max_length=256, null=True)
