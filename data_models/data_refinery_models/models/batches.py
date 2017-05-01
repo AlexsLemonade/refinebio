@@ -22,8 +22,8 @@ class Batch(TimeTrackedModel):
     experiment_accession_code = models.CharField(max_length=32)
     experiment_title = models.CharField(max_length=256)
     status = models.CharField(max_length=20)
-    release_date = models.DateTimeField()
-    last_uploaded_date = models.DateTimeField()
+    release_date = models.DateField()
+    last_uploaded_date = models.DateField()
     # api Revision?!? -- if so probably better as a KV record
     name = models.CharField(max_length=1024)
 

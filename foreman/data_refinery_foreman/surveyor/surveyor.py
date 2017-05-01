@@ -78,3 +78,15 @@ def test():
     key_value_pair.save()
     run_job(survey_job)
     return
+
+
+def survey_experiments(experiments_list_file):
+    with open(experiments_list_file, "r") as experiments:
+        for experiment in experiments:
+            survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
+            survey_job.save()
+            key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                               key="experiment_accession_code",
+                                               value=experiment.rstrip())
+            key_value_pair.save()
+            run_job(survey_job)

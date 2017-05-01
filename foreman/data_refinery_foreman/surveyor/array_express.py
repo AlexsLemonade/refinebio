@@ -22,6 +22,40 @@ EXPERIMENTS_URL = "https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/"
 SAMPLES_URL = EXPERIMENTS_URL + "{}/samples"
 
 
+class ArrayExpressExperiment():
+    def __init__(self, experiment_accession_code):
+        experiment_request = requests.get(EXPERIMENTS_URL
+                                          + experiment_accession_code)
+        experiment = experiment_request.json()["experiments"]["experiment"][0]
+
+        self.name = experiment["name"]
+        self.experiment_accession_code = experiment_accession_code
+
+        # If there is more than one arraydesign listed in the experiment
+        # then there is no other way to determine which array was used
+        # for which sample other than looking at the header of the CEL
+        # file. That obviously cannot happen until the CEL file has been
+        # downloaded so we can just mark it as UNKNOWN and let the
+        # downloader inspect the downloaded file to determine the
+        # array then.
+        if len(experiment["arraydesign"]) == 0:
+            logger.warn("Experiment %s has no arraydesign listed.",
+                        experiment_accession_code)
+            self.platform_accession_code = "UNKNOWN"
+        elif len(experiment["arraydesign"]) > 1:
+            self.platform_accession_code = "UNKNOWN"
+        else:
+            self.platform_accession_code = \
+                experiment["arraydesign"][0]["accession"]
+
+        self.release_date = experiment["releasedate"]
+
+        if "lastupdatedate" in experiment:
+            self.last_update_date = experiment["lastupdatedate"]
+        else:
+            self.last_update_date = experiment["releasedate"]
+
+
 class ArrayExpressSurveyor(ExternalSourceSurveyor):
     def source_type(self):
         return "ARRAY_EXPRESS"
@@ -44,17 +78,12 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             .value
         )
 
-        experiment_request = requests.get(self.EXPERIMENTS_URL
-                                          + experiment_accession_code)
-        experiment = experiment_request.json()["experiments"]["experiment"][0]
+        logger.info("Surveying experiment with accession code: %s.",
+                    experiment_accession_code)
 
-        if len(experiment["arraydesign"]) > 1:
-            logger.warn("Experiment %s has more than one arraydesign listed.",
-                        experiment_accession_code)
+        experiment = ArrayExpressExperiment(experiment_accession_code)
 
-        platform_accession_code = experiment["arraydesign"][0]["accession"]
-
-        r = requests.get(self.SAMPLES_URL.format(experiment_accession_code))
+        r = requests.get(SAMPLES_URL.format(experiment_accession_code))
         samples = r.json()["experiment"]["sample"]
 
         for sample in samples:
@@ -75,7 +104,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 organism_id = Organism.get_id_for_name(organism_name)
 
             for sample_file in sample["file"]:
-                if sample_file["type"] != "data":
+                if sample_file["type"] != "data" \
+                   and sample_file["name"] is not None:
                     continue
 
                 self.handle_batch(Batch(
@@ -83,12 +113,12 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     download_url=sample_file["url"],
                     raw_format=sample_file["name"].split(".")[-1],
                     processed_format="PCL",
-                    platform_accession_code=platform_accession_code,
+                    platform_accession_code=experiment.platform_accession_code,
                     experiment_accession_code=experiment_accession_code,
                     organism_id=organism_id,
                     organism_name=organism_name,
                     experiment_title=experiment["name"],
-                    release_date=experiment["releasedate"],
-                    last_uploaded_date=experiment["lastupdatedate"],
+                    release_date=experiment.release_date,
+                    last_uploaded_date=experiment.lastupdatedate,
                     name=sample_file["name"]
                 ))
