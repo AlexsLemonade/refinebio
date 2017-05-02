@@ -70,8 +70,8 @@ class ExternalSourceSurveyor:
         batch.survey_job = self.survey_job
         batch.source_type = self.source_type()
         batch.status = BatchStatuses.NEW.value
-        batch.internal_location = os.path.join(self.source_type(),
-                                               batch.accession_code)
+        batch.internal_location = os.path.join(batch.accession_code,
+                                               batch.pipeline_required)
 
         pipeline_required = self.determine_pipeline(batch, key_values)
         if (pipeline_required is DiscoveryPipeline) or batch.processed_format:

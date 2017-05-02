@@ -16,3 +16,5 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 
 app.autodiscover_tasks(["data_refinery_workers.downloaders"],
                        related_name="array_express")
+app.autodiscover_tasks(["data_refinery_workers.processors"],
+                       related_name="array_express")

@@ -1,16 +1,18 @@
-FROM python:3.6.1-slim
+FROM continuumio/miniconda3:4.3.11
 
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
-COPY workers/requirements.txt .
+COPY workers/environment.yml .
 
-RUN pip install -r requirements.txt
+RUN conda env create -f environment.yml
+
+ENV PATH "/opt/conda/envs/workers/bin:$PATH"
 
 COPY data_models/dist/data-refinery-models-* data_models/
 
 # Get the latest version from the dist directory.
-RUN pip install data_models/$(ls data_models/ -1 | tail -1)
+RUN pip install data_models/$(ls data_models -1 | tail -1)
 
 COPY workers/ .
 
