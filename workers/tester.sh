@@ -4,7 +4,7 @@
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory=`dirname "${BASH_SOURCE[0]}"`
+script_directory=`dirname "${BASH_SOURCE[0]}"  | xargs realpath`
 cd $script_directory
 
 # However in order to give Docker access to all the code we have to
@@ -20,4 +20,4 @@ docker run \
        --add-host=database:$HOST_IP \
        --env-file workers/environments/dev \
        --entrypoint ./manage.py \
-       test_master queue_test_task
+       test_master queue_downloader

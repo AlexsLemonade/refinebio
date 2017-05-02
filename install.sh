@@ -8,4 +8,4 @@ virtualenv dr_env
 
 source dr_env/bin/activate
 
-pip install pip-tools
+pip3 install pip-tools

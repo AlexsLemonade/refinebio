@@ -1,2 +1,4 @@
 django
 psycopg2
+pip-tools
+autopep8
