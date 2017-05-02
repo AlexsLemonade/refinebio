@@ -37,6 +37,6 @@ ProcessCelFiles <- function (process.dir, organism.code, output.file) {
     data <- affy::ReadAffy(cdfname = mapping[[level]], filenames = pfiles)
     express <- affy::rma(data)
 
-    write.exprs(express, file = output.file)
+    Biobase::write.exprs(express, file = output.file)
   }
 }

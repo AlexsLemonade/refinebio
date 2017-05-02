@@ -27,7 +27,7 @@ def start_job(kwargs: Dict):
 
     try:
         batch = Batch.objects.get(id=job.batch_id)
-    except ObjectDoesNotExist:
+    except Batch.DoesNotExist:
         logger.error("Cannot find batch record with ID %d.", job.batch_id)
         return {"success": False}
 
@@ -97,7 +97,7 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
     job_id = start_value["job_id"]
     try:
         job = ProcessorJob.objects.get(id=job_id)
-    except ObjectDoesNotExist:
+    except ProcessorJob.DoesNotExist:
         logger.error("Cannot find processor job record with ID %d.", job_id)
         return
 

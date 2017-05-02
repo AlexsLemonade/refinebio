@@ -1,3 +1,11 @@
+"""This command is intended for development purposes.
+It creates the database records necessary for a processor job to
+run and queues one. It assumes that the file
+/home/user/data_store/raw/A-AFFY-1/MICRO_ARRAY_TO_PCL/E-MTAB-3050.raw.1.zip
+exists.
+The easiest way to run this is with the tester.sh script.
+(Changing queue_downloader to queue_processor.)"""
+
 from django.core.management.base import BaseCommand
 from data_refinery_models.models import (
     SurveyJob,
@@ -16,14 +24,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    """This command is intended for development purposes.
-    It creates the database records necessary for a processor job to
-    run and queues one. It assumes that the file
-    /home/user/data_store/raw/A-AFFY-1/MICRO_ARRAY_TO_PCL/E-MTAB-3050.raw.1.zip
-    exists.
-    The easiest way to run this is with the tester.sh script.
-    (Changing queue_downloader to queue_processor.)"""
-
     def handle(self, *args, **options):
         # Create all the dummy data that would have been created
         # before a processor job could have been generated.

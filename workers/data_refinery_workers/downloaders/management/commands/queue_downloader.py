@@ -1,3 +1,8 @@
+"""This command is intended for development purposes.
+It creates the database records necessary for a downloader job to
+run and queues one.
+The easiest way to run this is with the tester.sh script."""
+
 from django.core.management.base import BaseCommand
 from data_refinery_models.models import (
     SurveyJob,
@@ -16,11 +21,6 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    """This command is intended for development purposes.
-    It creates the database records necessary for a downloader job to
-    run and queues one.
-    The easiest way to run this is with the tester.sh script."""
-
     def handle(self, *args, **options):
         # Create all the dummy data that would have been created
         # before a downloader job could have been generated.
