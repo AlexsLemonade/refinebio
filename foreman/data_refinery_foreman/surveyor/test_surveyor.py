@@ -9,7 +9,9 @@ class RunJobTestCase(TestCase):
     def test_run_unsupported_source(self):
         """If source_type is unsupported the job still is started and ended."""
         job = SurveyJob(source_type="UNSUPPORTED")
+        job.save()
         surveyor.run_job(job)
+
         self.assertIsInstance(job.replication_ended_at, datetime.datetime)
         self.assertIsInstance(job.start_time, datetime.datetime)
         self.assertIsInstance(job.end_time, datetime.datetime)
@@ -21,6 +23,7 @@ class RunJobTestCase(TestCase):
         survey_method.return_value = True
 
         job = SurveyJob(source_type="ARRAY_EXPRESS")
+        job.save()
         surveyor.run_job(job)
 
         survey_method.assert_called_with(job)

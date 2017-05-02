@@ -1,9 +1,10 @@
 import os
+import urllib
 from django.utils import timezone
 from data_refinery_models.models import Batch, BatchStatuses, DownloaderJob
 
 # This path is within the Docker container.
-ROOT_URI = "/home/user/data_store/raw/"
+ROOT_URI = "/home/user/data_store/raw"
 
 
 def start_job(job: DownloaderJob):
@@ -28,8 +29,9 @@ def end_job(job: DownloaderJob, batch: Batch, success):
 def prepare_destination(batch: Batch):
     """Prepare the destination directory and return the full
     path the Batch's file should be downloaded to."""
-    target_directory = ROOT_URI + batch.internal_location
+    target_directory = os.path.join(ROOT_URI, batch.internal_location)
     os.makedirs(target_directory, exist_ok=True)
 
-    filename = batch.download_url.split('/')[-1]
-    return target_directory + filename
+    path = urllib.parse.urlparse(batch.download_url).path
+    filename = os.path.basename(path)
+    return os.path.join(target_directory, filename)
