@@ -83,7 +83,7 @@ class ExternalSourceSurveyor:
         app.send_task(self.downloader_task(), args=[downloader_job.id])
 
     @abc.abstractmethod
-    def survey(self, survey_job: SurveyJob):
+    def survey(self):
         """Implementations of this function should do the following:
         1. Query the external source to discover batches that should be
            downloaded.

@@ -1,88 +1,246 @@
 import json
+import datetime
 from unittest.mock import Mock, patch
 from django.test import TestCase
 from data_refinery_models.models import (
     Batch,
+    DownloaderJob,
     SurveyJob,
-    SurveyJobKeyValue
+    SurveyJobKeyValue,
+    Organism
 )
-from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
+from data_refinery_foreman.surveyor.array_express import (
+    ArrayExpressSurveyor,
+    EXPERIMENTS_URL,
+    SAMPLES_URL
+)
 
 
-class SurveyTestCase(TestCase):
-    experiments_json = """
-    {
-    "files": {
+EXPERIMENTS_JSON = """
+{
+    "experiments": {
         "api-revision": "091015",
-        "api-version": 2,
+        "api-version": 3,
         "experiment": [
             {
                 "accession": "E-MTAB-3050",
-                "file": [
+                "arraydesign": [
                     {
-                        "extension": "zip",
-                        "kind": "raw",
-                        "lastmodified": "2014-10-30T10:15:00",
-                        "location": "E-MTAB-3050.raw.1.zip",
-                        "name": "E-MTAB-3050.raw.1.zip",
-                        "size": 14876114,
-                        "url":
-    "http://www.ebi.ac.uk/arrayexpress/files/E-MTAB-3050/E-MTAB-3050.raw.1.zip"
-                    },
-                    {
-                        "extension": "xls",
-                        "kind": "adf",
-                        "lastmodified": "2010-03-14T02:31:00",
-                        "location": "A-AFFY-1.adf.xls",
-                        "name": "A-AFFY-1.adf.xls",
-                        "size": 2040084,
-                        "url":
-    "http://www.ebi.ac.uk/arrayexpress/files/A-AFFY-1/A-AFFY-1.adf.xls"
+                        "accession": "A-AFFY-1",
+                        "count": 5,
+                        "id": 11048,
+                        "legacy_id": 5728564,
+                        "name": "Affymetrix GeneChip Human  U95Av2 [HG_U95Av2]"
                     }
-                ]
-            },
-            {
-                "accession": "E-MTAB-3042",
-                "file": [
+                ],
+                "bioassaydatagroup": [
                     {
-                        "extension": "txt",
-                        "kind": "idf",
-                        "lastmodified": "2014-10-28T10:15:00",
-                        "location": "E-MTAB-3042.idf.txt",
-                        "name": "E-MTAB-3042.idf.txt",
-                        "size": 5874,
-                        "url":
-    "http://www.ebi.ac.uk/arrayexpress/files/E-MTAB-3042/E-MTAB-3042.idf.txt"
-                    },
+                        "arraydesignprovider": null,
+                        "bioassaydatacubes": 5,
+                        "bioassays": 5,
+                        "dataformat": "rawData",
+                        "id": null,
+                        "isderived": 0,
+                        "name": "rawData"
+                    }
+                ],
+                "description": [
                     {
-                        "extension": "zip",
-                        "kind": "raw",
-                        "lastmodified": "2014-10-28T10:15:00",
-                        "location": "E-MTAB-3042.raw.1.zip",
-                        "name": "E-MTAB-3042.raw.1.zip",
-                        "size": 5525709,
-                        "url":
-    "http://www.ebi.ac.uk/arrayexpress/files/E-MTAB-3042/E-MTAB-3042.raw.1.zip"
+                        "id": null,
+                        "text": "description tex"
+                    }
+                ],
+                "experimentalvariable": [
+                    {
+                        "name": "cell type",
+                        "value": [
+                            "differentiated",
+                            "expanded",
+                            "freshly isolated"
+                        ]
+                    }
+                ],
+                "experimentdesign": [
+                    "cell type comparison design",
+                    "development or differentiation design"
+                ],
+                "experimenttype": [
+                    "transcription profiling by array"
+                ],
+                "id": 511696,
+                "lastupdatedate": "2014-10-30",
+                "name": "Microarray analysis of in vitro differentiation",
+                "organism": [
+                    "Homo sapiens"
+                ],
+                "protocol": [
+                    {
+                        "accession": "P-MTAB-41859",
+                        "id": 1092859
+                    }
+                ],
+                "provider": [
+                    {
+                        "contact": "Joel Habener",
+                        "email": "jhabener@partners.org",
+                        "role": "submitter"
+                    }
+                ],
+                "releasedate": "2014-10-31",
+                "samplecharacteristic": [
+                    {
+                        "category": "age",
+                        "value": [
+                            "38 year",
+                            "54 year"
+                        ]
                     }
                 ]
             }
         ],
-        "revision": 130311,
-        "total-experiments": 108,
-        "version": 1.2
+        "revision": "091015",
+        "total": 1,
+        "total-assays": 5,
+        "total-samples": 2,
+        "version": 3.0
     }
-}
-"""
+} """
 
+SAMPLES_JSON = """
+{
+    "experiment": {
+        "accession": "E-MTAB-3050",
+        "api-revision": "091015",
+        "api-version": 3,
+        "revision": "091015",
+        "sample": [
+            {
+                "assay": {
+                    "name": "1007409-C30057"
+                },
+                "characteristic": [
+                    {
+                        "category": "organism",
+                        "value": "Homo sapiens"
+                    }
+                ],
+                "extract": {
+                    "name": "donor A islets RNA"
+                },
+                "file": [
+                    {
+                        "comment": {
+                            "name": "ArrayExpress FTP file",
+                            "value": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.raw.1.zip"
+                        },
+                        "name": "C30057.CEL",
+                        "type": "data",
+                        "url": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.raw.1.zip/C30057.CEL"
+                    },
+                    {
+                        "comment": {
+                            "name": "Derived ArrayExpress FTP file",
+                            "value": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.processed.1.zip"
+                        },
+                        "name": "C30057.txt",
+                        "type": "derived data",
+                        "url": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.processed.1.zip/C30057.txt"
+                    }
+                ],
+                "labeled-extract": {
+                    "label": "biotin",
+                    "name": "donor A islets LEX"
+                },
+                "source": {
+                    "name": "donor A islets"
+                },
+                "variable": [
+                    {
+                        "name": "cell type",
+                        "value": "freshly isolated"
+                    }
+                ]
+            },
+            {
+                "assay": {
+                    "name": "1007409-C30058"
+                },
+                "characteristic": [
+                    {
+                        "category": "organism",
+                        "value": "Homo sapiens"
+                    }
+                ],
+                "extract": {
+                    "name": "donor A expanded cells RNA"
+                },
+                "file": [
+                    {
+                        "comment": {
+                            "name": "ArrayExpress FTP file",
+                            "value": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.raw.1.zip"
+                        },
+                        "name": "C30058.CEL",
+                        "type": "data",
+                        "url": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.raw.1.zip/C30058.CEL"
+                    },
+                    {
+                        "comment": {
+                            "name": "Derived ArrayExpress FTP file",
+                            "value": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.processed.1.zip"
+                        },
+                        "name": "C30058.txt",
+                        "type": "derived data",
+                        "url": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.processed.1.zip/C30058.txt"
+                    }
+                ],
+                "labeled-extract": {
+                    "label": "biotin",
+                    "name": "donor A expanded cells LEX"
+                },
+                "source": {
+                    "name": "donor A islets"
+                },
+                "variable": [
+                    {
+                        "name": "cell type",
+                        "value": "expanded"
+                    }
+                ]
+            }
+        ],
+        "version": 1.0
+    }
+}"""  # noqa
+
+
+def mocked_requests_get(url):
+    mock = Mock(ok=True)
+    if url == (EXPERIMENTS_URL + "E-MTAB-3050"):
+        mock.json.return_value = json.loads(EXPERIMENTS_JSON)
+    else:
+        mock.json.return_value = json.loads(SAMPLES_JSON)
+
+    return mock
+
+
+class SurveyTestCase(TestCase):
     def setUp(self):
         survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
         survey_job.save()
         self.survey_job = survey_job
 
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="accession_code",
-                                           value="A-AFFY-1")
+                                           key="experiment_accession_code",
+                                           value="E-MTAB-3050")
         key_value_pair.save()
+
+        # Insert the organism into the database so the model doesn't call the
+        # taxonomy API to populate it.
+        organism = Organism(name="HOMO SAPIENS",
+                            taxonomy_id=9606,
+                            is_scientific_name=True)
+        organism.save()
 
     def tearDown(self):
         SurveyJob.objects.all().delete()
@@ -90,54 +248,50 @@ class SurveyTestCase(TestCase):
         Batch.objects.all().delete
 
     @patch('data_refinery_foreman.surveyor.array_express.requests.get')
-    def test_multiple_experiements(self, mock_get):
-        """Multiple experiments are turned into multiple batches"""
+    def test_experiment_object(self, mock_get):
+        """The get_experiment_metadata function extracts all experiment metadata
+        from the experiments API."""
         mock_get.return_value = Mock(ok=True)
-        mock_get.return_value.json.return_value = json.loads(
-            self.experiments_json)
+        mock_get.return_value.json.return_value = json.loads(EXPERIMENTS_JSON)
 
-        ae_surveyor = ArrayExpressSurveyor(self.survey_job)
-        self.assertTrue(ae_surveyor.survey(self.survey_job))
-        self.assertEqual(2, Batch.objects.all().count())
-
-    # Note that this json has the `file` key mapped to a dictionary
-    # instead of a list. This is behavior exhibited by the API
-    # and is being tested on purpose here.
-    experiment_json = """
-    {
-    "files": {
-        "api-revision": "091015",
-        "api-version": 2,
-        "experiment": [
-            {
-                "accession": "E-MTAB-3050",
-                "file": {
-                        "extension": "zip",
-                        "kind": "raw",
-                        "lastmodified": "2014-10-30T10:15:00",
-                        "location": "E-MTAB-3050.raw.1.zip",
-                        "name": "E-MTAB-3050.raw.1.zip",
-                        "size": 14876114,
-                        "url":
-        "http://www.ebi.ac.uk/arrayexpress/files/E-MTAB-3050/E-MTAB-3050.raw.1.zip"
-                    }
-                }
-    ],
-        "revision": 130311,
-        "total-experiments": 108,
-        "version": 1.2
-    }
-}
-"""
+        experiment = ArrayExpressSurveyor.get_experiment_metadata("E-MTAB-3050")
+        self.assertEqual("Microarray analysis of in vitro differentiation", experiment["name"])
+        self.assertEqual("E-MTAB-3050", experiment["experiment_accession_code"])
+        self.assertEqual("A-AFFY-1", experiment["platform_accession_code"])
+        self.assertEqual("2014-10-31", experiment["release_date"])
+        self.assertEqual("2014-10-30", experiment["last_update_date"])
 
     @patch('data_refinery_foreman.surveyor.array_express.requests.get')
-    def test_single_experiment(self, mock_get):
-        """A single experiment is turned into a single batch."""
-        mock_get.return_value = Mock(ok=True)
-        mock_get.return_value.json.return_value = json.loads(
-            self.experiment_json
-        )
+    @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
+    def test_survey(self, mock_send_task, mock_get):
+        """survey generates one Batch per sample with all possible fields populated."""
+        mock_send_task.return_value = Mock(ok=True)
+        mock_get.side_effect = mocked_requests_get
 
         ae_surveyor = ArrayExpressSurveyor(self.survey_job)
-        self.assertTrue(ae_surveyor.survey(self.survey_job))
-        self.assertEqual(1, Batch.objects.all().count())
+        ae_surveyor.survey()
+
+        self.assertEqual(2, len(mock_send_task.mock_calls))
+        batches = Batch.objects.all()
+        self.assertEqual(2, len(batches))
+        downloader_jobs = DownloaderJob.objects.all()
+        self.assertEqual(2, len(downloader_jobs))
+
+        batch = batches[0]
+        self.assertEqual(batch.survey_job.id, self.survey_job.id)
+        self.assertEqual(batch.source_type, "ARRAY_EXPRESS")
+        self.assertEqual(batch.size_in_bytes, -1)
+        self.assertEqual(batch.download_url, "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.raw.1.zip/C30057.CEL")  # noqa
+        self.assertEqual(batch.raw_format, "CEL")
+        self.assertEqual(batch.processed_format, "PCL")
+        self.assertEqual(batch.pipeline_required, "AFFY_TO_PCL")
+        self.assertEqual(batch.platform_accession_code, "A-AFFY-1")
+        self.assertEqual(batch.experiment_accession_code, "E-MTAB-3050")
+        self.assertEqual(batch.experiment_title, "Microarray analysis of in vitro differentiation")
+        self.assertEqual(batch.status, "NEW")
+        self.assertEqual(batch.release_date, datetime.date(2014, 10, 31))
+        self.assertEqual(batch.last_uploaded_date, datetime.date(2014, 10, 30))
+        self.assertEqual(batch.name, "C30057.CEL")
+        self.assertEqual(batch.internal_location, "A-AFFY-1/AFFY_TO_PCL/")
+        self.assertEqual(batch.organism_id, 9606)
+        self.assertEqual(batch.organism_name, "HOMO SAPIENS")

@@ -10,7 +10,7 @@
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory=`dirname "${BASH_SOURCE[0]}"`
+script_directory=`cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd`
 cd $script_directory
 
 # Set up the data volume directory if it does not already exist
