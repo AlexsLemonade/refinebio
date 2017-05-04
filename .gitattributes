@@ -1,0 +1,3 @@
+prod filter=git-crypt diff=git-crypt
+*.tfstate filter=git-crypt diff=git-crypt
+terraform.tfvars filter=git-crypt diff=git-crypt
