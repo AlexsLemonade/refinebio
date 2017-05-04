@@ -19,9 +19,6 @@ logger = logging.getLogger(__name__)
 # This path is within the Docker container.
 ROOT_URI = "/home/user/data_store/raw"
 
-# This path is within the Docker container.
-ROOT_URI = "/home/user/data_store/raw"
-
 
 def start_job(job: DownloaderJob):
     """Record in the database that this job is being started. """
