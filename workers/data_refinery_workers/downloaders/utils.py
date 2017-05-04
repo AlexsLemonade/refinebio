@@ -38,18 +38,23 @@ def end_job(job: DownloaderJob, batch: Batch, success):
     job.save()
 
     @retry(stop_max_attempt_number=3)
-    def save_batch_start_job():
+    def save_batch_create_job():
         batch.status = BatchStatuses.DOWNLOADED.value
         batch.save()
 
         logger.info("Creating processor job for batch #%d.", batch.id)
         processor_job = ProcessorJob(batch=batch)
         processor_job.save()
+        return processor_job
+
+    @retry(stop_max_attempt_number=3)
+    def queue_task(processor_job):
         processor_task = processor_pipeline_registry[batch.pipeline_required]
         processor_task.delay(processor_job.id)
 
     if batch is not None:
-        save_batch_start_job()
+        processor_job = save_batch_create_job()
+        queue_task(processor_job)
 
 
 def prepare_destination(batch: Batch):
