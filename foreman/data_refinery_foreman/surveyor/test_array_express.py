@@ -12,7 +12,6 @@ from data_refinery_models.models import (
 from data_refinery_foreman.surveyor.array_express import (
     ArrayExpressSurveyor,
     EXPERIMENTS_URL,
-    SAMPLES_URL
 )
 
 

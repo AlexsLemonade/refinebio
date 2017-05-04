@@ -17,7 +17,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Batch',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(editable=False)),
                 ('updated_at', models.DateTimeField()),
                 ('source_type', models.CharField(max_length=256)),
@@ -44,12 +45,14 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='BatchKeyValue',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(editable=False)),
                 ('updated_at', models.DateTimeField()),
                 ('key', models.CharField(max_length=256)),
                 ('value', models.CharField(max_length=256)),
-                ('batch', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_models.Batch')),
+                ('batch', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE, to='data_refinery_models.Batch')),
             ],
             options={
                 'db_table': 'batch_key_values',
@@ -58,7 +61,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='DownloaderJob',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(editable=False)),
                 ('updated_at', models.DateTimeField()),
                 ('start_time', models.DateTimeField(null=True)),
@@ -66,7 +70,8 @@ class Migration(migrations.Migration):
                 ('success', models.NullBooleanField()),
                 ('num_retries', models.IntegerField(default=0)),
                 ('worker_id', models.CharField(max_length=256, null=True)),
-                ('batch', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_models.Batch')),
+                ('batch', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE, to='data_refinery_models.Batch')),
             ],
             options={
                 'db_table': 'downloader_jobs',
@@ -75,7 +80,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Organism',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(editable=False)),
                 ('updated_at', models.DateTimeField()),
                 ('name', models.CharField(max_length=256)),
@@ -89,7 +95,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ProcessorJob',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(editable=False)),
                 ('updated_at', models.DateTimeField()),
                 ('start_time', models.DateTimeField(null=True)),
@@ -98,7 +105,8 @@ class Migration(migrations.Migration):
                 ('pipeline_applied', models.CharField(max_length=256)),
                 ('num_retries', models.IntegerField(default=0)),
                 ('worker_id', models.CharField(max_length=256, null=True)),
-                ('batch', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_models.Batch')),
+                ('batch', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE, to='data_refinery_models.Batch')),
             ],
             options={
                 'db_table': 'processor_jobs',
@@ -107,7 +115,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='SurveyJob',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(editable=False)),
                 ('updated_at', models.DateTimeField()),
                 ('source_type', models.CharField(max_length=256)),
@@ -124,12 +133,14 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='SurveyJobKeyValue',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                                        primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(editable=False)),
                 ('updated_at', models.DateTimeField()),
                 ('key', models.CharField(max_length=256)),
                 ('value', models.CharField(max_length=256)),
-                ('survey_job', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_models.SurveyJob')),
+                ('survey_job', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE, to='data_refinery_models.SurveyJob')),
             ],
             options={
                 'db_table': 'survey_job_key_values',
@@ -138,6 +149,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='batch',
             name='survey_job',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_models.SurveyJob'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                    to='data_refinery_models.SurveyJob'),
         ),
     ]

@@ -9,7 +9,7 @@ from data_refinery_workers.downloaders import utils
 logger = get_task_logger(__name__)
 
 # chunk_size is in bytes
-CHUNK_SIZE = 4096
+CHUNK_SIZE = 1024 * 256
 
 
 @shared_task
@@ -55,6 +55,7 @@ def download_array_express(job_id):
                      e)
     finally:
         target_file.close()
+        request.close()
 
     if success:
         logger.info("File %s (Batch #%d) downloaded successfully in Job #%d.",

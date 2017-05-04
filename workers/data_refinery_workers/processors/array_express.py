@@ -22,17 +22,20 @@ def cel_to_pcl(kwargs: Dict):
     zip_location = (utils.ROOT_URI + "raw/" + batch.internal_location
                     + raw_file_name)
 
-    # I need to figure out location tracking
-    zip_ref = zipfile.ZipFile(zip_location, 'r')
-    zip_ref.extractall(temp_directory)
-    zip_ref.close()
+    if os.path.isfile(zip_location):
+        zip_ref = zipfile.ZipFile(zip_location, 'r')
+        zip_ref.extractall(temp_directory)
+        zip_ref.close()
+    else:
+        logger.error("Missing file: %s", zip_location)
+        return {"success": False}
 
     # Experiment code should be added to the batches data model
     experiment_code = raw_file_name.split('/')[0]
     new_name = experiment_code + ".pcl"
 
-    ro.r('source("/home/user/r_processors/cel_to_pcl.r")')
-    ro.r['processCelFiles'](
+    ro.r('source("/home/user/r_processors/process_cel_to_pcl.R")')
+    ro.r['ProcessCelFiles'](
         temp_directory,
         "Hs",  # temporary until organism discovery is working
         target_directory + new_name)

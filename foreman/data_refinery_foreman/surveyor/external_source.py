@@ -1,6 +1,8 @@
 import abc
+import os
 from enum import Enum
 from typing import List
+from retrying import retry
 from data_refinery_models.models import (
     Batch,
     BatchStatuses,
@@ -9,6 +11,12 @@ from data_refinery_models.models import (
     SurveyJob
 )
 from data_refinery_foreman.surveyor.message_queue import app
+
+
+# Import and set logger
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class InvalidProcessedFormatError(BaseException):
@@ -69,18 +77,29 @@ class ExternalSourceSurveyor:
         if (pipeline_required is DiscoveryPipeline) or batch.processed_format:
             batch.pipeline_required = pipeline_required.value
         else:
-            message = ("Batches must have the processed_format field set " +
-                       "unless the pipeline returned by determine_pipeline" +
+            message = ("Batches must have the processed_format field set "
+                       "unless the pipeline returned by determine_pipeline "
                        "is of the type DiscoveryPipeline.")
             raise InvalidProcessedFormatError(message)
 
-        batch.internal_location = (batch.platform_accession_code + "/"
-                                   + batch.pipeline_required + "/")
+        batch.internal_location = os.path.join(batch.platform_accession_code,
+                                               batch.pipeline_required)
 
-        batch.save()
-        downloader_job = DownloaderJob(batch=batch)
-        downloader_job.save()
-        app.send_task(self.downloader_task(), args=[downloader_job.id])
+        @retry(stop_max_attempt_number=3)
+        def save_batch_start_job():
+            batch.save()
+            downloader_job = DownloaderJob(batch=batch)
+            downloader_job.save()
+            app.send_task(self.downloader_task(), args=[downloader_job.id])
+
+        try:
+            save_batch_start_job()
+        except Exception as e:
+            logger.error("Failed to save batch to database three times "
+                         + "because error: %s. Terminating survey job #%d.",
+                         type(e).__name__,
+                         self.survey_job.id)
+            raise
 
     @abc.abstractmethod
     def survey(self):
