@@ -1,5 +1,6 @@
 import os
 import urllib
+from retrying import retry
 from django.utils import timezone
 from data_refinery_models.models import (
     Batch,
@@ -14,6 +15,9 @@ from data_refinery_workers.processors.processor_registry \
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# This path is within the Docker container.
+ROOT_URI = "/home/user/data_store/raw"
 
 # This path is within the Docker container.
 ROOT_URI = "/home/user/data_store/raw"
@@ -33,15 +37,19 @@ def end_job(job: DownloaderJob, batch: Batch, success):
     job.end_time = timezone.now()
     job.save()
 
-    if batch is not None:
+    @retry(stop_max_attempt_number=3)
+    def save_batch_start_job():
         batch.status = BatchStatuses.DOWNLOADED.value
         batch.save()
 
-    logger.info("Creating processor job for batch #%d.", batch.id)
-    processor_job = ProcessorJob(batch=batch)
-    processor_job.save()
-    processor_task = processor_pipeline_registry[batch.pipeline_required]
-    processor_task.delay(processor_job.id)
+        logger.info("Creating processor job for batch #%d.", batch.id)
+        processor_job = ProcessorJob(batch=batch)
+        processor_job.save()
+        processor_task = processor_pipeline_registry[batch.pipeline_required]
+        processor_task.delay(processor_job.id)
+
+    if batch is not None:
+        save_batch_start_job()
 
 
 def prepare_destination(batch: Batch):
