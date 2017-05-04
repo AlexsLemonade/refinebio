@@ -12,4 +12,6 @@ kombu==4.0.2              # via celery
 psycopg2==2.7.1
 pytz==2016.10             # via celery
 requests==2.13.0
+retrying==1.3.3
+six==1.10.0               # via retrying
 vine==1.1.3               # via amqp
