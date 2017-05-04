@@ -9,6 +9,11 @@ from data_refinery_models.models import (
 from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
 
 
+class MockTask():
+    def delay(self, id):
+        return True
+
+
 class SurveyTestCase(TestCase):
     experiments_json = """
     {
@@ -89,12 +94,14 @@ class SurveyTestCase(TestCase):
         SurveyJobKeyValue.objects.all().delete()
         Batch.objects.all().delete
 
-    @patch('data_refinery_foreman.surveyor.array_express.requests.get')
-    def test_multiple_experiements(self, mock_get):
+    @patch("data_refinery_foreman.surveyor.array_express.requests.get")
+    @patch("data_refinery_foreman.surveyor.array_express.ArrayExpressSurveyor.downloader_task")  # noqa
+    def test_multiple_experiements(self, mock_task, mock_get):
         """Multiple experiments are turned into multiple batches"""
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.json.return_value = json.loads(
             self.experiments_json)
+        mock_task.return_value = MockTask()
 
         ae_surveyor = ArrayExpressSurveyor(self.survey_job)
         self.assertTrue(ae_surveyor.survey(self.survey_job))
@@ -131,11 +138,13 @@ class SurveyTestCase(TestCase):
 """
 
     @patch('data_refinery_foreman.surveyor.array_express.requests.get')
-    def test_single_experiment(self, mock_get):
+    @patch("data_refinery_foreman.surveyor.array_express.ArrayExpressSurveyor.downloader_task")  # noqa
+    def test_single_experiment(self, mock_task, mock_get):
         """A single experiment is turned into a single batch."""
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.json.return_value = json.loads(
             self.experiment_json)
+        mock_task.return_value = MockTask()
 
         ae_surveyor = ArrayExpressSurveyor(self.survey_job)
         self.assertTrue(ae_surveyor.survey(self.survey_job))
