@@ -101,6 +101,9 @@ DATABASES = {
 # Celery
 CELERY_BROKER_URL = get_env_variable('CELERY_BROKER_URL')
 
+# Workaround for Celery bug: https://github.com/celery/celery/issues/3712
+CELERY_WORKER_PREFETCH_MULTIPLIER = 0
+
 
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators

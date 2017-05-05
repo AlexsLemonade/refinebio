@@ -11,6 +11,7 @@ dependencies:
   - greenelab::all-entrezg-brainarray-cdfs
   - python=3.6
   - r::rpy2=2.8.5
+  - pycurl=7.43.0
   - pip:
     - celery==4.0.2
     - django==1.10.6

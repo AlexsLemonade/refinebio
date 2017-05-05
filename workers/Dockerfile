@@ -3,6 +3,8 @@ FROM continuumio/miniconda3:4.3.11
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
+RUN apt-get install libcurl4-openssl-dev
+
 COPY workers/environment.yml .
 
 RUN conda env create -f environment.yml
