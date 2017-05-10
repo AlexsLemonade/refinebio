@@ -20,13 +20,13 @@ logger = logging.getLogger(__name__)
 class ArrayExpressSurveyor(ExternalSourceSurveyor):
     # Files API endpoint for ArrayExpress
     FILES_URL = "http://www.ebi.ac.uk/arrayexpress/json/v2/files"
+    DOWNLOADER_TASK = "data_refinery_workers.downloaders.array_express.download_array_express"
 
     def source_type(self):
         return "ARRAY_EXPRESS"
 
     def downloader_task(self):
-        return ("data_refinery_workers.downloaders"
-                + ".array_express.download_array_express")
+        return self.DOWNLOADER_TASK
 
     def determine_pipeline(self,
                            batch: Batch,
