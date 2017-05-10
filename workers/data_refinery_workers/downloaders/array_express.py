@@ -87,9 +87,9 @@ def download_array_express(job_id):
         success = False
 
     try:
-        verify_batch_grouping(batches, job_id)
-        download_file(download_url, target_file_path, job_id)
-        extract_file(target_file_path, job_id)
+        _verify_batch_grouping(batches, job_id)
+        _download_file(download_url, target_file_path, job_id)
+        _extract_file(target_file_path, job_id)
     except Exception:
         # Exceptions are already logged and handled.
         # Just need to mark the job as failed.
