@@ -16,10 +16,8 @@ ROOT_URI = "/home/user/data_store"
 
 def start_job(kwargs: Dict):
     """Record in the database that this job is being started and
-    retrieve the job and batch from the database.
-    Retrieves the job and the job's batch from the database and
-    adds them to the dictionary passed in with the keys 'job'
-    and 'batch' respectively."""
+    retrieves the job's batch from the database and
+    adds it to the dictionary passed in with the key 'batch'."""
     job = kwargs["job"]
     job.worker_id = "For now there's only one. For now..."
     job.start_time = timezone.now()
