@@ -11,7 +11,7 @@ class BatchStatuses(Enum):
 
 
 class Batch(TimeTrackedModel):
-    survey_job = models.ForeignKey(SurveyJob)
+    survey_job = models.ForeignKey(SurveyJob, on_delete=models.PROTECT)
     source_type = models.CharField(max_length=256)
     size_in_bytes = models.IntegerField()
     download_url = models.CharField(max_length=2048)

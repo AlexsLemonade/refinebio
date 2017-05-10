@@ -18,4 +18,6 @@ COPY workers/ .
 
 USER user
 
-ENTRYPOINT ["celery", "-l", "info", "-A", "data_refinery_workers", "-c", "1", "worker"]
+ENTRYPOINT ["python3.6", "manage.py"]
+
+CMD ["celery", "-l", "info", "-A", "data_refinery_workers", "-c", "1", "worker"]

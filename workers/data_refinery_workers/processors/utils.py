@@ -1,9 +1,6 @@
-import os
-import urllib
-import shutil
 from django.utils import timezone
 from typing import List, Dict, Callable
-from data_refinery_models.models import Batch, BatchStatuses, ProcessorJob
+from data_refinery_models.models import BatchStatuses, ProcessorJob, ProcessorJobsToBatches
 
 # Import and set logger
 import logging
@@ -16,20 +13,21 @@ ROOT_URI = "/home/user/data_store"
 
 def start_job(kwargs: Dict):
     """Record in the database that this job is being started and
-    retrieves the job's batch from the database and
-    adds it to the dictionary passed in with the key 'batch'."""
+    retrieves the job's batches from the database and
+    adds them to the dictionary passed in with the key 'batches'."""
     job = kwargs["job"]
     job.worker_id = "For now there's only one. For now..."
     job.start_time = timezone.now()
     job.save()
 
-    try:
-        batch = Batch.objects.get(id=job.batch_id)
-    except Batch.DoesNotExist:
-        logger.error("Cannot find batch record with ID %d.", job.batch_id)
+    batch_relations = ProcessorJobsToBatches.objects.filter(processor_job_id=job.id)
+    batches = list(map(lambda x: x.batch, batch_relations))
+
+    if len(batches) == 0:
+        logger.error("No batches found for job #%d.", job.id)
         return {"success": False}
 
-    kwargs["batch"] = batch
+    kwargs["batches"] = batches
     return kwargs
 
 
@@ -48,30 +46,14 @@ def end_job(kwargs: Dict):
     job.save()
 
     if job.success:
-        batch = kwargs["batch"]
-        batch.status = BatchStatuses.PROCESSED.value
-        batch.save()
+        batches = kwargs["batches"]
+        for batch in batches:
+            batch.status = BatchStatuses.PROCESSED.value
+            batch.save()
 
     # Every processor returns a dict, however end_job is always called
     # last so it doesn't need to contain anything.
     return {}
-
-
-def cleanup_temp_data(kwargs: Dict):
-    """Removes data from raw/ and temp/ directories related to the batch."""
-    batch = kwargs["batch"]
-
-    path = urllib.parse.urlparse(batch.download_url).path
-    raw_file_name = os.path.basename(path)
-    raw_file_location = os.path.join(ROOT_URI,
-                                     "raw",
-                                     batch.internal_location,
-                                     raw_file_name)
-    temp_directory = os.path.join(ROOT_URI, "temp", batch.internal_location)
-    os.remove(raw_file_location)
-    shutil.rmtree(temp_directory)
-
-    return kwargs
 
 
 def run_pipeline(start_value: Dict, pipeline: List[Callable]):
@@ -88,10 +70,10 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
     the pipeline to terminate with a call to utils.end_job.
 
     The key 'job' is reserved for the ProcessorJob currently being run.
-    The key 'batch' is reserved for the Batch that is currently being
-    processed.
+    The key 'batches' is reserved for the Batches that are currently
+    being processed.
     It is required that the dictionary returned by each processor
-    function preserve the mappings for 'job' and 'batch' that were
+    function preserve the mappings for 'job' and 'batches' that were
     passed into it.
     """
 

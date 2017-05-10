@@ -3,11 +3,13 @@ import os
 from enum import Enum
 from typing import List
 from retrying import retry
+from django.db import transaction
 from data_refinery_models.models import (
     Batch,
     BatchStatuses,
     BatchKeyValue,
     DownloaderJob,
+    DownloaderJobsToBatches,
     SurveyJob
 )
 from data_refinery_foreman.surveyor.message_queue import app
@@ -68,37 +70,44 @@ class ExternalSourceSurveyor:
         Must return a member of PipelineEnums."""
         return
 
-    def handle_batch(self, batch: Batch, key_values: BatchKeyValue = None):
-        batch.survey_job = self.survey_job
-        batch.source_type = self.source_type()
-        batch.status = BatchStatuses.NEW.value
+    def handle_batches(self, batches: List[Batch], key_values: BatchKeyValue = None):
+        for batch in batches:
+            batch.survey_job = self.survey_job
+            batch.source_type = self.source_type()
+            batch.status = BatchStatuses.NEW.value
 
-        pipeline_required = self.determine_pipeline(batch, key_values)
-        if (pipeline_required is DiscoveryPipeline) or batch.processed_format:
-            batch.pipeline_required = pipeline_required.value
-        else:
-            message = ("Batches must have the processed_format field set "
-                       "unless the pipeline returned by determine_pipeline "
-                       "is of the type DiscoveryPipeline.")
-            raise InvalidProcessedFormatError(message)
+            pipeline_required = self.determine_pipeline(batch, key_values)
+            if (pipeline_required is DiscoveryPipeline) or batch.processed_format:
+                batch.pipeline_required = pipeline_required.value
+            else:
+                message = ("Batches must have the processed_format field set "
+                           "unless the pipeline returned by determine_pipeline "
+                           "is of the type DiscoveryPipeline.")
+                raise InvalidProcessedFormatError(message)
 
-        batch.internal_location = os.path.join(batch.platform_accession_code,
-                                               batch.pipeline_required)
+            batch.internal_location = os.path.join(batch.platform_accession_code,
+                                                   batch.pipeline_required)
 
         @retry(stop_max_attempt_number=3)
-        def save_batch_start_job():
-            batch.save()
-            downloader_job = DownloaderJob(batch=batch)
+        @transaction.atomic
+        def save_batches_start_job():
+            downloader_job = DownloaderJob()
             downloader_job.save()
+
+            for batch in batches:
+                batch.save()
+                downloader_job_to_batch = DownloaderJobsToBatches(batch=batch,
+                                                                  downloader_job=downloader_job)
+                downloader_job_to_batch.save()
+
             app.send_task(self.downloader_task(), args=[downloader_job.id])
 
         try:
-            save_batch_start_job()
-        except Exception as e:
-            logger.error("Failed to save batch to database three times "
-                         + "because error: %s. Terminating survey job #%d.",
-                         type(e).__name__,
-                         self.survey_job.id)
+            save_batches_start_job()
+        except Exception:
+            logger.exception(("Failed to save batches to database three times. "
+                              "Terminating survey job #%d."),
+                             self.survey_job.id)
             raise
 
     @abc.abstractmethod
