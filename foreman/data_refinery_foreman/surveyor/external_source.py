@@ -7,7 +7,6 @@ from django.db import transaction
 from data_refinery_models.models import (
     Batch,
     BatchStatuses,
-    BatchKeyValue,
     DownloaderJob,
     DownloaderJobsToBatches,
     SurveyJob
@@ -63,20 +62,19 @@ class ExternalSourceSurveyor:
 
     @abc.abstractmethod
     def determine_pipeline(self,
-                           batch: Batch,
-                           key_values: List[BatchKeyValue] = []):
+                           batch: Batch):
         """Determines the appropriate processor pipeline for the batch
         and returns a string that represents a processor pipeline.
         Must return a member of PipelineEnums."""
         return
 
-    def handle_batches(self, batches: List[Batch], key_values: BatchKeyValue = None):
+    def handle_batches(self, batches: List[Batch]):
         for batch in batches:
             batch.survey_job = self.survey_job
             batch.source_type = self.source_type()
             batch.status = BatchStatuses.NEW.value
 
-            pipeline_required = self.determine_pipeline(batch, key_values)
+            pipeline_required = self.determine_pipeline(batch)
             if (pipeline_required is DiscoveryPipeline) or batch.processed_format:
                 batch.pipeline_required = pipeline_required.value
             else:
