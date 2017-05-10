@@ -84,6 +84,10 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
         logger.error("Cannot find processor job record with ID %d.", job_id)
         return
 
+    if len(pipeline) == 0:
+        logger.error("Empty pipeline specified for job #%d.",
+                     job_id)
+
     last_result = start_value
     last_result["job"] = job
     for processor in pipeline:

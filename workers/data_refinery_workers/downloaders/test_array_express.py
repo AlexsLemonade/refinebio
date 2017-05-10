@@ -42,7 +42,6 @@ class DownloadArrayExpressTestCase(TestCase):
                       _download_file,
                       _verify_batch_grouping,
                       pipeline_registry):
-
         # Set up mocks:
         mock_processor_task = MagicMock()
         mock_processor_task.delay = MagicMock()
