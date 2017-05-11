@@ -14,8 +14,7 @@ from data_refinery_models.models import (
     ProcessorJob,
     ProcessorJobsToBatches
 )
-from data_refinery_workers.processors.array_express \
-    import process_array_express
+from data_refinery_workers.processors.array_express import affy_to_pcl
 
 
 # Import and set logger
@@ -60,4 +59,4 @@ class Command(BaseCommand):
                                                          processor_job=processor_job)
         downloader_job_to_batch.save()
         logger.info("Queuing a processor job.")
-        process_array_express.delay(processor_job.id)
+        affy_to_pcl.delay(processor_job.id)
