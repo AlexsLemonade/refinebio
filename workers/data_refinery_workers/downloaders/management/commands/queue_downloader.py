@@ -34,15 +34,15 @@ class Command(BaseCommand):
             survey_job=survey_job,
             source_type="ARRAY_EXPRESS",
             size_in_bytes=0,
-            download_url="ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip/GSM1426072_CD_colon_active_2.CEL",  # noqa
+            download_url="ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip",  # noqa
             raw_format="CEL",
             processed_format="PCL",
             pipeline_required="AFFY_TO_PCL",
-            platform_accession_code="A-AFFY-1",
-            experiment_accession_code="E-MTAB-3050",
+            platform_accession_code="A-AFFY-141",
+            experiment_accession_code="E-GEOD-59071",
             experiment_title="It doesn't really matter.",
-            name="CE12314",
-            internal_location="A-AFFY-1/MICRO_ARRAY_TO_PCL/",
+            name="GSM1426072_CD_colon_active_2.CEL",
+            internal_location="A-AFFY-141/AFFY_TO_PCL/",
             organism_id=9606,
             organism_name="HOMO SAPIENS",
             release_date="2017-05-05",
@@ -54,7 +54,7 @@ class Command(BaseCommand):
         downloader_job = DownloaderJob()
         downloader_job.save()
         downloader_job_to_batch = DownloaderJobsToBatches(batch=batch,
-                                                          DownloaderJob=downloader_job)
+                                                          downloader_job=downloader_job)
         downloader_job_to_batch.save()
         logger.info("Queuing a task.")
         download_array_express.delay(downloader_job.id)

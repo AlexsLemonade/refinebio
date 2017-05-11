@@ -39,7 +39,7 @@ def end_job(job: DownloaderJob, batches: Batch, success):
         batch.save()
 
         logger.debug("Creating processor job for batch #%d.", batch.id)
-        processor_job = ProcessorJob(batch=batch)
+        processor_job = ProcessorJob()
         processor_job.save()
         processor_job_to_batch = ProcessorJobsToBatches(batch=batch,
                                                         processor_job=processor_job)
