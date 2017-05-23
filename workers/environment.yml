@@ -9,6 +9,9 @@ dependencies:
   - bioconda::bioconductor-org.dm.eg.db=3.4.0
   - bioconda::bioconductor-org.ce.eg.db=3.2.3
   - greenelab::all-entrezg-brainarray-cdfs
+  - russH::bioconductor-oligo
+  - Terradue::r-ff
+  - kurtwheeler::bioconductor-scan.upc
   - python=3.6
   - r::rpy2=2.8.5
   - pip:

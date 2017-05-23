@@ -22,16 +22,30 @@ def cel_to_pcl(kwargs: Dict):
     # Array Express processor jobs have one batch per job.
     batch = kwargs["batches"][0]
 
-    from_directory = utils.ROOT_URI + "raw/" + batch.internal_location
-    target_directory = utils.ROOT_URI + "processed/" + batch.internal_location
-    os.makedirs(target_directory, exist_ok=True)
-    new_name = batch.name + "." + batch.processed_format
+    # TODO: the batch's name currently matches the file.
+    # It should not store the file extension.
+    raw_file = os.path.join(utils.ROOT_URI, "raw", batch.internal_location, batch.name)
+    # raw_file = raw_file + "." + batch.raw_format
 
-    ro.r('source("/home/user/r_processors/process_cel_to_pcl.R")')
-    ro.r['ProcessCelFiles'](
-        from_directory,
-        "Hs",  # temporary until organism handling is more defined
-        target_directory + new_name)
+    target_directory = os.path.join(utils.ROOT_URI, "processed", batch.internal_location)
+    os.makedirs(target_directory, exist_ok=True)
+
+    processed_file = os.path.join(target_directory, batch.name)
+    processed_file = processed_file + "." + batch.processed_format
+
+    # It's necessary to load the foreach library before calling SCANfast
+    # because it doesn't load the library before calling functions
+    # from it.
+    ro.r("library('foreach')")
+
+    # rpy2 doesn't seem to support the double colon operator. Issue open here:
+    # https://bitbucket.org/rpy2/rpy2/issues/408/accessing-a-librarys-function-via-the
+    ro.r("library('SCAN.UPC')")
+    ro.r["SCANfast"](
+        raw_file,
+        processed_file,
+        probeSummaryPackage="hgu133plus2hsentrezgprobe"
+    )
 
     return kwargs
 
