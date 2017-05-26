@@ -6,9 +6,8 @@ supported by Greene Lab.
 ## Getting Started
 
 Note: The following steps assume you have already installed PostgreSQL (>=9.4)
-and Python (Most versions should work, but this has been tested with Python 3.5)
-on Ubuntu (Tested with 16.04. It should be possible to use other versions or
-even a Mac though).
+and Python (>=3.5) on Ubuntu (Tested with 16.04. It should be possible to use
+other versions or even a Mac though).
 
 Run `./install.sh` to set up the virtualenv. It will activate the `dr_env`
 for you the first time. This virtualenv is valid for the entire data_refinery

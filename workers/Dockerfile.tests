@@ -3,8 +3,6 @@ FROM continuumio/miniconda3:4.3.11
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
-RUN apt-get install libcurl4-openssl-dev
-
 COPY workers/environment.yml .
 
 RUN conda env create -f environment.yml
@@ -20,4 +18,6 @@ COPY workers/ .
 
 USER user
 
-CMD ["celery", "-l", "info", "-A", "data_refinery_workers", "-c", "1", "worker"]
+ENTRYPOINT ["python3.6", "manage.py"]
+
+CMD ["test", "--no-input"]

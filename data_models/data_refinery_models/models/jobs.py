@@ -4,7 +4,8 @@ from data_refinery_models.models.batches import Batch
 
 
 class ProcessorJob(TimeTrackedModel):
-    batch = models.ForeignKey(Batch, on_delete=models.CASCADE)
+    """Records information about running a processor."""
+
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
     success = models.NullBooleanField(null=True)
@@ -30,8 +31,22 @@ class ProcessorJob(TimeTrackedModel):
         db_table = "processor_jobs"
 
 
-class DownloaderJob(TimeTrackedModel):
+class ProcessorJobsToBatches(TimeTrackedModel):
+    """Represents a many to many relationship.
+
+    Maps between ProcessorJobs and Batches.
+    """
+
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE)
+    processor_job = models.ForeignKey(ProcessorJob, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "processor_jobs_to_batches"
+
+
+class DownloaderJob(TimeTrackedModel):
+    """Records information about running a Downloader."""
+
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
     success = models.NullBooleanField(null=True)
@@ -43,3 +58,16 @@ class DownloaderJob(TimeTrackedModel):
 
     class Meta:
         db_table = "downloader_jobs"
+
+
+class DownloaderJobsToBatches(TimeTrackedModel):
+    """Represents a many to many relationship.
+
+    Maps between DownloaderJobs and Batches.
+    """
+
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE)
+    downloader_job = models.ForeignKey(DownloaderJob, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "downloader_jobs_to_batches"

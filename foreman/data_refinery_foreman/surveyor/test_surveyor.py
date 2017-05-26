@@ -26,7 +26,7 @@ class RunJobTestCase(TestCase):
         job.save()
         surveyor.run_job(job)
 
-        survey_method.assert_called_with(job)
+        survey_method.assert_called_with()
         self.assertIsInstance(job.replication_ended_at, datetime.datetime)
         self.assertIsInstance(job.start_time, datetime.datetime)
         self.assertIsInstance(job.end_time, datetime.datetime)

@@ -4,7 +4,6 @@ from typing import List
 from data_refinery_models.models import (
     Batch,
     BatchKeyValue,
-    SurveyJob,
     SurveyJobKeyValue,
     Organism
 )
@@ -85,6 +84,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         r = requests.get(SAMPLES_URL.format(experiment_accession_code))
         samples = r.json()["experiment"]["sample"]
 
+        batches = []
         for sample in samples:
             if "file" not in sample:
                 continue
@@ -105,9 +105,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 if sample_file["type"] != "data" and sample_file["name"] is not None:
                     continue
 
-                self.handle_batch(Batch(
+                batches.append(Batch(
                     size_in_bytes=-1,  # Will have to be determined later
-                    download_url=sample_file["url"],
+                    download_url=sample_file["comment"]["value"],
                     raw_format=sample_file["name"].split(".")[-1],
                     processed_format="PCL",
                     platform_accession_code=experiment["platform_accession_code"],
@@ -119,3 +119,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     last_uploaded_date=experiment["last_update_date"],
                     name=sample_file["name"]
                 ))
+
+        # Group batches based on their download URL and handle each group.
+        download_urls = set(map(lambda x: x.download_url, batches))
+        for url in download_urls:
+            batches_with_url = list(filter(lambda x: x.download_url == url, batches))
+            self.handle_batches(batches_with_url)
