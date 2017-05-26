@@ -3,6 +3,8 @@ from django.utils import timezone
 
 
 class TimeTrackedModel(models.Model):
+    """Base model with auto created_at and updated_at fields."""
+
     created_at = models.DateTimeField(editable=False)
     updated_at = models.DateTimeField()
 
