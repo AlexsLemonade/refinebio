@@ -5,6 +5,8 @@ from data_refinery_models.models.surveys import SurveyJob
 
 
 class BatchStatuses(Enum):
+    """Valid values for the status field of the Batch model."""
+
     NEW = "NEW"
     DOWNLOADED = "DOWNLOADED"
     PROCESSED = "PROCESSED"
