@@ -40,11 +40,17 @@ def cel_to_pcl(kwargs: Dict):
 
     # rpy2 doesn't seem to support the double colon operator. Issue open here:
     # https://bitbucket.org/rpy2/rpy2/issues/408/accessing-a-librarys-function-via-the
-    ro.r("library('SCAN.UPC')")
-    ro.r["SCANfast"](
+    # ro.r("library('SCAN.UPC')")
+    # ro.r["SCANfast"](
+    #     raw_file,
+    #     processed_file,
+    #     probeSummaryPackage="hgu133plus2hsentrezgprobe"
+    # )
+    # ro.r('source("https://bioconductor.org/biocLite.R")')
+    # ro.r('biocLite("SCAN.UPC", ask=FALSE)')
+    ro.r['::']('SCAN.UPC', 'SCANfast')(
         raw_file,
-        processed_file,
-        probeSummaryPackage="hgu133plus2hsentrezgprobe"
+        processed_file
     )
 
     return kwargs

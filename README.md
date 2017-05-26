@@ -21,6 +21,11 @@ instructions on doing so.
 
 ## Development
 
+For development it will be necessary to run a rabbitmq docker image:
+```
+docker run -d --hostname my-rabbit --name some-rabbit rabbitmq:3
+```
+
 R files in this repo follow
 [Google's R Style Guide](https://google.github.io/styleguide/Rguide.xml).
 Python Files in this repo follow
