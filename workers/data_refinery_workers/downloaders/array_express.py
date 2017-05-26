@@ -15,6 +15,7 @@ from data_refinery_models.models import (
 )
 from data_refinery_workers.downloaders import utils
 import logging
+import boto
 
 logger = get_task_logger(__name__)
 
