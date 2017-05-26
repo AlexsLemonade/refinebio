@@ -9,3 +9,7 @@ DATABASE_PORT=5432
 DATABASE_TIMEOUT=5
 
 CELERY_BROKER_URL=amqp://guest@rabbit
+
+USE_S3=False
+S3_BUCKET_NAME=data-refinery
+LOCAL_ROOT_DIRECTORY=/home/user/data_store

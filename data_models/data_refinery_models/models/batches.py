@@ -1,7 +1,17 @@
+import os
+import urllib
 from enum import Enum
 from django.db import models
 from data_refinery_models.models.base_models import TimeTrackedModel
 from data_refinery_models.models.surveys import SurveyJob
+
+
+def get_env_variable(var_name):
+    try:
+        return os.environ[var_name]
+    except KeyError:
+        error_msg = "Set the %s environment variable" % var_name
+        raise ImproperlyConfigured(error_msg)
 
 
 class BatchStatuses(Enum):
@@ -43,6 +53,15 @@ class Batch(TimeTrackedModel):
     organism_id = models.IntegerField()
     # This is the organism name as it appeared in the experiment.
     organism_name = models.CharField(max_length=256)
+
+    def get_local_dir(self, prefix) -> str:
+        root_dir = get_env_variable("LOCAL_ROOT_DIRECTORY")
+        return os.path.join(root_dir, prefix, self.internal_location)
+
+    def get_local_file_path(self, prefix) -> str:
+        path = urllib.parse.urlparse(self.download_url).path
+        file_name = os.path.basename(path)
+        return os.path.join(self.get_local_dir(prefix), file_name)
 
     class Meta:
         db_table = "batches"

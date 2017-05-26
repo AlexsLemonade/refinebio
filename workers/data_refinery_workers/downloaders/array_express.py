@@ -15,7 +15,8 @@ from data_refinery_models.models import (
 )
 from data_refinery_workers.downloaders import utils
 import logging
-import boto
+import boto3
+
 
 logger = get_task_logger(__name__)
 
@@ -50,18 +51,37 @@ def _download_file(download_url, file_path, job_id):
         target_file.close()
 
 
-def _extract_file(file_path, job_id):
+def _extract_file(batch, job_id):
+    job_id = -1
+    batch = Batch(
+        internal_location="A-AFFY-1/AFFY_TO_PCL/",
+        download_url="ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-MTAB-3050.raw.1.zip",  # noqa
+        )
+    zip_path = batch.get_local_file_path(utils.RAW_PREFIX)
+    local_dir = batch.get_local_dir(utils.RAW_PREFIX)
+    # TODO: use env var for "data-refinery"
+    bucket_name = utils.get_env_variable("S3_BUCKET_NAME")
+    bucket = boto3.resource("s3").Bucket(bucket_name)
     try:
-        zip_ref = zipfile.ZipFile(file_path, 'r')
-        zip_ref.extractall(os.path.dirname(file_path))
+        zip_ref = zipfile.ZipFile(zip_path, "r")
+        zip_ref.extractall(local_dir)
+
+        if utils.get_env_variable("USE_S3") == "True":
+            for file_info in zip_ref.infolist():
+                local_path = os.path.join(local_dir, file_info.filename)
+                remote_path = os.path.join(utils.RAW_PREFIX,
+                                           batch.internal_location,
+                                           file_info.filename)
+                with open(local_path, 'r') as data:
+                    bucket.put_object(Key=remote_path, Body=data)
     except Exception:
         logging.exception("Exception caught while extracting %s during Job #%d.",
-                          file_path,
+                          zip_path,
                           job_id)
         raise
     finally:
         zip_ref.close()
-        os.remove(file_path)
+        # os.remove(file_path)
 
 
 @shared_task

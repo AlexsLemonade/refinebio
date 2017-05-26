@@ -3,6 +3,7 @@ import urllib
 from retrying import retry
 from django.utils import timezone
 from django.db import transaction
+from django.core.exceptions import ImproperlyConfigured
 from data_refinery_models.models import (
     Batch,
     BatchStatuses,
@@ -20,6 +21,15 @@ logger = logging.getLogger(__name__)
 
 # This path is within the Docker container.
 ROOT_URI = "/home/user/data_store/raw"
+RAW_PREFIX = "raw"
+
+
+def get_env_variable(var_name):
+    try:
+        return os.environ[var_name]
+    except KeyError:
+        error_msg = "Set the %s environment variable" % var_name
+        raise ImproperlyConfigured(error_msg)
 
 
 def start_job(job: DownloaderJob):
