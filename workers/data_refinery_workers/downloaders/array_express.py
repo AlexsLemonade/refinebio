@@ -24,7 +24,7 @@ logger = get_task_logger(__name__)
 CHUNK_SIZE = 1024 * 256
 
 
-def _verify_batch_grouping(batches: List[Batch], job_id):
+def _verify_batch_grouping(batches: List[Batch], job_id: int) -> None:
     """All batches in the same job should have the same downloader url"""
     for batch in batches:
         if batch.download_url != batches[0].download_url:
@@ -34,7 +34,7 @@ def _verify_batch_grouping(batches: List[Batch], job_id):
             raise ValueError("A batch doesn't have the same download url as other batches.")
 
 
-def _download_file(download_url, file_path, job_id):
+def _download_file(download_url: str, file_path: str, job_id: int) -> None:
     try:
         logger.debug("Downloading file from %s to %s. (Job #%d)",
                      download_url,
@@ -51,28 +51,23 @@ def _download_file(download_url, file_path, job_id):
         target_file.close()
 
 
-def _extract_file(batch, job_id):
-    job_id = -1
-    batch = Batch(
-        internal_location="A-AFFY-1/AFFY_TO_PCL/",
-        download_url="ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-MTAB-3050.raw.1.zip",  # noqa
-        )
-    zip_path = batch.get_local_file_path(utils.RAW_PREFIX)
-    local_dir = batch.get_local_dir(utils.RAW_PREFIX)
-    # TODO: use env var for "data-refinery"
+def _extract_file(batches: List[Batch], job_id: int) -> None:
     bucket_name = utils.get_env_variable("S3_BUCKET_NAME")
     bucket = boto3.resource("s3").Bucket(bucket_name)
+
+    # zip_path and local_dir should be common to all batches in the group
+    zip_path = batches[0].get_local_file_path(utils.RAW_PREFIX)
+    local_dir = batches[0].get_local_dir(utils.RAW_PREFIX)
+
     try:
         zip_ref = zipfile.ZipFile(zip_path, "r")
         zip_ref.extractall(local_dir)
 
         if utils.get_env_variable("USE_S3") == "True":
-            for file_info in zip_ref.infolist():
-                local_path = os.path.join(local_dir, file_info.filename)
-                remote_path = os.path.join(utils.RAW_PREFIX,
-                                           batch.internal_location,
-                                           file_info.filename)
-                with open(local_path, 'r') as data:
+            for batch in batches:
+                local_path = os.path.join(local_dir, batch.name)
+                remote_path = batch.get_remote_path(utils.RAW_PREFIX)
+                with open(local_path, 'rb') as data:
                     bucket.put_object(Key=remote_path, Body=data)
     except Exception:
         logging.exception("Exception caught while extracting %s during Job #%d.",
@@ -81,11 +76,11 @@ def _extract_file(batch, job_id):
         raise
     finally:
         zip_ref.close()
-        # os.remove(file_path)
+        shutil.rmtree(local_dir)
 
 
 @shared_task
-def download_array_express(job_id):
+def download_array_express(job_id: int) -> None:
     logger.debug("Starting job with id: %s.", job_id)
     try:
         job = DownloaderJob.objects.get(id=job_id)
@@ -107,14 +102,15 @@ def download_array_express(job_id):
                      job_id)
         success = False
 
-    try:
-        _verify_batch_grouping(batches, job_id)
-        _download_file(download_url, target_file_path, job_id)
-        _extract_file(target_file_path, job_id)
-    except Exception:
-        # Exceptions are already logged and handled.
-        # Just need to mark the job as failed.
-        success = False
+    if success:
+        try:
+            _verify_batch_grouping(batches, job_id)
+            _download_file(download_url, target_file_path, job_id)
+            _extract_file(batches, job_id)
+        except Exception:
+            # Exceptions are already logged and handled.
+            # Just need to mark the job as failed.
+            success = False
 
     if success:
         logger.debug("File %s downloaded and extracted successfully in Job #%d.",
