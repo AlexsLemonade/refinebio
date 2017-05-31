@@ -9,11 +9,14 @@ itself is not yet tested."""
 
 from __future__ import absolute_import, unicode_literals
 import os
+import shutil
+import boto3
 from typing import Dict
 import rpy2.robjects as ro
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from data_refinery_workers.processors import utils
+import logging
 
 logger = get_task_logger(__name__)
 

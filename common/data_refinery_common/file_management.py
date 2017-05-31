@@ -9,7 +9,7 @@ from data_refinery_common.utils import get_env_variable
 RAW_PREFIX = get_env_variable("RAW_PREFIX")
 TEMP_PREFIX = get_env_variable("TEMP_PREFIX")
 PROCESSED_PREFIX = get_env_variable("PROCESSED_PREFIX")
-ROOT_DIR = get_env_variable("LOCAL_ROOT_DIRECTORY")
+LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR")
 USE_S3 = get_env_variable("USE_S3") == "True"
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME")
 
@@ -18,7 +18,7 @@ def get_raw_dir(batch: Batch) -> str:
     if USE_S3:
         return os.path.join(RAW_PREFIX, batch.internal_location)
     else:
-        return os.path.join(ROOT_DIR, RAW_PREFIX, batch.internal_location)
+        return os.path.join(LOCAL_ROOT_DIR, RAW_PREFIX, batch.internal_location)
 
 
 def get_download_path(batch: Batch) -> str:
@@ -39,12 +39,19 @@ def get_raw_path(batch: Batch) -> str:
 # Use the ID of the batch in the temporary paths so it can be removed
 # after processing is complete without interfering with other jobs.
 def get_temp_dir(batch: Batch) -> str:
-    return os.path.join(ROOT_DIR, TEMP_PREFIX, batch.id, batch.internal_location)
+    return os.path.join(LOCAL_ROOT_DIR,
+                        TEMP_PREFIX,
+                        batch.internal_location,
+                        str(batch.id))
 
 
 def get_temp_pre_path(batch: Batch) -> str:
     """Returns the path of the pre-processed file for the batch."""
-    return os.path.join(ROOT_DIR, TEMP_PREFIX, batch.internal_location, batch.id, batch.name)
+    return os.path.join(LOCAL_ROOT_DIR,
+                        TEMP_PREFIX,
+                        batch.internal_location,
+                        str(batch.id),
+                        batch.name)
 
 
 def get_temp_post_path(batch: Batch) -> str:
@@ -52,14 +59,18 @@ def get_temp_post_path(batch: Batch) -> str:
     # This may be brittle, there's probably a better way.
     file_base = batch.name.split(".")[0]
     new_name = file_base + "." + batch.processed_format
-    return os.path.join(ROOT_DIR, TEMP_PREFIX, batch.internal_location, batch.id, new_name)
+    return os.path.join(LOCAL_ROOT_DIR,
+                        TEMP_PREFIX,
+                        batch.internal_location,
+                        str(batch.id),
+                        new_name)
 
 
 def get_processed_dir(batch: Batch) -> str:
     if USE_S3:
         return os.path.join(PROCESSED_PREFIX, batch.internal_location)
     else:
-        return os.path.join(ROOT_DIR, PROCESSED_PREFIX, batch.internal_location)
+        return os.path.join(LOCAL_ROOT_DIR, PROCESSED_PREFIX, batch.internal_location)
 
 
 def get_processed_path(batch: Batch) -> str:

@@ -1,4 +1,6 @@
+import os
 from django.utils import timezone
+from django.core.exceptions import ImproperlyConfigured
 from typing import List, Dict, Callable
 from data_refinery_models.models import BatchStatuses, ProcessorJob, ProcessorJobsToBatches
 
@@ -9,6 +11,16 @@ logger = logging.getLogger(__name__)
 
 # This path is within the Docker container.
 ROOT_URI = "/home/user/data_store"
+RAW_PREFIX = "raw"
+TEMP_PREFIX = "temp"
+
+
+def get_env_variable(var_name):
+    try:
+        return os.environ[var_name]
+    except KeyError:
+        error_msg = "Set the %s environment variable" % var_name
+        raise ImproperlyConfigured(error_msg)
 
 
 def start_job(kwargs: Dict):

@@ -42,7 +42,7 @@ class Command(BaseCommand):
             experiment_accession_code="E-GEOD-59071",
             experiment_title="It doesn't really matter.",
             name="GSM1426072_CD_colon_active_2.CEL",
-            internal_location="A-AFFY-141/AFFY_TO_PCL/",
+            internal_location="A-AFFY-141/AFFY_TO_PCL",
             organism_id=9606,
             organism_name="HOMO SAPIENS",
             release_date="2017-05-05",

@@ -3,6 +3,7 @@ import urllib.request
 import os
 import shutil
 import zipfile
+import boto3
 from typing import List
 from contextlib import closing
 from celery import shared_task
@@ -15,7 +16,6 @@ from data_refinery_models.models import (
 )
 from data_refinery_workers.downloaders import utils
 import logging
-import boto3
 
 
 logger = get_task_logger(__name__)

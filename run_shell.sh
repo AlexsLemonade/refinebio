@@ -28,7 +28,7 @@ docker run \
        --add-host=database:$HOST_IP \
        --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
        --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-       --env-file workers/environments/prod \
+       --env-file workers/environments/dev \
        --volume /tmp:/tmp \
        --volume $volume_directory:/home/user/data_store \
        --entrypoint ./manage.py \
