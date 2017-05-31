@@ -5,14 +5,14 @@ from setuptools import find_packages, setup
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
-    name="data-refinery-utils",
+    name="data-refinery-common",
     version="0.1.0",
     packages=find_packages(),
     install_requires=["django>=1.10.6",
                       "data_refinery_models>=0.1.0",
                       "boto3>=1.4.4"],
     license="BSD License",
-    description="Common util functions for the Data Refinery project",
+    description="Common functionality to be shared between Data Refinery sub-projects.",
     url="https://www.greenelab.com",
     author="Kurt Wheeler",
     author_email="kurt.wheeler91@gmail.com",

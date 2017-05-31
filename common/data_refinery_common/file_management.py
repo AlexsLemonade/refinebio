@@ -2,16 +2,8 @@ import os
 import urllib
 import shutil
 import boto3
-from django.core.exceptions import ImproperlyConfigured
 from data_refinery_models.models import Batch
-
-
-def get_env_variable(var_name: str) -> str:
-    try:
-        return os.environ[var_name]
-    except KeyError:
-        error_msg = "Set the %s environment variable" % var_name
-        raise ImproperlyConfigured(error_msg)
+from data_refinery_common.utils import get_env_variable
 
 
 RAW_PREFIX = get_env_variable("RAW_PREFIX")
@@ -44,13 +36,15 @@ def get_raw_path(batch: Batch) -> str:
     return os.path.join(get_raw_dir(batch), batch.name)
 
 
+# Use the ID of the batch in the temporary paths so it can be removed
+# after processing is complete without interfering with other jobs.
 def get_temp_dir(batch: Batch) -> str:
-    return os.path.join(ROOT_DIR, TEMP_PREFIX, batch.internal_location)
+    return os.path.join(ROOT_DIR, TEMP_PREFIX, batch.id, batch.internal_location)
 
 
 def get_temp_pre_path(batch: Batch) -> str:
     """Returns the path of the pre-processed file for the batch."""
-    return os.path.join(ROOT_DIR, TEMP_PREFIX, batch.internal_location, batch.name)
+    return os.path.join(ROOT_DIR, TEMP_PREFIX, batch.internal_location, batch.id, batch.name)
 
 
 def get_temp_post_path(batch: Batch) -> str:
@@ -58,7 +52,7 @@ def get_temp_post_path(batch: Batch) -> str:
     # This may be brittle, there's probably a better way.
     file_base = batch.name.split(".")[0]
     new_name = file_base + "." + batch.processed_format
-    return os.path.join(ROOT_DIR, TEMP_PREFIX, batch.internal_location, new_name)
+    return os.path.join(ROOT_DIR, TEMP_PREFIX, batch.internal_location, batch.id, new_name)
 
 
 def get_processed_dir(batch: Batch) -> str:
@@ -104,3 +98,23 @@ def upload_processed_file(batch: Batch) -> None:
             bucket.put_object(Key=processed_path, Body=temp_file)
     else:
         shutil.copyfile(temp_path, processed_path)
+
+
+def remove_temp_directory(batch: Batch) -> None:
+    temp_dir = get_temp_dir(batch)
+    shutil.rmtree(temp_dir)
+
+
+def remove_raw_files(batch: Batch) -> None:
+    raw_path = get_raw_path(batch)
+    if USE_S3:
+        bucket = boto3.resource("s3").Bucket(S3_BUCKET_NAME)
+        bucket.delete_objects(
+            Delete={
+                'Objects': {
+                    'Key': raw_path
+                }
+            }
+        )
+    else:
+        os.remove(raw_path)
