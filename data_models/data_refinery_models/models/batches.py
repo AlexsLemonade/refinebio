@@ -1,17 +1,7 @@
-import os
-import urllib
 from enum import Enum
 from django.db import models
 from data_refinery_models.models.base_models import TimeTrackedModel
 from data_refinery_models.models.surveys import SurveyJob
-
-
-def get_env_variable(var_name):
-    try:
-        return os.environ[var_name]
-    except KeyError:
-        error_msg = "Set the %s environment variable" % var_name
-        raise ImproperlyConfigured(error_msg)
 
 
 class BatchStatuses(Enum):

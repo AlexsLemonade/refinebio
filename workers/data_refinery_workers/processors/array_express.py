@@ -8,34 +8,73 @@ itself is not yet tested."""
 
 
 from __future__ import absolute_import, unicode_literals
-import os
-import shutil
-import boto3
 from typing import Dict
 import rpy2.robjects as ro
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from data_refinery_workers.processors import utils
+from data_refinery_common import file_management
 import logging
 
 logger = get_task_logger(__name__)
 
 
 def cel_to_pcl(kwargs: Dict):
+    """Process .CEL files to .PCL format using R.
+
+    Moves the .CEL file from the raw directory to the temp directory,
+    calls ProcessCelFiles, uploads the processed file, and cleans up
+    the raw/temp files. Because it uses the file_management module
+    this works seamlessly whether S3 is being used or not.
+    """
     # Array Express processor jobs have one batch per job.
     batch = kwargs["batches"][0]
 
-    from_directory = utils.ROOT_URI + "raw/" + batch.internal_location
-    target_directory = utils.ROOT_URI + "processed/" + batch.internal_location
-    os.makedirs(target_directory, exist_ok=True)
-    new_name = batch.name + "." + batch.processed_format
+    try:
+        file_management.download_raw_file(batch)
+    except Exception:
+        logging.exception("Exception caught while retrieving %s for batch %d during Job #%d.",
+                          file_management.get_raw_path(batch),
+                          batch.id,
+                          kwargs["job_id"])
+        kwargs["success"] = False
+        return kwargs
 
-    ro.r('source("/home/user/r_processors/process_cel_to_pcl.R")')
+    temp_dir = file_management.get_temp_dir(batch)
+    output_file = file_management.get_temp_post_path(batch)
+
+    ro.r('source("/home/user/r_processors/cel_to_pcl.R")')
     ro.r['ProcessCelFiles'](
-        from_directory,
+        temp_dir,
         "Hs",  # temporary until organism handling is more defined
-        target_directory + new_name)
+        output_file)
 
+    try:
+        file_management.upload_processed_file(batch)
+    except Exception:
+        logging.exception(("Exception caught while uploading processed file %s for batch %d"
+                           " during Job #%d."),
+                          output_file,
+                          batch.id,
+                          kwargs["job_id"])
+        kwargs["success"] = False
+        return kwargs
+    finally:
+        file_management.remove_temp_directory(batch)
+
+    try:
+        file_management.remove_raw_files(batch)
+    except:
+        # If we fail to remove the raw files, the job is still done
+        # enough to call a success. However logging will be important
+        # so the problem can be identified and the raw files cleaned up.
+        logging.exception(("Exception caught while uploading processed file %s for batch %d"
+                           " during Job #%d."),
+                          output_file,
+                          batch.id,
+                          kwargs["job_id"])
+
+    kwargs["success"] = True
     return kwargs
 
 

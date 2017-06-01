@@ -1,6 +1,4 @@
-import os
 from django.utils import timezone
-from django.core.exceptions import ImproperlyConfigured
 from typing import List, Dict, Callable
 from data_refinery_models.models import BatchStatuses, ProcessorJob, ProcessorJobsToBatches
 
@@ -8,19 +6,6 @@ from data_refinery_models.models import BatchStatuses, ProcessorJob, ProcessorJo
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# This path is within the Docker container.
-ROOT_URI = "/home/user/data_store"
-RAW_PREFIX = "raw"
-TEMP_PREFIX = "temp"
-
-
-def get_env_variable(var_name):
-    try:
-        return os.environ[var_name]
-    except KeyError:
-        error_msg = "Set the %s environment variable" % var_name
-        raise ImproperlyConfigured(error_msg)
 
 
 def start_job(kwargs: Dict):
@@ -103,9 +88,18 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
     last_result = start_value
     last_result["job"] = job
     for processor in pipeline:
-        last_result = processor(last_result)
+        try:
+            last_result = processor(last_result)
+        except Exception:
+            logging.exception(("Unhandled exception caught while running processor %s in pipeline"
+                               " for job #%d."),
+                              processor.__name__,
+                              job_id)
+            last_result["success"] = False
+            end_job(last_result)
         if "success" in last_result and last_result["success"] is False:
-            logger.error("Processor %s failed. Terminating pipeline.",
-                         processor.__name__)
+            logger.error("Processor %s failed. Terminating pipeline for job %d.",
+                         processor.__name__,
+                         job_id)
             end_job(last_result)
             break

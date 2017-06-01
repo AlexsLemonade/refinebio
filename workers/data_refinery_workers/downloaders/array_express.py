@@ -3,7 +3,6 @@ import urllib.request
 import os
 import shutil
 import zipfile
-import boto3
 from typing import List
 from contextlib import closing
 from celery import shared_task
@@ -14,6 +13,7 @@ from data_refinery_models.models import (
     DownloaderJob,
     DownloaderJobsToBatches
 )
+from data_refinery_common import file_management
 from data_refinery_workers.downloaders import utils
 import logging
 
@@ -52,23 +52,19 @@ def _download_file(download_url: str, file_path: str, job_id: int) -> None:
 
 
 def _extract_file(batches: List[Batch], job_id: int) -> None:
-    bucket_name = utils.get_env_variable("S3_BUCKET_NAME")
-    bucket = boto3.resource("s3").Bucket(bucket_name)
-
+    """Extract zip from temp directory and move to raw directory."""
     # zip_path and local_dir should be common to all batches in the group
-    zip_path = batches[0].get_local_file_path(utils.RAW_PREFIX)
-    local_dir = batches[0].get_local_dir(utils.RAW_PREFIX)
+    zip_path = file_management.get_temp_download_path(batches[0], str(job_id))
+    local_dir = file_management.get_temp_dir(batches[0], str(job_id))
+
+    logger.debug("Extracting %s for job %d.", zip_path, job_id)
 
     try:
         zip_ref = zipfile.ZipFile(zip_path, "r")
         zip_ref.extractall(local_dir)
 
-        if utils.get_env_variable("USE_S3") == "True":
-            for batch in batches:
-                local_path = os.path.join(local_dir, batch.name)
-                remote_path = batch.get_remote_path(utils.RAW_PREFIX)
-                with open(local_path, 'rb') as data:
-                    bucket.put_object(Key=remote_path, Body=data)
+        for batch in batches:
+            file_management.upload_raw_file(batch, str(job_id))
     except Exception:
         logging.exception("Exception caught while extracting %s during Job #%d.",
                           zip_path,
@@ -76,7 +72,7 @@ def _extract_file(batches: List[Batch], job_id: int) -> None:
         raise
     finally:
         zip_ref.close()
-        shutil.rmtree(local_dir)
+        file_management.remove_temp_directory(batches[0], str(job_id))
 
 
 @shared_task
@@ -95,7 +91,9 @@ def download_array_express(job_id: int) -> None:
     batches = list(map(lambda x: x.batch, batch_relations))
 
     if len(batches) > 0:
-        target_file_path = utils.prepare_destination(batches[0])
+        target_directory = file_management.get_temp_dir(batches[0], str(job_id))
+        os.makedirs(target_directory, exist_ok=True)
+        target_file_path = file_management.get_temp_download_path(batches[0], str(job_id))
         download_url = batches[0].download_url
     else:
         logger.error("No batches found for job #%d.",
