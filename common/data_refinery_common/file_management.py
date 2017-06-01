@@ -30,6 +30,11 @@ def _get_downloaded_name(batch: Batch) -> str:
     return os.path.basename(path)
 
 
+def _get_processed_name(batch: Batch) -> str:
+    file_base = batch.name.split(".")[0]
+    return file_base + "." + batch.processed_format
+
+
 def get_raw_dir(batch: Batch) -> str:
     if USE_S3:
         return os.path.join(RAW_PREFIX, batch.internal_location)
@@ -80,9 +85,8 @@ def get_temp_pre_path(batch: Batch, dir_name: str = None) -> str:
 
 def get_temp_post_path(batch: Batch, dir_name: str = None) -> str:
     """Returns the path of the post-processed file for the batch."""
-    file_base = batch.name.split(".")[0]
-    new_name = file_base + "." + batch.processed_format
-    return os.path.join(get_temp_dir(batch, dir_name), new_name)
+    return os.path.join(get_temp_dir(batch, dir_name),
+                        _get_processed_name(batch))
 
 
 def get_processed_dir(batch: Batch) -> str:
@@ -93,7 +97,8 @@ def get_processed_dir(batch: Batch) -> str:
 
 
 def get_processed_path(batch: Batch) -> str:
-    return os.path.join(get_processed_dir(batch), batch.name)
+    return os.path.join(get_processed_dir(batch),
+                        _get_processed_name(batch))
 
 
 def upload_raw_file(batch: Batch, dir_name: str = None) -> None:
