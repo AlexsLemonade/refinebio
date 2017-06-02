@@ -1,8 +1,10 @@
 name: workers
 dependencies:
   - r::r-base=3.3.1
-  - kurtwheeler::bioconductor-oligo
-  - kurtwheeler::bioconductor-scan.upc
+  - kurtwheeler::bioconductor-pd.hugene.1.0.st.v1
+  - bioconda::bioconductor-oligo
+  - bioconda::bioconductor-biobase
+  - bioconda::bioconductor-scan.upc
   - bioconda::bioconductor-affy=1.50.0
   - bioconda::bioconductor-affyio=1.42.0
   - bioconda::bioconductor-annotationdbi=1.36.2
@@ -12,7 +14,6 @@ dependencies:
   - bioconda::bioconductor-org.ce.eg.db=3.2.3
   # - greenelab::all-entrezg-brainarray-cdfs
   - bioconda::r-ff
-  - kurtwheeler::bioconductor-pd.hg.u133.plus.2
   - python=3.6
   - r::rpy2=2.8.5
   - pip:
