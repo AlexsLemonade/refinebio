@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script for running a simple tester container to test the worker.
+# Script for executing Django PyUnit tests within a Docker container.
 
 # This script should always run as if it were being called from
 # the directory it lives in.
@@ -11,13 +11,11 @@ cd $script_directory
 # move up a level
 cd ..
 
-docker build -t test_master -f workers/Dockerfile .
+docker build -t dr_worker -f workers/Dockerfile.tests .
 
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
 docker run \
-       --link message-queue:rabbit \
        --add-host=database:$HOST_IP \
-       --env-file workers/environments/dev \
-       --entrypoint ./manage.py \
-       test_master queue_downloader
+       --env-file workers/environments/test \
+       -i dr_worker test --no-input "$@"

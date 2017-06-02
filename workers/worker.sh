@@ -23,7 +23,7 @@ docker build -t dr_worker -f workers/Dockerfile .
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
 docker run \
-       --link some-rabbit:rabbit \
+       --link message-queue:rabbit \
        --name worker1 \
        --add-host=database:$HOST_IP \
        --env-file workers/environments/dev \

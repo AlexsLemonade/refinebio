@@ -57,7 +57,7 @@ def run_job(survey_job: SurveyJob):
         return survey_job
 
     try:
-        job_success = surveyor.survey(survey_job)
+        job_success = surveyor.survey()
     except Exception as e:
         logger.error("Exception caught while running job #%d with message: %s",
                      survey_job.id,
@@ -73,8 +73,20 @@ def test():
     survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
     survey_job.save()
     key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                       key="accession_code",
-                                       value="A-AFFY-1")
+                                       key="experiment_accession_code",
+                                       value="E-MTAB-3050")
     key_value_pair.save()
     run_job(survey_job)
     return
+
+
+def survey_experiments(experiments_list_file):
+    with open(experiments_list_file, "r") as experiments:
+        for experiment in experiments:
+            survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
+            survey_job.save()
+            key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                               key="experiment_accession_code",
+                                               value=experiment.rstrip())
+            key_value_pair.save()
+            run_job(survey_job)
