@@ -216,7 +216,8 @@ class OrganismModelTestCase(TestCase):
         get_taxonomy_id will log an error message which will prompt
         a developer to investigate what the organism name that was
         unable to be found is. Therefore setting the ID to 0 is the
-        right thing to do in this case despite not seeming like it. """
+        right thing to do in this case despite not seeming like it.
+        """
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.text = ESEARCH_NOT_FOUND_XML
 

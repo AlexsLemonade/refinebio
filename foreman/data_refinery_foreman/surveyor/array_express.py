@@ -102,7 +102,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 organism_id = Organism.get_id_for_name(organism_name)
 
             for sample_file in sample["file"]:
-                if sample_file["type"] != "data" and sample_file["name"] is not None:
+                if sample_file["type"] != "data":
                     continue
 
                 batches.append(Batch(

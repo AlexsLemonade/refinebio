@@ -31,8 +31,10 @@ def start_job(job: DownloaderJob):
 
 def end_job(job: DownloaderJob, batches: Batch, success):
     """Record in the database that this job has completed.
+
     Create a processor job and queue a processor task for each batch
-    if the job was successful."""
+    if the job was successful.
+    """
     @retry(stop_max_attempt_number=3)
     def save_batch_create_job(batch):
         batch.status = BatchStatuses.DOWNLOADED.value
@@ -63,8 +65,11 @@ def end_job(job: DownloaderJob, batches: Batch, success):
 
 
 def prepare_destination(batch: Batch):
-    """Prepare the destination directory and return the full
-    path the Batch's file should be downloaded to."""
+    """Prepare the destination directory for the batch.
+
+    Also returns the full path the Batch's file should be downloaded
+    to.
+    """
     target_directory = os.path.join(ROOT_URI, batch.internal_location)
     os.makedirs(target_directory, exist_ok=True)
 
