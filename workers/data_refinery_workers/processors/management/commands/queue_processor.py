@@ -4,7 +4,8 @@ run and queues one. It assumes that the file
 /home/user/data_store/raw/A-AFFY-141/AFFY_TO_PCL/GSM1426072_CD_colon_active_2.CEL
 exists.
 The easiest way to run this is with the tester.sh script.
-(Changing queue_downloader to queue_processor.)"""
+(Changing queue_downloader to queue_processor.)
+"""
 
 from django.core.management.base import BaseCommand
 from data_refinery_models.models import (

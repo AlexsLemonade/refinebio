@@ -4,7 +4,8 @@ process Array Express files. I have rewritten the Array Express
 surveyor/downloader to support this, but we don't have the new
 processor yet. This will run, which is good enough for testing
 the system, however since it will change so much the processor
-itself is not yet tested."""
+itself is not yet tested.
+"""
 
 
 from __future__ import absolute_import, unicode_literals

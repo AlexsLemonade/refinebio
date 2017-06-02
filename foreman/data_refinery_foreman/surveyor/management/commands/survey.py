@@ -25,6 +25,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options["experiment_list"] is None:
             logger.error("You must specify an experiment list.")
-            return 0
+            return 1
         else:
             surveyor.survey_experiments(options["experiment_list"])
+            return 0

@@ -88,7 +88,7 @@ def download_array_express(job_id: int) -> None:
     utils.start_job(job)
 
     batch_relations = DownloaderJobsToBatches.objects.filter(downloader_job_id=job_id)
-    batches = list(map(lambda x: x.batch, batch_relations))
+    batches = [br.batch for br in batch_relations]
 
     if len(batches) > 0:
         target_directory = file_management.get_temp_dir(batches[0], str(job_id))
@@ -103,6 +103,10 @@ def download_array_express(job_id: int) -> None:
     if success:
         try:
             _verify_batch_grouping(batches, job_id)
+
+            # The files for all of the batches in the grouping are
+            # contained within the same zip file. Therefore only
+            # download the one.
             _download_file(download_url, target_file_path, job_id)
             _extract_file(batches, job_id)
         except Exception:

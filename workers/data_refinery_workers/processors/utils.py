@@ -9,16 +9,19 @@ logger = logging.getLogger(__name__)
 
 
 def start_job(kwargs: Dict):
-    """Record in the database that this job is being started and
-    retrieves the job's batches from the database and
-    adds them to the dictionary passed in with the key 'batches'."""
+    """A processor function to start jobs.
+
+    Record in the database that this job is being started and
+    retrieves the job's batches from the database and adds them to the
+    dictionary passed in with the key 'batches'.
+    """
     job = kwargs["job"]
     job.worker_id = "For now there's only one. For now..."
     job.start_time = timezone.now()
     job.save()
 
     batch_relations = ProcessorJobsToBatches.objects.filter(processor_job_id=job.id)
-    batches = list(map(lambda x: x.batch, batch_relations))
+    batches = [br.batch for br in batch_relations]
 
     if len(batches) == 0:
         logger.error("No batches found for job #%d.", job.id)
@@ -29,8 +32,11 @@ def start_job(kwargs: Dict):
 
 
 def end_job(kwargs: Dict):
-    """Record in the database that this job has completed and that
-    the batch has been processed if successful."""
+    """A processor function to end jobs.
+
+    Record in the database that this job has completed and that
+    the batch has been processed if successful.
+    """
     job = kwargs["job"]
 
     if "success" in kwargs:
@@ -56,22 +62,21 @@ def end_job(kwargs: Dict):
 def run_pipeline(start_value: Dict, pipeline: List[Callable]):
     """Runs a pipeline of processor functions.
 
-    start_value must contain a key 'job_id' which is a valid id
-    for a ProcessorJob record.
+    start_value must contain a key 'job_id' which is a valid id for a
+    ProcessorJob record.
 
     Each processor fuction must accept a dictionary and return a
     dictionary.
 
-    Any processor function which returns a dictionary
-    containing a key of 'success' with a value of False will cause
-    the pipeline to terminate with a call to utils.end_job.
+    Any processor function which returns a dictionary containing a key
+    of 'success' with a value of False will cause the pipeline to
+    terminate with a call to utils.end_job.
 
-    The key 'job' is reserved for the ProcessorJob currently being run.
-    The key 'batches' is reserved for the Batches that are currently
-    being processed.
-    It is required that the dictionary returned by each processor
-    function preserve the mappings for 'job' and 'batches' that were
-    passed into it.
+    The key 'job' is reserved for the ProcessorJob currently being
+    run.  The key 'batches' is reserved for the Batches that are
+    currently being processed.  It is required that the dictionary
+    returned by each processor function preserve the mappings for
+    'job' and 'batches' that were passed into it.
     """
 
     job_id = start_value["job_id"]
