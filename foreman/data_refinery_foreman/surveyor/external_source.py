@@ -28,7 +28,8 @@ class PipelineEnums(Enum):
     """An abstract class to enumerate valid processor pipelines.
 
     Enumerations which extend this class are valid values for the
-    pipeline_required field of the Batches table."""
+    pipeline_required field of the Batches table.
+    """
     pass
 
 
@@ -38,8 +39,7 @@ class ProcessorPipeline(PipelineEnums):
 
 
 class DiscoveryPipeline(PipelineEnums):
-    """Pipelines which discover what kind of processing is appropriate
-    for the data."""
+    """Pipelines which discover appropriate processing for the data."""
     pass
 
 
@@ -55,17 +55,22 @@ class ExternalSourceSurveyor:
 
     @abc.abstractproperty
     def downloader_task(self):
-        """This property should return the Celery Downloader Task name
-        from the data_refinery_workers project which should be queued
-        to download Batches discovered by this surveyor."""
+        """Abstract property representing the downloader task.
+
+        Should return the Celery Downloader Task name from the
+        data_refinery_workers project which should be queued to
+        download Batches discovered by this surveyor.
+        """
         return
 
     @abc.abstractmethod
     def determine_pipeline(self,
                            batch: Batch):
-        """Determines the appropriate processor pipeline for the batch
-        and returns a string that represents a processor pipeline.
-        Must return a member of PipelineEnums."""
+        """Determines the appropriate pipeline for the batch.
+
+        Returns a string that represents a processor pipeline.
+        Must return a member of PipelineEnums.
+        """
         return
 
     def handle_batches(self, batches: List[Batch]):
@@ -110,7 +115,9 @@ class ExternalSourceSurveyor:
 
     @abc.abstractmethod
     def survey(self):
-        """Implementations of this function should do the following:
+        """Abstract method to survey a source.
+
+        Implementations of this method should do the following:
         1. Query the external source to discover batches that should be
            downloaded.
         2. Create a Batch object for each discovered batch and optionally

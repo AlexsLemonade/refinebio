@@ -11,9 +11,10 @@ logger = logging.getLogger(__name__)
 NCBI_ROOT_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
 ESEARCH_URL = NCBI_ROOT_URL + "esearch.fcgi"
 EFETCH_URL = NCBI_ROOT_URL + "efetch.fcgi"
+TAXONOMY_DATABASE = "taxonomy"
 
 
-class UnscientifcNameError(BaseException):
+class UnscientificNameError(BaseException):
     pass
 
 
@@ -21,14 +22,14 @@ class InvalidNCBITaxonomyId(BaseException):
     pass
 
 
-def get_scientific_name(taxonomy_id: int):
-    parameters = {"db": "taxonomy", "id": str(taxonomy_id)}
+def get_scientific_name(taxonomy_id: int) -> str:
+    parameters = {"db": TAXONOMY_DATABASE, "id": str(taxonomy_id)}
     response = requests.get(EFETCH_URL, parameters)
 
     root = ElementTree.fromstring(response.text)
     taxon_list = root.findall("Taxon")
 
-    if(len(taxon_list) == 0):
+    if len(taxon_list) == 0:
         logger.error("No names returned by ncbi.nlm.nih.gov for organism "
                      + "with taxonomy ID %d.",
                      taxonomy_id)
@@ -37,19 +38,19 @@ def get_scientific_name(taxonomy_id: int):
     return taxon_list[0].find("ScientificName").text.upper()
 
 
-def get_taxonomy_id(organism_name: str):
-    parameters = {"db": "taxonomy", "term": organism_name}
+def get_taxonomy_id(organism_name: str) -> int:
+    parameters = {"db": TAXONOMY_DATABASE, "term": organism_name}
     response = requests.get(ESEARCH_URL, parameters)
 
     root = ElementTree.fromstring(response.text)
     id_list = root.find("IdList").findall("Id")
 
-    if(len(id_list) == 0):
+    if len(id_list) == 0:
         logger.error("Unable to retrieve NCBI taxonomy ID number for organism "
                      + "with name: %s",
                      organism_name)
         return 0
-    elif(len(id_list) > 1):
+    elif len(id_list) > 1:
         logger.warn("Organism with name %s returned multiple NCBI taxonomy ID "
                     + "numbers.",
                     organism_name)
@@ -57,16 +58,16 @@ def get_taxonomy_id(organism_name: str):
     return int(id_list[0].text)
 
 
-def get_taxonomy_id_scientific(organism_name: str):
-    parameters = {"db": "taxonomy", "field": "scin", "term": organism_name}
+def get_taxonomy_id_scientific(organism_name: str) -> int:
+    parameters = {"db": TAXONOMY_DATABASE, "field": "scin", "term": organism_name}
     response = requests.get(ESEARCH_URL, parameters)
 
     root = ElementTree.fromstring(response.text)
     id_list = root.find("IdList").findall("Id")
 
-    if(len(id_list) == 0):
-        raise UnscientifcNameError
-    elif(len(id_list) > 1):
+    if len(id_list) == 0:
+        raise UnscientificNameError
+    elif len(id_list) > 1:
         logger.warn("Organism with name %s returned multiple NCBI taxonomy ID "
                     + "numbers.",
                     organism_name)
@@ -75,12 +76,19 @@ def get_taxonomy_id_scientific(organism_name: str):
 
 
 class Organism(TimeTrackedModel):
+    """Provides a lookup between organism name and taxonomy ids.
+
+    Should only be used via the two class methods get_name_for_id and
+    get_id_for_name. These methods will populate the database table
+    with any missing values by accessing the NCBI API.
+    """
+
     name = models.CharField(max_length=256)
     taxonomy_id = models.IntegerField()
     is_scientific_name = models.BooleanField(default=False)
 
     @classmethod
-    def get_name_for_id(cls, taxonomy_id: int):
+    def get_name_for_id(cls, taxonomy_id: int) -> str:
         try:
             organism = (cls.objects
                         .filter(taxonomy_id=taxonomy_id)
@@ -96,7 +104,7 @@ class Organism(TimeTrackedModel):
         return organism.name
 
     @classmethod
-    def get_id_for_name(cls, name: str):
+    def get_id_for_name(cls, name: str) -> id:
         name = name.upper()
         try:
             organism = (cls.objects
@@ -107,7 +115,7 @@ class Organism(TimeTrackedModel):
             try:
                 taxonomy_id = get_taxonomy_id_scientific(name)
                 is_scientific_name = True
-            except UnscientifcNameError:
+            except UnscientificNameError:
                 taxonomy_id = get_taxonomy_id(name)
 
             organism = Organism(name=name,

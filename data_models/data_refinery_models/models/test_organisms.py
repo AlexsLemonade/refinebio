@@ -151,8 +151,8 @@ class OrganismModelTestCase(TestCase):
             {"db": "taxonomy", "field": "scin", "term": "HOMO%20SAPIENS"}
         )
 
-        # The first call should have stored it in the database so
-        # this call should not make a request.
+        # The first call should have stored the organism record in the
+        # database so this call should not make a request.
         mock_get.reset_mock()
         new_id = Organism.get_id_for_name("Homo Sapiens")
 
@@ -172,8 +172,8 @@ class OrganismModelTestCase(TestCase):
             call(ESEARCH_URL,
                  {"db": "taxonomy", "term": "HUMAN"})])
 
-        # The first call should have stored it in the database so
-        # this call should not make a request.
+        # The first call should have stored the organism record in the
+        # database so this call should not make a request.
         mock_get.reset_mock()
         new_id = Organism.get_id_for_name("Human")
 
@@ -193,8 +193,8 @@ class OrganismModelTestCase(TestCase):
             {"db": "taxonomy", "id": "9606"}
         )
 
-        # The first call should have stored it in the database so
-        # this call should not make a request.
+        # The first call should have stored the organism record in the
+        # database so this call should not make a request.
         mock_get.reset_mock()
         new_name = Organism.get_name_for_id(9606)
 
@@ -216,7 +216,8 @@ class OrganismModelTestCase(TestCase):
         get_taxonomy_id will log an error message which will prompt
         a developer to investigate what the organism name that was
         unable to be found is. Therefore setting the ID to 0 is the
-        right thing to do in this case despite not seeming like it. """
+        right thing to do in this case despite not seeming like it.
+        """
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.text = ESEARCH_NOT_FOUND_XML
 
@@ -229,8 +230,8 @@ class OrganismModelTestCase(TestCase):
             call(ESEARCH_URL,
                  {"db": "taxonomy", "term": "BLAH"})])
 
-        # The first call should have stored it in the database so
-        # this call should not make a request.
+        # The first call should have stored the organism record in the
+        # database so this call should not make a request.
         mock_get.reset_mock()
         new_id = Organism.get_id_for_name("BLAH")
 

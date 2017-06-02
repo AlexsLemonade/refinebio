@@ -76,7 +76,7 @@ def download_array_express(job_id):
     utils.start_job(job)
 
     batch_relations = DownloaderJobsToBatches.objects.filter(downloader_job_id=job_id)
-    batches = list(map(lambda x: x.batch, batch_relations))
+    batches = [br.batch for br in batch_relations]
 
     if len(batches) > 0:
         target_file_path = utils.prepare_destination(batches[0])
@@ -86,14 +86,19 @@ def download_array_express(job_id):
                      job_id)
         success = False
 
-    try:
-        _verify_batch_grouping(batches, job_id)
-        _download_file(download_url, target_file_path, job_id)
-        _extract_file(target_file_path, job_id)
-    except Exception:
-        # Exceptions are already logged and handled.
-        # Just need to mark the job as failed.
-        success = False
+    if success:
+        try:
+            _verify_batch_grouping(batches, job_id)
+
+            # The files for all of the batches in the grouping are
+            # contained within the same zip file. Therefore only
+            # download the one.
+            _download_file(download_url, target_file_path, job_id)
+            _extract_file(target_file_path, job_id)
+        except Exception:
+            # Exceptions are already logged and handled.
+            # Just need to mark the job as failed.
+            success = False
 
     if success:
         logger.debug("File %s downloaded and extracted successfully in Job #%d.",

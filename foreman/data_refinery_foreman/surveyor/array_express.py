@@ -102,7 +102,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 organism_id = Organism.get_id_for_name(organism_name)
 
             for sample_file in sample["file"]:
-                if sample_file["type"] != "data" and sample_file["name"] is not None:
+                if sample_file["type"] != "data":
                     continue
 
                 batches.append(Batch(
@@ -121,7 +121,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 ))
 
         # Group batches based on their download URL and handle each group.
-        download_urls = set(map(lambda x: x.download_url, batches))
+        download_urls = {batch.download_url for batch in batches}
         for url in download_urls:
-            batches_with_url = list(filter(lambda x: x.download_url == url, batches))
+            batches_with_url = [batch for batch in batches if batch.download_url == url]
             self.handle_batches(batches_with_url)

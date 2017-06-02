@@ -16,7 +16,7 @@ docker build -t test_master -f workers/Dockerfile .
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
 docker run \
-       --link some-rabbit:rabbit \
+       --link message-queue:rabbit \
        --add-host=database:$HOST_IP \
        --env-file workers/environments/dev \
        --entrypoint ./manage.py \

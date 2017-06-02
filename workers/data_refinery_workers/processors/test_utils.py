@@ -65,6 +65,7 @@ class StartJobTestCase(TestCase):
         self.assertEqual(len(kwargs["batches"]), 2)
 
     def test_failure(self):
+        """Fails because there are no batches for the job."""
         processor_job = ProcessorJob()
         processor_job.save()
 
@@ -86,7 +87,7 @@ class EndJobTestCase(TestCase):
         utils.end_job({"job": processor_job,
                        "batches": [batch, batch2]})
 
-        gprocessor_job.refresh_from_db()
+        processor_job.refresh_from_db()
         self.assertTrue(processor_job.success)
         self.assertIsNotNone(processor_job.end_time)
 
@@ -143,7 +144,8 @@ class RunPipelineTestCase(TestCase):
 
     def test_value_passing(self):
         """The keys added to kwargs and returned by processors will be
-        passed through to other processors."""
+        passed through to other processors.
+        """
         batch = init_batch()
         batch.save()
         processor_job = ProcessorJob()
@@ -156,7 +158,6 @@ class RunPipelineTestCase(TestCase):
         mock_dict = {"something_to_pass_along": True,
                      "job": processor_job,
                      "batches": [batch]}
-        mock_dict["something_to_pass_along"] = True
         mock_processor.return_value = mock_dict
 
         def processor_function(kwargs):

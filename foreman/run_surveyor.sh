@@ -23,7 +23,7 @@ docker build -t dr_foreman -f foreman/Dockerfile .
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
 docker run \
-       --link some-rabbit:rabbit \
+       --link message-queue:rabbit \
        --add-host=database:$HOST_IP \
        --env-file foreman/environments/dev \
        --volume $volume_directory:/home/user/data_store \

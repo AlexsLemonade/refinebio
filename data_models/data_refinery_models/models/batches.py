@@ -5,16 +5,26 @@ from data_refinery_models.models.surveys import SurveyJob
 
 
 class BatchStatuses(Enum):
+    """Valid values for the status field of the Batch model."""
+
     NEW = "NEW"
     DOWNLOADED = "DOWNLOADED"
     PROCESSED = "PROCESSED"
 
 
 class Batch(TimeTrackedModel):
+    """Represents a batch of data.
+
+    The definition of a Batch is intentionally that vague. What a batch
+    is will vary from source to source. It could be a single file, or
+    a group of files with some kind of logical grouping such as an
+    experiment.
+    """
+
     survey_job = models.ForeignKey(SurveyJob, on_delete=models.PROTECT)
     source_type = models.CharField(max_length=256)
     size_in_bytes = models.IntegerField()
-    download_url = models.CharField(max_length=2048)
+    download_url = models.CharField(max_length=4096)
     raw_format = models.CharField(max_length=256, null=True)
     processed_format = models.CharField(max_length=256, null=True)
     pipeline_required = models.CharField(max_length=256)
@@ -39,12 +49,13 @@ class Batch(TimeTrackedModel):
 
 
 class BatchKeyValue(TimeTrackedModel):
+    """Tracks additional fields for Batches.
+
+    Useful for fields that would be sparsely populated if they were
+    their own columns. I.e. one source may have an extra field or two
+    that are worth tracking but are specific to that source.
     """
-    This table is used for tracking fields onto a Batch record that would
-    be sparsely populated if it was its own column.
-    I.e. one source may have an extra field or two that are worth tracking
-    but are specific to that source.
-    """
+
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE)
     key = models.CharField(max_length=256)
     value = models.CharField(max_length=256)
