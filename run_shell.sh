@@ -13,13 +13,13 @@ script_directory=`cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd`
 cd $script_directory
 
 # Set up the data volume directory if it does not already exist
-volume_directory="$script_directory/workers/volume"
+volume_directory="$script_directory/foreman/volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir $volume_directory
     chmod 775 $volume_directory
 fi
 
-docker build -t dr_shell -f workers/Dockerfile .
+docker build -t dr_shell -f foreman/Dockerfile .
 
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
@@ -28,7 +28,7 @@ docker run \
        --add-host=database:$HOST_IP \
        --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
        --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-       --env-file workers/environments/dev \
+       --env-file foreman/environments/dev \
        --volume /tmp:/tmp \
        --volume $volume_directory:/home/user/data_store \
        --entrypoint ./manage.py \
