@@ -20,4 +20,4 @@ docker run \
        --add-host=database:$HOST_IP \
        --env-file workers/environments/dev \
        --entrypoint ./manage.py \
-       test_master queue_downloader
+       test_master queue_processor
