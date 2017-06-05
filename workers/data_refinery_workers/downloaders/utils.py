@@ -1,4 +1,5 @@
 from retrying import retry
+from billiard import current_process
 from django.utils import timezone
 from django.db import transaction
 from data_refinery_models.models import (
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 def start_job(job: DownloaderJob):
     """Record in the database that this job is being started. """
-    job.worker_id = "For now there's only one. For now..."
+    job.worker_id = str(current_process().index)
     job.start_time = timezone.now()
     job.save()
 
