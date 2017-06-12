@@ -7,7 +7,6 @@ from typing import List
 from contextlib import closing
 from celery import shared_task
 from celery.utils.log import get_task_logger
-from django.core.exceptions import ObjectDoesNotExist
 from data_refinery_models.models import (
     Batch,
     DownloaderJob,
@@ -77,15 +76,8 @@ def _extract_file(batches: List[Batch], job_id: int) -> None:
 
 @shared_task
 def download_array_express(job_id: int) -> None:
-    logger.debug("Starting job with id: %s.", job_id)
-    try:
-        job = DownloaderJob.objects.get(id=job_id)
-    except ObjectDoesNotExist:
-        logger.error("Cannot find downloader job record with ID %d.", job_id)
-        return
-
+    job = utils.start_job(job_id)
     success = True
-    utils.start_job(job)
 
     batch_relations = DownloaderJobsToBatches.objects.filter(downloader_job_id=job_id)
     batches = [br.batch for br in batch_relations]
