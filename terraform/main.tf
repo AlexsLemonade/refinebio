@@ -60,6 +60,15 @@ resource "aws_iam_role" "ecs_instance" {
 EOF
 }
 
+resource "aws_iam_policy_attachment" "ecs" {
+  name = "AmazonEC2ContainerServiceforEC2Role"
+  roles = ["${aws_iam_role.ecs_instance.name}"]
+
+  # The following can be found here:
+  # https://console.aws.amazon.com/iam/home?region=us-east-1#/policies/arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+}
+
 resource "aws_iam_policy" "s3_access_policy" {
   name = "data-refinery-s3-access-policy"
   description = "Allows S3 Permissions."
@@ -97,21 +106,43 @@ resource "aws_iam_policy" "s3_access_policy" {
 EOF
 }
 
-
-resource "aws_iam_policy_attachment" "ecs" {
-  name = "AmazonEC2ContainerServiceforEC2Role"
-  roles = ["${aws_iam_role.ecs_instance.name}"]
-
-  # The following can be found here:
-  # https://console.aws.amazon.com/iam/home?region=us-east-1#/policies/arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
-}
-
 resource "aws_iam_policy_attachment" "s3" {
   name = "data-refinery-s3-access-policy-attachment"
   roles = ["${aws_iam_role.ecs_instance.name}"]
 
   policy_arn = "${aws_iam_policy.s3_access_policy.arn}"
+}
+
+resource "aws_iam_policy" "cloudwatch_policy" {
+  name = "data-refinery-cloudwatch-policy"
+  description = "Allows Cloudwatch Permissions."
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams"
+            ],
+            "Resource": [
+                "arn:aws:logs:*:*:*"
+            ]
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_policy_attachment" "cloudwatch" {
+  name = "data-refinery-cloudwatch-policy-attachment"
+  roles = ["${aws_iam_role.ecs_instance.name}"]
+
+  policy_arn = "${aws_iam_policy.cloudwatch_policy.arn}"
 }
 
 resource "aws_key_pair" "data_refinery" {
