@@ -94,15 +94,7 @@ class ExternalSourceSurveyor:
         @retry(stop_max_attempt_number=3)
         @transaction.atomic
         def save_batches_start_job():
-            downloader_job = DownloaderJob()
-            downloader_job.save()
-
-            for batch in batches:
-                batch.save()
-                downloader_job_to_batch = DownloaderJobsToBatches(batch=batch,
-                                                                  downloader_job=downloader_job)
-                downloader_job_to_batch.save()
-
+            downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
             app.send_task(self.downloader_task(), args=[downloader_job.id])
 
         try:

@@ -242,9 +242,9 @@ class SurveyTestCase(TestCase):
         organism.save()
 
     def tearDown(self):
-        SurveyJob.objects.all().delete()
         SurveyJobKeyValue.objects.all().delete()
-        Batch.objects.all().delete
+        Batch.objects.all().delete()
+        SurveyJob.objects.all().delete()
 
     @patch('data_refinery_foreman.surveyor.array_express.requests.get')
     def test_experiment_object(self, mock_get):
@@ -272,17 +272,17 @@ class SurveyTestCase(TestCase):
         ae_surveyor = ArrayExpressSurveyor(self.survey_job)
         ae_surveyor.survey()
 
-        self.assertEqual(2, len(mock_send_task.mock_calls))
+        mock_send_task.assert_called_once()
         batches = Batch.objects.all()
         self.assertEqual(2, len(batches))
         downloader_jobs = DownloaderJob.objects.all()
-        self.assertEqual(2, len(downloader_jobs))
+        self.assertEqual(1, len(downloader_jobs))
 
         batch = batches[0]
         self.assertEqual(batch.survey_job.id, self.survey_job.id)
         self.assertEqual(batch.source_type, "ARRAY_EXPRESS")
         self.assertEqual(batch.size_in_bytes, -1)
-        self.assertEqual(batch.download_url, "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.raw.1.zip/C30057.CEL")  # noqa
+        self.assertEqual(batch.download_url, "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.raw.1.zip")  # noqa
         self.assertEqual(batch.raw_format, "CEL")
         self.assertEqual(batch.processed_format, "PCL")
         self.assertEqual(batch.pipeline_required, "AFFY_TO_PCL")
@@ -293,6 +293,6 @@ class SurveyTestCase(TestCase):
         self.assertEqual(batch.release_date, datetime.date(2014, 10, 31))
         self.assertEqual(batch.last_uploaded_date, datetime.date(2014, 10, 30))
         self.assertEqual(batch.name, "C30057.CEL")
-        self.assertEqual(batch.internal_location, "A-AFFY-1/AFFY_TO_PCL/")
+        self.assertEqual(batch.internal_location, "A-AFFY-1/AFFY_TO_PCL")
         self.assertEqual(batch.organism_id, 9606)
         self.assertEqual(batch.organism_name, "HOMO SAPIENS")

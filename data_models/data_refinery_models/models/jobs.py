@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.db import models
 from data_refinery_models.models.base_models import TimeTrackedModel
 from data_refinery_models.models.batches import Batch
@@ -30,6 +31,29 @@ class ProcessorJob(TimeTrackedModel):
     class Meta:
         db_table = "processor_jobs"
 
+    @classmethod
+    @transaction.atomic
+    def create_job_and_relationships(cls, *args, **kwargs):
+        """Inits and saves a job, its batches, and the relationships.
+
+        Creates and saves a single processor job. For each batch
+        passed in via the 'batches' keyword, saves that batch, creates
+        a ProcessorJobsToBatches record, and saves that record.
+        """
+        batches = kwargs.pop('batches', None)
+        this_job = cls(*args, **kwargs)
+        if batches is None:
+            raise KeyError("The 'batches' argument must be specified.")
+        else:
+            this_job.save()
+            for batch in batches:
+                batch.save()
+                processor_job_to_batch = ProcessorJobsToBatches(batch=batch,
+                                                                processor_job=this_job)
+                processor_job_to_batch.save()
+
+        return this_job
+
 
 class ProcessorJobsToBatches(TimeTrackedModel):
     """Represents a many to many relationship.
@@ -58,6 +82,29 @@ class DownloaderJob(TimeTrackedModel):
 
     class Meta:
         db_table = "downloader_jobs"
+
+    @classmethod
+    @transaction.atomic
+    def create_job_and_relationships(cls, *args, **kwargs):
+        """Inits and saves a job, its batches, and the relationships.
+
+        Creates and saves a single downloader job. For each batch
+        passed in via the 'batches' keyword, saves that batch, creates
+        a DownloaderJobsToBatches record, and saves that record.
+        """
+        batches = kwargs.pop('batches', None)
+        this_job = cls(*args, **kwargs)
+        if batches is None:
+            raise KeyError("The 'batches' argument must be specified.")
+        else:
+            this_job.save()
+            for batch in batches:
+                batch.save()
+                downloader_job_to_batch = DownloaderJobsToBatches(batch=batch,
+                                                                  downloader_job=this_job)
+                downloader_job_to_batch.save()
+
+        return this_job
 
 
 class DownloaderJobsToBatches(TimeTrackedModel):
