@@ -2,9 +2,7 @@ from django.test import TestCase
 from data_refinery_models.models import (
     SurveyJob,
     DownloaderJob,
-    DownloaderJobsToBatches,
     ProcessorJob,
-    ProcessorJobsToBatches,
     Batch,
     BatchStatuses
 )
@@ -14,7 +12,7 @@ def get_batch():
     survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
     survey_job.save()
 
-    return Batch(
+    batch = Batch(
         survey_job=survey_job,
         source_type="ARRAY_EXPRESS",
         size_in_bytes=0,
@@ -33,6 +31,8 @@ def get_batch():
         last_uploaded_date="2017-05-05",
         status=BatchStatuses.NEW.value
     )
+    batch.save()
+    return batch
 
 
 class DownloaderJobTestCase(TestCase):
@@ -40,15 +40,14 @@ class DownloaderJobTestCase(TestCase):
         """DownloaderJob, Batches, and relationships are created."""
         batches = [get_batch(), get_batch()]
 
-        downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
+        downloader_job = DownloaderJob.create_job_and_relationships(batches=batches,
+                                                                    downloader_task="test")
         self.assertIsInstance(downloader_job.id, int)
 
-        # If the two batch_relations got saved to the database then
-        # the so must have the batches themselves so no need to test
-        # that explicitly
-        batch_relations = DownloaderJobsToBatches.objects.filter(
-            downloader_job_id=downloader_job.id)
-        self.assertEqual(len(batch_relations), 2)
+        batches_for_job = downloader_job.batches.all()
+        self.assertEqual(len(batches_for_job), 2)
+
+        self.assertEqual(batches[0].downloaderjob_set.get(), downloader_job)
 
 
 class ProcessorJobTestCase(TestCase):
@@ -60,9 +59,7 @@ class ProcessorJobTestCase(TestCase):
                                                                   pipeline_applied="AFFY_TO_PCL")
         self.assertIsInstance(processor_job.id, int)
 
-        # If the two batch_relations got saved to the database then
-        # the so must have the batches themselves so no need to test
-        # that explicitly
-        batch_relations = ProcessorJobsToBatches.objects.filter(
-            processor_job_id=processor_job.id)
-        self.assertEqual(len(batch_relations), 2)
+        batches_for_job = processor_job.batches.all()
+        self.assertEqual(len(batches_for_job), 2)
+
+        self.assertEqual(batches[0].processorjob_set.get(), processor_job)

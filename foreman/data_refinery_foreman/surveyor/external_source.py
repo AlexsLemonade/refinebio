@@ -8,7 +8,6 @@ from data_refinery_models.models import (
     Batch,
     BatchStatuses,
     DownloaderJob,
-    DownloaderJobsToBatches,
     SurveyJob
 )
 from data_refinery_foreman.surveyor.message_queue import app

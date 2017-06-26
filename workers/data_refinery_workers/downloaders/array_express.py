@@ -9,8 +9,7 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 from data_refinery_models.models import (
     Batch,
-    DownloaderJob,
-    DownloaderJobsToBatches
+    DownloaderJob
 )
 from data_refinery_common import file_management
 from data_refinery_workers.downloaders import utils
@@ -77,10 +76,8 @@ def _extract_file(batches: List[Batch], job_id: int) -> None:
 @shared_task
 def download_array_express(job_id: int) -> None:
     job = utils.start_job(job_id)
+    batches = list(job.batches.all())
     success = True
-
-    batch_relations = DownloaderJobsToBatches.objects.filter(downloader_job_id=job_id)
-    batches = [br.batch for br in batch_relations]
 
     if len(batches) > 0:
         target_directory = file_management.get_temp_dir(batches[0], str(job_id))

@@ -7,8 +7,7 @@ from data_refinery_models.models import (
     Batch,
     BatchStatuses,
     DownloaderJob,
-    ProcessorJob,
-    ProcessorJobsToBatches
+    ProcessorJob
 )
 from data_refinery_workers.processors.processor_registry \
     import processor_pipeline_registry
@@ -27,12 +26,12 @@ def start_job(job_id: int) -> DownloaderJob:
     """
     logger.info("Starting job with id: %s.", job_id)
     try:
-        job = DownloaderJob.objects.get(id=job_id)
+        job = DownloaderJob.objects.get(pk=job_id)
     except ObjectDoesNotExist:
         logger.error("Cannot find downloader job record with ID %d.", job_id)
         raise
 
-    job.worker_id = str(current_process().index)
+    job.worker_id = current_process().name
     job.start_time = timezone.now()
     job.save()
 
@@ -51,11 +50,8 @@ def end_job(job: DownloaderJob, batches: Batch, success):
         batch.save()
 
         logger.debug("Creating processor job for batch #%d.", batch.id)
-        processor_job = ProcessorJob(pipeline_applied=batch.pipeline_required)
-        processor_job.save()
-        processor_job_to_batch = ProcessorJobsToBatches(batch=batch,
-                                                        processor_job=processor_job)
-        processor_job_to_batch.save()
+        processor_job = ProcessorJob.create_job_and_relationships(
+            batches=[batch], pipeline_applied=batch.pipeline_required)
         return processor_job
 
     @retry(stop_max_attempt_number=3)

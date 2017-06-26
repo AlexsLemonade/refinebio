@@ -6,8 +6,6 @@ from data_refinery_models.models.batches import (
 )
 from data_refinery_models.models.jobs import (
     DownloaderJob,
-    ProcessorJob,
-    DownloaderJobsToBatches,
-    ProcessorJobsToBatches
+    ProcessorJob
 )
 from data_refinery_models.models.organism import Organism

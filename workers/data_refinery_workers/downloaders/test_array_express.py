@@ -6,9 +6,7 @@ from data_refinery_models.models import (
     Batch,
     BatchStatuses,
     DownloaderJob,
-    DownloaderJobsToBatches,
-    ProcessorJob,
-    ProcessorJobsToBatches
+    ProcessorJob
 )
 from data_refinery_workers.downloaders import array_express
 
@@ -78,14 +76,7 @@ class DownloadArrayExpressTestCase(TestCase):
         batch.save()
         batch2.save()
 
-        downloader_job = DownloaderJob()
-        downloader_job.save()
-        downloader_job_to_batch = DownloaderJobsToBatches(batch=batch,
-                                                          downloader_job=downloader_job)
-        downloader_job_to_batch.save()
-        downloader_job_to_batch2 = DownloaderJobsToBatches(batch=batch2,
-                                                           downloader_job=downloader_job)
-        downloader_job_to_batch2.save()
+        downloader_job = DownloaderJob.create_job_and_relationships(batches=[batch, batch2])
 
         # Call the task we're testing:
         array_express.download_array_express.apply(args=(downloader_job.id,)).get()
@@ -111,5 +102,3 @@ class DownloadArrayExpressTestCase(TestCase):
 
         processor_jobs = ProcessorJob.objects.all()
         self.assertEqual(len(processor_jobs), 2)
-        processor_jobs_to_batches = ProcessorJobsToBatches.objects.all()
-        self.assertEqual(len(processor_jobs_to_batches), 2)
