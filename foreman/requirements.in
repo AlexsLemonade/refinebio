@@ -4,3 +4,4 @@ psycopg2
 requests
 GEOparse
 retrying
+boto
