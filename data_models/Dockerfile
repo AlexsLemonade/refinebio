@@ -16,5 +16,3 @@ RUN ls
 ENTRYPOINT ["python3.6", "manage.py"]
 
 CMD ["migrate"]
-
-# CMD sleep 10000
