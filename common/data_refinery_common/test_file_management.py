@@ -48,18 +48,18 @@ class FilesTestCase(TestCase):
 
         self.assertEqual(raw_dir, "/home/user/data_store/raw/A-AFFY-141/AFFY_TO_PCL")
 
-    def test_download_path_s3(self):
+    def test_raw_download_path_s3(self):
         file_management.USE_S3 = True
         batch = Batch.objects.get(pk=1)
-        download_path = file_management.get_download_path(batch)
+        download_path = file_management.get_raw_download_path(batch)
         correct_path = "raw/A-AFFY-141/AFFY_TO_PCL/E-GEOD-59071.raw.3.zip"
 
         self.assertEqual(download_path, correct_path)
 
-    def test_download_path_no_s3(self):
+    def test_raw_download_path_no_s3(self):
         file_management.USE_S3 = False
         batch = Batch.objects.get(pk=1)
-        download_path = file_management.get_download_path(batch)
+        download_path = file_management.get_raw_download_path(batch)
         correct_path = "/home/user/data_store/raw/A-AFFY-141/AFFY_TO_PCL/E-GEOD-59071.raw.3.zip"
 
         self.assertEqual(download_path, correct_path)
@@ -118,7 +118,7 @@ class FilesTestCase(TestCase):
         file_management.USE_S3 = True
         batch = Batch.objects.get(pk=1)
         processed_path = file_management.get_processed_path(batch)
-        correct_path = "processed/A-AFFY-141/AFFY_TO_PCL/GSM1426072.CEL"
+        correct_path = "processed/A-AFFY-141/AFFY_TO_PCL/GSM1426072.PCL"
 
         self.assertEqual(processed_path, correct_path)
 
@@ -126,6 +126,6 @@ class FilesTestCase(TestCase):
         file_management.USE_S3 = False
         batch = Batch.objects.get(pk=1)
         processed_path = file_management.get_processed_path(batch)
-        correct_path = "/home/user/data_store/processed/A-AFFY-141/AFFY_TO_PCL/GSM1426072.CEL"
+        correct_path = "/home/user/data_store/processed/A-AFFY-141/AFFY_TO_PCL/GSM1426072.PCL"
 
         self.assertEqual(processed_path, correct_path)
