@@ -7,6 +7,5 @@ jobs:
     steps:
       - checkout
       - run: ./data_models/install.sh
-      - run: ./data_models
-      - run: env $(cat data_models/environments/test | xargs) python3.5 data_models/manage.py migrate
+      - run: ./data_models/make_migrations.sh
       - run: ./data_models/run_tests.sh
