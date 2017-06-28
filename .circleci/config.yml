@@ -6,6 +6,6 @@ jobs:
       - image: circleci/postgres:9.4
     steps:
       - checkout
-      - run: ./data_models/install.sh
+      # - run: ./data_models/install.sh
       - run: ./data_models/make_migrations.sh
       - run: ./data_models/run_tests.sh
