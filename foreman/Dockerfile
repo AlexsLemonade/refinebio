@@ -25,4 +25,4 @@ USER user
 
 ENTRYPOINT ["python3.6", "manage.py"]
 
-CMD ["start"]
+CMD ["survey"]
