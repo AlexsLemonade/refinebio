@@ -277,7 +277,7 @@ class SurveyTestCase(TestCase):
         ae_surveyor = ArrayExpressSurveyor(self.survey_job)
         ae_surveyor.survey()
 
-        self.assertEqual(1, len(mock_send_task.mock_calls))
+        mock_send_task.assert_called_once()
         batches = Batch.objects.all()
         self.assertEqual(2, len(batches))
         downloader_jobs = DownloaderJob.objects.all()
