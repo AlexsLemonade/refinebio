@@ -12,7 +12,7 @@ jobs:
     steps:
       - checkout
       - setup-remote-docker
-      - run: sudo apt-get update && sudo apt-get install -f -y postgresql-client
+      - run: sleep 10
       - run: ./data_models/run_tests.sh
       - run: ./foreman/run_tests.sh
       - run: ./common/run_tests.sh
