@@ -9,5 +9,6 @@ jobs:
       # - run: ./data_models/install.sh
       - setup-remote-docker
       - run: pwd
+      - run: ls data_models/data_refinery_models
       - run: ./data_models/make_migrations.sh
-      - run: ./data_models/run_tests.sh
+      # - run: ./data_models/run_tests.sh

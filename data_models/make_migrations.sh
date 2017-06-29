@@ -6,9 +6,10 @@
 # This script should always run as if it were being called from
 # the directory it lives in.
 script_directory=`dirname "${BASH_SOURCE[0]}"  | xargs realpath`
-echo "SCRIPT DIRECTORY!!!!!!!!!!!!!!!!!!"
-echo $script_directory
 cd $script_directory
+pwd
+
+ls data_refinery_models
 
 docker build -t dr_models -f Dockerfile .
 
@@ -19,10 +20,10 @@ docker run \
        --add-host=database:$HOST_IP \
        --env-file environments/dev \
        --interactive \
-       dr_models makemigrations data_refinery_models
+       dr_models #makemigrations data_refinery_models
 
-docker run \
-       --volume $script_directory/data_refinery_models:/home/user/data_refinery_models \
-       --add-host=database:$HOST_IP \
-       --env-file environments/dev \
-       dr_models
+# docker run \
+#        --volume $script_directory/data_refinery_models:/home/user/data_refinery_models \
+#        --add-host=database:$HOST_IP \
+#        --env-file environments/dev \
+#        dr_models
