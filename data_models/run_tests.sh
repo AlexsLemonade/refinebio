@@ -14,4 +14,5 @@ HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 docker run \
        --add-host=database:$HOST_IP \
        --env-file environments/test \
+       -v /var/run/docker.sock:/var/run/docker.sock \
        -i models_tests "$@"

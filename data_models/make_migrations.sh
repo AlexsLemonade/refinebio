@@ -17,10 +17,12 @@ docker run \
        --add-host=database:$HOST_IP \
        --env-file environments/dev \
        --interactive \
+       -v /var/run/docker.sock:/var/run/docker.sock \
        dr_models makemigrations data_refinery_models
 
 docker run \
        --volume $script_directory/data_refinery_models:/home/user/data_refinery_models \
        --add-host=database:$HOST_IP \
        --env-file environments/dev \
+       -v /var/run/docker.sock:/var/run/docker.sock \
        dr_models
