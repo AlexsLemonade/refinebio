@@ -1,7 +1,7 @@
 version: 2
 jobs:
   build:
-    working_directory: ~/data_refinery
+    working_directory: /data_refinery
     docker:
       - image: circleci/python:3.6
     steps:
