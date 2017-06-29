@@ -8,6 +8,6 @@ jobs:
       - checkout
       # - run: ./data_models/install.sh
       - setup-remote-docker
-      - run: ls data_models/data_refinery_models
+      - run: pwd
       - run: ./data_models/make_migrations.sh
       - run: ./data_models/run_tests.sh
