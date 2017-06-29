@@ -13,8 +13,6 @@ USER user
 
 RUN ls -lah
 
-# ENTRYPOINT ["python3.6", "manage.py"]
+ENTRYPOINT ["python3.6", "manage.py"]
 
-# CMD ["migrate"]
-# CMD ["ls", "data_refinery_models"]
-CMD ls -lah data_refinery_models
+CMD ["migrate"]

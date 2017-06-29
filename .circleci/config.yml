@@ -4,11 +4,16 @@ jobs:
     working_directory: /home/circleci/data_refinery
     docker:
       - image: circleci/python:3.6
+      - image: circleci/postgres
+        environment:
+          POSTGRES_USER: data_refinery_user
+          POSTGRES_DB: data_refinery
+          POSTGRES_PASSWORD: data_refinery_password
     steps:
       - checkout
-      # - run: ./data_models/install.sh
       - setup-remote-docker
-      - run: pwd
-      - run: ls data_models/data_refinery_models
-      - run: ./data_models/make_migrations.sh
-      # - run: ./data_models/run_tests.sh
+      - run: sudo apt-get update && sudo apt-get install -f -y postgresql-client
+      - run: ./data_models/run_tests.sh
+      - run: ./foreman/run_tests.sh
+      - run: ./common/run_tests.sh
+      - run: ./workers/run_tests.sh
