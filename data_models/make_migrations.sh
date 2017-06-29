@@ -6,6 +6,8 @@
 # This script should always run as if it were being called from
 # the directory it lives in.
 script_directory=`dirname "${BASH_SOURCE[0]}"  | xargs realpath`
+echo "SCRIPT DIRECTORY!!!!!!!!!!!!!!!!!!"
+echo $script_directory
 cd $script_directory
 
 docker build -t dr_models -f Dockerfile .
