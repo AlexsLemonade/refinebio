@@ -2,18 +2,24 @@ version: 2
 jobs:
   build:
     working_directory: /home/circleci/data_refinery
-    docker:
-      - image: circleci/python:3.6
-      - image: circleci/postgres
-        environment:
-          POSTGRES_USER: data_refinery_user
-          POSTGRES_DB: data_refinery
-          POSTGRES_PASSWORD: data_refinery_password
-          POSTGRES_HOST: 127.0.0.1
+    machine: true
+    # docker:
+    #   - image: circleci/python:3.6
+      # - image: circleci/postgres
+      #   environment:
+      #     POSTGRES_USER: data_refinery_user
+      #     POSTGRES_DB: data_refinery
+      #     POSTGRES_PASSWORD: data_refinery_password
+      #     POSTGRES_HOST: 127.0.0.1
     steps:
       - checkout
-      - setup-remote-docker
+      # - setup-remote-docker
+      - run: docker run --name postgres -d --env-file .circleci/postgres_env circleci/postgres
       - run: sudo apt-get update && sudo apt-get install -f -y postgresql-client
+      - run: docker ps
+      - run: docker network inspect bridge
+      # - run: docker network ls
+      # - run: docker container inspect $( docker ps | grep postgres | awk -F" "  '{print $NF}' )
       - run: ./.circleci/wait_for_postgres.sh
       - run: ./data_models/run_tests.sh
       - run: ./foreman/run_tests.sh
