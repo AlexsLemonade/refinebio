@@ -9,8 +9,8 @@ cd $script_directory
 
 docker build -t models_tests -f Dockerfile.tests .
 
-# HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
-HOST_IP=127.0.0.1
+HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
+# HOST_IP=127.0.0.1
 
 docker run \
        --add-host=database:$HOST_IP \
