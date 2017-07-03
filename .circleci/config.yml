@@ -12,8 +12,8 @@ jobs:
       - run: sudo -u postgres psql data_refinery -c 'GRANT ALL PRIVILEGES ON DATABASE data_refinery TO data_refinery_user;'
       - run: sudo -u postgres psql data_refinery -c 'ALTER USER data_refinery_user CREATEDB;'
       - run: ./data_models/run_tests.sh
-      - run: ./common/run_tests.sh
       - run: cd data_models && python setup.py sdist
+      - run: ./common/run_tests.sh
       - run: cd common && python setup.py sdist
       - run: ./foreman/run_tests.sh
       - run: ./workers/run_tests.sh
