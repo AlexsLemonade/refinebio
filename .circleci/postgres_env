@@ -1,4 +1,0 @@
-POSTGRES_USER=data_refinery_user
-POSTGRES_DB=data_refinery
-POSTGRES_PASSWORD=data_refinery_password
-POSTGRES_HOST=127.0.0.1
