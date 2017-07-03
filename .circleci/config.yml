@@ -3,30 +3,17 @@ jobs:
   build:
     working_directory: /home/circleci/data_refinery
     machine: true
-    # docker:
-    #   - image: circleci/python:3.6
-      # - image: circleci/postgres
-      #   environment:
-      #     POSTGRES_USER: data_refinery_user
-      #     POSTGRES_DB: data_refinery
-      #     POSTGRES_PASSWORD: data_refinery_password
-      #     POSTGRES_HOST: 127.0.0.1
     steps:
       - checkout
-      - run: sudo service postgresql start
-      - run: ./.circleci/wait_for_postgres.sh
+      # - run: sudo service postgresql start
+      # - run: ./.circleci/wait_for_postgres.sh
       - run: sudo -u postgres createdb data_refinery
       - run: sudo -u postgres psql data_refinery -c "CREATE ROLE data_refinery_user WITH LOGIN PASSWORD 'data_refinery_password';"
       - run: sudo -u postgres psql data_refinery -c 'GRANT ALL PRIVILEGES ON DATABASE data_refinery TO data_refinery_user;'
       - run: sudo -u postgres psql data_refinery -c 'ALTER USER data_refinery_user CREATEDB;'
-      # - run: docker run --name postgres -d --env-file .circleci/postgres_env circleci/postgres
-      # - run: sudo apt-get update && sudo apt-get install -f -y postgresql-client
-      # - run: sudo -u postgres ./data_models/install.sh
-      # - run: docker ps
-      # - run: docker network inspect bridge
-      # - run: docker network ls
-      # - run: docker container inspect $( docker ps | grep postgres | awk -F" "  '{print $NF}' )
       - run: ./data_models/run_tests.sh
-      - run: ./foreman/run_tests.sh
       - run: ./common/run_tests.sh
+      - run: cd data_models && python setup.py sdist
+      - run: cd common && python setup.py sdist
+      - run: ./foreman/run_tests.sh
       - run: ./workers/run_tests.sh
