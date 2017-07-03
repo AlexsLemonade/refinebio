@@ -90,6 +90,8 @@ class ExternalSourceSurveyor:
             batch.internal_location = os.path.join(batch.platform_accession_code,
                                                    batch.pipeline_required)
 
+            batch.save()
+
         @retry(stop_max_attempt_number=3)
         @transaction.atomic
         def save_batches_start_job():

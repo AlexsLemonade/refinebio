@@ -47,7 +47,7 @@ def run_job(survey_job: SurveyJob):
     _start_job(survey_job)
 
     try:
-        surveyor = _get_surveyor_for_source(survey_job)
+        surveyor = get_surveyor_for_source(survey_job)
     except SourceNotSupportedError as e:
         logger.error("Unable to run survey job #%d because: %s",
                      survey_job.id,
