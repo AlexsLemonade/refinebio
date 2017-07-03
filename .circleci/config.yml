@@ -5,7 +5,7 @@ jobs:
     machine: true
     steps:
       - checkout
-      # - run: sudo service postgresql start
+      - run: sudo service postgresql start
       # - run: ./.circleci/wait_for_postgres.sh
       - run: sudo -u postgres createdb data_refinery
       - run: sudo -u postgres psql data_refinery -c "CREATE ROLE data_refinery_user WITH LOGIN PASSWORD 'data_refinery_password';"
