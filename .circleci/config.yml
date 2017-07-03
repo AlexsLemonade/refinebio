@@ -16,7 +16,7 @@ jobs:
       # - setup-remote-docker
       - run: docker run --name postgres -d --env-file .circleci/postgres_env circleci/postgres
       - run: sudo apt-get update && sudo apt-get install -f -y postgresql-client
-      - run: ./data_models/install.sh
+      - run: sudo -u postgres ./data_models/install.sh
       # - run: docker ps
       # - run: docker network inspect bridge
       # - run: docker network ls
