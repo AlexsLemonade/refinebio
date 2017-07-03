@@ -14,10 +14,22 @@ jobs:
     steps:
       - checkout
       # - setup-remote-docker
-      - run: docker run --name postgres -d --env-file .circleci/postgres_env circleci/postgres
-      - run: sudo apt-get update && sudo apt-get install -f -y postgresql-client
+      - run: sudo service postgresql stop && sudo apt-get remove -y
+      - run: postgresql-9.4 && sudo apt-get update; sudo apt-get install -y
+      - run: postgresql-9.3 postgresql-contrib-9.3
+      - run: sudo sed -i "s/\port = 5433/port = 5432/"
+      - run: /etc/postgresql/9.3/main/postgresql.conf
+      - run: sudo cp /etc/postgresql/9.4/main/pg_hba.conf
+      - run: /etc/postgresql/9.3/main/pg_hba.conf
+      - run: sudo service postgresql restart
+      - run: sudo -u postgres createuser ubuntu -d --superuser
+      - run: createdb circle_test
+      - run: createdb ubuntu
+      - run: createdb data_refinery
+      # - run: docker run --name postgres -d --env-file .circleci/postgres_env circleci/postgres
+      # - run: sudo apt-get update && sudo apt-get install -f -y postgresql-client
       - run: ./.circleci/wait_for_postgres.sh
-      - run: sudo -u postgres ./data_models/install.sh
+      # - run: sudo -u postgres ./data_models/install.sh
       # - run: docker ps
       # - run: docker network inspect bridge
       # - run: docker network ls
