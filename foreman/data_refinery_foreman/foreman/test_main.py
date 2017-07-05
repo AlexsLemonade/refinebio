@@ -11,11 +11,10 @@ from data_refinery_models.models import (
 
 
 class SurveyTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
         survey_job.save()
-        cls.survey_job = survey_job
+        self.survey_job = survey_job
 
     def tearDown(self):
         Batch.objects.all().delete()
@@ -53,7 +52,7 @@ class SurveyTestCase(TestCase):
             num_retries=0, batches=[batch], downloader_task="dummy_task")
 
         main.requeue_downloader_job(job)
-        mock_send_task.assertCalledOnce()
+        mock_send_task.assert_called_once()
 
         jobs = DownloaderJob.objects.order_by('id')
         self.assertTrue(jobs[0].retried)

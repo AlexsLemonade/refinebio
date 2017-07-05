@@ -1,6 +1,7 @@
 import time
 from typing import Callable
 from threading import Thread
+from functools import wraps
 from retrying import retry
 from datetime import timedelta
 from django.db import transaction
@@ -76,18 +77,21 @@ def handle_downloader_jobs(jobs: DownloaderJob) -> None:
 
 
 def do_forever(min_loop_time: int) -> Callable:
-    def wrapper(function: Callable):
-        while(True):
-            start_time = timezone.now()
+    def decorator(function: Callable) -> Callable:
+        @wraps(function)
+        def wrapper():
+            while(True):
+                start_time = timezone.now()
 
-            function()
+                function()
 
-            loop_time = timezone.now() - start_time
-            if loop_time < min_loop_time:
-                remaining_time = MIN_LOOP_TIME - loop_time
-                time.sleep(remaining_time.seconds)
+                loop_time = timezone.now() - start_time
+                if loop_time < min_loop_time:
+                    remaining_time = MIN_LOOP_TIME - loop_time
+                    time.sleep(remaining_time.seconds)
 
-    return wrapper
+        return wrapper
+    return decorator
 
 
 @do_forever(MIN_LOOP_TIME)
