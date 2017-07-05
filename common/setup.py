@@ -15,7 +15,7 @@ setup(
     description="Common functionality to be shared between Data Refinery sub-projects.",
     url="https://www.greenelab.com",
     author="Kurt Wheeler",
-    author_email="kurt.wheeler91@gmail.com",
+    author_email="team@greenelab.com",
     classifiers=[
         "Environment :: Web Environment",
         "Framework :: Django",

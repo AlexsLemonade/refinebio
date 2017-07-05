@@ -14,7 +14,7 @@ setup(
                  + ' the Data Refinery Project.'),
     url='https://github.com/data-refinery/data_refinery/tree/master/workers',
     author='Kurt Wheeler',
-    author_email='kurt.wheeler91@gmail.com',
+    author_email='team@greenelab.com',
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django',

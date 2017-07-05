@@ -1,13 +1,3 @@
-"""This processor is currently out of date. It is designed to process
-multiple CEL files at a time, but that is not how we are going to
-process Array Express files. I have rewritten the Array Express
-surveyor/downloader to support this, but we don't have the new
-processor yet. This will run, which is good enough for testing
-the system, however since it will change so much the processor
-itself is not yet tested.
-"""
-
-
 from __future__ import absolute_import, unicode_literals
 from typing import Dict
 import rpy2.robjects as ro
@@ -41,25 +31,21 @@ def cel_to_pcl(kwargs: Dict):
         kwargs["success"] = False
         return kwargs
 
-    raw_file = file_management.get_temp_pre_path(batch)
-    processed_file = file_management.get_temp_post_path(batch)
+    temp_dir = file_management.get_temp_dir(batch)
+    output_file = file_management.get_temp_post_path(batch)
 
-    # It's necessary to load the foreach library before calling SCANfast
-    # because it doesn't load the library before calling functions
-    # from it.
-    ro.r("library('foreach')")
-
-    ro.r['::']('SCAN.UPC', 'SCANfast')(
-        raw_file,
-        processed_file
-    )
+    ro.r('source("/home/user/r_processors/cel_to_pcl.R")')
+    ro.r['ProcessCelFiles'](
+        temp_dir,
+        "Hs",  # temporary until organism handling is more defined
+        output_file)
 
     try:
         file_management.upload_processed_file(batch)
     except Exception:
         logging.exception(("Exception caught while uploading processed file %s for batch %d"
                            " during Job #%d."),
-                          processed_file,
+                          output_file,
                           batch.id,
                           kwargs["job_id"])
         kwargs["success"] = False
@@ -75,7 +61,7 @@ def cel_to_pcl(kwargs: Dict):
         # so the problem can be identified and the raw files cleaned up.
         logging.exception(("Exception caught while uploading processed file %s for batch %d"
                            " during Job #%d."),
-                          processed_file,
+                          output_file,
                           batch.id,
                           kwargs["job_id"])
 
