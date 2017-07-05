@@ -22,7 +22,7 @@ class WorkerJob(TimeTrackedModel):
 
     # This field indicates whether or not this job has been retried
     # already or not.
-    retried = models.BooleanField(default=True)
+    retried = models.BooleanField(default=False)
 
     # This point of this field is to identify which worker ran the
     # job. A few fields may actually be required or something other
