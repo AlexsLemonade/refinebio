@@ -130,7 +130,6 @@ def upload_raw_file(batch: Batch, dir_name: str = None) -> None:
 def download_raw_file(batch: Batch, dir_name: str = None) -> None:
     """Moves the batch's raw file to the temp directory.
 
-
     Depending on the value of the USE_S3 environment variable this
     will either move the batch's raw file from the RAW_PREFIX directory
     or from S3.
