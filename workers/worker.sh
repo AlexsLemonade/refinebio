@@ -26,6 +26,8 @@ docker run \
        --link message-queue:rabbit \
        --name worker1 \
        --add-host=database:$HOST_IP \
+       --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+       --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
        --env-file workers/environments/dev \
        --volume $volume_directory:/home/user/data_store \
        --detach \

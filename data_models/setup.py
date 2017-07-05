@@ -6,14 +6,14 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='data-refinery-models',
-    version='0.1',
+    version='0.1.0',
     packages=find_packages(),
     include_package_data=True,
     license='BSD License',
     description='An abstracted database model for the Data Refinery project',
     url='https://www.greenelab.com',
     author='Kurt Wheeler',
-    author_email='kurt.wheeler91@gmail.com',
+    author_email='team@greenelab.com',
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django',

@@ -5,8 +5,7 @@
 # By default the Docker container will be for the foreman project.
 # This can be changed by modifying the --env-file command line arg,
 # changing foreman/Dockerfile to the appropriate Dockerfile,
-# changing the volume_directory path,
-# and by modifying the Dockerfile.shell file appropriately.
+# and changing the volume_directory path.
 
 # This script should always run as if it were being called from
 # the directory it lives in.
@@ -27,6 +26,8 @@ HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 docker run \
        --link message-queue:rabbit \
        --add-host=database:$HOST_IP \
+       --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+       --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
        --env-file foreman/environments/dev \
        --volume /tmp:/tmp \
        --volume $volume_directory:/home/user/data_store \

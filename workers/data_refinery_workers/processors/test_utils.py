@@ -30,7 +30,7 @@ def init_batch():
         platform_accession_code="A-AFFY-1",
         experiment_accession_code="E-MTAB-3050",
         experiment_title="It doesn't really matter.",
-        name="CE1234",
+        name="CE1234.CEL",
         internal_location="A-AFFY-1/MICRO_ARRAY_TO_PCL/",
         organism_id=9606,
         organism_name="HOMO SAPIENS",
@@ -44,7 +44,7 @@ class StartJobTestCase(TestCase):
     def test_success(self):
         batch = init_batch()
         batch2 = copy.deepcopy(batch)
-        batch2.name = "CE2345"
+        batch2.name = "CE2345.CEL"
         batch.save()
         batch2.save()
 
@@ -77,7 +77,7 @@ class EndJobTestCase(TestCase):
     def test_success(self):
         batch = init_batch()
         batch2 = copy.deepcopy(batch)
-        batch2.name = "CE2345"
+        batch2.name = "CE2345.CEL"
         batch.save()
         batch2.save()
 
@@ -98,7 +98,7 @@ class EndJobTestCase(TestCase):
     def test_failure(self):
         batch = init_batch()
         batch2 = copy.deepcopy(batch)
-        batch2.name = "CE2345"
+        batch2.name = "CE2345.CEL"
         batch.save()
         batch2.save()
 

@@ -35,9 +35,7 @@ class DownloadArrayExpressTestCase(TestCase):
     @patch("data_refinery_workers.downloaders.array_express._verify_batch_grouping")
     @patch("data_refinery_workers.downloaders.array_express._download_file")
     @patch("data_refinery_workers.downloaders.array_express._extract_file")
-    @patch("data_refinery_workers.downloaders.array_express.utils.prepare_destination")
     def test_download(self,
-                      prepare_destination,
                       _extract_file,
                       _download_file,
                       _verify_batch_grouping,
@@ -48,8 +46,6 @@ class DownloadArrayExpressTestCase(TestCase):
         mock_processor_task.delay.return_value = None
         pipeline_registry.__getitem__ = MagicMock()
         pipeline_registry.__getitem__.return_value = mock_processor_task
-        target_file_path = "target_file_path"
-        prepare_destination.return_value = "target_file_path"
 
         # Set up database records:
         survey_job = SurveyJob(
@@ -57,7 +53,7 @@ class DownloadArrayExpressTestCase(TestCase):
         )
         survey_job.save()
 
-        download_url = "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip/GSM1426072_CD_colon_active_2.CEL"  # noqa
+        download_url = "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip"  # noqa
         batch = Batch(
             survey_job=survey_job,
             source_type="ARRAY_EXPRESS",
@@ -69,8 +65,8 @@ class DownloadArrayExpressTestCase(TestCase):
             platform_accession_code="A-AFFY-1",
             experiment_accession_code="E-MTAB-3050",
             experiment_title="It doesn't really matter.",
-            name="CE1234",
-            internal_location="A-AFFY-1/MICRO_ARRAY_TO_PCL/",
+            name="CE1234.CEL",
+            internal_location="A-AFFY-1/AFFY_TO_PCL/",
             organism_id=9606,
             organism_name="HOMO SAPIENS",
             release_date="2017-05-05",
@@ -78,7 +74,7 @@ class DownloadArrayExpressTestCase(TestCase):
             status=BatchStatuses.NEW.value
         )
         batch2 = copy.deepcopy(batch)
-        batch2.name = "CE2345"
+        batch2.name = "CE2345.CEL"
         batch.save()
         batch2.save()
 
@@ -94,11 +90,13 @@ class DownloadArrayExpressTestCase(TestCase):
         # Call the task we're testing:
         array_express.download_array_express.apply(args=(downloader_job.id,)).get()
 
+        target_file_path = ("/home/user/data_store/temp/A-AFFY-1/AFFY_TO_PCL/{}"
+                            "/E-GEOD-59071.raw.3.zip").format(str(downloader_job.id))
+
         # Verify that all expected functionality is run:
-        prepare_destination.assert_called_once()
         _verify_batch_grouping.assert_called_once()
         _download_file.assert_called_with(download_url, target_file_path, downloader_job.id)
-        _extract_file.assert_called_with(target_file_path, downloader_job.id)
+        _extract_file.assert_called_with([batch, batch2], downloader_job.id)
 
         mock_processor_task.delay.assert_called()
 

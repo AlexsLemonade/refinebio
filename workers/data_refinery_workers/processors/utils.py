@@ -7,9 +7,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# This path is within the Docker container.
-ROOT_URI = "/home/user/data_store"
-
 
 def start_job(kwargs: Dict):
     """A processor function to start jobs.
@@ -96,9 +93,18 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
     last_result = start_value
     last_result["job"] = job
     for processor in pipeline:
-        last_result = processor(last_result)
+        try:
+            last_result = processor(last_result)
+        except Exception:
+            logging.exception(("Unhandled exception caught while running processor %s in pipeline"
+                               " for job #%d."),
+                              processor.__name__,
+                              job_id)
+            last_result["success"] = False
+            end_job(last_result)
         if "success" in last_result and last_result["success"] is False:
-            logger.error("Processor %s failed. Terminating pipeline.",
-                         processor.__name__)
+            logger.error("Processor %s failed. Terminating pipeline for job %d.",
+                         processor.__name__,
+                         job_id)
             end_job(last_result)
             break

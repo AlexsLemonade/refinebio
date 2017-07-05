@@ -1,36 +1,71 @@
 from __future__ import absolute_import, unicode_literals
-import os
 from typing import Dict
 import rpy2.robjects as ro
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from data_refinery_workers.processors import utils
+from data_refinery_common import file_management
+import logging
 
 logger = get_task_logger(__name__)
 
 
 def cel_to_pcl(kwargs: Dict):
+    """Process .CEL files to .PCL format using R.
+
+    Moves the .CEL file from the raw directory to the temp directory,
+    calls ProcessCelFiles, uploads the processed file, and cleans up
+    the raw/temp files. Because it uses the file_management module
+    this works seamlessly whether S3 is being used or not.
+    """
     # Array Express processor jobs have one batch per job.
     batch = kwargs["batches"][0]
 
-    raw_file = os.path.join(utils.ROOT_URI, "raw", batch.internal_location, batch.name)
+    try:
+        file_management.download_raw_file(batch)
+    except Exception:
+        logging.exception("Exception caught while retrieving %s for batch %d during Job #%d.",
+                          file_management.get_raw_path(batch),
+                          batch.id,
+                          kwargs["job_id"])
+        kwargs["success"] = False
+        return kwargs
 
-    target_directory = os.path.join(utils.ROOT_URI, "processed", batch.internal_location)
-    os.makedirs(target_directory, exist_ok=True)
+    temp_dir = file_management.get_temp_dir(batch)
+    output_file = file_management.get_temp_post_path(batch)
 
-    processed_file = os.path.join(target_directory, batch.name.split(".")[0])
-    processed_file = processed_file + "." + batch.processed_format
+    ro.r('source("/home/user/r_processors/cel_to_pcl.R")')
+    ro.r['ProcessCelFiles'](
+        temp_dir,
+        "Hs",  # temporary until organism handling is more defined
+        output_file)
 
-    # It's necessary to load the foreach library before calling SCANfast
-    # because it doesn't load the library before calling functions
-    # from it.
-    ro.r("library('foreach')")
+    try:
+        file_management.upload_processed_file(batch)
+    except Exception:
+        logging.exception(("Exception caught while uploading processed file %s for batch %d"
+                           " during Job #%d."),
+                          output_file,
+                          batch.id,
+                          kwargs["job_id"])
+        kwargs["success"] = False
+        return kwargs
+    finally:
+        file_management.remove_temp_directory(batch)
 
-    ro.r['::']('SCAN.UPC', 'SCANfast')(
-        raw_file,
-        processed_file
-    )
+    try:
+        file_management.remove_raw_files(batch)
+    except:
+        # If we fail to remove the raw files, the job is still done
+        # enough to call a success. However logging will be important
+        # so the problem can be identified and the raw files cleaned up.
+        logging.exception(("Exception caught while uploading processed file %s for batch %d"
+                           " during Job #%d."),
+                          output_file,
+                          batch.id,
+                          kwargs["job_id"])
 
+    kwargs["success"] = True
     return kwargs
 
 

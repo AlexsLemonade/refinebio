@@ -13,8 +13,10 @@ from data_refinery_models.models import (
     DownloaderJob,
     DownloaderJobsToBatches
 )
+from data_refinery_common import file_management
 from data_refinery_workers.downloaders import utils
 import logging
+
 
 logger = get_task_logger(__name__)
 
@@ -22,7 +24,7 @@ logger = get_task_logger(__name__)
 CHUNK_SIZE = 1024 * 256
 
 
-def _verify_batch_grouping(batches: List[Batch], job_id):
+def _verify_batch_grouping(batches: List[Batch], job_id: int) -> None:
     """All batches in the same job should have the same downloader url"""
     for batch in batches:
         if batch.download_url != batches[0].download_url:
@@ -32,7 +34,7 @@ def _verify_batch_grouping(batches: List[Batch], job_id):
             raise ValueError("A batch doesn't have the same download url as other batches.")
 
 
-def _download_file(download_url, file_path, job_id):
+def _download_file(download_url: str, file_path: str, job_id: int) -> None:
     try:
         logger.debug("Downloading file from %s to %s. (Job #%d)",
                      download_url,
@@ -49,22 +51,32 @@ def _download_file(download_url, file_path, job_id):
         target_file.close()
 
 
-def _extract_file(file_path, job_id):
+def _extract_file(batches: List[Batch], job_id: int) -> None:
+    """Extract zip from temp directory and move to raw directory."""
+    # zip_path and local_dir should be common to all batches in the group
+    zip_path = file_management.get_temp_download_path(batches[0], str(job_id))
+    local_dir = file_management.get_temp_dir(batches[0], str(job_id))
+
+    logger.debug("Extracting %s for job %d.", zip_path, job_id)
+
     try:
-        zip_ref = zipfile.ZipFile(file_path, 'r')
-        zip_ref.extractall(os.path.dirname(file_path))
+        zip_ref = zipfile.ZipFile(zip_path, "r")
+        zip_ref.extractall(local_dir)
+
+        for batch in batches:
+            file_management.upload_raw_file(batch, str(job_id))
     except Exception:
         logging.exception("Exception caught while extracting %s during Job #%d.",
-                          file_path,
+                          zip_path,
                           job_id)
         raise
     finally:
         zip_ref.close()
-        os.remove(file_path)
+        file_management.remove_temp_directory(batches[0], str(job_id))
 
 
 @shared_task
-def download_array_express(job_id):
+def download_array_express(job_id: int) -> None:
     logger.debug("Starting job with id: %s.", job_id)
     try:
         job = DownloaderJob.objects.get(id=job_id)
@@ -79,7 +91,9 @@ def download_array_express(job_id):
     batches = [br.batch for br in batch_relations]
 
     if len(batches) > 0:
-        target_file_path = utils.prepare_destination(batches[0])
+        target_directory = file_management.get_temp_dir(batches[0], str(job_id))
+        os.makedirs(target_directory, exist_ok=True)
+        target_file_path = file_management.get_temp_download_path(batches[0], str(job_id))
         download_url = batches[0].download_url
     else:
         logger.error("No batches found for job #%d.",
@@ -94,7 +108,7 @@ def download_array_express(job_id):
             # contained within the same zip file. Therefore only
             # download the one.
             _download_file(download_url, target_file_path, job_id)
-            _extract_file(target_file_path, job_id)
+            _extract_file(batches, job_id)
         except Exception:
             # Exceptions are already logged and handled.
             # Just need to mark the job as failed.
