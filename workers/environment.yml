@@ -1,7 +1,9 @@
 name: workers
 dependencies:
   - r::r-base=3.3.1
+  - greenelab::all-entrezg-brainarray-cdfs
   - kurtwheeler::bioconductor-pd.hugene.1.0.st.v1
+  - kurtwheeler::bioconductor-pd.hg.u95av2
   - bioconda::bioconductor-oligo
   - bioconda::bioconductor-biobase
   - bioconda::bioconductor-scan.upc
