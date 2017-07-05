@@ -32,7 +32,7 @@ def start_job(job_id: int) -> DownloaderJob:
         logger.error("Cannot find downloader job record with ID %d.", job_id)
         raise
 
-    job.worker_id = str(current_process().index)
+    job.worker_id = current_process().name
     job.start_time = timezone.now()
     job.save()
 
