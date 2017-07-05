@@ -79,7 +79,7 @@ def handle_downloader_jobs(jobs: DownloaderJob) -> None:
 def do_forever(min_loop_time: int) -> Callable:
     def decorator(function: Callable) -> Callable:
         @wraps(function)
-        def wrapper():
+        def wrapper(*args, **kwargs):
             while(True):
                 start_time = timezone.now()
 
