@@ -44,7 +44,9 @@ PROCESSOR_PIPELINE_LOOKUP = {
 def requeue_downloader_job(last_job: DownloaderJob) -> None:
     """Queues a new downloader job and a Celery task for it.
 
-    The new downloader job will have num_retries one greater than last_job.num_retries. """
+    The new downloader job will have num_retries one greater than
+    last_job.num_retries.
+    """
     num_retries = last_job.num_retries + 1
 
     new_job = DownloaderJob.create_job_and_relationships(num_retries=num_retries,
@@ -58,9 +60,11 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
 
 
 def handle_repeated_failure(job: WorkerJob) -> None:
+    """If a job fails too many times, log it and stop retrying."""
     # Not strictly retried but will prevent the job from getting
     # retried any more times.
     job.retried = True
+
     # success may already be False, but if it was a hung or lost job
     # this will ensure it's marked as failed.
     job.success = False
@@ -74,6 +78,7 @@ def handle_repeated_failure(job: WorkerJob) -> None:
 
 
 def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
+    """For each job in jobs, either retry it or log it."""
     for job in jobs:
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_downloader_job(job)
@@ -107,12 +112,14 @@ def do_forever(min_loop_time: timedelta) -> Callable:
 
 @do_forever(MIN_LOOP_TIME)
 def retry_failed_downloader_jobs() -> None:
+    """Handle downloader jobs that were marked as a failure."""
     failed_jobs = DownloaderJob.objects.filter(success=False, retried=False)
     handle_downloader_jobs(failed_jobs)
 
 
 @do_forever(MIN_LOOP_TIME)
 def retry_hung_downloader_jobs() -> None:
+    """Retry downloader jobs that were started but never finished."""
     minimum_start_time = timezone.now() - MAX_DOWNLOADER_RUN_TIME
     hung_jobs = DownloaderJob.objects.filter(
         success=None,
@@ -126,11 +133,14 @@ def retry_hung_downloader_jobs() -> None:
 
 @do_forever(MIN_LOOP_TIME)
 def retry_lost_downloader_jobs() -> None:
-    """Idea: at some point this function could integrate with the spot
+    """Retry downloader jobs that went too long without being started.
+
+    Idea: at some point this function could integrate with the spot
     instances to determine if jobs are hanging due to a lack of
-    instances. A naive time-based implementation like this could end up
-    retrying every single queued job if there were a long period of spot
-    instance bid price being very high."""
+    instances. A naive time-based implementation like this could end
+    up retrying every single queued job if there were a long period of
+    spot instance bid price being very high.
+    """
     minimum_creation_time = timezone.now() - MAX_QUEUE_TIME
     lost_jobs = DownloaderJob.objects.filter(
         success=None,
@@ -146,6 +156,11 @@ def retry_lost_downloader_jobs() -> None:
 @retry(stop_max_attempt_number=3)
 @transaction.atomic
 def requeue_processor_job(last_job: ProcessorJob) -> None:
+    """Queues a new downloader job and a Celery task for it.
+
+    The new downloader job will have num_retries one greater than
+    last_job.num_retries.
+    """
     num_retries = last_job.num_retries + 1
 
     new_job = ProcessorJob.create_job_and_relationships(num_retries=num_retries,
@@ -160,6 +175,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
 
 
 def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
+    """For each job in jobs, either retry it or log it."""
     for job in jobs:
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_processor_job(job)
@@ -169,13 +185,15 @@ def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
 
 @do_forever(MIN_LOOP_TIME)
 def retry_failed_processor_jobs() -> None:
+    """Handle processor jobs that were marked as a failure."""
     failed_jobs = ProcessorJob.objects.filter(success=False, retried=False)
     handle_processor_jobs(failed_jobs)
 
 
 @do_forever(MIN_LOOP_TIME)
 def retry_hung_processor_jobs() -> None:
-    minimum_start_time = timezone.now() - MAX_DOWNLOADER_RUN_TIME
+    """Retry processor jobs that were started but never finished."""
+    minimum_start_time = timezone.now() - MAX_PROCESSOR_RUN_TIME
     hung_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
@@ -188,6 +206,7 @@ def retry_hung_processor_jobs() -> None:
 
 @do_forever(MIN_LOOP_TIME)
 def retry_lost_processor_jobs() -> None:
+    """Retry processor jobs who never even got started for too long."""
     minimum_creation_time = timezone.now() - MAX_QUEUE_TIME
     lost_jobs = ProcessorJob.objects.filter(
         success=None,
@@ -201,7 +220,7 @@ def retry_lost_processor_jobs() -> None:
 
 
 def monitor_jobs():
-    """Starts the retry threads and then chill."""
+    """Runs a thread for each job monitoring loop."""
     threads = []
     thread = Thread(target=retry_failed_downloader_jobs,
                     name="retry_failed_downloader_jobs")
@@ -233,6 +252,7 @@ def monitor_jobs():
     thread.start()
     threads.append(thread)
 
+    # Make sure that no threads die quietly.
     while(True):
         for thread in threads:
             thread.join(THREAD_WAIT_TIME)
