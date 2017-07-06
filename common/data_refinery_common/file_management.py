@@ -101,27 +101,38 @@ def get_processed_path(batch: Batch) -> str:
                         _get_processed_name(batch))
 
 
+def _upload_file(from_path: str, to_path: str) -> None:
+    """Move the file from from_path to to_path.
+
+    Depending on the value of the USE_S3 environment variable this
+    will either move the file to a local directory or to S3.
+    """
+    if USE_S3:
+        bucket = boto3.resource("s3").Bucket(S3_BUCKET_NAME)
+        with open(from_path, 'rb') as from_file:
+            bucket.put_object(Key=to_path, Body=from_file)
+    else:
+        shutil.copyfile(from_path, to_path)
+
+
 def upload_raw_file(batch: Batch, dir_name: str = None) -> None:
     """Moves the batch's raw file out of the temp directory.
 
-    Depending on the value of the USE_S3 environment variable this may
-    just be to the RAW_PREFIX directory or it may be to S3.
+    Depending on the value of the USE_S3 environment variable this
+    will either move the batch's raw file to the RAW_PREFIX directory
+    or to S3.
     """
     temp_path = get_temp_pre_path(batch, dir_name)
     raw_path = get_raw_path(batch)
-    if USE_S3:
-        bucket = boto3.resource("s3").Bucket(S3_BUCKET_NAME)
-        with open(temp_path, 'rb') as temp_file:
-            bucket.put_object(Key=raw_path, Body=temp_file)
-    else:
-        shutil.copyfile(temp_path, raw_path)
+    _upload_file(temp_path, raw_path)
 
 
 def download_raw_file(batch: Batch, dir_name: str = None) -> None:
     """Moves the batch's raw file to the temp directory.
 
-    Depending on the value of the USE_S3 environment variable this may
-    just be from the RAW_PREFIX directory or it may be from S3.
+    Depending on the value of the USE_S3 environment variable this
+    will either move the batch's raw file from the RAW_PREFIX directory
+    or from S3.
     """
     raw_path = get_raw_path(batch)
     temp_dir = get_temp_dir(batch, dir_name)
@@ -143,12 +154,7 @@ def upload_processed_file(batch: Batch, dir_name: str = None) -> None:
     """
     temp_path = get_temp_post_path(batch, dir_name)
     processed_path = get_processed_path(batch)
-    if USE_S3:
-        bucket = boto3.resource("s3").Bucket(S3_BUCKET_NAME)
-        with open(temp_path, 'rb') as temp_file:
-            bucket.put_object(Key=processed_path, Body=temp_file)
-    else:
-        shutil.copyfile(temp_path, processed_path)
+    _upload_file(temp_path, processed_path)
 
 
 def remove_temp_directory(batch: Batch, dir_name: str = None) -> None:

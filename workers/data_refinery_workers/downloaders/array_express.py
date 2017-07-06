@@ -7,10 +7,7 @@ from typing import List
 from contextlib import closing
 from celery import shared_task
 from celery.utils.log import get_task_logger
-from data_refinery_models.models import (
-    Batch,
-    DownloaderJob
-)
+from data_refinery_models.models import Batch
 from data_refinery_common import file_management
 from data_refinery_workers.downloaders import utils
 import logging
