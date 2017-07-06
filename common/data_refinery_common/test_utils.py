@@ -4,18 +4,15 @@ from data_refinery_common import utils
 
 
 class UtilsTestCase(TestCase):
-    @patch('data_refinery_common.utils.current_process')
     @patch('data_refinery_common.utils.get_env_variable')
     @patch('data_refinery_common.utils.requests.get')
-    def test_get_worker_id_cloud(self, mock_get, mock_get_env_variable, mock_current_process):
+    def test_get_worker_id_cloud(self, mock_get, mock_get_env_variable):
         """Test that a request is made and the global value is stored"""
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.text = "instance_id"
         mock_get_env_variable.return_value = "True"
-        mock_current_process.return_value = Mock(ok=True)
-        mock_current_process.return_value.index = 0
 
-        self.assertEqual(utils.get_worker_id(), "instance_id/0")
+        self.assertEqual(utils.get_worker_id(), "instance_id/MainProcess")
 
         # Ensure that the second call uses the now-set global value.
         # (By calling it again and checking that two function calls
@@ -24,15 +21,13 @@ class UtilsTestCase(TestCase):
         mock_get.assert_called_once()
         mock_get_env_variable.assert_called_once()
 
-    @patch('data_refinery_common.utils.current_process')
     @patch('data_refinery_common.utils.get_env_variable')
-    def test_get_worker_id_local(self, mock_get_env_variable, mock_current_process):
+    def test_get_worker_id_local(self, mock_get_env_variable):
         """Test that local is used for instance id."""
+        utils.INSTANCE_ID = None
         mock_get_env_variable.return_value = "False"
-        mock_current_process.return_value = Mock(ok=True)
-        mock_current_process.return_value.index = 0
 
-        self.assertEqual(utils.get_worker_id(), "local/0")
+        self.assertEqual(utils.get_worker_id(), "local/MainProcess")
 
         # Ensure that the second call uses the now-set global value.
         # (By calling it again and checking that two function calls

@@ -35,4 +35,4 @@ def get_instance_id() -> str:
 
 def get_worker_id() -> str:
     """Returns <instance_id>/<thread_id>."""
-    return get_instance_id() + "/" + str(current_process().index)
+    return get_instance_id() + "/" + current_process().name
