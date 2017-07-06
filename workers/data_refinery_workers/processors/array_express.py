@@ -40,7 +40,7 @@ def cel_to_pcl(kwargs: Dict):
     # header is a list of vectors. [0][0] contains the package name.
     table = str.maketrans(dict.fromkeys(string.punctuation))
     package_name = header[0][0].translate(table).lower()
-    brainarray_package = package_name + "hsentrezgcdf"
+    brainarray_package = package_name + "hsentrezgprobe"
 
     # It's necessary to load the foreach library before calling SCANfast
     # because it doesn't load the library before calling functions
