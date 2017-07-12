@@ -1,3 +1,8 @@
+# The configuration contained in this file specifies high level AWS
+# resources such as VPC, subnets, and security groups needed for The
+# Data Refinery. It also is the current home of the EC2 instances and
+# the IAM permissions/roles for them.
+
 provider "aws" {
   region = "us-east-1"
 }
@@ -43,6 +48,8 @@ resource "aws_iam_instance_profile" "ecs_instance_profile" {
 resource "aws_iam_role" "ecs_instance" {
   name = "data-refinery-ecs-instance"
 
+  # Policy text found at:
+  # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html
   assume_role_policy = <<EOF
 {
   "Version": "2008-10-17",
@@ -64,6 +71,8 @@ resource "aws_iam_policy" "s3_access_policy" {
   name = "data-refinery-s3-access-policy"
   description = "Allows S3 Permissions."
 
+  # Policy text based off of:
+  # http://docs.aws.amazon.com/AmazonS3/latest/dev/example-bucket-policies.html
   policy = <<EOF
 {
    "Version":"2012-10-17",
@@ -153,15 +162,6 @@ resource "aws_security_group" "data_refinery_worker" {
     Name = "data-refinery-worker"
   }
 }
-
-# resource "aws_security_group_rule" "cognoma-service-http" {
-#   type = "ingress"
-#   from_port = 80
-#   to_port = 80
-#   protocol = "tcp"
-#   self = true
-#   security_group_id = "${aws_security_group.cognoma-service.id}"
-# }
 
 resource "aws_security_group_rule" "data_refinery_worker_custom" {
   type = "ingress"

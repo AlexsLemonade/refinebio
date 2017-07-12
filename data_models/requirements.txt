@@ -4,6 +4,6 @@
 #
 #    pip-compile --output-file requirements.txt requirements.in
 #
-django==1.10.6
+django==1.11.1
 psycopg2==2.7.1
 requests==2.13.0
