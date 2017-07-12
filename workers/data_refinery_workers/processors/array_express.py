@@ -11,6 +11,11 @@ import logging
 logger = get_task_logger(__name__)
 
 
+PACKAGE_NAME_CORRECTIONS = {
+    "hugene10stv1hsentrezgprobe": "hugene10sthsentrezgprobe"
+}
+
+
 def cel_to_pcl(kwargs: Dict):
     """Process .CEL files to .PCL format using R.
 
@@ -41,6 +46,12 @@ def cel_to_pcl(kwargs: Dict):
     table = str.maketrans(dict.fromkeys(string.punctuation))
     package_name = header[0][0].translate(table).lower()
     brainarray_package = package_name + "hsentrezgprobe"
+
+    # Some CEL headers have a v1 in the package name which is not part
+    # of the brainararry package name. We have a table which corrects
+    # for this.
+    if brainarray_package in PACKAGE_NAME_CORRECTIONS:
+        brainarray_package = PACKAGE_NAME_CORRECTIONS[brainarray_package]
 
     # It's necessary to load the foreach library before calling SCANfast
     # because it doesn't load the library before calling functions
