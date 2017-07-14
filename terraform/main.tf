@@ -126,6 +126,9 @@ resource "aws_iam_policy" "cloudwatch_policy" {
   name = "data-refinery-cloudwatch-policy"
   description = "Allows Cloudwatch Permissions."
 
+
+  # Policy text found at:
+  # http://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/iam-identity-based-access-control-cwl.html
   policy = <<EOF
 {
     "Version": "2012-10-17",
