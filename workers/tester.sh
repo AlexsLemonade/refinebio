@@ -11,7 +11,7 @@ cd $script_directory
 # move up a level
 cd ..
 
-docker build -t test_master -f workers/Dockerfile .
+docker build -t dr_worker -f workers/Dockerfile .
 
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 

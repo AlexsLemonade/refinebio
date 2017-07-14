@@ -137,7 +137,7 @@ class RunPipelineTestCase(TestCase):
         mock_processor.return_value = return_dict
 
         utils.run_pipeline(job_dict, [mock_processor])
-        mock_processor.assert_called_once()
+        self.assertEqual(mock_processor.call_count, 1)
         processor_job.refresh_from_db()
         self.assertFalse(processor_job.success)
         self.assertIsNotNone(processor_job.end_time)

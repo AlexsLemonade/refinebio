@@ -37,10 +37,6 @@ COPY workers/r_dependencies.R .
 
 RUN Rscript r_dependencies.R
 
-COPY workers/additional_dependencies.R .
-
-RUN Rscript additional_dependencies.R
-
 COPY workers/requirements.txt .
 
 RUN \
