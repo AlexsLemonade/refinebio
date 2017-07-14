@@ -9,7 +9,6 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 from data_refinery_models.models import (
     Batch,
-    DownloaderJob,
     DownloaderJobsToBatches
 )
 from data_refinery_common import file_management

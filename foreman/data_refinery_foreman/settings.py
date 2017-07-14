@@ -48,7 +48,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'data_refinery_models',
-    'data_refinery_workers',
     'data_refinery_foreman.surveyor',
 ]
 
