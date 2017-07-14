@@ -18,7 +18,7 @@ dependencies:
   - pycurl=7.43.0
   - pip:
     - celery==4.0.2
-    - django==1.10.6
+    - django==1.11.1
     - requests==2.13.0
     - psycopg2==2.7.1
     - boto3==1.4.4

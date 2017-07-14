@@ -1,7 +1,6 @@
 from retrying import retry
 from django.utils import timezone
 from django.db import transaction
-from django.core.exceptions import ObjectDoesNotExist
 from data_refinery_common.utils import get_worker_id
 from data_refinery_models.models import (
     Batch,
@@ -28,7 +27,7 @@ def start_job(job_id: int) -> DownloaderJob:
     logger.info("Starting job with id: %s.", job_id)
     try:
         job = DownloaderJob.objects.get(id=job_id)
-    except ObjectDoesNotExist:
+    except DownloaderJob.DoesNotExist:
         logger.error("Cannot find downloader job record with ID %d.", job_id)
         raise
 

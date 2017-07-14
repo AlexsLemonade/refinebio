@@ -1,3 +1,9 @@
+# The configuration contained in this file specifies AWS resources
+# related to the database of The Data Refinery such as the RDS
+# instance itself along with supporting resources such as subnets and
+# security groups.
+
+
 variable "database_password" {}
 
 resource "aws_db_subnet_group" "data_refinery" {
