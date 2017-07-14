@@ -2,3 +2,5 @@ prod filter=git-crypt diff=git-crypt
 *.tfstate filter=git-crypt diff=git-crypt
 terraform.tfvars filter=git-crypt diff=git-crypt
 *.tfstate.backup filter=git-crypt diff=git-crypt
+*.secret filter=git-crypt diff=git-crypt
+*.pem filter=git-crypt diff=git-crypt

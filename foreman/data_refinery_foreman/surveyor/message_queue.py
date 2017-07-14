@@ -13,7 +13,7 @@ dependencies that the foreman project does not need.
 
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE',
-                      'data_refinery_workers.settings')
+                      'data_refinery_foreman.settings')
 
 app = Celery('data_refinery_workers')
 

@@ -148,7 +148,7 @@ class OrganismModelTestCase(TestCase):
         self.assertEqual(taxonomy_id, 9606)
         mock_get.assert_called_once_with(
             ESEARCH_URL,
-            {"db": "taxonomy", "field": "scin", "term": "HOMO%20SAPIENS"}
+            {"db": "taxonomy", "field": "scin", "term": "HOMO SAPIENS"}
         )
 
         # The first call should have stored the organism record in the
