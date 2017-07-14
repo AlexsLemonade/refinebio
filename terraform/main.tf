@@ -163,18 +163,6 @@ resource "aws_security_group" "data_refinery_worker" {
   }
 }
 
-<<<<<<< HEAD
-# resource "aws_security_group_rule" "cognoma-service-http" {
-#   type = "ingress"
-#   from_port = 80
-#   to_port = 80
-#   protocol = "tcp"
-#   self = true
-#   security_group_id = "${aws_security_group.cognoma-service.id}"
-# }
-
-=======
->>>>>>> 03afa4a7ac67e80c9478123451c36670b37c2cac
 resource "aws_security_group_rule" "data_refinery_worker_custom" {
   type = "ingress"
   from_port = 8000
