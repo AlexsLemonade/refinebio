@@ -2,7 +2,6 @@ from retrying import retry
 from billiard import current_process
 from django.utils import timezone
 from django.db import transaction
-from django.core.exceptions import ObjectDoesNotExist
 from data_refinery_models.models import (
     Batch,
     BatchStatuses,
@@ -28,11 +27,11 @@ def start_job(job_id: int) -> DownloaderJob:
     logger.info("Starting job with id: %s.", job_id)
     try:
         job = DownloaderJob.objects.get(id=job_id)
-    except ObjectDoesNotExist:
+    except DownloaderJob.DoesNotExist:
         logger.error("Cannot find downloader job record with ID %d.", job_id)
         raise
 
-    job.worker_id = str(current_process().index)
+    job.worker_id = current_process().name
     job.start_time = timezone.now()
     job.save()
 

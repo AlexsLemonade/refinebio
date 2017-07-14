@@ -17,7 +17,11 @@ def start_job(kwargs: Dict):
     dictionary passed in with the key 'batches'.
     """
     job = kwargs["job"]
+<<<<<<< HEAD
     job.worker_id = str(current_process().index)
+=======
+    job.worker_id = current_process().name
+>>>>>>> 03afa4a7ac67e80c9478123451c36670b37c2cac
     job.start_time = timezone.now()
     job.save()
 
