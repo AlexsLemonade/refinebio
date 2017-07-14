@@ -1,4 +1,5 @@
 from retrying import retry
+from billiard import current_process
 from django.utils import timezone
 from django.db import transaction
 from data_refinery_models.models import (
@@ -17,11 +18,24 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def start_job(job: DownloaderJob):
-    """Record in the database that this job is being started. """
-    job.worker_id = "For now there's only one. For now..."
+def start_job(job_id: int) -> DownloaderJob:
+    """Record in the database that this job is being started.
+
+    Retrieves the job from the database and returns it after marking
+    it as started.
+    """
+    logger.info("Starting job with id: %s.", job_id)
+    try:
+        job = DownloaderJob.objects.get(id=job_id)
+    except DownloaderJob.DoesNotExist:
+        logger.error("Cannot find downloader job record with ID %d.", job_id)
+        raise
+
+    job.worker_id = current_process().name
     job.start_time = timezone.now()
     job.save()
+
+    return job
 
 
 def end_job(job: DownloaderJob, batches: Batch, success):

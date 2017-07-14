@@ -1,74 +1,9 @@
-provider "aws" {
-  region = "us-east-1"
-}
+# The configuration contained in this file specifies AWS resources
+# related to the database of The Data Refinery such as the RDS
+# instance itself along with supporting resources such as subnets and
+# security groups.
 
 variable "database_password" {}
-
-resource "aws_vpc" "data_refinery_vpc" {
-  cidr_block = "10.0.0.0/16"
-  enable_dns_support = true
-  enable_dns_hostnames = true
-
-  tags {
-    Name = "data-refinery"
-  }
-}
-
-resource "aws_subnet" "data_refinery_1a" {
-  availability_zone = "us-east-1a"
-  cidr_block = "10.0.0.0/17"
-  vpc_id = "${aws_vpc.data_refinery_vpc.id}"
-  map_public_ip_on_launch = true
-
-  tags {
-    Name = "data-refinery-1a"
-  }
-}
-
-resource "aws_subnet" "data_refinery_1b" {
-  availability_zone = "us-east-1b"
-  cidr_block = "10.0.128.0/17"
-  vpc_id = "${aws_vpc.data_refinery_vpc.id}"
-  # Unsure if this should be set to true
-  map_public_ip_on_launch = true
-
-  tags {
-    Name = "data-refinery-1b"
-  }
-}
-
-resource "aws_internet_gateway" "data_refinery" {
-  vpc_id = "${aws_vpc.data_refinery_vpc.id}"
-
-  tags = {
-    Name = "data-refinery"
-  }
-}
-
-# Note: this is a insecure practice long term, however it's
-# necessary to access it from lab machines.
-resource "aws_route_table" "data_refinery" {
-  vpc_id = "${aws_vpc.data_refinery_vpc.id}"
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = "${aws_internet_gateway.data_refinery.id}"
-  }
-
-  tags {
-    Name = "data_refinery"
-  }
-}
-
-resource "aws_route_table_association" "data_refinery_1a" {
-  subnet_id      = "${aws_subnet.data_refinery_1a.id}"
-  route_table_id = "${aws_route_table.data_refinery.id}"
-}
-
-resource "aws_route_table_association" "data_refinery_1b" {
-  subnet_id      = "${aws_subnet.data_refinery_1b.id}"
-  route_table_id = "${aws_route_table.data_refinery.id}"
-}
 
 resource "aws_db_subnet_group" "data_refinery" {
   name = "data_refinery"
@@ -98,7 +33,25 @@ resource "aws_security_group_rule" "data_refinery_db_postgres_lab" {
   security_group_id = "${aws_security_group.data_refinery_db.id}"
 }
 
-resource "aws_security_group_rule" "data_refinery_outbound" {
+resource "aws_security_group_rule" "data_refinery_db_workers_tcp" {
+  type = "ingress"
+  from_port = 0
+  to_port = 65535
+  protocol = "tcp"
+  source_security_group_id = "${aws_security_group.data_refinery_worker.id}"
+  security_group_id = "${aws_security_group.data_refinery_db.id}"
+}
+
+resource "aws_security_group_rule" "data_refinery_db_workers_icmp" {
+  type = "ingress"
+  from_port = -1
+  to_port = -1
+  protocol = "icmp"
+  source_security_group_id = "${aws_security_group.data_refinery_worker.id}"
+  security_group_id = "${aws_security_group.data_refinery_db.id}"
+}
+
+resource "aws_security_group_rule" "data_refinery_db_outbound" {
   type = "egress"
   from_port = 0
   to_port = 0
@@ -113,7 +66,7 @@ resource "aws_db_instance" "postgres-db" {
   storage_type = "gp2"
   engine = "postgres"
   engine_version = "9.5.4"
-  instance_class = "db.t2.large"
+  instance_class = "db.t2.micro"
   name = "data_refinery"
   username = "data_refinery_user"
   password = "${var.database_password}"

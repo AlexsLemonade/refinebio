@@ -1,5 +1,6 @@
 from django.utils import timezone
 from typing import List, Dict, Callable
+from billiard import current_process
 from data_refinery_models.models import BatchStatuses, ProcessorJob, ProcessorJobsToBatches
 
 # Import and set logger
@@ -16,7 +17,7 @@ def start_job(kwargs: Dict):
     dictionary passed in with the key 'batches'.
     """
     job = kwargs["job"]
-    job.worker_id = "For now there's only one. For now..."
+    job.worker_id = current_process().name
     job.start_time = timezone.now()
     job.save()
 
