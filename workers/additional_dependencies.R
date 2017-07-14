@@ -1,3 +1,5 @@
+source('https://bioconductor.org/biocLite.R')
+
 platform_designs <- c(
   "pd.081229.hg18.promoter.medip.hx1",
   "pd.2006.07.18.hg18.refseq.promoter",

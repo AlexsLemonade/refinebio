@@ -16,7 +16,12 @@ import boto3
 from data_refinery_models.models import Batch
 from data_refinery_common.utils import get_env_variable
 
+# Import and set logger
+import logging
+logger = logging.getLogger(__name__)
 
+
+DEFAULT_BATCH_PREFIX = "batch_"
 RAW_PREFIX = get_env_variable("RAW_PREFIX")
 TEMP_PREFIX = get_env_variable("TEMP_PREFIX")
 PROCESSED_PREFIX = get_env_variable("PROCESSED_PREFIX")
@@ -60,7 +65,7 @@ def get_raw_path(batch: Batch) -> str:
 # without interfering with other jobs. An optional dir_name can be
 # used instead.
 def get_temp_dir(batch: Batch, dir_name: str = None) -> str:
-    dir_name = dir_name if dir_name is not None else str(batch.id)
+    dir_name = dir_name if dir_name is not None else DEFAULT_BATCH_PREFIX + str(batch.id)
     return os.path.join(LOCAL_ROOT_DIR,
                         TEMP_PREFIX,
                         batch.internal_location,
@@ -101,7 +106,7 @@ def get_processed_path(batch: Batch) -> str:
                         _get_processed_name(batch))
 
 
-def _upload_file(from_path: str, to_path: str) -> None:
+def _upload_file(from_path: str, to_dir: str, to_path: str) -> None:
     """Move the file from from_path to to_path.
 
     Depending on the value of the USE_S3 environment variable this
@@ -112,6 +117,7 @@ def _upload_file(from_path: str, to_path: str) -> None:
         with open(from_path, 'rb') as from_file:
             bucket.put_object(Key=to_path, Body=from_file)
     else:
+        os.makedirs(to_dir, exist_ok=True)
         shutil.copyfile(from_path, to_path)
 
 
@@ -123,8 +129,11 @@ def upload_raw_file(batch: Batch, dir_name: str = None) -> None:
     or to S3.
     """
     temp_path = get_temp_pre_path(batch, dir_name)
+    raw_dir = get_raw_dir(batch)
     raw_path = get_raw_path(batch)
-    _upload_file(temp_path, raw_path)
+
+    logger.debug("Moving file from %s to %s.", temp_path, raw_path)
+    _upload_file(temp_path, raw_dir, raw_path)
 
 
 def download_raw_file(batch: Batch, dir_name: str = None) -> None:
@@ -153,8 +162,9 @@ def upload_processed_file(batch: Batch, dir_name: str = None) -> None:
     just be to the PROCESSED_PREFIX directory or it may be to S3.
     """
     temp_path = get_temp_post_path(batch, dir_name)
+    processed_dir = get_processed_dir(batch)
     processed_path = get_processed_path(batch)
-    _upload_file(temp_path, processed_path)
+    _upload_file(temp_path, processed_dir, processed_path)
 
 
 def remove_temp_directory(batch: Batch, dir_name: str = None) -> None:

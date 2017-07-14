@@ -1,6 +1,7 @@
 install.packages('ff', repos='https://cloud.r-project.org/')
 install.packages('XML', repos='https://cloud.r-project.org/')
 install.packages('RCurl', repos='https://cloud.r-project.org/')
+install.packages('RSQLite', repos='https://cloud.r-project.org/')
 
 source('https://bioconductor.org/biocLite.R')
 biocLite('oligo')

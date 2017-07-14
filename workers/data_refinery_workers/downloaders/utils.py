@@ -13,7 +13,6 @@ from data_refinery_workers.processors.processor_registry \
 
 # Import and set logger
 import logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -46,6 +45,9 @@ def end_job(job: DownloaderJob, batches: Batch, success):
     @retry(stop_max_attempt_number=3)
     def queue_task(processor_job):
         processor_task = processor_pipeline_registry[batch.pipeline_required]
+        logger.debug("Queuing processor task %s for Job %d.",
+                     processor_task.name,
+                     processor_job.id)
         processor_task.delay(processor_job.id)
 
     if success:

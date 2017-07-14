@@ -1,25 +1,70 @@
-FROM continuumio/miniconda3:4.3.11
+FROM ubuntu:16.04
+
+RUN \
+  apt-get update -qq && \
+  apt-get install -y \
+                     lsb-release && \
+  echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) multiverse\n" \
+      >> /etc/apt/sources.list.d/added_repos.list && \
+  echo "deb http://cran.cnr.berkeley.edu/bin/linux/ubuntu $(lsb_release -sc)/" \
+      >> /etc/apt/sources.list.d/added_repos.list && \
+  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9 && \
+  apt-get update -qq && \
+  apt-get install -y \
+                     ed \
+                     git \
+		     mercurial \
+		     libcairo-dev \
+		     libedit-dev \
+                     lsb-release \
+		     python3 \
+		     python3-pip \
+		     r-base \
+		     r-base-dev \
+                     libxml2-dev \
+                     libcurl4-gnutls-dev \
+                     libssl-dev \
+                     curl \
+		     wget &&\
+  rm -rf /var/lib/apt/lists/*
 
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
-RUN apt-get install libcurl4-openssl-dev
+ENV R_LIBS "/usr/local/lib/R/site-library"
 
-COPY workers/environment.yml .
+COPY workers/r_dependencies.R .
 
-RUN conda env create -f environment.yml
+RUN Rscript r_dependencies.R
 
-ENV PATH "/opt/conda/envs/workers/bin:$PATH"
+COPY workers/additional_dependencies.R .
+
+RUN Rscript additional_dependencies.R
+
+COPY workers/requirements.txt .
+
+RUN \
+  pip3 --no-cache-dir install pip --upgrade && \
+  pip3 --no-cache-dir install setuptools --upgrade && \
+  pip3 --no-cache-dir install wheel --upgrade && \
+  pip3 --no-cache-dir install -r requirements.txt --upgrade && \
+  rm -rf /root/.cache
+
+# Run dev version of rpy2
+RUN \
+  pip3 --no-cache-dir install \
+       https://bitbucket.org/rpy2/rpy2/get/version_2.8.x.tar.gz && \
+  rm -rf /root/.cache
 
 COPY data_models/dist/data-refinery-models-* data_models/
 
 # Get the latest version from the dist directory.
-RUN pip install data_models/$(ls data_models -1 | sort --version-sort | tail -1)
+RUN pip3 install data_models/$(ls data_models -1 | sort --version-sort | tail -1)
 
 COPY common/dist/data-refinery-common-* common/
 
 # Get the latest version from the dist directory.
-RUN pip install common/$(ls common -1 | sort --version-sort | tail -1)
+RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY workers/ .
 
