@@ -1,4 +1,4 @@
-FROM data_refinery_worker_base
+FROM ccdl/data_refinery_worker_base
 
 COPY data_models/dist/data-refinery-models-* data_models/
 
