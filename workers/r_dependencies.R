@@ -4,32 +4,36 @@ install.packages('RCurl', repos='https://cloud.r-project.org/')
 install.packages('RSQLite', repos='https://cloud.r-project.org/')
 
 source('https://bioconductor.org/biocLite.R')
-biocLite('oligo')
-biocLite('Biobase')
-biocLite('SCAN.UPC')
-biocLite('affy')
-biocLite('affyio')
-biocLite('AnnotationDbi')
-biocLite('org.Hs.eg.db')
-biocLite('org.Mm.eg.db')
-biocLite('org.Dm.eg.db')
-biocLite('org.Ce.eg.db')
-biocLite('org.Bt.eg.db')
-biocLite('org.Cf.eg.db')
-biocLite('org.Gg.eg.db')
-biocLite('org.Rn.eg.db')
-biocLite('org.Ss.eg.db')
-biocLite('org.Dr.eg.db')
+bioconductor.packages <- c(
+  'oligo',
+  'Biobase',
+  'SCAN.UPC',
+  'affy',
+  'affyio',
+  'AnnotationDbi',
+  'org.Hs.eg.db',
+  'org.Mm.eg.db',
+  'org.Dm.eg.db',
+  'org.Ce.eg.db',
+  'org.Bt.eg.db',
+  'org.Cf.eg.db',
+  'org.Gg.eg.db',
+  'org.Rn.eg.db',
+  'org.Ss.eg.db',
+  'org.Dr.eg.db'
+)
+
+lapply(bioconductor.packages, biocLite)
 
 
 packages <- row.names(available.packages(contriburl="http://brainarray.mbni.med.umich.edu/bioc/src/contrib/"))
 
 ## This narrows down from all the files gotten just having entrezg in the name
-entrez_packages <- packages[grep("entrezg", packages)]
+entrez.packages <- packages[grep("entrezg", packages)]
 
-install.packages(entrez_packages, repos="http://brainarray.mbni.med.umich.edu/bioc/", type="source")
+install.packages(entrez.packages, repos="http://brainarray.mbni.med.umich.edu/bioc/", type="source")
 
-platform_designs <- c(
+platform.designs <- c(
   "pd.081229.hg18.promoter.medip.hx1",
   "pd.2006.07.18.hg18.refseq.promoter",
   "pd.2006.07.18.mm8.refseq.promoter",
@@ -200,6 +204,6 @@ platform_designs <- c(
   "pd.zebgene.1.0.st",
   "pd.zebgene.1.1.st",
   "pd.zebrafish"
-  )
+)
 
-lapply(platform_designs, biocLite)
+lapply(platform.designs, biocLite)
