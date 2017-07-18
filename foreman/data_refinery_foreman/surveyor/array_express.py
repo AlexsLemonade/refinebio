@@ -1,5 +1,5 @@
 import requests
-from typing import List
+from typing import List, Dict
 
 from data_refinery_models.models import (
     Batch,
@@ -68,22 +68,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         return experiment
 
-    def survey(self):
-        experiment_accession_code = (
-            SurveyJobKeyValue
-            .objects
-            .get(survey_job_id=self.survey_job.id,
-                 key__exact="experiment_accession_code")
-            .value
-        )
-
-        logger.info("Surveying experiment with accession code: %s.", experiment_accession_code)
-
-        experiment = self.get_experiment_metadata(experiment_accession_code)
-
-        r = requests.get(SAMPLES_URL.format(experiment_accession_code))
-        samples = r.json()["experiment"]["sample"]
-
+    def _generate_batches(self,
+                          samples: List[Dict],
+                          experiment: Dict,
+                          replicate_raw: bool = True) -> List[Batch]:
         batches = []
         for sample in samples:
             if "file" not in sample:
@@ -96,13 +84,13 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
             if organism_name == "UNKNOWN":
                 logger.error("Sample from experiment %s did not specify the organism name.",
-                             experiment_accession_code)
+                             experiment["experiment_accession_code"])
                 organism_id = 0
             else:
                 organism_id = Organism.get_id_for_name(organism_name)
 
             for sample_file in sample["file"]:
-                if sample_file["type"] != "data":
+                if not replicate_raw and sample_file["type"] != "data":
                     continue
 
                 batches.append(Batch(
@@ -111,7 +99,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     raw_format=sample_file["name"].split(".")[-1],
                     processed_format="PCL",
                     platform_accession_code=experiment["platform_accession_code"],
-                    experiment_accession_code=experiment_accession_code,
+                    experiment_accession_code=experiment["experiment_accession_code"],
                     organism_id=organism_id,
                     organism_name=organism_name,
                     experiment_title=experiment["name"],
@@ -119,6 +107,29 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     last_uploaded_date=experiment["last_update_date"],
                     name=sample_file["name"]
                 ))
+
+        return batches
+
+    def survey(self):
+        experiment_accession_code = (
+            SurveyJobKeyValue
+            .objects
+            .get(survey_job_id=self.survey_job.id,
+                 key__exact="experiment_accession_code")
+            .value
+        )
+
+        logger.info("Surveying experiment with accession code: %s.", experiment_accession_code)
+
+        experiment = self.get_experiment_metadata(experiment_accession_code)
+        r = requests.get(SAMPLES_URL.format(experiment_accession_code))
+        samples = r.json()["experiment"]["sample"]
+        batches = self._generate_batches(samples, experiment)
+
+        if len(samples) != 0 and len(batches) == 0:
+            # Found no samples with raw data, so replicate the
+            # processed data instead
+            batches = self._generate_batches(samples, experiment, replicate_raw=False)
 
         # Group batches based on their download URL and handle each group.
         download_urls = {batch.download_url for batch in batches}
