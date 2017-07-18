@@ -7,11 +7,9 @@ COPY requirements.txt .
 
 RUN pip install -r requirements.txt
 
-COPY manage.py .
+COPY . .
 
 USER user
-
-RUN ls -lah
 
 ENTRYPOINT ["python3.6", "manage.py"]
 
