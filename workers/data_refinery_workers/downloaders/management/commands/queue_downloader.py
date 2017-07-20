@@ -8,8 +8,7 @@ from data_refinery_models.models import (
     SurveyJob,
     Batch,
     BatchStatuses,
-    DownloaderJob,
-    DownloaderJobsToBatches
+    DownloaderJob
 )
 from data_refinery_workers.downloaders.array_express \
     import download_array_express
@@ -51,10 +50,6 @@ class Command(BaseCommand):
         )
         batch.save()
 
-        downloader_job = DownloaderJob()
-        downloader_job.save()
-        downloader_job_to_batch = DownloaderJobsToBatches(batch=batch,
-                                                          downloader_job=downloader_job)
-        downloader_job_to_batch.save()
+        downloader_job = DownloaderJob.create_job_and_relationships(batches=[batch])
         logger.info("Queuing a task.")
         download_array_express.delay(downloader_job.id)

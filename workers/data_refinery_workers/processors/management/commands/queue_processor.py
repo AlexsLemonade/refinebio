@@ -54,10 +54,6 @@ class Command(BaseCommand):
         )
         batch.save()
 
-        processor_job = ProcessorJob()
-        processor_job.save()
-        downloader_job_to_batch = ProcessorJobsToBatches(batch=batch,
-                                                         processor_job=processor_job)
-        downloader_job_to_batch.save()
+        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
         logger.info("Queuing a processor job.")
         affy_to_pcl.delay(processor_job.id)
