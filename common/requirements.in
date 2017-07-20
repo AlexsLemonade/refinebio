@@ -2,3 +2,5 @@ django
 psycopg2
 boto3
 requests
+retrying
+celery

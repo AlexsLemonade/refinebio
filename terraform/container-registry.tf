@@ -2,7 +2,6 @@
 # cluster, and task definitions for The Data Refinery. It also creates
 # the IAM permissions needed for ECS to work.
 
-
 resource "aws_ecs_cluster" "data_refinery" {
   name = "data-refinery"
 }
