@@ -73,10 +73,10 @@ def _extract_file(batches: List[Batch], job_id: int) -> None:
 @shared_task
 def download_array_express(job_id: int) -> None:
     job = utils.start_job(job_id)
-    batches = list(job.batches.all())
+    batches = job.batches.all()
     success = True
 
-    if len(batches) > 0:
+    if batches.count() > 0:
         target_directory = file_management.get_temp_dir(batches[0], str(job_id))
         os.makedirs(target_directory, exist_ok=True)
         target_file_path = file_management.get_temp_download_path(batches[0], str(job_id))

@@ -1,3 +1,4 @@
+from typing import Type
 from unittest.mock import patch
 from datetime import timedelta
 from django.utils import timezone
@@ -7,6 +8,7 @@ from data_refinery_models.models import (
     SurveyJob,
     Batch,
     BatchStatuses,
+    WorkerJob,
     DownloaderJob,
     ProcessorJob
 )
@@ -47,11 +49,19 @@ class SurveyTestCase(TestCase):
         batch.save()
         return batch
 
+    def create_batch_and_downloader_job(self) -> DownloaderJob:
+        batch = self.insert_batch()
+        return DownloaderJob.create_job_and_relationships(
+            num_retries=0, batches=[batch], downloader_task="dummy_task")
+
+    def create_batch_and_processor_job(self) -> ProcessorJob:
+        batch = self.insert_batch()
+        return ProcessorJob.create_job_and_relationships(
+            num_retries=0, batches=[batch], pipeline_applied="AFFY_TO_PCL")
+
     @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
     def test_requeuing_downloader_job(self, mock_send_task):
-        batch = self.insert_batch()
-        job = DownloaderJob.create_job_and_relationships(
-            num_retries=0, batches=[batch], downloader_task="dummy_task")
+        job = self.create_batch_and_downloader_job()
 
         main.requeue_downloader_job(job)
         mock_send_task.assert_called_once()
@@ -68,9 +78,7 @@ class SurveyTestCase(TestCase):
     @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
     def test_repeated_download_failures(self, mock_send_task):
         """Jobs will be repeatedly retried."""
-        batch = self.insert_batch()
-        job = DownloaderJob.create_job_and_relationships(
-            num_retries=0, batches=[batch], downloader_task="dummy_task")
+        job = self.create_batch_and_downloader_job()
 
         for i in range(main.MAX_NUM_RETRIES):
             main.handle_downloader_jobs([job])
@@ -96,9 +104,7 @@ class SurveyTestCase(TestCase):
 
     @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
     def test_retrying_failed_downloader_jobs(self, mock_send_task):
-        batch = self.insert_batch()
-        job = DownloaderJob.create_job_and_relationships(
-            num_retries=0, batches=[batch], downloader_task="dummy_task")
+        job = self.create_batch_and_downloader_job()
         job.success = False
         job.save()
 
@@ -118,9 +124,7 @@ class SurveyTestCase(TestCase):
 
     @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
     def test_retrying_hung_downloader_jobs(self, mock_send_task):
-        batch = self.insert_batch()
-        job = DownloaderJob.create_job_and_relationships(
-            num_retries=0, batches=[batch], downloader_task="dummy_task")
+        job = self.create_batch_and_downloader_job()
         job.start_time = timezone.now() - main.MAX_DOWNLOADER_RUN_TIME - timedelta(seconds=1)
         job.save()
 
@@ -140,9 +144,7 @@ class SurveyTestCase(TestCase):
 
     @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
     def test_retrying_lost_downloader_jobs(self, mock_send_task):
-        batch = self.insert_batch()
-        job = DownloaderJob.create_job_and_relationships(
-            num_retries=0, batches=[batch], downloader_task="dummy_task")
+        job = self.create_batch_and_downloader_job()
         job.created_at = timezone.now() - main.MAX_QUEUE_TIME - timedelta(seconds=1)
         job.save()
 
@@ -162,9 +164,7 @@ class SurveyTestCase(TestCase):
 
     @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
     def test_requeuing_processor_job(self, mock_send_task):
-        batch = self.insert_batch()
-        job = ProcessorJob.create_job_and_relationships(
-            num_retries=0, batches=[batch], pipeline_applied="AFFY_TO_PCL")
+        job = self.create_batch_and_processor_job()
 
         main.requeue_processor_job(job)
         mock_send_task.assert_called_once()
@@ -181,9 +181,7 @@ class SurveyTestCase(TestCase):
     @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
     def test_repeated_processor_failures(self, mock_send_task):
         """Jobs will be repeatedly retried."""
-        batch = self.insert_batch()
-        job = ProcessorJob.create_job_and_relationships(
-            num_retries=0, batches=[batch], pipeline_applied="AFFY_TO_PCL")
+        job = self.create_batch_and_processor_job()
 
         for i in range(main.MAX_NUM_RETRIES):
             main.handle_processor_jobs([job])
@@ -209,9 +207,7 @@ class SurveyTestCase(TestCase):
 
     @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
     def test_retrying_failed_processor_jobs(self, mock_send_task):
-        batch = self.insert_batch()
-        job = ProcessorJob.create_job_and_relationships(
-            num_retries=0, batches=[batch], pipeline_applied="AFFY_TO_PCL")
+        job = self.create_batch_and_processor_job()
         job.success = False
         job.save()
 
@@ -231,9 +227,7 @@ class SurveyTestCase(TestCase):
 
     @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
     def test_retrying_hung_processor_jobs(self, mock_send_task):
-        batch = self.insert_batch()
-        job = ProcessorJob.create_job_and_relationships(
-            num_retries=0, batches=[batch], pipeline_applied="AFFY_TO_PCL")
+        job = self.create_batch_and_processor_job()
         job.start_time = timezone.now() - main.MAX_PROCESSOR_RUN_TIME - timedelta(seconds=1)
         job.save()
 
@@ -253,15 +247,14 @@ class SurveyTestCase(TestCase):
 
     @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
     def test_retrying_lost_processor_jobs(self, mock_send_task):
-        batch = self.insert_batch()
-        job = ProcessorJob.create_job_and_relationships(
-            num_retries=0, batches=[batch], pipeline_applied="AFFY_TO_PCL")
+        job = self.create_batch_and_processor_job()
         job.created_at = timezone.now() - main.MAX_QUEUE_TIME - timedelta(seconds=1)
         job.save()
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
         main.retry_lost_processor_jobs.__wrapped__()
+
         mock_send_task.assert_called_once()
 
         jobs = ProcessorJob.objects.order_by('id')

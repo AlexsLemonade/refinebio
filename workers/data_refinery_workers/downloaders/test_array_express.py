@@ -87,7 +87,10 @@ class DownloadArrayExpressTestCase(TestCase):
         # Verify that all expected functionality is run:
         _verify_batch_grouping.assert_called_once()
         _download_file.assert_called_with(download_url, target_file_path, downloader_job.id)
-        _extract_file.assert_called_with([batch, batch2], downloader_job.id)
+        args, _ = _extract_file.call_args
+        batch_query_set, job_id = args
+        self.assertEqual(list(batch_query_set), [batch, batch2])
+        self.assertEqual(job_id, downloader_job.id)
 
         mock_processor_task.delay.assert_called()
 

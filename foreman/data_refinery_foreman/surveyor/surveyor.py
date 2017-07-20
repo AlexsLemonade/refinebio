@@ -13,7 +13,7 @@ class SourceNotSupportedError(BaseException):
     pass
 
 
-def get_surveyor_for_source(survey_job: SurveyJob):
+def _get_surveyor_for_source(survey_job: SurveyJob):
     """Factory method for ExternalSourceSurveyors."""
     if survey_job.source_type == "ARRAY_EXPRESS":
         return ArrayExpressSurveyor(survey_job)
@@ -47,7 +47,7 @@ def run_job(survey_job: SurveyJob):
     _start_job(survey_job)
 
     try:
-        surveyor = get_surveyor_for_source(survey_job)
+        surveyor = _get_surveyor_for_source(survey_job)
     except SourceNotSupportedError as e:
         logger.error("Unable to run survey job #%d because: %s",
                      survey_job.id,

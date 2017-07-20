@@ -32,7 +32,13 @@ class WorkerJob(TimeTrackedModel):
     @classmethod
     @transaction.atomic
     def create_job_and_relationships(cls, *args, **kwargs):
-        """Inits and saves a job and its relationships to its batches."""
+        """Inits and saves a job and its relationships to its batches.
+
+        Expects keyword arguments that could be passed to the init
+        method for WorkerJob, with the addition of the keyword
+        argument 'batches', which must be specified as a list of Batch
+        objects which have already been saved (so they have an id).
+        """
         batches = kwargs.pop('batches', None)
         this_job = cls(*args, **kwargs)
         if batches is None:
@@ -61,4 +67,8 @@ class DownloaderJob(WorkerJob):
     class Meta:
         db_table = "downloader_jobs"
 
+    # This field contains a string which corresponds to a Celery
+    # task. It needs to have all the namespaces as if it were an
+    # import statement because it will be used to look up the Celery
+    # task on the worker machine.
     downloader_task = models.CharField(max_length=256)

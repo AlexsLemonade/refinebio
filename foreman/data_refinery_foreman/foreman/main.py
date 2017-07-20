@@ -138,8 +138,9 @@ def retry_lost_downloader_jobs() -> None:
     Idea: at some point this function could integrate with the spot
     instances to determine if jobs are hanging due to a lack of
     instances. A naive time-based implementation like this could end
-    up retrying every single queued job if there were a long period of
-    spot instance bid price being very high.
+    up retrying every single queued job if there were a long period
+    during which the price of spot instance is higher than our bid
+    price.
     """
     minimum_creation_time = timezone.now() - MAX_QUEUE_TIME
     lost_jobs = DownloaderJob.objects.filter(
@@ -221,36 +222,18 @@ def retry_lost_processor_jobs() -> None:
 
 def monitor_jobs():
     """Runs a thread for each job monitoring loop."""
+    functions = [retry_failed_downloader_jobs,
+                 retry_hung_downloader_jobs,
+                 retry_lost_downloader_jobs,
+                 retry_failed_processor_jobs,
+                 retry_hung_processor_jobs,
+                 retry_lost_processor_jobs]
+
     threads = []
-    thread = Thread(target=retry_failed_downloader_jobs,
-                    name="retry_failed_downloader_jobs")
-    thread.start()
-    threads.append(thread)
-
-    thread = Thread(target=retry_hung_downloader_jobs,
-                    name="retry_hung_downloader_jobs")
-    thread.start()
-    threads.append(thread)
-
-    thread = Thread(target=retry_lost_downloader_jobs,
-                    name="retry_lost_downloader_jobs")
-    thread.start()
-    threads.append(thread)
-
-    thread = Thread(target=retry_failed_processor_jobs,
-                    name="retry_failed_processor_jobs")
-    thread.start()
-    threads.append(thread)
-
-    thread = Thread(target=retry_hung_processor_jobs,
-                    name="retry_hung_processor_jobs")
-    thread.start()
-    threads.append(thread)
-
-    thread = Thread(target=retry_lost_processor_jobs,
-                    name="retry_lost_processor_jobs")
-    thread.start()
-    threads.append(thread)
+    for f in functions:
+        thread = Thread(target=f, name=f.func_name)
+        thread.start()
+        threads.append(thread)
 
     # Make sure that no threads die quietly.
     while(True):
