@@ -8,8 +8,9 @@ from data_refinery_models.models import (
     DownloaderJob,
     ProcessorJob
 )
-from data_refinery_workers.processors.processor_registry \
-    import processor_pipeline_registry
+from data_refinery_workers.task_runner import app
+from data_refinery_common.job_lookup import ProcessorPipeline, PROCESSOR_PIPELINE_LOOKUP
+
 
 # Import and set logger
 import logging
@@ -48,21 +49,28 @@ def end_job(job: DownloaderJob, batches: Batch, success):
         batch.status = BatchStatuses.DOWNLOADED.value
         batch.save()
 
-        logger.debug("Creating processor job for batch #%d.", batch.id)
-        processor_job = ProcessorJob.create_job_and_relationships(
-            batches=[batch], pipeline_applied=batch.pipeline_required)
-        return processor_job
+        # TEMPORARY for Jackie's grant:
+        if batch.pipeline_required != ProcessorPipeline.NONE:
+            logger.debug("Creating processor job for batch #%d.", batch.id)
+            processor_job = ProcessorJob.create_job_and_relationships(
+                batches=[batch], pipeline_applied=batch.pipeline_required)
+            return processor_job
+        else:
+            logger.debug("Not queuing a processor job for batch #%d.", batch.id)
+            return None
 
     @retry(stop_max_attempt_number=3)
     def queue_task(processor_job):
-        processor_task = processor_pipeline_registry[batch.pipeline_required]
-        processor_task.delay(processor_job.id)
+        processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
+        app.send_task(processor_task, args=[processor_job.id])
 
     if success:
         for batch in batches:
             with transaction.atomic():
                 processor_job = save_batch_create_job(batch)
-                queue_task(processor_job)
+                # TEMPORARY for Jackie's grant:
+                if batch.pipeline_required != ProcessorPipeline.NONE:
+                    queue_task(processor_job)
 
     job.success = success
     job.end_time = timezone.now()

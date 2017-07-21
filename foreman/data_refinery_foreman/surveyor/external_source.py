@@ -1,6 +1,5 @@
 import abc
 import os
-from enum import Enum
 from typing import List
 from retrying import retry
 from django.db import transaction
@@ -11,6 +10,7 @@ from data_refinery_models.models import (
     SurveyJob
 )
 from data_refinery_foreman.surveyor.message_queue import app
+from data_refinery_common.job_lookup import DiscoveryPipeline, DOWNLOADER_TASK_LOOKUP
 
 
 # Import and set logger
@@ -20,25 +20,6 @@ logger = logging.getLogger(__name__)
 
 
 class InvalidProcessedFormatError(BaseException):
-    pass
-
-
-class PipelineEnums(Enum):
-    """An abstract class to enumerate valid processor pipelines.
-
-    Enumerations which extend this class are valid values for the
-    pipeline_required field of the Batches table.
-    """
-    pass
-
-
-class ProcessorPipeline(PipelineEnums):
-    """Pipelines which perform some kind of processing on the data."""
-    AFFY_TO_PCL = "AFFY_TO_PCL"
-
-
-class DiscoveryPipeline(PipelineEnums):
-    """Pipelines which discover appropriate processing for the data."""
     pass
 
 
@@ -52,16 +33,6 @@ class ExternalSourceSurveyor:
     def source_type(self):
         return
 
-    @abc.abstractproperty
-    def downloader_task(self):
-        """Abstract property representing the downloader task.
-
-        Should return the Celery Downloader Task name from the
-        data_refinery_workers project which should be queued to
-        download Batches discovered by this surveyor.
-        """
-        return
-
     @abc.abstractmethod
     def determine_pipeline(self,
                            batch: Batch):
@@ -71,6 +42,15 @@ class ExternalSourceSurveyor:
         Must return a member of PipelineEnums.
         """
         return
+
+    def downloader_task(self):
+        """Returns the downloader task for the source.
+
+        Returns the Celery Downloader Task name from the
+        data_refinery_workers project which should be queued to
+        download Batches discovered by this surveyor.
+        """
+        return DOWNLOADER_TASK_LOOKUP[self.source_type()]
 
     def handle_batches(self, batches: List[Batch]):
         for batch in batches:

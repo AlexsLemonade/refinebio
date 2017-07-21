@@ -7,15 +7,15 @@ from data_refinery_models.models import (
     SurveyJobKeyValue,
     Organism
 )
-from data_refinery_foreman.surveyor.external_source import (
-    ExternalSourceSurveyor,
-    ProcessorPipeline
-)
+from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
+from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
+
 
 # Import and set logger
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 EXPERIMENTS_URL = "https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/"
 SAMPLES_URL = EXPERIMENTS_URL + "{}/samples"
@@ -23,15 +23,22 @@ SAMPLES_URL = EXPERIMENTS_URL + "{}/samples"
 
 class ArrayExpressSurveyor(ExternalSourceSurveyor):
     def source_type(self):
-        return "ARRAY_EXPRESS"
-
-    def downloader_task(self):
-        return "data_refinery_workers.downloaders.array_express.download_array_express"
+        return Downloaders.ARRAY_EXPRESS
 
     def determine_pipeline(self,
                            batch: Batch,
                            key_values: List[BatchKeyValue] = []):
-        return ProcessorPipeline.AFFY_TO_PCL
+        # If it's a CEL file run SCAN.UPC on it.
+        if batch.raw_format == "CEL":
+            return ProcessorPipeline.AFFY_TO_PCL
+        # If only processed data is available then we don't need to do
+        # anything to it
+        elif batch.raw_format == batch.processed_format:
+            return ProcessorPipeline.NO_OP
+        # If it's not CEL and it's not already processed then we just
+        # want to download it for Jackie's grant.
+        else:
+            return ProcessorPipeline.NONE
 
     @staticmethod
     def get_experiment_metadata(experiment_accession_code):
@@ -72,6 +79,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                           samples: List[Dict],
                           experiment: Dict,
                           replicate_raw: bool = True) -> List[Batch]:
+        """TODO: write this docstring."""
         batches = []
         for sample in samples:
             if "file" not in sample:
@@ -90,14 +98,20 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 organism_id = Organism.get_id_for_name(organism_name)
 
             for sample_file in sample["file"]:
+                # Generally we only want to replicate the raw data if
+                # we can, however if there isn't raw data then we'll
+                # take the processed stuff.
                 if not replicate_raw and sample_file["type"] != "data":
                     continue
+
+                raw_format = sample_file["name"].split(".")[-1]
+                processed_format = "PCL" if replicate_raw else raw_format
 
                 batches.append(Batch(
                     size_in_bytes=-1,  # Will have to be determined later
                     download_url=sample_file["comment"]["value"],
-                    raw_format=sample_file["name"].split(".")[-1],
-                    processed_format="PCL",
+                    raw_format=raw_format,
+                    processed_format=processed_format,
                     platform_accession_code=experiment["platform_accession_code"],
                     experiment_accession_code=experiment["experiment_accession_code"],
                     organism_id=organism_id,

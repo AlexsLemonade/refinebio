@@ -12,6 +12,7 @@ from data_refinery_models.models import (
     ProcessorJob
 )
 from data_refinery_foreman.surveyor.message_queue import app
+from data_refinery_common.job_lookup import PROCESSOR_PIPELINE_LOOKUP
 
 # Import and set logger
 import logging
@@ -33,10 +34,6 @@ MAX_QUEUE_TIME = timedelta(days=1)
 # seconds.
 MIN_LOOP_TIME = timedelta(seconds=10)
 THREAD_WAIT_TIME = 10.0
-
-PROCESSOR_PIPELINE_LOOKUP = {
-    "AFFY_TO_PCL": "data_refinery_workers.processors.array_express.affy_to_pcl"
-}
 
 
 @retry(stop_max_attempt_number=3)
