@@ -1,5 +1,5 @@
 import copy
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 from django.test import TestCase
 from data_refinery_models.models import (
     SurveyJob,
@@ -29,7 +29,7 @@ class DownloadArrayExpressTestCase(TestCase):
         with self.assertRaises(ValueError):
             array_express._verify_batch_grouping(batches, job_id)
 
-    @patch("data_refinery_workers.downloaders.array_express.utils.app")
+    @patch("data_refinery_workers.downloaders.utils.app")
     @patch("data_refinery_workers.downloaders.array_express._verify_batch_grouping")
     @patch("data_refinery_workers.downloaders.array_express._download_file")
     @patch("data_refinery_workers.downloaders.array_express._extract_file")
@@ -39,14 +39,11 @@ class DownloadArrayExpressTestCase(TestCase):
                       _verify_batch_grouping,
                       app):
         # Set up mocks:
-        app = MagicMock()
         app.send_task = MagicMock()
         app.send_task.return_value = None
 
         # Set up database records:
-        survey_job = SurveyJob(
-            source_type="ARRAY_EXPRESS"
-        )
+        survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
         survey_job.save()
 
         download_url = "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip"  # noqa
@@ -102,11 +99,9 @@ class DownloadArrayExpressTestCase(TestCase):
         processor_jobs = ProcessorJob.objects.all()
         self.assertEqual(len(processor_jobs), 2)
 
-        app.send_task.assert_called_with(
-            "data_refinery_workers.processors.array_express.affy_to_pcl",
-            args=[processor_jobs[0].id]
-        )
-        app.send_task.assert_called_with(
-            "data_refinery_workers.processors.array_express.affy_to_pcl",
-            args=[processor_jobs[1].id]
-        )
+        app.send_task.assert_has_calls([
+            call("data_refinery_workers.processors.array_express.affy_to_pcl",
+                 args=[processor_jobs[0].id]),
+            call("data_refinery_workers.processors.array_express.affy_to_pcl",
+                 args=[processor_jobs[1].id])
+        ])
