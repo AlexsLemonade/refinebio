@@ -1,13 +1,12 @@
 from retrying import retry
-from billiard import current_process
 from django.utils import timezone
 from django.db import transaction
+from data_refinery_common.utils import get_worker_id
 from data_refinery_models.models import (
     Batch,
     BatchStatuses,
     DownloaderJob,
-    ProcessorJob,
-    ProcessorJobsToBatches
+    ProcessorJob
 )
 from data_refinery_workers.processors.processor_registry \
     import processor_pipeline_registry
@@ -31,7 +30,7 @@ def start_job(job_id: int) -> DownloaderJob:
         logger.error("Cannot find downloader job record with ID %d.", job_id)
         raise
 
-    job.worker_id = current_process().name
+    job.worker_id = get_worker_id()
     job.start_time = timezone.now()
     job.save()
 
@@ -50,11 +49,8 @@ def end_job(job: DownloaderJob, batches: Batch, success):
         batch.save()
 
         logger.debug("Creating processor job for batch #%d.", batch.id)
-        processor_job = ProcessorJob()
-        processor_job.save()
-        processor_job_to_batch = ProcessorJobsToBatches(batch=batch,
-                                                        processor_job=processor_job)
-        processor_job_to_batch.save()
+        processor_job = ProcessorJob.create_job_and_relationships(
+            batches=[batch], pipeline_applied=batch.pipeline_required)
         return processor_job
 
     @retry(stop_max_attempt_number=3)

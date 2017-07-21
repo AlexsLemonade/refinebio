@@ -67,6 +67,15 @@ resource "aws_iam_role" "ecs_instance" {
 EOF
 }
 
+resource "aws_iam_policy_attachment" "ecs" {
+  name = "AmazonEC2ContainerServiceforEC2Role"
+  roles = ["${aws_iam_role.ecs_instance.name}"]
+
+  # The following can be found here:
+  # https://console.aws.amazon.com/iam/home?region=us-east-1#/policies/arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+}
+
 resource "aws_iam_policy" "s3_access_policy" {
   name = "data-refinery-s3-access-policy"
   description = "Allows S3 Permissions."
@@ -106,21 +115,46 @@ resource "aws_iam_policy" "s3_access_policy" {
 EOF
 }
 
-
-resource "aws_iam_policy_attachment" "ecs" {
-  name = "AmazonEC2ContainerServiceforEC2Role"
-  roles = ["${aws_iam_role.ecs_instance.name}"]
-
-  # The following can be found here:
-  # https://console.aws.amazon.com/iam/home?region=us-east-1#/policies/arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
-}
-
 resource "aws_iam_policy_attachment" "s3" {
   name = "data-refinery-s3-access-policy-attachment"
   roles = ["${aws_iam_role.ecs_instance.name}"]
 
   policy_arn = "${aws_iam_policy.s3_access_policy.arn}"
+}
+
+resource "aws_iam_policy" "cloudwatch_policy" {
+  name = "data-refinery-cloudwatch-policy"
+  description = "Allows Cloudwatch Permissions."
+
+
+  # Policy text found at:
+  # http://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/iam-identity-based-access-control-cwl.html
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams"
+            ],
+            "Resource": [
+                "arn:aws:logs:*:*:*"
+            ]
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_policy_attachment" "cloudwatch" {
+  name = "data-refinery-cloudwatch-policy-attachment"
+  roles = ["${aws_iam_role.ecs_instance.name}"]
+
+  policy_arn = "${aws_iam_policy.cloudwatch_policy.arn}"
 }
 
 resource "aws_key_pair" "data_refinery" {
@@ -193,7 +227,7 @@ resource "aws_security_group_rule" "data_refinery_worker_outbound" {
 
 resource "aws_instance" "data_refinery_worker_1" {
   ami = "ami-275ffe31"
-  instance_type = "m4.large"
+  instance_type = "t2.medium"
   availability_zone = "us-east-1a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
@@ -205,11 +239,57 @@ resource "aws_instance" "data_refinery_worker_1" {
   tags = {
     Name = "data-refinery-1"
   }
+
+  provisioner "remote-exec" {
+    # Commands copied from
+    # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_cloudwatch_logs.html
+    inline = [
+      "sudo yum install -y awslogs",
+      "sudo yum install -y jq",
+    ]
+
+    connection {
+      type = "ssh"
+      user = "ec2-user"
+      private_key = "${file("data-refinery-key.pem")}"
+    }
+  }
+
+  provisioner "file" {
+    source = "conf/awslogs.conf"
+    destination = "/home/ec2-user/awslogs.conf"
+
+    connection {
+      type = "ssh"
+      user = "ec2-user"
+      private_key = "${file("data-refinery-key.pem")}"
+    }
+  }
+
+  provisioner "remote-exec" {
+    # Commands copied from
+    # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_cloudwatch_logs.html
+    inline = [
+      "sudo mv /home/ec2-user/awslogs.conf /etc/awslogs/awslogs.conf",
+      "cluster=$(curl -s http://localhost:51678/v1/metadata | jq -r '. | .Cluster')",
+      "sudo sed -i -e \"s/{cluster}/$cluster/g\" /etc/awslogs/awslogs.conf",
+      "container_instance_id=$(curl -s http://localhost:51678/v1/metadata | jq -r '. | .ContainerInstanceArn' | awk -F/ '{print $2}' )",
+      "sudo sed -i -e \"s/{container_instance_id}/$container_instance_id/g\" /etc/awslogs/awslogs.conf",
+      "sudo service awslogs start",
+      "sudo chkconfig awslogs on",
+    ]
+
+    connection {
+      type = "ssh"
+      user = "ec2-user"
+      private_key = "${file("data-refinery-key.pem")}"
+    }
+  }
 }
 
 resource "aws_instance" "data_refinery_worker_2" {
   ami = "ami-275ffe31"
-  instance_type = "m4.large"
+  instance_type = "t2.medium"
   availability_zone = "us-east-1b"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
@@ -220,6 +300,52 @@ resource "aws_instance" "data_refinery_worker_2" {
 
   tags = {
     Name = "data-refinery-2"
+  }
+
+  provisioner "remote-exec" {
+    # Commands copied from
+    # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_cloudwatch_logs.html
+    inline = [
+      "sudo yum install -y awslogs",
+      "sudo yum install -y jq",
+    ]
+
+    connection {
+      type = "ssh"
+      user = "ec2-user"
+      private_key = "${file("data-refinery-key.pem")}"
+    }
+  }
+
+  provisioner "file" {
+    source = "conf/awslogs.conf"
+    destination = "/home/ec2-user/awslogs.conf"
+
+    connection {
+      type = "ssh"
+      user = "ec2-user"
+      private_key = "${file("data-refinery-key.pem")}"
+    }
+  }
+
+  provisioner "remote-exec" {
+    # Commands copied from
+    # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_cloudwatch_logs.html
+    inline = [
+      "sudo mv /home/ec2-user/awslogs.conf /etc/awslogs/awslogs.conf",
+      "cluster=$(curl -s http://localhost:51678/v1/metadata | jq -r '. | .Cluster')",
+      "sudo sed -i -e \"s/{cluster}/$cluster/g\" /etc/awslogs/awslogs.conf",
+      "container_instance_id=$(curl -s http://localhost:51678/v1/metadata | jq -r '. | .ContainerInstanceArn' | awk -F/ '{print $2}' )",
+      "sudo sed -i -e \"s/{container_instance_id}/$container_instance_id/g\" /etc/awslogs/awslogs.conf",
+      "sudo service awslogs start",
+      "sudo chkconfig awslogs on",
+    ]
+
+    connection {
+      type = "ssh"
+      user = "ec2-user"
+      private_key = "${file("data-refinery-key.pem")}"
+    }
   }
 }
 

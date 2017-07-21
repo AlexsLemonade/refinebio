@@ -7,11 +7,11 @@
 script_directory=`dirname "${BASH_SOURCE[0]}"`
 cd $script_directory
 
-docker build -t models_tests -f Dockerfile.tests .
+docker build -t dr_models -f Dockerfile .
 
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
 docker run \
        --add-host=database:$HOST_IP \
        --env-file environments/test \
-       -i models_tests "$@"
+       -i dr_models test --no-input "$@"
