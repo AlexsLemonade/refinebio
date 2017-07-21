@@ -10,7 +10,7 @@ import logging
 logger = get_task_logger(__name__)
 
 
-def cel_to_pcl(kwargs: Dict):
+def cel_to_pcl(kwargs: Dict) -> Dict:
     """Process .CEL files to .PCL format using R.
 
     Moves the .CEL file from the raw directory to the temp directory,
@@ -59,7 +59,7 @@ def cel_to_pcl(kwargs: Dict):
         # If we fail to remove the raw files, the job is still done
         # enough to call a success. However logging will be important
         # so the problem can be identified and the raw files cleaned up.
-        logging.exception(("Exception caught while uploading processed file %s for batch %d"
+        logging.exception(("Exception caught while removing raw files %s for batch %d"
                            " during Job #%d."),
                           output_file,
                           batch.id,
@@ -70,7 +70,7 @@ def cel_to_pcl(kwargs: Dict):
 
 
 @shared_task
-def affy_to_pcl(job_id):
+def affy_to_pcl(job_id: int) -> None:
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
                         cel_to_pcl,

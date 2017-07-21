@@ -1,5 +1,5 @@
-from django.utils import timezone
 from typing import List, Dict, Callable
+from django.utils import timezone
 from data_refinery_models.models import BatchStatuses, ProcessorJob
 from data_refinery_common.utils import get_worker_id
 

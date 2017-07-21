@@ -25,7 +25,7 @@ class DiscoveryPipeline(PipelineEnums):
 # Maps processor pipeline names to the Celery task definitions.
 PROCESSOR_PIPELINE_LOOKUP = {
     "AFFY_TO_PCL": "data_refinery_workers.processors.array_express.affy_to_pcl",
-    "NO_OP": "data_refinery_workers.processors.utils.no_op_processor"
+    "NO_OP": "data_refinery_workers.processors.no_op.no_op_processor"
 }
 
 
