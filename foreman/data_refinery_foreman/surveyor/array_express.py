@@ -23,7 +23,7 @@ SAMPLES_URL = EXPERIMENTS_URL + "{}/samples"
 
 class ArrayExpressSurveyor(ExternalSourceSurveyor):
     def source_type(self):
-        return Downloaders.ARRAY_EXPRESS
+        return Downloaders.ARRAY_EXPRESS.value
 
     def determine_pipeline(self,
                            batch: Batch,
@@ -101,7 +101,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 # Generally we only want to replicate the raw data if
                 # we can, however if there isn't raw data then we'll
                 # take the processed stuff.
-                if not replicate_raw and sample_file["type"] != "data":
+                if replicate_raw and sample_file["type"] != "data":
                     continue
 
                 raw_format = sample_file["name"].split(".")[-1]

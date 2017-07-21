@@ -1,6 +1,6 @@
 import json
 import datetime
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, call
 from django.test import TestCase
 from data_refinery_models.models import (
     Batch,
@@ -275,10 +275,13 @@ class SurveyTestCase(TestCase):
         ae_surveyor = ArrayExpressSurveyor(self.survey_job)
         ae_surveyor.survey()
 
-        mock_send_task.assert_called_once()
+        downloader_jobs = DownloaderJob.objects.all()
+        mock_send_task.assert_has_calls([
+            call("data_refinery_workers.downloaders.array_express.download_array_express",
+                 args=[downloader_jobs[0].id])
+        ])
         batches = Batch.objects.all()
         self.assertEqual(2, len(batches))
-        downloader_jobs = DownloaderJob.objects.all()
         self.assertEqual(1, len(downloader_jobs))
 
         batch = batches[0]
