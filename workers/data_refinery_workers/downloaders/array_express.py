@@ -47,7 +47,13 @@ def _download_file(download_url: str, file_path: str, job_id: int) -> None:
 
 
 def _extract_file(batches: List[Batch], job_id: int) -> None:
-    """Extract zip from temp directory and move to raw directory."""
+    """Extract zip from temp directory and move to raw directory.
+
+    Additionally this function sets the size_in_bytes field of each
+    Batch in batches. To save database calls it does not save the
+    batch itself since it will be saved soon when its status
+    changes in utils.end_job.
+    """
     # zip_path and local_dir should be common to all batches in the group
     zip_path = file_management.get_temp_download_path(batches[0], str(job_id))
     local_dir = file_management.get_temp_dir(batches[0], str(job_id))
@@ -59,6 +65,8 @@ def _extract_file(batches: List[Batch], job_id: int) -> None:
         zip_ref.extractall(local_dir)
 
         for batch in batches:
+            raw_file_location = file_management.get_temp_pre_path(batch)
+            batch.size_in_bytes = os.path.getsize(raw_file_location)
             file_management.upload_raw_file(batch, str(job_id))
     except Exception:
         logging.exception("Exception caught while extracting %s during Job #%d.",
