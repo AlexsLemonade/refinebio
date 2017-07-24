@@ -94,7 +94,6 @@ class DownloadArrayExpressTestCase(TestCase):
                             "/E-GEOD-59071.raw.3.zip").format(str(downloader_job.id))
 
         # Verify that all expected functionality is run:
-        # _verify_batch_grouping.assert_called_once()
         self.assertEqual(_verify_batch_grouping.call_count, 1)
         _download_file.assert_called_with(download_url, target_file_path, downloader_job.id)
         _extract_file.assert_called_with([batch, batch2], downloader_job.id)

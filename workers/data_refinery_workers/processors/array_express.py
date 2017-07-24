@@ -43,8 +43,8 @@ def cel_to_pcl(kwargs: Dict):
     header = ro.r['::']('affyio', 'read.celfile.header')(input_file)
 
     # header is a list of vectors. [0][0] contains the package name.
-    table = str.maketrans(dict.fromkeys(string.punctuation))
-    package_name = header[0][0].translate(table).lower()
+    punctuation_table = str.maketrans(dict.fromkeys(string.punctuation))
+    package_name = header[0][0].translate(punctuation_table).lower()
     brainarray_package = package_name + "hsentrezgprobe"
 
     # Some CEL headers have a v1 in the package name which is not part
