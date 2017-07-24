@@ -1,14 +1,11 @@
 import copy
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 from django.test import TestCase
 from data_refinery_models.models import (
     SurveyJob,
     Batch,
     BatchStatuses,
-    DownloaderJob,
-    DownloaderJobsToBatches,
     ProcessorJob,
-    ProcessorJobsToBatches
 )
 from data_refinery_workers.processors import utils
 
@@ -48,14 +45,7 @@ class StartJobTestCase(TestCase):
         batch.save()
         batch2.save()
 
-        processor_job = ProcessorJob()
-        processor_job.save()
-        processor_job_to_batch = ProcessorJobsToBatches(batch=batch,
-                                                        processor_job=processor_job)
-        processor_job_to_batch.save()
-        processor_job_to_batch2 = ProcessorJobsToBatches(batch=batch2,
-                                                         processor_job=processor_job)
-        processor_job_to_batch2.save()
+        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch, batch2])
 
         kwargs = utils.start_job({"job": processor_job})
         # start_job preserves the "job" key
@@ -148,11 +138,7 @@ class RunPipelineTestCase(TestCase):
         """
         batch = init_batch()
         batch.save()
-        processor_job = ProcessorJob()
-        processor_job.save()
-        processor_jobs_to_batches = ProcessorJobsToBatches(batch=batch,
-                                                           processor_job=processor_job)
-        processor_jobs_to_batches.save()
+        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
 
         mock_processor = MagicMock()
         mock_dict = {"something_to_pass_along": True,

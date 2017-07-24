@@ -1,7 +1,7 @@
 from django.utils import timezone
 from typing import List, Dict, Callable
-from billiard import current_process
-from data_refinery_models.models import BatchStatuses, ProcessorJob, ProcessorJobsToBatches
+from data_refinery_models.models import BatchStatuses, ProcessorJob
+from data_refinery_common.utils import get_worker_id
 
 # Import and set logger
 import logging
@@ -17,12 +17,11 @@ def start_job(kwargs: Dict):
     dictionary passed in with the key 'batches'.
     """
     job = kwargs["job"]
-    job.worker_id = current_process().name
+    job.worker_id = get_worker_id()
     job.start_time = timezone.now()
     job.save()
 
-    batch_relations = ProcessorJobsToBatches.objects.filter(processor_job_id=job.id)
-    batches = [br.batch for br in batch_relations]
+    batches = list(job.batches.all())
 
     if len(batches) == 0:
         logger.error("No batches found for job #%d.", job.id)

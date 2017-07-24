@@ -2,11 +2,9 @@
 # cluster, and task definitions for The Data Refinery. It also creates
 # the IAM permissions needed for ECS to work.
 
-
 resource "aws_ecs_cluster" "data_refinery" {
   name = "data-refinery"
 }
-
 
 # The following IAM role/policies allow ECS to register/deregister EC2
 # instances with the ELB. More information on why these are needed can

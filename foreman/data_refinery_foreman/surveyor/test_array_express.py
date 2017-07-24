@@ -5,7 +5,6 @@ from django.test import TestCase
 from data_refinery_models.models import (
     Batch,
     DownloaderJob,
-    DownloaderJobsToBatches,
     SurveyJob,
     SurveyJobKeyValue,
     Organism
@@ -243,7 +242,6 @@ class SurveyTestCase(TestCase):
         organism.save()
 
     def tearDown(self):
-        DownloaderJobsToBatches.objects.all().delete()
         DownloaderJob.objects.all().delete()
         Batch.objects.all().delete()
         SurveyJobKeyValue.objects.all().delete()

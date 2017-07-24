@@ -8,7 +8,6 @@ from data_refinery_models.models import (
     Batch,
     BatchStatuses,
     DownloaderJob,
-    DownloaderJobsToBatches,
     SurveyJob
 )
 from data_refinery_foreman.surveyor.message_queue import app
@@ -91,19 +90,15 @@ class ExternalSourceSurveyor:
             batch.internal_location = os.path.join(batch.platform_accession_code,
                                                    batch.pipeline_required)
 
+            batch.save()
+
         @retry(stop_max_attempt_number=3)
         @transaction.atomic
         def save_batches_start_job():
-            downloader_job = DownloaderJob()
-            downloader_job.save()
-
-            for batch in batches:
-                batch.save()
-                downloader_job_to_batch = DownloaderJobsToBatches(batch=batch,
-                                                                  downloader_job=downloader_job)
-                downloader_job_to_batch.save()
-
-            app.send_task(self.downloader_task(), args=[downloader_job.id])
+            downloader_task = self.downloader_task()
+            downloader_job = DownloaderJob.create_job_and_relationships(
+                batches=batches, downloader_task=downloader_task)
+            app.send_task(downloader_task, args=[downloader_job.id])
 
         try:
             save_batches_start_job()
