@@ -12,8 +12,7 @@ from data_refinery_models.models import (
     SurveyJob,
     Batch,
     BatchStatuses,
-    ProcessorJob,
-    ProcessorJobsToBatches
+    ProcessorJob
 )
 from data_refinery_workers.processors.array_express import affy_to_pcl
 

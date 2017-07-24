@@ -1,0 +1,3 @@
+FROM dr_worker
+
+ENTRYPOINT ["python3", "manage.py"]

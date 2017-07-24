@@ -11,7 +11,7 @@ cd $script_directory
 # move up a level
 cd ..
 
-docker build -t dr_worker -f workers/Dockerfile .
+docker build -t dr_tester -f workers/Dockerfile.tests .
 
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
@@ -20,4 +20,4 @@ docker run \
        --add-host=database:$HOST_IP \
        --env-file workers/environments/dev \
        --entrypoint ./manage.py \
-       test_master queue_processor
+       dr_worker queue_processor
