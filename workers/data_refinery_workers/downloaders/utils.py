@@ -14,7 +14,6 @@ from data_refinery_common.job_lookup import ProcessorPipeline, PROCESSOR_PIPELIN
 
 # Import and set logger
 import logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

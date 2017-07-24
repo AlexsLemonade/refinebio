@@ -15,8 +15,10 @@ import logging
 
 logger = get_task_logger(__name__)
 
+
 # chunk_size is in bytes
 CHUNK_SIZE = 1024 * 256
+JOB_DIR_PREFIX = "downloader_job_"
 
 
 def _verify_batch_grouping(batches: List[Batch], job_id: int) -> None:
@@ -55,8 +57,9 @@ def _extract_file(batches: List[Batch], job_id: int) -> None:
     changes in utils.end_job.
     """
     # zip_path and local_dir should be common to all batches in the group
-    zip_path = file_management.get_temp_download_path(batches[0], str(job_id))
-    local_dir = file_management.get_temp_dir(batches[0], str(job_id))
+    job_dir = JOB_DIR_PREFIX + str(job_id)
+    zip_path = file_management.get_temp_download_path(batches[0], job_dir)
+    local_dir = file_management.get_temp_dir(batches[0], job_dir)
 
     logger.debug("Extracting %s for job %d.", zip_path, job_id)
 
@@ -67,7 +70,7 @@ def _extract_file(batches: List[Batch], job_id: int) -> None:
         for batch in batches:
             raw_file_location = file_management.get_temp_pre_path(batch)
             batch.size_in_bytes = os.path.getsize(raw_file_location)
-            file_management.upload_raw_file(batch, str(job_id))
+            file_management.upload_raw_file(batch, job_dir)
     except Exception:
         logging.exception("Exception caught while extracting %s during Job #%d.",
                           zip_path,
@@ -75,7 +78,7 @@ def _extract_file(batches: List[Batch], job_id: int) -> None:
         raise
     finally:
         zip_ref.close()
-        file_management.remove_temp_directory(batches[0], str(job_id))
+        file_management.remove_temp_directory(batches[0], job_dir)
 
 
 @shared_task
@@ -83,11 +86,12 @@ def download_array_express(job_id: int) -> None:
     job = utils.start_job(job_id)
     batches = job.batches.all()
     success = True
+    job_dir = JOB_DIR_PREFIX + str(job_id)
 
     if batches.count() > 0:
-        target_directory = file_management.get_temp_dir(batches[0], str(job_id))
+        target_directory = file_management.get_temp_dir(batches[0], job_dir)
         os.makedirs(target_directory, exist_ok=True)
-        target_file_path = file_management.get_temp_download_path(batches[0], str(job_id))
+        target_file_path = file_management.get_temp_download_path(batches[0], job_dir)
         download_url = batches[0].download_url
     else:
         logger.error("No batches found for job #%d.",

@@ -84,19 +84,19 @@ class FilesTestCase(TestCase):
         batch = Batch.objects.get(pk=1)
         temp_dir = file_management.get_temp_dir(batch)
 
-        self.assertEqual(temp_dir, "/home/user/data_store/temp/A-AFFY-141/AFFY_TO_PCL/1")
+        self.assertEqual(temp_dir, "/home/user/data_store/temp/A-AFFY-141/AFFY_TO_PCL/batch_1")
 
     def test_temp_pre_path(self):
         batch = Batch.objects.get(pk=1)
         temp_pre_path = file_management.get_temp_pre_path(batch)
-        correct_path = "/home/user/data_store/temp/A-AFFY-141/AFFY_TO_PCL/1/GSM1426072.CEL"
+        correct_path = "/home/user/data_store/temp/A-AFFY-141/AFFY_TO_PCL/batch_1/GSM1426072.CEL"
 
         self.assertEqual(temp_pre_path, correct_path)
 
     def test_temp_post_path(self):
         batch = Batch.objects.get(pk=1)
         temp_post_path = file_management.get_temp_post_path(batch)
-        correct_path = "/home/user/data_store/temp/A-AFFY-141/AFFY_TO_PCL/1/GSM1426072.PCL"
+        correct_path = "/home/user/data_store/temp/A-AFFY-141/AFFY_TO_PCL/batch_1/GSM1426072.PCL"
 
         self.assertEqual(temp_post_path, correct_path)
 

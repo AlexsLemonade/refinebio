@@ -11,11 +11,11 @@ cd $script_directory
 # move up a level
 cd ..
 
-docker build -t dr_worker -f workers/Dockerfile .
+docker build -t dr_worker_tests -f workers/Dockerfile.tests .
 
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
 docker run \
        --add-host=database:$HOST_IP \
        --env-file workers/environments/test \
-       -i dr_worker test --no-input "$@"
+       -i dr_worker_tests test --no-input "$@"

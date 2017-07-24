@@ -1,4 +1,5 @@
 from __future__ import absolute_import, unicode_literals
+import string
 from typing import Dict
 import rpy2.robjects as ro
 from celery import shared_task
@@ -8,6 +9,11 @@ from data_refinery_common import file_management
 import logging
 
 logger = get_task_logger(__name__)
+
+
+PACKAGE_NAME_CORRECTIONS = {
+    "hugene10stv1hsentrezgprobe": "hugene10sthsentrezgprobe"
+}
 
 
 def cel_to_pcl(kwargs: Dict) -> Dict:
@@ -31,14 +37,32 @@ def cel_to_pcl(kwargs: Dict) -> Dict:
         kwargs["success"] = False
         return kwargs
 
-    temp_dir = file_management.get_temp_dir(batch)
+    input_file = file_management.get_temp_pre_path(batch)
     output_file = file_management.get_temp_post_path(batch)
 
-    ro.r('source("/home/user/r_processors/cel_to_pcl.R")')
-    ro.r['ProcessCelFiles'](
-        temp_dir,
-        "Hs",  # temporary until organism handling is more defined
-        output_file)
+    header = ro.r['::']('affyio', 'read.celfile.header')(input_file)
+
+    # header is a list of vectors. [0][0] contains the package name.
+    punctuation_table = str.maketrans(dict.fromkeys(string.punctuation))
+    package_name = header[0][0].translate(punctuation_table).lower()
+    brainarray_package = package_name + "hsentrezgprobe"
+
+    # Some CEL headers have a v1 in the package name which is not part
+    # of the brainararry package name. We have a table which corrects
+    # for this.
+    if brainarray_package in PACKAGE_NAME_CORRECTIONS:
+        brainarray_package = PACKAGE_NAME_CORRECTIONS[brainarray_package]
+
+    # It's necessary to load the foreach library before calling SCANfast
+    # because it doesn't load the library before calling functions
+    # from it.
+    ro.r("library('foreach')")
+
+    ro.r['::']('SCAN.UPC', 'SCANfast')(
+        input_file,
+        output_file,
+        probeSummaryPackage=brainarray_package
+    )
 
     try:
         file_management.upload_processed_file(batch)

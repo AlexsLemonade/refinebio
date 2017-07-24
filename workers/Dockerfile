@@ -1,25 +1,14 @@
-FROM continuumio/miniconda3:4.3.11
-
-RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
-WORKDIR /home/user
-
-RUN apt-get install libcurl4-openssl-dev
-
-COPY workers/environment.yml .
-
-RUN conda env create -f environment.yml
-
-ENV PATH "/opt/conda/envs/workers/bin:$PATH"
+FROM ccdl/data_refinery_worker_base
 
 COPY data_models/dist/data-refinery-models-* data_models/
 
 # Get the latest version from the dist directory.
-RUN pip install data_models/$(ls data_models -1 | sort --version-sort | tail -1)
+RUN pip3 install data_models/$(ls data_models -1 | sort --version-sort | tail -1)
 
 COPY common/dist/data-refinery-common-* common/
 
 # Get the latest version from the dist directory.
-RUN pip install common/$(ls common -1 | sort --version-sort | tail -1)
+RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
 
 COPY common/dist/data-refinery-common-* common/
 
@@ -30,6 +19,4 @@ COPY workers/ .
 
 USER user
 
-ENTRYPOINT ["python3.6", "manage.py"]
-
-CMD ["celery", "-l", "info", "-A", "data_refinery_workers", "-c", "1", "worker", "-Ofair"]
+CMD ["celery", "-l", "info", "-A", "data_refinery_workers", "-c", "2", "worker", "-Ofair"]
