@@ -81,18 +81,18 @@ class DownloadArrayExpressTestCase(TestCase):
         # Call the task we're testing:
         array_express.download_array_express.apply(args=(downloader_job.id,)).get()
 
-        target_file_path = ("/home/user/data_store/temp/A-AFFY-1/AFFY_TO_PCL/{}"
+        target_file_path = ("/home/user/data_store/temp/A-AFFY-1/AFFY_TO_PCL/downloader_job_{}"
                             "/E-GEOD-59071.raw.3.zip").format(str(downloader_job.id))
 
         # Verify that all expected functionality is run:
-        _verify_batch_grouping.assert_called_once()
+        self.assertEqual(_verify_batch_grouping.call_count, 1)
         _download_file.assert_called_with(download_url, target_file_path, downloader_job.id)
         args, _ = _extract_file.call_args
         batch_query_set, job_id = args
         self.assertEqual(list(batch_query_set), [batch, batch2])
         self.assertEqual(job_id, downloader_job.id)
 
-        mock_processor_task.delay.assert_called()
+        self.assertEqual(mock_processor_task.delay.call_count, 2)
 
         # Verify that the database has been updated correctly:
         batches = Batch.objects.all()
