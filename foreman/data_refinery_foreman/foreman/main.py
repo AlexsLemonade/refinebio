@@ -12,7 +12,7 @@ from data_refinery_models.models import (
     ProcessorJob
 )
 from data_refinery_foreman.surveyor.message_queue import app
-from data_refinery_common.job_lookup import PROCESSOR_PIPELINE_LOOKUP
+from data_refinery_common.job_lookup import ProcessorPipeline, PROCESSOR_PIPELINE_LOOKUP
 
 # Import and set logger
 import logging
@@ -212,7 +212,8 @@ def retry_lost_processor_jobs() -> None:
         start_time=None,
         end_time=None,
         created_at__lt=minimum_creation_time
-    )
+        # TEMPORARY for Jackie's grant
+    ).exclude(pipeline_applied=ProcessorPipeline.NONE)
 
     handle_processor_jobs(lost_jobs)
 
