@@ -74,4 +74,8 @@ resource "aws_ecs_service" "data_refinery_worker" {
   deployment_minimum_healthy_percent = 50
   deployment_maximum_percent = 200
   depends_on = ["aws_iam_role_policy.ecs_service"]
+
+  lifecycle {
+    ignore_changes = ["task_definition"]
+  }
 }

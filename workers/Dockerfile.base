@@ -41,6 +41,9 @@ RUN Rscript r_dependencies.R
 
 COPY workers/requirements.txt .
 
+RUN apt-get update -qq && \
+    apt-get install -y libgnutls28-dev
+
 RUN \
   pip3 --no-cache-dir install pip --upgrade && \
   pip3 --no-cache-dir install setuptools --upgrade && \

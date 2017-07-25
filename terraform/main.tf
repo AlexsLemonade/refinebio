@@ -240,6 +240,17 @@ resource "aws_instance" "data_refinery_worker_1" {
     Name = "data-refinery-1"
   }
 
+  root_block_device = {
+    volume_type = "gp2"
+    volume_size = 100
+  }
+
+  ebs_block_device = {
+    device_name = "/dev/xvdcz"
+    volume_type = "gp2"
+    volume_size = 40
+  }
+
   provisioner "remote-exec" {
     # Commands copied from
     # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_cloudwatch_logs.html
@@ -300,6 +311,17 @@ resource "aws_instance" "data_refinery_worker_2" {
 
   tags = {
     Name = "data-refinery-2"
+  }
+
+  root_block_device = {
+    volume_type = "gp2"
+    volume_size = 100
+  }
+
+  ebs_block_device = {
+    device_name = "/dev/xvdcz"
+    volume_type = "gp2"
+    volume_size = 40
   }
 
   provisioner "remote-exec" {
