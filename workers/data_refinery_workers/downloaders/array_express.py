@@ -68,7 +68,7 @@ def _extract_file(batches: List[Batch], job_id: int) -> None:
         zip_ref.extractall(local_dir)
 
         for batch in batches:
-            raw_file_location = file_management.get_temp_pre_path(batch)
+            raw_file_location = file_management.get_temp_pre_path(batch, job_dir)
             batch.size_in_bytes = os.path.getsize(raw_file_location)
             file_management.upload_raw_file(batch, job_dir)
     except Exception:

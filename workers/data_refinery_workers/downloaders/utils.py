@@ -67,9 +67,8 @@ def end_job(job: DownloaderJob, batches: Batch, success):
         for batch in batches:
             with transaction.atomic():
                 processor_job = save_batch_create_job(batch)
-                # TEMPORARY for Jackie's grant:
-                # if batch.pipeline_required != ProcessorPipeline.NONE:
-                #     queue_task(processor_job)
+                if batch.pipeline_required != ProcessorPipeline.NONE:
+                    queue_task(processor_job)
 
     job.success = success
     job.end_time = timezone.now()
