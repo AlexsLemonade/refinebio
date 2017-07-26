@@ -1,7 +1,14 @@
+# Turn warnings into errors because biocLite throws warnings instead
+# of error if it fails to install something.
+options(warn=2)
+
 install.packages('ff', repos='https://cloud.r-project.org/')
 install.packages('XML', repos='https://cloud.r-project.org/')
 install.packages('RCurl', repos='https://cloud.r-project.org/')
 install.packages('RSQLite', repos='https://cloud.r-project.org/')
+install.packages('tibble', repos='https://cloud.r-project.org/')
+install.packages('xtable', repos='https://cloud.r-project.org/')
+install.packages('pkgconfig', repos='https://cloud.r-project.org/')
 
 source('https://bioconductor.org/biocLite.R')
 bioconductor.packages <- c(
@@ -11,6 +18,10 @@ bioconductor.packages <- c(
   'affy',
   'affyio',
   'AnnotationDbi',
+  'zlibbioc',
+  'preprocessCore',
+  'genefilter',
+  'sva',
   'org.Hs.eg.db',
   'org.Mm.eg.db',
   'org.Dm.eg.db',

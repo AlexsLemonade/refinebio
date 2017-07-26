@@ -24,10 +24,10 @@ RUN \
   r-base \
   r-base-dev \
   libxml2-dev \
-  libcurl4-gnutls-dev \
   libssl-dev \
+  libcurl4-openssl-dev \
   curl \
-  wget &&\
+  wget && \
   rm -rf /var/lib/apt/lists/*
 
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
@@ -42,18 +42,17 @@ RUN Rscript r_dependencies.R
 COPY workers/requirements.txt .
 
 # These should be moved up once I have the time to rebuild the whole image.
-RUN apt-get update -qq && \
-    apt-get purge -y curl && \
-    apt-get purge -y libcurl4-gnutls-dev && \
-    apt-get install -y libcurl4-openssl-dev && \
-    apt-get install -y curl
+# RUN apt-get update -qq && \
+#     apt-get purge -y curl && \
+#     apt-get purge -y libcurl4-gnutls-dev && \
+#     apt-get install -y curl
 
 # Install pycurl via this method so we can specify the `--with-openssl` option.
 # Necessary because GnuTLS drops SSL connections and caused this error:
 # https://stackoverflow.com/questions/41084351/django-celery-sqs-boto-exception-sqserror-sqserror-599-gnutls-handshake
-RUN curl -O https://pypi.python.org/packages/source/p/pycurl/pycurl-7.43.0.tar.gz && \
-    pip3 install pycurl-7.43.0.tar.gz --global-option="--with-openssl" && \
-    rm pycurl-7.43.0.tar.gz
+# RUN curl -O https://pypi.python.org/packages/source/p/pycurl/pycurl-7.43.0.tar.gz && \
+#     pip3 install pycurl-7.43.0.tar.gz --global-option="--with-openssl" && \
+#     rm pycurl-7.43.0.tar.gz
 
 RUN \
   pip3 --no-cache-dir install pip --upgrade && \
@@ -67,3 +66,7 @@ RUN \
 #   pip3 --no-cache-dir install \
 #        https://bitbucket.org/rpy2/rpy2/get/version_2.8.x.tar.gz && \
 #   rm -rf /root/.cache
+
+# COPY workers/additional_dependencies.R .
+
+# RUN Rscript additional_dependencies.R

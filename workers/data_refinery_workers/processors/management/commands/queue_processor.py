@@ -43,7 +43,7 @@ class Command(BaseCommand):
             platform_accession_code="A-AFFY-141",
             experiment_accession_code="E-GEOD-59071",
             experiment_title="It doesn't really matter.",
-            name="GSM1426072_CD_colon_active_2.CEL",
+            name="GSM1426073_CD_colon_active_3.CEL",
             internal_location="A-AFFY-141/AFFY_TO_PCL",
             organism_id=9606,
             organism_name="HOMO SAPIENS",
