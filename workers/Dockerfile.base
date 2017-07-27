@@ -54,6 +54,11 @@ COPY workers/requirements.txt .
 #     pip3 install pycurl-7.43.0.tar.gz --global-option="--with-openssl" && \
 #     rm pycurl-7.43.0.tar.gz
 
+# Move these apt-gets up into the other one once I have time for rebuild
+# libpq-dev install pg_config which is needed for psycopg2
+RUN apt-get update -qq && \
+    apt-get install -y libpq-dev
+
 RUN \
   pip3 --no-cache-dir install pip --upgrade && \
   pip3 --no-cache-dir install setuptools --upgrade && \
