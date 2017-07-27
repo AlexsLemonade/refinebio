@@ -2,6 +2,7 @@ from typing import List, Dict, Callable
 from django.utils import timezone
 from data_refinery_models.models import BatchStatuses, ProcessorJob
 from data_refinery_common.utils import get_worker_id
+from data_refinery_workers._version import __version__
 
 # Import and set logger
 import logging
@@ -18,6 +19,7 @@ def start_job(kwargs: Dict):
     """
     job = kwargs["job"]
     job.worker_id = get_worker_id()
+    job.worker_version = __version__
     job.start_time = timezone.now()
     job.save()
 

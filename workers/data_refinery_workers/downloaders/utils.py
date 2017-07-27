@@ -9,6 +9,7 @@ from data_refinery_models.models import (
     ProcessorJob
 )
 from data_refinery_workers.task_runner import app
+from data_refinery_workers._version import __version__
 from data_refinery_common.job_lookup import ProcessorPipeline, PROCESSOR_PIPELINE_LOOKUP
 
 
@@ -31,6 +32,7 @@ def start_job(job_id: int) -> DownloaderJob:
         raise
 
     job.worker_id = get_worker_id()
+    job.worker_version = __version__
     job.start_time = timezone.now()
     job.save()
 

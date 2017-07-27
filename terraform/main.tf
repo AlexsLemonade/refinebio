@@ -226,8 +226,8 @@ resource "aws_security_group_rule" "data_refinery_worker_outbound" {
 }
 
 resource "aws_instance" "data_refinery_worker_1" {
-  ami = "ami-275ffe31"
-  instance_type = "t2.medium"
+  ami = "ami-04351e12"
+  instance_type = "t2.xlarge"
   availability_zone = "us-east-1a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
@@ -299,8 +299,8 @@ resource "aws_instance" "data_refinery_worker_1" {
 }
 
 resource "aws_instance" "data_refinery_worker_2" {
-  ami = "ami-275ffe31"
-  instance_type = "t2.medium"
+  ami = "ami-04351e12"
+  instance_type = "t2.xlarge"
   availability_zone = "us-east-1b"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
