@@ -39,8 +39,6 @@ COPY workers/r_dependencies.R .
 
 RUN Rscript r_dependencies.R
 
-COPY workers/requirements.txt .
-
 # These should be moved up once I have the time to rebuild the whole image.
 # RUN apt-get update -qq && \
 #     apt-get purge -y curl && \
@@ -58,6 +56,8 @@ COPY workers/requirements.txt .
 # libpq-dev install pg_config which is needed for psycopg2
 RUN apt-get update -qq && \
     apt-get install -y libpq-dev
+
+COPY workers/requirements.txt .
 
 RUN \
   pip3 --no-cache-dir install pip --upgrade && \

@@ -23,7 +23,7 @@ def no_op_processor_fn(kwargs: Dict) -> Dict:
 
     try:
         if file_management.USE_S3:
-            client = boto3.resource("s3")
+            client = boto3.client("s3")
             client.copy_object(Bucket=file_management.S3_BUCKET_NAME,
                                Key=file_management.get_processed_path(batch),
                                CopySource={"Bucket": file_management.S3_BUCKET_NAME,
