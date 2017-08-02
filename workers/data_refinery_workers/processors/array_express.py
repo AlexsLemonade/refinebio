@@ -11,11 +11,6 @@ import logging
 logger = get_task_logger(__name__)
 
 
-PACKAGE_NAME_CORRECTIONS = {
-    "hugene10stv1hsentrezgprobe": "hugene10sthsentrezgprobe"
-}
-
-
 def cel_to_pcl(kwargs: Dict) -> Dict:
     """Process .CEL files to .PCL format using R.
 
@@ -45,13 +40,14 @@ def cel_to_pcl(kwargs: Dict) -> Dict:
     # header is a list of vectors. [0][0] contains the package name.
     punctuation_table = str.maketrans(dict.fromkeys(string.punctuation))
     package_name = header[0][0].translate(punctuation_table).lower()
-    brainarray_package = package_name + "hsentrezgprobe"
-
-    # Some CEL headers have a v1 in the package name which is not part
-    # of the brainararry package name. We have a table which corrects
-    # for this.
-    if brainarray_package in PACKAGE_NAME_CORRECTIONS:
-        brainarray_package = PACKAGE_NAME_CORRECTIONS[brainarray_package]
+    # Headers can contain the version "v1" or "v2", which doesn't
+    # appear in the brainarray package name. This replacement is
+    # brittle, but the list of brainarray packages is relatively short
+    # and we can monitor what packages are added to it and modify
+    # accordingly. So far "v1" and "v2" are the only known versions
+    # which must be accomodated in this way.
+    package_name_without_version = package_name.replace("v1", "").replace("v2", "")
+    brainarray_package = package_name_without_version + "hsentrezgprobe"
 
     # Prevents:
     # RRuntimeWarning: There were 50 or more warnings (use warnings()
