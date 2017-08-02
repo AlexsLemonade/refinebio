@@ -53,7 +53,14 @@ class ExternalSourceSurveyor:
         return DOWNLOADER_TASK_LOOKUP[self.source_type()]
 
     def handle_batches(self, batches: List[Batch]):
+        new_batches = []
         for batch in batches:
+            if not Batch.is_new_batch(batch):
+                logger.info(("Skipping sample with name %s because a batch already exists with"
+                             "that name."),
+                            batch.name)
+                continue
+
             batch.survey_job = self.survey_job
             batch.source_type = self.source_type()
             batch.status = BatchStatuses.NEW.value
@@ -71,13 +78,14 @@ class ExternalSourceSurveyor:
                                                    batch.pipeline_required)
 
             batch.save()
+            new_batches.append(batch)
 
         @retry(stop_max_attempt_number=3)
         @transaction.atomic
         def save_batches_start_job():
             downloader_task = self.downloader_task()
             downloader_job = DownloaderJob.create_job_and_relationships(
-                batches=batches, downloader_task=downloader_task)
+                batches=new_batches, downloader_task=downloader_task)
             app.send_task(downloader_task, args=[downloader_job.id])
 
         try:

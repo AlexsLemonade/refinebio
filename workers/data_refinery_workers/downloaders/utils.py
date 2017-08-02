@@ -51,7 +51,7 @@ def end_job(job: DownloaderJob, batches: Batch, success):
         batch.save()
 
         # TEMPORARY for Jackie's grant:
-        if batch.pipeline_required != ProcessorPipeline.NONE:
+        if batch.pipeline_required != ProcessorPipeline.NONE.value:
             logger.debug("Creating processor job for batch #%d.", batch.id)
             processor_job = ProcessorJob.create_job_and_relationships(
                 batches=[batch], pipeline_applied=batch.pipeline_required)
@@ -62,15 +62,21 @@ def end_job(job: DownloaderJob, batches: Batch, success):
 
     @retry(stop_max_attempt_number=3)
     def queue_task(processor_job):
-        processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
-        app.send_task(processor_task, args=[processor_job.id])
+        if batch.pipeline_required in PROCESSOR_PIPELINE_LOOKUP:
+            processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
+            app.send_task(processor_task, args=[processor_job.id])
+            return True
+        else:
+            logger.error("Cannot find Processor Pipeline %s in the lookup.",
+                         batch.pipeline_required)
+            return False
 
     if success:
         for batch in batches:
             with transaction.atomic():
                 processor_job = save_batch_create_job(batch)
-                if batch.pipeline_required != ProcessorPipeline.NONE:
-                    queue_task(processor_job)
+                if batch.pipeline_required != ProcessorPipeline.NONE.value:
+                    success = queue_task(processor_job)
 
     job.success = success
     job.end_time = timezone.now()

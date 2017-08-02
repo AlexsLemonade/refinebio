@@ -14,7 +14,8 @@ from data_refinery_models.models import (
     BatchStatuses,
     ProcessorJob
 )
-from data_refinery_workers.processors.array_express import affy_to_pcl
+from data_refinery_workers.task_runner import app
+from data_refinery_common.job_lookup import PROCESSOR_PIPELINE_LOOKUP
 
 
 # Import and set logger

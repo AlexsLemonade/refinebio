@@ -2,7 +2,7 @@ from typing import Dict
 import shutil
 import boto3
 from celery import shared_task
-from data_refinery_workers import utils
+from data_refinery_workers.processors import utils
 from data_refinery_common import file_management
 
 # import and set logger

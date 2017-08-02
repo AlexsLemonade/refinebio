@@ -49,6 +49,9 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
     new_job = DownloaderJob.create_job_and_relationships(num_retries=num_retries,
                                                          batches=list(last_job.batches.all()),
                                                          downloader_task=last_job.downloader_task)
+    logger.info("Requeuing downloader job which had id %d with a new downloader job with id %d.",
+                last_job.id,
+                new_job.id)
     app.send_task(last_job.downloader_task, args=[new_job.id])
 
     last_job.retried = True
@@ -213,7 +216,7 @@ def retry_lost_processor_jobs() -> None:
         end_time=None,
         created_at__lt=minimum_creation_time
         # TEMPORARY for Jackie's grant
-    ).exclude(pipeline_applied=ProcessorPipeline.NONE)
+    ).exclude(pipeline_applied=ProcessorPipeline.NONE.value)
 
     handle_processor_jobs(lost_jobs)
 

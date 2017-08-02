@@ -101,15 +101,34 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 # Generally we only want to replicate the raw data if
                 # we can, however if there isn't raw data then we'll
                 # take the processed stuff.
-                if replicate_raw and sample_file["type"] != "data":
+                if (replicate_raw and sample_file["type"] != "data") \
+                        or sample_file["name"] is None:
                     continue
+
+                # sample_file["comment"] is only a list if there's
+                # more than one comment...
+                comments = sample_file["comment"]
+                if isinstance(comments, list):
+                    for comment in comments:
+                        # Could be: "Derived ArrayExpress Data Matrix FTP file"
+                        # or: "ArrayExpress FTP file"
+                        # If there is no comment with a name including
+                        # "FTP file" then we don't know where to
+                        # download it so we need to mark this job as
+                        # an error. Therefore don't catch the
+                        # potential exception where download_url
+                        # doesn't get defined.
+                        if comment["name"].find("FTP file") != -1:
+                            download_url = comment["value"]
+                else:
+                    download_url = comments["value"]
 
                 raw_format = sample_file["name"].split(".")[-1]
                 processed_format = "PCL" if replicate_raw else raw_format
 
                 batches.append(Batch(
                     size_in_bytes=-1,  # Will have to be determined later
-                    download_url=sample_file["comment"]["value"],
+                    download_url=download_url,
                     raw_format=raw_format,
                     processed_format=processed_format,
                     platform_accession_code=experiment["platform_accession_code"],

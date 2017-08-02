@@ -53,6 +53,11 @@ def cel_to_pcl(kwargs: Dict) -> Dict:
     if brainarray_package in PACKAGE_NAME_CORRECTIONS:
         brainarray_package = PACKAGE_NAME_CORRECTIONS[brainarray_package]
 
+    # Prevents:
+    # RRuntimeWarning: There were 50 or more warnings (use warnings()
+    # to see the first 50)
+    ro.r("options(warn=1)")
+
     # It's necessary to load the foreach library before calling SCANfast
     # because it doesn't load the library before calling functions
     # from it.

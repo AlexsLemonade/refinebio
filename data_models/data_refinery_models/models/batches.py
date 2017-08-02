@@ -44,6 +44,11 @@ class Batch(TimeTrackedModel):
     # This is the organism name as it appeared in the experiment.
     organism_name = models.CharField(max_length=256)
 
+    @classmethod
+    def is_new_batch(cls, batch) -> bool:
+        matching_batches = cls.objects.filter(name=batch.name)
+        return True if matching_batches.count() == 0 else False
+
     class Meta:
         db_table = "batches"
 
