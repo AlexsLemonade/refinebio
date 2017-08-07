@@ -83,10 +83,17 @@ class ExternalSourceSurveyor:
         @retry(stop_max_attempt_number=3)
         @transaction.atomic
         def save_batches_start_job():
-            downloader_task = self.downloader_task()
-            downloader_job = DownloaderJob.create_job_and_relationships(
-                batches=new_batches, downloader_task=downloader_task)
-            app.send_task(downloader_task, args=[downloader_job.id])
+            if len(new_batches) > 0:
+                downloader_task = self.downloader_task()
+                downloader_job = DownloaderJob.create_job_and_relationships(
+                    batches=new_batches, downloader_task=downloader_task)
+                logger.info("Survey job #%d is queuing downloader job #%d.",
+                            self.survey_job.id,
+                            downloader_job.id)
+                app.send_task(downloader_task, args=[downloader_job.id])
+            else:
+                logger.info("Survey job #% found no new Batches.",
+                            self.survey_job.id)
 
         try:
             save_batches_start_job()

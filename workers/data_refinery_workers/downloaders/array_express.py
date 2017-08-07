@@ -41,7 +41,7 @@ def _download_file(download_url: str, file_path: str, job_id: int) -> None:
         with closing(urllib.request.urlopen(download_url)) as request:
             shutil.copyfileobj(request, target_file, CHUNK_SIZE)
     except Exception:
-        logging.exception("Exception caught while running Job #%d.",
+        logging.exception("Exception caught while running Downloader Job #%d.",
                           job_id)
         raise
     finally:
@@ -61,18 +61,28 @@ def _extract_file(batches: List[Batch], job_id: int) -> None:
     zip_path = file_management.get_temp_download_path(batches[0], job_dir)
     local_dir = file_management.get_temp_dir(batches[0], job_dir)
 
-    logger.debug("Extracting %s for job %d.", zip_path, job_id)
+    logger.debug("Extracting %s for Downloader Job %d.", zip_path, job_id)
 
     try:
         zip_ref = zipfile.ZipFile(zip_path, "r")
         zip_ref.extractall(local_dir)
 
         for batch in batches:
+            batch_directory = file_management.get_temp_dir(batch, job_dir)
             raw_file_location = file_management.get_temp_pre_path(batch, job_dir)
+
+            # The platform is part of the batch's location so if the
+            # batches in this job have different platforms then some
+            # of them need to be moved to the directory corresponding
+            # to thier platform.
+            if local_dir != batch_directory:
+                incorrect_location = os.path.join(local_dir, batch.name)
+                os.rename(incorrect_location, raw_file_location)
+
             batch.size_in_bytes = os.path.getsize(raw_file_location)
             file_management.upload_raw_file(batch, job_dir)
     except Exception:
-        logging.exception("Exception caught while extracting %s during Job #%d.",
+        logging.exception("Exception caught while extracting %s during Downloader Job #%d.",
                           zip_path,
                           job_id)
         raise
@@ -94,7 +104,7 @@ def download_array_express(job_id: int) -> None:
         target_file_path = file_management.get_temp_download_path(batches[0], job_dir)
         download_url = batches[0].download_url
     else:
-        logger.error("No batches found for job #%d.",
+        logger.error("No batches found for Downloader Job #%d.",
                      job_id)
         success = False
 
@@ -113,7 +123,7 @@ def download_array_express(job_id: int) -> None:
             success = False
 
     if success:
-        logger.debug("File %s downloaded and extracted successfully in Job #%d.",
+        logger.debug("File %s downloaded and extracted successfully in Downloader Job #%d.",
                      download_url,
                      job_id)
 

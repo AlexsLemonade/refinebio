@@ -42,7 +42,7 @@ resource "aws_subnet" "data_refinery_1b" {
 
 resource "aws_iam_instance_profile" "ecs_instance_profile" {
   name  = "data-refinery-ecs-instance-profile"
-  roles = ["${aws_iam_role.ecs_instance.name}"]
+  role = "${aws_iam_role.ecs_instance.name}"
 }
 
 resource "aws_iam_role" "ecs_instance" {
@@ -67,9 +67,8 @@ resource "aws_iam_role" "ecs_instance" {
 EOF
 }
 
-resource "aws_iam_policy_attachment" "ecs" {
-  name = "AmazonEC2ContainerServiceforEC2Role"
-  roles = ["${aws_iam_role.ecs_instance.name}"]
+resource "aws_iam_role_policy_attachment" "ecs" {
+  role = "${aws_iam_role.ecs_instance.name}"
 
   # The following can be found here:
   # https://console.aws.amazon.com/iam/home?region=us-east-1#/policies/arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role

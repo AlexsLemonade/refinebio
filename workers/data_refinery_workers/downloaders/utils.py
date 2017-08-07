@@ -24,7 +24,7 @@ def start_job(job_id: int) -> DownloaderJob:
     Retrieves the job from the database and returns it after marking
     it as started.
     """
-    logger.info("Starting job with id: %s.", job_id)
+    logger.info("Starting Downloader Job with id: %s.", job_id)
     try:
         job = DownloaderJob.objects.get(id=job_id)
     except DownloaderJob.DoesNotExist:
