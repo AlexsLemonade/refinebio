@@ -39,19 +39,6 @@ COPY workers/r_dependencies.R .
 
 RUN Rscript r_dependencies.R
 
-# These should be moved up once I have the time to rebuild the whole image.
-# RUN apt-get update -qq && \
-#     apt-get purge -y curl && \
-#     apt-get purge -y libcurl4-gnutls-dev && \
-#     apt-get install -y curl
-
-# Install pycurl via this method so we can specify the `--with-openssl` option.
-# Necessary because GnuTLS drops SSL connections and caused this error:
-# https://stackoverflow.com/questions/41084351/django-celery-sqs-boto-exception-sqserror-sqserror-599-gnutls-handshake
-# RUN curl -O https://pypi.python.org/packages/source/p/pycurl/pycurl-7.43.0.tar.gz && \
-#     pip3 install pycurl-7.43.0.tar.gz --global-option="--with-openssl" && \
-#     rm pycurl-7.43.0.tar.gz
-
 # Move these apt-gets up into the other one once I have time for rebuild
 # libpq-dev install pg_config which is needed for psycopg2
 RUN apt-get update -qq && \
@@ -65,13 +52,3 @@ RUN \
   pip3 --no-cache-dir install wheel --upgrade && \
   pip3 --no-cache-dir install -r requirements.txt --upgrade && \
   rm -rf /root/.cache
-
-# Run dev version of rpy2
-# RUN \
-#   pip3 --no-cache-dir install \
-#        https://bitbucket.org/rpy2/rpy2/get/version_2.8.x.tar.gz && \
-#   rm -rf /root/.cache
-
-# COPY workers/additional_dependencies.R .
-
-# RUN Rscript additional_dependencies.R

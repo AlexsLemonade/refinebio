@@ -11,6 +11,11 @@ import logging
 logger = get_task_logger(__name__)
 
 
+PACKAGE_NAME_CORRECTIONS = {
+    "hugene10stv1hsentrezgprobe": "hugene10sthsentrezgprobe"
+}
+
+
 def cel_to_pcl(kwargs: Dict) -> Dict:
     """Process .CEL files to .PCL format using R.
 
