@@ -60,6 +60,7 @@ def _extract_file(batches: List[Batch], job_id: int) -> None:
     job_dir = JOB_DIR_PREFIX + str(job_id)
     zip_path = file_management.get_temp_download_path(batches[0], job_dir)
     local_dir = file_management.get_temp_dir(batches[0], job_dir)
+    dirs_to_clean = set()
 
     logger.debug("Extracting %s for Downloader Job %d.", zip_path, job_id)
 
@@ -76,6 +77,8 @@ def _extract_file(batches: List[Batch], job_id: int) -> None:
             # of them need to be moved to the directory corresponding
             # to thier platform.
             if local_dir != batch_directory:
+                os.makedirs(batch_directory, exist_ok=True)
+                dirs_to_clean.add(batch_directory)
                 incorrect_location = os.path.join(local_dir, batch.name)
                 os.rename(incorrect_location, raw_file_location)
 
@@ -89,6 +92,8 @@ def _extract_file(batches: List[Batch], job_id: int) -> None:
     finally:
         zip_ref.close()
         file_management.remove_temp_directory(batches[0], job_dir)
+        for directory in dirs_to_clean:
+            shutil.rmtree(directory)
 
 
 @shared_task
