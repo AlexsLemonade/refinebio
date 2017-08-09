@@ -22,11 +22,11 @@ logger = logging.getLogger(__name__)
 
 # Maximum number of retries, so the number of attempts will be one
 # greater than this because of the first attempt
-MAX_NUM_RETRIES = 5
+MAX_NUM_RETRIES = 2
 
 # For now it seems like no jobs should take longer than a day to be
 # either picked up or run.
-MAX_DOWNLOADER_RUN_TIME = timedelta(minutes=1)
+MAX_DOWNLOADER_RUN_TIME = timedelta(days=1)
 MAX_PROCESSOR_RUN_TIME = timedelta(days=1)
 MAX_QUEUE_TIME = timedelta(days=1)
 
@@ -228,13 +228,12 @@ def retry_lost_processor_jobs() -> None:
 
 def monitor_jobs():
     """Runs a thread for each job monitoring loop."""
-    functions = [  # retry_failed_downloader_jobs,
-        # retry_hung_downloader_jobs,
-        # retry_lost_downloader_jobs,
-        retry_failed_processor_jobs,
-        # retry_hung_processor_jobs,
-        # retry_lost_processor_jobs
-    ]
+    functions = [retry_failed_downloader_jobs,
+                 retry_hung_downloader_jobs,
+                 retry_lost_downloader_jobs,
+                 retry_failed_processor_jobs,
+                 retry_hung_processor_jobs,
+                 retry_lost_processor_jobs]
 
     threads = []
     for f in functions:
