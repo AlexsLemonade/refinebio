@@ -35,7 +35,7 @@ def _get_downloaded_name(batch: Batch) -> str:
     return os.path.basename(path)
 
 
-def _get_processed_name(batch: Batch) -> str:
+def get_processed_name(batch: Batch) -> str:
     file_base = batch.name.split(".")[0]
     return file_base + "." + batch.processed_format
 
@@ -91,7 +91,7 @@ def get_temp_pre_path(batch: Batch, dir_name: str = None) -> str:
 def get_temp_post_path(batch: Batch, dir_name: str = None) -> str:
     """Returns the path of the post-processed file for the batch."""
     return os.path.join(get_temp_dir(batch, dir_name),
-                        _get_processed_name(batch))
+                        get_processed_name(batch))
 
 
 def get_processed_dir(batch: Batch) -> str:
@@ -103,7 +103,7 @@ def get_processed_dir(batch: Batch) -> str:
 
 def get_processed_path(batch: Batch) -> str:
     return os.path.join(get_processed_dir(batch),
-                        _get_processed_name(batch))
+                        get_processed_name(batch))
 
 
 def _upload_file(from_path: str, to_dir: str, to_path: str) -> None:

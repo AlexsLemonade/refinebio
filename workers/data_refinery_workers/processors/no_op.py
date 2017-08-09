@@ -37,6 +37,7 @@ def no_op_processor_fn(kwargs: Dict) -> Dict:
                           raw_path,
                           batch.id,
                           kwargs["job_id"])
+        kwargs["job"].failure_reason = "Exception caught while moving file {}".format(batch.name)
         kwargs["success"] = False
         return kwargs
 

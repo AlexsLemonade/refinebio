@@ -30,10 +30,12 @@ def cel_to_pcl(kwargs: Dict) -> Dict:
     try:
         file_management.download_raw_file(batch)
     except Exception:
-        logging.exception("Exception caught while retrieving %s for batch %d during Job #%d.",
+        logging.exception(("Exception caught while retrieving raw file "
+                           "%s for batch %d during Processor Job #%d."),
                           file_management.get_raw_path(batch),
-                          batch.id,
-                          kwargs["job_id"])
+                          batch.id, kwargs["job_id"])
+        failure_template = "Exception caught while retrieving raw file {}"
+        kwargs["job"].failure_reason = failure_template.format(batch.name)
         kwargs["success"] = False
         return kwargs
 
@@ -78,6 +80,9 @@ def cel_to_pcl(kwargs: Dict) -> Dict:
                           output_file,
                           batch.id,
                           kwargs["job_id"])
+        processed_name = file_management.get_processed_name(batch)
+        failure_template = "Exception caught while uploading processed file {}"
+        kwargs["job"].failure_reason = failure_template.format(processed_name)
         kwargs["success"] = False
         return kwargs
     finally:
