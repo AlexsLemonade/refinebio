@@ -114,10 +114,8 @@ resource "aws_iam_policy" "s3_access_policy" {
 EOF
 }
 
-resource "aws_iam_policy_attachment" "s3" {
-  name = "data-refinery-s3-access-policy-attachment"
-  roles = ["${aws_iam_role.ecs_instance.name}"]
-
+resource "aws_iam_role_policy_attachment" "s3" {
+  role = "${aws_iam_role.ecs_instance.name}"
   policy_arn = "${aws_iam_policy.s3_access_policy.arn}"
 }
 
@@ -149,10 +147,8 @@ resource "aws_iam_policy" "cloudwatch_policy" {
 EOF
 }
 
-resource "aws_iam_policy_attachment" "cloudwatch" {
-  name = "data-refinery-cloudwatch-policy-attachment"
-  roles = ["${aws_iam_role.ecs_instance.name}"]
-
+resource "aws_iam_role_policy_attachment" "cloudwatch" {
+  role = "${aws_iam_role.ecs_instance.name}"
   policy_arn = "${aws_iam_policy.cloudwatch_policy.arn}"
 }
 

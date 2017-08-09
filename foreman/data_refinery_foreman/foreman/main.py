@@ -49,7 +49,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
     new_job = DownloaderJob.create_job_and_relationships(num_retries=num_retries,
                                                          batches=list(last_job.batches.all()),
                                                          downloader_task=last_job.downloader_task)
-    logger.info("Requeuing downloader job which had id %d with a new downloader job with id %d.",
+    logger.info("Requeuing Downloader Job which had ID %d with a new Downloader Job with ID %d.",
                 last_job.id,
                 new_job.id)
     app.send_task(last_job.downloader_task, args=[new_job.id])
@@ -168,6 +168,9 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     new_job = ProcessorJob.create_job_and_relationships(num_retries=num_retries,
                                                         batches=list(last_job.batches.all()),
                                                         pipeline_applied=last_job.pipeline_applied)
+    logger.info("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",
+                last_job.id,
+                new_job.id)
     processor_task = PROCESSOR_PIPELINE_LOOKUP[last_job.pipeline_applied]
     app.send_task(processor_task, args=[new_job.id])
 
