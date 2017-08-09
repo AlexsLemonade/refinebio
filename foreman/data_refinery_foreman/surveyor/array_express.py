@@ -79,7 +79,14 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                           samples: List[Dict],
                           experiment: Dict,
                           replicate_raw: bool = True) -> List[Batch]:
-        """TODO: write this docstring."""
+        """Generates a Batch for each sample in samples.
+
+        Uses the metadata contained in experiment (which should be
+        generated via get_experiment_metadata) to add additional
+        metadata to each Batch. If replicate_raw is True (the default)
+        then only raw files will be replicated. Otherwise all files
+        will be replicated.
+        """
         batches = []
         for sample in samples:
             if "file" not in sample:
@@ -109,15 +116,14 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 # more than one comment...
                 comments = sample_file["comment"]
                 if isinstance(comments, list):
+                    # Could be: "Derived ArrayExpress Data Matrix FTP
+                    # file" or: "ArrayExpress FTP file". If there is
+                    # no comment with a name including "FTP file" then
+                    # we don't know where to download it so we need to
+                    # mark this job as an error. Therefore don't catch
+                    # the potential exception where download_url
+                    # doesn't get defined.
                     for comment in comments:
-                        # Could be: "Derived ArrayExpress Data Matrix FTP file"
-                        # or: "ArrayExpress FTP file"
-                        # If there is no comment with a name including
-                        # "FTP file" then we don't know where to
-                        # download it so we need to mark this job as
-                        # an error. Therefore don't catch the
-                        # potential exception where download_url
-                        # doesn't get defined.
                         if comment["name"].find("FTP file") != -1:
                             download_url = comment["value"]
                 else:
