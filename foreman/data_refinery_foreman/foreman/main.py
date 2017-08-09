@@ -56,6 +56,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
 
     last_job.retried = True
     last_job.success = False
+    last_job.retried_job = new_job.id
     last_job.save()
 
 
@@ -172,6 +173,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
 
     last_job.retried = True
     last_job.success = False
+    last_job.retried_job = new_job.id
     last_job.save()
 
 
@@ -232,7 +234,7 @@ def monitor_jobs():
 
     threads = []
     for f in functions:
-        thread = Thread(target=f, name=f.func_name)
+        thread = Thread(target=f, name=f.__name__)
         thread.start()
         threads.append(thread)
 
