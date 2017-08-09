@@ -1,7 +1,8 @@
 """
-This command will create and run survey jobs for each experiment in the
-experiment_list. experiment list should be a file containing one
-experiment accession code per line.
+This command will run the Foreman's main function monitor_jobs.
+This will cause the Foreman to check for a number of different
+failures for both the DownloaderJobs and ProcessorJobs and requeue
+those jobs it detects as failed.
 """
 
 from django.core.management.base import BaseCommand
