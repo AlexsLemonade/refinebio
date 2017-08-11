@@ -73,7 +73,7 @@ def upload_processed_files(kwargs: Dict) -> Dict:
                               file_management.get_temp_post_path(batch),
                               batch.id,
                               kwargs["job_id"])
-            processed_name = file_management.get_processed_name(batch)
+            processed_name = file_management.get_processed_path(batch)
             failure_template = "Exception caught while uploading processed file {}"
             kwargs["job"].failure_reason = failure_template.format(processed_name)
             kwargs["success"] = False

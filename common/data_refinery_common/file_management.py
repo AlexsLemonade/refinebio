@@ -169,7 +169,8 @@ def upload_processed_file(batch: Batch, dir_name: str = None) -> None:
 
 def remove_temp_directory(batch: Batch, dir_name: str = None) -> None:
     temp_dir = get_temp_dir(batch, dir_name)
-    shutil.rmtree(temp_dir)
+    if os.path.isdir(temp_dir):
+        shutil.rmtree(temp_dir)
 
 
 def remove_raw_files(batch: Batch) -> None:
