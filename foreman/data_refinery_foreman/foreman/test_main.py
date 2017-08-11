@@ -1,4 +1,3 @@
-from typing import Type
 from unittest.mock import patch
 from datetime import timedelta
 from django.utils import timezone
@@ -8,7 +7,6 @@ from data_refinery_models.models import (
     SurveyJob,
     Batch,
     BatchStatuses,
-    WorkerJob,
     DownloaderJob,
     ProcessorJob
 )
@@ -19,11 +17,6 @@ class SurveyTestCase(TestCase):
         survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
         survey_job.save()
         self.survey_job = survey_job
-
-    def tearDown(self):
-        Batch.objects.all().delete()
-        DownloaderJob.objects.all().delete()
-        ProcessorJob.objects.all().delete()
 
     def insert_batch(self):
         download_url = "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip"  # noqa

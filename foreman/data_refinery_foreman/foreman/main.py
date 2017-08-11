@@ -56,7 +56,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
 
     last_job.retried = True
     last_job.success = False
-    last_job.retried_job = new_job.id
+    last_job.retried_job = new_job
     last_job.save()
 
 
@@ -176,7 +176,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
 
     last_job.retried = True
     last_job.success = False
-    last_job.retried_job = new_job.id
+    last_job.retried_job = new_job
     last_job.save()
 
 
