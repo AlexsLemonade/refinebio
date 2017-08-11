@@ -1,6 +1,7 @@
 from typing import List, Dict, Callable
 from django.utils import timezone
 from data_refinery_models.models import BatchStatuses, ProcessorJob
+from data_refinery_common import file_management
 from data_refinery_common.utils import get_worker_id
 from data_refinery_workers._version import __version__
 
@@ -59,6 +60,52 @@ def end_job(kwargs: Dict):
     # Every processor returns a dict, however end_job is always called
     # last so it doesn't need to contain anything.
     return {}
+
+
+def upload_processed_files(kwargs: Dict) -> Dict:
+    """Uploads all the processed files for the job."""
+    for batch in kwargs["batches"]:
+        try:
+            file_management.upload_processed_file(batch)
+        except Exception:
+            logging.exception(("Exception caught while uploading processed file %s for batch %d"
+                               " during Job #%d."),
+                              file_management.get_temp_post_path(batch),
+                              batch.id,
+                              kwargs["job_id"])
+            processed_name = file_management.get_processed_name(batch)
+            failure_template = "Exception caught while uploading processed file {}"
+            kwargs["job"].failure_reason = failure_template.format(processed_name)
+            kwargs["success"] = False
+            return kwargs
+        finally:
+            file_management.remove_temp_directory(batch)
+
+    return kwargs
+
+
+def cleanup_raw_files(kwargs: Dict) -> Dict:
+    """Tries to clean up raw files for the job.
+
+    If we fail to remove the raw files, the job is still done enough
+    to call a success, therefore we don't mark it as a failure.
+    However logging will be important so the problem can be
+    identified and the raw files cleaned up.
+    """
+    for batch in kwargs["batches"]:
+        try:
+            file_management.remove_raw_files(batch)
+        except:
+            # If we fail to remove the raw files, the job is still done
+            # enough to call a success. However logging will be important
+            # so the problem can be identified and the raw files cleaned up.
+            logging.exception(("Exception caught while removing raw files %s for batch %d"
+                               " during Job #%d."),
+                              file_management.get_temp_pre_path(batch),
+                              batch.id,
+                              kwargs["job_id"])
+
+    return kwargs
 
 
 def run_pipeline(start_value: Dict, pipeline: List[Callable]):
