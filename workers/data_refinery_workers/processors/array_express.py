@@ -12,14 +12,14 @@ import logging
 logger = get_task_logger(__name__)
 
 
-def _prepare_files(kwargs: Dict) -> Dict:
+def _prepare_files(job_context: Dict) -> Dict:
     """Moves the .CEL file from the raw directory to the temp directory
 
-    Also adds the keys input_file and output_file to kwargs so
+    Also adds the keys input_file and output_file to job_context so
     everything is prepared for processing.
     """
     # Array Express processor jobs have only one batch per job.
-    batch = kwargs["batches"][0]
+    batch = job_context["batches"][0]
 
     try:
         file_management.download_raw_file(batch)
@@ -27,36 +27,36 @@ def _prepare_files(kwargs: Dict) -> Dict:
         logging.exception(("Exception caught while retrieving raw file "
                            "%s for batch %d during Processor Job #%d."),
                           file_management.get_raw_path(batch),
-                          batch.id, kwargs["job_id"])
+                          batch.id, job_context["job_id"])
         failure_template = "Exception caught while retrieving raw file {}"
-        kwargs["job"].failure_reason = failure_template.format(batch.name)
-        kwargs["success"] = False
-        return kwargs
+        job_context["job"].failure_reason = failure_template.format(batch.name)
+        job_context["success"] = False
+        return job_context
 
-    kwargs["input_file"] = file_management.get_temp_pre_path(batch)
-    kwargs["output_file"] = file_management.get_temp_post_path(batch)
-    return kwargs
+    job_context["input_file"] = file_management.get_temp_pre_path(batch)
+    job_context["output_file"] = file_management.get_temp_post_path(batch)
+    return job_context
 
 
-def _determine_brainarray_package(kwargs: Dict) -> Dict:
+def _determine_brainarray_package(job_context: Dict) -> Dict:
     """Determines the right brainarray package to use for the file.
 
-    Expects kwargs to contain the key 'input_file'. Adds the key
-    'brainarray_package' to kwargs."""
-    input_file = kwargs["input_file"]
+    Expects job_context to contain the key 'input_file'. Adds the key
+    'brainarray_package' to job_context."""
+    input_file = job_context["input_file"]
     try:
         header = ro.r['::']('affyio', 'read.celfile.header')(input_file)
     except RRuntimeError as e:
         # Array Express processor jobs have only one batch per job.
-        file_management.remove_temp_directory(kwargs["batches"][0])
+        file_management.remove_temp_directory(job_context["batches"][0])
 
         base_error_template = "unable to read Affy header in input file {0} due to error: {1}"
         base_error_message = base_error_template.format(input_file, str(e))
         log_message = "Processor Job %d running AFFY_TO_PCL pipeline " + base_error_message
         logger.error(log_message)
-        kwargs["job"].failure_reason = base_error_message
-        kwargs["success"] = False
-        return kwargs
+        job_context["job"].failure_reason = base_error_message
+        job_context["success"] = False
+        return job_context
 
     # header is a list of vectors. [0][0] contains the package name.
     punctuation_table = str.maketrans(dict.fromkeys(string.punctuation))
@@ -69,18 +69,18 @@ def _determine_brainarray_package(kwargs: Dict) -> Dict:
     # accordingly. So far "v1" and "v2" are the only known versions
     # which must be accomodated in this way.
     package_name_without_version = package_name.replace("v1", "").replace("v2", "")
-    kwargs["brainarray_package"] = package_name_without_version + "hsentrezgprobe"
-    return kwargs
+    job_context["brainarray_package"] = package_name_without_version + "hsentrezgprobe"
+    return job_context
 
 
-def _run_scan_upc(kwargs: Dict) -> Dict:
+def _run_scan_upc(job_context: Dict) -> Dict:
     """Processes an input CEL file to an output PCL file.
 
     Does so using the SCAN.UPC package's SCANfast method using R.
-    Expects kwargs to contain the keys 'input_file', 'output_file',
+    Expects job_context to contain the keys 'input_file', 'output_file',
     and 'brainarray_package'.
     """
-    input_file = kwargs["input_file"]
+    input_file = job_context["input_file"]
 
     try:
         # Prevents:
@@ -95,22 +95,22 @@ def _run_scan_upc(kwargs: Dict) -> Dict:
 
         ro.r['::']('SCAN.UPC', 'SCANfast')(
             input_file,
-            kwargs["output_file"],
-            probeSummaryPackage=kwargs["brainarray_package"]
+            job_context["output_file"],
+            probeSummaryPackage=job_context["brainarray_package"]
         )
     except RRuntimeError as e:
         base_error_template = "encountered error in R code while processing {0}: {1}"
         base_error_message = base_error_template.format(input_file, str(e))
         log_message = "Processor Job %d running AFFY_TO_PCL pipeline " + base_error_message
-        logger.error(log_message, kwargs["job_id"])
-        kwargs["job"].failure_reason = base_error_message
-        kwargs["success"] = False
-        return kwargs
+        logger.error(log_message, job_context["job_id"])
+        job_context["job"].failure_reason = base_error_message
+        job_context["success"] = False
+        return job_context
     finally:
         # Array Express processor jobs have only one batch per job.
-        file_management.remove_temp_directory(kwargs["batches"][0])
+        file_management.remove_temp_directory(job_context["batches"][0])
 
-    return kwargs
+    return job_context
 
 
 @shared_task

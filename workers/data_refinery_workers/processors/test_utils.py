@@ -49,20 +49,20 @@ class StartJobTestCase(TestCase):
 
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch, batch2])
 
-        kwargs = utils.start_job({"job": processor_job})
+        job_context = utils.start_job({"job": processor_job})
         # start_job preserves the "job" key
-        self.assertEqual(kwargs["job"], processor_job)
+        self.assertEqual(job_context["job"], processor_job)
 
         # start_job finds the batches and returns them
-        self.assertEqual(len(kwargs["batches"]), 2)
+        self.assertEqual(len(job_context["batches"]), 2)
 
     def test_failure(self):
         """Fails because there are no batches for the job."""
         processor_job = ProcessorJob()
         processor_job.save()
 
-        kwargs = utils.start_job({"job": processor_job})
-        self.assertFalse(kwargs["success"])
+        job_context = utils.start_job({"job": processor_job})
+        self.assertFalse(job_context["success"])
 
 
 class EndJobTestCase(TestCase):
@@ -178,7 +178,7 @@ class RunPipelineTestCase(TestCase):
         self.assertIsNotNone(processor_job.end_time)
 
     def test_value_passing(self):
-        """The keys added to kwargs and returned by processors will be
+        """The keys added to job_context and returned by processors will be
         passed through to other processors.
         """
         batch = init_batch()
@@ -191,9 +191,9 @@ class RunPipelineTestCase(TestCase):
                      "batches": [batch]}
         mock_processor.return_value = mock_dict
 
-        def processor_function(kwargs):
-            self.assertTrue(kwargs["something_to_pass_along"])
-            return kwargs
+        def processor_function(job_context):
+            self.assertTrue(job_context["something_to_pass_along"])
+            return job_context
 
         test_processor = MagicMock(side_effect=processor_function)
 

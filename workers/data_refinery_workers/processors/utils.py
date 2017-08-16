@@ -11,14 +11,14 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def start_job(kwargs: Dict):
+def start_job(job_context: Dict):
     """A processor function to start jobs.
 
     Record in the database that this job is being started and
     retrieves the job's batches from the database and adds them to the
     dictionary passed in with the key 'batches'.
     """
-    job = kwargs["job"]
+    job = job_context["job"]
     job.worker_id = get_worker_id()
     job.worker_version = __version__
     job.start_time = timezone.now()
@@ -30,20 +30,20 @@ def start_job(kwargs: Dict):
         logger.error("No batches found for job #%d.", job.id)
         return {"success": False}
 
-    kwargs["batches"] = batches
-    return kwargs
+    job_context["batches"] = batches
+    return job_context
 
 
-def end_job(kwargs: Dict):
+def end_job(job_context: Dict):
     """A processor function to end jobs.
 
     Record in the database that this job has completed and that
     the batch has been processed if successful.
     """
-    job = kwargs["job"]
+    job = job_context["job"]
 
-    if "success" in kwargs:
-        success = kwargs["success"]
+    if "success" in job_context:
+        success = job_context["success"]
     else:
         success = True
 
@@ -52,7 +52,7 @@ def end_job(kwargs: Dict):
     job.save()
 
     if job.success:
-        batches = kwargs["batches"]
+        batches = job_context["batches"]
         for batch in batches:
             batch.status = BatchStatuses.PROCESSED.value
             batch.save()
@@ -62,9 +62,9 @@ def end_job(kwargs: Dict):
     return {}
 
 
-def upload_processed_files(kwargs: Dict) -> Dict:
+def upload_processed_files(job_context: Dict) -> Dict:
     """Uploads all the processed files for the job."""
-    for batch in kwargs["batches"]:
+    for batch in job_context["batches"]:
         try:
             file_management.upload_processed_file(batch)
         except Exception:
@@ -72,19 +72,19 @@ def upload_processed_files(kwargs: Dict) -> Dict:
                                " during Job #%d."),
                               file_management.get_temp_post_path(batch),
                               batch.id,
-                              kwargs["job_id"])
+                              job_context["job_id"])
             processed_name = file_management.get_processed_path(batch)
             failure_template = "Exception caught while uploading processed file {}"
-            kwargs["job"].failure_reason = failure_template.format(processed_name)
-            kwargs["success"] = False
-            return kwargs
+            job_context["job"].failure_reason = failure_template.format(processed_name)
+            job_context["success"] = False
+            return job_context
         finally:
             file_management.remove_temp_directory(batch)
 
-    return kwargs
+    return job_context
 
 
-def cleanup_raw_files(kwargs: Dict) -> Dict:
+def cleanup_raw_files(job_context: Dict) -> Dict:
     """Tries to clean up raw files for the job.
 
     If we fail to remove the raw files, the job is still done enough
@@ -92,7 +92,7 @@ def cleanup_raw_files(kwargs: Dict) -> Dict:
     However logging will be important so the problem can be
     identified and the raw files cleaned up.
     """
-    for batch in kwargs["batches"]:
+    for batch in job_context["batches"]:
         try:
             file_management.remove_raw_files(batch)
         except:
@@ -103,9 +103,9 @@ def cleanup_raw_files(kwargs: Dict) -> Dict:
                                " during Job #%d."),
                               file_management.get_temp_pre_path(batch),
                               batch.id,
-                              kwargs["job_id"])
+                              job_context["job_id"])
 
-    return kwargs
+    return job_context
 
 
 def run_pipeline(start_value: Dict, pipeline: List[Callable]):
