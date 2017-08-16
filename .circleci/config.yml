@@ -22,6 +22,7 @@ jobs:
       # - run: chmod 666 workers/test_volume
       # Set the permissions for all the directories in the volume to
       # 777 and all the files to 666
+      # commands found: https://stackoverflow.com/a/11512211/6095378
       - run: find workers/test_volume -type d -exec chmod 777 {} \;
       - run: find workers/test_volume -type f -exec chmod 666 {} \;
       - run: ./workers/run_tests.sh
