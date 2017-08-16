@@ -19,4 +19,5 @@ jobs:
       - run: ./common/run_tests.sh
       - run: cd common && python setup.py sdist
       - run: ./foreman/run_tests.sh
+      - run: chmod 666 workers/test_volume
       - run: ./workers/run_tests.sh
