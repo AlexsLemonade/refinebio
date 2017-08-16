@@ -47,16 +47,16 @@ def _determine_brainarray_package(kwargs: Dict) -> Dict:
     try:
         header = ro.r['::']('affyio', 'read.celfile.header')(input_file)
     except RRuntimeError as e:
-        base_error_template = "unable to read Affy header in input file {} due to error: %s"
+        # Array Express processor jobs have only one batch per job.
+        file_management.remove_temp_directory(kwargs["batches"][0])
+
+        base_error_template = "unable to read Affy header in input file {0} due to error: {1}"
         base_error_message = base_error_template.format(input_file, str(e))
         log_message = "Processor Job %d running AFFY_TO_PCL pipeline " + base_error_message
         logger.error(log_message)
         kwargs["job"].failure_reason = base_error_message
         kwargs["success"] = False
         return kwargs
-    finally:
-        # Array Express processor jobs have only one batch per job.
-        file_management.remove_temp_directory(kwargs["batch"][0])
 
     # header is a list of vectors. [0][0] contains the package name.
     punctuation_table = str.maketrans(dict.fromkeys(string.punctuation))
@@ -102,13 +102,13 @@ def _run_scan_upc(kwargs: Dict) -> Dict:
         base_error_template = "encountered error in R code while processing {0}: {1}"
         base_error_message = base_error_template.format(input_file, str(e))
         log_message = "Processor Job %d running AFFY_TO_PCL pipeline " + base_error_message
-        logger.error(log_message)
+        logger.error(log_message, kwargs["job_id"])
         kwargs["job"].failure_reason = base_error_message
         kwargs["success"] = False
         return kwargs
     finally:
         # Array Express processor jobs have only one batch per job.
-        file_management.remove_temp_directory(kwargs["batch"][0])
+        file_management.remove_temp_directory(kwargs["batches"][0])
 
     return kwargs
 

@@ -115,9 +115,6 @@ class UploadProcessedFilesTestCase(TestCase):
         batch = init_batch()
         batch.save()
         self.batch = batch
-        # os.makedirs(file_management.get_temp_dir(batch), exist_ok=True)
-        # with open(file_management.get_temp_post_path(batch), "w") as dummy_pcl:
-        #     dummy_pcl.write("This is a dummy file for tests to operate upon.")
 
     def tearDown(self):
         expected_path = "/home/user/data_store/processed/A-AFFY-1/AFFY_TO_PCL/CE1234.PCL"
