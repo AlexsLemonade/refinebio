@@ -23,5 +23,5 @@ jobs:
       # Set the permissions for all the directories in the volume to
       # 777 and all the files to 666
       - run: find workers/test_volume -type d -exec chmod 777 {} \;
-      - run: find /opt/lampp/htdocs -type f -exec chmod 666 {} \;
+      - run: find workers/test_volume -type f -exec chmod 666 {} \;
       - run: ./workers/run_tests.sh
