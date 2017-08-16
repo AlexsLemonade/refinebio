@@ -235,7 +235,7 @@ def monitor_jobs():
 
     threads = []
     for f in functions:
-        thread = Thread(target=f, name=f.func_name)
+        thread = Thread(target=f, name=f.__name__)
         thread.start()
         threads.append(thread)
 
