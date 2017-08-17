@@ -8,7 +8,6 @@ amqp==2.1.4               # via kombu
 billiard==3.5.0.2         # via celery
 boto==2.46.1
 celery==4.0.2
-daiquiri==1.2.2
 django==1.11.1
 geoparse==0.1.10
 kombu==4.0.2              # via celery
