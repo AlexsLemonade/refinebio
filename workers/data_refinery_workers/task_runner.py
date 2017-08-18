@@ -18,3 +18,5 @@ app.autodiscover_tasks(["data_refinery_workers.downloaders"],
                        related_name="array_express")
 app.autodiscover_tasks(["data_refinery_workers.processors"],
                        related_name="array_express")
+app.autodiscover_tasks(["data_refinery_workers.processors"],
+                       related_name="no_op")

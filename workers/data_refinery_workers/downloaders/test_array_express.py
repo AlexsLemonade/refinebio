@@ -1,5 +1,5 @@
 import copy
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 from django.test import TestCase
 from data_refinery_models.models import (
     SurveyJob,
@@ -29,7 +29,7 @@ class DownloadArrayExpressTestCase(TestCase):
         with self.assertRaises(ValueError):
             array_express._verify_batch_grouping(batches, job_id)
 
-    @patch("data_refinery_workers.downloaders.array_express.utils.processor_pipeline_registry")
+    @patch("data_refinery_workers.downloaders.utils.app")
     @patch("data_refinery_workers.downloaders.array_express._verify_batch_grouping")
     @patch("data_refinery_workers.downloaders.array_express._download_file")
     @patch("data_refinery_workers.downloaders.array_express._extract_file")
@@ -37,18 +37,13 @@ class DownloadArrayExpressTestCase(TestCase):
                       _extract_file,
                       _download_file,
                       _verify_batch_grouping,
-                      pipeline_registry):
+                      app):
         # Set up mocks:
-        mock_processor_task = MagicMock()
-        mock_processor_task.delay = MagicMock()
-        mock_processor_task.delay.return_value = None
-        pipeline_registry.__getitem__ = MagicMock()
-        pipeline_registry.__getitem__.return_value = mock_processor_task
+        app.send_task = MagicMock()
+        app.send_task.return_value = None
 
         # Set up database records:
-        survey_job = SurveyJob(
-            source_type="ARRAY_EXPRESS"
-        )
+        survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
         survey_job.save()
 
         download_url = "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip"  # noqa
@@ -92,8 +87,6 @@ class DownloadArrayExpressTestCase(TestCase):
         self.assertEqual(list(batch_query_set), [batch, batch2])
         self.assertEqual(job_id, downloader_job.id)
 
-        self.assertEqual(mock_processor_task.delay.call_count, 2)
-
         # Verify that the database has been updated correctly:
         batches = Batch.objects.all()
         for batch in batches:
@@ -105,3 +98,10 @@ class DownloadArrayExpressTestCase(TestCase):
 
         processor_jobs = ProcessorJob.objects.all()
         self.assertEqual(len(processor_jobs), 2)
+
+        app.send_task.assert_has_calls([
+            call("data_refinery_workers.processors.array_express.affy_to_pcl",
+                 args=[processor_jobs[0].id]),
+            call("data_refinery_workers.processors.array_express.affy_to_pcl",
+                 args=[processor_jobs[1].id])
+        ])

@@ -12,6 +12,7 @@ from data_refinery_models.models import (
     ProcessorJob
 )
 from data_refinery_foreman.surveyor.message_queue import app
+from data_refinery_common.job_lookup import ProcessorPipeline, PROCESSOR_PIPELINE_LOOKUP
 
 # Import and set logger
 import logging
@@ -34,10 +35,6 @@ MAX_QUEUE_TIME = timedelta(days=1)
 MIN_LOOP_TIME = timedelta(seconds=10)
 THREAD_WAIT_TIME = 10.0
 
-PROCESSOR_PIPELINE_LOOKUP = {
-    "AFFY_TO_PCL": "data_refinery_workers.processors.array_express.affy_to_pcl"
-}
-
 
 @retry(stop_max_attempt_number=3)
 @transaction.atomic
@@ -52,6 +49,9 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
     new_job = DownloaderJob.create_job_and_relationships(num_retries=num_retries,
                                                          batches=list(last_job.batches.all()),
                                                          downloader_task=last_job.downloader_task)
+    logger.info("Requeuing Downloader Job which had ID %d with a new Downloader Job with ID %d.",
+                last_job.id,
+                new_job.id)
     app.send_task(last_job.downloader_task, args=[new_job.id])
 
     last_job.retried = True
@@ -167,6 +167,9 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     new_job = ProcessorJob.create_job_and_relationships(num_retries=num_retries,
                                                         batches=list(last_job.batches.all()),
                                                         pipeline_applied=last_job.pipeline_applied)
+    logger.info("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",
+                last_job.id,
+                new_job.id)
     processor_task = PROCESSOR_PIPELINE_LOOKUP[last_job.pipeline_applied]
     app.send_task(processor_task, args=[new_job.id])
 
@@ -215,7 +218,8 @@ def retry_lost_processor_jobs() -> None:
         start_time=None,
         end_time=None,
         created_at__lt=minimum_creation_time
-    )
+        # TEMPORARY for Jackie's grant
+    ).exclude(pipeline_applied=ProcessorPipeline.NONE.value)
 
     handle_processor_jobs(lost_jobs)
 
@@ -231,7 +235,7 @@ def monitor_jobs():
 
     threads = []
     for f in functions:
-        thread = Thread(target=f, name=f.func_name)
+        thread = Thread(target=f, name=f.__name__)
         thread.start()
         threads.append(thread)
 

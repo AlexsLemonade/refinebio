@@ -42,7 +42,7 @@ resource "aws_subnet" "data_refinery_1b" {
 
 resource "aws_iam_instance_profile" "ecs_instance_profile" {
   name  = "data-refinery-ecs-instance-profile"
-  roles = ["${aws_iam_role.ecs_instance.name}"]
+  role = "${aws_iam_role.ecs_instance.name}"
 }
 
 resource "aws_iam_role" "ecs_instance" {
@@ -67,9 +67,8 @@ resource "aws_iam_role" "ecs_instance" {
 EOF
 }
 
-resource "aws_iam_policy_attachment" "ecs" {
-  name = "AmazonEC2ContainerServiceforEC2Role"
-  roles = ["${aws_iam_role.ecs_instance.name}"]
+resource "aws_iam_role_policy_attachment" "ecs" {
+  role = "${aws_iam_role.ecs_instance.name}"
 
   # The following can be found here:
   # https://console.aws.amazon.com/iam/home?region=us-east-1#/policies/arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
@@ -115,10 +114,8 @@ resource "aws_iam_policy" "s3_access_policy" {
 EOF
 }
 
-resource "aws_iam_policy_attachment" "s3" {
-  name = "data-refinery-s3-access-policy-attachment"
-  roles = ["${aws_iam_role.ecs_instance.name}"]
-
+resource "aws_iam_role_policy_attachment" "s3" {
+  role = "${aws_iam_role.ecs_instance.name}"
   policy_arn = "${aws_iam_policy.s3_access_policy.arn}"
 }
 
@@ -150,10 +147,8 @@ resource "aws_iam_policy" "cloudwatch_policy" {
 EOF
 }
 
-resource "aws_iam_policy_attachment" "cloudwatch" {
-  name = "data-refinery-cloudwatch-policy-attachment"
-  roles = ["${aws_iam_role.ecs_instance.name}"]
-
+resource "aws_iam_role_policy_attachment" "cloudwatch" {
+  role = "${aws_iam_role.ecs_instance.name}"
   policy_arn = "${aws_iam_policy.cloudwatch_policy.arn}"
 }
 
@@ -226,8 +221,8 @@ resource "aws_security_group_rule" "data_refinery_worker_outbound" {
 }
 
 resource "aws_instance" "data_refinery_worker_1" {
-  ami = "ami-275ffe31"
-  instance_type = "t2.medium"
+  ami = "ami-04351e12"
+  instance_type = "t2.xlarge"
   availability_zone = "us-east-1a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
@@ -238,6 +233,17 @@ resource "aws_instance" "data_refinery_worker_1" {
 
   tags = {
     Name = "data-refinery-1"
+  }
+
+  root_block_device = {
+    volume_type = "gp2"
+    volume_size = 100
+  }
+
+  ebs_block_device = {
+    device_name = "/dev/xvdcz"
+    volume_type = "gp2"
+    volume_size = 40
   }
 
   provisioner "remote-exec" {
@@ -288,8 +294,8 @@ resource "aws_instance" "data_refinery_worker_1" {
 }
 
 resource "aws_instance" "data_refinery_worker_2" {
-  ami = "ami-275ffe31"
-  instance_type = "t2.medium"
+  ami = "ami-04351e12"
+  instance_type = "t2.xlarge"
   availability_zone = "us-east-1b"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
@@ -300,6 +306,17 @@ resource "aws_instance" "data_refinery_worker_2" {
 
   tags = {
     Name = "data-refinery-2"
+  }
+
+  root_block_device = {
+    volume_type = "gp2"
+    volume_size = 100
+  }
+
+  ebs_block_device = {
+    device_name = "/dev/xvdcz"
+    volume_type = "gp2"
+    volume_size = 40
   }
 
   provisioner "remote-exec" {

@@ -28,6 +28,7 @@ def _start_job(survey_job: SurveyJob):
                 survey_job.source_type)
 
     survey_job.start_time = timezone.now()
+    survey_job.replication_started_at = timezone.now()
 
     # If the end of the replication range is not already set,
     # set it to the current time.

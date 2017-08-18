@@ -29,6 +29,10 @@ class WorkerJob(TimeTrackedModel):
     # than just an id.
     worker_id = models.CharField(max_length=256, null=True)
 
+    # This field corresponds to the version number of the
+    # data_refinery_workers project that was used to run the job.
+    worker_version = models.CharField(max_length=128, null=True)
+
     @classmethod
     @transaction.atomic
     def create_job_and_relationships(cls, *args, **kwargs):

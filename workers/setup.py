@@ -1,12 +1,24 @@
 import os
 from setuptools import find_packages, setup
+import re
+
 
 # allow setup.py to be run from any path
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
+# code found at: https://stackoverflow.com/a/7071358/6095378
+VERSIONFILE = "data_refinery_workers/_version.py"
+verstrline = open(VERSIONFILE, "rt").read()
+VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
+match_object = re.search(VSRE, verstrline, re.M)
+if match_object:
+    verstr = match_object.group(1)
+else:
+    raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
+
 setup(
     name='data-refinery-workers',
-    version='0.1.0',
+    version=verstr,
     packages=find_packages(),
     include_package_data=True,
     license='BSD License',

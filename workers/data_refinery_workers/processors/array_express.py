@@ -16,7 +16,7 @@ PACKAGE_NAME_CORRECTIONS = {
 }
 
 
-def cel_to_pcl(kwargs: Dict):
+def cel_to_pcl(kwargs: Dict) -> Dict:
     """Process .CEL files to .PCL format using R.
 
     Moves the .CEL file from the raw directory to the temp directory,
@@ -45,13 +45,19 @@ def cel_to_pcl(kwargs: Dict):
     # header is a list of vectors. [0][0] contains the package name.
     punctuation_table = str.maketrans(dict.fromkeys(string.punctuation))
     package_name = header[0][0].translate(punctuation_table).lower()
-    brainarray_package = package_name + "hsentrezgprobe"
+    # Headers can contain the version "v1" or "v2", which doesn't
+    # appear in the brainarray package name. This replacement is
+    # brittle, but the list of brainarray packages is relatively short
+    # and we can monitor what packages are added to it and modify
+    # accordingly. So far "v1" and "v2" are the only known versions
+    # which must be accomodated in this way.
+    package_name_without_version = package_name.replace("v1", "").replace("v2", "")
+    brainarray_package = package_name_without_version + "hsentrezgprobe"
 
-    # Some CEL headers have a v1 in the package name which is not part
-    # of the brainararry package name. We have a table which corrects
-    # for this.
-    if brainarray_package in PACKAGE_NAME_CORRECTIONS:
-        brainarray_package = PACKAGE_NAME_CORRECTIONS[brainarray_package]
+    # Prevents:
+    # RRuntimeWarning: There were 50 or more warnings (use warnings()
+    # to see the first 50)
+    ro.r("options(warn=1)")
 
     # It's necessary to load the foreach library before calling SCANfast
     # because it doesn't load the library before calling functions
@@ -83,7 +89,7 @@ def cel_to_pcl(kwargs: Dict):
         # If we fail to remove the raw files, the job is still done
         # enough to call a success. However logging will be important
         # so the problem can be identified and the raw files cleaned up.
-        logging.exception(("Exception caught while uploading processed file %s for batch %d"
+        logging.exception(("Exception caught while removing raw files %s for batch %d"
                            " during Job #%d."),
                           output_file,
                           batch.id,
@@ -94,7 +100,7 @@ def cel_to_pcl(kwargs: Dict):
 
 
 @shared_task
-def affy_to_pcl(job_id):
+def affy_to_pcl(job_id: int) -> None:
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
                         cel_to_pcl,

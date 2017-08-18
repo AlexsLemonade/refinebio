@@ -48,7 +48,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'data_refinery_models',
+    'data_refinery_common',
     'data_refinery_foreman.surveyor',
+    'data_refinery_foreman.foreman',
 ]
 
 MIDDLEWARE = [

@@ -14,7 +14,8 @@ from data_refinery_models.models import (
     BatchStatuses,
     ProcessorJob
 )
-from data_refinery_workers.processors.array_express import affy_to_pcl
+from data_refinery_workers.task_runner import app
+from data_refinery_common.job_lookup import PROCESSOR_PIPELINE_LOOKUP
 
 
 # Import and set logger
@@ -39,11 +40,11 @@ class Command(BaseCommand):
             download_url="ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip",  # noqa
             raw_format="CEL",
             processed_format="PCL",
-            pipeline_required="AFFY_TO_PCL",
+            pipeline_required="NO_OP",
             platform_accession_code="A-AFFY-141",
             experiment_accession_code="E-GEOD-59071",
             experiment_title="It doesn't really matter.",
-            name="GSM1426072_CD_colon_active_2.CEL",
+            name="GSM1426074_CD_colon_active_4.CEL",
             internal_location="A-AFFY-141/AFFY_TO_PCL",
             organism_id=9606,
             organism_name="HOMO SAPIENS",
@@ -55,4 +56,5 @@ class Command(BaseCommand):
 
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
         logger.info("Queuing a processor job.")
-        affy_to_pcl.delay(processor_job.id)
+        processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
+        app.send_task(processor_task, args=[processor_job.id])
