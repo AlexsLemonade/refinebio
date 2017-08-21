@@ -2,11 +2,11 @@ import requests
 from xml.etree import ElementTree
 from django.db import models
 from data_refinery_models.models.base_models import TimeTrackedModel
+from data_refinery_common.logging import get_and_configure_logger
 
-# Import and set logger
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+
+logger = get_and_configure_logger(__name__)
+
 
 NCBI_ROOT_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
 ESEARCH_URL = NCBI_ROOT_URL + "esearch.fcgi"

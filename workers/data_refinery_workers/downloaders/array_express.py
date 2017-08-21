@@ -6,14 +6,13 @@ import zipfile
 from typing import List
 from contextlib import closing
 from celery import shared_task
-from celery.utils.log import get_task_logger
 from data_refinery_models.models import Batch, DownloaderJob
 from data_refinery_common import file_management
 from data_refinery_workers.downloaders import utils
-import logging
+from data_refinery_common.logging import get_and_configure_logger
 
 
-logger = get_task_logger(__name__)
+logger = get_and_configure_logger(__name__)
 
 
 # chunk_size is in bytes
@@ -25,25 +24,25 @@ def _verify_batch_grouping(batches: List[Batch], job: DownloaderJob) -> None:
     """All batches in the same job should have the same downloader url"""
     for batch in batches:
         if batch.download_url != batches[0].download_url:
-            failure_message = "A Batch doesn't have the same download URL as the other batches"
-            logger.error(failure_message + " in Downloader Job #%d.",
-                         job.id)
+            failure_message = "A Batch doesn't have the same download URL as the other batches."
+            logger.error(failure_message,
+                         downloader_job=job.id)
             job.failure_reason = failure_message
             raise ValueError(failure_message)
 
 
 def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> None:
     try:
-        logger.debug("Downloading file from %s to %s. (Job #%d)",
+        logger.debug("Downloading file from %s to %s.",
                      download_url,
                      file_path,
-                     job.id)
+                     downloader_job=job.id)
         target_file = open(file_path, "wb")
         with closing(urllib.request.urlopen(download_url)) as request:
             shutil.copyfileobj(request, target_file, CHUNK_SIZE)
     except Exception:
-        logging.exception("Exception caught while downloading batch in Downloader Job #%d.",
-                          job.id)
+        logger.exception("Exception caught while downloading batch.",
+                         downloader_job=job.id)
         job.failure_reason = "Exception caught while downloading batch"
         raise
     finally:
@@ -64,7 +63,7 @@ def _extract_file(batches: List[Batch], job: DownloaderJob) -> None:
     local_dir = file_management.get_temp_dir(batches[0], job_dir)
     dirs_to_clean = set()
 
-    logger.debug("Extracting %s for Downloader Job %d.", zip_path, job.id)
+    logger.debug("Extracting %s", zip_path, downloader_job=job.id)
 
     try:
         zip_ref = zipfile.ZipFile(zip_path, "r")
@@ -87,9 +86,9 @@ def _extract_file(batches: List[Batch], job: DownloaderJob) -> None:
             batch.size_in_bytes = os.path.getsize(raw_file_location)
             file_management.upload_raw_file(batch, job_dir)
     except Exception:
-        logging.exception("Exception caught while extracting %s during Downloader Job #%d.",
-                          zip_path,
-                          job.id)
+        logger.exception("Exception caught while extracting %s",
+                         zip_path,
+                         downloader_job=job.id)
         job.failure_reason = "Exception caught while extracting " + zip_path
         raise
     finally:
@@ -112,8 +111,8 @@ def download_array_express(job_id: int) -> None:
         target_file_path = file_management.get_temp_download_path(batches[0], job_dir)
         download_url = batches[0].download_url
     else:
-        logger.error("No batches found for Downloader Job #%d.",
-                     job_id)
+        logger.error("No batches found.",
+                     downloader_job=job_id)
         success = False
 
     if success:
@@ -131,8 +130,8 @@ def download_array_express(job_id: int) -> None:
             success = False
 
     if success:
-        logger.debug("File %s downloaded and extracted successfully in Downloader Job #%d.",
+        logger.debug("File %s downloaded and extracted successfully.",
                      download_url,
-                     job_id)
+                     downloader_job=job_id)
 
     utils.end_job(job, batches, success)

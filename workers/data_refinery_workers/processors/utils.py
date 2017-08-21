@@ -4,11 +4,10 @@ from data_refinery_models.models import BatchStatuses, ProcessorJob
 from data_refinery_common import file_management
 from data_refinery_common.utils import get_worker_id
 from data_refinery_workers._version import __version__
+from data_refinery_common.logging import get_and_configure_logger
 
-# Import and set logger
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+
+logger = get_and_configure_logger(__name__)
 
 
 def start_job(job_context: Dict):
@@ -27,7 +26,7 @@ def start_job(job_context: Dict):
     batches = list(job.batches.all())
 
     if len(batches) == 0:
-        logger.error("No batches found for job #%d.", job.id)
+        logger.error("No batches found.", processor_job=job.id)
         return {"success": False}
 
     job_context["batches"] = batches
@@ -68,11 +67,10 @@ def upload_processed_files(job_context: Dict) -> Dict:
         try:
             file_management.upload_processed_file(batch)
         except Exception:
-            logging.exception(("Exception caught while uploading processed file %s for batch %d"
-                               " during Job #%d."),
+            logging.exception("Exception caught while uploading processed file %s",
                               file_management.get_temp_post_path(batch),
-                              batch.id,
-                              job_context["job_id"])
+                              batch=batch.id,
+                              processor_job=job_context["job_id"])
             processed_name = file_management.get_processed_path(batch)
             failure_template = "Exception caught while uploading processed file {}"
             job_context["job"].failure_reason = failure_template.format(processed_name)
@@ -99,11 +97,10 @@ def cleanup_raw_files(job_context: Dict) -> Dict:
             # If we fail to remove the raw files, the job is still done
             # enough to call a success. However logging will be important
             # so the problem can be identified and the raw files cleaned up.
-            logging.exception(("Exception caught while removing raw files %s for batch %d"
-                               " during Job #%d."),
+            logging.exception("Exception caught while removing raw files %s",
                               file_management.get_temp_pre_path(batch),
-                              batch.id,
-                              job_context["job_id"])
+                              batch=batch.id,
+                              processor_job=job_context["job_id"])
 
     return job_context
 
@@ -132,12 +129,12 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
     try:
         job = ProcessorJob.objects.get(id=job_id)
     except ProcessorJob.DoesNotExist:
-        logger.error("Cannot find processor job record with ID %d.", job_id)
+        logger.error("Cannot find processor job record.", processor_job=job_id)
         return
 
     if len(pipeline) == 0:
-        logger.error("Empty pipeline specified for job #%d.",
-                     job_id)
+        logger.error("Empty pipeline specified.",
+                     procesor_job=job_id)
 
     last_result = start_value
     last_result["job"] = job
@@ -145,15 +142,14 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
         try:
             last_result = processor(last_result)
         except Exception:
-            logging.exception(("Unhandled exception caught while running processor %s in pipeline"
-                               " for job #%d."),
+            logging.exception("Unhandled exception caught while running processor %s in pipeline",
                               processor.__name__,
-                              job_id)
+                              processor_job=job_id)
             last_result["success"] = False
             end_job(last_result)
         if "success" in last_result and last_result["success"] is False:
-            logger.error("Processor %s failed. Terminating pipeline for job %d.",
+            logger.error("Processor %s failed. Terminating pipeline.",
                          processor.__name__,
-                         job_id)
+                         processor_job=job_id)
             end_job(last_result)
             break

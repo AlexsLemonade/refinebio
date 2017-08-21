@@ -4,12 +4,12 @@ from typing import Dict
 import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
 from celery import shared_task
-from celery.utils.log import get_task_logger
 from data_refinery_workers.processors import utils
 from data_refinery_common import file_management
-import logging
+from data_refinery_common.logging import get_and_configure_logger
 
-logger = get_task_logger(__name__)
+
+logger = get_and_configure_logger(__name__)
 
 
 def _prepare_files(job_context: Dict) -> Dict:
@@ -24,10 +24,10 @@ def _prepare_files(job_context: Dict) -> Dict:
     try:
         file_management.download_raw_file(batch)
     except Exception:
-        logging.exception(("Exception caught while retrieving raw file "
-                           "%s for batch %d during Processor Job #%d."),
-                          file_management.get_raw_path(batch),
-                          batch.id, job_context["job_id"])
+        logger.exception("Exception caught while retrieving raw file %s",
+                         file_management.get_raw_path(batch),
+                         processor_job=job_context["job_id"],
+                         batch=batch.id)
         failure_template = "Exception caught while retrieving raw file {}"
         job_context["job"].failure_reason = failure_template.format(batch.name)
         job_context["success"] = False
@@ -50,11 +50,11 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
         # Array Express processor jobs have only one batch per job.
         file_management.remove_temp_directory(job_context["batches"][0])
 
-        base_error_template = "unable to read Affy header in input file {0} due to error: {1}"
-        base_error_message = base_error_template.format(input_file, str(e))
-        log_message = "Processor Job %d running AFFY_TO_PCL pipeline " + base_error_message
-        logger.error(log_message)
-        job_context["job"].failure_reason = base_error_message
+        error_template = ("Unable to read Affy header in input file {0}"
+                          " while running AFFY_TO_PCL due to error: {1}")
+        error_message = error_template.format(input_file, str(e))
+        logger.error(error_message, processor_job=job_context["job"].id)
+        job_context["job"].failure_reason = error_message
         job_context["success"] = False
         return job_context
 
@@ -99,11 +99,11 @@ def _run_scan_upc(job_context: Dict) -> Dict:
             probeSummaryPackage=job_context["brainarray_package"]
         )
     except RRuntimeError as e:
-        base_error_template = "encountered error in R code while processing {0}: {1}"
-        base_error_message = base_error_template.format(input_file, str(e))
-        log_message = "Processor Job %d running AFFY_TO_PCL pipeline " + base_error_message
-        logger.error(log_message, job_context["job_id"])
-        job_context["job"].failure_reason = base_error_message
+        error_template = ("Encountered error in R code while running AFFY_TO_PCL"
+                          " pipeline during processing of {0}: {1}")
+        error_message = error_template.format(input_file, str(e))
+        logger.error(error_message, processor_job=job_context["job_id"])
+        job_context["job"].failure_reason = error_message
         job_context["success"] = False
         return job_context
     finally:

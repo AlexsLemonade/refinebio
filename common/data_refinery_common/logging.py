@@ -7,11 +7,11 @@ from data_refinery_common.utils import get_worker_id
 
 
 # base_format_string = "%(asctime)s {0} %(name)s %(color)s%(levelname)s"
-format_string = (
+FORMAT_STRING = (
     "%(asctime)s {0} %(name)s %(color)s%(levelname)s%(context)s"
     ": %(message)s%(color_stop)s"
 ).format(get_worker_id())
-parameter_template = " [{0}: {1}]"
+PARAMETER_TEMPLATE = " [{0}: {1}]"
 
 
 class ArbitraryContextAdapter(logging.LoggerAdapter):
@@ -43,7 +43,7 @@ class ArbitraryContextAdapter(logging.LoggerAdapter):
         for name in list(kwargs.keys()):
             if name == "exc_info":
                 continue
-            context += parameter_template.format(name, kwargs.pop(name))
+            context += PARAMETER_TEMPLATE.format(name, kwargs.pop(name))
 
         extra["context"] = context
         extra["_daiquiri_extra"] = extra
@@ -79,15 +79,17 @@ def unconfigure_root_logger():
         root_logger.removeHandler(handler)
 
 
+# We want this function to be run once. Having it top level like this
+# will cause it to be run when the module is first imported, then not
+# again.
+unconfigure_root_logger()
+
+
 def get_and_configure_logger(name: str) -> logging.Logger:
-    unconfigure_root_logger()
     # Set level to a environment variable; I think at least
     logger = getLogger(name, level=logging.INFO)
 
-    # I think using both this and unconfigure_root_logger might be redundant
-    # logger.propagate = False
-
     handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(daiquiri.formatter.ColorFormatter(fmt=format_string))
+    handler.setFormatter(daiquiri.formatter.ColorFormatter(fmt=FORMAT_STRING))
     logger.logger.addHandler(handler)
     return logger
