@@ -8,6 +8,7 @@ class UtilsTestCase(TestCase):
     @patch('data_refinery_common.utils.requests.get')
     def test_get_worker_id_cloud(self, mock_get, mock_get_env_variable):
         """Test that a request is made and the global value is stored"""
+        utils.INSTANCE_ID = None
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.text = "instance_id"
         mock_get_env_variable.return_value = "True"
