@@ -67,10 +67,10 @@ def upload_processed_files(job_context: Dict) -> Dict:
         try:
             file_management.upload_processed_file(batch)
         except Exception:
-            logging.exception("Exception caught while uploading processed file %s",
-                              file_management.get_temp_post_path(batch),
-                              batch=batch.id,
-                              processor_job=job_context["job_id"])
+            logger.exception("Exception caught while uploading processed file %s",
+                             file_management.get_temp_post_path(batch),
+                             batch=batch.id,
+                             processor_job=job_context["job_id"])
             processed_name = file_management.get_processed_path(batch)
             failure_template = "Exception caught while uploading processed file {}"
             job_context["job"].failure_reason = failure_template.format(processed_name)
@@ -97,10 +97,10 @@ def cleanup_raw_files(job_context: Dict) -> Dict:
             # If we fail to remove the raw files, the job is still done
             # enough to call a success. However logging will be important
             # so the problem can be identified and the raw files cleaned up.
-            logging.exception("Exception caught while removing raw files %s",
-                              file_management.get_temp_pre_path(batch),
-                              batch=batch.id,
-                              processor_job=job_context["job_id"])
+            logger.exception("Exception caught while removing raw files %s",
+                             file_management.get_temp_pre_path(batch),
+                             batch=batch.id,
+                             processor_job=job_context["job_id"])
 
     return job_context
 
@@ -142,9 +142,9 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
         try:
             last_result = processor(last_result)
         except Exception:
-            logging.exception("Unhandled exception caught while running processor %s in pipeline",
-                              processor.__name__,
-                              processor_job=job_id)
+            logger.exception("Unhandled exception caught while running processor %s in pipeline",
+                             processor.__name__,
+                             processor_job=job_id)
             last_result["success"] = False
             end_job(last_result)
         if "success" in last_result and last_result["success"] is False:
