@@ -13,9 +13,9 @@ logger = get_task_logger(__name__)
 
 
 def _prepare_files(job_context: Dict) -> Dict:
-    """Moves the .CEL file from the raw directory to the temp directory
+    """Moves the CEL file from the raw directory to the temp directory.
 
-    Also adds the keys input_file and output_file to job_context so
+    Also adds the keys "input_file" and "output_file" to job_context so
     everything is prepared for processing.
     """
     # Array Express processor jobs have only one batch per job.
@@ -53,7 +53,7 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
         base_error_template = "unable to read Affy header in input file {0} due to error: {1}"
         base_error_message = base_error_template.format(input_file, str(e))
         log_message = "Processor Job %d running AFFY_TO_PCL pipeline " + base_error_message
-        logger.error(log_message)
+        logger.error(log_message, job_context["job"].id)
         job_context["job"].failure_reason = base_error_message
         job_context["success"] = False
         return job_context

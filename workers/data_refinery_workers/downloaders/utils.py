@@ -83,7 +83,7 @@ def end_job(job: DownloaderJob, batches: Batch, success):
                 if batch.pipeline_required != ProcessorPipeline.NONE.value:
                     success = queue_task(processor_job)
                     if success:
-                        logger.info("Downloader Job %d completed successfully.")
+                        logger.info("Downloader Job %d completed successfully.", job.id)
                     else:
                         failure_template = "Could not find Processor Pipeline {} in the lookup."
                         job.failure_reason = failure_template.format(batch.pipeline_required)
