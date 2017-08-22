@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 import string
+import warnings
 from typing import Dict
 import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
@@ -83,21 +84,25 @@ def _run_scan_upc(job_context: Dict) -> Dict:
     input_file = job_context["input_file"]
 
     try:
+        # It's necessary to load the foreach library before calling SCANfast
+        # because it doesn't load the library before calling functions
+        # from it.
+        ro.r("suppressMessages(library('foreach'))")
+
         # Prevents:
         # RRuntimeWarning: There were 50 or more warnings (use warnings()
         # to see the first 50)
         ro.r("options(warn=1)")
 
-        # It's necessary to load the foreach library before calling SCANfast
-        # because it doesn't load the library before calling functions
-        # from it.
-        ro.r("library('foreach')")
+        # All R messages are turned into Python 'warnings' by rpy2. By
+        # filtering all of them we silence a lot of useless output
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            scan_upc = ro.r['::']('SCAN.UPC', 'SCANfast')
+            scan_upc(input_file,
+                     job_context["output_file"],
+                     probeSummaryPackage=job_context["brainarray_package"])
 
-        ro.r['::']('SCAN.UPC', 'SCANfast')(
-            input_file,
-            job_context["output_file"],
-            probeSummaryPackage=job_context["brainarray_package"]
-        )
     except RRuntimeError as e:
         error_template = ("Encountered error in R code while running AFFY_TO_PCL"
                           " pipeline during processing of {0}: {1}")
