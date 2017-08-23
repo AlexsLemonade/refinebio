@@ -1,4 +1,3 @@
-from typing import List
 import daiquiri
 import logging
 import sys
