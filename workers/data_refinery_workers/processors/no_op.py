@@ -11,14 +11,14 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def no_op_processor_fn(kwargs: Dict) -> Dict:
+def no_op_processor_fn(job_context: Dict) -> Dict:
     """A processor which does nothing other than move files.
 
     Simply moves the batch's file from its raw location to its
     processed location. Useful for handling data that has already been
     processed.
     """
-    batch = kwargs["batches"][0]
+    batch = job_context["batches"][0]
     raw_path = file_management.get_raw_path(batch)
 
     try:
@@ -36,9 +36,11 @@ def no_op_processor_fn(kwargs: Dict) -> Dict:
                            " during Job #%d."),
                           raw_path,
                           batch.id,
-                          kwargs["job_id"])
-        kwargs["success"] = False
-        return kwargs
+                          job_context["job_id"])
+        failure_reason = "Exception caught while moving file {}".format(batch.name)
+        job_context["job"].failure_reason = failure_reason
+        job_context["success"] = False
+        return job_context
 
     try:
         file_management.remove_raw_files(batch)
@@ -50,10 +52,10 @@ def no_op_processor_fn(kwargs: Dict) -> Dict:
                            " during Job #%d."),
                           raw_path,
                           batch.id,
-                          kwargs["job_id"])
+                          job_context["job_id"])
 
-    kwargs["success"] = True
-    return kwargs
+    job_context["success"] = True
+    return job_context
 
 
 @shared_task

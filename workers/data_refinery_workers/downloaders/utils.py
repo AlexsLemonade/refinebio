@@ -67,8 +67,13 @@ def end_job(job: DownloaderJob, batches: Batch, success):
             app.send_task(processor_task, args=[processor_job.id])
             return True
         else:
-            logger.error("Cannot find Processor Pipeline %s in the lookup.",
-                         batch.pipeline_required)
+            failure_template = "Could not find Processor Pipeline {} in the lookup."
+            failure_message = failure_template.format(batch.pipeline_required)
+            logger.error(failure_message)
+            processor_job.failure_reason = failure_message
+            processor_job.success = False
+            processor_job.retried = True
+            processor_job.save()
             return False
 
     if success:
@@ -77,6 +82,11 @@ def end_job(job: DownloaderJob, batches: Batch, success):
                 processor_job = save_batch_create_job(batch)
                 if batch.pipeline_required != ProcessorPipeline.NONE.value:
                     success = queue_task(processor_job)
+                    if success:
+                        logger.info("Downloader Job %d completed successfully.", job.id)
+                    else:
+                        failure_template = "Could not find Processor Pipeline {} in the lookup."
+                        job.failure_reason = failure_template.format(batch.pipeline_required)
 
     job.success = success
     job.end_time = timezone.now()

@@ -7,7 +7,7 @@ from typing import List
 from contextlib import closing
 from celery import shared_task
 from celery.utils.log import get_task_logger
-from data_refinery_models.models import Batch
+from data_refinery_models.models import Batch, DownloaderJob
 from data_refinery_common import file_management
 from data_refinery_workers.downloaders import utils
 import logging
@@ -21,34 +21,36 @@ CHUNK_SIZE = 1024 * 256
 JOB_DIR_PREFIX = "downloader_job_"
 
 
-def _verify_batch_grouping(batches: List[Batch], job_id: int) -> None:
+def _verify_batch_grouping(batches: List[Batch], job: DownloaderJob) -> None:
     """All batches in the same job should have the same downloader url"""
     for batch in batches:
         if batch.download_url != batches[0].download_url:
-            logger.error(("A Batch doesn't have the same download URL as the other batches"
-                          " in downloader job #%d."),
-                         job_id)
-            raise ValueError("A batch doesn't have the same download url as other batches.")
+            failure_message = "A Batch doesn't have the same download URL as the other batches"
+            logger.error(failure_message + " in Downloader Job #%d.",
+                         job.id)
+            job.failure_reason = failure_message
+            raise ValueError(failure_message)
 
 
-def _download_file(download_url: str, file_path: str, job_id: int) -> None:
+def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> None:
     try:
         logger.debug("Downloading file from %s to %s. (Job #%d)",
                      download_url,
                      file_path,
-                     job_id)
+                     job.id)
         target_file = open(file_path, "wb")
         with closing(urllib.request.urlopen(download_url)) as request:
             shutil.copyfileobj(request, target_file, CHUNK_SIZE)
     except Exception:
-        logging.exception("Exception caught while running Downloader Job #%d.",
-                          job_id)
+        logging.exception("Exception caught while downloading batch in Downloader Job #%d.",
+                          job.id)
+        job.failure_reason = "Exception caught while downloading batch"
         raise
     finally:
         target_file.close()
 
 
-def _extract_file(batches: List[Batch], job_id: int) -> None:
+def _extract_file(batches: List[Batch], job: DownloaderJob) -> None:
     """Extract zip from temp directory and move to raw directory.
 
     Additionally this function sets the size_in_bytes field of each
@@ -57,12 +59,12 @@ def _extract_file(batches: List[Batch], job_id: int) -> None:
     changes in utils.end_job.
     """
     # zip_path and local_dir should be common to all batches in the group
-    job_dir = JOB_DIR_PREFIX + str(job_id)
+    job_dir = JOB_DIR_PREFIX + str(job.id)
     zip_path = file_management.get_temp_download_path(batches[0], job_dir)
     local_dir = file_management.get_temp_dir(batches[0], job_dir)
     dirs_to_clean = set()
 
-    logger.debug("Extracting %s for Downloader Job %d.", zip_path, job_id)
+    logger.debug("Extracting %s for Downloader Job %d.", zip_path, job.id)
 
     try:
         zip_ref = zipfile.ZipFile(zip_path, "r")
@@ -87,7 +89,8 @@ def _extract_file(batches: List[Batch], job_id: int) -> None:
     except Exception:
         logging.exception("Exception caught while extracting %s during Downloader Job #%d.",
                           zip_path,
-                          job_id)
+                          job.id)
+        job.failure_reason = "Exception caught while extracting " + zip_path
         raise
     finally:
         zip_ref.close()
@@ -115,13 +118,13 @@ def download_array_express(job_id: int) -> None:
 
     if success:
         try:
-            _verify_batch_grouping(batches, job_id)
+            _verify_batch_grouping(batches, job)
 
             # The files for all of the batches in the grouping are
             # contained within the same zip file. Therefore only
             # download the one.
-            _download_file(download_url, target_file_path, job_id)
-            _extract_file(batches, job_id)
+            _download_file(download_url, target_file_path, job)
+            _extract_file(batches, job)
         except Exception:
             # Exceptions are already logged and handled.
             # Just need to mark the job as failed.

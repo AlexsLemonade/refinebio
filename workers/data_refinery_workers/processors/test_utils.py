@@ -1,4 +1,5 @@
 import copy
+import os
 from unittest.mock import MagicMock
 from django.test import TestCase
 from data_refinery_models.models import (
@@ -8,6 +9,7 @@ from data_refinery_models.models import (
     ProcessorJob,
 )
 from data_refinery_workers.processors import utils
+from data_refinery_common import file_management
 
 
 def init_batch():
@@ -28,7 +30,7 @@ def init_batch():
         experiment_accession_code="E-MTAB-3050",
         experiment_title="It doesn't really matter.",
         name="CE1234.CEL",
-        internal_location="A-AFFY-1/MICRO_ARRAY_TO_PCL/",
+        internal_location="A-AFFY-1/AFFY_TO_PCL/",
         organism_id=9606,
         organism_name="HOMO SAPIENS",
         release_date="2017-05-05",
@@ -47,20 +49,20 @@ class StartJobTestCase(TestCase):
 
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch, batch2])
 
-        kwargs = utils.start_job({"job": processor_job})
+        job_context = utils.start_job({"job": processor_job})
         # start_job preserves the "job" key
-        self.assertEqual(kwargs["job"], processor_job)
+        self.assertEqual(job_context["job"], processor_job)
 
         # start_job finds the batches and returns them
-        self.assertEqual(len(kwargs["batches"]), 2)
+        self.assertEqual(len(job_context["batches"]), 2)
 
     def test_failure(self):
         """Fails because there are no batches for the job."""
         processor_job = ProcessorJob()
         processor_job.save()
 
-        kwargs = utils.start_job({"job": processor_job})
-        self.assertFalse(kwargs["success"])
+        job_context = utils.start_job({"job": processor_job})
+        self.assertFalse(job_context["success"])
 
 
 class EndJobTestCase(TestCase):
@@ -108,6 +110,49 @@ class EndJobTestCase(TestCase):
             self.assertEqual(batch.status, BatchStatuses.DOWNLOADED.value)
 
 
+class UploadProcessedFilesTestCase(TestCase):
+    def setUp(self):
+        batch = init_batch()
+        batch.save()
+        self.batch = batch
+
+    def tearDown(self):
+        expected_path = "/home/user/data_store/processed/A-AFFY-1/AFFY_TO_PCL/CE1234.PCL"
+        if os.path.isfile(expected_path):
+            os.remove(expected_path)
+
+    def test_success(self):
+        processor_job = ProcessorJob.create_job_and_relationships(batches=[self.batch])
+        os.makedirs(file_management.get_temp_dir(self.batch), exist_ok=True)
+        with open(file_management.get_temp_post_path(self.batch), "w") as dummy_pcl:
+            dummy_pcl.write("This is a dummy file for tests to operate upon.")
+
+        # Verify file was created correctly or else the test which
+        # verifies that it was removed won't actually be testing
+        # anything
+        self.assertTrue(os.path.isfile(file_management.get_temp_post_path(self.batch)))
+
+        job_context = {"batches": [self.batch],
+                       "job": processor_job,
+                       "job_id": processor_job.id}
+        job_context = utils.upload_processed_files(job_context)
+
+        self.assertFalse("success" in job_context)
+        self.assertTrue(os.path.isfile(file_management.get_processed_path(self.batch)))
+        self.assertFalse(os.path.isfile(file_management.get_temp_post_path(self.batch)))
+
+    def test_failure(self):
+        processor_job = ProcessorJob.create_job_and_relationships(batches=[self.batch])
+        job_context = {"batches": [self.batch],
+                       "job": processor_job,
+                       "job_id": processor_job.id}
+        job_context = utils.upload_processed_files(job_context)
+
+        self.assertFalse(job_context["success"])
+        self.assertEqual(type(job_context["job"].failure_reason), str)
+        self.assertFalse(os.path.isfile(file_management.get_processed_path(self.batch)))
+
+
 class RunPipelineTestCase(TestCase):
     def test_no_job(self):
         mock_processor = MagicMock()
@@ -133,7 +178,7 @@ class RunPipelineTestCase(TestCase):
         self.assertIsNotNone(processor_job.end_time)
 
     def test_value_passing(self):
-        """The keys added to kwargs and returned by processors will be
+        """The keys added to job_context and returned by processors will be
         passed through to other processors.
         """
         batch = init_batch()
@@ -146,9 +191,9 @@ class RunPipelineTestCase(TestCase):
                      "batches": [batch]}
         mock_processor.return_value = mock_dict
 
-        def processor_function(kwargs):
-            self.assertTrue(kwargs["something_to_pass_along"])
-            return kwargs
+        def processor_function(job_context):
+            self.assertTrue(job_context["something_to_pass_along"])
+            return job_context
 
         test_processor = MagicMock(side_effect=processor_function)
 

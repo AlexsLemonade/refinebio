@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 import string
 from typing import Dict
 import rpy2.robjects as ro
+from rpy2.rinterface import RRuntimeError
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from data_refinery_workers.processors import utils
@@ -11,40 +12,56 @@ import logging
 logger = get_task_logger(__name__)
 
 
-PACKAGE_NAME_CORRECTIONS = {
-    "hugene10stv1hsentrezgprobe": "hugene10sthsentrezgprobe"
-}
+def _prepare_files(job_context: Dict) -> Dict:
+    """Moves the CEL file from the raw directory to the temp directory.
 
-
-def cel_to_pcl(kwargs: Dict) -> Dict:
-    """Process .CEL files to .PCL format using R.
-
-    Moves the .CEL file from the raw directory to the temp directory,
-    calls ProcessCelFiles, uploads the processed file, and cleans up
-    the raw/temp files. Because it uses the file_management module
-    this works seamlessly whether S3 is being used or not.
+    Also adds the keys "input_file" and "output_file" to job_context so
+    everything is prepared for processing.
     """
-    # Array Express processor jobs have one batch per job.
-    batch = kwargs["batches"][0]
+    # Array Express processor jobs have only one batch per job.
+    batch = job_context["batches"][0]
 
     try:
         file_management.download_raw_file(batch)
     except Exception:
-        logging.exception("Exception caught while retrieving %s for batch %d during Job #%d.",
+        logging.exception(("Exception caught while retrieving raw file "
+                           "%s for batch %d during Processor Job #%d."),
                           file_management.get_raw_path(batch),
-                          batch.id,
-                          kwargs["job_id"])
-        kwargs["success"] = False
-        return kwargs
+                          batch.id, job_context["job_id"])
+        failure_template = "Exception caught while retrieving raw file {}"
+        job_context["job"].failure_reason = failure_template.format(batch.name)
+        job_context["success"] = False
+        return job_context
 
-    input_file = file_management.get_temp_pre_path(batch)
-    output_file = file_management.get_temp_post_path(batch)
+    job_context["input_file"] = file_management.get_temp_pre_path(batch)
+    job_context["output_file"] = file_management.get_temp_post_path(batch)
+    return job_context
 
-    header = ro.r['::']('affyio', 'read.celfile.header')(input_file)
+
+def _determine_brainarray_package(job_context: Dict) -> Dict:
+    """Determines the right brainarray package to use for the file.
+
+    Expects job_context to contain the key 'input_file'. Adds the key
+    'brainarray_package' to job_context."""
+    input_file = job_context["input_file"]
+    try:
+        header = ro.r['::']('affyio', 'read.celfile.header')(input_file)
+    except RRuntimeError as e:
+        # Array Express processor jobs have only one batch per job.
+        file_management.remove_temp_directory(job_context["batches"][0])
+
+        base_error_template = "unable to read Affy header in input file {0} due to error: {1}"
+        base_error_message = base_error_template.format(input_file, str(e))
+        log_message = "Processor Job %d running AFFY_TO_PCL pipeline " + base_error_message
+        logger.error(log_message, job_context["job"].id)
+        job_context["job"].failure_reason = base_error_message
+        job_context["success"] = False
+        return job_context
 
     # header is a list of vectors. [0][0] contains the package name.
     punctuation_table = str.maketrans(dict.fromkeys(string.punctuation))
     package_name = header[0][0].translate(punctuation_table).lower()
+
     # Headers can contain the version "v1" or "v2", which doesn't
     # appear in the brainarray package name. This replacement is
     # brittle, but the list of brainarray packages is relatively short
@@ -52,56 +69,57 @@ def cel_to_pcl(kwargs: Dict) -> Dict:
     # accordingly. So far "v1" and "v2" are the only known versions
     # which must be accomodated in this way.
     package_name_without_version = package_name.replace("v1", "").replace("v2", "")
-    brainarray_package = package_name_without_version + "hsentrezgprobe"
+    job_context["brainarray_package"] = package_name_without_version + "hsentrezgprobe"
+    return job_context
 
-    # Prevents:
-    # RRuntimeWarning: There were 50 or more warnings (use warnings()
-    # to see the first 50)
-    ro.r("options(warn=1)")
 
-    # It's necessary to load the foreach library before calling SCANfast
-    # because it doesn't load the library before calling functions
-    # from it.
-    ro.r("library('foreach')")
+def _run_scan_upc(job_context: Dict) -> Dict:
+    """Processes an input CEL file to an output PCL file.
 
-    ro.r['::']('SCAN.UPC', 'SCANfast')(
-        input_file,
-        output_file,
-        probeSummaryPackage=brainarray_package
-    )
+    Does so using the SCAN.UPC package's SCANfast method using R.
+    Expects job_context to contain the keys 'input_file', 'output_file',
+    and 'brainarray_package'.
+    """
+    input_file = job_context["input_file"]
 
     try:
-        file_management.upload_processed_file(batch)
-    except Exception:
-        logging.exception(("Exception caught while uploading processed file %s for batch %d"
-                           " during Job #%d."),
-                          output_file,
-                          batch.id,
-                          kwargs["job_id"])
-        kwargs["success"] = False
-        return kwargs
+        # Prevents:
+        # RRuntimeWarning: There were 50 or more warnings (use warnings()
+        # to see the first 50)
+        ro.r("options(warn=1)")
+
+        # It's necessary to load the foreach library before calling SCANfast
+        # because it doesn't load the library before calling functions
+        # from it.
+        ro.r("library('foreach')")
+
+        ro.r['::']('SCAN.UPC', 'SCANfast')(
+            input_file,
+            job_context["output_file"],
+            probeSummaryPackage=job_context["brainarray_package"]
+        )
+    except RRuntimeError as e:
+        base_error_template = "encountered error in R code while processing {0}: {1}"
+        base_error_message = base_error_template.format(input_file, str(e))
+        log_message = "Processor Job %d running AFFY_TO_PCL pipeline " + base_error_message
+        logger.error(log_message, job_context["job_id"])
+        job_context["job"].failure_reason = base_error_message
+        job_context["success"] = False
+        return job_context
     finally:
-        file_management.remove_temp_directory(batch)
+        # Array Express processor jobs have only one batch per job.
+        file_management.remove_temp_directory(job_context["batches"][0])
 
-    try:
-        file_management.remove_raw_files(batch)
-    except:
-        # If we fail to remove the raw files, the job is still done
-        # enough to call a success. However logging will be important
-        # so the problem can be identified and the raw files cleaned up.
-        logging.exception(("Exception caught while removing raw files %s for batch %d"
-                           " during Job #%d."),
-                          output_file,
-                          batch.id,
-                          kwargs["job_id"])
-
-    kwargs["success"] = True
-    return kwargs
+    return job_context
 
 
 @shared_task
 def affy_to_pcl(job_id: int) -> None:
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
-                        cel_to_pcl,
+                        _prepare_files,
+                        _determine_brainarray_package,
+                        _run_scan_upc,
+                        utils.upload_processed_files,
+                        utils.cleanup_raw_files,
                         utils.end_job])
