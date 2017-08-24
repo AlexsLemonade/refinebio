@@ -105,10 +105,9 @@ def _run_scan_upc(job_context: Dict) -> Dict:
         logger.error(log_message, job_context["job_id"])
         job_context["job"].failure_reason = base_error_message
         job_context["success"] = False
-        return job_context
-    finally:
         # Array Express processor jobs have only one batch per job.
         file_management.remove_temp_directory(job_context["batches"][0])
+        return job_context
 
     return job_context
 

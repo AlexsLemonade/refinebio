@@ -1,0 +1,32 @@
+version: '3'
+services:
+  rabbitmq:
+    image: "rabbitmq:3"
+  workers:
+    build:
+      context: .
+      dockerfile: workers/Dockerfile
+    volumes:
+      - "$VOLUME_DIRECTORY:/home/user/data_store"
+    extra_hosts:
+      - "database:$HOST_IP"
+    depends_on:
+      - rabbitmq
+    links:
+      - rabbitmq:rabbit
+    env_file: workers/environments/dev
+  foreman:
+    build:
+      context: .
+      dockerfile: foreman/Dockerfile
+    volumes:
+      - "$VOLUME_DIRECTORY:/home/user/data_store"
+    extra_hosts:
+      - "database:$HOST_IP"
+    depends_on:
+      - rabbitmq
+      - workers
+    links:
+      - rabbitmq:rabbit
+    env_file: foreman/environments/dev
+    command: "survey $EXPERIMENT_LIST"
