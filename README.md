@@ -1,7 +1,9 @@
 # Data Refinery
 
-A project to download, process, aggregate, and serve bioinformatic data
-supported by Greene Lab.
+A project to download, process, aggregate, and serve bioinformatic data now
+supported by Alex's Lemonade Stand Foundation, with some initial development
+supported by the Gordon and Betty Moore Foundation via GBMF 4552 to Casey
+Greene.
 
 ## Getting Started
 
