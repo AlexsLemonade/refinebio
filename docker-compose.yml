@@ -14,7 +14,7 @@ services:
       - rabbitmq
     links:
       - rabbitmq:rabbit
-    env_file: workers/environments/dev
+    env_file: workers/environments/test
   foreman:
     build:
       context: .
@@ -28,5 +28,6 @@ services:
       - workers
     links:
       - rabbitmq:rabbit
-    env_file: foreman/environments/dev
-    command: "survey $EXPERIMENT_LIST"
+    env_file: foreman/environments/test
+    command: test --keepdb --no-input data_refinery_foreman.surveyor.end_to_end_tests
+    # command: "survey $EXPERIMENT_LIST"
