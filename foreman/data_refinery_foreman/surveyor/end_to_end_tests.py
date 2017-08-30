@@ -1,5 +1,5 @@
 import time
-from django.test import TestCase
+from django.test import TransactionTestCase
 from data_refinery_models.models import (
     SurveyJob,
     SurveyJobKeyValue,
@@ -25,14 +25,15 @@ def wait_for_job(job, job_class: type):
     """Monitors the `job_class` table for when `job` is done."""
     job = job_class.objects.filter(id=job.id).get()
     while job.success is None:
-        logger.info("Still polling the survey job.")
+        logger.info("Still polling the %s.",
+                    job_class.__name__)
         time.sleep(LOOP_TIME)
         job = job_class.objects.filter(id=job.id).get()
 
     return job
 
 
-class ScanUpcEndToEndTestCase(TestCase):
+class ScanUpcEndToEndTestCase(TransactionTestCase):
     def test_calls_survey(self):
         """If source_type is supported calls the appropriate survey method."""
         logger.info(pformat(connection.settings_dict))
