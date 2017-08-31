@@ -171,7 +171,6 @@ class RunScanUPCTestCase(TestCase):
 
         # success is only populated by this function on an error
         self.assertFalse("success" in job_context)
-        self.assertTrue(mock_file_management.remove_temp_directory.called)
         self.assertTrue(os.path.isfile(output_file))
 
         # Clean up the processed file
