@@ -1,6 +1,6 @@
 version: '3'
 services:
-  rabbitmq:
+  message-queue:
     image: "rabbitmq:3"
   workers:
     build:
@@ -11,9 +11,9 @@ services:
     extra_hosts:
       - "database:$HOST_IP"
     depends_on:
-      - rabbitmq
+      - message-queue
     links:
-      - rabbitmq:rabbit
+      - message-queue:rabbit
     env_file: workers/environments/test
   foreman:
     build:
@@ -24,10 +24,10 @@ services:
     extra_hosts:
       - "database:$HOST_IP"
     depends_on:
-      - rabbitmq
+      - message-queue
       - workers
     links:
-      - rabbitmq:rabbit
+      - message-queue:rabbit
     env_file: foreman/environments/test
     command: test --keepdb --no-input data_refinery_foreman.surveyor.end_to_end_tests
     # command: "survey $EXPERIMENT_LIST"

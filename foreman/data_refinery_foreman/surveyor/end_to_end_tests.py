@@ -9,9 +9,6 @@ from data_refinery_models.models import (
 )
 from data_refinery_foreman.surveyor import surveyor
 
-from django.db import connection
-from pprint import pformat
-
 # Import and set logger
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -36,8 +33,6 @@ def wait_for_job(job, job_class: type):
 class ScanUpcEndToEndTestCase(TransactionTestCase):
     def test_calls_survey(self):
         """If source_type is supported calls the appropriate survey method."""
-        logger.info(pformat(connection.settings_dict))
-
         survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
         survey_job.save()
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
