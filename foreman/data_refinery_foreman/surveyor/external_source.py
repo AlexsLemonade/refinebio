@@ -92,7 +92,13 @@ class ExternalSourceSurveyor:
                 logger.info("Survey job #%d is queuing downloader job #%d.",
                             self.survey_job.id,
                             downloader_job.id)
-                app.send_task(downloader_task, args=[downloader_job.id])
+                try:
+                    app.send_task(downloader_task, args=[downloader_job.id])
+                except:
+                    # If the task doesn't get sent we don't want the
+                    # downloader_job to be left floating
+                    downloader_job.delete()
+                    raise
             else:
                 logger.info("Survey job #% found no new Batches.",
                             self.survey_job.id)

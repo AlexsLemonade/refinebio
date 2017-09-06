@@ -190,7 +190,7 @@ SAMPLES_JSON = """
         "file": [
           {
             "comment": {
-              "value": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-22166/E-GEOD-22166.raw.1.zip",
+              "value": "http://nginx/E-GEOD-22166.raw.1.zip",
               "name": "ArrayExpress FTP file"
             },
             "url": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-22166/E-GEOD-22166.raw.1.zip/GSM551183.CEL",

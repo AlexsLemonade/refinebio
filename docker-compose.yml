@@ -8,7 +8,6 @@ services:
       - "$STATIC_DIRECTORY:/usr/share/nginx/html:ro"
     ports:
       - "80:80"
-      - "21:21"
   workers:
     build:
       context: .
