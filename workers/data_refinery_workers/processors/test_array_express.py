@@ -165,7 +165,8 @@ class RunScanUPCTestCase(TestCase):
 
         # If this file already exists for any reason then we aren't
         # actually testing that it is generated
-        self.assertFalse(os.path.isfile(output_file))
+        if os.path.isfile(output_file):
+            os.remove(output_file)
 
         job_context = array_express._run_scan_upc(job_context)
 

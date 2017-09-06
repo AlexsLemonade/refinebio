@@ -2,6 +2,13 @@ version: '3'
 services:
   message-queue:
     image: "rabbitmq:3"
+  nginx:
+    image: nginx
+    volumes:
+      - "$STATIC_DIRECTORY:/usr/share/nginx/html:ro"
+    ports:
+      - "80:80"
+      - "21:21"
   workers:
     build:
       context: .
