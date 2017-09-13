@@ -107,7 +107,6 @@ def _run_scan_upc(job_context: Dict) -> Dict:
         job_context["success"] = False
         # Array Express processor jobs have only one batch per job.
         file_management.remove_temp_directory(job_context["batches"][0])
-        return job_context
 
     return job_context
 

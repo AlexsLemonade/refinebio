@@ -170,7 +170,7 @@ SAMPLES_JSON = """
         "source": {
           "comment": [
             {
-              "value": "Gene expression data from embryos younger than nuclear cycle 9, i.e. before zygotic genome activation.",
+              "value": "Gene expression data from embryos younger than.... truncated",
               "name": "Sample_description"
             },
             {
@@ -275,7 +275,7 @@ class ScanUpcEndToEndTestCase(TransactionTestCase):
         key_value_pair.save()
 
         surveyor.run_job(survey_job)
-        logger.info("Started Survey Job %s, waiting for it to complete.", survey_job.id)
+        logger.info("Started Survey Job %d, waiting for it to complete.", survey_job.id)
         survey_job = wait_for_job(survey_job, SurveyJob)
         self.assertTrue(survey_job.success)
 

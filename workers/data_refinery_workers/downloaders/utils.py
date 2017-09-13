@@ -81,12 +81,19 @@ def end_job(job: DownloaderJob, batches: Batch, success):
         for batch in batches:
             processor_job = save_batch_create_job(batch)
             if batch.pipeline_required != ProcessorPipeline.NONE.value:
-                success = queue_task(processor_job)
+                try:
+                    success = queue_task(processor_job)
+                except:
+                    # If the task doesn't get sent we don't want the
+                    # processor_job to be left floating
+                    processor_job.delete()
+
+                    success = False
+                    job.failure_message = "Could not queue processor job task."
+                    logger.error(job.failure_message)
+
                 if success:
                     logger.info("Downloader Job %d completed successfully.", job.id)
-                else:
-                    failure_template = "Could not find Processor Pipeline {} in the lookup."
-                    job.failure_reason = failure_template.format(batch.pipeline_required)
 
     job.success = success
     job.end_time = timezone.now()

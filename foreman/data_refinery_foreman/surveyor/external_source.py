@@ -100,7 +100,7 @@ class ExternalSourceSurveyor:
                     downloader_job.delete()
                     raise
             else:
-                logger.info("Survey job #% found no new Batches.",
+                logger.info("Survey job #%d found no new Batches.",
                             self.survey_job.id)
 
         try:
