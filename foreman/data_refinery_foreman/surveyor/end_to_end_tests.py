@@ -256,6 +256,9 @@ def wait_for_job(job, job_class: type):
     return job
 
 
+# TransactionTestCase makes database calls complete before the test
+# ends.  Otherwise the workers wouldn't actually be able to find the
+# job in the database cause it'd be stuck in a transaction.
 class ScanUpcEndToEndTestCase(TransactionTestCase):
     @patch('data_refinery_foreman.surveyor.array_express.requests.get')
     def test_calls_survey(self, mock_get):
