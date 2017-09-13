@@ -27,7 +27,8 @@ unconfigure_root_logger()
 
 def get_and_configure_logger(name: str) -> logging.Logger:
     # Set level to a environment variable; I think at least
-    logger = daiquiri.getLogger(name, level=logging.INFO)
+    logger = daiquiri.getLogger(name)
+    logger.setLevel(logging.INFO)
 
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(daiquiri.formatter.ColorExtrasFormatter(
