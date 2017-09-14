@@ -53,8 +53,9 @@ def end_job(job: DownloaderJob, batches: Batch, success):
         # TEMPORARY for Jackie's grant:
         if batch.pipeline_required != ProcessorPipeline.NONE.value:
             logger.debug("Creating processor job for batch #%d.", batch.id)
-            processor_job = ProcessorJob.create_job_and_relationships(
-                batches=[batch], pipeline_applied=batch.pipeline_required)
+            with transaction.atomic():
+                processor_job = ProcessorJob.create_job_and_relationships(
+                    batches=[batch], pipeline_applied=batch.pipeline_required)
             return processor_job
         else:
             logger.debug("Not queuing a processor job for batch #%d.", batch.id)
@@ -78,15 +79,21 @@ def end_job(job: DownloaderJob, batches: Batch, success):
 
     if success:
         for batch in batches:
-            with transaction.atomic():
-                processor_job = save_batch_create_job(batch)
-                if batch.pipeline_required != ProcessorPipeline.NONE.value:
+            processor_job = save_batch_create_job(batch)
+            if batch.pipeline_required != ProcessorPipeline.NONE.value:
+                try:
                     success = queue_task(processor_job)
-                    if success:
-                        logger.info("Downloader Job %d completed successfully.", job.id)
-                    else:
-                        failure_template = "Could not find Processor Pipeline {} in the lookup."
-                        job.failure_reason = failure_template.format(batch.pipeline_required)
+                except:
+                    # If the task doesn't get sent we don't want the
+                    # processor_job to be left floating
+                    processor_job.delete()
+
+                    success = False
+                    job.failure_message = "Could not queue processor job task."
+                    logger.error(job.failure_message)
+
+                if success:
+                    logger.info("Downloader Job %d completed successfully.", job.id)
 
     job.success = success
     job.end_time = timezone.now()

@@ -18,6 +18,7 @@ jobs:
       - run: cd data_models && python setup.py sdist
       - run: ./common/run_tests.sh
       - run: cd common && python setup.py sdist
+      - run: ./run_rabbitmq.sh
       - run: ./foreman/run_tests.sh
       - run: chmod -R a+rw workers/test_volume
       - run: ./workers/run_tests.sh

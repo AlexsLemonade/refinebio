@@ -149,7 +149,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         return batches
 
-    def survey(self):
+    def survey(self) -> bool:
         experiment_accession_code = (
             SurveyJobKeyValue
             .objects
@@ -174,4 +174,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         download_urls = {batch.download_url for batch in batches}
         for url in download_urls:
             batches_with_url = [batch for batch in batches if batch.download_url == url]
-            self.handle_batches(batches_with_url)
+            try:
+                self.handle_batches(batches_with_url)
+            except Exception:
+                return False
+
+        return True
