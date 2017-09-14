@@ -163,8 +163,7 @@ class RunScanUPCTestCase(TestCase):
                        "input_file": input_file,
                        "output_file": output_file}
 
-        # If this file already exists for any reason then we aren't
-        # actually testing that it is generated
+        # If output_file exists, remove it first.
         if os.path.isfile(output_file):
             os.remove(output_file)
 
