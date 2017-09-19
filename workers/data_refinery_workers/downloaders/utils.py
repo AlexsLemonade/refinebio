@@ -54,8 +54,9 @@ def end_job(job: DownloaderJob, batches: Batch, success: bool):
             logger.debug("Creating processor job for Batch.",
                          downloader_job=job.id,
                          batch=batch.id)
-            processor_job = ProcessorJob.create_job_and_relationships(
-                batches=[batch], pipeline_applied=batch.pipeline_required)
+            with transaction.atomic():
+                processor_job = ProcessorJob.create_job_and_relationships(
+                    batches=[batch], pipeline_applied=batch.pipeline_required)
             return processor_job
         else:
             logger.debug("Not queuing a processor job for batch.",
@@ -81,13 +82,21 @@ def end_job(job: DownloaderJob, batches: Batch, success: bool):
 
     if success:
         for batch in batches:
-            with transaction.atomic():
-                processor_job = save_batch_create_job(batch)
-                if batch.pipeline_required != ProcessorPipeline.NONE.value:
-                    success = success and queue_task(processor_job, batch)
+            processor_job = save_batch_create_job(batch)
+            if batch.pipeline_required != ProcessorPipeline.NONE.value:
+                try:
+                    success = queue_task(processor_job, batch)
+                except:
+                    # If the task doesn't get sent we don't want the
+                    # processor_job to be left floating
+                    processor_job.delete()
 
-    if success:
-        logger.info("Downloader job completed successfully.", downloader_job=job.id)
+                    success = False
+                    job.failure_message = "Could not queue processor job task."
+                    logger.error(job.failure_message)
+
+                if success:
+                    logger.info("Downloader job completed successfully.", downloader_job=job.id)
 
     job.success = success
     job.end_time = timezone.now()

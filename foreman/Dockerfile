@@ -5,6 +5,8 @@ WORKDIR /home/user
 
 COPY foreman/requirements.txt .
 
+# The base image does not have Python 2.X on it at all, so all calls
+# to pip or python are by default calls to pip3 or python3
 RUN pip install -r requirements.txt
 
 COPY data_models/dist/data-refinery-models-* data_models/

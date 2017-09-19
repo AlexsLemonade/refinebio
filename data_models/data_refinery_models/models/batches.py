@@ -47,7 +47,7 @@ class Batch(TimeTrackedModel):
     @classmethod
     def is_new_batch(cls, batch) -> bool:
         matching_batches = cls.objects.filter(name=batch.name)
-        return True if matching_batches.count() == 0 else False
+        return matching_batches.count() == 0
 
     class Meta:
         db_table = "batches"
