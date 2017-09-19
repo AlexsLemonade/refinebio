@@ -18,11 +18,7 @@ jobs:
       - run: cd data_models && python setup.py sdist
       - run: ./common/run_tests.sh
       - run: cd common && python setup.py sdist
+      - run: ./run_rabbitmq.sh
       - run: ./foreman/run_tests.sh
-      # - run: chmod 666 workers/test_volume
-      # Set the permissions for all the directories in the volume to
-      # 777 and all the files to 666
-      # commands found: https://stackoverflow.com/a/11512211/6095378
-      - run: find workers/test_volume -type d -exec chmod 777 {} \;
-      - run: find workers/test_volume -type f -exec chmod 666 {} \;
+      - run: chmod -R a+rw workers/test_volume
       - run: ./workers/run_tests.sh

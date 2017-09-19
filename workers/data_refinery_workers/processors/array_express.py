@@ -14,9 +14,9 @@ logger = get_and_configure_logger(__name__)
 
 
 def _prepare_files(job_context: Dict) -> Dict:
-    """Moves the .CEL file from the raw directory to the temp directory
+    """Moves the CEL file from the raw directory to the temp directory.
 
-    Also adds the keys input_file and output_file to job_context so
+    Also adds the keys "input_file" and "output_file" to job_context so
     everything is prepared for processing.
     """
     # Array Express processor jobs have only one batch per job.
@@ -29,6 +29,7 @@ def _prepare_files(job_context: Dict) -> Dict:
                          file_management.get_raw_path(batch),
                          processor_job=job_context["job_id"],
                          batch=batch.id)
+
         failure_template = "Exception caught while retrieving raw file {}"
         job_context["job"].failure_reason = failure_template.format(batch.name)
         job_context["success"] = False

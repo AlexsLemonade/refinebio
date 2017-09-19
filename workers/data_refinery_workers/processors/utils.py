@@ -6,7 +6,6 @@ from data_refinery_common.utils import get_worker_id
 from data_refinery_workers._version import __version__
 from data_refinery_common.logging import get_and_configure_logger
 
-
 logger = get_and_configure_logger(__name__)
 
 
