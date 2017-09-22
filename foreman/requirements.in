@@ -5,3 +5,4 @@ requests
 GEOparse
 retrying
 boto
+python-nomad

@@ -111,7 +111,6 @@ def _run_scan_upc(job_context: Dict) -> Dict:
     return job_context
 
 
-@shared_task
 def affy_to_pcl(job_id: int) -> None:
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,

@@ -1,3 +1,5 @@
 */volume
 */test_volume
 dr_env
+nomad_dir
+workers-nomad.tar
