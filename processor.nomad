@@ -1,4 +1,4 @@
-job "pj" {
+job "AFFY_TO_PCL" {
   datacenters = ["dc1"]
 
   type = "batch"

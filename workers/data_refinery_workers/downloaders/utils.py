@@ -8,7 +8,7 @@ from data_refinery_models.models import (
     DownloaderJob,
     ProcessorJob
 )
-from data_refinery_workers.task_runner import app
+from data_refinery_workers.task_runner import send_job
 from data_refinery_workers._version import __version__
 from data_refinery_common.job_lookup import ProcessorPipeline, PROCESSOR_PIPELINE_LOOKUP
 
@@ -64,8 +64,7 @@ def end_job(job: DownloaderJob, batches: Batch, success):
     @retry(stop_max_attempt_number=3)
     def queue_task(processor_job):
         if batch.pipeline_required in PROCESSOR_PIPELINE_LOOKUP:
-            processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
-            app.send_task(processor_task, args=[processor_job.id])
+            send_job(batch.pipeline_required, processor_job.id)
             return True
         else:
             failure_template = "Could not find Processor Pipeline {} in the lookup."
@@ -84,13 +83,13 @@ def end_job(job: DownloaderJob, batches: Batch, success):
                 try:
                     success = queue_task(processor_job)
                 except:
+                    logger.exception("Could not queue processor job task.")
                     # If the task doesn't get sent we don't want the
                     # processor_job to be left floating
                     processor_job.delete()
 
                     success = False
                     job.failure_message = "Could not queue processor job task."
-                    logger.error(job.failure_message)
 
                 if success:
                     logger.info("Downloader Job %d completed successfully.", job.id)
