@@ -1,4 +1,4 @@
-job "dj" {
+job "DOWNLOAD_ARRAY_EXPRESS" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -50,7 +50,8 @@ job "dj" {
       }
 
       config {
-        image = "workers-nomad"
+        image = "wkurt/nomad-test:first"
+        force_pull = false
 
         auth {
           username = "REDACTED"
@@ -61,7 +62,7 @@ job "dj" {
 
         extra_hosts = ["database:165.123.67.153"]
 
-        volumes = ["/home/kurt/data_refinery/workers/volume:/home/user/data_store"]
+        volumes = ["/home/kurt/Development/data_refinery/workers/volume:/home/user/data_store"]
 
       }
     }

@@ -11,8 +11,8 @@ from data_refinery_models.models import (
     DownloaderJob,
     ProcessorJob
 )
-from data_refinery_foreman.surveyor.message_queue import app
-from data_refinery_common.job_lookup import ProcessorPipeline, PROCESSOR_PIPELINE_LOOKUP
+from data_refinery_foreman.surveyor.message_queue import send_job
+from data_refinery_common.job_lookup import ProcessorPipeline
 
 # Import and set logger
 import logging
@@ -52,7 +52,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
     logger.info("Requeuing Downloader Job which had ID %d with a new Downloader Job with ID %d.",
                 last_job.id,
                 new_job.id)
-    app.send_task(last_job.downloader_task, args=[new_job.id])
+    send_job(last_job.downloader_task, new_job.id)
 
     last_job.retried = True
     last_job.success = False
@@ -171,8 +171,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     logger.info("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",
                 last_job.id,
                 new_job.id)
-    processor_task = PROCESSOR_PIPELINE_LOOKUP[last_job.pipeline_applied]
-    app.send_task(processor_task, args=[new_job.id])
+    send_job(last_job.pipeline_applied, new_job.id)
 
     last_job.retried = True
     last_job.success = False

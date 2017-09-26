@@ -22,18 +22,11 @@ class DiscoveryPipeline(PipelineEnums):
     pass
 
 
-# Maps processor pipeline names to the Celery task definitions.
-PROCESSOR_PIPELINE_LOOKUP = {
-    "AFFY_TO_PCL": "data_refinery_workers.processors.array_express.affy_to_pcl",
-    "NO_OP": "data_refinery_workers.processors.no_op.no_op_processor"
-}
-
-
 class Downloaders(Enum):
     """A enumeration of downloaders for batch.downloader_task."""
     ARRAY_EXPRESS = "ARRAY_EXPRESS"
 
 
 DOWNLOADER_TASK_LOOKUP = {
-    "ARRAY_EXPRESS": "data_refinery_workers.downloaders.array_express.download_array_express"
+    "ARRAY_EXPRESS": "DOWNLOAD_ARRAY_EXPRESS"
 }

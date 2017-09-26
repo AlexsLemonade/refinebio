@@ -10,7 +10,7 @@ from data_refinery_models.models import (
 )
 from data_refinery_workers.task_runner import send_job
 from data_refinery_workers._version import __version__
-from data_refinery_common.job_lookup import ProcessorPipeline, PROCESSOR_PIPELINE_LOOKUP
+from data_refinery_common.job_lookup import ProcessorPipeline
 
 
 # Import and set logger
@@ -63,7 +63,7 @@ def end_job(job: DownloaderJob, batches: Batch, success):
 
     @retry(stop_max_attempt_number=3)
     def queue_task(processor_job):
-        if batch.pipeline_required in PROCESSOR_PIPELINE_LOOKUP:
+        if batch.pipeline_required in ProcessorPipeline.__members__:
             send_job(batch.pipeline_required, processor_job.id)
             return True
         else:

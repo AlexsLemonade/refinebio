@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 import os
 from celery import Celery
+import nomad
 
 """
 This module initializes a Celery app using the same name as the
@@ -22,3 +23,8 @@ app = Celery('data_refinery_workers')
 # - namespace='CELERY' means all celery-related configuration keys
 #   should have a `CELERY_` prefix.
 app.config_from_object('django.conf:settings', namespace='CELERY')
+
+
+def send_job(job_name: str, job_id: int):
+    nomad_client = nomad.Nomad("database", timeout=5)
+    nomad_client.job.dispatch_job(job_name, meta={"JOB_ID": str(job_id)})

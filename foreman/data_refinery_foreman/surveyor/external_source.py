@@ -9,7 +9,7 @@ from data_refinery_models.models import (
     DownloaderJob,
     SurveyJob
 )
-from data_refinery_foreman.surveyor.message_queue import app
+from data_refinery_foreman.surveyor.message_queue import send_job
 from data_refinery_common.job_lookup import DiscoveryPipeline, DOWNLOADER_TASK_LOOKUP
 
 
@@ -93,7 +93,7 @@ class ExternalSourceSurveyor:
                             self.survey_job.id,
                             downloader_job.id)
                 try:
-                    app.send_task(downloader_task, args=[downloader_job.id])
+                    send_job(downloader_task, downloader_job.id)
                 except:
                     # If the task doesn't get sent we don't want the
                     # downloader_job to be left floating

@@ -14,8 +14,7 @@ from data_refinery_models.models import (
     BatchStatuses,
     ProcessorJob
 )
-from data_refinery_workers.task_runner import app
-from data_refinery_common.job_lookup import PROCESSOR_PIPELINE_LOOKUP
+from data_refinery_workers.task_runner import send_job
 
 
 # Import and set logger
@@ -56,5 +55,4 @@ class Command(BaseCommand):
 
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
         logger.info("Queuing a processor job.")
-        processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
-        app.send_task(processor_task, args=[processor_job.id])
+        send_job(batch.pipeline_required, processor_job.id)
