@@ -23,7 +23,7 @@ class Batch(TimeTrackedModel):
 
     survey_job = models.ForeignKey(SurveyJob, on_delete=models.PROTECT)
     source_type = models.CharField(max_length=256)
-    size_in_bytes = models.IntegerField()
+    size_in_bytes = models.BigIntegerField()
     download_url = models.CharField(max_length=4096)
     raw_format = models.CharField(max_length=256, null=True)
     processed_format = models.CharField(max_length=256, null=True)

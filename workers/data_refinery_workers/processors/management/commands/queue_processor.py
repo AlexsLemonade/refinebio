@@ -29,32 +29,53 @@ class Command(BaseCommand):
         # Create all the dummy data that would have been created
         # before a processor job could have been generated.
         survey_job = SurveyJob(
-            source_type="ARRAY_EXPRESS"
+            source_type="SRA"
         )
         survey_job.save()
 
         batch = Batch(
             survey_job=survey_job,
-            source_type="ARRAY_EXPRESS",
-            size_in_bytes=0,
-            download_url="ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip",  # noqa
-            raw_format="CEL",
-            processed_format="PCL",
-            pipeline_required="NO_OP",
-            platform_accession_code="A-AFFY-141",
-            experiment_accession_code="E-GEOD-59071",
+            source_type="SRA",
+            size_in_bytes=2214725074,
+            raw_format="fastq",
+            processed_format="sf",
+            pipeline_required="SALMON",
+            platform_accession_code="IlluminaHiSeq2500",
+            experiment_accession_code="PRJEB5018",
             experiment_title="It doesn't really matter.",
-            name="GSM1426074_CD_colon_active_4.CEL",
-            internal_location="A-AFFY-141/AFFY_TO_PCL",
-            organism_id=9606,
-            organism_name="HOMO SAPIENS",
-            release_date="2017-05-05",
-            last_uploaded_date="2017-05-05",
-            status=BatchStatuses.NEW.value
+            name="ERR1680082_1.fastq",
+            internal_location="IlluminaHiSeq2500/SALMON",
+            organism_id=10090,
+            organism_name="MUS MUSCULUS",
+            release_date="2014-03-25",
+            last_uploaded_date="2016-05-20",
+            status=BatchStatuses.NEW.value,
+            download_url="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR168/002/ERR1680082/ERR1680082_1.fastq.gz"  # noqa
         )
         batch.save()
 
-        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
+        batch2 = Batch(
+            survey_job=survey_job,
+            source_type="SRA",
+            size_in_bytes=2214725074,
+            download_url="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR168/002/ERR1680082/ERR1680082_2.fastq.gz",  # noqa
+            raw_format="fastq",
+            processed_format="sf",
+            pipeline_required="SALMON",
+            platform_accession_code="IlluminaHiSeq2500",
+            experiment_accession_code="PRJEB5018",
+            experiment_title="It doesn't really matter.",
+            name="ERR1680082_2.fastq",
+            internal_location="IlluminaHiSeq2500/SALMON",
+            organism_id=10090,
+            organism_name="MUS MUSCULUS",
+            release_date="2014-03-25",
+            last_uploaded_date="2016-05-20",
+            status=BatchStatuses.NEW.value
+        )
+        batch2.save()
+
+        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch, batch2])
         logger.info("Queuing a processor job.")
         processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
         app.send_task(processor_task, args=[processor_job.id])

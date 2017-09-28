@@ -1,3 +1,6 @@
 */volume
 */test_volume
 dr_env
+nomad_dir
+ERR1680082_*
+workers/Dockerfile*
