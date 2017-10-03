@@ -1,4 +1,20 @@
-FROM ccdl/data_refinery_worker_base
+FROM combinelab/salmon:0.8.2
+
+RUN apt-get install -y \
+  python3 \
+  python3-pip
+
+RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
+WORKDIR /home/user
+
+COPY workers/requirements.txt .
+
+RUN \
+  pip3 --no-cache-dir install pip --upgrade && \
+  pip3 --no-cache-dir install setuptools --upgrade && \
+  pip3 --no-cache-dir install wheel --upgrade && \
+  pip3 --no-cache-dir install -r requirements.txt --upgrade && \
+  rm -rf /root/.cache
 
 COPY data_models/dist/data-refinery-models-* data_models/
 
@@ -9,11 +25,6 @@ COPY common/dist/data-refinery-common-* common/
 
 # Get the latest version from the dist directory.
 RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
-
-COPY common/dist/data-refinery-common-* common/
-
-# Get the latest version from the dist directory.
-RUN pip install common/$(ls common -1 | tail -1)
 
 COPY workers/ .
 

@@ -18,7 +18,7 @@ def run_salmon(job_context: Dict) -> Dict:
     read_1 = "/home/user/data_store/raw/IlluminaHiSeq2500/SALMON/ERR1680082_1.fastq"
     read_2 = "/home/user/data_store/raw/IlluminaHiSeq2500/SALMON/ERR1680082_2.fastq"
     output_dir = "/home/user/data_store/processed/IlluminaHiSeq2500/SALMON"
-    cmd_str = "{} quant -l IU -i {} -1 {} -2 {} -p 20 -o {} --seqBias --gcBias --dumpEq"
+    cmd_str = "{} quant -l IU -i {} -1 {} -2 {} -p 20 -o {} --seqBias --gcBias --dumpEq --writeUnmappedNames"
     subprocess.Popen(cmd_str.format(salmon, index, read_1, read_2, output_dir).split())
 
     job_context["success"] = True
