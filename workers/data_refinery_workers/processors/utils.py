@@ -1,7 +1,6 @@
 from typing import List, Dict, Callable
 from django.utils import timezone
-from data_refinery_common.models import BatchStatuses, ProcessorJob
-from data_refinery_common import file_management
+from data_refinery_common.models import BatchStatuses, ProcessorJob, File
 from data_refinery_common.utils import get_worker_id
 from data_refinery_workers._version import __version__
 
@@ -64,22 +63,23 @@ def end_job(job_context: Dict):
 
 def upload_processed_files(job_context: Dict) -> Dict:
     """Uploads all the processed files for the job."""
-    for batch in job_context["batches"]:
+    files = File.objects.filter(batch__in=job_context["batches"])
+    for file in files:
         try:
-            file_management.upload_processed_file(batch)
+            file.upload_processed_file()
         except Exception:
             logging.exception(("Exception caught while uploading processed file %s for batch %d"
                                " during Job #%d."),
-                              file_management.get_temp_post_path(batch),
-                              batch.id,
+                              file.get_temp_post_path(),
+                              file.batch.id,
                               job_context["job_id"])
-            processed_name = file_management.get_processed_path(batch)
+            processed_name = file.get_processed_path()
             failure_template = "Exception caught while uploading processed file {}"
             job_context["job"].failure_reason = failure_template.format(processed_name)
             job_context["success"] = False
             return job_context
         finally:
-            file_management.remove_temp_directory(batch)
+            file.remove_temp_directory()
 
     return job_context
 
@@ -92,17 +92,18 @@ def cleanup_raw_files(job_context: Dict) -> Dict:
     However logging will be important so the problem can be
     identified and the raw files cleaned up.
     """
-    for batch in job_context["batches"]:
+    files = File.objects.filter(batch__in=job_context["batches"])
+    for file in files:
         try:
-            file_management.remove_raw_files(batch)
+            file.remove_raw_files()
         except:
             # If we fail to remove the raw files, the job is still done
             # enough to call a success. However logging will be important
             # so the problem can be identified and the raw files cleaned up.
             logging.exception(("Exception caught while removing raw files %s for batch %d"
                                " during Job #%d."),
-                              file_management.get_temp_pre_path(batch),
-                              batch.id,
+                              file.get_temp_pre_path(),
+                              file.batch.id,
                               job_context["job_id"])
 
     return job_context

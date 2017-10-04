@@ -2,8 +2,8 @@ from typing import Dict
 import shutil
 import boto3
 from celery import shared_task
+from data_refinery_common.models import batches, File
 from data_refinery_workers.processors import utils
-from data_refinery_common import file_management
 
 # import and set logger
 import logging
@@ -18,32 +18,32 @@ def no_op_processor_fn(job_context: Dict) -> Dict:
     processed location. Useful for handling data that has already been
     processed.
     """
-    batch = job_context["batches"][0]
-    raw_path = file_management.get_raw_path(batch)
+    file = File.objects.get(batch=job_context["batches"][0])
+    raw_path = file.get_raw_path()
 
     try:
-        if file_management.USE_S3:
+        if batches.USE_S3:
             client = boto3.client("s3")
-            client.copy_object(Bucket=file_management.S3_BUCKET_NAME,
-                               Key=file_management.get_processed_path(batch),
-                               CopySource={"Bucket": file_management.S3_BUCKET_NAME,
+            client.copy_object(Bucket=batches.S3_BUCKET_NAME,
+                               Key=file.get_processed_path(),
+                               CopySource={"Bucket": batches.S3_BUCKET_NAME,
                                            "Key": raw_path})
         else:
-            shutil.copyfile(file_management.get_raw_path(batch),
-                            file_management.get_processed_path(batch))
+            shutil.copyfile(file.get_raw_path(),
+                            file.get_processed_path())
     except Exception:
         logging.exception(("Exception caught while moving file %s for batch %d"
                            " during Job #%d."),
                           raw_path,
-                          batch.id,
+                          file.batch.id,
                           job_context["job_id"])
-        failure_reason = "Exception caught while moving file {}".format(batch.name)
+        failure_reason = "Exception caught while moving file {}".format(file.name)
         job_context["job"].failure_reason = failure_reason
         job_context["success"] = False
         return job_context
 
     try:
-        file_management.remove_raw_files(batch)
+        file.remove_raw_files()
     except:
         # If we fail to remove the raw files, the job is still done
         # enough to call a success. However logging will be important
@@ -51,7 +51,7 @@ def no_op_processor_fn(job_context: Dict) -> Dict:
         logging.exception(("Exception caught while removing raw file %s for batch %d"
                            " during Job #%d."),
                           raw_path,
-                          batch.id,
+                          file.batch.id,
                           job_context["job_id"])
 
     job_context["success"] = True

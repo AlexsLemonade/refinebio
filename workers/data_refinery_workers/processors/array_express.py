@@ -5,8 +5,8 @@ import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
 from celery import shared_task
 from celery.utils.log import get_task_logger
+from data_refinery_common.models import File
 from data_refinery_workers.processors import utils
-from data_refinery_common import file_management
 import logging
 
 logger = get_task_logger(__name__)
@@ -15,26 +15,28 @@ logger = get_task_logger(__name__)
 def _prepare_files(job_context: Dict) -> Dict:
     """Moves the CEL file from the raw directory to the temp directory.
 
-    Also adds the keys "input_file" and "output_file" to job_context so
-    everything is prepared for processing.
+    Also adds the keys "input_file_path" and "output_file_path" to
+    job_context so everything is prepared for processing.
     """
-    # Array Express processor jobs have only one batch per job.
+    # Array Express processor jobs have only one batch per job and one
+    # file per batch.
     batch = job_context["batches"][0]
+    file = File.objects.get(batch=batch)
 
     try:
-        file_management.download_raw_file(batch)
+        file.download_raw_file()
     except Exception:
         logging.exception(("Exception caught while retrieving raw file "
                            "%s for batch %d during Processor Job #%d."),
-                          file_management.get_raw_path(batch),
+                          file.get_raw_path(),
                           batch.id, job_context["job_id"])
         failure_template = "Exception caught while retrieving raw file {}"
-        job_context["job"].failure_reason = failure_template.format(batch.name)
+        job_context["job"].failure_reason = failure_template.format(file.name)
         job_context["success"] = False
         return job_context
 
-    job_context["input_file"] = file_management.get_temp_pre_path(batch)
-    job_context["output_file"] = file_management.get_temp_post_path(batch)
+    job_context["input_file_path"] = file.get_temp_pre_path()
+    job_context["output_file_path"] = file.get_temp_post_path()
     return job_context
 
 
@@ -42,13 +44,15 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
     """Determines the right brainarray package to use for the file.
 
     Expects job_context to contain the key 'input_file'. Adds the key
-    'brainarray_package' to job_context."""
-    input_file = job_context["input_file"]
+    'brainarray_package' to job_context.
+    """
+    input_file = job_context["input_file_path"]
     try:
         header = ro.r['::']('affyio', 'read.celfile.header')(input_file)
     except RRuntimeError as e:
         # Array Express processor jobs have only one batch per job.
-        file_management.remove_temp_directory(job_context["batches"][0])
+        file = File.objects.get(batch=job_context["batches"][0])
+        file.remove_temp_directory()
 
         base_error_template = "unable to read Affy header in input file {0} due to error: {1}"
         base_error_message = base_error_template.format(input_file, str(e))
@@ -80,7 +84,7 @@ def _run_scan_upc(job_context: Dict) -> Dict:
     Expects job_context to contain the keys 'input_file', 'output_file',
     and 'brainarray_package'.
     """
-    input_file = job_context["input_file"]
+    input_file = job_context["input_file_path"]
 
     try:
         # Prevents:
@@ -95,7 +99,7 @@ def _run_scan_upc(job_context: Dict) -> Dict:
 
         ro.r['::']('SCAN.UPC', 'SCANfast')(
             input_file,
-            job_context["output_file"],
+            job_context["output_file_path"],
             probeSummaryPackage=job_context["brainarray_package"]
         )
     except RRuntimeError as e:
@@ -105,8 +109,10 @@ def _run_scan_upc(job_context: Dict) -> Dict:
         logger.error(log_message, job_context["job_id"])
         job_context["job"].failure_reason = base_error_message
         job_context["success"] = False
-        # Array Express processor jobs have only one batch per job.
-        file_management.remove_temp_directory(job_context["batches"][0])
+        # Array Express processor jobs have only one batch per job and
+        # one file per batch
+        file = File.objects.get(batch=job_context["batches"][0])
+        file.remove_temp_directory()
 
     return job_context
 

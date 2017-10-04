@@ -161,7 +161,7 @@ class File(TimeTrackedModel):
         return os.path.join(self.get_processed_dir(),
                             self.get_processed_name())
 
-    def _upload_file(from_path: str, to_dir: str, to_path: str) -> None:
+    def _upload_file(self, from_path: str, to_dir: str, to_path: str) -> None:
         """Move the file from from_path to to_path.
 
         Depending on the value of the USE_S3 environment variable this
