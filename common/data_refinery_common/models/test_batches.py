@@ -1,5 +1,4 @@
 from django.test import TestCase
-from data_refinery_common import file_management
 from data_refinery_common.models import batches
 from data_refinery_common.models import Batch, BatchStatuses, File, SurveyJob
 
