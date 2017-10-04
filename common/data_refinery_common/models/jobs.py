@@ -1,7 +1,7 @@
 from django.db import transaction
 from django.db import models
-from data_refinery_models.models.base_models import TimeTrackedModel
-from data_refinery_models.models.batches import Batch
+from data_refinery_common.models.base_models import TimeTrackedModel
+from data_refinery_common.models.batches import Batch
 
 
 class WorkerJob(TimeTrackedModel):

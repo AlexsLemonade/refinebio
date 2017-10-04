@@ -2,7 +2,7 @@ import os
 import shutil
 from django.test import TestCase
 from unittest.mock import patch, MagicMock
-from data_refinery_models.models import (
+from data_refinery_common.models import (
     SurveyJob,
     Batch,
     BatchStatuses,

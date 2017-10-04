@@ -5,8 +5,8 @@ import shutil
 import boto3
 from django.db import transaction
 from django.db import models
-from data_refinery_models.models.base_models import TimeTrackedModel
-from data_refinery_models.models.surveys import SurveyJob
+from data_refinery_common.models.base_models import TimeTrackedModel
+from data_refinery_common.models.surveys import SurveyJob
 from data_refinery_common.utils import get_env_variable
 
 # Import and set logger
@@ -42,7 +42,6 @@ class Batch(TimeTrackedModel):
 
     survey_job = models.ForeignKey(SurveyJob, on_delete=models.PROTECT)
     source_type = models.CharField(max_length=256)
-    size_in_bytes = models.BigIntegerField()
     pipeline_required = models.CharField(max_length=256)
     platform_accession_code = models.CharField(max_length=32)
     experiment_accession_code = models.CharField(max_length=32)
@@ -50,10 +49,6 @@ class Batch(TimeTrackedModel):
     status = models.CharField(max_length=20)
     release_date = models.DateField()
     last_uploaded_date = models.DateField()
-    name = models.CharField(max_length=1024)
-
-    # This field will denote where in our system the file can be found.
-    internal_location = models.CharField(max_length=256, null=True)
 
     # This corresponds to the organism taxonomy ID from NCBI.
     organism_id = models.IntegerField()
@@ -96,6 +91,7 @@ class File(TimeTrackedModel):
     raw_format = models.CharField(max_length=256, null=True)
     processed_format = models.CharField(max_length=256, null=True)
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE)
+    size_in_bytes = models.BigIntegerField()
 
     # This field will denote where in our system the file can be found.
     internal_location = models.CharField(max_length=256, null=True)
@@ -120,7 +116,7 @@ class File(TimeTrackedModel):
         In cases where extraction is necessary, this will not match the
         name of the batch's extracted file.
         """
-        return os.path.join(self.get_raw_dir(), self.get_downloaded_name())
+        return os.path.join(self.get_raw_dir(), self._get_downloaded_name())
 
     def get_raw_path(self) -> str:
         return os.path.join(self.get_raw_dir(), self.name)
@@ -130,7 +126,7 @@ class File(TimeTrackedModel):
     # without interfering with other jobs. An optional dir_name can be
     # used instead.
     def get_temp_dir(self, dir_name: str = None) -> str:
-        # dir_name = dir_name if dir_name is not None else DEFAULT_BATCH_PREFIX + str(batch.id)
+        dir_name = dir_name if dir_name is not None else DEFAULT_BATCH_PREFIX + str(self.batch.id)
         return os.path.join(LOCAL_ROOT_DIR,
                             TEMP_PREFIX,
                             self.internal_location,
@@ -143,7 +139,7 @@ class File(TimeTrackedModel):
         name of the batch's extracted file.
         """
         return os.path.join(self.get_temp_dir(dir_name),
-                            self.get_downloaded_name())
+                            self._get_downloaded_name())
 
     def get_temp_pre_path(self, dir_name: str = None) -> str:
         """Returns the path of the pre-processed file for the batch."""

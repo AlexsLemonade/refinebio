@@ -1,6 +1,6 @@
 import traceback
 from django.utils import timezone
-from data_refinery_models.models import SurveyJob, SurveyJobKeyValue
+from data_refinery_common.models import SurveyJob, SurveyJobKeyValue
 from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
 
 # Import and set logger

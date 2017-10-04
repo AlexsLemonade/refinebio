@@ -4,7 +4,7 @@ run and queues one.
 The easiest way to run this is with the tester.sh script."""
 
 from django.core.management.base import BaseCommand
-from data_refinery_models.models import (
+from data_refinery_common.models import (
     SurveyJob,
     Batch,
     BatchStatuses,

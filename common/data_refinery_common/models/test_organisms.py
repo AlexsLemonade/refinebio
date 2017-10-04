@@ -1,6 +1,6 @@
 from unittest.mock import Mock, patch, call
 from django.test import TestCase
-from data_refinery_models.models.organism import (
+from data_refinery_common.models.organism import (
     Organism,
     ESEARCH_URL,
     EFETCH_URL,
@@ -116,7 +116,7 @@ class OrganismModelTestCase(TestCase):
     def tearDown(self):
         Organism.objects.all().delete()
 
-    @patch('data_refinery_models.models.organism.requests.get')
+    @patch('data_refinery_common.models.organism.requests.get')
     def test_cached_names_are_found(self, mock_get):
         Organism.objects.create(name="HOMO SAPIENS",
                                 taxonomy_id=9606,
@@ -127,7 +127,7 @@ class OrganismModelTestCase(TestCase):
         self.assertEqual(name, "HOMO SAPIENS")
         mock_get.assert_not_called()
 
-    @patch('data_refinery_models.models.organism.requests.get')
+    @patch('data_refinery_common.models.organism.requests.get')
     def test_cached_ids_are_found(self, mock_get):
         Organism.objects.create(name="HOMO SAPIENS",
                                 taxonomy_id=9606,
@@ -138,7 +138,7 @@ class OrganismModelTestCase(TestCase):
         self.assertEqual(id, 9606)
         mock_get.assert_not_called()
 
-    @patch('data_refinery_models.models.organism.requests.get')
+    @patch('data_refinery_common.models.organism.requests.get')
     def test_uncached_scientific_names_are_found(self, mock_get):
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.text = ESEARCH_RESPONSE_XML
@@ -159,7 +159,7 @@ class OrganismModelTestCase(TestCase):
         self.assertEqual(new_id, 9606)
         mock_get.assert_not_called()
 
-    @patch('data_refinery_models.models.organism.requests.get')
+    @patch('data_refinery_common.models.organism.requests.get')
     def test_uncached_other_names_are_found(self, mock_get):
         mock_get.side_effect = mocked_requests_get
 
@@ -180,7 +180,7 @@ class OrganismModelTestCase(TestCase):
         self.assertEqual(new_id, 9606)
         mock_get.assert_not_called()
 
-    @patch('data_refinery_models.models.organism.requests.get')
+    @patch('data_refinery_common.models.organism.requests.get')
     def test_uncached_ids_are_found(self, mock_get):
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.text = EFETCH_RESPONSE_XML
@@ -201,7 +201,7 @@ class OrganismModelTestCase(TestCase):
         self.assertEqual(new_name, "HOMO SAPIENS")
         mock_get.assert_not_called()
 
-    @patch('data_refinery_models.models.organism.requests.get')
+    @patch('data_refinery_common.models.organism.requests.get')
     def test_invalid_ids_cause_exceptions(self, mock_get):
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.text = EFETCH_NOT_FOUND_XML
@@ -209,7 +209,7 @@ class OrganismModelTestCase(TestCase):
         with self.assertRaises(InvalidNCBITaxonomyId):
             Organism.get_name_for_id(0)
 
-    @patch('data_refinery_models.models.organism.requests.get')
+    @patch('data_refinery_common.models.organism.requests.get')
     def test_unfound_names_return_0(self, mock_get):
         """If we can't find an NCBI taxonomy ID for an organism name
         we can keep things moving for a while without it.

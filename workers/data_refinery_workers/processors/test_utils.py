@@ -2,7 +2,7 @@ import copy
 import os
 from unittest.mock import MagicMock
 from django.test import TestCase
-from data_refinery_models.models import (
+from data_refinery_common.models import (
     SurveyJob,
     Batch,
     BatchStatuses,

@@ -2,7 +2,7 @@ import requests
 import os
 from typing import List, Dict
 
-from data_refinery_models.models import (
+from data_refinery_common.models import (
     Batch,
     File,
     SurveyJobKeyValue,
@@ -139,6 +139,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                             download_url=download_url,
                             raw_format=raw_format,
                             processed_format=processed_format,
+                            size_in_bytes=-1,  # Will have to be determined later
                             internal_location=internal_location)
 
                 self.add_batch(platform_accession_code=experiment["platform_accession_code"],
@@ -148,7 +149,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                                experiment_title=experiment["name"],
                                release_date=experiment["release_date"],
                                last_uploaded_date=experiment["last_update_date"],
-                               size_in_bytes=-1,  # Will have to be determined later
                                files=[file])
 
     def discover_batches(self):

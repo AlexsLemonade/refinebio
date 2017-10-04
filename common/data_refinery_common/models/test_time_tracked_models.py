@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.utils import timezone
-from data_refinery_models.models import SurveyJob
+from data_refinery_common.models import SurveyJob
 
 
 class TimeTrackedModelTestCase(TestCase):

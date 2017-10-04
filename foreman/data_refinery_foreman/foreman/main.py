@@ -6,7 +6,7 @@ from retrying import retry
 from datetime import timedelta
 from django.utils import timezone
 from django.db import transaction
-from data_refinery_models.models import (
+from data_refinery_common.models import (
     WorkerJob,
     DownloaderJob,
     ProcessorJob

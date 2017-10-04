@@ -2,7 +2,7 @@ import abc
 from typing import List, Dict
 from retrying import retry
 from django.db import transaction
-from data_refinery_models.models import (
+from data_refinery_common.models import (
     Batch,
     BatchKeyValue,
     BatchStatuses,

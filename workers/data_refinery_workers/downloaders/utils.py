@@ -2,7 +2,7 @@ from retrying import retry
 from django.utils import timezone
 from django.db import transaction
 from data_refinery_common.utils import get_worker_id
-from data_refinery_models.models import (
+from data_refinery_common.models import (
     Batch,
     BatchStatuses,
     DownloaderJob,

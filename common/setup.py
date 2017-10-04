@@ -9,7 +9,7 @@ setup(
     version="0.1.0",
     packages=find_packages(),
     install_requires=["django>=1.10.6",
-                      "data_refinery_models>=0.1.0",
+                      "data_refinery_common>=0.1.0",
                       "boto3>=1.4.4"],
     license="BSD License",
     description="Common functionality to be shared between Data Refinery sub-projects.",
