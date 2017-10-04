@@ -1,16 +1,17 @@
 import abc
-import os
-from typing import List
+from typing import List, Dict
 from retrying import retry
 from django.db import transaction
 from data_refinery_models.models import (
     Batch,
+    BatchKeyValue,
     BatchStatuses,
+    File,
     DownloaderJob,
     SurveyJob
 )
 from data_refinery_foreman.surveyor.message_queue import app
-from data_refinery_common.job_lookup import DiscoveryPipeline, DOWNLOADER_TASK_LOOKUP
+from data_refinery_common.job_lookup import DOWNLOADER_TASK_LOOKUP
 
 
 # Import and set logger
@@ -25,6 +26,7 @@ class InvalidProcessedFormatError(BaseException):
 
 class ExternalSourceSurveyor:
     __metaclass__ = abc.ABCMeta
+    batches = []
 
     def __init__(self, survey_job: SurveyJob):
         self.survey_job = survey_job
@@ -33,9 +35,24 @@ class ExternalSourceSurveyor:
     def source_type(self):
         return
 
+    def group_batches(self) -> List[List[Batch]]:
+        """Groups batches together which should be downloaded together.
+
+        The default implementation groups batches based on the
+        download URL of their first File.
+        """
+        groups = []
+        download_urls = {batch.files[0].download_url for batch in self.batches}
+        for url in download_urls:
+            groups.append([batch for batch in self.batches if batch.files[0].download_url == url])
+
+        return groups
+
     @abc.abstractmethod
     def determine_pipeline(self,
-                           batch: Batch):
+                           batch: Batch,
+                           files: List[File],
+                           key_values: Dict = {}):
         """Determines the appropriate pipeline for the batch.
 
         Returns a string that represents a processor pipeline.
@@ -52,67 +69,55 @@ class ExternalSourceSurveyor:
         """
         return DOWNLOADER_TASK_LOOKUP[self.source_type()]
 
-    def handle_batches(self, batches: List[Batch]):
-        new_batches = []
-        for batch in batches:
-            if not Batch.is_new_batch(batch):
-                logger.info(("Skipping sample with name %s because a batch already exists with"
+    @retry(stop_max_attempt_number=3)
+    @transaction.atomic
+    def add_batch(self,
+                  platform_accession_code: str,
+                  experiment_accession_code: str,
+                  organism_id: int,
+                  organism_name: str,
+                  experiment_title: str,
+                  release_date,
+                  last_uploaded_date,
+                  files: List[File],
+                  size_in_bytes: int = -1,
+                  key_values: Dict = {}):
+        # Prevent creating duplicate Batches.
+        for file in files:
+            if File.objects.filter(name=file.name).count() != 0:
+                logger.info(("Skipping sample with name %s because a File already exists with"
                              "that name."),
-                            batch.name)
-                continue
+                            file.name)
+                return
 
-            batch.survey_job = self.survey_job
-            batch.source_type = self.source_type()
-            batch.status = BatchStatuses.NEW.value
+        batch = Batch(survey_job=self.survey_job,
+                      source_type=self.source_type(),
+                      status=BatchStatuses.NEW.value,
+                      size_in_bytes=-1,
+                      platform_accession_code=platform_accession_code,
+                      experiment_accession_code=experiment_accession_code,
+                      organism_id=organism_id,
+                      organism_name=organism_name,
+                      experiment_title=experiment_title,
+                      release_date=release_date,
+                      last_uploaded_date=last_uploaded_date)
 
-            pipeline_required = self.determine_pipeline(batch)
-            if (pipeline_required is DiscoveryPipeline) or batch.processed_format:
-                batch.pipeline_required = pipeline_required.value
-            else:
-                message = ("Batches must have the processed_format field set "
-                           "unless the pipeline returned by determine_pipeline "
-                           "is of the type DiscoveryPipeline.")
-                raise InvalidProcessedFormatError(message)
+        batch.pipeline_required = self.determine_pipeline(batch, files, key_values)
+        batch.save()
 
-            batch.internal_location = os.path.join(batch.platform_accession_code,
-                                                   batch.pipeline_required)
+        for file in files:
+            file.batch = batch
+            file.save()
 
-            batch.save()
-            new_batches.append(batch)
+        for key, value in key_values.items():
+            BatchKeyValue(batch=batch,
+                          key=key,
+                          value=value).save()
 
-        @retry(stop_max_attempt_number=3)
-        def save_batches_start_job():
-            if len(new_batches) > 0:
-                downloader_task = self.downloader_task()
-
-                with transaction.atomic():
-                    downloader_job = DownloaderJob.create_job_and_relationships(
-                        batches=new_batches, downloader_task=downloader_task)
-
-                logger.info("Survey job #%d is queuing downloader job #%d.",
-                            self.survey_job.id,
-                            downloader_job.id)
-                try:
-                    app.send_task(downloader_task, args=[downloader_job.id])
-                except:
-                    # If the task doesn't get sent we don't want the
-                    # downloader_job to be left floating
-                    downloader_job.delete()
-                    raise
-            else:
-                logger.info("Survey job #%d found no new Batches.",
-                            self.survey_job.id)
-
-        try:
-            save_batches_start_job()
-        except Exception:
-            logger.exception(("Failed to save batches to database three times. "
-                              "Terminating survey job #%d."),
-                             self.survey_job.id)
-            raise
+        self.batches.append(batch)
 
     @abc.abstractmethod
-    def survey(self):
+    def discover_batches(self):
         """Abstract method to survey a source.
 
         Implementations of this method should do the following:
@@ -146,3 +151,46 @@ class ExternalSourceSurveyor:
         no issues. Otherwise it should log any issues and return False.
         """
         return
+
+    @retry(stop_max_attempt_number=3)
+    def queue_downloader_jobs(self, batches: List[Batch]):
+        if len(batches) > 0:
+            downloader_task = self.downloader_task()
+
+            with transaction.atomic():
+                downloader_job = DownloaderJob.create_job_and_relationships(
+                    batches=batches, downloader_task=downloader_task)
+
+            logger.info("Survey job #%d is queuing downloader job #%d.",
+                        self.survey_job.id,
+                        downloader_job.id)
+            try:
+                app.send_task(downloader_task, args=[downloader_job.id])
+            except:
+                # If the task doesn't get sent we don't want the
+                # downloader_job to be left floating
+                downloader_job.delete()
+                raise
+        else:
+            logger.info("Survey job #%d found no new Batches.",
+                        self.survey_job.id)
+
+    def survey(self) -> bool:
+        try:
+            self.discover_batches()
+        except Exception:
+            logger.exception(("Exception caught while discovering batches. "
+                              "Terminating survey job #%d."),
+                             self.survey_job.id)
+            return False
+
+        for group in self.group_batches():
+            try:
+                self.queue_downloader_jobs()
+            except Exception:
+                logger.exception(("Failed to queue downloader jobs. "
+                                  "Terminating survey job #%d."),
+                                 self.survey_job.id)
+                return False
+
+        return True

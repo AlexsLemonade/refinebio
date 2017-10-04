@@ -2,7 +2,8 @@ from data_refinery_models.models.surveys import SurveyJob, SurveyJobKeyValue
 from data_refinery_models.models.batches import (
     BatchStatuses,
     Batch,
-    BatchKeyValue
+    BatchKeyValue,
+    File
 )
 from data_refinery_models.models.jobs import (
     WorkerJob,
