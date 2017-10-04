@@ -6,11 +6,11 @@ from data_refinery_common.models import (
     SurveyJob,
     Batch,
     BatchStatuses,
+    File,
     DownloaderJob,
     ProcessorJob
 )
 from data_refinery_workers.downloaders import array_express
-from data_refinery_common import file_management
 
 
 class DownloadArrayExpressTestCase(TestCase):
@@ -19,21 +19,15 @@ class DownloadArrayExpressTestCase(TestCase):
         survey_job.save()
         self.survey_job = survey_job
 
-    def insert_batches(self) -> List[Batch]:
+    def insert_objects(self) -> List[Batch]:
         download_url = "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip"  # noqa
         batch = Batch(
             survey_job=self.survey_job,
             source_type="ARRAY_EXPRESS",
-            size_in_bytes=0,
-            download_url=download_url,
-            raw_format="CEL",
-            processed_format="PCL",
             pipeline_required="AFFY_TO_PCL",
             platform_accession_code="A-AFFY-1",
             experiment_accession_code="E-MTAB-3050",
             experiment_title="It doesn't really matter.",
-            name="CE1234.CEL",
-            internal_location="A-AFFY-1/AFFY_TO_PCL/",
             organism_id=9606,
             organism_name="HOMO SAPIENS",
             release_date="2017-05-05",
@@ -41,29 +35,46 @@ class DownloadArrayExpressTestCase(TestCase):
             status=BatchStatuses.NEW.value
         )
         batch2 = copy.deepcopy(batch)
-        batch2.name = "CE2345.CEL"
         batch.save()
         batch2.save()
-        return [batch, batch2]
+
+        file = File(size_in_bytes=0,
+                    download_url=download_url,
+                    raw_format="CEL",
+                    processed_format="PCL",
+                    name="CE1234.CEL",
+                    internal_location="A-AFFY-1/AFFY_TO_PCL/",
+                    batch=batch)
+        file2 = File(size_in_bytes=0,
+                     download_url=download_url,
+                     raw_format="CEL",
+                     processed_format="PCL",
+                     name="CE2345.CEL",
+                     internal_location="A-AFFY-1/AFFY_TO_PCL/",
+                     batch=batch2)
+        file.save()
+        file2.save()
+
+        return ([batch, batch2], [file, file2])
 
     def test_good_batch_grouping(self):
         """Returns true if all batches have the same download_url."""
-        batches = self.insert_batches()
+        batches, files = self.insert_objects()
         downloader_job = DownloaderJob.create_job_and_relationships(
             batches=batches, downloader_task="dummy")
 
-        self.assertIsNone(array_express._verify_batch_grouping(batches, downloader_job))
+        self.assertIsNone(array_express._verify_batch_grouping(files, downloader_job))
 
     def test_bad_batch_grouping(self):
         """Raises exception if all batches don't have the same download_url."""
-        batches = self.insert_batches()
-        batches[1].download_url = "https://wompwomp.com"
-        batches[1].save()
+        batches, files = self.insert_objects()
+        files[1].download_url = "https://wompwomp.com"
+        files[1].save()
         downloader_job = DownloaderJob.create_job_and_relationships(
             batches=batches, downloader_task="dummy")
 
         with self.assertRaises(ValueError):
-            array_express._verify_batch_grouping(batches, downloader_job)
+            array_express._verify_batch_grouping(files, downloader_job)
 
     @patch("data_refinery_workers.downloaders.utils.app")
     @patch("data_refinery_workers.downloaders.array_express._verify_batch_grouping")
@@ -78,7 +89,7 @@ class DownloadArrayExpressTestCase(TestCase):
         app.send_task = MagicMock()
         app.send_task.return_value = None
 
-        batches = self.insert_batches()
+        batches, files = self.insert_objects()
         downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
         # Call the task we're testing:
@@ -92,8 +103,8 @@ class DownloadArrayExpressTestCase(TestCase):
         download_url = "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip"  # noqa
         _download_file.assert_called_with(download_url, target_file_path, downloader_job)
         args, _ = _extract_file.call_args
-        batch_query_set, job = args
-        self.assertEqual(list(batch_query_set), batches)
+        file_query_set, job = args
+        self.assertEqual(list(file_query_set), files)
         self.assertEqual(job.id, downloader_job.id)
 
         # Verify that the database has been updated correctly:
@@ -130,9 +141,9 @@ class DownloadArrayExpressTestCase(TestCase):
         # Set a different download URL to trigger a failure in the
         # _verify_batch_grouping function
         different_download_url = "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59070.raw.2.zip"  # noqa
-        batches = self.insert_batches()
-        batches[1].download_url = different_download_url
-        batches[1].save()
+        batches, files = self.insert_objects()
+        files[1].download_url = "https://wompwomp.com"
+        files[1].save()
         downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
         # Call the download task
@@ -148,7 +159,8 @@ class DownloadArrayExpressTestCase(TestCase):
         self.assertIsNotNone(downloader_job.start_time)
         self.assertIsNotNone(downloader_job.end_time)
         self.assertEqual(downloader_job.failure_reason,
-                         "A Batch doesn't have the same download URL as the other batches")
+                         ("A Batch's file doesn't have the same download "
+                          "URL as the other batches' files."))
 
     @patch("data_refinery_workers.downloaders.utils.app")
     @patch('data_refinery_workers.downloaders.array_express.open')
@@ -162,7 +174,7 @@ class DownloadArrayExpressTestCase(TestCase):
         app.send_task.return_value = None
         _open.side_effect = Exception()
 
-        batches = self.insert_batches()
+        batches, _ = self.insert_objects()
         downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
         # Call the download task
@@ -188,7 +200,7 @@ class DownloadArrayExpressTestCase(TestCase):
         app.send_task = MagicMock()
         app.send_task.return_value = None
 
-        batches = self.insert_batches()
+        batches, files = self.insert_objects()
         downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
         # Call the download task
@@ -203,6 +215,6 @@ class DownloadArrayExpressTestCase(TestCase):
         self.assertIsNotNone(downloader_job.end_time)
 
         job_dir = array_express.JOB_DIR_PREFIX + str(downloader_job.id)
-        zip_path = file_management.get_temp_download_path(batches[0], job_dir)
+        zip_path = files[0].get_temp_download_path(job_dir)
         self.assertEqual(downloader_job.failure_reason,
                          "Exception caught while extracting " + zip_path)
