@@ -1,4 +1,5 @@
 from typing import Dict
+import os
 import shutil
 import boto3
 from celery import shared_task
@@ -11,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def no_op_processor_fn(job_context: Dict) -> Dict:
+def _no_op_processor_fn(job_context: Dict) -> Dict:
     """A processor which does nothing other than move files.
 
     Simply moves the batch's file from its raw location to its
@@ -29,6 +30,7 @@ def no_op_processor_fn(job_context: Dict) -> Dict:
                                CopySource={"Bucket": batches.S3_BUCKET_NAME,
                                            "Key": raw_path})
         else:
+            os.makedirs(file.get_processed_dir(), exist_ok=True)
             shutil.copyfile(file.get_raw_path(),
                             file.get_processed_path())
     except Exception:
@@ -62,5 +64,5 @@ def no_op_processor_fn(job_context: Dict) -> Dict:
 def no_op_processor(job_id: int) -> None:
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
-                        no_op_processor_fn,
+                        _no_op_processor_fn,
                         utils.end_job])

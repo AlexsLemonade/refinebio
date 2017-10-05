@@ -1,7 +1,7 @@
 import os
 import shutil
 from django.test import TestCase
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 from data_refinery_common.models import (
     SurveyJob,
     Batch,
@@ -150,6 +150,7 @@ class RunScanUPCTestCase(TestCase):
         file.name = "GSM1426186_UC_colon_inactive_201.CEL"
         file.save()
 
+        # Prevent the test file/directory from getting removed.
         file.remove_temp_directory = MagicMock()
 
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])

@@ -14,8 +14,6 @@ jobs:
       - run: sudo -u postgres psql data_refinery -c 'ALTER USER data_refinery_user CREATEDB;'
 
       # Run Tests.
-      - run: ./data_models/run_tests.sh
-      - run: cd data_models && python setup.py sdist
       - run: ./common/run_tests.sh
       - run: cd common && python setup.py sdist
       - run: ./run_rabbitmq.sh
