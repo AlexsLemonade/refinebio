@@ -50,12 +50,15 @@ def init_objects():
     file.save()
     file2.save()
 
-    return [batch, batch2], [file, file2]
+    batch.files = [file]
+    batch2.files = [file2]
+
+    return (batch, batch2)
 
 
 class StartJobTestCase(TestCase):
     def test_success(self):
-        [batch, batch2], [file, file2] = init_objects()
+        batch, batch2 = init_objects()
 
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch, batch2])
 
@@ -77,7 +80,7 @@ class StartJobTestCase(TestCase):
 
 class EndJobTestCase(TestCase):
     def test_success(self):
-        [batch, batch2], [file, file2] = init_objects()
+        batch, batch2 = init_objects()
 
         processor_job = ProcessorJob()
         processor_job.save()
@@ -94,7 +97,7 @@ class EndJobTestCase(TestCase):
             self.assertEqual(batch.status, BatchStatuses.PROCESSED.value)
 
     def test_failure(self):
-        [batch, batch2], [file, file2] = init_objects()
+        batch, batch2 = init_objects()
 
         processor_job = ProcessorJob()
         processor_job.save()
@@ -114,7 +117,7 @@ class EndJobTestCase(TestCase):
 
 class UploadProcessedFilesTestCase(TestCase):
     def setUp(self):
-        [self.batch, _], [self.file, _] = init_objects()
+        self.batch, _ = init_objects()
 
     def tearDown(self):
         expected_path = "/home/user/data_store/processed/A-AFFY-1/AFFY_TO_PCL/CE1234.PCL"
@@ -122,15 +125,16 @@ class UploadProcessedFilesTestCase(TestCase):
             os.remove(expected_path)
 
     def test_success(self):
+        file = self.batch.files[0]
         processor_job = ProcessorJob.create_job_and_relationships(batches=[self.batch])
-        os.makedirs(self.file.get_temp_dir(), exist_ok=True)
-        with open(self.file.get_temp_post_path(), "w") as dummy_pcl:
+        os.makedirs(file.get_temp_dir(), exist_ok=True)
+        with open(file.get_temp_post_path(), "w") as dummy_pcl:
             dummy_pcl.write("This is a dummy file for tests to operate upon.")
 
         # Verify file was created correctly or else the test which
         # verifies that it was removed won't actually be testing
         # anything
-        self.assertTrue(os.path.isfile(self.file.get_temp_post_path()))
+        self.assertTrue(os.path.isfile(file.get_temp_post_path()))
 
         job_context = {"batches": [self.batch],
                        "job": processor_job,
@@ -138,10 +142,11 @@ class UploadProcessedFilesTestCase(TestCase):
         job_context = utils.upload_processed_files(job_context)
 
         self.assertFalse("success" in job_context)
-        self.assertTrue(os.path.isfile(self.file.get_processed_path()))
-        self.assertFalse(os.path.isfile(self.file.get_temp_post_path()))
+        self.assertTrue(os.path.isfile(file.get_processed_path()))
+        self.assertFalse(os.path.isfile(file.get_temp_post_path()))
 
     def test_failure(self):
+        file = self.batch.files[0]
         processor_job = ProcessorJob.create_job_and_relationships(batches=[self.batch])
         job_context = {"batches": [self.batch],
                        "job": processor_job,
@@ -150,7 +155,7 @@ class UploadProcessedFilesTestCase(TestCase):
 
         self.assertFalse(job_context["success"])
         self.assertEqual(type(job_context["job"].failure_reason), str)
-        self.assertFalse(os.path.isfile(self.file.get_processed_path()))
+        self.assertFalse(os.path.isfile(file.get_processed_path()))
 
 
 class RunPipelineTestCase(TestCase):
@@ -181,7 +186,7 @@ class RunPipelineTestCase(TestCase):
         """The keys added to job_context and returned by processors will be
         passed through to other processors.
         """
-        [batch, _], [_, _] = init_objects()
+        batch, _ = init_objects()
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
 
         mock_processor = MagicMock()

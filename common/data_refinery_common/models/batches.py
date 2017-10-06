@@ -55,6 +55,19 @@ class Batch(TimeTrackedModel):
     # This is the organism name as it appeared in the experiment.
     organism_name = models.CharField(max_length=256)
 
+    _files = None
+
+    def _get_files(self):
+        if self._files is None:
+            return list(self.file_set.all())
+        else:
+            return self._files
+
+    def _set_files(self, new_files):
+        self._files = new_files
+
+    files = property(_get_files, _set_files)
+
     @classmethod
     def is_new_batch(cls, batch) -> bool:
         file_names = batch.file_set.all().values("name")
@@ -125,14 +138,14 @@ class File(TimeTrackedModel):
     # temporary paths so it can be removed after processing is complete
     # without interfering with other jobs. An optional dir_name can be
     # used instead.
-    def get_temp_dir(self, dir_name: str = None) -> str:
+    def get_temp_dir(self, dir_name: str=None) -> str:
         dir_name = dir_name if dir_name is not None else DEFAULT_BATCH_PREFIX + str(self.batch.id)
         return os.path.join(LOCAL_ROOT_DIR,
                             TEMP_PREFIX,
                             self.internal_location,
                             dir_name)
 
-    def get_temp_download_path(self, dir_name: str = None) -> str:
+    def get_temp_download_path(self, dir_name: str=None) -> str:
         """Returns the path of the downloaded file in the temp directory
 
         In cases where extraction is necessary, this will not match the
@@ -141,12 +154,12 @@ class File(TimeTrackedModel):
         return os.path.join(self.get_temp_dir(dir_name),
                             self._get_downloaded_name())
 
-    def get_temp_pre_path(self, dir_name: str = None) -> str:
+    def get_temp_pre_path(self, dir_name: str=None) -> str:
         """Returns the path of the pre-processed file for the batch."""
         return os.path.join(self.get_temp_dir(dir_name),
                             self.name)
 
-    def get_temp_post_path(self, dir_name: str = None) -> str:
+    def get_temp_post_path(self, dir_name: str=None) -> str:
         """Returns the path of the post-processed file for the batch."""
         return os.path.join(self.get_temp_dir(dir_name),
                             self.get_processed_name())
@@ -175,7 +188,7 @@ class File(TimeTrackedModel):
             os.makedirs(to_dir, exist_ok=True)
             shutil.copyfile(from_path, to_path)
 
-    def upload_raw_file(self, dir_name: str = None) -> None:
+    def upload_raw_file(self, dir_name: str=None) -> None:
         """Moves the batch's raw file out of the temp directory.
 
         Depending on the value of the USE_S3 environment variable this
@@ -189,7 +202,7 @@ class File(TimeTrackedModel):
         logger.debug("Moving file from %s to %s.", temp_path, raw_path)
         self._upload_file(temp_path, raw_dir, raw_path)
 
-    def download_raw_file(self, dir_name: str = None) -> None:
+    def download_raw_file(self, dir_name: str=None) -> None:
         """Moves the batch's raw file to the temp directory.
 
         Depending on the value of the USE_S3 environment variable this
@@ -207,7 +220,7 @@ class File(TimeTrackedModel):
         else:
             shutil.copyfile(raw_path, temp_path)
 
-    def upload_processed_file(self, dir_name: str = None) -> None:
+    def upload_processed_file(self, dir_name: str=None) -> None:
         """Moves the batch's processed file out of the temp directory.
 
         Depending on the value of the USE_S3 environment variable this may
@@ -218,7 +231,7 @@ class File(TimeTrackedModel):
         processed_path = self.get_processed_path()
         self._upload_file(temp_path, processed_dir, processed_path)
 
-    def remove_temp_directory(self, dir_name: str = None) -> None:
+    def remove_temp_directory(self, dir_name: str=None) -> None:
         temp_dir = self.get_temp_dir(dir_name)
         if os.path.isdir(temp_dir):
             shutil.rmtree(temp_dir)

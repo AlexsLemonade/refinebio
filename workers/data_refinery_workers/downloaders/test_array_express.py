@@ -55,6 +55,9 @@ class DownloadArrayExpressTestCase(TestCase):
         file.save()
         file2.save()
 
+        batch.files = [file]
+        batch2.files = [file]
+
         return ([batch, batch2], [file, file2])
 
     def test_good_batch_grouping(self):

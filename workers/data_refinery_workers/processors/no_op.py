@@ -3,7 +3,7 @@ import os
 import shutil
 import boto3
 from celery import shared_task
-from data_refinery_common.models import batches, File
+from data_refinery_common.models import batches
 from data_refinery_workers.processors import utils
 
 # import and set logger
@@ -19,7 +19,7 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
     processed location. Useful for handling data that has already been
     processed.
     """
-    file = File.objects.get(batch=job_context["batches"][0])
+    file = job_context["batches"][0].files[0]
     raw_path = file.get_raw_path()
 
     try:

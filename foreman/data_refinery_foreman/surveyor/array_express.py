@@ -28,19 +28,28 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
     def determine_pipeline(self,
                            batch: Batch,
-                           files: List[File],
                            key_values: Dict = {}):
         # If it's a CEL file run SCAN.UPC on it.
-        if batch.raw_format == "CEL":
+        if batch.files[0].raw_format == "CEL":
             return ProcessorPipeline.AFFY_TO_PCL
         # If only processed data is available then we don't need to do
         # anything to it
-        elif batch.raw_format == batch.processed_format:
+        elif batch.files[0].raw_format == batch.files[0].processed_format:
             return ProcessorPipeline.NO_OP
         # If it's not CEL and it's not already processed then we just
         # want to download it for Jackie's grant.
         else:
             return ProcessorPipeline.NONE
+
+    def group_batches(self) -> List[List[Batch]]:
+        """Groups batches based on the download URL of their only File"""
+        groups = []
+        download_urls = {file.download_url for file in [batch.files[0] for batch in self.batches]}
+
+        for url in download_urls:
+            groups.append([batch for batch in self.batches if batch.files[0].download_url == url])
+
+        return groups
 
     @staticmethod
     def get_experiment_metadata(experiment_accession_code):
@@ -132,15 +141,12 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
                 raw_format = sample_file["name"].split(".")[-1]
                 processed_format = "PCL" if replicate_raw else raw_format
-                internal_location = os.path.join(experiment["platform_accession_code"],
-                                                 experiment["experiment_accession_code"])
 
                 file = File(name=sample_file["name"],
                             download_url=download_url,
                             raw_format=raw_format,
                             processed_format=processed_format,
-                            size_in_bytes=-1,  # Will have to be determined later
-                            internal_location=internal_location)
+                            size_in_bytes=-1)  # Will have to be determined later
 
                 self.add_batch(platform_accession_code=experiment["platform_accession_code"],
                                experiment_accession_code=experiment["experiment_accession_code"],

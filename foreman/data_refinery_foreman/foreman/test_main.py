@@ -6,6 +6,7 @@ from data_refinery_foreman.foreman import main
 from data_refinery_common.models import (
     SurveyJob,
     Batch,
+    File,
     BatchStatuses,
     DownloaderJob,
     ProcessorJob
@@ -23,16 +24,10 @@ class SurveyTestCase(TestCase):
         batch = Batch(
             survey_job=self.survey_job,
             source_type="ARRAY_EXPRESS",
-            size_in_bytes=0,
-            download_url=download_url,
-            raw_format="CEL",
-            processed_format="PCL",
             pipeline_required="AFFY_TO_PCL",
             platform_accession_code="A-AFFY-1",
             experiment_accession_code="E-MTAB-3050",
             experiment_title="It doesn't really matter.",
-            name="CE1234.CEL",
-            internal_location="A-AFFY-1/AFFY_TO_PCL/",
             organism_id=9606,
             organism_name="HOMO SAPIENS",
             release_date="2017-05-05",
@@ -40,6 +35,17 @@ class SurveyTestCase(TestCase):
             status=BatchStatuses.NEW.value
         )
         batch.save()
+
+        file = File(size_in_bytes=0,
+                    download_url=download_url,
+                    raw_format="CEL",
+                    processed_format="PCL",
+                    name="CE1234.CEL",
+                    internal_location="A-AFFY-1/AFFY_TO_PCL/",
+                    batch=batch)
+        file.save()
+
+        batch.files = [file]
         return batch
 
     def create_batch_and_downloader_job(self) -> DownloaderJob:

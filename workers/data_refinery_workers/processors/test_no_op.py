@@ -1,5 +1,4 @@
 import os
-import shutil
 from django.test import TestCase
 from unittest.mock import MagicMock, patch
 from data_refinery_common.models import (
@@ -9,7 +8,7 @@ from data_refinery_common.models import (
     File,
     ProcessorJob,
 )
-from data_refinery_workers.processors import no_op, utils
+from data_refinery_workers.processors import no_op
 
 
 def init_objects():
@@ -40,24 +39,22 @@ def init_objects():
                 batch=batch)
     file.save()
 
-    return batch, file
+    batch.files = [file]
+
+    return batch
 
 
 class RunNoOpTestCase(TestCase):
     @patch("data_refinery_common.models.File.objects")
     def test_success(self, mock_file_objects):
-        batch, file = init_objects()
+        batch = init_objects()
 
         # Prevent the test file from getting removed.
-        file.remove_raw_files = MagicMock()
-        # Return the File object with the mocked method from the
-        # database query.
-        mock_file_objects.get = MagicMock()
-        mock_file_objects.get.return_value = file
+        batch.files[0].remove_raw_files = MagicMock()
 
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
 
-        output_file_path = file.get_processed_path()
+        output_file_path = batch.files[0].get_processed_path()
         job_context = {"job_id": processor_job.id,
                        "job": processor_job,
                        "batches": [batch]}
@@ -76,9 +73,10 @@ class RunNoOpTestCase(TestCase):
         os.remove(output_file_path)
 
     def test_failure(self):
-        batch, file = init_objects()
+        batch = init_objects()
         batch.platform_accession_code = "TEST2"
         batch.save()
+        file = batch.files[0]
         file.internal_location = "TEST2/AFFY_TO_PCL"
         file.name = "dummy"
         file.save()

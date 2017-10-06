@@ -40,12 +40,14 @@ def init_objects():
                 batch=batch)
     file.save()
 
-    return batch, file
+    batch.files = [file]
+    return batch
 
 
 class PrepareFilesTestCase(TestCase):
     def test_success(self):
-        batch, file = init_objects()
+        batch = init_objects()
+        file = batch.files[0]
 
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
         os.makedirs(file.get_raw_dir(), exist_ok=True)
@@ -65,7 +67,7 @@ class PrepareFilesTestCase(TestCase):
         os.remove(input_file_path)
 
     def test_failure(self):
-        batch, file = init_objects()
+        batch = init_objects()
 
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
 
@@ -77,12 +79,13 @@ class PrepareFilesTestCase(TestCase):
         self.assertEqual(processor_job.failure_reason,
                          "Exception caught while retrieving raw file CE1234.CEL")
 
-        self.assertFalse(os.path.isfile(file.get_temp_pre_path()))
+        self.assertFalse(os.path.isfile(batch.files[0].get_temp_pre_path()))
 
 
 class DetermineBrainarrayPackageTestCase(TestCase):
     def test_success(self):
-        batch, file = init_objects()
+        batch = init_objects()
+        file = batch.files[0]
         batch.platform_accession_code = "TEST"
         batch.save()
         file.internal_location = "TEST/AFFY_TO_PCL"
@@ -114,7 +117,8 @@ class DetermineBrainarrayPackageTestCase(TestCase):
         os.remove(input_file_path)
 
     def test_failure(self):
-        batch, file = init_objects()
+        batch = init_objects()
+        file = batch.files[0]
         batch.platform_accession_code = "TEST2"
         batch.save()
         file.internal_location = "TEST2/AFFY_TO_PCL"
@@ -143,7 +147,8 @@ class DetermineBrainarrayPackageTestCase(TestCase):
 
 class RunScanUPCTestCase(TestCase):
     def test_success(self):
-        batch, file = init_objects()
+        batch = init_objects()
+        file = batch.files[0]
         batch.platform_accession_code = "TEST"
         batch.save()
         file.internal_location = "TEST/AFFY_TO_PCL"
@@ -188,7 +193,8 @@ class RunScanUPCTestCase(TestCase):
         os.remove(input_file_path)
 
     def test_failure(self):
-        batch, file = init_objects()
+        batch = init_objects()
+        file = batch.files[0]
         batch.platform_accession_code = "TEST2"
         batch.save()
         file.internal_location = "TEST2/AFFY_TO_PCL"

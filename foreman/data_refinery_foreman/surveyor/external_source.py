@@ -1,4 +1,5 @@
 import abc
+import os
 from typing import List, Dict
 from retrying import retry
 from django.db import transaction
@@ -38,20 +39,13 @@ class ExternalSourceSurveyor:
     def group_batches(self) -> List[List[Batch]]:
         """Groups batches together which should be downloaded together.
 
-        The default implementation groups batches based on the
-        download URL of their first File.
+        The default implementation just creates one group per batch.
         """
-        groups = []
-        download_urls = {batch.files[0].download_url for batch in self.batches}
-        for url in download_urls:
-            groups.append([batch for batch in self.batches if batch.files[0].download_url == url])
-
-        return groups
+        return [[batch] for batch in self.batches]
 
     @abc.abstractmethod
     def determine_pipeline(self,
                            batch: Batch,
-                           files: List[File],
                            key_values: Dict = {}):
         """Determines the appropriate pipeline for the batch.
 
@@ -80,7 +74,6 @@ class ExternalSourceSurveyor:
                   release_date,
                   last_uploaded_date,
                   files: List[File],
-                  size_in_bytes: int = -1,
                   key_values: Dict = {}):
         # Prevent creating duplicate Batches.
         for file in files:
@@ -93,7 +86,6 @@ class ExternalSourceSurveyor:
         batch = Batch(survey_job=self.survey_job,
                       source_type=self.source_type(),
                       status=BatchStatuses.NEW.value,
-                      size_in_bytes=-1,
                       platform_accession_code=platform_accession_code,
                       experiment_accession_code=experiment_accession_code,
                       organism_id=organism_id,
@@ -101,13 +93,17 @@ class ExternalSourceSurveyor:
                       experiment_title=experiment_title,
                       release_date=release_date,
                       last_uploaded_date=last_uploaded_date)
-
-        batch.pipeline_required = self.determine_pipeline(batch, files, key_values)
+        batch.files = files
+        batch.pipeline_required = self.determine_pipeline(batch, key_values).value
         batch.save()
 
         for file in files:
+            file.internal_location = os.path.join(batch.platform_accession_code,
+                                                  batch.pipeline_required)
             file.batch = batch
             file.save()
+
+        batch.files = files
 
         for key, value in key_values.items():
             BatchKeyValue(batch=batch,
@@ -186,7 +182,7 @@ class ExternalSourceSurveyor:
 
         for group in self.group_batches():
             try:
-                self.queue_downloader_jobs()
+                self.queue_downloader_jobs(group)
             except Exception:
                 logger.exception(("Failed to queue downloader jobs. "
                                   "Terminating survey job #%d."),
