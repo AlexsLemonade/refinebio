@@ -15,10 +15,10 @@ import shutil
 import boto3
 from data_refinery_models.models import Batch
 from data_refinery_common.utils import get_env_variable
+from data_refinery_common.logging import get_and_configure_logger
 
-# Import and set logger
-import logging
-logger = logging.getLogger(__name__)
+
+logger = get_and_configure_logger(__name__)
 
 
 DEFAULT_BATCH_PREFIX = "batch_"
@@ -132,7 +132,7 @@ def upload_raw_file(batch: Batch, dir_name: str = None) -> None:
     raw_dir = get_raw_dir(batch)
     raw_path = get_raw_path(batch)
 
-    logger.debug("Moving file from %s to %s.", temp_path, raw_path)
+    logger.debug("Moving file from %s to %s.", temp_path, raw_path, batch=batch.id)
     _upload_file(temp_path, raw_dir, raw_path)
 
 

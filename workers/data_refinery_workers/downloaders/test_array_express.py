@@ -148,7 +148,7 @@ class DownloadArrayExpressTestCase(TestCase):
         self.assertIsNotNone(downloader_job.start_time)
         self.assertIsNotNone(downloader_job.end_time)
         self.assertEqual(downloader_job.failure_reason,
-                         "A Batch doesn't have the same download URL as the other batches")
+                         "A Batch doesn't have the same download URL as the other batches.")
 
     @patch("data_refinery_workers.downloaders.utils.app")
     @patch('data_refinery_workers.downloaders.array_express.open')

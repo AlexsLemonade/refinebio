@@ -6,11 +6,10 @@ experiment accession code per line.
 
 from django.core.management.base import BaseCommand
 from data_refinery_foreman.surveyor import surveyor
+from data_refinery_common.logging import get_and_configure_logger
 
-# Import and set logger
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+
+logger = get_and_configure_logger(__name__)
 
 
 class Command(BaseCommand):
