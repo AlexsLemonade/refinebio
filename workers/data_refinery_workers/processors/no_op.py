@@ -4,11 +4,10 @@ import boto3
 from celery import shared_task
 from data_refinery_workers.processors import utils
 from data_refinery_common import file_management
+from data_refinery_common.logging import get_and_configure_logger
 
-# import and set logger
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+
+logger = get_and_configure_logger(__name__)
 
 
 def no_op_processor_fn(job_context: Dict) -> Dict:
@@ -32,11 +31,11 @@ def no_op_processor_fn(job_context: Dict) -> Dict:
             shutil.copyfile(file_management.get_raw_path(batch),
                             file_management.get_processed_path(batch))
     except Exception:
-        logging.exception(("Exception caught while moving file %s for batch %d"
-                           " during Job #%d."),
-                          raw_path,
-                          batch.id,
-                          job_context["job_id"])
+        logger.exception("Exception caught while moving file %s",
+                         raw_path,
+                         processor_job=job_context["job_id"],
+                         batch=batch.id)
+
         failure_reason = "Exception caught while moving file {}".format(batch.name)
         job_context["job"].failure_reason = failure_reason
         job_context["success"] = False
@@ -48,11 +47,10 @@ def no_op_processor_fn(job_context: Dict) -> Dict:
         # If we fail to remove the raw files, the job is still done
         # enough to call a success. However logging will be important
         # so the problem can be identified and the raw files cleaned up.
-        logging.exception(("Exception caught while removing raw file %s for batch %d"
-                           " during Job #%d."),
-                          raw_path,
-                          batch.id,
-                          job_context["job_id"])
+        logger.exception("Exception caught while removing raw file %s",
+                         raw_path,
+                         batch=batch.id,
+                         processor_job=job_context["job_id"])
 
     job_context["success"] = True
     return job_context

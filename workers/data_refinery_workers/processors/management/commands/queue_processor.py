@@ -16,12 +16,10 @@ from data_refinery_models.models import (
 )
 from data_refinery_workers.task_runner import app
 from data_refinery_common.job_lookup import PROCESSOR_PIPELINE_LOOKUP
+from data_refinery_common.logging import get_and_configure_logger
 
 
-# Import and set logger
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_and_configure_logger(__name__)
 
 
 class Command(BaseCommand):
@@ -76,6 +74,6 @@ class Command(BaseCommand):
         batch2.save()
 
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch, batch2])
-        logger.info("Queuing a processor job.")
         processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
         app.send_task(processor_task, args=[processor_job.id])
+        logger.info("Processor Job queued.", processor_job=processor_job.id)
