@@ -255,7 +255,8 @@ class SurveyTestCase(TestCase):
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.json.return_value = json.loads(EXPERIMENTS_JSON)
 
-        experiment = ArrayExpressSurveyor.get_experiment_metadata("E-MTAB-3050")
+        ae_surveyor = ArrayExpressSurveyor(self.survey_job)
+        experiment = ae_surveyor.get_experiment_metadata("E-MTAB-3050")
         self.assertEqual("Microarray analysis of in vitro differentiation", experiment["name"])
         self.assertEqual("E-MTAB-3050", experiment["experiment_accession_code"])
         self.assertEqual("A-AFFY-1", experiment["platform_accession_code"])

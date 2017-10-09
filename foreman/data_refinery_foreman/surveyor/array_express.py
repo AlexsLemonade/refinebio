@@ -1,5 +1,4 @@
 import requests
-import os
 from typing import List, Dict
 
 from data_refinery_common.models import (
@@ -10,12 +9,10 @@ from data_refinery_common.models import (
 )
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
+from data_refinery_common.logging import get_and_configure_logger
 
 
-# Import and set logger
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_and_configure_logger(__name__)
 
 
 EXPERIMENTS_URL = "https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/"
@@ -51,8 +48,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         return groups
 
-    @staticmethod
-    def get_experiment_metadata(experiment_accession_code):
+    def get_experiment_metadata(self, experiment_accession_code: str) -> Dict:
         experiment_request = requests.get(EXPERIMENTS_URL + experiment_accession_code)
         parsed_json = experiment_request.json()["experiments"]["experiment"][0]
 
@@ -69,7 +65,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         # downloader inspect the downloaded file to determine the
         # array then.
         if len(parsed_json["arraydesign"]) == 0:
-            logger.warn("Experiment %s has no arraydesign listed.", experiment_accession_code)
+            logger.warn("Experiment %s has no arraydesign listed.",
+                        experiment_accession_code,
+                        survey_job=self.survey_job.id)
             experiment["platform_accession_code"] = "UNKNOWN"
         elif len(parsed_json["arraydesign"]) > 1:
             experiment["platform_accession_code"] = "UNKNOWN"
@@ -109,7 +107,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
             if organism_name == "UNKNOWN":
                 logger.error("Sample from experiment %s did not specify the organism name.",
-                             experiment["experiment_accession_code"])
+                             experiment["experiment_accession_code"],
+                             survey_job=self.survey_job.id)
                 organism_id = 0
             else:
                 organism_id = Organism.get_id_for_name(organism_name)
@@ -166,7 +165,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             .value
         )
 
-        logger.info("Surveying experiment with accession code: %s.", experiment_accession_code)
+        logger.info("Surveying experiment with accession code: %s.",
+                    experiment_accession_code,
+                    survey_job=self.survey_job.id)
 
         experiment = self.get_experiment_metadata(experiment_accession_code)
         r = requests.get(SAMPLES_URL.format(experiment_accession_code))

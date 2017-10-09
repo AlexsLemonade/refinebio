@@ -12,12 +12,10 @@ from data_refinery_common.models import (
 )
 from data_refinery_workers.downloaders.array_express \
     import download_array_express
+from data_refinery_common.logging import get_and_configure_logger
 
 
-# Import and set logger
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_and_configure_logger(__name__)
 
 
 class Command(BaseCommand):
@@ -51,5 +49,5 @@ class Command(BaseCommand):
         batch.save()
 
         downloader_job = DownloaderJob.create_job_and_relationships(batches=[batch])
-        logger.info("Queuing a task.")
         download_array_express.delay(downloader_job.id)
+        logger.info("DownloaderJob queued.")

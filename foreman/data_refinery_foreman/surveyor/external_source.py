@@ -13,12 +13,10 @@ from data_refinery_common.models import (
 )
 from data_refinery_foreman.surveyor.message_queue import app
 from data_refinery_common.job_lookup import DOWNLOADER_TASK_LOOKUP
+from data_refinery_common.logging import get_and_configure_logger
 
 
-# Import and set logger
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_and_configure_logger(__name__)
 
 
 class InvalidProcessedFormatError(BaseException):
@@ -155,9 +153,9 @@ class ExternalSourceSurveyor:
                 downloader_job = DownloaderJob.create_job_and_relationships(
                     batches=batches, downloader_task=downloader_task)
 
-            logger.info("Survey job #%d is queuing downloader job #%d.",
-                        self.survey_job.id,
-                        downloader_job.id)
+            logger.info("Queuing downloader job.",
+                        survey_job=self.survey_job.id,
+                        downloader_job=downloader_job.id)
             try:
                 app.send_task(downloader_task, args=[downloader_job.id])
             except:
@@ -166,16 +164,16 @@ class ExternalSourceSurveyor:
                 downloader_job.delete()
                 raise
         else:
-            logger.info("Survey job #%d found no new Batches.",
-                        self.survey_job.id)
+            logger.info("Survey job found no new Batches.",
+                        survey_job=self.survey_job.id)
 
     def survey(self) -> bool:
         try:
             self.discover_batches()
         except Exception:
             logger.exception(("Exception caught while discovering batches. "
-                              "Terminating survey job #%d."),
-                             self.survey_job.id)
+                              "Terminating survey job."),
+                             survey_job=self.survey_job.id)
             return False
 
         for group in self.group_batches():
@@ -183,8 +181,8 @@ class ExternalSourceSurveyor:
                 self.queue_downloader_jobs(group)
             except Exception:
                 logger.exception(("Failed to queue downloader jobs. "
-                                  "Terminating survey job #%d."),
-                                 self.survey_job.id)
+                                  "Terminating survey job."),
+                                 survey_job=self.survey_job.id)
                 return False
 
         return True
