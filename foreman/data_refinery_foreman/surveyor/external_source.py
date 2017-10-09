@@ -103,8 +103,6 @@ class ExternalSourceSurveyor:
             file.batch = batch
             file.save()
 
-        batch.files = files
-
         for key, value in key_values.items():
             BatchKeyValue(batch=batch,
                           key=key,
