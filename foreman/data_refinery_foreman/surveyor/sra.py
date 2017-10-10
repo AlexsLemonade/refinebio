@@ -50,23 +50,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         return ProcessorPipeline.SALMON
 
     @staticmethod
-    def gather_metadata(sub_url):
-        fastqlist_line = "/ddbj_database/dra/fastq/DRA000/DRA000001/DRX000001/DRR000001.fastq.bz2\te9bbfd70534d84a8f4be84793171c4a9\t1387158\t2014-06-06 14:37:49+09"  # noqa
-
-        # I should probably make sure that xml which doesn't adhere to
-        # the standard doesn't break anything
-        sub_url = TEST_XML
-        metadata = {}
-
-        fastqlist_cols = fastqlist_line.split("\t")
-        fastqlist_path = fastqlist_cols[0]
-        metadata["checksum"] = fastqlist_cols[1]
-        metadata["size"] = fastqlist_cols[2]
-        fastqlist_files = fastqlist_path.split("/")
-        metadata["submission_accession"] = fastqlist_files[5]
-        metadata["experiment_accession"] = fastqlist_files[6]
-        metadata["run_accession"] = fastqlist_files[7].replace(".fastq.bz2", "")
-
+    def gather_submission_metadata(metadata: Dict) -> None:
         submission = requests.get(ENA_URL_TEMPLATE.format(metadata["submission_accession"]))
         submission_xml = ET.fromstring(submission.text)[0]
         submission_metadata = submission_xml.attrib
@@ -80,15 +64,90 @@ class SraSurveyor(ExternalSourceSurveyor):
                 metadata["submission_title"] = child.text
             elif child.tag == "SUBMISSION_ATTRIBUTES":
                 for grandchild in child:
-                    metadata[grandchild.find("TAG").text] = grandchild.find("VALUE").text
+                    metadata[grandchild.find("TAG").text.lower()] = grandchild.find("VALUE").text
 
-        # experiment = requests.get(ENA_URL_TEMPLATE.format(metadata["experiment_accession"]))
-        # experiment_xml = ET.fromstring(experiment.text)
+    @staticmethod
+    def gather_library_metadata(metadata: Dict, library: ET.Element) -> None:
+        for child in library:
+            if child.tag == "LIBRARY_LAYOUT":
+                metadata["library_layout"] = child[0].tag
+            else:
+                metadata[child.tag.lower()] = child.text
 
-        # experiment["name"] = parsed_json["name"]
-        # experiment["experiment_accession_code"] = experiment_accession_code
+    @staticmethod
+    def parse_read_spec(metadata: Dict, read_spec: ET.Element, counter: int) -> None:
+        for child in read_spec:
+            key = "read_spec_{}_{}".format(str(counter), child.tag.replace("READ_", "").lower())
+            metadata[key] = child.text
 
-        return experiment
+    @staticmethod
+    def gather_spot_metadata(metadata: Dict, spot: ET.Element) -> None:
+        """We don't actually know what this metadata is about."""
+        for child in spot:
+            if child.tag == "SPOT_DECODE_SPEC":
+                read_spec_counter = 0
+                for grandchild in child:
+                    if grandchild.tag == "SPOT_LENGTH":
+                        metadata["spot_length"] = grandchild.text
+                    elif grandchild.tag == "READ_SPEC":
+                        SraSurveyor.parse_read_spec(metadata, grandchild, read_spec_counter)
+                        read_spec_counter = read_spec_counter + 1
+
+    @staticmethod
+    def gather_experiment_metadata(metadata: Dict) -> None:
+        experiment = requests.get(ENA_URL_TEMPLATE.format(metadata["experiment_accession"]))
+        experiment_xml = ET.fromstring(experiment.text)
+
+        experiment = experiment_xml[0]
+        for child in experiment:
+            if child.tag == "TITLE":
+                metadata["experiment_title"] = child.text
+            elif child.tag == "DESIGN":
+                for grandchild in child:
+                    if grandchild.tag == "DESIGN_DESCRIPTION":
+                        metadata["experiment_desing_description"] = grandchild.text
+                    elif grandchild.tag == "LIBRARY_DESCRIPTOR":
+                        SraSurveyor.gather_library_metadata(metadata, grandchild)
+                    elif grandchild.tag == "SPOT_DESCRIPTOR":
+                        SraSurveyor.gather_spot_metadata(metadata, grandchild)
+            elif child.tag == "PLATFORM":
+                # This structure is extraneously nested.
+                metadata["platform_instrument_model"] = child[0][0].text
+
+    @staticmethod
+    def gather_all_metadata(sub_url):
+        fastqlist_line = "/ddbj_database/dra/fastq/DRA000/DRA000001/DRX000001/DRR000001.fastq.bz2\te9bbfd70534d84a8f4be84793171c4a9\t1387158\t2014-06-06 14:37:49+09"  # noqa
+
+        # I should probably make sure that xml which doesn't adhere to
+        # the standard doesn't break anything
+        # sub_url = TEST_XML
+        metadata = {}
+
+        fastqlist_cols = fastqlist_line.split("\t")
+        fastqlist_path = fastqlist_cols[0]
+        metadata["checksum"] = fastqlist_cols[1]
+        metadata["size"] = fastqlist_cols[2]
+        fastqlist_files = fastqlist_path.split("/")
+        metadata["submission_accession"] = fastqlist_files[5]
+        metadata["experiment_accession"] = fastqlist_files[6]
+        metadata["run_accession"] = fastqlist_files[7].replace(".fastq.bz2", "")
+
+        SraSurveyor.gather_submission_metadata(metadata)
+
+        experiment = requests.get(ENA_URL_TEMPLATE.format(metadata["experiment_accession"]))
+        experiment_xml = ET.fromstring(experiment.text)
+
+        experiment = experiment_xml[0]
+        for child in experiment:
+            if child.tag == "TITLE":
+                metadata["experiment_title"] = child.text
+            else:
+                print(child.tag)
+                for grandchild in child:
+                    print(grandchild.tag)
+                    print(grandchild.text)
+
+        return metadata
 
     def _generate_batches(self,
                           samples: List[Dict],
