@@ -3,14 +3,12 @@ FROM python:3.6.1-slim
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
-COPY requirements.txt .
+COPY common/requirements.txt .
 
 RUN pip install -r requirements.txt
 
-COPY . .
+COPY common/ .
 
 USER user
 
 ENTRYPOINT ["python3.6", "manage.py"]
-
-CMD ["migrate"]

@@ -2,7 +2,7 @@ import time
 import json
 from django.test import TransactionTestCase
 from unittest.mock import patch, Mock
-from data_refinery_models.models import (
+from data_refinery_common.models import (
     Organism,
     SurveyJob,
     SurveyJobKeyValue,

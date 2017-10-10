@@ -1,9 +1,9 @@
 import requests
 from typing import List, Dict
 
-from data_refinery_models.models import (
+from data_refinery_common.models import (
     Batch,
-    BatchKeyValue,
+    File,
     SurveyJobKeyValue,
     Organism
 )
@@ -25,18 +25,28 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
     def determine_pipeline(self,
                            batch: Batch,
-                           key_values: List[BatchKeyValue] = []):
+                           key_values: Dict = {}):
         # If it's a CEL file run SCAN.UPC on it.
-        if batch.raw_format == "CEL":
+        if batch.files[0].raw_format == "CEL":
             return ProcessorPipeline.AFFY_TO_PCL
         # If only processed data is available then we don't need to do
         # anything to it
-        elif batch.raw_format == batch.processed_format:
+        elif batch.files[0].raw_format == batch.files[0].processed_format:
             return ProcessorPipeline.NO_OP
         # If it's not CEL and it's not already processed then we just
         # want to download it for Jackie's grant.
         else:
             return ProcessorPipeline.NONE
+
+    def group_batches(self) -> List[List[Batch]]:
+        """Groups batches based on the download URL of their only File"""
+        groups = []
+        download_urls = {file.download_url for file in [batch.files[0] for batch in self.batches]}
+
+        for url in download_urls:
+            groups.append([batch for batch in self.batches if batch.files[0].download_url == url])
+
+        return groups
 
     def get_experiment_metadata(self, experiment_accession_code: str) -> Dict:
         experiment_request = requests.get(EXPERIMENTS_URL + experiment_accession_code)
@@ -86,7 +96,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         then only raw files will be replicated. Otherwise all files
         will be replicated.
         """
-        batches = []
         for sample in samples:
             if "file" not in sample:
                 continue
@@ -132,24 +141,22 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 raw_format = sample_file["name"].split(".")[-1]
                 processed_format = "PCL" if replicate_raw else raw_format
 
-                batches.append(Batch(
-                    size_in_bytes=-1,  # Will have to be determined later
-                    download_url=download_url,
-                    raw_format=raw_format,
-                    processed_format=processed_format,
-                    platform_accession_code=experiment["platform_accession_code"],
-                    experiment_accession_code=experiment["experiment_accession_code"],
-                    organism_id=organism_id,
-                    organism_name=organism_name,
-                    experiment_title=experiment["name"],
-                    release_date=experiment["release_date"],
-                    last_uploaded_date=experiment["last_update_date"],
-                    name=sample_file["name"]
-                ))
+                file = File(name=sample_file["name"],
+                            download_url=download_url,
+                            raw_format=raw_format,
+                            processed_format=processed_format,
+                            size_in_bytes=-1)  # Will have to be determined later
 
-        return batches
+                self.add_batch(platform_accession_code=experiment["platform_accession_code"],
+                               experiment_accession_code=experiment["experiment_accession_code"],
+                               organism_id=organism_id,
+                               organism_name=organism_name,
+                               experiment_title=experiment["name"],
+                               release_date=experiment["release_date"],
+                               last_uploaded_date=experiment["last_update_date"],
+                               files=[file])
 
-    def survey(self) -> bool:
+    def discover_batches(self):
         experiment_accession_code = (
             SurveyJobKeyValue
             .objects
@@ -165,20 +172,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         experiment = self.get_experiment_metadata(experiment_accession_code)
         r = requests.get(SAMPLES_URL.format(experiment_accession_code))
         samples = r.json()["experiment"]["sample"]
-        batches = self._generate_batches(samples, experiment)
+        self._generate_batches(samples, experiment)
 
-        if len(samples) != 0 and len(batches) == 0:
+        if len(samples) != 0 and len(self.batches) == 0:
             # Found no samples with raw data, so replicate the
             # processed data instead
-            batches = self._generate_batches(samples, experiment, replicate_raw=False)
-
-        # Group batches based on their download URL and handle each group.
-        download_urls = {batch.download_url for batch in batches}
-        for url in download_urls:
-            batches_with_url = [batch for batch in batches if batch.download_url == url]
-            try:
-                self.handle_batches(batches_with_url)
-            except Exception:
-                return False
-
-        return True
+            self._generate_batches(samples, experiment, replicate_raw=False)

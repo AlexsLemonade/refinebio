@@ -9,7 +9,6 @@ setup(
     version="0.1.0",
     packages=find_packages(),
     install_requires=["django>=1.10.6",
-                      "data_refinery_models>=0.1.0",
                       "boto3>=1.4.4",
                       "daiquiri>=1.3.0"],
     license="BSD License",
