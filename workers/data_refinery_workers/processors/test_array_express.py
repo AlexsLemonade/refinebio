@@ -127,7 +127,16 @@ class DetermineBrainarrayPackageTestCase(TestCase):
                        "input_file": input_file}
 
         job_context = array_express._determine_brainarray_package(job_context)
-        failure_reason_template = """Unable to read Affy header in input file /home/user/data_store/temp/TEST2/AFFY_TO_PCL/batch_{0}/dummy while running AFFY_TO_PCL due to error: Error in (function (filename, info = c("basic", "full"), verbose = FALSE)  : \n  Is /home/user/data_store/temp/TEST2/AFFY_TO_PCL/batch_{1}/dummy really a CEL file? tried reading as text, gzipped text, binary, gzipped binary, command console and gzipped command console formats\n"""  # noqa
+        failure_reason_template = (
+            "Unable to read Affy header in input file "
+            "/home/user/data_store/temp/TEST2/AFFY_TO_PCL/batch_{0}/dummy "
+            "while running AFFY_TO_PCL due to error: Error in (function "
+            '(filename, info = c("basic", "full"), verbose = FALSE)  : \n  '
+            "Is /home/user/data_store/temp/TEST2/AFFY_TO_PCL/batch_{1}/dummy "
+            "really a CEL file? tried reading as text, gzipped text, binary, "
+            "gzipped binary, command console and gzipped command console "
+            "formats\n"
+        )
 
         self.assertFalse("brainarray_package" in job_context)
         self.assertFalse(job_context["success"])
@@ -201,7 +210,16 @@ class RunScanUPCTestCase(TestCase):
                        "output_file": output_file}
 
         job_context = array_express._run_scan_upc(job_context)
-        failure_reason_template = """Encountered error in R code while running AFFY_TO_PCL pipeline during processing of /home/user/data_store/temp/TEST2/AFFY_TO_PCL/batch_{0}/dummy: Error in {{ : \n  task 1 failed - "Is /home/user/data_store/temp/TEST2/AFFY_TO_PCL/batch_{1}/dummy really a CEL file? tried reading as text, gzipped text, binary, gzipped binary, command console and gzipped command console formats\n"\n"""  # noqa
+        failure_reason_template = (
+            'Encountered error in R code while running AFFY_TO_PCL pipeline '
+            'during processing of '
+            '/home/user/data_store/temp/TEST2/AFFY_TO_PCL/batch_{0}/dummy: '
+            'Error in {{ : \n  task 1 failed - '
+            '"Is /home/user/data_store/temp/TEST2/AFFY_TO_PCL/batch_{1}/dummy '
+            'really a CEL file? tried reading as text, gzipped text, binary, '
+            'gzipped binary, command console and gzipped command console '
+            'formats\n"\n'
+        )
 
         self.assertFalse(job_context["success"])
         self.assertFalse(os.path.isfile(input_file))
