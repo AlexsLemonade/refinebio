@@ -1,0 +1,94 @@
+from unittest.mock import Mock, patch
+from django.test import TestCase
+from data_refinery_foreman.surveyor.sra import (
+    SraSurveyor,
+    ENA_URL_TEMPLATE,
+)
+from data_refinery_foreman.surveyor.test_sra_xml import (
+    EXPERIMENT_XML,
+    RUN_XML,
+    SAMPLE_XML,
+    STUDY_XML,
+    SUBMISSION_XML
+)
+
+
+def mocked_requests_get(url):
+    mock = Mock(ok=True)
+    if url == ENA_URL_TEMPLATE.format("DRX001563"):
+        mock.text = EXPERIMENT_XML
+    elif url == ENA_URL_TEMPLATE.format("DRR002116"):
+        mock.text = RUN_XML
+    elif url == ENA_URL_TEMPLATE.format("DRS001521"):
+        mock.text = SAMPLE_XML
+    elif url == ENA_URL_TEMPLATE.format("DRP000595"):
+        mock.text = STUDY_XML
+    elif url == ENA_URL_TEMPLATE.format("DRA000567"):
+        mock.text = SUBMISSION_XML
+    else:
+        raise Exception("Was not expecting the url: " + url)
+
+    return mock
+
+
+class SraSurveyorTestCase(TestCase):
+    @patch('data_refinery_foreman.surveyor.sra.requests.get')
+    def test_metadata_is_gathered_correctly(self, mock_get):
+        mock_get.side_effect = mocked_requests_get
+
+        metadata = SraSurveyor.gather_all_metadata("DRR002116")
+
+        self.assertEqual(metadata["broker_name"], "DDBJ")
+        self.assertEqual(metadata["center_name"], "RIKEN_CDB")
+        self.assertEqual(metadata["ena-base-count"], "158881910957")
+        self.assertEqual(metadata["ena-spot-count"], "1371813555")
+        self.assertEqual(metadata["experiment_accession"], "DRX001563")
+        self.assertEqual(metadata["experiment_desing_description"],
+                         ("Experiment for mRNAseq of chicken at stage "
+                          "HH16 (biological replicate 1)"))
+        self.assertEqual(metadata["experiment_title"],
+                         ("Illumina HiSeq 2000 sequencing; "
+                          "Exp_Gg_HH16_1_embryo_mRNAseq"))
+        self.assertEqual(metadata["lab_name"],
+                         ("Group for Morphological Evolution, Center for Developmental "
+                          "Biology, Kobe Institute, RIKEN"))
+        self.assertEqual(metadata["library_layout"], "SINGLE")
+        self.assertEqual(metadata["library_name"], "Gg_HH16_1_embryo_mRNAseq")
+        self.assertEqual(metadata["library_selection"], "RANDOM")
+        self.assertEqual(metadata["library_source"], "TRANSCRIPTOMIC")
+        self.assertEqual(metadata["library_strategy"], "RNA-Seq")
+        self.assertEqual(metadata["organism_id"], "9031")
+        self.assertEqual(metadata["organism_name"], "GALLUS GALLUS")
+        self.assertEqual(metadata["platform_instrument_model"], "Illumina HiSeq 2000")
+        self.assertEqual(metadata["read_spec_0_base_coord"], "1")
+        self.assertEqual(metadata["read_spec_0_class"], "Application Read")
+        self.assertEqual(metadata["read_spec_0_index"], "0")
+        self.assertEqual(metadata["read_spec_0_type"], "Forward")
+        self.assertEqual(metadata["run_accession"], "DRR002116")
+        self.assertEqual(metadata["run_center"], "RIKEN_CDB")
+        self.assertEqual(metadata["run_date"], "2011-09-01T00:00:00+09:00")
+        self.assertEqual(metadata["run_ena_base_count"], "3256836000")
+        self.assertEqual(metadata["run_ena_first_public"], "2013-07-19")
+        self.assertEqual(metadata["run_ena_last_update"], "2017-08-11")
+        self.assertEqual(metadata["run_ena_spot_count"], "32568360")
+        self.assertEqual(metadata["sample_accession"], "DRS001521")
+        self.assertEqual(metadata["sample_center_name"], "BioSample")
+        self.assertEqual(metadata["sample_ena_base_count"], "3256836000")
+        self.assertEqual(metadata["sample_ena_first_public"], "2013-07-20")
+        self.assertEqual(metadata["sample_ena_last_update"], "2015-08-24")
+        self.assertEqual(metadata["sample_ena_spot_count"], "32568360")
+        self.assertEqual(metadata["sample_sample_comment"],
+                         ("mRNAseq of chicken at stage HH16 (biological "
+                          "replicate 1)"))
+        self.assertEqual(metadata["sample_sample_name"], "DRS001521")
+        self.assertEqual(metadata["sample_title"], "Gg_HH16_1_embryo_mRNAseq")
+        self.assertEqual(metadata["spot_length"], "100")
+        self.assertEqual(metadata["study_accession"], "DRP000595")
+        self.assertEqual(metadata["submission_accession"], "DRA000567")
+        self.assertEqual(metadata["submission_comment"],
+                         ("Time course gene expression profiles of turtle "
+                          "(Pelodiscus sinensis) and chicken (Gallus gallus) "
+                          "embryos were examined. Whole transcriptome of turtle "
+                          "was also determined by uding stranded sequencing "
+                          "methods."))
+        self.assertEqual(metadata["submission_title"], "Submitted by RIKEN_CDB on 19-JUL-2013")
