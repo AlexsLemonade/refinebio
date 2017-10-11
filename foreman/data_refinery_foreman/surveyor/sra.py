@@ -225,7 +225,6 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_all_metadata(run_accession):
-        run_accession = "DRR002116"
         metadata = SraSurveyor.gather_run_metadata(run_accession)
 
         SraSurveyor.gather_experiment_metadata(metadata)
