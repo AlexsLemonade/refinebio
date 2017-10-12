@@ -40,13 +40,19 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
     def group_batches(self) -> List[List[Batch]]:
         """Groups batches based on the download URL of their only File"""
-        groups = []
-        download_urls = {file.download_url for file in [batch.files[0] for batch in self.batches]}
+        # Builds a mapping of each unique download_url to a list of
+        # Batches whose first File's download_url matches.
+        download_url_mapping = {}
+        for batch in self.batches:
+            download_url = batch.files[0].download_url
+            if download_url in download_url_mapping:
+                download_url_mapping[download_url].append(batch)
+            else:
+                download_url_mapping[download_url] = [batch]
 
-        for url in download_urls:
-            groups.append([batch for batch in self.batches if batch.files[0].download_url == url])
-
-        return groups
+        # The values of the mapping we built are the groups the
+        # batches should be grouped into.
+        return list(download_url_mapping.values())
 
     def get_experiment_metadata(self, experiment_accession_code: str) -> Dict:
         experiment_request = requests.get(EXPERIMENTS_URL + experiment_accession_code)

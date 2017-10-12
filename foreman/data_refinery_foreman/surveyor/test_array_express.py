@@ -306,3 +306,20 @@ class SurveyTestCase(TestCase):
         self.assertEqual(file.processed_format, "PCL")
         self.assertEqual(file.name, "C30057.CEL")
         self.assertEqual(file.internal_location, "A-AFFY-1/AFFY_TO_PCL")
+
+
+class GroupBatchesTestCase(TestCase):
+    def test_survey(self):
+        survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
+        surveyor = ArrayExpressSurveyor(survey_job)
+        file1 = File(download_url="a")
+        file2 = File(download_url="a")
+        file3 = File(download_url="b")
+        file4 = File(download_url="a")
+        batch1 = Batch(files=[file1])
+        batch2 = Batch(files=[file2])
+        batch3 = Batch(files=[file3, file4])
+
+        surveyor.batches = [batch1, batch2, batch3]
+        groups = surveyor.group_batches()
+        self.assertEqual(groups, [[batch1, batch2], [batch3]])
