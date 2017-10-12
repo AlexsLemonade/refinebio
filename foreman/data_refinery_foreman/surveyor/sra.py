@@ -4,6 +4,7 @@ from typing import List, Dict
 from data_refinery_common.models import (
     Batch,
     BatchKeyValue,
+    SurveyJob,
     SurveyJobKeyValue,
     Organism
 )
@@ -234,10 +235,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         return metadata
 
-    def _generate_batches(self,
-                          samples: List[Dict],
-                          experiment: Dict,
-                          replicate_raw: bool=True) -> List[Batch]:
+    def _generate_batch(self, run_accession: str):
         """Generates a Batch for each sample in samples.
 
         Uses the metadata contained in experiment (which should be
@@ -308,34 +306,36 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         return batches
 
-    def survey(self) -> bool:
-        experiment_accession_code = (
-            SurveyJobKeyValue
-            .objects
-            .get(survey_job_id=self.survey_job.id,
-                 key__exact="experiment_accession_code")
-            .value
-        )
+    @staticmethod
+    def get_next_accession(last_accession: str) -> str:
+        """Increments a SRA accession number by one.
 
-        logger.info("Surveying experiment with accession code: %s.", experiment_accession_code)
+        E.g. if last_accession is "DRR002116" then "DRR002117" will be
+        returned.
+        """
+        prefix = last_accession[0:3]
+        number = int(last_accession[3:])
+        number = number + 1
+        return prefix + "{0:06d}".format(number)
 
-        experiment = self.get_experiment_metadata(experiment_accession_code)
-        r = requests.get(SAMPLES_URL.format(experiment_accession_code))
-        samples = r.json()["experiment"]["sample"]
-        batches = self._generate_batches(samples, experiment)
+    def discover_batches(self):
+        survey_job = SurveyJob.objects.get(id=self.survey_job.id)
+        survey_job_properties = survey_job.get_properties()
 
-        if len(samples) != 0 and len(batches) == 0:
-            # Found no samples with raw data, so replicate the
-            # processed data instead
-            batches = self._generate_batches(samples, experiment, replicate_raw=False)
+        logger.info("Surveying SRA runs with accessions in the range of %s to %s.",
+                    survey_job_properties["start_accession"],
+                    survey_job_properties["end_accession"])
 
-        # Group batches based on their download URL and handle each group.
-        download_urls = {batch.download_url for batch in batches}
-        for url in download_urls:
-            batches_with_url = [batch for batch in batches if batch.download_url == url]
+        current_accession = survey_job_properties["start_accession"]
+        surveyed_last_accession = False
+        if not surveyed_last_accession:
             try:
-                self.handle_batches(batches_with_url)
-            except Exception:
+                self._generate_batch(current_accession)
+            except Exception as e:
+                logger.exception("Exception caught while trying to generate a batch.",
+                                 survey_job=self.survey_job.id,
+                                 run_accession=current_accession)
                 return False
+            surveyed_last_accession = current_accession == survey_job_properties["end_accession"]
 
         return True

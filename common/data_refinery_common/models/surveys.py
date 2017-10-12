@@ -1,4 +1,5 @@
 from django.db import models
+from typing import Dict
 from data_refinery_common.models.base_models import TimeTrackedModel
 
 
@@ -19,6 +20,9 @@ class SurveyJob(TimeTrackedModel):
 
     # The end time of the job
     end_time = models.DateTimeField(null=True)
+
+    def get_properties(self) -> Dict:
+        return {pair.key: pair.value for pair in self.surveyjobkeyvalue_set.all()}
 
     class Meta:
         db_table = "survey_jobs"
