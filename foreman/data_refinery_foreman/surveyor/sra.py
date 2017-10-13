@@ -1,25 +1,25 @@
 import requests
 from typing import List, Dict
-
+import xml.etree.ElementTree as ET
 from data_refinery_common.models import (
     Batch,
     BatchKeyValue,
+    File,
     SurveyJob,
     SurveyJobKeyValue,
     Organism
 )
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
-import xml.etree.ElementTree as ET
+from data_refinery_common.logging import get_and_configure_logger
 
-# Import and set logger
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+
+logger = get_and_configure_logger(__name__)
 
 
 DDBJ_URL_BASE = "ftp://ftp.ddbj.nig.ac.jp/ddbj_database/dra/fastq/"
 ENA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/data/view/{}&display=xml"
+NCBI_DOWNLOAD_URL_TEMPLATE = "https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?cmd=dload&run_list={}&format=fastq"  # noqa
 TEST_XML = "SRA200/SRA200001"
 TAIL = "SRA200001.run.xml"
 
@@ -125,7 +125,10 @@ class SraSurveyor(ExternalSourceSurveyor):
                         SraSurveyor.gather_spot_metadata(metadata, grandchild)
             elif child.tag == "PLATFORM":
                 # This structure is extraneously nested.
-                metadata["platform_instrument_model"] = child[0][0].text
+                # This is used as the platform_accession_code for SRA
+                # batches, which becomes part of file paths, so we
+                # don't want any spaces in it.
+                metadata["platform_instrument_model"] = child[0][0].text.replace(" ", "")
 
     @staticmethod
     def parse_run_link(run_link: ET.ElementTree) -> (str, str):
@@ -235,7 +238,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         return metadata
 
-    def _generate_batch(self, run_accession: str):
+    def _generate_batch(self, run_accession: str) -> None:
         """Generates a Batch for each sample in samples.
 
         Uses the metadata contained in experiment (which should be
@@ -244,67 +247,23 @@ class SraSurveyor(ExternalSourceSurveyor):
         then only raw files will be replicated. Otherwise all files
         will be replicated.
         """
-        batches = []
-        for sample in samples:
-            if "file" not in sample:
-                continue
+        metadata = SraSurveyor.gather_all_metadata(run_accession)
 
-            organism_name = "UNKNOWN"
-            for characteristic in sample["characteristic"]:
-                if characteristic["category"].upper() == "ORGANISM":
-                    organism_name = characteristic["value"].upper()
+        file = File(name=(run_accession + ".fastq.gz"),
+                    download_url=NCBI_DOWNLOAD_URL_TEMPLATE.format(run_accession),
+                    raw_format=".fastq.gz",
+                    processed_format=".tar.gz",
+                    size_in_bytes=-1)  # Will have to be determined later
 
-            if organism_name == "UNKNOWN":
-                logger.error("Sample from experiment %s did not specify the organism name.",
-                             experiment["experiment_accession_code"])
-                organism_id = 0
-            else:
-                organism_id = Organism.get_id_for_name(organism_name)
-
-            for sample_file in sample["file"]:
-                # Generally we only want to replicate the raw data if
-                # we can, however if there isn't raw data then we'll
-                # take the processed stuff.
-                if (replicate_raw and sample_file["type"] != "data") \
-                        or sample_file["name"] is None:
-                    continue
-
-                # sample_file["comment"] is only a list if there's
-                # more than one comment...
-                comments = sample_file["comment"]
-                if isinstance(comments, list):
-                    # Could be: "Derived ArrayExpress Data Matrix FTP
-                    # file" or: "ArrayExpress FTP file". If there is
-                    # no comment with a name including "FTP file" then
-                    # we don't know where to download it so we need to
-                    # mark this job as an error. Therefore don't catch
-                    # the potential exception where download_url
-                    # doesn't get defined.
-                    for comment in comments:
-                        if comment["name"].find("FTP file") != -1:
-                            download_url = comment["value"]
-                else:
-                    download_url = comments["value"]
-
-                raw_format = sample_file["name"].split(".")[-1]
-                processed_format = "PCL" if replicate_raw else raw_format
-
-                batches.append(Batch(
-                    size_in_bytes=-1,  # Will have to be determined later
-                    download_url=download_url,
-                    raw_format=raw_format,
-                    processed_format=processed_format,
-                    platform_accession_code=experiment["platform_accession_code"],
-                    experiment_accession_code=experiment["experiment_accession_code"],
-                    organism_id=organism_id,
-                    organism_name=organism_name,
-                    experiment_title=experiment["name"],
-                    release_date=experiment["release_date"],
-                    last_uploaded_date=experiment["last_update_date"],
-                    name=sample_file["name"]
-                ))
-
-        return batches
+        self.add_batch(platform_accession_code=metadata.pop("platform_instrument_model"),
+                       experiment_accession_code=metadata.pop("experiment_accession"),
+                       organism_id=metadata.pop("organism_id"),
+                       organism_name=metadata.pop("organism_name"),
+                       experiment_title=metadata.pop("experiment_title"),
+                       release_date=metadata.pop("run_ena_first_public"),
+                       last_uploaded_date=metadata.pop("run_ena_last_update"),
+                       files=[file],
+                       key_values=metadata)
 
     @staticmethod
     def get_next_accession(last_accession: str) -> str:
@@ -327,8 +286,14 @@ class SraSurveyor(ExternalSourceSurveyor):
                     survey_job_properties["end_accession"])
 
         current_accession = survey_job_properties["start_accession"]
+
+        # By evaluating this conditional at the end of the loop
+        # instead of the beginning, we achieve the functionality of a
+        # do-while loop.
         surveyed_last_accession = False
         if not surveyed_last_accession:
+            # Change to debug
+            logger.info("Surveying SRA Run Accession %d", survey_job=survey_job.id)
             try:
                 self._generate_batch(current_accession)
             except Exception as e:
@@ -336,6 +301,8 @@ class SraSurveyor(ExternalSourceSurveyor):
                                  survey_job=self.survey_job.id,
                                  run_accession=current_accession)
                 return False
+
             surveyed_last_accession = current_accession == survey_job_properties["end_accession"]
+            current_accession = SraSurveyor.get_next_accession(current_accession)
 
         return True

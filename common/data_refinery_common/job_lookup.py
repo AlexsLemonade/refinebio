@@ -39,5 +39,5 @@ class Downloaders(Enum):
 
 DOWNLOADER_TASK_LOOKUP = {
     "ARRAY_EXPRESS": "data_refinery_workers.downloaders.array_express.download_array_express",
-    "RNA_ARRAY_EXPRESS": "data_refinery_workers.downloaders.sra.download_sra"
+    "SRA": "data_refinery_workers.downloaders.sra.download_sra"
 }

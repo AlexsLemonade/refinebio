@@ -76,7 +76,7 @@ class ExternalSourceSurveyor:
         # Prevent creating duplicate Batches.
         for file in files:
             if File.objects.filter(name=file.name).count() != 0:
-                logger.info(("Skipping sample with name %s because a File already exists with"
+                logger.info(("Skipping sample with name %s because a File already exists with "
                              "that name."),
                             file.name)
                 return
