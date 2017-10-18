@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch
 from django.test import TestCase
 from data_refinery_foreman.surveyor.sra import (
     SraSurveyor,
-    ENA_URL_TEMPLATE,
+    ENA_METADATA_URL_TEMPLATE,
 )
 from data_refinery_foreman.surveyor.test_sra_xml import (
     EXPERIMENT_XML,
@@ -15,15 +15,15 @@ from data_refinery_foreman.surveyor.test_sra_xml import (
 
 def mocked_requests_get(url):
     mock = Mock(ok=True)
-    if url == ENA_URL_TEMPLATE.format("DRX001563"):
+    if url == ENA_METADATA_URL_TEMPLATE.format("DRX001563"):
         mock.text = EXPERIMENT_XML
-    elif url == ENA_URL_TEMPLATE.format("DRR002116"):
+    elif url == ENA_METADATA_URL_TEMPLATE.format("DRR002116"):
         mock.text = RUN_XML
-    elif url == ENA_URL_TEMPLATE.format("DRS001521"):
+    elif url == ENA_METADATA_URL_TEMPLATE.format("DRS001521"):
         mock.text = SAMPLE_XML
-    elif url == ENA_URL_TEMPLATE.format("DRP000595"):
+    elif url == ENA_METADATA_URL_TEMPLATE.format("DRP000595"):
         mock.text = STUDY_XML
-    elif url == ENA_URL_TEMPLATE.format("DRA000567"):
+    elif url == ENA_METADATA_URL_TEMPLATE.format("DRA000567"):
         mock.text = SUBMISSION_XML
     else:
         raise Exception("Was not expecting the url: " + url)
@@ -59,7 +59,7 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(metadata["library_strategy"], "RNA-Seq")
         self.assertEqual(metadata["organism_id"], "9031")
         self.assertEqual(metadata["organism_name"], "GALLUS GALLUS")
-        self.assertEqual(metadata["platform_instrument_model"], "Illumina HiSeq 2000")
+        self.assertEqual(metadata["platform_instrument_model"], "IlluminaHiSeq2000")
         self.assertEqual(metadata["read_spec_0_base_coord"], "1")
         self.assertEqual(metadata["read_spec_0_class"], "Application Read")
         self.assertEqual(metadata["read_spec_0_index"], "0")

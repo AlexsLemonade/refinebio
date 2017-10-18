@@ -18,8 +18,10 @@ logger = get_and_configure_logger(__name__)
 
 
 DDBJ_URL_BASE = "ftp://ftp.ddbj.nig.ac.jp/ddbj_database/dra/fastq/"
-ENA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/data/view/{}&display=xml"
-NCBI_DOWNLOAD_URL_TEMPLATE = "https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?cmd=dload&run_list={}&format=fastq"  # noqa
+ENA_METADATA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/data/view/{}&display=xml"
+ENA_DOWNLOAD_URL_TEMPLATE = ("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/{short_accession}{sub_dir}"
+                             "/{long_accession}/{long_accession}{read_suffix}.fastq.gz")
+ENA_SUB_DIR_PREFIX = "/00"
 TEST_XML = "SRA200/SRA200001"
 TAIL = "SRA200001.run.xml"
 
@@ -56,7 +58,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_submission_metadata(metadata: Dict) -> None:
-        response = requests.get(ENA_URL_TEMPLATE.format(metadata["submission_accession"]))
+        response = requests.get(ENA_METADATA_URL_TEMPLATE.format(metadata["submission_accession"]))
         submission_xml = ET.fromstring(response.text)[0]
         submission_metadata = submission_xml.attrib
 
@@ -108,7 +110,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_experiment_metadata(metadata: Dict) -> None:
-        response = requests.get(ENA_URL_TEMPLATE.format(metadata["experiment_accession"]))
+        response = requests.get(ENA_METADATA_URL_TEMPLATE.format(metadata["experiment_accession"]))
         experiment_xml = ET.fromstring(response.text)
 
         experiment = experiment_xml[0]
@@ -162,7 +164,7 @@ class SraSurveyor(ExternalSourceSurveyor):
     def gather_run_metadata(run_accession: str) -> Dict:
         """A run refers to a specific read in an experiment."""
         discoverable_accessions = ["study_accession", "sample_accession", "submission_accession"]
-        response = requests.get(ENA_URL_TEMPLATE.format(run_accession))
+        response = requests.get(ENA_METADATA_URL_TEMPLATE.format(run_accession))
         run_xml = ET.fromstring(response.text)
         run = run_xml[0]
 
@@ -187,7 +189,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_sample_metadata(metadata: Dict) -> None:
-        response = requests.get(ENA_URL_TEMPLATE.format(metadata["sample_accession"]))
+        response = requests.get(ENA_METADATA_URL_TEMPLATE.format(metadata["sample_accession"]))
         sample_xml = ET.fromstring(response.text)
 
         sample = sample_xml[0]
@@ -209,7 +211,7 @@ class SraSurveyor(ExternalSourceSurveyor):
     @staticmethod
     def gather_study_metadata(metadata: Dict) -> None:
         metadata = {"study_accession": "DRP000595"}
-        response = requests.get(ENA_URL_TEMPLATE.format(metadata["study_accession"]))
+        response = requests.get(ENA_METADATA_URL_TEMPLATE.format(metadata["study_accession"]))
         study_xml = ET.fromstring(response.text)
 
         study = study_xml[0]
@@ -238,6 +240,26 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         return metadata
 
+    @staticmethod
+    def _build_file(run_accession: str, read_suffix="")-> File:
+        # ENA has a weird way of nesting data where if the run
+        # accession is greater than 9 characters long then there is an
+        # extra sub-directory in the path which is "00" + the last
+        # digit of the run accession.
+        sub_dir = ""
+        if len(run_accession) > 9:
+            sub_dir = ENA_SUB_DIR_PREFIX + run_accession[-1]
+
+        return File(name=(run_accession + read_suffix + ".fastq.gz"),
+                    download_url=ENA_DOWNLOAD_URL_TEMPLATE.format(
+                        short_accession=run_accession[:6],
+                        sub_dir=sub_dir,
+                        long_accession=run_accession,
+                        read_suffix=read_suffix),
+                    raw_format=".fastq.gz",
+                    processed_format=".tar.gz",
+                    size_in_bytes=-1)  # Will have to be determined later
+
     def _generate_batch(self, run_accession: str) -> None:
         """Generates a Batch for each sample in samples.
 
@@ -249,11 +271,11 @@ class SraSurveyor(ExternalSourceSurveyor):
         """
         metadata = SraSurveyor.gather_all_metadata(run_accession)
 
-        file = File(name=(run_accession + ".fastq.gz"),
-                    download_url=NCBI_DOWNLOAD_URL_TEMPLATE.format(run_accession),
-                    raw_format=".fastq.gz",
-                    processed_format=".tar.gz",
-                    size_in_bytes=-1)  # Will have to be determined later
+        if metadata["library_layout"] == "PAIRED":
+            files = [SraSurveyor._build_file(run_accession, "_1"),
+                     SraSurveyor._build_file(run_accession, "_2")]
+        else:
+            files = [SraSurveyor._build_file(run_accession)]
 
         self.add_batch(platform_accession_code=metadata.pop("platform_instrument_model"),
                        experiment_accession_code=metadata.pop("experiment_accession"),
@@ -262,7 +284,7 @@ class SraSurveyor(ExternalSourceSurveyor):
                        experiment_title=metadata.pop("experiment_title"),
                        release_date=metadata.pop("run_ena_first_public"),
                        last_uploaded_date=metadata.pop("run_ena_last_update"),
-                       files=[file],
+                       files=files,
                        key_values=metadata)
 
     @staticmethod
@@ -293,7 +315,9 @@ class SraSurveyor(ExternalSourceSurveyor):
         surveyed_last_accession = False
         if not surveyed_last_accession:
             # Change to debug
-            logger.info("Surveying SRA Run Accession %d", survey_job=survey_job.id)
+            logger.info("Surveying SRA Run Accession %s",
+                        current_accession,
+                        survey_job=survey_job.id)
             try:
                 self._generate_batch(current_accession)
             except Exception as e:

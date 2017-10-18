@@ -146,10 +146,12 @@ class File(TimeTrackedModel):
                             dir_name)
 
     def get_temp_download_path(self, dir_name: str=None) -> str:
-        """Returns the path of the downloaded file in the temp directory
+        """Returns the path of the downloaded file in the temp directory.
 
-        In cases where extraction is necessary, this will not match the
-        name of the batch's extracted file.
+        Bases the filename in the returned path off of the filename
+        within the download_url. In cases where extraction is
+        necessary, this will not match the name of the batch's
+        extracted file.
         """
         return os.path.join(self.get_temp_dir(dir_name),
                             self._get_downloaded_name())
