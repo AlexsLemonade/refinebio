@@ -1,5 +1,5 @@
 from django.utils import timezone
-from data_refinery_models.models import SurveyJob, SurveyJobKeyValue
+from data_refinery_common.models import SurveyJob, SurveyJobKeyValue
 from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
 from data_refinery_common.logging import get_and_configure_logger
 

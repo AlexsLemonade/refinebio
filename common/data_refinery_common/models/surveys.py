@@ -1,5 +1,5 @@
 from django.db import models
-from data_refinery_models.models.base_models import TimeTrackedModel
+from data_refinery_common.models.base_models import TimeTrackedModel
 
 
 class SurveyJob(TimeTrackedModel):

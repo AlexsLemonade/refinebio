@@ -9,7 +9,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_models', '0002_auto_20170727_2100'),
+        ('data_refinery_common', '0002_auto_20170727_2100'),
     ]
 
     operations = [
@@ -21,7 +21,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='downloaderjob',
             name='retried_job',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, to='data_refinery_models.DownloaderJob'),
+            field=models.ForeignKey(
+                null=True, on_delete=django.db.models.deletion.PROTECT, to='data_refinery_common.DownloaderJob'),
         ),
         migrations.AddField(
             model_name='processorjob',
@@ -31,6 +32,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='processorjob',
             name='retried_job',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, to='data_refinery_models.ProcessorJob'),
+            field=models.ForeignKey(
+                null=True, on_delete=django.db.models.deletion.PROTECT, to='data_refinery_common.ProcessorJob'),
         ),
     ]
