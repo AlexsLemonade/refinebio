@@ -11,11 +11,11 @@ cd $script_directory
 # move up a level
 cd ..
 
-docker build -t common_tests -f common/Dockerfile.tests .
+docker build -t common_tests -f common/Dockerfile .
 
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
 docker run \
        --add-host=database:$HOST_IP \
        --env-file common/environments/test \
-       -i common_tests "$@"
+       -i common_tests test --no-input "$@"

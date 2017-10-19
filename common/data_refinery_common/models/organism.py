@@ -1,7 +1,7 @@
 import requests
 from xml.etree import ElementTree
 from django.db import models
-from data_refinery_models.models.base_models import TimeTrackedModel
+from data_refinery_common.models.base_models import TimeTrackedModel
 
 
 # Import and set logger

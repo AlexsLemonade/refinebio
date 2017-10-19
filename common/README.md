@@ -7,7 +7,7 @@ sudo -u postgres install.sh
 To create tables within that database run:
 
 ```
-python manage.py migrate
+./make_migrations.sh
 ```
 
 ## Developing
@@ -26,4 +26,5 @@ Next you should generate the package:
 python setup.py sdist
 ```
 
-The Dockerfiles know how to find the package and install it in the container.
+The Dockerfiles for other projects know how to find the package and install it
+in the container.
