@@ -5,9 +5,7 @@ from data_refinery_common.models import (
     Batch,
     BatchKeyValue,
     File,
-    SurveyJob,
-    SurveyJobKeyValue,
-    Organism
+    SurveyJob
 )
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
@@ -17,30 +15,10 @@ from data_refinery_common.logging import get_and_configure_logger
 logger = get_and_configure_logger(__name__)
 
 
-DDBJ_URL_BASE = "ftp://ftp.ddbj.nig.ac.jp/ddbj_database/dra/fastq/"
 ENA_METADATA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/data/view/{}&display=xml"
 ENA_DOWNLOAD_URL_TEMPLATE = ("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/{short_accession}{sub_dir}"
                              "/{long_accession}/{long_accession}{read_suffix}.fastq.gz")
 ENA_SUB_DIR_PREFIX = "/00"
-TEST_XML = "SRA200/SRA200001"
-TAIL = "SRA200001.run.xml"
-
-# SRA has a convention around its accession IDs. Each accession ID has
-# a three letter prefix. The first is what organization the data was
-# submitted to:
-# A - America
-# E - Europe
-# D - Japan
-
-# The second letter is presumably related to the type of data, but for
-# RNA data it is always R so I haven't needed to verify this. The
-# third letter corresponds to what type of data the accession ID is
-# referring to:
-SUBMISSION_CODE = "A"
-EXPERIMENT_CODE = "X"
-STUDY_CODE = "P"
-SAMPLE_CODE = "S"
-RUN_CODE = "R"
 
 
 class UnsupportedDataTypeError(BaseException):
@@ -120,7 +98,7 @@ class SraSurveyor(ExternalSourceSurveyor):
             elif child.tag == "DESIGN":
                 for grandchild in child:
                     if grandchild.tag == "DESIGN_DESCRIPTION":
-                        metadata["experiment_desing_description"] = grandchild.text
+                        metadata["experiment_design_description"] = grandchild.text
                     elif grandchild.tag == "LIBRARY_DESCRIPTOR":
                         SraSurveyor.gather_library_metadata(metadata, grandchild)
                     elif grandchild.tag == "SPOT_DESCRIPTOR":
@@ -261,14 +239,7 @@ class SraSurveyor(ExternalSourceSurveyor):
                     size_in_bytes=-1)  # Will have to be determined later
 
     def _generate_batch(self, run_accession: str) -> None:
-        """Generates a Batch for each sample in samples.
-
-        Uses the metadata contained in experiment (which should be
-        generated via get_experiment_metadata) to add additional
-        metadata to each Batch. If replicate_raw is True (the default)
-        then only raw files will be replicated. Otherwise all files
-        will be replicated.
-        """
+        """Generates a Batch for the provided run_accession."""
         metadata = SraSurveyor.gather_all_metadata(run_accession)
 
         if metadata["library_layout"] == "PAIRED":
@@ -314,10 +285,9 @@ class SraSurveyor(ExternalSourceSurveyor):
         # do-while loop.
         surveyed_last_accession = False
         if not surveyed_last_accession:
-            # Change to debug
-            logger.info("Surveying SRA Run Accession %s",
-                        current_accession,
-                        survey_job=survey_job.id)
+            logger.debug("Surveying SRA Run Accession %s",
+                         current_accession,
+                         survey_job=survey_job.id)
             try:
                 self._generate_batch(current_accession)
             except Exception as e:
