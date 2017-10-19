@@ -13,7 +13,6 @@ class PipelineEnums(Enum):
 class ProcessorPipeline(PipelineEnums):
     """Pipelines which perform some kind of processing on the data."""
     AFFY_TO_PCL = "AFFY_TO_PCL"
-    SALMON = "SALMON"
     NO_OP = "NO_OP"
     NONE = "NONE"
 
@@ -26,8 +25,7 @@ class DiscoveryPipeline(PipelineEnums):
 # Maps processor pipeline names to the Celery task definitions.
 PROCESSOR_PIPELINE_LOOKUP = {
     "AFFY_TO_PCL": "data_refinery_workers.processors.array_express.affy_to_pcl",
-    "NO_OP": "data_refinery_workers.processors.no_op.no_op_processor",
-    "SALMON": "data_refinery_workers.processors.salmon.salmon",
+    "NO_OP": "data_refinery_workers.processors.no_op.no_op_processor"
 }
 
 
