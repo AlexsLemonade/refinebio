@@ -152,6 +152,10 @@ class DownloadSraTestCase(TestCase):
 
         processor_job = ProcessorJob.objects.get()
 
+        target_path_template = "/home/user/data_store/temp/IlluminaHiSeq2000/SALMON/downloader_job_{}/DRR002116_{}.fastq.gz"  # noqa
+        target_path_1 = target_path_template.format(downloader_job.id, 1)
+        target_path_2 = target_path_template.format(downloader_job.id, 2)
+
         # Impossible to match the exact File and DownloaderJob
         # objects, so rather than trying to do so, just pull them out
         # from the calls and test the path it was called with:
@@ -160,10 +164,10 @@ class DownloadSraTestCase(TestCase):
         mock_download_file.assert_has_calls([
             call(first_call[0],
                  first_call[1],
-                 "/home/user/data_store/temp/IlluminaHiSeq2000/SALMON/downloader_job_1/DRR002116_2.fastq.gz"),  # noqa
+                 target_path_2),
             call(second_call[0],
                  second_call[1],
-                 "/home/user/data_store/temp/IlluminaHiSeq2000/SALMON/downloader_job_1/DRR002116_1.fastq.gz")  # noqa
+                 target_path_1)
         ])
 
         mock_app.send_task.assert_called_once_with(
