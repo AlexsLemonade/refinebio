@@ -1,6 +1,5 @@
 from unittest.mock import Mock, patch
 from django.test import TestCase
-import datetime
 from data_refinery_foreman.surveyor.sra import (
     SraSurveyor,
     ENA_METADATA_URL_TEMPLATE,
@@ -13,9 +12,6 @@ from data_refinery_foreman.surveyor.test_sra_xml import (
     SUBMISSION_XML
 )
 from data_refinery_common.models import (
-    Batch,
-    BatchKeyValue,
-    File,
     SurveyJob,
     SurveyJobKeyValue
 )
@@ -57,7 +53,7 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(metadata["ena-base-count"], "158881910957")
         self.assertEqual(metadata["ena-spot-count"], "1371813555")
         self.assertEqual(metadata["experiment_accession"], "DRX001563")
-        self.assertEqual(metadata["experiment_desing_description"],
+        self.assertEqual(metadata["experiment_design_description"],
                          ("Experiment for mRNAseq of chicken at stage "
                           "HH16 (biological replicate 1)"))
         self.assertEqual(metadata["experiment_title"],

@@ -25,10 +25,10 @@ class InvalidProcessedFormatError(BaseException):
 
 class ExternalSourceSurveyor:
     __metaclass__ = abc.ABCMeta
-    batches = []
 
     def __init__(self, survey_job: SurveyJob):
         self.survey_job = survey_job
+        self.batches = []
 
     @abc.abstractproperty
     def source_type(self):
