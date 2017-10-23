@@ -234,8 +234,8 @@ class SraSurveyor(ExternalSourceSurveyor):
                         sub_dir=sub_dir,
                         long_accession=run_accession,
                         read_suffix=read_suffix),
-                    raw_format=".fastq.gz",
-                    processed_format=".tar.gz",
+                    raw_format="fastq.gz",
+                    processed_format="tar.gz",
                     size_in_bytes=-1)  # Will have to be determined later
 
     def _generate_batch(self, run_accession: str) -> None:
@@ -250,7 +250,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         self.add_batch(platform_accession_code=metadata.pop("platform_instrument_model"),
                        experiment_accession_code=metadata.pop("experiment_accession"),
-                       organism_id=metadata.pop("organism_id"),
+                       organism_id=int(metadata.pop("organism_id")),
                        organism_name=metadata.pop("organism_name"),
                        experiment_title=metadata.pop("experiment_title"),
                        release_date=metadata.pop("run_ena_first_public"),

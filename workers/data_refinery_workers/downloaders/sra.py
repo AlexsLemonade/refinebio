@@ -15,7 +15,7 @@ CHUNK_SIZE = 1024 * 256
 JOB_DIR_PREFIX = "downloader_job_"
 
 
-def download_file(file: File, downloader_job: DownloaderJob, target_file_path: str) -> bool:
+def _download_file(file: File, downloader_job: DownloaderJob, target_file_path: str) -> bool:
     try:
         logger.debug("Downloading file from %s to %s.",
                      file.download_url,
@@ -31,7 +31,8 @@ def download_file(file: File, downloader_job: DownloaderJob, target_file_path: s
         logger.exception("Exception caught while downloading batch from the URL: %s",
                          file.download_url,
                          downloader_job=downloader_job.id)
-        downloader_job.failure_reason = "Exception caught while downloading batch"
+        downloader_job.failure_reason = ("Exception caught while downloading "
+                                         "batch from the URL: {}").format(file.download_url)
         return False
 
     return True
@@ -51,19 +52,25 @@ def download_sra(job_id: int) -> None:
         target_directory = files[0].get_temp_dir(job_dir)
         os.makedirs(target_directory, exist_ok=True)
     elif batches.count() > 1:
-        logger.error("More than one batch found for SRA downloader job. There should only be one.",
-                     downloader_job=job_id)
+        message = "More than one batch found for SRA downloader job. There should only be one."
+        logger.error(message, downloader_job=job_id)
+        job.failure_reason = message
         success = False
     else:
-        logger.error("No batches found.", downloader_job=job_id)
+        message = "No batches found."
+        logger.error(message, downloader_job=job_id)
+        job.failure_reason = message
         success = False
 
-    for file in files:
-        target_file_path = file.get_temp_pre_path(job_dir)
-        if success:
-            success = download_file(file, job, target_file_path)
+    if success:
+        for file in files:
+            target_file_path = file.get_temp_pre_path(job_dir)
+            success = _download_file(file, job, target_file_path)
 
-        if success:
+            # If a download fails stop the job and fail gracefully.
+            if not success:
+                break
+
             try:
                 file.size_in_bytes = os.path.getsize(target_file_path)
                 file.save()
@@ -74,8 +81,9 @@ def download_sra(job_id: int) -> None:
                                  batch=batches[0].id,
                                  file=file.id,
                                  file_name=file.name)
-                job.failure_reason = "Exception caught while uploading batch"
+                job.failure_reason = "Exception caught while uploading file."
                 success = False
+                break
 
     if success:
         logger.debug("Files for batch %s downloaded and extracted successfully.",

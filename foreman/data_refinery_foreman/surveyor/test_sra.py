@@ -1,5 +1,6 @@
 from unittest.mock import Mock, patch
 from django.test import TestCase
+import datetime
 from data_refinery_foreman.surveyor.sra import (
     SraSurveyor,
     ENA_METADATA_URL_TEMPLATE,
@@ -11,19 +12,32 @@ from data_refinery_foreman.surveyor.test_sra_xml import (
     STUDY_XML,
     SUBMISSION_XML
 )
+from data_refinery_common.models import (
+    Batch,
+    BatchKeyValue,
+    File,
+    SurveyJob,
+    SurveyJobKeyValue
+)
+
+EXPERIMENT_ACCESSION = "DRX001563"
+RUN_ACCESSION = "DRR002116"
+SAMPLE_ACCESSION = "DRS001521"
+STUDY_ACCESSION = "DRP000595"
+SUBMISSION_ACCESSION = "DRA000567"
 
 
 def mocked_requests_get(url):
     mock = Mock(ok=True)
-    if url == ENA_METADATA_URL_TEMPLATE.format("DRX001563"):
+    if url == ENA_METADATA_URL_TEMPLATE.format(EXPERIMENT_ACCESSION):
         mock.text = EXPERIMENT_XML
-    elif url == ENA_METADATA_URL_TEMPLATE.format("DRR002116"):
+    elif url == ENA_METADATA_URL_TEMPLATE.format(RUN_ACCESSION):
         mock.text = RUN_XML
-    elif url == ENA_METADATA_URL_TEMPLATE.format("DRS001521"):
+    elif url == ENA_METADATA_URL_TEMPLATE.format(SAMPLE_ACCESSION):
         mock.text = SAMPLE_XML
-    elif url == ENA_METADATA_URL_TEMPLATE.format("DRP000595"):
+    elif url == ENA_METADATA_URL_TEMPLATE.format(STUDY_ACCESSION):
         mock.text = STUDY_XML
-    elif url == ENA_METADATA_URL_TEMPLATE.format("DRA000567"):
+    elif url == ENA_METADATA_URL_TEMPLATE.format(SUBMISSION_ACCESSION):
         mock.text = SUBMISSION_XML
     else:
         raise Exception("Was not expecting the url: " + url)
@@ -92,3 +106,49 @@ class SraSurveyorTestCase(TestCase):
                           "was also determined by uding stranded sequencing "
                           "methods."))
         self.assertEqual(metadata["submission_title"], "Submitted by RIKEN_CDB on 19-JUL-2013")
+
+    @patch('data_refinery_foreman.surveyor.sra.requests.get')
+    def test_batch_created(self, mock_get):
+        mock_get.side_effect = mocked_requests_get
+
+        # Use same run accession for the start and end of the range to
+        # achieve a length of 1
+        survey_job = SurveyJob(source_type="SRA")
+        survey_job.save()
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                           key="start_accession",
+                                           value=RUN_ACCESSION)
+        key_value_pair.save()
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                           key="end_accession",
+                                           value=RUN_ACCESSION)
+        key_value_pair.save()
+
+        surveyor = SraSurveyor(survey_job)
+
+        self.assertTrue(surveyor.discover_batches())
+        # With only a single run accession there should only be a
+        # single batch.
+        self.assertEqual(len(surveyor.batches), 1)
+
+        batch = surveyor.batches[0]
+        self.assertEqual(batch.survey_job.id, survey_job.id)
+        self.assertEqual(batch.source_type, "SRA")
+        self.assertEqual(batch.pipeline_required, "SALMON")
+        self.assertEqual(batch.platform_accession_code, "IlluminaHiSeq2000")
+        self.assertEqual(batch.experiment_accession_code, "DRX001563")
+        self.assertEqual(batch.experiment_title, ("Illumina HiSeq 2000 sequencing; "
+                                                  "Exp_Gg_HH16_1_embryo_mRNAseq"))
+        self.assertEqual(batch.status, "NEW")
+        self.assertEqual(batch.release_date, "2013-07-19")
+        self.assertEqual(batch.last_uploaded_date, "2017-08-11")
+        self.assertEqual(batch.organism_id, 9031)
+        self.assertEqual(batch.organism_name, "GALLUS GALLUS")
+
+        file = batch.files[0]
+        self.assertEqual(file.size_in_bytes, -1)
+        self.assertEqual(file.download_url, "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/DRR002/DRR002116/DRR002116.fastq.gz")  # noqa
+        self.assertEqual(file.raw_format, "fastq.gz")
+        self.assertEqual(file.processed_format, "tar.gz")
+        self.assertEqual(file.name, "DRR002116.fastq.gz")
+        self.assertEqual(file.internal_location, "IlluminaHiSeq2000/SALMON")
