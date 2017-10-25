@@ -1,5 +1,6 @@
 import os
 import shutil
+from contextlib import closing
 from django.test import TestCase
 from unittest.mock import MagicMock
 from data_refinery_common.models import (
@@ -10,6 +11,7 @@ from data_refinery_common.models import (
     ProcessorJob,
 )
 from data_refinery_workers.processors import array_express, utils
+import pandas as pd
 
 
 def init_objects():
@@ -200,6 +202,90 @@ class RunScanUPCTestCase(TestCase):
 
         # Clean up the copied file
         os.remove(input_file_path)
+
+    def test_pcl_is_valid(self):
+        batch = init_objects()
+        file = batch.files[0]
+        batch.platform_accession_code = "TEST3"
+        batch.save()
+        file.internal_location = "TEST3/AFFY_TO_PCL"
+        file.name = "GSM955680_DNA10204-001.CEL"
+        file.save()
+
+        # Prevent the test file/directory from getting removed.
+        file.remove_temp_directory = MagicMock()
+
+        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
+
+        # We have a test file in the repo, but it needs to be in the
+        # correct location which depends on the ID of the Batch, which
+        # changes based on the order tests are run in.
+        test_file_directory = "/home/user/data_store/temp/TEST3/AFFY_TO_PCL/"
+        test_file_path = test_file_directory + file.name
+        input_file_path = file.get_temp_pre_path()
+        os.makedirs(file.get_temp_dir(), exist_ok=True)
+        shutil.copyfile(test_file_path, input_file_path)
+
+        output_file_path = file.get_temp_post_path()
+        job_context = {"job_id": processor_job.id,
+                       "job": processor_job,
+                       "batches": [batch],
+                       # "brainarray_package": "hugene10sthsentrezgprobe",
+                       "input_file_path": input_file_path,
+                       "output_file_path": output_file_path}
+
+        job_context = array_express._determine_brainarray_package(job_context)
+
+        # If output_file exists, remove it first.
+        if os.path.isfile(output_file_path):
+            os.remove(output_file_path)
+
+        job_context = array_express._run_scan_upc(job_context)
+
+        # success is only populated by this function on an error
+        self.assertFalse("success" in job_context)
+        self.assertTrue(os.path.isfile(output_file_path))
+
+        # Verification of the PCL file
+        reference_file = test_file_directory + "E-GEOD-39088_reference.pcl"
+
+        ####### DELETE ######
+        output_file_path = "/home/user/data_store/temp/GSM955680_DNA10204-001_re_rerun.PCL"
+        #####################
+        with closing(open(output_file_path)) as f:
+            reference_gene = f.readline().replace("\n", "")
+
+        ####### DELETE ######
+        reference_file = "/home/user/data_store/temp/E-GEOD-39088_reference.pcl"
+        #####################
+        reference_matrix = pd.read_csv(reference_file, delimiter="\t")
+        reference_matrix.rename(index=str,
+                                columns={"Unnamed: 0": "genes", reference_gene: "reference_gene"},
+                                inplace=True)
+        test_matrix = pd.read_csv(output_file_path, delimiter="\t", skiprows=1, header=None)
+        test_matrix.rename(index=str, columns={0: "genes", 1: "test_gene"}, inplace=True)
+        intersection = pd.merge(reference_matrix, test_matrix, how="inner", on="genes")
+        # d = intersection[[intersection.columns[0], "reference_gene", "test_gene"]]
+        # d["epsilon"] = d["reference_gene"] - d["test_gene"]
+        intersection["epsilon"] = intersection["reference_gene"] - intersection["test_gene"]
+        intersection[["reference_gene", "test_gene"]].corr()
+
+        standard_deviations = intersection.std(axis=0)
+        min_standard_deviation = min(standard_deviations["reference_gene"],
+                                     standard_deviations["test_gene"])
+        error_margin = min_standard_deviation * 0.1
+
+        largest_epsilon = intersection["epsilon"].abs().max()
+        self.assertGreater(error_margin, largest_epsilon)
+
+        correlation = intersection[["reference_gene", "test_gene"]].corr()
+        self.assertGreater(correlation, 0.99)
+
+        # Clean up the processed file
+        # os.remove(output_file_path)
+
+        # Clean up the copied file
+        # os.remove(input_file_path)
 
     def test_failure(self):
         batch = init_objects()
