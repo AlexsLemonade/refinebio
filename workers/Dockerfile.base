@@ -46,9 +46,13 @@ RUN apt-get update -qq && \
 
 COPY workers/requirements.txt .
 
+# Pycurl special options are necessary because GnuTLS drops
+# SSL connections and caused this error:
+# https://stackoverflow.com/questions/41084351/django-celery-sqs-boto-exception-sqserror-sqserror-599-gnutls-handshake
 RUN \
   pip3 --no-cache-dir install pip --upgrade && \
   pip3 --no-cache-dir install setuptools --upgrade && \
   pip3 --no-cache-dir install wheel --upgrade && \
   pip3 --no-cache-dir install -r requirements.txt --upgrade && \
+  pip3 --no-cache-dir install pycurl==7.43.0 --global-option="--with-openssl"
   rm -rf /root/.cache

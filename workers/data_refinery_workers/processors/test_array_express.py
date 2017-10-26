@@ -250,35 +250,36 @@ class RunScanUPCTestCase(TestCase):
         reference_file = test_file_directory + "E-GEOD-39088_reference.pcl"
 
         ####### DELETE ######
-        output_file_path = "/home/user/data_store/temp/GSM955680_DNA10204-001_re_rerun.PCL"
+        # output_file_path = "/home/user/data_store/temp/GSM955680_DNA10204-001_re_rerun.PCL"
         #####################
         with closing(open(output_file_path)) as f:
-            reference_gene = f.readline().replace("\n", "")
+            reference_sample = f.readline().replace("\n", "")
 
         ####### DELETE ######
-        reference_file = "/home/user/data_store/temp/E-GEOD-39088_reference.pcl"
+        # reference_file = "/home/user/data_store/temp/E-GEOD-39088_reference.pcl"
         #####################
         reference_matrix = pd.read_csv(reference_file, delimiter="\t")
         reference_matrix.rename(index=str,
-                                columns={"Unnamed: 0": "genes", reference_gene: "reference_gene"},
+                                columns={"Unnamed: 0": "genes",
+                                         reference_sample: "reference_sample"},
                                 inplace=True)
         test_matrix = pd.read_csv(output_file_path, delimiter="\t", skiprows=1, header=None)
-        test_matrix.rename(index=str, columns={0: "genes", 1: "test_gene"}, inplace=True)
+        test_matrix.rename(index=str, columns={0: "genes", 1: "test_sample"}, inplace=True)
         intersection = pd.merge(reference_matrix, test_matrix, how="inner", on="genes")
-        # d = intersection[[intersection.columns[0], "reference_gene", "test_gene"]]
-        # d["epsilon"] = d["reference_gene"] - d["test_gene"]
-        intersection["epsilon"] = intersection["reference_gene"] - intersection["test_gene"]
-        intersection[["reference_gene", "test_gene"]].corr()
+        # d = intersection[[intersection.columns[0], "reference_sample", "test_sample"]]
+        # d["epsilon"] = d["reference_sample"] - d["test_sample"]
+        intersection["epsilon"] = intersection["reference_sample"] - intersection["test_sample"]
+        intersection[["reference_sample", "test_sample"]].corr()
 
         standard_deviations = intersection.std(axis=0)
-        min_standard_deviation = min(standard_deviations["reference_gene"],
-                                     standard_deviations["test_gene"])
+        min_standard_deviation = min(standard_deviations["reference_sample"],
+                                     standard_deviations["test_sample"])
         error_margin = min_standard_deviation * 0.1
 
         largest_epsilon = intersection["epsilon"].abs().max()
         self.assertGreater(error_margin, largest_epsilon)
 
-        correlation = intersection[["reference_gene", "test_gene"]].corr()
+        correlation = intersection[["reference_sample", "test_sample"]].corr()
         self.assertGreater(correlation, 0.99)
 
         # Clean up the processed file
