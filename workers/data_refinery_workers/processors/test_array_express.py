@@ -276,11 +276,11 @@ class RunScanUPCTestCase(TestCase):
                                      standard_deviations["test_sample"])
         error_margin = min_standard_deviation * 0.1
 
-        largest_epsilon = intersection["epsilon"].abs().max()
-        self.assertGreater(error_margin, largest_epsilon)
+        median_epsilon = intersection["epsilon"].abs().median()
+        self.assertGreater(error_margin, median_epsilon)
 
         correlation = intersection[["reference_sample", "test_sample"]].corr()
-        self.assertGreater(correlation, 0.99)
+        self.assertGreater(correlation["reference_sample"]["test_sample"], 0.99)
 
         # Clean up the processed file
         # os.remove(output_file_path)
