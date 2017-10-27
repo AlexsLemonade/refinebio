@@ -230,7 +230,6 @@ class RunScanUPCTestCase(TestCase):
         job_context = {"job_id": processor_job.id,
                        "job": processor_job,
                        "batches": [batch],
-                       # "brainarray_package": "hugene10sthsentrezgprobe",
                        "input_file_path": input_file_path,
                        "output_file_path": output_file_path}
 
@@ -249,27 +248,20 @@ class RunScanUPCTestCase(TestCase):
         # Verification of the PCL file
         reference_file = test_file_directory + "E-GEOD-39088_reference.pcl"
 
-        ####### DELETE ######
-        # output_file_path = "/home/user/data_store/temp/GSM955680_DNA10204-001_re_rerun.PCL"
-        #####################
         with closing(open(output_file_path)) as f:
             reference_sample = f.readline().replace("\n", "")
 
-        ####### DELETE ######
-        # reference_file = "/home/user/data_store/temp/E-GEOD-39088_reference.pcl"
-        #####################
         reference_matrix = pd.read_csv(reference_file, delimiter="\t")
         reference_matrix.rename(index=str,
                                 columns={"Unnamed: 0": "genes",
                                          reference_sample: "reference_sample"},
                                 inplace=True)
+
         test_matrix = pd.read_csv(output_file_path, delimiter="\t", skiprows=1, header=None)
         test_matrix.rename(index=str, columns={0: "genes", 1: "test_sample"}, inplace=True)
+
         intersection = pd.merge(reference_matrix, test_matrix, how="inner", on="genes")
-        # d = intersection[[intersection.columns[0], "reference_sample", "test_sample"]]
-        # d["epsilon"] = d["reference_sample"] - d["test_sample"]
         intersection["epsilon"] = intersection["reference_sample"] - intersection["test_sample"]
-        intersection[["reference_sample", "test_sample"]].corr()
 
         standard_deviations = intersection.std(axis=0)
         min_standard_deviation = min(standard_deviations["reference_sample"],
@@ -277,16 +269,16 @@ class RunScanUPCTestCase(TestCase):
         error_margin = min_standard_deviation * 0.1
 
         median_epsilon = intersection["epsilon"].abs().median()
-        self.assertGreater(error_margin, median_epsilon)
+        self.assertLess(median_epsilon, error_margin)
 
         correlation = intersection[["reference_sample", "test_sample"]].corr()
         self.assertGreater(correlation["reference_sample"]["test_sample"], 0.99)
 
         # Clean up the processed file
-        # os.remove(output_file_path)
+        os.remove(output_file_path)
 
         # Clean up the copied file
-        # os.remove(input_file_path)
+        os.remove(input_file_path)
 
     def test_failure(self):
         batch = init_objects()
