@@ -11,7 +11,9 @@ cd $script_directory
 # move up a level
 cd ..
 
-docker build -t dr_tester -f workers/Dockerfile.tests .
+volume_directory="$script_directory/volume"
+
+docker build -t dr_tester -f workers/Dockerfile.salmon_runner .
 
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
@@ -20,4 +22,5 @@ docker run \
        --add-host=database:$HOST_IP \
        --env-file workers/environments/dev \
        --entrypoint ./manage.py \
-       dr_worker queue_processor
+       --volume $volume_directory:/home/user/data_store \
+       dr_tester queue_processor

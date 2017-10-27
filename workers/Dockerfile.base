@@ -51,4 +51,5 @@ RUN \
   pip3 --no-cache-dir install setuptools --upgrade && \
   pip3 --no-cache-dir install wheel --upgrade && \
   pip3 --no-cache-dir install -r requirements.txt --upgrade && \
+  pip3 --no-cache-dir install pycurl==7.43.0 --global-option="--with-openssl" && \
   rm -rf /root/.cache

@@ -12,6 +12,7 @@ from data_refinery_common.models import (
     SurveyJob,
     Batch,
     BatchStatuses,
+    File,
     ProcessorJob
 )
 from data_refinery_workers.task_runner import app
@@ -34,46 +35,41 @@ class Command(BaseCommand):
         batch = Batch(
             survey_job=survey_job,
             source_type="SRA",
-            size_in_bytes=2214725074,
-            raw_format="fastq",
-            processed_format="sf",
             pipeline_required="SALMON",
             platform_accession_code="IlluminaHiSeq2500",
-            experiment_accession_code="PRJEB5018",
+            experiment_accession_code="DRX014494",
             experiment_title="It doesn't really matter.",
-            name="ERR1680082_1.fastq",
-            internal_location="IlluminaHiSeq2500/SALMON",
             organism_id=10090,
-            organism_name="MUS MUSCULUS",
-            release_date="2014-03-25",
-            last_uploaded_date="2016-05-20",
-            status=BatchStatuses.NEW.value,
-            download_url="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR168/002/ERR1680082/ERR1680082_1.fastq.gz"  # noqa
+            organism_name="ARABIDOPSIS THALIANA",
+            release_date="2015-05-03",
+            last_uploaded_date="2015-06-19",
+            status=BatchStatuses.DOWNLOADED.value,
         )
         batch.save()
 
-        batch2 = Batch(
-            survey_job=survey_job,
-            source_type="SRA",
-            size_in_bytes=2214725074,
-            download_url="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR168/002/ERR1680082/ERR1680082_2.fastq.gz",  # noqa
-            raw_format="fastq",
-            processed_format="sf",
-            pipeline_required="SALMON",
-            platform_accession_code="IlluminaHiSeq2500",
-            experiment_accession_code="PRJEB5018",
-            experiment_title="It doesn't really matter.",
-            name="ERR1680082_2.fastq",
+        file1 = File(
+            size_in_bytes=967794560,
+            raw_format="fastq.gz",
+            processed_format=".tar.gz",
+            name="DRR016125_1.fastq.gz",
             internal_location="IlluminaHiSeq2500/SALMON",
-            organism_id=10090,
-            organism_name="MUS MUSCULUS",
-            release_date="2014-03-25",
-            last_uploaded_date="2016-05-20",
-            status=BatchStatuses.NEW.value
+            download_url="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/DRR016/DRR016125/DRR016125_1.fastq.gz",  # noqa
+            batch=batch
         )
-        batch2.save()
+        file1.save()
 
-        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch, batch2])
+        file2 = File(
+            size_in_bytes=1001146319,
+            raw_format="fastq.gz",
+            processed_format=".tar.gz",
+            name="DRR016125_2.fastq.gz",
+            internal_location="IlluminaHiSeq2500/SALMON",
+            download_url="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/DRR016/DRR016125/DRR016125_2.fastq.gz",  # noqa
+            batch=batch
+        )
+        file2.save()
+
+        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
         processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
         app.send_task(processor_task, args=[processor_job.id])
         logger.info("Processor Job queued.", processor_job=processor_job.id)
