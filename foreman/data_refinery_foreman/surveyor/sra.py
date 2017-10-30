@@ -26,6 +26,19 @@ class UnsupportedDataTypeError(BaseException):
 
 
 class SraSurveyor(ExternalSourceSurveyor):
+    """Surveys SRA for Batches of data.
+
+    Implements the ExternalSourceSurveyor interface. It is worth
+    noting that a large part of this class is parsing XML metadata
+    about Batches. The strategy for parsing the metadata was to take
+    nearly all of the fields that could be extracted from the
+    XML. Essentially all the XML parsing code is just working through
+    the XML in the way it is formatted. For reference see the sample
+    XML which has been included in ./test_sra_xml.py. This sample XML
+    is used for testing, so the values that are extracted from it can
+    be found in ./test_sra.py.
+    """
+
     def source_type(self):
         return Downloaders.SRA.value
 
@@ -75,7 +88,12 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_spot_metadata(metadata: Dict, spot: ET.Element) -> None:
-        """We don't actually know what this metadata is about."""
+        """We don't actually know what this metadata is about.
+
+        SPOT_DECODE_SPECs have a variable number of READ_SPECs so we
+        have to add a counter to the keys in order to make them work
+        within the flat dictionary we're building.
+        """
         for child in spot:
             if child.tag == "SPOT_DECODE_SPEC":
                 read_spec_counter = 0
@@ -119,6 +137,8 @@ class SraSurveyor(ExternalSourceSurveyor):
         # really just an unnecessary level
         for child in run_link[0]:
             if child.tag == "DB":
+                # The key is prefixed with "ena-" which is unnecessary
+                # since we know this is coming from ENA
                 key = child.text.lower().replace("ena-", "") + "_accession"
             elif child.tag == "ID":
                 value = child.text
@@ -127,6 +147,13 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def parse_attribute(attribute: ET.ElementTree, key_prefix: str ="") -> (str, str):
+        """Parse an XML attribute.
+
+        Takes an optional key_prefix which is used to differentiate
+        keys which may be shared between different object types. For
+        example "title" could be the experiment_title or the
+        sample_title.
+        """
         key = ""
         value = ""
 
@@ -188,7 +215,6 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_study_metadata(metadata: Dict) -> None:
-        metadata = {"study_accession": "DRP000595"}
         response = requests.get(ENA_METADATA_URL_TEMPLATE.format(metadata["study_accession"]))
         study_xml = ET.fromstring(response.text)
 
@@ -220,10 +246,10 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def _build_file(run_accession: str, read_suffix="")-> File:
-        # ENA has a weird way of nesting data where if the run
-        # accession is greater than 9 characters long then there is an
-        # extra sub-directory in the path which is "00" + the last
-        # digit of the run accession.
+        # ENA has a weird way of nesting data: if the run accession is
+        # greater than 9 characters long then there is an extra
+        # sub-directory in the path which is "00" + the last digit of
+        # the run accession.
         sub_dir = ""
         if len(run_accession) > 9:
             sub_dir = ENA_SUB_DIR_PREFIX + run_accession[-1]
@@ -266,9 +292,13 @@ class SraSurveyor(ExternalSourceSurveyor):
         returned.
         """
         prefix = last_accession[0:3]
-        number = int(last_accession[3:])
-        number = number + 1
-        return prefix + "{0:06d}".format(number)
+        digits = last_accession[3:]
+        number = int(digits) + 1
+
+        # This format string is pretty hairy, but since the number of
+        # digits can be variable we need to determine the amount of
+        # padding to have the formatter add.
+        return (prefix + "{0:0" + str(len(digits)) + "d}").format(number)
 
     def discover_batches(self):
         survey_job = SurveyJob.objects.get(id=self.survey_job.id)
@@ -284,7 +314,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         # instead of the beginning, we achieve the functionality of a
         # do-while loop.
         surveyed_last_accession = False
-        if not surveyed_last_accession:
+        while not surveyed_last_accession:
             logger.debug("Surveying SRA Run Accession %s",
                          current_accession,
                          survey_job=survey_job.id)

@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, call
 from django.test import TestCase
 from data_refinery_foreman.surveyor.sra import (
     SraSurveyor,
@@ -42,6 +42,36 @@ def mocked_requests_get(url):
 
 
 class SraSurveyorTestCase(TestCase):
+    def test_get_next_accession(self):
+        self.assertEqual(SraSurveyor.get_next_accession("DRR123456"), "DRR123457")
+        self.assertEqual(SraSurveyor.get_next_accession("DRR1234567"), "DRR1234568")
+        self.assertEqual(SraSurveyor.get_next_accession("DRR12345678"), "DRR12345679")
+        self.assertEqual(SraSurveyor.get_next_accession("DRR123456789"), "DRR123456790")
+
+    @patch.object(SraSurveyor, "_generate_batch")
+    def test_discover_batches(self, mock_generate_batch):
+        survey_job = SurveyJob(source_type="SRA")
+        survey_job.save()
+
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                           key="start_accession",
+                                           value="DRR012345")
+        key_value_pair.save()
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                           key="end_accession",
+                                           value="DRR012348")
+        key_value_pair.save()
+
+        sra_surveyor = SraSurveyor(survey_job)
+        sra_surveyor.discover_batches()
+
+        mock_generate_batch.assert_has_calls([
+            call("DRR012345"),
+            call("DRR012346"),
+            call("DRR012347"),
+            call("DRR012348")
+        ])
+
     @patch('data_refinery_foreman.surveyor.sra.requests.get')
     def test_metadata_is_gathered_correctly(self, mock_get):
         mock_get.side_effect = mocked_requests_get

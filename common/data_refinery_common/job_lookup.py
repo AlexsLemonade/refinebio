@@ -32,7 +32,7 @@ PROCESSOR_PIPELINE_LOOKUP = {
 
 
 class Downloaders(Enum):
-    """A enumeration of downloaders for batch.downloader_task."""
+    """An enumeration of downloaders for batch.downloader_task."""
     ARRAY_EXPRESS = "ARRAY_EXPRESS"
     SRA = "SRA"
 
