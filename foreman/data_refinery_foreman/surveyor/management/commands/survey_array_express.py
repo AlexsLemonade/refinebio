@@ -26,5 +26,5 @@ class Command(BaseCommand):
             logger.error("You must specify an experiment list.")
             return 1
         else:
-            surveyor.survey_experiments(options["experiment_list"])
+            surveyor.survey_ae_experiments(options["experiment_list"])
             return 0

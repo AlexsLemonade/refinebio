@@ -1,6 +1,7 @@
 from django.utils import timezone
 from data_refinery_common.models import SurveyJob, SurveyJobKeyValue
 from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
+from data_refinery_foreman.surveyor.sra import SraSurveyor
 from data_refinery_common.logging import get_and_configure_logger
 
 
@@ -15,6 +16,8 @@ def _get_surveyor_for_source(survey_job: SurveyJob):
     """Factory method for ExternalSourceSurveyors."""
     if survey_job.source_type == "ARRAY_EXPRESS":
         return ArrayExpressSurveyor(survey_job)
+    if survey_job.source_type == "SRA":
+        return SraSurveyor(survey_job)
     else:
         raise SourceNotSupportedError(
             "Source " + survey_job.source_type + " is not supported.")
@@ -77,7 +80,7 @@ def test():
     return
 
 
-def survey_experiments(experiments_list_file):
+def survey_ae_experiments(experiments_list_file):
     with open(experiments_list_file, "r") as experiments:
         for experiment in experiments:
             survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
@@ -87,3 +90,17 @@ def survey_experiments(experiments_list_file):
                                                value=experiment.rstrip())
             key_value_pair.save()
             run_job(survey_job)
+
+
+def survey_sra_experiments(start_accession, end_accession):
+    survey_job = SurveyJob(source_type="SRA")
+    survey_job.save()
+    key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                       key="start_accession",
+                                       value=start_accession)
+    key_value_pair.save()
+    key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                       key="end_accession",
+                                       value=end_accession)
+    key_value_pair.save()
+    run_job(survey_job)
