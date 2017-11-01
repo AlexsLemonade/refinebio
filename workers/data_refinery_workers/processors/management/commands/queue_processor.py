@@ -27,9 +27,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Create all the dummy data that would have been created
         # before a processor job could have been generated.
-        survey_job = SurveyJob(
-            source_type="SRA"
-        )
+        survey_job = SurveyJob(source_type="SRA")
         survey_job.save()
 
         batch = Batch(
@@ -50,7 +48,7 @@ class Command(BaseCommand):
         file1 = File(
             size_in_bytes=967794560,
             raw_format="fastq.gz",
-            processed_format=".tar.gz",
+            processed_format="tar.gz",
             name="DRR016125_1.fastq.gz",
             internal_location="IlluminaHiSeq2500/SALMON",
             download_url="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/DRR016/DRR016125/DRR016125_1.fastq.gz",  # noqa
@@ -61,7 +59,7 @@ class Command(BaseCommand):
         file2 = File(
             size_in_bytes=1001146319,
             raw_format="fastq.gz",
-            processed_format=".tar.gz",
+            processed_format="tar.gz",
             name="DRR016125_2.fastq.gz",
             internal_location="IlluminaHiSeq2500/SALMON",
             download_url="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/DRR016/DRR016125/DRR016125_2.fastq.gz",  # noqa
