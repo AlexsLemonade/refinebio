@@ -25,10 +25,10 @@ class InvalidProcessedFormatError(BaseException):
 
 class ExternalSourceSurveyor:
     __metaclass__ = abc.ABCMeta
-    batches = []
 
     def __init__(self, survey_job: SurveyJob):
         self.survey_job = survey_job
+        self.batches = []
 
     @abc.abstractproperty
     def source_type(self):
@@ -76,7 +76,7 @@ class ExternalSourceSurveyor:
         # Prevent creating duplicate Batches.
         for file in files:
             if File.objects.filter(name=file.name).count() != 0:
-                logger.info(("Skipping sample with name %s because a File already exists with"
+                logger.info(("Skipping sample with name %s because a File already exists with "
                              "that name."),
                             file.name)
                 return
