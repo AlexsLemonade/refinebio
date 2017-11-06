@@ -23,9 +23,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
     def source_type(self):
         return Downloaders.ARRAY_EXPRESS.value
 
-    def determine_pipeline(self,
-                           batch: Batch,
-                           key_values: Dict = {}):
+    def determine_pipeline(self, batch: Batch, key_values: Dict = {}) -> ProcessorPipeline:
         # If it's a CEL file run SCAN.UPC on it.
         if batch.files[0].raw_format == "CEL":
             return ProcessorPipeline.AFFY_TO_PCL

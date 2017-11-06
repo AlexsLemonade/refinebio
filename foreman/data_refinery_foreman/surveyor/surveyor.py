@@ -2,6 +2,7 @@ from django.utils import timezone
 from data_refinery_common.models import SurveyJob, SurveyJobKeyValue
 from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
 from data_refinery_foreman.surveyor.sra import SraSurveyor
+from data_refinery_foreman.surveyor.transcriptome_index import TranscriptomeIndexSurveyor
 from data_refinery_common.logging import get_and_configure_logger
 
 
@@ -18,6 +19,8 @@ def _get_surveyor_for_source(survey_job: SurveyJob):
         return ArrayExpressSurveyor(survey_job)
     if survey_job.source_type == "SRA":
         return SraSurveyor(survey_job)
+    if survey_job.source_type == "TRANSCRIPTOME_INDEX":
+        return TranscriptomeIndexSurveyor(survey_job)
     else:
         raise SourceNotSupportedError(
             "Source " + survey_job.source_type + " is not supported.")
