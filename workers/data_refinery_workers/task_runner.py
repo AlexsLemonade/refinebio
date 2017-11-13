@@ -24,3 +24,5 @@ app.autodiscover_tasks(["data_refinery_workers.processors"],
                        related_name="array_express")
 app.autodiscover_tasks(["data_refinery_workers.processors"],
                        related_name="no_op")
+app.autodiscover_tasks(["data_refinery_workers.processors"],
+                       related_name="transcriptome_index")

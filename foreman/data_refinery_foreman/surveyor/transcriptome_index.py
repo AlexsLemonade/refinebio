@@ -17,9 +17,10 @@ logger = get_and_configure_logger(__name__)
 
 DIVISION_URL_TEMPLATE = ("http://rest.ensemblgenomes.org/info/genomes/division/{division}"
                          "?content-type=application/json")
-TRANSCRIPTOME_URL_TEMPLATE = ("ftp://ftp.ensemblgenomes.org/pub/release-37/{short_division}/fasta/"
-                              "{species}/dna/"
-                              "{caps_species}.{assembly}.dna.toplevel.fa.gz")
+TRANSCRIPTOME_URL_TEMPLATE = (
+    "ftp://ftp.ensemblgenomes.org/pub/release-37/{short_division}/fasta/"
+    "{species}/dna/{caps_species}.{assembly}.dna.toplevel.fa.gz"
+)
 GTF_URL_TEMPLATE = ("ftp://ftp.ensemblgenomes.org/pub/release-37/{short_division}/gtf/"
                     "{species}/{caps_species}.{assembly}.37.gtf.gz")
 
@@ -86,13 +87,13 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             gtf_file = File(name=species["species"] + length + ".gtf.gz",
                             download_url=gtf_download_url,
                             raw_format="gtf.gz",
-                            processed_format="",
+                            processed_format="tar.gz",
                             size_in_bytes=-1)  # Will have to be determined later
 
             self.add_batch(platform_accession_code=species["division"],
                            experiment_accession_code=species["species"],
                            organism_id=species["taxonomy_id"],
-                           organism_name=species["name"],
+                           organism_name=species["name"].upper(),
                            experiment_title="NA",
                            release_date=current_time,
                            last_uploaded_date=current_time,

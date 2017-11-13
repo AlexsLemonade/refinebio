@@ -113,8 +113,11 @@ class File(TimeTrackedModel):
         path = urllib.parse.urlparse(self.download_url).path
         return os.path.basename(path)
 
+    def get_base_name(self) -> str:
+        return self.name.replace(("." + self.raw_format), "")
+
     def get_processed_name(self) -> str:
-        file_base = self.name.split(".")[0]
+        file_base = self.get_base_name()
         return file_base + "." + self.processed_format
 
     def get_raw_dir(self) -> str:

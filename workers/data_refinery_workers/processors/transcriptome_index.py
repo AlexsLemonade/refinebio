@@ -1,10 +1,10 @@
 from __future__ import absolute_import, unicode_literals
 import os
-import string
-import warnings
+import subprocess
+import tarfile
+import gzip
+import shutil
 from typing import Dict
-import rpy2.robjects as ro
-from rpy2.rinterface import RRuntimeError
 from celery import shared_task
 from data_refinery_common.models import File
 from data_refinery_workers.processors import utils
@@ -14,45 +14,186 @@ from data_refinery_common.logging import get_and_configure_logger
 logger = get_and_configure_logger(__name__)
 
 
+JOB_DIR_PREFIX = "processor_job_"
 GENE_TO_TRANSCRIPT_TEMPLATE = "{gene_id}\t{transcript_id}\n"
 GENE_TYPE_COLUMN = 2
 # Removes each occurrance of ; and "
 IDS_CLEANUP_TABLE = str.maketrans({";": None, "\"": None})
 
 
-def _process_gtf(input_gtf_path: str,
-                 output_gtf_path: str,
-                 genes_to_transcripts_path: str) -> None:
+def _set_job_prefix(job_context: Dict) -> str:
+    job_context["job_dir_prefix"] = JOB_DIR_PREFIX + str(job_context["job_id"])
+    return job_context
+
+
+def _prepare_files(job_context: Dict) -> Dict:
+    """Moves the batch's files from the raw directory to the temp directory.
+
+    Also adds the keys "fasta_file_path" and "gtf_file_path" to
+    job_context.
+    """
+    # Transcriptome index processor jobs have only one batch. Each
+    # batch has a fasta file and a gtf file
+    batch = job_context["batches"][0]
+    fasta_file = File.objects.get(batch=batch, raw_format__exact="fa.gz")
+    gtf_file = File.objects.get(batch=batch, raw_format__exact="gtf.gz")
+
+    try:
+        fasta_file.download_raw_file(job_context["job_dir_prefix"])
+        gtf_file.download_raw_file(job_context["job_dir_prefix"])
+    except Exception:
+        logger.exception("Exception caught while retrieving raw files.",
+                         processor_job=job_context["job_id"],
+                         batch=batch.id)
+
+        job_context["job"].failure_reason = "Exception caught while retrieving raw files"
+        job_context["success"] = False
+        return job_context
+
+    # The files are gzipped when download, but rsem-prepare-reference
+    # expects them to be unzipped.
+    gzipped_fasta_file_path = fasta_file.get_temp_pre_path(job_context["job_dir_prefix"])
+    gzipped_gtf_file_path = gtf_file.get_temp_pre_path(job_context["job_dir_prefix"])
+    job_context["fasta_file_path"] = gzipped_fasta_file_path.replace(".gz", "")
+    job_context["gtf_file_path"] = gzipped_gtf_file_path.replace(".gz", "")
+
+    with gzip.open(gzipped_fasta_file_path, "rb") as gzipped_file, \
+            open(job_context["fasta_file_path"], "wb") as gunzipped_file:
+        shutil.copyfileobj(gzipped_file, gunzipped_file)
+
+    with gzip.open(gzipped_gtf_file_path, "rb") as gzipped_file, \
+            open(job_context["gtf_file_path"], "wb") as gunzipped_file:
+        shutil.copyfileobj(gzipped_file, gunzipped_file)
+
+    job_context["fasta_file"] = fasta_file
+    job_context["gtf_file"] = gtf_file
+    return job_context
+
+
+def _process_gtf(job_context: Dict) -> Dict:
     """Reads in a .gtf file and generates two new files from it.
 
     The first is a new .gtf file which has all of the pseudogenes
     filtered out of it. The other is a tsv mapping between gene_ids
-    and transcript_ids.
+    and transcript_ids.  Adds the keys "gtf_file_path" and
+    "genes_to_transcripts_path" to job_context.
     """
-    with open(input_gtf_path, 'r') as input_gtf:
-        with open(output_gtf_path, "w") as output_gtf:
-            with open(genes_to_transcripts_path, "w") as genes_to_transcripts:
-                for line in input_gtf:
-                    # Filter out any lines containing "pseudogene".
-                    if "pseudogene" in line:
-                        continue
+    work_dir = job_context["gtf_file"].get_temp_dir(job_context["job_dir_prefix"])
+    filtered_gtf_path = os.path.join(work_dir, "no_pseudogenes.gtf")
+    genes_to_transcripts_path = os.path.join(work_dir, "genes_to_transcripts.txt")
 
-                    output_gtf.write(line)
-                    tab_split_line = line.split("\t")
+    with open(job_context["gtf_file_path"], 'r') as input_gtf, \
+            open(filtered_gtf_path, "w") as filtered_gtf, \
+            open(genes_to_transcripts_path, "w") as genes_to_transcripts:
+        for line in input_gtf:
+            # Filter out any lines containing "pseudogene".
+            if "pseudogene" in line:
+                continue
 
-                    # Skip header lines:
-                    if len(tab_split_line) < 2:
-                        continue
+            filtered_gtf.write(line)
+            tab_split_line = line.split("\t")
 
-                    if tab_split_line[GENE_TYPE_COLUMN] == "transcript":
-                        ids_column = tab_split_line[-1].translate(IDS_CLEANUP_TABLE)
-                        split_ids_column = ids_column.split(" ")
+            # Skip header lines (they're short and contain no tabs):
+            if len(tab_split_line) < 2:
+                continue
 
-                        gene_id_index = split_ids_column.index("gene_id") + 1
-                        gene_id = split_ids_column[gene_id_index]
-                        transcript_id_index = split_ids_column.index("transcript_id") + 1
-                        transcript_id = split_ids_column[transcript_id_index]
+            if tab_split_line[GENE_TYPE_COLUMN] == "transcript":
+                ids_column = tab_split_line[-1].translate(IDS_CLEANUP_TABLE)
+                split_ids_column = ids_column.split(" ")
 
-                        genes_to_transcripts.write(
-                            GENE_TO_TRANSCRIPT_TEMPLATE.format(gene_id=gene_id,
-                                                               transcript_id=transcript_id))
+                gene_id_index = split_ids_column.index("gene_id") + 1
+                gene_id = split_ids_column[gene_id_index]
+                transcript_id_index = split_ids_column.index("transcript_id") + 1
+                transcript_id = split_ids_column[transcript_id_index]
+
+                genes_to_transcripts.write(
+                    GENE_TO_TRANSCRIPT_TEMPLATE.format(gene_id=gene_id,
+                                                       transcript_id=transcript_id))
+
+    # Clean up the raw gtf file, which we no longer need.
+    os.remove(job_context["gtf_file_path"])
+    job_context["gtf_file_path"] = filtered_gtf_path
+    job_context["genes_to_transcripts_path"] = genes_to_transcripts_path
+    return job_context
+
+
+def _prepare_reference(job_context: Dict) -> Dict:
+    work_dir = job_context["gtf_file"].get_temp_dir(job_context["job_dir_prefix"])
+    job_context["output_dir"] = os.path.join(work_dir, "index")
+    os.makedirs(job_context["output_dir"], exist_ok=True)
+
+    # RSEM takes a prefix path and then all files generated by it will
+    # start with that
+    output_prefix = os.path.join(job_context["output_dir"],
+                                 job_context["fasta_file"].get_base_name())
+
+    command_string = (
+        "rsem-prepare-reference --gtf {gtf_file}"
+        " --transcript-to-gene-map {genes_to_transcripts} {fasta_file} {output_prefix}"
+    )
+
+    formatted_command = command_string.format(
+        gtf_file=job_context["gtf_file_path"],
+        genes_to_transcripts=job_context["genes_to_transcripts_path"],
+        fasta_file=job_context["fasta_file_path"],
+        output_prefix=output_prefix
+    )
+
+    completed_command = subprocess.run(formatted_command.split(),
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+
+    if completed_command.returncode == 1:
+        stderr = str(completed_command.stderr)
+        error_start = stderr.find("Error:")
+        logger.error("Shell call to rsem-prepare-reference failed with error message: %s",
+                     stderr[error_start:],
+                     processor_job=job_context["job_id"],
+                     batch=job_context["batches"][0])
+
+        job_context["gtf_file"].remove_temp_directory(job_context["job_dir_prefix"])
+
+        # The failure_reason column is only 256 characters wide.
+        error_end = error_start + 200
+        job_context["job"].failure_reason = ("Shell call to rsem-prepare-reference "
+                                             + "failed because: "
+                                             + stderr[error_start:error_end])
+        job_context["success"] = False
+
+    return job_context
+
+
+def _zip_index(job_context: Dict) -> Dict:
+    temp_post_path = job_context["gtf_file"].get_temp_post_path(job_context["job_dir_prefix"])
+    try:
+        with tarfile.open(temp_post_path, "w:gz") as tar:
+            tar.add(job_context["output_dir"],
+                    arcname=os.path.basename(job_context["output_dir"]))
+    except:
+        logger.exception("Exception caught while zipping index directory %s",
+                         temp_post_path,
+                         processor_job=job_context["job_id"],
+                         batch=job_context["batches"][0].id)
+
+        failure_template = "Exception caught while zipping index directory {}"
+        job_context["job"].failure_reason = failure_template.format(
+            job_context["gtf_file"].get_temp_post_path())
+        job_context["success"] = False
+        return job_context
+
+    job_context["files_to_upload"] = [job_context["gtf_file"]]
+    return job_context
+
+
+@shared_task
+def build_index(job_id: int) -> None:
+    utils.run_pipeline({"job_id": job_id},
+                       [utils.start_job,
+                        _set_job_prefix,
+                        _prepare_files,
+                        _process_gtf,
+                        _prepare_reference,
+                        _zip_index,
+                        utils.upload_processed_files,
+                        # utils.cleanup_raw_files,
+                        utils.end_job])

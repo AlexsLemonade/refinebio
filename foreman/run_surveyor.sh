@@ -27,4 +27,4 @@ docker run \
        --add-host=database:$HOST_IP \
        --env-file foreman/environments/dev \
        --volume $volume_directory:/home/user/data_store \
-       dr_foreman survey_sra "$@"
+       dr_foreman survey_transcriptome "$@"
