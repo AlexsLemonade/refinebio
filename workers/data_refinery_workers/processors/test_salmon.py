@@ -1,7 +1,6 @@
 import os
 import shutil
 from django.test import TestCase
-from unittest.mock import MagicMock
 from data_refinery_common.models import (
     SurveyJob,
     Batch,

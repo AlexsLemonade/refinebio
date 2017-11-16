@@ -46,7 +46,7 @@ def _prepare_files(job_context: Dict) -> Dict:
                          processor_job=job_context["job_id"],
                          batch=batch.id)
 
-        job_context["job"].failure_reason = "Exception caught while retrieving raw files"
+        job_context["job"].failure_reason = "Exception caught while retrieving raw files."
         job_context["success"] = False
         return job_context
 
@@ -110,7 +110,7 @@ def _process_gtf(job_context: Dict) -> Dict:
                     GENE_TO_TRANSCRIPT_TEMPLATE.format(gene_id=gene_id,
                                                        transcript_id=transcript_id))
 
-    # Clean up the raw gtf file, which we no longer need.
+    # Clean up the unfiltered gtf file, which we no longer need.
     os.remove(job_context["gtf_file_path"])
     job_context["gtf_file_path"] = filtered_gtf_path
     job_context["genes_to_transcripts_path"] = genes_to_transcripts_path
@@ -143,9 +143,10 @@ def _prepare_reference(job_context: Dict) -> Dict:
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
 
-    if completed_command.returncode == 1:
+    if completed_command.returncode != 0:
         stderr = str(completed_command.stderr)
         error_start = stderr.find("Error:")
+        error_start = error_start if error_start != -1 else 0
         logger.error("Shell call to rsem-prepare-reference failed with error message: %s",
                      stderr[error_start:],
                      processor_job=job_context["job_id"],
@@ -176,8 +177,7 @@ def _zip_index(job_context: Dict) -> Dict:
                          batch=job_context["batches"][0].id)
 
         failure_template = "Exception caught while zipping index directory {}"
-        job_context["job"].failure_reason = failure_template.format(
-            job_context["gtf_file"].get_temp_post_path())
+        job_context["job"].failure_reason = failure_template.format(temp_post_path)
         job_context["success"] = False
         return job_context
 
