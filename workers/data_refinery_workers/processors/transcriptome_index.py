@@ -176,6 +176,8 @@ def _zip_index(job_context: Dict) -> Dict:
                          processor_job=job_context["job_id"],
                          batch=job_context["batches"][0].id)
 
+        job_context["gtf_file"].remove_temp_directory(job_context["job_dir_prefix"])
+
         failure_template = "Exception caught while zipping index directory {}"
         job_context["job"].failure_reason = failure_template.format(temp_post_path)
         job_context["success"] = False
