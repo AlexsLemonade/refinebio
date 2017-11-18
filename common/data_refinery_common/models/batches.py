@@ -44,7 +44,10 @@ class Batch(TimeTrackedModel):
     source_type = models.CharField(max_length=256)
     pipeline_required = models.CharField(max_length=256)
     platform_accession_code = models.CharField(max_length=32)
-    experiment_accession_code = models.CharField(max_length=32)
+    # One source type uses organism names for this field and the
+    # longest organism name is apparently Parastratiosphecomyia
+    # stratiosphecomyioides at 44 characters.
+    experiment_accession_code = models.CharField(max_length=64)
     experiment_title = models.CharField(max_length=256)
     status = models.CharField(max_length=20)
     release_date = models.DateField()

@@ -21,6 +21,7 @@ def start_job(job_context: Dict):
     job.start_time = timezone.now()
     job.save()
 
+    logger.info("Starting processor Job.", processor_job=job.id)
     batches = list(job.batches.all())
 
     if len(batches) == 0:
@@ -58,6 +59,8 @@ def end_job(job_context: Dict):
         for batch in batches:
             batch.status = BatchStatuses.PROCESSED.value
             batch.save()
+
+        logger.info("Processor job completed successfully.", processor_job=job.id)
 
     # Every processor returns a dict, however end_job is always called
     # last so it doesn't need to contain anything.
