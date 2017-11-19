@@ -1,7 +1,6 @@
 from abc import ABC
 import requests
 import re
-from pprint import pprint
 import urllib
 from typing import List, Dict
 from django.utils import timezone
@@ -20,12 +19,11 @@ logger = get_and_configure_logger(__name__)
 
 DIVISION_URL_TEMPLATE = ("http://rest.ensemblgenomes.org/info/genomes/division/{division}"
                          "?content-type=application/json")
-TRANSCRIPTOME_URL_TEMPLATE = (
-    "ftp://ftp.ensemblgenomes.org/pub/release-37/{short_division}/fasta/"
-    "{species_sub_dir}/dna/{file_name_species}.{assembly}.dna.{schema_type}.fa.gz"
-)
-GTF_URL_TEMPLATE = ("ftp://ftp.ensemblgenomes.org/pub/release-37/{short_division}/gtf/"
-                    "{species_sub_dir}/{file_name_species}.{assembly}.37.gtf.gz")
+TRANSCRIPTOME_URL_TEMPLATE = ("ftp://ftp.{url_root}/fasta/{species_sub_dir}/dna/"
+                              "{file_name_species}.{assembly}.dna.{schema_type}.fa.gz")
+GTF_URL_TEMPLATE = ("ftp://ftp.{url_root}/gtf/{species_sub_dir}/"
+                    "{file_name_species}.{assembly}.{assembly_version}.gtf.gz")
+MAIN_DIVISION_URL_TEMPLATE = "http://rest.ensembl.org/info/species?content-type=application/json"
 
 
 # For whatever reason the division in the download URL is shortened in
@@ -38,13 +36,26 @@ DIVISION_LOOKUP = {"EnsemblPlants": "plants",
                    "EnsemblMetazoa": "metazoa"}
 
 
-class EnsemblUrlLogic(ABC):
+class EnsemblUrlBuilder(ABC):
     """Each division of Ensembl has different conventions for its URLs.
+    Generates URLs for different divisions of Ensembl.
 
-    The logic contained in the class is appropriate for most, but not
-    all of them. All of the logic is performed in the init method, and
-    then the results can be found by accessing the following member
-    variables:
+    Each division of Ensembl has different conventions for its
+    URLs. The logic contained in init method this base class is
+    appropriate for most, but not all of the divisions. However, the
+    logic contained in the build_* methods of this class is
+    appropriate for all divisions.
+
+    I think I should remove this now that all that is necessary is
+    just to call all three funcitons.
+    All of the
+    logic is performed in the init method, and then the results can be
+    found by accessing the following member variables:
+
+    transcriptome_url_root: The root of the URL for transcriptomes
+        which varies between the main division and all others.
+    gtf_url_root: The root of the URL for gtf files which varies
+        between the main division and all others.
     short_division: The division name as it appears in URLs.
     assembly: The name of the assembly of the genome?
     species_sub_dir: The correct sub-directory for the species.
@@ -53,8 +64,10 @@ class EnsemblUrlLogic(ABC):
 
     def __init__(self, species: Dict):
         """Species is a Dict containing parsed JSON from the Division API."""
+        self.url_root = "ensemblgenomes.org/pub/release-37/{short_division}"
         self.short_division = DIVISION_LOOKUP[species["division"]]
         self.assembly = species["assembly_name"].replace(" ", "_")
+        self.assembly_version = 37
 
         # Some species are nested within a collection directory. If
         # this is the case, then we need to add that extra directory
@@ -69,25 +82,61 @@ class EnsemblUrlLogic(ABC):
             self.species_sub_dir = species["species"]
             self.file_name_species = species["species"].capitalize()
 
-    # def get_species_sub_dir(self) -> str:
-    #     """Returns the correct sub-directory for the species."""
-    #     return
+        # These fields aren't needed for the URL, but they vary between
+        # the two REST APIs.
+        self.scientific_name = species["name"].upper()
+        self.taxonomy_id = species["taxonomy_id"]
 
-    # def get_file_name_species(self) -> str:
-    #     """Returns the species' name as it appears in the file name."""
-    #     return
+    def build_transcriptome_url(self) -> str:
+        url_root = self.url_root.format(short_division=self.short_division)
+        url = TRANSCRIPTOME_URL_TEMPLATE.format(url_root=url_root,
+                                                species_sub_dir=self.species_sub_dir,
+                                                file_name_species=self.file_name_species,
+                                                assembly=self.assembly,
+                                                schema_type="primary_assembly")
 
-    # def get_short_division(self) -> str:
-    #     """Returns a shorter division name.
+        # If the primary_assembly is not available use toplevel instead.
+        try:
+            file_handle = urllib.request.urlopen(url)
+            file_handle.close()
+        except:
+            url = url.replace("primary_assembly", "toplevel")
 
-    #     For whatever reason the division in the download URL is
-    #     shortened in a way that doesn't seem to be discoverable
-    #     programmatically so I've hardcoded them like this.
-    #     """
-    #     return
+        return url
+
+    def build_gtf_url(self) -> str:
+        url_root = self.url_root.format(short_division=self.short_division)
+        return GTF_URL_TEMPLATE.format(url_root=url_root,
+                                       species_sub_dir=self.species_sub_dir,
+                                       file_name_species=self.file_name_species,
+                                       assembly=self.assembly,
+                                       assembly_version=self.assembly_version)
 
 
-class EnsemblProtistsUrlLogic(EnsemblUrlLogic):
+class MainEnsemblUrlBuilder(EnsemblUrlBuilder):
+    """Special logic specific to the main Ensembl division.
+
+    There is one Ensembl division which is just called Ensembl. This
+    is confusing so I refer to it as the main Ensembl division. It
+    follows the same general pattern as the rest of them for URLs, but
+    just not quite the same base URL structure. Also its REST API
+    returns JSON with similar data except with slightly different key
+    names.
+    """
+
+    def __init__(self, species: Dict):
+        self.url_root = "ensembl.org/pub/release-90"
+        self.short_division = None
+        self.species_sub_dir = species["name"]
+        self.file_name_species = species["name"].capitalize()
+        self.assembly = species["assembly"]
+        self.assembly_version = "90"
+
+        self.scientific_name = species["common_name"].upper()
+        self.taxonomy_id = species["taxon_id"]
+
+
+class EnsemblProtistsUrlBuilder(EnsemblUrlBuilder):
     """Special logic specific to the EnsemblProtists division.
 
     EnsemblProtists is special because the first letter of the species
@@ -99,51 +148,33 @@ class EnsemblProtistsUrlLogic(EnsemblUrlLogic):
         super().__init__(species)
         self.file_name_species = species["species"].capitalize()
 
-    # def get_species_sub_dir(self) -> str:
-    #     return self.species["species"]
 
-    # def get_file_name_species(self) -> str:
-    #     return self.species["species"].capitalize()
+class EnsemblFungiUrlBuilder(EnsemblProtistsUrlBuilder):
+    """The EnsemblFungi URLs work the similarly to Protists division.
 
-    # def get_short_division(self) -> str:
-    #     return "plants"
+    EnsemblFungi is special because there is an assembly_name TIGR
+    which needs to be corrected to CADRE for some reason.
+    """
 
-
-# class EnsemblFungiUrlLogic(EnsemblUrlLogic):
-#     """Special logic specific to the EnsemblFungi division.
-
-#     EnsemblPlants is special because the first letter of the
-#     species name gets capitalized within the name of the file.
-#     """
-
-#     def get_species_sub_dir(self) -> str:
-#         COLLECTION_REGEX = r"^(.*_collection).*"
-#         match_object = re.search(COLLECTION_REGEX, self.species["dbname"])
-#         if match_object:
-#             return match_object.group(1) + "/" + self.species["species"]
-#         else:
-#             return self.species["species"]
-
-#     def get_file_name_species(self) -> str:
-#         return self.species["species"].capitalize()
-
-#     def get_short_division(self) -> str:
-#         return "plants"
+    def __init__(self, species: Dict):
+        super().__init__(species)
+        if self.assembly == "TIGR":
+            self.assembly = "CADRE"
 
 
-def ensembl_url_logic_factory(species: Dict) -> EnsemblUrlLogic:
+def ensembl_url_builder_factory(species: Dict) -> EnsemblUrlBuilder:
+    """Returns instance of EnsemblUrlBuilder or one of its subclasses.
+
+    The class of the returned object is based on the species' division.
+    """
     if species["division"] == "EnsemblProtists":
-        return EnsemblProtistsUrlLogic(species)
-    # elif species["division"] == "EnsemblFungi":
-    #     return EnsemblFungiUrlLogic(species)
-    # elif species["division"] == "EnsemblBacteria":
-    #     return EnsemblBacteriaUrlLogic(species)
-    # elif species["division"] == "EnsemblProtists":
-    #     return EnsemblProtistsUrlLogic(species)
-    # elif species["division"] == "EnsemblMetazoa":
-    #     return EnsemblMetazoaUrlLogic(species)
+        return EnsemblProtistsUrlBuilder(species)
+    elif species["division"] == "EnsemblFungi":
+        return EnsemblFungiUrlBuilder(species)
+    elif species["division"] == "Ensembl":
+        return MainEnsemblUrlBuilder(species)
     else:
-        return EnsemblUrlLogic(species)
+        return EnsemblUrlBuilder(species)
 
 
 class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
@@ -173,74 +204,72 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         # batches should be grouped into.
         return list(download_url_mapping.values())
 
-    # def _plant_special_logic(self, species: Dict) -> Tuple:
-    #     """Special logic specific to the EnsemblPlants division.
+    def _clean_metadata(self, species: Dict) -> Dict:
+        """Removes fields from metadata which shouldn't be stored.
 
-    #     EnsemblPlants is special because the first letter of the
-    #     species name gets capitalized within the name of the file.
-    #     """
+        These fields shouldn't be stored because:
+        The taxonomy id is stored as fields on the Batch.
+        aliases and groups are lists we don't need.
+        """
+        species.pop("taxon_id") if "taxon_id" in species else None
+        species.pop("taxonomy_id") if "taxonomy_id" in species else None
+        species.pop("aliases") if "aliases" in species else None
+        species.pop("groups") if "groups" in species else None
+
+        # Cast to List since we're modifying the size of the dict
+        # while iterating over it
+        for k, v in list(species.items()):
+            if v is None:
+                species.pop(k)
+            else:
+                species[k] = str(v)
+
+        return species
 
     def _generate_batches(self, species: Dict) -> None:
-        pprint(species)
+        url_builder = ensembl_url_builder_factory(species)
+        fasta_download_url = url_builder.build_transcriptome_url()
+        gtf_download_url = url_builder.build_gtf_url()
 
-        # COLLECTION_REGEX = r"^(.*_collection).*"
-        # match_object = re.search(COLLECTION_REGEX, species["dbname"])
-        # if match_object:
-        #     species_sub_dir = match_object.group(1) + "/" + species["species"]
-        #     file_name_species = species["species"]
-        # else:
-        #     species_sub_dir = species["species"]
-        #     file_name_species = species["species"].capitalize()
-
-        url_fields = ensembl_url_logic_factory(species)
-
-        # assembly = species["assembly_name"].replace(" ", "_")
-
-        # short_division = DIVISION_LOOKUP[species["division"]]
-
-        fasta_download_url = TRANSCRIPTOME_URL_TEMPLATE.format(
-            short_division=url_fields.short_division,
-            species_sub_dir=url_fields.species_sub_dir,
-            file_name_species=url_fields.file_name_species,
-            assembly=url_fields.assembly,
-            schema_type="primary_assembly")
-        # If the primary_assembly is not available use toplevel instead.
-        try:
-            file_handle = urllib.request.urlopen(fasta_download_url)
-            file_handle.close()
-        except:
-            fasta_download_url = fasta_download_url.replace("primary_assembly", "toplevel")
-
-        gtf_download_url = GTF_URL_TEMPLATE.format(
-            short_division=url_fields.short_division,
-            species_sub_dir=url_fields.species_sub_dir,
-            file_name_species=url_fields.file_name_species,
-            assembly=url_fields.assembly)
+        # Okay so for picking back up: Everything that accesses
+        # species needs to accomodate the difference in field names
+        # and then I should store the key value jawns.
+        # For the key values:
+        # I could store what's there or I could translate them
+        # to a single model. I should look at how different they are
+        # from each other.
+        # Store what's there minus groups and aliases for now.
 
         current_time = timezone.now()
+        platform_accession_code = species.pop("division")
+        self._clean_metadata(species)
+
         for length in ("_long", "_short"):
-            fasta_file = File(name=species["species"] + length + ".fa.gz",
+            fasta_file_name = url_builder.file_name_species + length + ".fa.gz"
+            fasta_file = File(name=fasta_file_name,
                               download_url=fasta_download_url,
                               raw_format="fa.gz",
                               processed_format="tar.gz",
                               size_in_bytes=-1)  # Will have to be determined later
 
-            gtf_file = File(name=species["species"] + length + ".gtf.gz",
+            gtf_file_name = url_builder.file_name_species + length + ".gtf.gz"
+            gtf_file = File(name=gtf_file_name,
                             download_url=gtf_download_url,
                             raw_format="gtf.gz",
                             processed_format="tar.gz",
                             size_in_bytes=-1)  # Will have to be determined later
 
-            self.add_batch(platform_accession_code=species["division"],
-                           experiment_accession_code=species["species"],
-                           organism_id=species["taxonomy_id"],
-                           organism_name=species["name"].upper(),
+            species["length"] = length
+            self.add_batch(platform_accession_code=platform_accession_code,
+                           experiment_accession_code=url_builder.file_name_species.upper(),
+                           organism_id=url_builder.taxonomy_id,
+                           organism_name=url_builder.scientific_name,
                            experiment_title="NA",
                            release_date=current_time,
                            last_uploaded_date=current_time,
                            files=[fasta_file, gtf_file],
                            # Store the rest of the metadata about these!
-                           key_values={"length": length})
+                           key_values=species)
 
     def discover_batches(self):
         ensembl_division = (
@@ -255,13 +284,18 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
                     ensembl_division,
                     survey_job=self.survey_job.id)
 
-        r = requests.get(DIVISION_URL_TEMPLATE.format(division=ensembl_division))
-        # Yes I'm aware that specieses isn't a word. However I need to
-        # distinguish between a singlular species and multiple species.
-        specieses = r.json()
-        # pprint(specieses)
+        # The main division has a different base URL for its REST API.
+        if ensembl_division == "Ensembl":
+            r = requests.get(MAIN_DIVISION_URL_TEMPLATE)
+            # Yes I'm aware that specieses isn't a word. However I need to
+            # distinguish between a singlular species and multiple species.
+            specieses = r.json()["species"]
+        else:
+            r = requests.get(DIVISION_URL_TEMPLATE.format(division=ensembl_division))
+            specieses = r.json()
 
         for species in specieses:
             self._generate_batches(species)
+
             # TEMPORARY FOR TESTING
             break
