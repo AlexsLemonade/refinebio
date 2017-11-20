@@ -260,6 +260,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
                             size_in_bytes=-1)  # Will have to be determined later
 
             species["length"] = length
+            species["kmer_size"] = "31" if length == "_long" else "23"
             self.add_batch(platform_accession_code=platform_accession_code,
                            experiment_accession_code=url_builder.file_name_species.upper(),
                            organism_id=url_builder.taxonomy_id,

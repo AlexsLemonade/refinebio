@@ -44,5 +44,5 @@ DOWNLOADER_TASK_LOOKUP = {
     "ARRAY_EXPRESS": "data_refinery_workers.downloaders.array_express.download_array_express",
     "SRA": "data_refinery_workers.downloaders.sra.download_sra",
     "TRANSCRIPTOME_INDEX": ("data_refinery_workers.downloaders."
-                            "transcriptome.download_transcriptome"),
+                            "transcriptome_index.download_transcriptome"),
 }

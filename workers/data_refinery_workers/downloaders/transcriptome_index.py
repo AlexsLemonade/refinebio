@@ -19,9 +19,7 @@ JOB_DIR_PREFIX = "downloader_job_"
 
 
 def _verify_batch_grouping(files: List[File], job: DownloaderJob) -> None:
-    """All batches in the same job should have the same downloader url.
-
-    This doesn't account for needing two files. Womp womp."""
+    """All batches in the same job should have the same downloader url."""
     for file in files:
         if file.download_url != files[0].download_url:
             failure_message = ("A Batch's file doesn't have the same download "

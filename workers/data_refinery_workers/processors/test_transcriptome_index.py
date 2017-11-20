@@ -204,3 +204,4 @@ class PrepareFilesTestCase(TestCase):
                          ("Exception caught while zipping index directory /home/user"
                           "/data_store/temp/EnsemblPlants/TRANSCRIPTOME_INDEX/{}"
                           "/aegilops_tauschii_short.tar.gz").format(job_context["job_dir_prefix"]))
+        self.assertFalse(os.path.isfile(batch.files[0].get_temp_pre_path()))
