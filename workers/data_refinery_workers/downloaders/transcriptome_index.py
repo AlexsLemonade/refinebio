@@ -18,16 +18,19 @@ CHUNK_SIZE = 1024 * 256
 JOB_DIR_PREFIX = "downloader_job_"
 
 
-def _verify_batch_grouping(files: List[File], job: DownloaderJob) -> None:
-    """All batches in the same job should have the same downloader url."""
-    for file in files:
-        if file.download_url != files[0].download_url:
-            failure_message = ("A Batch's file doesn't have the same download "
-                               "URL as the other batches' files.")
-            logger.error(failure_message,
-                         downloader_job=job.id)
-            job.failure_reason = failure_message
-            raise ValueError(failure_message)
+def _verify_files(file1: File, file2: File, job: DownloaderJob) -> None:
+    """Verifies that the two files are the same.
+
+    This is useful for this downloader because each job has two
+    batches which should each have the same two files.
+    """
+    if file1.download_url != file2.download_url:
+        failure_message = ("A Batch's file doesn't have the same download "
+                           "URL as the other batch's file.")
+        logger.error(failure_message,
+                     downloader_job=job.id)
+        job.failure_reason = failure_message
+        raise ValueError(failure_message)
 
 
 def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> None:
@@ -95,8 +98,8 @@ def download_transcriptome(job_id: int) -> None:
 
     if success:
         try:
-            _verify_batch_grouping([first_fasta_file, second_fasta_file], job)
-            _verify_batch_grouping([first_gtf_file, second_gtf_file], job)
+            _verify_files(first_fasta_file, second_fasta_file, job)
+            _verify_files(first_gtf_file, second_gtf_file, job)
 
             # The two Batches share the same fasta and gtf files, so
             # only download each one once
