@@ -6,6 +6,7 @@ jobs:
     steps:
       - checkout
 
+      - run: ls
       - run: ls workers/test_volume/TEST/TRANSCRIPTOME_INDEX
       - run: echo $((1 / 0))
 
