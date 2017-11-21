@@ -57,6 +57,10 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["fasta_file_path"] = gzipped_fasta_file_path.replace(".gz", "")
     job_context["gtf_file_path"] = gzipped_gtf_file_path.replace(".gz", "")
 
+    logger.info("!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    logger.info(gzipped_gtf_file_path)
+    logger.info(gzipped_fasta_file_path)
+    logger.info("!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     with gzip.open(gzipped_fasta_file_path, "rb") as gzipped_file, \
             open(job_context["fasta_file_path"], "wb") as gunzipped_file:
         shutil.copyfileobj(gzipped_file, gunzipped_file)
