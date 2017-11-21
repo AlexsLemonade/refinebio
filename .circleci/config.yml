@@ -6,7 +6,7 @@ jobs:
     steps:
       - checkout
 
-      -run: ls -lah workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX
+      - run: ls -lah workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX
 
       # Setup Postgres
       - run: sudo service postgresql start
