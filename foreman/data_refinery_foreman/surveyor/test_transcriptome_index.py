@@ -69,7 +69,8 @@ class SurveyTestCase(TestCase):
         send_task_calls = []
         for downloader_job in downloader_jobs:
             send_task_calls.append(
-                call("data_refinery_workers.downloaders.transcriptome.download_transcriptome",
+                call(("data_refinery_workers.downloaders."
+                      "transcriptome_index.download_transcriptome"),
                      args=[downloader_job.id]))
 
         mock_send_task.assert_has_calls(send_task_calls)
