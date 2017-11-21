@@ -6,6 +6,7 @@ from subprocess import CompletedProcess
 from data_refinery_common.models import (
     SurveyJob,
     Batch,
+    BatchKeyValue,
     BatchStatuses,
     File,
     ProcessorJob,
@@ -31,6 +32,8 @@ def init_objects():
         status=BatchStatuses.DOWNLOADED.value
     )
     batch.save()
+    BatchKeyValue(batch=batch, key="length", value="_short").save()
+    BatchKeyValue(batch=batch, key="kmer_size", value="23").save()
 
     gtf_file = File(
         size_in_bytes=-1,
@@ -98,7 +101,7 @@ class PrepareFilesTestCase(TestCase):
         #     with gzip.open(raw_path, "wt") as dummy_fastq:
         #         dummy_fastq.write("This is a dummy file for tests to operate upon.")
 
-        # The function being tested:
+        # One of the functions being tested:
         job_context = transcriptome_index._prepare_files(job_context)
 
         gtf_file_path = job_context["gtf_file_path"]
@@ -120,15 +123,16 @@ class PrepareFilesTestCase(TestCase):
         self.assertTrue("genes_to_transcripts_path" in job_context)
         self.assertTrue(os.path.isfile(job_context["genes_to_transcripts_path"]))
 
-        #
+        # Another function being tested
         job_context = transcriptome_index._prepare_reference(job_context)
 
         self.assertFalse("success" in job_context)
         self.assertTrue("output_dir" in job_context)
         self.assertTrue(os.path.isdir(job_context["output_dir"]))
         # There should be seven output files in the directory
-        self.assertEqual(7, len(os.listdir(job_context["output_dir"])))
+        self.assertEqual(9, len(os.listdir(job_context["output_dir"])))
 
+        # Another function being tested
         job_context = transcriptome_index._zip_index(job_context)
 
         self.assertTrue("files_to_upload" in job_context)

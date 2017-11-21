@@ -297,6 +297,3 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
 
         for species in specieses:
             self._generate_batches(species)
-
-            # TEMPORARY FOR TESTING
-            break

@@ -119,7 +119,7 @@ def _process_gtf(job_context: Dict) -> Dict:
 
 def _handle_shell_error(job_context: Dict, stderr: str, command: str) -> None:
     """Logs an error, cleans up, and updates job_context."""
-    logger.error("Shell call to salmon failed with error message: %s",
+    logger.error("Shell call to {} failed with error message: %s".format(command),
                  stderr,
                  processor_job=job_context["job_id"],
                  batch=job_context["batches"][0])
@@ -128,7 +128,7 @@ def _handle_shell_error(job_context: Dict, stderr: str, command: str) -> None:
 
     # The failure_reason column is only 256 characters wide.
     error_end = 200
-    job_context["job"].failure_reason = ("Shell call to salmon failed because: "
+    job_context["job"].failure_reason = ("Shell call to {} failed because: ".format(command)
                                          + stderr[:error_end])
     job_context["success"] = False
 
@@ -166,6 +166,7 @@ def _prepare_reference(job_context: Dict) -> Dict:
         error_start = error_start if error_start != -1 else 0
         stderr = stderr[error_start:]
         _handle_shell_error(job_context, stderr, "rsem-prepare-reference")
+        return job_context
 
     salmon_command_string = ("salmon --no-version-check index -t {rsem_transcripts}"
                              " -i {index_dir} --type quasi -k {kmer_size}")
