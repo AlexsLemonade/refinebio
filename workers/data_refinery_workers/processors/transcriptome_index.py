@@ -225,5 +225,5 @@ def build_index(job_id: int) -> None:
                         _prepare_reference,
                         _zip_index,
                         utils.upload_processed_files,
-                        # utils.cleanup_raw_files,
+                        utils.cleanup_raw_files,
                         utils.end_job])
