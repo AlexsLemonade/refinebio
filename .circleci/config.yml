@@ -4,6 +4,7 @@ jobs:
     working_directory: /home/circleci/data_refinery
     machine: true
     steps:
+      - run: wget https://github.com/git-lfs/git-lfs/releases/download/v2.3.4/git-lfs-linux-amd64-2.3.4.tar.gz | tar -xzf && (cd git-lfs-linux-amd64-2.3.4 && ./install.sh)
       - checkout
       - run: git lfs get
 
