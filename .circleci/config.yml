@@ -4,18 +4,10 @@ jobs:
     working_directory: /home/circleci/data_refinery
     machine: true
     steps:
-      # - run: wget https://github.com/git-lfs/git-lfs/releases/download/v2.3.4/git-lfs-linux-amd64-2.3.4.tar.gz | tar -xzf && (cd git-lfs-linux-amd64-2.3.4 && ls -lah)
       - run: curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
       - run: sudo apt-get install git-lfs
       - run: git lfs install
       - checkout
-      - run: git lfs get
-
-      - run: ls -lah workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX
-      - run: for file in $(ls -1 workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX); do stat "workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX/$file"; done
-      - run: for file in $(ls -1 workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX); do md5sum "workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX/$file"; done
-      - run: for file in $(ls -1 workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX); do gunzip -v -t "workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX/$file"; done
-      - run: $((1 / 0))
 
       # Setup Postgres
       - run: sudo service postgresql start
