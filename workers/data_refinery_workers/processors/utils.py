@@ -21,6 +21,7 @@ def start_job(job_context: Dict):
     job.start_time = timezone.now()
     job.save()
 
+    logger.info("Starting processor Job.", processor_job=job.id)
     batches = list(job.batches.all())
 
     if len(batches) == 0:
@@ -48,11 +49,18 @@ def end_job(job_context: Dict):
     job.end_time = timezone.now()
     job.save()
 
+    # Clean up temp directory.
+    if len(job_context["batches"]) != 0:
+        job_dir_prefix = job_context["job_dir_prefix"] if "job_dir_prefix" in job_context else None
+        job_context["batches"][0].files[0].remove_temp_directory(job_dir_prefix)
+
     if job.success:
         batches = job_context["batches"]
         for batch in batches:
             batch.status = BatchStatuses.PROCESSED.value
             batch.save()
+
+        logger.info("Processor job completed successfully.", processor_job=job.id)
 
     # Every processor returns a dict, however end_job is always called
     # last so it doesn't need to contain anything.
@@ -60,23 +68,37 @@ def end_job(job_context: Dict):
 
 
 def upload_processed_files(job_context: Dict) -> Dict:
-    """Uploads all the processed files for the job."""
-    files = File.objects.filter(batch__in=job_context["batches"])
-    for file in files:
-        try:
-            file.upload_processed_file()
-        except Exception:
-            logger.exception("Exception caught while uploading processed file %s",
-                             file.get_temp_post_path(),
-                             batch=file.batch.id,
-                             processor_job=job_context["job_id"])
-            processed_name = file.get_processed_path()
-            failure_template = "Exception caught while uploading processed file {}"
-            job_context["job"].failure_reason = failure_template.format(processed_name)
-            job_context["success"] = False
-            return job_context
-        finally:
-            file.remove_temp_directory()
+    """Uploads the processed files and removes the temp dir for the job.
+
+    If job_context contains a "files_to_upload" key then only those
+    files will be uploaded. Otherwise all files will be uploaded.
+    If job_context contains a "job_dir_prefix" key then that will be
+    passed through to the file methods as the `dir_name` parameter.
+    """
+    if "files_to_upload" in job_context:
+        files = job_context["files_to_upload"]
+    else:
+        files = File.objects.filter(batch__in=job_context["batches"])
+
+    if "job_dir_prefix" in job_context:
+        job_dir_prefix = job_context["job_dir_prefix"]
+    else:
+        job_dir_prefix = None
+
+    try:
+        for file in files:
+            file.upload_processed_file(job_dir_prefix)
+    except Exception:
+        logger.exception("Exception caught while uploading processed file %s",
+                         batch=files[0].batch.id,
+                         processor_job=job_context["job_id"])
+        job_context["job"].failure_reason = "Exception caught while uploading processed file."
+        job_context["success"] = False
+        return job_context
+    finally:
+        # Whether or not uploading was successful, the job is over so
+        # clean up the temp directory.
+        files[0].remove_temp_directory(job_dir_prefix)
 
     return job_context
 
@@ -124,7 +146,6 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
     returned by each processor function preserve the mappings for
     'job' and 'batches' that were passed into it.
     """
-
     job_id = start_value["job_id"]
     try:
         job = ProcessorJob.objects.get(id=job_id)

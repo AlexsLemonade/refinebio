@@ -23,4 +23,4 @@ docker run \
        --env-file workers/environments/dev \
        --entrypoint ./manage.py \
        --volume $volume_directory:/home/user/data_store \
-       dr_tester queue_processor
+       dr_worker queue_processor "TRANSCRIPTOME_INDEX"

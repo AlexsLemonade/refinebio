@@ -4,6 +4,9 @@ jobs:
     working_directory: /home/circleci/data_refinery
     machine: true
     steps:
+      - run: curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+      - run: sudo apt-get install git-lfs
+      - run: git lfs install
       - checkout
 
       # Setup Postgres

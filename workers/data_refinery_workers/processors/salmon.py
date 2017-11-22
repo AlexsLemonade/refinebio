@@ -140,4 +140,5 @@ def salmon(job_id: int) -> None:
                         _prepare_files,
                         _run_salmon,
                         _zip_and_upload,
+                        utils.cleanup_raw_files,
                         utils.end_job])

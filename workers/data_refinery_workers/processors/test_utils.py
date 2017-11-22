@@ -167,16 +167,17 @@ class RunPipelineTestCase(TestCase):
     def test_processor_failure(self):
         processor_job = ProcessorJob()
         processor_job.save()
-        job_dict = {"job_id": processor_job.id,
-                    "job": processor_job}
+        job_context = {"job_id": processor_job.id,
+                       "job": processor_job,
+                       "batches": []}
 
         mock_processor = MagicMock()
         mock_processor.__name__ = "Fake processor."
-        return_dict = copy.copy(job_dict)
-        return_dict["success"] = False
-        mock_processor.return_value = return_dict
+        return_context = copy.copy(job_context)
+        return_context["success"] = False
+        mock_processor.return_value = return_context
 
-        utils.run_pipeline(job_dict, [mock_processor])
+        utils.run_pipeline(job_context, [mock_processor])
         self.assertEqual(mock_processor.call_count, 1)
         processor_job.refresh_from_db()
         self.assertFalse(processor_job.success)
@@ -190,10 +191,10 @@ class RunPipelineTestCase(TestCase):
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
 
         mock_processor = MagicMock()
-        mock_dict = {"something_to_pass_along": True,
-                     "job": processor_job,
-                     "batches": [batch]}
-        mock_processor.return_value = mock_dict
+        mock_context = {"something_to_pass_along": True,
+                        "job": processor_job,
+                        "batches": [batch]}
+        mock_processor.return_value = mock_context
 
         def processor_function(job_context):
             self.assertTrue(job_context["something_to_pass_along"])

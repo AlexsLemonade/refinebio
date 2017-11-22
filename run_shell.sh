@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Exit on error:
+set -e
+
 # Running this script will start an interactive python shell running
 # within the context of a Docker container.
 # By default the Docker container will be for the foreman project.

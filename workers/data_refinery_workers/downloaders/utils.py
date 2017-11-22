@@ -69,6 +69,10 @@ def end_job(job: DownloaderJob, batches: Batch, success: bool):
         if batch.pipeline_required in PROCESSOR_PIPELINE_LOOKUP:
             processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
             app.send_task(processor_task, args=[processor_job.id])
+            logger.info("Queuing processor job.",
+                        downloader_job=job.id,
+                        processor_job=processor_job.id,
+                        batch=batch.id)
             return True
         else:
             failure_template = "Could not find Processor Pipeline {} in the lookup."

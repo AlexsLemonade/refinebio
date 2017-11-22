@@ -44,7 +44,10 @@ class Batch(TimeTrackedModel):
     source_type = models.CharField(max_length=256)
     pipeline_required = models.CharField(max_length=256)
     platform_accession_code = models.CharField(max_length=32)
-    experiment_accession_code = models.CharField(max_length=32)
+    # One source type uses organism names for this field and the
+    # longest organism name is apparently Parastratiosphecomyia
+    # stratiosphecomyioides at 44 characters.
+    experiment_accession_code = models.CharField(max_length=64)
     experiment_title = models.CharField(max_length=256)
     status = models.CharField(max_length=20)
     release_date = models.DateField()
@@ -113,8 +116,11 @@ class File(TimeTrackedModel):
         path = urllib.parse.urlparse(self.download_url).path
         return os.path.basename(path)
 
+    def get_base_name(self) -> str:
+        return self.name.replace(("." + self.raw_format), "")
+
     def get_processed_name(self) -> str:
-        file_base = self.name.split(".")[0]
+        file_base = self.get_base_name()
         return file_base + "." + self.processed_format
 
     def get_raw_dir(self) -> str:
@@ -148,10 +154,9 @@ class File(TimeTrackedModel):
     def get_temp_download_path(self, dir_name: str=None) -> str:
         """Returns the path of the downloaded file in the temp directory.
 
-        Bases the filename in the returned path off of the filename
-        within the download_url. In cases where extraction is
-        necessary, this will not match the name of the batch's
-        extracted file.
+        The base name of returned path is set to the base name of
+        download_url. In cases where extraction is necessary, this
+        will not match the name of the batch's extracted file.
         """
         return os.path.join(self.get_temp_dir(dir_name),
                             self._get_downloaded_name())
