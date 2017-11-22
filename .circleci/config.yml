@@ -6,8 +6,8 @@ jobs:
     steps:
       - checkout
 
-      - run: for file in $(ls -1) workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX; do md5sum $file; done
-      - run: for file in $(ls -1) workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX; do gunzip -v -t $file; done
+      - run: for file in $(ls -1 workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX); do md5sum $file; done
+      - run: for file in $(ls -1 workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX); do gunzip -v -t $file; done
       - run: ls -lah workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX
       - run: $((1 / 0))
 
