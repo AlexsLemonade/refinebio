@@ -125,7 +125,7 @@ class DownloadTranscriptomeIndexTestCase(TestCase):
         _download_file.assert_any_call(self.gtf_download_url, target_gtf_path, downloader_job)
         _download_file.assert_any_call(self.fasta_download_url, target_fasta_path, downloader_job)
         args, _ = _upload_files.call_args
-        files, job = args
+        job_dir, files, job = args
         self.assertEqual(set(files), set(batches[0].files + batches[1].files))
         self.assertEqual(job.id, downloader_job.id)
 
@@ -152,10 +152,7 @@ class DownloadTranscriptomeIndexTestCase(TestCase):
     @patch("data_refinery_workers.downloaders.utils.app")
     @patch("data_refinery_workers.downloaders.transcriptome_index._download_file")
     @patch("data_refinery_workers.downloaders.transcriptome_index._upload_files")
-    def test_verification_failure(self,
-                                  _upload_files,
-                                  _download_file,
-                                  app):
+    def test_verification_failure(self, _upload_files, _download_file, app):
         # Set up mocks:
         app.send_task = MagicMock()
         app.send_task.return_value = None

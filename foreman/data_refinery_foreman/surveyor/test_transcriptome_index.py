@@ -24,18 +24,10 @@ class SurveyTestCase(TestCase):
                                            value="EnsemblPlants")
         key_value_pair.save()
 
-    def tearDown(self):
-        DownloaderJob.objects.all().delete()
-        Batch.objects.all().delete()
-        SurveyJobKeyValue.objects.all().delete()
-        SurveyJob.objects.all().delete()
-
     @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
     @patch("data_refinery_foreman.surveyor.transcriptome_index.urllib.request.urlopen")
     @patch("data_refinery_foreman.surveyor.transcriptome_index.requests.get")
     def test_survey(self, mock_get, mock_urlopen, mock_send_task):
-        """The get_experiment_metadata function extracts all experiment metadata
-        from the experiments API."""
         json_file_path = os.path.join(os.path.dirname(__file__), "test_transcriptome_species.json")
         with open(json_file_path, "r") as json_file:
             species_json = json.load(json_file)

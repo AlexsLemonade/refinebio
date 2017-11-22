@@ -9,6 +9,7 @@ from data_refinery_common.models import (
     File,
     SurveyJobKeyValue
 )
+from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -37,29 +38,13 @@ DIVISION_LOOKUP = {"EnsemblPlants": "plants",
 
 
 class EnsemblUrlBuilder(ABC):
-    """Each division of Ensembl has different conventions for its URLs.
-    Generates URLs for different divisions of Ensembl.
+    """Generates URLs for different divisions of Ensembl.
 
     Each division of Ensembl has different conventions for its
-    URLs. The logic contained in init method this base class is
+    URLs. The logic contained in the init method of this base class is
     appropriate for most, but not all of the divisions. However, the
     logic contained in the build_* methods of this class is
     appropriate for all divisions.
-
-    I think I should remove this now that all that is necessary is
-    just to call all three funcitons.
-    All of the
-    logic is performed in the init method, and then the results can be
-    found by accessing the following member variables:
-
-    transcriptome_url_root: The root of the URL for transcriptomes
-        which varies between the main division and all others.
-    gtf_url_root: The root of the URL for gtf files which varies
-        between the main division and all others.
-    short_division: The division name as it appears in URLs.
-    assembly: The name of the assembly of the genome?
-    species_sub_dir: The correct sub-directory for the species.
-    file_name_species: The species' name as it appears in the file name.
     """
 
     def __init__(self, species: Dict):
@@ -185,28 +170,13 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         return ProcessorPipeline.TRANSCRIPTOME_INDEX
 
     def group_batches(self) -> List[List[Batch]]:
-        """Groups batches based on the download URL of their only File.
-
-        This is a duplicate of array_express' group_batches fn. Can I
-        DRY this up?
-        """
-        # Builds a mapping of each unique download_url to a list of
-        # Batches whose first File's download_url matches.
-        download_url_mapping = {}
-        for batch in self.batches:
-            download_url = batch.files[0].download_url
-            if download_url in download_url_mapping:
-                download_url_mapping[download_url].append(batch)
-            else:
-                download_url_mapping[download_url] = [batch]
-
-        # The values of the mapping we built are the groups the
-        # batches should be grouped into.
-        return list(download_url_mapping.values())
+        return utils.group_batches_by_first_file(self.batches)
 
     def _clean_metadata(self, species: Dict) -> Dict:
         """Removes fields from metadata which shouldn't be stored.
 
+        Also cast any None values to str so they can be stored in the
+        database.
         These fields shouldn't be stored because:
         The taxonomy id is stored as fields on the Batch.
         aliases and groups are lists we don't need.
@@ -231,15 +201,6 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         fasta_download_url = url_builder.build_transcriptome_url()
         gtf_download_url = url_builder.build_gtf_url()
 
-        # Okay so for picking back up: Everything that accesses
-        # species needs to accomodate the difference in field names
-        # and then I should store the key value jawns.
-        # For the key values:
-        # I could store what's there or I could translate them
-        # to a single model. I should look at how different they are
-        # from each other.
-        # Store what's there minus groups and aliases for now.
-
         current_time = timezone.now()
         platform_accession_code = species.pop("division")
         self._clean_metadata(species)
@@ -259,8 +220,10 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
                             processed_format="tar.gz",
                             size_in_bytes=-1)  # Will have to be determined later
 
+            # Add a couple extra key/value pairs to the Batch.
             species["length"] = length
             species["kmer_size"] = "31" if length == "_long" else "23"
+
             self.add_batch(platform_accession_code=platform_accession_code,
                            experiment_accession_code=url_builder.file_name_species.upper(),
                            organism_id=url_builder.taxonomy_id,

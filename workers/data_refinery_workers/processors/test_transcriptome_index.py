@@ -64,13 +64,13 @@ def init_objects():
     return (batch, gtf_file, fasta_file)
 
 
-class PrepareFilesTestCase(TestCase):
-    """I should switch the testing strategy here from doing each function
-    completely seperately to doing them all in the same testing go,
-    verifying that each step of the way things are as expected. This
-    way I'll have less code duplicating the functionality already
-    existing in the file under test.  I should then also test the
-    potential failures of each function seperately.
+class TranscriptomeIndexTestCase(TestCase):
+    """Test all functionality for the TRANSCRIPTOME_INDEX processor.
+
+    The successful functionality of all individual functions are
+    tested in test_success since each function sets up the next one
+    nicely. The failures of all individual functions are tested in
+    separate test functions.
     """
 
     def test_success(self):
@@ -94,12 +94,6 @@ class PrepareFilesTestCase(TestCase):
         # Ensure temp dir isn't leftover from a previous test.
         temp_dir = gtf_file.get_temp_dir(job_context["job_dir_prefix"])
         shutil.rmtree(temp_dir, ignore_errors=True)
-
-        # This will be useful in failure tests
-        # for file in batch.files:
-        #     raw_path = file.get_raw_path()
-        #     with gzip.open(raw_path, "wt") as dummy_fastq:
-        #         dummy_fastq.write("This is a dummy file for tests to operate upon.")
 
         # One of the functions being tested:
         job_context = transcriptome_index._prepare_files(job_context)
@@ -129,7 +123,6 @@ class PrepareFilesTestCase(TestCase):
         self.assertFalse("success" in job_context)
         self.assertTrue("output_dir" in job_context)
         self.assertTrue(os.path.isdir(job_context["output_dir"]))
-        # There should be seven output files in the directory
         self.assertEqual(9, len(os.listdir(job_context["output_dir"])))
 
         # Another function being tested

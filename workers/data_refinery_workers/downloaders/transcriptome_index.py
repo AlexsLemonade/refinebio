@@ -57,12 +57,8 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
         target_file.close()
 
 
-def _upload_files(files: List[File], job: DownloaderJob) -> None:
-    job_dir = JOB_DIR_PREFIX + str(job.id)
+def _upload_files(job_dir: str, files: List[File], job: DownloaderJob) -> None:
     try:
-        # We're downloading one file and then uploading it twice, once
-        # for each file. However the second file won't be looking for
-        # the correct file name, so create a symlink so it's there.
         for file in files:
             file.size_in_bytes = os.path.getsize(file.get_temp_pre_path(job_dir))
             file.save()
@@ -123,8 +119,9 @@ def download_transcriptome(job_id: int) -> None:
                 job.failure_reason = "Exception caught while creating symlinks."
                 raise
 
-            _upload_files([first_fasta_file, first_gtf_file,
-                           second_fasta_file, second_gtf_file], job)
+            _upload_files(job_dir,
+                          [first_fasta_file, first_gtf_file, second_fasta_file, second_gtf_file],
+                          job)
         except Exception:
             # Exceptions are already logged and handled.
             # Just need to mark the job as failed.

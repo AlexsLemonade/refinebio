@@ -16,7 +16,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "ensembl_division",
             help=("An ensembl division. Possible values are:"
-                  "['EnsemblFungi', 'EnsemblBacteria', 'EnsemblProtists',"
+                  "['Ensembl', 'EnsemblFungi', 'EnsemblBacteria', 'EnsemblProtists',"
                   "'EnsemblMetazoa', 'EnsemblPlants']"))
 
     def handle(self, *args, **options):
