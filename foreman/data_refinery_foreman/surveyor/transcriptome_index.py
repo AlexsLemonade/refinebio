@@ -117,7 +117,8 @@ class MainEnsemblUrlBuilder(EnsemblUrlBuilder):
         self.assembly = species["assembly"]
         self.assembly_version = "90"
 
-        self.scientific_name = species["common_name"].upper()
+        # Need to backport this to index-refinery branch.
+        self.scientific_name = self.file_name_species.replace("_", " ")
         self.taxonomy_id = species["taxon_id"]
 
 

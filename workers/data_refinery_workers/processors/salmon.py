@@ -4,11 +4,49 @@ import tarfile
 from typing import Dict
 from celery import shared_task
 from data_refinery_workers.processors import utils
+from data_refinery_common.job_lookup import Downloaders
+from data_refinery_common.models import Batch, BatchStatuses
 from data_refinery_common.logging import get_and_configure_logger
 import subprocess
 
 
 logger = get_and_configure_logger(__name__)
+JOB_DIR_PREFIX = "processor_job_"
+
+
+def _set_job_prefix(job_context: Dict) -> str:
+    job_context["job_dir_prefix"] = JOB_DIR_PREFIX + str(job_context["job_id"])
+    return job_context
+
+
+def _download_index(job_context: Dict) -> Dict:
+    batch = job_context["batches"][0]
+    try:
+        # Magic string here
+        index_batches = Batch.objects.filter(source_type=Downloaders.TRANSCRIPTOME_INDEX.value,
+                                             organism_id=batch.organism_id,
+                                             status=BatchStatuses.PROCESSED.value).all()
+        batch_ids = [batch.id for batch in index_batches]
+        # I need to determine what length index to use here. Not 100% sure
+        # how to do so, let's ask Jackie on Monday.
+        index_file = index_batch.files[0]
+    except:
+        # Handle not finding stuff here.
+        pass
+
+    temp_dir = batch.files[0].get_temp_dir(job_context["job_dir_prefix"])
+    job_context["index_directory"] = os.path.join(temp_dir, "index")
+    os.makedirs(job_context["index_directory"], exist_ok=True)
+    # try:
+    temp_path = index_file.download_processed_file(job_context["job_dir_prefix"])
+    logger.info("Trying to extract: " + temp_path)
+    with tarfile.open(temp_path, "r:gz") as tarball:
+        tarball.extractall(temp_dir)
+    # except:
+        # Handle not being able to download/extrat the index here:
+        # pass
+
+    return job_context
 
 
 def _prepare_files(job_context: Dict) -> Dict:
@@ -26,7 +64,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     for file in files:
         try:
-            file.download_raw_file()
+            file.download_raw_file(job_context["job_dir_prefix"])
         except Exception:
             logger.exception("Exception caught while retrieving raw file %s",
                              file.get_raw_path(),
@@ -38,18 +76,20 @@ def _prepare_files(job_context: Dict) -> Dict:
             job_context["success"] = False
             return job_context
 
-    job_context["input_file_path"] = files[0].get_temp_pre_path()
+    job_context["input_file_path"] = files[0].get_temp_pre_path(job_context["job_dir_prefix"])
     # Salmon outputs an entire directory of files, so create a temp
     # directory to output it to until we can zip it to
     # files[0].get_temp_post_path()
-    job_context["output_directory"] = os.path.join(files[0].get_temp_dir(), "output")
+    job_context["output_directory"] = os.path.join(
+        files[0].get_temp_dir(job_context["job_dir_prefix"]), "output")
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
     # Temporarily hardcoded until indices are implemented
-    job_context["index_directory"] = "/home/user/data_store/mouse_index"
+    # job_context["index_directory"] = "/home/user/data_store/mouse_index"
 
     if len(files) == 2:
-        job_context["input_file_path_2"] = files[1].get_temp_pre_path()
+        job_context["input_file_path_2"] = files[1].get_temp_pre_path(
+            job_context["job_dir_prefix"])
 
     return job_context
 
@@ -58,7 +98,7 @@ def _zip_and_upload(job_context: Dict) -> Dict:
     file = job_context["batches"][0].files[0]
     # If there are paired reads... the file name will be based off of
     # the first file's name, but not the second.
-    processed_path = file.get_temp_post_path()
+    processed_path = file.get_temp_post_path(job_context["job_dir_prefix"])
     try:
         with tarfile.open(processed_path, "w:gz") as tar:
             tar.add(job_context["output_directory"], arcname=os.sep)
@@ -68,14 +108,14 @@ def _zip_and_upload(job_context: Dict) -> Dict:
                          processor_job=job_context["job_id"],
                          batch=file.batch.id)
 
-        file.remove_temp_directory()
+        file.remove_temp_directory(job_context["job_dir_prefix"])
         failure_template = "Exception caught while zipping processed directory {}"
         job_context["job"].failure_reason = failure_template.format(file.name)
         job_context["success"] = False
         return job_context
 
     try:
-        file.upload_processed_file()
+        file.upload_processed_file(job_context["job_dir_prefix"])
     except Exception:
         logger.exception("Exception caught while uploading processed file %s",
                          processed_path,
@@ -88,7 +128,7 @@ def _zip_and_upload(job_context: Dict) -> Dict:
         job_context["success"] = False
         return job_context
 
-    file.remove_temp_directory()
+    file.remove_temp_directory(job_context["job_dir_prefix"])
     job_context["success"] = True
     return job_context
 
@@ -98,7 +138,7 @@ def _run_salmon(job_context: Dict) -> Dict:
     if "input_file_path_2" in job_context:
         second_read_str = " -2 {}".format(job_context["input_file_path_2"])
 
-    command_str = ("salmon --no-version-check quant -l IU -i {index}"
+    command_str = ("salmon --no-version-check quant -l A -i {index}"
                    " -1 {input_one}{second_read_str}"
                    " -p 20 -o {output_dir} --seqBias --gcBias --dumpEq --writeUnmappedNames")
     formatted_command = command_str.format(index=job_context["index_directory"],
@@ -117,6 +157,7 @@ def _run_salmon(job_context: Dict) -> Dict:
     if completed_command.returncode == 1:
         stderr = str(completed_command.stderr)
         error_start = stderr.find("Error:")
+        error_start = error_start if error_start != -1 else 0
         logger.error("Shell call to salmon failed with error message: %s",
                      stderr[error_start:],
                      processor_job=job_context["job_id"],
@@ -137,6 +178,8 @@ def _run_salmon(job_context: Dict) -> Dict:
 def salmon(job_id: int) -> None:
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
+                        _set_job_prefix,
+                        _download_index,
                         _prepare_files,
                         _run_salmon,
                         _zip_and_upload,

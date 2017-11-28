@@ -62,21 +62,6 @@ class Command(BaseCommand):
              size_in_bytes=2214725074,
              batch=batch).save()
 
-        batch2 = Batch(
-            survey_job=survey_job,
-            source_type="SRA",
-            pipeline_required="SALMON",
-            platform_accession_code="IlluminaHiSeq2500",
-            experiment_accession_code="PRJEB5018",
-            experiment_title="It doesn't really matter.",
-            organism_id=10090,
-            organism_name="MUS MUSCULUS",
-            release_date="2014-03-25",
-            last_uploaded_date="2016-05-20",
-            status=BatchStatuses.NEW.value
-        )
-        batch2.save()
-
         File(name="ERR1680082_2.fastq",
              download_url=("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR168/002/"
                            "ERR1680082/ERR1680082_2.fastq.gz"),
@@ -84,9 +69,9 @@ class Command(BaseCommand):
              processed_format="sf",
              internal_location="IlluminaHiSeq2500/SALMON",
              size_in_bytes=2214725074,
-             batch=batch2).save()
+             batch=batch).save()
 
-        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch, batch2])
+        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
         processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
         app.send_task(processor_task, args=[processor_job.id])
         logger.info("Processor Job queued.", processor_job=processor_job.id)

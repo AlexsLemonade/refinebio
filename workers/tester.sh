@@ -13,7 +13,7 @@ cd ..
 
 volume_directory="$script_directory/volume"
 
-docker build -t dr_tester -f workers/Dockerfile.salmon_runner .
+docker build -t dr_tester -f workers/Dockerfile.tests .
 
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
@@ -23,4 +23,4 @@ docker run \
        --env-file workers/environments/dev \
        --entrypoint ./manage.py \
        --volume $volume_directory:/home/user/data_store \
-       dr_worker queue_processor "TRANSCRIPTOME_INDEX"
+       dr_worker queue_processor "SRA"
