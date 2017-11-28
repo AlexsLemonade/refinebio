@@ -18,7 +18,7 @@ if [ ! -d "$volume_directory" ]; then
     chmod 775 $volume_directory
 fi
 
-docker build -t dr_worker_tests -f workers/Dockerfile.salmon_runner .
+docker build -t dr_worker_tests -f workers/Dockerfile.tests .
 
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
