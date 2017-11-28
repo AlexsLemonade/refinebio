@@ -1,8 +1,4 @@
-<< << << < HEAD
-from unittest.mock import Mock, patch
-== == == =
 from unittest.mock import Mock, patch, call
->>>>>> > 606d1c34f2c406256f69622fba41df314c89e23b
 from django.test import TestCase
 from data_refinery_foreman.surveyor.sra import (
     SraSurveyor,
