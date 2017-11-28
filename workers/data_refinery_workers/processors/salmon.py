@@ -5,7 +5,7 @@ from typing import Dict
 from celery import shared_task
 from data_refinery_workers.processors import utils
 from data_refinery_common.job_lookup import Downloaders
-from data_refinery_common.models import Batch, BatchStatuses
+from data_refinery_common.models import Batch, BatchStatuses, BatchKeyValue
 from data_refinery_common.logging import get_and_configure_logger
 import subprocess
 
@@ -16,36 +16,6 @@ JOB_DIR_PREFIX = "processor_job_"
 
 def _set_job_prefix(job_context: Dict) -> str:
     job_context["job_dir_prefix"] = JOB_DIR_PREFIX + str(job_context["job_id"])
-    return job_context
-
-
-def _download_index(job_context: Dict) -> Dict:
-    batch = job_context["batches"][0]
-    try:
-        # Magic string here
-        index_batches = Batch.objects.filter(source_type=Downloaders.TRANSCRIPTOME_INDEX.value,
-                                             organism_id=batch.organism_id,
-                                             status=BatchStatuses.PROCESSED.value).all()
-        batch_ids = [batch.id for batch in index_batches]
-        # I need to determine what length index to use here. Not 100% sure
-        # how to do so, let's ask Jackie on Monday.
-        index_file = index_batch.files[0]
-    except:
-        # Handle not finding stuff here.
-        pass
-
-    temp_dir = batch.files[0].get_temp_dir(job_context["job_dir_prefix"])
-    job_context["index_directory"] = os.path.join(temp_dir, "index")
-    os.makedirs(job_context["index_directory"], exist_ok=True)
-    # try:
-    temp_path = index_file.download_processed_file(job_context["job_dir_prefix"])
-    logger.info("Trying to extract: " + temp_path)
-    with tarfile.open(temp_path, "r:gz") as tarball:
-        tarball.extractall(temp_dir)
-    # except:
-        # Handle not being able to download/extrat the index here:
-        # pass
-
     return job_context
 
 
@@ -84,12 +54,100 @@ def _prepare_files(job_context: Dict) -> Dict:
         files[0].get_temp_dir(job_context["job_dir_prefix"]), "output")
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
-    # Temporarily hardcoded until indices are implemented
-    # job_context["index_directory"] = "/home/user/data_store/mouse_index"
-
     if len(files) == 2:
         job_context["input_file_path_2"] = files[1].get_temp_pre_path(
             job_context["job_dir_prefix"])
+
+    return job_context
+
+
+def _determine_index_length(job_context: Dict) -> Dict:
+    """Determines whether to use the long or short salmon index.
+
+    Adds the key 'kmer_size' to the job_context with a value of '23'
+    if the short index is appropriate or '31' if the long index is
+    appropriate."""
+    total_base_pairs = 0
+    number_of_reads = 0
+    counter = 1
+    with open(job_context["input_file_path"]) as input_file:
+        for line in input_file:
+            if counter % 4 == 2:
+                total_base_pairs += len(line.replace("\n", ""))
+                number_of_reads += 1
+
+            counter += 1
+
+    if "input_file_path_2" in job_context:
+        with open(job_context["input_file_path_2"]) as input_file:
+            for line in input_file:
+                if counter % 4 == 2:
+                    total_base_pairs += len(line.replace("\n", ""))
+                    number_of_reads += 1
+
+                counter += 1
+
+    if total_base_pairs / number_of_reads > 75:
+        job_context["kmer_size"] = "31"
+    else:
+        job_context["kmer_size"] = "23"
+
+    return job_context
+
+
+def _download_index(job_context: Dict) -> Dict:
+    batch = job_context["batches"][0]
+    try:
+        index_batches = Batch.objects.filter(source_type=Downloaders.TRANSCRIPTOME_INDEX.value,
+                                             organism_id=batch.organism_id,
+                                             status=BatchStatuses.PROCESSED.value).all()
+        batch_ids = [batch.id for batch in index_batches]
+
+        batch_key_value = BatchKeyValue.filter(batch_id__in=batch_ids,
+                                               key="kmer_size",
+                                               value=job_context["kmer_size"]).all()[0]
+
+        index_batch = batch_key_value.batch
+        index_file = index_batch.files[0]
+    except:
+        logger.exception("Failed to find an index for organism %s with kmer_size of %s.",
+                         batch.organism_name,
+                         job_context["kmer_size"],
+                         processor_job=job_context["job_id"],
+                         batch=batch.id)
+
+        failure_template = "Failed to find an index for organism {} with kmer_size of {}."
+        job_context["job"].failure_reason = failure_template.format(batch.organism_name,
+                                                                    job_context["kmer_size"])
+        job_context["success"] = False
+        return job_context
+
+    temp_dir = batch.files[0].get_temp_dir(job_context["job_dir_prefix"])
+    job_context["index_directory"] = os.path.join(temp_dir, "index")
+    os.makedirs(job_context["index_directory"], exist_ok=True)
+    try:
+        # The index_batch file will be downloaded to a directory
+        # specific to that batch.
+        temp_path = index_file.download_processed_file(job_context["job_dir_prefix"])
+        logger.info("Trying to extract: " + temp_path)
+        with tarfile.open(temp_path, "r:gz") as tarball:
+            tarball.extractall(temp_dir)
+    except:
+        logger.exception("Failed to download and extract index tarball %s",
+                         index_file.name,
+                         index_batch=index_batch.id,
+                         index_file=index_file.id,
+                         processor_job=job_context["job_id"],
+                         batch=batch.id)
+
+        failure_template = "Failed to download and extract tarball %s"
+        job_context["job"].failure_reason = failure_template.format(index_file.name)
+        job_context["success"] = False
+        return job_context
+    finally:
+        # Remove temp dir for the index batch since we've extracted it to
+        # the temp dir for this job.
+        index_file.remove_temp_directory(job_context["job_dir_prefix"])
 
     return job_context
 
@@ -163,7 +221,7 @@ def _run_salmon(job_context: Dict) -> Dict:
                      processor_job=job_context["job_id"],
                      batch=job_context["batches"][0])
 
-        job_context["batches"][0].files[0].remove_temp_directory()
+        job_context["batches"][0].files[0].remove_temp_directory(job_context["job_dir_prefix"])
 
         # The failure_reason column is only 256 characters wide.
         error_end = error_start + 200
@@ -179,8 +237,9 @@ def salmon(job_id: int) -> None:
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
                         _set_job_prefix,
-                        _download_index,
                         _prepare_files,
+                        _determine_index_length,
+                        _download_index,
                         _run_salmon,
                         _zip_and_upload,
                         utils.cleanup_raw_files,
