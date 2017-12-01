@@ -103,9 +103,9 @@ def _download_index(job_context: Dict) -> Dict:
                                              status=BatchStatuses.PROCESSED.value).all()
         batch_ids = [batch.id for batch in index_batches]
 
-        batch_key_value = BatchKeyValue.filter(batch_id__in=batch_ids,
-                                               key="kmer_size",
-                                               value=job_context["kmer_size"]).all()[0]
+        batch_key_value = BatchKeyValue.objects.filter(batch_id__in=batch_ids,
+                                                       key="kmer_size",
+                                                       value=job_context["kmer_size"]).all()[0]
 
         index_batch = batch_key_value.batch
         index_file = index_batch.files[0]
@@ -181,12 +181,11 @@ def _zip_and_upload(job_context: Dict) -> Dict:
                          batch=file.batch.id)
 
         file.remove_temp_directory()
-        failure_template = "Exception caught while uploadiong processed file {}"
+        failure_template = "Exception caught while uploading processed file {}"
         job_context["job"].failure_reason = failure_template.format(processed_path)
         job_context["success"] = False
         return job_context
 
-    file.remove_temp_directory(job_context["job_dir_prefix"])
     job_context["success"] = True
     return job_context
 
