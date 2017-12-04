@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 import os
+import gzip
 import tarfile
 from typing import Dict
 from celery import shared_task
@@ -70,7 +71,7 @@ def _determine_index_length(job_context: Dict) -> Dict:
     total_base_pairs = 0
     number_of_reads = 0
     counter = 1
-    with open(job_context["input_file_path"]) as input_file:
+    with gzip.open(job_context["input_file_path"], "rt") as input_file:
         for line in input_file:
             if counter % 4 == 2:
                 total_base_pairs += len(line.replace("\n", ""))
@@ -79,7 +80,7 @@ def _determine_index_length(job_context: Dict) -> Dict:
             counter += 1
 
     if "input_file_path_2" in job_context:
-        with open(job_context["input_file_path_2"]) as input_file:
+        with gzip.open(job_context["input_file_path_2"], "rt") as input_file:
             for line in input_file:
                 if counter % 4 == 2:
                     total_base_pairs += len(line.replace("\n", ""))

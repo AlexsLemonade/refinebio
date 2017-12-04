@@ -21,11 +21,11 @@ def init_objects():
         survey_job=survey_job,
         source_type="SALMON",
         pipeline_required="SALMON",
-        platform_accession_code="IlluminaHiSeq2500",
-        experiment_accession_code="PRJEB5019",
+        platform_accession_code="IlluminaGenomeAnalyzerII",
+        experiment_accession_code="ERX000259",
         experiment_title="It doesn't really matter.",
-        organism_id=100900,
-        organism_name="MUS MUSCULUS",
+        organism_id=9606,
+        organism_name="HOMO SAPIENS",
         release_date="2017-11-02",
         last_uploaded_date="2017-11-02",
         status=BatchStatuses.DOWNLOADED.value
@@ -34,24 +34,24 @@ def init_objects():
 
     first_fastq_file = File(
         size_in_bytes=2214725074,
-        raw_format="fastq",
+        raw_format="fastq.gz",
         processed_format="tar.gz",
-        name="ERR1680082_1.fastq",
-        internal_location="IlluminaHiSeq2500/SALMON",
-        download_url=("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR168/002/"
-                      "ERR1680082/ERR1680082_1.fastq.gz"),
+        name="ERR003000_1.fastq.gz",
+        internal_location="IlluminaGenomeAnalyzerII/SALMON",
+        download_url=("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR003/"
+                      "ERR003000/ERR003000_1.fastq.gz"),
         batch=batch
     )
     first_fastq_file.save()
 
     second_fastq_file = File(
         size_in_bytes=2214725074,
-        raw_format="fastq",
+        raw_format="fastq.gz",
         processed_format="tar.gz",
-        name="ERR1680082_2.fastq",
-        internal_location="IlluminaHiSeq2500/SALMON",
-        download_url=("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR168/002/"
-                      "ERR1680082/ERR1680082_2.fastq.gz"),
+        name="ERR003000_2.fastq.gz",
+        internal_location="IlluminaGenomeAnalyzerII/SALMON",
+        download_url=("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR003/"
+                      "ERR003000/ERR003000_2.fastq.gz"),
         batch=batch
     )
     second_fastq_file.save()
@@ -70,10 +70,10 @@ def _insert_salmon_index():
         source_type="TRANSCRIPTOME_INDEX",
         pipeline_required="TRANSCRIPTOME_INDEX",
         platform_accession_code="TEST",
-        experiment_accession_code="MUS_MUSCULUS",
+        experiment_accession_code="HOMO_SAPIENS",
         experiment_title="It doesn't really matter.",
-        organism_id=100900,
-        organism_name="MUS MUSCULUS",
+        organism_id=9606,
+        organism_name="HOMO SAPIENS",
         release_date="2017-11-02",
         last_uploaded_date="2017-11-02",
         status=BatchStatuses.PROCESSED.value
@@ -91,10 +91,10 @@ def _insert_salmon_index():
         size_in_bytes=2214725074,
         raw_format="gtf.gz",
         processed_format="tar.gz",
-        name="Mus_musculus_short.gtf.gz",
+        name="Homo_sapiens_short.gtf.gz",
         internal_location="TEST/TRANSCRIPTOME_INDEX",
-        download_url=("ftp://ftp.ensembl.org/pub/release-90/gtf/mus_musculus"
-                      "/Mus_musculus.GRCm38.90.gtf.gz"),
+        download_url=("ftp://ftp.ensembl.org/pub/release-90/gtf/homo_sapiens"
+                      "/Homo_sapiens.GRCh38.90.gtf.gz"),
         batch=batch
     )
     index_file.save()
@@ -203,7 +203,7 @@ class SalmonTestCase(TestCase):
 
         self.assertFalse(job_context["success"])
         self.assertEqual(processor_job.failure_reason,
-                         "Failed to find an index for organism MUS MUSCULUS with kmer_size of 23.")
+                         "Failed to find an index for organism HOMO SAPIENS with kmer_size of 23.")
 
     @patch.object(File, "download_processed_file")
     def test_download_index_missing(self, mock_download_processed_file):
@@ -224,7 +224,7 @@ class SalmonTestCase(TestCase):
 
         self.assertFalse(job_context["success"])
         self.assertEqual(processor_job.failure_reason,
-                         "Failed to download and extract index tarball Mus_musculus_short.gtf.gz")
+                         "Failed to download and extract index tarball Homo_sapiens_short.gtf.gz")
 
     def test_run_salmon_failure(self):
         batch, first_fastq_file, second_fastq_file = init_objects()
