@@ -2,7 +2,6 @@ import os
 import shutil
 from django.test import TestCase
 from unittest.mock import patch
-from subprocess import CompletedProcess
 from data_refinery_common.models import (
     SurveyJob,
     Batch,
@@ -36,7 +35,7 @@ def init_objects():
     first_fastq_file = File(
         size_in_bytes=2214725074,
         raw_format="fastq",
-        processed_format="sf",
+        processed_format="tar.gz",
         name="ERR1680082_1.fastq",
         internal_location="IlluminaHiSeq2500/SALMON",
         download_url=("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR168/002/"
@@ -48,7 +47,7 @@ def init_objects():
     second_fastq_file = File(
         size_in_bytes=2214725074,
         raw_format="fastq",
-        processed_format="sf",
+        processed_format="tar.gz",
         name="ERR1680082_2.fastq",
         internal_location="IlluminaHiSeq2500/SALMON",
         download_url=("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR168/002/"
@@ -175,3 +174,103 @@ class SalmonTestCase(TestCase):
         # Clean up both input and output files
         first_file.remove_temp_directory()
         shutil.rmtree(first_file.get_processed_dir())
+
+    def test_prepare_files_failure(self):
+        batch, _, _ = init_objects()
+        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
+
+        job_context = utils.start_job({"job": processor_job,
+                                       "job_id": processor_job.id})
+        job_context = salmon._prepare_files(job_context)
+
+        self.assertFalse(job_context["success"])
+        self.assertEqual(processor_job.failure_reason,
+                         "Exception caught while retrieving raw file ERR1680082_2.fastq")
+
+        self.assertFalse(os.path.isfile(batch.files[0].get_temp_pre_path()))
+
+    def test_download_index_not_found(self):
+        batch, _, _ = init_objects()
+        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
+
+        job_context = utils.start_job({"job": processor_job,
+                                       "job_id": processor_job.id,
+                                       "kmer_size": "23"})
+        job_context = salmon._prepare_files(job_context)
+
+        # Function we're testing.
+        salmon._download_index(job_context)
+
+        self.assertFalse(job_context["success"])
+        self.assertEqual(processor_job.failure_reason,
+                         "Failed to find an index for organism MUS MUSCULUS with kmer_size of 23.")
+
+    @patch.object(File, "download_processed_file")
+    def test_download_index_missing(self, mock_download_processed_file):
+        batch, _, _ = init_objects()
+        _insert_salmon_index()
+        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
+
+        job_context = utils.start_job({"job": processor_job,
+                                       "job_id": processor_job.id,
+                                       "job_dir_prefix": "dummy",
+                                       "kmer_size": "23"})
+        job_context = salmon._prepare_files(job_context)
+
+        mock_download_processed_file.side_effect = FileNotFoundError()
+
+        # The function being testing.
+        salmon._download_index(job_context)
+
+        self.assertFalse(job_context["success"])
+        self.assertEqual(processor_job.failure_reason,
+                         "Failed to download and extract index tarball Mus_musculus_short.gtf.gz")
+
+    def test_run_salmon_failure(self):
+        batch, first_fastq_file, second_fastq_file = init_objects()
+        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
+
+        # Mock out the job_context with everything the function under
+        # test will expect
+        input_file_path_1 = first_fastq_file.get_temp_pre_path("dummy")
+        input_file_path_2 = second_fastq_file.get_temp_pre_path("dummy")
+        job_context = utils.start_job({"job": processor_job,
+                                       "job_id": processor_job.id,
+                                       "job_dir_prefix": "dummy",
+                                       "batches": [batch],
+                                       "index_directory": "missing",
+                                       "input_file_path": input_file_path_1,
+                                       "input_file_path_2": input_file_path_2,
+                                       "output_directory": "blah"})
+
+        # The function being tested.
+        job_context = salmon._run_salmon(job_context)
+
+        self.maxDiff = None
+        self.assertFalse(job_context["success"])
+        self.assertEqual(processor_job.failure_reason,
+                         ("Shell call to salmon failed because: "
+                          "Error: The index version file missing/versionInfo.json doesn't seem"
+                          " to exist.  Please try re-building the salmon index.]\\nsalmon quant"
+                          " was invoked improperly.\\nFor usage information, try salmon quant "))
+        self.assertFalse(os.path.isfile(batch.files[0].get_temp_pre_path()))
+
+    def test_zip_and_upload_failure(self):
+        # Initialize test objects
+        batch, _, _ = init_objects()
+        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
+
+        # Mock out the job_context with everything the function under
+        # test will expect
+        job_context = utils.start_job({"job": processor_job,
+                                       "job_id": processor_job.id,
+                                       "job_dir_prefix": "dummy",
+                                       "output_directory": "missing/index"})
+
+        # The function being tested.
+        job_context = salmon._zip_and_upload(job_context)
+
+        self.assertFalse(job_context["success"])
+        self.assertEqual(processor_job.failure_reason,
+                         "Exception caught while zipping processed directory ERR1680082_1.fastq")
+        self.assertFalse(os.path.isfile(batch.files[0].get_temp_pre_path()))

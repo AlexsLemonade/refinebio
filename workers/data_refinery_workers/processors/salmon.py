@@ -129,7 +129,6 @@ def _download_index(job_context: Dict) -> Dict:
         # The index_batch file will be downloaded to a directory
         # specific to that batch.
         temp_path = index_file.download_processed_file(job_context["job_dir_prefix"])
-        logger.info("Trying to extract: " + temp_path)
         with tarfile.open(temp_path, "r:gz") as tarball:
             tarball.extractall(temp_dir)
     except:
@@ -140,7 +139,7 @@ def _download_index(job_context: Dict) -> Dict:
                          processor_job=job_context["job_id"],
                          batch=batch.id)
 
-        failure_template = "Failed to download and extract tarball %s"
+        failure_template = "Failed to download and extract index tarball {}"
         job_context["job"].failure_reason = failure_template.format(index_file.name)
         job_context["success"] = False
         return job_context
@@ -153,10 +152,21 @@ def _download_index(job_context: Dict) -> Dict:
 
 
 def _zip_and_upload(job_context: Dict) -> Dict:
-    file = job_context["batches"][0].files[0]
     # If there are paired reads... the file name will be based off of
     # the first file's name, but not the second.
-    processed_path = file.get_temp_post_path(job_context["job_dir_prefix"])
+    # Note that this is a workaround for not having separate File
+    # objects to represent processed files. Once that is fixed this
+    # should simply use the processed file instead of one of the input
+    # files.
+    first_file = None
+    for file in job_context["batches"][0].files:
+        if file.name.find("_1."):
+            first_file = file
+    # If there is only a single read, just use that one.
+    if first_file is None:
+        first_file = job_context["batches"][0].files[0]
+
+    processed_path = first_file.get_temp_post_path(job_context["job_dir_prefix"])
     try:
         with tarfile.open(processed_path, "w:gz") as tar:
             tar.add(job_context["output_directory"], arcname=os.sep)
@@ -164,23 +174,23 @@ def _zip_and_upload(job_context: Dict) -> Dict:
         logger.exception("Exception caught while zipping processed directory %s",
                          job_context["output_directory"],
                          processor_job=job_context["job_id"],
-                         batch=file.batch.id)
+                         batch=first_file.batch.id)
 
-        file.remove_temp_directory(job_context["job_dir_prefix"])
+        first_file.remove_temp_directory(job_context["job_dir_prefix"])
         failure_template = "Exception caught while zipping processed directory {}"
-        job_context["job"].failure_reason = failure_template.format(file.name)
+        job_context["job"].failure_reason = failure_template.format(first_file.name)
         job_context["success"] = False
         return job_context
 
     try:
-        file.upload_processed_file(job_context["job_dir_prefix"])
+        first_file.upload_processed_file(job_context["job_dir_prefix"])
     except Exception:
         logger.exception("Exception caught while uploading processed file %s",
                          processed_path,
                          processor_job=job_context["job_id"],
-                         batch=file.batch.id)
+                         batch=first_file.batch.id)
 
-        file.remove_temp_directory()
+        first_file.remove_temp_directory()
         failure_template = "Exception caught while uploading processed file {}"
         job_context["job"].failure_reason = failure_template.format(processed_path)
         job_context["success"] = False
