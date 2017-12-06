@@ -16,10 +16,10 @@ psql data_refinery -c 'ALTER USER data_refinery_user CREATEDB;'
 # See http://unix.stackexchange.com/questions/52376/why-do-iptables-rules-disappear-when-restarting-my-debian-system
 # for more information.
 # However upon restarting you'll either need to rerun:
-iptables -A INPUT -s 172.17.0.0/16 -j ACCEPT
+# iptables -A INPUT -s 172.17.0.0/16 -j ACCEPT
 
 # Or take advantage of the fact that this has been run:
-/sbin/iptables-save > /etc/iptables/rules
+# /sbin/iptables-save > /etc/iptables/rules
 # To run:
 # iptables-restore < /etc/iptables.conf
 
