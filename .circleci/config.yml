@@ -9,6 +9,12 @@ jobs:
       - run: git lfs install
       - checkout
 
+      # Install Postgres
+      - run: wget -q https://www.postgresql.org/media/keys/ACCC4CF8.asc -O - | sudo apt-key add -
+      - run: sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" >> /etc/apt/sources.list.d/pgdg.list'
+      - run: sudo apt-get update
+      - run: sudo apt-get install postgresql postgresql-contrib
+
       # Setup Postgres
       - run: sudo service postgresql start
       - run: sudo -u postgres createdb data_refinery
