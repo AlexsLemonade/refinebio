@@ -185,7 +185,7 @@ class SalmonTestCase(TestCase):
 
         self.assertFalse(job_context["success"])
         self.assertEqual(processor_job.failure_reason,
-                         "Exception caught while retrieving raw file ERR1680082_2.fastq")
+                         "Exception caught while retrieving raw file ERR003000_2.fastq.gz")
 
         self.assertFalse(os.path.isfile(batch.files[0].get_temp_pre_path()))
 
@@ -272,5 +272,5 @@ class SalmonTestCase(TestCase):
 
         self.assertFalse(job_context["success"])
         self.assertEqual(processor_job.failure_reason,
-                         "Exception caught while zipping processed directory ERR1680082_1.fastq")
+                         "Exception caught while zipping processed directory ERR003000_1.fastq.gz")
         self.assertFalse(os.path.isfile(batch.files[0].get_temp_pre_path()))
