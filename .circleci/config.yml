@@ -17,11 +17,10 @@ jobs:
 
       # Setup Postgres
       - run: sudo service postgresql start
-      - run: sudo -u postgres common/install.sh
-      # - run: sudo -u postgres createdb data_refinery
-      # - run: sudo -u postgres psql data_refinery -c "CREATE ROLE data_refinery_user WITH LOGIN PASSWORD 'data_refinery_password';"
-      # - run: sudo -u postgres psql data_refinery -c 'GRANT ALL PRIVILEGES ON DATABASE data_refinery TO data_refinery_user;'
-      # - run: sudo -u postgres psql data_refinery -c 'ALTER USER data_refinery_user CREATEDB;'
+      - run: sudo -u postgres createdb data_refinery
+      - run: sudo -u postgres psql data_refinery -c "CREATE ROLE data_refinery_user WITH LOGIN PASSWORD 'data_refinery_password';"
+      - run: sudo -u postgres psql data_refinery -c 'GRANT ALL PRIVILEGES ON DATABASE data_refinery TO data_refinery_user;'
+      - run: sudo -u postgres psql data_refinery -c 'ALTER USER data_refinery_user CREATEDB;'
 
       # Run Tests.
       - run: ./common/run_tests.sh
