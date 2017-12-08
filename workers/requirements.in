@@ -1,0 +1,9 @@
+amqp
+celery
+django
+requests
+psycopg2
+boto3
+retrying
+boto
+rpy2
