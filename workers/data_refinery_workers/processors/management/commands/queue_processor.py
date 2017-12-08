@@ -135,7 +135,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options["processor-type"] is None:
-            logger.error("You must the type of processor to queue.")
+            logger.error("You must set the type of processor to queue.")
             return 1
         elif options["processor-type"] == "SRA":
             self.run_sra_processor()

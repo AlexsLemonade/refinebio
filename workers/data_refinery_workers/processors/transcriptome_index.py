@@ -133,7 +133,20 @@ def _handle_shell_error(job_context: Dict, stderr: str, command: str) -> None:
     job_context["success"] = False
 
 
-def _prepare_reference(job_context: Dict) -> Dict:
+def _create_index(job_context: Dict) -> Dict:
+    """Creates a salmon transcriptome index.
+
+    This index will only be appropriate for use in running salmon on
+    transcripts collected from an organism from the same species as
+    the Batch. Additionally it will either be a "long" index or a
+    "short" index, which means that it will be appropriate for reads
+    with a certain range of base pair lengths. The creator of Salmon,
+    the esteemed Rob Patro, has said:
+
+    "For *most* data (i.e. 75bp or longer), the default k should work
+    well.  For reads shorter than 75bp ... one should absolutely use a
+    shorter k (probably 23 or 21)."
+    """
     work_dir = job_context["gtf_file"].get_temp_dir(job_context["job_dir_prefix"])
     job_context["output_dir"] = os.path.join(work_dir, "index")
     rsem_index_dir = os.path.join(work_dir, "rsem_index")
@@ -194,6 +207,12 @@ def _prepare_reference(job_context: Dict) -> Dict:
 
 
 def _zip_index(job_context: Dict) -> Dict:
+    """Zips the index directory into a single .tar.gz file.
+
+    This makes uploading and retrieving the index easier since it will
+    only be a single file along with compressing the size of the file
+    during storage.
+    """
     temp_post_path = job_context["gtf_file"].get_temp_post_path(job_context["job_dir_prefix"])
     try:
         with tarfile.open(temp_post_path, "w:gz") as tar:
@@ -223,7 +242,7 @@ def build_index(job_id: int) -> None:
                         _set_job_prefix,
                         _prepare_files,
                         _process_gtf,
-                        _prepare_reference,
+                        _create_index,
                         _zip_index,
                         utils.upload_processed_files,
                         utils.cleanup_raw_files,
