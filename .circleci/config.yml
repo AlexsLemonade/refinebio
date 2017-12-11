@@ -2,7 +2,11 @@ version: 2
 jobs:
   build:
     working_directory: /home/circleci/data_refinery
-    machine: true
+    machine:
+      # Prevents postgresql breaking change. Suggested in email from
+      # CCI support. Not good long term fix, but will do until
+      # issue #66 has been resolved.
+      image: circleci/classic:201708-01
     steps:
       - checkout
 
