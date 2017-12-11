@@ -7,6 +7,7 @@ from data_refinery_common.models import (
     SurveyJobKeyValue,
     Organism
 )
+from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -23,9 +24,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
     def source_type(self):
         return Downloaders.ARRAY_EXPRESS.value
 
-    def determine_pipeline(self,
-                           batch: Batch,
-                           key_values: Dict = {}):
+    def determine_pipeline(self, batch: Batch, key_values: Dict = {}) -> ProcessorPipeline:
         # If it's a CEL file run SCAN.UPC on it.
         if batch.files[0].raw_format == "CEL":
             return ProcessorPipeline.AFFY_TO_PCL
@@ -39,20 +38,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             return ProcessorPipeline.NONE
 
     def group_batches(self) -> List[List[Batch]]:
-        """Groups batches based on the download URL of their only File"""
-        # Builds a mapping of each unique download_url to a list of
-        # Batches whose first File's download_url matches.
-        download_url_mapping = {}
-        for batch in self.batches:
-            download_url = batch.files[0].download_url
-            if download_url in download_url_mapping:
-                download_url_mapping[download_url].append(batch)
-            else:
-                download_url_mapping[download_url] = [batch]
-
-        # The values of the mapping we built are the groups the
-        # batches should be grouped into.
-        return list(download_url_mapping.values())
+        return utils.group_batches_by_first_file(self.batches)
 
     def get_experiment_metadata(self, experiment_accession_code: str) -> Dict:
         experiment_request = requests.get(EXPERIMENTS_URL + experiment_accession_code)

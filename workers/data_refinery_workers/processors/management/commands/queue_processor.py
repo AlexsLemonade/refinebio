@@ -11,6 +11,7 @@ from django.core.management.base import BaseCommand
 from data_refinery_common.models import (
     SurveyJob,
     Batch,
+    File,
     BatchStatuses,
     ProcessorJob
 )
@@ -23,7 +24,12 @@ logger = get_and_configure_logger(__name__)
 
 
 class Command(BaseCommand):
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument("processor-type",
+                            help=("The type of processor. Valid options are:\n"
+                                  "[SRA, TRANSCRIPTOME_INDEX]"))
+
+    def run_sra_processor(self):
         # Create all the dummy data that would have been created
         # before a processor job could have been generated.
         survey_job = SurveyJob(
@@ -77,3 +83,66 @@ class Command(BaseCommand):
         processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
         app.send_task(processor_task, args=[processor_job.id])
         logger.info("Processor Job queued.", processor_job=processor_job.id)
+
+    def run_trasnscriptome_processor(self):
+        # Create all the dummy data that would have been created
+        # before a processor job could have been generated.
+        survey_job = SurveyJob(
+            source_type="TRANSCRIPTOME_INDEX"
+        )
+        survey_job.save()
+
+        batch = Batch(
+            survey_job=survey_job,
+            source_type="TRANSCRIPTOME_INDEX",
+            pipeline_required="TRANSCRIPTOME_INDEX",
+            platform_accession_code="EnsemblPlants",
+            experiment_accession_code="aegilops_tauschii",
+            experiment_title="It doesn't really matter.",
+            organism_id=37682,
+            organism_name="AEGILOPS TAUSCHII",
+            release_date="2017-11-02",
+            last_uploaded_date="2017-11-02",
+            status=BatchStatuses.DOWNLOADED.value,
+        )
+        batch.save()
+
+        gtf_file = File(name="aegilops_tauschii_short.gtf.gz",
+                        download_url=("ftp://ftp.ensemblgenomes.org/pub/release-37/plants/gtf"
+                                      "/aegilops_tauschii/Aegilops_tauschii.ASM34733v1.37.gtf.gz"),
+                        raw_format="gtf.gz",
+                        processed_format="tar.gz",
+                        internal_location="EnsemblPlants/TRANSCRIPTOME_INDEX",
+                        size_in_bytes=-1,
+                        batch=batch)
+        gtf_file.save()
+
+        fasta_file = File(name="aegilops_tauschii_short.fa.gz",
+                          download_url=("ftp://ftp.ensemblgenomes.org/pub/release-37/plants/fasta"
+                                        "/aegilops_tauschii/dna/Aegilops_tauschii."
+                                        "ASM34733v1.dna.toplevel.fa.gz"),
+                          raw_format="fa.gz",
+                          processed_format="tar.gz",
+                          internal_location="EnsemblPlants/TRANSCRIPTOME_INDEX",
+                          size_in_bytes=-1,
+                          batch=batch)
+        fasta_file.save()
+
+        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
+        processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
+        app.send_task(processor_task, args=[processor_job.id])
+        logger.info("Processor Job queued.", processor_job=processor_job.id)
+
+    def handle(self, *args, **options):
+        if options["processor-type"] is None:
+            logger.error("You must set the type of processor to queue.")
+            return 1
+        elif options["processor-type"] == "SRA":
+            self.run_sra_processor()
+            return 0
+        elif options["processor-type"] == "TRANSCRIPTOME_INDEX":
+            self.run_trasnscriptome_processor()
+            return 0
+        else:
+            logger.error("Unrecognized processor-type.")
+            return 1

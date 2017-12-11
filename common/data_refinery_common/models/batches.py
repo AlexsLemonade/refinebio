@@ -44,7 +44,10 @@ class Batch(TimeTrackedModel):
     source_type = models.CharField(max_length=256)
     pipeline_required = models.CharField(max_length=256)
     platform_accession_code = models.CharField(max_length=32)
-    experiment_accession_code = models.CharField(max_length=32)
+    # One source type uses organism names for this field and the
+    # longest organism name is apparently Parastratiosphecomyia
+    # stratiosphecomyioides at 44 characters.
+    experiment_accession_code = models.CharField(max_length=64)
     experiment_title = models.CharField(max_length=256)
     status = models.CharField(max_length=20)
     release_date = models.DateField()
@@ -113,8 +116,11 @@ class File(TimeTrackedModel):
         path = urllib.parse.urlparse(self.download_url).path
         return os.path.basename(path)
 
+    def get_base_name(self) -> str:
+        return self.name.replace(("." + self.raw_format), "")
+
     def get_processed_name(self) -> str:
-        file_base = self.name.split(".")[0]
+        file_base = self.get_base_name()
         return file_base + "." + self.processed_format
 
     def get_raw_dir(self) -> str:
