@@ -67,7 +67,9 @@ def _determine_index_length(job_context: Dict) -> Dict:
 
     Adds the key 'kmer_size' to the job_context with a value of '23'
     if the short index is appropriate or '31' if the long index is
-    appropriate."""
+    appropriate. For more information on index length see the
+    _create_index function of the transcriptome_index processor.
+    """
     total_base_pairs = 0
     number_of_reads = 0
     counter = 1
