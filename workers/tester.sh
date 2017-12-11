@@ -20,4 +20,4 @@ docker run \
        --add-host=database:$HOST_IP \
        --env-file workers/environments/dev \
        --entrypoint ./manage.py \
-       dr_worker queue_processor
+       dr_worker queue_processor "TRANSCRIPTOME_INDEX"

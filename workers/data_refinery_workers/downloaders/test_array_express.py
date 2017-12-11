@@ -143,7 +143,6 @@ class DownloadArrayExpressTestCase(TestCase):
 
         # Set a different download URL to trigger a failure in the
         # _verify_batch_grouping function
-        different_download_url = "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59070.raw.2.zip"  # noqa
         batches, files = self.insert_objects()
         files[1].download_url = "https://wompwomp.com"
         files[1].save()
