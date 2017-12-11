@@ -67,10 +67,10 @@ def init_objects():
 class TranscriptomeIndexTestCase(TestCase):
     """Test all functionality for the TRANSCRIPTOME_INDEX processor.
 
-    The successful functionality of all individual functions are
-    tested in test_success since each function sets up the next one
-    nicely. The failures of all individual functions are tested in
-    separate test functions.
+    The successes of all individual functions are tested in
+    test_success since each function sets up the next one nicely. The
+    failures of all individual functions are tested in separate test
+    functions.
     """
 
     def test_success(self):
@@ -118,7 +118,7 @@ class TranscriptomeIndexTestCase(TestCase):
         self.assertTrue(os.path.isfile(job_context["genes_to_transcripts_path"]))
 
         # Another function being tested
-        job_context = transcriptome_index._prepare_reference(job_context)
+        job_context = transcriptome_index._create_index(job_context)
 
         self.assertFalse("success" in job_context)
         self.assertTrue("output_dir" in job_context)
@@ -153,7 +153,7 @@ class TranscriptomeIndexTestCase(TestCase):
         self.assertFalse(os.path.isfile(batch.files[0].get_temp_pre_path()))
 
     @patch("data_refinery_workers.processors.transcriptome_index.subprocess.run")
-    def test_prepare_reference_failure(self, mocked_subprocess):
+    def test_create_index_failure(self, mocked_subprocess):
         # Initialize mock and test objects
         mocked_subprocess.return_value = CompletedProcess([], 1, stdout=None,
                                                           stderr="Error: something went wrong.")
@@ -172,7 +172,7 @@ class TranscriptomeIndexTestCase(TestCase):
         job_context = transcriptome_index._set_job_prefix(job_context)
 
         # The function being tested.
-        job_context = transcriptome_index._prepare_reference(job_context)
+        job_context = transcriptome_index._create_index(job_context)
 
         self.assertFalse(job_context["success"])
         self.assertEqual(processor_job.failure_reason,

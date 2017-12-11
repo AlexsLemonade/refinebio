@@ -48,7 +48,7 @@ class SurveyTestCase(TestCase):
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.json.return_value = species_json
 
-        # There's two possible file locations. The correct one is
+        # There are two possible file locations. The correct one is
         # determined by making a request to one to see if it
         # exists. This URLError simulates it not existing.
         mock_urlopen.side_effect = URLError("404 or something")

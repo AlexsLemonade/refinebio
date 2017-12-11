@@ -46,6 +46,9 @@ RUN apt-get update -qq && \
 
 COPY workers/requirements.txt .
 
+# Pycurl special options are necessary because GnuTLS drops
+# SSL connections and caused this error:
+# https://stackoverflow.com/questions/41084351/django-celery-sqs-boto-exception-sqserror-sqserror-599-gnutls-handshake
 RUN \
   pip3 --no-cache-dir install pip --upgrade && \
   pip3 --no-cache-dir install setuptools --upgrade && \
@@ -59,7 +62,7 @@ RUN git clone https://github.com/deweylab/RSEM.git
 
 RUN cd RSEM && make install
 
-RUN rm -r RSEM
+RUN rm -rf RSEM
 
 # Starting here, code is based on:
 # https://github.com/COMBINE-lab/salmon/blob/master/docker/Dockerfile

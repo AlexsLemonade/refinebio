@@ -197,7 +197,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
 
         return species
 
-    def _generate_batches(self, species: Dict) -> None:
+    def _generate_batch(self, species: Dict) -> None:
         url_builder = ensembl_url_builder_factory(species)
         fasta_download_url = url_builder.build_transcriptome_url()
         gtf_download_url = url_builder.build_gtf_url()
@@ -260,4 +260,4 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             specieses = r.json()
 
         for species in specieses:
-            self._generate_batches(species)
+            self._generate_batch(species)
