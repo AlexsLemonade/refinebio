@@ -54,7 +54,7 @@ class DownloadTranscriptomeIndexTestCase(TestCase):
                          raw_format="fa.gz",
                          processed_format="tar.gz",
                          name="Aegilops_tauschii{}.fa.gz".format(length),
-                         internal_location="EnsemblPlants/TRANSCRIPTOME_INDEX/",
+                         internal_location="EnsemblPlants/TRANSCRIPTOME_INDEX",
                          batch=batch)
             file2 = File(size_in_bytes=0,
                          download_url=self.gtf_download_url,

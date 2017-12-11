@@ -141,7 +141,7 @@ def _create_index(job_context: Dict) -> Dict:
     the Batch. Additionally it will either be a "long" index or a
     "short" index, which means that it will be appropriate for reads
     with a certain range of base pair lengths. The creator of Salmon,
-    the esteemed Rob Patro, has said:
+    the esteemed Dr. Rob Patro, has said (via personal communication):
 
     "For *most* data (i.e. 75bp or longer), the default k should work
     well.  For reads shorter than 75bp ... one should absolutely use a
