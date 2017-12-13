@@ -1,12 +1,12 @@
-import traceback
 from django.utils import timezone
-from data_refinery_models.models import SurveyJob, SurveyJobKeyValue
+from data_refinery_common.models import SurveyJob, SurveyJobKeyValue
 from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
+from data_refinery_foreman.surveyor.sra import SraSurveyor
+from data_refinery_foreman.surveyor.transcriptome_index import TranscriptomeIndexSurveyor
+from data_refinery_common.logging import get_and_configure_logger
 
-# Import and set logger
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+
+logger = get_and_configure_logger(__name__)
 
 
 class SourceNotSupportedError(BaseException):
@@ -17,15 +17,19 @@ def _get_surveyor_for_source(survey_job: SurveyJob):
     """Factory method for ExternalSourceSurveyors."""
     if survey_job.source_type == "ARRAY_EXPRESS":
         return ArrayExpressSurveyor(survey_job)
+    if survey_job.source_type == "SRA":
+        return SraSurveyor(survey_job)
+    if survey_job.source_type == "TRANSCRIPTOME_INDEX":
+        return TranscriptomeIndexSurveyor(survey_job)
     else:
         raise SourceNotSupportedError(
             "Source " + survey_job.source_type + " is not supported.")
 
 
 def _start_job(survey_job: SurveyJob):
-    logger.info("Starting Survey Job #%d for source type: %s.",
-                survey_job.id,
-                survey_job.source_type)
+    logger.info("Starting Survey Job for source type: %s.",
+                survey_job.source_type,
+                survey_job=survey_job.id)
 
     survey_job.start_time = timezone.now()
     survey_job.replication_started_at = timezone.now()
@@ -50,9 +54,9 @@ def run_job(survey_job: SurveyJob):
     try:
         surveyor = _get_surveyor_for_source(survey_job)
     except SourceNotSupportedError as e:
-        logger.error("Unable to run survey job #%d because: %s",
-                     survey_job.id,
-                     e)
+        logger.error("Unable to run Survey Job because: %s",
+                     e,
+                     survey_job=survey_job.id)
 
         _end_job(survey_job, False)
         return survey_job
@@ -60,10 +64,8 @@ def run_job(survey_job: SurveyJob):
     try:
         job_success = surveyor.survey()
     except Exception as e:
-        logger.error("Exception caught while running job #%d with message: %s",
-                     survey_job.id,
-                     e)
-        logger.error(traceback.format_exc())
+        logger.exception("Exception caught while running Survey Job.",
+                         survey_job=survey_job.id)
         job_success = False
 
     _end_job(survey_job, job_success)
@@ -81,7 +83,7 @@ def test():
     return
 
 
-def survey_experiments(experiments_list_file):
+def survey_ae_experiments(experiments_list_file):
     with open(experiments_list_file, "r") as experiments:
         for experiment in experiments:
             survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
@@ -91,3 +93,17 @@ def survey_experiments(experiments_list_file):
                                                value=experiment.rstrip())
             key_value_pair.save()
             run_job(survey_job)
+
+
+def survey_sra_experiments(start_accession, end_accession):
+    survey_job = SurveyJob(source_type="SRA")
+    survey_job.save()
+    key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                       key="start_accession",
+                                       value=start_accession)
+    key_value_pair.save()
+    key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                       key="end_accession",
+                                       value=end_accession)
+    key_value_pair.save()
+    run_job(survey_job)

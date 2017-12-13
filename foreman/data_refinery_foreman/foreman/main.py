@@ -6,19 +6,17 @@ from retrying import retry
 from datetime import timedelta
 from django.utils import timezone
 from django.db import transaction
-from data_refinery_models.models import (
+from data_refinery_common.models import (
     WorkerJob,
     DownloaderJob,
     ProcessorJob
 )
 from data_refinery_foreman.surveyor.message_queue import send_job
 from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.logging import get_and_configure_logger
 
-# Import and set logger
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
+logger = get_and_configure_logger(__name__)
 
 # Maximum number of retries, so the number of attempts will be one
 # greater than this because of the first attempt

@@ -13,6 +13,8 @@ class PipelineEnums(Enum):
 class ProcessorPipeline(PipelineEnums):
     """Pipelines which perform some kind of processing on the data."""
     AFFY_TO_PCL = "AFFY_TO_PCL"
+    SALMON = "SALMON"
+    TRANSCRIPTOME_INDEX = "TRANSCRIPTOME_INDEX"
     NO_OP = "NO_OP"
     NONE = "NONE"
 
@@ -23,10 +25,14 @@ class DiscoveryPipeline(PipelineEnums):
 
 
 class Downloaders(Enum):
-    """A enumeration of downloaders for batch.downloader_task."""
+    """An enumeration of downloaders for batch.downloader_task."""
     ARRAY_EXPRESS = "ARRAY_EXPRESS"
+    SRA = "SRA"
+    TRANSCRIPTOME_INDEX = "TRANSCRIPTOME_INDEX"
 
 
 DOWNLOADER_TASK_LOOKUP = {
-    "ARRAY_EXPRESS": "DOWNLOAD_ARRAY_EXPRESS"
+    "ARRAY_EXPRESS": "DOWNLOAD_ARRAY_EXPRESS",
+    "SRA": "DOWNLOAD_SRA",
+    "TRANSCRIPTOME_INDEX": "DOWNLOAD_TRANSCRIPTOME_INDEX",
 }

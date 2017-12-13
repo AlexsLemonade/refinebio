@@ -4,6 +4,9 @@ jobs:
     working_directory: /home/circleci/data_refinery
     machine: true
     steps:
+      - run: curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+      - run: sudo apt-get install git-lfs
+      - run: git lfs install
       - checkout
 
       # Setup Postgres
@@ -14,8 +17,6 @@ jobs:
       - run: sudo -u postgres psql data_refinery -c 'ALTER USER data_refinery_user CREATEDB;'
 
       # Run Tests.
-      - run: ./data_models/run_tests.sh
-      - run: cd data_models && python setup.py sdist
       - run: ./common/run_tests.sh
       - run: cd common && python setup.py sdist
       - run: ./run_rabbitmq.sh

@@ -2,8 +2,9 @@ import json
 import datetime
 from unittest.mock import Mock, patch, call
 from django.test import TestCase
-from data_refinery_models.models import (
+from data_refinery_common.models import (
     Batch,
+    File,
     DownloaderJob,
     SurveyJob,
     SurveyJobKeyValue,
@@ -254,7 +255,8 @@ class SurveyTestCase(TestCase):
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.json.return_value = json.loads(EXPERIMENTS_JSON)
 
-        experiment = ArrayExpressSurveyor.get_experiment_metadata("E-MTAB-3050")
+        ae_surveyor = ArrayExpressSurveyor(self.survey_job)
+        experiment = ae_surveyor.get_experiment_metadata("E-MTAB-3050")
         self.assertEqual("Microarray analysis of in vitro differentiation", experiment["name"])
         self.assertEqual("E-MTAB-3050", experiment["experiment_accession_code"])
         self.assertEqual("A-AFFY-1", experiment["platform_accession_code"])
@@ -287,10 +289,6 @@ class SurveyTestCase(TestCase):
         batch = batches[0]
         self.assertEqual(batch.survey_job.id, self.survey_job.id)
         self.assertEqual(batch.source_type, "ARRAY_EXPRESS")
-        self.assertEqual(batch.size_in_bytes, -1)
-        self.assertEqual(batch.download_url, "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.raw.1.zip")  # noqa
-        self.assertEqual(batch.raw_format, "CEL")
-        self.assertEqual(batch.processed_format, "PCL")
         self.assertEqual(batch.pipeline_required, "AFFY_TO_PCL")
         self.assertEqual(batch.platform_accession_code, "A-AFFY-1")
         self.assertEqual(batch.experiment_accession_code, "E-MTAB-3050")
@@ -298,7 +296,30 @@ class SurveyTestCase(TestCase):
         self.assertEqual(batch.status, "NEW")
         self.assertEqual(batch.release_date, datetime.date(2014, 10, 31))
         self.assertEqual(batch.last_uploaded_date, datetime.date(2014, 10, 30))
-        self.assertEqual(batch.name, "C30057.CEL")
-        self.assertEqual(batch.internal_location, "A-AFFY-1/AFFY_TO_PCL")
         self.assertEqual(batch.organism_id, 9606)
         self.assertEqual(batch.organism_name, "HOMO SAPIENS")
+
+        file = batch.files[0]
+        self.assertEqual(file.size_in_bytes, -1)
+        self.assertEqual(file.download_url, "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.raw.1.zip")  # noqa
+        self.assertEqual(file.raw_format, "CEL")
+        self.assertEqual(file.processed_format, "PCL")
+        self.assertEqual(file.name, "C30057.CEL")
+        self.assertEqual(file.internal_location, "A-AFFY-1/AFFY_TO_PCL")
+
+
+class GroupBatchesTestCase(TestCase):
+    def test_survey(self):
+        survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
+        surveyor = ArrayExpressSurveyor(survey_job)
+        file1 = File(download_url="a")
+        file2 = File(download_url="a")
+        file3 = File(download_url="b")
+        file4 = File(download_url="a")
+        batch1 = Batch(files=[file1])
+        batch2 = Batch(files=[file2])
+        batch3 = Batch(files=[file3, file4])
+
+        surveyor.batches = [batch1, batch2, batch3]
+        groups = surveyor.group_batches()
+        self.assertEqual(groups, [[batch1, batch2], [batch3]])
