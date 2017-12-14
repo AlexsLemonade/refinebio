@@ -65,7 +65,7 @@ def end_job(job: DownloaderJob, batches: Batch, success: bool):
             return None
 
     @retry(stop_max_attempt_number=3)
-    def queue_task(processor_job):
+    def queue_task(processor_job, batch):
         if batch.pipeline_required in ProcessorPipeline.__members__:
             send_job(batch.pipeline_required, processor_job.id)
             logger.info("Queuing processor job.",

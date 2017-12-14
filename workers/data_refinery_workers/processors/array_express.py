@@ -4,7 +4,6 @@ import warnings
 from typing import Dict
 import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
-from celery import shared_task
 from data_refinery_common.models import File
 from data_refinery_workers.processors import utils
 from data_refinery_common.logging import get_and_configure_logger

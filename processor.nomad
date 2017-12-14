@@ -50,7 +50,7 @@ job "AFFY_TO_PCL" {
       }
 
       config {
-        image = "wkurt/nomad-test:first"
+        image = "wkurt/nomad-test:second"
         force_pull = false
 
         auth {

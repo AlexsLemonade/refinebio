@@ -50,7 +50,7 @@ job "DOWNLOAD_ARRAY_EXPRESS" {
       }
 
       config {
-        image = "wkurt/nomad-test:first"
+        image = "wkurt/nomad-test:second"
         force_pull = false
 
         auth {
