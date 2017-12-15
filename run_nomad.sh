@@ -24,7 +24,7 @@ while [ $nomad_status != "200" ]; do
     nomad_status=$(check_nomad_status)
 done
 
-echo "Nomad is online, registering jobs."
+echo "Nomad is online. Registering jobs."
 
 # Register the jobs for dispatching.
 nomad run -address http://$HOST_IP:4646 downloader.nomad
