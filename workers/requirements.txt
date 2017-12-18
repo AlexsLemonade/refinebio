@@ -6,7 +6,6 @@
 #
 amqp==2.2.2
 boto3==1.4.8
-boto==2.48.0
 botocore==1.8.13          # via boto3, s3transfer
 certifi==2017.11.5        # via requests
 chardet==3.0.4            # via requests

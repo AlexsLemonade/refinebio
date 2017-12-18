@@ -4,6 +4,5 @@ requests
 psycopg2
 boto3
 retrying
-boto
 rpy2
 python-nomad
