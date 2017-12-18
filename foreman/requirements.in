@@ -1,5 +1,4 @@
 django
-celery
 psycopg2
 requests
 retrying

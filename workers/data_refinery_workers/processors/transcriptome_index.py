@@ -5,7 +5,6 @@ import tarfile
 import gzip
 import shutil
 from typing import Dict
-from celery import shared_task
 from data_refinery_common.models import File, BatchKeyValue
 from data_refinery_workers.processors import utils
 from data_refinery_common.logging import get_and_configure_logger
@@ -235,7 +234,6 @@ def _zip_index(job_context: Dict) -> Dict:
     return job_context
 
 
-@shared_task
 def build_index(job_id: int) -> None:
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,

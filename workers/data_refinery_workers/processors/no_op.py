@@ -2,7 +2,6 @@ from typing import Dict
 import os
 import shutil
 import boto3
-from celery import shared_task
 from data_refinery_common.models import batches
 from data_refinery_workers.processors import utils
 from data_refinery_common.logging import get_and_configure_logger
@@ -58,7 +57,6 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
     return job_context
 
 
-@shared_task
 def no_op_processor(job_id: int) -> None:
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,

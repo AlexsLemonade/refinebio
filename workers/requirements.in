@@ -1,5 +1,4 @@
 amqp
-celery
 django
 requests
 psycopg2
