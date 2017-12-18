@@ -16,7 +16,6 @@ docker build -t dr_foreman -f foreman/Dockerfile .
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
 docker run \
-       --link message-queue:rabbit \
        --add-host=database:$HOST_IP \
        --env-file foreman/environments/test \
        -i dr_foreman test --no-input "$@"

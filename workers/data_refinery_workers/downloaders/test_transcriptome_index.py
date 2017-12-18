@@ -1,7 +1,7 @@
 import shutil
 import copy
 from typing import List
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, call
 from django.test import TestCase
 from data_refinery_common.models import (
     SurveyJob,
@@ -106,7 +106,7 @@ class DownloadTranscriptomeIndexTestCase(TestCase):
         batches = self.insert_objects()
         downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
-        # Call the task we're testing:
+        # Call the downloader function we're testing:
         transcriptome_index.download_transcriptome(downloader_job.id)
 
         target_gtf_path = (
@@ -152,7 +152,7 @@ class DownloadTranscriptomeIndexTestCase(TestCase):
     @patch("data_refinery_workers.downloaders.transcriptome_index._download_file")
     @patch("data_refinery_workers.downloaders.transcriptome_index._upload_files")
     def test_verification_failure(self, _upload_files, _download_file, mock_send_job):
-        mock_send_job.send_task.return_value = None
+        mock_send_job.return_value = None
 
         # Set a different download URL to trigger a failure in the
         # _verify_batch_grouping function
@@ -161,7 +161,7 @@ class DownloadTranscriptomeIndexTestCase(TestCase):
         batches[0].files[0].save()
         downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
-        # Call the download task
+        # Call the downloader function
         transcriptome_index.download_transcriptome(downloader_job.id)
 
         _download_file.assert_not_called()
@@ -191,7 +191,7 @@ class DownloadTranscriptomeIndexTestCase(TestCase):
         batches = self.insert_objects()
         downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
-        # Call the download task
+        # Call the downloader function
         transcriptome_index.download_transcriptome(downloader_job.id)
 
         _upload_files.assert_not_called()

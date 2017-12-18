@@ -1,6 +1,6 @@
 from urllib.error import URLError
 from typing import List
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, call
 from django.test import TestCase
 from data_refinery_common.models import (
     SurveyJob,

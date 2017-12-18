@@ -23,7 +23,6 @@ docker build -t dr_worker -f workers/Dockerfile .
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
 docker run \
-       --link message-queue:rabbit \
        --name worker1 \
        --add-host=database:$HOST_IP \
        --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \

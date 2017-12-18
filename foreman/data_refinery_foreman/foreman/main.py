@@ -37,7 +37,7 @@ THREAD_WAIT_TIME = 10.0
 @retry(stop_max_attempt_number=3)
 @transaction.atomic
 def requeue_downloader_job(last_job: DownloaderJob) -> None:
-    """Queues a new downloader job and a Celery task for it.
+    """Queues a new downloader job.
 
     The new downloader job will have num_retries one greater than
     last_job.num_retries.
@@ -156,9 +156,9 @@ def retry_lost_downloader_jobs() -> None:
 @retry(stop_max_attempt_number=3)
 @transaction.atomic
 def requeue_processor_job(last_job: ProcessorJob) -> None:
-    """Queues a new downloader job and a Celery task for it.
+    """Queues a new processor job.
 
-    The new downloader job will have num_retries one greater than
+    The new processor job will have num_retries one greater than
     last_job.num_retries.
     """
     num_retries = last_job.num_retries + 1

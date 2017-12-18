@@ -1,6 +1,6 @@
 import copy
 from typing import List
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, call
 from django.test import TestCase
 from data_refinery_common.models import (
     SurveyJob,
@@ -93,7 +93,7 @@ class DownloadArrayExpressTestCase(TestCase):
         batches, files = self.insert_objects()
         downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
-        # Call the task we're testing:
+        # Call the function we're testing:
         array_express.download_array_express(downloader_job.id)
 
         target_file_path = ("/home/user/data_store/temp/A-AFFY-1/AFFY_TO_PCL/downloader_job_{}"
@@ -144,7 +144,7 @@ class DownloadArrayExpressTestCase(TestCase):
         files[1].save()
         downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
-        # Call the download task
+        # Call the downloader function
         array_express.download_array_express(downloader_job.id)
 
         _download_file.assert_not_called()
@@ -174,7 +174,7 @@ class DownloadArrayExpressTestCase(TestCase):
         batches, _ = self.insert_objects()
         downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
-        # Call the download task
+        # Call the downloader function
         array_express.download_array_express(downloader_job.id)
 
         _extract_file.assert_not_called()
@@ -198,7 +198,7 @@ class DownloadArrayExpressTestCase(TestCase):
         batches, files = self.insert_objects()
         downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
-        # Call the download task
+        # Call the downloader function
         array_express.download_array_express(downloader_job.id)
 
         mock_send_job.assert_not_called()
