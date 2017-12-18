@@ -58,12 +58,12 @@ class SurveyTestCase(TestCase):
         return ProcessorJob.create_job_and_relationships(
             num_retries=0, batches=[batch], pipeline_applied="AFFY_TO_PCL")
 
-    @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
-    def test_requeuing_downloader_job(self, mock_send_task):
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_requeuing_downloader_job(self, mock_send_job):
         job = self.create_batch_and_downloader_job()
 
         main.requeue_downloader_job(job)
-        mock_send_task.assert_called_once()
+        mock_send_job.assert_called_once()
 
         jobs = DownloaderJob.objects.order_by('id')
         original_job = jobs[0]
@@ -74,14 +74,14 @@ class SurveyTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
-    def test_repeated_download_failures(self, mock_send_task):
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_repeated_download_failures(self, mock_send_job):
         """Jobs will be repeatedly retried."""
         job = self.create_batch_and_downloader_job()
 
         for i in range(main.MAX_NUM_RETRIES):
             main.handle_downloader_jobs([job])
-            self.assertEqual(i + 1, len(mock_send_task.mock_calls))
+            self.assertEqual(i + 1, len(mock_send_job.mock_calls))
 
             jobs = DownloaderJob.objects.all().order_by("-id")
             previous_job = jobs[1]
@@ -101,8 +101,8 @@ class SurveyTestCase(TestCase):
         self.assertEqual(last_job.num_retries, main.MAX_NUM_RETRIES)
         self.assertFalse(last_job.success)
 
-    @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
-    def test_retrying_failed_downloader_jobs(self, mock_send_task):
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_retrying_failed_downloader_jobs(self, mock_send_job):
         job = self.create_batch_and_downloader_job()
         job.success = False
         job.save()
@@ -110,7 +110,7 @@ class SurveyTestCase(TestCase):
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
         main.retry_failed_downloader_jobs.__wrapped__()
-        mock_send_task.assert_called_once()
+        mock_send_job.assert_called_once()
 
         jobs = DownloaderJob.objects.order_by('id')
         original_job = jobs[0]
@@ -121,8 +121,8 @@ class SurveyTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
-    def test_retrying_hung_downloader_jobs(self, mock_send_task):
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_retrying_hung_downloader_jobs(self, mock_send_job):
         job = self.create_batch_and_downloader_job()
         job.start_time = timezone.now() - main.MAX_DOWNLOADER_RUN_TIME - timedelta(seconds=1)
         job.save()
@@ -130,7 +130,7 @@ class SurveyTestCase(TestCase):
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
         main.retry_hung_downloader_jobs.__wrapped__()
-        mock_send_task.assert_called_once()
+        mock_send_job.assert_called_once()
 
         jobs = DownloaderJob.objects.order_by('id')
         original_job = jobs[0]
@@ -141,8 +141,8 @@ class SurveyTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
-    def test_retrying_lost_downloader_jobs(self, mock_send_task):
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_retrying_lost_downloader_jobs(self, mock_send_job):
         job = self.create_batch_and_downloader_job()
         job.created_at = timezone.now() - main.MAX_QUEUE_TIME - timedelta(seconds=1)
         job.save()
@@ -150,7 +150,7 @@ class SurveyTestCase(TestCase):
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
         main.retry_lost_downloader_jobs.__wrapped__()
-        mock_send_task.assert_called_once()
+        mock_send_job.assert_called_once()
 
         jobs = DownloaderJob.objects.order_by('id')
         original_job = jobs[0]
@@ -161,12 +161,12 @@ class SurveyTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
-    def test_requeuing_processor_job(self, mock_send_task):
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_requeuing_processor_job(self, mock_send_job):
         job = self.create_batch_and_processor_job()
 
         main.requeue_processor_job(job)
-        mock_send_task.assert_called_once()
+        mock_send_job.assert_called_once()
 
         jobs = ProcessorJob.objects.order_by('id')
         original_job = jobs[0]
@@ -177,14 +177,14 @@ class SurveyTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
-    def test_repeated_processor_failures(self, mock_send_task):
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_repeated_processor_failures(self, mock_send_job):
         """Jobs will be repeatedly retried."""
         job = self.create_batch_and_processor_job()
 
         for i in range(main.MAX_NUM_RETRIES):
             main.handle_processor_jobs([job])
-            self.assertEqual(i + 1, len(mock_send_task.mock_calls))
+            self.assertEqual(i + 1, len(mock_send_job.mock_calls))
 
             jobs = ProcessorJob.objects.all().order_by("-id")
             previous_job = jobs[1]
@@ -204,8 +204,8 @@ class SurveyTestCase(TestCase):
         self.assertEqual(last_job.num_retries, main.MAX_NUM_RETRIES)
         self.assertFalse(last_job.success)
 
-    @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
-    def test_retrying_failed_processor_jobs(self, mock_send_task):
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_retrying_failed_processor_jobs(self, mock_send_job):
         job = self.create_batch_and_processor_job()
         job.success = False
         job.save()
@@ -213,7 +213,7 @@ class SurveyTestCase(TestCase):
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
         main.retry_failed_processor_jobs.__wrapped__()
-        mock_send_task.assert_called_once()
+        mock_send_job.assert_called_once()
 
         jobs = ProcessorJob.objects.order_by('id')
         original_job = jobs[0]
@@ -224,8 +224,8 @@ class SurveyTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
-    def test_retrying_hung_processor_jobs(self, mock_send_task):
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_retrying_hung_processor_jobs(self, mock_send_job):
         job = self.create_batch_and_processor_job()
         job.start_time = timezone.now() - main.MAX_PROCESSOR_RUN_TIME - timedelta(seconds=1)
         job.save()
@@ -233,7 +233,7 @@ class SurveyTestCase(TestCase):
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
         main.retry_hung_processor_jobs.__wrapped__()
-        mock_send_task.assert_called_once()
+        mock_send_job.assert_called_once()
 
         jobs = ProcessorJob.objects.order_by('id')
         original_job = jobs[0]
@@ -244,8 +244,8 @@ class SurveyTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
-    def test_retrying_lost_processor_jobs(self, mock_send_task):
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_retrying_lost_processor_jobs(self, mock_send_job):
         job = self.create_batch_and_processor_job()
         job.created_at = timezone.now() - main.MAX_QUEUE_TIME - timedelta(seconds=1)
         job.save()
@@ -254,7 +254,7 @@ class SurveyTestCase(TestCase):
         # decorated with @do_forever
         main.retry_lost_processor_jobs.__wrapped__()
 
-        mock_send_task.assert_called_once()
+        mock_send_job.assert_called_once()
 
         jobs = ProcessorJob.objects.order_by('id')
         original_job = jobs[0]
