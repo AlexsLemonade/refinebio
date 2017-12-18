@@ -55,7 +55,7 @@ class ExternalSourceSurveyor:
     def downloader_task(self):
         """Returns the downloader task for the source.
 
-        Returns the Celery Downloader Task name from the
+        Returns the Downloader Task name from the
         data_refinery_workers project which should be queued to
         download Batches discovered by this surveyor.
         """

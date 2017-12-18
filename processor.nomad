@@ -31,8 +31,6 @@ job "AFFY_TO_PCL" {
         DATABASE_PORT = "5432"
         DATABASE_TIMEOUT = "5"
 
-        CELERY_BROKER_URL = "amqp://guest@rabbit"
-
         RUNNING_IN_CLOUD = "False"
 
         USE_S3 = "False"
