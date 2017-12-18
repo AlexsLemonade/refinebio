@@ -5,7 +5,6 @@ import shutil
 import zipfile
 from typing import List
 from contextlib import closing
-from celery import shared_task
 from data_refinery_common.models import File, DownloaderJob
 from data_refinery_workers.downloaders import utils
 from data_refinery_common.logging import get_and_configure_logger
@@ -99,7 +98,6 @@ def _extract_file(files: List[File], job: DownloaderJob) -> None:
             shutil.rmtree(directory)
 
 
-@shared_task
 def download_array_express(job_id: int) -> None:
     job = utils.start_job(job_id)
     batches = job.batches.all()

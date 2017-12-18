@@ -3,7 +3,6 @@ import urllib.request
 import os
 import shutil
 from contextlib import closing
-from celery import shared_task
 from data_refinery_common.models import File, DownloaderJob
 from data_refinery_workers.downloaders import utils
 from data_refinery_common.logging import get_and_configure_logger
@@ -38,7 +37,6 @@ def _download_file(file: File, downloader_job: DownloaderJob, target_file_path: 
     return True
 
 
-@shared_task
 def download_sra(job_id: int) -> None:
     job = utils.start_job(job_id)
     batches = job.batches.all()

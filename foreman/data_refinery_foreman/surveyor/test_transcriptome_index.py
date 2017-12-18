@@ -24,7 +24,7 @@ class SurveyTestCase(TestCase):
                                            value="EnsemblPlants")
         key_value_pair.save()
 
-    @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
+    @patch('data_refinery_foreman.surveyor.external_source.send_job')
     @patch("data_refinery_foreman.surveyor.transcriptome_index.urllib.request.urlopen")
     @patch("data_refinery_foreman.surveyor.transcriptome_index.requests.get")
     def test_survey(self, mock_get, mock_urlopen, mock_send_task):
@@ -61,9 +61,8 @@ class SurveyTestCase(TestCase):
         send_task_calls = []
         for downloader_job in downloader_jobs:
             send_task_calls.append(
-                call(("data_refinery_workers.downloaders."
-                      "transcriptome_index.download_transcriptome"),
-                     args=[downloader_job.id]))
+                call("DOWNLOAD_TRANSCRIPTOME_INDEX",
+                     downloader_job.id))
 
         mock_send_task.assert_has_calls(send_task_calls)
 

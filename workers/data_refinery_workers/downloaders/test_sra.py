@@ -124,12 +124,10 @@ class DownloadSraTestCase(TestCase):
 
     @patch("os.path.getsize")
     @patch.object(File, "upload_raw_file")
-    @patch("data_refinery_workers.downloaders.utils.app")
+    @patch("data_refinery_workers.downloaders.utils.send_job")
     @patch("data_refinery_workers.downloaders.sra._download_file")
-    def test_happy_path(self, mock_download_file, mock_app, mock_upload_raw_file, mock_getsize):
-        # Set up mocks:
-        mock_app.send_task = MagicMock()
-        mock_app.send_task.return_value = None
+    def test_happy_path(self, mock_download_file, mock_send_job, mock_upload_raw_file, mock_getsize):
+        mock_send_job.return_value = None
 
         # We don't actually want to download anything and we're
         # testing this function separately anyway.
@@ -162,18 +160,11 @@ class DownloadSraTestCase(TestCase):
         first_call = mock_download_file.call_args_list[0][0]
         second_call = mock_download_file.call_args_list[1][0]
         mock_download_file.assert_has_calls([
-            call(first_call[0],
-                 first_call[1],
-                 target_path_2),
-            call(second_call[0],
-                 second_call[1],
-                 target_path_1)
+            call(first_call[0], first_call[1], target_path_2),
+            call(second_call[0], second_call[1], target_path_1)
         ])
 
-        mock_app.send_task.assert_called_once_with(
-            "data_refinery_workers.processors.salmon.salmon",
-            args=[processor_job.id]
-        )
+        mock_send_job.assert_called_once_with("SALMON", processor_job.id)
 
         self.assertEquals(len(mock_upload_raw_file.mock_calls), 2)
 

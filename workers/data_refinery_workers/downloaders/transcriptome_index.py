@@ -4,7 +4,6 @@ import os
 import shutil
 from typing import List
 from contextlib import closing
-from celery import shared_task
 from data_refinery_common.models import File, DownloaderJob
 from data_refinery_workers.downloaders import utils
 from data_refinery_common.logging import get_and_configure_logger
@@ -73,7 +72,6 @@ def _upload_files(job_dir: str, files: List[File], job: DownloaderJob) -> None:
         file.remove_temp_directory(job_dir)
 
 
-@shared_task
 def download_transcriptome(job_id: int) -> None:
     job = utils.start_job(job_id)
     batches = job.batches.all()
