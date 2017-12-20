@@ -2,13 +2,15 @@
 
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
+echo "Rebuilding Docker image while waiting for Nomad to come online."
+
 # Start the nomad in development locally
 nomad agent -bind $HOST_IP \
       -data-dir /home/kurt/Development/data_refinery/nomad_dir \
       -dev \
       > nomad.logs &
 
-echo "Waiting for Nomad to come online."
+docker build -t wkurt/nomad-test:second -f workers/Dockerfile .
 
 check_nomad_status () {
     echo $(curl --write-out %{http_code} \

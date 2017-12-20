@@ -5,5 +5,6 @@ import nomad
 
 
 def send_job(job_name: str, job_id: int):
+    # This hostname should be nomad. This won't work in production.
     nomad_client = nomad.Nomad("database", timeout=5)
     nomad_client.job.dispatch_job(job_name, meta={"JOB_ID": str(job_id)})

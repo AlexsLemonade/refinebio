@@ -234,7 +234,7 @@ def _zip_index(job_context: Dict) -> Dict:
     return job_context
 
 
-def build_index(job_id: int) -> None:
+def build_transcriptome_index(job_id: int) -> None:
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
                         _set_job_prefix,

@@ -67,7 +67,11 @@ def end_job(job: DownloaderJob, batches: Batch, success: bool):
     @retry(stop_max_attempt_number=3)
     def queue_task(processor_job, batch):
         if batch.pipeline_required in ProcessorPipeline.__members__:
-            send_job(batch.pipeline_required, processor_job.id)
+            # This is what it should be once there are more Nomad Jobs
+            # instead of just one to run all processors.
+            # send_job(batch.pipeline_required, processor_job.id)
+            # This is temporary until then.
+            send_job("PROCESSOR", processor_job.id)
             logger.info("Queuing processor job.",
                         downloader_job=job.id,
                         processor_job=processor_job.id,

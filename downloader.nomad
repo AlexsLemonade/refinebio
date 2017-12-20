@@ -1,4 +1,4 @@
-job "DOWNLOAD_ARRAY_EXPRESS" {
+job "DOWNLOADER" {
   datacenters = ["dc1"]
 
   type = "batch"

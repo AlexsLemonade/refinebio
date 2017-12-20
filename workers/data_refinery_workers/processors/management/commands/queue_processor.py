@@ -17,7 +17,6 @@ from data_refinery_common.models import (
 )
 
 from data_refinery_workers.task_runner import send_job
-from data_refinery_workers.task_runner import app
 from data_refinery_common.logging import get_and_configure_logger
 
 
@@ -85,7 +84,7 @@ class Command(BaseCommand):
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch, batch2])
         # processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
         processor_task = "temp cause it'll break if I use PROCESSOR_PIPELINE_LOOKUP"
-        app.send_task(processor_task, args=[processor_job.id])
+        send_job(processor_task, processor_job.id)
         logger.info("Processor Job queued.", processor_job=processor_job.id)
 
     def run_trasnscriptome_processor(self):
@@ -134,7 +133,11 @@ class Command(BaseCommand):
 
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
         logger.info("Queuing a processor job.")
-        send_job(batch.pipeline_required, processor_job.id)
+        # This is what it should be once there are more Nomad Jobs
+        # instead of just one to run all processors.
+        # send_job(batch.pipeline_required, processor_job.id)
+        # This is temporary until then.
+        send_job("PROCESSOR", processor_job.id)
 
     def handle(self, *args, **options):
         if options["processor-type"] is None:

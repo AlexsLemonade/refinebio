@@ -1,4 +1,7 @@
-job "AFFY_TO_PCL" {
+# This job name is temporary. Once resource requirements for various
+# jobs have been properly estimated there should be different job
+# specifications for each processor type.
+job "PROCESSOR" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -44,7 +47,7 @@ job "AFFY_TO_PCL" {
 
       resources {
         cpu = 500
-        memory = 2024
+        memory = 4048
       }
 
       config {
