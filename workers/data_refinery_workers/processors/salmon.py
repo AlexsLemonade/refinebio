@@ -47,6 +47,18 @@ def _prepare_files(job_context: Dict) -> Dict:
             job_context["success"] = False
             return job_context
 
+    num_files = len(files)
+    if num_files > 2 or num_files < 1:
+        failure_message = ("{} files were found for a Salmon job. There should never"
+                           " be more than two.").format(str(num_files))
+        logger.error(failure_message, batch=batch, processor_job=job_context["job_id"])
+        job_context["job"].failure_reason = failure_message
+        job_context["success"] = False
+        return job_context
+    elif num_files == 2:
+        job_context["input_file_path_2"] = files[1].get_temp_pre_path(
+            job_context["job_dir_prefix"])
+
     job_context["input_file_path"] = files[0].get_temp_pre_path(job_context["job_dir_prefix"])
     # Salmon outputs an entire directory of files, so create a temp
     # directory to output it to until we can zip it to
@@ -54,10 +66,6 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["output_directory"] = os.path.join(
         files[0].get_temp_dir(job_context["job_dir_prefix"]), "output")
     os.makedirs(job_context["output_directory"], exist_ok=True)
-
-    if len(files) == 2:
-        job_context["input_file_path_2"] = files[1].get_temp_pre_path(
-            job_context["job_dir_prefix"])
 
     return job_context
 
@@ -75,6 +83,10 @@ def _determine_index_length(job_context: Dict) -> Dict:
     counter = 1
     with gzip.open(job_context["input_file_path"], "rt") as input_file:
         for line in input_file:
+            # In the FASTQ file format, there are 4 lines for each
+            # read. Three of these contain metadata about the
+            # read. The string representing the read itself is found
+            # on the second line of each quartet.
             if counter % 4 == 2:
                 total_base_pairs += len(line.replace("\n", ""))
                 number_of_reads += 1
@@ -99,18 +111,27 @@ def _determine_index_length(job_context: Dict) -> Dict:
 
 
 def _download_index(job_context: Dict) -> Dict:
+    """Downloads the appropriate Salmon Index for this batch.
+
+    Salmon documentation states:
+
+    "If you want to use Salmon in quasi-mapping-based mode, then you
+    first have to build an Salmon index for your transcriptome."
+
+    We have used the Data Refinery to build these indices already,
+    this function retrieves the correct index for the organism and
+    read length from Permanent Storage.
+    """
     batch = job_context["batches"][0]
     try:
-        index_batches = Batch.objects.filter(source_type=Downloaders.TRANSCRIPTOME_INDEX.value,
-                                             organism_id=batch.organism_id,
-                                             status=BatchStatuses.PROCESSED.value).all()
-        batch_ids = [batch.id for batch in index_batches]
+        index_batch = BatchKeyValue.objects.select_related("batch").filter(
+            batch__source_type=Downloaders.TRANSCRIPTOME_INDEX.value,
+            batch__organism_id=batch.organism_id,
+            batch__status=BatchStatuses.PROCESSED.value,
+            key="kmer_size",
+            value=job_context["kmer_size"]
+        ).all()[0]
 
-        batch_key_value = BatchKeyValue.objects.filter(batch_id__in=batch_ids,
-                                                       key="kmer_size",
-                                                       value=job_context["kmer_size"]).all()[0]
-
-        index_batch = batch_key_value.batch
         index_file = index_batch.files[0]
     except:
         logger.exception("Failed to find an index for organism %s with kmer_size of %s.",
@@ -155,6 +176,11 @@ def _download_index(job_context: Dict) -> Dict:
 
 
 def _zip_and_upload(job_context: Dict) -> Dict:
+    """Zips the directory output by Salmon into a single file and uploads it.
+
+    Adds the 'success' key to job_context because this function is the
+    last in the job.
+    """
     # If there are paired reads... the file name will be based off of
     # the first file's name, but not the second.
     # Note that this is a workaround for not having separate File
@@ -165,6 +191,7 @@ def _zip_and_upload(job_context: Dict) -> Dict:
     for file in job_context["batches"][0].files:
         if file.name.find("_1."):
             first_file = file
+
     # If there is only a single read, just use that one.
     if first_file is None:
         first_file = job_context["batches"][0].files[0]

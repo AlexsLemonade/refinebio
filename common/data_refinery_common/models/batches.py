@@ -209,7 +209,7 @@ class File(TimeTrackedModel):
         logger.debug("Moving file from %s to %s.", temp_path, raw_path)
         self._upload_file(temp_path, raw_dir, raw_path)
 
-    def download_raw_file(self, dir_name: str=None) -> None:
+    def download_raw_file(self, dir_name: str=None) -> str:
         """Moves the batch's raw file to the temp directory.
 
         Depending on the value of the USE_S3 environment variable this
@@ -230,7 +230,7 @@ class File(TimeTrackedModel):
 
         return temp_path
 
-    def download_processed_file(self, dir_name: str=None) -> None:
+    def download_processed_file(self, dir_name: str=None) -> str:
         """Moves the batch's processed file to the temp directory.
 
         Depending on the value of the USE_S3 environment variable this
