@@ -130,7 +130,7 @@ def _download_index(job_context: Dict) -> Dict:
             batch__status=BatchStatuses.PROCESSED.value,
             key="kmer_size",
             value=job_context["kmer_size"]
-        ).all()[0]
+        ).all()[0].batch
 
         index_file = index_batch.files[0]
     except:
