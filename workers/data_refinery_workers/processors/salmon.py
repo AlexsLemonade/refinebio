@@ -6,7 +6,7 @@ from typing import Dict
 from celery import shared_task
 from data_refinery_workers.processors import utils
 from data_refinery_common.job_lookup import Downloaders
-from data_refinery_common.models import Batch, BatchStatuses, BatchKeyValue
+from data_refinery_common.models import BatchStatuses, BatchKeyValue
 from data_refinery_common.logging import get_and_configure_logger
 import subprocess
 
@@ -15,7 +15,7 @@ logger = get_and_configure_logger(__name__)
 JOB_DIR_PREFIX = "processor_job_"
 
 
-def _set_job_prefix(job_context: Dict) -> str:
+def _set_job_prefix(job_context: Dict) -> Dict:
     job_context["job_dir_prefix"] = JOB_DIR_PREFIX + str(job_context["job_id"])
     return job_context
 

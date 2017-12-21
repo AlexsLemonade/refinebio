@@ -246,7 +246,6 @@ class SalmonTestCase(TestCase):
         # The function being tested.
         job_context = salmon._run_salmon(job_context)
 
-        self.maxDiff = None
         self.assertFalse(job_context["success"])
         self.assertEqual(processor_job.failure_reason,
                          ("Shell call to salmon failed because: "
