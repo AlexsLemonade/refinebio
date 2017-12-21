@@ -8,10 +8,10 @@ from data_refinery_common.models import (
     DownloaderJob,
     ProcessorJob
 )
-from data_refinery_workers.task_runner import send_job
 from data_refinery_workers._version import __version__
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.message_queue import send_job
 
 
 logger = get_and_configure_logger(__name__)
@@ -69,9 +69,9 @@ def end_job(job: DownloaderJob, batches: Batch, success: bool):
         if batch.pipeline_required in ProcessorPipeline.__members__:
             # This is what it should be once there are more Nomad Jobs
             # instead of just one to run all processors.
-            # send_job(batch.pipeline_required, processor_job.id)
+            send_job(batch.pipeline_required, processor_job.id)
             # This is temporary until then.
-            send_job("PROCESSOR", processor_job.id)
+            # send_job("PROCESSOR", processor_job.id)
             logger.info("Queuing processor job.",
                         downloader_job=job.id,
                         processor_job=processor_job.id,

@@ -11,12 +11,14 @@ from django.core.management.base import BaseCommand
 from data_refinery_common.models import (
     SurveyJob,
     Batch,
+    BatchKeyValue,
     File,
     BatchStatuses,
     ProcessorJob
 )
 
-from data_refinery_workers.task_runner import send_job
+from data_refinery_common.message_queue import send_job
+from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 
 
@@ -110,6 +112,11 @@ class Command(BaseCommand):
         )
         batch.save()
 
+        kmer_size_property = BatchKeyValue(batch=batch,
+                                           key="kmer_size",
+                                           value="31")
+        kmer_size_property.save()
+
         gtf_file = File(name="aegilops_tauschii_short.gtf.gz",
                         download_url=("ftp://ftp.ensemblgenomes.org/pub/release-37/plants/gtf"
                                       "/aegilops_tauschii/Aegilops_tauschii.ASM34733v1.37.gtf.gz"),
@@ -133,11 +140,7 @@ class Command(BaseCommand):
 
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
         logger.info("Queuing a processor job.")
-        # This is what it should be once there are more Nomad Jobs
-        # instead of just one to run all processors.
-        # send_job(batch.pipeline_required, processor_job.id)
-        # This is temporary until then.
-        send_job("PROCESSOR", processor_job.id)
+        send_job(ProcessorPipeline[batch.pipeline_required], processor_job.id)
 
     def handle(self, *args, **options):
         if options["processor-type"] is None:

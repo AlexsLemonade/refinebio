@@ -8,7 +8,7 @@ job "PROCESSOR" {
 
   parameterized {
     payload       = "forbidden"
-    meta_required = ["JOB_ID"]
+    meta_required = [ "JOB_NAME", "JOB_ID"]
   }
 
   group "jobs" {
@@ -59,7 +59,11 @@ job "PROCESSOR" {
           password = "REDACTED"
         }
 
-        args = ["run_processor_job", "--job-id", "${NOMAD_META_JOB_ID}"]
+        args = [
+          "run_processor_job",
+          "--job-name", "${NOMAD_META_JOB_NAME}",
+          "--job-id", "${NOMAD_META_JOB_ID}"
+        ]
 
         extra_hosts = ["database:165.123.67.153"]
 
