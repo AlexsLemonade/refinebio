@@ -2,6 +2,7 @@ import json
 import datetime
 from unittest.mock import Mock, patch, call
 from django.test import TestCase
+from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (
     Batch,
     File,
@@ -279,7 +280,7 @@ class SurveyTestCase(TestCase):
 
         downloader_jobs = DownloaderJob.objects.all()
         mock_send_task.assert_has_calls([
-            call("DOWNLOAD_ARRAY_EXPRESS",
+            call(Downloaders.ARRAY_EXPRESS,
                  downloader_jobs[0].id)
         ])
         batches = Batch.objects.all()

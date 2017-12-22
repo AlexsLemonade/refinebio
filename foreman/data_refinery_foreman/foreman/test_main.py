@@ -51,7 +51,7 @@ class SurveyTestCase(TestCase):
     def create_batch_and_downloader_job(self) -> DownloaderJob:
         batch = self.insert_batch()
         return DownloaderJob.create_job_and_relationships(
-            num_retries=0, batches=[batch], downloader_task="dummy_task")
+            num_retries=0, batches=[batch], downloader_task="ARRAY_EXPRESS")
 
     def create_batch_and_processor_job(self) -> ProcessorJob:
         batch = self.insert_batch()

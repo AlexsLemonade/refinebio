@@ -11,8 +11,8 @@ from data_refinery_common.models import (
     DownloaderJob,
     SurveyJob
 )
-from data_refinery_foreman.surveyor.message_queue import send_job
-from data_refinery_common.job_lookup import DOWNLOADER_TASK_LOOKUP
+from data_refinery_common.message_queue import send_job
+from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 
 
@@ -53,13 +53,12 @@ class ExternalSourceSurveyor:
         return
 
     def downloader_task(self):
-        """Returns the downloader task for the source.
+        """Returns the Downloaders Enum for the source.
 
-        Returns the Downloader Task name from the
-        data_refinery_workers project which should be queued to
+        Returns the Downloaders Enum which should be queued to
         download Batches discovered by this surveyor.
         """
-        return DOWNLOADER_TASK_LOOKUP[self.source_type()]
+        return Downloaders[self.source_type()]
 
     @retry(stop_max_attempt_number=3)
     @transaction.atomic
@@ -151,7 +150,7 @@ class ExternalSourceSurveyor:
 
             with transaction.atomic():
                 downloader_job = DownloaderJob.create_job_and_relationships(
-                    batches=batches, downloader_task=downloader_task)
+                    batches=batches, downloader_task=downloader_task.value)
 
             logger.info("Queuing downloader job.",
                         survey_job=self.survey_job.id,

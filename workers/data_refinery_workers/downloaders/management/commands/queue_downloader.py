@@ -4,6 +4,9 @@ run and queues one.
 The easiest way to run this is with the tester.sh script."""
 
 from django.core.management.base import BaseCommand
+from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.job_lookup import Downloaders
+from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     SurveyJob,
     Batch,
@@ -11,8 +14,6 @@ from data_refinery_common.models import (
     File,
     DownloaderJob
 )
-from data_refinery_workers.task_runner import send_job
-from data_refinery_common.logging import get_and_configure_logger
 
 
 logger = get_and_configure_logger(__name__)
@@ -54,4 +55,4 @@ class Command(BaseCommand):
         file.save()
 
         downloader_job = DownloaderJob.create_job_and_relationships(batches=[batch])
-        send_job("DOWNLOADER", downloader_job.id)
+        send_job(Downloaders["ARRAY_EXPRESS"], downloader_job.id)

@@ -3,6 +3,7 @@ import json
 from unittest.mock import Mock, patch, call
 from django.test import TestCase
 from urllib.request import URLError
+from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (
     Batch,
     DownloaderJob,
@@ -61,7 +62,7 @@ class SurveyTestCase(TestCase):
         send_job_calls = []
         for downloader_job in downloader_jobs:
             send_job_calls.append(
-                call("DOWNLOAD_TRANSCRIPTOME_INDEX",
+                call(Downloaders.TRANSCRIPTOME_INDEX,
                      downloader_job.id))
 
         mock_send_job.assert_has_calls(send_job_calls)
