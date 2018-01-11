@@ -24,6 +24,7 @@ HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
 docker run \
        --add-host=database:$HOST_IP \
+       --add-host=nomad:$HOST_IP \
        --env-file workers/environments/test \
        --volume $volume_directory:/home/user/data_store \
        -i dr_worker_tests test --no-input "$@"

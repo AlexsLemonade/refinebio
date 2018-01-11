@@ -10,8 +10,7 @@ logger = get_and_configure_logger(__name__)
 
 
 def send_job(job_type: Enum, job_id: int):
-    # This hostname should be nomad. This won't work in production.
-    nomad_client = nomad.Nomad("database", timeout=5)
+    nomad_client = nomad.Nomad("nomad", timeout=5)
 
     # Once I have every job specced out with its own Nomad job, this
     # code can change and the meta won't need "JOB_NAME" in it because

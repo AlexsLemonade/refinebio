@@ -17,5 +17,6 @@ HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
 docker run \
        --add-host=database:$HOST_IP \
+       --add-host=nomad:$HOST_IP \
        --env-file foreman/environments/test \
        -i dr_foreman test --no-input "$@"
