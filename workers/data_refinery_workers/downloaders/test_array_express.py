@@ -10,7 +10,7 @@ from data_refinery_common.models import (
     DownloaderJob,
     ProcessorJob
 )
-from data_refinery_workers.downloaders import array_express
+from data_refinery_workers.downloaders import array_express, utils
 from data_refinery_common.job_lookup import ProcessorPipeline
 
 
@@ -210,7 +210,7 @@ class DownloadArrayExpressTestCase(TestCase):
         self.assertIsNotNone(downloader_job.start_time)
         self.assertIsNotNone(downloader_job.end_time)
 
-        job_dir = array_express.JOB_DIR_PREFIX + str(downloader_job.id)
+        job_dir = utils.JOB_DIR_PREFIX + str(downloader_job.id)
         zip_path = files[0].get_temp_download_path(job_dir)
         self.assertEqual(downloader_job.failure_reason,
                          "Exception caught while extracting " + zip_path)

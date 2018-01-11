@@ -14,7 +14,6 @@ logger = get_and_configure_logger(__name__)
 
 # chunk_size is in bytes
 CHUNK_SIZE = 1024 * 256
-JOB_DIR_PREFIX = "downloader_job_"
 
 
 def _verify_files(file1: File, file2: File, job: DownloaderJob) -> None:
@@ -76,7 +75,7 @@ def download_transcriptome(job_id: int) -> None:
     job = utils.start_job(job_id)
     batches = job.batches.all()
     success = True
-    job_dir = JOB_DIR_PREFIX + str(job_id)
+    job_dir = utils.JOB_DIR_PREFIX + str(job_id)
 
     try:
         first_fasta_file = File.objects.get(batch=batches[0], raw_format__exact="fa.gz")

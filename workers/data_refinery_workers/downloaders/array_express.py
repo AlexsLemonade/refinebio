@@ -15,7 +15,6 @@ logger = get_and_configure_logger(__name__)
 
 # chunk_size is in bytes
 CHUNK_SIZE = 1024 * 256
-JOB_DIR_PREFIX = "downloader_job_"
 
 
 def _verify_batch_grouping(files: List[File], job: DownloaderJob) -> None:
@@ -57,7 +56,7 @@ def _extract_file(files: List[File], job: DownloaderJob) -> None:
     changes in utils.end_job.
     """
     # zip_path and local_dir should be common to all batches in the group
-    job_dir = JOB_DIR_PREFIX + str(job.id)
+    job_dir = utils.JOB_DIR_PREFIX + str(job.id)
     zip_path = files[0].get_temp_download_path(job_dir)
     local_dir = files[0].get_temp_dir(job_dir)
     dirs_to_clean = set()
@@ -102,7 +101,7 @@ def download_array_express(job_id: int) -> None:
     job = utils.start_job(job_id)
     batches = job.batches.all()
     success = True
-    job_dir = JOB_DIR_PREFIX + str(job_id)
+    job_dir = utils.JOB_DIR_PREFIX + str(job_id)
 
     if batches.count() > 0:
         files = File.objects.filter(batch__in=batches)

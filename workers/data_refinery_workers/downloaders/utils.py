@@ -17,6 +17,9 @@ from data_refinery_common.message_queue import send_job
 logger = get_and_configure_logger(__name__)
 
 
+JOB_DIR_PREFIX = "downloader_job_"
+
+
 def start_job(job_id: int) -> DownloaderJob:
     """Record in the database that this job is being started.
 
@@ -100,6 +103,11 @@ def end_job(job: DownloaderJob, batches: Batch, success: bool):
 
                 if success:
                     logger.info("Downloader job completed successfully.", downloader_job=job.id)
+
+    # Check to make sure job didn't end because of missing batches or files.
+    if len(batches) > 0 and len(batches[0].files) > 0:
+        # Clean up temp directory to free up local disk space.
+        batches[0].files[0].remove_temp_directory(JOB_DIR_PREFIX + str(job.id))
 
     job.success = success
     job.end_time = timezone.now()

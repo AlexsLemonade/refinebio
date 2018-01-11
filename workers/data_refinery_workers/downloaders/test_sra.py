@@ -127,7 +127,11 @@ class DownloadSraTestCase(TestCase):
     @patch.object(File, "upload_raw_file")
     @patch("data_refinery_workers.downloaders.utils.send_job")
     @patch("data_refinery_workers.downloaders.sra._download_file")
-    def test_happy_path(self, mock_download_file, mock_send_job, mock_upload_raw_file, mock_getsize):
+    def test_happy_path(self,
+                        mock_download_file,
+                        mock_send_job,
+                        mock_upload_raw_file,
+                        mock_getsize):
         mock_send_job.return_value = None
 
         # We don't actually want to download anything and we're
