@@ -1,6 +1,7 @@
 # Project specific files
 workers/volume
 foreman/volume
+nomad*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
