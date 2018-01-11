@@ -11,6 +11,7 @@ from data_refinery_common.models import (
     ProcessorJob
 )
 from data_refinery_workers.downloaders import array_express
+from data_refinery_common.job_lookup import ProcessorPipeline
 
 
 class DownloadArrayExpressTestCase(TestCase):
@@ -122,9 +123,9 @@ class DownloadArrayExpressTestCase(TestCase):
         self.assertEqual(len(processor_jobs), 2)
 
         mock_send_job.assert_has_calls([
-            call("AFFY_TO_PCL",
+            call(ProcessorPipeline.AFFY_TO_PCL,
                  processor_jobs[0].id),
-            call("AFFY_TO_PCL",
+            call(ProcessorPipeline.AFFY_TO_PCL,
                  processor_jobs[1].id)
         ])
 

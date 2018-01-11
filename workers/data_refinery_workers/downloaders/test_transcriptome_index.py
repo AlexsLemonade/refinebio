@@ -13,6 +13,7 @@ from data_refinery_common.models import (
     ProcessorJob
 )
 from data_refinery_workers.downloaders import transcriptome_index
+from data_refinery_common.job_lookup import ProcessorPipeline
 
 
 class DownloadTranscriptomeIndexTestCase(TestCase):
@@ -142,9 +143,9 @@ class DownloadTranscriptomeIndexTestCase(TestCase):
         self.assertEqual(len(processor_jobs), 2)
 
         mock_send_job.assert_has_calls([
-            call("TRANSCRIPTOME_INDEX",
+            call(ProcessorPipeline.TRANSCRIPTOME_INDEX,
                  processor_jobs[0].id),
-            call("TRANSCRIPTOME_INDEX",
+            call(ProcessorPipeline.TRANSCRIPTOME_INDEX,
                  processor_jobs[1].id)
         ])
 

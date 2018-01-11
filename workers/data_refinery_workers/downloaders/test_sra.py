@@ -11,6 +11,7 @@ from data_refinery_common.models import (
     ProcessorJob
 )
 from data_refinery_workers.downloaders import sra
+from data_refinery_common.job_lookup import ProcessorPipeline
 
 
 class DownloadSraTestCase(TestCase):
@@ -164,7 +165,7 @@ class DownloadSraTestCase(TestCase):
             call(second_call[0], second_call[1], target_path_1)
         ])
 
-        mock_send_job.assert_called_once_with("SALMON", processor_job.id)
+        mock_send_job.assert_called_once_with(ProcessorPipeline.SALMON, processor_job.id)
 
         self.assertEquals(len(mock_upload_raw_file.mock_calls), 2)
 
