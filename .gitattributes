@@ -5,3 +5,4 @@ terraform.tfvars filter=git-crypt diff=git-crypt
 *.secret filter=git-crypt diff=git-crypt
 *.pem filter=git-crypt diff=git-crypt
 *.gz filter=lfs diff=lfs merge=lfs -text
+*.xz filter=lfs diff=lfs merge=lfs -text

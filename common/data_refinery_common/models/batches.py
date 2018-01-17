@@ -209,12 +209,13 @@ class File(TimeTrackedModel):
         logger.debug("Moving file from %s to %s.", temp_path, raw_path)
         self._upload_file(temp_path, raw_dir, raw_path)
 
-    def download_raw_file(self, dir_name: str=None) -> None:
+    def download_raw_file(self, dir_name: str=None) -> str:
         """Moves the batch's raw file to the temp directory.
 
         Depending on the value of the USE_S3 environment variable this
         will either move the batch's raw file from the RAW_PREFIX directory
         or from S3.
+        Returns the path the file was downloaded to.
         """
         raw_path = self.get_raw_path()
         temp_dir = self.get_temp_dir(dir_name)
@@ -226,6 +227,29 @@ class File(TimeTrackedModel):
                 bucket.download_fileobj(raw_path, temp_file)
         else:
             shutil.copyfile(raw_path, temp_path)
+
+        return temp_path
+
+    def download_processed_file(self, dir_name: str=None) -> str:
+        """Moves the batch's processed file to the temp directory.
+
+        Depending on the value of the USE_S3 environment variable this
+        will either move the batch's processed file from the
+        PROCESSED_PREFIX directory or from S3.
+        Returns the path the file was downloaded to.
+        """
+        processed_path = self.get_processed_path()
+        temp_dir = self.get_temp_dir(dir_name)
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_path = self.get_temp_post_path(dir_name)
+        if USE_S3:
+            bucket = boto3.resource("s3").Bucket(S3_BUCKET_NAME)
+            with open(temp_path, 'wb') as temp_file:
+                bucket.download_fileobj(processed_path, temp_file)
+        else:
+            shutil.copyfile(processed_path, temp_path)
+
+        return temp_path
 
     def upload_processed_file(self, dir_name: str=None) -> None:
         """Moves the batch's processed file out of the temp directory.
