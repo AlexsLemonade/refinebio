@@ -11,6 +11,8 @@ cd $script_directory
 # move up a level
 cd ..
 
+volume_directory="$script_directory/volume"
+
 docker build -t dr_tester -f workers/Dockerfile.tests .
 
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
@@ -20,4 +22,5 @@ docker run \
        --add-host=database:$HOST_IP \
        --env-file workers/environments/dev \
        --entrypoint ./manage.py \
-       dr_worker queue_processor "TRANSCRIPTOME_INDEX"
+       --volume $volume_directory:/home/user/data_store \
+       dr_worker queue_processor "SRA"
