@@ -5,14 +5,18 @@
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory=`dirname "${BASH_SOURCE[0]}"  | xargs realpath`
+script_directory=`perl -e 'use File::Basename; use Cwd "abs_path"; print dirname(abs_path(@ARGV[0]));' -- "$0"`
 cd $script_directory
 
 cd ..
 
 docker build -t dr_models -f common/Dockerfile .
 
-HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
+if [ `uname` == "Linux" ]; then
+    HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
+elif [ `uname` == 'Darwin' ]; then # MacOS
+    HOST_IP=$(ifconfig en0 | grep inet | awk '{print $2; exit}')
+fi
 
 
 docker run \

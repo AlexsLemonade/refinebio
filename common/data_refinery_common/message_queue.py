@@ -3,6 +3,7 @@
 from __future__ import absolute_import, unicode_literals
 from enum import Enum
 import nomad
+from data_refinery_common.utils import get_env_variable
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 
@@ -10,7 +11,8 @@ logger = get_and_configure_logger(__name__)
 
 
 def send_job(job_type: Enum, job_id: int):
-    nomad_client = nomad.Nomad("nomad", timeout=5)
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_client = nomad.Nomad(nomad_host, timeout=5)
 
     # Once I have every job specced out with its own Nomad job, this
     # code can change and the meta won't need "JOB_NAME" in it because
