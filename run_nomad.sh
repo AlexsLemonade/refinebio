@@ -28,6 +28,11 @@ done
 
 echo "Nomad is online. Registering jobs."
 
+if [ ! -f workers/downloader.nomad -o ! -f workers/processor.nomad ]; then
+    echo "One or more Job Specifications for Nomad are missing, building them from the template."
+    ./workers/format_nomad_with_env.sh
+fi
+
 # Register the jobs for dispatching.
-nomad run -address http://$HOST_IP:4646 downloader.nomad
-nomad run -address http://$HOST_IP:4646 processor.nomad
+nomad run -address http://$HOST_IP:4646 workers/downloader.nomad
+nomad run -address http://$HOST_IP:4646 workers/processor.nomad
