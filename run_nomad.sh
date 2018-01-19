@@ -1,6 +1,10 @@
 #!/bin/bash
 
-HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
+if [ `uname` == "Linux" ]; then
+    HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
+elif [ `uname` == 'Darwin' ]; then # MacOS
+    HOST_IP=$(ifconfig en0 | grep inet | awk '{print $2; exit}')
+fi
 
 echo "Rebuilding Docker image while waiting for Nomad to come online."
 

@@ -12,7 +12,9 @@ set -e
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory=`cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd`
+script_directory=`perl -e 'use File::Basename;
+ use Cwd "abs_path";
+ print dirname(abs_path(@ARGV[0]));' -- "$0"`
 cd $script_directory
 
 # Set up the data volume directory if it does not already exist
@@ -24,7 +26,11 @@ fi
 
 docker build -t dr_shell -f foreman/Dockerfile .
 
-HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
+if [ `uname` == "Linux" ]; then
+    HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
+elif [ `uname` == 'Darwin' ]; then # MacOS
+    HOST_IP=$(ifconfig en0 | grep inet | awk '{print $2; exit}')
+fi
 
 docker run \
        --add-host=database:$HOST_IP \

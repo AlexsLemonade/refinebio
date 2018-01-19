@@ -27,7 +27,9 @@ fi
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory=`perl -e 'use File::Basename; use Cwd "abs_path"; print dirname(abs_path(@ARGV[0]));' -- "$0"`
+script_directory=`perl -e 'use File::Basename;
+ use Cwd "abs_path";
+ print dirname(abs_path(@ARGV[0]));' -- "$0"`
 cd $script_directory
 
 while read line; do
@@ -36,6 +38,12 @@ while read line; do
         export $line
     fi
 done < "environments/$env"
+
+if [ `uname` == "Linux" ]; then
+    export HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
+elif [ `uname` == 'Darwin' ]; then # MacOS
+    export HOST_IP=$(ifconfig en0 | grep inet | awk '{print $2; exit}')
+fi
 
 # There is a current outstanding Nomad issue for the ability to
 # template environment variables into the job specifications. Until
