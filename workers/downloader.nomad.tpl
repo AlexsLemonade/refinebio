@@ -31,7 +31,7 @@ job "DOWNLOADER" {
         DATABASE_PORT = "5432"
         DATABASE_TIMEOUT = "5"
 
-        RUNNING_IN_CLOUD = "False"
+        RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
 
         USE_S3 = "False"
         S3_BUCKET_NAME = "data-refinery"
