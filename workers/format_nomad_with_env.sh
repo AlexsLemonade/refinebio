@@ -31,7 +31,8 @@ script_directory=`perl -e 'use File::Basename; use Cwd "abs_path"; print dirname
 cd $script_directory
 
 while read line; do
-    if [[ -n $line ]]; then
+    is_comment=$(echo $line | grep "^#")
+    if [[ -n $line ]] && [[ -z $is_comment ]]; then
         export $line
     fi
 done < "environments/$env"
