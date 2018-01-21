@@ -20,6 +20,17 @@ if [ ! -d "$volume_directory" ]; then
     chmod 775 $volume_directory
 fi
 
+# In order to get the size of certain test data within the limit of
+# Git LFS we have to use xz compression instead of gz. Therefore
+# before we can run the tests we need to make sure the files are
+# decompressed.
+index_dir="$volume_directory/processed/TEST/TRANSCRIPTOME_INDEX/"
+gz_index_path="$index_dir/Homo_sapiens_short.tar.gz"
+if [ ! -e "$gz_index_path" ]; then
+    xz_index_path="$index_dir/Homo_sapiens_short.tar.xz"
+    unxz -k --stdout $xz_index_path | gzip > $gz_index_path
+fi
+
 docker build -t dr_worker_tests -f workers/Dockerfile.tests .
 
 if [ `uname` == "Linux" ]; then

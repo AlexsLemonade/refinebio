@@ -26,7 +26,7 @@ nomad agent -bind $HOST_IP \
       -dev \
       > nomad.logs &
 
-docker build -t dr_workers -f workers/Dockerfile .
+docker build -t dr_worker -f workers/Dockerfile .
 
 # This function checks what the status of the Nomad agent is.
 # Returns an HTTP response code. i.e. 200 means everything is ok.

@@ -1,9 +1,10 @@
 """This command is intended for development purposes.
 It creates the database records necessary for a processor job to
-run and queues one. It assumes that the file
-/home/user/data_store/raw/A-AFFY-141/AFFY_TO_PCL/GSM1426072_CD_colon_active_2.CEL
-exists.
-The easiest way to run this is with the tester.sh script.
+run and queues one. It assumes that the files
+/home/user/data_store/raw/IlluminaHiSeq2500/SALMON/ERR1680082_1.fastq
+and
+/home/user/data_store/raw/IlluminaHiSeq2500/SALMON/ERR1680082_2.fastq
+exist. The easiest way to run this is with the tester.sh script.
 (Changing queue_downloader to queue_processor.)
 """
 
@@ -54,25 +55,23 @@ class Command(BaseCommand):
         )
         batch.save()
 
-        file = File(name="ERR1680082_1.fastq",
-                    internal_location="IlluminaHiSeq2500/SALMON",
-                    size_in_bytes=2214725074,
-                    raw_format="fastq",
-                    processed_format="sf",
-                    download_url="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR168/002/ERR1680082/ERR1680082_1.fastq.gz"  # noqa
-                    batch=batch
-        )
-        file.save()
+        File(name="ERR1680082_1.fastq",
+             download_url=("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR168/002/"
+                           "ERR1680082/ERR1680082_1.fastq.gz"),
+             raw_format="fastq",
+             processed_format="sf",
+             internal_location="IlluminaHiSeq2500/SALMON",
+             size_in_bytes=2214725074,
+             batch=batch).save()
 
-        file2 = File(name="ERR1680082_2.fastq",
-                     internal_location="IlluminaHiSeq2500/SALMON",
-                     size_in_bytes=2214725074,
-                     download_url="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR168/002/ERR1680082/ERR1680082_2.fastq.gz",  # noqa
-                     raw_format="fastq",
-                     processed_format="sf",
-                     batch=batch
-        )
-        file2.save()
+        File(name="ERR1680082_2.fastq",
+             download_url=("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR168/002/"
+                           "ERR1680082/ERR1680082_2.fastq.gz"),
+             raw_format="fastq",
+             processed_format="sf",
+             internal_location="IlluminaHiSeq2500/SALMON",
+             size_in_bytes=2214725074,
+             batch=batch).save()
 
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
         logger.info("Queuing a processor job.")
