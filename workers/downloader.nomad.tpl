@@ -18,6 +18,7 @@ job "DOWNLOADER" {
     task "downloader" {
       driver = "docker"
 
+      # This env will be passed into the container for the job.
       env {
         AWS_ACCESS_KEY_ID = "${{AWS_ACCESS_KEY_ID}}"
         AWS_SECRET_ACCESS_KEY = "${{AWS_SECRET_ACCESS_KEY}}"
@@ -42,8 +43,11 @@ job "DOWNLOADER" {
         PROCESSED_PREFIX = "${{PROCESSED_PREFIX}}"
       }
 
+      # The resources the job will require.
       resources {
+        # CPU is in AWS's CPU units.
         cpu = 500
+        # Memory is in MB of RAM.
         memory = 2024
       }
 
@@ -51,14 +55,15 @@ job "DOWNLOADER" {
         image = "${{WORKERS_DOCKER_IMAGE}}"
         force_pull = false
 
+        # The args to pass to the Docker container's entrypoint.
         args = [
           "run_downloader_job",
           "--job-name", "${NOMAD_META_JOB_NAME}",
           "--job-id", "${NOMAD_META_JOB_ID}"]
 
-        extra_hosts = ["database:165.123.67.153"]
+        extra_hosts = ["database:${{HOST_IP}}"]
 
-        volumes = ["/home/kurt/Development/data_refinery/workers/volume:/home/user/data_store"]
+        volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]
 
       }
     }

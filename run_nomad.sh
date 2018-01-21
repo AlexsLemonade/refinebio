@@ -8,14 +8,28 @@ fi
 
 echo "Rebuilding Docker image while waiting for Nomad to come online."
 
+# Figure out the right location to put the nomad directory.
+script_directory=`perl -e 'use File::Basename;
+ use Cwd "abs_path";
+ print dirname(abs_path(@ARGV[0]));' -- "$0"`
+cd $script_directory
+
+nomad_dir = $script_directory/nomad_dir
+if [ -d $nomad_dir ]; then
+    mkdir nomad_dir
+fi
+
 # Start the nomad in development locally
+# TODO: do this in a Nomad container.
 nomad agent -bind $HOST_IP \
-      -data-dir /home/kurt/Development/data_refinery/nomad_dir \
+      -data-dir $nomad_dir \
       -dev \
       > nomad.logs &
 
-docker build -t wkurt/nomad-test:second -f workers/Dockerfile .
+docker build -t dr_workers -f workers/Dockerfile .
 
+# This function checks what the status of the Nomad agent is.
+# Returns an HTTP response code. i.e. 200 means everything is ok.
 check_nomad_status () {
     echo $(curl --write-out %{http_code} \
                   --silent \
@@ -26,7 +40,7 @@ check_nomad_status () {
 # Wait for Nomad to get started.
 nomad_status=$(check_nomad_status)
 while [ $nomad_status != "200" ]; do
-    sleep 0.5
+    sleep 1
     nomad_status=$(check_nomad_status)
 done
 

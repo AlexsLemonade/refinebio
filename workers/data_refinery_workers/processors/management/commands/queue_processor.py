@@ -42,52 +42,41 @@ class Command(BaseCommand):
         batch = Batch(
             survey_job=survey_job,
             source_type="SRA",
-            size_in_bytes=2214725074,
-            raw_format="fastq",
-            processed_format="sf",
             pipeline_required="SALMON",
             platform_accession_code="IlluminaHiSeq2500",
             experiment_accession_code="PRJEB5018",
             experiment_title="It doesn't really matter.",
-            name="ERR1680082_1.fastq",
-            internal_location="IlluminaHiSeq2500/SALMON",
             organism_id=10090,
             organism_name="MUS MUSCULUS",
             release_date="2014-03-25",
             last_uploaded_date="2016-05-20",
             status=BatchStatuses.NEW.value,
-            download_url="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR168/002/ERR1680082/ERR1680082_1.fastq.gz"  # noqa
         )
         batch.save()
 
-        batch2 = Batch(
-            survey_job=survey_job,
-            source_type="SRA",
-            size_in_bytes=2214725074,
-            download_url="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR168/002/ERR1680082/ERR1680082_2.fastq.gz",  # noqa
-            raw_format="fastq",
-            processed_format="sf",
-            pipeline_required="SALMON",
-            platform_accession_code="IlluminaHiSeq2500",
-            experiment_accession_code="PRJEB5018",
-            experiment_title="It doesn't really matter.",
-            name="ERR1680082_2.fastq",
-            internal_location="IlluminaHiSeq2500/SALMON",
-            organism_id=10090,
-            organism_name="MUS MUSCULUS",
-            release_date="2014-03-25",
-            last_uploaded_date="2016-05-20",
-            status=BatchStatuses.NEW.value
+        file = File(name="ERR1680082_1.fastq",
+                    internal_location="IlluminaHiSeq2500/SALMON",
+                    size_in_bytes=2214725074,
+                    raw_format="fastq",
+                    processed_format="sf",
+                    download_url="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR168/002/ERR1680082/ERR1680082_1.fastq.gz"  # noqa
+                    batch=batch
         )
-        batch2.save()
+        file.save()
 
-        # This is the old way of doing things. Should be updated once
-        # I'm sure it's working.
-        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch, batch2])
-        # processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
-        processor_task = "temp cause it'll break if I use PROCESSOR_PIPELINE_LOOKUP"
-        send_job(processor_task, processor_job.id)
-        logger.info("Processor Job queued.", processor_job=processor_job.id)
+        file2 = File(name="ERR1680082_2.fastq",
+                     internal_location="IlluminaHiSeq2500/SALMON",
+                     size_in_bytes=2214725074,
+                     download_url="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR168/002/ERR1680082/ERR1680082_2.fastq.gz",  # noqa
+                     raw_format="fastq",
+                     processed_format="sf",
+                     batch=batch
+        )
+        file2.save()
+
+        processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
+        logger.info("Queuing a processor job.")
+        send_job(ProcessorPipeline[batch.pipeline_required], processor_job.id)
 
     def run_trasnscriptome_processor(self):
         # Create all the dummy data that would have been created

@@ -10,7 +10,21 @@ from data_refinery_common.logging import get_and_configure_logger
 logger = get_and_configure_logger(__name__)
 
 
-def send_job(job_type: Enum, job_id: int):
+# There are currently two Nomad Job Specifications defined in
+# workers/downloader.nomad.tpl and workers/processor.nomad.tpl.
+# These constants are the identifiers for those two job specifications.
+NOMAD_PROCESSOR_JOB = "PROCESSOR"
+NOMAD_DOWNLOADER_JOB = "DOWNLOADER"
+
+
+def send_job(job_type: Enum, job_id: int) -> None:
+    """Queues a worker job by sending a Nomad Job dispatch message.
+
+    job_type must be a valid Enum for ProcessorPipelines or
+    Downloaders as defined in data_refinery_common.job_lookup.
+    job_id must correspond to an existing ProcessorJob or
+    DownloaderJob record.
+    """
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_client = nomad.Nomad(nomad_host, timeout=5)
 
@@ -18,9 +32,9 @@ def send_job(job_type: Enum, job_id: int):
     # code can change and the meta won't need "JOB_NAME" in it because
     # the just specifying the nomad_job to dispatch will be enough.
     if job_type in list(ProcessorPipeline):
-        nomad_job = "PROCESSOR"
+        nomad_job = NOMAD_PROCESSOR_JOB
     elif job_type in list(Downloaders):
-        nomad_job = "DOWNLOADER"
+        nomad_job = NOMAD_DOWNLOADER_JOB
     else:
         raise ValueError("Invalid job_type.")
 

@@ -72,6 +72,15 @@ def _upload_files(job_dir: str, files: List[File], job: DownloaderJob) -> None:
 
 
 def download_transcriptome(job_id: int) -> None:
+    """The main function for the Transcriptome Index Downloader.
+
+    Two files are needed for the Transcriptome Index Downloader: a
+    fasta file and a gtf file. However each pair need to be processed
+    into two different sized indices. (See the
+    processors.transcriptome_index._create_index function's docstring
+    for more info.) Therefore we only download each set once, then
+    push it to Temporary Storage twice.
+    """
     job = utils.start_job(job_id)
     batches = job.batches.all()
     success = True

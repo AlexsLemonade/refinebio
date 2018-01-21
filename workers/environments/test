@@ -9,10 +9,7 @@ DATABASE_PORT=5432
 DATABASE_TIMEOUT=5
 
 NOMAD_HOST=nomad
-
-# This works, but should be replaced by individual devs
-# as needed for development.
-WORKERS_DOCKER_IMAGE=wkurt/nomad-test:second
+WORKERS_DOCKER_IMAGE=dr_workers
 
 RUNNING_IN_CLOUD=False
 

@@ -98,6 +98,14 @@ def _extract_file(files: List[File], job: DownloaderJob) -> None:
 
 
 def download_array_express(job_id: int) -> None:
+    """The main function for the Array Express Downloader.
+
+    Downloads a single zip file containing the .PCL files representing
+    samples relating to a single experiement stored in
+    ArrayExpress. Each of these files is a separate Batch, so the file
+    is unzipped and then each Batch's data is stored in Temporary
+    Storage.
+    """
     job = utils.start_job(job_id)
     batches = job.batches.all()
     success = True

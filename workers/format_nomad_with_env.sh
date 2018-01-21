@@ -32,6 +32,13 @@ script_directory=`perl -e 'use File::Basename;
  print dirname(abs_path(@ARGV[0]));' -- "$0"`
 cd $script_directory
 
+# What to do for the "prod" env is TBD.
+if [ $env == "test" ]; then
+    export VOLUME_DIR=$script_directory/test_volume
+else
+    export VOLUME_DIR=$script_directory/volume
+fi
+
 while read line; do
     is_comment=$(echo $line | grep "^#")
     if [[ -n $line ]] && [[ -z $is_comment ]]; then

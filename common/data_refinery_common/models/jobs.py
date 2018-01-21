@@ -79,5 +79,5 @@ class DownloaderJob(WorkerJob):
 
     # This field contains a string which corresponds to a valid
     # Downloader Task. Valid values are enumerated in:
-    # data_refinery_common.job_lookupo.Downloaders
+    # data_refinery_common.job_lookup.Downloaders
     downloader_task = models.CharField(max_length=256)

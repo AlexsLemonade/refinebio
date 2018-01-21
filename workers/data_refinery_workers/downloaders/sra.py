@@ -37,6 +37,11 @@ def _download_file(file: File, downloader_job: DownloaderJob, target_file_path: 
 
 
 def download_sra(job_id: int) -> None:
+    """The main function for the SRA Downloader.
+
+    Fairly straightforward, just downloads the Batch's file from SRA
+    and pushes it into Temporary Storage.
+    """
     job = utils.start_job(job_id)
     batches = job.batches.all()
     success = True
