@@ -4,7 +4,6 @@ import warnings
 from typing import Dict
 import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
-from celery import shared_task
 from data_refinery_common.models import File
 from data_refinery_workers.processors import utils
 from data_refinery_common.logging import get_and_configure_logger
@@ -123,7 +122,6 @@ def _run_scan_upc(job_context: Dict) -> Dict:
     return job_context
 
 
-@shared_task
 def affy_to_pcl(job_id: int) -> None:
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,

@@ -1,6 +1,5 @@
 django
-celery
 psycopg2
 requests
 retrying
-boto
+python-nomad

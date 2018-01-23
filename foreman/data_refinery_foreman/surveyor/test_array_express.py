@@ -2,6 +2,7 @@ import json
 import datetime
 from unittest.mock import Mock, patch, call
 from django.test import TestCase
+from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (
     Batch,
     File,
@@ -264,7 +265,7 @@ class SurveyTestCase(TestCase):
         self.assertEqual("2014-10-30", experiment["last_update_date"])
 
     @patch('data_refinery_foreman.surveyor.array_express.requests.get')
-    @patch('data_refinery_foreman.surveyor.message_queue.app.send_task')
+    @patch('data_refinery_foreman.surveyor.external_source.send_job')
     def test_survey(self, mock_send_task, mock_get):
         """The 'survey' function generates one Batch per sample.
 
@@ -279,8 +280,8 @@ class SurveyTestCase(TestCase):
 
         downloader_jobs = DownloaderJob.objects.all()
         mock_send_task.assert_has_calls([
-            call("data_refinery_workers.downloaders.array_express.download_array_express",
-                 args=[downloader_jobs[0].id])
+            call(Downloaders.ARRAY_EXPRESS,
+                 downloader_jobs[0].id)
         ])
         batches = Batch.objects.all()
         self.assertEqual(2, len(batches))

@@ -3,7 +3,6 @@ import os
 import gzip
 import tarfile
 from typing import Dict
-from celery import shared_task
 from data_refinery_workers.processors import utils
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import BatchStatuses, BatchKeyValue
@@ -271,8 +270,12 @@ def _run_salmon(job_context: Dict) -> Dict:
     return job_context
 
 
-@shared_task
 def salmon(job_id: int) -> None:
+    """Main processor function for the Salmon Processor.
+
+    Runs salmon quant command line tool, specifying either a long or
+    short read length.
+    """
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
                         _set_job_prefix,

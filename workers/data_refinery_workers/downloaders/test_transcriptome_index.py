@@ -1,7 +1,7 @@
 import shutil
 import copy
 from typing import List
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, call
 from django.test import TestCase
 from data_refinery_common.models import (
     SurveyJob,
@@ -13,6 +13,7 @@ from data_refinery_common.models import (
     ProcessorJob
 )
 from data_refinery_workers.downloaders import transcriptome_index
+from data_refinery_common.job_lookup import ProcessorPipeline
 
 
 class DownloadTranscriptomeIndexTestCase(TestCase):
@@ -88,7 +89,7 @@ class DownloadTranscriptomeIndexTestCase(TestCase):
                                                                 File(download_url="b"),
                                                                 downloader_job))
 
-    @patch("data_refinery_workers.downloaders.utils.app")
+    @patch("data_refinery_workers.downloaders.utils.send_job")
     @patch("data_refinery_workers.downloaders.transcriptome_index._verify_files")
     @patch("data_refinery_workers.downloaders.transcriptome_index._download_file")
     @patch("data_refinery_workers.downloaders.transcriptome_index._upload_files")
@@ -96,19 +97,18 @@ class DownloadTranscriptomeIndexTestCase(TestCase):
                       _upload_files,
                       _download_file,
                       _verify_files,
-                      app):
+                      mock_send_job):
         # Clean up temp directory:
         shutil.rmtree("/home/user/data_store/temp/EnsemblPlants/TRANSCRIPTOME_INDEX",
                       ignore_errors=True)
-        # Set up mocks:
-        app.send_task = MagicMock()
-        app.send_task.return_value = None
+
+        mock_send_job.return_value = None
 
         batches = self.insert_objects()
         downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
-        # Call the task we're testing:
-        transcriptome_index.download_transcriptome.apply(args=(downloader_job.id,)).get()
+        # Call the downloader function we're testing:
+        transcriptome_index.download_transcriptome(downloader_job.id)
 
         target_gtf_path = (
             "/home/user/data_store/temp/EnsemblPlants/TRANSCRIPTOME_INDEX/downloader_job_{}"
@@ -142,20 +142,18 @@ class DownloadTranscriptomeIndexTestCase(TestCase):
         processor_jobs = ProcessorJob.objects.all()
         self.assertEqual(len(processor_jobs), 2)
 
-        app.send_task.assert_has_calls([
-            call("data_refinery_workers.processors.transcriptome_index.build_index",
-                 args=[processor_jobs[0].id]),
-            call("data_refinery_workers.processors.transcriptome_index.build_index",
-                 args=[processor_jobs[1].id])
+        mock_send_job.assert_has_calls([
+            call(ProcessorPipeline.TRANSCRIPTOME_INDEX,
+                 processor_jobs[0].id),
+            call(ProcessorPipeline.TRANSCRIPTOME_INDEX,
+                 processor_jobs[1].id)
         ])
 
-    @patch("data_refinery_workers.downloaders.utils.app")
+    @patch("data_refinery_workers.downloaders.utils.send_job")
     @patch("data_refinery_workers.downloaders.transcriptome_index._download_file")
     @patch("data_refinery_workers.downloaders.transcriptome_index._upload_files")
-    def test_verification_failure(self, _upload_files, _download_file, app):
-        # Set up mocks:
-        app.send_task = MagicMock()
-        app.send_task.return_value = None
+    def test_verification_failure(self, _upload_files, _download_file, mock_send_job):
+        mock_send_job.return_value = None
 
         # Set a different download URL to trigger a failure in the
         # _verify_batch_grouping function
@@ -164,12 +162,12 @@ class DownloadTranscriptomeIndexTestCase(TestCase):
         batches[0].files[0].save()
         downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
-        # Call the download task
-        transcriptome_index.download_transcriptome.apply(args=(downloader_job.id,)).get()
+        # Call the downloader function
+        transcriptome_index.download_transcriptome(downloader_job.id)
 
         _download_file.assert_not_called()
         _upload_files.assert_not_called()
-        app.send_task.assert_not_called()
+        mock_send_job.assert_not_called()
 
         # Verify that the database has been updated correctly:
         downloader_job = DownloaderJob.objects.get()
@@ -180,26 +178,25 @@ class DownloadTranscriptomeIndexTestCase(TestCase):
                          ("A Batch's file doesn't have the same download "
                           "URL as the other batch's file."))
 
-    @patch("data_refinery_workers.downloaders.utils.app")
+    @patch("data_refinery_workers.downloaders.utils.send_job")
     @patch('data_refinery_workers.downloaders.transcriptome_index.open')
     @patch("data_refinery_workers.downloaders.transcriptome_index._upload_files")
     def test_download_failure(self,
                               _upload_files,
                               _open,
-                              app):
+                              mock_send_job):
         # Set up mocks:
-        app.send_task = MagicMock()
-        app.send_task.return_value = None
+        mock_send_job.return_value = None
         _open.side_effect = Exception()
 
         batches = self.insert_objects()
         downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
-        # Call the download task
-        transcriptome_index.download_transcriptome.apply(args=(downloader_job.id,)).get()
+        # Call the downloader function
+        transcriptome_index.download_transcriptome(downloader_job.id)
 
         _upload_files.assert_not_called()
-        app.send_task.assert_not_called()
+        mock_send_job.assert_not_called()
 
         # Verify that the database has been updated correctly:
         downloader_job = DownloaderJob.objects.get()

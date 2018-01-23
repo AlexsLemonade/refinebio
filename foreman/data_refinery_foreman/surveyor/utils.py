@@ -4,6 +4,7 @@ from data_refinery_common.models import Batch
 
 def group_batches_by_first_file(batches: List[Batch]) -> List[List[Batch]]:
     """Groups batches based on the download URL of their first File."""
+
     # Builds a mapping of each unique download_url to a list of
     # Batches whose first File's download_url matches.
     download_url_mapping = {}

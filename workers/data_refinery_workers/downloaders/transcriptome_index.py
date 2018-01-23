@@ -4,7 +4,6 @@ import os
 import shutil
 from typing import List
 from contextlib import closing
-from celery import shared_task
 from data_refinery_common.models import File, DownloaderJob
 from data_refinery_workers.downloaders import utils
 from data_refinery_common.logging import get_and_configure_logger
@@ -15,7 +14,6 @@ logger = get_and_configure_logger(__name__)
 
 # chunk_size is in bytes
 CHUNK_SIZE = 1024 * 256
-JOB_DIR_PREFIX = "downloader_job_"
 
 
 def _verify_files(file1: File, file2: File, job: DownloaderJob) -> None:
@@ -73,12 +71,20 @@ def _upload_files(job_dir: str, files: List[File], job: DownloaderJob) -> None:
         file.remove_temp_directory(job_dir)
 
 
-@shared_task
 def download_transcriptome(job_id: int) -> None:
+    """The main function for the Transcriptome Index Downloader.
+
+    Two files are needed for the Transcriptome Index Downloader: a
+    fasta file and a gtf file. However each pair need to be processed
+    into two different sized indices. (See the
+    processors.transcriptome_index._create_index function's docstring
+    for more info.) Therefore we only download each set once, then
+    push it to Temporary Storage twice.
+    """
     job = utils.start_job(job_id)
     batches = job.batches.all()
     success = True
-    job_dir = JOB_DIR_PREFIX + str(job_id)
+    job_dir = utils.JOB_DIR_PREFIX + str(job_id)
 
     try:
         first_fasta_file = File.objects.get(batch=batches[0], raw_format__exact="fa.gz")

@@ -77,8 +77,7 @@ class DownloaderJob(WorkerJob):
     class Meta:
         db_table = "downloader_jobs"
 
-    # This field contains a string which corresponds to a Celery
-    # task. It needs to have all the namespaces as if it were an
-    # import statement because it will be used to look up the Celery
-    # task on the worker machine.
+    # This field contains a string which corresponds to a valid
+    # Downloader Task. Valid values are enumerated in:
+    # data_refinery_common.job_lookup.Downloaders
     downloader_task = models.CharField(max_length=256)

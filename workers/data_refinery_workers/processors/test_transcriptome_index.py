@@ -135,7 +135,7 @@ class TranscriptomeIndexTestCase(TestCase):
         self.assertTrue(os.path.isfile(zipped_path))
 
         # Clean up both input and output files
-        job_context["gtf_file"].remove_temp_directory()
+        utils.end_job(job_context)
 
     def test_prepare_files_failure(self):
         batch, _, _ = init_objects()

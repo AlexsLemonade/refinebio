@@ -4,7 +4,9 @@
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory=`dirname "${BASH_SOURCE[0]}"  | xargs readlink -f`
+script_directory=`perl -e 'use File::Basename;
+ use Cwd "abs_path";
+ print dirname(abs_path(@ARGV[0]));' -- "$0"`
 cd $script_directory
 
 # However in order to give Docker access to all the code we have to
@@ -13,10 +15,11 @@ cd ..
 
 docker build -t dr_foreman -f foreman/Dockerfile .
 
-HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
+source common.sh
+HOST_IP=$(get_ip_address)
 
 docker run \
-       --link message-queue:rabbit \
        --add-host=database:$HOST_IP \
+       --add-host=nomad:$HOST_IP \
        --env-file foreman/environments/test \
        -i dr_foreman test --no-input "$@"

@@ -3,7 +3,6 @@ import urllib.request
 import os
 import shutil
 from contextlib import closing
-from celery import shared_task
 from data_refinery_common.models import File, DownloaderJob
 from data_refinery_workers.downloaders import utils
 from data_refinery_common.logging import get_and_configure_logger
@@ -12,7 +11,6 @@ from data_refinery_common.logging import get_and_configure_logger
 logger = get_and_configure_logger(__name__)
 # chunk_size is in bytes
 CHUNK_SIZE = 1024 * 256
-JOB_DIR_PREFIX = "downloader_job_"
 
 
 def _download_file(file: File, downloader_job: DownloaderJob, target_file_path: str) -> bool:
@@ -38,12 +36,16 @@ def _download_file(file: File, downloader_job: DownloaderJob, target_file_path: 
     return True
 
 
-@shared_task
 def download_sra(job_id: int) -> None:
+    """The main function for the SRA Downloader.
+
+    Fairly straightforward, just downloads the Batch's file from SRA
+    and pushes it into Temporary Storage.
+    """
     job = utils.start_job(job_id)
     batches = job.batches.all()
     success = True
-    job_dir = JOB_DIR_PREFIX + str(job_id)
+    job_dir = utils.JOB_DIR_PREFIX + str(job_id)
 
     # There should only be one batch per SRA job.
     if batches.count() == 1:

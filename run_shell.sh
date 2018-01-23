@@ -12,7 +12,9 @@ set -e
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory=`cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd`
+script_directory=`perl -e 'use File::Basename;
+ use Cwd "abs_path";
+ print dirname(abs_path(@ARGV[0]));' -- "$0"`
 cd $script_directory
 
 # Set up the data volume directory if it does not already exist
@@ -24,11 +26,12 @@ fi
 
 docker build -t dr_shell -f foreman/Dockerfile .
 
-HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
+source common.sh
+HOST_IP=$(get_ip_address)
 
 docker run \
-       --link message-queue:rabbit \
        --add-host=database:$HOST_IP \
+       --add-host=nomad:$HOST_IP \
        --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
        --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
        --env-file foreman/environments/dev \
