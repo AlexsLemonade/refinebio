@@ -12,12 +12,14 @@ from django.core.management.base import BaseCommand
 from data_refinery_common.models import (
     SurveyJob,
     Batch,
+    BatchKeyValue,
     File,
     BatchStatuses,
     ProcessorJob
 )
-from data_refinery_workers.task_runner import app
-from data_refinery_common.job_lookup import PROCESSOR_PIPELINE_LOOKUP
+
+from data_refinery_common.message_queue import send_job
+from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 
 
@@ -72,9 +74,8 @@ class Command(BaseCommand):
              batch=batch).save()
 
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
-        processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
-        app.send_task(processor_task, args=[processor_job.id])
-        logger.info("Processor Job queued.", processor_job=processor_job.id)
+        logger.info("Queuing a processor job.")
+        send_job(ProcessorPipeline[batch.pipeline_required], processor_job.id)
 
     def run_trasnscriptome_processor(self):
         # Create all the dummy data that would have been created
@@ -99,6 +100,11 @@ class Command(BaseCommand):
         )
         batch.save()
 
+        kmer_size_property = BatchKeyValue(batch=batch,
+                                           key="kmer_size",
+                                           value="31")
+        kmer_size_property.save()
+
         gtf_file = File(name="aegilops_tauschii_short.gtf.gz",
                         download_url=("ftp://ftp.ensemblgenomes.org/pub/release-37/plants/gtf"
                                       "/aegilops_tauschii/Aegilops_tauschii.ASM34733v1.37.gtf.gz"),
@@ -121,9 +127,8 @@ class Command(BaseCommand):
         fasta_file.save()
 
         processor_job = ProcessorJob.create_job_and_relationships(batches=[batch])
-        processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
-        app.send_task(processor_task, args=[processor_job.id])
-        logger.info("Processor Job queued.", processor_job=processor_job.id)
+        logger.info("Queuing a processor job.")
+        send_job(ProcessorPipeline[batch.pipeline_required], processor_job.id)
 
     def handle(self, *args, **options):
         if options["processor-type"] is None:

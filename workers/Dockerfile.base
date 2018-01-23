@@ -44,19 +44,6 @@ RUN Rscript r_dependencies.R
 RUN apt-get update -qq && \
     apt-get install -y libpq-dev
 
-COPY workers/requirements.txt .
-
-# Pycurl special options are necessary because GnuTLS drops
-# SSL connections and caused this error:
-# https://stackoverflow.com/questions/41084351/django-celery-sqs-boto-exception-sqserror-sqserror-599-gnutls-handshake
-RUN \
-  pip3 --no-cache-dir install pip --upgrade && \
-  pip3 --no-cache-dir install setuptools --upgrade && \
-  pip3 --no-cache-dir install wheel --upgrade && \
-  pip3 --no-cache-dir install -r requirements.txt --upgrade && \
-  pip3 --no-cache-dir install pycurl==7.43.0 --global-option="--with-openssl" && \
-  rm -rf /root/.cache
-
 # It's annoying that this can only be installed via git.
 RUN git clone https://github.com/deweylab/RSEM.git
 
@@ -88,3 +75,13 @@ RUN curl -k -L https://github.com/COMBINE-lab/salmon/archive/${SALMON_COMMIT_HAS
 
 ENV PATH /home/user/salmon-${SALMON_COMMIT_HASH}/bin:${PATH}
 # End code from salmon repo.
+
+
+COPY workers/requirements.txt .
+
+RUN \
+  pip3 --no-cache-dir install pip --upgrade && \
+  pip3 --no-cache-dir install setuptools --upgrade && \
+  pip3 --no-cache-dir install wheel --upgrade && \
+  pip3 --no-cache-dir install -r requirements.txt --upgrade && \
+  rm -rf /root/.cache

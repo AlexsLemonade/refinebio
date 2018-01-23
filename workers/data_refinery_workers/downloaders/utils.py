@@ -8,13 +8,16 @@ from data_refinery_common.models import (
     DownloaderJob,
     ProcessorJob
 )
-from data_refinery_workers.task_runner import app
 from data_refinery_workers._version import __version__
-from data_refinery_common.job_lookup import ProcessorPipeline, PROCESSOR_PIPELINE_LOOKUP
+from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.message_queue import send_job
 
 
 logger = get_and_configure_logger(__name__)
+
+
+JOB_DIR_PREFIX = "downloader_job_"
 
 
 def start_job(job_id: int) -> DownloaderJob:
@@ -65,10 +68,9 @@ def end_job(job: DownloaderJob, batches: Batch, success: bool):
             return None
 
     @retry(stop_max_attempt_number=3)
-    def queue_task(processor_job: ProcessorJob, batch: Batch):
-        if batch.pipeline_required in PROCESSOR_PIPELINE_LOOKUP:
-            processor_task = PROCESSOR_PIPELINE_LOOKUP[batch.pipeline_required]
-            app.send_task(processor_task, args=[processor_job.id])
+    def queue_task(processor_job, batch):
+        if batch.pipeline_required in ProcessorPipeline.__members__:
+            send_job(ProcessorPipeline[batch.pipeline_required], processor_job.id)
             logger.info("Queuing processor job.",
                         downloader_job=job.id,
                         processor_job=processor_job.id,
@@ -91,16 +93,21 @@ def end_job(job: DownloaderJob, batches: Batch, success: bool):
                 try:
                     success = queue_task(processor_job, batch)
                 except:
+                    logger.exception("Could not queue processor job task.")
                     # If the task doesn't get sent we don't want the
                     # processor_job to be left floating
                     processor_job.delete()
 
                     success = False
                     job.failure_message = "Could not queue processor job task."
-                    logger.error(job.failure_message)
 
                 if success:
                     logger.info("Downloader job completed successfully.", downloader_job=job.id)
+
+    # Check to make sure job didn't end because of missing batches or files.
+    if len(batches) > 0 and len(batches[0].files) > 0:
+        # Clean up temp directory to free up local disk space.
+        batches[0].files[0].remove_temp_directory(JOB_DIR_PREFIX + str(job.id))
 
     job.success = success
     job.end_time = timezone.now()

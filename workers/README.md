@@ -1,7 +1,7 @@
 # Data Refinery Workers
 
 This is the project root for the Data Refinery Workers. This project is
-composed of a number of Celery tasks which can be used to download and
+composed of a number of Nomad jobs which can be used to download and
 process data from a variety of sources.
 
 ## Developing

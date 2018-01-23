@@ -5,7 +5,6 @@ import tarfile
 import gzip
 import shutil
 from typing import Dict
-from celery import shared_task
 from data_refinery_common.models import File, BatchKeyValue
 from data_refinery_workers.processors import utils
 from data_refinery_common.logging import get_and_configure_logger
@@ -235,8 +234,17 @@ def _zip_index(job_context: Dict) -> Dict:
     return job_context
 
 
-@shared_task
-def build_index(job_id: int) -> None:
+def build_transcriptome_index(job_id: int) -> None:
+    """The main function for the Transcriptome Index Processor.
+
+    The steps in this process are as follows:
+      * First, files are retrieved from Temporary Storage.
+      * Next, they are prepared by removing pseudogenes from the gtf file.
+      * Next the tool RSEM's prepare-reference is run.
+      * Finally the salmon index command is run
+    The output of salmon index is a directory which is pushed in full
+    to Permanent Storage.
+    """
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
                         _set_job_prefix,

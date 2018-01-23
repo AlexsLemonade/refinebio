@@ -11,8 +11,8 @@ from data_refinery_common.models import (
     DownloaderJob,
     ProcessorJob
 )
-from data_refinery_foreman.surveyor.message_queue import app
-from data_refinery_common.job_lookup import ProcessorPipeline, PROCESSOR_PIPELINE_LOOKUP
+from data_refinery_common.message_queue import send_job
+from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 
 
@@ -37,7 +37,7 @@ THREAD_WAIT_TIME = 10.0
 @retry(stop_max_attempt_number=3)
 @transaction.atomic
 def requeue_downloader_job(last_job: DownloaderJob) -> None:
-    """Queues a new downloader job and a Celery task for it.
+    """Queues a new downloader job.
 
     The new downloader job will have num_retries one greater than
     last_job.num_retries.
@@ -50,7 +50,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
     logger.info("Requeuing Downloader Job which had ID %d with a new Downloader Job with ID %d.",
                 last_job.id,
                 new_job.id)
-    app.send_task(last_job.downloader_task, args=[new_job.id])
+    send_job(Downloaders[last_job.downloader_task], new_job.id)
 
     last_job.retried = True
     last_job.success = False
@@ -156,9 +156,9 @@ def retry_lost_downloader_jobs() -> None:
 @retry(stop_max_attempt_number=3)
 @transaction.atomic
 def requeue_processor_job(last_job: ProcessorJob) -> None:
-    """Queues a new downloader job and a Celery task for it.
+    """Queues a new processor job.
 
-    The new downloader job will have num_retries one greater than
+    The new processor job will have num_retries one greater than
     last_job.num_retries.
     """
     num_retries = last_job.num_retries + 1
@@ -169,8 +169,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     logger.info("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",
                 last_job.id,
                 new_job.id)
-    processor_task = PROCESSOR_PIPELINE_LOOKUP[last_job.pipeline_applied]
-    app.send_task(processor_task, args=[new_job.id])
+    send_job(ProcessorPipeline[last_job.pipeline_applied], new_job.id)
 
     last_job.retried = True
     last_job.success = False

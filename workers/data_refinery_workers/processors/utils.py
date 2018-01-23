@@ -49,13 +49,14 @@ def end_job(job_context: Dict):
     job.end_time = timezone.now()
     job.save()
 
-    # Clean up temp directory.
-    if len(job_context["batches"]) != 0:
-        job_dir_prefix = job_context["job_dir_prefix"] if "job_dir_prefix" in job_context else None
-        job_context["batches"][0].files[0].remove_temp_directory(job_dir_prefix)
+    batches = job_context["batches"] if "batches" in job_context else None
 
-    if job.success:
-        batches = job_context["batches"]
+    # Clean up temp directory.
+    if batches is not None and len(batches) > 0 and len(batches[0].files) > 0:
+        job_dir_prefix = job_context["job_dir_prefix"] if "job_dir_prefix" in job_context else None
+        batches[0].files[0].remove_temp_directory(job_dir_prefix)
+
+    if job.success and batches is not None:
         for batch in batches:
             batch.status = BatchStatuses.PROCESSED.value
             batch.save()
