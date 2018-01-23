@@ -1,21 +1,18 @@
 #!/bin/bash
 
-if [ `uname` == "Linux" ]; then
-    HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
-elif [ `uname` == 'Darwin' ]; then # MacOS
-    HOST_IP=$(ifconfig en0 | grep inet | awk '{print $2; exit}')
-fi
-
-echo "Rebuilding Docker image while waiting for Nomad to come online."
-
 # Figure out the right location to put the nomad directory.
 script_directory=`perl -e 'use File::Basename;
  use Cwd "abs_path";
  print dirname(abs_path(@ARGV[0]));' -- "$0"`
 cd $script_directory
 
-nomad_dir = $script_directory/nomad_dir
-if [ -d $nomad_dir ]; then
+source common.sh
+HOST_IP=$(get_ip_address)
+
+echo "Rebuilding Docker image while waiting for Nomad to come online."
+
+nomad_dir="$script_directory/nomad_dir"
+if [ ! -d $nomad_dir ]; then
     mkdir nomad_dir
 fi
 

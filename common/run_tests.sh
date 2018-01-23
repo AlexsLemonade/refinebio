@@ -15,11 +15,8 @@ cd ..
 
 docker build -t common_tests -f common/Dockerfile .
 
-if [ `uname` == "Linux" ]; then
-    export HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
-elif [ `uname` == 'Darwin' ]; then # MacOS
-    export HOST_IP=$(ifconfig en0 | grep inet | awk '{print $2; exit}')
-fi
+source common.sh
+HOST_IP=$(get_ip_address)
 
 docker run \
        --add-host=database:$HOST_IP \

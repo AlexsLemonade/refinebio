@@ -16,12 +16,8 @@ cd ..
 
 docker build -t dr_models -f common/Dockerfile .
 
-if [ `uname` == "Linux" ]; then
-    HOST_IP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
-elif [ `uname` == 'Darwin' ]; then # MacOS
-    HOST_IP=$(ifconfig en0 | grep inet | awk '{print $2; exit}')
-fi
-
+source common.sh
+HOST_IP=$(get_ip_address)
 
 docker run \
        --volume $script_directory/data_refinery_common:/home/user/data_refinery_common \
