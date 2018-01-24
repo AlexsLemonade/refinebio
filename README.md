@@ -1,4 +1,4 @@
-# Data Refinery
+# Data Refinery [![Build Status](ttps://circleci.com/gh/data-refinery/data-refinery/tree/dev.svg?&style=shield)](https://circleci.com/gh/data-refinery/data-refinery/)
 
 A project to download, process, aggregate, and serve bioinformatic data now
 supported by Alex's Lemonade Stand Foundation, with some initial development
