@@ -11,7 +11,9 @@ jobs:
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
+      - run: sleep 30
       - run: ./common/install_db_docker.sh
+      - run: sleep 30
       - run: ./common/make_migrations.sh
 
       # Setup Nomad
