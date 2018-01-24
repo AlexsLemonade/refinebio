@@ -34,11 +34,13 @@ fi
 docker build -t dr_worker_tests -f workers/Dockerfile.tests .
 
 source common.sh
+DB_HOST_IP=$(get_docker_db_ip_address)
 HOST_IP=$(get_ip_address)
 
 docker run \
-       --add-host=database:$HOST_IP \
+       --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
        --env-file workers/environments/test \
        --volume $volume_directory:/home/user/data_store \
+       --link drdb:postgres \
        -i dr_worker_tests test --no-input "$@"
