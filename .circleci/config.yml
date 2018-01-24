@@ -9,17 +9,25 @@ jobs:
       - run: git lfs install
       - checkout
 
-      # Setup Postgres
-      - run: sudo service postgresql start
-      - run: sudo -u postgres createdb data_refinery
-      - run: sudo -u postgres psql data_refinery -c "CREATE ROLE data_refinery_user WITH LOGIN PASSWORD 'data_refinery_password';"
-      - run: sudo -u postgres psql data_refinery -c 'GRANT ALL PRIVILEGES ON DATABASE data_refinery TO data_refinery_user;'
-      - run: sudo -u postgres psql data_refinery -c 'ALTER USER data_refinery_user CREATEDB;'
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      - run: sleep 30
+      - run: ./common/install_db_docker.sh
+      - run: sleep 30
+      - run: ./common/make_migrations.sh
 
-      # Run Tests.
-      - run: ./common/run_tests.sh
+      # Install our application
       - run: cd common && python setup.py sdist
-      - run: ./run_rabbitmq.sh
+
+      # Setup Nomad
+      - run: ./run_nomad.sh
+
+      # Run Common Tests.
+      - run: ./common/run_tests.sh
+
+      # Run Foreman Tests
       - run: ./foreman/run_tests.sh
+
+      # Run Worker Tests
       - run: chmod -R a+rw workers/test_volume
       - run: ./workers/run_tests.sh
