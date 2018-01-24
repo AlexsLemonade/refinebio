@@ -1,15 +1,25 @@
-# Data Refinery
+# Data Refinery [![Build Status](https://circleci.com/gh/data-refinery/data-refinery/tree/dev.svg?&style=shield)](https://circleci.com/gh/data-refinery/data-refinery/)
 
 A project to download, process, aggregate, and serve bioinformatic data now
 supported by Alex's Lemonade Stand Foundation, with some initial development
 supported by the Gordon and Betty Moore Foundation via GBMF 4552 to Casey
 Greene.
 
-## Getting Started
+## Development
 
-Note: The following steps assume you have already installed PostgreSQL (>=9.4)
-and Python (>=3.5) on Ubuntu (Tested with 16.04. It should be possible to use
-other versions or even a Mac though).
+### Git Workflow
+
+`data-refinery` uses a [feature branch](http://nvie.com/posts/a-successful-git-branching-model/ based workflow. New features should be
+developed on new feature branches, and pull requests should be sent to
+the `-dev` branch for code review. Merges into `-master` happen at the end
+of sprints, and tags in `master` correspond to production releases.
+
+### Running Locally
+
+_Note: The following steps assume you have already installed Python (>=3.5) 
+on a system running Ubuntu 16.04 and higher, or OSX. OSX users will
+need [Docker for Mac](https://www.docker.com/docker-mac) installed, as well
+as Homebrew, for to `brew install iproute2mac git-crypt git-lfs`._
 
 Run `./install.sh` to set up the virtualenv. It will activate the `dr_env`
 for you the first time. This virtualenv is valid for the entire data_refinery
@@ -17,15 +27,62 @@ repo. Sub-projects each have their own virtualenvs which are managed by their
 containers. When returning to this project you should run
 `source dr_env/bin/activate` to reactivate the virtualenv.
 
-You'll also need to set up the database. See `data_models/README.md` for
-instructions on doing so.
+### Services
 
-## Development
+`data-refinery` also depends on Postgres and Nomad, both of which can be run
+in local Docker containers.
 
-For development it will be necessary to run a rabbitmq docker image:
+#### Postgres
+
+To start a local Postgres server in a Docker container, use:
+
+```bash
+./run_postgres.sh
 ```
-docker run -d --hostname my-rabbit --name some-rabbit rabbitmq:3
+
+Then, to initalize the database, run:
+
+```bash
+./common/install_db_docker.sh
 ```
+
+Finally, to make the migrations to the database, use:
+
+```bash
+./common/make_migrations.sh
+```
+
+If you need to access a `psql` shell for inspecting the database, you can use:
+
+```bash
+./run_psql_shell.sh
+```
+
+#### Nomad
+
+Similarly, you will need to run a local Nomad service instance in a Docker
+container. You can do so with:
+
+```bash
+./run_nomad.sh
+```
+
+
+### Testing
+
+To run the test entire suite:
+
+```bash
+./run_all_tests.sh
+```
+
+These tests will also be run continuosly for each commit via CircleCI.
+
+### Production Deployment
+
+_TODO_
+
+### Style
 
 R files in this repo follow
 [Google's R Style Guide](https://google.github.io/styleguide/Rguide.xml).
