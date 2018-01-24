@@ -1,15 +1,13 @@
 # Data Refinery [![Build Status](https://circleci.com/gh/data-refinery/data-refinery/tree/dev.svg?&style=shield)](https://circleci.com/gh/data-refinery/data-refinery/)
 
-A project to download, process, aggregate, and serve bioinformatic data now
-supported by Alex's Lemonade Stand Foundation, with some initial development
-supported by the Gordon and Betty Moore Foundation via GBMF 4552 to Casey
-Greene.
+<!-- This section needs to be drastically improved -->
+A project to download, harmonize, aggregate, and serve massive amounts of bioinformatic data. 
 
 ## Development
 
 ### Git Workflow
 
-`data-refinery` uses a [feature branch](http://nvie.com/posts/a-successful-git-branching-model/ based workflow. New features should be
+`data-refinery` uses a [feature branch](http://nvie.com/posts/a-successful-git-branching-model/) based workflow. New features should be
 developed on new feature branches, and pull requests should be sent to
 the `-dev` branch for code review. Merges into `-master` happen at the end
 of sprints, and tags in `master` correspond to production releases.
@@ -22,10 +20,19 @@ need [Docker for Mac](https://www.docker.com/docker-mac) installed, as well
 as Homebrew, for to `brew install iproute2mac git-crypt git-lfs`._
 
 Run `./install.sh` to set up the virtualenv. It will activate the `dr_env`
-for you the first time. This virtualenv is valid for the entire data_refinery
+for you the first time. This virtualenv is valid for the entire `data_refinery`
 repo. Sub-projects each have their own virtualenvs which are managed by their
 containers. When returning to this project you should run
 `source dr_env/bin/activate` to reactivate the virtualenv.
+
+It can be useful to have an interactive python interpreter running within the
+context of the Docker container. The `run_shell.sh` script has been provided
+for this purpose. It is in the top level directory so that if you wish to
+reference it in any integrations its location will be constant. However it
+is configured by default for the Foreman project. The interpreter will
+have all the environment variables, dependencies, and Django configurations
+for the Foreman project. There are instructions within the script describing
+how to change this to another project.
 
 ### Services
 
@@ -96,11 +103,11 @@ of those programs from anywhere within the project's directory tree they will
 enforce a limit of 100 instead of 80. This will also be true for editors which
 rely on them.
 
-It can be useful to have an interactive python interpreter running within the
-context of the Docker container. The `run_shell.sh` script has been provided
-for this purpose. It is in the top level directory so that if you wish to
-reference it in any integrations its location will be constant. However it
-is configured by default for the Foreman project. The interpreter will
-have all the environment variables, dependencies, and Django configurations
-for the Foreman project. There are instructions within the script describing
-how to change this to another project.
+
+## Support
+
+`data-refinery` is supported by [Alex's Lemonade Stand Foundation](https://www.alexslemonade.org/), with some initial development supported by the Gordon and Betty Moore Foundation via GBMF 4552 to Casey Greene.
+
+## License
+
+BSD 3-Clause License.
