@@ -7,3 +7,7 @@ get_ip_address () {
         echo $(ifconfig | grep "inet " | grep -v 127.0.0.1 | cut -d\  -f2)
     fi
 }
+
+get_docker_db_ip_address () {
+    docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' drdb
+}

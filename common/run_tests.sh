@@ -16,10 +16,12 @@ cd ..
 docker build -t common_tests -f common/Dockerfile .
 
 source common.sh
+DB_HOST_IP=$(get_docker_db_ip_address)
 HOST_IP=$(get_ip_address)
 
 docker run \
-       --add-host=database:$HOST_IP \
+       --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
        --env-file common/environments/test \
+       --link drdb:postgres \
        -i common_tests test --no-input "$@"
