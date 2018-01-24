@@ -16,8 +16,8 @@ of sprints, and tags in `master` correspond to production releases.
 
 ### Running Locally
 
-_Note: The following steps assume you have already installed PostgreSQL (>=9.4)
-and Python (>=3.5) on Ubuntu 16.04 and higher, as well as OSX. OSX users will
+_Note: The following steps assume you have already installed Python (>=3.5) 
+on a system running Ubuntu 16.04 and higher, or OSX. OSX users will
 need [Docker for Mac](https://www.docker.com/docker-mac) installed, as well
 as Homebrew, for to `brew install iproute2mac git-crypt git-lfs`._
 
