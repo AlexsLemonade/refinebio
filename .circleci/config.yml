@@ -16,11 +16,11 @@ jobs:
       - run: sleep 30
       - run: ./common/make_migrations.sh
 
-      # Setup Nomad
-      - run: ./run_nomad.sh
-
       # Install our application
       - run: cd common && python setup.py sdist
+
+      # Setup Nomad
+      - run: ./run_nomad.sh
 
       # Run Common Tests.
       - run: ./common/run_tests.sh
