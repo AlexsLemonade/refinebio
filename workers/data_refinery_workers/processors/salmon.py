@@ -248,7 +248,7 @@ def _run_salmon(job_context: Dict) -> Dict:
 
     completed_command = subprocess.run(formatted_command.split(),
                                        stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
+                                       stderr=subprocess.STDOUT)
 
     if completed_command.returncode == 1:
         stderr = str(completed_command.stderr)

@@ -1,7 +1,7 @@
 # Data Refinery [![Build Status](https://circleci.com/gh/data-refinery/data-refinery/tree/dev.svg?&style=shield)](https://circleci.com/gh/data-refinery/data-refinery/)
 
 <!-- This section needs to be drastically improved -->
-A project to download, harmonize, aggregate, and serve massive amounts of bioinformatic data. 
+Data Refinery harmonizes petabytes of publicly available biological data into ready-to-use datasets for cancer researchers and AI/ML scientists.
 
 ## Development
 
