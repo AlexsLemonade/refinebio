@@ -14,17 +14,17 @@ jobs:
       - run: sleep 30
       - run: ./common/install_db_docker.sh
       - run: sleep 30
-      - run: ./common/make_migrations.sh
 
-      # Install our application
-      - run: cd common && python setup.py sdist
-
-      # Setup Nomad
+      # Setup Nomad in a Container
       #- run: ./run_nomad.sh
       - run: ./run_nomad_docker.sh
       - run: sleep 30
 
+      # Install our application
+      - run: cd common && python setup.py sdist
+
       # Run Common Tests.
+      - run: ./common/make_migrations.sh
       - run: ./common/run_tests.sh
 
       # Run Foreman Tests
