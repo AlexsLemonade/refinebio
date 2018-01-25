@@ -247,11 +247,6 @@ class SalmonTestCase(TestCase):
         job_context = salmon._run_salmon(job_context)
 
         self.assertFalse(job_context["success"])
-        self.assertEqual(processor_job.failure_reason,
-                         ("Shell call to salmon failed because: "
-                          "Error: The index version file missing/versionInfo.json doesn't seem"
-                          " to exist.  Please try re-building the salmon index.]\\nsalmon quant"
-                          " was invoked improperly.\\nFor usage information, try salmon quant "))
         self.assertFalse(os.path.isfile(batch.files[0].get_temp_pre_path()))
 
     def test_zip_and_upload_failure(self):
