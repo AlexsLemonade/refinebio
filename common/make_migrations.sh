@@ -29,7 +29,7 @@ docker run \
        --interactive \
        --link drdb:postgres \
        --link nomad:nomad \
-       dr_models makemigrations data_refinery_common
+       dr_models python3.6 manage.py makemigrations data_refinery_common
 
 docker run \
        --volume $script_directory/data_refinery_common:/home/user/data_refinery_common \
@@ -38,4 +38,4 @@ docker run \
        --env-file common/environments/dev \
        --link drdb:postgres \
        --link nomad:nomad \
-       dr_models migrate
+       dr_models python3.6 manage.py migrate
