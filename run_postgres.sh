@@ -6,9 +6,10 @@ script_directory=`perl -e 'use File::Basename;
  use Cwd "abs_path";
  print dirname(abs_path(@ARGV[0]));' -- "$0"`
 cd $script_directory
+
 # CircleCI Docker won't make this by default for some reason
-if [ ! -d volumes_postgres ]; then
-  mkdir volumes_postgres
+if [ ! -d $(pwd)/volumes_postgres ]; then
+  mkdir $(pwd)/volumes_postgres
 fi
 VOLUMES=$(pwd)/volumes_postgres
 
