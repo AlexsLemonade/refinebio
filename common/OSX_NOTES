@@ -1,0 +1,16 @@
+# OSX Notes
+
+## Tools
+
+Homebrew
+Docker for Mac
+Postgres.app
+brew install iproute2mac
+brew install git-crypt
+brew install git-lfs 
+
+realpath() {
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+}
+
+
