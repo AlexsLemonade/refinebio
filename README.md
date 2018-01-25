@@ -9,7 +9,7 @@ Data Refinery harmonizes petabytes of publicly available biological data into re
 
 `data-refinery` uses a [feature branch](http://nvie.com/posts/a-successful-git-branching-model/) based workflow. New features should be
 developed on new feature branches, and pull requests should be sent to
-the `-dev` branch for code review. Merges into `-master` happen at the end
+the `dev` branch for code review. Merges into `master` happen at the end
 of sprints, and tags in `master` correspond to production releases.
 
 ### Running Locally
