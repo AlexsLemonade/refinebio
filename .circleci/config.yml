@@ -1,4 +1,8 @@
 version: 2
+dependencies:
+  override:
+    - bundle install:
+        timeout: 2400 # Salmon takes a long time.
 jobs:
   build:
     working_directory: /home/circleci/data_refinery
