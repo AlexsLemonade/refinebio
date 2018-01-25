@@ -248,9 +248,9 @@ def _run_salmon(job_context: Dict) -> Dict:
 
     completed_command = subprocess.run(formatted_command.split(),
                                        stdout=subprocess.PIPE,
-                                       stderr=subprocess.STDOUT)
+                                       stderr=subprocess.PIPE)
 
-    if completed_command.returncode == 1:
+    if completed_command.returncode != 0:
         stderr = str(completed_command.stderr)
         error_start = stderr.find("Error:")
         error_start = error_start if error_start != -1 else 0
@@ -266,6 +266,8 @@ def _run_salmon(job_context: Dict) -> Dict:
         job_context["job"].failure_reason = ("Shell call to salmon failed because: "
                                              + stderr[error_start:error_end])
         job_context["success"] = False
+    else:
+        job_context["success"] = True
 
     return job_context
 
