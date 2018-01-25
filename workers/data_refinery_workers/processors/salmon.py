@@ -80,7 +80,13 @@ def _determine_index_length(job_context: Dict) -> Dict:
     total_base_pairs = 0
     number_of_reads = 0
     counter = 1
-    with gzip.open(job_context["input_file_path"], "rt") as input_file:
+
+    if '.gz' in job_context["input_file_path"]:
+        opener = gzip.open
+    else:
+        opener = open
+
+    with opener(job_context["input_file_path"], "rt") as input_file:
         for line in input_file:
             # In the FASTQ file format, there are 4 lines for each
             # read. Three of these contain metadata about the
@@ -93,7 +99,13 @@ def _determine_index_length(job_context: Dict) -> Dict:
             counter += 1
 
     if "input_file_path_2" in job_context:
-        with gzip.open(job_context["input_file_path_2"], "rt") as input_file:
+
+        if '.gz' in job_context["input_file_path_2"]:
+            opener = gzip.open
+        else:
+            opener = open
+
+        with opener(job_context["input_file_path_2"], "rt") as input_file:
             for line in input_file:
                 if counter % 4 == 2:
                     total_base_pairs += len(line.replace("\n", ""))
