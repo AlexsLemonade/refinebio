@@ -6,3 +6,4 @@ requests
 retrying
 daiquiri
 billiard
+python-nomad
