@@ -20,7 +20,9 @@ jobs:
       - run: cd common && python setup.py sdist
 
       # Setup Nomad
-      - run: ./run_nomad.sh
+      #- run: ./run_nomad.sh
+      - run: ./run_nomad_docker.sh
+      - run: sleep 30
 
       # Run Common Tests.
       - run: ./common/run_tests.sh
