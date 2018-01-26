@@ -12,6 +12,7 @@ RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
 
 # Only needed for tests, so not included in the base.
 RUN pip3 install pandas
+RUN pip3 install ipdb
 
 COPY workers/ .
 

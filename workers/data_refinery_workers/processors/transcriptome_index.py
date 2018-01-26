@@ -66,6 +66,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     job_context["fasta_file"] = fasta_file
     job_context["gtf_file"] = gtf_file
+    job_context["success"] = True
     return job_context
 
 
@@ -178,6 +179,7 @@ def _create_index(job_context: Dict) -> Dict:
         error_start = error_start if error_start != -1 else 0
         stderr = stderr[error_start:]
         _handle_shell_error(job_context, stderr, "rsem-prepare-reference")
+        job_context["success"] = False
         return job_context
 
     salmon_command_string = ("salmon --no-version-check index -t {rsem_transcripts}"
@@ -202,6 +204,7 @@ def _create_index(job_context: Dict) -> Dict:
         stderr = str(salmon_completed_command.stderr)
         _handle_shell_error(job_context, stderr, "salmon")
 
+    job_context["success"] = True
     return job_context
 
 
@@ -231,6 +234,7 @@ def _zip_index(job_context: Dict) -> Dict:
         return job_context
 
     job_context["files_to_upload"] = [job_context["gtf_file"]]
+    job_context["success"] = True
     return job_context
 
 
