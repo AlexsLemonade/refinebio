@@ -45,4 +45,5 @@ docker run \
        --volume $volume_directory:/home/user/data_store \
        --link drdb:postgres \
        --link nomad:nomad \
-       -i dr_worker_tests test --no-input "$@"
+        -i dr_worker_tests test --no-input "$@" # This runs everything
+       # -i dr_worker_tests test data_refinery_workers.processors.test_salmon.SalmonTestCase.test_success --no-input "$@" # This runs a specific test
