@@ -163,7 +163,7 @@ class SalmonTestCase(TestCase):
         job_context = salmon._run_salmon(job_context)
 
         self.assertTrue(job_context["success"])
-        self.assertGreater(len(os.listdir(output_directory_path), 1))
+        self.assertGreater(len(os.listdir(output_directory_path)), 1)
 
         # The last function to test
         job_context = salmon._zip_and_upload(job_context)
@@ -247,7 +247,7 @@ class SalmonTestCase(TestCase):
         job_context = salmon._run_salmon(job_context)
 
         self.assertFalse(job_context["success"])
-        self.assertNoneEqual(processor_job.failure_reason, None)
+        self.assertNotEqual(processor_job.failure_reason, None)
         self.assertFalse(os.path.isfile(batch.files[0].get_temp_pre_path()))
 
     def test_zip_and_upload_failure(self):
