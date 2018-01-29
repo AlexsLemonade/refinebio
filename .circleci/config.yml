@@ -14,15 +14,17 @@ jobs:
       - run: sleep 30
       - run: ./common/install_db_docker.sh
       - run: sleep 30
-      - run: ./common/make_migrations.sh
+
+      # Setup Nomad in a Container
+      #- run: ./run_nomad.sh
+      - run: ./run_nomad_docker.sh
+      - run: sleep 30
 
       # Install our application
       - run: cd common && python setup.py sdist
 
-      # Setup Nomad
-      - run: ./run_nomad.sh
-
       # Run Common Tests.
+      - run: ./common/make_migrations.sh
       - run: ./common/run_tests.sh
 
       # Run Foreman Tests
@@ -30,4 +32,6 @@ jobs:
 
       # Run Worker Tests
       - run: chmod -R a+rw workers/test_volume
-      - run: ./workers/run_tests.sh
+      - run: 
+            command: ./workers/run_tests.sh
+            no_output_timeout: 36000

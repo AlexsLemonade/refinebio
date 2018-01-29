@@ -109,8 +109,7 @@ class TranscriptomeIndexTestCase(TestCase):
 
         job_context = transcriptome_index._process_gtf(job_context)
 
-        # "success" is only populated by this function on an error
-        self.assertFalse("success" in job_context)
+        self.assertTrue(job_context["success"])
         # A new gtf file is created by _process_gtf
         self.assertNotEqual(job_context["gtf_file_path"], gtf_file_path)
         self.assertTrue(os.path.isfile(job_context["gtf_file_path"]))
@@ -120,7 +119,7 @@ class TranscriptomeIndexTestCase(TestCase):
         # Another function being tested
         job_context = transcriptome_index._create_index(job_context)
 
-        self.assertFalse("success" in job_context)
+        self.assertTrue(job_context["success"])
         self.assertTrue("output_dir" in job_context)
         self.assertTrue(os.path.isdir(job_context["output_dir"]))
         self.assertEqual(9, len(os.listdir(job_context["output_dir"])))
