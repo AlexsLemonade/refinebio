@@ -17,7 +17,6 @@ if [ ! -d $nomad_dir ]; then
 fi
 
 # Start the nomad in development locally
-# TODO: do this in a Nomad container.
 nomad agent -bind $HOST_IP \
       -data-dir $nomad_dir \
       -dev \

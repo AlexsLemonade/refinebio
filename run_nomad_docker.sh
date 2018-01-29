@@ -1,6 +1,5 @@
 #! /bin/bash
 docker run -d \
-  -v /var/run/docker.sock:/var/run/docker.sock \
   --name nomad \
   -p 4646:4646 \
   -p 4647:4647 \
