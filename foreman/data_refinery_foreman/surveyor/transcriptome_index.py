@@ -244,6 +244,14 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             .value
         )
 
+        number_of_organisms = int(
+            SurveyJobKeyValue
+            .objects
+            .get(survey_job_id=self.survey_job.id,
+                 key__exact="number_of_organisms")
+            .value
+        )
+
         logger.info("Surveying %s division of ensembl.",
                     ensembl_division,
                     survey_job=self.survey_job.id)
@@ -258,5 +266,10 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             r = requests.get(DIVISION_URL_TEMPLATE.format(division=ensembl_division))
             specieses = r.json()
 
+        species_surveyed = 0
         for species in specieses:
+            if number_of_organisms != -1 and species_surveyed >= number_of_organisms:
+                break
+
             self._generate_batch(species)
+            species_surveyed += 1
