@@ -1,7 +1,7 @@
 # Data Refinery [![Build Status](https://circleci.com/gh/data-refinery/data-refinery/tree/dev.svg?&style=shield)](https://circleci.com/gh/data-refinery/data-refinery/)
 
 <!-- This section needs to be drastically improved -->
-A project to download, harmonize, aggregate, and serve massive amounts of bioinformatic data. 
+Data Refinery harmonizes petabytes of publicly available biological data into ready-to-use datasets for cancer researchers and AI/ML scientists.
 
 ## Development
 
@@ -9,7 +9,7 @@ A project to download, harmonize, aggregate, and serve massive amounts of bioinf
 
 `data-refinery` uses a [feature branch](http://nvie.com/posts/a-successful-git-branching-model/) based workflow. New features should be
 developed on new feature branches, and pull requests should be sent to
-the `-dev` branch for code review. Merges into `-master` happen at the end
+the `dev` branch for code review. Merges into `master` happen at the end
 of sprints, and tags in `master` correspond to production releases.
 
 ### Running Locally

@@ -66,6 +66,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         files[0].get_temp_dir(job_context["job_dir_prefix"]), "output")
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
+    job_context["success"] = True
     return job_context
 
 
@@ -80,6 +81,7 @@ def _determine_index_length(job_context: Dict) -> Dict:
     total_base_pairs = 0
     number_of_reads = 0
     counter = 1
+
     with gzip.open(job_context["input_file_path"], "rt") as input_file:
         for line in input_file:
             # In the FASTQ file format, there are 4 lines for each
@@ -171,6 +173,7 @@ def _download_index(job_context: Dict) -> Dict:
         # the temp dir for this job.
         index_file.remove_temp_directory(job_context["job_dir_prefix"])
 
+    job_context["success"] = True
     return job_context
 
 
@@ -250,6 +253,10 @@ def _run_salmon(job_context: Dict) -> Dict:
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
 
+    ## To me, this looks broken: error codes are anything non-zero.
+    ## However, Salmon (seems) to output with negative status codes
+    ## even with succesful executions.
+    ## Possibly related: https://github.com/COMBINE-lab/salmon/issues/55
     if completed_command.returncode == 1:
         stderr = str(completed_command.stderr)
         error_start = stderr.find("Error:")
@@ -266,6 +273,8 @@ def _run_salmon(job_context: Dict) -> Dict:
         job_context["job"].failure_reason = ("Shell call to salmon failed because: "
                                              + stderr[error_start:error_end])
         job_context["success"] = False
+    else:
+        job_context["success"] = True
 
     return job_context
 
