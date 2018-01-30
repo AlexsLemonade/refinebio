@@ -1,13 +1,13 @@
 from __future__ import absolute_import, unicode_literals
 import os
 import gzip
+import subprocess
 import tarfile
 from typing import Dict
 from data_refinery_workers.processors import utils
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import BatchStatuses, BatchKeyValue
 from data_refinery_common.logging import get_and_configure_logger
-import subprocess
 
 
 logger = get_and_configure_logger(__name__)
