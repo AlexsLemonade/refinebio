@@ -244,13 +244,18 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             .value
         )
 
-        number_of_organisms = int(
-            SurveyJobKeyValue
-            .objects
-            .get(survey_job_id=self.survey_job.id,
-                 key__exact="number_of_organisms")
-            .value
-        )
+        # If number_of_organisms isn't specified, default to surveying
+        # all organisms in the division.
+        try:
+            number_of_organisms = int(
+                SurveyJobKeyValue
+                .objects
+                .get(survey_job_id=self.survey_job.id,
+                     key__exact="number_of_organisms")
+                .value
+            )
+        except SurveyJobKeyValue.DoesNotExist:
+            number_of_organisms = -1
 
         logger.info("Surveying %s division of ensembl.",
                     ensembl_division,

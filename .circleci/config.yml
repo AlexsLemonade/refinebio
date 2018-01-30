@@ -32,6 +32,6 @@ jobs:
 
       # Run Worker Tests
       - run: chmod -R a+rw workers/test_volume
-      - run: 
+      - run:
             command: ./workers/run_tests.sh
             no_output_timeout: 36000
