@@ -68,10 +68,8 @@ class DownloadSraTestCase(TestCase):
         downloader_job = DownloaderJob.create_job_and_relationships(
             batches=[batch], downloader_task="dummy")
 
-        self.assertFalse(sra._download_file(files[0],  downloader_job, "target_file_path"))
-        self.assertEqual(downloader_job.failure_reason,
-                         ("Exception caught while downloading batch from the URL: "
-                          "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/DRR002/DRR002116/DRR002116_1.fastq.gz"))  # noqa
+        self.assertFalse(sra._download_file(files[0],  downloader_job, "target_file_path", force_ftp=True))
+        self.assertNotEqual(downloader_job.failure_reason, None)  # noqa
 
     @patch("data_refinery_workers.downloaders.sra._download_file")
     def test_multiple_batches(self, mock_download_file):
@@ -199,3 +197,34 @@ class DownloadSraTestCase(TestCase):
         self.assertEquals(downloader_job.failure_reason, "Exception caught while uploading file.")
 
         self.assertEquals(len(mock_upload_raw_file.mock_calls), 1)
+
+    def test_aspera_downloader(self):
+        """ """
+
+        batch = Batch(
+            survey_job=self.survey_job,
+            source_type="SRA",
+            pipeline_required="SALMON",
+            platform_accession_code="IlluminaHiSeq2000",
+            experiment_accession_code="DRX001563",
+            experiment_title="It doesn't really matter.",
+            organism_id=9031,
+            organism_name="GALLUS GALLUS",
+            release_date="2013-07-19",
+            last_uploaded_date="2017-09-11",
+            status=BatchStatuses.NEW.value
+        )
+        batch.save()
+
+        # This is converted to us Aspera
+        file = File(size_in_bytes=0,
+                    download_url="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036000/ERR036000_1.fastq.gz",  # noqa
+                    raw_format="fastq.gz",
+                    processed_format="tar.gz",
+                    name="ERR036000_1.fastq.gz",
+                    internal_location="IlluminaHiSeq2000/SALMON",
+                    batch=batch)
+        # This is converted to us Aspera
+        dj = DownloaderJob()
+
+        self.assertTrue(sra._download_file(file,  dj, file.name))

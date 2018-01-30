@@ -3,6 +3,8 @@ jobs:
   build:
     working_directory: /home/circleci/data_refinery
     machine: true
+    pre:
+      - run: echo "export COMMIT_MESSAGE=\"$(git log --format=oneline -n 1 $CIRCLE_SHA1)\"" >> ~/.bashrc
     steps:
       - run: curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
       - run: sudo apt-get install git-lfs
@@ -32,6 +34,7 @@ jobs:
 
       # Run Worker Tests
       - run: chmod -R a+rw workers/test_volume
-      - run:
-            command: ./workers/run_tests.sh
+      - run: 
+            command: 
+              if [[ $(git log --format=oneline -n 1 $CIRCLE_SHA1) = *"noslow"* ]]; then echo "Skipping slow tests!"; ./workers/run_tests.sh --exclude-tag=slow; else "Running all tests!" ./workers/run_tests.sh; fi
             no_output_timeout: 36000
