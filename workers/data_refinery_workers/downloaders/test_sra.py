@@ -68,10 +68,8 @@ class DownloadSraTestCase(TestCase):
         downloader_job = DownloaderJob.create_job_and_relationships(
             batches=[batch], downloader_task="dummy")
 
-        self.assertFalse(sra._download_file(files[0],  downloader_job, "target_file_path"))
-        self.assertEqual(downloader_job.failure_reason,
-                         ("Exception caught while downloading batch from the URL: "
-                          "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/DRR002/DRR002116/DRR002116_1.fastq.gz"))  # noqa
+        self.assertFalse(sra._download_file(files[0],  downloader_job, "target_file_path", force_ftp=True))
+        self.assertNotEqual(downloader_job.failure_reason, None)  # noqa
 
     @patch("data_refinery_workers.downloaders.sra._download_file")
     def test_multiple_batches(self, mock_download_file):

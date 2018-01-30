@@ -14,11 +14,11 @@ logger = get_and_configure_logger(__name__)
 CHUNK_SIZE = 1024 * 256
 
 
-def _download_file(file: File, downloader_job: DownloaderJob, target_file_path: str) -> bool:
+def _download_file(file: File, downloader_job: DownloaderJob, target_file_path: str, force_ftp: bool=False) -> bool:
     """ Download file dispatcher. Dispatches to the FTP or Aspera downloader """
 
     # SRA files have Apsera downloads.
-    if 'ftp.sra.ebi.ac.uk' in file.download_url:
+    if 'ftp.sra.ebi.ac.uk' in file.download_url and not force_ftp:
         # From: ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036000/ERR036000_1.fastq.gz
         # To: era-fasp@fasp.sra.ebi.ac.uk:/vol1/fastq/ERR036/ERR036000/ERR036000_1.fastq.gz
         file.download_url = file.download_url.replace('ftp://', 'era-fasp@')
