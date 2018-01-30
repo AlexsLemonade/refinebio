@@ -24,10 +24,11 @@ docker build -t dr_worker -f workers/Dockerfile .
 
 source common.sh
 HOST_IP=$(get_ip_address)
+DB_HOST_IP=$(get_docker_db_ip_address)
 
 docker run \
        --name worker1 \
-       --add-host=database:$HOST_IP \
+       --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
        --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
        --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \

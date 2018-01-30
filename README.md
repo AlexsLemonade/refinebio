@@ -115,21 +115,50 @@ to run. The three valid options are:
 - `survey_sra`
 - `survey_transcriptome`
 
-Each Surveyor Job type expects unique arguments. Details on these arguments can be viewed by running:
+Each Surveyor Job type expects unique arguments. Details on these
+arguments can be viewed by running:
+
 ```
-./foreman/run_surveyor.sh JOB_TYPE -h
+./foreman/run_surveyor.sh <JOB_TYPE> -h
 ```
 
-Examples of valid commands to run the different types of Surveyor Jobs are:
+Templates and examples of valid commands to run the different types of
+Surveyor Jobs are:
 
+The [Array Express](https://www.ebi.ac.uk/arrayexpress/) Surveyor
+expects a single accession code:
+
+```
+./foreman/run_surveyor.sh survey_array_express <ARRAY_EXPRESS_ACCESSION_CODE>
+```
+
+Example:
 ```
 ./foreman/run_surveyor.sh survey_array_express E-MTAB-3050
 ```
 
+The [Sequence Read Archive](https://www.ncbi.nlm.nih.gov/sra) Surveyor expects a
+range of SRA accession codes:
+
+```
+./foreman/run_surveyor.sh survey_sra <START> <END>
+```
+
+Example:
 ```
 ./foreman/run_surveyor.sh survey_sra DRR002116 DRR002116
 ```
 
+
+The Index Refinery Surveyor expects an
+[Ensembl](http://ensemblgenomes.org/) divsion and a number of
+organisms to survey:
+
+```
+./foreman/run_surveyor.sh survey_transcriptome <DIVISION> <NUMBER_OF_ORGANISMS>
+```
+
+Example:
 ```
 ./foreman/run_surveyor.sh survey_transcriptome Ensembl 1
 ```
@@ -146,22 +175,23 @@ Downloader Job which will download a sample from Array Express:
 ./workers/tester.sh queue_downloader
 ```
 
-Currently it is only possible to queue Array Express Downloader Jobs
-this way, if this functionality is useful more options can be added.
 
 #### Processors
 
 Processor Jobs will be queued automatically by successful Downloader
 Jobs. However, if you just want to run a Processor Job without first
-needing to run a Downloader Job, the following commands will do so:
+needing to run a Downloader Job, the following command will do so:
 
+```
+./workers/tester.sh queue_processor <PROCESSOR_TYPE>
+```
+
+Examples:
 ```
 ./workers/tester.sh queue_processor SRA
-```
-
-```
 ./workers/tester.sh queue_processor TRANSCRIPTOME_INDEX
 ```
+
 
 ### Testing
 

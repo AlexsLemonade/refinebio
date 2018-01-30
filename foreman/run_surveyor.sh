@@ -24,9 +24,10 @@ docker build -t dr_foreman -f foreman/Dockerfile .
 
 source common.sh
 HOST_IP=$(get_ip_address)
+DB_HOST_IP=$(get_docker_db_ip_address)
 
 docker run \
-       --add-host=database:$HOST_IP \
+       --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
        --env-file foreman/environments/dev \
        --volume $volume_directory:/home/user/data_store \
