@@ -11,35 +11,30 @@ jobs:
       - run: git lfs install
       - checkout
 
-      # # Setup Postgres in a Container
-      # - run: ./run_postgres.sh
-      # - run: sleep 30
-      # - run: ./common/install_db_docker.sh
-      # - run: sleep 30
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      - run: sleep 30
+      - run: ./common/install_db_docker.sh
+      - run: sleep 30
 
-      # # Setup Nomad in a Container
-      # #- run: ./run_nomad.sh
-      # - run: ./run_nomad_docker.sh
-      # - run: sleep 30
+      # Setup Nomad in a Container
+      #- run: ./run_nomad.sh
+      - run: ./run_nomad_docker.sh
+      - run: sleep 30
 
-      # # Install our application
-      # - run: cd common && python setup.py sdist
+      # Install our application
+      - run: cd common && python setup.py sdist
 
-      # # Run Common Tests.
-      # - run: ./common/make_migrations.sh
-      # - run: ./common/run_tests.sh
+      # Run Common Tests.
+      - run: ./common/make_migrations.sh
+      - run: ./common/run_tests.sh
 
-      # # Run Foreman Tests
-      # - run: ./foreman/run_tests.sh
+      # Run Foreman Tests
+      - run: ./foreman/run_tests.sh
 
       # Run Worker Tests
       - run: chmod -R a+rw workers/test_volume
       - run: 
             command: 
-              - >
-                if [[ $COMMIT_MESSAGE = *"noslow"* ]]; then
-                  ./workers/run_tests.sh --exclude-tag=slow
-                else
-                  ./workers/run_tests.sh
-                fi
+              if [[ $COMMIT_MESSAGE = *"noslow"* ]]; then ./workers/run_tests.sh --exclude-tag=slow; else ./workers/run_tests.sh; fi
             no_output_timeout: 36000
