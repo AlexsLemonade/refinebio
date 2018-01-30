@@ -49,6 +49,15 @@ Instructions for installing Docker and Homebrew can be found by
 following the link for those services. The last three on that list can
 be installed by running: `brew install iproute2mac git-crypt git-lfs`.
 
+#### Virtual Environment
+
+Run `./create_virtualenv.sh` to set up the virtualenv. It will activate the `dr_env`
+for you the first time. This virtualenv is valid for the entire `data_refinery`
+repo. Sub-projects each have their own virtualenvs which are managed by their
+containers. When returning to this project you should run
+`source dr_env/bin/activate` to reactivate the virtualenv.
+
+
 
 ### Services
 
@@ -99,8 +108,21 @@ the job.
 
 ### Running Locally
 
-Once you have the Postgresql and Nomad services running, you're ready
-to run jobs. There are three kinds of jobs within the Data Refinery.
+Besides the Postgresql and Nomad containers we also run the entire
+system within Docker containers. Therefore scripts used to run jobs
+will first build the Docker images for the necessary
+components. Building these images relies on common code, which we
+include in the [common](./common) sub-project. So before you can build
+these images you need to prepare the distribution directory for
+`common` with this command:
+
+```bash
+(cd common && python setup.py sdist)
+```
+
+Once you've run that and you have the Nomad and Postgres services
+running, you're ready to run jobs. There are three kinds of jobs
+within the Data Refinery.
 
 #### Surveyor Jobs
 
@@ -118,7 +140,7 @@ to run. The three valid options are:
 Each Surveyor Job type expects unique arguments. Details on these
 arguments can be viewed by running:
 
-```
+```bash
 ./foreman/run_surveyor.sh <JOB_TYPE> -h
 ```
 
@@ -128,24 +150,24 @@ Surveyor Jobs are:
 The [Array Express](https://www.ebi.ac.uk/arrayexpress/) Surveyor
 expects a single accession code:
 
-```
+```bash
 ./foreman/run_surveyor.sh survey_array_express <ARRAY_EXPRESS_ACCESSION_CODE>
 ```
 
 Example:
-```
+```bash
 ./foreman/run_surveyor.sh survey_array_express E-MTAB-3050
 ```
 
 The [Sequence Read Archive](https://www.ncbi.nlm.nih.gov/sra) Surveyor expects a
 range of SRA accession codes:
 
-```
+```bash
 ./foreman/run_surveyor.sh survey_sra <START> <END>
 ```
 
 Example:
-```
+```bash
 ./foreman/run_surveyor.sh survey_sra DRR002116 DRR002116
 ```
 
@@ -154,12 +176,12 @@ The Index Refinery Surveyor expects an
 [Ensembl](http://ensemblgenomes.org/) divsion and a number of
 organisms to survey:
 
-```
+```bash
 ./foreman/run_surveyor.sh survey_transcriptome <DIVISION> <NUMBER_OF_ORGANISMS>
 ```
 
 Example:
-```
+```bash
 ./foreman/run_surveyor.sh survey_transcriptome Ensembl 1
 ```
 
@@ -171,7 +193,7 @@ discover new samples. However if you just want to queue a Downloader
 Job without running the Surveyor, the following command will queue a
 Downloader Job which will download a sample from Array Express:
 
-```
+```bash
 ./workers/tester.sh queue_downloader
 ```
 
@@ -182,12 +204,12 @@ Processor Jobs will be queued automatically by successful Downloader
 Jobs. However, if you just want to run a Processor Job without first
 needing to run a Downloader Job, the following command will do so:
 
-```
+```bash
 ./workers/tester.sh queue_processor <PROCESSOR_TYPE>
 ```
 
 Examples:
-```
+```bash
 ./workers/tester.sh queue_processor SRA
 ./workers/tester.sh queue_processor TRANSCRIPTOME_INDEX
 ```
