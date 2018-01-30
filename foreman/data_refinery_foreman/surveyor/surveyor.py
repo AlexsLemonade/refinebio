@@ -83,16 +83,14 @@ def test():
     return
 
 
-def survey_ae_experiments(experiments_list_file):
-    with open(experiments_list_file, "r") as experiments:
-        for experiment in experiments:
-            survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
-            survey_job.save()
-            key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                               key="experiment_accession_code",
-                                               value=experiment.rstrip())
-            key_value_pair.save()
-            run_job(survey_job)
+def survey_ae_experiment(experiment_accession):
+    survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
+    survey_job.save()
+    key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                       key="experiment_accession_code",
+                                       value=experiment_accession)
+    key_value_pair.save()
+    run_job(survey_job)
 
 
 def survey_sra_experiments(start_accession, end_accession):
