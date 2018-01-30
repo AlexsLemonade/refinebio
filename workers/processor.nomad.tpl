@@ -65,7 +65,7 @@ job "PROCESSOR" {
           "--job-id", "${NOMAD_META_JOB_ID}"
         ]
 
-        extra_hosts = ["database:${{HOST_IP}}"]
+        extra_hosts = ["database:${{DB_HOST_IP}}"]
 
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]
 
