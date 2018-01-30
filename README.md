@@ -3,7 +3,7 @@
 <!-- This section needs to be drastically improved -->
 Data Refinery harmonizes petabytes of publicly available biological data into ready-to-use datasets for cancer researchers and AI/ML scientists.
 
-The Data Refinery currently has four subprojects contained within this repo:
+The Data Refinery currently has four sub-projects contained within this repo:
 - [common](./common) Contains code needed by both `foreman` and `workers`.
 - [foreman](./foreman) Discovers data to download/process and manages jobs.
 - [workers](./workers) Runs Downloader and Processor jobs.
@@ -88,7 +88,7 @@ Similarly, you will need to run a local
 container. You can do so with:
 
 ```bash
-./run_nomad.sh
+./run_nomad_docker.sh
 ```
 
 Nomad is an orchestration tool which the Data Refinery uses to run
@@ -108,10 +108,13 @@ Surveyor Jobs discover samples to download/process along with
 recording metadata about the samples. A Surveyor Job should queue
 Downloader Jobs to download the data it discovers.
 
-The Surveyor can be run with the `./foreman/run_surveyor.sh` script. The first argument to this script is the type of Surveyor Job to run. The three valid options are:
-- survey_array_express
-- survey_sra
-- survey_transcriptome
+The Surveyor can be run with the `./foreman/run_surveyor.sh`
+script. The first argument to this script is the type of Surveyor Job
+to run. The three valid options are:
+- `survey_array_express`
+- `survey_sra`
+- `survey_transcriptome`
+
 Each Surveyor Job type expects unique arguments. Details on these arguments can be viewed by running:
 ```
 ./foreman/run_surveyor.sh JOB_TYPE -h
@@ -203,7 +206,10 @@ rely on them.
 
 ## Support
 
-`data-refinery` is supported by [Alex's Lemonade Stand Foundation](https://www.alexslemonade.org/), with some initial development supported by the Gordon and Betty Moore Foundation via GBMF 4552 to Casey Greene.
+`data-refinery` is supported by [Alex's Lemonade Stand
+Foundation](https://www.alexslemonade.org/), with some initial
+development supported by the Gordon and Betty Moore Foundation via
+GBMF 4552 to Casey Greene.
 
 ## License
 
