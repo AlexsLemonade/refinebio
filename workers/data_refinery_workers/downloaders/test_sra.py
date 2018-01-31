@@ -216,7 +216,7 @@ class DownloadSraTestCase(TestCase):
         )
         batch.save()
 
-        # This is converted to us Aspera
+        # This is converted from FTP URL to use Aspera
         file = File(size_in_bytes=0,
                     download_url="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036000/ERR036000_1.fastq.gz",  # noqa
                     raw_format="fastq.gz",
@@ -224,7 +224,6 @@ class DownloadSraTestCase(TestCase):
                     name="ERR036000_1.fastq.gz",
                     internal_location="IlluminaHiSeq2000/SALMON",
                     batch=batch)
-        # This is converted to us Aspera
         dj = DownloaderJob()
 
         self.assertTrue(sra._download_file(file,  dj, file.name))

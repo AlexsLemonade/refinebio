@@ -47,3 +47,4 @@ docker run \
        --link nomad:nomad \
         -i dr_worker_tests python3 manage.py test --no-input "$@" # This runs everything
        # -i dr_worker_tests python3 manage.py test data_refinery_workers.processors.test_salmon.SalmonTestCase.test_success --no-input "$@" # This runs a specific test
+       # Can also be called like ./workers/run_tests.sh data_refinery_workers.downloaders.test_sra.DownloadSraTestCase.test_aspera_downloader 
