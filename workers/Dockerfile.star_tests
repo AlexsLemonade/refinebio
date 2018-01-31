@@ -1,4 +1,4 @@
-FROM ccdl/data_refinery_worker_base
+FROM miserlou/data_refinery_worker_base
 
 COPY common/dist/data-refinery-common-* common/
 

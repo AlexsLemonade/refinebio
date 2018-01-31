@@ -1,0 +1,9 @@
+FROM miserlou/data_refinery_worker_base
+
+##
+# STAR
+##
+
+ENV R_LIBS "/usr/local/lib/R/site-library"
+COPY workers/r_test_dependencies.R .
+RUN Rscript r_test_dependencies.R
