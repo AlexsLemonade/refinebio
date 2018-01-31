@@ -9,15 +9,14 @@ jobs:
       - run: git lfs install
       - checkout
 
+      # Setup Nomad in a Container
+      - run: ./run_nomad_docker.sh
+      - run: sleep 30
+
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
       - run: sleep 30
       - run: ./common/install_db_docker.sh
-      - run: sleep 30
-
-      # Setup Nomad in a Container
-      #- run: ./run_nomad.sh
-      - run: ./run_nomad_docker.sh
       - run: sleep 30
 
       # Install our application
@@ -32,6 +31,6 @@ jobs:
 
       # Run Worker Tests
       - run: chmod -R a+rw workers/test_volume
-      - run: 
+      - run:
             command: ./workers/run_tests.sh
             no_output_timeout: 36000
