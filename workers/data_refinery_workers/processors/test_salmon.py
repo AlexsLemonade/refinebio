@@ -1,6 +1,6 @@
 import os
 import shutil
-from django.test import TestCase
+from django.test import TestCase, tag
 from unittest.mock import patch
 from data_refinery_common.models import (
     SurveyJob,
@@ -109,6 +109,7 @@ class SalmonTestCase(TestCase):
     separate test functions.
     """
 
+    @tag('slow')
     def test_success(self):
         """Tests the successful path of the module under test."""
         # Set up test environment.
