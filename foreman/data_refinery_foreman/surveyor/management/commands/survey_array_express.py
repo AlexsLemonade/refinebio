@@ -15,16 +15,13 @@ logger = get_and_configure_logger(__name__)
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
-            "experiment_list",
-            help=("A file containing a list of experiment accession codes to "
-                  "survey, download, and process. These should be listed one "
-                  "per line. Should be a path relative to the foreman "
-                  "directory."))
+            "experiment_accession",
+            help=("An experiment accession code to survey, download, and process."))
 
     def handle(self, *args, **options):
-        if options["experiment_list"] is None:
-            logger.error("You must specify an experiment list.")
+        if options["experiment_accession"] is None:
+            logger.error("You must specify an experiment accession.")
             return 1
         else:
-            surveyor.survey_ae_experiments(options["experiment_list"])
+            surveyor.survey_ae_experiment(options["experiment_accession"])
             return 0

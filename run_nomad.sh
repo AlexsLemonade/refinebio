@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# This script runs the Data Refinery Workers locally.
+# What that actually means is that it runs Nomad and registers the
+# Nomad jobs for the Data Refinery Workers. Nomad is listening for
+# messages telling it to run Processor and Downloader jobs. When it
+# receives them, it will run the jobs within new Docker containers.
+
 # Figure out the right location to put the nomad directory.
 script_directory=`perl -e 'use File::Basename;
  use Cwd "abs_path";
