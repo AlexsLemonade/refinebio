@@ -100,3 +100,6 @@ dr_env/
 
 # OSX
 .DS_Store
+
+# PyCharm
+.idea
