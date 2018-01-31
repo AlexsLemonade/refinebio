@@ -22,6 +22,7 @@ NOMAD_HOST_IP=$(get_docker_nomad_ip_address)
 HOST_IP=$(get_ip_address)
 
 docker run \
+       --net data-refinery \
        --volume $script_directory/data_refinery_common:/home/user/data_refinery_common \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$NOMAD_HOST_IP \
@@ -32,6 +33,7 @@ docker run \
        dr_models python3.6 manage.py makemigrations data_refinery_common
 
 docker run \
+       --net data-refinery \
        --volume $script_directory/data_refinery_common:/home/user/data_refinery_common \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$NOMAD_HOST_IP \

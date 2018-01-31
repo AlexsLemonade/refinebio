@@ -21,6 +21,7 @@ NOMAD_HOST_IP=$(get_docker_nomad_ip_address)
 HOST_IP=$(get_ip_address)
 
 docker run \
+       --net data-refinery \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$NOMAD_HOST_IP \
        --env-file common/environments/test \
