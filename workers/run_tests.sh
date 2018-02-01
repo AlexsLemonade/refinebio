@@ -27,8 +27,11 @@ fi
 index_dir="$volume_directory/processed/TEST/TRANSCRIPTOME_INDEX/"
 gz_index_path="$index_dir/Homo_sapiens_short.tar.gz"
 if [ ! -e "$gz_index_path" ]; then
-    xz_index_path="$index_dir/Homo_sapiens_short.tar.xz"
-    unxz -k --stdout $xz_index_path | gzip > $gz_index_path
+    # xz_index_path="$index_dir/Homo_sapiens_short.tar.xz"
+    # unxz -k --stdout $xz_index_path | gzip > $gz_index_path
+    mkdir -p workers/test_volume/processed/TEST/TRANSCRIPTOME_INDEX
+    wget -O workers/test_volume/processed/TEST/TRANSCRIPTOME_INDEX/Homo_sapiens_short.tar.gz \
+         https://s3.amazonaws.com/data-refinery-test-assets/Homo_sapiens_short.tar.gz
 fi
 
 docker build -t dr_worker_tests -f workers/Dockerfile.tests .
@@ -47,4 +50,4 @@ docker run \
        --link nomad:nomad \
         -i dr_worker_tests python3 manage.py test --no-input "$@" # This runs everything
        # -i dr_worker_tests python3 manage.py test data_refinery_workers.processors.test_salmon.SalmonTestCase.test_success --no-input "$@" # This runs a specific test
-       # Can also be called like ./workers/run_tests.sh data_refinery_workers.downloaders.test_sra.DownloadSraTestCase.test_aspera_downloader 
+       # Can also be called like ./workers/run_tests.sh data_refinery_workers.downloaders.test_sra.DownloadSraTestCase.test_aspera_downloader

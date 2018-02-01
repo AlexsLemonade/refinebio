@@ -31,7 +31,7 @@ unsupported by this project.
 #### Linux
 
 The following services will need to be installed:
-- [Docker](https://www.docker.com/community-edition)
+- [Docker](https://www.docker.com/community-edition): Be sure to follow the [post installation steps](https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user) so Docker does not need sudo permissions.
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries)
 - [git-lfs](https://git-lfs.github.com/)
 - git-crypt
