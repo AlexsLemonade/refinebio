@@ -32,6 +32,8 @@ job "DOWNLOADER" {
         DATABASE_PORT = "${{DATABASE_PORT}}"
         DATABASE_TIMEOUT = "${{DATABASE_TIMEOUT}}"
 
+        NOMAD_HOST = "${{NOMAD_HOST}}"
+
         RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
 
         USE_S3 = "${{USE_S3}}"
@@ -61,7 +63,8 @@ job "DOWNLOADER" {
           "--job-name", "${NOMAD_META_JOB_NAME}",
           "--job-id", "${NOMAD_META_JOB_ID}"]
 
-        extra_hosts = ["database:${{DB_HOST_IP}}"]
+        extra_hosts = ["database:${{DB_HOST_IP}}",
+                       "nomad:${{NOMAD_HOST_IP}}"]
 
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]
 

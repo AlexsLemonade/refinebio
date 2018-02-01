@@ -28,7 +28,20 @@ nomad agent -bind $HOST_IP \
       -dev \
       > nomad.logs &
 
+# While we wait for Nomad to start, make sure the Docker registry has
+# an up-to-date Docker image for the workers sub-project. We run a
+# local Docker registry because Nomad must pull from a registry, it
+# will not use an image which lives on the host machine.
+
+# Make sure the local Docker registry is running.
+if [[ -z $(docker ps | grep "image-registry") ]]; then
+    docker run -d -p 5000:5000 --restart=always --name image-registry registry:2
+fi
+
+# Build, tag, and push an image for the workers to the local registry.
 docker build -t dr_worker -f workers/Dockerfile .
+docker tag dr_worker localhost:5000/dr_worker
+docker push localhost:5000/dr_worker
 
 # This function checks what the status of the Nomad agent is.
 # Returns an HTTP response code. i.e. 200 means everything is ok.
@@ -48,10 +61,7 @@ done
 
 echo "Nomad is online. Registering jobs."
 
-if [ ! -f workers/downloader.nomad -o ! -f workers/processor.nomad ]; then
-    echo "One or more Job Specifications for Nomad are missing, building them from the template."
-    ./workers/format_nomad_with_env.sh
-fi
+./workers/format_nomad_with_env.sh
 
 # Register the jobs for dispatching.
 nomad run -address http://$HOST_IP:4646 workers/downloader.nomad

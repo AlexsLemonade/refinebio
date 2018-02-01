@@ -32,20 +32,24 @@ unsupported by this project.
 
 The following services will need to be installed:
 - [Docker](https://www.docker.com/community-edition)
+- [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries)
 - [git-lfs](https://git-lfs.github.com/)
 - git-crypt
 
-Instructions for install Docker and git-lfs can be found by following the link for each service. git-crypt can be installed via `sudo apt-get install git-crypt`.
+Instructions for installing Docker, Nomad, and git-lfs can be found by
+following the link for each service. git-crypt can be installed via
+`sudo apt-get install git-crypt`.
 
 #### Mac
 The following services will need to be installed:
 - [Docker for Mac](https://www.docker.com/docker-mac)
+- [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries)
 - [Homebrew](https://brew.sh/)
 - git-crypt
 - git-lfs
 - iproute2mac
 
-Instructions for installing Docker and Homebrew can be found by
+Instructions for installing Docker, Nomad, and Homebrew can be found by
 following the link for those services. The last three on that list can
 be installed by running: `brew install iproute2mac git-crypt git-lfs`.
 
@@ -61,8 +65,9 @@ containers. When returning to this project you should run
 
 ### Services
 
-`data-refinery` also depends on Postgres and Nomad, both of which can be run
-in local Docker containers.
+`data-refinery` also depends on Postgres and Nomad. Postgres can be
+run in a local Docker container, but Nomad must be run on your
+development machine.
 
 #### Postgres
 
@@ -93,11 +98,12 @@ If you need to access a `psql` shell for inspecting the database, you can use:
 #### Nomad
 
 Similarly, you will need to run a local
-[Nomad](https://www.nomadproject.io/) service instance in a Docker
-container. You can do so with:
+[Nomad](https://www.nomadproject.io/) service in development
+mode. Assuming you have followed the [installation instructions](#installation), you
+can do so with:
 
 ```bash
-./run_nomad_docker.sh
+sudo -E ./run_nomad.sh
 ```
 
 Nomad is an orchestration tool which the Data Refinery uses to run
@@ -213,6 +219,66 @@ Examples:
 ./workers/tester.sh queue_processor SRA
 ./workers/tester.sh queue_processor TRANSCRIPTOME_INDEX
 ```
+
+
+#### Checking on Local Jobs
+
+_Note that the following instructions assume you have set the
+environment variable $HOST_IP to the the IP address of your
+development machine._
+
+To check on the status of a job, run:
+
+```bash
+nomad status -address http://$HOST_IP:4646
+```
+
+It should output something like:
+
+```
+ID                                       Type                 Priority  Status   Submit Date
+DOWNLOADER                               batch/parameterized  50        running  01/31/18 18:34:05 EST
+DOWNLOADER/dispatch-1517441663-4b02e7a3  batch                50        dead     01/31/18 18:34:23 EST
+PROCESSOR                                batch/parameterized  50        running  01/31/18 18:34:05 EST
+```
+
+The DOWNLOADER and PROCESSOR IDs are the parameterized jobs which are
+waiting to dispatch Data Refinery jobs. If you don't understand what
+that means, don't worry about it. All you really need to do is select
+one of the IDs which contains `dispatch` and has a `Submit Date`
+matching when the job you want to check on was ran. Copy that full ID,
+in this case `DOWNLOADER/dispatch-1517437920-ae8b77a4`, and paste it
+after the previous command like so:
+
+```bash
+nomad status -address http://$HOST_IP:4646 DOWNLOADER/dispatch-1517441663-4b02e7a3
+```
+
+This will output a lot of information about that Nomad Dispatch Job,
+of which we're mostly interested in the section titled
+**Allocations**, which looks like this:
+
+```
+Allocations
+ID        Node ID   Task Group  Version  Desired  Status    Created At
+b30e4edd  fda75a5a  jobs        0        run      complete  01/31/18 18:34:23 EST
+```
+
+If you paste that after the original `nomad status` command like so:
+
+```bash
+nomad status -address http://$HOST_IP:4646 b30e4edd
+```
+
+You'll see a lot of information about allocation, which probably isn't
+what you're interested in. Instead you should run:
+
+```bash
+nomad logs -verbose -address http://$HOST_IP:4646 b30e4edd
+```
+
+Which will output both the stderr and stdout logs from the container
+which ran that allocation, which is really a Data Refinery job.
 
 
 ### Testing
