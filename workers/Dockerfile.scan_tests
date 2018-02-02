@@ -1,4 +1,4 @@
-FROM miserlou/data_refinery_worker_base
+FROM miserlou/scan_tests_base
 
 COPY common/dist/data-refinery-common-* common/
 

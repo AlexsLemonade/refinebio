@@ -1,6 +1,6 @@
 import os
 import shutil
-from django.test import TestCase
+from django.test import TestCase, tag
 from unittest.mock import patch
 from subprocess import CompletedProcess
 from data_refinery_common.models import (
@@ -73,6 +73,7 @@ class TranscriptomeIndexTestCase(TestCase):
     functions.
     """
 
+    @tag("slow")
     def test_success(self):
         """Tests the successful path of the module under test."""
         # Set up test environment.

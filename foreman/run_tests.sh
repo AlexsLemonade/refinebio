@@ -26,4 +26,4 @@ docker run \
        --env-file foreman/environments/test \
        --link drdb:postgres \
        --link nomad:nomad \
-       -i dr_foreman test --no-input "$@"
+       -i dr_foreman test --no-input "$@" --verbosity=3

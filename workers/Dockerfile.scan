@@ -1,4 +1,4 @@
-FROM miserlou/star_base
+FROM miserlou/scan_base
 
 COPY common/dist/data-refinery-common-* common/
 

@@ -26,4 +26,4 @@ docker run \
        --env-file common/environments/test \
        --link drdb:postgres \
        --link nomad:nomad \
-       -i common_tests bash -c 'coverage run --source="." manage.py test --no-input "$@"; coverage report -m'
+       -i common_tests bash -c 'coverage run --source="." manage.py test --no-input "$@" --verbosity=3; coverage report -m'

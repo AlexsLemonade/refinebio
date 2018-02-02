@@ -34,7 +34,7 @@ if [ ! -e "$gz_index_path" ]; then
          https://s3.amazonaws.com/data-refinery-test-assets/Homo_sapiens_short.tar.gz
 fi
 
-docker build -t dr_worker_tests -f workers/Dockerfile.salmon_tests .
+docker build -t dr_worker_tests -f workers/Dockerfile.scan_tests .
 
 source common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
@@ -48,6 +48,6 @@ docker run \
        --volume $volume_directory:/home/user/data_store \
        --link drdb:postgres \
        --link nomad:nomad \
-        -i dr_worker_tests python3 manage.py test --no-input --exclude-tag=scan "$@" --verbosity=3 # This runs everything
+        -i dr_worker_tests python3 manage.py test --no-input --tag=scan "$@"  --verbosity=3  # This runs everything
        # -i dr_worker_tests python3 manage.py test data_refinery_workers.processors.test_salmon.SalmonTestCase.test_success --no-input "$@" # This runs a specific test
        # Can also be called like ./workers/run_tests.sh data_refinery_workers.downloaders.test_sra.DownloadSraTestCase.test_aspera_downloader 
