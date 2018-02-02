@@ -4,9 +4,6 @@ jobs:
     working_directory: /home/circleci/data_refinery
     machine: true
     steps:
-      - run: curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-      - run: sudo apt-get install git-lfs
-      - run: git lfs install
       - checkout
 
       # Setup Postgres in a Container
@@ -32,7 +29,7 @@ jobs:
 
       # Run Worker Tests
       - run: chmod -R a+rw workers/test_volume
-      - run: 
-            command: 
+      - run:
+            command:
               .circleci/filter_tests.sh
             no_output_timeout: 36000
