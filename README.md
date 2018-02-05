@@ -60,13 +60,40 @@ repo. Sub-projects each have their own virtualenvs which are managed by their
 containers. When returning to this project you should run
 `source dr_env/bin/activate` to reactivate the virtualenv.
 
+### Common Dependecies
 
+The [common](./common) sub-project contains common code which is
+depended upon by the other sub-projects. So before anything else you
+should prepare the distribution directory for `common` with this
+command:
+
+```bash
+(cd common && python setup.py sdist)
+```
 
 ### Services
 
 `data-refinery` also depends on Postgres and Nomad. Postgres can be
 run in a local Docker container, but Nomad must be run on your
 development machine.
+
+
+#### Nomad
+
+Similarly, you will need to run a local
+[Nomad](https://www.nomadproject.io/) service in development
+mode. Assuming you have followed the [installation instructions](#installation), you
+can do so with:
+
+```bash
+sudo -E ./run_nomad.sh
+```
+
+Nomad is an orchestration tool which the Data Refinery uses to run
+Downloader and Processor jobs. Jobs are queued by sending a message to
+the Nomad agent, which will then launch a Docker container which runs
+the job.
+
 
 #### Postgres
 
@@ -94,40 +121,11 @@ If you need to access a `psql` shell for inspecting the database, you can use:
 ./run_psql_shell.sh
 ```
 
-#### Nomad
-
-Similarly, you will need to run a local
-[Nomad](https://www.nomadproject.io/) service in development
-mode. Assuming you have followed the [installation instructions](#installation), you
-can do so with:
-
-```bash
-sudo -E ./run_nomad.sh
-```
-
-Nomad is an orchestration tool which the Data Refinery uses to run
-Downloader and Processor jobs. Jobs are queued by sending a message to
-the Nomad agent, which will then launch a Docker container which runs
-the job.
-
-
 ### Running Locally
 
-Besides the Postgresql and Nomad containers we also run the entire
-system within Docker containers. Therefore scripts used to run jobs
-will first build the Docker images for the necessary
-components. Building these images relies on common code, which we
-include in the [common](./common) sub-project. So before you can build
-these images you need to prepare the distribution directory for
-`common` with this command:
-
-```bash
-(cd common && python setup.py sdist)
-```
-
-Once you've run that and you have the Nomad and Postgres services
-running, you're ready to run jobs. There are three kinds of jobs
-within the Data Refinery.
+Once you've run built the `common` distribution directory and you have
+the Nomad and Postgres services running, you're ready to run
+jobs. There are three kinds of jobs within the Data Refinery.
 
 #### Surveyor Jobs
 

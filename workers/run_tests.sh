@@ -46,15 +46,17 @@ fi
 docker build -t dr_worker_tests -f workers/Dockerfile.tests .
 
 source common.sh
-DB_HOST_IP=$(get_docker_db_ip_address)
 HOST_IP=$(get_ip_address)
+DB_HOST_IP=$(get_docker_db_ip_address)
+NOMAD_HOST_IP=$(get_docker_nomad_ip_address)
+NOMAD_LINK=$(get_nomad_link_option)
 
 docker run \
        --add-host=database:$DB_HOST_IP \
-       --add-host=nomad:$HOST_IP \
+       --add-host=nomad:$NOMAD_HOST_IP \
        --env-file workers/environments/test \
        --volume $volume_directory:/home/user/data_store \
-       --link drdb:postgres \
+       --link drdb:postgres $NOMAD_LINK \
         -i dr_worker_tests python3 manage.py test --no-input "$@" # This runs everything
        # -i dr_worker_tests python3 manage.py test data_refinery_workers.processors.test_salmon.SalmonTestCase.test_success --no-input "$@" # This runs a specific test
        # Can also be called like ./workers/run_tests.sh data_refinery_workers.downloaders.test_sra.DownloadSraTestCase.test_aspera_downloader
