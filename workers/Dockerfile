@@ -13,7 +13,6 @@ RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
 USER user
 # Install Aspera
 RUN wget -q https://download.asperasoft.com/download/sw/cli/3.7.7/aspera-cli-3.7.7.608.927cce8-linux-64-release.sh
-ADD --chown=user:user aspera-cli-3.7.7.608.927cce8-linux-64-release.sh aspera-cli-3.7.7.608.927cce8-linux-64-release.sh
 RUN sh aspera-cli-3.7.7.608.927cce8-linux-64-release.sh
 
 COPY workers/ .

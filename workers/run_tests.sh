@@ -20,18 +20,27 @@ if [ ! -d "$volume_directory" ]; then
     chmod 775 $volume_directory
 fi
 
-# In order to get the size of certain test data within the limit of
-# Git LFS we have to use xz compression instead of gz. Therefore
-# before we can run the tests we need to make sure the files are
-# decompressed.
+# Make sure test Transcriptome Index is downloaded from S3.
 index_dir="$volume_directory/processed/TEST/TRANSCRIPTOME_INDEX/"
 gz_index_path="$index_dir/Homo_sapiens_short.tar.gz"
 if [ ! -e "$gz_index_path" ]; then
-    # xz_index_path="$index_dir/Homo_sapiens_short.tar.xz"
-    # unxz -k --stdout $xz_index_path | gzip > $gz_index_path
-    mkdir -p workers/test_volume/processed/TEST/TRANSCRIPTOME_INDEX
-    wget -O workers/test_volume/processed/TEST/TRANSCRIPTOME_INDEX/Homo_sapiens_short.tar.gz \
+    mkdir -p $index_dir
+    wget -O $gz_index_path \
          https://s3.amazonaws.com/data-refinery-test-assets/Homo_sapiens_short.tar.gz
+fi
+
+# Make sure data for Salmon test is downloaded from S3.
+rna_seq_test_raw_dir="$volume_directory/raw/TEST/SALMON/"
+read_1_name="ERR003000_1.fastq.gz"
+read_2_name="ERR003000_2.fastq.gz"
+rna_seq_test_data_1="$rna_seq_test_raw_dir/$read_1_name"
+rna_seq_test_data_2="$rna_seq_test_raw_dir/$read_2_name"
+if [ ! -e "$rna_seq_test_data_data_1" ]; then
+    mkdir -p $rna_seq_test_raw_dir
+    wget -O $rna_seq_test_data_1 \
+         https://s3.amazonaws.com/data-refinery-test-assets/$read_1_name
+    wget -O $rna_seq_test_data_2 \
+         https://s3.amazonaws.com/data-refinery-test-assets/$read_2_name
 fi
 
 docker build -t dr_worker_tests -f workers/Dockerfile.tests .
@@ -39,15 +48,13 @@ docker build -t dr_worker_tests -f workers/Dockerfile.tests .
 source common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
 HOST_IP=$(get_ip_address)
-NOMAD_HOST_IP=$(get_docker_nomad_ip_address)
 
 docker run \
        --add-host=database:$DB_HOST_IP \
-       --add-host=nomad:$NOMAD_HOST_IP \
+       --add-host=nomad:$HOST_IP \
        --env-file workers/environments/test \
        --volume $volume_directory:/home/user/data_store \
        --link drdb:postgres \
-       --link nomad:nomad \
         -i dr_worker_tests python3 manage.py test --no-input "$@" # This runs everything
        # -i dr_worker_tests python3 manage.py test data_refinery_workers.processors.test_salmon.SalmonTestCase.test_success --no-input "$@" # This runs a specific test
        # Can also be called like ./workers/run_tests.sh data_refinery_workers.downloaders.test_sra.DownloadSraTestCase.test_aspera_downloader

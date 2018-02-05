@@ -31,12 +31,12 @@ unsupported by this project.
 #### Linux
 
 The following services will need to be installed:
+- [Python3 and Pip]: `sudo apt-get -y install python3-pip`
 - [Docker](https://www.docker.com/community-edition): Be sure to follow the [post installation steps](https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user) so Docker does not need sudo permissions.
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries)
-- [git-lfs](https://git-lfs.github.com/)
 - git-crypt
 
-Instructions for installing Docker, Nomad, and git-lfs can be found by
+Instructions for installing Docker and Nomad can be found by
 following the link for each service. git-crypt can be installed via
 `sudo apt-get install git-crypt`.
 
@@ -46,12 +46,11 @@ The following services will need to be installed:
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries)
 - [Homebrew](https://brew.sh/)
 - git-crypt
-- git-lfs
 - iproute2mac
 
 Instructions for installing Docker, Nomad, and Homebrew can be found by
 following the link for those services. The last three on that list can
-be installed by running: `brew install iproute2mac git-crypt git-lfs`.
+be installed by running: `brew install iproute2mac git-crypt`.
 
 #### Virtual Environment
 
