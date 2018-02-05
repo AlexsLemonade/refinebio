@@ -220,9 +220,13 @@ Examples:
 
 #### Checking on Local Jobs
 
-_Note that the following instructions assume you have set the
+_Note:_ The following instructions assume you have set the
 environment variable $HOST_IP to the the IP address of your
-development machine._
+development machine. This can be done with:
+
+```bash
+source common.sh && export HOST_IP=$(get_ip_address)
+```
 
 To check on the status of a job, run:
 
