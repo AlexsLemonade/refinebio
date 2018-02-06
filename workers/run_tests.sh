@@ -28,7 +28,8 @@ index_tarball="Homo_sapiens_short.tar.gz"
 gz_index_path="$index_dir/index_tarball"
 if [ ! -e "$gz_index_path" ]; then
     mkdir -p $index_dir
-    wget -O $gz_index_path \
+    echo "Downloading Salmon index for Salmon tests."
+    wget -q -O $gz_index_path \
          "$test_data_repo/$index_tarball"
 fi
 
@@ -40,9 +41,11 @@ rna_seq_test_data_1="$rna_seq_test_raw_dir/$read_1_name"
 rna_seq_test_data_2="$rna_seq_test_raw_dir/$read_2_name"
 if [ ! -e "$rna_seq_test_data_data_1" ]; then
     mkdir -p $rna_seq_test_raw_dir
-    wget -O $rna_seq_test_data_1 \
+    echo "Downloading ERR003000_1.fastq.gz for Salmon tests."
+    wget -q -O $rna_seq_test_data_1 \
          "$test_data_repo/$read_1_name"
-    wget -O $rna_seq_test_data_2 \
+    echo "Downloading ERR003000_2.fastq.gz for Salmon tests."
+    wget -q -O $rna_seq_test_data_2 \
          "$test_data_repo/$read_2_name"
 fi
 
@@ -50,8 +53,9 @@ fi
 tx_index_test_raw_dir="$volume_directory/raw/TEST/TRANSCRIPTOME_INDEX"
 fasta_file="aegilops_tauschii_short.fa.gz"
 if [ ! -e "$tx_index_test_raw_dir/$fasta_file" ]; then
-    wget -O "$tx_index_test_raw_dir/$fasta_flile" \
-         "$test_data_repo/$fasta_flile"
+    echo "Downloading fasta file for Transcriptome Index tests."
+    wget -q -O "$tx_index_test_raw_dir/$fasta_file" \
+         "$test_data_repo/$fasta_file"
 fi
 
 docker build -t dr_worker_tests -f workers/Dockerfile.tests .
