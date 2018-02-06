@@ -20,17 +20,20 @@ if [ ! -d "$volume_directory" ]; then
     chmod 775 $volume_directory
 fi
 
-# Make sure test Transcriptome Index is downloaded from S3.
-index_dir="$volume_directory/processed/TEST/TRANSCRIPTOME_INDEX/"
-gz_index_path="$index_dir/Homo_sapiens_short.tar.gz"
+test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
+
+# Make sure test Transcriptome Index is downloaded from S3 for salmon tests.
+index_dir="$volume_directory/processed/TEST/TRANSCRIPTOME_INDEX"
+index_tarball="Homo_sapiens_short.tar.gz"
+gz_index_path="$index_dir/index_tarball"
 if [ ! -e "$gz_index_path" ]; then
     mkdir -p $index_dir
     wget -O $gz_index_path \
-         https://s3.amazonaws.com/data-refinery-test-assets/Homo_sapiens_short.tar.gz
+         "$test_data_repo/$index_tarball"
 fi
 
 # Make sure data for Salmon test is downloaded from S3.
-rna_seq_test_raw_dir="$volume_directory/raw/TEST/SALMON/"
+rna_seq_test_raw_dir="$volume_directory/raw/TEST/SALMON"
 read_1_name="ERR003000_1.fastq.gz"
 read_2_name="ERR003000_2.fastq.gz"
 rna_seq_test_data_1="$rna_seq_test_raw_dir/$read_1_name"
@@ -38,9 +41,17 @@ rna_seq_test_data_2="$rna_seq_test_raw_dir/$read_2_name"
 if [ ! -e "$rna_seq_test_data_data_1" ]; then
     mkdir -p $rna_seq_test_raw_dir
     wget -O $rna_seq_test_data_1 \
-         https://s3.amazonaws.com/data-refinery-test-assets/$read_1_name
+         "$test_data_repo/$read_1_name"
     wget -O $rna_seq_test_data_2 \
-         https://s3.amazonaws.com/data-refinery-test-assets/$read_2_name
+         "$test_data_repo/$read_2_name"
+fi
+
+# Make sure data for Transcriptome Index tests is downloaded.
+tx_index_test_raw_dir="$volume_directory/raw/TEST/TRANSCRIPTOME_INDEX"
+fasta_file="aegilops_tauschii_short.fa.gz"
+if [ ! -e "$tx_index_test_raw_dir/$fasta_file" ]; then
+    wget -O "$tx_index_test_raw_dir/$fasta_flile" \
+         "$test_data_repo/$fasta_flile"
 fi
 
 docker build -t dr_worker_tests -f workers/Dockerfile.tests .
