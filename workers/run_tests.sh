@@ -39,7 +39,7 @@ read_1_name="ERR003000_1.fastq.gz"
 read_2_name="ERR003000_2.fastq.gz"
 rna_seq_test_data_1="$rna_seq_test_raw_dir/$read_1_name"
 rna_seq_test_data_2="$rna_seq_test_raw_dir/$read_2_name"
-if [ ! -e "$rna_seq_test_data_data_1" ]; then
+if [ ! -e "$rna_seq_test_data_1" ]; then
     mkdir -p $rna_seq_test_raw_dir
     echo "Downloading ERR003000_1.fastq.gz for Salmon tests."
     wget -q -O $rna_seq_test_data_1 \
