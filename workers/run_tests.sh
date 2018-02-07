@@ -25,7 +25,7 @@ test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 # Make sure test Transcriptome Index is downloaded from S3 for salmon tests.
 index_dir="$volume_directory/processed/TEST/TRANSCRIPTOME_INDEX"
 index_tarball="Homo_sapiens_short.tar.gz"
-gz_index_path="$index_dir/index_tarball"
+gz_index_path="$index_dir/$index_tarball"
 if [ ! -e "$gz_index_path" ]; then
     mkdir -p $index_dir
     echo "Downloading Salmon index for Salmon tests."
