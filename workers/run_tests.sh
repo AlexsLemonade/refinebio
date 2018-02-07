@@ -59,7 +59,7 @@ if [ ! -e "$tx_index_test_raw_dir/$fasta_file" ]; then
 fi
 
 # Ensure permissions are set for everything within the test data directory.
-chmod -R a+rX $volume_directory
+chmod -R a+rwX $volume_directory
 
 docker build -t dr_worker_tests -f workers/Dockerfile.tests .
 
