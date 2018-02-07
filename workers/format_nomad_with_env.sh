@@ -46,8 +46,9 @@ while read line; do
     fi
 done < "environments/$env"
 
-source common.sh
-HOST_IP=$(get_ip_address)
+source ../common.sh
+export DB_HOST_IP=$(get_docker_db_ip_address)
+export NOMAD_HOST_IP=$(get_ip_address)
 
 # There is a current outstanding Nomad issue for the ability to
 # template environment variables into the job specifications. Until

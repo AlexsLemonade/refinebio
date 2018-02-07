@@ -34,5 +34,6 @@ docker run \
        --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
        --env-file workers/environments/dev \
        --volume $volume_directory:/home/user/data_store \
+       --link drdb:postgres \
        --detach \
        dr_worker

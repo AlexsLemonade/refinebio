@@ -11,6 +11,10 @@ from data_refinery_common.models import (
     ProcessorJob,
 )
 from data_refinery_workers.processors import salmon, utils
+from data_refinery_common.logging import get_and_configure_logger
+
+
+logger = get_and_configure_logger(__name__)
 
 
 def init_objects():
@@ -102,8 +106,8 @@ def _insert_salmon_index():
 
 class SalmonTestCase(TestCase):
     """Test all functionality for the SALMON processor.
-
     The successful functionality of all individual functions are
+
     tested in test_success since each function sets up the next one
     nicely. The failures of all individual functions are tested in
     separate test functions.
@@ -112,6 +116,7 @@ class SalmonTestCase(TestCase):
     @tag('slow')
     def test_success(self):
         """Tests the successful path of the module under test."""
+        logger.info("STARTING SALMON SUCCESS TEST!!!!!!!!")
         # Set up test environment.
         batch, first_file, second_file = init_objects()
         _insert_salmon_index()
@@ -175,6 +180,7 @@ class SalmonTestCase(TestCase):
         # Clean up both input and output files
         first_file.remove_temp_directory()
         shutil.rmtree(first_file.get_processed_dir())
+        logger.info("ENDING SALMON SUCCESS TEST!!!!!!!!")
 
     def test_prepare_files_failure(self):
         batch, _, _ = init_objects()
