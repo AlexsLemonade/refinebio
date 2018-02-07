@@ -19,11 +19,11 @@ source common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
 NOMAD_HOST_IP=$(get_docker_nomad_ip_address)
 HOST_IP=$(get_ip_address)
+NOMAD_LINK=$(get_nomad_link_option)
 
 docker run \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$NOMAD_HOST_IP \
        --env-file common/environments/test \
-       --link drdb:postgres \
-       --link nomad:nomad \
+       --link drdb:postgres $NOMAD_LINK \
        -i common_tests bash -c 'coverage run --source="." manage.py test --no-input "$@"; coverage report -m'

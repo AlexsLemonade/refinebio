@@ -28,4 +28,5 @@ docker run \
        --env-file workers/environments/dev \
        --entrypoint ./manage.py \
        --volume $volume_directory:/home/user/data_store \
+       --link drdb:postgres \
        dr_worker "$@"
