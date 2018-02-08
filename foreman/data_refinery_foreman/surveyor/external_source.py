@@ -72,6 +72,7 @@ class ExternalSourceSurveyor:
                   last_uploaded_date,
                   files: List[File],
                   key_values: Dict = {}):
+
         # Prevent creating duplicate Batches.
         for file in files:
             if File.objects.filter(name=file.name).count() != 0:

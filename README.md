@@ -92,7 +92,8 @@ sudo -E ./run_nomad.sh
 Nomad is an orchestration tool which the Data Refinery uses to run
 Downloader and Processor jobs. Jobs are queued by sending a message to
 the Nomad agent, which will then launch a Docker container which runs
-the job.
+the job. If address conflicts emerge, old Docker containers can be purged
+with `docker container prune -f`.
 
 
 #### Postgres

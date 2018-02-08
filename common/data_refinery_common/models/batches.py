@@ -30,7 +30,6 @@ class BatchStatuses(Enum):
     DOWNLOADED = "DOWNLOADED"
     PROCESSED = "PROCESSED"
 
-
 class Batch(TimeTrackedModel):
     """Represents a batch of data.
 

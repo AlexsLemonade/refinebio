@@ -14,6 +14,7 @@ cd $script_directory
 
 source common.sh
 HOST_IP=$(get_ip_address)
+export HOST_IP
 
 echo "Rebuilding Docker image while waiting for Nomad to come online."
 

@@ -5,8 +5,9 @@ from data_refinery_common.models import (
     Batch,
     File,
     SurveyJobKeyValue,
-    Organism
+    Organism,
 )
+from data_refinery_common.models.new_models import Experiment
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
@@ -18,7 +19,7 @@ logger = get_and_configure_logger(__name__)
 
 EXPERIMENTS_URL = "https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/"
 SAMPLES_URL = EXPERIMENTS_URL + "{}/samples"
-
+UNKNOWN="UNKNOWN"
 
 class ArrayExpressSurveyor(ExternalSourceSurveyor):
     def source_type(self):
@@ -41,7 +42,88 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         return utils.group_batches_by_first_file(self.batches)
 
     def get_experiment_metadata(self, experiment_accession_code: str) -> Dict:
-        experiment_request = requests.get(EXPERIMENTS_URL + experiment_accession_code)
+        """
+
+        Example:
+        {
+            'id': 511696,
+            'accession': 'E-MTAB-3050',
+            'name': 'Microarray analysis of in vitro differentiation of adult human pancreatic progenitor cells',
+            'releasedate': '2014-10-31',
+            'lastupdatedate': '2014-10-30',
+            'organism': ['Homo sapiens'],
+            'experimenttype': ['transcription profiling by array'],
+            'experimentdesign': ['cell type comparison design',
+                                 'development or differentiation design'],
+            'description': [{'id': None,
+                            'text': 'We have developed an in vitro culture system that allows us to expand progenitor cells from human islet preparations and differentiate them into insulin-producing cells. We noticed however, that cultures from individual islet preparations had very heterogeneous outcomes, from good differentiation to almost none. We therefore speculated that our progenitor cell cultures contained different kinds of cells and that the true endocrine progenitor cells are present in the successful cultures, but not in the unsuccessful ones. To address this issue and to begin to identify markers for the true endocrine progenitor cells we compared global gene expression between a very successful culture (final insulin-expression 10% of islets) and an unsuccessful one (final insulin-expression 0%). We also included RNA from freshly isolated islets for control purposes. The cultures from donor A yielded substantial differentiation, while the cultures from donor B showed no successful differentiation.'
+                            }],
+            'provider': [{'contact': 'Joel Habener', 'role': 'submitter',
+                         'email': 'jhabener@partners.org'}],
+            'samplecharacteristic': [{'category': 'age', 'value': ['38 year',
+                                     '54 year']},
+                                     {'category': 'developmental stage',
+                                     'value': ['adult']},
+                                     {'category': 'organism',
+                                     'value': ['Homo sapiens']},
+                                     {'category': 'organism part',
+                                     'value': ['islet']}, {'category': 'sex',
+                                     'value': ['female', 'male']}],
+            'experimentalvariable': [{'name': 'cell type',
+                                     'value': ['differentiated', 'expanded',
+                                     'freshly isolated']}, {'name': 'individual'
+                                     , 'value': ['A', 'B']},
+                                     {'name': 'test result', 'value': ['NA',
+                                     'successful', 'unsuccessful']}],
+            'arraydesign': [{
+                'id': 11048,
+                'accession': 'A-AFFY-1',
+                'name': 'Affymetrix GeneChip Human Genome U95Av2 [HG_U95Av2]',
+                'count': 5,
+                'legacy_id': 5728564,
+                }],
+            'protocol': [
+                {'id': 1092859, 'accession': 'P-MTAB-41859'},
+                {'id': 1092858, 'accession': 'P-MTAB-41860'},
+                {'id': 1092857, 'accession': 'P-MTAB-41861'},
+                {'id': 235758, 'accession': '  '},
+                {'id': 1092863, 'accession': 'P-MTAB-41854'},
+                {'id': 1092856, 'accession': 'P-MTAB-41862'},
+                {'id': 1092860, 'accession': 'P-MTAB-41856'},
+                {'id': 1092861, 'accession': 'P-MTAB-41855'},
+                {'id': 1092862, 'accession': 'P-MTAB-41858'},
+                {'id': 1092864, 'accession': 'P-MTAB-41857'},
+                ],
+            'bioassaydatagroup': [{
+                'id': None,
+                'name': 'rawData',
+                'bioassaydatacubes': 5,
+                'arraydesignprovider': None,
+                'dataformat': 'rawData',
+                'bioassays': 5,
+                'isderived': 0,
+                }, {
+                'id': None,
+                'name': 'processedData',
+                'bioassaydatacubes': 5,
+                'arraydesignprovider': None,
+                'dataformat': 'processedData',
+                'bioassays': 5,
+                'isderived': 0,
+                }, {
+                'id': None,
+                'name': 'image',
+                'bioassaydatacubes': 5,
+                'arraydesignprovider': None,
+                'dataformat': 'image',
+                'bioassays': 5,
+                'isderived': 0,
+                }],
+            }
+
+        """
+        request_url = EXPERIMENTS_URL + experiment_accession_code;
+        experiment_request = requests.get(request_url)
         parsed_json = experiment_request.json()["experiments"]["experiment"][0]
 
         experiment = {}
@@ -60,12 +142,14 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             logger.warn("Experiment %s has no arraydesign listed.",
                         experiment_accession_code,
                         survey_job=self.survey_job.id)
-            experiment["platform_accession_code"] = "UNKNOWN"
+            experiment["platform_accession_code"] = UNKNOWN
+            experiment["platform_accession_name"] = UNKNOWN
         elif len(parsed_json["arraydesign"]) > 1:
-            experiment["platform_accession_code"] = "UNKNOWN"
+            experiment["platform_accession_code"] = UNKNOWN
+            experiment["platform_accession_name"] = UNKNOWN
         else:
-            experiment["platform_accession_code"] = \
-                parsed_json["arraydesign"][0]["accession"]
+            experiment["platform_accession_code"] = parsed_json["arraydesign"][0]["accession"]
+            experiment["platform_accession_name"] = parsed_json["arraydesign"][0]["name"]
 
         experiment["release_date"] = parsed_json["releasedate"]
 
@@ -74,30 +158,45 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         else:
             experiment["last_update_date"] = parsed_json["releasedate"]
 
+        try:
+            experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
+        except Experiment.DoesNotExist:
+            experiment_object = Experiment()
+            experiment_object.source_url = request_url
+            experiment_object.name = parsed_json["name"]
+            experiment_object.description = parsed_json["description"][0]["text"]
+            experiment_object.platform_name = experiment["platform_accession_name"]
+            experiment_object.platform_accession_code = experiment["platform_accession_code"]
+            experiment_object.save()
+
         return experiment
 
-    def _generate_batches(self,
+    def _generate_samples(self,
                           samples: List[Dict],
-                          experiment: Dict,
-                          replicate_raw: bool = True) -> List[Batch]:
-        """Generates a Batch for each sample in samples.
+                          experiment: Experiment
+                          ) -> List[Sample]:
+        """Generates a Sample item for each sample in an AE experiment..
 
-        Uses the metadata contained in experiment (which should be
-        generated via get_experiment_metadata) to add additional
-        metadata to each Batch. If replicate_raw is True (the default)
-        then only raw files will be replicated. Otherwise all files
-        will be replicated.
+        There are three possible data situations for a sample:
+
+            - If the sample only has raw data available:
+                Download this raw data and process it
+            - If the sample has both raw and derived data:
+                Download the raw data and process it
+            - If the sample only has derived data:
+                Download the derived data and no-op it.
+
         """
         for sample in samples:
             if "file" not in sample:
                 continue
 
-            organism_name = "UNKNOWN"
+            organism_name = UNKNOWN
             for characteristic in sample["characteristic"]:
                 if characteristic["category"].upper() == "ORGANISM":
                     organism_name = characteristic["value"].upper()
 
-            if organism_name == "UNKNOWN":
+            if organism_name == UNKNOWN:
                 logger.error("Sample from experiment %s did not specify the organism name.",
                              experiment["experiment_accession_code"],
                              survey_job=self.survey_job.id)
@@ -139,6 +238,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                             processed_format=processed_format,
                             size_in_bytes=-1)  # Will have to be determined later
 
+                print ("Going to add batch..")
                 self.add_batch(platform_accession_code=experiment["platform_accession_code"],
                                experiment_accession_code=experiment["experiment_accession_code"],
                                organism_id=organism_id,
@@ -149,6 +249,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                                files=[file])
 
     def discover_batches(self):
+
         experiment_accession_code = (
             SurveyJobKeyValue
             .objects
@@ -164,9 +265,4 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         experiment = self.get_experiment_metadata(experiment_accession_code)
         r = requests.get(SAMPLES_URL.format(experiment_accession_code))
         samples = r.json()["experiment"]["sample"]
-        self._generate_batches(samples, experiment)
-
-        if len(samples) != 0 and len(self.batches) == 0:
-            # Found no samples with raw data, so replicate the
-            # processed data instead
-            self._generate_batches(samples, experiment, replicate_raw=False)
+        self._generate_samples(samples, experiment)

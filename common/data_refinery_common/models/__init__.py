@@ -11,3 +11,4 @@ from data_refinery_common.models.jobs import (
     ProcessorJob
 )
 from data_refinery_common.models.organism import Organism
+from data_refinery_common.models.new_models import Experiment
