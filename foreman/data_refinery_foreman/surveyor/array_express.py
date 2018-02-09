@@ -247,7 +247,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             # If not, take the derived.
             has_raw = False
             for sub_file in sample['file']:
-                if sub_file['type'] == "data":
+                # Some have the 'data' field, but not the actual data
+                # Ex: E-GEOD-9656
+                if sub_file['type'] == "data" and sub_file['comment']['value'] != None:
                     has_raw = True
 
             for sub_file in sample['file']:
@@ -272,8 +274,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     # the potential exception where download_url
                     # doesn't get defined.
                     for comment in comments:
-                        if comment["name"].find("FTP file") != -1:
+                        if "FTP file" in comment["name"]:
                             download_url = comment["value"]
+                            break
                 else:
                     download_url = comments["value"]
 
@@ -284,6 +287,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                             survey_job=self.survey_job.id)
                     continue
                 filename = sub_file['name']
+
+            if not download_url:
+                print(sub_file)
 
             # Create the sample object
             try:
@@ -308,13 +314,13 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             association.sample = sample
             association.save()
 
-            logger.info("Created Sample: " + sample)
+            logger.info("Created Sample: " + str(sample))
 
             created_samples.append(sample)
 
         return created_samples
 
-    def discover_batches(self):
+    def discover_experiments_and_samples(self) -> List[Sample]:
 
         experiment_accession_code = (
             SurveyJobKeyValue
@@ -334,7 +340,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             logger.info("Experiment with accession code: %s was not on a supported platform, skipping.",
                 experiment_accession_code,
                 survey_job=self.survey_job.id)
-            return
+            return []
 
         samples = self.create_samples_from_api(experiment)
         return samples
