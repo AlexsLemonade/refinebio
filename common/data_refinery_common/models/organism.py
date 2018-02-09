@@ -77,7 +77,7 @@ def get_taxonomy_id_scientific(organism_name: str) -> int:
     return int(id_list[0].text)
 
 
-class Organism(TimeTrackedModel):
+class Organism(models.Model):
     """Provides a lookup between organism name and taxonomy ids.
 
     Should only be used via the two class methods get_name_for_id and
@@ -126,6 +126,29 @@ class Organism(TimeTrackedModel):
             organism.save()
 
         return organism.taxonomy_id
+
+    @classmethod
+    def get_object_for_name(cls, name: str) -> id:
+        name = name.upper()
+        try:
+            organism = (cls.objects
+                        .filter(name=name)
+                        [0])
+        except IndexError:
+            is_scientific_name = False
+            try:
+                taxonomy_id = get_taxonomy_id_scientific(name)
+                is_scientific_name = True
+            except UnscientificNameError:
+                taxonomy_id = get_taxonomy_id(name)
+
+            organism = Organism(name=name,
+                                taxonomy_id=taxonomy_id,
+                                is_scientific_name=is_scientific_name)
+            organism.save()
+
+        return organism
+
 
     class Meta:
         db_table = "organisms"

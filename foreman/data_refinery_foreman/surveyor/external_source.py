@@ -109,7 +109,7 @@ class ExternalSourceSurveyor:
         self.batches.append(batch)
 
     @abc.abstractmethod
-    def discover_batches(self):
+    def discover_experiments_and_samples(self):
         """Abstract method to survey a source.
 
         Implementations of this method should do the following:
@@ -169,20 +169,19 @@ class ExternalSourceSurveyor:
 
     def survey(self) -> bool:
         try:
-            self.discover_batches()
+            samples = self.discover_experiments_and_samples()
         except Exception:
             logger.exception(("Exception caught while discovering batches. "
                               "Terminating survey job."),
                              survey_job=self.survey_job.id)
             return False
 
-        for group in self.group_batches():
-            try:
-                self.queue_downloader_jobs(group)
-            except Exception:
-                logger.exception(("Failed to queue downloader jobs. "
-                                  "Terminating survey job."),
-                                 survey_job=self.survey_job.id)
-                return False
+          try:
+              self.queue_downloader_jobs(samples)
+          except Exception:
+              logger.exception(("Failed to queue downloader jobs. "
+                                "Terminating survey job."),
+                               survey_job=self.survey_job.id)
+              return False
 
         return True

@@ -139,3 +139,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+
+##
+# Computed
+##
+
+from data_refinery_common.utils import get_supported_platforms, get_env_variable
+SUPPORTED_PLATFORMS = get_supported_platforms()
