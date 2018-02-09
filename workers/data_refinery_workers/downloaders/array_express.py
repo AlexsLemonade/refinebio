@@ -6,6 +6,7 @@ import zipfile
 from typing import List
 from contextlib import closing
 from data_refinery_common.models import File, DownloaderJob
+from data_refinery_common.models.new_models import Experiment, Sample, ExperimentSampleAssociation
 from data_refinery_workers.downloaders import utils
 from data_refinery_common.logging import get_and_configure_logger
 
@@ -30,6 +31,8 @@ def _verify_batch_grouping(files: List[File], job: DownloaderJob) -> None:
 
 
 def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> None:
+    """ Download a file from ArrayExpress via FTP. There is no Aspera endpoint
+    which I can find. """
     try:
         logger.debug("Downloading file from %s to %s.",
                      download_url,
@@ -107,38 +110,59 @@ def download_array_express(job_id: int) -> None:
     Storage.
     """
     job = utils.start_job(job_id)
-    batches = job.batches.all()
-    success = True
+    experiment = job.experiment
+    #success = True
+    
+
+    # if batches.count() > 0:
+    #     files = File.objects.filter(batch__in=batches)
+    #     target_directory = files[0].get_temp_dir(job_dir)
+    #     os.makedirs(target_directory, exist_ok=True)
+    #     target_file_path = files[0].get_temp_download_path(job_dir)
+    #     download_url = files[0].download_url
+    # else:
+    #     logger.error("No batches found.",
+    #                  downloader_job=job_id)
+    #     success = False
+
+    #if success:
+
     job_dir = utils.JOB_DIR_PREFIX + str(job_id)
 
-    if batches.count() > 0:
-        files = File.objects.filter(batch__in=batches)
-        target_directory = files[0].get_temp_dir(job_dir)
-        os.makedirs(target_directory, exist_ok=True)
-        target_file_path = files[0].get_temp_download_path(job_dir)
-        download_url = files[0].download_url
-    else:
-        logger.error("No batches found.",
-                     downloader_job=job_id)
-        success = False
+    # TODO: 
+    # Get NFS mount location
 
-    if success:
-        try:
-            _verify_batch_grouping(files, job)
+    # There is going to be a prettier way of doing this
+    relations = ExperimentSampleAssociation.objects.filter(experiment=experiment)
+    samples = Sample.objects.filter(id__in=relations.values('sample_id'))
+    urls = list(samples.values_list("source_archive_url", flat=True).distinct())
+
+    # First, get all the unique sample archive URLs.
+    # There may be more than one!
+    # Then, unpack all the ones downloaded.
+    # Then create processor jobs!
+
+    DOWNLOAD_ROOT = "/home/user/data_store/"
+    try:
+        for url in urls:
 
             # The files for all of the batches in the grouping are
             # contained within the same zip file. Therefore only
             # download the one.
-            _download_file(download_url, target_file_path, job)
-            _extract_file(files, job)
-        except Exception:
-            # Exceptions are already logged and handled.
-            # Just need to mark the job as failed.
-            success = False
+            _download_file(url, DOWNLOAD_ROOT + experiment.accession_code + ".zip", job)
+            print(url)
+            print("Downloaded!")
+
+            #_extract_file(files, job)
+            success=True
+    except Exception:
+        # Exceptions are already logged and handled.
+        # Just need to mark the job as failed.
+        success = False
 
     if success:
-        logger.debug("File %s downloaded and extracted successfully.",
-                     download_url,
+        logger.debug("File downloaded and extracted successfully.",
+                     url,
                      downloader_job=job_id)
 
-    utils.end_job(job, batches, success)
+    # utils.end_job(job, batches, success)

@@ -320,7 +320,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         return created_samples
 
-    def discover_experiments_and_samples(self) -> List[Sample]:
+    def discover_experiment_and_samples(self) -> (Experiment, List[Sample]):
 
         experiment_accession_code = (
             SurveyJobKeyValue
@@ -343,4 +343,4 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             return []
 
         samples = self.create_samples_from_api(experiment)
-        return samples
+        return experiment, samples

@@ -5,7 +5,7 @@ from datetime import datetime
 
 import pytz
 
-from data_refinery_common.models import Organism
+from data_refinery_common.models.organism import Organism
 
 """
 # Miscellaneous

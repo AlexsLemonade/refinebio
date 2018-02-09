@@ -11,6 +11,7 @@ from data_refinery_common.models import (
     DownloaderJob,
     SurveyJob
 )
+from data_refinery_common.models.new_models import Sample, Experiment
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -145,43 +146,43 @@ class ExternalSourceSurveyor:
         return
 
     @retry(stop_max_attempt_number=3)
-    def queue_downloader_jobs(self, batches: List[Batch]):
-        if len(batches) > 0:
-            downloader_task = self.downloader_task()
+    def queue_downloader_jobs(self, experiment: Experiment):
 
-            with transaction.atomic():
-                downloader_job = DownloaderJob.create_job_and_relationships(
-                    batches=batches, downloader_task=downloader_task.value)
+        with transaction.atomic():
+          downloader_job = DownloaderJob()
+          downloader_job.experiment = experiment
+          downloader_job.downloader_task = self.downloader_task()
+          downloader_job.save()
 
+        try:
             logger.info("Queuing downloader job.",
-                        survey_job=self.survey_job.id,
-                        downloader_job=downloader_job.id)
-            try:
-                send_job(downloader_task, downloader_job.id)
-            except:
-                # If the task doesn't get sent we don't want the
-                # downloader_job to be left floating
-                downloader_job.delete()
-                raise
-        else:
-            logger.info("Survey job found no new Batches.",
-                        survey_job=self.survey_job.id)
+                    survey_job=self.survey_job.id,
+                    downloader_job=downloader_job.id)
+            send_job(downloader_job.downloader_task, downloader_job.id)
+        except:
+            # If the task doesn't get sent we don't want the
+            # downloader_job to be left floating
+            logger.info("Failed to enqueue downloader job.",
+                    survey_job=self.survey_job.id,
+                    downloader_job=downloader_job.id)
+            downloader_job.delete()
+            raise
 
     def survey(self) -> bool:
         try:
-            samples = self.discover_experiments_and_samples()
+            experiment, samples = self.discover_experiment_and_samples()
         except Exception:
             logger.exception(("Exception caught while discovering batches. "
                               "Terminating survey job."),
                              survey_job=self.survey_job.id)
             return False
 
-          try:
-              self.queue_downloader_jobs(samples)
-          except Exception:
-              logger.exception(("Failed to queue downloader jobs. "
-                                "Terminating survey job."),
-                               survey_job=self.survey_job.id)
-              return False
+        try:
+            self.queue_downloader_jobs(experiment)
+        except Exception:
+            logger.exception(("Failed to queue downloader jobs. "
+                              "Terminating survey job."),
+                             survey_job=self.survey_job.id)
+            return False
 
         return True

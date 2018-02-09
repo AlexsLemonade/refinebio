@@ -3,6 +3,8 @@ from django.db import models
 from data_refinery_common.models.base_models import TimeTrackedModel
 from data_refinery_common.models.batches import Batch
 
+from data_refinery_common.models.new_models import Sample, Experiment
+
 
 class WorkerJob(TimeTrackedModel):
     """Base model with auto created_at and updated_at fields."""
@@ -71,7 +73,18 @@ class ProcessorJob(WorkerJob):
     pipeline_applied = models.CharField(max_length=256)
 
 
-class DownloaderJob(WorkerJob):
+# class DownloaderJob(WorkerJob):
+#     """Records information about running a Downloader."""
+
+#     class Meta:
+#         db_table = "downloader_jobs"
+
+#     # This field contains a string which corresponds to a valid
+#     # Downloader Task. Valid values are enumerated in:
+#     # data_refinery_common.job_lookup.Downloaders
+#     downloader_task = models.CharField(max_length=256)
+
+class DownloaderJob(models.Model):
     """Records information about running a Downloader."""
 
     class Meta:
@@ -81,3 +94,30 @@ class DownloaderJob(WorkerJob):
     # Downloader Task. Valid values are enumerated in:
     # data_refinery_common.job_lookup.Downloaders
     downloader_task = models.CharField(max_length=256)
+    experiment = models.ForeignKey(Experiment, max_length=256, on_delete=models.CASCADE)
+
+    # Tracking
+    start_time = models.DateTimeField(null=True)
+    end_time = models.DateTimeField(null=True)
+    success = models.NullBooleanField(null=True)
+
+    # This field represents how many times this job has been
+    # retried. It starts at 0 and each time the job has to be retried
+    # it will be incremented.
+    num_retries = models.IntegerField(default=0)
+
+    # This field indicates whether or not this job has been retried
+    # already or not.
+    retried = models.BooleanField(default=False)
+
+    # This point of this field is to identify which worker ran the
+    # job. A few fields may actually be required or something other
+    # than just an id.
+    worker_id = models.CharField(max_length=256, null=True)
+
+    # This field corresponds to the version number of the
+    # data_refinery_workers project that was used to run the job.
+    worker_version = models.CharField(max_length=128, null=True)
+
+    # This field allows jobs to specify why they failed.
+    failure_reason = models.CharField(max_length=256, null=True)
