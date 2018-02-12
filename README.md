@@ -201,6 +201,11 @@ Downloader Job which will download a sample from Array Express:
 ./workers/tester.sh queue_downloader
 ```
 
+For example:
+```bash
+./common/make_migrations.sh; cd common; python setup.py sdist; cd..; ./workers/tester.sh run_downloader_job --job-name=ARRAY_EXPRESS --job-id=1
+```
+
 
 #### Processors
 
@@ -212,7 +217,7 @@ needing to run a Downloader Job, the following command will do so:
 ./workers/tester.sh queue_processor <PROCESSOR_TYPE>
 ```
 
-Examples:
+An individual processor job can be run with:
 ```bash
 ./workers/tester.sh queue_processor SRA
 ./workers/tester.sh queue_processor TRANSCRIPTOME_INDEX

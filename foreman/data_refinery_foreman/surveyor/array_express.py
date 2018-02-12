@@ -7,7 +7,7 @@ from data_refinery_common.models import (
     SurveyJobKeyValue,
     Organism,
 )
-from data_refinery_common.models.new_models import Experiment, Sample, ExperimentSampleAssociation
+from data_refinery_common.models.new_models import Experiment, ExperimentAnnotation, Sample, SampleAnnotation, ExperimentSampleAssociation
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
@@ -180,6 +180,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment_object = Experiment()
             experiment_object.accession_code = experiment_accession_code
             experiment_object.source_url = request_url
+            experiment_object.source_database = "ARRAY_EXPRESS"
             experiment_object.name = parsed_json["name"]
             experiment_object.description = parsed_json["description"][0]["text"]
             experiment_object.platform_name = experiment["platform_accession_name"]
@@ -187,6 +188,23 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment_object.save()
 
             # TODO: Is there other K/V pair data we should create here?
+            if 'protocol' in parsed_json:
+                for pid in parsed_json['protocol']:
+                    protocol_kv = ExperimentAnnotation()
+                    protocol_kv.experiment = experiment_object
+                    protocol_kv.key = "protocol_accession_code"
+                    protocol_kv.value = pid['accession']
+                    protocol_kv.save()
+
+            if 'provider' in parsed_json:
+                for provider in parsed_json['provider']:
+                    if provider['role'] is "submitter":
+                        provider_kv = ExperimentAnnotation()
+                        provider_kv.experiment = experiment_object
+                        provider_kv.key = "submitter_name"
+                        provider_kv.value = provider['contact']
+                        provider_kv.save()
+
 
         return experiment_object
 
@@ -226,7 +244,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             if "file" not in sample:
                 continue
 
-            sample_accession_code = sample["assay"]["name"]
+            import pprint
+            pprint.pprint(sample)
+
+            sample_accession_code = sample["source"]["name"]
 
             # Figure out the Organism for this sample
             organism_name = UNKNOWN
@@ -293,30 +314,47 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
             # Create the sample object
             try:
-                sample = Sample.objects.get(accession_code=sample_accession_code)
+                sample_object = Sample.objects.get(accession_code=sample_accession_code)
                 logger.error("Sample %s from experiment %s already exists, skipping object creation.",
                          sample_accession_code,
                          experiment.accession_code,
                          survey_job=self.survey_job.id)
                 continue
             except Sample.DoesNotExist:
-                sample = Sample()
-                sample.accession_code = sample_accession_code
-                sample.source_archive_url = download_url
-                sample.source_filename = filename
-                sample.is_downloaded = False
-                sample.has_raw = has_raw
-                sample.organism = organism
-                sample.save()
+                sample_object = Sample()
+                sample_object.accession_code = sample_accession_code
+                sample_object.source_archive_url = download_url
+                sample_object.source_filename = filename
+                sample_object.is_downloaded = False
+                sample_object.has_raw = has_raw
+                sample_object.organism = organism
+                sample_object.save()
+
+                for characteristic in sample['characteristic']:
+                    if characteristic['category'] is 'organism':
+                        continue
+
+                    # TODO: What to do if a units field is present?
+                    sample_kv = SampleAnnotation()
+                    sample_kv.sample = sample_object
+                    sample_kv.key = characteristic['category']
+                    sample_kv.value = characteristic['value']
+                    sample_kv.save()
+
+                sample_kv = SampleAnnotation()
+                sample_kv.sample = sample_object
+                sample_kv.key = sample['source']['comment']['name']
+                sample_kv.value = sample['source']['comment']['value']
+                sample_kv.save()
 
             association = ExperimentSampleAssociation()
             association.experiment = experiment
-            association.sample = sample
+            association.sample = sample_object
             association.save()
 
-            logger.info("Created Sample: " + str(sample))
+            logger.info("Created Sample: " + str(sample_object))
 
-            created_samples.append(sample)
+            created_samples.append(sample_object)
 
         return created_samples
 
@@ -340,7 +378,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             logger.info("Experiment with accession code: %s was not on a supported platform, skipping.",
                 experiment_accession_code,
                 survey_job=self.survey_job.id)
-            return []
+            return None, []
 
         samples = self.create_samples_from_api(experiment)
         return experiment, samples

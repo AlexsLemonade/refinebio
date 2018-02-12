@@ -177,6 +177,10 @@ class ExternalSourceSurveyor:
                              survey_job=self.survey_job.id)
             return False
 
+        if not experiment:
+          logger.info("No experiment found.")
+          return False
+
         try:
             self.queue_downloader_jobs(experiment)
         except Exception:

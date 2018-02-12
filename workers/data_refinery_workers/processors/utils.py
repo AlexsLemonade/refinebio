@@ -1,6 +1,7 @@
 from typing import List, Dict, Callable
 from django.utils import timezone
-from data_refinery_common.models import BatchStatuses, ProcessorJob, File
+from data_refinery_common.models import BatchStatuses, ProcessorJob, File, ProcessorJobSampleAssociation
+from data_refinery_common.models.new_models import Sample
 from data_refinery_common.utils import get_worker_id
 from data_refinery_workers._version import __version__
 from data_refinery_common.logging import get_and_configure_logger
@@ -22,13 +23,17 @@ def start_job(job_context: Dict):
     job.save()
 
     logger.info("Starting processor Job.", processor_job=job.id)
-    batches = list(job.batches.all())
+    # batches = list(job.batches.all())
 
-    if len(batches) == 0:
-        logger.error("No batches found.", processor_job=job.id)
-        return {"success": False}
+    relations = ProcessorJobSampleAssociation.objects.filter(processor_job=job)
+    samples = Sample.objects.filter(id__in=relations.values('sample_id'))
 
-    job_context["batches"] = batches
+    if len(samples) == 0:
+        logger.error("No samples found.", processor_job=job.id)
+        job_context["success"] = False
+        return job_context
+
+    job_context["samples"] = samples
     return job_context
 
 
@@ -38,6 +43,8 @@ def end_job(job_context: Dict):
     Record in the database that this job has completed and that
     the batch has been processed if successful.
     """
+    print(job_context)
+
     job = job_context["job"]
 
     if "success" in job_context:
@@ -49,19 +56,19 @@ def end_job(job_context: Dict):
     job.end_time = timezone.now()
     job.save()
 
-    batches = job_context["batches"] if "batches" in job_context else None
+    # batches = job_context["batches"] if "batches" in job_context else None
 
-    # Clean up temp directory.
-    if batches is not None and len(batches) > 0 and len(batches[0].files) > 0:
-        job_dir_prefix = job_context["job_dir_prefix"] if "job_dir_prefix" in job_context else None
-        batches[0].files[0].remove_temp_directory(job_dir_prefix)
+    # # Clean up temp directory.
+    # if batches is not None and len(batches) > 0 and len(batches[0].files) > 0:
+    #     job_dir_prefix = job_context["job_dir_prefix"] if "job_dir_prefix" in job_context else None
+    #     batches[0].files[0].remove_temp_directory(job_dir_prefix)
 
-    if job.success and batches is not None:
-        for batch in batches:
-            batch.status = BatchStatuses.PROCESSED.value
-            batch.save()
+    # if job.success and batches is not None:
+    #     for batch in batches:
+    #         batch.status = BatchStatuses.PROCESSED.value
+    #         batch.save()
 
-        logger.info("Processor job completed successfully.", processor_job=job.id)
+    logger.info("Processor job completed successfully.", processor_job=job.id)
 
     # Every processor returns a dict, however end_job is always called
     # last so it doesn't need to contain anything.

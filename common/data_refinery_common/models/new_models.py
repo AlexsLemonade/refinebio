@@ -141,6 +141,7 @@ class Experiment(models.Model):
     accession_code = models.CharField(max_length=64, unique=True)
 
     # Historical Properties
+    source_database = models.CharField(max_length=32) # "ArrayExpress, "SRA"
     source_url = models.CharField(max_length=256)
 
     # Properties
@@ -148,6 +149,23 @@ class Experiment(models.Model):
     description = models.TextField()
     platform_accession_code = models.CharField(max_length=256)
     platform_name = models.CharField(max_length=256)
+
+    # Common Properties
+    is_public = models.BooleanField(default=False)
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now)
+
+class ExperimentAnnotation(models.Model):
+
+    class Meta:
+        db_table = "experiment_annotations"
+
+    # Relations
+    experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
+
+    # Properties
+    key = models.CharField(max_length=255)
+    value = models.CharField(max_length=255)
 
     # Common Properties
     is_public = models.BooleanField(default=False)

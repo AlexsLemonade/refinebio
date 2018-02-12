@@ -72,6 +72,21 @@ class ProcessorJob(WorkerJob):
     # processor pipeline was applied during the processor job.
     pipeline_applied = models.CharField(max_length=256)
 
+    # Tracking
+    start_time = models.DateTimeField(null=True)
+    end_time = models.DateTimeField(null=True)
+    success = models.NullBooleanField(null=True)
+
+class ProcessorJobSampleAssociation(models.Model):
+
+    class Meta:
+        db_table = "processorjob_sample_associations"
+
+    def __str__ (self):
+        return "ProcessorJobSampleAssociation: " + self.pk
+
+    processor_job = models.ForeignKey(ProcessorJob, blank=False, null=False, on_delete=models.CASCADE)
+    sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
 
 # class DownloaderJob(WorkerJob):
 #     """Records information about running a Downloader."""

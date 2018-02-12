@@ -8,7 +8,8 @@ from data_refinery_common.models.batches import (
 from data_refinery_common.models.jobs import (
     WorkerJob,
     DownloaderJob,
-    ProcessorJob
+    ProcessorJob,
+    ProcessorJobSampleAssociation
 )
 from data_refinery_common.models.organism import Organism
 from data_refinery_common.models.new_models import Experiment
