@@ -21,16 +21,17 @@ cd $script_directory
 volume_directory="$script_directory/foreman/volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir $volume_directory
-    chmod 775 $volume_directory
+    chmod -R a+rwX $volume_directory
 fi
 
 docker build -t dr_shell -f foreman/Dockerfile .
 
 source common.sh
 HOST_IP=$(get_ip_address)
+DB_HOST_IP=$(get_docker_db_ip_address)
 
 docker run \
-       --add-host=database:$HOST_IP \
+       --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
        --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
        --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \

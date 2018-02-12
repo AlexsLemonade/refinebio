@@ -1,14 +1,6 @@
-To initialize the database for the Data Refinery project run:
+# Data Refinery Common
 
-```
-sudo -u postgres install.sh
-```
-
-To create tables within that database run:
-
-```
-./make_migrations.sh
-```
+This sub-project contains code common to other sub-projects.
 
 ## Developing
 

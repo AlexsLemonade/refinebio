@@ -17,21 +17,23 @@ cd ..
 volume_directory="$script_directory/volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir $volume_directory
-    chmod 775 $volume_directory
+    chmod -R a+rwX $volume_directory
 fi
 
 docker build -t dr_worker -f workers/Dockerfile .
 
 source common.sh
 HOST_IP=$(get_ip_address)
+DB_HOST_IP=$(get_docker_db_ip_address)
 
 docker run \
        --name worker1 \
-       --add-host=database:$HOST_IP \
+       --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
        --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
        --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
        --env-file workers/environments/dev \
        --volume $volume_directory:/home/user/data_store \
+       --link drdb:postgres \
        --detach \
        dr_worker

@@ -17,17 +17,21 @@ cd ..
 volume_directory="$script_directory/volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir $volume_directory
-    chmod 775 $volume_directory
+    chmod -R a+rwX $volume_directory
 fi
 
 docker build -t dr_foreman -f foreman/Dockerfile .
 
 source common.sh
 HOST_IP=$(get_ip_address)
+DB_HOST_IP=$(get_docker_db_ip_address)
+NOMAD_HOST_IP=$(get_docker_nomad_ip_address)
+NOMAD_LINK=$(get_nomad_link_option)
 
 docker run \
-       --add-host=database:$HOST_IP \
-       --add-host=nomad:$HOST_IP \
+       --add-host=database:$DB_HOST_IP \
+       --add-host=nomad:$NOMAD_HOST_IP \
        --env-file foreman/environments/dev \
        --volume $volume_directory:/home/user/data_store \
-       dr_foreman survey_array_express "$@"
+       --link drdb:postgres $NOMAD_LINK \
+       dr_foreman "$@"
