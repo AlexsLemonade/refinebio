@@ -17,7 +17,7 @@ cd ..
 volume_directory="$script_directory/volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir $volume_directory
-    chmod 775 $volume_directory
+    chmod -R a+rwX $volume_directory
 fi
 
 docker build -t dr_worker -f workers/Dockerfile .
