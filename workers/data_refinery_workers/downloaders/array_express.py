@@ -9,9 +9,11 @@ from data_refinery_common.models import File, DownloaderJob
 from data_refinery_common.models.new_models import Experiment, Sample, ExperimentAnnotation, ExperimentSampleAssociation
 from data_refinery_workers.downloaders import utils
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.utils import get_env_variable
 
 
 logger = get_and_configure_logger(__name__)
+LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 
 
 # chunk_size is in bytes
@@ -121,11 +123,14 @@ def _extract_files(file_path: str, experiment: Experiment) -> List[str]:
         # This is technically an unsafe operation.
         # However, we're trusting AE as a data source.
         zip_ref = zipfile.ZipFile(file_path, "r")
+
         # TODO: Make this an absolute path
-        zip_ref.extractall(experiment.accession_code)
+        abs_with_code_raw = LOCAL_ROOT_DIR + '/' + experiment.accession_code + '/raw/'
+        zip_ref.extractall(abs_with_code_raw)
         zip_ref.close()
 
-        files = [f for f in os.listdir(experiment.accession_code)]
+        # os.abspath doesn't do what I thought it does, hency this monstrocity.
+        files = [{'absolute_path': abs_with_code_raw + f, 'filename': f} for f in os.listdir(abs_with_code_raw)]
 
         # for file in files:
         #     batch_directory = file.get_temp_dir(job_dir)
@@ -170,7 +175,6 @@ def download_array_express(job_id: int) -> None:
     experiment = job.experiment
     #success = True
     
-
     # if batches.count() > 0:
     #     files = File.objects.filter(batch__in=batches)
     #     target_directory = files[0].get_temp_dir(job_dir)
@@ -181,14 +185,7 @@ def download_array_express(job_id: int) -> None:
     #     logger.error("No batches found.",
     #                  downloader_job=job_id)
     #     success = False
-
     #if success:
-
-    job_dir = utils.JOB_DIR_PREFIX + str(job_id)
-
-    # TODO: 
-    # Get NFS mount location
-    DOWNLOAD_ROOT = "/home/user/data_store/"
 
     # There is going to be a prettier way of doing this
     relations = ExperimentSampleAssociation.objects.filter(experiment=experiment)
@@ -210,21 +207,21 @@ def download_array_express(job_id: int) -> None:
             # The files for all of the samples are
             # contained within the same zip file. Therefore only
             # download the one.
-            dl_file_path = DOWNLOAD_ROOT + experiment.accession_code + ".zip"
+            os.makedirs(LOCAL_ROOT_DIR + '/' + experiment.accession_code, exist_ok=True)
+            dl_file_path = LOCAL_ROOT_DIR + '/' + experiment.accession_code + '/' + experiment.accession_code + ".zip"
             _download_file(url, dl_file_path, job)
-            print(url)
-            print("Downloaded!")
 
             extracted_files = _extract_files(dl_file_path, experiment)
             all_unpacked_files = all_unpacked_files + extracted_files
 
             for og_file in all_unpacked_files:
-                sample = samples.get(source_filename=og_file)
+                # TODO: We _should_ be able to use GET here - anything more than 1 sample per
+                # filename is a problem. However, I need to know more about the naming convention.
+                sample = samples.filter(source_filename=og_file['filename']).order_by('created_at')[0]
                 sample.is_downloaded=True
+                sample.source_absolute_file_path = og_file['absolute_path']
                 sample.save()
 
-                print("Marked as downloaded!")
-        
         success=True
     except Exception as e:
         print(e)
@@ -236,8 +233,6 @@ def download_array_express(job_id: int) -> None:
         logger.debug("File downloaded and extracted successfully.",
                      url,
                      downloader_job=job_id)
-
-    print("Extracted: " + str(all_unpacked_files))
 
     utils.end_downloader_job(job, success)
 

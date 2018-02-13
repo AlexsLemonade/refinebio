@@ -237,6 +237,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         r = requests.get(SAMPLES_URL.format(experiment.accession_code))
         samples = r.json()["experiment"]["sample"]
 
+        import pprint
+        pprint.pprint(samples)
+
         # An experiment can have many samples
         for sample in samples:
 
@@ -244,10 +247,11 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             if "file" not in sample:
                 continue
 
-            import pprint
-            pprint.pprint(sample)
-
-            sample_accession_code = sample["source"]["name"]
+            # XXX: Somebody needs to explain this to me.
+            try:
+                sample_accession_code = sample["assay"]["name"]
+            except KeyError:
+                sample_accession_code = sample["source"]["name"]
 
             # Figure out the Organism for this sample
             organism_name = UNKNOWN
@@ -341,11 +345,19 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     sample_kv.value = characteristic['value']
                     sample_kv.save()
 
-                sample_kv = SampleAnnotation()
-                sample_kv.sample = sample_object
-                sample_kv.key = sample['source']['comment']['name']
-                sample_kv.value = sample['source']['comment']['value']
-                sample_kv.save()
+                if 'comment' in sample['source']:
+                    if 'name' in sample['source']['comment']:
+                        sample_kv = SampleAnnotation()
+                        sample_kv.sample = sample_object
+                        sample_kv.key = sample['source']['comment']['name']
+                        sample_kv.value = sample['source']['comment']['value']
+                        sample_kv.save()
+                if 'name' in sample['source']:
+                    sample_kv = SampleAnnotation()
+                    sample_kv.sample = sample_object
+                    sample_kv.key = 'name'
+                    sample_kv.value = sample['source']['name']
+                    sample_kv.save()
 
             association = ExperimentSampleAssociation()
             association.experiment = experiment

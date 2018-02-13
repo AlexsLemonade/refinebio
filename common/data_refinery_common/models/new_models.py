@@ -1,9 +1,12 @@
+import hashlib
+import os
+import pytz
+
+from datetime import datetime
 from django.db import transaction
 from django.db import models
 from django.utils import timezone
-from datetime import datetime
-
-import pytz
+from functools import partial
 
 from data_refinery_common.models.organism import Organism
 
@@ -96,11 +99,11 @@ class Sample(models.Model):
 
     # Historical Properties
     source_archive_url = models.CharField(max_length=255)
-    source_filename = models.CharField(max_length=255)
+    source_filename = models.CharField(max_length=255, blank=False)
+    source_absolute_file_path = models.CharField(max_length=255)
 
     # Scientific Properties
     has_raw = models.BooleanField(default=True) # Did this sample have a raw data source?
-    has_derived = models.BooleanField(default=False) # Did this sample have a pre-derived data source?
 
     # Crunch Properties
     is_downloaded = models.BooleanField(default=False)
@@ -177,6 +180,18 @@ class ComputationalResult(models.Model):
     class Meta:
         db_table = "computational_results"
 
+    def __str__ (self):
+        return "ComputationalResult: " + str(self.pk)
+
+    command_executed = models.CharField(max_length=255, blank=True)
+    system_version = models.CharField(max_length=255) 
+    is_ccdl = models.BooleanField(default=True)
+
+    # Common Properties
+    is_public = models.BooleanField(default=False)
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now) 
+
 class CompultationalResultAnnotation(models.Model):
 
     class Meta:
@@ -218,6 +233,60 @@ These are the database representations of files
 which live on local disk, on ephemeral storage,
 or on AWS cloud services.
 """
+
+class ComputedFile(models.Model):
+
+    class Meta:
+        db_table = "computed_files"
+
+    def __str__ (self):
+        return "ComputedFile: " + str(self.pk)
+
+    file_name = models.CharField(max_length=255)
+    absolute_file_path = models.CharField(max_length=255, blank=True, null=True)
+    size_in_bytes = models.IntegerField()
+    sha1 = models.CharField(max_length=64)
+
+    result = models.ForeignKey(ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+    s3_bucket = models.CharField(max_length=64)
+    s3_key = models.CharField(max_length=64)
+
+    # Common Properties
+    is_public = models.BooleanField(default=False)
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now) 
+
+    def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
+        """ Syncs a file to AWS S3. 
+
+        XXX: TODO!
+        """
+        self.s3_bucket = s3_bucket
+        self.s3_key = s3_key
+        return True
+
+    def calculate_sha1(self, absolute_file_path:str=None) -> None:
+        """ Calculate the SHA1 value of a given file.
+        """
+        if not absolute_file_path:
+            absolute_file_path = self.absolute_file_path
+
+        hash_object = hashlib.sha1() 
+        with open(absolute_file_path, mode='rb') as open_file:
+            for buf in iter(partial(open_file.read, 128), b''):
+                hash_object.update(buf)
+        
+        self.sha1 = hash_object.hexdigest()
+        return self.sha1
+
+    def calculate_size(self, absolute_file_path:str=None) -> None:
+        """ Calculate the number of bites in a given file.
+        """
+        if not absolute_file_path:
+            absolute_file_path = self.absolute_file_path
+
+        self.size_in_bytes = os.path.getsize(absolute_file_path)
+        return self.size_in_bytes
 
 """
 # Jobs

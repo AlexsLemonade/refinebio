@@ -23,7 +23,6 @@ def start_job(job_context: Dict):
     job.save()
 
     logger.info("Starting processor Job.", processor_job=job.id)
-    # batches = list(job.batches.all())
 
     relations = ProcessorJobSampleAssociation.objects.filter(processor_job=job)
     samples = Sample.objects.filter(id__in=relations.values('sample_id'))
@@ -43,8 +42,6 @@ def end_job(job_context: Dict):
     Record in the database that this job has completed and that
     the batch has been processed if successful.
     """
-    print(job_context)
-
     job = job_context["job"]
 
     if "success" in job_context:

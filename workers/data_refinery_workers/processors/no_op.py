@@ -2,10 +2,15 @@ from typing import Dict
 import os
 import shutil
 import boto3
-from data_refinery_common.models import batches
-from data_refinery_workers.processors import utils
-from data_refinery_common.logging import get_and_configure_logger
 
+from data_refinery_workers._version import __version__
+from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.models import batches
+from data_refinery_common.models.new_models import ComputationalResult, ComputedFile
+from data_refinery_workers.processors import utils
+from data_refinery_common.utils import get_env_variable
+
+S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
 logger = get_and_configure_logger(__name__)
 
@@ -19,41 +24,38 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
     """
 
     sample = job_context["samples"][0]
-    # raw_path = file.get_raw_path()
 
-    # try:
-    #     if batches.USE_S3:
-    #         client = boto3.client("s3")
-    #         client.copy_object(Bucket=batches.S3_BUCKET_NAME,
-    #                            Key=file.get_processed_path(),
-    #                            CopySource={"Bucket": batches.S3_BUCKET_NAME,
-    #                                        "Key": raw_path})
-    #     else:
-    #         os.makedirs(file.get_processed_dir(), exist_ok=True)
-    #         shutil.copyfile(file.get_raw_path(),
-    #                         file.get_processed_path())
-    # except Exception:
-    #     logger.exception("Exception caught while moving file %s",
-    #                      raw_path,
-    #                      processor_job=job_context["job_id"],
-    #                      batch=file.batch.id)
+    # This is a NO-OP, but we make a ComputationalResult regardless.
+    result = ComputationalResult()
+    result.command_executed = "" # No op!
+    result.is_ccdl = True
+    result.system_version = __version__
+    result.save()
 
-    #     failure_reason = "Exception caught while moving file {}".format(file.name)
-    #     job_context["job"].failure_reason = failure_reason
-    #     job_context["success"] = False
-    #     return job_context
+    # Create a ComputedFile for the sample,
+    # sync it S3 and save it.
+    try:
+        computed_file = ComputedFile()
+        computed_file.absolute_file_path = sample.source_absolute_file_path
+        computed_file.filename = sample.source_filename
+        computed_file.calculate_sha1()
+        computed_file.calculate_size()
+        computed_file.result = result
+        computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
+        # TODO here: delete local file after S3 sync
+        computed_file.save()
+    except Exception:
+        logger.exception("Exception caught while moving file %s",
+                         raw_path,
+                         processor_job=job_context["job_id"],
+                         batch=file.batch.id)
 
-    # try:
-    #     file.remove_raw_files()
-    # except:
-    #     # If we fail to remove the raw files, the job is still done
-    #     # enough to call a success. However logging will be important
-    #     # so the problem can be identified and the raw files cleaned up.
-    #     logger.exception("Exception caught while removing raw file %s",
-    #                      raw_path,
-    #                      batch=file.batch.id,
-    #                      processor_job=job_context["job_id"])
+        failure_reason = "Exception caught while moving file {}".format(file.name)
+        job_context["job"].failure_reason = failure_reason
+        job_context["success"] = False
+        return job_context        
 
+    logger.info("Created %s", result)
     job_context["success"] = True
     return job_context
 

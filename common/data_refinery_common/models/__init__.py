@@ -12,4 +12,5 @@ from data_refinery_common.models.jobs import (
     ProcessorJobSampleAssociation
 )
 from data_refinery_common.models.organism import Organism
-from data_refinery_common.models.new_models import Experiment
+
+from data_refinery_common.models.new_models import Experiment, ComputationalResult, ComputedFile

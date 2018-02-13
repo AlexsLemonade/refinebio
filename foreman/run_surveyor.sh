@@ -28,7 +28,7 @@ DB_HOST_IP=$(get_docker_db_ip_address)
 NOMAD_HOST_IP=$(get_docker_nomad_ip_address)
 NOMAD_LINK=$(get_nomad_link_option)
 
-docker run \
+docker run -i \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$NOMAD_HOST_IP \
        --env-file foreman/environments/dev \

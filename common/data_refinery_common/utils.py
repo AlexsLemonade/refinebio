@@ -11,10 +11,12 @@ METADATA_URL = "http://169.254.169.254/latest/meta-data"
 INSTANCE_ID = None
 
 
-def get_env_variable(var_name: str) -> str:
+def get_env_variable(var_name: str, default:str=None) -> str:
     try:
         return os.environ[var_name]
     except KeyError:
+        if default:
+            return default
         error_msg = "Set the %s environment variable" % var_name
         raise ImproperlyConfigured(error_msg)
 
