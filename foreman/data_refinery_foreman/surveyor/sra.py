@@ -5,8 +5,10 @@ from data_refinery_common.models import (
     Batch,
     BatchKeyValue,
     File,
-    SurveyJob
+    SurveyJob,
+    Organism,
 )
+from data_refinery_common.models.new_models import OriginalFile, Experiment, ExperimentAnnotation, Sample, SampleAnnotation, ExperimentSampleAssociation
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -15,6 +17,7 @@ from data_refinery_common.logging import get_and_configure_logger
 logger = get_and_configure_logger(__name__)
 
 
+ENA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/data/view/{}"
 ENA_METADATA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/data/view/{}&display=xml"
 ENA_DOWNLOAD_URL_TEMPLATE = ("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/{short_accession}{sub_dir}"
                              "/{long_accession}/{long_accession}{read_suffix}.fastq.gz")
@@ -264,25 +267,123 @@ class SraSurveyor(ExternalSourceSurveyor):
                     processed_format="tar.gz",
                     size_in_bytes=-1)  # Will have to be determined later
 
-    def _generate_batch(self, run_accession: str) -> None:
+    @staticmethod
+    def _build_file_url(run_accession: str, read_suffix="")-> File:
+        # ENA has a weird way of nesting data: if the run accession is
+        # greater than 9 characters long then there is an extra
+        # sub-directory in the path which is "00" + the last digit of
+        # the run accession.
+        sub_dir = ""
+        if len(run_accession) > 9:
+            sub_dir = ENA_SUB_DIR_PREFIX + run_accession[-1]
+
+        return ENA_DOWNLOAD_URL_TEMPLATE.format(
+                        short_accession=run_accession[:6],
+                        sub_dir=sub_dir,
+                        long_accession=run_accession,
+                        read_suffix=read_suffix)
+
+    def _generate_experiment_and_samples(self, run_accession: str) -> None:
         """Generates a Batch for the provided run_accession."""
         metadata = SraSurveyor.gather_all_metadata(run_accession)
 
         if metadata["library_layout"] == "PAIRED":
-            files = [SraSurveyor._build_file(run_accession, "_1"),
-                     SraSurveyor._build_file(run_accession, "_2")]
+            files_urls = [SraSurveyor._build_file_url(run_accession, "_1"),
+                     SraSurveyor._build_file_url(run_accession, "_2")]
         else:
-            files = [SraSurveyor._build_file(run_accession)]
+            files_urls = [SraSurveyor._build_file_url(run_accession)]
 
-        self.add_batch(platform_accession_code=metadata.pop("platform_instrument_model"),
-                       experiment_accession_code=metadata.pop("experiment_accession"),
-                       organism_id=int(metadata.pop("organism_id")),
-                       organism_name=metadata.pop("organism_name"),
-                       experiment_title=metadata.pop("experiment_title"),
-                       release_date=metadata.pop("run_ena_first_public"),
-                       last_uploaded_date=metadata.pop("run_ena_last_update"),
-                       files=files,
-                       key_values=metadata)
+        ##
+        # Experiment
+        ##
+        experiment_accession_code = metadata.pop('experiment_accession')
+        try:
+            experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
+            logger.error("Experiment %s already exists, skipping object creation.",
+                experiment_accession_code,
+                survey_job=self.survey_job.id)
+        except Experiment.DoesNotExist:
+            experiment_object = Experiment()
+            experiment_object.accession_code = experiment_accession_code
+            experiment_object.source_url = ENA_URL_TEMPLATE.format(experiment_accession_code)
+            experiment_object.source_database = "SRA"
+            experiment_object.name = metadata.pop("experiment_title")
+            experiment_object.description = metadata.pop("experiment_design_description")
+            experiment_object.platform_name = metadata.pop("platform_instrument_model")
+            # We don't get this value from the API, unfortunately.
+            # experiment_object.platform_accession_code = experiment["platform_accession_code"]
+            experiment_object.save()
+
+        ##
+        # Experiment K/V
+        ##
+        for key in [    
+                    'study_abstract', 
+                    'study_accession', 
+                    'study_type', 
+                    'submission_accession',
+                    'submission_comment',
+                    'submission_title',
+                    'lab_name'
+                ]:
+            kv = ExperimentAnnotation()
+            kv.experiment = experiment_object
+            kv.key = key 
+            kv.value = metadata.pop(key)
+            kv.save()
+
+        ##
+        # Samples
+        ##
+
+        # Figure out the Organism for this sample
+        organism_name = metadata.pop("organism_name").upper()
+        organism = Organism.get_object_for_name(organism_name)
+
+        sample_accession_code = metadata.pop('sample_accession')
+        # Create the sample object
+        try:
+            sample_object = Sample.objects.get(accession_code=sample_accession_code)
+            logger.error("Sample %s from experiment %s already exists, skipping object creation.",
+                     sample_accession_code,
+                     experiment_object.accession_code,
+                     survey_job=self.survey_job.id)
+        except Sample.DoesNotExist:
+            sample_object = Sample()
+            sample_object.accession_code = sample_accession_code
+            sample_object.organism = organism
+            sample_object.save()
+
+            original_files = []
+            for file_url in files_urls:
+                original_file = OriginalFile()
+                original_file.sample = sample_object
+                original_file.source_archive_url = file_url
+                original_file.source_filename = file_url.split('/')[-1]
+                original_file.is_downloaded = False
+                original_file.has_raw = True # I think this is always true?
+                original_file.save()
+
+            esa = ExperimentSampleAssociation()
+            esa.experiment = experiment_object
+            esa.sample = sample_object
+            esa.save()
+
+        ##
+        # Samples K/V
+        ##
+
+        return experiment_object, [sample_object]
+
+        # self.add_batch(platform_accession_code=metadata.pop("platform_instrument_model"),
+        #                experiment_accession_code=metadata.pop("experiment_accession"),
+        #                organism_id=int(metadata.pop("organism_id")),
+        #                organism_name=metadata.pop("organism_name"),
+        #                experiment_title=metadata.pop("experiment_title"),
+        #                release_date=metadata.pop("run_ena_first_public"),
+        #                last_uploaded_date=metadata.pop("run_ena_last_update"),
+        #                files=files,
+        #                key_values=metadata)
 
     @staticmethod
     def get_next_accession(last_accession: str) -> str:
@@ -300,33 +401,12 @@ class SraSurveyor(ExternalSourceSurveyor):
         # padding to have the formatter add.
         return (prefix + "{0:0" + str(len(digits)) + "d}").format(number)
 
-    def discover_batches(self):
+    def discover_experiment_and_samples(self):
+        """ """
         survey_job = SurveyJob.objects.get(id=self.survey_job.id)
         survey_job_properties = survey_job.get_properties()
+        accession = survey_job_properties["accession"]
+        logger.debug("Surveying SRA Run Accession %s",
+                         accession)
+        return self._generate_experiment_and_samples(accession)
 
-        logger.info("Surveying SRA runs with accessions in the range of %s to %s.",
-                    survey_job_properties["start_accession"],
-                    survey_job_properties["end_accession"])
-
-        current_accession = survey_job_properties["start_accession"]
-
-        # By evaluating this conditional at the end of the loop
-        # instead of the beginning, we achieve the functionality of a
-        # do-while loop.
-        surveyed_last_accession = False
-        while not surveyed_last_accession:
-            logger.debug("Surveying SRA Run Accession %s",
-                         current_accession,
-                         survey_job=survey_job.id)
-            try:
-                self._generate_batch(current_accession)
-            except Exception as e:
-                logger.exception("Exception caught while trying to generate a batch.",
-                                 survey_job=self.survey_job.id,
-                                 run_accession=current_accession)
-                return False
-
-            surveyed_last_accession = current_accession == survey_job_properties["end_accession"]
-            current_accession = SraSurveyor.get_next_accession(current_accession)
-
-        return True

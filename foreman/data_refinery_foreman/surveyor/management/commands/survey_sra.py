@@ -14,22 +14,13 @@ logger = get_and_configure_logger(__name__)
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
-            "start_accession",
-            help=("An SRA run accession. Runs going from the start_accession to the "
-                  "end_accession will be surveyed. If surveying a single run accession "
-                  "is desired then the same accession should be passed to both start_accession "
-                  "and end_accession."))
-        parser.add_argument(
-            "end_accession",
-            help=("An SRA run accession. Runs going from the start_accession to the "
-                  "end_accession will be surveyed. If surveying a single run accession "
-                  "is desired then the same accession should be passed to both start_accession "
-                  "and end_accession."))
+            "accession",
+            help=("An SRA run accession. "))
 
     def handle(self, *args, **options):
-        if options["start_accession"] is None or options["end_accession"] is None:
+        if options["accession"] is None:
             logger.error("You must specify start_accession and end_accession.")
             return 1
         else:
-            surveyor.survey_sra_experiments(options["start_accession"], options["end_accession"])
+            surveyor.survey_sra_experiment(options["accession"])
             return 0

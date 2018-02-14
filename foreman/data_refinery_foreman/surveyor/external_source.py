@@ -11,7 +11,7 @@ from data_refinery_common.models import (
     DownloaderJob,
     SurveyJob
 )
-from data_refinery_common.models.new_models import Sample, Experiment
+from data_refinery_common.models.new_models import Sample, Experiment, ExperimentSampleAssociation, OriginalFile, DownloaderJobOriginalFileAssociation
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -148,25 +148,45 @@ class ExternalSourceSurveyor:
     @retry(stop_max_attempt_number=3)
     def queue_downloader_jobs(self, experiment: Experiment):
 
-        with transaction.atomic():
-          downloader_job = DownloaderJob()
-          downloader_job.experiment = experiment
-          downloader_job.downloader_task = self.downloader_task()
-          downloader_job.save()
+        # Get all of the undownloaded original files related to this Experiment.
+        relations = ExperimentSampleAssociation.objects.filter(experiment=experiment)
+        samples = Sample.objects.filter(id__in=relations.values('sample_id'))
+        files_to_download = OriginalFile.objects.filter(sample__in=samples.values('pk'), is_downloaded=False)
 
-        try:
-            logger.info("Queuing downloader job.",
-                    survey_job=self.survey_job.id,
-                    downloader_job=downloader_job.id)
-            send_job(downloader_job.downloader_task, downloader_job.id)
-        except:
-            # If the task doesn't get sent we don't want the
-            # downloader_job to be left floating
-            logger.info("Failed to enqueue downloader job.",
-                    survey_job=self.survey_job.id,
-                    downloader_job=downloader_job.id)
-            downloader_job.delete()
-            raise
+        downloaded_urls = []
+        for original_file in files_to_download:
+
+            # We don't need to create multiple downloaders for the same file.
+            if original_file.source_url in downloaded_urls:
+              continue
+
+            with transaction.atomic():
+
+              downloader_job = DownloaderJob()
+              downloader_job.downloader_task = self.downloader_task()
+              downloader_job.accession_code = experiment.accession_code
+              downloader_job.save()
+
+              asoc = DownloaderJobOriginalFileAssociation()
+              asoc.downloader_job = downloader_job
+              asoc.original_file = original_file
+              asoc.save()
+
+              downloaded_urls.append(original_file.source_url)
+
+            try:
+                logger.info("Queuing downloader job.",
+                        survey_job=self.survey_job.id,
+                        downloader_job=downloader_job.id)
+                send_job(downloader_job.downloader_task, downloader_job.id)
+            except:
+                # If the task doesn't get sent we don't want the
+                # downloader_job to be left floating
+                logger.info("Failed to enqueue downloader job.",
+                        survey_job=self.survey_job.id,
+                        downloader_job=downloader_job.id)
+                downloader_job.delete()
+                raise
 
     def survey(self) -> bool:
         try:

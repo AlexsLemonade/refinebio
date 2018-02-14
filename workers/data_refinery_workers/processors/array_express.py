@@ -10,7 +10,7 @@ from rpy2.rinterface import RRuntimeError
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import File
-from data_refinery_common.models.new_models import ComputationalResult, ComputedFile
+from data_refinery_common.models.new_models import OriginalFile, ComputationalResult, ComputedFile
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 from data_refinery_common.utils import get_env_variable
@@ -27,11 +27,11 @@ def _prepare_files(job_context: Dict) -> Dict:
     """
     # Array Express processor jobs have only one batch per job and one
     # file per batch.
-    sample = job_context["samples"][0]
-    job_context["input_file_path"] = sample.source_absolute_file_path
+    original_file = job_context["original_files"][0]
+    job_context["input_file_path"] = original_file.source_absolute_file_path
     # This is ugly, I'm sorry.
     # Turns /home/user/data_store/E-GEOD-8607/raw/foo.cel into /home/user/data_store/E-GEOD-8607/proccessed/foo.cel
-    job_context["output_file_path"] = '/'.join(sample.source_absolute_file_path.split('/')[:-2]) + '/proccessed/' + sample.source_filename + '.cel'
+    job_context["output_file_path"] = '/'.join(original_file.source_absolute_file_path.split('/')[:-2]) + '/proccessed/' + sample.source_filename + '.cel'
 
     return job_context
 

@@ -1,7 +1,7 @@
 from typing import List, Dict, Callable
 from django.utils import timezone
-from data_refinery_common.models import BatchStatuses, ProcessorJob, File, ProcessorJobSampleAssociation
-from data_refinery_common.models.new_models import Sample
+from data_refinery_common.models import BatchStatuses, ProcessorJob, File, ProcessorJobOriginalFileAssociation
+from data_refinery_common.models.new_models import Sample, OriginalFile, ProcessorJobOriginalFileAssociation
 from data_refinery_common.utils import get_worker_id
 from data_refinery_workers._version import __version__
 from data_refinery_common.logging import get_and_configure_logger
@@ -24,15 +24,15 @@ def start_job(job_context: Dict):
 
     logger.info("Starting processor Job.", processor_job=job.id)
 
-    relations = ProcessorJobSampleAssociation.objects.filter(processor_job=job)
-    samples = Sample.objects.filter(id__in=relations.values('sample_id'))
+    relations = ProcessorJobOriginalFileAssociation.objects.filter(processor_job=job)
+    original_files = Sample.objects.filter(id__in=relations.values('sample_id'))
 
-    if len(samples) == 0:
-        logger.error("No samples found.", processor_job=job.id)
+    if len(original_files) == 0:
+        logger.error("No files found.", processor_job=job.id)
         job_context["success"] = False
         return job_context
 
-    job_context["samples"] = samples
+    job_context["original_files"] = original_files
     return job_context
 
 

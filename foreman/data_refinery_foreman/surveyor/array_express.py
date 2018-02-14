@@ -7,7 +7,7 @@ from data_refinery_common.models import (
     SurveyJobKeyValue,
     Organism,
 )
-from data_refinery_common.models.new_models import Experiment, ExperimentAnnotation, Sample, SampleAnnotation, ExperimentSampleAssociation
+from data_refinery_common.models.new_models import Experiment, ExperimentAnnotation, Sample, SampleAnnotation, ExperimentSampleAssociation, OriginalFile
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
@@ -52,84 +52,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         Will raise an UnsupportedPlatformException if this experiment was
         conducting using a platform which we don't support.
 
-        See an example at: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-3050/samples
-        Example:
-        {
-            'id': 511696,
-            'accession': 'E-MTAB-3050',
-            'name': 'Microarray analysis of in vitro differentiation of adult human pancreatic progenitor cells',
-            'releasedate': '2014-10-31',
-            'lastupdatedate': '2014-10-30',
-            'organism': ['Homo sapiens'],
-            'experimenttype': ['transcription profiling by array'],
-            'experimentdesign': ['cell type comparison design',
-                                 'development or differentiation design'],
-            'description': [{'id': None,
-                            'text': 'We have developed an in vitro culture system that allows us to expand progenitor cells from human islet preparations and differentiate them into insulin-producing cells. We noticed however, that cultures from individual islet preparations had very heterogeneous outcomes, from good differentiation to almost none. We therefore speculated that our progenitor cell cultures contained different kinds of cells and that the true endocrine progenitor cells are present in the successful cultures, but not in the unsuccessful ones. To address this issue and to begin to identify markers for the true endocrine progenitor cells we compared global gene expression between a very successful culture (final insulin-expression 10% of islets) and an unsuccessful one (final insulin-expression 0%). We also included RNA from freshly isolated islets for control purposes. The cultures from donor A yielded substantial differentiation, while the cultures from donor B showed no successful differentiation.'
-                            }],
-            'provider': [{'contact': 'Joel Habener', 'role': 'submitter',
-                         'email': 'jhabener@partners.org'}],
-            'samplecharacteristic': [{'category': 'age', 'value': ['38 year',
-                                     '54 year']},
-                                     {'category': 'developmental stage',
-                                     'value': ['adult']},
-                                     {'category': 'organism',
-                                     'value': ['Homo sapiens']},
-                                     {'category': 'organism part',
-                                     'value': ['islet']}, {'category': 'sex',
-                                     'value': ['female', 'male']}],
-            'experimentalvariable': [{'name': 'cell type',
-                                     'value': ['differentiated', 'expanded',
-                                     'freshly isolated']}, {'name': 'individual'
-                                     , 'value': ['A', 'B']},
-                                     {'name': 'test result', 'value': ['NA',
-                                     'successful', 'unsuccessful']}],
-            'arraydesign': [{
-                'id': 11048,
-                'accession': 'A-AFFY-1',
-                'name': 'Affymetrix GeneChip Human Genome U95Av2 [HG_U95Av2]',
-                'count': 5,
-                'legacy_id': 5728564,
-                }],
-            'protocol': [
-                {'id': 1092859, 'accession': 'P-MTAB-41859'},
-                {'id': 1092858, 'accession': 'P-MTAB-41860'},
-                {'id': 1092857, 'accession': 'P-MTAB-41861'},
-                {'id': 235758, 'accession': '  '},
-                {'id': 1092863, 'accession': 'P-MTAB-41854'},
-                {'id': 1092856, 'accession': 'P-MTAB-41862'},
-                {'id': 1092860, 'accession': 'P-MTAB-41856'},
-                {'id': 1092861, 'accession': 'P-MTAB-41855'},
-                {'id': 1092862, 'accession': 'P-MTAB-41858'},
-                {'id': 1092864, 'accession': 'P-MTAB-41857'},
-                ],
-            'bioassaydatagroup': [{
-                'id': None,
-                'name': 'rawData',
-                'bioassaydatacubes': 5,
-                'arraydesignprovider': None,
-                'dataformat': 'rawData',
-                'bioassays': 5,
-                'isderived': 0,
-                }, {
-                'id': None,
-                'name': 'processedData',
-                'bioassaydatacubes': 5,
-                'arraydesignprovider': None,
-                'dataformat': 'processedData',
-                'bioassays': 5,
-                'isderived': 0,
-                }, {
-                'id': None,
-                'name': 'image',
-                'bioassaydatacubes': 5,
-                'arraydesignprovider': None,
-                'dataformat': 'image',
-                'bioassays': 5,
-                'isderived': 0,
-                }],
-            }
-
+        See an example at: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-3050/sample
         """
         request_url = EXPERIMENTS_URL + experiment_accession_code;
         experiment_request = requests.get(request_url)
@@ -237,9 +160,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         r = requests.get(SAMPLES_URL.format(experiment.accession_code))
         samples = r.json()["experiment"]["sample"]
 
-        import pprint
-        pprint.pprint(samples)
-
         # An experiment can have many samples
         for sample in samples:
 
@@ -285,7 +205,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                         continue
 
                 download_url = None
-                filename = None
+                filename = sub_file["name"]
 
                 # sub_file["comment"] is only a list if there's
                 # more than one comment...
@@ -304,6 +224,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                             break
                 else:
                     download_url = comments["value"]
+                    filename = sub_file["name"]
 
                 if not download_url:
                     logger.error("Sample %s from experiment %s did not specify a download url, skipping.",
@@ -311,7 +232,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                             experiment.accession_code,
                             survey_job=self.survey_job.id)
                     continue
-                filename = sub_file['name']
 
             if not download_url:
                 print(sub_file)
@@ -327,10 +247,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             except Sample.DoesNotExist:
                 sample_object = Sample()
                 sample_object.accession_code = sample_accession_code
-                sample_object.source_archive_url = download_url
-                sample_object.source_filename = filename
-                sample_object.is_downloaded = False
-                sample_object.has_raw = has_raw
                 sample_object.organism = organism
                 sample_object.save()
 
@@ -358,6 +274,15 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     sample_kv.key = 'name'
                     sample_kv.value = sample['source']['name']
                     sample_kv.save()
+
+                original_file = OriginalFile()
+                original_file.sample = sample_object
+                original_file.source_filename = filename
+                original_file.source_url = download_url
+                original_file.is_downloaded = False
+                original_file.is_archive = True
+                original_file.has_raw = has_raw
+                original_file.save()
 
             association = ExperimentSampleAssociation()
             association.experiment = experiment

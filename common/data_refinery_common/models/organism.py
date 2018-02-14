@@ -85,6 +85,9 @@ class Organism(models.Model):
     with any missing values by accessing the NCBI API.
     """
 
+    def __str__ (self):
+        return "Organism: " + str(self.name)
+
     name = models.CharField(max_length=256)
     taxonomy_id = models.IntegerField()
     is_scientific_name = models.BooleanField(default=False)

@@ -9,10 +9,8 @@ from data_refinery_common.models import (
     BatchStatuses,
     DownloaderJob,
     ProcessorJob,
-    ProcessorJobSampleAssociation
 )
-from data_refinery_common.models.new_models import Experiment, Sample, ExperimentAnnotation, ExperimentSampleAssociation
-
+from data_refinery_common.models.new_models import Experiment, Sample, ExperimentAnnotation, ExperimentSampleAssociation, OriginalFile, ProcessorJobOriginalFileAssociation
 from data_refinery_workers._version import __version__
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
@@ -127,21 +125,52 @@ def end_downloader_job(job: DownloaderJob, success: bool):
     job.end_time = timezone.now()
     job.save()
 
-def create_processor_jobs(experiment: Experiment):
+# def create_processor_jobs_for_experiment(experiment: Experiment):
+#     """
+#     Create a processor job and queue a processor task for sample related to an experiment.
+#     """
+
+#     relations = ExperimentSampleAssociation.objects.filter(experiment=experiment)
+#     samples = Sample.objects.filter(id__in=relations.values('sample_id'))
+
+#     # Iterate over all of our samples.
+#     # If we have raw, send it to the correct processor.
+#     # Else, treat it as a "NO-OP"
+#     for sample in samples:
+
+#         processor_job = ProcessorJob()
+#         if not sample.has_raw:
+#             processor_job.pipeline_applied = "NO_OP"
+#         else:
+#             if experiment.source_database == "ARRAY_EXPRESS":
+#                 processor_job.pipeline_applied = "AFFY_TO_PCL"
+#             # TODO: Salmon!
+
+#         # Save the Job and create the association
+#         processor_job.save()
+#         assoc = ProcessorJobSampleAssociation()
+#         assoc.sample = sample
+#         assoc.processor_job = processor_job
+#         assoc.save()
+
+#         # Send the job to Nomad
+#         send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)
+
+def create_processor_jobs_for_original_files(original_files: List[OriginalFile]):
     """
     Create a processor job and queue a processor task for sample related to an experiment.
     """
 
-    relations = ExperimentSampleAssociation.objects.filter(experiment=experiment)
-    samples = Sample.objects.filter(id__in=relations.values('sample_id'))
-
     # Iterate over all of our samples.
     # If we have raw, send it to the correct processor.
     # Else, treat it as a "NO-OP"
-    for sample in samples:
+    for original_file in original_files:
+
+        sample = original_file.sample
+        experiment = ExperimentSampleAssociation.objects.filter(sample=sample)[0].experiment
 
         processor_job = ProcessorJob()
-        if not sample.has_raw:
+        if not original_file.has_raw:
             processor_job.pipeline_applied = "NO_OP"
         else:
             if experiment.source_database == "ARRAY_EXPRESS":
@@ -150,8 +179,8 @@ def create_processor_jobs(experiment: Experiment):
 
         # Save the Job and create the association
         processor_job.save()
-        assoc = ProcessorJobSampleAssociation()
-        assoc.sample = sample
+        assoc = ProcessorJobOriginalFileAssociation()
+        assoc.original_file = original_file
         assoc.processor_job = processor_job
         assoc.save()
 

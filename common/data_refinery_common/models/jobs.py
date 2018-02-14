@@ -3,7 +3,7 @@ from django.db import models
 from data_refinery_common.models.base_models import TimeTrackedModel
 from data_refinery_common.models.batches import Batch
 
-from data_refinery_common.models.new_models import Sample, Experiment
+from data_refinery_common.models.new_models import Sample, Experiment, OriginalFile
 
 
 class WorkerJob(TimeTrackedModel):
@@ -77,16 +77,16 @@ class ProcessorJob(WorkerJob):
     end_time = models.DateTimeField(null=True)
     success = models.NullBooleanField(null=True)
 
-class ProcessorJobSampleAssociation(models.Model):
+# class ProcessorJobOriginalFileAssociation(models.Model):
 
-    class Meta:
-        db_table = "processorjob_sample_associations"
+#     class Meta:
+#         db_table = "processorjob_original_file_associations"
 
-    def __str__ (self):
-        return "ProcessorJobSampleAssociation: " + self.pk
+#     def __str__ (self):
+#         return "ProcessorJobOriginalFileAssociation: " + self.pk
 
-    processor_job = models.ForeignKey(ProcessorJob, blank=False, null=False, on_delete=models.CASCADE)
-    sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
+#     processor_job = models.ForeignKey(ProcessorJob, blank=False, null=False, on_delete=models.CASCADE)
+#     original_file = models.ForeignKey(OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
 
 # class DownloaderJob(WorkerJob):
 #     """Records information about running a Downloader."""
@@ -109,7 +109,7 @@ class DownloaderJob(models.Model):
     # Downloader Task. Valid values are enumerated in:
     # data_refinery_common.job_lookup.Downloaders
     downloader_task = models.CharField(max_length=256)
-    experiment = models.ForeignKey(Experiment, max_length=256, on_delete=models.CASCADE)
+    accession_code = models.CharField(max_length=256, blank=True, null=True)
 
     # Tracking
     start_time = models.DateTimeField(null=True)

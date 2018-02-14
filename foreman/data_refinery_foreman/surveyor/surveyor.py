@@ -93,15 +93,11 @@ def survey_ae_experiment(experiment_accession):
     run_job(survey_job)
 
 
-def survey_sra_experiments(start_accession, end_accession):
+def survey_sra_experiment(accesion):
     survey_job = SurveyJob(source_type="SRA")
     survey_job.save()
     key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                       key="start_accession",
-                                       value=start_accession)
-    key_value_pair.save()
-    key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                       key="end_accession",
-                                       value=end_accession)
+                                       key="accession",
+                                       value=accesion)
     key_value_pair.save()
     run_job(survey_job)

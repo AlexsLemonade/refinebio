@@ -6,7 +6,7 @@ import zipfile
 from typing import List
 from contextlib import closing
 from data_refinery_common.models import File, DownloaderJob
-from data_refinery_common.models.new_models import Experiment, Sample, ExperimentAnnotation, ExperimentSampleAssociation
+from data_refinery_common.models.new_models import Experiment, Sample, ExperimentAnnotation, ExperimentSampleAssociation, OriginalFile, DownloaderJobOriginalFileAssociation
 from data_refinery_workers.downloaders import utils
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable
@@ -101,7 +101,7 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
 #         for directory in dirs_to_clean:
 #             shutil.rmtree(directory)
 
-def _extract_files(file_path: str, experiment: Experiment) -> List[str]:
+def _extract_files(file_path: str, accession_code: str) -> List[str]:
     """Extract zip from temp directory and move to raw directory.
 
     Additionally this function sets the size_in_bytes field of each
@@ -125,7 +125,7 @@ def _extract_files(file_path: str, experiment: Experiment) -> List[str]:
         zip_ref = zipfile.ZipFile(file_path, "r")
 
         # TODO: Make this an absolute path
-        abs_with_code_raw = LOCAL_ROOT_DIR + '/' + experiment.accession_code + '/raw/'
+        abs_with_code_raw = LOCAL_ROOT_DIR + '/' + accession_code + '/raw/'
         zip_ref.extractall(abs_with_code_raw)
         zip_ref.close()
 
@@ -172,7 +172,15 @@ def download_array_express(job_id: int) -> None:
     Storage.
     """
     job = utils.start_job(job_id)
-    experiment = job.experiment
+
+    file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
+    original_file = file_assocs[0].original_file # AE should never have more than one zip, but we can iterate here if we discover this is false.
+    # if original_file.is_downloaded:
+    #     logger.info("This file is already downloaded!")
+    #     return
+    url = original_file.source_url
+    accession_code = job.accession_code
+
     #success = True
     
     # if batches.count() > 0:
@@ -188,46 +196,49 @@ def download_array_express(job_id: int) -> None:
     #if success:
 
     # There is going to be a prettier way of doing this
-    relations = ExperimentSampleAssociation.objects.filter(experiment=experiment)
-    samples = Sample.objects.filter(id__in=relations.values('sample_id'))
-    urls = list(samples.values_list("source_archive_url", flat=True).distinct())
+    # relations = ExperimentSampleAssociation.objects.filter(experiment=experiment)
+    # samples = Sample.objects.filter(id__in=relations.values('sample_id'))
+    # urls = list(samples.values_list("originalfile__source_archive_url", flat=True).distinct())
 
-    for sample in samples:
-        print(sample.source_filename)
+    # for sample in samples:
+    #     print(sample.source_filename)
 
     # First, get all the unique sample archive URLs.
     # There may be more than one!
     # Then, unpack all the ones downloaded.
     # Then create processor jobs!
 
-    all_unpacked_files = []
+
+    og_files = []
     try:
-        for url in urls:
+        # The files for all of the samples are
+        # contained within the same zip file. Therefore only
+        # download the one.
+        os.makedirs(LOCAL_ROOT_DIR + '/' + accession_code, exist_ok=True)
+        dl_file_path = LOCAL_ROOT_DIR + '/' + accession_code + '/' + accession_code + ".zip"
+        _download_file(url, dl_file_path, job)
 
-            # The files for all of the samples are
-            # contained within the same zip file. Therefore only
-            # download the one.
-            os.makedirs(LOCAL_ROOT_DIR + '/' + experiment.accession_code, exist_ok=True)
-            dl_file_path = LOCAL_ROOT_DIR + '/' + experiment.accession_code + '/' + experiment.accession_code + ".zip"
-            _download_file(url, dl_file_path, job)
+        extracted_files = _extract_files(dl_file_path, accession_code)
 
-            extracted_files = _extract_files(dl_file_path, experiment)
-            all_unpacked_files = all_unpacked_files + extracted_files
-
-            for og_file in all_unpacked_files:
-                # TODO: We _should_ be able to use GET here - anything more than 1 sample per
-                # filename is a problem. However, I need to know more about the naming convention.
-                sample = samples.filter(source_filename=og_file['filename']).order_by('created_at')[0]
-                sample.is_downloaded=True
-                sample.source_absolute_file_path = og_file['absolute_path']
-                sample.save()
-
+        for og_file in extracted_files:
+            # TODO: We _should_ be able to use GET here - anything more than 1 sample per
+            # filename is a problem. However, I need to know more about the naming convention.
+            try:
+                original_file = OriginalFile.objects.filter(source_filename=og_file['filename']).order_by('created_at')[0]
+                original_file.is_downloaded=True
+                original_file.is_archive=False
+                original_file.source_absolute_file_path = og_file['absolute_path']
+                original_file.save()
+                og_files.append(original_file)
+            except Exception:
+                logger.debug("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'])
         success=True
     except Exception as e:
         print(e)
         # Exceptions are already logged and handled.
         # Just need to mark the job as failed.
         success = False
+        raise
 
     if success:
         logger.debug("File downloaded and extracted successfully.",
@@ -237,4 +248,4 @@ def download_array_express(job_id: int) -> None:
     utils.end_downloader_job(job, success)
 
     if success:
-        utils.create_processor_jobs(experiment)
+        utils.create_processor_jobs_for_original_files(og_files)
