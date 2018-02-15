@@ -172,7 +172,7 @@ range of SRA accession codes:
 
 Example:
 ```bash
-./foreman/run_surveyor.sh survey_sra DRR002116 DRR002116
+./foreman/run_surveyor.sh survey_sra DRR002116
 ```
 
 
@@ -203,7 +203,7 @@ Downloader Job which will download a sample from Array Express:
 
 For example:
 ```bash
-./common/make_migrations.sh; cd common; python setup.py sdist; cd..; ./workers/tester.sh run_downloader_job --job-name=ARRAY_EXPRESS --job-id=1
+./common/make_migrations.sh; cd common; python setup.py sdist; cd ..; ./workers/tester.sh run_downloader_job --job-name=ARRAY_EXPRESS --job-id=1
 ```
 
 

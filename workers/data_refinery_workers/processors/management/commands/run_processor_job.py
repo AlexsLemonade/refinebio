@@ -4,6 +4,7 @@ from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_workers.processors.array_express import affy_to_pcl
 from data_refinery_workers.processors.transcriptome_index import build_transcriptome_index
 from data_refinery_workers.processors.no_op import no_op_processor
+from data_refinery_workers.processors.salmon import salmon
 
 
 logger = get_and_configure_logger(__name__)
@@ -36,6 +37,8 @@ class Command(BaseCommand):
             affy_to_pcl(options["job_id"])
         elif job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX:
             build_transcriptome_index(options["job_id"])
+        elif job_type is ProcessorPipeline.SALMON:
+            salmon(options["job_id"])
         elif job_type is ProcessorPipeline.NO_OP:
             no_op_processor(options["job_id"])
         else:

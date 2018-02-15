@@ -227,7 +227,9 @@ def download_array_express(job_id: int) -> None:
                 original_file = OriginalFile.objects.filter(source_filename=og_file['filename']).order_by('created_at')[0]
                 original_file.is_downloaded=True
                 original_file.is_archive=False
-                original_file.source_absolute_file_path = og_file['absolute_path']
+                original_file.absolute_file_path = og_file['absolute_path']
+                original_file.calculate_size()
+                original_file.calculate_sha1()
                 original_file.save()
                 og_files.append(original_file)
             except Exception:

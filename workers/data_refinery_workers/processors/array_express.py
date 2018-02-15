@@ -28,10 +28,10 @@ def _prepare_files(job_context: Dict) -> Dict:
     # Array Express processor jobs have only one batch per job and one
     # file per batch.
     original_file = job_context["original_files"][0]
-    job_context["input_file_path"] = original_file.source_absolute_file_path
+    job_context["input_file_path"] = original_file.absolute_file_path
     # This is ugly, I'm sorry.
     # Turns /home/user/data_store/E-GEOD-8607/raw/foo.cel into /home/user/data_store/E-GEOD-8607/proccessed/foo.cel
-    job_context["output_file_path"] = '/'.join(original_file.source_absolute_file_path.split('/')[:-2]) + '/proccessed/' + sample.source_filename + '.cel'
+    job_context["output_file_path"] = '/'.join(original_file.absolute_file_path.split('/')[:-2]) + '/proccessed/' + sample.source_filename + '.cel'
 
     return job_context
 

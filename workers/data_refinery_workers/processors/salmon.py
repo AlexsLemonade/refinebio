@@ -29,42 +29,55 @@ def _prepare_files(job_context: Dict) -> Dict:
     """
     # Salmon processor jobs have only one batch per job, but may have
     # up to two files per batch.
-    batch = job_context["batches"][0]
-    files = batch.files
+    original_files = job_context["original_files"]
 
-    for file in files:
-        try:
-            file.download_raw_file(job_context["job_dir_prefix"])
-        except Exception:
-            logger.exception("Exception caught while retrieving raw file %s",
-                             file.get_raw_path(),
-                             processor_job=job_context["job_id"],
-                             batch=batch.id)
+    
+    job_context["input_file_path"] = original_files[0].absolute_file_path
+    if len(original_files) == 2:
+        job_context["input_file_path_2"] = original_files[1].absolute_file_path
+    # XXX: If more, fail
 
-            failure_template = "Exception caught while retrieving raw file {}"
-            job_context["job"].failure_reason = failure_template.format(file.name)
-            job_context["success"] = False
-            return job_context
+    import pdb
+    pdb.set_trace()
 
-    num_files = len(files)
-    if num_files > 2 or num_files < 1:
-        failure_message = ("{} files were found for a Salmon job. There should never"
-                           " be more than two.").format(str(num_files))
-        logger.error(failure_message, batch=batch, processor_job=job_context["job_id"])
-        job_context["job"].failure_reason = failure_message
-        job_context["success"] = False
-        return job_context
-    elif num_files == 2:
-        job_context["input_file_path_2"] = files[1].get_temp_pre_path(
-            job_context["job_dir_prefix"])
-
-    job_context["input_file_path"] = files[0].get_temp_pre_path(job_context["job_dir_prefix"])
     # Salmon outputs an entire directory of files, so create a temp
     # directory to output it to until we can zip it to
-    # files[0].get_temp_post_path()
-    job_context["output_directory"] = os.path.join(
-        files[0].get_temp_dir(job_context["job_dir_prefix"]), "output")
+    job_context["output_directory"] = '/'.join(original_files[0].absolute_file_path.split('/')[:-1]) + '/proccessed/'
     os.makedirs(job_context["output_directory"], exist_ok=True)
+
+    # for file in files:
+    #     try:
+    #         file.download_raw_file(job_context["job_dir_prefix"])
+    #     except Exception:
+    #         logger.exception("Exception caught while retrieving raw file %s",
+    #                          file.get_raw_path(),
+    #                          processor_job=job_context["job_id"],
+    #                          batch=batch.id)
+
+    #         failure_template = "Exception caught while retrieving raw file {}"
+    #         job_context["job"].failure_reason = failure_template.format(file.name)
+    #         job_context["success"] = False
+    #         return job_context
+
+    # num_files = len(files)
+    # if num_files > 2 or num_files < 1:
+    #     failure_message = ("{} files were found for a Salmon job. There should never"
+    #                        " be more than two.").format(str(num_files))
+    #     logger.error(failure_message, batch=batch, processor_job=job_context["job_id"])
+    #     job_context["job"].failure_reason = failure_message
+    #     job_context["success"] = False
+    #     return job_context
+    # elif num_files == 2:
+    #     job_context["input_file_path_2"] = files[1].get_temp_pre_path(
+    #         job_context["job_dir_prefix"])
+
+    # job_context["input_file_path"] = files[0].get_temp_pre_path(job_context["job_dir_prefix"])
+    # # Salmon outputs an entire directory of files, so create a temp
+    # # directory to output it to until we can zip it to
+    # # files[0].get_temp_post_path()
+    # job_context["output_directory"] = os.path.join(
+    #     files[0].get_temp_dir(job_context["job_dir_prefix"]), "output")
+    # os.makedirs(job_context["output_directory"], exist_ok=True)
 
     job_context["success"] = True
     return job_context

@@ -356,9 +356,10 @@ class SraSurveyor(ExternalSourceSurveyor):
 
             original_files = []
             for file_url in files_urls:
+
                 original_file = OriginalFile()
                 original_file.sample = sample_object
-                original_file.source_archive_url = file_url
+                original_file.source_url = file_url
                 original_file.source_filename = file_url.split('/')[-1]
                 original_file.is_downloaded = False
                 original_file.has_raw = True # I think this is always true?

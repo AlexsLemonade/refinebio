@@ -1,4 +1,5 @@
 import hashlib
+import io
 import os
 import pytz
 
@@ -220,7 +221,7 @@ class OriginalFile(models.Model):
 
     file_name = models.CharField(max_length=255)
     absolute_file_path = models.CharField(max_length=255, blank=True, null=True)
-    size_in_bytes = models.IntegerField(blank=True, null=True)
+    size_in_bytes = models.BigIntegerField(blank=True, null=True)
     sha1 = models.CharField(max_length=64)
 
     sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
@@ -229,7 +230,6 @@ class OriginalFile(models.Model):
     source_url = models.CharField(max_length=255)
     is_archive = models.BooleanField(default=True)
     source_filename = models.CharField(max_length=255, blank=False)
-    source_absolute_file_path = models.CharField(max_length=255)
 
     # Scientific Properties
     has_raw = models.BooleanField(default=True) # Did this sample have a raw data source?
@@ -251,7 +251,7 @@ class OriginalFile(models.Model):
 
         hash_object = hashlib.sha1() 
         with open(absolute_file_path, mode='rb') as open_file:
-            for buf in iter(partial(open_file.read, 128), b''):
+            for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
                 hash_object.update(buf)
         
         self.sha1 = hash_object.hexdigest()
@@ -276,7 +276,7 @@ class ComputedFile(models.Model):
 
     file_name = models.CharField(max_length=255)
     absolute_file_path = models.CharField(max_length=255, blank=True, null=True)
-    size_in_bytes = models.IntegerField()
+    size_in_bytes = models.BigIntegerField()
     sha1 = models.CharField(max_length=64)
 
     result = models.ForeignKey(ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
@@ -305,7 +305,7 @@ class ComputedFile(models.Model):
 
         hash_object = hashlib.sha1() 
         with open(absolute_file_path, mode='rb') as open_file:
-            for buf in iter(partial(open_file.read, 128), b''):
+            for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
                 hash_object.update(buf)
         
         self.sha1 = hash_object.hexdigest()
