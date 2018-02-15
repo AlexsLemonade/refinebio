@@ -9,6 +9,7 @@ from data_refinery_common.models import (
     File,
     SurveyJobKeyValue
 )
+from data_refinery_common.models.new_models import OriginalFile
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
@@ -196,7 +197,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
 
         return species
 
-    def _generate_batch(self, species: Dict) -> None:
+    def _generate_files(self, species: Dict) -> None:
         url_builder = ensembl_url_builder_factory(species)
         fasta_download_url = url_builder.build_transcriptome_url()
         gtf_download_url = url_builder.build_gtf_url()
@@ -205,37 +206,83 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         platform_accession_code = species.pop("division")
         self._clean_metadata(species)
 
+        all_new_files = []
         for length in ("_long", "_short"):
             fasta_file_name = url_builder.file_name_species + length + ".fa.gz"
-            fasta_file = File(name=fasta_file_name,
-                              download_url=fasta_download_url,
-                              raw_format="fa.gz",
-                              processed_format="tar.gz",
-                              size_in_bytes=-1)  # Will have to be determined later
+
+            original_file = OriginalFile()
+            original_file.source_filename = fasta_file_name
+            original_file.source_url = fasta_download_url
+            original_file.is_archive = True
+            original_file.is_downloaded = False
+            original_file.save()
+            all_new_files.append(original_file)
+
+            # fasta_file = File(name=fasta_file_name,
+            #                   download_url=fasta_download_url,
+            #                   raw_format="fa.gz",
+            #                   processed_format="tar.gz",
+            #                   size_in_bytes=-1)  # Will have to be determined later
 
             gtf_file_name = url_builder.file_name_species + length + ".gtf.gz"
-            gtf_file = File(name=gtf_file_name,
-                            download_url=gtf_download_url,
-                            raw_format="gtf.gz",
-                            processed_format="tar.gz",
-                            size_in_bytes=-1)  # Will have to be determined later
+            # gtf_file = File(name=gtf_file_name,
+            #                 download_url=gtf_download_url,
+            #                 raw_format="gtf.gz",
+            #                 processed_format="tar.gz",
+            #                 size_in_bytes=-1)  # Will have to be determined later
 
             # Add a couple extra key/value pairs to the Batch.
+            # XXX WHAT DO WITH THIS
             species["length"] = length
             species["kmer_size"] = "31" if length == "_long" else "23"
 
-            self.add_batch(platform_accession_code=platform_accession_code,
-                           experiment_accession_code=url_builder.file_name_species.upper(),
-                           organism_id=url_builder.taxonomy_id,
-                           organism_name=url_builder.scientific_name,
-                           experiment_title="NA",
-                           release_date=current_time,
-                           last_uploaded_date=current_time,
-                           files=[fasta_file, gtf_file],
-                           # Store the rest of the metadata about these!
-                           key_values=species)
+            original_file = OriginalFile()
+            original_file.source_filename = gtf_file_name
+            original_file.source_url = gtf_download_url
+            original_file.is_archive = True
+            original_file.is_downloaded = False
+            original_file.save()
+            all_new_files.append(original_file)
 
-    def discover_batches(self):
+            # self.add_batch(platform_accession_code=platform_accession_code,
+            #                experiment_accession_code=url_builder.file_name_species.upper(),
+            #                organism_id=url_builder.taxonomy_id,
+            #                organism_name=url_builder.scientific_name,
+            #                experiment_title="NA",
+            #                release_date=current_time,
+            #                last_uploaded_date=current_time,
+            #                files=[fasta_file, gtf_file],
+            #                # Store the rest of the metadata about these!
+            #                key_values=species)
+
+        return all_new_files
+
+    def survey(self) -> bool:
+        """
+        Surveying here is a bit different than discovering an experiment
+        and samples.
+        """
+
+        try:
+            species_files = self.discover_species()
+        except Exception:
+            logger.exception(("Exception caught while discovering batches. "
+                              "Terminating survey job."),
+                             survey_job=self.survey_job.id)
+            return False
+
+        try:
+            for specie_file_list in species_files: 
+                self.queue_downloader_job_for_original_files(specie_file_list)
+        except Exception:
+            logger.exception(("Failed to queue downloader jobs. "
+                              "Terminating survey job."),
+                             survey_job=self.survey_job.id)
+            return False
+
+        return True
+
+    def discover_species(self):
         ensembl_division = (
             SurveyJobKeyValue
             .objects
@@ -272,9 +319,50 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             specieses = r.json()
 
         species_surveyed = 0
+        all_new_species = []
         for species in specieses:
             if number_of_organisms != -1 and species_surveyed >= number_of_organisms:
                 break
 
-            self._generate_batch(species)
+            import pdb
+            pdb.set_trace()
+            all_new_species.append(self._generate_files(species))
             species_surveyed += 1
+
+        
+        return all_new_species
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

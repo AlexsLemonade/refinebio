@@ -217,14 +217,16 @@ class OriginalFile(models.Model):
         db_table = "original_files"
 
     def __str__ (self):
-        return "OriginalFile: " + str(self.file_name)
+        return "OriginalFile: " + self.get_display_name()
 
+    # XXX: move to `filename`
     file_name = models.CharField(max_length=255)
     absolute_file_path = models.CharField(max_length=255, blank=True, null=True)
     size_in_bytes = models.BigIntegerField(blank=True, null=True)
     sha1 = models.CharField(max_length=64)
 
-    sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
+    # Reference properties
+    sample = models.ForeignKey(Sample, blank=True, null=True, on_delete=models.CASCADE)
 
     # Historical Properties
     source_url = models.CharField(max_length=255)
@@ -265,6 +267,13 @@ class OriginalFile(models.Model):
 
         self.size_in_bytes = os.path.getsize(absolute_file_path)
         return self.size_in_bytes
+
+    def get_display_name(self):
+        """ For dev convenience """
+        if not self.file_name:
+            return self.source_filename
+        else:
+            return self.file_name
 
 class ComputedFile(models.Model):
 

@@ -188,6 +188,43 @@ class ExternalSourceSurveyor:
                 downloader_job.delete()
                 raise
 
+    @retry(stop_max_attempt_number=3)
+    def queue_downloader_job_for_original_files(self, original_files: List[OriginalFile]):
+
+        downloader_job = DownloaderJob()
+        downloader_job.downloader_task = self.downloader_task()
+        downloader_job.save()
+
+        downloaded_urls = []
+        for original_file in original_files:
+
+            # We don't need to create multiple downloaders for the same file.
+            if original_file.source_url in downloaded_urls:
+              continue
+
+            with transaction.atomic():
+
+              asoc = DownloaderJobOriginalFileAssociation()
+              asoc.downloader_job = downloader_job
+              asoc.original_file = original_file
+              asoc.save()
+
+              downloaded_urls.append(original_file.source_url)
+
+        try:
+            logger.info("Queuing downloader job.",
+                    survey_job=self.survey_job.id,
+                    downloader_job=downloader_job.id)
+            send_job(downloader_job.downloader_task, downloader_job.id)
+        except:
+            # If the task doesn't get sent we don't want the
+            # downloader_job to be left floating
+            logger.info("Failed to enqueue downloader job.",
+                    survey_job=self.survey_job.id,
+                    downloader_job=downloader_job.id)
+            downloader_job.delete()
+            raise
+
     def survey(self) -> bool:
         try:
             experiment, samples = self.discover_experiment_and_samples()

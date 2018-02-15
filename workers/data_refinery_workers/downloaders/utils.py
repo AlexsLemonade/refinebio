@@ -165,22 +165,27 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile])
 
     """
 
+    processor_job = ProcessorJob()
+
     # Iterate over all of our samples.
     # If we have raw, send it to the correct processor.
     # Else, treat it as a "NO-OP"
     for original_file in original_files:
 
-        sample = original_file.sample
-        experiment = ExperimentSampleAssociation.objects.filter(sample=sample)[0].experiment
-
-        processor_job = ProcessorJob()
-        if not original_file.has_raw:
-            processor_job.pipeline_applied = ProcessorPipeline.NO_OP
+        if original_file.sample:
+            experiment = ExperimentSampleAssociation.objects.filter(sample=sample)[0].experiment
         else:
-            if experiment.source_database == "ARRAY_EXPRESS":
+            experiment = None
+
+        if not experiment:
+            processor_job.pipeline_applied = "TRANSCRIPTOME_INDEX"
+        elif experiment.source_database == "ARRAY_EXPRESS":
+            if not original_file.has_raw:
+                processor_job.pipeline_applied = ProcessorPipeline.NO_OP
+            else:
                 processor_job.pipeline_applied = "AFFY_TO_PCL"
-            if experiment.source_database == "SRA":
-                processor_job.pipeline_applied = "SALMON" 
+        elif experiment.source_database == "SRA":
+            processor_job.pipeline_applied = "SALMON" 
 
         # Save the Job and create the association
         processor_job.save()
@@ -189,8 +194,8 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile])
         assoc.processor_job = processor_job
         assoc.save()
 
-        # Send the job to Nomad
-        send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)
+    # Send the job to Nomad
+    send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)
 
 
     # @retry(stop_max_attempt_number=3)

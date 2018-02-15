@@ -5,9 +5,11 @@ import shutil
 from typing import List
 from contextlib import closing
 from data_refinery_common.models import File, DownloaderJob
+from data_refinery_common.models.new_models import DownloaderJobOriginalFileAssociation
 from data_refinery_workers.downloaders import utils
 from data_refinery_common.logging import get_and_configure_logger
-
+from data_refinery_common.utils import get_env_variable
+LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 
 logger = get_and_configure_logger(__name__)
 
@@ -53,6 +55,7 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
         raise
     finally:
         target_file.close()
+    return True
 
 
 def _upload_files(job_dir: str, files: List[File], job: DownloaderJob) -> None:
@@ -82,61 +85,95 @@ def download_transcriptome(job_id: int) -> None:
     push it to Temporary Storage twice.
     """
     job = utils.start_job(job_id)
-    batches = job.batches.all()
-    success = True
-    job_dir = utils.JOB_DIR_PREFIX + str(job_id)
+    # batches = job.batches.all()
+    # success = True
+    # job_dir = utils.JOB_DIR_PREFIX + str(job_id)
 
-    try:
-        first_fasta_file = File.objects.get(batch=batches[0], raw_format__exact="fa.gz")
-        first_gtf_file = File.objects.get(batch=batches[0], raw_format__exact="gtf.gz")
-        second_fasta_file = File.objects.get(batch=batches[1], raw_format__exact="fa.gz")
-        second_gtf_file = File.objects.get(batch=batches[1], raw_format__exact="gtf.gz")
-        os.makedirs(first_fasta_file.get_temp_dir(job_dir), exist_ok=True)
-    except Exception:
-        logger.exception("Failed to retrieve all expected files from database.",
-                         downloader_job=job.id)
-        job.failure_reason = "Failed to retrieve all expected files from database."
-        success = False
+    file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
+    files_to_process = []
+    for assoc in file_assocs:
+        original_file = assoc.original_file
+
+        # if original_file.is_downloaded:
+        #     logger.info("File already downloaded!")
+        #     continue
+
+        if original_file.is_archive:
+            file_name_species = ''.join(original_file.source_filename.split('.')[:-2])
+        else:
+            # Does this ever happen?
+            file_name_species = ''.join(original_file.source_filename.split('.')[:-1])
+
+        import pdb
+        pdb.set_trace()
+
+        os.makedirs(LOCAL_ROOT_DIR + '/' + file_name_species, exist_ok=True)
+        dl_file_path = LOCAL_ROOT_DIR + '/' + file_name_species + '/' + original_file.source_filename
+        success = _download_file(original_file.source_url, dl_file_path, job)
+
+        if success:
+            original_file.is_downloaded = True
+            original_file.absolute_file_path = dl_file_path
+            original_file.file_name = original_file.source_filename
+            original_file.is_archive = False
+            original_file.has_raw = False
+            original_file.calculate_size()
+            original_file.calculate_sha1()
+            original_file.save()
+            files_to_process.append(original_file)
+        else:
+          logger.error("Problem during download")
+
+    # try:
+    #     first_fasta_file = File.objects.get(batch=batches[0], raw_format__exact="fa.gz")
+    #     first_gtf_file = File.objects.get(batch=batches[0], raw_format__exact="gtf.gz")
+    #     second_fasta_file = File.objects.get(batch=batches[1], raw_format__exact="fa.gz")
+    #     second_gtf_file = File.objects.get(batch=batches[1], raw_format__exact="gtf.gz")
+    #     os.makedirs(first_fasta_file.get_temp_dir(job_dir), exist_ok=True)
+    # except Exception:
+    #     logger.exception("Failed to retrieve all expected files from database.",
+    #                      downloader_job=job.id)
+    #     job.failure_reason = "Failed to retrieve all expected files from database."
+    #     success = False
+
+    # if success:
+    #     try:
+    #         _verify_files(first_fasta_file, second_fasta_file, job)
+    #         _verify_files(first_gtf_file, second_gtf_file, job)
+
+    #         # The two Batches share the same fasta and gtf files, so
+    #         # only download each one once
+    #         _download_file(first_fasta_file.download_url,
+    #                        first_fasta_file.get_temp_pre_path(job_dir),
+    #                        job)
+    #         _download_file(first_gtf_file.download_url,
+    #                        first_gtf_file.get_temp_pre_path(job_dir),
+    #                        job)
+
+    #         # Then create symlinks so the files for the second Batch
+    #         # can be found where they will be expected to.
+    #         try:
+    #             os.symlink(first_fasta_file.get_temp_pre_path(job_dir),
+    #                        second_fasta_file.get_temp_pre_path(job_dir))
+    #             os.symlink(first_gtf_file.get_temp_pre_path(job_dir),
+    #                        second_gtf_file.get_temp_pre_path(job_dir))
+    #         except Exception:
+    #             logger.exception("Exception caught while creating symlinks.",
+    #                              downloader_job=job.id)
+    #             job.failure_reason = "Exception caught while creating symlinks."
+    #             raise
+
+    #         _upload_files(job_dir,
+    #                       [first_fasta_file, first_gtf_file, second_fasta_file, second_gtf_file],
+    #                       job)
+    #     except Exception:
+    #         # Exceptions are already logged and handled.
+    #         # Just need to mark the job as failed.
+    #         success = False
 
     if success:
-        try:
-            _verify_files(first_fasta_file, second_fasta_file, job)
-            _verify_files(first_gtf_file, second_gtf_file, job)
-
-            # The two Batches share the same fasta and gtf files, so
-            # only download each one once
-            _download_file(first_fasta_file.download_url,
-                           first_fasta_file.get_temp_pre_path(job_dir),
-                           job)
-            _download_file(first_gtf_file.download_url,
-                           first_gtf_file.get_temp_pre_path(job_dir),
-                           job)
-
-            # Then create symlinks so the files for the second Batch
-            # can be found where they will be expected to.
-            try:
-                os.symlink(first_fasta_file.get_temp_pre_path(job_dir),
-                           second_fasta_file.get_temp_pre_path(job_dir))
-                os.symlink(first_gtf_file.get_temp_pre_path(job_dir),
-                           second_gtf_file.get_temp_pre_path(job_dir))
-            except Exception:
-                logger.exception("Exception caught while creating symlinks.",
-                                 downloader_job=job.id)
-                job.failure_reason = "Exception caught while creating symlinks."
-                raise
-
-            _upload_files(job_dir,
-                          [first_fasta_file, first_gtf_file, second_fasta_file, second_gtf_file],
-                          job)
-        except Exception:
-            # Exceptions are already logged and handled.
-            # Just need to mark the job as failed.
-            success = False
-
-    if success:
-        logger.debug("Files %s and %s downloaded successfully.",
-                     first_fasta_file,
-                     first_gtf_file,
+        logger.debug("Files downloaded successfully.",
                      downloader_job=job_id)
 
-    utils.end_job(job, batches, success)
+    utils.end_downloader_job(job, success)
+    utils.create_processor_jobs_for_original_files(files_to_process)
