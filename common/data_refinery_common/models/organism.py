@@ -88,8 +88,8 @@ class Organism(models.Model):
     def __str__ (self):
         return "Organism: " + str(self.name)
 
-    name = models.CharField(max_length=256)
-    taxonomy_id = models.IntegerField()
+    name = models.CharField(max_length=256, unique=True)
+    taxonomy_id = models.IntegerField(unique=True)
     is_scientific_name = models.BooleanField(default=False)
 
     @classmethod

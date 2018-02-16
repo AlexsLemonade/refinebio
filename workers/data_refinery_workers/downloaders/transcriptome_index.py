@@ -104,9 +104,6 @@ def download_transcriptome(job_id: int) -> None:
             # Does this ever happen?
             file_name_species = ''.join(original_file.source_filename.split('.')[:-1])
 
-        import pdb
-        pdb.set_trace()
-
         os.makedirs(LOCAL_ROOT_DIR + '/' + file_name_species, exist_ok=True)
         dl_file_path = LOCAL_ROOT_DIR + '/' + file_name_species + '/' + original_file.source_filename
         success = _download_file(original_file.source_url, dl_file_path, job)
@@ -176,4 +173,30 @@ def download_transcriptome(job_id: int) -> None:
                      downloader_job=job_id)
 
     utils.end_downloader_job(job, success)
-    utils.create_processor_jobs_for_original_files(files_to_process)
+    create_long_and_short_processor_jobs(files_to_process)
+    # utils.create_processor_jobs_for_original_files(files_to_process)
+
+def create_long_and_short_processor_jobs(files_to_process):
+    """ """
+
+    processor_job = ProcessorJob()
+    processor_job.pipeline_applied = "TRANSCRIPTOME_INDEX_LONG"
+    processor_job.save()
+
+    assoc = ProcessorJobOriginalFileAssociation()
+    assoc.original_file = original_file
+    assoc.processor_job = processor_job
+    assoc.save()
+
+    send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)
+
+    processor_job = ProcessorJob()
+    processor_job.pipeline_applied = "TRANSCRIPTOME_INDEX_SHORT"
+    processor_job.save()
+
+    assoc = ProcessorJobOriginalFileAssociation()
+    assoc.original_file = original_file
+    assoc.processor_job = processor_job
+    assoc.save()
+    
+    send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)

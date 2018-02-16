@@ -24,6 +24,11 @@ class Command(BaseCommand):
             default="-1",
             help=("How many organisms to survey in this run. Omitting this argument or passing"
                   " -1 will survey all organisms in the division."))
+        parser.add_argument(
+            "organism_name",
+            nargs='?',
+            default="",
+            help=("Optional name of an organism to process"))
 
     def handle(self, *args, **options):
         if options["ensembl_division"] is None:
@@ -40,6 +45,11 @@ class Command(BaseCommand):
             key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
                                                key="number_of_organisms",
                                                value=options["number_of_organisms"])
+            key_value_pair.save()
+
+            key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                               key="organism_name",
+                                               value=options["organism_name"])
             key_value_pair.save()
 
             surveyor.run_job(survey_job)

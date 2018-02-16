@@ -188,6 +188,10 @@ class ComputationalResult(models.Model):
     system_version = models.CharField(max_length=255) 
     is_ccdl = models.BooleanField(default=True)
 
+    # Stats
+    time_start = models.DateTimeField(blank=True, null=True) 
+    time_end = models.DateTimeField(blank=True, null=True)
+
     # Common Properties
     is_public = models.BooleanField(default=False)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
@@ -197,6 +201,13 @@ class CompultationalResultAnnotation(models.Model):
 
     class Meta:
         db_table = "computational_result_annotations"
+
+    # Relations
+    result = models.ForeignKey(ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+
+    # Properties
+    key = models.CharField(max_length=255)
+    value = models.CharField(max_length=255)
 
 class Gene(models.Model):
 
@@ -209,8 +220,8 @@ class Index(models.Model):
         db_table = "index"
 
     organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
-    index_type = models.CharField(max_length=255) # XXX ex "TRANSCRIPTOME", ???
-    version = models.CharField(max_length=255) # XXX ???
+    index_type = models.CharField(max_length=255) # XXX ex "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT", ???
+    source_version = models.CharField(max_length=255) # Where do we get this from
     result = models.ForeignKey(ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
     # Common Properties

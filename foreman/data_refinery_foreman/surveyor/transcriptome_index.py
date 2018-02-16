@@ -207,53 +207,24 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         self._clean_metadata(species)
 
         all_new_files = []
-        for length in ("_long", "_short"):
-            fasta_file_name = url_builder.file_name_species + length + ".fa.gz"
 
-            original_file = OriginalFile()
-            original_file.source_filename = fasta_file_name
-            original_file.source_url = fasta_download_url
-            original_file.is_archive = True
-            original_file.is_downloaded = False
-            original_file.save()
-            all_new_files.append(original_file)
+        fasta_file_name = url_builder.file_name_species + ".fa.gz"
+        original_file = OriginalFile()
+        original_file.source_filename = fasta_file_name
+        original_file.source_url = fasta_download_url
+        original_file.is_archive = True
+        original_file.is_downloaded = False
+        original_file.save()
+        all_new_files.append(original_file)
 
-            # fasta_file = File(name=fasta_file_name,
-            #                   download_url=fasta_download_url,
-            #                   raw_format="fa.gz",
-            #                   processed_format="tar.gz",
-            #                   size_in_bytes=-1)  # Will have to be determined later
-
-            gtf_file_name = url_builder.file_name_species + length + ".gtf.gz"
-            # gtf_file = File(name=gtf_file_name,
-            #                 download_url=gtf_download_url,
-            #                 raw_format="gtf.gz",
-            #                 processed_format="tar.gz",
-            #                 size_in_bytes=-1)  # Will have to be determined later
-
-            # Add a couple extra key/value pairs to the Batch.
-            # XXX WHAT DO WITH THIS
-            species["length"] = length
-            species["kmer_size"] = "31" if length == "_long" else "23"
-
-            original_file = OriginalFile()
-            original_file.source_filename = gtf_file_name
-            original_file.source_url = gtf_download_url
-            original_file.is_archive = True
-            original_file.is_downloaded = False
-            original_file.save()
-            all_new_files.append(original_file)
-
-            # self.add_batch(platform_accession_code=platform_accession_code,
-            #                experiment_accession_code=url_builder.file_name_species.upper(),
-            #                organism_id=url_builder.taxonomy_id,
-            #                organism_name=url_builder.scientific_name,
-            #                experiment_title="NA",
-            #                release_date=current_time,
-            #                last_uploaded_date=current_time,
-            #                files=[fasta_file, gtf_file],
-            #                # Store the rest of the metadata about these!
-            #                key_values=species)
+        gtf_file_name = url_builder.file_name_species +  ".gtf.gz"
+        original_file = OriginalFile()
+        original_file.source_filename = gtf_file_name
+        original_file.source_url = gtf_download_url
+        original_file.is_archive = True
+        original_file.is_downloaded = False
+        original_file.save()
+        all_new_files.append(original_file)
 
         return all_new_files
 
@@ -318,51 +289,25 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             r = requests.get(DIVISION_URL_TEMPLATE.format(division=ensembl_division))
             specieses = r.json()
 
+        try:
+            organism_name = SurveyJobKeyValue.objects.get(survey_job_id=self.survey_job.id, key__exact="organism_name").value
+            organism_name = organism_name.lower().replace(' ', "_")
+        except SurveyJobKeyValue.DoesNotExist:
+            organism_name = None
+
+        for species in specieses:
+            if species['name'] == organism_name:
+                specieses = [species]
+                logger.info("Found species " + organism_name + " on Ensembl.")
+                break
+
         species_surveyed = 0
         all_new_species = []
         for species in specieses:
             if number_of_organisms != -1 and species_surveyed >= number_of_organisms:
                 break
 
-            import pdb
-            pdb.set_trace()
             all_new_species.append(self._generate_files(species))
             species_surveyed += 1
-
         
         return all_new_species
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

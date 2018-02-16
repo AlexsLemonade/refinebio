@@ -35,8 +35,10 @@ class Command(BaseCommand):
 
         if job_type is ProcessorPipeline.AFFY_TO_PCL:
             affy_to_pcl(options["job_id"])
-        elif job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX:
-            build_transcriptome_index(options["job_id"])
+        elif job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_SHORT:
+            build_transcriptome_index(options["job_id"], length="long")
+        elif job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_LONG:
+            build_transcriptome_index(options["job_id"], length="short")
         elif job_type is ProcessorPipeline.SALMON:
             salmon(options["job_id"])
         elif job_type is ProcessorPipeline.NO_OP:

@@ -95,7 +95,7 @@ def _process_gtf(job_context: Dict) -> Dict:
     "genes_to_transcripts_path" to job_context.
     """
 
-    work_dir = job_context["base_file_path"] + '/work/'
+    work_dir = os.path.join(job_context["base_file_path"], 'work', job_context['length'])
     os.makedirs(work_dir, exist_ok=True)
     job_context["work_dir"] = work_dir
     filtered_gtf_path = os.path.join(work_dir, "no_pseudogenes.gtf")
@@ -206,7 +206,7 @@ def _create_index(job_context: Dict) -> Dict:
 
     # To me, this looks quite ugly! However, I was told we got these values from
     # Rob Paltro, the author of Salmon.
-    if '_long' in job_context['base_file_path']:
+    if job_context['length'] is "long":
         job_context['kmer_size'] = "31"
     else:
         job_context['kmer_size'] = "23"
@@ -268,13 +268,13 @@ def _zip_index(job_context: Dict) -> Dict:
 
 def _populate_index_object(job_context: Dict) -> Dict:
     """ """
-    import pdb
-    pdb.set_trace()
 
     result = ComputationalResult()
     result.command_executed = job_context["salmon_formatted_command"] # No op!
     result.is_ccdl = True
     result.system_version = __version__
+    result.time_start = job_context["time_start"]
+    result.time_end = job_context["time_end"]
     result.save()
 
     computed_file = ComputedFile()
@@ -291,7 +291,7 @@ def _populate_index_object(job_context: Dict) -> Dict:
     index_object = Index()
     index_object.organism = organism_object
     index_object.version = "XXX" # XXX: I don't know how this is tracked
-    index_object.index_type = "TRANSCRIPTOME"
+    index_object.index_type = "TRANSCRIPTOME_" + job_context['length'].upper()
     index_object.result = result
     index_object.save()
 
@@ -301,7 +301,7 @@ def _populate_index_object(job_context: Dict) -> Dict:
 
     return job_context
 
-def build_transcriptome_index(job_id: int) -> None:
+def build_transcriptome_index(job_id: int, length="long") -> None:
     """The main function for the Transcriptome Index Processor.
 
     The steps in this process are as follows:
@@ -312,7 +312,7 @@ def build_transcriptome_index(job_id: int) -> None:
     The output of salmon index is a directory which is pushed in full
     to Permanent Storage.
     """
-    utils.run_pipeline({"job_id": job_id},
+    utils.run_pipeline({"job_id": job_id, "length": length},
                        [utils.start_job,
                         _set_job_prefix,
                         _prepare_files,

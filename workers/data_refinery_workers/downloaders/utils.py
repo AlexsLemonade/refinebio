@@ -173,13 +173,9 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile])
     for original_file in original_files:
 
         if original_file.sample:
-            experiment = ExperimentSampleAssociation.objects.filter(sample=sample)[0].experiment
-        else:
-            experiment = None
+            experiment = ExperimentSampleAssociation.objects.filter(sample=original_file.sample)[0].experiment
 
-        if not experiment:
-            processor_job.pipeline_applied = "TRANSCRIPTOME_INDEX"
-        elif experiment.source_database == "ARRAY_EXPRESS":
+        if experiment.source_database == "ARRAY_EXPRESS":
             if not original_file.has_raw:
                 processor_job.pipeline_applied = ProcessorPipeline.NO_OP
             else:
