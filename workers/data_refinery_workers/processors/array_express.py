@@ -134,9 +134,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
         logger.exception("Exception caught while moving file %s",
                          raw_path,
                          processor_job=job_context["job_id"],
-                         batch=file.batch.id)
-
-        failure_reason = "Exception caught while moving file {}".format(file.name)
+                         )
+        failure_reason = "Exception caught while moving file"
         job_context["job"].failure_reason = failure_reason
         job_context["success"] = False
         return job_context        

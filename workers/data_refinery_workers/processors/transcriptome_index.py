@@ -4,11 +4,15 @@ import subprocess
 import tarfile
 import gzip
 import shutil
+
 from typing import Dict
-from data_refinery_common.models import File, BatchKeyValue
+from django.utils import timezone
+
+from data_refinery_common.models import File, BatchKeyValue, Organism
+from data_refinery_common.models.new_models import OriginalFile, ComputationalResult, ComputedFile, Index
+from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 from data_refinery_common.logging import get_and_configure_logger
-
 
 logger = get_and_configure_logger(__name__)
 
@@ -67,6 +71,8 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["fasta_file_path"] = gzipped_fasta_file_path.replace(".gz", "")
     job_context["gtf_file_path"] = gzipped_gtf_file_path.replace(".gz", "")
     job_context["base_file_path"] = '/'.join(job_context["gtf_file_path"].split('/')[:-1])
+    job_context['organism_with_size'] = '_'.join(job_context["base_file_path"].split('/')[-1].split("_"))
+    job_context["organism_name"] = '_'.join(job_context["base_file_path"].split('/')[-1].split("_")[:-1])
 
     with gzip.open(gzipped_fasta_file_path, "rb") as gzipped_file, \
             open(job_context["fasta_file_path"], "wb") as gunzipped_file:
@@ -198,25 +204,26 @@ def _create_index(job_context: Dict) -> Dict:
     salmon_command_string = ("salmon --no-version-check index -t {rsem_transcripts}"
                              " -i {index_dir} --type quasi -k {kmer_size}")
 
-    import pdb
-    pdb.set_trace()
-    # XXX Hardcore KMER values rather than shuttling!
-    # XXX TODO: create INDEX for computed output of this stuff
-
-    kmer_size_property = BatchKeyValue.objects.get(batch_id=job_context["batches"][0].id,
-                                                   key="kmer_size")
+    # To me, this looks quite ugly! However, I was told we got these values from
+    # Rob Paltro, the author of Salmon.
+    if '_long' in job_context['base_file_path']:
+        job_context['kmer_size'] = "31"
+    else:
+        job_context['kmer_size'] = "23"
 
     # rsem-prepare-reference outputs a transcripts.fa file which needs
     # to be passed into salmon.
     rsem_transcripts = rsem_prefix + ".transcripts.fa"
-    salmon_formatted_command = salmon_command_string.format(
+    job_context["salmon_formatted_command"] = salmon_command_string.format(
         rsem_transcripts=rsem_transcripts,
         index_dir=job_context["output_dir"],
-        kmer_size=kmer_size_property.value)
+        kmer_size=job_context['kmer_size'])
 
-    salmon_completed_command = subprocess.run(salmon_formatted_command.split(),
+    job_context['time_start'] = timezone.now()
+    salmon_completed_command = subprocess.run(job_context["salmon_formatted_command"].split(),
                                               stdout=subprocess.PIPE,
                                               stderr=subprocess.PIPE)
+    job_context['time_end'] = timezone.now()
 
     if salmon_completed_command.returncode != 0:
         stderr = str(salmon_completed_command.stderr)
@@ -233,28 +240,66 @@ def _zip_index(job_context: Dict) -> Dict:
     only be a single file along with compressing the size of the file
     during storage.
     """
-    temp_post_path = job_context["gtf_file"].get_temp_post_path(job_context["job_dir_prefix"])
+
+    stamp = str(timezone.now().timestamp()).split('.')[0]
+    job_context["computed_archive"] = job_context['base_file_path'] + '/' + job_context['organism_with_size'] + "_" + stamp + '.tar.gz'
+
     try:
-        with tarfile.open(temp_post_path, "w:gz") as tar:
+        with tarfile.open(job_context["computed_archive"], "w:gz") as tar:
             tar.add(job_context["output_dir"],
                     arcname=os.path.basename(job_context["output_dir"]))
     except:
         logger.exception("Exception caught while zipping index directory %s",
                          temp_post_path,
-                         processor_job=job_context["job_id"],
-                         batch=job_context["batches"][0].id)
-
-        job_context["gtf_file"].remove_temp_directory(job_context["job_dir_prefix"])
-
+                         processor_job=job_context["job_id"]
+                         )
         failure_template = "Exception caught while zipping index directory {}"
         job_context["job"].failure_reason = failure_template.format(temp_post_path)
         job_context["success"] = False
+        try:
+            os.remove(job_context["computed_archive"])
+        except Exception:
+            pass
         return job_context
 
-    job_context["files_to_upload"] = [job_context["gtf_file"]]
+    job_context["files_to_upload"] = [job_context["computed_archive"]]
     job_context["success"] = True
     return job_context
 
+def _populate_index_object(job_context: Dict) -> Dict:
+    """ """
+    import pdb
+    pdb.set_trace()
+
+    result = ComputationalResult()
+    result.command_executed = job_context["salmon_formatted_command"] # No op!
+    result.is_ccdl = True
+    result.system_version = __version__
+    result.save()
+
+    computed_file = ComputedFile()
+    computed_file.absolute_file_path = job_context["computed_archive"]
+    computed_file.filename = os.path.split(job_context["computed_archive"])[1]
+    computed_file.calculate_sha1()
+    computed_file.calculate_size()
+    computed_file.result = result
+    #computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
+    # TODO here: delete local file after S3 sync
+    computed_file.save()
+
+    organism_object = Organism.get_object_for_name(job_context['organism_name'])
+    index_object = Index()
+    index_object.organism = organism_object
+    index_object.version = "XXX" # XXX: I don't know how this is tracked
+    index_object.index_type = "TRANSCRIPTOME"
+    index_object.result = result
+    index_object.save()
+
+    job_context['result'] = result
+    job_context['computed_file'] = computed_file
+    job_context['index'] = index_object
+
+    return job_context
 
 def build_transcriptome_index(job_id: int) -> None:
     """The main function for the Transcriptome Index Processor.
@@ -274,6 +319,7 @@ def build_transcriptome_index(job_id: int) -> None:
                         _process_gtf,
                         _create_index,
                         _zip_index,
-                        utils.upload_processed_files,
-                        utils.cleanup_raw_files,
+                        _populate_index_object,
+                        #utils.upload_processed_files,
+                        #utils.cleanup_raw_files,
                         utils.end_job])

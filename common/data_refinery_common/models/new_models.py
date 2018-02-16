@@ -203,6 +203,21 @@ class Gene(models.Model):
     class Meta:
         db_table = "genes"
 
+class Index(models.Model):
+
+    class Meta:
+        db_table = "index"
+
+    organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
+    index_type = models.CharField(max_length=255) # XXX ex "TRANSCRIPTOME", ???
+    version = models.CharField(max_length=255) # XXX ???
+    result = models.ForeignKey(ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+
+    # Common Properties
+    is_public = models.BooleanField(default=True)
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now) 
+
 """
 # Files
 
