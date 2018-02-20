@@ -1,21 +1,34 @@
 from __future__ import absolute_import, unicode_literals
-import os
+
+import io
+import json
 import gzip
+import os
 import subprocess
 import tarfile
+
+from django.utils import timezone
 from typing import Dict
+
+import rpy2.robjects as ro
+from rpy2.rinterface import RRuntimeError
+
 from data_refinery_workers.processors import utils
 from data_refinery_common.job_lookup import Downloaders
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import BatchStatuses, BatchKeyValue
 from data_refinery_common.models.new_models import Index, ComputationalResult, ComputedFile
-from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.utils import get_env_variable
+from data_refinery_workers._version import __version__
 
 
 logger = get_and_configure_logger(__name__)
 JOB_DIR_PREFIX = "processor_job_"
+SKIP_PROCESSED = get_env_variable("SKIP_PROCESSED", True)
 
 
 def _set_job_prefix(job_context: Dict) -> Dict:
+    """ """
     job_context["job_dir_prefix"] = JOB_DIR_PREFIX + str(job_context["job_id"])
     return job_context
 
@@ -30,6 +43,8 @@ def _prepare_files(job_context: Dict) -> Dict:
     """
     # Salmon processor jobs have only one batch per job, but may have
     # up to two files per batch.
+    logger.info("Preparing files..")
+
     original_files = job_context["original_files"]
 
     
@@ -93,9 +108,28 @@ def _determine_index_length(job_context: Dict) -> Dict:
     appropriate. For more information on index length see the
     _create_index function of the transcriptome_index processor.
     """
+    logger.info("Determining index length..")
     total_base_pairs = 0
     number_of_reads = 0
     counter = 1
+
+    ### TODO: This process is really slow!
+    ### I bet there is a faster way of doing this, maybe by
+    ### shelling and using UNIX! 
+    ### $ cat file.fastq | echo $((`wc -l`/4))
+    ### We may also be able to use io.BufferedReader to improve gzip speed
+    input_file = gzip.open(job_context["input_file_path"], "rt")
+    # buffered_input = io.BufferedReader(input_file)
+    # for line in buffered_input.readlines():
+    #     # In the FASTQ file format, there are 4 lines for each
+    #     # read. Three of these contain metadata about the
+    #     # read. The string representing the read itself is found
+    #     # on the second line of each quartet.
+    #     if counter % 4 == 2:
+    #         total_base_pairs += len(line.replace("\n", ""))
+    #         number_of_reads += 1
+
+    #     counter += 1
 
     with gzip.open(job_context["input_file_path"], "rt") as input_file:
         for line in input_file:
@@ -138,12 +172,12 @@ def _download_index(job_context: Dict) -> Dict:
     this function retrieves the correct index for the organism and
     read length from Permanent Storage.
     """
-
+    logger.info("Downloading index..")
 
     index_object = Index.objects.filter(organism=job_context['organism'], index_type="TRANSCRIPTOME_" + job_context["index_length"].upper()).order_by('created_at')[0]
     result = index_object.result
     files = ComputedFile.objects.filter(result=result)
-    job_context["index_directory"] = ''.join(files[0].absolute_file_path.split('/')[:-1])
+    job_context["index_directory"] = '/'.join(files[0].absolute_file_path.split('/')[:-1]) + '/index'
     
     with tarfile.open(files[0].absolute_file_path, "r:gz") as tarball:
         tarball.extractall(job_context["index_directory"])
@@ -266,41 +300,59 @@ def _zip_and_upload(job_context: Dict) -> Dict:
     return job_context
 
 
-def _run_salmon(job_context: Dict) -> Dict:
-    second_read_str = ""
-    if "input_file_path_2" in job_context:
-        second_read_str = " -2 {}".format(job_context["input_file_path_2"])
+def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
+    """ """
+    logger.info("Running Salmon..")
+    
+    skip = False
+    if skip_processed and os.path.exists(os.path.join(job_context['output_directory'] + 'quant.sf')):
+        logger.info("Skipping pre-processed Salmon run!")
+        skip = True
+        ##return job_context
 
-    command_str = ("salmon --no-version-check quant -l A -i {index}"
-                   " -1 {input_one}{second_read_str}"
-                   " -p 20 -o {output_dir} --seqBias --gcBias --dumpEq --writeUnmappedNames")
-    formatted_command = command_str.format(index=job_context["index_directory"],
-                                           input_one=job_context["input_file_path"],
-                                           second_read_str=second_read_str,
-                                           output_dir=job_context["output_directory"])
-    logger.info("Running Salmon Quant using the following shell command: %s",
-                formatted_command,
-                processor_job=job_context["job_id"],
-                batch=job_context["batches"][0])
+    if not skip:
+        # Salmon needs to be run differently for different sample types.
+        if "input_file_path_2" in job_context:
+            second_read_str = " -2 {}".format(job_context["input_file_path_2"])
+            command_str = ("salmon --no-version-check quant -l A -i {index}"
+                           " -1 {input_one}{second_read_str}"
+                           " -p 20 -o {output_directory} --seqBias --gcBias --dumpEq --writeUnmappedNames")
+            formatted_command = command_str.format(index=job_context["index_directory"],
+                        input_one=job_context["input_file_path"],
+                        second_read_str=second_read_str,
+                        output_directory=job_context["output_directory"])
+        else:
+            command_str = ("salmon --no-version-check quant -l A -i {index}"
+                   " -r {input_one}"
+                   " -p 20 -o {output_directory} --seqBias --dumpEq --writeUnmappedNames")
+            formatted_command = command_str.format(index=job_context["index_directory"],
+                        input_one=job_context["input_file_path"],
+                        output_directory=job_context["output_directory"])
 
-    completed_command = subprocess.run(formatted_command.split(),
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
+        logger.info("Running Salmon Quant using the following shell command: %s",
+                    formatted_command,
+                    processor_job=job_context["job_id"])
+
+        job_context['time_start'] = timezone.now()
+        completed_command = subprocess.run(formatted_command.split(),
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE)
+        job_context['time_end'] = timezone.now()
 
     ## To me, this looks broken: error codes are anything non-zero.
     ## However, Salmon (seems) to output with negative status codes
     ## even with succesful executions.
     ## Possibly related: https://github.com/COMBINE-lab/salmon/issues/55
-    if completed_command.returncode == 1:
+    if not skip and completed_command.returncode == 1:
+
         stderr = str(completed_command.stderr)
         error_start = stderr.find("Error:")
         error_start = error_start if error_start != -1 else 0
         logger.error("Shell call to salmon failed with error message: %s",
                      stderr[error_start:],
-                     processor_job=job_context["job_id"],
-                     batch=job_context["batches"][0])
+                     processor_job=job_context["job_id"])
 
-        job_context["batches"][0].files[0].remove_temp_directory(job_context["job_dir_prefix"])
+        #job_context["batches"][0].files[0].remove_temp_directory(job_context["job_dir_prefix"])
 
         # The failure_reason column is only 256 characters wide.
         error_end = error_start + 200
@@ -308,10 +360,72 @@ def _run_salmon(job_context: Dict) -> Dict:
                                              + stderr[error_start:error_end])
         job_context["success"] = False
     else:
+
+        import pdb
+        pdb.set_trace()
+
+        result = ComputationalResult()
+        result.command_executed = formatted_command
+        result.system_version = __version__
+        result.time_start = job_context['time_start']
+        result.time_end = job_context['time_end']
+        version_subprocess = subprocess.run(['salmon', '--version'],
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE)
+        result.program_version = version_subprocess.stdout.strip()
+        result.is_ccdl = True
+        result.save()
+
+        # Okay, I actually want to replace this with 
+        # https://docs.djangoproject.com/en/2.0/ref/contrib/postgres/fields/#django.contrib.postgres.fields.HStoreField
+        # https://www.postgresql.org/docs/9.6/static/hstore.html
+        with open(os.path.join(job_context['output_directory'], 'lib_format_counts.json')) as lfc_file:
+            format_count_data = json.loads(lfc_file)
+            for key in format_count_data.keys():
+                kv = CompultationalResultAnnotation()
+                kv.key = key
+                kv.value = format_count_data[key]
+                kv.result = result.save()
+                kv.save
+        with open(os.path.join(job_context['output_directory'], 'aux_info', 'meta_info.json')) as mi_file:
+            meta_info = json.loads(mi_file)
+            for key in meta_info.keys():
+                kv = CompultationalResultAnnotation()
+                kv.key = key
+                kv.value = meta_info[key]
+                kv.result = result.save()
+                kv.save
+
+        job_context["result"] = result
         job_context["success"] = True
 
     return job_context
 
+def _run_tximport(job_context: Dict) -> Dict:
+    """ Runs the `tximport` R package to find genes. 
+    
+    For an R code example of tximport usage, see: 
+    https://github.com/jaclyn-taroni/ref-txome/blob/79e2f64ffe6a71c5103a150bd3159efb784cddeb/4-athaliana_tximport.R
+
+    Related: https://github.com/data-refinery/data-refinery/issues/82
+
+    """
+
+    try:
+        tx_out = ro.r['::']('tximport', 'tximport')(job_context['output_directory'] + 'quant.sf', type="salmon", txOut=True)
+    except RRuntimeError as e:
+        # XXX: TODO: This doesn't work yet.
+        return job_context
+
+    return job_context
+
+def _run_salmontools(job_context: Dict) -> Dict:
+    """ Run Salmontools to extract unmapped genes. 
+
+    Related: https://github.com/data-refinery/data-refinery/issues/83
+    """
+    # XXX: TODO
+    return job_context
 
 def salmon(job_id: int) -> None:
     """Main processor function for the Salmon Processor.
@@ -326,6 +440,8 @@ def salmon(job_id: int) -> None:
                         _determine_index_length,
                         _download_index,
                         _run_salmon,
+                        _run_salmontools,
+                        _run_tximport,
                         _zip_and_upload,
                         utils.cleanup_raw_files,
                         utils.end_job])

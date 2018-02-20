@@ -52,6 +52,9 @@ Instructions for installing Docker, Nomad, and Homebrew can be found by
 following the link for those services. The last three on that list can
 be installed by running: `brew install iproute2mac git-crypt`.
 
+Many of the computational processes running are very memory intensive. You will need
+to [raise the amount of virtual memory available to Docker](https://docs.docker.com/docker-for-mac/#advanced) from the default of 2GB to 12GB or 24GB, if possible. 
+
 #### Virtual Environment
 
 Run `./create_virtualenv.sh` to set up the virtualenv. It will activate the `dr_env`

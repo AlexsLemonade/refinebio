@@ -185,7 +185,8 @@ class ComputationalResult(models.Model):
         return "ComputationalResult: " + str(self.pk)
 
     command_executed = models.CharField(max_length=255, blank=True)
-    system_version = models.CharField(max_length=255) 
+    program_version = models.CharField(max_length=255) # Define in settings!
+    system_version = models.CharField(max_length=255) # Generally defined in from data_refinery_workers._version import __version__
     is_ccdl = models.BooleanField(default=True)
 
     # Stats
@@ -386,6 +387,9 @@ class ProcessorJobOriginalFileAssociation(models.Model):
         db_table = "processorjob_originalfile_associations"
 
 class SampleResultAssociation(models.Model):
+
+    sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
+    result = models.ForeignKey(ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "sample_result_associations"

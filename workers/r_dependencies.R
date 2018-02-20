@@ -22,6 +22,7 @@ bioconductor.packages <- c(
   'preprocessCore',
   'genefilter',
   'sva',
+  'tximport',
   'org.Hs.eg.db',
   'org.Mm.eg.db',
   'org.Dm.eg.db',
