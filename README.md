@@ -1,3 +1,32 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Data Refinery *](#data-refinery-)
+  - [Development](#development)
+    - [Git Workflow](#git-workflow)
+    - [Installation](#installation)
+      - [Linux](#linux)
+      - [Mac](#mac)
+      - [Virtual Environment](#virtual-environment)
+    - [Common Dependecies](#common-dependecies)
+    - [Services](#services)
+      - [Nomad](#nomad)
+      - [Postgres](#postgres)
+    - [Running Locally](#running-locally)
+      - [Surveyor Jobs](#surveyor-jobs)
+      - [Downloader Jobs](#downloader-jobs)
+      - [Processor Jobs](#processor-jobs)
+      - [Checking on Local Jobs](#checking-on-local-jobs)
+    - [Testing](#testing)
+    - [Production Deployment](#production-deployment)
+    - [Development Helpers](#development-helpers)
+    - [Style](#style)
+  - [Support](#support)
+  - [License](#license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Data Refinery [![Build Status](https://circleci.com/gh/data-refinery/data-refinery/tree/dev.svg?&style=shield)](https://circleci.com/gh/data-refinery/data-refinery/)
 
 <!-- This section needs to be drastically improved -->
@@ -10,9 +39,9 @@ The Data Refinery currently has four sub-projects contained within this repo:
 - [workers](./workers) Runs Downloader and Processor jobs.
 - [terraform](./terraform) Manages infrastructure for the Data Refinery.
 
-## 1. Development
+## Development
 
-### 1.1 Git Workflow
+### Git Workflow
 
 `data-refinery` uses a
 [feature branch](http://nvie.com/posts/a-successful-git-branching-model/)
@@ -21,7 +50,7 @@ pull requests should be sent to the `dev` branch for code review. Merges into
 `master` happen at the end of sprints, and tags in `master` correspond to
 production releases.
 
-### 1.2 Installation
+### Installation
 
 To run the Data Refinery locally, you will need to have the
 prerequisites installed onto your local machine. This will vary depending on
@@ -30,7 +59,7 @@ have been tested on Ubuntu 16.04 or later, but other Linux distributions
 _should_ be able to run the necessary services. Microsoft Windows is currently
 unsupported by this project.
 
-#### 1.2.1 Linux
+#### Linux
 
 The following services will need to be installed:
 - [Python3 and Pip]: `sudo apt-get -y install python3-pip`
@@ -45,7 +74,7 @@ Instructions for installing Docker and Nomad can be found by
 following the link for each service. git-crypt can be installed via
 `sudo apt-get install git-crypt`.
 
-#### 1.2.2 Mac
+#### Mac
 
 The following services will need to be installed:
 - [Docker for Mac](https://www.docker.com/docker-mac)
@@ -58,7 +87,7 @@ Instructions for installing Docker, Nomad, and Homebrew can be found by
 following the link for those services. The last three on that list can
 be installed by running: `brew install iproute2mac git-crypt`.
 
-#### 1.2.3 Virtual Environment
+#### Virtual Environment
 
 Run `./create_virtualenv.sh` to set up the virtualenv. It will activate the `dr_env`
 for you the first time. This virtualenv is valid for the entire `data_refinery`
@@ -66,7 +95,7 @@ repo. Sub-projects each have their own virtualenvs which are managed by their
 containers. When returning to this project you should run
 `source dr_env/bin/activate` to reactivate the virtualenv.
 
-### 1.3 Common Dependecies
+### Common Dependecies
 
 The [common](./common) sub-project contains common code which is
 depended upon by the other sub-projects. So before anything else you
@@ -77,13 +106,13 @@ command:
 (cd common && python setup.py sdist)
 ```
 
-### 1.4 Services
+### Services
 
 `data-refinery` also depends on Postgres and Nomad. Postgres can be
 run in a local Docker container, but Nomad must be run on your
 development machine.
 
-#### 1.4.1 Nomad
+#### Nomad
 
 Similarly, you will need to run a local
 [Nomad](https://www.nomadproject.io/) service in development
@@ -101,7 +130,7 @@ Nomad is an orchestration tool which the Data Refinery uses to run
 the Nomad agent, which will then launch a Docker container which runs
 the job.
 
-#### 1.4.2 Postgres
+#### Postgres
 
 To start a local Postgres server in a Docker container, use:
 
@@ -127,13 +156,13 @@ If you need to access a `psql` shell for inspecting the database, you can use:
 ./run_psql_shell.sh
 ```
 
-### 1.5 Running Locally
+### Running Locally
 
 Once you've built the `common/dist` directory and have
 the Nomad and Postgres services running, you're ready to run
 jobs. There are three kinds of jobs within the Data Refinery.
 
-#### 1.5.1 Surveyor Jobs
+#### Surveyor Jobs
 
 Surveyor Jobs discover samples to download/process along with
 recording metadata about the samples. A Surveyor Job should queue
@@ -193,7 +222,7 @@ Example:
 ./foreman/run_surveyor.sh survey_transcriptome Ensembl 1
 ```
 
-#### 1.5.2 Downloader Jobs
+#### Downloader Jobs
 
 Downloader Jobs will be queued automatically when `Surveyor Jobs`
 discover new samples. However, if you just want to queue a `Downloader Job`
@@ -204,7 +233,7 @@ without running the `Surveyor`, the following command will queue a
 ./workers/tester.sh queue_downloader
 ```
 
-#### 1.5.3 Processor Jobs
+#### Processor Jobs
 
 Processor Jobs will be queued automatically by successful `Downloader Jobs`.
 However, if you just want to run a `Processor Job` without first running
@@ -220,7 +249,7 @@ Examples:
 ./workers/tester.sh queue_processor TRANSCRIPTOME_INDEX
 ```
 
-#### 1.5.4 Checking on Local Jobs
+#### Checking on Local Jobs
 
 _Note:_ The following instructions assume you have set the
 environment variable $HOST_IP to the IP address of your
@@ -283,7 +312,7 @@ nomad logs -verbose -address http://$HOST_IP:4646 b30e4edd
 This command will output both the stderr and stdout logs from the container
 which ran that allocation. The allocation is really a Data Refinery job.
 
-### 1.6 Testing
+### Testing
 
 To run the entire test suite:
 
@@ -293,11 +322,11 @@ To run the entire test suite:
 
 These tests will also be run continuosly for each commit via CircleCI.
 
-### 1.7 Production Deployment
+### Production Deployment
 
 _TODO_
 
-### 1.8 Development Helpers
+### Development Helpers
 
 It can be useful to have an interactive Python interpreter running within the
 context of the Docker container. The `run_shell.sh` script has been provided
@@ -308,7 +337,7 @@ have all the environment variables, dependencies, and Django configurations
 for the Foreman project. There are instructions within the script describing
 how to change this to another project.
 
-### 1.9 Style
+### Style
 
 R files in this repo follow
 [Google's R Style Guide](https://google.github.io/styleguide/Rguide.xml).
@@ -322,13 +351,13 @@ linter within the project's directory tree, it will enforce a line length limit
 of 100 instead of 80. This will also be true for editors which rely on either
 linter.
 
-## 2. Support
+## Support
 
 `data-refinery` is supported by
 [Alex's Lemonade Stand Foundation](https://www.alexslemonade.org/),
 with some initial development supported by the Gordon and Betty Moore
 Foundation via GBMF 4552 to Casey Greene.
 
-## 3. License
+## License
 
 BSD 3-Clause License.
