@@ -30,7 +30,3 @@ class Downloaders(Enum):
     ARRAY_EXPRESS = "ARRAY_EXPRESS"
     SRA = "SRA"
     TRANSCRIPTOME_INDEX = "TRANSCRIPTOME_INDEX"
-
-salmon --no-version-check quant -l A -i /home/user/data_store/Gallus_gallus_long/index -1 /home/user/data_store/DRX001563/DRR002116.fastq.gz -p 20 -o /home/user/data_store/DRX001563/proccessed/ --seqBias --gcBias --dumpEq --writeUnmappedNames
-
-salmon --no-version-check quant -l A -i /home/user/data_store/Gallus_gallus_long/index -r /home/user/data_store/DRX001563/DRR002116.fastq.gz -p 20 -o /home/user/data_store/DRX001563/proccessed/ --seqBias --gcBias --dumpEq --writeUnmappedNames

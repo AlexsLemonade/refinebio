@@ -4,73 +4,14 @@ import os
 import pytz
 
 from datetime import datetime
+from functools import partial
+
+from django.contrib.postgres.fields import HStoreField
 from django.db import transaction
 from django.db import models
 from django.utils import timezone
-from functools import partial
 
 from data_refinery_common.models.organism import Organism
-
-"""
-# Miscellaneous
-
-Everything that's left over.
-
-"""
-
-# class Organism(models.Model):
-#     """Provides a lookup between organism name and taxonomy ids.
-
-#     Should only be used via the two class methods get_name_for_id and
-#     get_id_for_name. These methods will populate the database table
-#     with any missing values by accessing the NCBI API.
-#     """
-
-#     taxonomy_id = models.IntegerField()
-#     name = models.CharField(max_length=256)
-#     is_scientific_name = models.BooleanField(default=False)
-
-#     # @classmethod
-#     # def get_name_for_id(cls, taxonomy_id: int) -> str:
-#     #     try:
-#     #         organism = (cls.objects
-#     #                     .filter(taxonomy_id=taxonomy_id)
-#     #                     .order_by("-is_scientific_name")
-#     #                     [0])
-#     #     except IndexError:
-#     #         name = get_scientific_name(taxonomy_id).upper()
-#     #         organism = Organism(name=name,
-#     #                             taxonomy_id=taxonomy_id,
-#     #                             is_scientific_name=True)
-#     #         organism.save()
-#     #
-#     #     return organism.name
-#     #
-#     # @classmethod
-#     # def get_id_for_name(cls, name: str) -> id:
-#     #     name = name.upper()
-#     #     try:
-#     #         organism = (cls.objects
-#     #                     .filter(name=name)
-#     #                     [0])
-#     #     except IndexError:
-#     #         is_scientific_name = False
-#     #         try:
-#     #             taxonomy_id = get_taxonomy_id_scientific(name)
-#     #             is_scientific_name = True
-#     #         except UnscientificNameError:
-#     #             taxonomy_id = get_taxonomy_id(name)
-#     #
-#     #         organism = Organism(name=name,
-#     #                             taxonomy_id=taxonomy_id,
-#     #                             is_scientific_name=is_scientific_name)
-#     #         organism.save()
-#     #
-#     #     return organism.taxonomy_id
-
-#     class Meta:
-#         db_table = "organisms"
-
 """
 # First Order Classes
 
@@ -207,8 +148,14 @@ class CompultationalResultAnnotation(models.Model):
     result = models.ForeignKey(ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
     # Properties
-    key = models.CharField(max_length=255)
-    value = models.CharField(max_length=255)
+    data = HStoreField(default={})
+    # key = models.CharField(max_length=255)
+    # value = models.CharField(max_length=255)
+
+    # Common Properties
+    is_public = models.BooleanField(default=False)
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now) 
 
 class Gene(models.Model):
 

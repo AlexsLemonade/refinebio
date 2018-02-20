@@ -128,7 +128,7 @@ def download_sra(job_id: int) -> None:
 
     utils.end_downloader_job(job, success)
     if success:
-        utils.create_processor_jobs_for_original_files(downloaded_files)
+        utils.create_processor_job_for_original_files(downloaded_files)
 
     #         target_file_path = file.get_temp_pre_path(job_dir)
     #         success = _download_file(file, job, target_file_path)

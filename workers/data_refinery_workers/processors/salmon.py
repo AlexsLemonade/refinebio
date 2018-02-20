@@ -17,13 +17,14 @@ from data_refinery_workers.processors import utils
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import BatchStatuses, BatchKeyValue
-from data_refinery_common.models.new_models import Index, ComputationalResult, ComputedFile
+from data_refinery_common.models.new_models import Index, ComputationalResult, CompultationalResultAnnotation, ComputedFile
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
 
 
 logger = get_and_configure_logger(__name__)
 JOB_DIR_PREFIX = "processor_job_"
+S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 SKIP_PROCESSED = get_env_variable("SKIP_PROCESSED", True)
 
 
@@ -58,7 +59,10 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     # Salmon outputs an entire directory of files, so create a temp`
     # directory to output it to until we can zip it to
-    job_context["output_directory"] = '/'.join(original_files[0].absolute_file_path.split('/')[:-1]) + '/proccessed/'
+    job_context["output_directory"] = '/'.join(original_files[0].absolute_file_path.split('/')[:-1]) + '/processed/'
+    os.makedirs(job_context["output_directory"], exist_ok=True)
+
+    job_context["output_archive"] = '/'.join(original_files[0].absolute_file_path.split('/')[:-1]) + '/result-' + str(timezone.now().timestamp()).split('.')[0] +  '.tar.gz'
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
     # for file in files:
@@ -257,44 +261,30 @@ def _zip_and_upload(job_context: Dict) -> Dict:
     # objects to represent processed files. Once that is fixed this
     # should simply use the processed file instead of one of the input
     # files.
-    first_file = None
-    for file in job_context["batches"][0].files:
-        if file.name.find("_1."):
-            first_file = file
 
-    # If there is only a single read, just use that one.
-    if first_file is None:
-        first_file = job_context["batches"][0].files[0]
-
-    processed_path = first_file.get_temp_post_path(job_context["job_dir_prefix"])
     try:
-        with tarfile.open(processed_path, "w:gz") as tar:
+        with tarfile.open(job_context['output_archive'], "w:gz") as tar:
             tar.add(job_context["output_directory"], arcname=os.sep)
     except Exception:
         logger.exception("Exception caught while zipping processed directory %s",
                          job_context["output_directory"],
-                         processor_job=job_context["job_id"],
-                         batch=first_file.batch.id)
-
-        first_file.remove_temp_directory(job_context["job_dir_prefix"])
+                         processor_job=job_context["job_id"]
+                        )
         failure_template = "Exception caught while zipping processed directory {}"
         job_context["job"].failure_reason = failure_template.format(first_file.name)
         job_context["success"] = False
         return job_context
 
-    try:
-        first_file.upload_processed_file(job_context["job_dir_prefix"])
-    except Exception:
-        logger.exception("Exception caught while uploading processed file %s",
-                         processed_path,
-                         processor_job=job_context["job_id"],
-                         batch=first_file.batch.id)
-
-        first_file.remove_temp_directory()
-        failure_template = "Exception caught while uploading processed file {}"
-        job_context["job"].failure_reason = failure_template.format(processed_path)
-        job_context["success"] = False
-        return job_context
+    computed_file = ComputedFile()
+    computed_file.absolute_file_path = job_context["output_archive"]
+    computed_file.file_name = os.path.split(job_context["output_archive"])[-1]
+    computed_file.calculate_sha1()
+    computed_file.calculate_size()
+    computed_file.is_public = True
+    computed_file.result = job_context['result']
+    computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.file_name)
+    # TODO here: delete local file after S3 sync
+    computed_file.save()
 
     job_context["success"] = True
     return job_context
@@ -310,34 +300,35 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         skip = True
         ##return job_context
 
+    # Salmon needs to be run differently for different sample types.
+    if "input_file_path_2" in job_context:
+        second_read_str = " -2 {}".format(job_context["input_file_path_2"])
+        command_str = ("salmon --no-version-check quant -l A -i {index}"
+                       " -1 {input_one}{second_read_str}"
+                       " -p 20 -o {output_directory} --seqBias --gcBias --dumpEq --writeUnmappedNames")
+        formatted_command = command_str.format(index=job_context["index_directory"],
+                    input_one=job_context["input_file_path"],
+                    second_read_str=second_read_str,
+                    output_directory=job_context["output_directory"])
+    else:
+        # Related: https://github.com/COMBINE-lab/salmon/issues/83
+        command_str = ("salmon --no-version-check quant -l A -i {index}"
+               " -r {input_one}"
+               " -p 20 -o {output_directory} --seqBias --dumpEq --writeUnmappedNames")
+        formatted_command = command_str.format(index=job_context["index_directory"],
+                    input_one=job_context["input_file_path"],
+                    output_directory=job_context["output_directory"])
+
+    logger.info("Running Salmon Quant using the following shell command: %s",
+                formatted_command,
+                processor_job=job_context["job_id"])
+
+    job_context['time_start'] = timezone.now()
     if not skip:
-        # Salmon needs to be run differently for different sample types.
-        if "input_file_path_2" in job_context:
-            second_read_str = " -2 {}".format(job_context["input_file_path_2"])
-            command_str = ("salmon --no-version-check quant -l A -i {index}"
-                           " -1 {input_one}{second_read_str}"
-                           " -p 20 -o {output_directory} --seqBias --gcBias --dumpEq --writeUnmappedNames")
-            formatted_command = command_str.format(index=job_context["index_directory"],
-                        input_one=job_context["input_file_path"],
-                        second_read_str=second_read_str,
-                        output_directory=job_context["output_directory"])
-        else:
-            command_str = ("salmon --no-version-check quant -l A -i {index}"
-                   " -r {input_one}"
-                   " -p 20 -o {output_directory} --seqBias --dumpEq --writeUnmappedNames")
-            formatted_command = command_str.format(index=job_context["index_directory"],
-                        input_one=job_context["input_file_path"],
-                        output_directory=job_context["output_directory"])
-
-        logger.info("Running Salmon Quant using the following shell command: %s",
-                    formatted_command,
-                    processor_job=job_context["job_id"])
-
-        job_context['time_start'] = timezone.now()
         completed_command = subprocess.run(formatted_command.split(),
                                            stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE)
-        job_context['time_end'] = timezone.now()
+    job_context['time_end'] = timezone.now()
 
     ## To me, this looks broken: error codes are anything non-zero.
     ## However, Salmon (seems) to output with negative status codes
@@ -361,18 +352,12 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         job_context["success"] = False
     else:
 
-        import pdb
-        pdb.set_trace()
-
         result = ComputationalResult()
         result.command_executed = formatted_command
         result.system_version = __version__
         result.time_start = job_context['time_start']
         result.time_end = job_context['time_end']
-        version_subprocess = subprocess.run(['salmon', '--version'],
-                                           stdout=subprocess.PIPE,
-                                           stderr=subprocess.PIPE)
-        result.program_version = version_subprocess.stdout.strip()
+        result.program_version = subprocess.run(['salmon', '--version'], stderr=subprocess.PIPE, stdout=subprocess.PIPE).stderr.decode("utf-8").strip()
         result.is_ccdl = True
         result.save()
 
@@ -380,21 +365,19 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         # https://docs.djangoproject.com/en/2.0/ref/contrib/postgres/fields/#django.contrib.postgres.fields.HStoreField
         # https://www.postgresql.org/docs/9.6/static/hstore.html
         with open(os.path.join(job_context['output_directory'], 'lib_format_counts.json')) as lfc_file:
-            format_count_data = json.loads(lfc_file)
-            for key in format_count_data.keys():
-                kv = CompultationalResultAnnotation()
-                kv.key = key
-                kv.value = format_count_data[key]
-                kv.result = result.save()
-                kv.save
+            format_count_data = json.load(lfc_file)
+            kv = CompultationalResultAnnotation()
+            kv.data = format_count_data
+            kv.result = result
+            kv.is_public = True
+            kv.save()
         with open(os.path.join(job_context['output_directory'], 'aux_info', 'meta_info.json')) as mi_file:
-            meta_info = json.loads(mi_file)
-            for key in meta_info.keys():
-                kv = CompultationalResultAnnotation()
-                kv.key = key
-                kv.value = meta_info[key]
-                kv.result = result.save()
-                kv.save
+            meta_info = json.load(mi_file)
+            kv = CompultationalResultAnnotation()
+            kv.data = meta_info
+            kv.result = result
+            kv.is_public = True
+            kv.save()
 
         job_context["result"] = result
         job_context["success"] = True
@@ -414,7 +397,8 @@ def _run_tximport(job_context: Dict) -> Dict:
     try:
         tx_out = ro.r['::']('tximport', 'tximport')(job_context['output_directory'] + 'quant.sf', type="salmon", txOut=True)
     except RRuntimeError as e:
-        # XXX: TODO: This doesn't work yet.
+        # XXX/TODO: This doesn't work yet.
+        # But, eventually, it will look something like this. ^^
         return job_context
 
     return job_context

@@ -4,8 +4,10 @@ import os
 import shutil
 from typing import List
 from contextlib import closing
-from data_refinery_common.models import File, DownloaderJob
-from data_refinery_common.models.new_models import DownloaderJobOriginalFileAssociation
+from data_refinery_common.models import File, DownloaderJob, ProcessorJob
+from data_refinery_common.message_queue import send_job
+from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.models.new_models import DownloaderJobOriginalFileAssociation, ProcessorJobOriginalFileAssociation
 from data_refinery_workers.downloaders import utils
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable
@@ -34,6 +36,14 @@ def _verify_files(file1: File, file2: File, job: DownloaderJob) -> None:
 
 
 def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> None:
+    """Download the file via FTP.
+
+    I spoke to Erin from Ensembl about ways to improve this. They're looking into it,
+    but have decided against adding an Aspera endpoint.
+
+    She suggested using `rsync`, we could try shelling out to that.
+
+    """
     failure_template = "Exception caught while downloading file from: %s"
     try:
         logger.debug("Downloading file from %s to %s.",
@@ -112,14 +122,14 @@ def download_transcriptome(job_id: int) -> None:
             original_file.is_downloaded = True
             original_file.absolute_file_path = dl_file_path
             original_file.file_name = original_file.source_filename
-            original_file.is_archive = False
+            original_file.is_archive = True
             original_file.has_raw = False
             original_file.calculate_size()
             original_file.calculate_sha1()
             original_file.save()
             files_to_process.append(original_file)
         else:
-          logger.error("Problem during download")
+            logger.error("Problem during download")
 
     # try:
     #     first_fasta_file = File.objects.get(batch=batches[0], raw_format__exact="fa.gz")
@@ -179,24 +189,29 @@ def download_transcriptome(job_id: int) -> None:
 def create_long_and_short_processor_jobs(files_to_process):
     """ """
 
-    processor_job = ProcessorJob()
-    processor_job.pipeline_applied = "TRANSCRIPTOME_INDEX_LONG"
-    processor_job.save()
+    processor_job_long = ProcessorJob()
+    processor_job_long.pipeline_applied = "TRANSCRIPTOME_INDEX_LONG"
+    processor_job_long.save()
 
-    assoc = ProcessorJobOriginalFileAssociation()
-    assoc.original_file = original_file
-    assoc.processor_job = processor_job
-    assoc.save()
+    for original_file in files_to_process:
 
-    send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)
+        assoc = ProcessorJobOriginalFileAssociation()
+        assoc.original_file = original_file
+        assoc.processor_job = processor_job_long
+        assoc.save()
 
-    processor_job = ProcessorJob()
-    processor_job.pipeline_applied = "TRANSCRIPTOME_INDEX_SHORT"
-    processor_job.save()
+    send_job(ProcessorPipeline[processor_job_long.pipeline_applied], processor_job_long.id)
 
-    assoc = ProcessorJobOriginalFileAssociation()
-    assoc.original_file = original_file
-    assoc.processor_job = processor_job
-    assoc.save()
+    processor_job_short = ProcessorJob()
+    processor_job_short.pipeline_applied = "TRANSCRIPTOME_INDEX_SHORT"
+    processor_job_short.save()
+
+    for original_file in files_to_process:
+
+        assoc = ProcessorJobOriginalFileAssociation()
+        assoc.original_file = original_file
+        assoc.processor_job = processor_job_short
+        assoc.save()
     
-    send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)
+    send_job(ProcessorPipeline[processor_job_short.pipeline_applied], processor_job_short.id)
+

@@ -8,7 +8,7 @@ import shutil
 from typing import Dict
 from django.utils import timezone
 
-from data_refinery_common.models import File, BatchKeyValue, Organism
+from data_refinery_common.models import File, BatchKeyValue, Organism, ProcessorJob
 from data_refinery_common.models.new_models import OriginalFile, ComputationalResult, ComputedFile, Index
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
@@ -45,42 +45,22 @@ def _prepare_files(job_context: Dict) -> Dict:
         if "fa.gz" in og_file.source_filename:
             gzipped_fasta_file_path = og_file.absolute_file_path
             job_context["fasta_file"] = og_file
+            job_context["fasta_file_path"] = gzipped_fasta_file_path.replace(".gz", "")
+            job_context["base_file_path"] = '/'.join(job_context["fasta_file_path"].split('/')[:-1])
+            with gzip.open(gzipped_fasta_file_path, "rb") as gzipped_file, \
+                    open(job_context["fasta_file_path"], "wb") as gunzipped_file:
+                shutil.copyfileobj(gzipped_file, gunzipped_file)
         elif "gtf.gz" in og_file.source_filename:
             gzipped_gtf_file_path = og_file.absolute_file_path
             job_context["gtf_file"] = og_file
+            job_context["gtf_file_path"] = gzipped_gtf_file_path.replace(".gz", "")
+            job_context["base_file_path"] = '/'.join(job_context["gtf_file_path"].split('/')[:-1])
+            with gzip.open(gzipped_gtf_file_path, "rb") as gzipped_file, \
+                    open(job_context["gtf_file_path"], "wb") as gunzipped_file:
+                shutil.copyfileobj(gzipped_file, gunzipped_file)
 
-    #fasta_file = File.objects.get(batch=batch, raw_format__exact="fa.gz")
-    #gtf_file = File.objects.get(batch=batch, raw_format__exact="gtf.gz")
-
-    # try:
-    #     fasta_file.download_raw_file(job_context["job_dir_prefix"])
-    #     gtf_file.download_raw_file(job_context["job_dir_prefix"])
-    # except Exception:
-    #     logger.exception("Exception caught while retrieving raw files.",
-    #                      processor_job=job_context["job_id"],
-    #                      batch=batch.id)
-
-    #     job_context["job"].failure_reason = "Exception caught while retrieving raw files."
-    #     job_context["success"] = False
-    #     return job_context
-
-    # The files are gzipped when download, but rsem-prepare-reference
-    # expects them to be unzipped.
-    # gzipped_fasta_file_path = fasta_file.get_temp_pre_path(job_context["job_dir_prefix"])
-    # gzipped_gtf_file_path = gtf_file.get_temp_pre_path(job_context["job_dir_prefix"])
-    job_context["fasta_file_path"] = gzipped_fasta_file_path.replace(".gz", "")
-    job_context["gtf_file_path"] = gzipped_gtf_file_path.replace(".gz", "")
-    job_context["base_file_path"] = '/'.join(job_context["gtf_file_path"].split('/')[:-1])
-    job_context['organism_with_size'] = '_'.join(job_context["base_file_path"].split('/')[-1].split("_"))
-    job_context["organism_name"] = '_'.join(job_context["base_file_path"].split('/')[-1].split("_")[:-1])
-
-    with gzip.open(gzipped_fasta_file_path, "rb") as gzipped_file, \
-            open(job_context["fasta_file_path"], "wb") as gunzipped_file:
-        shutil.copyfileobj(gzipped_file, gunzipped_file)
-
-    with gzip.open(gzipped_gtf_file_path, "rb") as gzipped_file, \
-            open(job_context["gtf_file_path"], "wb") as gunzipped_file:
-        shutil.copyfileobj(gzipped_file, gunzipped_file)
+    job_context["organism_name"] = job_context["base_file_path"].split('/')[-1]
+    job_context["organism_with_size"] = job_context["organism_name"] + "_" + job_context['length']
 
     job_context["success"] = True
     return job_context
@@ -279,7 +259,7 @@ def _populate_index_object(job_context: Dict) -> Dict:
 
     computed_file = ComputedFile()
     computed_file.absolute_file_path = job_context["computed_archive"]
-    computed_file.filename = os.path.split(job_context["computed_archive"])[1]
+    computed_file.file_name = os.path.split(job_context["computed_archive"])[-1]
     computed_file.calculate_sha1()
     computed_file.calculate_size()
     computed_file.result = result

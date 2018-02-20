@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import os
 import string
 import warnings
+from django.utils import timezone
 from typing import Dict
 
 import rpy2.robjects as ro
@@ -25,13 +26,11 @@ def _prepare_files(job_context: Dict) -> Dict:
     Also adds the keys "input_file_path" and "output_file_path" to
     job_context so everything is prepared for processing.
     """
-    # Array Express processor jobs have only one batch per job and one
-    # file per batch.
     original_file = job_context["original_files"][0]
     job_context["input_file_path"] = original_file.absolute_file_path
     # This is ugly, I'm sorry.
-    # Turns /home/user/data_store/E-GEOD-8607/raw/foo.cel into /home/user/data_store/E-GEOD-8607/proccessed/foo.cel
-    job_context["output_file_path"] = '/'.join(original_file.absolute_file_path.split('/')[:-2]) + '/proccessed/' + sample.source_filename + '.cel'
+    # Turns /home/user/data_store/E-GEOD-8607/raw/foo.cel into /home/user/data_store/E-GEOD-8607/processed/foo.cel
+    job_context["output_file_path"] = '/'.join(original_file.absolute_file_path.split('/')[:-2]) + '/processed/' + original_file.absolute_file_path.split('/')[-1]
 
     return job_context
 
@@ -94,9 +93,11 @@ def _run_scan_upc(job_context: Dict) -> Dict:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             scan_upc = ro.r['::']('SCAN.UPC', 'SCANfast')
+            job_context['time_start'] = timezone.now()
             scan_upc(input_file,
                      job_context["output_file_path"],
                      probeSummaryPackage=job_context["brainarray_package"])
+            job_context['time_end'] = timezone.now()
 
     except RRuntimeError as e:
         error_template = ("Encountered error in R code while running AFFY_TO_PCL"
@@ -111,11 +112,14 @@ def _run_scan_upc(job_context: Dict) -> Dict:
 def _create_result_objects(job_context: Dict) -> Dict:
     """ Create the ComputationalResult objects after a Scan run is complete """
 
-    # This is a NO-OP, but we make a ComputationalResult regardless.
     result = ComputationalResult()
-    result.command_executed = "" # No op!
+    result.command_executed = "'SCAN.UPC', 'SCANfast'" # Need a better way to represent this R code.
     result.is_ccdl = True
+    result.is_public = True
     result.system_version = __version__
+    result.program_version = "XXX" # XXX - I don't know how to get this from R!
+    result.time_start = job_context['time_start']
+    result.time_end = job_context['time_end']
     result.save()
 
     # Create a ComputedFile for the sample,
@@ -123,19 +127,19 @@ def _create_result_objects(job_context: Dict) -> Dict:
     try:
         computed_file = ComputedFile()
         computed_file.absolute_file_path = job_context["output_file_path"]
-        computed_file.filename = os.path.split(job_context["output_file_path"])[1]
+        computed_file.file_name = os.path.split(job_context["output_file_path"])[-1]
         computed_file.calculate_sha1()
         computed_file.calculate_size()
         computed_file.result = result
-        computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
+        computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.file_name)
         # TODO here: delete local file after S3 sync
         computed_file.save()
     except Exception:
-        logger.exception("Exception caught while moving file %s",
-                         raw_path,
+        logger.exception("Exception caught while moving file %s to S3",
+                         computed_file.file_name,
                          processor_job=job_context["job_id"],
                          )
-        failure_reason = "Exception caught while moving file"
+        failure_reason = "Exception caught while moving file to S3"
         job_context["job"].failure_reason = failure_reason
         job_context["success"] = False
         return job_context        

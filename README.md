@@ -192,6 +192,12 @@ Example:
 ./foreman/run_surveyor.sh survey_transcriptome Ensembl 1
 ```
 
+A specific organism can also be specified:
+
+Example:
+```bash
+./foreman/run_surveyor.sh survey_transcriptome Ensembl 2 "Homo Sapiens"
+```
 
 #### Downloaders
 

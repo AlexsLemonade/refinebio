@@ -100,7 +100,7 @@ class Organism(models.Model):
                         .order_by("-is_scientific_name")
                         [0])
         except IndexError:
-            name = get_scientific_name(taxonomy_id).upper()
+            name = get_scientific_name(taxonomy_id).upper().replace(' ', '_')
             organism = Organism(name=name,
                                 taxonomy_id=taxonomy_id,
                                 is_scientific_name=True)
@@ -110,7 +110,7 @@ class Organism(models.Model):
 
     @classmethod
     def get_id_for_name(cls, name: str) -> id:
-        name = name.upper()
+        name = name.upper().replace(' ', '_')
         try:
             organism = (cls.objects
                         .filter(name=name)
@@ -133,6 +133,7 @@ class Organism(models.Model):
     @classmethod
     def get_object_for_name(cls, name: str) -> id:
         name = name.upper()
+        name = name.replace(' ', '_')
         try:
             organism = (cls.objects
                         .filter(name=name)

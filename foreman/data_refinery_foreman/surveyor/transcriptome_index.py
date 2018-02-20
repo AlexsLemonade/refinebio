@@ -217,7 +217,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         original_file.save()
         all_new_files.append(original_file)
 
-        gtf_file_name = url_builder.file_name_species +  ".gtf.gz"
+        gtf_file_name = url_builder.file_name_species + ".gtf.gz"
         original_file = OriginalFile()
         original_file.source_filename = gtf_file_name
         original_file.source_url = gtf_download_url

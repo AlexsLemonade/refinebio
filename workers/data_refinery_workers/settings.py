@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     'data_refinery_common',
     'data_refinery_workers.downloaders',
     'data_refinery_workers.processors',

@@ -159,29 +159,20 @@ def end_downloader_job(job: DownloaderJob, success: bool):
 
 def create_processor_jobs_for_original_files(original_files: List[OriginalFile]):
     """
-    Create a processor job and queue a processor task for sample related to an experiment.
-    
-    TODO: Refactor to support multifile Salmon?
-
+    Create a processor jobs queue a processor task for samples related to an experiment.
     """
-
-    processor_job = ProcessorJob()
 
     # Iterate over all of our samples.
     # If we have raw, send it to the correct processor.
     # Else, treat it as a "NO-OP"
     for original_file in original_files:
 
-        if original_file.sample:
-            experiment = ExperimentSampleAssociation.objects.filter(sample=original_file.sample)[0].experiment
+        processor_job = ProcessorJob()
 
-        if experiment.source_database == "ARRAY_EXPRESS":
-            if not original_file.has_raw:
-                processor_job.pipeline_applied = ProcessorPipeline.NO_OP
-            else:
-                processor_job.pipeline_applied = "AFFY_TO_PCL"
-        elif experiment.source_database == "SRA":
-            processor_job.pipeline_applied = "SALMON" 
+        if not original_file.has_raw:
+            processor_job.pipeline_applied = ProcessorPipeline.NO_OP
+        else:
+            processor_job.pipeline_applied = "AFFY_TO_PCL"
 
         # Save the Job and create the association
         processor_job.save()
@@ -190,9 +181,30 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile])
         assoc.processor_job = processor_job
         assoc.save()
 
-    # Send the job to Nomad
-    send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)
+        send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)
 
+def create_processor_job_for_original_files(original_files: List[OriginalFile]):
+    """
+    Create a processor job and queue a processor task for sample related to an experiment.
+
+    """
+    processor_job = ProcessorJob()
+
+    # Iterate over all of our samples.
+    # If we have raw, send it to the correct processor.
+    # Else, treat it as a "NO-OP"
+    for original_file in original_files:
+
+        processor_job.pipeline_applied = "SALMON" 
+
+        # Save the Job and create the association
+        processor_job.save()
+        assoc = ProcessorJobOriginalFileAssociation()
+        assoc.original_file = original_file
+        assoc.processor_job = processor_job
+        assoc.save()
+
+    send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)
 
     # @retry(stop_max_attempt_number=3)
     # def save_batch_create_job(batch):

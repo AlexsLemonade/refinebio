@@ -250,6 +250,13 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 sample_object.organism = organism
                 sample_object.save()
 
+                # This creates key values for a given sample.
+                # This looks a bit of a mess.
+                # I'm not sure the amount of variety in these values.
+                # I suggest we leave it in K/V form for a few non-trivial runs
+                # from various data sources and then try to solidify
+                # onto some attributes on the Sample object and then
+                # move the rest to a HStore on the annotation.
                 for characteristic in sample['characteristic']:
                     if characteristic['category'] is 'organism':
                         continue
