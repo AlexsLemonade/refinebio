@@ -22,5 +22,3 @@ _You can tag others or simply leave it for further investigation, but you must p
 
 
 
-
-_Issue template motivated by [Wiredcraft](https://wiredcraft.com/blog/how-we-write-our-github-issues/)._
