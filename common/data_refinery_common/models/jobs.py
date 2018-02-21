@@ -77,28 +77,6 @@ class ProcessorJob(WorkerJob):
     end_time = models.DateTimeField(null=True)
     success = models.NullBooleanField(null=True)
 
-# class ProcessorJobOriginalFileAssociation(models.Model):
-
-#     class Meta:
-#         db_table = "processorjob_original_file_associations"
-
-#     def __str__ (self):
-#         return "ProcessorJobOriginalFileAssociation: " + self.pk
-
-#     processor_job = models.ForeignKey(ProcessorJob, blank=False, null=False, on_delete=models.CASCADE)
-#     original_file = models.ForeignKey(OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
-
-# class DownloaderJob(WorkerJob):
-#     """Records information about running a Downloader."""
-
-#     class Meta:
-#         db_table = "downloader_jobs"
-
-#     # This field contains a string which corresponds to a valid
-#     # Downloader Task. Valid values are enumerated in:
-#     # data_refinery_common.job_lookup.Downloaders
-#     downloader_task = models.CharField(max_length=256)
-
 class DownloaderJob(models.Model):
     """Records information about running a Downloader."""
 

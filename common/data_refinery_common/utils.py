@@ -51,14 +51,11 @@ def get_supported_platforms(platforms_csv:str="supported_platforms.csv") -> list
     supported_platforms = []
     with open(platforms_csv) as platforms_file:
         reader = csv.reader(platforms_file)
-        
         for line in reader:
-            
             # Skip the header row
             # Lines are 1 indexed, #BecauseCSV
             if reader.line_num is 1:
                 continue
-
             if line[4] is "Y":
                 supported_platforms.append(line[1])
 

@@ -1,17 +1,23 @@
 import abc
 import os
-from typing import List, Dict
-from retrying import retry
+
 from django.db import transaction
+from retrying import retry
+from typing import List, Dict
+
 from data_refinery_common.models import (
     Batch,
     BatchKeyValue,
     BatchStatuses,
     File,
     DownloaderJob,
-    SurveyJob
+    SurveyJob,
+    Sample,
+    Experiment,
+    ExperimentSampleAssociation,
+    OriginalFile,
+    DownloaderJobOriginalFileAssociation
 )
-from data_refinery_common.models.new_models import Sample, Experiment, ExperimentSampleAssociation, OriginalFile, DownloaderJobOriginalFileAssociation
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
