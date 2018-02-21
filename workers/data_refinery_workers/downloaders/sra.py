@@ -6,8 +6,7 @@ import shutil
 import subprocess
 from contextlib import closing
 
-from data_refinery_common.models import File, DownloaderJob
-from data_refinery_common.models.new_models import DownloaderJobOriginalFileAssociation
+from data_refinery_common.models import File, DownloaderJob, DownloaderJobOriginalFileAssociation
 from data_refinery_workers.downloaders import utils
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable
@@ -133,57 +132,3 @@ def download_sra(job_id: int) -> None:
     utils.end_downloader_job(job, success)
     if success:
         utils.create_processor_job_for_original_files(downloaded_files)
-
-    #         target_file_path = file.get_temp_pre_path(job_dir)
-    #         success = _download_file(file, job, target_file_path)
-
-    # batches = job.batches.all()
-    # success = True
-    # job_dir = utils.JOB_DIR_PREFIX + str(job_id)
-
-    # # There should only be one batch per SRA job.
-    # if batches.count() == 1:
-    #     files = File.objects.filter(batch=batches[0])
-    #     # All the files will be downloaded to the same directory
-    #     target_directory = files[0].get_temp_dir(job_dir)
-    #     os.makedirs(target_directory, exist_ok=True)
-    # elif batches.count() > 1:
-    #     message = "More than one batch found for SRA downloader job. There should only be one."
-    #     logger.error(message, downloader_job=job_id)
-    #     job.failure_reason = message
-    #     success = False
-    # else:
-    #     message = "No batches found."
-    #     logger.error(message, downloader_job=job_id)
-    #     job.failure_reason = message
-    #     success = False
-
-    # if success:
-    #     for file in files:
-    #         target_file_path = file.get_temp_pre_path(job_dir)
-    #         success = _download_file(file, job, target_file_path)
-
-    #         # If a download fails stop the job and fail gracefully.
-    #         if not success:
-    #             break
-
-    #         try:
-    #             file.size_in_bytes = os.path.getsize(target_file_path)
-    #             file.save()
-    #             file.upload_raw_file(job_dir)
-    #         except Exception:
-    #             logger.exception("Exception caught while uploading file.",
-    #                              downloader_job=job.id,
-    #                              batch=batches[0].id,
-    #                              file=file.id,
-    #                              file_name=file.name)
-    #             job.failure_reason = "Exception caught while uploading file."
-    #             success = False
-    #             break
-
-    # if success:
-    #     logger.debug("Files for batch %s downloaded and extracted successfully.",
-    #                  file.download_url,
-    #                  downloader_job=job_id)
-
-    # utils.end_job(job, batches, success)

@@ -13,14 +13,13 @@ from typing import Dict
 import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
 
-from data_refinery_workers.processors import utils
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import BatchStatuses, BatchKeyValue
 from data_refinery_common.models.new_models import Index, ComputationalResult, CompultationalResultAnnotation, ComputedFile
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
-
+from data_refinery_workers.processors import utils
 
 logger = get_and_configure_logger(__name__)
 JOB_DIR_PREFIX = "processor_job_"
@@ -47,57 +46,17 @@ def _prepare_files(job_context: Dict) -> Dict:
     logger.info("Preparing files..")
 
     original_files = job_context["original_files"]
-
-    
     job_context["input_file_path"] = original_files[0].absolute_file_path
     if len(original_files) == 2:
         job_context["input_file_path_2"] = original_files[1].absolute_file_path
-    # XXX: If more, fail
 
-    # import pdb
-    # pdb.set_trace()
-
-    # Salmon outputs an entire directory of files, so create a temp`
+    # Salmon outputs an entire directory of files, so create a temp
     # directory to output it to until we can zip it to
     job_context["output_directory"] = '/'.join(original_files[0].absolute_file_path.split('/')[:-1]) + '/processed/'
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
     job_context["output_archive"] = '/'.join(original_files[0].absolute_file_path.split('/')[:-1]) + '/result-' + str(timezone.now().timestamp()).split('.')[0] +  '.tar.gz'
     os.makedirs(job_context["output_directory"], exist_ok=True)
-
-    # for file in files:
-    #     try:
-    #         file.download_raw_file(job_context["job_dir_prefix"])
-    #     except Exception:
-    #         logger.exception("Exception caught while retrieving raw file %s",
-    #                          file.get_raw_path(),
-    #                          processor_job=job_context["job_id"],
-    #                          batch=batch.id)
-
-    #         failure_template = "Exception caught while retrieving raw file {}"
-    #         job_context["job"].failure_reason = failure_template.format(file.name)
-    #         job_context["success"] = False
-    #         return job_context
-
-    # num_files = len(files)
-    # if num_files > 2 or num_files < 1:
-    #     failure_message = ("{} files were found for a Salmon job. There should never"
-    #                        " be more than two.").format(str(num_files))
-    #     logger.error(failure_message, batch=batch, processor_job=job_context["job_id"])
-    #     job_context["job"].failure_reason = failure_message
-    #     job_context["success"] = False
-    #     return job_context
-    # elif num_files == 2:
-    #     job_context["input_file_path_2"] = files[1].get_temp_pre_path(
-    #         job_context["job_dir_prefix"])
-
-    # job_context["input_file_path"] = files[0].get_temp_pre_path(job_context["job_dir_prefix"])
-    # # Salmon outputs an entire directory of files, so create a temp
-    # # directory to output it to until we can zip it to
-    # # files[0].get_temp_post_path()
-    # job_context["output_directory"] = os.path.join(
-    #     files[0].get_temp_dir(job_context["job_dir_prefix"]), "output")
-    # os.makedirs(job_context["output_directory"], exist_ok=True)
 
     job_context['organism'] = job_context['original_files'][0].sample.organism
     job_context["success"] = True
@@ -136,7 +95,7 @@ def _determine_index_length(job_context: Dict) -> Dict:
     ###         total_base_pairs += len(line.replace("\n", ""))
     ###         number_of_reads += 1
     ###     counter += 1
-    
+
     input_file = gzip.open(job_context["input_file_path"], "rt")
 
     with gzip.open(job_context["input_file_path"], "rt") as input_file:
@@ -192,65 +151,6 @@ def _download_index(job_context: Dict) -> Dict:
     else:
         logger.info("Index already installed")
 
-    # XXX GOOD MORNING RICHARD!
-    # XXX make sure this is working!
-    # XXX it should be, just need to tidy everything up then self-pr for review
-    # make sure to check why there were two of the same Organism created at one point
-    # and make sure that array express is still working, maybe refactor the 
-    # create_processor_jobs_for_original_files method
-    # oh yeah and test on a case where salmon has multiple files 
-    # then you're done
-
-    # batch = job_context["batches"][0]
-    # try:
-    #     index_batch = BatchKeyValue.objects.select_related("batch").filter(
-    #         batch__source_type=Downloaders.TRANSCRIPTOME_INDEX.value,
-    #         batch__organism_id=batch.organism_id,
-    #         batch__status=BatchStatuses.PROCESSED.value,
-    #         key="kmer_size",
-    #         value=job_context["kmer_size"]
-    #     ).all()[0].batch
-
-    #     index_file = index_batch.files[0]
-    # except:
-    #     logger.exception("Failed to find an index for organism %s with kmer_size of %s.",
-    #                      batch.organism_name,
-    #                      job_context["kmer_size"],
-    #                      processor_job=job_context["job_id"],
-    #                      batch=batch.id)
-
-    #     failure_template = "Failed to find an index for organism {} with kmer_size of {}."
-    #     job_context["job"].failure_reason = failure_template.format(batch.organism_name,
-    #                                                                 job_context["kmer_size"])
-    #     job_context["success"] = False
-    #     return job_context
-
-    # temp_dir = batch.files[0].get_temp_dir(job_context["job_dir_prefix"])
-    # job_context["index_directory"] = os.path.join(temp_dir, "index")
-    # os.makedirs(job_context["index_directory"], exist_ok=True)
-    # try:
-    #     # The index_batch file will be downloaded to a directory
-    #     # specific to that batch.
-    #     temp_path = index_file.download_processed_file(job_context["job_dir_prefix"])
-    #     with tarfile.open(temp_path, "r:gz") as tarball:
-    #         tarball.extractall(temp_dir)
-    # except:
-    #     logger.exception("Failed to download and extract index tarball %s",
-    #                      index_file.name,
-    #                      index_batch=index_batch.id,
-    #                      index_file=index_file.id,
-    #                      processor_job=job_context["job_id"],
-    #                      batch=batch.id)
-
-    #     failure_template = "Failed to download and extract index tarball {}"
-    #     job_context["job"].failure_reason = failure_template.format(index_file.name)
-    #     job_context["success"] = False
-    #     return job_context
-    # finally:
-    #     # Remove temp dir for the index batch since we've extracted it to
-    #     # the temp dir for this job.
-    #     index_file.remove_temp_directory(job_context["job_dir_prefix"])
-
     job_context["success"] = True
     return job_context
 
@@ -267,7 +167,6 @@ def _zip_and_upload(job_context: Dict) -> Dict:
     # objects to represent processed files. Once that is fixed this
     # should simply use the processed file instead of one of the input
     # files.
-
     try:
         with tarfile.open(job_context['output_archive'], "w:gz") as tar:
             tar.add(job_context["output_directory"], arcname=os.sep)

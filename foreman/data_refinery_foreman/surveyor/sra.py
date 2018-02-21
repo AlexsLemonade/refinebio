@@ -7,8 +7,13 @@ from data_refinery_common.models import (
     File,
     SurveyJob,
     Organism,
+    OriginalFile,
+    Experiment,
+    ExperimentAnnotation,
+    Sample,
+    SampleAnnotation,
+    ExperimentSampleAssociation
 )
-from data_refinery_common.models.new_models import OriginalFile, Experiment, ExperimentAnnotation, Sample, SampleAnnotation, ExperimentSampleAssociation
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger

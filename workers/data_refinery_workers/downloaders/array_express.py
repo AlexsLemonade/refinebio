@@ -67,8 +67,6 @@ def _extract_files(file_path: str, accession_code: str) -> List[str]:
         # This is technically an unsafe operation.
         # However, we're trusting AE as a data source.
         zip_ref = zipfile.ZipFile(file_path, "r")
-
-        # TODO: Make this an absolute path
         abs_with_code_raw = LOCAL_ROOT_DIR + '/' + accession_code + '/raw/'
         zip_ref.extractall(abs_with_code_raw)
         zip_ref.close()
@@ -127,6 +125,7 @@ def download_array_express(job_id: int) -> None:
                 original_file.save()
                 og_files.append(original_file)
             except Exception:
+                # TODO - is this worth failing a job for?
                 logger.debug("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'])
         success=True
     except Exception as e:

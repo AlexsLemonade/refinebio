@@ -1,7 +1,12 @@
 from typing import List, Dict, Callable
 from django.utils import timezone
-from data_refinery_common.models import BatchStatuses, ProcessorJob, File
-from data_refinery_common.models.new_models import Sample, OriginalFile, ProcessorJobOriginalFileAssociation
+from data_refinery_common.models import (
+    ProcessorJob, 
+    File,
+    Sample,
+    OriginalFile,
+    ProcessorJobOriginalFileAssociation
+)
 from data_refinery_common.utils import get_worker_id
 from data_refinery_workers._version import __version__
 from data_refinery_common.logging import get_and_configure_logger
@@ -52,18 +57,6 @@ def end_job(job_context: Dict):
     job.success = success
     job.end_time = timezone.now()
     job.save()
-
-    # batches = job_context["batches"] if "batches" in job_context else None
-
-    # # Clean up temp directory.
-    # if batches is not None and len(batches) > 0 and len(batches[0].files) > 0:
-    #     job_dir_prefix = job_context["job_dir_prefix"] if "job_dir_prefix" in job_context else None
-    #     batches[0].files[0].remove_temp_directory(job_dir_prefix)
-
-    # if job.success and batches is not None:
-    #     for batch in batches:
-    #         batch.status = BatchStatuses.PROCESSED.value
-    #         batch.save()
 
     logger.info("Processor job completed successfully.", processor_job=job.id)
 

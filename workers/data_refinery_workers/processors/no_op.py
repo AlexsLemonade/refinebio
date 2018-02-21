@@ -1,14 +1,13 @@
-from typing import Dict
 import os
 import shutil
 import boto3
+from typing import Dict
 
-from data_refinery_workers._version import __version__
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import batches
-from data_refinery_common.models.new_models import ComputationalResult, ComputedFile
-from data_refinery_workers.processors import utils
+from data_refinery_common.models import ComputationalResult, ComputedFile
 from data_refinery_common.utils import get_env_variable
+from data_refinery_workers._version import __version__
+from data_refinery_workers.processors import utils
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
@@ -18,7 +17,7 @@ logger = get_and_configure_logger(__name__)
 def _no_op_processor_fn(job_context: Dict) -> Dict:
     """A processor which does nothing other than move files.
 
-    Simply moves the batch's file from its raw location to its
+    Simply moves the file from its raw location to its
     processed location. Useful for handling data that has already been
     processed.
     """
@@ -47,8 +46,7 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
     except Exception:
         logger.exception("Exception caught while moving file %s",
                          raw_path,
-                         processor_job=job_context["job_id"],
-                         batch=file.batch.id)
+                         processor_job=job_context["job_id"])
 
         failure_reason = "Exception caught while moving file {}".format(file.name)
         job_context["job"].failure_reason = failure_reason

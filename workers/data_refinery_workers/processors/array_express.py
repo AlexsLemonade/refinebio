@@ -10,8 +10,7 @@ import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import File
-from data_refinery_common.models.new_models import OriginalFile, ComputationalResult, ComputedFile
+from data_refinery_common.models import OriginalFile, ComputationalResult, ComputedFile
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 from data_refinery_common.utils import get_env_variable
