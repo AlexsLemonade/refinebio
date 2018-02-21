@@ -12,6 +12,7 @@ from django.db import models
 from django.utils import timezone
 
 from data_refinery_common.models.organism import Organism
+
 """
 # First Order Classes
 
@@ -23,8 +24,6 @@ and filtering against.
 class Sample(models.Model):
     """
     An individual sample.
-    Examples:
-
     """
 
     class Meta:
@@ -58,6 +57,7 @@ class Sample(models.Model):
 
 
 class SampleAnnotation(models.Model):
+    """ Non-standard information associated with a Sample """
 
     class Meta:
         db_table = "sample_annotations"
@@ -75,6 +75,7 @@ class SampleAnnotation(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
 class Experiment(models.Model):
+    """ An Experiment or Study """
 
     class Meta:
         db_table = "experiments"
@@ -101,6 +102,7 @@ class Experiment(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
 class ExperimentAnnotation(models.Model):
+    """ Non-standard information associated with an Experiment """
 
     class Meta:
         db_table = "experiment_annotations"
@@ -118,6 +120,7 @@ class ExperimentAnnotation(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
 class ComputationalResult(models.Model):
+    """ Meta-information about the output of a computer process. (Ex Salmon) """
 
     class Meta:
         db_table = "computational_results"
@@ -126,7 +129,7 @@ class ComputationalResult(models.Model):
         return "ComputationalResult: " + str(self.pk)
 
     command_executed = models.CharField(max_length=255, blank=True)
-    program_version = models.CharField(max_length=255) # Define in settings!
+    program_version = models.CharField(max_length=255)
     system_version = models.CharField(max_length=255) # Generally defined in from data_refinery_workers._version import __version__
     is_ccdl = models.BooleanField(default=True)
 
@@ -140,6 +143,7 @@ class ComputationalResult(models.Model):
     last_modified = models.DateTimeField(default=timezone.now) 
 
 class CompultationalResultAnnotation(models.Model):
+    """ Non-standard information associated with an ComputationalResult """
 
     class Meta:
         db_table = "computational_result_annotations"
@@ -149,20 +153,21 @@ class CompultationalResultAnnotation(models.Model):
 
     # Properties
     data = HStoreField(default={})
-    # key = models.CharField(max_length=255)
-    # value = models.CharField(max_length=255)
 
     # Common Properties
     is_public = models.BooleanField(default=False)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now) 
 
-class Gene(models.Model):
+# TODO
+# class Gene(models.Model):
+    """ A representation of a Gene """
 
-    class Meta:
-        db_table = "genes"
+#     class Meta:
+#         db_table = "genes"
 
 class Index(models.Model):
+    """ A special type of process result, necessary for processing other SRA samples """
 
     class Meta:
         db_table = "index"
@@ -186,6 +191,7 @@ or on AWS cloud services.
 """
 
 class OriginalFile(models.Model):
+    """ A representation of a file from an external source """
 
     class Meta:
         db_table = "original_files"
@@ -250,6 +256,7 @@ class OriginalFile(models.Model):
             return self.file_name
 
 class ComputedFile(models.Model):
+    """ A representation of a file created by a data-refinery process """
 
     class Meta:
         db_table = "computed_files"
@@ -340,22 +347,3 @@ class SampleResultAssociation(models.Model):
 
     class Meta:
         db_table = "sample_result_associations"
-
-
-# XXX: Can't we just make lots of SampleResultAssociations instead?
-# class ExperimentResultAssociation(models.Model):
-
-#     class Meta:
-#         db_table = "experiment_result_associations"
-
-
-"""
-# Jobs
-
-These models correspond to the status of various task workers
-responsible for the downloading and transformation of our
-input data.
-
-"""
-
-
