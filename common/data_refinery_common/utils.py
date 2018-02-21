@@ -12,6 +12,7 @@ INSTANCE_ID = None
 
 
 def get_env_variable(var_name: str, default:str=None) -> str:
+    """ Get an environment variable or return a default value """
     try:
         return os.environ[var_name]
     except KeyError:

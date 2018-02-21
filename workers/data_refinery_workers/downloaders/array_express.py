@@ -5,6 +5,7 @@ import shutil
 import zipfile
 from typing import List
 from contextlib import closing
+
 from data_refinery_common.models import File, DownloaderJob
 from data_refinery_common.models.new_models import Experiment, Sample, ExperimentAnnotation, ExperimentSampleAssociation, OriginalFile, DownloaderJobOriginalFileAssociation
 from data_refinery_workers.downloaders import utils
@@ -51,56 +52,6 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
     finally:
         target_file.close()
 
-
-# def _extract_files(files: List[File], job: DownloaderJob) -> None:
-#     """Extract zip from temp directory and move to raw directory.
-
-#     Additionally this function sets the size_in_bytes field of each
-#     Batch in batches. To save database calls it does not save the
-#     batch itself since it will be saved soon when its status
-#     changes in utils.end_job.
-#     """
-#     # zip_path and local_dir should be common to all batches in the group
-#     job_dir = utils.JOB_DIR_PREFIX + str(job.id)
-#     zip_path = files[0].get_temp_download_path(job_dir)
-#     local_dir = files[0].get_temp_dir(job_dir)
-#     dirs_to_clean = set()
-
-#     logger.debug("Extracting %s", zip_path, downloader_job=job.id)
-
-#     try:
-#         zip_ref = zipfile.ZipFile(zip_path, "r")
-#         zip_ref.extractall(local_dir)
-
-#         for file in files:
-#             batch_directory = file.get_temp_dir(job_dir)
-#             raw_file_location = file.get_temp_pre_path(job_dir)
-
-#             # The platform is part of the batch's location so if the
-#             # batches in this job have different platforms then some
-#             # of them need to be moved to the directory corresponding
-#             # to thier platform.
-#             if local_dir != batch_directory:
-#                 os.makedirs(batch_directory, exist_ok=True)
-#                 dirs_to_clean.add(batch_directory)
-#                 incorrect_location = os.path.join(local_dir, file.name)
-#                 os.rename(incorrect_location, raw_file_location)
-
-#             file.size_in_bytes = os.path.getsize(raw_file_location)
-#             file.save()
-#             file.upload_raw_file(job_dir)
-#     except Exception:
-#         logger.exception("Exception caught while extracting %s",
-#                          zip_path,
-#                          downloader_job=job.id)
-#         job.failure_reason = "Exception caught while extracting " + zip_path
-#         raise
-#     finally:
-#         zip_ref.close()
-#         file.remove_temp_directory(job_dir)
-#         for directory in dirs_to_clean:
-#             shutil.rmtree(directory)
-
 def _extract_files(file_path: str, accession_code: str) -> List[str]:
     """Extract zip from temp directory and move to raw directory.
 
@@ -109,15 +60,8 @@ def _extract_files(file_path: str, accession_code: str) -> List[str]:
     batch itself since it will be saved soon when its status
     changes in utils.end_job.
     """
-    # zip_path and local_dir should be common to all batches in the group
-    # job_dir = utils.JOB_DIR_PREFIX + str(job.id)
-    # zip_path = files[0].get_temp_download_path(job_dir)
-    # local_dir = files[0].get_temp_dir(job_dir)
-    # dirs_to_clean = set()
 
     logger.debug("Extracting %s!", file_path)
-
-    print(file_path)
 
     try:
         # This is technically an unsafe operation.
@@ -132,33 +76,11 @@ def _extract_files(file_path: str, accession_code: str) -> List[str]:
         # os.abspath doesn't do what I thought it does, hency this monstrocity.
         files = [{'absolute_path': abs_with_code_raw + f, 'filename': f} for f in os.listdir(abs_with_code_raw)]
 
-        # for file in files:
-        #     batch_directory = file.get_temp_dir(job_dir)
-        #     raw_file_location = file.get_temp_pre_path(job_dir)
-
-        #     # The platform is part of the batch's location so if the
-        #     # batches in this job have different platforms then some
-        #     # of them need to be moved to the directory corresponding
-        #     # to thier platform.
-        #     if local_dir != batch_directory:
-        #         os.makedirs(batch_directory, exist_ok=True)
-        #         dirs_to_clean.add(batch_directory)
-        #         incorrect_location = os.path.join(local_dir, file.name)
-        #         os.rename(incorrect_location, raw_file_location)
-
-        #     file.size_in_bytes = os.path.getsize(raw_file_location)
-        #     file.save()
-        #     file.upload_raw_file(job_dir)
     except Exception as e:
-        print(e)
         reason = "Exception %s caught while extracting %s", str(e), zip_path
         logger.exception(reason)
         job.failure_reason = reason
         raise
-    # finally:
-    #     zip_ref.close()
-    #     for directory in dirs_to_clean:
-    #         shutil.rmtree(directory)
 
     return files
 
@@ -167,47 +89,19 @@ def download_array_express(job_id: int) -> None:
 
     Downloads a single zip file containing the .PCL files representing
     samples relating to a single experiement stored in
-    ArrayExpress. Each of these files is a separate Batch, so the file
-    is unzipped and then each Batch's data is stored in Temporary
-    Storage.
+    ArrayExpress.
     """
     job = utils.start_job(job_id)
 
     file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
     original_file = file_assocs[0].original_file # AE should never have more than one zip, but we can iterate here if we discover this is false.
-    # if original_file.is_downloaded:
-    #     logger.info("This file is already downloaded!")
-    #     return
     url = original_file.source_url
     accession_code = job.accession_code
-
-    #success = True
-    
-    # if batches.count() > 0:
-    #     files = File.objects.filter(batch__in=batches)
-    #     target_directory = files[0].get_temp_dir(job_dir)
-    #     os.makedirs(target_directory, exist_ok=True)
-    #     target_file_path = files[0].get_temp_download_path(job_dir)
-    #     download_url = files[0].download_url
-    # else:
-    #     logger.error("No batches found.",
-    #                  downloader_job=job_id)
-    #     success = False
-    #if success:
-
-    # There is going to be a prettier way of doing this
-    # relations = ExperimentSampleAssociation.objects.filter(experiment=experiment)
-    # samples = Sample.objects.filter(id__in=relations.values('sample_id'))
-    # urls = list(samples.values_list("originalfile__source_archive_url", flat=True).distinct())
-
-    # for sample in samples:
-    #     print(sample.source_filename)
 
     # First, get all the unique sample archive URLs.
     # There may be more than one!
     # Then, unpack all the ones downloaded.
     # Then create processor jobs!
-
 
     og_files = []
     try:

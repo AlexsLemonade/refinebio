@@ -31,3 +31,7 @@ get_nomad_link_option () {
         echo "--link nomad:nomad"
     fi
 }
+
+get_docker_db_ip_address_alt() {
+	ifconfig -u | grep 'inet ' | grep -v 127.0.0.1
+}

@@ -1,20 +1,21 @@
-from abc import ABC
-import requests
 import re
+import requests
 import urllib
-from typing import List, Dict
+
+from abc import ABC
 from django.utils import timezone
+from typing import List, Dict
+
 from data_refinery_common.models import (
     Batch,
     File,
-    SurveyJobKeyValue
+    SurveyJobKeyValue,
+    OriginalFile
 )
-from data_refinery_common.models.new_models import OriginalFile
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
-
 
 logger = get_and_configure_logger(__name__)
 

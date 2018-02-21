@@ -1,9 +1,11 @@
 from __future__ import absolute_import, unicode_literals
+
 import urllib.request
 import os
 import shutil
 import subprocess
 from contextlib import closing
+
 from data_refinery_common.models import File, DownloaderJob
 from data_refinery_common.models.new_models import DownloaderJobOriginalFileAssociation
 from data_refinery_workers.downloaders import utils

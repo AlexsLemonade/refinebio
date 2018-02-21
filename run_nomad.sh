@@ -27,7 +27,7 @@ fi
 nomad agent -bind $HOST_IP \
       -data-dir $nomad_dir \
       -dev \
-      > nomad.logs &
+      &> nomad.logs &
 
 # While we wait for Nomad to start, make sure the Docker registry has
 # an up-to-date Docker image for the workers sub-project. We run a

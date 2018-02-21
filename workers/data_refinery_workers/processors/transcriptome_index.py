@@ -8,8 +8,16 @@ import shutil
 from typing import Dict
 from django.utils import timezone
 
-from data_refinery_common.models import File, BatchKeyValue, Organism, ProcessorJob
-from data_refinery_common.models.new_models import OriginalFile, ComputationalResult, ComputedFile, Index
+from data_refinery_common.models import (
+    File, 
+    BatchKeyValue, 
+    Organism, 
+    ProcessorJob,
+    OriginalFile,
+    ComputationalResult,
+    ComputedFile,
+    Index
+)
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 from data_refinery_common.logging import get_and_configure_logger

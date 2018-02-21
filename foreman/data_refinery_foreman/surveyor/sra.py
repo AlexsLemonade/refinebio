@@ -387,7 +387,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         ##
         # Samples K/V
-        # TODO
+        # TODO - What do we want to save here?
         ##
 
         return experiment_object, [sample_object]
@@ -409,7 +409,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         return (prefix + "{0:0" + str(len(digits)) + "d}").format(number)
 
     def discover_experiment_and_samples(self):
-        """ """
+        """ Returns an experiment and a list of samples for an SRA accession """
         survey_job = SurveyJob.objects.get(id=self.survey_job.id)
         survey_job_properties = survey_job.get_properties()
         accession = survey_job_properties["accession"]

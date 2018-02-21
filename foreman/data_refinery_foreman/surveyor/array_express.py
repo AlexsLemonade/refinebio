@@ -1,4 +1,6 @@
 import requests
+
+from django.conf import settings
 from typing import List, Dict
 
 from data_refinery_common.models import (
@@ -6,14 +8,17 @@ from data_refinery_common.models import (
     File,
     SurveyJobKeyValue,
     Organism,
+    Experiment,
+    ExperimentAnnotation,
+    Sample,
+    SampleAnnotation,
+    ExperimentSampleAssociation,
+    OriginalFile
 )
-from data_refinery_common.models.new_models import Experiment, ExperimentAnnotation, Sample, SampleAnnotation, ExperimentSampleAssociation, OriginalFile
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
-
-from django.conf import settings
 
 logger = get_and_configure_logger(__name__)
 
