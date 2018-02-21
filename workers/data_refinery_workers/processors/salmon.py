@@ -118,22 +118,26 @@ def _determine_index_length(job_context: Dict) -> Dict:
     counter = 1
 
     ### TODO: This process is really slow!
-    ### I bet there is a faster way of doing this, maybe by
-    ### shelling and using UNIX! 
-    ### $ cat file.fastq | echo $((`wc -l`/4))
-    ### We may also be able to use io.BufferedReader to improve gzip speed
-    input_file = gzip.open(job_context["input_file_path"], "rt")
-    # buffered_input = io.BufferedReader(input_file)
-    # for line in buffered_input.readlines():
-    #     # In the FASTQ file format, there are 4 lines for each
-    #     # read. Three of these contain metadata about the
-    #     # read. The string representing the read itself is found
-    #     # on the second line of each quartet.
-    #     if counter % 4 == 2:
-    #         total_base_pairs += len(line.replace("\n", ""))
-    #         number_of_reads += 1
 
-    #     counter += 1
+    ### I bet there is a faster way of doing this, maybe by
+    ### shelling and using UNIX!
+    ### Python is single-core gunziping this line by line,
+    ### I think it'd be faster to gunzip with multicores
+    ### and then count lines that way, ex:
+
+    ### $ pigz file.fasq.gz;
+    ### $ cat file.fastq | echo $((`wc -l`/4))
+    
+    ### We may also be able to use io.BufferedReader to improve gzip speed
+    ### Ex: (But does this work for text, not binary, gzip?)
+    ### buffered_input = io.BufferedReader(input_file)
+    ### for line in buffered_input.readlines():
+    ###     if counter % 4 == 2:
+    ###         total_base_pairs += len(line.replace("\n", ""))
+    ###         number_of_reads += 1
+    ###     counter += 1
+    
+    input_file = gzip.open(job_context["input_file_path"], "rt")
 
     with gzip.open(job_context["input_file_path"], "rt") as input_file:
         for line in input_file:
@@ -144,7 +148,6 @@ def _determine_index_length(job_context: Dict) -> Dict:
             if counter % 4 == 2:
                 total_base_pairs += len(line.replace("\n", ""))
                 number_of_reads += 1
-
             counter += 1
 
     if "input_file_path_2" in job_context:
@@ -153,7 +156,6 @@ def _determine_index_length(job_context: Dict) -> Dict:
                 if counter % 4 == 2:
                     total_base_pairs += len(line.replace("\n", ""))
                     number_of_reads += 1
-
                 counter += 1
 
     if total_base_pairs / number_of_reads > 75:
@@ -176,15 +178,19 @@ def _download_index(job_context: Dict) -> Dict:
     this function retrieves the correct index for the organism and
     read length from Permanent Storage.
     """
-    logger.info("Downloading index..")
+    logger.info("Downloading and installing index..")
 
     index_object = Index.objects.filter(organism=job_context['organism'], index_type="TRANSCRIPTOME_" + job_context["index_length"].upper()).order_by('created_at')[0]
     result = index_object.result
     files = ComputedFile.objects.filter(result=result)
-    job_context["index_directory"] = '/'.join(files[0].absolute_file_path.split('/')[:-1]) + '/index'
+    job_context["index_unpacked"] = '/'.join(files[0].absolute_file_path.split('/')[:-1]) + '/index'
+    job_context["index_directory"] = job_context["index_unpacked"] + "/index"
     
-    with tarfile.open(files[0].absolute_file_path, "r:gz") as tarball:
-        tarball.extractall(job_context["index_directory"])
+    if not os.path.exists(job_context["index_directory"] + '/versionInfo.json'):
+        with tarfile.open(files[0].absolute_file_path, "r:gz") as tarball:
+            tarball.extractall(job_context["index_unpacked"])
+    else:
+        logger.info("Index already installed")
 
     # XXX GOOD MORNING RICHARD!
     # XXX make sure this is working!
@@ -301,6 +307,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         ##return job_context
 
     # Salmon needs to be run differently for different sample types.
+    # XXX: TODO: We need to tune the -p/--numThreads to the machines this process wil run on.
     if "input_file_path_2" in job_context:
         second_read_str = " -2 {}".format(job_context["input_file_path_2"])
         command_str = ("salmon --no-version-check quant -l A -i {index}"
@@ -353,7 +360,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
     else:
 
         result = ComputationalResult()
-        result.command_executed = formatted_command
+        result.command_executed = formatted_command[:254] # I hate having to do this. XXX.
         result.system_version = __version__
         result.time_start = job_context['time_start']
         result.time_end = job_context['time_end']
@@ -361,9 +368,6 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         result.is_ccdl = True
         result.save()
 
-        # Okay, I actually want to replace this with 
-        # https://docs.djangoproject.com/en/2.0/ref/contrib/postgres/fields/#django.contrib.postgres.fields.HStoreField
-        # https://www.postgresql.org/docs/9.6/static/hstore.html
         with open(os.path.join(job_context['output_directory'], 'lib_format_counts.json')) as lfc_file:
             format_count_data = json.load(lfc_file)
             kv = CompultationalResultAnnotation()
@@ -427,5 +431,4 @@ def salmon(job_id: int) -> None:
                         _run_salmontools,
                         _run_tximport,
                         _zip_and_upload,
-                        utils.cleanup_raw_files,
                         utils.end_job])

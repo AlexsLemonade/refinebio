@@ -173,11 +173,15 @@ range of SRA accession codes:
 ./foreman/run_surveyor.sh survey_sra <START> <END>
 ```
 
-Example:
+Example (single read):
 ```bash
 ./foreman/run_surveyor.sh survey_sra DRR002116
 ```
 
+Example (paired read):
+```bash
+./foreman/run_surveyor.sh survey_sra SRR6718414
+```
 
 The Index Refinery Surveyor expects an
 [Ensembl](http://ensemblgenomes.org/) divsion and a number of

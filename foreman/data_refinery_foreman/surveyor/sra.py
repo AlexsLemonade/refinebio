@@ -174,13 +174,16 @@ class SraSurveyor(ExternalSourceSurveyor):
         discoverable_accessions = ["study_accession", "sample_accession", "submission_accession"]
         response = requests.get(ENA_METADATA_URL_TEMPLATE.format(run_accession))
         run_xml = ET.fromstring(response.text)
-        run = run_xml[0]
+        run_item = run_xml[0]
 
-        useful_attributes = ["center_name", "run_center", "run_date", "broker_name"]
-        metadata = {key: run.attrib[key] for key in useful_attributes}
+        useful_attributes = ["center_name", "run_center", "run_date", "broker_name", "alias"]
+        metadata = {}
+        for attribute in useful_attributes:
+            if attribute in run_item.attrib: 
+                metadata[attribute] = run_item.attrib[attribute]
         metadata["run_accession"] = run_accession
 
-        for child in run:
+        for child in run_item:
             if child.tag == "EXPERIMENT_REF":
                 metadata["experiment_accession"] = child.attrib["accession"]
             elif child.tag == "RUN_LINKS":
@@ -201,7 +204,10 @@ class SraSurveyor(ExternalSourceSurveyor):
         sample_xml = ET.fromstring(response.text)
 
         sample = sample_xml[0]
-        metadata["sample_center_name"] = sample.attrib["center_name"]
+
+        if "center_name" in sample.attrib:
+            metadata["sample_center_name"] = sample.attrib["center_name"]
+
         for child in sample:
             if child.tag == "TITLE":
                 metadata["sample_title"] = child.text
@@ -307,17 +313,23 @@ class SraSurveyor(ExternalSourceSurveyor):
             experiment_object.accession_code = experiment_accession_code
             experiment_object.source_url = ENA_URL_TEMPLATE.format(experiment_accession_code)
             experiment_object.source_database = "SRA"
-            experiment_object.name = metadata.pop("experiment_title")
-            experiment_object.description = metadata.pop("experiment_design_description")
-            experiment_object.platform_name = metadata.pop("platform_instrument_model")
+            experiment_object.name = metadata.pop("experiment_title", "No title.")
+            experiment_object.description = metadata.pop("experiment_design_description", "No description.")
+            experiment_object.platform_name = metadata.pop("platform_instrument_model", "No model.")
             # We don't get this value from the API, unfortunately.
             # experiment_object.platform_accession_code = experiment["platform_accession_code"]
+
+            if not experiment_object.description:
+                experiment_object.description = "No description."
+
             experiment_object.save()
 
         ##
         # Experiment K/V
+        # TODO: Convert to HField?
         ##
-        for key in [    
+        for key in [
+                    'library_construction_protocol',    
                     'study_abstract', 
                     'study_accession', 
                     'study_type', 
@@ -326,11 +338,12 @@ class SraSurveyor(ExternalSourceSurveyor):
                     'submission_title',
                     'lab_name'
                 ]:
-            kv = ExperimentAnnotation()
-            kv.experiment = experiment_object
-            kv.key = key 
-            kv.value = metadata.pop(key)
-            kv.save()
+            if key in metadata:
+                kv = ExperimentAnnotation()
+                kv.experiment = experiment_object
+                kv.key = key 
+                kv.value = metadata.pop(key)[:255] # Ugly. Abstracts can be very very long.
+                kv.save()
 
         ##
         # Samples
@@ -365,6 +378,8 @@ class SraSurveyor(ExternalSourceSurveyor):
                 original_file.has_raw = True # I think this is always true?
                 original_file.save()
 
+                original_files.append(original_file)
+
             esa = ExperimentSampleAssociation()
             esa.experiment = experiment_object
             esa.sample = sample_object
@@ -372,19 +387,10 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         ##
         # Samples K/V
+        # TODO
         ##
 
         return experiment_object, [sample_object]
-
-        # self.add_batch(platform_accession_code=metadata.pop("platform_instrument_model"),
-        #                experiment_accession_code=metadata.pop("experiment_accession"),
-        #                organism_id=int(metadata.pop("organism_id")),
-        #                organism_name=metadata.pop("organism_name"),
-        #                experiment_title=metadata.pop("experiment_title"),
-        #                release_date=metadata.pop("run_ena_first_public"),
-        #                last_uploaded_date=metadata.pop("run_ena_last_update"),
-        #                files=files,
-        #                key_values=metadata)
 
     @staticmethod
     def get_next_accession(last_accession: str) -> str:

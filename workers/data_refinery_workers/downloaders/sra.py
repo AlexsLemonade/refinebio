@@ -75,6 +75,8 @@ def _download_file_aspera(download_url: str, downloader_job: DownloaderJob, targ
 
         # Something went wrong! Else, just fall through to returning True.
         if completed_command.returncode != 0:
+            import pdb
+            pdb.set_trace()
             stderr = str(completed_command.stderr)
             logger.error("Shell call to ascp failed with error message: %s\nCommand was: %s",
                          stderr,
@@ -124,7 +126,7 @@ def download_sra(job_id: int) -> None:
 
             downloaded_files.append(original_file)
         else:
-            logger.error("A problem occured while downloading OriginalFile %s".format(original_file.pk))
+            logger.error("A problem occured while downloading")
 
     utils.end_downloader_job(job, success)
     if success:

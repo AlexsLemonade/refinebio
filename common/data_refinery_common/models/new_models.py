@@ -263,8 +263,8 @@ class ComputedFile(models.Model):
     sha1 = models.CharField(max_length=64)
 
     result = models.ForeignKey(ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
-    s3_bucket = models.CharField(max_length=64)
-    s3_key = models.CharField(max_length=64)
+    s3_bucket = models.CharField(max_length=255)
+    s3_key = models.CharField(max_length=255)
 
     # Common Properties
     is_public = models.BooleanField(default=False)
