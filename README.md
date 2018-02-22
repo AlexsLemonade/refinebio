@@ -15,24 +15,24 @@ The Data Refinery currently has four sub-projects contained within this repo:
 **Table of Contents**
 
 - [Development](#development)
-- [Git Workflow](#git-workflow)
-- [Installation](#installation)
-  - [Linux](#linux)
-  - [Mac](#mac)
-  - [Virtual Environment](#virtual-environment)
-  - [Common Dependecies](#common-dependecies)
-  - [Services](#services)
-    - [Nomad](#nomad)
-    - [Postgres](#postgres)
+  - [Git Workflow](#git-workflow)
+  - [Installation](#installation)
+    - [Linux](#linux)
+    - [Mac](#mac)
+    - [Virtual Environment](#virtual-environment)
+    - [Common Dependecies](#common-dependecies)
+    - [Services](#services)
+      - [Nomad](#nomad)
+      - [Postgres](#postgres)
 - [Running Locally](#running-locally)
   - [Surveyor Jobs](#surveyor-jobs)
   - [Downloader Jobs](#downloader-jobs)
   - [Processor Jobs](#processor-jobs)
   - [Checking on Local Jobs](#checking-on-local-jobs)
 - [Testing](#testing)
-- [Production Deployment](#production-deployment)
 - [Development Helpers](#development-helpers)
 - [Style](#style)
+- [Production Deployment](#production-deployment)
 - [Support](#support)
 - [License](#license)
 
@@ -159,13 +159,13 @@ If you need to access a `psql` shell for inspecting the database, you can use:
 ./run_psql_shell.sh
 ```
 
-### Running Locally
+## Running Locally
 
 Once you've built the `common/dist` directory and have
 the Nomad and Postgres services running, you're ready to run
 jobs. There are three kinds of jobs within the Data Refinery.
 
-#### Surveyor Jobs
+### Surveyor Jobs
 
 Surveyor Jobs discover samples to download/process along with
 recording metadata about the samples. A Surveyor Job should queue
@@ -238,7 +238,7 @@ Example:
 ./foreman/run_surveyor.sh survey_transcriptome Ensembl 2 "Homo Sapiens"
 ```
 
-#### Downloader Jobs
+### Downloader Jobs
 
 Downloader Jobs will be queued automatically when `Surveyor Jobs`
 discover new samples. However, if you just want to queue a `Downloader Job`
@@ -254,7 +254,7 @@ For example:
 ./update_models.sh; ./workers/tester.sh run_downloader_job --job-name=ARRAY_EXPRESS --job-id=1
 ```
 
-#### Processor Jobs
+### Processor Jobs
 
 Processor Jobs will be queued automatically by successful `Downloader Jobs`.
 However, if you just want to run a `Processor Job` without first running
@@ -270,7 +270,7 @@ An individual processor job can be run with:
 ./workers/tester.sh queue_processor TRANSCRIPTOME_INDEX
 ```
 
-#### Checking on Local Jobs
+### Checking on Local Jobs
 
 _Note:_ The following instructions assume you have set the
 environment variable $HOST_IP to the IP address of your
@@ -333,7 +333,7 @@ nomad logs -verbose -address http://$HOST_IP:4646 b30e4edd
 This command will output both the stderr and stdout logs from the container
 which ran that allocation. The allocation is really a Data Refinery job.
 
-### Testing
+## Testing
 
 To run the entire test suite:
 
@@ -343,11 +343,8 @@ To run the entire test suite:
 
 These tests will also be run continuosly for each commit via CircleCI.
 
-### Production Deployment
 
-_TODO_
-
-### Development Helpers
+## Development Helpers
 
 It can be useful to have an interactive Python interpreter running within the
 context of the Docker container. The `run_shell.sh` script has been provided
@@ -358,7 +355,7 @@ have all the environment variables, dependencies, and Django configurations
 for the Foreman project. There are instructions within the script describing
 how to change this to another project.
 
-### Style
+## Style
 
 R files in this repo follow
 [Google's R Style Guide](https://google.github.io/styleguide/Rguide.xml).
@@ -371,6 +368,10 @@ the line length limit for the autopep8 and flake8 linters. If you run either
 linter within the project's directory tree, it will enforce a line length limit
 of 100 instead of 80. This will also be true for editors which rely on either
 linter.
+
+## Production Deployment
+
+_TODO_
 
 ## Support
 
