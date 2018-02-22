@@ -197,6 +197,16 @@ linter within the project's directory tree, it will enforce a line length limit
 of 100 instead of 80. This will also be true for editors which rely on either
 linter.
 
+### Gotchas
+
+During development, you make encounter some occasional strangeness. Here's
+some things to watch out for:
+
+  - If builds are failing, increase the size of Docker's memory allocation.
+  - If Docker images are failing mysteriously during creation, it may
+be the result of Docker's `Docker.qcow2` or `Docker.raw` file filling. You 
+can prune old images with `docker system prune -a`.
+
 ## Running Locally
 
 Once you've built the `common/dist` directory and have
