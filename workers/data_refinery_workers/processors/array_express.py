@@ -62,6 +62,10 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
     # and we can monitor what packages are added to it and modify
     # accordingly. So far "v1" and "v2" are the only known versions
     # which must be accomodated in this way.
+
+    # XXX: This may need to be made Organism-specific! hsentrezgprobe is for Homo Sapiens(?)
+    # XXX: TODO: We also expect this to be replaced with `ensg`
+    # Related: https://github.com/data-refinery/data-refinery/issues/85
     package_name_without_version = package_name.replace("v1", "").replace("v2", "")
     job_context["brainarray_package"] = package_name_without_version + "hsentrezgprobe"
     return job_context

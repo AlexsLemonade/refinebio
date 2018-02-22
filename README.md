@@ -27,6 +27,7 @@ The Data Refinery currently has four sub-projects contained within this repo:
   - [Testing](#testing)
   - [Development Helpers](#development-helpers)
   - [Style](#style)
+  - [Gotchas](#gotchas)
 - [Running Locally](#running-locally)
   - [Surveyor Jobs](#surveyor-jobs)
     - [ArrayExpress](#arrayexpress)

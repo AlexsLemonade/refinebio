@@ -43,6 +43,9 @@ packages <- row.names(available.packages(contriburl="http://brainarray.mbni.med.
 ## This narrows down from all the files gotten just having entrezg in the name
 entrez.packages <- packages[grep("entrezg", packages)]
 
+# In the future, we probably want to replace ^^ that with:
+# ensg.packages <- packages[grep("ensg", packages)]
+
 install.packages(entrez.packages, repos="http://brainarray.mbni.med.umich.edu/bioc/", type="source")
 
 platform.designs <- c(
