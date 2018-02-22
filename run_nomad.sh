@@ -12,6 +12,13 @@ script_directory=`perl -e 'use File::Basename;
  print dirname(abs_path(@ARGV[0]));' -- "$0"`
 cd $script_directory
 
+# Set up the data volume directory if it does not already exist
+volume_directory="$script_directory/workers/volume"
+if [ ! -d "$volume_directory" ]; then
+    mkdir $volume_directory
+    chmod -R a+rwX $volume_directory
+fi
+
 source common.sh
 HOST_IP=$(get_ip_address)
 export HOST_IP
