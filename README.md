@@ -24,14 +24,17 @@ The Data Refinery currently has four sub-projects contained within this repo:
     - [Services](#services)
       - [Nomad](#nomad)
       - [Postgres](#postgres)
+  - [Testing](#testing)
+  - [Development Helpers](#development-helpers)
+  - [Style](#style)
 - [Running Locally](#running-locally)
   - [Surveyor Jobs](#surveyor-jobs)
+    - [ArrayExpress](#arrayexpress)
+    - [Sequence Read Archive (SRA)](#sequence-read-archive-sra)
+    - [Ensembl Indexes](#ensembl-indexes)
   - [Downloader Jobs](#downloader-jobs)
   - [Processor Jobs](#processor-jobs)
   - [Checking on Local Jobs](#checking-on-local-jobs)
-- [Testing](#testing)
-- [Development Helpers](#development-helpers)
-- [Style](#style)
 - [Production Deployment](#production-deployment)
 - [Support](#support)
 - [License](#license)
@@ -159,6 +162,41 @@ If you need to access a `psql` shell for inspecting the database, you can use:
 ./run_psql_shell.sh
 ```
 
+### Testing
+
+To run the entire test suite:
+
+```bash
+./run_all_tests.sh
+```
+
+These tests will also be run continuosly for each commit via CircleCI.
+
+### Development Helpers
+
+It can be useful to have an interactive Python interpreter running within the
+context of the Docker container. The `run_shell.sh` script has been provided
+for this purpose. It is in the top level directory so that if you wish to
+reference it in any integrations its location will be constant. However, it
+is configured by default for the Foreman project. The interpreter will
+have all the environment variables, dependencies, and Django configurations
+for the Foreman project. There are instructions within the script describing
+how to change this to another project.
+
+### Style
+
+R files in this repo follow
+[Google's R Style Guide](https://google.github.io/styleguide/Rguide.xml).
+Python Files in this repo follow
+[PEP 8](https://www.python.org/dev/peps/pep-0008/). All files (including
+Python and R) have a line length limit of 100 characters.
+
+A `setup.cfg` file has been included in the root of this repo which specifies
+the line length limit for the autopep8 and flake8 linters. If you run either
+linter within the project's directory tree, it will enforce a line length limit
+of 100 instead of 80. This will also be true for editors which rely on either
+linter.
+
 ## Running Locally
 
 Once you've built the `common/dist` directory and have
@@ -188,7 +226,9 @@ arguments can be viewed by running:
 Templates and examples of valid commands to run the different types of
 Surveyor Jobs are:
 
-(1) The [Array Express](https://www.ebi.ac.uk/arrayexpress/) Surveyor
+#### ArrayExpress
+
+The [ArrayExpress](https://www.ebi.ac.uk/arrayexpress/) Surveyor
 expects a single accession code:
 
 ```bash
@@ -200,7 +240,9 @@ Example:
 ./foreman/run_surveyor.sh survey_array_express E-MTAB-3050
 ```
 
-(2) The [Sequence Read Archive](https://www.ncbi.nlm.nih.gov/sra) Surveyor expects a
+#### Sequence Read Archive (SRA)
+
+The [Sequence Read Archive](https://www.ncbi.nlm.nih.gov/sra) Surveyor expects a
 range of SRA accession codes:
 
 ```bash
@@ -217,9 +259,9 @@ Example (paired read):
 ./foreman/run_surveyor.sh survey_sra SRR6718414
 ```
 
-(3) The Index Refinery Surveyor expects an
+#### Ensembl Indexes
 
-[Ensembl](http://ensemblgenomes.org/) divsion and a number of
+The Index Refinery Surveyor expects an [Ensembl](http://ensemblgenomes.org/) divsion and a number of
 organisms to survey:
 
 ```bash
@@ -233,7 +275,6 @@ Example:
 
 A specific organism can also be specified:
 
-Example:
 ```bash
 ./foreman/run_surveyor.sh survey_transcriptome Ensembl 2 "Homo Sapiens"
 ```
@@ -332,42 +373,6 @@ nomad logs -verbose -address http://$HOST_IP:4646 b30e4edd
 
 This command will output both the stderr and stdout logs from the container
 which ran that allocation. The allocation is really a Data Refinery job.
-
-## Testing
-
-To run the entire test suite:
-
-```bash
-./run_all_tests.sh
-```
-
-These tests will also be run continuosly for each commit via CircleCI.
-
-
-## Development Helpers
-
-It can be useful to have an interactive Python interpreter running within the
-context of the Docker container. The `run_shell.sh` script has been provided
-for this purpose. It is in the top level directory so that if you wish to
-reference it in any integrations its location will be constant. However, it
-is configured by default for the Foreman project. The interpreter will
-have all the environment variables, dependencies, and Django configurations
-for the Foreman project. There are instructions within the script describing
-how to change this to another project.
-
-## Style
-
-R files in this repo follow
-[Google's R Style Guide](https://google.github.io/styleguide/Rguide.xml).
-Python Files in this repo follow
-[PEP 8](https://www.python.org/dev/peps/pep-0008/). All files (including
-Python and R) have a line length limit of 100 characters.
-
-A `setup.cfg` file has been included in the root of this repo which specifies
-the line length limit for the autopep8 and flake8 linters. If you run either
-linter within the project's directory tree, it will enforce a line length limit
-of 100 instead of 80. This will also be true for editors which rely on either
-linter.
 
 ## Production Deployment
 
