@@ -14,28 +14,27 @@ The Data Refinery currently has four sub-projects contained within this repo:
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**
 
-- [Data Refinery *](#data-refinery-)
-  - [Development](#development)
-    - [Git Workflow](#git-workflow)
-    - [Installation](#installation)
-      - [Linux](#linux)
-      - [Mac](#mac)
-      - [Virtual Environment](#virtual-environment)
-    - [Common Dependecies](#common-dependecies)
-    - [Services](#services)
-      - [Nomad](#nomad)
-      - [Postgres](#postgres)
-    - [Running Locally](#running-locally)
-      - [Surveyor Jobs](#surveyor-jobs)
-      - [Downloader Jobs](#downloader-jobs)
-      - [Processor Jobs](#processor-jobs)
-      - [Checking on Local Jobs](#checking-on-local-jobs)
-    - [Testing](#testing)
-    - [Production Deployment](#production-deployment)
-    - [Development Helpers](#development-helpers)
-    - [Style](#style)
-  - [Support](#support)
-  - [License](#license)
+- [Development](#development)
+- [Git Workflow](#git-workflow)
+- [Installation](#installation)
+  - [Linux](#linux)
+  - [Mac](#mac)
+  - [Virtual Environment](#virtual-environment)
+  - [Common Dependecies](#common-dependecies)
+  - [Services](#services)
+    - [Nomad](#nomad)
+    - [Postgres](#postgres)
+- [Running Locally](#running-locally)
+  - [Surveyor Jobs](#surveyor-jobs)
+  - [Downloader Jobs](#downloader-jobs)
+  - [Processor Jobs](#processor-jobs)
+  - [Checking on Local Jobs](#checking-on-local-jobs)
+- [Testing](#testing)
+- [Production Deployment](#production-deployment)
+- [Development Helpers](#development-helpers)
+- [Style](#style)
+- [Support](#support)
+- [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -98,7 +97,7 @@ repo. Sub-projects each have their own virtualenvs which are managed by their
 containers. When returning to this project you should run
 `source dr_env/bin/activate` to reactivate the virtualenv.
 
-### Common Dependecies
+#### Common Dependecies
 
 The [common](./common) sub-project contains common code which is
 depended upon by the other sub-projects. So before anything else you
@@ -109,13 +108,13 @@ command:
 (cd common && python setup.py sdist)
 ```
 
-### Services
+#### Services
 
 `data-refinery` also depends on Postgres and Nomad. Postgres can be
 run in a local Docker container, but Nomad must be run on your
 development machine.
 
-#### Nomad
+##### Nomad
 
 Similarly, you will need to run a local
 [Nomad](https://www.nomadproject.io/) service in development
@@ -134,7 +133,7 @@ the Nomad agent, which will then launch a Docker container which runs
 the job. If address conflicts emerge, old Docker containers can be purged
 with `docker container prune -f`.
 
-#### Postgres
+##### Postgres
 
 To start a local Postgres server in a Docker container, use:
 
