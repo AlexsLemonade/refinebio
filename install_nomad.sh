@@ -1,10 +1,8 @@
 #!/bin/bash
-# set -e
 
-echo 'DOCKER_STORAGE_OPTIONS="--storage-driver overlay2"' > /etc/sysconfig/docker-storage
-/etc/init.d/docker restart
+# This script installs Nomad. It should be run with `sudo`.
 
-# This is the public key from above - one-time step.
+# Import Hashicorps' Key.
 curl https://keybase.io/hashicorp/pgp_keys.asc | gpg --import
 
 # Download the binary and signature files.
@@ -26,8 +24,8 @@ if [[ "$shasum_ok" = "" ]]; then
     exit 1
 fi
 
-sudo apt-get update
-sudo apt-get install -y unzip
+apt-get update
+apt-get install -y unzip
 
 unzip -d /usr/bin nomad_0.7.1_linux_amd64.zip
 chmod a+rx /usr/bin/nomad
