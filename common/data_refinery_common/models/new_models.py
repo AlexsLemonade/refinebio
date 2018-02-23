@@ -105,7 +105,6 @@ class Experiment(models.Model):
     publication_doi = models.CharField(max_length=64, blank=True)
     pubmed_id = models.CharField(max_length=16, blank=True)
 
-
     # Common Properties
     is_public = models.BooleanField(default=False)
     created_at = models.DateTimeField(editable=False, default=timezone.now)

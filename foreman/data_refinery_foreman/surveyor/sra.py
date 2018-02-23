@@ -57,6 +57,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_submission_metadata(metadata: Dict) -> None:
+
         response = requests.get(ENA_METADATA_URL_TEMPLATE.format(metadata["submission_accession"]))
         submission_xml = ET.fromstring(response.text)[0]
         submission_metadata = submission_xml.attrib
@@ -246,6 +247,13 @@ class SraSurveyor(ExternalSourceSurveyor):
                 for grandchild in child:
                     key, value = SraSurveyor.parse_attribute(grandchild, "study_")
                     metadata[key] = value
+            elif child.tag == "STUDY_LINKS":
+                for grandchild in child:
+                    for ggc in grandchild:
+                        print(ggc.getchildren()[0].text)
+                        if ggc.getchildren()[0].text == "pubmed":
+                            metadata["pubmed_id"] = ggc.getchildren()[1].text
+                            break
 
     @staticmethod
     def gather_all_metadata(run_accession):
@@ -333,9 +341,10 @@ class SraSurveyor(ExternalSourceSurveyor):
             if "lab_name" in metadata:
                 experiment_object.submitter_institution = metadata["lab_name"]
             if "experiment_design_description" in metadata:
-                experiment_object.submitter_institution = metadata["protocol_description"]
-            # XXX: Example with publication info? 
-
+                experiment_object.protocol_description = metadata["experiment_design_description"]
+            if "pubmed_id" in metadata:
+                experiment_object.pubmed_id = metadata["pubmed_id"]
+                experiment_object.has_publication = True
 
             experiment_object.save()
 
