@@ -76,8 +76,6 @@ def _download_file_aspera(download_url: str, downloader_job: DownloaderJob, targ
 
         # Something went wrong! Else, just fall through to returning True.
         if completed_command.returncode != 0:
-            import pdb
-            pdb.set_trace()
             stderr = str(completed_command.stderr)
             logger.error("Shell call to ascp failed with error message: %s\nCommand was: %s",
                          stderr,

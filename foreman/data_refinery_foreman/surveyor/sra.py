@@ -318,14 +318,24 @@ class SraSurveyor(ExternalSourceSurveyor):
             experiment_object.accession_code = experiment_accession_code
             experiment_object.source_url = ENA_URL_TEMPLATE.format(experiment_accession_code)
             experiment_object.source_database = "SRA"
-            experiment_object.name = metadata.get("experiment_title", "No title.")
-            experiment_object.description = metadata.get("experiment_design_description", "No description.")
             experiment_object.platform_name = metadata.get("platform_instrument_model", "No model.")
+
             # We don't get this value from the API, unfortunately.
             # experiment_object.platform_accession_code = experiment["platform_accession_code"]
 
             if not experiment_object.description:
                 experiment_object.description = "No description."
+
+            if "study_title" in metadata:
+                experiment_object.title = metadata["study_title"]
+            if "study_abstract" in metadata:
+                experiment_object.description = metadata["study_abstract"]
+            if "lab_name" in metadata:
+                experiment_object.submitter_institution = metadata["lab_name"]
+            if "experiment_design_description" in metadata:
+                experiment_object.submitter_institution = metadata["protocol_description"]
+            # XXX: Example with publication info? 
+
 
             experiment_object.save()
 
