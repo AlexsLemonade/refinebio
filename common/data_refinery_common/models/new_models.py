@@ -104,6 +104,8 @@ class Experiment(models.Model):
     publication_title = models.TextField()
     publication_doi = models.CharField(max_length=64, blank=True)
     pubmed_id = models.CharField(max_length=16, blank=True)
+    source_first_published = models.CharField(max_length=256, blank=True)
+    source_last_updated = models.CharField(max_length=256, blank=True)
 
     # Common Properties
     is_public = models.BooleanField(default=False)

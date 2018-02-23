@@ -250,7 +250,6 @@ class SraSurveyor(ExternalSourceSurveyor):
             elif child.tag == "STUDY_LINKS":
                 for grandchild in child:
                     for ggc in grandchild:
-                        print(ggc.getchildren()[0].text)
                         if ggc.getchildren()[0].text == "pubmed":
                             metadata["pubmed_id"] = ggc.getchildren()[1].text
                             break
@@ -345,6 +344,10 @@ class SraSurveyor(ExternalSourceSurveyor):
             if "pubmed_id" in metadata:
                 experiment_object.pubmed_id = metadata["pubmed_id"]
                 experiment_object.has_publication = True
+            if "study_ena_first_public" in metadata:
+                experiment.source_first_published = metadata["study_ena_first_public"]
+            if "study_ena_last_update" in metadata:
+                experiment.source_last_updated = metadata["study_ena_last_update"]
 
             experiment_object.save()
 

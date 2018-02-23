@@ -113,6 +113,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment_object.description = parsed_json["description"][0]["text"]
             experiment_object.platform_name = experiment["platform_accession_name"]
             experiment_object.platform_accession_code = experiment["platform_accession_code"]
+            experiment_object.source_first_published = experiment["release_date"]
+            experiment_object.source_last_updated = experiment["last_update_date"]
             experiment_object.save()
 
             json_xa = ExperimentAnnotation()
@@ -153,8 +155,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 experiment_object.publication_doi = idf_dict['Publication DOI']
                 experiment_object.has_publication = True
             if 'PubMed ID' in idf_dict:
-                experiment_object.pubmed_id = idf_dict['Pubmed ID']
+                experiment_object.pubmed_id = idf_dict['PubMed ID']
                 experiment_object.has_publication = True
+            
             experiment_object.save()
 
         return experiment_object
