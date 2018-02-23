@@ -23,5 +23,10 @@ class Command(BaseCommand):
             logger.error("You must specify an experiment accession.")
             return 1
         else:
-            surveyor.survey_ae_experiment(options["experiment_accession"])
+
+            accession = options["experiment_accession"]
+            if "GSE" in accession:
+                accession = "E-GEOD-" + accession.split('GSE')[1] 
+
+            surveyor.survey_ae_experiment(accession)
             return 0
