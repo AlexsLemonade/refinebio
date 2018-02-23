@@ -307,7 +307,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         ##
         # Experiment
         ##
-        experiment_accession_code = metadata.pop('experiment_accession')
+        experiment_accession_code = metadata.get('experiment_accession')
         try:
             experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
             logger.error("Experiment %s already exists, skipping object creation.",
@@ -318,9 +318,9 @@ class SraSurveyor(ExternalSourceSurveyor):
             experiment_object.accession_code = experiment_accession_code
             experiment_object.source_url = ENA_URL_TEMPLATE.format(experiment_accession_code)
             experiment_object.source_database = "SRA"
-            experiment_object.name = metadata.pop("experiment_title", "No title.")
-            experiment_object.description = metadata.pop("experiment_design_description", "No description.")
-            experiment_object.platform_name = metadata.pop("platform_instrument_model", "No model.")
+            experiment_object.name = metadata.get("experiment_title", "No title.")
+            experiment_object.description = metadata.get("experiment_design_description", "No description.")
+            experiment_object.platform_name = metadata.get("platform_instrument_model", "No model.")
             # We don't get this value from the API, unfortunately.
             # experiment_object.platform_accession_code = experiment["platform_accession_code"]
 
@@ -329,26 +329,14 @@ class SraSurveyor(ExternalSourceSurveyor):
 
             experiment_object.save()
 
-        ##
-        # Experiment K/V
-        # TODO: Convert to HField?
-        ##
-        for key in [
-                    'library_construction_protocol',    
-                    'study_abstract', 
-                    'study_accession', 
-                    'study_type', 
-                    'submission_accession',
-                    'submission_comment',
-                    'submission_title',
-                    'lab_name'
-                ]:
-            if key in metadata:
-                kv = ExperimentAnnotation()
-                kv.experiment = experiment_object
-                kv.key = key 
-                kv.value = metadata.pop(key)[:255] # Ugly. Abstracts can be very very long.
-                kv.save()
+            ##
+            # Experiment Metadata
+            ##
+            json_xa = ExperimentAnnotation()
+            json_xa.experiment = experiment_object
+            json_xa.data = metadata
+            json_xa.is_ccdl = False
+            json_xa.save()
 
         ##
         # Samples

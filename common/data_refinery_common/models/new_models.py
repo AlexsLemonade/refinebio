@@ -102,7 +102,7 @@ class Experiment(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
 class ExperimentAnnotation(models.Model):
-    """ Non-standard information associated with an Experiment """
+    """ Semi-standard information associated with an Experiment """
 
     class Meta:
         db_table = "experiment_annotations"
@@ -111,8 +111,8 @@ class ExperimentAnnotation(models.Model):
     experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
 
     # Properties
-    key = models.CharField(max_length=255)
-    value = models.CharField(max_length=255)
+    data = HStoreField(default={})
+    is_ccdl = models.BooleanField(default=False)
 
     # Common Properties
     is_public = models.BooleanField(default=False)
@@ -153,6 +153,7 @@ class CompultationalResultAnnotation(models.Model):
 
     # Properties
     data = HStoreField(default={})
+    is_ccdl = models.BooleanField(default=True)
 
     # Common Properties
     is_public = models.BooleanField(default=False)

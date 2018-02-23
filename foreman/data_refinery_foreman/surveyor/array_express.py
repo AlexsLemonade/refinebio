@@ -115,24 +115,30 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment_object.platform_accession_code = experiment["platform_accession_code"]
             experiment_object.save()
 
-            # TODO: Is there other K/V pair data we should create here?
-            if 'protocol' in parsed_json:
-                for pid in parsed_json['protocol']:
-                    protocol_kv = ExperimentAnnotation()
-                    protocol_kv.experiment = experiment_object
-                    protocol_kv.key = "protocol_accession_code"
-                    protocol_kv.value = pid['accession']
-                    protocol_kv.save()
+            json_xa = ExperimentAnnotation()
+            json_xa.experiment = experiment_object
+            json_xa.data = parsed_json
+            json_xa.is_ccdl = False
+            json_xa.save()
 
-            if 'provider' in parsed_json:
-                for provider in parsed_json['provider']:
-                    if provider['role'] is "submitter":
-                        provider_kv = ExperimentAnnotation()
-                        provider_kv.experiment = experiment_object
-                        provider_kv.key = "submitter_name"
-                        provider_kv.value = provider['contact']
-                        provider_kv.save()
+            ## Fetch and parse the IDF file for any other fields
+            IDF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.idf.txt"
+            idf_url = IDF_URL_TEMPLATE.format(code=experiment_accession_code)
+            idf_text = requests.get(idf_url).text
+            lines = idf_text.split('\n')
+            idf_dict = {}
+            for line in lines:
+                keyval = line.strip().split('\t')
+                if len(keyval) == 2:
+                    idf_dict[keyval[0]] = keyval[1]
+                elif len(keyval) > 2:
+                    idf_dict[keyval[0]] = keyval[1:]
 
+            idf_xa = ExperimentAnnotation()
+            idf_xa.data = idf_dict
+            idf_xa.experiment = experiment_object
+            idf_xa.is_ccdl = False
+            idf_xa.save()
 
         return experiment_object
 
