@@ -263,35 +263,15 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
                 # This creates key values for a given sample.
                 # This looks a bit of a mess.
-                # I'm not sure the amount of variety in these values.
-                # I suggest we leave it in K/V form for a few non-trivial runs
-                # from various data sources and then try to solidify
-                # onto some attributes on the Sample object and then
-                # move the rest to a HStore on the annotation.
-                for characteristic in sample['characteristic']:
-                    if characteristic['category'] is 'organism':
-                        continue
 
-                    # TODO: What to do if a units field is present?
-                    sample_kv = SampleAnnotation()
-                    sample_kv.sample = sample_object
-                    sample_kv.key = characteristic['category']
-                    sample_kv.value = characteristic['value']
-                    sample_kv.save()
+                # XXX: TODO: Harmonize desired values to filter on and 
+                # extact to properties of the Sample itself.
 
-                if 'comment' in sample['source']:
-                    if 'name' in sample['source']['comment']:
-                        sample_kv = SampleAnnotation()
-                        sample_kv.sample = sample_object
-                        sample_kv.key = sample['source']['comment']['name']
-                        sample_kv.value = sample['source']['comment']['value']
-                        sample_kv.save()
-                if 'name' in sample['source']:
-                    sample_kv = SampleAnnotation()
-                    sample_kv.sample = sample_object
-                    sample_kv.key = 'name'
-                    sample_kv.value = sample['source']['name']
-                    sample_kv.save()
+                sample_annotation = SampleAnnotation()
+                sample_annotation.data = sample
+                sample.sample = sample_object
+                sample.is_ccdl = False
+                sample.save()
 
                 original_file = OriginalFile()
                 original_file.sample = sample_object
