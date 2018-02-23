@@ -1,8 +1,23 @@
 # The configuration contained in this file specifies the AWS instances
 # we'll need. These include EC2 instances and an RDS instance.
 
+data "aws_ami" "ubuntu" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    # This is a HVM, EBS backed SSD Ubuntu LTS AMI with Docker version 17.12 on it.
+    values = ["ubuntu-16.04-docker-17.12.0-ce-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
 resource "aws_instance" "data_refinery_worker_1" {
-  ami = "ami-04351e12"
+  ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.xlarge"
   availability_zone = "us-east-1a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
@@ -75,7 +90,7 @@ resource "aws_instance" "data_refinery_worker_1" {
 }
 
 resource "aws_instance" "data_refinery_worker_2" {
-  ami = "ami-04351e12"
+  ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.xlarge"
   availability_zone = "us-east-1b"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]

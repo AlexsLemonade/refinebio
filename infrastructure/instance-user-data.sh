@@ -19,14 +19,15 @@ if [[ "$gpg_ok" = "" ]]; then
     exit 1
 fi
 
-# shasum is not on the ec2 instance. Start by getting it on there.
-
 # Verify the SHASUM matches the binary.
-shasum_ok=$(shasum -a 256 -c nomad_0.7.1_SHA256SUMS |& grep OK)
+shasum_ok=$(sha256sum -c nomad_0.7.1_SHA256SUMS |& grep OK)
 if [[ "$shasum_ok" = "" ]]; then
     echo "Could not verify the Nomad checksum provided by Hashicorp."
     exit 1
 fi
+
+sudo apt-get update
+sudo apt-get install -y unzip
 
 unzip -d /usr/bin nomad_0.7.1_linux_amd64.zip
 chmod a+rx /usr/bin/nomad
