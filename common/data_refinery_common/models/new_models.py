@@ -91,10 +91,20 @@ class Experiment(models.Model):
     source_url = models.CharField(max_length=256)
 
     # Properties
-    title = models.CharField(max_length=256)
+    ## I was always under the impression that TextFields were slower
+    ## than CharFields, however the Postgres documentation disagrees: 
+    ## https://www.postgresql.org/docs/9.0/static/datatype-character.html
+    title = models.TextField()
     description = models.TextField()
-    platform_accession_code = models.CharField(max_length=256)
-    platform_name = models.CharField(max_length=256)
+    protocol_description = models.TextField()
+    platform_accession_code = models.CharField(max_length=256, blank=True)
+    platform_name = models.CharField(max_length=256, blank=True)
+    submitter_institution = models.CharField(max_length=256, blank=True)
+    has_publication = models.BooleanField(default=False)
+    publication_title = models.TextField()
+    publication_doi = models.CharField(max_length=64, blank=True)
+    pubmed_id = models.CharField(max_length=16, blank=True)
+
 
     # Common Properties
     is_public = models.BooleanField(default=False)

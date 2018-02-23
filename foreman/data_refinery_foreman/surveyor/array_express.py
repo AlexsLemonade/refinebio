@@ -140,6 +140,23 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             idf_xa.is_ccdl = False
             idf_xa.save()
 
+            if 'Investigation Title' in idf_dict:
+                experiment_object.title = idf_dict['Investigation Title']
+            if 'Person Affiliation' in idf_dict:
+                experiment_object.submitter_institution = idf_dict['Person Affiliation']
+            if 'Protocol Description' in idf_dict:
+                experiment_object.protocol_description = ", ".join(idf_dict['Protocol Description'])
+            if 'Publication Title' in idf_dict:
+                experiment_object.publication_title = idf_dict['Publication Title']
+                experiment_object.has_publication = True
+            if 'Publication DOI' in idf_dict:
+                experiment_object.publication_doi = idf_dict['Publication DOI']
+                experiment_object.has_publication = True
+            if 'PubMed ID' in idf_dict:
+                experiment_object.pubmed_id = idf_dict['Pubmed ID']
+                experiment_object.has_publication = True
+            experiment_object.save()
+
         return experiment_object
 
     def create_samples_from_api(self,
@@ -269,9 +286,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
                 sample_annotation = SampleAnnotation()
                 sample_annotation.data = sample
-                sample.sample = sample_object
-                sample.is_ccdl = False
-                sample.save()
+                sample_annotation.sample = sample_object
+                sample_annotation.is_ccdl = False
+                sample_annotation.save()
 
                 original_file = OriginalFile()
                 original_file.sample = sample_object
