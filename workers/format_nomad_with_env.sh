@@ -32,6 +32,12 @@ script_directory=`perl -e 'use File::Basename;
  print dirname(abs_path(@ARGV[0]));' -- "$0"`
 cd $script_directory
 
+# It's important that these are run first so they will be overwritten
+# by environment variables.
+source ../common.sh
+export DB_HOST_IP=$(get_docker_db_ip_address)
+export NOMAD_HOST_IP=$(get_ip_address)
+
 # What to do for the "prod" env is TBD.
 if [ $env == "test" ]; then
     export VOLUME_DIR=$script_directory/test_volume
@@ -47,10 +53,6 @@ while read line; do
         export $line
     fi
 done < "environments/$env"
-
-source ../common.sh
-export DB_HOST_IP=$(get_docker_db_ip_address)
-export NOMAD_HOST_IP=$(get_ip_address)
 
 # There is a current outstanding Nomad issue for the ability to
 # template environment variables into the job specifications. Until
