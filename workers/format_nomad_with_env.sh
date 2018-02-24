@@ -35,6 +35,8 @@ cd $script_directory
 # What to do for the "prod" env is TBD.
 if [ $env == "test" ]; then
     export VOLUME_DIR=$script_directory/test_volume
+elif [ $env == "prod" ]; then
+    export VOLUME_DIR=/tmp/docker_volume
 else
     export VOLUME_DIR=$script_directory/volume
 fi

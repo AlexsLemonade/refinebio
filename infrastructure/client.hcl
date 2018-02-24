@@ -2,7 +2,7 @@
 log_level = "DEBUG"
 
 # Setup data dir
-data_dir = "/tmp/client1"
+data_dir = "/tmp/nomad_client1"
 
 # Enable the client
 client {
