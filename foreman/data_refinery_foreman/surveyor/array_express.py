@@ -69,6 +69,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             raise
 
         experiment = {}
+        platform_warning = False
 
         experiment["name"] = parsed_json["name"]
         experiment["experiment_accession_code"] = experiment_accession_code
@@ -91,7 +92,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment["platform_accession_name"] = UNKNOWN
         else:
             if parsed_json["arraydesign"][0]["accession"] not in settings.SUPPORTED_PLATFORMS:
-                raise UnsupportedPlatformException
+                logger.warn("Experiment platform %s is not supported!", 
+                        parsed_json["arraydesign"][0]["accession"])
+                platform_warning = True
 
             experiment["platform_accession_code"] = parsed_json["arraydesign"][0]["accession"]
             experiment["platform_accession_name"] = parsed_json["arraydesign"][0]["name"]
@@ -121,6 +124,15 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment_object.source_first_published = experiment["release_date"]
             experiment_object.source_last_updated = experiment["last_update_date"]
             experiment_object.save()
+
+            # We still create the Experiment and samples if there is processed
+            # data but we can't support the reprocessing of raw data.
+            if platform_warning:
+                warning_xa = ExperimentAnnotation()
+                warning_xa.experiment = experiment_object
+                warning_xa.data = {'has_unsupported_platform': True}
+                warning_xa.is_ccdl = False
+                warning_xa.save()
 
             json_xa = ExperimentAnnotation()
             json_xa.experiment = experiment_object
@@ -196,6 +208,12 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         r = requests.get(SAMPLES_URL.format(experiment.accession_code))
         samples = r.json()["experiment"]["sample"]
 
+        try:
+            ExperimentAnnotation.objects.get(data__has_unsupported_platform=True, experiment=experiment)
+            has_platform_warning = True
+        except Exception:
+            has_platform_warning = False
+
         # An experiment can have many samples
         for sample in samples:
 
@@ -249,7 +267,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             for sub_file in sample['file']:
 
                 # Skip derived data if we have it raw.
-                if has_raw:
+                if has_raw and not has_platform_warning:
                     if "derived data" in sub_file['type']:
                         continue
 
@@ -282,9 +300,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                             survey_job=self.survey_job.id)
                     continue
 
-            if not download_url:
-                print(sub_file)
-
             # Create the sample object
             try:
                 sample_object = Sample.objects.get(accession_code=sample_accession_code)
@@ -311,6 +326,13 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 sample_annotation.sample = sample_object
                 sample_annotation.is_ccdl = False
                 sample_annotation.save()
+
+                if has_platform_warning and has_raw:
+                    sample_annotation = SampleAnnotation()
+                    sample_annotation.data = {'has_raw': True, 'has_unsupported_platform': True}
+                    sample_annotation.sample = sample_object
+                    sample_annotation.is_ccdl = True
+                    sample_annotation.save()
 
                 original_file = OriginalFile()
                 original_file.sample = sample_object
