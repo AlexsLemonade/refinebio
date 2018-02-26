@@ -139,8 +139,8 @@ class ComputationalResult(models.Model):
     def __str__ (self):
         return "ComputationalResult: " + str(self.pk)
 
-    command_executed = models.CharField(max_length=255, blank=True)
-    program_version = models.CharField(max_length=255)
+    command_executed = models.TextField(blank=True)
+    program_version = models.TextField(blank=True)
     system_version = models.CharField(max_length=255) # Generally defined in from data_refinery_workers._version import __version__
     is_ccdl = models.BooleanField(default=True)
 

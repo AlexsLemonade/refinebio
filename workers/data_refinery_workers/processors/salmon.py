@@ -259,7 +259,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
     else:
 
         result = ComputationalResult()
-        result.command_executed = formatted_command[:254] # I hate having to do this. XXX.
+        result.command_executed = formatted_command
         result.system_version = __version__
         result.time_start = job_context['time_start']
         result.time_end = job_context['time_end']
