@@ -103,7 +103,7 @@ class Experiment(models.Model):
     has_publication = models.BooleanField(default=False)
     publication_title = models.TextField()
     publication_doi = models.CharField(max_length=64, blank=True)
-    pubmed_id = models.CharField(max_length=16, blank=True)
+    pubmed_id = models.CharField(max_length=32, blank=True)
     source_first_published = models.CharField(max_length=256, blank=True)
     source_last_updated = models.CharField(max_length=256, blank=True)
 

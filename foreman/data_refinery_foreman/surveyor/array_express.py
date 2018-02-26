@@ -204,10 +204,15 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 continue
 
             # XXX: Somebody needs to explain this to me.
-            try:
-                sample_accession_code = sample["source"]["name"]
-            except KeyError:
-                sample_accession_code = sample["assay"]["name"]
+            # XXX: This looks hacky. Some samples appear to have these fields
+            # reversed - so we always take the longest.
+            # Ex: E-MEXP-669
+            sample_source_name = sample["source"].get("name", "")
+            sample_assay_name = sample["assay"].get("name", "")
+            if len(sample_source_name) >= len(sample_assay_name):
+                sample_accession_code = sample_source_name
+            else:
+                sample_accession_code = sample_assay_name
 
             # Figure out the Organism for this sample
             organism_name = UNKNOWN
