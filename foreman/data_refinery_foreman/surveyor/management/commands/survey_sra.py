@@ -19,7 +19,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options["accession"] is None:
-            logger.error("You must specify start_accession and end_accession.")
+            logger.error("You must specify accession.")
             return 1
         else:
             surveyor.survey_sra_experiment(options["accession"])

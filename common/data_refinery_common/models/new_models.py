@@ -237,27 +237,22 @@ class OriginalFile(models.Model):
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now) 
 
-    def calculate_sha1(self, absolute_file_path:str=None) -> None:
+    def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
-        if not absolute_file_path:
-            absolute_file_path = self.absolute_file_path
 
         hash_object = hashlib.sha1() 
-        with open(absolute_file_path, mode='rb') as open_file:
+        with open(self.absolute_file_path, mode='rb') as open_file:
             for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
                 hash_object.update(buf)
         
         self.sha1 = hash_object.hexdigest()
         return self.sha1
 
-    def calculate_size(self, absolute_file_path:str=None) -> None:
+    def calculate_size(self) -> None:
         """ Calculate the number of bites in a given file.
         """
-        if not absolute_file_path:
-            absolute_file_path = self.absolute_file_path
-
-        self.size_in_bytes = os.path.getsize(absolute_file_path)
+        self.size_in_bytes = os.path.getsize(self.absolute_file_path)
         return self.size_in_bytes
 
     def get_display_name(self):
@@ -299,27 +294,21 @@ class ComputedFile(models.Model):
         self.s3_key = s3_key
         return True
 
-    def calculate_sha1(self, absolute_file_path:str=None) -> None:
+    def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
-        if not absolute_file_path:
-            absolute_file_path = self.absolute_file_path
-
         hash_object = hashlib.sha1() 
-        with open(absolute_file_path, mode='rb') as open_file:
+        with open(self.absolute_file_path, mode='rb') as open_file:
             for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
                 hash_object.update(buf)
         
         self.sha1 = hash_object.hexdigest()
         return self.sha1
 
-    def calculate_size(self, absolute_file_path:str=None) -> None:
+    def calculate_size(self) -> None:
         """ Calculate the number of bites in a given file.
         """
-        if not absolute_file_path:
-            absolute_file_path = self.absolute_file_path
-
-        self.size_in_bytes = os.path.getsize(absolute_file_path)
+        self.size_in_bytes = os.path.getsize(self.absolute_file_path)
         return self.size_in_bytes
 
 """

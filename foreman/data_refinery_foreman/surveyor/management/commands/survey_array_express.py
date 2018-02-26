@@ -24,6 +24,8 @@ class Command(BaseCommand):
             return 1
         else:
 
+            # This allos us to support ascession codes in both
+            # ArrayExpress and imported-from-GEO format.
             accession = options["experiment_accession"]
             if "GSE" in accession:
                 accession = "E-GEOD-" + accession.split('GSE')[1] 
