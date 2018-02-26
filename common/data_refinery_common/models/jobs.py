@@ -36,7 +36,7 @@ class WorkerJob(TimeTrackedModel):
     worker_version = models.CharField(max_length=128, null=True)
 
     # This field allows jobs to specify why they failed.
-    failure_reason = models.CharField(max_length=256, null=True)
+    failure_reason = models.TextField(null=True)
 
     # If the job is retried, this is the id of the new job
     retried_job = models.ForeignKey('self', on_delete=models.PROTECT, null=True)
@@ -113,4 +113,4 @@ class DownloaderJob(models.Model):
     worker_version = models.CharField(max_length=128, null=True)
 
     # This field allows jobs to specify why they failed.
-    failure_reason = models.CharField(max_length=256, null=True)
+    failure_reason = models.TextField(null=True)
