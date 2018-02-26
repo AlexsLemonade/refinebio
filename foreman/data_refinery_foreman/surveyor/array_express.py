@@ -61,7 +61,12 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         """
         request_url = EXPERIMENTS_URL + experiment_accession_code;
         experiment_request = requests.get(request_url)
-        parsed_json = experiment_request.json()["experiments"]["experiment"][0]
+        try:
+            parsed_json = experiment_request.json()["experiments"]["experiment"][0]
+        except KeyError:
+            logger.error("Remote experiment " + experiment_accession_code +
+                " has no Experiment data!")
+            raise
 
         experiment = {}
 
