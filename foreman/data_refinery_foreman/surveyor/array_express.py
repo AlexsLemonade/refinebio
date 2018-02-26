@@ -234,9 +234,14 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             has_raw = False
             for sub_file in sample['file']:
 
+                # For ex: E-GEOD-15645
+                if isinstance(sub_file['comment'], list):
+                    sub_file_mod = sub_file
+                    sub_file_mod['comment'] = sub_file['comment'][0]
+
                 # Some have the 'data' field, but not the actual data
                 # Ex: E-GEOD-9656
-                if sub_file['type'] == "data" and sub_file['comment']['value'] != None:
+                if sub_file_mod['type'] == "data" and sub_file_mod['comment'].get('value', None) != None:
                     has_raw = True
 
             for sub_file in sample['file']:
