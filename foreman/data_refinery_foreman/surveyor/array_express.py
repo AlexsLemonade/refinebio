@@ -238,6 +238,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 if isinstance(sub_file['comment'], list):
                     sub_file_mod = sub_file
                     sub_file_mod['comment'] = sub_file['comment'][0]
+                else:
+                    sub_file_mod = sub_file
 
                 # Some have the 'data' field, but not the actual data
                 # Ex: E-GEOD-9656
