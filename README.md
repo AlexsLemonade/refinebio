@@ -207,6 +207,9 @@ some things to watch out for:
   - If Docker images are failing mysteriously during creation, it may
 be the result of Docker's `Docker.qcow2` or `Docker.raw` file filling. You 
 can prune old images with `docker system prune -a`.
+  - If it's killed abruptly, the containerized Postgres images can be
+  left in an unrecoverable state. Annoying.
+  - Since we use multiple Docker instances, don't forget to `./update_models`
 
 ## Running Locally
 

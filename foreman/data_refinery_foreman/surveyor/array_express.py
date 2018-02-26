@@ -157,7 +157,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             if 'PubMed ID' in idf_dict:
                 experiment_object.pubmed_id = idf_dict['PubMed ID']
                 experiment_object.has_publication = True
-            
+
             experiment_object.save()
 
         return experiment_object
@@ -200,9 +200,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
             # XXX: Somebody needs to explain this to me.
             try:
-                sample_accession_code = sample["assay"]["name"]
-            except KeyError:
                 sample_accession_code = sample["source"]["name"]
+            except KeyError:
+                sample_accession_code = sample["assay"]["name"]
 
             # Figure out the Organism for this sample
             organism_name = UNKNOWN
@@ -223,6 +223,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             # If not, take the derived.
             has_raw = False
             for sub_file in sample['file']:
+
                 # Some have the 'data' field, but not the actual data
                 # Ex: E-GEOD-9656
                 if sub_file['type'] == "data" and sub_file['comment']['value'] != None:
@@ -232,7 +233,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
                 # Skip derived data if we have it raw.
                 if has_raw:
-                    if sub_file['type'] == "derived data":
+                    if "derived data" in sub_file['type']:
                         continue
 
                 download_url = None
@@ -276,6 +277,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                          survey_job=self.survey_job.id)
                 continue
             except Sample.DoesNotExist:
+
                 sample_object = Sample()
                 sample_object.accession_code = sample_accession_code
                 sample_object.organism = organism
