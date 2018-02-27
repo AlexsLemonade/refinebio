@@ -11,7 +11,7 @@ resource "aws_ecs_cluster" "data_refinery" {
 # be found at:
 # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/service_IAM_role.html
 resource "aws_iam_role" "ecs_service_role" {
-  name = "data-refinery-ecs-servic-${var.user}-${var.stage}"
+  name = "data-refinery-ecs-service-${var.user}-${var.stage}"
 
   # Similar policy text can be found at:
   # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/service_IAM_role.html
