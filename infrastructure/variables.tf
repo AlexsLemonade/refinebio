@@ -9,3 +9,4 @@ variable "user" {
 variable "stage" {
   default = "dev"
 }
+
