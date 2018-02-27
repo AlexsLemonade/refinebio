@@ -171,13 +171,25 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             if 'Protocol Description' in idf_dict:
                 experiment_object.protocol_description = ", ".join(idf_dict['Protocol Description'])
             if 'Publication Title' in idf_dict:
-                experiment_object.publication_title = idf_dict['Publication Title']
+                # This will happen for some superseries.
+                # Ex: E-GEOD-29536
+                # Assume most recent is "best:, store the rest in experiment annotation.
+                if isinstance(idf_dict['Publication Title'], list):
+                    experiment_object.publication_title = idf_dict['Publication Title'][0]
+                else:
+                    experiment_object.publication_title = idf_dict['Publication Title']
                 experiment_object.has_publication = True
             if 'Publication DOI' in idf_dict:
-                experiment_object.publication_doi = idf_dict['Publication DOI']
+                if isinstance(idf_dict['Publication DOI'], list):
+                    experiment_object.publication_doi = idf_dict['Publication DOI'][0]
+                else:
+                    experiment_object.publication_doi = idf_dict['Publication DOI']
                 experiment_object.has_publication = True
             if 'PubMed ID' in idf_dict:
-                experiment_object.pubmed_id = idf_dict['PubMed ID']
+                if isinstance(idf_dict['PubMed ID'], list):
+                    experiment_object.pubmed_id = idf_dict['PubMed ID'][0]
+                else:
+                    experiment_object.pubmed_id = idf_dict['PubMed ID']
                 experiment_object.has_publication = True
 
             experiment_object.save()
