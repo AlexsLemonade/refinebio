@@ -2,12 +2,12 @@
 # permissions.
 
 resource "aws_iam_instance_profile" "ecs_instance_profile" {
-  name  = "data-refinery-ecs-instance-profile"
+  name  = "data-refinery-ecs-instance-profile-${var.user}-${var.stage}"
   role = "${aws_iam_role.ecs_instance.name}"
 }
 
 resource "aws_iam_role" "ecs_instance" {
-  name = "data-refinery-ecs-instance"
+  name = "data-refinery-ecs-instance-${var.user}-${var.stage}"
 
   # Policy text found at:
   # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html
@@ -37,7 +37,7 @@ resource "aws_iam_role_policy_attachment" "ecs" {
 }
 
 resource "aws_iam_policy" "s3_access_policy" {
-  name = "data-refinery-s3-access-policy"
+  name = "data-refinery-s3-access-policy-${var.user}-${var.stage}"
   description = "Allows S3 Permissions."
 
   # Policy text based off of:
@@ -81,7 +81,7 @@ resource "aws_iam_role_policy_attachment" "s3" {
 }
 
 resource "aws_iam_policy" "cloudwatch_policy" {
-  name = "data-refinery-cloudwatch-policy"
+  name = "data-refinery-cloudwatch-policy-${var.user}-${var.stage}"
   description = "Allows Cloudwatch Permissions."
 
 

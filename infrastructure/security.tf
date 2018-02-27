@@ -2,17 +2,17 @@
 # associated rules.
 
 resource "aws_key_pair" "data_refinery" {
-  key_name = "data-refinery-key"
+  key_name = "data-refinery-key-${var.user}-${var.stage}"
   public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDG1WFcvLLyLK7jZfhYnNBfbVwm259du2ig4tYcicA1d8d8I43LcWg2WYpd7EfNFH8LnJMDg632NcnQ0qzrpUG4zLGTcYufXm1Fm97J285iabzlUxfgSpbk5Ee1ioNCmqtPxEgy5lrt2xw0p3Rnbn0NvSKzwGU82/k/NCbxeKbaRpHLjz9TTcAdcZLugV7Syr8W+zWBqlCIMyC4ce4t8s/ecGbyacmRPdPqC9jUBC0guLHeQmlinINJIr+wMihxJ0B5Zcyokf4wXlQBPPcB89oO9L81nlApY6aK5JJrhkSN8M5+YOkdk6Xi4SZuJD5SLWbilKGPiCNiLPAnPw7m7Ual"
 }
 
 resource "aws_security_group" "data_refinery_worker" {
-  name = "data-refinery-worker"
-  description = "data-refinery-worker"
+  name = "data-refinery-worker-${var.user}-${var.stage}"
+  description = "data-refinery-worker-${var.user}-${var.stage}"
   vpc_id = "${aws_vpc.data_refinery_vpc.id}"
 
   tags {
-    Name = "data-refinery-worker"
+    Name = "data-refinery-worker-${var.user}-${var.stage}"
   }
 }
 
@@ -45,12 +45,12 @@ resource "aws_security_group_rule" "data_refinery_worker_outbound" {
 }
 
 resource "aws_security_group" "data_refinery_db" {
-  name = "data_refinery_db"
-  description = "data_refinery_db"
+  name = "data_refinery_db-${var.user}-${var.stage}"
+  description = "data_refinery_db-${var.user}-${var.stage}"
   vpc_id = "${aws_vpc.data_refinery_vpc.id}"
 
   tags {
-    Name = "data-refinery-db"
+    Name = "data-refinery-db-${var.user}-${var.stage}"
   }
 }
 

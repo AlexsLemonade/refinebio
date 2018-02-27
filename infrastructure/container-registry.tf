@@ -3,7 +3,7 @@
 # the IAM permissions needed for ECS to work.
 
 resource "aws_ecs_cluster" "data_refinery" {
-  name = "data-refinery"
+  name = "data-refinery-${var.user}-${var.stage}"
 }
 
 # The following IAM role/policies allow ECS to register/deregister EC2
@@ -11,7 +11,7 @@ resource "aws_ecs_cluster" "data_refinery" {
 # be found at:
 # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/service_IAM_role.html
 resource "aws_iam_role" "ecs_service_role" {
-  name = "data-refinery-ecs-service"
+  name = "data-refinery-ecs-servic-${var.user}-${var.stage}"
 
   # Similar policy text can be found at:
   # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/service_IAM_role.html
@@ -34,7 +34,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "ecs_service" {
-  name = "data-refinery-ecs-service-policy"
+  name = "data-refinery-ecs-service-policy-${var.user}-${var.stage}"
   role = "${aws_iam_role.ecs_service_role.name}"
 
   # Policy text found at:
@@ -67,7 +67,7 @@ resource "aws_ecs_task_definition" "data_refinery_worker" {
 }
 
 resource "aws_ecs_service" "data_refinery_worker" {
-  name = "data-refinery-worker"
+  name = "data-refinery-worker-${var.user}-${var.stage}"
   cluster = "${aws_ecs_cluster.data_refinery.id}"
   task_definition = "${aws_ecs_task_definition.data_refinery_worker.arn}"
   desired_count  = 2
