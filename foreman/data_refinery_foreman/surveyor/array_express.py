@@ -113,6 +113,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 experiment_accession_code,
                 survey_job=self.survey_job.id)
         except Experiment.DoesNotExist:
+
             experiment_object = Experiment()
             experiment_object.accession_code = experiment_accession_code
             experiment_object.source_url = request_url
@@ -162,7 +163,11 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             if 'Investigation Title' in idf_dict:
                 experiment_object.title = idf_dict['Investigation Title']
             if 'Person Affiliation' in idf_dict:
-                experiment_object.submitter_institution = idf_dict['Person Affiliation']
+                # This is very rare, ex: E-MEXP-32
+                if isinstance(idf_dict['Person Affiliation'], list):
+                    experiment_object.submitter_institution = ", ".join(list(set(idf_dict['Person Affiliation'])))[:255]
+                else:
+                    experiment_object.submitter_institution = idf_dict['Person Affiliation']
             if 'Protocol Description' in idf_dict:
                 experiment_object.protocol_description = ", ".join(idf_dict['Protocol Description'])
             if 'Publication Title' in idf_dict:

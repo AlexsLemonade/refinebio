@@ -246,12 +246,17 @@ The [ArrayExpress](https://www.ebi.ac.uk/arrayexpress/) Surveyor
 expects a single accession code:
 
 ```bash
-./foreman/run_surveyor.sh survey_array_express <ARRAY_EXPRESS_ACCESSION_CODE>
+./foreman/run_surveyor.sh survey_array_express --accession <ARRAY_EXPRESS_ACCESSION_CODE>
 ```
 
 Example:
 ```bash
-./foreman/run_surveyor.sh survey_array_express E-MTAB-3050
+./foreman/run_surveyor.sh survey_array_express --accession E-MTAB-3050
+```
+
+You can also supply a list in a file:
+```bash
+./foreman/run_surveyor.sh survey_array_express --file my_neuroblastoma_list.txt
 ```
 
 #### Sequence Read Archive (SRA)
