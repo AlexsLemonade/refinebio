@@ -1,6 +1,10 @@
 #!/bin/bash
 
-# This script installs Nomad. It should be run with `sudo`.
+# This script installs Nomad onto an Ubuntu machine. It should be run with `sudo`.
+# It also assumes grep, curl, gpg, and sha256sum are installed on the mahcine.
+# It will install unzip if it is not already installed.
+# These assumptions/installations were based on what is installed by default in
+# the AWS Ubuntu AMI.
 
 # Import Hashicorps' Key.
 curl https://keybase.io/hashicorp/pgp_keys.asc | gpg --import

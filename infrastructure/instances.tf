@@ -41,52 +41,6 @@ resource "aws_instance" "data_refinery_worker_1" {
     volume_type = "gp2"
     volume_size = 40
   }
-
-  provisioner "remote-exec" {
-    # Commands copied from
-    # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_cloudwatch_logs.html
-    inline = [
-      "sudo yum install -y awslogs",
-      "sudo yum install -y jq",
-    ]
-
-    connection {
-      type = "ssh"
-      user = "ec2-user"
-      private_key = "${file("data-refinery-key.pem")}"
-    }
-  }
-
-  provisioner "file" {
-    source = "conf/awslogs.conf"
-    destination = "/home/ec2-user/awslogs.conf"
-
-    connection {
-      type = "ssh"
-      user = "ec2-user"
-      private_key = "${file("data-refinery-key.pem")}"
-    }
-  }
-
-  provisioner "remote-exec" {
-    # Commands copied from
-    # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_cloudwatch_logs.html
-    inline = [
-      "sudo mv /home/ec2-user/awslogs.conf /etc/awslogs/awslogs.conf",
-      "cluster=$(curl -s http://localhost:51678/v1/metadata | jq -r '. | .Cluster')",
-      "sudo sed -i -e \"s/{cluster}/$cluster/g\" /etc/awslogs/awslogs.conf",
-      "container_instance_id=$(curl -s http://localhost:51678/v1/metadata | jq -r '. | .ContainerInstanceArn' | awk -F/ '{print $2}' )",
-      "sudo sed -i -e \"s/{container_instance_id}/$container_instance_id/g\" /etc/awslogs/awslogs.conf",
-      "sudo service awslogs start",
-      "sudo chkconfig awslogs on",
-    ]
-
-    connection {
-      type = "ssh"
-      user = "ec2-user"
-      private_key = "${file("data-refinery-key.pem")}"
-    }
-  }
 }
 
 resource "aws_instance" "data_refinery_worker_2" {
@@ -113,52 +67,6 @@ resource "aws_instance" "data_refinery_worker_2" {
     device_name = "/dev/xvdcz"
     volume_type = "gp2"
     volume_size = 40
-  }
-
-  provisioner "remote-exec" {
-    # Commands copied from
-    # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_cloudwatch_logs.html
-    inline = [
-      "sudo yum install -y awslogs",
-      "sudo yum install -y jq",
-    ]
-
-    connection {
-      type = "ssh"
-      user = "ec2-user"
-      private_key = "${file("data-refinery-key.pem")}"
-    }
-  }
-
-  provisioner "file" {
-    source = "conf/awslogs.conf"
-    destination = "/home/ec2-user/awslogs.conf"
-
-    connection {
-      type = "ssh"
-      user = "ec2-user"
-      private_key = "${file("data-refinery-key.pem")}"
-    }
-  }
-
-  provisioner "remote-exec" {
-    # Commands copied from
-    # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_cloudwatch_logs.html
-    inline = [
-      "sudo mv /home/ec2-user/awslogs.conf /etc/awslogs/awslogs.conf",
-      "cluster=$(curl -s http://localhost:51678/v1/metadata | jq -r '. | .Cluster')",
-      "sudo sed -i -e \"s/{cluster}/$cluster/g\" /etc/awslogs/awslogs.conf",
-      "container_instance_id=$(curl -s http://localhost:51678/v1/metadata | jq -r '. | .ContainerInstanceArn' | awk -F/ '{print $2}' )",
-      "sudo sed -i -e \"s/{container_instance_id}/$container_instance_id/g\" /etc/awslogs/awslogs.conf",
-      "sudo service awslogs start",
-      "sudo chkconfig awslogs on",
-    ]
-
-    connection {
-      type = "ssh"
-      user = "ec2-user"
-      private_key = "${file("data-refinery-key.pem")}"
-    }
   }
 }
 
