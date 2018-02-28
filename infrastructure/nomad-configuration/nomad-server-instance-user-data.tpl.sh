@@ -55,7 +55,7 @@ sleep 30
 
 # Determine the IP address of this machine so we know where the Nomad
 # server's HTTP API is addressed.
-IP_ADDRESS=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')g
+IP_ADDRESS=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
 # Register job specs.
 nomad_job_specs=nomad-job-specs/*
