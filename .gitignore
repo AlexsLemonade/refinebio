@@ -12,6 +12,9 @@ nomad.logs
 nomad_dir
 infrastructure/nomad-job-specs/
 
+# Terraform
+infrastructure/.terraform/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
