@@ -4,4 +4,3 @@ terraform.tfvars filter=git-crypt diff=git-crypt
 *.tfstate.backup filter=git-crypt diff=git-crypt
 *.secret filter=git-crypt diff=git-crypt
 *.pem filter=git-crypt diff=git-crypt
-*instance-user-data.sh filter=git-crypt diff=git-crypt
