@@ -57,7 +57,7 @@ resource "aws_route_table" "data_refinery" {
   }
 
   tags {
-    Name = "data_refinery-${var.user}-${var.stage}"
+    Name = "data-refinery-${var.user}-${var.stage}"
   }
 }
 
@@ -73,7 +73,7 @@ resource "aws_route_table_association" "data_refinery_1b" {
 }
 
 resource "aws_db_subnet_group" "data_refinery" {
-  name = "data_refinery-${var.user}-${var.stage}"
+  name = "data-refinery-${var.user}-${var.stage}"
   subnet_ids = ["${aws_subnet.data_refinery_1a.id}", "${aws_subnet.data_refinery_1b.id}"]
 
   tags {
