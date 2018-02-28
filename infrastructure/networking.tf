@@ -11,7 +11,7 @@ resource "aws_vpc" "data_refinery_vpc" {
   enable_dns_hostnames = true
 
   tags {
-    Name = "data-refinery"
+    Name = "data-refinery-${var.user}-${var.stage}"
   }
 }
 
@@ -22,7 +22,7 @@ resource "aws_subnet" "data_refinery_1a" {
   map_public_ip_on_launch = true
 
   tags {
-    Name = "data-refinery-1a"
+    Name = "data-refinery-1a-${var.user}-${var.stage}"
   }
 }
 
@@ -34,7 +34,7 @@ resource "aws_subnet" "data_refinery_1b" {
   map_public_ip_on_launch = true
 
   tags {
-    Name = "data-refinery-1b"
+    Name = "data-refinery-1b-${var.user}-${var.stage}"
   }
 }
 
@@ -42,7 +42,7 @@ resource "aws_internet_gateway" "data_refinery" {
   vpc_id = "${aws_vpc.data_refinery_vpc.id}"
 
   tags = {
-    Name = "data-refinery"
+    Name = "data-refinery-${var.user}-${var.stage}"
   }
 }
 
@@ -57,7 +57,7 @@ resource "aws_route_table" "data_refinery" {
   }
 
   tags {
-    Name = "data_refinery"
+    Name = "data-refinery-${var.user}-${var.stage}"
   }
 }
 
@@ -73,10 +73,10 @@ resource "aws_route_table_association" "data_refinery_1b" {
 }
 
 resource "aws_db_subnet_group" "data_refinery" {
-  name = "data_refinery"
+  name = "data-refinery-${var.user}-${var.stage}"
   subnet_ids = ["${aws_subnet.data_refinery_1a.id}", "${aws_subnet.data_refinery_1b.id}"]
 
   tags {
-    Name = "Data Refinery DB Subnet"
+    Name = "Data Refinery DB Subnet (${var.user}) [${var.stage}]"
   }
 }

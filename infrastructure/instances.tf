@@ -89,7 +89,7 @@ resource "aws_instance" "nomad-server-1" {
   user_data = "${data.template_file.nomad-server-script-smusher.rendered}"
 
   tags = {
-    Name = "nomad-server-1"
+    Name = "nomad-server-1-${var.user}-${var.stage}"
   }
 
   # Nomad server requirements can be found here:
@@ -145,7 +145,7 @@ resource "aws_instance" "nomad-client-1" {
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
   tags = {
-    Name = "nomad-client-1"
+    Name = "nomad-client-1-${var.user}-${var.stage}"
   }
 
   # I think these are the defaults provided in terraform examples.
@@ -165,13 +165,13 @@ resource "aws_instance" "nomad-client-1" {
 variable "database_password" {}
 
 resource "aws_db_instance" "postgres-db" {
-  identifier = "data-refinery"
+  identifier = "data-refinery-${var.user}-${var.stage}"
   allocated_storage = 100
   storage_type = "gp2"
   engine = "postgres"
   engine_version = "9.5.4"
   instance_class = "db.t2.micro"
-  name = "data_refinery"
+  name = "data-refinery-${var.user}-${var.stage}"
   username = "data_refinery_user"
   password = "${var.database_password}"
   db_subnet_group_name = "${aws_db_subnet_group.data_refinery.name}"
