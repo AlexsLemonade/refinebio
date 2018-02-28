@@ -26,3 +26,4 @@ s3transfer==0.1.12        # via boto3
 six==1.11.0               # via python-dateutil, retrying, rpy2
 urllib3==1.22             # via requests
 vine==1.1.4               # via amqp
+watchtower==0.5.2

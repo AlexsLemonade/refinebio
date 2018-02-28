@@ -1,7 +1,7 @@
 DJANGO_SECRET_KEY=THIS_IS_NOT_A_SECRET_DO_NOT_USE_IN_PROD
 DJANGO_DEBUG=True
 
-DATABASE_NAME=test_data_refinery
+DATABASE_NAME=data_refinery
 DATABASE_USER=data_refinery_user
 DATABASE_PASSWORD=data_refinery_password
 DATABASE_HOST=database
@@ -12,6 +12,7 @@ NOMAD_HOST=nomad
 WORKERS_DOCKER_IMAGE=dr_worker
 
 RUNNING_IN_CLOUD=False
+SERVICE=worker
 
 USE_S3=False
 S3_BUCKET_NAME=data-refinery
