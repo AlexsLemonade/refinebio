@@ -2,7 +2,7 @@
 # related to networking.
 
 provider "aws" {
-  region = "us-east-1"
+  region = "${var.region}"
 }
 
 resource "aws_vpc" "data_refinery_vpc" {

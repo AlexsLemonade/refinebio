@@ -65,6 +65,9 @@ data "template_file" "nomad-server-script-smusher" {
     processor_job_spec = "${data.local_file.processor-job-spec.content}"
     install_nomad_script = "${data.local_file.install-nomad-script.content}"
     nomad_server_config = "${data.local_file.nomad-server-config.content}"
+    user = "${var.user}"
+    stage = "${var.stage}"
+    region = "${var.region}"
   }
 }
 
@@ -131,6 +134,9 @@ data "template_file" "nomad-client-script-smusher" {
   vars {
     install_nomad_script = "${data.local_file.install-nomad-script.content}"
     nomad_client_config = "${data.template_file.nomad-client-config.rendered}"
+    user = "${var.user}"
+    stage = "${var.stage}"
+    region = "${var.region}"
   }
 }
 
