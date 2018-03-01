@@ -75,7 +75,7 @@ data "template_file" "nomad-server-script-smusher" {
 # TODO: create those other servers!
 resource "aws_instance" "nomad-server-1" {
   ami = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.xlarge"
+  instance_type = "t2.small"
   availability_zone = "us-east-1a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
@@ -106,6 +106,10 @@ resource "aws_instance" "nomad-server-1" {
     volume_type = "gp2"
     volume_size = 40
   }
+}
+
+output "nomad-server-ip" {
+  value = "aws_instance.nomad-server-1.public_ip"
 }
 
 # The Nomad Client needs to be aware of the Nomad Server's IP address,
@@ -160,6 +164,12 @@ resource "aws_instance" "nomad-client-1" {
     volume_type = "gp2"
     volume_size = 40
   }
+}
+
+
+
+output "nomad-client-ip" {
+  value = "aws_instance.nomad-client-1.public_ip"
 }
 
 variable "database_password" {}

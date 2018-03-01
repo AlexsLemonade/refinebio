@@ -76,7 +76,7 @@ resource "aws_security_group_rule" "data_refinery_worker_nomad_serf_udp" {
 
 # Allow SSH connections to Nomad instances. This is pretty much the
 # only way to debug issues until we get the Nomad UI up and running.
-# THIS DEFINITELY NEEDS TO BE REMOVED LONG TERM!!!!!!!!!!
+# XXX: THIS DEFINITELY NEEDS TO BE REMOVED LONG TERM!!!!!!!!!!
 resource "aws_security_group_rule" "data_refinery_worker_ssh" {
   type = "ingress"
   from_port = 22

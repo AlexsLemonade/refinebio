@@ -34,8 +34,8 @@ EOF
 
 
 # Create a directory for docker to use as a volume.
-mkdir /tmp/docker_volume
-chmod a+rwx /tmp/docker_volume
+mkdir /home/ubuntu/docker_volume
+chmod a+rwx /home/ubuntu/docker_volume
 
 
 # Install Nomad

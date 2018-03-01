@@ -47,7 +47,7 @@ export NOMAD_HOST_IP=$(get_ip_address)
 if [ $env == "test" ]; then
     export VOLUME_DIR=$script_directory/test_volume
 elif [ $env == "prod" ]; then
-    export VOLUME_DIR=/tmp/docker_volume
+    export VOLUME_DIR=/home/ubuntu/docker_volume
 else
     export VOLUME_DIR=$script_directory/volume
 fi
