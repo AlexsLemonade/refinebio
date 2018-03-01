@@ -193,7 +193,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='Index',
+            name='OrganismIndex',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('index_type', models.CharField(max_length=255)),
@@ -203,7 +203,7 @@ class Migration(migrations.Migration):
                 ('last_modified', models.DateTimeField(default=django.utils.timezone.now)),
             ],
             options={
-                'db_table': 'index',
+                'db_table': 'organism_index',
             },
         ),
         migrations.CreateModel(

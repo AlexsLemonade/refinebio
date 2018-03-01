@@ -15,8 +15,11 @@ from rpy2.rinterface import RRuntimeError
 
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import BatchStatuses, BatchKeyValue
-from data_refinery_common.models.new_models import Index, ComputationalResult, CompultationalResultAnnotation, ComputedFile
+from data_refinery_common.models import (
+    OrganismIndex, 
+    ComputationalResult, 
+    CompultationalResultAnnotation, 
+    ComputedFile)
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
@@ -139,7 +142,7 @@ def _download_index(job_context: Dict) -> Dict:
     """
     logger.info("Downloading and installing index..")
 
-    index_object = Index.objects.filter(organism=job_context['organism'], index_type="TRANSCRIPTOME_" + job_context["index_length"].upper()).order_by('created_at')[0]
+    index_object = OrganismIndex.objects.filter(organism=job_context['organism'], index_type="TRANSCRIPTOME_" + job_context["index_length"].upper()).order_by('created_at')[0]
     result = index_object.result
     files = ComputedFile.objects.filter(result=result)
     job_context["index_unpacked"] = '/'.join(files[0].absolute_file_path.split('/')[:-1]) + '/index'

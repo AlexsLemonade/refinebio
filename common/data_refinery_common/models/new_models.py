@@ -178,11 +178,11 @@ class CompultationalResultAnnotation(models.Model):
 #     class Meta:
 #         db_table = "genes"
 
-class Index(models.Model):
+class OrganismIndex(models.Model):
     """ A special type of process result, necessary for processing other SRA samples """
 
     class Meta:
-        db_table = "index"
+        db_table = "organism_index"
 
     organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
     index_type = models.CharField(max_length=255) # XXX ex "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT", ???

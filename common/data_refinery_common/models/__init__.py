@@ -19,7 +19,7 @@ from data_refinery_common.models.new_models import (
 	ExperimentAnnotation, 
 	ComputationalResult,
 	CompultationalResultAnnotation,
-	Index,
+	OrganismIndex,
 	OriginalFile,
 	ComputedFile,
 	ExperimentSampleAssociation,

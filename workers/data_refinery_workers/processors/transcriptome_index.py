@@ -16,7 +16,7 @@ from data_refinery_common.models import (
     OriginalFile,
     ComputationalResult,
     ComputedFile,
-    Index
+    OrganismIndex
 )
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
@@ -276,7 +276,7 @@ def _populate_index_object(job_context: Dict) -> Dict:
     computed_file.save()
 
     organism_object = Organism.get_object_for_name(job_context['organism_name'])
-    index_object = Index()
+    index_object = OrganismIndex()
     index_object.organism = organism_object
     index_object.version = "XXX" # XXX: I don't know how this is tracked
     index_object.index_type = "TRANSCRIPTOME_" + job_context['length'].upper()
