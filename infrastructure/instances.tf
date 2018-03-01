@@ -79,7 +79,7 @@ data "template_file" "nomad-server-script-smusher" {
 resource "aws_instance" "nomad-server-1" {
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.small"
-  availability_zone = "us-east-1a"
+  availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
@@ -146,7 +146,7 @@ data "template_file" "nomad-client-script-smusher" {
 resource "aws_instance" "nomad-client-1" {
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.xlarge"
-  availability_zone = "us-east-1b"
+  availability_zone = "${var.region}b"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
   subnet_id = "${aws_subnet.data_refinery_1b.id}"

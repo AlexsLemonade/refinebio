@@ -16,7 +16,7 @@ resource "aws_vpc" "data_refinery_vpc" {
 }
 
 resource "aws_subnet" "data_refinery_1a" {
-  availability_zone = "us-east-1a"
+  availability_zone = "${var.region}a"
   cidr_block = "10.0.0.0/17"
   vpc_id = "${aws_vpc.data_refinery_vpc.id}"
   map_public_ip_on_launch = true
@@ -27,7 +27,7 @@ resource "aws_subnet" "data_refinery_1a" {
 }
 
 resource "aws_subnet" "data_refinery_1b" {
-  availability_zone = "us-east-1b"
+  availability_zone = "${var.region}b"
   cidr_block = "10.0.128.0/17"
   vpc_id = "${aws_vpc.data_refinery_vpc.id}"
   # Unsure if this should be set to true
