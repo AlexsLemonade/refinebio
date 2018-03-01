@@ -1,14 +1,19 @@
 #!/bin/bash
 
-while getopts ":e:h" opt; do
+while getopts ":e:o:h" opt; do
     case $opt in
         e)
             env=$OPTARG
             ;;
+        o)
+            output_dir=$OPTARG
+            ;;
         h)
             echo "Formats Nomad Job Specifications with the specified environment overlaid "
             echo "onto the current environment."
-            echo '"dev" is the default enviroment, use -e to specify "prod" or "test".'
+            echo '- "dev" is the default enviroment, use -e to specify "prod" or "test".'
+            echo '- "workers/" is the default output directory, use -o to specify'
+            echo '      an absolute path to a directory (trailing / must be included).'
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
@@ -42,7 +47,7 @@ export NOMAD_HOST_IP=$(get_ip_address)
 if [ $env == "test" ]; then
     export VOLUME_DIR=$script_directory/test_volume
 elif [ $env == "prod" ]; then
-    export VOLUME_DIR=/tmp/docker_volume
+    export VOLUME_DIR=/home/ubuntu/docker_volume
 else
     export VOLUME_DIR=$script_directory/volume
 fi
@@ -60,13 +65,17 @@ done < "environments/$env"
 # issue can be found here:
 # https://github.com/hashicorp/nomad/issues/1185
 
+if [[ ! -z $env && ! -d "$output_dir" ]]; then
+    mkdir $output_dir
+fi
+
 # Perl magic found here: https://stackoverflow.com/a/2916159/6095378
 cat downloader.nomad.tpl \
     | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-           > downloader.nomad \
+           > "$output_dir"downloader.nomad \
            2> /dev/null
 
 cat processor.nomad.tpl \
     | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-           > processor.nomad \
+           > "$output_dir"processor.nomad \
            2> /dev/null
