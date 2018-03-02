@@ -68,11 +68,9 @@ data "template_file" "nomad-lead-server-script-smusher" {
   }
 }
 
-# This instance will run the Nomad Server. We will want three of
-# these, but one server needs to start first so that the others can be
-# aware of its IP address to join it.
-# Those other servers do not yet exist in the current configuration.
-# TODO: create those other servers!
+# This instance will run the lead Nomad Server. We will want three
+# Nomad Servers to prevent data loss, but one server needs to start
+# first so that the others can be aware of its IP address to join it.
 resource "aws_instance" "nomad-server-1" {
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.small"
