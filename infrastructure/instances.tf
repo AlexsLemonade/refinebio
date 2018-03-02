@@ -25,7 +25,7 @@ data "aws_ami" "ubuntu" {
 # apply`.
 resource "null_resource" "format-nomad-job-specs" {
   provisioner "local-exec" {
-    command = "cd .. && ./workers/format_nomad_with_env.sh -e prod -o $(pwd)/infrastructure/nomad-job-specs/"
+    command = "cd .. && REGION=${var.region} USER=${var.user} STAGE=${var.stage} ./workers/format_nomad_with_env.sh -e prod -o $(pwd)/infrastructure/nomad-job-specs/"
   }
 }
 
@@ -65,6 +65,9 @@ data "template_file" "nomad-lead-server-script-smusher" {
     processor_job_spec = "${data.local_file.processor-job-spec.content}"
     install_nomad_script = "${data.local_file.install-nomad-script.content}"
     nomad_server_config = "${data.local_file.nomad-lead-server-config.content}"
+    user = "${var.user}"
+    stage = "${var.stage}"
+    region = "${var.region}"
   }
 }
 
@@ -74,7 +77,7 @@ data "template_file" "nomad-lead-server-script-smusher" {
 resource "aws_instance" "nomad-server-1" {
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.small"
-  availability_zone = "us-east-1a"
+  availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
@@ -233,6 +236,9 @@ data "template_file" "nomad-client-script-smusher" {
   vars {
     install_nomad_script = "${data.local_file.install-nomad-script.content}"
     nomad_client_config = "${data.template_file.nomad-client-config.rendered}"
+    user = "${var.user}"
+    stage = "${var.stage}"
+    region = "${var.region}"
   }
 }
 
@@ -242,7 +248,7 @@ data "template_file" "nomad-client-script-smusher" {
 resource "aws_instance" "nomad-client-1" {
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.xlarge"
-  availability_zone = "us-east-1b"
+  availability_zone = "${var.region}b"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
   subnet_id = "${aws_subnet.data_refinery_1b.id}"
