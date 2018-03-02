@@ -25,6 +25,30 @@
 # Change to home directory of the default user
 cd /home/ubuntu
 
+# Install, configure and launch our CloudWatch Logs agent
+cat <<EOF >awslogs.conf
+[general]
+state_file = /var/lib/awslogs/agent-state
+
+[/var/log/nomad_server.log]
+file = /var/log/nomad_server.log
+log_group_name = data-refinery-log-group-${user}-${stage}
+log_stream_name = log-stream-nomad-server-${server_number}-${user}-${stage}
+EOF
+
+mkdir /var/lib/awslogs
+wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
+python ./awslogs-agent-setup.py --region ${region} --non-interactive --configfile awslogs.conf
+# Rotate the logs, delete after 3 days.
+echo "
+/var/log/nomad_server.log {
+    missingok
+    notifempty
+    compress
+    size 20k
+    daily
+    maxage 3
+}" >> /etc/logrotate.conf
 
 # Output the files we need to start up Nomad and register jobs.
 # Note that the lines starting with "$" are where

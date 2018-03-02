@@ -25,7 +25,7 @@ state_file = /var/lib/awslogs/agent-state
 [/var/log/nomad_server.log]
 file = /var/log/nomad_server.log
 log_group_name = data-refinery-log-group-${user}-${stage}
-log_stream_name = log-stream-nomad-server-${user}-${stage}
+log_stream_name = log-stream-nomad-server-${server_number}-${user}-${stage}
 EOF
 
 mkdir /var/lib/awslogs

@@ -18,11 +18,25 @@ resource "aws_cloudwatch_log_group" "data_refinery_log_group" {
 ##
 
 # Nomad
-resource "aws_cloudwatch_log_stream" "log_stream_nomad_server" {
-  name           = "log-stream-nomad-server-${var.user}-${var.stage}"
+resource "aws_cloudwatch_log_stream" "log_stream_nomad_server_1" {
+  name           = "log-stream-nomad-server-1-${var.user}-${var.stage}"
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
 }
 
+resource "aws_cloudwatch_log_stream" "log_stream_nomad_server_2" {
+  name           = "log-stream-nomad-server-2-${var.user}-${var.stage}"
+  log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
+}
+resource "aws_cloudwatch_log_stream" "log_stream_nomad_server_3" {
+  name           = "log-stream-nomad-server-3-${var.user}-${var.stage}"
+  log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
+}
+
+# XXX: Once we're using spot instnaces we should have them create the
+# streams themselves so that we'll have streams for the dynamically
+# created instances. However, in the meantime explicitly creating the
+# stream via Terraform is better because it will be able to clean them
+# up too.
 resource "aws_cloudwatch_log_stream" "log_stream_nomad_client" {
   name           = "log-stream-nomad-client-${var.user}-${var.stage}"
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
