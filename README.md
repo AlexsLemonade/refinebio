@@ -2,7 +2,7 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**
 
-- [Data Refinery *](#data-refinery-)
+- [Refine.bio](#refinebio-)
   - [Development](#development)
     - [Git Workflow](#git-workflow)
     - [Installation](#installation)
@@ -19,31 +19,33 @@
       - [Processor Jobs](#processor-jobs)
       - [Checking on Local Jobs](#checking-on-local-jobs)
     - [Testing](#testing)
-    - [Production Deployment](#production-deployment)
     - [Development Helpers](#development-helpers)
     - [Style](#style)
+  - [Production Deployment](#production-deployment)
+    - [Terraform](#terraform)
+    - [Log Consumption](#log-consumption)
   - [Support](#support)
   - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-# Data Refinery [![Build Status](https://circleci.com/gh/data-refinery/data-refinery/tree/dev.svg?&style=shield)](https://circleci.com/gh/data-refinery/data-refinery/)
+# Refine.bio [![Build Status](https://circleci.com/gh/data-refinery/data-refinery/tree/dev.svg?&style=shield)](https://circleci.com/gh/data-refinery/data-refinery/)
 
 <!-- This section needs to be drastically improved -->
-Data Refinery harmonizes petabytes of publicly available biological data into
+Refine.bio harmonizes petabytes of publicly available biological data into
 ready-to-use datasets for cancer researchers and AI/ML scientists.
 
-The Data Refinery currently has four sub-projects contained within this repo:
+Refine.bio currently has four sub-projects contained within this repo:
 - [common](./common) Contains code needed by both `foreman` and `workers`.
 - [foreman](./foreman) Discovers data to download/process and manages jobs.
 - [workers](./workers) Runs Downloader and Processor jobs.
-- [terraform](./terraform) Manages infrastructure for the Data Refinery.
+- [infrasctructure](./infrastructure) Manages infrastructure for Refine.bio.
 
 ## Development
 
 ### Git Workflow
 
-`data-refinery` uses a
+`refinebio` uses a
 [feature branch](http://nvie.com/posts/a-successful-git-branching-model/)
 based workflow. New features should be developed on new feature branches, and
 pull requests should be sent to the `dev` branch for code review. Merges into
@@ -52,7 +54,7 @@ production releases.
 
 ### Installation
 
-To run the Data Refinery locally, you will need to have the
+To run Refine.bio locally, you will need to have the
 prerequisites installed onto your local machine. This will vary depending on
 whether you are developing on a Mac or a Linux machine. Linux instructions
 have been tested on Ubuntu 16.04 or later, but other Linux distributions
@@ -67,6 +69,7 @@ The following services will need to be installed:
 [post installation steps]
 (https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
 so Docker does not need sudo permissions.
+- [Terraform](https://www.terraform.io/)
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries)
 - git-crypt
 
@@ -78,14 +81,15 @@ following the link for each service. git-crypt can be installed via
 
 The following services will need to be installed:
 - [Docker for Mac](https://www.docker.com/docker-mac)
+- [Terraform](https://www.terraform.io/)
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries)
 - [Homebrew](https://brew.sh/)
 - git-crypt
 - iproute2mac
 
 Instructions for installing Docker, Nomad, and Homebrew can be found by
-following the link for those services. The last three on that list can
-be installed by running: `brew install iproute2mac git-crypt`.
+following the link for those services. The others on that list can
+be installed by running: `brew install iproute2mac git-crypt terraform`.
 
 #### Virtual Environment
 
@@ -125,7 +129,7 @@ sudo -E ./run_nomad.sh
 
 (_Note:_ This step may take some time because it downloads lots of files.)
 
-Nomad is an orchestration tool which the Data Refinery uses to run
+Nomad is an orchestration tool which Refine.bio uses to run
 `Downloader` and `Processor` jobs. Jobs are queued by sending a message to
 the Nomad agent, which will then launch a Docker container which runs
 the job.
@@ -160,7 +164,7 @@ If you need to access a `psql` shell for inspecting the database, you can use:
 
 Once you've built the `common/dist` directory and have
 the Nomad and Postgres services running, you're ready to run
-jobs. There are three kinds of jobs within the Data Refinery.
+jobs. There are three kinds of jobs within Refine.bio.
 
 #### Surveyor Jobs
 
@@ -275,7 +279,7 @@ PROCESSOR                                batch/parameterized  50        running 
 ```
 
 The rows whose `ID`s are `DOWNLOADER` or `PROCESSOR` are the parameterized
-jobs which are waiting to dispatch Data Refinery jobs. If you don't understand
+jobs which are waiting to dispatch Refine.bio jobs. If you don't understand
 what that means, don't worry about it. All you really need to do is select
 one of the jobs whose ID contains `dispatch` and whose `Submit Date`
 matches the time when the job you want to check on was run, copy that full ID
@@ -310,7 +314,7 @@ nomad logs -verbose -address http://$HOST_IP:4646 b30e4edd
 ```
 
 This command will output both the stderr and stdout logs from the container
-which ran that allocation. The allocation is really a Data Refinery job.
+which ran that allocation. The allocation is really a Refine.bio job.
 
 ### Testing
 
@@ -321,10 +325,6 @@ To run the entire test suite:
 ```
 
 These tests will also be run continuosly for each commit via CircleCI.
-
-### Production Deployment
-
-_TODO_
 
 ### Development Helpers
 
@@ -351,9 +351,79 @@ linter within the project's directory tree, it will enforce a line length limit
 of 100 instead of 80. This will also be true for editors which rely on either
 linter.
 
+## Production Deployment
+
+Refine.bio requires an active, credentialed AWS account with appropriate permissions to create network infrastructure, users, compute instances and databases.
+
+### Terraform 
+
+Once you have Terraform installed and your AWS account credentials installed, you can plan your terraform deployment like so:
+
+```bash
+TF_VAR_user=myusername TF_VAR_stage=dev TF_VAR_region=us-east-1 terraform plan
+```
+
+If that worked fine, then to deploy:
+
+```bash
+TF_VAR_user=myusername TF_VAR_stage=dev TF_VAR_region=us-east-1 terraform apply
+```
+
+This will spin up the whole system. It will usually take about 15 minutes, most of which is spent waiting for the Postgres instance to start.
+
+To see what's been created at any time, you can:
+```
+terraform state list
+```
+
+If you want to change a single entity in the state, you can use
+
+```
+terraform taint <your-entity-from-state-list>; tf plan; tf apply;
+```
+
+To tear down the entire system:
+
+```
+terraform destroy
+```
+
+### Log Consumption
+
+All of the different Refine.bio subservices log to the same AWS CloudWatch Log Group. If you want to consume these logs, you can use the `awslogs` tool, which can be installed from `pip` like so:
+
+```bash
+pip install awslogs
+```
+
+or, for OSX El Capitan:
+
+```bash
+pip install awslogs --ignore-installed six
+```
+
+Once `awslogs` is installed, you can find your log group with:
+
+```bash
+awslogs groups
+```
+
+Then, to see all of the logs in that group for the past day, as they come in:
+
+```bash
+awslogs get <your-log-group> ALL --watch --start='1 days'
+```
+
+You can also apply a filter on these logs like so:
+
+```bash
+awslogs get <your-log-group> ALL --watch --start='1 days' --filter-pattern="DEBUG"
+```
+
+
 ## Support
 
-`data-refinery` is supported by
+Refine.bio is supported by
 [Alex's Lemonade Stand Foundation](https://www.alexslemonade.org/),
 with some initial development supported by the Gordon and Betty Moore
 Foundation via GBMF 4552 to Casey Greene.
