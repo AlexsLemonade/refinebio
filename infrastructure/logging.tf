@@ -28,6 +28,17 @@ resource "aws_cloudwatch_log_stream" "log_stream_nomad_client" {
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
 }
 
+# Nomad / Docker
+resource "aws_cloudwatch_log_stream" "log_stream_nomad_docker_processor" {
+  name           = "log-stream-nomad-docker-processor-${var.user}-${var.stage}"
+  log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
+}
+
+resource "aws_cloudwatch_log_stream" "log_stream_nomad_docker_downloader" {
+  name           = "log-stream-nomad-docker-downloader-${var.user}-${var.stage}"
+  log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
+}
+
 # Foreman
 resource "aws_cloudwatch_log_stream" "log_stream_foreman_django" {
   name           = "log-stream-foreman-django-${var.user}-${var.stage}"
