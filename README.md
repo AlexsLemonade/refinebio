@@ -1,6 +1,18 @@
+# Refine.bio [![Build Status](https://circleci.com/gh/data-refinery/data-refinery/tree/dev.svg?&style=shield)](https://circleci.com/gh/data-refinery/data-refinery/)
+
+<!-- This section needs to be drastically improved -->
+Refine.bio harmonizes petabytes of publicly available biological data into
+ready-to-use datasets for cancer researchers and AI/ML scientists.
+
+Refine.bio currently has four sub-projects contained within this repo:
+- [common](./common) Contains code needed by both `foreman` and `workers`.
+- [foreman](./foreman) Discovers data to download/process and manages jobs.
+- [workers](./workers) Runs Downloader and Processor jobs.
+- [infrasctructure](./infrastructure) Manages infrastructure for Refine.bio.
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**
+## Table of Contents
 
 - [Refine.bio](#refinebio-)
   - [Development](#development)
@@ -28,18 +40,6 @@
   - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Refine.bio [![Build Status](https://circleci.com/gh/data-refinery/data-refinery/tree/dev.svg?&style=shield)](https://circleci.com/gh/data-refinery/data-refinery/)
-
-<!-- This section needs to be drastically improved -->
-Refine.bio harmonizes petabytes of publicly available biological data into
-ready-to-use datasets for cancer researchers and AI/ML scientists.
-
-Refine.bio currently has four sub-projects contained within this repo:
-- [common](./common) Contains code needed by both `foreman` and `workers`.
-- [foreman](./foreman) Discovers data to download/process and manages jobs.
-- [workers](./workers) Runs Downloader and Processor jobs.
-- [infrasctructure](./infrastructure) Manages infrastructure for Refine.bio.
 
 ## Development
 
@@ -408,16 +408,16 @@ Once `awslogs` is installed, you can find your log group with:
 awslogs groups
 ```
 
-Then, to see all of the logs in that group for the past day, as they come in:
+Then, to see all of the logs in that group for the past day, watching as they come in:
 
 ```bash
-awslogs get <your-log-group> ALL --watch --start='1 days'
+awslogs get <your-log-group> ALL --start='1 days' --watch 
 ```
 
 You can also apply a filter on these logs like so:
 
 ```bash
-awslogs get <your-log-group> ALL --watch --start='1 days' --filter-pattern="DEBUG"
+awslogs get <your-log-group> ALL --start='1 days' --watch --filter-pattern="DEBUG"
 ```
 
 
