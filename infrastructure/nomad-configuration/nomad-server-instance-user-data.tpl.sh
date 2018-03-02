@@ -31,6 +31,16 @@ EOF
 mkdir /var/lib/awslogs
 wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
 python ./awslogs-agent-setup.py --region ${region} --non-interactive --configfile awslogs.conf
+# Rotate the logs, delete after 3 days.
+echo "
+/var/log/nomad_server.log {
+    missingok
+    notifempty
+    compress
+    size 20k
+    daily
+    maxage 3
+}" >> /etc/logrotate.conf
 
 # Output the files we need to start up Nomad and register jobs.
 # Note that the lines starting with "$" are where
