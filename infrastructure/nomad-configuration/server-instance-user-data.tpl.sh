@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This is a template for the instance-user-data.sh script for the nomad server.
+# This is a template for the instance-user-data.sh script for the Nomad Server.
 # For more information on instance-user-data.sh scripts, see:
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html
 
@@ -18,19 +18,9 @@
 cd /home/ubuntu
 
 
-# Output the files we need to start up Nomad and register jobs.
+# Output the files we need to start up Nomad.
 # Note that the lines starting with "$" are where
 # Terraform will template in the contents of those files.
-
-# Create and fill the directory for all the Nomad Job Specifications.
-mkdir nomad-job-specs
-cat <<"EOF" > nomad-job-specs/downloader.nomad
-${downloader_job_spec}
-EOF
-
-cat <<"EOF" > nomad-job-specs/processor.nomad
-${processor_job_spec}
-EOF
 
 # Create the script to install Nomad.
 cat <<"EOF" > install_nomad.sh

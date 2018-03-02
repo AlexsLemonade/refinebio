@@ -77,6 +77,6 @@ resource "aws_db_subnet_group" "data_refinery" {
   subnet_ids = ["${aws_subnet.data_refinery_1a.id}", "${aws_subnet.data_refinery_1b.id}"]
 
   tags {
-    Name = "Data Refinery DB Subnet (${var.user}) [${var.stage}]"
+    Name = "Data Refinery DB Subnet ${var.user}-${var.stage}"
   }
 }
