@@ -74,7 +74,7 @@ job "PROCESSOR" {
           config {
             awslogs-region = "${{REGION}}",
             awslogs-group = "data-refinery-log-group-${{USER}}-${{STAGE}}",
-            awslogs-steam = "log-stream-nomad-docker-processor-${{USER}}-${{STAGE}}"
+            awslogs-stream = "log-stream-nomad-docker-processor-${{USER}}-${{STAGE}}"
           }
         }
       }
