@@ -28,6 +28,7 @@ log_group_name = data-refinery-log-group-${user}-${stage}
 log_stream_name = log-stream-nomad-server-${user}-${stage}
 EOF
 
+mkdir /var/lib/awslogs
 wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
 python ./awslogs-agent-setup.py --region ${region} --non-interactive --configfile awslogs.conf
 

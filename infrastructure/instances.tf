@@ -25,7 +25,7 @@ data "aws_ami" "ubuntu" {
 # apply`.
 resource "null_resource" "format-nomad-job-specs" {
   provisioner "local-exec" {
-    command = "cd .. && ./workers/format_nomad_with_env.sh -e prod -o $(pwd)/infrastructure/nomad-job-specs/"
+    command = "cd .. && REGION=${var.region} USER=${var.user} STAGE=${var.stage} ./workers/format_nomad_with_env.sh -e prod -o $(pwd)/infrastructure/nomad-job-specs/"
   }
 }
 
@@ -187,7 +187,7 @@ resource "aws_db_instance" "postgres-db" {
   engine = "postgres"
   engine_version = "9.5.4"
   instance_class = "db.t2.micro"
-  name = "data-refinery-${var.user}-${var.stage}"
+  name = "data_refinery_${var.user}_${var.stage}"
   username = "data_refinery_user"
   password = "${var.database_password}"
   db_subnet_group_name = "${aws_db_subnet_group.data_refinery.name}"
