@@ -30,6 +30,17 @@ resource "aws_security_group_rule" "data_refinery_worker_custom" {
   security_group_id = "${aws_security_group.data_refinery_worker.id}"
 }
 
+# Allow the EFS Network File System to operate
+# Ex: https://confluence.atlassian.com/bamkb/configuring-elastic-instances-to-use-efs-elastic-file-system-867015018.html
+resource "aws_security_group_rule" "data_refinery_worker_nfs" {
+  type = "ingress"
+  from_port = 2049
+  to_port = 2049
+  protocol = "tcp"
+  self = true
+  security_group_id = "${aws_security_group.data_refinery_worker.id}"
+}
+
 # Allow the Nomad HTTP API to be accessible by this security group. See:
 # https://www.nomadproject.io/guides/cluster/requirements.html#ports-used
 resource "aws_security_group_rule" "data_refinery_worker_nomad" {

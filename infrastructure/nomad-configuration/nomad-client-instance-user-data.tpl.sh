@@ -13,6 +13,12 @@
 # provisioners which will put files onto the instance after it starts up,
 # but those run after this script runs.
 
+# Mount the EFS.
+apt-get install --yes nfs-common
+mkdir -p /var/efs/
+chown ubuntu:ubuntu /var/efs/
+echo "${file_system_id}.efs.${region}.amazonaws.com:/ /var/efs/ nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0" >> /etc/fstab
+mount -a -t nfs4
 
 # Change to home directory of the default user
 cd /home/ubuntu

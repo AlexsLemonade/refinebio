@@ -137,6 +137,7 @@ data "template_file" "nomad-client-script-smusher" {
     user = "${var.user}"
     stage = "${var.stage}"
     region = "${var.region}"
+    file_system_id = "${aws_efs_file_system.data_refinery_efs.id}"
   }
 }
 
