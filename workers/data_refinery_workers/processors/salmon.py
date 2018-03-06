@@ -31,7 +31,7 @@ SKIP_PROCESSED = get_env_variable("SKIP_PROCESSED", True)
 
 
 def _set_job_prefix(job_context: Dict) -> Dict:
-    """ """
+    """ Sets the `job_dir_prefix` value in the job context object."""
     job_context["job_dir_prefix"] = JOB_DIR_PREFIX + str(job_context["job_id"])
     return job_context
 
@@ -44,9 +44,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     are paired then there will also be an "input_file_path_2" key
     added to job_context for the second read.
     """
-    # Salmon processor jobs have only one batch per job, but may have
-    # up to two files per batch.
-    logger.info("Preparing files..")
+    logger.debug("Preparing files..")
 
     original_files = job_context["original_files"]
     job_context["input_file_path"] = original_files[0].absolute_file_path
@@ -55,10 +53,13 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     # Salmon outputs an entire directory of files, so create a temp
     # directory to output it to until we can zip it to
-    job_context["output_directory"] = '/'.join(original_files[0].absolute_file_path.split('/')[:-1]) + '/processed/'
+
+    pre_part = original_files[0].absolute_file_path.split('/')[:-1]
+    job_context["output_directory"] = '/'.join(pre_part) + '/processed/'
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
-    job_context["output_archive"] = '/'.join(original_files[0].absolute_file_path.split('/')[:-1]) + '/result-' + str(timezone.now().timestamp()).split('.')[0] +  '.tar.gz'
+    timestamp = str(timezone.now().timestamp()).split('.')[0]
+    job_context["output_archive"] = '/'.join(pre_part) + '/result-' + timestamp +  '.tar.gz'
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
     job_context['organism'] = job_context['original_files'][0].sample.organism
@@ -74,12 +75,13 @@ def _determine_index_length(job_context: Dict) -> Dict:
     appropriate. For more information on index length see the
     _create_index function of the transcriptome_index processor.
     """
-    logger.info("Determining index length..")
+    logger.debug("Determining index length..")
     total_base_pairs = 0
     number_of_reads = 0
     counter = 1
 
     ### TODO: This process is really slow!
+    ### Related: https://github.com/AlexsLemonade/refinebio/issues/157
 
     ### I bet there is a faster way of doing this, maybe by
     ### shelling and using UNIX!
@@ -129,7 +131,7 @@ def _determine_index_length(job_context: Dict) -> Dict:
 
 
 def _download_index(job_context: Dict) -> Dict:
-    """Downloads the appropriate Salmon Index for this batch.
+    """Downloads the appropriate Salmon Index for this experiment.
 
     Salmon documentation states:
 
@@ -140,12 +142,14 @@ def _download_index(job_context: Dict) -> Dict:
     this function retrieves the correct index for the organism and
     read length from Permanent Storage.
     """
-    logger.info("Downloading and installing index..")
+    logger.debug("Downloading and installing index..")
 
-    index_object = OrganismIndex.objects.filter(organism=job_context['organism'], index_type="TRANSCRIPTOME_" + job_context["index_length"].upper()).order_by('created_at')[0]
+    index_type = "TRANSCRIPTOME_" + job_context["index_length"].upper()
+    index_object = OrganismIndex.objects.filter(organism=job_context['organism'], 
+        index_type=index_type).order_by('created_at')[0]
     result = index_object.result
     files = ComputedFile.objects.filter(result=result)
-    job_context["index_unpacked"] = '/'.join(files[0].absolute_file_path.split('/')[:-1]) + '/index'
+    job_context["index_unpacked"] = '/'.join(files[0].absolute_file_path.split('/')[:-1])
     job_context["index_directory"] = job_context["index_unpacked"] + "/index"
     
     if not os.path.exists(job_context["index_directory"] + '/versionInfo.json'):
@@ -164,12 +168,6 @@ def _zip_and_upload(job_context: Dict) -> Dict:
     Adds the 'success' key to job_context because this function is the
     last in the job.
     """
-    # If there are paired reads... the file name will be based off of
-    # the first file's name, but not the second.
-    # Note that this is a workaround for not having separate File
-    # objects to represent processed files. Once that is fixed this
-    # should simply use the processed file instead of one of the input
-    # files.
     try:
         with tarfile.open(job_context['output_archive'], "w:gz") as tar:
             tar.add(job_context["output_directory"], arcname=os.sep)
@@ -191,7 +189,7 @@ def _zip_and_upload(job_context: Dict) -> Dict:
     computed_file.is_public = True
     computed_file.result = job_context['result']
     computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.file_name)
-    # TODO here: delete local file after S3 sync
+    # TODO here: delete local file after S3 sync#
     computed_file.save()
 
     job_context["success"] = True
@@ -200,13 +198,12 @@ def _zip_and_upload(job_context: Dict) -> Dict:
 
 def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
     """ """
-    logger.info("Running Salmon..")
+    logger.debug("Running Salmon..")
     
     skip = False
     if skip_processed and os.path.exists(os.path.join(job_context['output_directory'] + 'quant.sf')):
         logger.info("Skipping pre-processed Salmon run!")
         skip = True
-        ##return job_context
 
     # Salmon needs to be run differently for different sample types.
     # XXX: TODO: We need to tune the -p/--numThreads to the machines this process wil run on.
@@ -251,8 +248,6 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         logger.error("Shell call to salmon failed with error message: %s",
                      stderr[error_start:],
                      processor_job=job_context["job_id"])
-
-        #job_context["batches"][0].files[0].remove_temp_directory(job_context["job_dir_prefix"])
 
         # The failure_reason column is only 256 characters wide.
         error_end = error_start + 200

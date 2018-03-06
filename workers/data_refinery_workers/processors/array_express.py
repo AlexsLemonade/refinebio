@@ -29,7 +29,9 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["input_file_path"] = original_file.absolute_file_path
     # This is ugly, I'm sorry.
     # Turns /home/user/data_store/E-GEOD-8607/raw/foo.cel into /home/user/data_store/E-GEOD-8607/processed/foo.cel
-    job_context["output_file_path"] = '/'.join(original_file.absolute_file_path.split('/')[:-2]) + '/processed/' + original_file.absolute_file_path.split('/')[-1]
+    pre_part = original_file.absolute_file_path.split('/')[:-2]
+    end_part = original_file.absolute_file_path.split('/')[-1]
+    job_context["output_file_path"] = '/'.join(pre_part) + '/processed/' + end_part
 
     return job_context
 
@@ -66,6 +68,7 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
     # XXX: This may need to be made Organism-specific! hsentrezgprobe is for Homo Sapiens(?)
     # XXX: TODO: We also expect this to be replaced with `ensg`
     # Related: https://github.com/data-refinery/data-refinery/issues/85
+    # Related: https://github.com/data-refinery/data-refinery/issues/141
     package_name_without_version = package_name.replace("v1", "").replace("v2", "")
     job_context["brainarray_package"] = package_name_without_version + "hsentrezgprobe"
     return job_context
@@ -120,7 +123,11 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.is_ccdl = True
     result.is_public = True
     result.system_version = __version__
-    result.program_version = "XXX" # XXX - I don't know how to get this from R!
+    scan_version_parts = []
+    for version_part in ro.r("packageVersion('SCAN.UPC')")[0]:
+        scan_version_parts.append(str(version_part))
+    scan_version = ".".join(scan_version_parts) 
+    result.program_version = scan_version
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
     result.save()

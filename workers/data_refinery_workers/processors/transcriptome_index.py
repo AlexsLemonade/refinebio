@@ -193,7 +193,7 @@ def _create_index(job_context: Dict) -> Dict:
                              " -i {index_dir} --type quasi -k {kmer_size}")
 
     # To me, this looks quite ugly! However, I was told we got these values from
-    # Rob Paltro, the author of Salmon.
+    # Rob Patro, the author of Salmon.
     if job_context['length'] is "long":
         job_context['kmer_size'] = "31"
     else:
