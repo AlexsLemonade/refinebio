@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -ex
 
 # This is a template for the instance-user-data.sh script for the nomad client.
 # For more information on instance-user-data.sh scripts, see:
@@ -14,6 +14,9 @@
 # but those run after this script runs.
 
 # Mount the EFS.
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -y
+apt-get upgrade -y
 apt-get install --yes nfs-common
 mkdir -p /var/efs/
 chown ubuntu:ubuntu /var/efs/
