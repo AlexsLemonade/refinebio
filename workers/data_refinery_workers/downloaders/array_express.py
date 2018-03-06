@@ -51,7 +51,7 @@ def _extract_files(file_path: str, accession_code: str) -> List[str]:
     """Extract zip and return a list of the raw files.
     """
 
-    logger.debug("Extracting %s!", file_path, downloader_job=job.id)
+    logger.debug("Extracting %s!", file_path, file_path=file_path)
 
     try:
         # This is technically an unsafe operation.
