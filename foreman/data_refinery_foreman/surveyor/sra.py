@@ -385,10 +385,10 @@ class SraSurveyor(ExternalSourceSurveyor):
                 original_file.has_raw = True
                 original_file.save()
 
-            esa = ExperimentSampleAssociation()
-            esa.experiment = experiment_object
-            esa.sample = sample_object
-            esa.save()
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment_object
+        esa.sample = sample_object
+        esa.save()
 
         ##
         # Samples K/V
