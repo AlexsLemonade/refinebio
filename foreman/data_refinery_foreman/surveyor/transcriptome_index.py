@@ -7,7 +7,6 @@ from django.utils import timezone
 from typing import List, Dict
 
 from data_refinery_common.models import (
-    Batch,
     File,
     SurveyJobKeyValue,
     OriginalFile
@@ -168,20 +167,14 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
     def source_type(self):
         return Downloaders.TRANSCRIPTOME_INDEX.value
 
-    def determine_pipeline(self, batch: Batch, key_values: Dict = {}) -> ProcessorPipeline:
-        return ProcessorPipeline.TRANSCRIPTOME_INDEX
-
-    def group_batches(self) -> List[List[Batch]]:
-        return utils.group_batches_by_first_file(self.batches)
-
     def _clean_metadata(self, species: Dict) -> Dict:
         """Removes fields from metadata which shouldn't be stored.
 
         Also cast any None values to str so they can be stored in the
         database.
         These fields shouldn't be stored because:
-        The taxonomy id is stored as fields on the Batch.
-        aliases and groups are lists we don't need.
+        The taxonomy id is stored as fields on the Organism.
+        Aliases and groups are lists we don't need.
         """
         species.pop("taxon_id") if "taxon_id" in species else None
         species.pop("taxonomy_id") if "taxonomy_id" in species else None
@@ -238,7 +231,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         try:
             species_files = self.discover_species()
         except Exception:
-            logger.exception(("Exception caught while discovering batches. "
+            logger.exception(("Exception caught while discovering species. "
                               "Terminating survey job."),
                              survey_job=self.survey_job.id)
             return False
@@ -297,6 +290,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         except SurveyJobKeyValue.DoesNotExist:
             organism_name = None
 
+        # Survey jobs are on a per-organism basis.
         for species in specieses:
             if species['name'] == organism_name:
                 specieses = [species]

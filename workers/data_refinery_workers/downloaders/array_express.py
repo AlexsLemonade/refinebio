@@ -6,8 +6,16 @@ import zipfile
 from typing import List
 from contextlib import closing
 
-from data_refinery_common.models import File, DownloaderJob
-from data_refinery_common.models.new_models import Experiment, Sample, ExperimentAnnotation, ExperimentSampleAssociation, OriginalFile, DownloaderJobOriginalFileAssociation
+from data_refinery_common.models import (
+    File, 
+    DownloaderJob,
+    Experiment, 
+    Sample, 
+    ExperimentAnnotation, 
+    ExperimentSampleAssociation, 
+    OriginalFile, 
+    DownloaderJobOriginalFileAssociation
+)
 from data_refinery_workers.downloaders import utils
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable
@@ -19,19 +27,6 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 
 # chunk_size is in bytes
 CHUNK_SIZE = 1024 * 256
-
-
-def _verify_batch_grouping(files: List[File], job: DownloaderJob) -> None:
-    """All batches in the same job should have the same downloader url"""
-    for file in files:
-        if file.download_url != files[0].download_url:
-            failure_message = ("A Batch's file doesn't have the same download "
-                               "URL as the other batches' files.")
-            logger.error(failure_message,
-                         downloader_job=job.id)
-            job.failure_reason = failure_message
-            raise ValueError(failure_message)
-
 
 def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> None:
     """ Download a file from ArrayExpress via FTP. There is no Aspera endpoint
@@ -45,23 +40,18 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
         with closing(urllib.request.urlopen(download_url)) as request:
             shutil.copyfileobj(request, target_file, CHUNK_SIZE)
     except Exception:
-        logger.exception("Exception caught while downloading batch.",
+        logger.exception("Exception caught while downloading file.",
                          downloader_job=job.id)
-        job.failure_reason = "Exception caught while downloading batch"
+        job.failure_reason = "Exception caught while downloading file"
         raise
     finally:
         target_file.close()
 
 def _extract_files(file_path: str, accession_code: str) -> List[str]:
-    """Extract zip from temp directory and move to raw directory.
-
-    Additionally this function sets the size_in_bytes field of each
-    Batch in batches. To save database calls it does not save the
-    batch itself since it will be saved soon when its status
-    changes in utils.end_job.
+    """Extract zip and return a list of the raw files.
     """
 
-    logger.debug("Extracting %s!", file_path)
+    logger.debug("Extracting %s!", file_path, downloader_job=job.id)
 
     try:
         # This is technically an unsafe operation.
@@ -102,38 +92,31 @@ def download_array_express(job_id: int) -> None:
     # Then create processor jobs!
 
     og_files = []
-    try:
-        # The files for all of the samples are
-        # contained within the same zip file. Therefore only
-        # download the one.
-        os.makedirs(LOCAL_ROOT_DIR + '/' + accession_code, exist_ok=True)
-        dl_file_path = LOCAL_ROOT_DIR + '/' + accession_code + '/' + accession_code + ".zip"
-        _download_file(url, dl_file_path, job)
+    # The files for all of the samples are
+    # contained within the same zip file. Therefore only
+    # download the one.
+    os.makedirs(LOCAL_ROOT_DIR + '/' + accession_code, exist_ok=True)
+    dl_file_path = LOCAL_ROOT_DIR + '/' + accession_code + '/' + accession_code + ".zip"
+    _download_file(url, dl_file_path, job)
 
-        extracted_files = _extract_files(dl_file_path, accession_code)
+    extracted_files = _extract_files(dl_file_path, accession_code)
 
-        for og_file in extracted_files:
-            # TODO: We _should_ be able to use GET here - anything more than 1 sample per
-            # filename is a problem. However, I need to know more about the naming convention.
-            try:
-                original_file = OriginalFile.objects.filter(source_filename=og_file['filename']).order_by('created_at')[0]
-                original_file.is_downloaded=True
-                original_file.is_archive=False
-                original_file.absolute_file_path = og_file['absolute_path']
-                original_file.calculate_size()
-                original_file.calculate_sha1()
-                original_file.save()
-                og_files.append(original_file)
-            except Exception:
-                # TODO - is this worth failing a job for?
-                logger.debug("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'])
-        success=True
-    except Exception as e:
-        print(e)
-        # Exceptions are already logged and handled.
-        # Just need to mark the job as failed.
-        success = False
-        raise
+    for og_file in extracted_files:
+        # TODO: We _should_ be able to use GET here - anything more than 1 sample per
+        # filename is a problem. However, I need to know more about the naming convention.
+        try:
+            original_file = OriginalFile.objects.filter(source_filename=og_file['filename']).order_by('created_at')[0]
+            original_file.is_downloaded=True
+            original_file.is_archive=False
+            original_file.absolute_file_path = og_file['absolute_path']
+            original_file.calculate_size()
+            original_file.calculate_sha1()
+            original_file.save()
+            og_files.append(original_file)
+        except Exception:
+            # TODO - is this worth failing a job for?
+            logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'])
+    success=True
 
     if success:
         logger.debug("File downloaded and extracted successfully.",

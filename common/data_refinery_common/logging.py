@@ -74,7 +74,10 @@ def get_and_configure_logger(name: str) -> logging.Logger:
                 boto3_session=session,
                 create_log_group=False
                 )
+            tower.setFormatter(daiquiri.formatter.ColorExtrasFormatter(
+                fmt=FORMAT_STRING, keywords=[]))
             logger.logger.addHandler(tower)
+
         except Exception as e:
             # Oh, the irony!
             logger.error("Error while creating CloudwatchLogHandler.")

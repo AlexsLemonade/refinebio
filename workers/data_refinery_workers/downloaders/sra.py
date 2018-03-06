@@ -107,7 +107,7 @@ def download_sra(job_id: int) -> None:
         original_file = assoc.original_file
 
         if original_file.is_downloaded:
-            logger.error("File already downloaded!")
+            logger.error("File already downloaded!", original_file_id=original_file.id)
             continue
 
         os.makedirs(LOCAL_ROOT_DIR + '/' + job.accession_code, exist_ok=True)

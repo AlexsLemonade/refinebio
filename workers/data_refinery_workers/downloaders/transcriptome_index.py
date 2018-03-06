@@ -105,13 +105,15 @@ def download_transcriptome(job_id: int) -> None:
             original_file.absolute_file_path = dl_file_path
             original_file.file_name = original_file.source_filename
             original_file.is_archive = True
-            original_file.has_raw = False
+            original_file.has_raw = True
             original_file.calculate_size()
             original_file.calculate_sha1()
             original_file.save()
             files_to_process.append(original_file)
         else:
-            logger.error("Problem during download")
+            logger.error("Problem during download", 
+                url=original_file.source_url, 
+                original_file_id=original_file.id)
 
     if success:
         logger.debug("Files downloaded successfully.",

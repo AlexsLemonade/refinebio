@@ -2,8 +2,6 @@ import requests
 from typing import List, Dict
 import xml.etree.ElementTree as ET
 from data_refinery_common.models import (
-    Batch,
-    BatchKeyValue,
     File,
     SurveyJob,
     Organism,
@@ -34,11 +32,11 @@ class UnsupportedDataTypeError(BaseException):
 
 
 class SraSurveyor(ExternalSourceSurveyor):
-    """Surveys SRA for Batches of data.
+    """Surveys SRA for data.
 
     Implements the ExternalSourceSurveyor interface. It is worth
     noting that a large part of this class is parsing XML metadata
-    about Batches. The strategy for parsing the metadata was to take
+    about Experiments. The strategy for parsing the metadata was to take
     nearly all of the fields that could be extracted from the
     XML. Essentially all the XML parsing code is just working through
     the XML in the way it is formatted. For reference see the sample
@@ -49,11 +47,6 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     def source_type(self):
         return Downloaders.SRA.value
-
-    def determine_pipeline(self,
-                           batch: Batch,
-                           key_values: List[BatchKeyValue] = []):
-        return ProcessorPipeline.SALMON
 
     @staticmethod
     def gather_submission_metadata(metadata: Dict) -> None:
@@ -133,7 +126,7 @@ class SraSurveyor(ExternalSourceSurveyor):
             elif child.tag == "PLATFORM":
                 # This structure is extraneously nested.
                 # This is used as the platform_accession_code for SRA
-                # batches, which becomes part of file paths, so we
+                # objects, which becomes part of file paths, so we
                 # don't want any spaces in it.
                 metadata["platform_instrument_model"] = child[0][0].text.replace(" ", "")
 
@@ -302,7 +295,7 @@ class SraSurveyor(ExternalSourceSurveyor):
                         read_suffix=read_suffix)
 
     def _generate_experiment_and_samples(self, run_accession: str) -> None:
-        """Generates a Batch for the provided run_accession."""
+        """Generates Experiments and Samples for the provided run_accession."""
         metadata = SraSurveyor.gather_all_metadata(run_accession)
 
         if metadata["library_layout"] == "PAIRED":
@@ -314,6 +307,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         ##
         # Experiment
         ##
+        
         experiment_accession_code = metadata.get('experiment_accession')
         try:
             experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
