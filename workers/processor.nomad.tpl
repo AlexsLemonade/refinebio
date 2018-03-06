@@ -69,6 +69,14 @@ job "PROCESSOR" {
 
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]
 
+        logging {
+          type = "awslogs"
+          config {
+            awslogs-region = "${{REGION}}",
+            awslogs-group = "data-refinery-log-group-${{USER}}-${{STAGE}}",
+            awslogs-stream = "log-stream-nomad-docker-processor-${{USER}}-${{STAGE}}"
+          }
+        }
       }
     }
   }

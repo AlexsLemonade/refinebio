@@ -9,7 +9,7 @@ get_ip_address () {
 }
 
 get_docker_db_ip_address () {
-    docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' drdb
+    docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' drdb 2> /dev/null
 }
 
 get_docker_nomad_ip_address () {
