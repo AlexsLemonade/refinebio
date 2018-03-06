@@ -64,9 +64,9 @@ class ExternalSourceSurveyor:
               continue
 
             # There is already a downloader job associated with this file.
-            old_asocs = DownloaderJobOriginalFileAssociation.objects.filter(original_file=original_file)
-            if old_assocs.length() > 0:
-              logger.warn("We found an existing DownloaderJob for this file.", original_file_id=original_file.id)
+            old_assocs = DownloaderJobOriginalFileAssociation.objects.filter(original_file__source_url=original_file.source_url)
+            if len(old_assocs) > 0:
+              logger.debug("We found an existing DownloaderJob for this file/url.", original_file_id=original_file.id)
               continue
 
             with transaction.atomic():
