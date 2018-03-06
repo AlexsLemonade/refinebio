@@ -356,12 +356,12 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.Sample'),
         ),
         migrations.AddField(
-            model_name='index',
+            model_name='organismindex',
             name='organism',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.Organism'),
         ),
         migrations.AddField(
-            model_name='index',
+            model_name='organismindex',
             name='result',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.ComputationalResult'),
         ),
