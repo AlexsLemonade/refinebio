@@ -64,6 +64,10 @@ cat <<"EOF" > nomad-job-specs/processor.nomad
 ${processor_job_spec}
 EOF
 
+cat <<"EOF" > nomad-job-specs/surveyor.nomad
+${surveyor_job_spec}
+EOF
+
 # Create the script to install Nomad.
 cat <<"EOF" > install_nomad.sh
 ${install_nomad_script}
@@ -80,6 +84,7 @@ chmod +x install_nomad.sh
 ./install_nomad.sh
 
 # Start the Nomad agent in server mode.
+# XXX: Should this have `-server`? 
 nohup nomad agent -config server.hcl > /tmp/nomad_server.log &
 
 # Give the Nomad server time to start up.

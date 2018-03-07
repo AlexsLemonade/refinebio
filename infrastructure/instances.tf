@@ -25,7 +25,7 @@ data "aws_ami" "ubuntu" {
 # apply`.
 resource "null_resource" "format_nomad_job_specs" {
   provisioner "local-exec" {
-    command = "cd .. && REGION=${var.region} USER=${var.user} STAGE=${var.stage} ./workers/format_nomad_with_env.sh -e prod -o $(pwd)/infrastructure/nomad-job-specs/"
+    command = "cd .. && REGION=${var.region} USER=${var.user} STAGE=${var.stage} ./workers/format_nomad_with_env.sh -e prod -o $(pwd)/infrastructure/nomad-job-specs/ && REGION=${var.region} USER=${var.user} STAGE=${var.stage} ./foreman/format_nomad_with_env.sh -e prod -o $(pwd)/infrastructure/nomad-job-specs/"
   }
 }
 
@@ -49,6 +49,12 @@ data "local_file" "processor_job_spec" {
   filename = "nomad-job-specs/processor.nomad"
 }
 
+# This is another Nomad Job Specification file built by ${null_resource.format_nomad_job_specs}.
+data "local_file" "surveyor_job_spec" {
+  filename = "nomad-job-specs/surveyor.nomad"
+}
+
+
 # This script smusher exists in order to be able to circumvent a
 # limitation of AWS which is that you get one script and one script
 # only to set up the instance when it boots up. Because there is only
@@ -63,6 +69,7 @@ data "template_file" "nomad_lead_server_script_smusher" {
   vars {
     downloader_job_spec = "${data.local_file.downloader_job_spec.content}"
     processor_job_spec = "${data.local_file.processor_job_spec.content}"
+    surveyor_job_spec = "${data.local_file.surveyor_job_spec.content}"
     install_nomad_script = "${data.local_file.install_nomad_script.content}"
     nomad_server_config = "${data.local_file.nomad_lead_server_config.content}"
     server_number = 1
