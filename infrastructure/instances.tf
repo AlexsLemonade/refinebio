@@ -25,7 +25,7 @@ data "aws_ami" "ubuntu" {
 # apply`.
 resource "null_resource" "format_nomad_job_specs" {
   provisioner "local-exec" {
-    command = "cd .. && REGION=${var.region} USER=${var.user} STAGE=${var.stage} ./workers/format_nomad_with_env.sh -e prod -o $(pwd)/infrastructure/nomad-job-specs/ && REGION=${var.region} USER=${var.user} STAGE=${var.stage} ./foreman/format_nomad_with_env.sh -e prod -o $(pwd)/infrastructure/nomad-job-specs/"
+    command = "cd .. && REGION=${var.region} USER=${var.user} STAGE=${var.stage} AWS_ACCESS_KEY_ID=${aws_iam_access_key.data_refinery_user_worker_key.id} AWS_SECRET_ACCESS_KEY=${aws_iam_access_key.data_refinery_user_worker_key.secret} ./workers/format_nomad_with_env.sh -e prod -o $(pwd)/infrastructure/nomad-job-specs/ && REGION=${var.region} USER=${var.user} STAGE=${var.stage} AWS_ACCESS_KEY_ID=${aws_iam_access_key.data_refinery_user_foreman_key.id} AWS_SECRET_ACCESS_KEY=${aws_iam_access_key.data_refinery_user_foreman_key.secret} ./foreman/format_nomad_with_env.sh -e prod -o $(pwd)/infrastructure/nomad-job-specs/"
   }
 }
 
@@ -42,16 +42,19 @@ data "local_file" "nomad_lead_server_config" {
 # This is a Nomad Job Specification file built by ${null_resource.format_nomad_job_specs}.
 data "local_file" "downloader_job_spec" {
   filename = "nomad-job-specs/downloader.nomad"
+  depends_on = ["null_resource.format_nomad_job_specs"]
 }
 
 # This is another Nomad Job Specification file built by ${null_resource.format_nomad_job_specs}.
 data "local_file" "processor_job_spec" {
   filename = "nomad-job-specs/processor.nomad"
+  depends_on = ["null_resource.format_nomad_job_specs"]
 }
 
 # This is another Nomad Job Specification file built by ${null_resource.format_nomad_job_specs}.
 data "local_file" "surveyor_job_spec" {
   filename = "nomad-job-specs/surveyor.nomad"
+  depends_on = ["null_resource.format_nomad_job_specs"]
 }
 
 
@@ -193,10 +196,10 @@ output "nomad_server_2_ip" {
 resource "aws_instance" "nomad_server_3" {
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.small"
-  availability_zone = "${var.region}b"
+  availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
-  subnet_id = "${aws_subnet.data_refinery_1b.id}"
+  subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
@@ -261,10 +264,10 @@ data "template_file" "nomad_client_script_smusher" {
 resource "aws_instance" "nomad_client_1" {
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.xlarge"
-  availability_zone = "${var.region}b"
+  availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
-  subnet_id = "${aws_subnet.data_refinery_1b.id}"
+  subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_internet_gateway.data_refinery", "aws_instance.nomad_server_1"]
   user_data = "${data.template_file.nomad_client_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"

@@ -15,7 +15,7 @@ job "SURVEYOR" {
       # delay    = "30s"
     }
 
-    task "processor" {
+    task "surveyor" {
       driver = "docker"
 
       # This env will be passed into the container for the job.
@@ -48,7 +48,7 @@ job "SURVEYOR" {
         # CPU is in AWS's CPU units.
         cpu = 500
         # Memory is in MB of RAM.
-        memory = 4048
+        memory = 2048
       }
 
       config {
@@ -65,14 +65,6 @@ job "SURVEYOR" {
 
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]
 
-        logging {
-          type = "awslogs"
-          config {
-            awslogs-region = "${{REGION}}",
-            awslogs-group = "data-refinery-log-group-${{USER}}-${{STAGE}}",
-            awslogs-stream = "log-stream-nomad-docker-surveyor-${{USER}}-${{STAGE}}"
-          }
-        }
       }
     }
   }
