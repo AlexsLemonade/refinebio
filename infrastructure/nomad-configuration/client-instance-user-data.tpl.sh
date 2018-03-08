@@ -23,6 +23,15 @@ chown ubuntu:ubuntu /var/efs/
 echo "${file_system_id}.efs.${region}.amazonaws.com:/ /var/efs/ nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0" >> /etc/fstab
 mount -a -t nfs4
 
+# Set up the database
+apt-get install --yes postgresql-client-common postgresql-client
+PGPASSWORD=${database_password} psql -c "create database data_refinery" -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
+PGPASSWORD=${database_password} psql -c "CREATE ROLE data_refinery_user WITH LOGIN PASSWORD 'data_refinery_password';" -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
+PGPASSWORD=${database_password} psql -c 'GRANT ALL PRIVILEGES ON DATABASE data_refinery TO data_refinery_user;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
+PGPASSWORD=${database_password} psql -c 'ALTER USER data_refinery_user CREATEDB;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
+PGPASSWORD=${database_password} psql -c 'ALTER ROLE data_refinery_user superuser;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
+PGPASSWORD=${database_password} psql -c 'CREATE EXTENSION IF NOT EXISTS hstore;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
+
 # Change to home directory of the default user
 cd /home/ubuntu
 

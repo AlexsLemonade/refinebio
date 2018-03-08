@@ -4,8 +4,9 @@
 
 # Annoyingly, TF can't have computed variables (${env.USER})
 # as default values for variables. So `TF_VAR_user=rjones tf plan`, etc.
+# Also, don't use any non-alphanumeric characters here or RDS will whinge.
 variable "user" {
-  default = "my-user-name"
+  default = "myusername"
 }
 
 variable "stage" {
@@ -14,4 +15,12 @@ variable "stage" {
 
 variable "region" {
   default = "us-east-1"
+}
+
+variable "database_user" {
+  default = "drpostgresuser"
+}
+
+variable "database_password" {
+  default = "drpostgrespassword"
 }

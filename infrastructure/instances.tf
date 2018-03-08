@@ -255,6 +255,10 @@ data "template_file" "nomad_client_script_smusher" {
     stage = "${var.stage}"
     region = "${var.region}"
     file_system_id = "${aws_efs_file_system.data_refinery_efs.id}"
+    database_host = "${aws_db_instance.postgres_db.address}"
+    database_user = "${var.database_user}"
+    database_password = "${var.database_password}"
+    database_name = "${aws_db_instance.postgres_db.name}"
   }
 }
 
@@ -296,8 +300,6 @@ output "nomad_client_ip" {
   value = "${aws_instance.nomad_client_1.public_ip}"
 }
 
-variable "database_password" {}
-
 resource "aws_db_instance" "postgres_db" {
   identifier = "data-refinery-${var.user}-${var.stage}"
   allocated_storage = 100
@@ -306,7 +308,7 @@ resource "aws_db_instance" "postgres_db" {
   engine_version = "9.5.4"
   instance_class = "db.t2.micro"
   name = "data_refinery_${var.user}_${var.stage}"
-  username = "data_refinery_user"
+  username = "${var.database_user}"
   password = "${var.database_password}"
   db_subnet_group_name = "${aws_db_subnet_group.data_refinery.name}"
   skip_final_snapshot = true
