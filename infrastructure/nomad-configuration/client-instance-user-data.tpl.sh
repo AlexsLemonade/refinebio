@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -x
 
 # This is a template for the instance-user-data.sh script for the nomad client.
 # For more information on instance-user-data.sh scripts, see:
@@ -24,11 +24,11 @@ echo "${file_system_id}.efs.${region}.amazonaws.com:/ /var/efs/ nfs4 nfsvers=4.1
 mount -a -t nfs4
 
 # Set up the database
-# XXX - Failure here is catastrphic - even normally "safe" operations like apply permissions to a user that already has them
+# XXX - Failure here is catastrophic - even normally "safe" operations like apply permissions to a user that already has them
 # XXX - We need to have way to do this "manually" for staging and automatically for prod, all without
 # XXX - the catastrophic failure.
 apt-get install --yes postgresql-client-common postgresql-client
-PGPASSWORD=${database_password} psql -c "create database data_refinery" -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
+PGPASSWORD=${database_password} psql -c "create database data_refinery" -h ${database_host} -p 5432 -U ${database_user} -d ${database_name} 
 PGPASSWORD=${database_password} psql -c "CREATE ROLE data_refinery_user WITH LOGIN PASSWORD 'data_refinery_password';" -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
 PGPASSWORD=${database_password} psql -c 'GRANT ALL PRIVILEGES ON DATABASE data_refinery TO data_refinery_user;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
 PGPASSWORD=${database_password} psql -c 'ALTER USER data_refinery_user CREATEDB;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
@@ -89,3 +89,8 @@ chmod +x install_nomad.sh
 
 # Start the Nomad agent in client mode.
 nomad agent -config client.hcl > /var/log/nomad_client.log &
+
+# XXX: TODO: Delete the cloudinit and syslog!
+# rm /var/log/cloud-init.log
+# rm /var/log/cloud-init-output.log
+# rm /var/log/syslog
