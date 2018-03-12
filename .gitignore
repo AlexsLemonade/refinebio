@@ -111,3 +111,6 @@ dr_env/
 
 # PyCharm
 .idea
+
+# emacs backup files
+*~
