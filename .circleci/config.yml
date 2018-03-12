@@ -33,6 +33,9 @@ jobs:
       #      command:
       #        .circleci/filter_tests.sh
       #      no_output_timeout: 36000
+      - run: bash .circleci/git_decrypt.sh        # dhu: test only
+      - run: bash .circleci/update_docker_img.sh  # dhu: test only
+
 
   deploy:
     machine: true
