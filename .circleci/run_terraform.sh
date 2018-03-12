@@ -21,9 +21,9 @@ openssl aes-256-cbc -d -in $TFSTATE_BAK.enc -out $TFSTATE_BAK.s3 -k $OPENSSL_KEY
 #terraform apply -auto-approve
 
 # Encrypt new tfstate files
-openssl aes-256-cbc -e -in $TFSTATE.s3 -out $TFSTATE.enc -k $OPENSSL_KEY
-openssl aes-256-cbc -e -in $TFSTATE_BAK.s3 -out $TFSTATE_BAK.enc -k $OPENSSL_KEY
+openssl aes-256-cbc -e -in $TFSTATE -out $TFSTATE.enc -k $OPENSSL_KEY
+openssl aes-256-cbc -e -in $TFSTATE_BAK -out $TFSTATE_BAK.enc -k $OPENSSL_KEY
 
 # Upload encrypted tfstate files back to S3
-aws s3 cp $TFSTATE.enc.s3 s3://refinebio-tfstate/
-aws s3 cp $TFSTATE_BAK.enc.s3 s3://refinebio-tfstate/
+aws s3 cp $TFSTATE.enc s3://refinebio-tfstate/
+aws s3 cp $TFSTATE_BAK.enc s3://refinebio-tfstate/
