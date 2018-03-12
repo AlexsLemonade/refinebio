@@ -17,6 +17,9 @@ variable "region" {
   default = "us-east-1"
 }
 
+variable "HOST_IP" {
+}
+
 variable "database_user" {
   default = "drpostgresuser"
 }

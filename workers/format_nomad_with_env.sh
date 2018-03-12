@@ -65,7 +65,7 @@ done < "environments/$env"
 # issue can be found here:
 # https://github.com/hashicorp/nomad/issues/1185
 
-if [[ ! -z $env && ! -d "$output_dir" ]]; then
+if [[ ! -z $output_dir && ! -d "$output_dir" ]]; then
     mkdir $output_dir
 fi
 
