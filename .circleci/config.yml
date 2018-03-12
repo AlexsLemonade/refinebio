@@ -1,7 +1,7 @@
 version: 2
 jobs:
-  build:
-    working_directory: /home/circleci/data_refinery
+  test:
+    working_directory: ~/refinebio
     machine: true
     steps:
       - checkout
@@ -29,7 +29,38 @@ jobs:
 
       # Run Worker Tests
       - run: chmod -R a+rw workers/test_volume
-      - run:
-            command:
-              .circleci/filter_tests.sh
-            no_output_timeout: 36000
+      #- run:
+      #      command:
+      #        .circleci/filter_tests.sh
+      #      no_output_timeout: 36000
+
+  deploy:
+    machine: true
+    working_directory: ~/refinebio
+    steps:
+      - checkout
+      - run: bash .circleci/git_decrypt.sh
+      - run: bash .circleci/update_docker_img.sh
+      - run: bash .circleci/run_terraform.sh
+
+workflows:
+  version: 2
+  test-and-deploy:
+    jobs:
+      # "build" job will be triggered by:.
+      # - any branch commit, or:
+      # - tag commits whose names start with letter "v".
+      - test:
+          filters:
+            tags:
+              only: /v.*/
+      # "deploy" job will be triggered ONLY by tag commits whose name
+      # start with letter "v".
+      - deploy:
+          requires:
+            - test
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v.*/
