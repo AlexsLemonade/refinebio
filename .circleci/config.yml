@@ -29,13 +29,10 @@ jobs:
 
       # Run Worker Tests
       - run: chmod -R a+rw workers/test_volume
-      #- run:
-      #      command:
-      #        .circleci/filter_tests.sh
-      #      no_output_timeout: 36000
-      - run: bash .circleci/git_decrypt.sh        # dhu: test only
-      - run: bash .circleci/update_docker_img.sh  # dhu: test only
-
+      - run:
+          command:
+            .circleci/filter_tests.sh
+          no_output_timeout: 36000
 
   deploy:
     machine: true
@@ -55,14 +52,18 @@ workflows:
       # - tag commits whose names start with letter "v".
       - build:
           filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "build" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
+
       # "deploy" job will be triggered ONLY by tag commits whose name
       # start with letter "v".
       - deploy:
           requires:
             - build
           filters:
+            # No branch commit will ever trigger this job.
             branches:
               ignore: /.*/
             tags:
