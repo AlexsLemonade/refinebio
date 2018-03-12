@@ -47,7 +47,7 @@ workflows:
   version: 2
   build-and-deploy:
     jobs:
-      # "build" job will be triggered by:.
+      # "build" job will be triggered by:
       # - any branch commit, or:
       # - tag commits whose names start with letter "v".
       - build:
