@@ -54,6 +54,17 @@ else
     export VOLUME_DIR=$script_directory/volume
 fi
 
+# We need to specify the database host for development, but not for
+# production because we just point directly at the RDS instance.
+if [ $env != "prod" ]; then
+    # This is kinda ugly, maybe clean it up?
+    export EXTRA_HOSTS="
+        extra_hosts = [\"database:$DB_HOST_IP\"]
+"
+else
+    export EXTRA_HOSTS=""
+fi
+
 while read line; do
     is_comment=$(echo $line | grep "^#")
     if [[ -n $line ]] && [[ -z $is_comment ]]; then
@@ -67,7 +78,7 @@ done < "environments/$env"
 # issue can be found here:
 # https://github.com/hashicorp/nomad/issues/1185
 
-if [[ ! -z $env && ! -d "$output_dir" ]]; then
+if [[ ! -z $output_dir && ! -d "$output_dir" ]]; then
     mkdir $output_dir
 fi
 

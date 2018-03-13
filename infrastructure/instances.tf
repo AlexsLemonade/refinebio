@@ -16,73 +16,6 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-# We need to transfer the Nomad Job Specifications onto the instance
-# so we can register them. However we use these job specifications to
-# store environment variables, so they are on Github as templates. To
-# format them with the production environment variables, we need to
-# run the following command. By doing so with a `null_resource` we're
-# able to avoid having a prerequisite step to running `terraform
-# apply`.
-resource "null_resource" "format_workers_nomad_job_specs" {
-  provisioner "local-exec" {
-    command = <<EOF
-cd .. && \
-REGION=${var.region} \
-USER=${var.user} \
-STAGE=${var.stage} \
-AWS_ACCESS_KEY_ID=${aws_iam_access_key.data_refinery_user_worker_key.id} \
-AWS_SECRET_ACCESS_KEY=${aws_iam_access_key.data_refinery_user_worker_key.secret} \
-DATABASE_NAME=${aws_db_instance.postgres_db.name} \
-DATABASE_HOST=${aws_db_instance.postgres_db.address} \
-DATABASE_USER=${var.database_user} \
-DATABASE_PASSWORD=${var.database_password} \
-DATABASE_PORT=${var.database_port} \
-DATABASE_TIMEOUT=${var.database_timeout} \
-DJANGO_SECRET_KEY=${var.django_secret_key} \
-DJANGO_DEBUG=${var.django_debug} \
-RUNNING_IN_CLOUD=${var.running_in_cloud} \
-WORKERS_DOCKER_IMAGE=${var.workers_docker_image} \
-USE_S3=${var.use_s3} \
-S3_BUCKET_NAME=${aws_s3_bucket.data_refinery_bucket.id} \
-RAW_PREFIX=${var.raw_prefix} \
-PROCESSED_PREFIX=${var.processed_prefix} \
-TEMP_PREFIX=${var.temp_prefix} \
-LOCAL_ROOT_DIR=${var.local_root_dir} \
-./workers/format_nomad_with_env.sh -e prod -o $(pwd)/infrastructure/nomad-job-specs/
-EOF
-  }
-}
-
-resource "null_resource" "format_foreman_nomad_job_specs" {
-  provisioner "local-exec" {
-    command = <<EOF
-cd .. && \
-REGION=${var.region} \
-USER=${var.user} \
-STAGE=${var.stage} \
-AWS_ACCESS_KEY_ID=${aws_iam_access_key.data_refinery_user_foreman_key.id} \
-AWS_SECRET_ACCESS_KEY=${aws_iam_access_key.data_refinery_user_foreman_key.secret} \
-DATABASE_NAME=${aws_db_instance.postgres_db.name} \
-DATABASE_HOST=${aws_db_instance.postgres_db.address} \
-DATABASE_USER=${var.database_user} \
-DATABASE_PASSWORD=${var.database_password} \
-DATABASE_PORT=${var.database_port} \
-DATABASE_TIMEOUT=${var.database_timeout} \
-DJANGO_SECRET_KEY=${var.django_secret_key} \
-DJANGO_DEBUG=${var.django_debug} \
-RUNNING_IN_CLOUD=${var.running_in_cloud} \
-FOREMAN_DOCKER_IMAGE=${var.foreman_docker_image} \
-USE_S3=${var.use_s3} \
-S3_BUCKET_NAME=${aws_s3_bucket.data_refinery_bucket.id} \
-RAW_PREFIX=${var.raw_prefix} \
-PROCESSED_PREFIX=${var.processed_prefix} \
-TEMP_PREFIX=${var.temp_prefix} \
-LOCAL_ROOT_DIR=${var.local_root_dir} \
-./foreman/format_nomad_with_env.sh -e prod -o $(pwd)/infrastructure/nomad-job-specs/
-EOF
-  }
-}
-
 # This script installs Nomad.
 data "local_file" "install_nomad_script" {
   filename = "../install_nomad.sh"
@@ -92,25 +25,6 @@ data "local_file" "install_nomad_script" {
 data "local_file" "nomad_lead_server_config" {
   filename = "nomad-configuration/lead_server.hcl"
 }
-
-# This is a Nomad Job Specification file built by ${null_resource.format_nomad_job_specs}.
-data "local_file" "downloader_job_spec" {
-  filename = "nomad-job-specs/downloader.nomad"
-  # depends_on = ["null_resource.format_workers_nomad_job_specs"]
-}
-
-# This is another Nomad Job Specification file built by ${null_resource.format_nomad_job_specs}.
-data "local_file" "processor_job_spec" {
-  filename = "nomad-job-specs/processor.nomad"
-  # depends_on = ["null_resource.format_workers_nomad_job_specs"]
-}
-
-# This is another Nomad Job Specification file built by ${null_resource.format_nomad_job_specs}.
-data "local_file" "surveyor_job_spec" {
-  filename = "nomad-job-specs/surveyor.nomad"
-  # depends_on = ["null_resource.format_foreman_nomad_job_specs"]
-}
-
 
 # This script smusher exists in order to be able to circumvent a
 # limitation of AWS which is that you get one script and one script
@@ -124,9 +38,6 @@ data "template_file" "nomad_lead_server_script_smusher" {
   template = "${file("nomad-configuration/lead-server-instance-user-data.tpl.sh")}"
 
   vars {
-    downloader_job_spec = "${data.local_file.downloader_job_spec.content}"
-    processor_job_spec = "${data.local_file.processor_job_spec.content}"
-    surveyor_job_spec = "${data.local_file.surveyor_job_spec.content}"
     install_nomad_script = "${data.local_file.install_nomad_script.content}"
     nomad_server_config = "${data.local_file.nomad_lead_server_config.content}"
     server_number = 1
@@ -369,4 +280,12 @@ resource "aws_db_instance" "postgres_db" {
   vpc_security_group_ids = ["${aws_security_group.data_refinery_db.id}"]
   multi_az = true
   publicly_accessible = true
+}
+
+output "database_name" {
+  value = "${aws_db_instance.postgres_db.name}"
+}
+
+output "database_host" {
+  value = "${aws_db_instance.postgres_db.address}"
 }

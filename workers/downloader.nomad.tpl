@@ -62,10 +62,7 @@ job "DOWNLOADER" {
           "run_downloader_job",
           "--job-name", "${NOMAD_META_JOB_NAME}",
           "--job-id", "${NOMAD_META_JOB_ID}"]
-
-        extra_hosts = ["database:${{DB_HOST_IP}}",
-                       "nomad:${{NOMAD_HOST_IP}}"]
-
+        ${{EXTRA_HOSTS}}
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]
 
         logging {

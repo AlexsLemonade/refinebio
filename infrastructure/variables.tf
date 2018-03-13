@@ -9,12 +9,24 @@ variable "user" {
   default = "rjones"
 }
 
+output "user" {
+  value = "${var.user}"
+}
+
 variable "stage" {
   default = "dev"
 }
 
+output "stage" {
+  value = "${var.stage}"
+}
+
 variable "region" {
   default = "us-east-1"
+}
+
+output "region" {
+  value = "${var.region}"
 }
 
 variable "host_ip" {
@@ -25,6 +37,7 @@ variable "database_user" {
 }
 
 variable "database_password" {
+  # Not sure what's going on with this here password, but it doesn't seem to work.
   default = "drpostgrespassword"
 }
 
@@ -56,7 +69,7 @@ variable "workers_docker_image" {
   default = "miserlou/dr_worker:2"
 }
 variable "foreman_docker_image" {
-  default = "miserlou/dr_foreman:2"
+  default = "miserlou/dr_foreman:3"
 }
 variable "use_s3" {
   default = "True"
@@ -75,4 +88,13 @@ variable "temp_prefix" {
 }
 variable "processed_prefix" {
   default = "processed"
+}
+
+
+output "aws_access_key_id" {
+  value = "${aws_iam_access_key.data_refinery_user_worker_key.id}"
+}
+
+output "aws_secret_access_key" {
+  value = "${aws_iam_access_key.data_refinery_user_worker_key.secret}"
 }
