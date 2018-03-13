@@ -17,7 +17,7 @@ variable "region" {
   default = "us-east-1"
 }
 
-variable "HOST_IP" {
+variable "host_ip" {
 }
 
 variable "database_user" {

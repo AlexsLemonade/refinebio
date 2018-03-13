@@ -32,10 +32,10 @@ USER=${var.user} \
 STAGE=${var.stage} \
 AWS_ACCESS_KEY_ID=${aws_iam_access_key.data_refinery_user_worker_key.id} \
 AWS_SECRET_ACCESS_KEY=${aws_iam_access_key.data_refinery_user_worker_key.secret} \
-DATABASE_NAME=data_refinery \
+DATABASE_NAME=${aws_db_instance.postgres_db.name} \
 DATABASE_HOST=${aws_db_instance.postgres_db.address} \
-DATABASE_USER=data_refinery_user \
-DATABASE_PASSWORD=data_refinery_password \
+DATABASE_USER=${var.database_user} \
+DATABASE_PASSWORD=${var.database_password} \
 DATABASE_PORT=${var.database_port} \
 DATABASE_TIMEOUT=${var.database_timeout} \
 DJANGO_SECRET_KEY=${var.django_secret_key} \
@@ -62,10 +62,10 @@ USER=${var.user} \
 STAGE=${var.stage} \
 AWS_ACCESS_KEY_ID=${aws_iam_access_key.data_refinery_user_foreman_key.id} \
 AWS_SECRET_ACCESS_KEY=${aws_iam_access_key.data_refinery_user_foreman_key.secret} \
-DATABASE_NAME=data_refinery \
+DATABASE_NAME=${aws_db_instance.postgres_db.name} \
 DATABASE_HOST=${aws_db_instance.postgres_db.address} \
-DATABASE_USER=data_refinery_user \
-DATABASE_PASSWORD=data_refinery_password \
+DATABASE_USER=${var.database_user} \
+DATABASE_PASSWORD=${var.database_password} \
 DATABASE_PORT=${var.database_port} \
 DATABASE_TIMEOUT=${var.database_timeout} \
 DJANGO_SECRET_KEY=${var.django_secret_key} \
@@ -96,19 +96,19 @@ data "local_file" "nomad_lead_server_config" {
 # This is a Nomad Job Specification file built by ${null_resource.format_nomad_job_specs}.
 data "local_file" "downloader_job_spec" {
   filename = "nomad-job-specs/downloader.nomad"
-  depends_on = ["null_resource.format_workers_nomad_job_specs"]
+  # depends_on = ["null_resource.format_workers_nomad_job_specs"]
 }
 
 # This is another Nomad Job Specification file built by ${null_resource.format_nomad_job_specs}.
 data "local_file" "processor_job_spec" {
   filename = "nomad-job-specs/processor.nomad"
-  depends_on = ["null_resource.format_workers_nomad_job_specs"]
+  # depends_on = ["null_resource.format_workers_nomad_job_specs"]
 }
 
 # This is another Nomad Job Specification file built by ${null_resource.format_nomad_job_specs}.
 data "local_file" "surveyor_job_spec" {
   filename = "nomad-job-specs/surveyor.nomad"
-  depends_on = ["null_resource.format_foreman_nomad_job_specs"]
+  # depends_on = ["null_resource.format_foreman_nomad_job_specs"]
 }
 
 

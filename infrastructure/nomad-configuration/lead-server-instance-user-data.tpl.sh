@@ -78,13 +78,11 @@ cat <<"EOF" > server.hcl
 ${nomad_server_config}
 EOF
 
-
 # Install Nomad.
 chmod +x install_nomad.sh
 ./install_nomad.sh
 
 # Start the Nomad agent in server mode.
-# XXX: Should this have `-server`? 
 nohup nomad agent -config server.hcl > /tmp/nomad_server.log &
 
 # Give the Nomad server time to start up.

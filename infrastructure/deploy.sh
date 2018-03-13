@@ -4,7 +4,8 @@
 
 # Make our IP address known to terraform.
 source ../common.sh
-export TF_VAR_HOST_IP=$(get_ip_address)
+export TF_VAR_host_ip=`wget -qO- http://ipecho.net/plain ; echo`
+echo $TF_VAR_host_ip
 
 # Copy ingress config to top level so it can be applied.
 cp deploy/ci_ingress.tf .
@@ -16,9 +17,9 @@ terraform apply -auto-approve
 
 # Remove the ingress config so the next `terraform apply` will remove
 # access for Circle.
-rm ci_ingress.tf
+#rm ci_ingress.tf
 
 # Taint the lead server so that it and all other servers (which depend
 # on it) will be torn down and re-initialized.
-terraform taint aws_instance.nomad_server_1
-terraform apply -auto-approve
+#terraform taint aws_instance.nomad_server_1
+#terraform apply -auto-approve

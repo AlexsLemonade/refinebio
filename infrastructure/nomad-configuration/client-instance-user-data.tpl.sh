@@ -36,6 +36,16 @@ PGPASSWORD=${database_password} psql -c 'ALTER USER data_refinery_user CREATEDB;
 # PGPASSWORD=${database_password} psql -c 'ALTER ROLE data_refinery_user superuser;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
 PGPASSWORD=${database_password} psql -c 'CREATE EXTENSION IF NOT EXISTS hstore;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
 
+PGPASSWORD=${database_password} psql -c 'GRANT ALL ON ALL TABLES IN SCHEMA public to drpostgresuser;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
+PGPASSWORD=${database_password} psql -c 'GRANT ALL ON ALL SEQUENCES IN SCHEMA public to drpostgresuser;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
+PGPASSWORD=${database_password} psql -c 'GRANT ALL ON ALL FUNCTIONS IN SCHEMA public to drpostgresuser;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
+PGPASSWORD=${database_password} psql -c 'GRANT ALL ON ALL TABLES IN SCHEMA public to data_refinery_user;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
+PGPASSWORD=${database_password} psql -c 'GRANT ALL ON ALL SEQUENCES IN SCHEMA public to data_refinery_user;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
+PGPASSWORD=${database_password} psql -c 'GRANT ALL ON ALL FUNCTIONS IN SCHEMA public to data_refinery_user;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
+
+
+
+
 # Change to home directory of the default user
 cd /home/ubuntu
 
@@ -77,11 +87,9 @@ cat <<"EOF" > client.hcl
 ${nomad_client_config}
 EOF
 
-
 # Create a directory for docker to use as a volume.
 mkdir /home/ubuntu/docker_volume
 chmod a+rwx /home/ubuntu/docker_volume
-
 
 # Install Nomad
 chmod +x install_nomad.sh
