@@ -32,7 +32,8 @@ job "SURVEYOR" {
         DATABASE_PORT = "${{DATABASE_PORT}}"
         DATABASE_TIMEOUT = "${{DATABASE_TIMEOUT}}"
 
-        RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
+        RUNNING_IN_CLOUD = "False"
+        WATCHTOWER="False"
 
         USE_S3 = "${{USE_S3}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
@@ -60,8 +61,6 @@ job "SURVEYOR" {
           "${NOMAD_META_COMMAND}",
           "--file", "${NOMAD_META_FILE}",
         ]
-
-        extra_hosts = ["database:${{DB_HOST_IP}}"]
 
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]
 

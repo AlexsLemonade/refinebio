@@ -56,7 +56,7 @@ variable "workers_docker_image" {
   default = "miserlou/dr_worker:2"
 }
 variable "foreman_docker_image" {
-  default = "miserlou/dr_foreman:2"
+  default = "miserlou/dr_foreman:3"
 }
 variable "use_s3" {
   default = "True"
