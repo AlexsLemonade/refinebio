@@ -6,7 +6,7 @@
 # as default values for variables. So `TF_VAR_user=rjones tf plan`, etc.
 # Also, don't use any non-alphanumeric characters here or RDS will whinge.
 variable "user" {
-  default = "myusername"
+  default = "rjones"
 }
 
 variable "stage" {
@@ -60,6 +60,9 @@ variable "foreman_docker_image" {
 }
 variable "use_s3" {
   default = "True"
+}
+variable "s3_bucket_name" {
+  default = "data-refinery"
 }
 variable "local_root_dir" {
   default = "/home/user/data_store"

@@ -9,6 +9,8 @@ export TF_VAR_HOST_IP=$(get_ip_address)
 # Copy ingress config to top level so it can be applied.
 cp deploy/ci_ingress.tf .
 
+terraform plan
+
 # Open up ingress to AWS for Circle, stop jobs, migrate DB.
 terraform apply -auto-approve
 
