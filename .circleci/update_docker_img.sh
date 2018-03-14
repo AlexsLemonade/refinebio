@@ -1,5 +1,7 @@
-cd ~/refinebio
+cd ~/refinebio/common
+python setup.py sdist
 
+cd ~/refinebio
 # Log into DockerHub
 docker login -u $DOCKER_ID -p $DOCKER_PASSWD
 
