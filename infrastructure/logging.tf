@@ -54,22 +54,12 @@ resource "aws_cloudwatch_log_stream" "log_stream_nomad_docker_downloader" {
 }
 
 # Foreman
-resource "aws_cloudwatch_log_stream" "log_stream_foreman_django" {
-  name           = "log-stream-foreman-django-${var.user}-${var.stage}"
-  log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
-}
-
 resource "aws_cloudwatch_log_stream" "log_stream_foreman_docker" {
   name           = "log-stream-foreman-docker-${var.user}-${var.stage}"
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
 }
 
 # Worker
-resource "aws_cloudwatch_log_stream" "log_stream_worker_django" {
-  name           = "log-stream-worker-django-${var.user}-${var.stage}"
-  log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
-}
-
 resource "aws_cloudwatch_log_stream" "log_stream_worker_docker" {
   name           = "log-stream-worker-docker-${var.user}-${var.stage}"
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"

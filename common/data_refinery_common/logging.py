@@ -2,7 +2,6 @@ import boto3
 import daiquiri
 import logging
 import sys
-import watchtower
 
 from data_refinery_common.utils import get_worker_id
 from data_refinery_common.utils import get_env_variable
@@ -41,45 +40,5 @@ def get_and_configure_logger(name: str) -> logging.Logger:
     handler.setFormatter(daiquiri.formatter.ColorExtrasFormatter(
         fmt=FORMAT_STRING, keywords=[]))
     logger.logger.addHandler(handler)
-
-    # This is for CloudWatching.
-    # Watchtower honestly isn't an awesome package and 
-    # we should keep an eye on it and possibly reevaluate if
-    # it becomes problematic.
-    # Related: https://github.com/kislyuk/watchtower/issues/34
-    # Related: https://github.com/kislyuk/watchtower/issues/56
-    in_cloud = get_env_variable("RUNNING_IN_CLOUD", False)
-    # Env vars are only ever strings.
-    if in_cloud == "True":
-        # <service>-<user>-<stage>
-        user = get_env_variable("USER", "user")
-        stage = get_env_variable("STAGE", "dev")
-        service = get_env_variable("SERVICE", "common")
-
-        # AWS
-        aws_access_key_id = get_env_variable("aws_access_key_id".upper(), "AK123")
-        aws_secret_access_key = get_env_variable("aws_secret_access_key".upper(), "SK123")
-        region = get_env_variable("REGION".upper(), "us-east-1")
-
-        log_group = "data-refinery-log-group-{user}-{stage}".format(user=user, stage=stage)
-        stream_name = "log-stream-{service}-django-{user}-{stage}".format(service=service, user=user, stage=stage)
-        session = boto3.session.Session(aws_access_key_id=aws_access_key_id, 
-            aws_secret_access_key=aws_secret_access_key, 
-            region_name=region)
-
-        try:
-            tower = watchtower.CloudWatchLogHandler(
-                log_group=log_group,
-                stream_name=stream_name,
-                boto3_session=session,
-                create_log_group=False
-                )
-            tower.setFormatter(daiquiri.formatter.ColorExtrasFormatter(
-                fmt=FORMAT_STRING, keywords=[]))
-            logger.logger.addHandler(tower)
-
-        except Exception as e:
-            # Oh, the irony!
-            logger.error("Error while creating CloudwatchLogHandler.")
 
     return logger
