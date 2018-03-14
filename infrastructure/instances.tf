@@ -281,11 +281,3 @@ resource "aws_db_instance" "postgres_db" {
   multi_az = true
   publicly_accessible = true
 }
-
-output "database_name" {
-  value = "${aws_db_instance.postgres_db.name}"
-}
-
-output "database_host" {
-  value = "${aws_db_instance.postgres_db.address}"
-}

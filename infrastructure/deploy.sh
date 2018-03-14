@@ -54,89 +54,62 @@ fi
 if [[ $(nomad status) != "No running jobs" ]]; then
     for job in $(nomad status | awk {'print $1'} || grep /)
     do
-        nomad stop $job
+        # Skip the header row for jobs.
+        if [ $job != "ID" ]; then
+            nomad stop $job
+        fi
     done
 fi
 
-# Declare our production environment variables. These should be in
-# parity with the env files such as workers/environments/dev.
-# Note:
-# I have two options here. Make this the source of truth for these
-# variables or have terraform spit every single one of them out as
-# outputs.
-export REGION=`terraform output region`
-export USER=`terraform output user`
-export STAGE=`terraform output stage`
-export AWS_ACCESS_KEY_ID=`terraform output aws_access_key_id`
-export AWS_SECRET_ACCESS_KEY=`terraform output aws_secret_access_key`
-export DJANGO_DEBUG=False
-export DATABASE_NAME=`terraform output database_name`
-export DATABASE_HOST=`terraform output database_host`
-export DATABASE_USER=drpostgresuser
-# export DATABASE_PASSWORD=drpostgrespassword
-export DATABASE_PASSWORD=629f6R4eUgNmBzJf6Qthaw5wzaKqT9UA
-export DATABASE_PORT=5432
-export DATABASE_TIMEOUT=30
-export DJANGO_SECRET_KEY=NtG1bxZU115GThwrLuAJe0PhTVN9hJ4P
-export RUNNING_IN_CLOUD=True
-export USE_S3=True
-export S3_BUCKET_NAME=data-refinery # Should be TF output?
-export LOCAL_ROOT_DIR=/home/user/data_store
-export RAW_PREFIX=raw
-export TEMP_PREFIX=temp
-export PROCESSED_PREFIX=processed
-export WORKERS_DOCKER_IMAGE=miserlou/dr_worker:2
-export FOREMAN_DOCKER_IMAGE=miserlou/dr_foreman:3
+# Install jq if not already installed.
+if [[ $(nomad -version |& grep command) != "" ]]; then
+    sudo apt install jq
+fi
 
-# Big hack here. Figure something better out tomorrow.
-echo "REGION=`terraform output region`" > prod_env
-echo "USER=`terraform output user`" >> prod_env
-echo "STAGE=`terraform output stage`" >> prod_env
-echo "AWS_ACCESS_KEY_ID=`terraform output aws_access_key_id`" >> prod_env
-echo "AWS_SECRET_ACCESS_KEY=`terraform output aws_secret_access_key`" >> prod_env
-echo "DJANGO_DEBUG=False" >> prod_env
-echo "DATABASE_NAME=`terraform output database_name`" >> prod_env
-echo "DATABASE_HOST=`terraform output database_host`" >> prod_env
-echo "DATABASE_USER=drpostgresuser" >> prod_env
-# Not sure what's going on with this here password, but it doesn't seem to work.
-echo "DATABASE_PASSWORD=drpostgrespassword" >> prod_env
-echo "DATABASE_PORT=5432" >> prod_env
-echo "DATABASE_TIMEOUT=30" >> prod_env
-echo "DJANGO_SECRET_KEY=NtG1bxZU115GThwrLuAJe0PhTVN9hJ4P" >> prod_env
-echo "RUNNING_IN_CLOUD=True" >> prod_env
-echo "USE_S3=True" >> prod_env
-echo "S3_BUCKET_NAME=data-refinery # Should be TF output?" >> prod_env
-echo "LOCAL_ROOT_DIR=/home/user/data_store" >> prod_env
-echo "RAW_PREFIX=raw" >> prod_env
-echo "TEMP_PREFIX=temp" >> prod_env
-echo "PROCESSED_PREFIX=processed" >> prod_env
-echo "WORKERS_DOCKER_IMAGE=miserlou/dr_worker:2" >> prod_env
-echo "FOREMAN_DOCKER_IMAGE=miserlou/dr_foreman:3" >> prod_env
+# Make sure that prod_env is empty since we are only appending to it.
+# prod_env is a temporary file we use to pass environment variables to
+# `docker run` commands when running migrations.
+rm -f prod_env
+
+# We have terraform output environment variables via a single output
+# variable, which we then read in as json using the command line tool
+# `jq`, so that we can use them via bash.
+for row in $(terraform output -json environment_variables | jq -c '.value[]'); do
+    env_var_assignment=$(echo $row | jq -r ".name")=$(echo $row | jq -r ".value")
+    export $env_var_assignment
+    echo $env_var_assignment >> prod_env
+done
 
 # Create directory for migration files.
 mkdir -p migrations;
 
 # Get an image to run the migrations with.
-docker pull miserlou/dr_foreman:3;
+docker pull miserlou/dr_foreman:3
 
 # Make the migration files.
 docker run \
        --volume migrations \
        --env-file prod_env \
-       miserlou/dr_foreman:3 makemigrations;
+       miserlou/dr_foreman:3 makemigrations
 
 # Migrate auth.
 docker run \
        --volume migrations \
        --env-file prod_env \
-       miserlou/dr_foreman:3 migrate auth;
+       miserlou/dr_foreman:3 migrate auth
 
 # Apply general migrations
 docker run \
        --volume migrations \
        --env-file prod_env \
-       miserlou/dr_foreman:3 migrate;
+       miserlou/dr_foreman:3 migrate
 
+# Don't leave secrets lying around!
+rm prod_env
+
+# Template the environment variables for production into the Nomad Job
+# specs.
+mkdir -p nomad-job-specs
 ../workers/format_nomad_with_env.sh -e prod -o $(pwd)/nomad-job-specs/
 ../foreman/format_nomad_with_env.sh -e prod -o $(pwd)/nomad-job-specs/
 
@@ -144,9 +117,11 @@ docker run \
 nomad_job_specs=nomad-job-specs/*
 for nomad_job_spec in $nomad_job_specs; do
     echo "registering $nomad_job_spec"
-    nomad run -address http://$NOMAD_LEAD_SERVER_IP:4646 $nomad_job_spec
+    nomad run $nomad_job_spec
 done
 
 # Remove the ingress config so the next `terraform apply` will remove
 # access for Circle.
 # rm ci_ingress.tf
+
+# terraform apply
