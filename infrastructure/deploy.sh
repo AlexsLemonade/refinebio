@@ -50,7 +50,7 @@ fi
 
 # Kill parameterized Nomad Jobs so no jobs will be running when we
 # apply migrations.
-echo "Killing dispatch jobs.."
+echo "Killing dispatch jobs... (This may take a while.)"
 if [[ $(nomad status) != "No running jobs" ]]; then
     for job in $(nomad status | awk {'print $1'} || grep /)
     do
@@ -75,18 +75,8 @@ for row in $(terraform output -json environment_variables | jq -c '.value[]'); d
     echo $env_var_assignment >> prod_env
 done
 
-# Create directory for migration files.
-echo "Migrating.."
-mkdir -p migrations;
-
 # Get an image to run the migrations with.
 docker pull $FOREMAN_DOCKER_IMAGE
-
-# Make the migration files.
-docker run \
-       --volume migrations \
-       --env-file prod_env \
-       $FOREMAN_DOCKER_IMAGE makemigrations
 
 # Migrate auth.
 docker run \
@@ -94,7 +84,7 @@ docker run \
        --env-file prod_env \
        $FOREMAN_DOCKER_IMAGE migrate auth
 
-# Apply general migrations
+# Apply general migrations.
 docker run \
        --volume migrations \
        --env-file prod_env \
