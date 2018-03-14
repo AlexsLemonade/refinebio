@@ -42,6 +42,7 @@ job "SURVEYOR" {
         RAW_PREFIX = "${{RAW_PREFIX}}"
         TEMP_PREFIX = "${{RAW_PREFIX}}"
         PROCESSED_PREFIX = "${{PROCESSED_PREFIX}}"
+        NOMAD_HOST = "${{NOMAD_HOST}}"
       }
 
       # The resources the job will require.
@@ -69,7 +70,7 @@ job "SURVEYOR" {
           config {
             awslogs-region = "${{REGION}}",
             awslogs-group = "data-refinery-log-group-${{USER}}-${{STAGE}}",
-            awslogs-stream = "log-stream-nomad-docker-downloader-${{USER}}-${{STAGE}}"
+            awslogs-stream = "log-stream-nomad-docker-surveyor-${{USER}}-${{STAGE}}"
           }
         }
 

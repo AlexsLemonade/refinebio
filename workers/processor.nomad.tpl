@@ -44,6 +44,8 @@ job "PROCESSOR" {
         RAW_PREFIX = "${{RAW_PREFIX}}"
         TEMP_PREFIX = "${{RAW_PREFIX}}"
         PROCESSED_PREFIX = "${{PROCESSED_PREFIX}}"
+
+        NOMAD_HOST = "${{NOMAD_HOST}}"
       }
 
       # The resources the job will require.
