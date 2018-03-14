@@ -15,6 +15,7 @@ fi
 cp deploy/ci_ingress.tf .
 
 # Open up ingress to AWS for Circle, stop jobs, migrate DB.
+echo "Applying ingress.."
 terraform apply -auto-approve
 
 # Find address of Nomad server.
@@ -30,8 +31,10 @@ check_nomad_status () {
                   $NOMAD_ADDR/v1/status/leader)
 }
 
+
 # Wait for Nomad to get started in case the server just went up for
 # the first time.
+echo "Confirming Nomad cluster.."
 start_time=$(date +%s)
 diff=0
 nomad_status=$(check_nomad_status)
@@ -42,6 +45,7 @@ while [[ $diff < 300 && $nomad_status != "200" ]]; do
 done
 
 # Kill Base Nomad Jobs so no new jobs can be queued.
+echo "Killing base jobs.."
 if [[ $(nomad status) != "No running jobs" ]]; then
     for job in $(nomad status | grep running | awk {'print $1'} || grep --invert-match /)
     do
@@ -51,10 +55,14 @@ fi
 
 # Kill parameterized Nomad Jobs so no jobs will be running when we
 # apply migrations.
+echo "Killing dispatch jobs.."
 if [[ $(nomad status) != "No running jobs" ]]; then
     for job in $(nomad status | awk {'print $1'} || grep /)
     do
-        nomad stop $job
+        # Skip the header row for jobs.
+        if [ $job != "ID" ]; then
+            nomad stop $job
+        fi
     done
 fi
 
@@ -99,7 +107,7 @@ echo "DATABASE_NAME=`terraform output database_name`" >> prod_env
 echo "DATABASE_HOST=`terraform output database_host`" >> prod_env
 echo "DATABASE_USER=drpostgresuser" >> prod_env
 # Not sure what's going on with this here password, but it doesn't seem to work.
-echo "DATABASE_PASSWORD=drpostgrespassword" >> prod_env
+echo "DATABASE_PASSWORD=629f6R4eUgNmBzJf6Qthaw5wzaKqT9UA" >> prod_env
 echo "DATABASE_PORT=5432" >> prod_env
 echo "DATABASE_TIMEOUT=30" >> prod_env
 echo "DJANGO_SECRET_KEY=NtG1bxZU115GThwrLuAJe0PhTVN9hJ4P" >> prod_env
@@ -114,6 +122,7 @@ echo "WORKERS_DOCKER_IMAGE=miserlou/dr_worker:2" >> prod_env
 echo "FOREMAN_DOCKER_IMAGE=miserlou/dr_foreman:3" >> prod_env
 
 # Create directory for migration files.
+echo "Migrating.."
 mkdir -p migrations;
 
 # Get an image to run the migrations with.
@@ -141,6 +150,7 @@ docker run \
 ../foreman/format_nomad_with_env.sh -e prod -o $(pwd)/nomad-job-specs/
 
 # Re-register Nomad jobs.
+echo "Registering new job specifications.."
 nomad_job_specs=nomad-job-specs/*
 for nomad_job_spec in $nomad_job_specs; do
     echo "registering $nomad_job_spec"
