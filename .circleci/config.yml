@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  test:
     working_directory: ~/refinebio
     machine: true
     steps:
@@ -45,15 +45,15 @@ jobs:
 
 workflows:
   version: 2
-  build-and-deploy:
+  test-and-deploy:
     jobs:
-      # "build" job will be triggered by:
+      # "test" job will be triggered by:
       # - any branch commit, or:
       # - tag commits whose names start with letter "v".
-      - build:
+      - test:
           filters:
             # To allow tag commits whose name start with "v" to trigger
-            # "build" job, an explicit "tags" filter is required here.
+            # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
 
@@ -61,7 +61,7 @@ workflows:
       # start with letter "v".
       - deploy:
           requires:
-            - build
+            - test
           filters:
             # No branch commit will ever trigger this job.
             branches:
