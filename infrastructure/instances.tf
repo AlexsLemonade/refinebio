@@ -55,7 +55,7 @@ resource "aws_instance" "nomad_server_1" {
   instance_type = "t2.small"
   availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
+  iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
@@ -122,7 +122,7 @@ resource "aws_instance" "nomad_server_2" {
   instance_type = "t2.small"
   availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
+  iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
@@ -163,7 +163,7 @@ resource "aws_instance" "nomad_server_3" {
   instance_type = "t2.small"
   availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
+  iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
@@ -235,7 +235,7 @@ resource "aws_instance" "nomad_client_1" {
   instance_type = "t2.xlarge"
   availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
+  iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_internet_gateway.data_refinery", "aws_instance.nomad_server_1"]
   user_data = "${data.template_file.nomad_client_script_smusher.rendered}"
@@ -272,7 +272,7 @@ resource "aws_db_instance" "postgres_db" {
   engine = "postgres"
   engine_version = "9.5.4"
   instance_class = "db.t2.micro"
-  name = "data_refinery_${var.user}_${var.stage}"
+  name = "data_refinery"
   username = "${var.database_user}"
   password = "${var.database_password}"
   db_subnet_group_name = "${aws_db_subnet_group.data_refinery.name}"

@@ -28,7 +28,6 @@ mount -a -t nfs4
 # XXX - We need to have way to do this "manually" for staging and automatically for prod, all without
 # XXX - the catastrophic failure.
 apt-get install --yes postgresql-client-common postgresql-client
-PGPASSWORD=${database_password} psql -c "create database data_refinery" -h ${database_host} -p 5432 -U ${database_user} -d ${database_name} 
 PGPASSWORD=${database_password} psql -c "CREATE ROLE data_refinery_user WITH LOGIN PASSWORD 'data_refinery_password';" -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
 PGPASSWORD=${database_password} psql -c 'GRANT ALL PRIVILEGES ON DATABASE data_refinery TO data_refinery_user;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
 PGPASSWORD=${database_password} psql -c 'ALTER USER data_refinery_user CREATEDB;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
