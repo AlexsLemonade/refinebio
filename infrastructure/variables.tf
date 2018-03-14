@@ -6,7 +6,7 @@
 # as default values for variables. So `TF_VAR_user=rjones tf plan`, etc.
 # Also, don't use any non-alphanumeric characters here or RDS will whinge.
 variable "user" {
-  default = "otherkurt"
+  default = "myusername"
 }
 
 variable "stage" {
