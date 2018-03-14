@@ -6,7 +6,7 @@
 # as default values for variables. So `TF_VAR_user=rjones tf plan`, etc.
 # Also, don't use any non-alphanumeric characters here or RDS will whinge.
 variable "user" {
-  default = "myusername"
+  default = "rjones"
 }
 
 variable "stage" {
@@ -18,6 +18,8 @@ variable "region" {
 }
 
 variable "host_ip" {
+  # This will be overwritten.
+  default = "127.0.0.1"
 }
 
 variable "database_user" {
@@ -122,6 +124,8 @@ output "environment_variables" {
     {name = "FOREMAN_DOCKER_IMAGE"
       value = "${var.foreman_docker_image}"},
     {name = "NOMAD_HOST"
+      value = "${aws_instance.nomad_server_1.private_ip}"},
+    {name = "NOMAD_PUBLIC_HOST"
       value = "${aws_instance.nomad_server_1.public_ip}"},
     {name = "NOMAD_PORT"
       value = "4646"}
