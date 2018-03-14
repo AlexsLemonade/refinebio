@@ -15,6 +15,7 @@ fi
 cp deploy/ci_ingress.tf .
 
 # Open up ingress to AWS for Circle, stop jobs, migrate DB.
+echo "Applying ingress.."
 terraform apply -auto-approve
 
 # Find address of Nomad server.
@@ -30,8 +31,10 @@ check_nomad_status () {
                   $NOMAD_ADDR/v1/status/leader)
 }
 
+
 # Wait for Nomad to get started in case the server just went up for
 # the first time.
+echo "Confirming Nomad cluster.."
 start_time=$(date +%s)
 diff=0
 nomad_status=$(check_nomad_status)
@@ -42,6 +45,7 @@ while [[ $diff < 300 && $nomad_status != "200" ]]; do
 done
 
 # Kill Base Nomad Jobs so no new jobs can be queued.
+echo "Killing base jobs.."
 if [[ $(nomad status) != "No running jobs" ]]; then
     for job in $(nomad status | grep running | awk {'print $1'} || grep --invert-match /)
     do
@@ -51,6 +55,7 @@ fi
 
 # Kill parameterized Nomad Jobs so no jobs will be running when we
 # apply migrations.
+echo "Killing dispatch jobs.."
 if [[ $(nomad status) != "No running jobs" ]]; then
     for job in $(nomad status | awk {'print $1'} || grep /)
     do
@@ -81,6 +86,7 @@ for row in $(terraform output -json environment_variables | jq -c '.value[]'); d
 done
 
 # Create directory for migration files.
+echo "Migrating.."
 mkdir -p migrations;
 
 # Get an image to run the migrations with.
@@ -114,6 +120,7 @@ mkdir -p nomad-job-specs
 ../foreman/format_nomad_with_env.sh -e prod -o $(pwd)/nomad-job-specs/
 
 # Re-register Nomad jobs.
+echo "Registering new job specifications.."
 nomad_job_specs=nomad-job-specs/*
 for nomad_job_spec in $nomad_job_specs; do
     echo "registering $nomad_job_spec"
