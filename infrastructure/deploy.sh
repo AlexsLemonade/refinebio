@@ -6,11 +6,6 @@
 source ../common.sh
 export TF_VAR_host_ip=`wget -qO- http://ipecho.net/plain ; echo`
 
-# Install Nomad if not already installed.
-if [[ $(nomad -version |& grep command) != "" ]]; then
-    ../install_nomad.sh
-fi
-
 # Copy ingress config to top level so it can be applied.
 cp deploy/ci_ingress.tf .
 
@@ -64,11 +59,6 @@ if [[ $(nomad status) != "No running jobs" ]]; then
             nomad stop $job
         fi
     done
-fi
-
-# Install jq if not already installed.
-if [[ $(nomad -version |& grep command) != "" ]]; then
-    sudo apt install jq
 fi
 
 # Make sure that prod_env is empty since we are only appending to it.
@@ -129,6 +119,6 @@ done
 
 # Remove the ingress config so the next `terraform apply` will remove
 # access for Circle.
+echo "Removing ingress.."
 # rm ci_ingress.tf
-
 # terraform apply
