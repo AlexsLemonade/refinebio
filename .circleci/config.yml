@@ -30,8 +30,7 @@ jobs:
       # Run Worker Tests
       - run: chmod -R a+rw workers/test_volume
       - run:
-          command:
-            .circleci/filter_tests.sh
+          command: .circleci/filter_tests.sh
           no_output_timeout: 36000
 
   deploy:
