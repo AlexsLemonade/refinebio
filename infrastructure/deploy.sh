@@ -44,7 +44,7 @@ echo "Killing base jobs.."
 if [[ $(nomad status) != "No running jobs" ]]; then
     for job in $(nomad status | grep running | awk {'print $1'} || grep --invert-match /)
     do
-        nomad stop $job
+        nomad stop -detach $job > /dev/null
     done
 fi
 
@@ -56,7 +56,7 @@ if [[ $(nomad status) != "No running jobs" ]]; then
     do
         # Skip the header row for jobs.
         if [ $job != "ID" ]; then
-            nomad stop $job
+            nomad stop -detach $job > /dev/null
         fi
     done
 fi
@@ -80,25 +80,25 @@ echo "Migrating.."
 mkdir -p migrations;
 
 # Get an image to run the migrations with.
-docker pull miserlou/dr_foreman:3
+docker pull $FOREMAN_DOCKER_IMAGE
 
 # Make the migration files.
 docker run \
        --volume migrations \
        --env-file prod_env \
-       miserlou/dr_foreman:3 makemigrations
+       $FOREMAN_DOCKER_IMAGE makemigrations
 
 # Migrate auth.
 docker run \
        --volume migrations \
        --env-file prod_env \
-       miserlou/dr_foreman:3 migrate auth
+       $FOREMAN_DOCKER_IMAGE migrate auth
 
 # Apply general migrations
 docker run \
        --volume migrations \
        --env-file prod_env \
-       miserlou/dr_foreman:3 migrate
+       $FOREMAN_DOCKER_IMAGE migrate
 
 # Don't leave secrets lying around!
 rm prod_env

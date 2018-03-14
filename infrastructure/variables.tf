@@ -51,10 +51,10 @@ variable "running_in_cloud" {
 
 # This is a placeholder until there is a production image ready.
 variable "workers_docker_image" {
-  default = "miserlou/dr_worker:2"
+  default = "wkurt/dr_worker:1"
 }
 variable "foreman_docker_image" {
-  default = "miserlou/dr_foreman:3"
+  default = "wkurt/dr_foreman:1"
 }
 variable "use_s3" {
   default = "True"
