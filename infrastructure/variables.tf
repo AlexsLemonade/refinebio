@@ -54,7 +54,7 @@ variable "workers_docker_image" {
   default = "wkurt/dr_worker:3"
 }
 variable "foreman_docker_image" {
-  default = "wkurt/dr_foreman:3"
+  default = "wkurt/dr_foreman:4"
 }
 variable "use_s3" {
   default = "True"

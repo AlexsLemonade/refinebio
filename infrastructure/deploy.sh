@@ -44,7 +44,7 @@ echo "Killing base jobs.."
 if [[ $(nomad status) != "No running jobs" ]]; then
     for job in $(nomad status | grep running | awk {'print $1'} || grep --invert-match /)
     do
-        nomad stop -detach $job > /dev/null
+        nomad stop -purge -detach $job > /dev/null
     done
 fi
 
@@ -56,7 +56,7 @@ if [[ $(nomad status) != "No running jobs" ]]; then
     do
         # Skip the header row for jobs.
         if [ $job != "ID" ]; then
-            nomad stop -detach $job > /dev/null
+            nomad stop -purge -detach $job > /dev/null
         fi
     done
 fi

@@ -19,9 +19,9 @@ apt-get update -y
 apt-get upgrade -y
 apt-get install --yes nfs-common
 mkdir -p /var/efs/
-chown ubuntu:ubuntu /var/efs/
 echo "${file_system_id}.efs.${region}.amazonaws.com:/ /var/efs/ nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0" >> /etc/fstab
 mount -a -t nfs4
+chown ubuntu:ubuntu /var/efs/
 
 # Set up the database
 # XXX - Failure here is catastrophic - even normally "safe" operations like apply permissions to a user that already has them
