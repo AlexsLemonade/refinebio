@@ -5,6 +5,7 @@ unzip terraform_0.11.3_linux_amd64.zip
 sudo mv terraform /usr/local/bin/
 
 cd ~/refinebio/infrastructure
+terraform init
 
 # Download encrypted tfstate files from S3
 aws s3 cp s3://refinebio-tfstate/$TFSTATE.enc .
@@ -15,7 +16,6 @@ openssl aes-256-cbc -d -in $TFSTATE.enc -out $TFSTATE -k $OPENSSL_KEY
 openssl aes-256-cbc -d -in $TFSTATE_BAK.enc -out $TFSTATE_BAK -k $OPENSSL_KEY
 
 # New deployment
-terraform init
 terraform plan
 terraform apply -auto-approve
 
@@ -26,3 +26,4 @@ openssl aes-256-cbc -e -in $TFSTATE_BAK -out $TFSTATE_BAK.enc -k $OPENSSL_KEY
 # Upload encrypted tfstate files back to S3
 aws s3 cp $TFSTATE.enc s3://refinebio-tfstate/
 aws s3 cp $TFSTATE_BAK.enc s3://refinebio-tfstate/
+rm -f $TFSTATE*
