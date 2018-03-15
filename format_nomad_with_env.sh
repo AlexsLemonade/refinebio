@@ -1,5 +1,10 @@
 #!/bin/bash
 
+##
+# This script takes your environment variables and uses them to populate
+# Nomad job specifications, as defined in each project. 
+##
+
 while getopts ":p:e:o:h" opt; do
     case $opt in
         p)
@@ -92,6 +97,7 @@ if [[ ! -z $output_dir && ! -d "$output_dir" ]]; then
     mkdir $output_dir
 fi
 
+# This actually performs the templating using Perl's regex engine.
 # Perl magic found here: https://stackoverflow.com/a/2916159/6095378
 if [[ $project == "workers" ]]; then
     cat downloader.nomad.tpl \
