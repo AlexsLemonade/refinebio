@@ -52,7 +52,15 @@ class EnsemblUrlBuilder(ABC):
         self.url_root = "ensemblgenomes.org/pub/release-37/{short_division}"
         self.short_division = DIVISION_LOOKUP[species["division"]]
         self.assembly = species["assembly_name"].replace(" ", "_")
-        self.assembly_version = 37
+        # Ensembl will periodically release updated versions of the
+        # assemblies.  All divisions other than the main one have
+        # identical release versions.  The latest assembly version can
+        # be found by going to ftp://ftp.ensemblgenomes.org/pub/plants
+        # and looking for the latest version.  This version is the
+        # latest version as of whenever it was last updated. It is
+        # unclear what schedule we will want to update this on, but
+        # presumably we will do so once we have a reason to.
+        self.assembly_version = "38"
 
         # Some species are nested within a collection directory. If
         # this is the case, then we need to add that extra directory
@@ -115,7 +123,10 @@ class MainEnsemblUrlBuilder(EnsemblUrlBuilder):
         self.species_sub_dir = species["name"]
         self.file_name_species = species["name"].capitalize()
         self.assembly = species["assembly"]
-        self.assembly_version = "90"
+        # The main Ensembl division has a different version counter
+        # than the other divisions. See the comment on the property
+        # this is overriding for more details.
+        self.assembly_version = "91"
 
         self.scientific_name = self.file_name_species.replace("_", " ")
         self.taxonomy_id = species["taxon_id"]
