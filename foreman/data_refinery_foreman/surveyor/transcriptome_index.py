@@ -37,6 +37,19 @@ DIVISION_LOOKUP = {"EnsemblPlants": "plants",
                    "EnsemblMetazoa": "metazoa"}
 
 
+# Ensembl will periodically release updated versions of the
+# assemblies.  All divisions other than the main one have identical
+# release versions.  The latest assembly version for the main division
+# can be found by going to ftp://ftp.ensembl.org/pub/ and looking for
+# the latest version. All other divisions' latest assembly version can
+# be found by going to ftp://ftp.ensemblgenomes.org/pub/plants. These
+# versions are the latest version as of whenever it was last
+# updated. It is unclear when we will want to update these, but
+# presumably we will do so once we have a reason to.
+MAIN_DIVISION_ASSEMBLY_VERSION = "91"
+OTHER_DIVISIONS_ASSEMBLY_VERSION = "38"
+
+
 class EnsemblUrlBuilder(ABC):
     """Generates URLs for different divisions of Ensembl.
 
@@ -49,18 +62,10 @@ class EnsemblUrlBuilder(ABC):
 
     def __init__(self, species: Dict):
         """Species is a Dict containing parsed JSON from the Division API."""
-        self.url_root = "ensemblgenomes.org/pub/release-37/{short_division}"
+        self.url_root = "ensemblgenomes.org/pub/release-{assembly_version}/{short_division}"
         self.short_division = DIVISION_LOOKUP[species["division"]]
         self.assembly = species["assembly_name"].replace(" ", "_")
-        # Ensembl will periodically release updated versions of the
-        # assemblies.  All divisions other than the main one have
-        # identical release versions.  The latest assembly version can
-        # be found by going to ftp://ftp.ensemblgenomes.org/pub/plants
-        # and looking for the latest version.  This version is the
-        # latest version as of whenever it was last updated. It is
-        # unclear what schedule we will want to update this on, but
-        # presumably we will do so once we have a reason to.
-        self.assembly_version = "38"
+        self.assembly_version = OTHER_DIVISIONS_ASSEMBLY_VERSION
 
         # Some species are nested within a collection directory. If
         # this is the case, then we need to add that extra directory
@@ -81,7 +86,8 @@ class EnsemblUrlBuilder(ABC):
         self.taxonomy_id = species["taxonomy_id"]
 
     def build_transcriptome_url(self) -> str:
-        url_root = self.url_root.format(short_division=self.short_division)
+        url_root = self.url_root.format(assembly_version=self.assembly_version,
+                                        short_division=self.short_division)
         url = TRANSCRIPTOME_URL_TEMPLATE.format(url_root=url_root,
                                                 species_sub_dir=self.species_sub_dir,
                                                 file_name_species=self.file_name_species,
@@ -98,7 +104,8 @@ class EnsemblUrlBuilder(ABC):
         return url
 
     def build_gtf_url(self) -> str:
-        url_root = self.url_root.format(short_division=self.short_division)
+        url_root = self.url_root.format(assembly_version=self.assembly_version,
+                                        short_division=self.short_division)
         return GTF_URL_TEMPLATE.format(url_root=url_root,
                                        species_sub_dir=self.species_sub_dir,
                                        file_name_species=self.file_name_species,
@@ -118,15 +125,12 @@ class MainEnsemblUrlBuilder(EnsemblUrlBuilder):
     """
 
     def __init__(self, species: Dict):
-        self.url_root = "ensembl.org/pub/release-90"
+        self.url_root = "ensembl.org/pub/release-{assembly_version}"
         self.short_division = None
         self.species_sub_dir = species["name"]
         self.file_name_species = species["name"].capitalize()
         self.assembly = species["assembly"]
-        # The main Ensembl division has a different version counter
-        # than the other divisions. See the comment on the property
-        # this is overriding for more details.
-        self.assembly_version = "91"
+        self.assembly_version = MAIN_DIVISION_ASSEMBLY_VERSION
 
         self.scientific_name = self.file_name_species.replace("_", " ")
         self.taxonomy_id = species["taxon_id"]
