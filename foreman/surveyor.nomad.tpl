@@ -33,7 +33,6 @@ job "SURVEYOR" {
         DATABASE_TIMEOUT = "${{DATABASE_TIMEOUT}}"
 
         RUNNING_IN_CLOUD = "False"
-        WATCHTOWER="False"
 
         USE_S3 = "${{USE_S3}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
