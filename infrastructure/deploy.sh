@@ -96,8 +96,8 @@ rm prod_env
 # Template the environment variables for production into the Nomad Job
 # specs.
 mkdir -p nomad-job-specs
-../workers/format_nomad_with_env.sh -e prod -o $(pwd)/nomad-job-specs/
-../foreman/format_nomad_with_env.sh -e prod -o $(pwd)/nomad-job-specs/
+../format_nomad_with_env.sh -p workers -e prod -o $(pwd)/nomad-job-specs/
+../format_nomad_with_env.sh -p foreman -e prod -o $(pwd)/nomad-job-specs/
 
 # Re-register Nomad jobs.
 echo "Registering new job specifications.."

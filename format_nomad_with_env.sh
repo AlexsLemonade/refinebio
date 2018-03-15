@@ -1,7 +1,14 @@
 #!/bin/bash
 
-while getopts ":e:o:h" opt; do
+while getopts ":p:e:o:h" opt; do
     case $opt in
+        p)
+            if [[ $OPTARG != "workers" && $OPTARG != "foreman" ]]; then
+                echo 'Error: -p must either specify "workers" or "foreman".'
+                exit 1
+            fi
+            project=$OPTARG
+            ;;
         e)
             env=$OPTARG
             ;;
@@ -11,8 +18,9 @@ while getopts ":e:o:h" opt; do
         h)
             echo "Formats Nomad Job Specifications with the specified environment overlaid "
             echo "onto the current environment."
+            echo '-p specifies the project to format. Valid values are "workers" or "foreman".'
             echo '- "dev" is the default enviroment, use -e to specify "prod" or "test".'
-            echo '- "workers/" is the default output directory, use -o to specify'
+            echo '- the project directory will be used as the default output directory, use -o to specify'
             echo '      an absolute path to a directory (trailing / must be included).'
             ;;
         \?)
@@ -30,12 +38,12 @@ if [[ -z $env ]]; then
     env="dev"
 fi
 
-# This script should always run as if it were being called from
-# the directory it lives in.
+# This script should always run from the context of the directory of
+# the project it is building.
 script_directory=`perl -e 'use File::Basename;
  use Cwd "abs_path";
  print dirname(abs_path(@ARGV[0]));' -- "$0"`
-cd $script_directory
+cd $script_directory/$project
 
 # It's important that these are run first so they will be overwritten
 # by environment variables.
@@ -43,19 +51,21 @@ source ../common.sh
 export DB_HOST_IP=$(get_docker_db_ip_address)
 export NOMAD_HOST_IP=$(get_ip_address)
 
-# What to do for the "prod" env is TBD.
 if [ $env == "test" ]; then
     export VOLUME_DIR=$script_directory/test_volume
 elif [ $env == "prod" ]; then
+    # In production we use EFS as the mount.
     export VOLUME_DIR=/var/efs
 else
     export VOLUME_DIR=$script_directory/volume
 fi
 
-# We need to specify the database host for development, but not for
-# production because we just point directly at the RDS instance.
+# We need to specify the database and Nomad hosts for development, but
+# not for production because we just point directly at the RDS/Nomad
+# instances.
 if [ $env != "prod" ]; then
-    # This is kinda ugly, maybe clean it up?
+    # This is a multi-line env var so that it can be formatted into
+    # development job specs.
     export EXTRA_HOSTS="
         extra_hosts = [\"database:$DB_HOST_IP\",
                        \"nomad:$NOMAD_HOST_IP\"]
@@ -83,12 +93,19 @@ if [[ ! -z $output_dir && ! -d "$output_dir" ]]; then
 fi
 
 # Perl magic found here: https://stackoverflow.com/a/2916159/6095378
-cat downloader.nomad.tpl \
-    | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-           > "$output_dir"downloader.nomad \
-           2> /dev/null
+if [[ $project == "workers" ]]; then
+    cat downloader.nomad.tpl \
+        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+               > "$output_dir"downloader.nomad \
+               2> /dev/null
 
-cat processor.nomad.tpl \
-    | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-           > "$output_dir"processor.nomad \
-           2> /dev/null
+    cat processor.nomad.tpl \
+        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+               > "$output_dir"processor.nomad \
+               2> /dev/null
+elif [[ $project == "foreman" ]]; then
+    cat surveyor.nomad.tpl \
+        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+               > "$output_dir"surveyor.nomad \
+               2> /dev/null
+fi

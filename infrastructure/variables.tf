@@ -6,7 +6,7 @@
 # as default values for variables. So `TF_VAR_user=rjones tf plan`, etc.
 # Also, don't use any non-alphanumeric characters here or RDS will whinge.
 variable "user" {
-  default = "rjones"
+  default = "myusername"
 }
 
 variable "stage" {
@@ -27,11 +27,13 @@ variable "database_user" {
 }
 
 variable "database_password" {
-  # Not sure what's going on with this here password, but it doesn't seem to work.
+  # This will be overwritten by the password in terraform.tfvars.
+  # It's kept there so it's secret.
   default = "drpostgrespassword"
 }
 
 variable "django_secret_key" {
+  # TODO: generate a new one of these and store it in terraform.tfvars as well.
   default = "NtG1bxZU115GThwrLuAJe0PhTVN9hJ4P"
 }
 variable "django_debug" {
@@ -58,9 +60,6 @@ variable "foreman_docker_image" {
 }
 variable "use_s3" {
   default = "True"
-}
-variable "s3_bucket_name" {
-  default = "data-refinery"
 }
 variable "local_root_dir" {
   default = "/home/user/data_store"
