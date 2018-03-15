@@ -9,6 +9,9 @@ export TF_VAR_host_ip=`wget -qO- http://ipecho.net/plain ; echo`
 # Copy ingress config to top level so it can be applied.
 cp deploy/ci_ingress.tf .
 
+# Output the plan for debugging deployments later.
+terraform plan
+
 # Open up ingress to AWS for Circle, stop jobs, migrate DB.
 echo "Applying ingress.."
 terraform apply -auto-approve
@@ -110,5 +113,5 @@ done
 # Remove the ingress config so the next `terraform apply` will remove
 # access for Circle.
 echo "Removing ingress.."
-# rm ci_ingress.tf
-# terraform apply
+rm ci_ingress.tf
+terraform apply -auto-approve
