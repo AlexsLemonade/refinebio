@@ -79,7 +79,7 @@ else
     export EXTRA_HOSTS=""
 fi
 
-
+# Skip all comments (lines starting with '#')
 while read line; do
     is_comment=$(echo $line | grep "^#")
     if [[ -n $line ]] && [[ -z $is_comment ]]; then

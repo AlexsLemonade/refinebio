@@ -43,8 +43,6 @@ PGPASSWORD=${database_password} psql -c 'GRANT ALL ON ALL SEQUENCES IN SCHEMA pu
 PGPASSWORD=${database_password} psql -c 'GRANT ALL ON ALL FUNCTIONS IN SCHEMA public to data_refinery_user;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
 
 
-
-
 # Change to home directory of the default user
 cd /home/ubuntu
 
@@ -97,7 +95,10 @@ chmod +x install_nomad.sh
 # Start the Nomad agent in client mode.
 nomad agent -config client.hcl > /var/log/nomad_client.log &
 
-# XXX: TODO: Delete the cloudinit and syslog!
-# rm /var/log/cloud-init.log
-# rm /var/log/cloud-init-output.log
-# rm /var/log/syslog
+# Delete the cloudinit and syslog in production.
+export STAGE=${stage}
+if [[ $STAGE = *"prod"* ]]; then
+    rm /var/log/cloud-init.log
+    rm /var/log/cloud-init-output.log
+    rm /var/log/syslog
+fi

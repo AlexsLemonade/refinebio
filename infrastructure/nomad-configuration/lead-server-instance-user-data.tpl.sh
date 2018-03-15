@@ -71,3 +71,11 @@ chmod +x install_nomad.sh
 
 # Start the Nomad agent in server mode.
 nohup nomad agent -config server.hcl > /tmp/nomad_server.log &
+
+# Delete the cloudinit and syslog in production.
+export STAGE=${stage}
+if [[ $STAGE = *"prod"* ]]; then
+    rm /var/log/cloud-init.log
+    rm /var/log/cloud-init-output.log
+    rm /var/log/syslog
+fi
