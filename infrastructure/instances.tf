@@ -276,6 +276,8 @@ resource "aws_db_instance" "postgres_db" {
   username = "${var.database_user}"
   password = "${var.database_password}"
   db_subnet_group_name = "${aws_db_subnet_group.data_refinery.name}"
+  # We probably actually want to keep this, but TF is broken here.
+  # Related: https://github.com/hashicorp/terraform/issues/5417
   skip_final_snapshot = true
   vpc_security_group_ids = ["${aws_security_group.data_refinery_db.id}"]
   multi_az = true
