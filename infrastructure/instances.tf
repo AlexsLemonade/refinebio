@@ -42,13 +42,11 @@ data "local_file" "nomad_lead_server_config" {
 # This is a Nomad Job Specification file built by ${null_resource.format_nomad_job_specs}.
 data "local_file" "downloader_job_spec" {
   filename = "nomad-job-specs/downloader.nomad"
-  depends_on = ["${null_resource.format_nomad_job_specs}"]
 }
 
 # This is another Nomad Job Specification file built by ${null_resource.format_nomad_job_specs}.
 data "local_file" "processor_job_spec" {
   filename = "nomad-job-specs/processor.nomad"
-  depends_on = ["${null_resource.format_nomad_job_specs}"]
 }
 
 # This script smusher exists in order to be able to circumvent a
