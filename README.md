@@ -72,10 +72,11 @@ so Docker does not need sudo permissions.
 - [Terraform](https://www.terraform.io/)
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries)
 - git-crypt
+- jq
 
 Instructions for installing Docker and Nomad can be found by
-following the link for each service. git-crypt can be installed via
-`sudo apt-get install git-crypt`.
+following the link for each service. git-crypt and jq can be installed via
+`sudo apt-get install git-crypt jq`.
 
 #### Mac
 
@@ -86,10 +87,11 @@ The following services will need to be installed:
 - [Homebrew](https://brew.sh/)
 - git-crypt
 - iproute2mac
+- jq
 
 Instructions for installing Docker, Nomad, and Homebrew can be found by
 following the link for those services. The others on that list can
-be installed by running: `brew install iproute2mac git-crypt terraform`.
+be installed by running: `brew install iproute2mac git-crypt terraform jq`.
 
 #### Virtual Environment
 
@@ -357,7 +359,7 @@ Refine.bio requires an active, credentialed AWS account with appropriate permiss
 
 ### Terraform 
 
-Once you have Terraform installed and your AWS account credentials installed, you can plan your terraform deployment like so:
+Once you have Terraform installed and your AWS account credentials installed, you can plan your terraform deployment like so (from the `infrastructure` directory:
 
 ```bash
 TF_VAR_user=myusername TF_VAR_stage=dev TF_VAR_region=us-east-1 terraform plan
@@ -386,6 +388,23 @@ To tear down the entire system:
 
 ```
 terraform destroy
+```
+
+For convenience, a `deploy.sh` script is also provided, which will perform additional
+steps to configure (such as setting up Nomad job specifications and performing database migrations) and prepare the entire system. It can be used simply (from the `infrastructure` directory, like so):
+
+```
+./deploy.sh
+```
+
+### Running Jobs
+
+Jobs can be submitted via Nomad, either from a server/client or a local machine if you supply a server address and have an open network ingress. 
+
+To start the Neuroblastoma job:
+
+```
+nomad job dispatch -meta COMMAND=survey_array_express -meta FILE=NEUROBLASTOMA.txt SURVEYOR
 ```
 
 ### Log Consumption
