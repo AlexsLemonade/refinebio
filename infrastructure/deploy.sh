@@ -4,7 +4,7 @@
 
 # Make our IP address known to terraform.
 source ../common.sh
-export TF_VAR_host_ip=`wget -qO- http://ipecho.net/plain ; echo`
+export TF_VAR_host_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
 
 # Copy ingress config to top level so it can be applied.
 cp deploy/ci_ingress.tf .
