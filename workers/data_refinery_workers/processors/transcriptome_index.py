@@ -258,7 +258,7 @@ def _populate_index_object(job_context: Dict) -> Dict:
     """ """
 
     result = ComputationalResult()
-    result.command_executed = job_context["salmon_formatted_command"] # No op!
+    result.command_executed = job_context["salmon_formatted_command"]
     result.is_ccdl = True
     result.system_version = __version__
     result.time_start = job_context["time_start"]
@@ -278,6 +278,7 @@ def _populate_index_object(job_context: Dict) -> Dict:
     organism_object = Organism.get_object_for_name(job_context['organism_name'])
     index_object = OrganismIndex()
     index_object.organism = organism_object
+    # Related TODO: https://github.com/AlexsLemonade/refinebio/issues/158
     index_object.version = "XXX" # XXX: I don't know how this is tracked
     index_object.index_type = "TRANSCRIPTOME_" + job_context['length'].upper()
     index_object.result = result

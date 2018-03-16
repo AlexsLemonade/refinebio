@@ -50,6 +50,10 @@ class ExternalSourceSurveyor:
 
     @retry(stop_max_attempt_number=3)
     def queue_downloader_jobs(self, experiment: Experiment):
+        """ This enqueues DownloaderJobs on a per-file basis.
+        There is a complementary function below foe enqueueing multi-file
+        DownloaderJobs.
+        """
 
         # Get all of the undownloaded original files related to this Experiment.
         relations = ExperimentSampleAssociation.objects.filter(experiment=experiment)
@@ -99,6 +103,7 @@ class ExternalSourceSurveyor:
 
     @retry(stop_max_attempt_number=3)
     def queue_downloader_job_for_original_files(self, original_files: List[OriginalFile]):
+        """ Creates a single DownloaderJob with multiple files to download."""
 
         downloader_job = DownloaderJob()
         downloader_job.downloader_task = self.downloader_task()
