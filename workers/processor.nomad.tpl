@@ -23,8 +23,8 @@ job "PROCESSOR" {
 
       # This env will be passed into the container for the job.
       env {
-        AWS_ACCESS_KEY_ID = "${{AWS_ACCESS_KEY_ID}}"
-        AWS_SECRET_ACCESS_KEY = "${{AWS_SECRET_ACCESS_KEY}}"
+        AWS_ACCESS_KEY_ID = "${{AWS_ACCESS_KEY_ID_WORKER}}"
+        AWS_SECRET_ACCESS_KEY = "${{AWS_SECRET_ACCESS_KEY_WORKER}}"
         DJANGO_SECRET_KEY = "${{DJANGO_SECRET_KEY}}"
         DJANGO_DEBUG = "${{DJANGO_DEBUG}}"
 
@@ -44,6 +44,8 @@ job "PROCESSOR" {
         RAW_PREFIX = "${{RAW_PREFIX}}"
         TEMP_PREFIX = "${{RAW_PREFIX}}"
         PROCESSED_PREFIX = "${{PROCESSED_PREFIX}}"
+
+        NOMAD_HOST = "${{NOMAD_HOST}}"
       }
 
       # The resources the job will require.
@@ -64,9 +66,7 @@ job "PROCESSOR" {
           "--job-name", "${NOMAD_META_JOB_NAME}",
           "--job-id", "${NOMAD_META_JOB_ID}"
         ]
-
-        extra_hosts = ["database:${{DB_HOST_IP}}"]
-
+        ${{EXTRA_HOSTS}}
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]
 
         logging {

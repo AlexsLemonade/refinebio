@@ -11,7 +11,6 @@ data_dir = "/tmp/nomad_server1"
 server {
     enabled = true
 
-    # Self-elect, should be 3 or 5 for production
-    # TODO: up this to 3.
+    # Only 1 for the lead server, 3 for the others. Tx Kurt.
     bootstrap_expect = 1
 }

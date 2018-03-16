@@ -16,19 +16,6 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-# We need to transfer the Nomad Job Specifications onto the instance
-# so we can register them. However we use these job specifications to
-# store environment variables, so they are on Github as templates. To
-# format them with the production environment variables, we need to
-# run the following command. By doing so with a `null_resource` we're
-# able to avoid having a prerequisite step to running `terraform
-# apply`.
-resource "null_resource" "format_nomad_job_specs" {
-  provisioner "local-exec" {
-    command = "cd .. && REGION=${var.region} USER=${var.user} STAGE=${var.stage} ./workers/format_nomad_with_env.sh -e prod -o $(pwd)/infrastructure/nomad-job-specs/"
-  }
-}
-
 # This script installs Nomad.
 data "local_file" "install_nomad_script" {
   filename = "../install_nomad.sh"
@@ -37,16 +24,6 @@ data "local_file" "install_nomad_script" {
 # This is the configuration for the Nomad Server.
 data "local_file" "nomad_lead_server_config" {
   filename = "nomad-configuration/lead_server.hcl"
-}
-
-# This is a Nomad Job Specification file built by ${null_resource.format_nomad_job_specs}.
-data "local_file" "downloader_job_spec" {
-  filename = "nomad-job-specs/downloader.nomad"
-}
-
-# This is another Nomad Job Specification file built by ${null_resource.format_nomad_job_specs}.
-data "local_file" "processor_job_spec" {
-  filename = "nomad-job-specs/processor.nomad"
 }
 
 # This script smusher exists in order to be able to circumvent a
@@ -61,8 +38,6 @@ data "template_file" "nomad_lead_server_script_smusher" {
   template = "${file("nomad-configuration/lead-server-instance-user-data.tpl.sh")}"
 
   vars {
-    downloader_job_spec = "${data.local_file.downloader_job_spec.content}"
-    processor_job_spec = "${data.local_file.processor_job_spec.content}"
     install_nomad_script = "${data.local_file.install_nomad_script.content}"
     nomad_server_config = "${data.local_file.nomad_lead_server_config.content}"
     server_number = 1
@@ -80,7 +55,7 @@ resource "aws_instance" "nomad_server_1" {
   instance_type = "t2.small"
   availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
+  iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
@@ -145,10 +120,10 @@ data "template_file" "nomad_server_script_smusher" {
 resource "aws_instance" "nomad_server_2" {
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.small"
-  availability_zone = "${var.region}a"
+  availability_zone = "${var.region}b"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
-  subnet_id = "${aws_subnet.data_refinery_1a.id}"
+  iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
+  subnet_id = "${aws_subnet.data_refinery_1b.id}"
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
@@ -186,10 +161,10 @@ output "nomad_server_2_ip" {
 resource "aws_instance" "nomad_server_3" {
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.small"
-  availability_zone = "${var.region}b"
+  availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
-  subnet_id = "${aws_subnet.data_refinery_1b.id}"
+  iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
+  subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
@@ -244,6 +219,11 @@ data "template_file" "nomad_client_script_smusher" {
     user = "${var.user}"
     stage = "${var.stage}"
     region = "${var.region}"
+    file_system_id = "${aws_efs_file_system.data_refinery_efs.id}"
+    database_host = "${aws_db_instance.postgres_db.address}"
+    database_user = "${var.database_user}"
+    database_password = "${var.database_password}"
+    database_name = "${aws_db_instance.postgres_db.name}"
   }
 }
 
@@ -253,10 +233,10 @@ data "template_file" "nomad_client_script_smusher" {
 resource "aws_instance" "nomad_client_1" {
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.xlarge"
-  availability_zone = "${var.region}b"
+  availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.ecs_instance_profile.name}"
-  subnet_id = "${aws_subnet.data_refinery_1b.id}"
+  iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
+  subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_internet_gateway.data_refinery", "aws_instance.nomad_server_1"]
   user_data = "${data.template_file.nomad_client_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"
@@ -285,19 +265,19 @@ output "nomad_client_ip" {
   value = "${aws_instance.nomad_client_1.public_ip}"
 }
 
-variable "database_password" {}
-
 resource "aws_db_instance" "postgres_db" {
   identifier = "data-refinery-${var.user}-${var.stage}"
   allocated_storage = 100
   storage_type = "gp2"
   engine = "postgres"
-  engine_version = "9.5.4"
+  engine_version = "9.6.6"
   instance_class = "db.t2.micro"
-  name = "data_refinery_${var.user}_${var.stage}"
-  username = "data_refinery_user"
+  name = "data_refinery"
+  username = "${var.database_user}"
   password = "${var.database_password}"
   db_subnet_group_name = "${aws_db_subnet_group.data_refinery.name}"
+  # We probably actually want to keep this, but TF is broken here.
+  # Related: https://github.com/hashicorp/terraform/issues/5417
   skip_final_snapshot = true
   vpc_security_group_ids = ["${aws_security_group.data_refinery_db.id}"]
   multi_az = true
