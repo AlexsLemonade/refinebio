@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 # This is a template for the instance-user-data.sh script for the nomad client.
 # For more information on instance-user-data.sh scripts, see:
@@ -13,6 +13,20 @@
 # provisioners which will put files onto the instance after it starts up,
 # but those run after this script runs.
 
+# Mount the EFS.
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -y
+apt-get upgrade -y
+apt-get install --yes nfs-common
+mkdir -p /var/efs/
+echo "${file_system_id}.efs.${region}.amazonaws.com:/ /var/efs/ nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0" >> /etc/fstab
+mount -a -t nfs4
+chown ubuntu:ubuntu /var/efs/
+
+# Set up the required database extensions.
+# HStore allows us to treat object annotations as pseudo-NoSQL data tables.
+apt-get install --yes postgresql-client-common postgresql-client
+PGPASSWORD=${database_password} psql -c 'CREATE EXTENSION IF NOT EXISTS hstore;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
 
 # Change to home directory of the default user
 cd /home/ubuntu
@@ -55,11 +69,9 @@ cat <<"EOF" > client.hcl
 ${nomad_client_config}
 EOF
 
-
 # Create a directory for docker to use as a volume.
 mkdir /home/ubuntu/docker_volume
 chmod a+rwx /home/ubuntu/docker_volume
-
 
 # Install Nomad
 chmod +x install_nomad.sh
@@ -67,3 +79,11 @@ chmod +x install_nomad.sh
 
 # Start the Nomad agent in client mode.
 nomad agent -config client.hcl > /var/log/nomad_client.log &
+
+# Delete the cloudinit and syslog in production.
+export STAGE=${stage}
+if [[ $STAGE = *"prod"* ]]; then
+    rm /var/log/cloud-init.log
+    rm /var/log/cloud-init-output.log
+    rm /var/log/syslog
+fi
