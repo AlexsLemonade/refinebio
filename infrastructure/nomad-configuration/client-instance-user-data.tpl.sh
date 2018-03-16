@@ -23,7 +23,8 @@ echo "${file_system_id}.efs.${region}.amazonaws.com:/ /var/efs/ nfs4 nfsvers=4.1
 mount -a -t nfs4
 chown ubuntu:ubuntu /var/efs/
 
-# Set up the require database extensions.
+# Set up the required database extensions.
+# HStore allows us to treat object annotations as pseudo-NoSQL data tables.
 apt-get install --yes postgresql-client-common postgresql-client
 PGPASSWORD=${database_password} psql -c 'CREATE EXTENSION IF NOT EXISTS hstore;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
 
