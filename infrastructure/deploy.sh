@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+# This script can be used to deploy and update a `refine.bio` instance stack.
+# It will create all of the AWS infrasctructure (roles/instances/db/network/etc),
+# open an ingress, kill all running Nomad jobs, perform a database migration,
+# re-define and re-register Nomad job specifications, and finally close the
+# ingress. This can be run from a CI/CD machine or a local dev box.
 # This script must be run from /infrastructure!
 
 # Make our IP address known to terraform.
