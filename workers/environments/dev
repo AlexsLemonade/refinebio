@@ -12,6 +12,7 @@ RUNNING_IN_CLOUD=False
 
 NOMAD_HOST=nomad
 WORKERS_DOCKER_IMAGE=localhost:5000/dr_worker
+FOREMAN_DOCKER_IMAGE=localhost:5000/dr_foreman
 
 USE_S3=False
 S3_BUCKET_NAME=data-refinery
