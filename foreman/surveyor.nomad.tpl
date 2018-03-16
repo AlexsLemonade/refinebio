@@ -1,11 +1,11 @@
-job "DOWNLOADER" {
+job "SURVEYOR" {
   datacenters = ["dc1"]
 
   type = "batch"
 
   parameterized {
     payload       = "forbidden"
-    meta_required = ["JOB_NAME", "JOB_ID"]
+    meta_required = [ "COMMAND", "FILE"]
   }
 
   group "jobs" {
@@ -15,7 +15,7 @@ job "DOWNLOADER" {
       # delay    = "30s"
     }
 
-    task "downloader" {
+    task "surveyor" {
       driver = "docker"
 
       # This env will be passed into the container for the job.
@@ -32,9 +32,7 @@ job "DOWNLOADER" {
         DATABASE_PORT = "${{DATABASE_PORT}}"
         DATABASE_TIMEOUT = "${{DATABASE_TIMEOUT}}"
 
-        NOMAD_HOST = "${{NOMAD_HOST}}"
-
-        RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
+        RUNNING_IN_CLOUD = "False"
 
         USE_S3 = "${{USE_S3}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
@@ -43,6 +41,7 @@ job "DOWNLOADER" {
         RAW_PREFIX = "${{RAW_PREFIX}}"
         TEMP_PREFIX = "${{RAW_PREFIX}}"
         PROCESSED_PREFIX = "${{PROCESSED_PREFIX}}"
+        NOMAD_HOST = "${{NOMAD_HOST}}"
       }
 
       # The resources the job will require.
@@ -50,18 +49,18 @@ job "DOWNLOADER" {
         # CPU is in AWS's CPU units.
         cpu = 500
         # Memory is in MB of RAM.
-        memory = 2024
+        memory = 2048
       }
 
       config {
-        image = "${{WORKERS_DOCKER_IMAGE}}"
+        image = "${{FOREMAN_DOCKER_IMAGE}}"
         force_pull = false
 
         # The args to pass to the Docker container's entrypoint.
         args = [
-          "run_downloader_job",
-          "--job-name", "${NOMAD_META_JOB_NAME}",
-          "--job-id", "${NOMAD_META_JOB_ID}"]
+          "${NOMAD_META_COMMAND}",
+          "--file", "${NOMAD_META_FILE}",
+        ]
         ${{EXTRA_HOSTS}}
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]
 
@@ -70,7 +69,7 @@ job "DOWNLOADER" {
           config {
             awslogs-region = "${{REGION}}",
             awslogs-group = "data-refinery-log-group-${{USER}}-${{STAGE}}",
-            awslogs-stream = "log-stream-nomad-docker-downloader-${{USER}}-${{STAGE}}"
+            awslogs-stream = "log-stream-nomad-docker-surveyor-${{USER}}-${{STAGE}}"
           }
         }
 

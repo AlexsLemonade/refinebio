@@ -69,8 +69,10 @@ done
 
 echo "Nomad is online. Registering jobs."
 
-./workers/format_nomad_with_env.sh
+./format_nomad_with_env.sh -p workers
+./format_nomad_with_env.sh -p foreman
 
 # Register the jobs for dispatching.
 nomad run -address http://$HOST_IP:4646 workers/downloader.nomad
 nomad run -address http://$HOST_IP:4646 workers/processor.nomad
+nomad run -address http://$HOST_IP:4646 foreman/surveyor.nomad
