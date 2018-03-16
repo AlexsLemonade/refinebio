@@ -2,9 +2,8 @@ provider "aws" {
   region = "us-east-1"
 }
 
-
 resource "aws_s3_bucket" "refinebio-tfstate" {
-  bucket = "refinebio-tfstate-${user}-${stage}"
+  bucket = "refinebio-tfstate-${var.user}-${var.stage}"
   acl    = "private"
 
   versioning {
