@@ -4,7 +4,7 @@ provider "aws" {
 
 
 resource "aws_s3_bucket" "refinebio-tfstate" {
-  bucket = "refinebio-tfstate"
+  bucket = "refinebio-tfstate-${user}-${stage}"
   acl    = "private"
 
   versioning {
