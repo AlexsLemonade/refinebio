@@ -22,9 +22,9 @@ logger = get_and_configure_logger(__name__)
 DIVISION_URL_TEMPLATE = ("http://rest.ensemblgenomes.org/info/genomes/division/{division}"
                          "?content-type=application/json")
 TRANSCRIPTOME_URL_TEMPLATE = ("ftp://ftp.{url_root}/fasta/{species_sub_dir}/dna/"
-                              "{file_name_species}.{assembly}.dna.{schema_type}.fa.gz")
+                              "{filename_species}.{assembly}.dna.{schema_type}.fa.gz")
 GTF_URL_TEMPLATE = ("ftp://ftp.{url_root}/gtf/{species_sub_dir}/"
-                    "{file_name_species}.{assembly}.{assembly_version}.gtf.gz")
+                    "{filename_species}.{assembly}.{assembly_version}.gtf.gz")
 MAIN_DIVISION_URL_TEMPLATE = "http://rest.ensembl.org/info/species?content-type=application/json"
 
 
@@ -76,10 +76,10 @@ class EnsemblUrlBuilder(ABC):
         match_object = re.search(COLLECTION_REGEX, species["dbname"])
         if match_object:
             self.species_sub_dir = match_object.group(1) + "/" + species["species"]
-            self.file_name_species = species["species"]
+            self.filename_species = species["species"]
         else:
             self.species_sub_dir = species["species"]
-            self.file_name_species = species["species"].capitalize()
+            self.filename_species = species["species"].capitalize()
 
         # These fields aren't needed for the URL, but they vary between
         # the two REST APIs.
@@ -91,7 +91,7 @@ class EnsemblUrlBuilder(ABC):
                                         short_division=self.short_division)
         url = TRANSCRIPTOME_URL_TEMPLATE.format(url_root=url_root,
                                                 species_sub_dir=self.species_sub_dir,
-                                                file_name_species=self.file_name_species,
+                                                filename_species=self.filename_species,
                                                 assembly=self.assembly,
                                                 schema_type="primary_assembly")
 
@@ -109,7 +109,7 @@ class EnsemblUrlBuilder(ABC):
                                         short_division=self.short_division)
         return GTF_URL_TEMPLATE.format(url_root=url_root,
                                        species_sub_dir=self.species_sub_dir,
-                                       file_name_species=self.file_name_species,
+                                       filename_species=self.filename_species,
                                        assembly=self.assembly,
                                        assembly_version=self.assembly_version)
 
@@ -129,11 +129,11 @@ class MainEnsemblUrlBuilder(EnsemblUrlBuilder):
         self.url_root = "ensembl.org/pub/release-{assembly_version}"
         self.short_division = None
         self.species_sub_dir = species["name"]
-        self.file_name_species = species["name"].capitalize()
+        self.filename_species = species["name"].capitalize()
         self.assembly = species["assembly"]
         self.assembly_version = MAIN_DIVISION_ASSEMBLY_VERSION
 
-        self.scientific_name = self.file_name_species.replace("_", " ")
+        self.scientific_name = self.filename_species.replace("_", " ")
         self.taxonomy_id = species["taxon_id"]
 
 
@@ -147,7 +147,7 @@ class EnsemblProtistsUrlBuilder(EnsemblUrlBuilder):
 
     def __init__(self, species: Dict):
         super().__init__(species)
-        self.file_name_species = species["species"].capitalize()
+        self.filename_species = species["species"].capitalize()
 
 
 class EnsemblFungiUrlBuilder(EnsemblProtistsUrlBuilder):
@@ -217,18 +217,18 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
 
         all_new_files = []
 
-        fasta_file_name = url_builder.file_name_species + ".fa.gz"
+        fasta_filename = url_builder.filename_species + ".fa.gz"
         original_file = OriginalFile()
-        original_file.source_filename = fasta_file_name
+        original_file.source_filename = fasta_filename
         original_file.source_url = fasta_download_url
         original_file.is_archive = True
         original_file.is_downloaded = False
         original_file.save()
         all_new_files.append(original_file)
 
-        gtf_file_name = url_builder.file_name_species + ".gtf.gz"
+        gtf_filename = url_builder.filename_species + ".gtf.gz"
         original_file = OriginalFile()
-        original_file.source_filename = gtf_file_name
+        original_file.source_filename = gtf_filename
         original_file.source_url = gtf_download_url
         original_file.is_archive = True
         original_file.is_downloaded = False

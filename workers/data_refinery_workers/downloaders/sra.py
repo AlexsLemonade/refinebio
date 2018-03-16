@@ -117,7 +117,7 @@ def download_sra(job_id: int) -> None:
         if success:
             original_file.is_downloaded = True
             original_file.absolute_file_path = dl_file_path
-            original_file.file_name = original_file.source_filename
+            original_file.filename = original_file.source_filename
             original_file.is_archive = False
             original_file.calculate_size()
             original_file.calculate_sha1()

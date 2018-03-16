@@ -86,7 +86,7 @@ class Migration(migrations.Migration):
             name='ComputedFile',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('file_name', models.CharField(max_length=255)),
+                ('filename', models.CharField(max_length=255)),
                 ('absolute_file_path', models.CharField(blank=True, max_length=255, null=True)),
                 ('size_in_bytes', models.BigIntegerField()),
                 ('sha1', models.CharField(max_length=64)),
@@ -222,7 +222,7 @@ class Migration(migrations.Migration):
             name='OriginalFile',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('file_name', models.CharField(max_length=255)),
+                ('filename', models.CharField(max_length=255)),
                 ('absolute_file_path', models.CharField(blank=True, max_length=255, null=True)),
                 ('size_in_bytes', models.BigIntegerField(blank=True, null=True)),
                 ('sha1', models.CharField(max_length=64)),

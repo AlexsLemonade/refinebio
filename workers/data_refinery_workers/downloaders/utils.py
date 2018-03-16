@@ -89,8 +89,8 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile]):
     original_file = original_files[0]
 
     # This is a paired read. Make sure the other one is downloaded, this start the job
-    if '_' in original_file.file_name:
-        split = original_file.file_name.split('_')
+    if '_' in original_file.filename:
+        split = original_file.filename.split('_')
         if '1' in split[1]:
             other_file = OriginalFile.objects.get(source_filename='_'.join([split[0], split[1].replace('1', '2')]))
         else:

@@ -72,8 +72,8 @@ class Batch(TimeTrackedModel):
 
     @classmethod
     def is_new_batch(cls, batch) -> bool:
-        file_names = batch.file_set.all().values("name")
-        matching_batches = cls.objects.filter(name__in=file_names)
+        filenames = batch.file_set.all().values("name")
+        matching_batches = cls.objects.filter(name__in=filenames)
         return matching_batches.count() == 0
 
     @classmethod

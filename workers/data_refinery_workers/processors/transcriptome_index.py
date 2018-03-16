@@ -267,7 +267,7 @@ def _populate_index_object(job_context: Dict) -> Dict:
 
     computed_file = ComputedFile()
     computed_file.absolute_file_path = job_context["computed_archive"]
-    computed_file.file_name = os.path.split(job_context["computed_archive"])[-1]
+    computed_file.filename = os.path.split(job_context["computed_archive"])[-1]
     computed_file.calculate_sha1()
     computed_file.calculate_size()
     computed_file.result = result

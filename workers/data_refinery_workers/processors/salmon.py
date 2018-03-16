@@ -183,12 +183,12 @@ def _zip_and_upload(job_context: Dict) -> Dict:
 
     computed_file = ComputedFile()
     computed_file.absolute_file_path = job_context["output_archive"]
-    computed_file.file_name = os.path.split(job_context["output_archive"])[-1]
+    computed_file.filename = os.path.split(job_context["output_archive"])[-1]
     computed_file.calculate_sha1()
     computed_file.calculate_size()
     computed_file.is_public = True
     computed_file.result = job_context['result']
-    computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.file_name)
+    computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
     # TODO here: delete local file after S3 sync#
     computed_file.save()
 

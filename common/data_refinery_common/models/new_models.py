@@ -185,7 +185,7 @@ class OrganismIndex(models.Model):
         db_table = "organism_index"
 
     organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
-    index_type = models.CharField(max_length=255) # XXX ex "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT", ???
+    index_type = models.CharField(max_length=255) # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
     source_version = models.CharField(max_length=255) # Where do we get this from
     result = models.ForeignKey(ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
@@ -211,8 +211,7 @@ class OriginalFile(models.Model):
     def __str__ (self):
         return "OriginalFile: " + self.get_display_name()
 
-    # XXX: move to `filename`
-    file_name = models.CharField(max_length=255)
+    filename = models.CharField(max_length=255)
     absolute_file_path = models.CharField(max_length=255, blank=True, null=True)
     size_in_bytes = models.BigIntegerField(blank=True, null=True)
     sha1 = models.CharField(max_length=64)
@@ -257,10 +256,10 @@ class OriginalFile(models.Model):
 
     def get_display_name(self):
         """ For dev convenience """
-        if not self.file_name:
+        if not self.filename:
             return self.source_filename
         else:
-            return self.file_name
+            return self.filename
 
 class ComputedFile(models.Model):
     """ A representation of a file created by a data-refinery process """
@@ -269,9 +268,9 @@ class ComputedFile(models.Model):
         db_table = "computed_files"
 
     def __str__ (self):
-        return "ComputedFile: " + str(self.file_name)
+        return "ComputedFile: " + str(self.filename)
 
-    file_name = models.CharField(max_length=255)
+    filename = models.CharField(max_length=255)
     absolute_file_path = models.CharField(max_length=255, blank=True, null=True)
     size_in_bytes = models.BigIntegerField()
     sha1 = models.CharField(max_length=64)

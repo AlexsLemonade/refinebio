@@ -91,19 +91,19 @@ def download_transcriptome(job_id: int) -> None:
         original_file = assoc.original_file
 
         if original_file.is_archive:
-            file_name_species = ''.join(original_file.source_filename.split('.')[:-2])
+            filename_species = ''.join(original_file.source_filename.split('.')[:-2])
         else:
             # Does this ever happen?
-            file_name_species = ''.join(original_file.source_filename.split('.')[:-1])
+            filename_species = ''.join(original_file.source_filename.split('.')[:-1])
 
-        os.makedirs(LOCAL_ROOT_DIR + '/' + file_name_species, exist_ok=True)
-        dl_file_path = LOCAL_ROOT_DIR + '/' + file_name_species + '/' + original_file.source_filename
+        os.makedirs(LOCAL_ROOT_DIR + '/' + filename_species, exist_ok=True)
+        dl_file_path = LOCAL_ROOT_DIR + '/' + filename_species + '/' + original_file.source_filename
         success = _download_file(original_file.source_url, dl_file_path, job)
 
         if success:
             original_file.is_downloaded = True
             original_file.absolute_file_path = dl_file_path
-            original_file.file_name = original_file.source_filename
+            original_file.filename = original_file.source_filename
             original_file.is_archive = True
             original_file.has_raw = True
             original_file.calculate_size()
