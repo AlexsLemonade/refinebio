@@ -5,6 +5,7 @@ unzip terraform_0.11.3_linux_amd64.zip
 sudo mv terraform /usr/local/bin/
 
 cd ~/refinebio/infrastructure
+terraform init
 
 # Download encrypted tfstate files from S3
 aws s3 cp s3://refinebio-tfstate/$TFSTATE.enc .
@@ -15,9 +16,7 @@ openssl aes-256-cbc -d -in $TFSTATE.enc -out $TFSTATE -k $OPENSSL_KEY
 openssl aes-256-cbc -d -in $TFSTATE_BAK.enc -out $TFSTATE_BAK -k $OPENSSL_KEY
 
 # New deployment
-terraform init
-terraform plan
-terraform apply -auto-approve
+TF_VAR_user=deploy TV_VAR_stage=production ./deploy.sh
 
 # Encrypt new tfstate files
 openssl aes-256-cbc -e -in $TFSTATE -out $TFSTATE.enc -k $OPENSSL_KEY
