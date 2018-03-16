@@ -11,6 +11,7 @@ DATABASE_TIMEOUT=5
 NOMAD_HOST=nomad
 
 RUNNING_IN_CLOUD=False
+SERVICE=foreman
 
 USE_S3=False
 S3_BUCKET_NAME=data-refinery

@@ -14,30 +14,37 @@ Refine.bio currently has four sub-projects contained within this repo:
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 ## Table of Contents
 
-- [Refine.bio](#refinebio-)
-  - [Development](#development)
-    - [Git Workflow](#git-workflow)
-    - [Installation](#installation)
-      - [Linux](#linux)
-      - [Mac](#mac)
-      - [Virtual Environment](#virtual-environment)
+- [Development](#development)
+  - [Git Workflow](#git-workflow)
+  - [Installation](#installation)
+    - [Linux](#linux)
+    - [Mac](#mac)
+    - [Virtual Environment](#virtual-environment)
     - [Common Dependecies](#common-dependecies)
     - [Services](#services)
       - [Nomad](#nomad)
       - [Postgres](#postgres)
-    - [Running Locally](#running-locally)
-      - [Surveyor Jobs](#surveyor-jobs)
-      - [Downloader Jobs](#downloader-jobs)
-      - [Processor Jobs](#processor-jobs)
-      - [Checking on Local Jobs](#checking-on-local-jobs)
-    - [Testing](#testing)
-    - [Development Helpers](#development-helpers)
-    - [Style](#style)
-  - [Production Deployment](#production-deployment)
-    - [Terraform](#terraform)
-    - [Log Consumption](#log-consumption)
-  - [Support](#support)
-  - [License](#license)
+  - [Testing](#testing)
+  - [Development Helpers](#development-helpers)
+  - [Style](#style)
+  - [Gotchas](#gotchas)
+- [Running Locally](#running-locally)
+  - [Surveyor Jobs](#surveyor-jobs)
+    - [ArrayExpress](#arrayexpress)
+    - [Sequence Read Archive (SRA)](#sequence-read-archive-sra)
+    - [Ensembl Indexes](#ensembl-indexes)
+  - [Downloader Jobs](#downloader-jobs)
+  - [Processor Jobs](#processor-jobs)
+  - [Checking on Local Jobs](#checking-on-local-jobs)
+  - [Testing](#testing-1)
+  - [Development Helpers](#development-helpers-1)
+  - [Style](#style-1)
+- [Production Deployment](#production-deployment)
+  - [Terraform](#terraform)
+  - [Running Jobs](#running-jobs)
+  - [Log Consumption](#log-consumption)
+- [Support](#support)
+- [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -93,6 +100,9 @@ Instructions for installing Docker, Nomad, and Homebrew can be found by
 following the link for those services. The others on that list can
 be installed by running: `brew install iproute2mac git-crypt terraform jq`.
 
+Many of the computational processes running are very memory intensive. You will need
+to [raise the amount of virtual memory available to Docker](https://docs.docker.com/docker-for-mac/#advanced) from the default of 2GB to 12GB or 24GB, if possible. 
+
 #### Virtual Environment
 
 Run `./create_virtualenv.sh` to set up the virtualenv. It will activate the `dr_env`
@@ -101,7 +111,7 @@ repo. Sub-projects each have their own virtualenvs which are managed by their
 containers. When returning to this project you should run
 `source dr_env/bin/activate` to reactivate the virtualenv.
 
-### Common Dependecies
+#### Common Dependecies
 
 The [common](./common) sub-project contains common code which is
 depended upon by the other sub-projects. So before anything else you
@@ -112,13 +122,13 @@ command:
 (cd common && python setup.py sdist)
 ```
 
-### Services
+#### Services
 
 `data-refinery` also depends on Postgres and Nomad. Postgres can be
 run in a local Docker container, but Nomad must be run on your
 development machine.
 
-#### Nomad
+##### Nomad
 
 Similarly, you will need to run a local
 [Nomad](https://www.nomadproject.io/) service in development
@@ -134,9 +144,10 @@ sudo -E ./run_nomad.sh
 Nomad is an orchestration tool which Refine.bio uses to run
 `Downloader` and `Processor` jobs. Jobs are queued by sending a message to
 the Nomad agent, which will then launch a Docker container which runs
-the job.
+the job. If address conflicts emerge, old Docker containers can be purged
+with `docker container prune -f`.
 
-#### Postgres
+##### Postgres
 
 To start a local Postgres server in a Docker container, use:
 
@@ -162,13 +173,61 @@ If you need to access a `psql` shell for inspecting the database, you can use:
 ./run_psql_shell.sh
 ```
 
-### Running Locally
+### Testing
+
+To run the entire test suite:
+
+```bash
+./run_all_tests.sh
+```
+
+These tests will also be run continuosly for each commit via CircleCI.
+
+### Development Helpers
+
+It can be useful to have an interactive Python interpreter running within the
+context of the Docker container. The `run_shell.sh` script has been provided
+for this purpose. It is in the top level directory so that if you wish to
+reference it in any integrations its location will be constant. However, it
+is configured by default for the Foreman project. The interpreter will
+have all the environment variables, dependencies, and Django configurations
+for the Foreman project. There are instructions within the script describing
+how to change this to another project.
+
+### Style
+
+R files in this repo follow
+[Google's R Style Guide](https://google.github.io/styleguide/Rguide.xml).
+Python Files in this repo follow
+[PEP 8](https://www.python.org/dev/peps/pep-0008/). All files (including
+Python and R) have a line length limit of 100 characters.
+
+A `setup.cfg` file has been included in the root of this repo which specifies
+the line length limit for the autopep8 and flake8 linters. If you run either
+linter within the project's directory tree, it will enforce a line length limit
+of 100 instead of 80. This will also be true for editors which rely on either
+linter.
+
+### Gotchas
+
+During development, you make encounter some occasional strangeness. Here's
+some things to watch out for:
+
+  - If builds are failing, increase the size of Docker's memory allocation.
+  - If Docker images are failing mysteriously during creation, it may
+be the result of Docker's `Docker.qcow2` or `Docker.raw` file filling. You 
+can prune old images with `docker system prune -a`.
+  - If it's killed abruptly, the containerized Postgres images can be
+  left in an unrecoverable state. Annoying.
+  - Since we use multiple Docker instances, don't forget to `./update_models`
+
+## Running Locally
 
 Once you've built the `common/dist` directory and have
 the Nomad and Postgres services running, you're ready to run
 jobs. There are three kinds of jobs within Refine.bio.
 
-#### Surveyor Jobs
+### Surveyor Jobs
 
 Surveyor Jobs discover samples to download/process along with
 recording metadata about the samples. A Surveyor Job should queue
@@ -191,32 +250,47 @@ arguments can be viewed by running:
 Templates and examples of valid commands to run the different types of
 Surveyor Jobs are:
 
-(1) The [Array Express](https://www.ebi.ac.uk/arrayexpress/) Surveyor
+#### ArrayExpress
+
+The [ArrayExpress](https://www.ebi.ac.uk/arrayexpress/) Surveyor
 expects a single accession code:
 
 ```bash
-./foreman/run_surveyor.sh survey_array_express <ARRAY_EXPRESS_ACCESSION_CODE>
+./foreman/run_surveyor.sh survey_array_express --accession <ARRAY_EXPRESS_ACCESSION_CODE>
 ```
 
 Example:
 ```bash
-./foreman/run_surveyor.sh survey_array_express E-MTAB-3050
+./foreman/run_surveyor.sh survey_array_express --accession E-MTAB-3050
 ```
 
-(2) The [Sequence Read Archive](https://www.ncbi.nlm.nih.gov/sra) Surveyor expects a
+You can also supply a list in a file:
+```bash
+./foreman/run_surveyor.sh survey_array_express --file my_neuroblastoma_list.txt
+```
+
+#### Sequence Read Archive (SRA)
+
+The [Sequence Read Archive](https://www.ncbi.nlm.nih.gov/sra) Surveyor expects a
 range of SRA accession codes:
 
 ```bash
-./foreman/run_surveyor.sh survey_sra <START> <END>
+./foreman/run_surveyor.sh survey_sra <ACCESSION>
 ```
 
-Example:
+Example (single read):
 ```bash
-./foreman/run_surveyor.sh survey_sra DRR002116 DRR002116
+./foreman/run_surveyor.sh survey_sra DRR002116
 ```
 
-(3) The Index Refinery Surveyor expects an
-[Ensembl](http://ensemblgenomes.org/) divsion and a number of
+Example (paired read):
+```bash
+./foreman/run_surveyor.sh survey_sra SRR6718414
+```
+
+#### Ensembl Indexes
+
+The Index Refinery Surveyor expects an [Ensembl](http://ensemblgenomes.org/) divsion and a number of
 organisms to survey:
 
 ```bash
@@ -228,7 +302,13 @@ Example:
 ./foreman/run_surveyor.sh survey_transcriptome Ensembl 1
 ```
 
-#### Downloader Jobs
+A specific organism can also be specified:
+
+```bash
+./foreman/run_surveyor.sh survey_transcriptome Ensembl 2 "Homo Sapiens"
+```
+
+### Downloader Jobs
 
 Downloader Jobs will be queued automatically when `Surveyor Jobs`
 discover new samples. However, if you just want to queue a `Downloader Job`
@@ -239,7 +319,12 @@ without running the `Surveyor`, the following command will queue a
 ./workers/tester.sh queue_downloader
 ```
 
-#### Processor Jobs
+For example:
+```bash
+./update_models.sh; ./workers/tester.sh run_downloader_job --job-name=ARRAY_EXPRESS --job-id=1
+```
+
+### Processor Jobs
 
 Processor Jobs will be queued automatically by successful `Downloader Jobs`.
 However, if you just want to run a `Processor Job` without first running
@@ -249,13 +334,13 @@ a `Downloader Job`, the following command will do so:
 ./workers/tester.sh queue_processor <PROCESSOR_TYPE>
 ```
 
-Examples:
+An individual processor job can be run with:
 ```bash
 ./workers/tester.sh queue_processor SRA
 ./workers/tester.sh queue_processor TRANSCRIPTOME_INDEX
 ```
 
-#### Checking on Local Jobs
+### Checking on Local Jobs
 
 _Note:_ The following instructions assume you have set the
 environment variable $HOST_IP to the IP address of your
@@ -438,7 +523,6 @@ You can also apply a filter on these logs like so:
 ```bash
 awslogs get <your-log-group> ALL --start='1 days' --watch --filter-pattern="DEBUG"
 ```
-
 
 ## Support
 

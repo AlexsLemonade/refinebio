@@ -18,10 +18,10 @@ jobs:
       - run: sleep 30
 
       # Install our application
+      - run: ./common/make_migrations.sh
       - run: cd common && python setup.py sdist
 
       # Run Common Tests.
-      - run: ./common/make_migrations.sh
       - run: ./common/run_tests.sh
 
       # Run Foreman Tests

@@ -22,6 +22,7 @@ bioconductor.packages <- c(
   'preprocessCore',
   'genefilter',
   'sva',
+  'tximport',
   'org.Hs.eg.db',
   'org.Mm.eg.db',
   'org.Dm.eg.db',
@@ -41,6 +42,10 @@ packages <- row.names(available.packages(contriburl="http://brainarray.mbni.med.
 
 ## This narrows down from all the files gotten just having entrezg in the name
 entrez.packages <- packages[grep("entrezg", packages)]
+
+# Related: https://github.com/AlexsLemonade/refinebio/issues/85
+# In the future, we probably want to replace ^^ that with:
+# ensg.packages <- packages[grep("ensg", packages)]
 
 install.packages(entrez.packages, repos="http://brainarray.mbni.med.umich.edu/bioc/", type="source")
 

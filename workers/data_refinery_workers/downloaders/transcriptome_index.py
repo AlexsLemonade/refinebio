@@ -1,37 +1,38 @@
 from __future__ import absolute_import, unicode_literals
-import urllib.request
+
 import os
 import shutil
+import urllib.request
 from typing import List
 from contextlib import closing
-from data_refinery_common.models import File, DownloaderJob
-from data_refinery_workers.downloaders import utils
-from data_refinery_common.logging import get_and_configure_logger
 
+from data_refinery_common.models import (
+    File, 
+    DownloaderJob, 
+    ProcessorJob,
+    DownloaderJobOriginalFileAssociation,
+    ProcessorJobOriginalFileAssociation,
+)
+from data_refinery_common.message_queue import send_job
+from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.utils import get_env_variable
+from data_refinery_workers.downloaders import utils
 
 logger = get_and_configure_logger(__name__)
-
-
-# chunk_size is in bytes
-CHUNK_SIZE = 1024 * 256
-
-
-def _verify_files(file1: File, file2: File, job: DownloaderJob) -> None:
-    """Verifies that the two files are the same.
-
-    This is useful for this downloader because each job has two
-    batches which should each have the same two files.
-    """
-    if file1.download_url != file2.download_url:
-        failure_message = ("A Batch's file doesn't have the same download "
-                           "URL as the other batch's file.")
-        logger.error(failure_message,
-                     downloader_job=job.id)
-        job.failure_reason = failure_message
-        raise ValueError(failure_message)
+LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
+CHUNK_SIZE = 1024 * 256 # chunk_size is in bytes
 
 
 def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> None:
+    """Download the file via FTP.
+
+    I spoke to Erin from Ensembl about ways to improve this. They're looking into it,
+    but have decided against adding an Aspera endpoint.
+
+    She suggested using `rsync`, we could try shelling out to that.
+
+    """
     failure_template = "Exception caught while downloading file from: %s"
     try:
         logger.debug("Downloading file from %s to %s.",
@@ -53,6 +54,7 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
         raise
     finally:
         target_file.close()
+    return True
 
 
 def _upload_files(job_dir: str, files: List[File], job: DownloaderJob) -> None:
@@ -82,61 +84,70 @@ def download_transcriptome(job_id: int) -> None:
     push it to Temporary Storage twice.
     """
     job = utils.start_job(job_id)
-    batches = job.batches.all()
-    success = True
-    job_dir = utils.JOB_DIR_PREFIX + str(job_id)
 
-    try:
-        first_fasta_file = File.objects.get(batch=batches[0], raw_format__exact="fa.gz")
-        first_gtf_file = File.objects.get(batch=batches[0], raw_format__exact="gtf.gz")
-        second_fasta_file = File.objects.get(batch=batches[1], raw_format__exact="fa.gz")
-        second_gtf_file = File.objects.get(batch=batches[1], raw_format__exact="gtf.gz")
-        os.makedirs(first_fasta_file.get_temp_dir(job_dir), exist_ok=True)
-    except Exception:
-        logger.exception("Failed to retrieve all expected files from database.",
-                         downloader_job=job.id)
-        job.failure_reason = "Failed to retrieve all expected files from database."
-        success = False
+    file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
+    files_to_process = []
+    for assoc in file_assocs:
+        original_file = assoc.original_file
 
-    if success:
-        try:
-            _verify_files(first_fasta_file, second_fasta_file, job)
-            _verify_files(first_gtf_file, second_gtf_file, job)
+        if original_file.is_archive:
+            filename_species = ''.join(original_file.source_filename.split('.')[:-2])
+        else:
+            # Does this ever happen?
+            filename_species = ''.join(original_file.source_filename.split('.')[:-1])
 
-            # The two Batches share the same fasta and gtf files, so
-            # only download each one once
-            _download_file(first_fasta_file.download_url,
-                           first_fasta_file.get_temp_pre_path(job_dir),
-                           job)
-            _download_file(first_gtf_file.download_url,
-                           first_gtf_file.get_temp_pre_path(job_dir),
-                           job)
+        os.makedirs(LOCAL_ROOT_DIR + '/' + filename_species, exist_ok=True)
+        dl_file_path = LOCAL_ROOT_DIR + '/' + filename_species + '/' + original_file.source_filename
+        success = _download_file(original_file.source_url, dl_file_path, job)
 
-            # Then create symlinks so the files for the second Batch
-            # can be found where they will be expected to.
-            try:
-                os.symlink(first_fasta_file.get_temp_pre_path(job_dir),
-                           second_fasta_file.get_temp_pre_path(job_dir))
-                os.symlink(first_gtf_file.get_temp_pre_path(job_dir),
-                           second_gtf_file.get_temp_pre_path(job_dir))
-            except Exception:
-                logger.exception("Exception caught while creating symlinks.",
-                                 downloader_job=job.id)
-                job.failure_reason = "Exception caught while creating symlinks."
-                raise
-
-            _upload_files(job_dir,
-                          [first_fasta_file, first_gtf_file, second_fasta_file, second_gtf_file],
-                          job)
-        except Exception:
-            # Exceptions are already logged and handled.
-            # Just need to mark the job as failed.
-            success = False
+        if success:
+            original_file.is_downloaded = True
+            original_file.absolute_file_path = dl_file_path
+            original_file.filename = original_file.source_filename
+            original_file.is_archive = True
+            original_file.has_raw = True
+            original_file.calculate_size()
+            original_file.calculate_sha1()
+            original_file.save()
+            files_to_process.append(original_file)
+        else:
+            logger.error("Problem during download", 
+                url=original_file.source_url, 
+                original_file_id=original_file.id)
 
     if success:
-        logger.debug("Files %s and %s downloaded successfully.",
-                     first_fasta_file,
-                     first_gtf_file,
+        logger.debug("Files downloaded successfully.",
                      downloader_job=job_id)
 
-    utils.end_job(job, batches, success)
+    utils.end_downloader_job(job, success)
+    create_long_and_short_processor_jobs(files_to_process)
+
+def create_long_and_short_processor_jobs(files_to_process):
+    """ Creates two processor jobs for the files needed for this transcriptome"""
+
+    processor_job_long = ProcessorJob()
+    processor_job_long.pipeline_applied = "TRANSCRIPTOME_INDEX_LONG"
+    processor_job_long.save()
+
+    for original_file in files_to_process:
+
+        assoc = ProcessorJobOriginalFileAssociation()
+        assoc.original_file = original_file
+        assoc.processor_job = processor_job_long
+        assoc.save()
+
+    send_job(ProcessorPipeline[processor_job_long.pipeline_applied], processor_job_long.id)
+
+    processor_job_short = ProcessorJob()
+    processor_job_short.pipeline_applied = "TRANSCRIPTOME_INDEX_SHORT"
+    processor_job_short.save()
+
+    for original_file in files_to_process:
+
+        assoc = ProcessorJobOriginalFileAssociation()
+        assoc.original_file = original_file
+        assoc.processor_job = processor_job_short
+        assoc.save()
+    
+    send_job(ProcessorPipeline[processor_job_short.pipeline_applied], processor_job_short.id)
+

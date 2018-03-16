@@ -14,22 +14,26 @@ logger = get_and_configure_logger(__name__)
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
-            "start_accession",
-            help=("An SRA run accession. Runs going from the start_accession to the "
-                  "end_accession will be surveyed. If surveying a single run accession "
-                  "is desired then the same accession should be passed to both start_accession "
-                  "and end_accession."))
+            "--accession",
+            type=str,
+            help=("An SRA run accession. "))
         parser.add_argument(
-            "end_accession",
-            help=("An SRA run accession. Runs going from the start_accession to the "
-                  "end_accession will be surveyed. If surveying a single run accession "
-                  "is desired then the same accession should be passed to both start_accession "
-                  "and end_accession."))
+            "--file",
+            type=str,
+            help=("An optional file listing accession codes.")
+        )
 
     def handle(self, *args, **options):
-        if options["start_accession"] is None or options["end_accession"] is None:
-            logger.error("You must specify start_accession and end_accession.")
+        if options["accession"] is None and options["file"] is None:
+            logger.error("You must specify accession or input file.")
             return 1
+        if options["file"]:
+            with open(options["file"]) as file:
+                for acession in file:
+                    try:
+                        surveyor.survey_sra_experiment(accession.strip())
+                    except Exception as e:
+                        print(e)
         else:
-            surveyor.survey_sra_experiments(options["start_accession"], options["end_accession"])
+            surveyor.survey_sra_experiment(options["accession"])
             return 0

@@ -1,19 +1,20 @@
-from abc import ABC
-import requests
 import re
+import requests
 import urllib
-from typing import List, Dict
+
+from abc import ABC
 from django.utils import timezone
+from typing import List, Dict
+
 from data_refinery_common.models import (
-    Batch,
     File,
-    SurveyJobKeyValue
+    SurveyJobKeyValue,
+    OriginalFile
 )
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
-
 
 logger = get_and_configure_logger(__name__)
 
@@ -21,9 +22,9 @@ logger = get_and_configure_logger(__name__)
 DIVISION_URL_TEMPLATE = ("http://rest.ensemblgenomes.org/info/genomes/division/{division}"
                          "?content-type=application/json")
 TRANSCRIPTOME_URL_TEMPLATE = ("ftp://ftp.{url_root}/fasta/{species_sub_dir}/dna/"
-                              "{file_name_species}.{assembly}.dna.{schema_type}.fa.gz")
+                              "{filename_species}.{assembly}.dna.{schema_type}.fa.gz")
 GTF_URL_TEMPLATE = ("ftp://ftp.{url_root}/gtf/{species_sub_dir}/"
-                    "{file_name_species}.{assembly}.{assembly_version}.gtf.gz")
+                    "{filename_species}.{assembly}.{assembly_version}.gtf.gz")
 MAIN_DIVISION_URL_TEMPLATE = "http://rest.ensembl.org/info/species?content-type=application/json"
 
 
@@ -75,10 +76,10 @@ class EnsemblUrlBuilder(ABC):
         match_object = re.search(COLLECTION_REGEX, species["dbname"])
         if match_object:
             self.species_sub_dir = match_object.group(1) + "/" + species["species"]
-            self.file_name_species = species["species"]
+            self.filename_species = species["species"]
         else:
             self.species_sub_dir = species["species"]
-            self.file_name_species = species["species"].capitalize()
+            self.filename_species = species["species"].capitalize()
 
         # These fields aren't needed for the URL, but they vary between
         # the two REST APIs.
@@ -90,7 +91,7 @@ class EnsemblUrlBuilder(ABC):
                                         short_division=self.short_division)
         url = TRANSCRIPTOME_URL_TEMPLATE.format(url_root=url_root,
                                                 species_sub_dir=self.species_sub_dir,
-                                                file_name_species=self.file_name_species,
+                                                filename_species=self.filename_species,
                                                 assembly=self.assembly,
                                                 schema_type="primary_assembly")
 
@@ -108,7 +109,7 @@ class EnsemblUrlBuilder(ABC):
                                         short_division=self.short_division)
         return GTF_URL_TEMPLATE.format(url_root=url_root,
                                        species_sub_dir=self.species_sub_dir,
-                                       file_name_species=self.file_name_species,
+                                       filename_species=self.filename_species,
                                        assembly=self.assembly,
                                        assembly_version=self.assembly_version)
 
@@ -128,11 +129,11 @@ class MainEnsemblUrlBuilder(EnsemblUrlBuilder):
         self.url_root = "ensembl.org/pub/release-{assembly_version}"
         self.short_division = None
         self.species_sub_dir = species["name"]
-        self.file_name_species = species["name"].capitalize()
+        self.filename_species = species["name"].capitalize()
         self.assembly = species["assembly"]
         self.assembly_version = MAIN_DIVISION_ASSEMBLY_VERSION
 
-        self.scientific_name = self.file_name_species.replace("_", " ")
+        self.scientific_name = self.filename_species.replace("_", " ")
         self.taxonomy_id = species["taxon_id"]
 
 
@@ -146,7 +147,7 @@ class EnsemblProtistsUrlBuilder(EnsemblUrlBuilder):
 
     def __init__(self, species: Dict):
         super().__init__(species)
-        self.file_name_species = species["species"].capitalize()
+        self.filename_species = species["species"].capitalize()
 
 
 class EnsemblFungiUrlBuilder(EnsemblProtistsUrlBuilder):
@@ -181,20 +182,14 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
     def source_type(self):
         return Downloaders.TRANSCRIPTOME_INDEX.value
 
-    def determine_pipeline(self, batch: Batch, key_values: Dict = {}) -> ProcessorPipeline:
-        return ProcessorPipeline.TRANSCRIPTOME_INDEX
-
-    def group_batches(self) -> List[List[Batch]]:
-        return utils.group_batches_by_first_file(self.batches)
-
     def _clean_metadata(self, species: Dict) -> Dict:
         """Removes fields from metadata which shouldn't be stored.
 
         Also cast any None values to str so they can be stored in the
         database.
         These fields shouldn't be stored because:
-        The taxonomy id is stored as fields on the Batch.
-        aliases and groups are lists we don't need.
+        The taxonomy id is stored as fields on the Organism.
+        Aliases and groups are lists we don't need.
         """
         species.pop("taxon_id") if "taxon_id" in species else None
         species.pop("taxonomy_id") if "taxonomy_id" in species else None
@@ -211,7 +206,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
 
         return species
 
-    def _generate_batch(self, species: Dict) -> None:
+    def _generate_files(self, species: Dict) -> None:
         url_builder = ensembl_url_builder_factory(species)
         fasta_download_url = url_builder.build_transcriptome_url()
         gtf_download_url = url_builder.build_gtf_url()
@@ -220,37 +215,54 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         platform_accession_code = species.pop("division")
         self._clean_metadata(species)
 
-        for length in ("_long", "_short"):
-            fasta_file_name = url_builder.file_name_species + length + ".fa.gz"
-            fasta_file = File(name=fasta_file_name,
-                              download_url=fasta_download_url,
-                              raw_format="fa.gz",
-                              processed_format="tar.gz",
-                              size_in_bytes=-1)  # Will have to be determined later
+        all_new_files = []
 
-            gtf_file_name = url_builder.file_name_species + length + ".gtf.gz"
-            gtf_file = File(name=gtf_file_name,
-                            download_url=gtf_download_url,
-                            raw_format="gtf.gz",
-                            processed_format="tar.gz",
-                            size_in_bytes=-1)  # Will have to be determined later
+        fasta_filename = url_builder.filename_species + ".fa.gz"
+        original_file = OriginalFile()
+        original_file.source_filename = fasta_filename
+        original_file.source_url = fasta_download_url
+        original_file.is_archive = True
+        original_file.is_downloaded = False
+        original_file.save()
+        all_new_files.append(original_file)
 
-            # Add a couple extra key/value pairs to the Batch.
-            species["length"] = length
-            species["kmer_size"] = "31" if length == "_long" else "23"
+        gtf_filename = url_builder.filename_species + ".gtf.gz"
+        original_file = OriginalFile()
+        original_file.source_filename = gtf_filename
+        original_file.source_url = gtf_download_url
+        original_file.is_archive = True
+        original_file.is_downloaded = False
+        original_file.save()
+        all_new_files.append(original_file)
 
-            self.add_batch(platform_accession_code=platform_accession_code,
-                           experiment_accession_code=url_builder.file_name_species.upper(),
-                           organism_id=url_builder.taxonomy_id,
-                           organism_name=url_builder.scientific_name,
-                           experiment_title="NA",
-                           release_date=current_time,
-                           last_uploaded_date=current_time,
-                           files=[fasta_file, gtf_file],
-                           # Store the rest of the metadata about these!
-                           key_values=species)
+        return all_new_files
 
-    def discover_batches(self):
+    def survey(self) -> bool:
+        """
+        Surveying here is a bit different than discovering an experiment
+        and samples.
+        """
+
+        try:
+            species_files = self.discover_species()
+        except Exception:
+            logger.exception(("Exception caught while discovering species. "
+                              "Terminating survey job."),
+                             survey_job=self.survey_job.id)
+            return False
+
+        try:
+            for specie_file_list in species_files: 
+                self.queue_downloader_job_for_original_files(specie_file_list)
+        except Exception:
+            logger.exception(("Failed to queue downloader jobs. "
+                              "Terminating survey job."),
+                             survey_job=self.survey_job.id)
+            return False
+
+        return True
+
+    def discover_species(self):
         ensembl_division = (
             SurveyJobKeyValue
             .objects
@@ -279,6 +291,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         # The main division has a different base URL for its REST API.
         if ensembl_division == "Ensembl":
             r = requests.get(MAIN_DIVISION_URL_TEMPLATE)
+
             # Yes I'm aware that specieses isn't a word. However I need to
             # distinguish between a singlular species and multiple species.
             specieses = r.json()["species"]
@@ -286,10 +299,26 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             r = requests.get(DIVISION_URL_TEMPLATE.format(division=ensembl_division))
             specieses = r.json()
 
+        try:
+            organism_name = SurveyJobKeyValue.objects.get(survey_job_id=self.survey_job.id, key__exact="organism_name").value
+            organism_name = organism_name.lower().replace(' ', "_")
+        except SurveyJobKeyValue.DoesNotExist:
+            organism_name = None
+
+        # Survey jobs are on a per-organism basis.
+        for species in specieses:
+            if species['name'] == organism_name:
+                specieses = [species]
+                logger.info("Found species " + organism_name + " on Ensembl.")
+                break
+
         species_surveyed = 0
+        all_new_species = []
         for species in specieses:
             if number_of_organisms != -1 and species_surveyed >= number_of_organisms:
                 break
 
-            self._generate_batch(species)
+            all_new_species.append(self._generate_files(species))
             species_surveyed += 1
+        
+        return all_new_species

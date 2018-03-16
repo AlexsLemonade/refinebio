@@ -1,13 +1,20 @@
 from __future__ import absolute_import, unicode_literals
+
+import os
 import string
 import warnings
+from django.utils import timezone
 from typing import Dict
+
 import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
-from data_refinery_common.models import File
-from data_refinery_workers.processors import utils
-from data_refinery_common.logging import get_and_configure_logger
 
+from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.models import OriginalFile, ComputationalResult, ComputedFile
+from data_refinery_workers._version import __version__
+from data_refinery_workers.processors import utils
+from data_refinery_common.utils import get_env_variable
+S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
 logger = get_and_configure_logger(__name__)
 
@@ -18,26 +25,14 @@ def _prepare_files(job_context: Dict) -> Dict:
     Also adds the keys "input_file_path" and "output_file_path" to
     job_context so everything is prepared for processing.
     """
-    # Array Express processor jobs have only one batch per job and one
-    # file per batch.
-    batch = job_context["batches"][0]
-    file = File.objects.get(batch=batch)
+    original_file = job_context["original_files"][0]
+    job_context["input_file_path"] = original_file.absolute_file_path
+    # This is ugly, I'm sorry.
+    # Turns /home/user/data_store/E-GEOD-8607/raw/foo.cel into /home/user/data_store/E-GEOD-8607/processed/foo.cel
+    pre_part = original_file.absolute_file_path.split('/')[:-2]
+    end_part = original_file.absolute_file_path.split('/')[-1]
+    job_context["output_file_path"] = '/'.join(pre_part) + '/processed/' + end_part
 
-    try:
-        file.download_raw_file()
-    except Exception:
-        logger.exception("Exception caught while retrieving raw file %s",
-                         file.get_raw_path(),
-                         processor_job=job_context["job_id"],
-                         batch=file.batch.id)
-
-        failure_template = "Exception caught while retrieving raw file {}"
-        job_context["job"].failure_reason = failure_template.format(file.name)
-        job_context["success"] = False
-        return job_context
-
-    job_context["input_file_path"] = file.get_temp_pre_path()
-    job_context["output_file_path"] = file.get_temp_post_path()
     return job_context
 
 
@@ -51,10 +46,6 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
     try:
         header = ro.r['::']('affyio', 'read.celfile.header')(input_file)
     except RRuntimeError as e:
-        # Array Express processor jobs have only one batch per job.
-        file = File.objects.get(batch=job_context["batches"][0])
-        file.remove_temp_directory()
-
         error_template = ("Unable to read Affy header in input file {0}"
                           " while running AFFY_TO_PCL due to error: {1}")
         error_message = error_template.format(input_file, str(e))
@@ -73,6 +64,11 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
     # and we can monitor what packages are added to it and modify
     # accordingly. So far "v1" and "v2" are the only known versions
     # which must be accomodated in this way.
+
+    # XXX: This may need to be made Organism-specific! hsentrezgprobe is for Homo Sapiens(?)
+    # XXX: TODO: We also expect this to be replaced with `ensg`
+    # Related: https://github.com/data-refinery/data-refinery/issues/85
+    # Related: https://github.com/data-refinery/data-refinery/issues/141
     package_name_without_version = package_name.replace("v1", "").replace("v2", "")
     job_context["brainarray_package"] = package_name_without_version + "hsentrezgprobe"
     return job_context
@@ -103,9 +99,11 @@ def _run_scan_upc(job_context: Dict) -> Dict:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             scan_upc = ro.r['::']('SCAN.UPC', 'SCANfast')
+            job_context['time_start'] = timezone.now()
             scan_upc(input_file,
                      job_context["output_file_path"],
                      probeSummaryPackage=job_context["brainarray_package"])
+            job_context['time_end'] = timezone.now()
 
     except RRuntimeError as e:
         error_template = ("Encountered error in R code while running AFFY_TO_PCL"
@@ -114,13 +112,52 @@ def _run_scan_upc(job_context: Dict) -> Dict:
         logger.error(error_message, processor_job=job_context["job_id"])
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
-        # Array Express processor jobs have only one batch per job and
-        # one file per batch
-        file = File.objects.get(batch=job_context["batches"][0])
-        file.remove_temp_directory()
 
     return job_context
 
+def _create_result_objects(job_context: Dict) -> Dict:
+    """ Create the ComputationalResult objects after a Scan run is complete """
+
+    result = ComputationalResult()
+    result.command_executed = "'SCAN.UPC', 'SCANfast'" # Need a better way to represent this R code.
+    result.is_ccdl = True
+    result.is_public = True
+    result.system_version = __version__
+    scan_version_parts = []
+    for version_part in ro.r("packageVersion('SCAN.UPC')")[0]:
+        scan_version_parts.append(str(version_part))
+    scan_version = ".".join(scan_version_parts) 
+    result.program_version = scan_version
+    result.time_start = job_context['time_start']
+    result.time_end = job_context['time_end']
+    result.save()
+
+    # Create a ComputedFile for the sample,
+    # sync it S3 and save it.
+    try:
+        computed_file = ComputedFile()
+        computed_file.absolute_file_path = job_context["output_file_path"]
+        computed_file.filename = os.path.split(job_context["output_file_path"])[-1]
+        computed_file.calculate_sha1()
+        computed_file.calculate_size()
+        computed_file.result = result
+        computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
+        # TODO here: delete local file after S3 sync
+        computed_file.save()
+    except Exception:
+        logger.exception("Exception caught while moving file %s to S3",
+                         computed_file.filename,
+                         processor_job=job_context["job_id"],
+                         )
+        failure_reason = "Exception caught while moving file to S3"
+        job_context["job"].failure_reason = failure_reason
+        job_context["success"] = False
+        return job_context        
+
+    logger.info("Created %s", result)
+    job_context["success"] = True
+
+    return job_context
 
 def affy_to_pcl(job_id: int) -> None:
     utils.run_pipeline({"job_id": job_id},
@@ -128,6 +165,7 @@ def affy_to_pcl(job_id: int) -> None:
                         _prepare_files,
                         _determine_brainarray_package,
                         _run_scan_upc,
-                        utils.upload_processed_files,
-                        utils.cleanup_raw_files,
+                        _create_result_objects,
+                        # utils.upload_processed_files,
+                        # utils.cleanup_raw_files,
                         utils.end_job])

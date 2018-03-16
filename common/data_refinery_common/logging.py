@@ -1,7 +1,10 @@
+import boto3
 import daiquiri
 import logging
 import sys
+
 from data_refinery_common.utils import get_worker_id
+from data_refinery_common.utils import get_env_variable
 
 
 # Most of the formatting in this string is for the logging system. All
@@ -32,8 +35,10 @@ def get_and_configure_logger(name: str) -> logging.Logger:
     logger = daiquiri.getLogger(name)
     logger.setLevel(logging.INFO)
 
+    # This is the local handler
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(daiquiri.formatter.ColorExtrasFormatter(
         fmt=FORMAT_STRING, keywords=[]))
     logger.logger.addHandler(handler)
+
     return logger

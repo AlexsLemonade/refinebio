@@ -11,3 +11,19 @@ from data_refinery_common.models.jobs import (
     ProcessorJob
 )
 from data_refinery_common.models.organism import Organism
+
+from data_refinery_common.models.new_models import (
+	Sample,
+	SampleAnnotation,
+	Experiment,
+	ExperimentAnnotation, 
+	ComputationalResult,
+	CompultationalResultAnnotation,
+	OrganismIndex,
+	OriginalFile,
+	ComputedFile,
+	ExperimentSampleAssociation,
+	DownloaderJobOriginalFileAssociation,
+	ProcessorJobOriginalFileAssociation,
+	SampleResultAssociation
+)
