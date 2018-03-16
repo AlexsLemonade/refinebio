@@ -249,7 +249,7 @@ class OriginalFile(models.Model):
         return self.sha1
 
     def calculate_size(self) -> None:
-        """ Calculate the number of bites in a given file.
+        """ Calculate the number of bytes in a given file.
         """
         self.size_in_bytes = os.path.getsize(self.absolute_file_path)
         return self.size_in_bytes
@@ -305,7 +305,7 @@ class ComputedFile(models.Model):
         return self.sha1
 
     def calculate_size(self) -> None:
-        """ Calculate the number of bites in a given file.
+        """ Calculate the number of bytes in a given file.
         """
         self.size_in_bytes = os.path.getsize(self.absolute_file_path)
         return self.size_in_bytes
