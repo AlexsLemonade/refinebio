@@ -359,7 +359,7 @@ Refine.bio requires an active, credentialed AWS account with appropriate permiss
 
 ### Terraform 
 
-Once you have Terraform installed and your AWS account credentials installed, you can plan your terraform deployment like so (from the `infrastructure` directory:
+Once you have Terraform installed and your AWS account credentials installed, you can plan your terraform deployment like so (from the `infrastructure` directory):
 
 ```bash
 TF_VAR_user=myusername TF_VAR_stage=dev TF_VAR_region=us-east-1 terraform plan
@@ -391,7 +391,7 @@ terraform destroy
 ```
 
 For convenience, a `deploy.sh` script is also provided, which will perform additional
-steps to configure (such as setting up Nomad job specifications and performing database migrations) and prepare the entire system. It can be used simply (from the `infrastructure` directory, like so):
+steps to configure (such as setting up Nomad job specifications and performing database migrations) and prepare the entire system. It can be used simply (from the `infrastructure` directory), like so:
 
 ```
 ./deploy.sh
