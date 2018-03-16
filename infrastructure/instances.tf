@@ -120,10 +120,10 @@ data "template_file" "nomad_server_script_smusher" {
 resource "aws_instance" "nomad_server_2" {
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.small"
-  availability_zone = "${var.region}a"
+  availability_zone = "${var.region}b"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
-  subnet_id = "${aws_subnet.data_refinery_1a.id}"
+  subnet_id = "${aws_subnet.data_refinery_1b.id}"
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
 

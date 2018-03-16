@@ -26,8 +26,8 @@ resource "aws_iam_user_policy" "data_refinery_user_worker_policy" {
         {
             "Effect": "Allow",
             "Action": [
-		"logs:PutLogEvents",
-		"logs:DescribeLogStreams"
+          		  "logs:PutLogEvents",
+                "logs:DescribeLogStreams"
             ],
             "Resource": "arn:aws:logs:*:*:*"
         },
@@ -37,7 +37,7 @@ resource "aws_iam_user_policy" "data_refinery_user_worker_policy" {
                 "s3:*"
             ],
             "Resource": "arn:aws:s3:::*"
-        },
+        }
     ]
 }
 EOF
@@ -54,11 +54,12 @@ resource "aws_iam_user_policy" "data_refinery_user_foreman_policy" {
         {
             "Effect": "Allow",
             "Action": [
-		"logs:PutLogEvents",
-		"logs:DescribeLogStreams"
+		            "logs:PutLogEvents",
+		            "logs:DescribeLogStreams"
             ],
-            "Resource": "arn:aws:logs:*:*:*"
-        },
+            "Resource": 
+                "arn:aws:logs:*:*:*"
+        }
     ]
 }
 EOF

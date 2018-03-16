@@ -23,25 +23,9 @@ echo "${file_system_id}.efs.${region}.amazonaws.com:/ /var/efs/ nfs4 nfsvers=4.1
 mount -a -t nfs4
 chown ubuntu:ubuntu /var/efs/
 
-# Set up the database
-# XXX - Failure here is catastrophic - even normally "safe" operations like apply permissions to a user that already has them
-# XXX - We need to have way to do this "manually" for staging and automatically for prod, all without
-# XXX - the catastrophic failure.
+# Set up the require database extensions.
 apt-get install --yes postgresql-client-common postgresql-client
-PGPASSWORD=${database_password} psql -c "CREATE ROLE data_refinery_user WITH LOGIN PASSWORD 'data_refinery_password';" -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
-PGPASSWORD=${database_password} psql -c 'GRANT ALL PRIVILEGES ON DATABASE data_refinery TO data_refinery_user;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
-PGPASSWORD=${database_password} psql -c 'ALTER USER data_refinery_user CREATEDB;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
-# This won't work on RDS. AWS won't give you the superuser ability.
-# PGPASSWORD=${database_password} psql -c 'ALTER ROLE data_refinery_user superuser;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
 PGPASSWORD=${database_password} psql -c 'CREATE EXTENSION IF NOT EXISTS hstore;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
-
-PGPASSWORD=${database_password} psql -c 'GRANT ALL ON ALL TABLES IN SCHEMA public to drpostgresuser;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
-PGPASSWORD=${database_password} psql -c 'GRANT ALL ON ALL SEQUENCES IN SCHEMA public to drpostgresuser;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
-PGPASSWORD=${database_password} psql -c 'GRANT ALL ON ALL FUNCTIONS IN SCHEMA public to drpostgresuser;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
-PGPASSWORD=${database_password} psql -c 'GRANT ALL ON ALL TABLES IN SCHEMA public to data_refinery_user;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
-PGPASSWORD=${database_password} psql -c 'GRANT ALL ON ALL SEQUENCES IN SCHEMA public to data_refinery_user;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
-PGPASSWORD=${database_password} psql -c 'GRANT ALL ON ALL FUNCTIONS IN SCHEMA public to data_refinery_user;' -h ${database_host} -p 5432 -U ${database_user} -d ${database_name}
-
 
 # Change to home directory of the default user
 cd /home/ubuntu
