@@ -76,3 +76,11 @@ for nomad_job_spec in $nomad_job_specs; do
     echo "registering $nomad_job_spec"
     nomad run -address http://$IP_ADDRESS:4646 $nomad_job_spec
 done
+
+# Delete the cloudinit and syslog in production.
+export STAGE=${stage}
+if [[ $STAGE = *"prod"* ]]; then
+    rm /var/log/cloud-init.log
+    rm /var/log/cloud-init-output.log
+    rm /var/log/syslog
+fi
