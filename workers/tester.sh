@@ -23,6 +23,7 @@ HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 
 docker run \
+	   -it \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
        --env-file workers/environments/dev \

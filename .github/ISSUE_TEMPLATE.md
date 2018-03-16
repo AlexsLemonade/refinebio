@@ -1,3 +1,4 @@
+<!-- 
 ### New Issue Checklist
 - [ ] The title is short and descriptive
 - [ ] The issue contains an:
@@ -7,14 +8,14 @@
   - [ ] Context
   - [ ] Problem or idea
   - [ ] Solution or next step
-  
-### Context
-
-_Explain the conditions that led you to write this issue. If you are proposing a new feature, the context should be your user story. If this relates to a certain page or API endpoint, provide a link._
-
+-->
 ### Problem or idea
 
 _The context should lead to something, an idea or a problem that you’re facing._
+
+### Context
+
+_Explain the conditions that led you to write this issue. If you are proposing a new feature, the context should be your user story. If this relates to a certain page or API endpoint, provide a link._
 
 ### Solution or next step
 
