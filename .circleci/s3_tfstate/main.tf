@@ -10,3 +10,7 @@ resource "aws_s3_bucket" "refinebio-tfstate" {
     enabled = true
   }
 }
+
+output "terraform_state_s3_bucket" {
+  value = "${aws_s3_bucket.refinebio-tfstate.id}"
+}

@@ -10,9 +10,11 @@ wget https://releases.hashicorp.com/nomad/0.7.1/nomad_0.7.1_linux_amd64-lxc.zip
 unzip nomad_0.7.1_linux_amd64-lxc.zip
 sudo mv nomad /usr/local/bin/
 
+cd ~/refinebio/.circleci/s3_tfstate
+BUCKET_NAME=`terraform output terraform_state_s3_bucket`
+
 cd ~/refinebio/infrastructure
 terraform init
-BUCKET_NAME=refinebio-tfstate-deploy-production
 
 # Download encrypted tfstate files from S3
 aws s3 cp s3://$BUCKET_NAME/$TFSTATE.enc .
