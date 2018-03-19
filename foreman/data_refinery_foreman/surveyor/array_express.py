@@ -327,6 +327,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 continue
             except Sample.DoesNotExist:
 
+
+
                 sample_object = Sample()
                 sample_object.accession_code = sample_accession_code
                 sample_object.organism = organism
