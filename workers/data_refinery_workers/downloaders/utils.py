@@ -114,7 +114,10 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile]):
     # This is a single read. Let's rock now.
     else:
         # Only one file to download, start the job now.
+        processor_job = ProcessorJob()
+        processor_job.pipeline_applied = "SALMON"
         processor_job.save()
+
         assoc = ProcessorJobOriginalFileAssociation()
         assoc.original_file = original_file
         assoc.processor_job = processor_job
