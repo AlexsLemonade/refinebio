@@ -2,7 +2,6 @@ from typing import List, Dict, Callable
 from django.utils import timezone
 from data_refinery_common.models import (
     ProcessorJob, 
-    File,
     Sample,
     OriginalFile,
     ProcessorJobOriginalFileAssociation

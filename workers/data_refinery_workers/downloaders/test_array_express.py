@@ -4,9 +4,6 @@ from unittest.mock import patch, call
 from django.test import TestCase
 from data_refinery_common.models import (
     SurveyJob,
-    Batch,
-    BatchStatuses,
-    File,
     DownloaderJob,
     ProcessorJob
 )
@@ -20,197 +17,178 @@ class DownloadArrayExpressTestCase(TestCase):
         survey_job.save()
         self.survey_job = survey_job
 
-    def insert_objects(self) -> List[Batch]:
-        download_url = "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip"  # noqa
-        batch = Batch(
-            survey_job=self.survey_job,
-            source_type="ARRAY_EXPRESS",
-            pipeline_required="AFFY_TO_PCL",
-            platform_accession_code="A-AFFY-1",
-            experiment_accession_code="E-MTAB-3050",
-            experiment_title="It doesn't really matter.",
-            organism_id=9606,
-            organism_name="HOMO SAPIENS",
-            release_date="2017-05-05",
-            last_uploaded_date="2017-05-05",
-            status=BatchStatuses.NEW.value
-        )
-        batch2 = copy.deepcopy(batch)
-        batch.save()
-        batch2.save()
+    # def insert_objects(self) -> List[Batch]:
+    #     download_url = "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip"  # noqa
+    #     batch = Batch(
+    #         survey_job=self.survey_job,
+    #         source_type="ARRAY_EXPRESS",
+    #         pipeline_required="AFFY_TO_PCL",
+    #         platform_accession_code="A-AFFY-1",
+    #         experiment_accession_code="E-MTAB-3050",
+    #         experiment_title="It doesn't really matter.",
+    #         organism_id=9606,
+    #         organism_name="HOMO SAPIENS",
+    #         release_date="2017-05-05",
+    #         last_uploaded_date="2017-05-05",
+    #         status=BatchStatuses.NEW.value
+    #     )
+    #     batch2 = copy.deepcopy(batch)
+    #     batch.save()
+    #     batch2.save()
 
-        file = File(size_in_bytes=0,
-                    download_url=download_url,
-                    raw_format="CEL",
-                    processed_format="PCL",
-                    name="CE1234.CEL",
-                    internal_location="A-AFFY-1/AFFY_TO_PCL/",
-                    batch=batch)
-        file2 = File(size_in_bytes=0,
-                     download_url=download_url,
-                     raw_format="CEL",
-                     processed_format="PCL",
-                     name="CE2345.CEL",
-                     internal_location="A-AFFY-1/AFFY_TO_PCL/",
-                     batch=batch2)
-        file.save()
-        file2.save()
+    #     file = File(size_in_bytes=0,
+    #                 download_url=download_url,
+    #                 raw_format="CEL",
+    #                 processed_format="PCL",
+    #                 name="CE1234.CEL",
+    #                 internal_location="A-AFFY-1/AFFY_TO_PCL/",
+    #                 batch=batch)
+    #     file2 = File(size_in_bytes=0,
+    #                  download_url=download_url,
+    #                  raw_format="CEL",
+    #                  processed_format="PCL",
+    #                  name="CE2345.CEL",
+    #                  internal_location="A-AFFY-1/AFFY_TO_PCL/",
+    #                  batch=batch2)
+    #     file.save()
+    #     file2.save()
 
-        batch.files = [file]
-        batch2.files = [file]
+    #     batch.files = [file]
+    #     batch2.files = [file]
 
-        return ([batch, batch2], [file, file2])
+    #     return ([batch, batch2], [file, file2])
 
-    def test_good_batch_grouping(self):
-        """Returns true if all batches have the same download_url."""
-        batches, files = self.insert_objects()
-        downloader_job = DownloaderJob.create_job_and_relationships(
-            batches=batches, downloader_task="dummy")
+    # @patch("data_refinery_workers.downloaders.utils.send_job")
+    # @patch("data_refinery_workers.downloaders.array_express._verify_batch_grouping")
+    # @patch("data_refinery_workers.downloaders.array_express._download_file")
+    # @patch("data_refinery_workers.downloaders.array_express._extract_file")
+    # def test_download(self,
+    #                   _extract_file,
+    #                   _download_file,
+    #                   _verify_batch_grouping,
+    #                   mock_send_job):
+    #     mock_send_job.return_value = None
 
-        self.assertIsNone(array_express._verify_batch_grouping(files, downloader_job))
+    #     batches, files = self.insert_objects()
+    #     downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
-    def test_bad_batch_grouping(self):
-        """Raises exception if all batches don't have the same download_url."""
-        batches, files = self.insert_objects()
-        files[1].download_url = "https://wompwomp.com"
-        files[1].save()
-        downloader_job = DownloaderJob.create_job_and_relationships(
-            batches=batches, downloader_task="dummy")
+    #     # Call the function we're testing:
+    #     array_express.download_array_express(downloader_job.id)
 
-        with self.assertRaises(ValueError):
-            array_express._verify_batch_grouping(files, downloader_job)
+    #     target_file_path = ("/home/user/data_store/temp/A-AFFY-1/AFFY_TO_PCL/downloader_job_{}"
+    #                         "/E-GEOD-59071.raw.3.zip").format(str(downloader_job.id))
 
-    @patch("data_refinery_workers.downloaders.utils.send_job")
-    @patch("data_refinery_workers.downloaders.array_express._verify_batch_grouping")
-    @patch("data_refinery_workers.downloaders.array_express._download_file")
-    @patch("data_refinery_workers.downloaders.array_express._extract_file")
-    def test_download(self,
-                      _extract_file,
-                      _download_file,
-                      _verify_batch_grouping,
-                      mock_send_job):
-        mock_send_job.return_value = None
+    #     # Verify that all expected functionality is run:
+    #     self.assertEqual(_verify_batch_grouping.call_count, 1)
+    #     download_url = "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip"  # noqa
+    #     _download_file.assert_called_with(download_url, target_file_path, downloader_job)
+    #     args, _ = _extract_file.call_args
+    #     file_query_set, job = args
+    #     self.assertEqual(list(file_query_set), files)
+    #     self.assertEqual(job.id, downloader_job.id)
 
-        batches, files = self.insert_objects()
-        downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
+    #     # Verify that the database has been updated correctly:
+    #     batches = Batch.objects.all()
+    #     for batch in batches:
+    #         self.assertEqual(batch.status, BatchStatuses.DOWNLOADED.value)
 
-        # Call the function we're testing:
-        array_express.download_array_express(downloader_job.id)
+    #     downloader_job = DownloaderJob.objects.get()
+    #     self.assertTrue(downloader_job.success)
+    #     self.assertIsNotNone(downloader_job.start_time)
+    #     self.assertIsNotNone(downloader_job.end_time)
 
-        target_file_path = ("/home/user/data_store/temp/A-AFFY-1/AFFY_TO_PCL/downloader_job_{}"
-                            "/E-GEOD-59071.raw.3.zip").format(str(downloader_job.id))
+    #     processor_jobs = ProcessorJob.objects.all()
+    #     self.assertEqual(len(processor_jobs), 2)
 
-        # Verify that all expected functionality is run:
-        self.assertEqual(_verify_batch_grouping.call_count, 1)
-        download_url = "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip"  # noqa
-        _download_file.assert_called_with(download_url, target_file_path, downloader_job)
-        args, _ = _extract_file.call_args
-        file_query_set, job = args
-        self.assertEqual(list(file_query_set), files)
-        self.assertEqual(job.id, downloader_job.id)
+    #     mock_send_job.assert_has_calls([
+    #         call(ProcessorPipeline.AFFY_TO_PCL,
+    #              processor_jobs[0].id),
+    #         call(ProcessorPipeline.AFFY_TO_PCL,
+    #              processor_jobs[1].id)
+    #     ])
 
-        # Verify that the database has been updated correctly:
-        batches = Batch.objects.all()
-        for batch in batches:
-            self.assertEqual(batch.status, BatchStatuses.DOWNLOADED.value)
+    # @patch("data_refinery_workers.downloaders.utils.send_job")
+    # @patch("data_refinery_workers.downloaders.array_express._download_file")
+    # @patch("data_refinery_workers.downloaders.array_express._extract_file")
+    # def test_verification_failure(self,
+    #                               _extract_file,
+    #                               _download_file,
+    #                               mock_send_job):
+    #     mock_send_job.return_value = None
 
-        downloader_job = DownloaderJob.objects.get()
-        self.assertTrue(downloader_job.success)
-        self.assertIsNotNone(downloader_job.start_time)
-        self.assertIsNotNone(downloader_job.end_time)
+    #     # Set a different download URL to trigger a failure in the
+    #     # _verify_batch_grouping function
+    #     batches, files = self.insert_objects()
+    #     files[1].download_url = "https://wompwomp.com"
+    #     files[1].save()
+    #     downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
-        processor_jobs = ProcessorJob.objects.all()
-        self.assertEqual(len(processor_jobs), 2)
+    #     # Call the downloader function
+    #     array_express.download_array_express(downloader_job.id)
 
-        mock_send_job.assert_has_calls([
-            call(ProcessorPipeline.AFFY_TO_PCL,
-                 processor_jobs[0].id),
-            call(ProcessorPipeline.AFFY_TO_PCL,
-                 processor_jobs[1].id)
-        ])
+    #     _download_file.assert_not_called()
+    #     _extract_file.assert_not_called()
+    #     mock_send_job.assert_not_called()
 
-    @patch("data_refinery_workers.downloaders.utils.send_job")
-    @patch("data_refinery_workers.downloaders.array_express._download_file")
-    @patch("data_refinery_workers.downloaders.array_express._extract_file")
-    def test_verification_failure(self,
-                                  _extract_file,
-                                  _download_file,
-                                  mock_send_job):
-        mock_send_job.return_value = None
+    #     # Verify that the database has been updated correctly:
+    #     downloader_job = DownloaderJob.objects.get()
+    #     self.assertFalse(downloader_job.success)
+    #     self.assertIsNotNone(downloader_job.start_time)
+    #     self.assertIsNotNone(downloader_job.end_time)
+    #     self.assertEqual(downloader_job.failure_reason,
+    #                      ("A Batch's file doesn't have the same download "
+    #                       "URL as the other batches' files."))
 
-        # Set a different download URL to trigger a failure in the
-        # _verify_batch_grouping function
-        batches, files = self.insert_objects()
-        files[1].download_url = "https://wompwomp.com"
-        files[1].save()
-        downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
+    # @patch("data_refinery_workers.downloaders.utils.send_job")
+    # @patch('data_refinery_workers.downloaders.array_express.open')
+    # @patch("data_refinery_workers.downloaders.array_express._extract_file")
+    # def test_download_failure(self,
+    #                           _extract_file,
+    #                           _open,
+    #                           mock_send_job):
+    #     # Set up mocks:
+    #     mock_send_job.return_value = None
+    #     _open.side_effect = Exception()
 
-        # Call the downloader function
-        array_express.download_array_express(downloader_job.id)
+    #     batches, _ = self.insert_objects()
+    #     downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
-        _download_file.assert_not_called()
-        _extract_file.assert_not_called()
-        mock_send_job.assert_not_called()
+    #     # Call the downloader function
+    #     array_express.download_array_express(downloader_job.id)
 
-        # Verify that the database has been updated correctly:
-        downloader_job = DownloaderJob.objects.get()
-        self.assertFalse(downloader_job.success)
-        self.assertIsNotNone(downloader_job.start_time)
-        self.assertIsNotNone(downloader_job.end_time)
-        self.assertEqual(downloader_job.failure_reason,
-                         ("A Batch's file doesn't have the same download "
-                          "URL as the other batches' files."))
+    #     _extract_file.assert_not_called()
+    #     mock_send_job.assert_not_called()
 
-    @patch("data_refinery_workers.downloaders.utils.send_job")
-    @patch('data_refinery_workers.downloaders.array_express.open')
-    @patch("data_refinery_workers.downloaders.array_express._extract_file")
-    def test_download_failure(self,
-                              _extract_file,
-                              _open,
-                              mock_send_job):
-        # Set up mocks:
-        mock_send_job.return_value = None
-        _open.side_effect = Exception()
+    #     # Verify that the database has been updated correctly:
+    #     downloader_job = DownloaderJob.objects.get()
+    #     self.assertFalse(downloader_job.success)
+    #     self.assertIsNotNone(downloader_job.start_time)
+    #     self.assertIsNotNone(downloader_job.end_time)
+    #     self.assertEqual(downloader_job.failure_reason,
+    #                      "Exception caught while downloading batch")
 
-        batches, _ = self.insert_objects()
-        downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
+    # @patch("data_refinery_workers.downloaders.utils.send_job")
+    # @patch("data_refinery_workers.downloaders.array_express._download_file")
+    # def test_extraction_failure(self,
+    #                             _download_file,
+    #                             mock_send_job):
+    #     mock_send_job.return_value = None
 
-        # Call the downloader function
-        array_express.download_array_express(downloader_job.id)
+    #     batches, files = self.insert_objects()
+    #     downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
 
-        _extract_file.assert_not_called()
-        mock_send_job.assert_not_called()
+    #     # Call the downloader function
+    #     array_express.download_array_express(downloader_job.id)
 
-        # Verify that the database has been updated correctly:
-        downloader_job = DownloaderJob.objects.get()
-        self.assertFalse(downloader_job.success)
-        self.assertIsNotNone(downloader_job.start_time)
-        self.assertIsNotNone(downloader_job.end_time)
-        self.assertEqual(downloader_job.failure_reason,
-                         "Exception caught while downloading batch")
+    #     mock_send_job.assert_not_called()
 
-    @patch("data_refinery_workers.downloaders.utils.send_job")
-    @patch("data_refinery_workers.downloaders.array_express._download_file")
-    def test_extraction_failure(self,
-                                _download_file,
-                                mock_send_job):
-        mock_send_job.return_value = None
+    #     # Verify that the database has been updated correctly:
+    #     downloader_job = DownloaderJob.objects.get()
+    #     self.assertFalse(downloader_job.success)
+    #     self.assertIsNotNone(downloader_job.start_time)
+    #     self.assertIsNotNone(downloader_job.end_time)
 
-        batches, files = self.insert_objects()
-        downloader_job = DownloaderJob.create_job_and_relationships(batches=batches)
-
-        # Call the downloader function
-        array_express.download_array_express(downloader_job.id)
-
-        mock_send_job.assert_not_called()
-
-        # Verify that the database has been updated correctly:
-        downloader_job = DownloaderJob.objects.get()
-        self.assertFalse(downloader_job.success)
-        self.assertIsNotNone(downloader_job.start_time)
-        self.assertIsNotNone(downloader_job.end_time)
-
-        job_dir = utils.JOB_DIR_PREFIX + str(downloader_job.id)
-        zip_path = files[0].get_temp_download_path(job_dir)
-        self.assertEqual(downloader_job.failure_reason,
-                         "Exception caught while extracting " + zip_path)
+    #     job_dir = utils.JOB_DIR_PREFIX + str(downloader_job.id)
+    #     zip_path = files[0].get_temp_download_path(job_dir)
+    #     self.assertEqual(downloader_job.failure_reason,
+    #                      "Exception caught while extracting " + zip_path)

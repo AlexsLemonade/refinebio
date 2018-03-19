@@ -75,6 +75,6 @@ docker run \
        --env-file workers/environments/test \
        --volume $volume_directory:/home/user/data_store \
        --link drdb:postgres $NOMAD_LINK \
-        -i dr_worker_tests python3 manage.py test --no-input "$@" # This runs everything
+       -it dr_worker_tests bash -c 'coverage run --source="." manage.py test --no-input "$@"; coverage report -m' # This runs everything
        # -i dr_worker_tests python3 manage.py test data_refinery_workers.processors.test_salmon.SalmonTestCase.test_success --no-input "$@" # This runs a specific test
        # Can also be called like ./workers/run_tests.sh data_refinery_workers.downloaders.test_sra.DownloadSraTestCase.test_aspera_downloader

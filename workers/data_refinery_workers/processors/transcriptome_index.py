@@ -9,8 +9,6 @@ from typing import Dict
 from django.utils import timezone
 
 from data_refinery_common.models import (
-    File, 
-    BatchKeyValue, 
     Organism, 
     ProcessorJob,
     OriginalFile,

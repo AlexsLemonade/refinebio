@@ -6,4 +6,4 @@ boto3
 retrying
 rpy2
 python-nomad
-watchtower
+coveralls

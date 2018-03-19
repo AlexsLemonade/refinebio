@@ -5,8 +5,6 @@ from typing import List, Dict
 
 from data_refinery_common.utils import get_worker_id
 from data_refinery_common.models import (
-    Batch,
-    BatchStatuses,
     DownloaderJob,
     ProcessorJob,
     Experiment,
