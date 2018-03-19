@@ -259,11 +259,13 @@ resource "aws_instance" "nomad_client_1" {
   }
 }
 
-
-
 output "nomad_client_ip" {
   value = "${aws_instance.nomad_client_1.public_ip}"
 }
+
+##
+# Database
+##
 
 resource "aws_db_instance" "postgres_db" {
   identifier = "data-refinery-${var.user}-${var.stage}"
@@ -283,3 +285,69 @@ resource "aws_db_instance" "postgres_db" {
   multi_az = true
   publicly_accessible = true
 }
+
+##
+# API Gateway
+# XXX - This code is on haitus until this TF bug is fixed:
+# https://github.com/terraform-providers/terraform-provider-aws/issues/2511
+##
+
+# data "aws_iam_role" "api_user" {
+#   role_name = "api_user"
+# }
+
+# # module "authorizer_lambda" {
+# #   source   = "../lambda"
+# #   name     = "${var.api_name}-authorizer_lambda"
+# #   filename = "authorizer_lambda"
+# #   runtime  = "nodejs4.3"
+# #   role     = "${data.aws_iam_role.api_user.arn}"
+# # }
+
+# # resource "aws_api_gateway_authorizer" "custom_authorizer" {
+# #   name                   = "${var.api_name}-custom_authorizer"
+# #   rest_api_id            = "${aws_api_gateway_rest_api.ApiGateway.id}"
+# #   authorizer_uri         = "${module.authorizer_lambda.uri}"
+# #   authorizer_credentials = "${data.aws_iam_role.api_user.arn}"
+# #   authorizer_result_ttl_in_seconds = 1
+# # }
+
+# resource "aws_api_gateway_rest_api" "ApiGateway" {
+#   name        = "nomadui"
+#   description = "nomadui"
+# }
+
+# resource "aws_api_gateway_resource" "ApiProxyResource" {
+#   rest_api_id = "${aws_api_gateway_rest_api.ApiGateway.id}"
+#   parent_id   = "${aws_api_gateway_rest_api.ApiGateway.root_resource_id}"
+#   path_part   = "{proxy+}"
+# }
+
+# resource "aws_api_gateway_integration" "ApiProxyIntegration" {
+#   rest_api_id              = "${aws_api_gateway_rest_api.ApiGateway.id}"
+#   resource_id              = "${aws_api_gateway_resource.ApiProxyResource.id}"
+#     http_method              = "${aws_api_gateway_method.ApiProxyMethod.http_method}"
+#     type                     = "HTTP_PROXY"
+#     integration_http_method  = "ANY"
+#     uri                      = "http://${aws_instance.nomad_server_1.public_ip}:4646/ui/{proxy}"
+#     passthrough_behavior     = "WHEN_NO_MATCH"
+#     # request_parameters       = "${var.aws_api_gateway_integration_request_parameters}"
+# }
+
+# resource "aws_api_gateway_method" "ApiProxyMethod" {
+#   rest_api_id                   = "${aws_api_gateway_rest_api.ApiGateway.id}"
+#   resource_id                   = "${aws_api_gateway_resource.ApiProxyResource.id}"
+#   http_method                   = "ANY"
+#   request_parameters            = {"method.request.path.proxy" = true}
+#   authorization                 = "NONE"
+# }
+
+# resource "aws_api_gateway_deployment" "ApiDeployment" {
+#   depends_on = ["aws_api_gateway_method.ApiProxyMethod"]
+#   rest_api_id = "${aws_api_gateway_rest_api.ApiGateway.id}"
+#   stage_name = "${var.stage}"
+# }
+
+# output "nomad_ui_url" {
+#   value = "${aws_api_gateway_rest_api.ApiGateway.id}"
+# }
