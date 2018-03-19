@@ -4,8 +4,6 @@ from django.conf import settings
 from typing import List, Dict
 
 from data_refinery_common.models import (
-    Batch,
-    File,
     SurveyJobKeyValue,
     Organism,
     Experiment,
@@ -33,22 +31,6 @@ class UnsupportedPlatformException(BaseException):
 class ArrayExpressSurveyor(ExternalSourceSurveyor):
     def source_type(self):
         return Downloaders.ARRAY_EXPRESS.value
-
-    def determine_pipeline(self, batch: Batch, key_values: Dict = {}) -> ProcessorPipeline:
-        # If it's a CEL file run SCAN.UPC on it.
-        if batch.files[0].raw_format == "CEL":
-            return ProcessorPipeline.AFFY_TO_PCL
-        # If only processed data is available then we don't need to do
-        # anything to it
-        elif batch.files[0].raw_format == batch.files[0].processed_format:
-            return ProcessorPipeline.NO_OP
-        # If it's not CEL and it's not already processed then we just
-        # want to download it for Jackie's grant.
-        else:
-            return ProcessorPipeline.NONE
-
-    def group_batches(self) -> List[List[Batch]]:
-        return utils.group_batches_by_first_file(self.batches)
 
     def create_experiment_from_api(self, experiment_accession_code: str) -> Dict:
         """

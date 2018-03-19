@@ -7,7 +7,6 @@ from django.utils import timezone
 from typing import List, Dict
 
 from data_refinery_common.models import (
-    File,
     SurveyJobKeyValue,
     OriginalFile
 )
