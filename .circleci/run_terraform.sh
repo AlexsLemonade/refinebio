@@ -5,7 +5,7 @@ unzip terraform_0.11.3_linux_amd64.zip
 sudo mv terraform /usr/local/bin/
 
 apt-get update
-apt-get install lxc -y
+sudo apt-get install lxc -y  # Install lxc, which is required by nomad
 wget https://releases.hashicorp.com/nomad/0.7.1/nomad_0.7.1_linux_amd64-lxc.zip
 unzip nomad_0.7.1_linux_amd64-lxc.zip
 sudo mv nomad /usr/local/bin/
