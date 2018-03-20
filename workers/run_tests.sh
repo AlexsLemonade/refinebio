@@ -49,6 +49,17 @@ if [ ! -e "$rna_seq_test_data_1" ]; then
          "$test_data_repo/$read_2_name"
 fi
 
+# Make sure CEL for test is downloaded from S3
+cel_name="GSM1426071_CD_colon_active_1.CEL"
+cel_test_raw_dir="$volume_directory/raw/TEST/CEL"
+cel_test_data_1="$cel_test_raw_dir/$cel_name"
+if [ ! -e "$cel_test_data_1" ]; then
+    mkdir -p $cel_test_raw_dir
+    echo "Downloading CEL for tests."
+    wget -q -O $cel_test_data_1 \
+         "$test_data_repo/$cel_name"
+fi
+
 # Make sure data for Transcriptome Index tests is downloaded.
 tx_index_test_raw_dir="$volume_directory/raw/TEST/TRANSCRIPTOME_INDEX"
 fasta_file="aegilops_tauschii_short.fa.gz"
@@ -76,5 +87,3 @@ docker run \
        --volume $volume_directory:/home/user/data_store \
        --link drdb:postgres $NOMAD_LINK \
        -it dr_worker_tests bash -c 'coverage run --source="." manage.py test --no-input "$@"; coverage report -m' # This runs everything
-       # -i dr_worker_tests python3 manage.py test data_refinery_workers.processors.test_salmon.SalmonTestCase.test_success --no-input "$@" # This runs a specific test
-       # Can also be called like ./workers/run_tests.sh data_refinery_workers.downloaders.test_sra.DownloadSraTestCase.test_aspera_downloader

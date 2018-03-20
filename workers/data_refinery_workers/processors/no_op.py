@@ -21,8 +21,7 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
     processed location. Useful for handling data that has already been
     processed.
     """
-
-    sample = job_context["samples"][0]
+    original_file = job_context["original_files"][0]
 
     # This is a NO-OP, but we make a ComputationalResult regardless.
     result = ComputationalResult()
@@ -31,16 +30,16 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
     result.system_version = __version__
     result.save()
 
-    # Create a ComputedFile for the sample,
+    # Create a ComputedFile for the OG File,
     # sync it S3 and save it.
     try:
         computed_file = ComputedFile()
-        computed_file.absolute_file_path = sample.source_absolute_file_path
-        computed_file.filename = sample.source_filename
+        computed_file.absolute_file_path = original_file.absolute_file_path
+        computed_file.filename = original_file.filename
         computed_file.calculate_sha1()
         computed_file.calculate_size()
         computed_file.result = result
-        computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
+        # computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
         # TODO here: delete local file after S3 sync
         computed_file.save()
     except Exception:
