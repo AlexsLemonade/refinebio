@@ -25,7 +25,7 @@ openssl aes-256-cbc -d -in $TFSTATE.enc -out $TFSTATE -k $OPENSSL_KEY
 openssl aes-256-cbc -d -in $TFSTATE_BAK.enc -out $TFSTATE_BAK -k $OPENSSL_KEY
 
 # New deployment
-TF_VAR_user=deploy TV_VAR_stage=production ./deploy.sh
+TF_VAR_user=deploy TF_VAR_stage=production ./deploy.sh
 
 # Encrypt new tfstate files
 openssl aes-256-cbc -e -in $TFSTATE -out $TFSTATE.enc -k $OPENSSL_KEY
