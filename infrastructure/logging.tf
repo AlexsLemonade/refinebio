@@ -77,8 +77,8 @@ resource "aws_cloudwatch_log_stream" "log_stream_worker_docker" {
 # Turns out we don't need to actually _make_ the metric - we can just push to it
 # without creating it via TF and it JustWorks^tm - we just have to make sure
 # that we match to this value in our script.
-resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm" {
-    alarm_name = "nomad-queue-length-alarm-${var.user}-${var.stage}"
+resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm_up" {
+    alarm_name = "nomad-queue-length-alarm-up-${var.user}-${var.stage}"
     comparison_operator = "GreaterThanOrEqualToThreshold"
     evaluation_periods = "2"
     metric_name = "NomadQueueLength"
@@ -86,5 +86,31 @@ resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm" {
     period = "60"
     statistic = "Average"
     threshold = "40" # XXX Tweak this to taste!!
-    alarm_description = "This monitors the length of the Nomad queue."
+    alarm_description = "The queue is too long - we need more workers!"
+    alarm_actions = [
+        "${aws_autoscaling_policy.clients_scale_up.arn}"
+    ]
+    dimensions {
+        AutoScalingGroupName = "${aws_autoscaling_group.clients.name}"
+    }
+
+}
+
+resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm_down" {
+    alarm_name = "nomad-queue-length-alarm-down-${var.user}-${var.stage}"
+    comparison_operator = "LessThanThreshold"
+    evaluation_periods = "2"
+    metric_name = "NomadQueueLength"
+    namespace = "${var.user}-${var.stage}"
+    period = "60"
+    statistic = "Average"
+    threshold = "10" # XXX Tweak this to taste!!
+    alarm_description = "The queue is too short - we need less workers!"
+    alarm_actions = [
+        "${aws_autoscaling_policy.clients_scale_down.arn}"
+    ]
+    dimensions {
+        AutoScalingGroupName = "${aws_autoscaling_group.clients.name}"
+    }
+
 }
