@@ -74,9 +74,17 @@ variable "processed_prefix" {
   default = "processed"
 }
 
-# Instance types
+# Instance types / ASG
 variable "client_instance_type" {
   default = "t2.xlarge"
+}
+
+variable "spot_price" {
+  default = "0.01"
+}
+
+variable "max_clients" {
+  default = "20"
 }
 
 # Output our production environment variables. These should be in
