@@ -16,6 +16,11 @@ class SurveyTestCase(TestCase):
         survey_job.save()
         self.survey_job = survey_job
 
+    ##
+    # XXX: Foreman is currently in disuse, but could be revived.
+    # Tests should be updated to match that!
+    ##
+
     # @patch('data_refinery_foreman.foreman.main.send_job')
     # def test_requeuing_downloader_job(self, mock_send_job):
     #     job = self.create_batch_and_downloader_job()

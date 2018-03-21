@@ -65,11 +65,3 @@ class SurveyTestCase(TestCase):
                      downloader_job.id))
 
         mock_send_job.assert_has_calls(send_job_calls)
-
-        # There should be 2 Batches for each species (long and short
-        # transcriptome lengths).
-        # batches = Batch.objects.all()
-        # self.assertEqual(batches.count(), len(species_json) * 2)
-        # # And each batch has two files: fasta and gtf
-        # for batch in batches:
-        #     self.assertEqual(len(batch.files), 2)

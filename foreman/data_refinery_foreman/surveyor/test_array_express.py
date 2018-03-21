@@ -236,7 +236,7 @@ class SurveyTestCase(TestCase):
 
         # Insert the organism into the database so the model doesn't call the
         # taxonomy API to populate it.
-        organism = Organism(name="HOMO SAPIENS",
+        organism = Organism(name="HOMO_SAPIENS",
                             taxonomy_id=9606,
                             is_scientific_name=True)
         organism.save()
@@ -261,48 +261,3 @@ class SurveyTestCase(TestCase):
         ae_surveyor.survey()
 
         downloader_jobs = DownloaderJob.objects.all()
-        # mock_send_task.assert_has_calls([
-        #     call(Downloaders.ARRAY_EXPRESS,
-        #          downloader_jobs[0].id)
-        # ])
-        # batches = Batch.objects.all()
-        # self.assertEqual(2, len(batches))
-        # self.assertEqual(1, len(downloader_jobs))
-
-        # batch = batches[0]
-        # self.assertEqual(batch.survey_job.id, self.survey_job.id)
-        # self.assertEqual(batch.source_type, "ARRAY_EXPRESS")
-        # self.assertEqual(batch.pipeline_required, "AFFY_TO_PCL")
-        # self.assertEqual(batch.platform_accession_code, "A-AFFY-1")
-        # self.assertEqual(batch.experiment_accession_code, "E-MTAB-3050")
-        # self.assertEqual(batch.experiment_title, "Microarray analysis of in vitro differentiation")
-        # self.assertEqual(batch.status, "NEW")
-        # self.assertEqual(batch.release_date, datetime.date(2014, 10, 31))
-        # self.assertEqual(batch.last_uploaded_date, datetime.date(2014, 10, 30))
-        # self.assertEqual(batch.organism_id, 9606)
-        # self.assertEqual(batch.organism_name, "HOMO SAPIENS")
-
-        # file = batch.files[0]
-        # self.assertEqual(file.size_in_bytes, -1)
-        # self.assertEqual(file.download_url, "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.raw.1.zip")  # noqa
-        # self.assertEqual(file.raw_format, "CEL")
-        # self.assertEqual(file.processed_format, "PCL")
-        # self.assertEqual(file.name, "C30057.CEL")
-        # self.assertEqual(file.internal_location, "A-AFFY-1/AFFY_TO_PCL")
-
-
-class GroupBatchesTestCase(TestCase):
-    def test_survey(self):
-        survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
-        surveyor = ArrayExpressSurveyor(survey_job)
-        # file1 = File(download_url="a")
-        # file2 = File(download_url="a")
-        # file3 = File(download_url="b")
-        # file4 = File(download_url="a")
-        # batch1 = Batch(files=[file1])
-        # batch2 = Batch(files=[file2])
-        # batch3 = Batch(files=[file3, file4])
-
-        # surveyor.batches = [batch1, batch2, batch3]
-        # groups = surveyor.group_batches()
-        # self.assertEqual(groups, [[batch1, batch2], [batch3]])
