@@ -232,7 +232,7 @@ data "template_file" "nomad_client_script_smusher" {
 # do it using a normal ec2 instance.
 resource "aws_instance" "nomad_client_1" {
   ami = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.xlarge"
+  instance_type = "${var.client_instance_type}"
   availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"

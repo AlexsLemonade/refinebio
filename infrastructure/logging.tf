@@ -69,3 +69,22 @@ resource "aws_cloudwatch_log_stream" "log_stream_worker_docker" {
   name           = "log-stream-worker-docker-${var.user}-${var.stage}"
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
 }
+
+##
+# Metrics and Alarms
+##
+
+# Turns out we don't need to actually _make_ the metric - we can just push to it
+# without creating it via TF and it JustWorks^tm - we just have to make sure
+# that we match to this value in our script.
+resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm" {
+    alarm_name = "nomad-queue-length-alarm-${var.user}-${var.stage}"
+    comparison_operator = "GreaterThanOrEqualToThreshold"
+    evaluation_periods = "2"
+    metric_name = "NomadQueueLength"
+    namespace = "${var.user}-${var.stage}"
+    period = "60"
+    statistic = "Average"
+    threshold = "40" # XXX Tweak this to taste!!
+    alarm_description = "This monitors the length of the Nomad queue."
+}

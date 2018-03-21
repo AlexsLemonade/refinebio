@@ -74,6 +74,11 @@ variable "processed_prefix" {
   default = "processed"
 }
 
+# Instance types
+variable "client_instance_type" {
+  default = "t2.xlarge"
+}
+
 # Output our production environment variables. These should be in
 # parity with the env files such as workers/environments/dev.
 output "environment_variables" {
