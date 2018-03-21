@@ -77,6 +77,13 @@ resource "aws_cloudwatch_log_stream" "log_stream_worker_docker" {
 # Turns out we don't need to actually _make_ the metric - we can just push to it
 # without creating it via TF and it JustWorks^tm - we just have to make sure
 # that we match to this value in our script.
+
+# We need one metric for scaling up and another for scaling down.
+# If the queue length is larger than [threshold], on average,
+# for more than [evaluation_periods] of [period] seconds, then
+# fire the alarm action to the scale up command, which adds a server.
+
+# For the down alarm, do the opposite.
 resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm_up" {
     alarm_name = "nomad-queue-length-alarm-up-${var.user}-${var.stage}"
     comparison_operator = "GreaterThanOrEqualToThreshold"
