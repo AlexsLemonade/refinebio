@@ -72,6 +72,15 @@ chmod +x install_nomad.sh
 # Start the Nomad agent in server mode.
 nohup nomad agent -config server.hcl > /tmp/nomad_server.log &
 
+# Create the CW metric job in a crontab
+# write out current crontab
+crontab -l > tempcron
+# echo new cron into cron file
+echo "* * * * * BLOCKED=\`curl -s localhost:4646/v1/evaluations | python -m json.tool | grep 'Status": "blocked' | wc -l\`; aws cloudwatch put-metric-data --metric-name NomadQueueLength --namespace ${user}-${stage} --value \$BLOCKED --region ${region}" >> tempcron
+# install new cron file
+crontab tempcron
+rm tempcron
+
 # Delete the cloudinit and syslog in production.
 export STAGE=${stage}
 if [[ $STAGE = *"prod"* ]]; then
