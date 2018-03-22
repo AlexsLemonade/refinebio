@@ -41,10 +41,14 @@ resource "aws_iam_user_policy" "data_refinery_user_worker_policy" {
         {
             "Effect": "Allow",
             "Action": [
-                "cloudwatch:PutMetricData"
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:ListMetrics",
+                "cloudwatch:PutMetricAlarm",
+                "cloudwatch:PutMetricData",
+                "cloudwatch:SetAlarmState"
             ],
             "Resource":
-                "arn:aws:cloudwatch:*:*:*"
+                "*"
         }
     ]
 }
@@ -71,10 +75,14 @@ resource "aws_iam_user_policy" "data_refinery_user_foreman_policy" {
         {
             "Effect": "Allow",
             "Action": [
-                "cloudwatch:PutMetricData"
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:ListMetrics",
+                "cloudwatch:PutMetricAlarm",
+                "cloudwatch:PutMetricData",
+                "cloudwatch:SetAlarmState"
             ],
             "Resource":
-                "arn:aws:cloudwatch:*:*:*"
+                "*"
         }
     ]
 }

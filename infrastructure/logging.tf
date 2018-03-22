@@ -90,16 +90,13 @@ resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm_up" {
     evaluation_periods = "2"
     metric_name = "NomadQueueLength"
     namespace = "${var.user}-${var.stage}"
-    period = "60"
+    period = "120"
     statistic = "Average"
     threshold = "40" # XXX Tweak this to taste!!
     alarm_description = "The queue is too long - we need more workers!"
     alarm_actions = [
         "${aws_autoscaling_policy.clients_scale_up.arn}"
     ]
-    dimensions {
-        AutoScalingGroupName = "${aws_autoscaling_group.clients.name}"
-    }
 
 }
 
@@ -109,15 +106,12 @@ resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm_down" {
     evaluation_periods = "2"
     metric_name = "NomadQueueLength"
     namespace = "${var.user}-${var.stage}"
-    period = "60"
+    period = "120"
     statistic = "Average"
     threshold = "10" # XXX Tweak this to taste!!
     alarm_description = "The queue is too short - we need less workers!"
     alarm_actions = [
         "${aws_autoscaling_policy.clients_scale_down.arn}"
     ]
-    dimensions {
-        AutoScalingGroupName = "${aws_autoscaling_group.clients.name}"
-    }
 
 }

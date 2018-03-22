@@ -75,8 +75,11 @@ nohup nomad agent -config server.hcl > /tmp/nomad_server.log &
 # Create the CW metric job in a crontab
 # write out current crontab
 crontab -l > tempcron
+echo -e '#!/bin/bash\naws cloudwatch put-metric-data --metric-name NomadQueueLength --namespace ${user}-${stage} --value `curl -s localhost:4646/v1/evaluations | python -m json.tool | grep "Status\": \"blocked" | wc -l` --region ${region}' >> update_metric.sh
+chmod +x update_metric.sh
+
 # echo new cron into cron file
-echo "* * * * * BLOCKED=\`curl -s localhost:4646/v1/evaluations | python -m json.tool | grep 'Status": "blocked' | wc -l\`; aws cloudwatch put-metric-data --metric-name NomadQueueLength --namespace ${user}-${stage} --value \$BLOCKED --region ${region}" >> tempcron
+echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n* * * * * /home/ubuntu/update_metric.sh" >> tempcron
 # install new cron file
 crontab tempcron
 rm tempcron
