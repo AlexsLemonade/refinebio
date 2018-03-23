@@ -83,6 +83,8 @@ class Experiment(models.Model):
     def __str__ (self):
         return "Experiment: " + self.accession_code
 
+    samples = models.ManyToManyField('Sample', through='ExperimentSampleAssociation')
+
     # Identifiers
     accession_code = models.CharField(max_length=64, unique=True)
 

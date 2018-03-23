@@ -79,18 +79,22 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'title', 
                     'description',
                     'platform_accession_code',
+                    'samples',
                     'submitter_institution',
                     'created_at',
                     'last_modified'
                 )
 
 class DetailedExperimentSerializer(serializers.ModelSerializer):
+    samples = SampleSerializer(many=True)
+
     class Meta:
         model = Experiment
         fields = (    
                     'id', 
                     'title', 
                     'description',
+                    'samples',
                     'protocol_description',
                     'platform_accession_code',
                     'platform_name',
