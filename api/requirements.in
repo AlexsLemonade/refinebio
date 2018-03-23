@@ -8,4 +8,5 @@ daiquiri
 billiard
 python-nomad
 djangorestframework
+djangorestframework-hstore
 coreapi

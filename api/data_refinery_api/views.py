@@ -6,8 +6,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from data_refinery_common.models import Experiment
-from data_refinery_api.serializers import ExperimentSerializer, DetailedExperimentSerializer
+from data_refinery_common.models import Experiment, Sample
+from data_refinery_api.serializers import ( 
+	ExperimentSerializer, 
+	DetailedExperimentSerializer,
+	SampleSerializer, 
+	DetailedSampleSerializer,
+)
 
 class PaginatedAPIView(APIView):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
@@ -39,6 +44,9 @@ class PaginatedAPIView(APIView):
         assert self.paginator is not None
         return self.paginator.get_paginated_response(data)
 
+##
+# Experiments
+##
 
 class ExperimentList(PaginatedAPIView):
     """
@@ -69,4 +77,39 @@ class ExperimentDetail(APIView):
     def get(self, request, pk, format=None):
         experiment = self.get_object(pk)
         serializer = DetailedExperimentSerializer(experiment)
+        return Response(serializer.data)
+
+##
+# Experiments
+##
+
+class SampleList(PaginatedAPIView):
+    """
+    List all Samples
+    """
+
+    def get(self, request, format=None):
+        samples = Sample.objects.all()
+
+        page = self.paginate_queryset(samples)
+        if page is not None:
+            serializer = SampleSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        else:
+	        serializer = SampleSerializer(samples, many=True)
+	        return Response(serializer.data)
+
+class SampleDetail(APIView):
+    """
+    Retriev an Sample instance.
+    """
+    def get_object(self, pk):
+        try:
+            return Sample.objects.get(pk=pk)
+        except Sample.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk, format=None):
+        sample = self.get_object(pk)
+        serializer = DetailedSampleSerializer(sample)
         return Response(serializer.data)
