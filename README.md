@@ -486,7 +486,7 @@ steps to configure (such as setting up Nomad job specifications and performing d
 
 `refinebio` uses AWS Auto Scaling Groups to provide elastic capacity for large work loads. To do this, we use "Spot Requests". To find a good bid price for your instance type, use the [spot request page](https://console.aws.amazon.com/ec2sp/v1/spot/home?region=us-east-1) and then click on the **view pricing history** chart. Choose your instance type and then choose a big price that it slightly higher than the current price for your availability zone (AZ).
 
-Then set your `TF_VAR_client_instance_type`, `TF_VAR_spot_price` and `TF_VAR_max_clients` to configure your scaling instance types, cost and size.
+Then set your `TF_VAR_client_instance_type`, `TF_VAR_spot_price` and `TF_VAR_max_clients` to configure your scaling instance types, cost and size. `TF_VAR_scale_up_threshold` and `TF_VAR_scale_down_threshold` define the queue lengths which trigger the scaling alarms, though you probably won't need to tweak these as much.
 
 ### Running Jobs
 
