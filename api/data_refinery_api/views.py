@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from data_refinery_common.models import Experiment
-from data_refinery_api.serializers import ExperimentSerializer
+from data_refinery_api.serializers import ExperimentSerializer, DetailedExperimentSerializer
 
 class PaginatedAPIView(APIView):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
@@ -68,5 +68,5 @@ class ExperimentDetail(APIView):
 
     def get(self, request, pk, format=None):
         experiment = self.get_object(pk)
-        serializer = ExperimentSerializer(experiment)
+        serializer = DetailedExperimentSerializer(experiment)
         return Response(serializer.data)
