@@ -108,3 +108,20 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
                     'submitter_institution',
                     'created_at',
                 )
+
+class PlatformSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Experiment
+        fields = (    
+                    'platform_accession_code',
+                    'platform_name',
+                )
+
+class InstitutionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Experiment
+        fields = (    
+                    'submitter_institution',
+                )

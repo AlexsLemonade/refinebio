@@ -6,12 +6,15 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from data_refinery_common.models import Experiment, Sample
+from data_refinery_common.models import Experiment, Sample, Organism
 from data_refinery_api.serializers import ( 
 	ExperimentSerializer, 
 	DetailedExperimentSerializer,
 	SampleSerializer, 
 	DetailedSampleSerializer,
+	OrganismSerializer,
+	PlatformSerializer,
+	InstitutionSerializer
 )
 
 class PaginatedAPIView(APIView):
@@ -96,8 +99,8 @@ class SampleList(PaginatedAPIView):
             serializer = SampleSerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         else:
-	        serializer = SampleSerializer(samples, many=True)
-	        return Response(serializer.data)
+            serializer = SampleSerializer(samples, many=True)
+            return Response(serializer.data)
 
 class SampleDetail(APIView):
     """
@@ -112,4 +115,38 @@ class SampleDetail(APIView):
     def get(self, request, pk, format=None):
         sample = self.get_object(pk)
         serializer = DetailedSampleSerializer(sample)
+        return Response(serializer.data)
+
+##
+# Search Filter Models
+##
+
+class OrganismList(APIView):
+    """
+	Unpaginated list of all the available organisms
+	"""
+     
+    def get(self, request, format=None):
+        organisms = Organism.objects.all()
+        serializer = OrganismSerializer(organisms, many=True)
+        return Response(serializer.data)
+
+class PlatformList(APIView):
+    """
+	Unpaginated list of all the available "platform" information
+	"""
+     
+    def get(self, request, format=None):
+        experiments = Experiment.objects.all().values("platform_accession_code", "platform_name").distinct()
+        serializer = PlatformSerializer(experiments, many=True)
+        return Response(serializer.data)
+
+class InstitutionList(APIView):
+    """
+	Unpaginated list of all the available "institution" information
+	"""
+     
+    def get(self, request, format=None):
+        experiments = Experiment.objects.all().values("submitter_institution").distinct()
+        serializer = InstitutionSerializer(experiments, many=True)
         return Response(serializer.data)
