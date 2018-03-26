@@ -1,6 +1,7 @@
 import csv
 import os
 import requests
+from urllib.parse import urlparse
 
 from billiard import current_process
 from django.core.exceptions import ImproperlyConfigured
@@ -61,3 +62,16 @@ def get_supported_platforms(platforms_csv:str="supported_platforms.csv") -> list
                 supported_platforms.append(line[1])
 
     return supported_platforms
+
+def parse_s3_url(url):
+    """
+    Parses S3 URL.
+    Returns bucket (domain) and file (full path).
+    """
+    bucket = ''
+    path = ''
+    if url:
+        result = urlparse(url)
+        bucket = result.netloc
+        path = result.path.strip('/')
+    return bucket, path
