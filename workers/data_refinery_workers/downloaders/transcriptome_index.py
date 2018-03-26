@@ -7,7 +7,6 @@ from typing import List
 from contextlib import closing
 
 from data_refinery_common.models import (
-    File, 
     DownloaderJob, 
     ProcessorJob,
     DownloaderJobOriginalFileAssociation,
@@ -55,23 +54,6 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
     finally:
         target_file.close()
     return True
-
-
-def _upload_files(job_dir: str, files: List[File], job: DownloaderJob) -> None:
-    try:
-        for file in files:
-            file.size_in_bytes = os.path.getsize(file.get_temp_pre_path(job_dir))
-            file.save()
-            file.upload_raw_file(job_dir)
-    except Exception:
-        logger.exception("Exception caught while uploading file.",
-                         downloader_job=job.id,
-                         batch=file.batch.id)
-        job.failure_reason = "Exception caught while uploading file."
-        raise
-    finally:
-        file.remove_temp_directory(job_dir)
-
 
 def download_transcriptome(job_id: int) -> None:
     """The main function for the Transcriptome Index Downloader.

@@ -1,4 +1,4 @@
-# Refine.bio [![Build Status](https://circleci.com/gh/data-refinery/data-refinery/tree/dev.svg?&style=shield)](https://circleci.com/gh/data-refinery/data-refinery/)
+# Refine.bio [![Build Status](https://circleci.com/gh/AlexsLemonade/refinebio/tree/dev.svg?&style=shield)](https://circleci.com/gh/AlexsLemonade/refinebio/)
 
 <!-- This section needs to be drastically improved -->
 Refine.bio harmonizes petabytes of publicly available biological data into
@@ -106,7 +106,7 @@ to [raise the amount of virtual memory available to Docker](https://docs.docker.
 #### Virtual Environment
 
 Run `./create_virtualenv.sh` to set up the virtualenv. It will activate the `dr_env`
-for you the first time. This virtualenv is valid for the entire `data_refinery`
+for you the first time. This virtualenv is valid for the entire `refinebio`
 repo. Sub-projects each have their own virtualenvs which are managed by their
 containers. When returning to this project you should run
 `source dr_env/bin/activate` to reactivate the virtualenv.
@@ -124,7 +124,7 @@ command:
 
 #### Services
 
-`data-refinery` also depends on Postgres and Nomad. Postgres can be
+`refinebio` also depends on Postgres and Nomad. Postgres can be
 run in a local Docker container, but Nomad must be run on your
 development machine.
 

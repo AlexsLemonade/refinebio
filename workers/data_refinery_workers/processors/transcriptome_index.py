@@ -9,8 +9,6 @@ from typing import Dict
 from django.utils import timezone
 
 from data_refinery_common.models import (
-    File, 
-    BatchKeyValue, 
     Organism, 
     ProcessorJob,
     OriginalFile,
@@ -43,10 +41,6 @@ def _prepare_files(job_context: Dict) -> Dict:
     Also adds the keys "fasta_file_path" and "gtf_file_path" to
     job_context.
     """
-    # Transcriptome index processor jobs have only one batch. Each
-    # batch has a fasta file and a gtf file
-    #batch = job_context["batches"][0]
-    
     original_files = job_context["original_files"]
 
     for og_file in original_files:
@@ -128,8 +122,7 @@ def _handle_shell_error(job_context: Dict, stderr: str, command: str) -> None:
     """Logs an error, cleans up, and updates job_context."""
     logger.error("Shell call to {} failed with error message: %s".format(command),
                  stderr,
-                 processor_job=job_context["job_id"],
-                 batch=job_context["batches"][0])
+                 processor_job=job_context["job_id"])
 
     job_context["gtf_file"].remove_temp_directory(job_context["job_dir_prefix"])
 
