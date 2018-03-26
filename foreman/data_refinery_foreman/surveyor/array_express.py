@@ -308,9 +308,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                          survey_job=self.survey_job.id)
                 continue
             except Sample.DoesNotExist:
-
-
-
                 sample_object = Sample()
                 sample_object.accession_code = sample_accession_code
                 sample_object.organism = organism

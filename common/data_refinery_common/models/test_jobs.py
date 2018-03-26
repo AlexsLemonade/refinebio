@@ -20,3 +20,4 @@ class SanityTestJobsTestCase(TestCase):
         dl_job.downloader_task = "XYZ"
         dl_job.accession_code = "123"
         dl_job.save()
+

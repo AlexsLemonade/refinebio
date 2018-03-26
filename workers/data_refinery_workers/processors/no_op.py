@@ -30,7 +30,7 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
     result.system_version = __version__
     result.save()
 
-    # Create a ComputedFile for the OG File,
+    # Create a ComputedFile for the original file,
     # sync it S3 and save it.
     try:
         computed_file = ComputedFile()
