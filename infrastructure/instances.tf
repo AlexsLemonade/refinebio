@@ -259,8 +259,6 @@ resource "aws_instance" "nomad_client_1" {
   }
 }
 
-
-
 output "nomad_client_ip" {
   value = "${aws_instance.nomad_client_1.public_ip}"
 }
