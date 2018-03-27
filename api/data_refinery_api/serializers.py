@@ -196,6 +196,7 @@ class DownloaderJobSerializer(serializers.ModelSerializer):
                     'id',
                     'downloader_task',
                     'success',
+                    'failure_reason',
                     'original_files',
                     'start_time',
                     'end_time'
@@ -210,6 +211,7 @@ class ProcessorJobSerializer(serializers.ModelSerializer):
                     'id',
                     'pipeline_applied',
                     'success',
+                    'failure_reason',
                     'original_files',
                     'start_time',
                     'end_time'
