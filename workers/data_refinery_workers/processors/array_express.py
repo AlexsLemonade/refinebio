@@ -32,6 +32,8 @@ def _prepare_files(job_context: Dict) -> Dict:
     pre_part = original_file.absolute_file_path.split('/')[:-2]
     end_part = original_file.absolute_file_path.split('/')[-1]
     job_context["output_file_path"] = '/'.join(pre_part) + '/processed/' + end_part
+    job_context["output_file_path"] = job_context["output_file_path"].replace('.CEL', '.PCL')
+    job_context["output_file_path"] = job_context["output_file_path"].replace('.cel', '.PCL')
 
     return job_context
 

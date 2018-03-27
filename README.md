@@ -101,7 +101,9 @@ following the link for those services. The others on that list can
 be installed by running: `brew install iproute2mac git-crypt terraform jq`.
 
 Many of the computational processes running are very memory intensive. You will need
-to [raise the amount of virtual memory available to Docker](https://docs.docker.com/docker-for-mac/#advanced) from the default of 2GB to 12GB or 24GB, if possible. 
+to [raise the amount of virtual memory available to
+Docker](https://docs.docker.com/docker-for-mac/#advanced) from the default of
+2GB to 12GB or 24GB, if possible. 
 
 #### Virtual Environment
 
@@ -482,6 +484,22 @@ steps to configure (such as setting up Nomad job specifications and performing d
 ./deploy.sh
 ```
 
+### Autoscaling and Setting Spot Prices
+
+`refinebio` uses AWS Auto Scaling Groups to provide elastic capacity for large
+work loads. To do this, we use "Spot Requests". To find a good bid price for
+your instance type, use the [spot request
+page](https://console.aws.amazon.com/ec2sp/v1/spot/home?region=us-east-1) and
+then click on the **view pricing history** chart. Choose your instance type and
+then choose a bid price that is slightly higher than the current price for your
+availability zone (AZ).
+
+Then set your `TF_VAR_client_instance_type`, `TF_VAR_spot_price` and
+`TF_VAR_max_clients` to configure your scaling instance types, cost and size.
+`TF_VAR_scale_up_threshold` and `TF_VAR_scale_down_threshold` define the queue
+lengths which trigger the scaling alarms, though you probably won't need to
+tweak these as much.
+
 ### Running Jobs
 
 Jobs can be submitted via Nomad, either from a server/client or a local machine if you supply a server address and have an open network ingress. 
@@ -494,7 +512,9 @@ nomad job dispatch -meta COMMAND=survey_array_express -meta FILE=NEUROBLASTOMA.t
 
 ### Log Consumption
 
-All of the different Refine.bio subservices log to the same AWS CloudWatch Log Group. If you want to consume these logs, you can use the `awslogs` tool, which can be installed from `pip` like so:
+All of the different Refine.bio subservices log to the same AWS CloudWatch Log
+Group. If you want to consume these logs, you can use the `awslogs` tool, which
+can be installed from `pip` like so:
 
 ```bash
 pip install awslogs

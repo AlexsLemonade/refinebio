@@ -74,6 +74,27 @@ variable "processed_prefix" {
   default = "processed"
 }
 
+# Instance types / ASG
+variable "client_instance_type" {
+  default = "m4.large"
+}
+
+variable "spot_price" {
+  default = "0.04"
+}
+
+variable "max_clients" {
+  default = "20"
+}
+
+variable "scale_up_threshold" {
+  default = "40"
+}
+
+variable "scale_down_threshold" {
+  default = "10"
+}
+
 # Output our production environment variables. These should be in
 # parity with the env files such as workers/environments/dev.
 output "environment_variables" {
