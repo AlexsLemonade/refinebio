@@ -6,7 +6,8 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation, 
     Organism,
-    OriginalFile
+    OriginalFile,
+    ComputationalResult
 )
 
 ##
@@ -19,6 +20,24 @@ class OrganismSerializer(serializers.ModelSerializer):
         fields = (    
                     'name', 
                     'taxonomy_id',
+                )
+##
+# Results
+##
+
+class ComputationalResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ComputationalResult
+        fields = (    
+                    'id', 
+                    'command_executed',
+                    'program_version',
+                    'system_version',
+                    'is_ccdl',
+                    'time_start',
+                    'time_end',
+                    'created_at',
+                    'last_modified'
                 )
 
 ##
@@ -55,6 +74,7 @@ class SampleAnnotationSerializer(serializers.ModelSerializer):
 class DetailedSampleSerializer(serializers.ModelSerializer):
     annotations = SampleAnnotationSerializer(many=True, source='sampleannotation_set')
     organism = OrganismSerializer(many=False)
+    results = ComputationalResultSerializer(many=True)
 
     class Meta:
         model = Sample
@@ -66,7 +86,8 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
                     'is_processed',
                     'created_at',
                     'last_modified',
-                    'annotations'
+                    'annotations',
+                    'results'
                 )
 
 ##

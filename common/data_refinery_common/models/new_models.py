@@ -37,6 +37,7 @@ class Sample(models.Model):
 
     # Relations
     organism = models.ForeignKey(Organism, blank=True, null=True, on_delete=models.SET_NULL)
+    results = models.ManyToManyField('ComputationalResult', through='SampleResultAssociation')
 
     # Historical Properties
     source_archive_url = models.CharField(max_length=255)

@@ -65,6 +65,8 @@ class ExperimentList(PaginatedAPIView):
 
     def get(self, request, format=None):
         filter_dict = request.query_params.dict()
+        filter_dict.pop('limit', None)
+        filter_dict.pop('offset', None)
         experiments = Experiment.objects.filter(**filter_dict)
 
         page = self.paginate_queryset(experiments)
@@ -101,6 +103,8 @@ class SampleList(PaginatedAPIView):
 
     def get(self, request, format=None):
         filter_dict = request.query_params.dict()
+        filter_dict.pop('limit', None)
+        filter_dict.pop('offset', None)
         samples = Sample.objects.filter(**filter_dict)
 
         page = self.paginate_queryset(samples)
@@ -176,8 +180,9 @@ class SurveyJobList(PaginatedAPIView):
     """
 
     def get(self, request, format=None):
-
         filter_dict = request.query_params.dict()
+        filter_dict.pop('limit', None)
+        filter_dict.pop('offset', None)
         jobs = SurveyJob.objects.filter(**filter_dict)
 
         page = self.paginate_queryset(jobs)
@@ -195,6 +200,8 @@ class DownloaderJobList(PaginatedAPIView):
 
     def get(self, request, format=None):
         filter_dict = request.query_params.dict()
+        filter_dict.pop('limit', None)
+        filter_dict.pop('offset', None)
         jobs = DownloaderJob.objects.filter(**filter_dict)
 
         page = self.paginate_queryset(jobs)
@@ -212,6 +219,8 @@ class ProcessorJobList(PaginatedAPIView):
 
     def get(self, request, format=None):
         filter_dict = request.query_params.dict()
+        filter_dict.pop('limit', None)
+        filter_dict.pop('offset', None)
         jobs = ProcessorJob.objects.filter(**filter_dict)
 
         page = self.paginate_queryset(jobs)
