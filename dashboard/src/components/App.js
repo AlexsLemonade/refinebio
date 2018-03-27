@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import ChartistGraph from 'react-chartist';
-import './App.css';
+import './App.scss';
+import './custom-chartist.scss';
 
 class App extends Component {
   componentWillMount() {
