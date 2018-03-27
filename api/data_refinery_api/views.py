@@ -64,15 +64,16 @@ class ExperimentList(PaginatedAPIView):
     """
 
     def get(self, request, format=None):
-        experiments = Experiment.objects.all()
+        filter_dict = request.query_params.dict()
+        experiments = Experiment.objects.filter(**filter_dict)
 
         page = self.paginate_queryset(experiments)
         if page is not None:
             serializer = ExperimentSerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         else:
-	        serializer = ExperimentSerializer(experiments, many=True)
-	        return Response(serializer.data)
+            serializer = ExperimentSerializer(experiments, many=True)
+            return Response(serializer.data)
 
 class ExperimentDetail(APIView):
     """
@@ -99,7 +100,8 @@ class SampleList(PaginatedAPIView):
     """
 
     def get(self, request, format=None):
-        samples = Sample.objects.all()
+        filter_dict = request.query_params.dict()
+        samples = Sample.objects.filter(**filter_dict)
 
         page = self.paginate_queryset(samples)
         if page is not None:
