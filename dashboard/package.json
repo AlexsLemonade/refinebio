@@ -1,0 +1,19 @@
+{
+  "name": "dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "proxy": "http://54.175.166.174:4646",
+  "dependencies": {
+    "chartist": "^0.11.0",
+    "react": "^16.2.0",
+    "react-chartist": "^0.13.1",
+    "react-dom": "^16.2.0",
+    "react-scripts": "1.1.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  }
+}
