@@ -37,6 +37,18 @@ resource "aws_iam_user_policy" "data_refinery_user_worker_policy" {
                 "s3:*"
             ],
             "Resource": "arn:aws:s3:::*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:ListMetrics",
+                "cloudwatch:PutMetricAlarm",
+                "cloudwatch:PutMetricData",
+                "cloudwatch:SetAlarmState"
+            ],
+            "Resource":
+                "*"
         }
     ]
 }
@@ -59,6 +71,18 @@ resource "aws_iam_user_policy" "data_refinery_user_foreman_policy" {
             ],
             "Resource": 
                 "arn:aws:logs:*:*:*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:ListMetrics",
+                "cloudwatch:PutMetricAlarm",
+                "cloudwatch:PutMetricData",
+                "cloudwatch:SetAlarmState"
+            ],
+            "Resource":
+                "*"
         }
     ]
 }
