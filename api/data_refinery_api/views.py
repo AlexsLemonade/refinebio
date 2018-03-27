@@ -164,11 +164,19 @@ class InstitutionList(APIView):
 
 class SurveyJobList(PaginatedAPIView):
     """
-    List of all SurveyJob
+    List of all SurveyJob.
+
+	Ex: 
+	  - ?start_time__lte=2018-03-23T15:29:40.848381Z
+	  - ?start_time__lte=2018-03-23T15:29:40.848381Z&start_time__gte=2018-03-23T14:29:40.848381Z
+	  - success=True
+
     """
 
     def get(self, request, format=None):
-        jobs = SurveyJob.objects.all()
+
+        filter_dict = request.query_params.dict()
+        jobs = SurveyJob.objects.filter(**filter_dict)
 
         page = self.paginate_queryset(jobs)
         if page is not None:
@@ -184,7 +192,8 @@ class DownloaderJobList(PaginatedAPIView):
     """
 
     def get(self, request, format=None):
-        jobs = DownloaderJob.objects.all()
+        filter_dict = request.query_params.dict()
+        jobs = DownloaderJob.objects.filter(**filter_dict)
 
         page = self.paginate_queryset(jobs)
         if page is not None:
@@ -200,7 +209,8 @@ class ProcessorJobList(PaginatedAPIView):
     """
 
     def get(self, request, format=None):
-        jobs = ProcessorJob.objects.all()
+        filter_dict = request.query_params.dict()
+        jobs = ProcessorJob.objects.filter(**filter_dict)
 
         page = self.paginate_queryset(jobs)
         if page is not None:
