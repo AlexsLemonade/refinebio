@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import ChartistGraph from 'react-chartist';
 import './App.scss';
 import './custom-chartist.scss';
 
@@ -10,7 +9,7 @@ class App extends Component {
 
   fetchQueues = async () => {
     try {
-      const res = await fetch('/v1/evaluations');
+      const res = await (await fetch('../stats.json')).json();
       console.log(res);
     } catch (e) {
       console.log(e);
@@ -31,7 +30,6 @@ class App extends Component {
         <header className="App-header">
           <h1 className="App-title">Executive Dashboard</h1>
         </header>
-        <ChartistGraph data={dataBar} type="Bar" options={optionsBar} />
       </div>
     );
   }

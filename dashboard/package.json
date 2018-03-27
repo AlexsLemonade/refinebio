@@ -4,10 +4,9 @@
   "private": true,
   "proxy": "http://54.175.166.174:4646",
   "dependencies": {
-    "chartist": "^0.11.0",
+    "axios": "^0.18.0",
     "custom-react-scripts": "^0.2.2",
     "react": "^16.2.0",
-    "react-chartist": "^0.13.1",
     "react-dom": "^16.2.0"
   },
   "scripts": {

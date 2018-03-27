@@ -1,0 +1,23 @@
+{
+    "survey_jobs": {
+        "total": 165,
+        "pending": 0,
+        "completed": 165,
+        "open": 0,
+        "average_time": "9.651066"
+    },
+    "downloader_jobs": {
+        "total": 297,
+        "pending": 0,
+        "completed": 193,
+        "open": 104,
+        "average_time": "53.550762"
+    },
+    "processor_jobs": {
+        "total": 11057,
+        "pending": 7403,
+        "completed": 3651,
+        "open": 3,
+        "average_time": "58.437481"
+    }
+}
