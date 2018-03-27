@@ -287,7 +287,7 @@ resource "aws_launch_configuration" "auto_client_configuration" {
     depends_on = ["aws_internet_gateway.data_refinery", "aws_instance.nomad_server_1"]
     user_data = "${data.template_file.nomad_client_script_smusher.rendered}"
     key_name = "${aws_key_pair.data_refinery.key_name}"
-    spot_price    = "${var.spot_price}"
+    spot_price = "${var.spot_price}"
 
     lifecycle {
         create_before_destroy = true
