@@ -1,10 +1,12 @@
 from rest_framework import serializers
 from rest_framework_hstore.fields import HStoreField
+from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
 from data_refinery_common.models import (
     Experiment,
     Sample,
     SampleAnnotation, 
-    Organism
+    Organism,
+    OriginalFile
 )
 
 ##
@@ -124,4 +126,70 @@ class InstitutionSerializer(serializers.ModelSerializer):
         model = Experiment
         fields = (    
                     'submitter_institution',
+                )
+
+##
+# Files
+##
+class OriginalFileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = OriginalFile
+        fields = (    
+                    'id',
+                    'filename',
+                    'absolute_file_path',
+                    'size_in_bytes',
+                    'sha1',
+                    'source_url',
+                    'source_filename',
+                    'is_downloaded',
+                    'has_raw',
+                    'is_downloaded',
+                    'is_processed'
+                )
+
+##
+# Jobs
+##
+
+class SurveyJobSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SurveyJob
+        fields = (    
+                    'id',
+                    'source_type',
+                    'success',
+
+                    'start_time',
+                    'end_time'
+                )
+
+class DownloaderJobSerializer(serializers.ModelSerializer):
+    original_files = OriginalFileSerializer(many=True)
+
+    class Meta:
+        model = DownloaderJob
+        fields = (    
+                    'id',
+                    'downloader_task',
+                    'success',
+                    'original_files',
+                    'start_time',
+                    'end_time'
+                )
+
+class ProcessorJobSerializer(serializers.ModelSerializer):
+    original_files = OriginalFileSerializer(many=True)
+
+    class Meta:
+        model = ProcessorJob
+        fields = (    
+                    'id',
+                    'pipeline_applied',
+                    'success',
+                    'original_files',
+                    'start_time',
+                    'end_time'
                 )

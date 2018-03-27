@@ -1,4 +1,6 @@
 from django.conf import settings
+from django.db.models.aggregates import Avg
+from django.db.models.expressions import F
 from rest_framework.settings import api_settings
 from django.http import Http404
 
@@ -14,7 +16,12 @@ from data_refinery_api.serializers import (
 	DetailedSampleSerializer,
 	OrganismSerializer,
 	PlatformSerializer,
-	InstitutionSerializer
+	InstitutionSerializer,
+
+	# Jobs
+	SurveyJobSerializer,
+	DownloaderJobSerializer,
+	ProcessorJobSerializer
 )
 
 class PaginatedAPIView(APIView):
@@ -150,3 +157,92 @@ class InstitutionList(APIView):
         experiments = Experiment.objects.all().values("submitter_institution").distinct()
         serializer = InstitutionSerializer(experiments, many=True)
         return Response(serializer.data)
+
+##
+# Jobs
+##
+
+class SurveyJobList(PaginatedAPIView):
+    """
+    List of all SurveyJob
+    """
+
+    def get(self, request, format=None):
+        jobs = SurveyJob.objects.all()
+
+        page = self.paginate_queryset(jobs)
+        if page is not None:
+            serializer = SurveyJobSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        else:
+            serializer = SurveyJobSerializer(jobs, many=True)
+            return Response(serializer.data)
+
+class DownloaderJobList(PaginatedAPIView):
+    """
+    List of all DownloaderJob
+    """
+
+    def get(self, request, format=None):
+        jobs = DownloaderJob.objects.all()
+
+        page = self.paginate_queryset(jobs)
+        if page is not None:
+            serializer = DownloaderJobSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        else:
+            serializer = DownloaderJobSerializer(jobs, many=True)
+            return Response(serializer.data)
+
+class ProcessorJobList(PaginatedAPIView):
+    """
+    List of all ProcessorJobs
+    """
+
+    def get(self, request, format=None):
+        jobs = ProcessorJob.objects.all()
+
+        page = self.paginate_queryset(jobs)
+        if page is not None:
+            serializer = ProcessorJobSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        else:
+            serializer = ProcessorJobSerializer(jobs, many=True)
+            return Response(serializer.data)
+
+###
+# Statistics
+###
+
+from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
+
+class Stats(APIView):
+    """
+	Statistics about the health of the system.
+	"""
+
+    def get(self, request, format=None):
+        data = {}
+        data['survey_jobs'] = {}
+        data['survey_jobs']['total'] = SurveyJob.objects.count()
+        data['survey_jobs']['pending'] = SurveyJob.objects.filter(start_time__isnull=True).count()
+        data['survey_jobs']['completed'] = SurveyJob.objects.filter(end_time__isnull=False).count()
+        data['survey_jobs']['open'] = SurveyJob.objects.filter(start_time__isnull=False, end_time__isnull=True).count()
+        # via https://stackoverflow.com/questions/32520655/get-average-of-difference-of-datetime-fields-in-django
+        data['survey_jobs']['average_time'] = SurveyJob.objects.filter(start_time__isnull=False, end_time__isnull=False).aggregate(average_time=Avg(F('end_time') - F('start_time')))['average_time']
+
+        data['downloader_jobs'] = {}
+        data['downloader_jobs']['total'] = DownloaderJob.objects.count()
+        data['downloader_jobs']['pending'] = DownloaderJob.objects.filter(start_time__isnull=True).count()
+        data['downloader_jobs']['completed'] = DownloaderJob.objects.filter(end_time__isnull=False).count()
+        data['downloader_jobs']['open'] = DownloaderJob.objects.filter(start_time__isnull=False, end_time__isnull=True).count()
+        data['downloader_jobs']['average_time'] = DownloaderJob.objects.filter(start_time__isnull=False, end_time__isnull=False).aggregate(average_time=Avg(F('end_time') - F('start_time')))['average_time']
+
+        data['processor_jobs'] = {}
+        data['processor_jobs']['total'] = ProcessorJob.objects.count()
+        data['processor_jobs']['pending'] = ProcessorJob.objects.filter(start_time__isnull=True).count()
+        data['processor_jobs']['completed'] = ProcessorJob.objects.filter(end_time__isnull=False).count()
+        data['processor_jobs']['open'] = ProcessorJob.objects.filter(start_time__isnull=False, end_time__isnull=True).count()
+        data['processor_jobs']['average_time'] = ProcessorJob.objects.filter(start_time__isnull=False, end_time__isnull=False).aggregate(average_time=Avg(F('end_time') - F('start_time')))['average_time']
+
+        return Response(data)

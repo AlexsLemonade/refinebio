@@ -72,6 +72,8 @@ class ProcessorJob(WorkerJob):
     # processor pipeline was applied during the processor job.
     pipeline_applied = models.CharField(max_length=256)
 
+    original_files = models.ManyToManyField('OriginalFile', through='ProcessorJobOriginalFileAssociation')
+
     # Tracking
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
@@ -88,6 +90,8 @@ class DownloaderJob(models.Model):
     # data_refinery_common.job_lookup.Downloaders
     downloader_task = models.CharField(max_length=256)
     accession_code = models.CharField(max_length=256, blank=True, null=True)
+
+    original_files = models.ManyToManyField('OriginalFile', through='DownloaderJobOriginalFileAssociation')
 
     # Tracking
     start_time = models.DateTimeField(null=True)

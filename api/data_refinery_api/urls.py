@@ -1,4 +1,5 @@
 from django.conf.urls import url, include
+from django.contrib import admin
 from rest_framework.documentation import include_docs_urls
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -12,9 +13,19 @@ from data_refinery_api.views import (
     SampleDetail,
     OrganismList,
     PlatformList,
-    InstitutionList
+    InstitutionList,
+    SurveyJobList,
+    DownloaderJobList,
+    ProcessorJobList,
+    Stats
 )
 
+# Don't uncomment this in production!
+# Uncommenting this will allow unauthenticated access to the admin interface.
+# Very useful for debugging (since we have no User accounts), but very dangerous for prod!
+class AccessUser:
+    has_module_perms = has_perm = __getattr__ = lambda s,*a,**kw: True
+admin.site.has_permission = lambda r: setattr(r, 'user', AccessUser()) or True
 
 # This class provides a friendlier root API page.
 class APIRoot(APIView):
@@ -31,8 +42,21 @@ class APIRoot(APIView):
             'organisms': reverse('organisms', request=request),
             'platforms': reverse('platforms', request=request),
             'institutions': reverse('institutions', request=request),
+            'jobs': reverse('jobs', request=request),
+            'stats': reverse('stats', request=request)
         })
 
+# This class provides a friendlier jobs API page.
+class JobsRoot(APIView):
+    """
+    Jobs!
+    """
+    def get(self, request):
+        return Response({
+            'survey': reverse('survey_jobs', request=request),
+            'downloader': reverse('downloader_jobs', request=request),
+            'processor': reverse('processor_jobs', request=request)
+        })
 
 urlpatterns = [
     # Endpoints / Self-documentation
@@ -44,10 +68,23 @@ urlpatterns = [
     url(r'^platforms/$', PlatformList.as_view(), name="platforms"),
     url(r'^institutions/$', InstitutionList.as_view(), name="institutions"),
 
-    url(r'^', APIRoot.as_view()),
+    # Jobs
+    url(r'^jobs/$', JobsRoot.as_view(), name="jobs"),
+    url(r'^jobs/survey/$', SurveyJobList.as_view(), name="survey_jobs"),
+    url(r'^jobs/downloader/$', DownloaderJobList.as_view(), name="downloader_jobs"),
+    url(r'^jobs/processor/$', ProcessorJobList.as_view(), name="processor_jobs"),
+
+    # Dashboard Driver
+    url(r'^stats/$', Stats.as_view(), name="stats"),
+
+    # Admin
+    url(r'^admin', admin.site.urls),
 
     # Core API schema docs
-    url(r'^docs/', include_docs_urls(title='Refine.bio API'))
+    url(r'^docs', include_docs_urls(title='Refine.bio API')),
+
+    # Root
+    url(r'^', APIRoot.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
