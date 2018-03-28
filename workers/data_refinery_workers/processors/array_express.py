@@ -72,7 +72,7 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
     # Related: https://github.com/data-refinery/data-refinery/issues/85
     # Related: https://github.com/data-refinery/data-refinery/issues/141
     package_name_without_version = package_name.replace("v1", "").replace("v2", "")
-    job_context["brainarray_package"] = package_name_without_version + "hsentrezgprobe"
+    job_context["brainarray_package"] = package_name_without_version + "ensgprobe"
     return job_context
 
 
@@ -128,7 +128,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     scan_version_parts = []
     for version_part in ro.r("packageVersion('SCAN.UPC')")[0]:
         scan_version_parts.append(str(version_part))
-    scan_version = ".".join(scan_version_parts) 
+    scan_version = ".".join(scan_version_parts)
     result.program_version = scan_version
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
@@ -154,7 +154,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
         failure_reason = "Exception caught while moving file to S3"
         job_context["job"].failure_reason = failure_reason
         job_context["success"] = False
-        return job_context        
+        return job_context
 
     logger.info("Created %s", result)
     job_context["success"] = True
