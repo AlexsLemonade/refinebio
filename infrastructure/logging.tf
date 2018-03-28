@@ -92,7 +92,7 @@ resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm_up" {
     namespace = "${var.user}-${var.stage}"
     period = "120"
     statistic = "Average"
-    threshold = "{var.scale_up_threshold}"
+    threshold = "${var.scale_up_threshold}"
     alarm_description = "The queue is too long - we need more workers!"
     alarm_actions = [
         "${aws_autoscaling_policy.clients_scale_up.arn}"
@@ -108,7 +108,7 @@ resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm_down" {
     namespace = "${var.user}-${var.stage}"
     period = "120"
     statistic = "Average"
-    threshold = "{var.scale_down_threshold}"
+    threshold = "${var.scale_down_threshold}"
     alarm_description = "The queue is too short - we need less workers!"
     alarm_actions = [
         "${aws_autoscaling_policy.clients_scale_down.arn}"

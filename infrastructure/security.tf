@@ -8,6 +8,10 @@ resource "aws_key_pair" "data_refinery" {
   public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDG1WFcvLLyLK7jZfhYnNBfbVwm259du2ig4tYcicA1d8d8I43LcWg2WYpd7EfNFH8LnJMDg632NcnQ0qzrpUG4zLGTcYufXm1Fm97J285iabzlUxfgSpbk5Ee1ioNCmqtPxEgy5lrt2xw0p3Rnbn0NvSKzwGU82/k/NCbxeKbaRpHLjz9TTcAdcZLugV7Syr8W+zWBqlCIMyC4ce4t8s/ecGbyacmRPdPqC9jUBC0guLHeQmlinINJIr+wMihxJ0B5Zcyokf4wXlQBPPcB89oO9L81nlApY6aK5JJrhkSN8M5+YOkdk6Xi4SZuJD5SLWbilKGPiCNiLPAnPw7m7Ual"
 }
 
+##
+# Workers
+##
+
 # This is a security group for Data Refinery Workers, which currently
 # includes the Nomad Server nodes as well.
 resource "aws_security_group" "data_refinery_worker" {
@@ -111,6 +115,10 @@ resource "aws_security_group_rule" "data_refinery_worker_outbound" {
   security_group_id = "${aws_security_group.data_refinery_worker.id}"
 }
 
+##
+# Database
+##
+
 resource "aws_security_group" "data_refinery_db" {
   name = "data-refinery_db-${var.user}-${var.stage}"
   description = "data_refinery_db-${var.user}-${var.stage}"
@@ -155,4 +163,56 @@ resource "aws_security_group_rule" "data_refinery_db_outbound" {
   protocol = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
   security_group_id = "${aws_security_group.data_refinery_db.id}"
+}
+
+##
+# API
+##
+
+resource "aws_security_group" "data_refinery_api" {
+  name = "data-refinery-api-${var.user}-${var.stage}"
+  description = "data-refinery-api-${var.user}-${var.stage}"
+  vpc_id = "${aws_vpc.data_refinery_vpc.id}"
+
+  tags {
+    Name = "data-refinery-api-${var.user}-${var.stage}"
+  }
+}
+
+# XXX: THIS DEFINITELY NEEDS TO BE REMOVED LONG TERM!!!!!!!!!!
+resource "aws_security_group_rule" "data_refinery_api_ssh" {
+  type = "ingress"
+  from_port = 22
+  to_port = 22
+  protocol = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = "${aws_security_group.data_refinery_api.id}"
+}
+
+resource "aws_security_group_rule" "data_refinery_api_http" {
+  type = "ingress"
+  from_port = 80
+  to_port = 80
+  protocol = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = "${aws_security_group.data_refinery_api.id}"
+}
+
+resource "aws_security_group_rule" "data_refinery_api_https" {
+  type = "ingress"
+  from_port = 443
+  to_port = 443
+  protocol = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = "${aws_security_group.data_refinery_api.id}"
+}
+
+resource "aws_security_group_rule" "data_refinery_api_outbound" {
+  type = "egress"
+  from_port = 0
+  to_port = 0
+  protocol = "all"
+  cidr_blocks = ["0.0.0.0/0"]
+  ipv6_cidr_blocks = ["::/0"]
+  security_group_id = "${aws_security_group.data_refinery_api.id}"
 }

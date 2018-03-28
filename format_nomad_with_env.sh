@@ -8,8 +8,8 @@
 while getopts ":p:e:o:h" opt; do
     case $opt in
         p)
-            if [[ $OPTARG != "workers" && $OPTARG != "foreman" ]]; then
-                echo 'Error: -p must either specify "workers" or "foreman".'
+            if [[ $OPTARG != "workers" && $OPTARG != "foreman" && $OPTARG != "api" ]]; then
+                echo 'Error: -p must either specify "api", workers" or "foreman".'
                 exit 1
             fi
             project=$OPTARG
@@ -23,7 +23,7 @@ while getopts ":p:e:o:h" opt; do
         h)
             echo "Formats Nomad Job Specifications with the specified environment overlaid "
             echo "onto the current environment."
-            echo '-p specifies the project to format. Valid values are "workers" or "foreman".'
+            echo '-p specifies the project to format. Valid values are "api", workers" or "foreman".'
             echo '- "dev" is the default enviroment, use -e to specify "prod" or "test".'
             echo '- the project directory will be used as the default output directory, use -o to specify'
             echo '      an absolute path to a directory (trailing / must be included).'
@@ -113,5 +113,10 @@ elif [[ $project == "foreman" ]]; then
     cat surveyor.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                > "$output_dir"surveyor.nomad \
+               2> /dev/null
+elif [[ $project == "api" ]]; then
+    cat environment.tpl \
+        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+               > "$output_dir"environment \
                2> /dev/null
 fi

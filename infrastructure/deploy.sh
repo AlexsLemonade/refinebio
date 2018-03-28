@@ -18,7 +18,8 @@ cp deploy/ci_ingress.tf .
 terraform plan
 
 # Open up ingress to AWS for Circle, stop jobs, migrate DB.
-echo "Applying ingress.."
+echo "Deploying with ingress.."
+../format_nomad_with_env.sh -p api -e prod -o $(pwd)/api-configuration/
 terraform apply -auto-approve
 
 # Find address of Nomad server.
@@ -102,7 +103,7 @@ docker run \
 rm prod_env
 
 # Template the environment variables for production into the Nomad Job
-# specs.
+# specs and API confs.
 mkdir -p nomad-job-specs
 ../format_nomad_with_env.sh -p workers -e prod -o $(pwd)/nomad-job-specs/
 ../format_nomad_with_env.sh -p foreman -e prod -o $(pwd)/nomad-job-specs/

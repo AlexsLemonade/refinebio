@@ -359,3 +359,68 @@ resource "aws_db_instance" "postgres_db" {
   multi_az = true
   publicly_accessible = true
 }
+
+##
+# API Webserver
+##
+
+# This is the configuration for the Nomad Server.
+data "local_file" "api_nginx_config" {
+  filename = "api-configuration/nginx_config.conf"
+}
+
+data "local_file" "api_environment" {
+  filename = "api-configuration/environment"
+}
+
+# This script smusher serves a similar purpose to
+# ${data.template_file.nomad_lead_server_script_smusher} but for the Nginx/API.
+data "template_file" "api_server_script_smusher" {
+  template = "${file("api-configuration/api-server-instance-user-data.tpl.sh")}"
+
+  vars {
+    nginx_config = "${data.local_file.api_nginx_config.content}"
+    api_environment = "${data.local_file.api_environment.content}"
+    api_docker_image = "${var.api_docker_image}"
+    user = "${var.user}"
+    stage = "${var.stage}"
+    region = "${var.region}"
+    database_host = "${aws_db_instance.postgres_db.address}"
+    database_user = "${var.database_user}"
+    database_password = "${var.database_password}"
+    database_name = "${aws_db_instance.postgres_db.name}"
+  }
+}
+
+resource "aws_instance" "api_server_1" {
+  ami = "${data.aws_ami.ubuntu.id}"
+  instance_type = "${var.api_instance_type}"
+  availability_zone = "${var.region}a"
+  vpc_security_group_ids = ["${aws_security_group.data_refinery_api.id}"]
+  iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
+  subnet_id = "${aws_subnet.data_refinery_1a.id}"
+  depends_on = ["aws_db_instance.postgres_db"]
+  user_data = "${data.template_file.api_server_script_smusher.rendered}"
+  key_name = "${aws_key_pair.data_refinery.key_name}"
+
+  tags = {
+    Name = "API Server 1 ${var.user}-${var.stage}"
+  }
+
+  # I think these are the defaults provided in terraform examples.
+  # They should be removed or revisited.
+  root_block_device = {
+    volume_type = "gp2"
+    volume_size = 100
+  }
+
+  ebs_block_device = {
+    device_name = "/dev/xvdcz"
+    volume_type = "gp2"
+    volume_size = 40
+  }
+}
+
+output "api_server_1_ip" {
+  value = "${aws_instance.api_server_1.public_ip}"
+}
