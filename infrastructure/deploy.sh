@@ -14,6 +14,15 @@ export TF_VAR_host_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
 # Copy ingress config to top level so it can be applied.
 cp deploy/ci_ingress.tf .
 
+# We have terraform output environment variables via a single output
+# variable, which we then read in as json using the command line tool
+# `jq`, so that we can use them via bash.
+for row in $(terraform output -json environment_variables | jq -c '.value[]'); do
+    env_var_assignment=$(echo $row | jq -r ".name")=$(echo $row | jq -r ".value")
+    export $env_var_assignment
+    echo $env_var_assignment >> prod_env
+done
+
 # Output the plan for debugging deployments later.
 terraform plan
 

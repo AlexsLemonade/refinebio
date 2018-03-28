@@ -69,6 +69,10 @@ mkdir -p /tmp/volumes_static
 chmod a+rwx /tmp/volumes_static
 docker run \
        --env-file environment \
+       -e DATABASE_HOST=${database_host} \
+       -e DATABASE_NAME=${database_name} \
+       -e DATABASE_USER=${database_user} \
+       -e DATABASE_PASSWORD=${database_password} \
        -v "$STATIC_VOLUMES":/tmp/www/static \
        -p 8081:8081 \
        -it -d ${api_docker_image} /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
