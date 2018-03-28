@@ -17,9 +17,14 @@ COPY api/ .
 
 # uWSGI
 RUN pip install uwsgi
+RUN chmod +x /home/user/collect_and_run_uwsgi.sh
+
+RUN mkdir -p /var/www/static
+VOLUME /var/www/static
 
 USER user
 
 EXPOSE 8081
 
-CMD ["uwsgi", "--ini", "uwsgi.ini", "--http", "8081"]
+
+CMD ["/home/user/collect_and_run_uwsgi.sh"]
