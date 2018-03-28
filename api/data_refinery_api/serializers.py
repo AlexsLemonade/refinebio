@@ -182,7 +182,6 @@ class SurveyJobSerializer(serializers.ModelSerializer):
                     'id',
                     'source_type',
                     'success',
-
                     'start_time',
                     'end_time'
                 )
