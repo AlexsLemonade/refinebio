@@ -2,7 +2,6 @@ import requests
 from typing import List, Dict
 import xml.etree.ElementTree as ET
 from data_refinery_common.models import (
-    File,
     SurveyJob,
     Organism,
     OriginalFile,
@@ -257,52 +256,6 @@ class SraSurveyor(ExternalSourceSurveyor):
         SraSurveyor.gather_submission_metadata(metadata)
 
         return metadata
-
-    @staticmethod
-    def _build_file(run_accession: str, read_suffix="")-> File:
-        # ENA has a weird way of nesting data: if the run accession is
-        # greater than 9 characters long then there is an extra
-        # sub-directory in the path which is "00" + the last digit of
-        # the run accession.
-        sub_dir = ""
-        if len(run_accession) > 9:
-            sub_dir = ENA_SUB_DIR_PREFIX + run_accession[-1]
-
-        return File(name=(run_accession + read_suffix + ".fastq.gz"),
-                    download_url=ENA_DOWNLOAD_URL_TEMPLATE.format(
-                        short_accession=run_accession[:6],
-                        sub_dir=sub_dir,
-                        long_accession=run_accession,
-                        read_suffix=read_suffix),
-                    raw_format="fastq.gz",
-                    processed_format="tar.gz",
-                    size_in_bytes=-1)  # Will have to be determined later
-
-    @staticmethod
-    def _build_file_url(run_accession: str, read_suffix="")-> File:
-        # ENA has a weird way of nesting data: if the run accession is
-        # greater than 9 characters long then there is an extra
-        # sub-directory in the path which is "00" + the last digit of
-        # the run accession.
-        sub_dir = ""
-        if len(run_accession) > 9:
-            sub_dir = ENA_SUB_DIR_PREFIX + run_accession[-1]
-
-        return ENA_DOWNLOAD_URL_TEMPLATE.format(
-                        short_accession=run_accession[:6],
-                        sub_dir=sub_dir,
-                        long_accession=run_accession,
-                        read_suffix=read_suffix)
-
-    def _generate_experiment_and_samples(self, run_accession: str) -> None:
-        """Generates Experiments and Samples for the provided run_accession."""
-        metadata = SraSurveyor.gather_all_metadata(run_accession)
-
-        if metadata["library_layout"] == "PAIRED":
-            files_urls = [SraSurveyor._build_file_url(run_accession, "_1"),
-                     SraSurveyor._build_file_url(run_accession, "_2")]
-        else:
-            files_urls = [SraSurveyor._build_file_url(run_accession)]
 
         ##
         # Experiment

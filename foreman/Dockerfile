@@ -19,4 +19,4 @@ COPY foreman/ .
 
 USER user
 
-ENTRYPOINT ["python3.6", "manage.py"]
+ENTRYPOINT []

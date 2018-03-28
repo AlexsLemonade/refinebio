@@ -48,30 +48,6 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(SraSurveyor.get_next_accession("DRR12345678"), "DRR12345679")
         self.assertEqual(SraSurveyor.get_next_accession("DRR123456789"), "DRR123456790")
 
-    @patch.object(SraSurveyor, "_generate_batch")
-    def test_discover_batches(self, mock_generate_batch):
-        survey_job = SurveyJob(source_type="SRA")
-        survey_job.save()
-
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="start_accession",
-                                           value="DRR012345")
-        key_value_pair.save()
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="end_accession",
-                                           value="DRR012348")
-        key_value_pair.save()
-
-        sra_surveyor = SraSurveyor(survey_job)
-        sra_surveyor.discover_batches()
-
-        mock_generate_batch.assert_has_calls([
-            call("DRR012345"),
-            call("DRR012346"),
-            call("DRR012347"),
-            call("DRR012348")
-        ])
-
     @patch('data_refinery_foreman.surveyor.sra.requests.get')
     def test_metadata_is_gathered_correctly(self, mock_get):
         mock_get.side_effect = mocked_requests_get
@@ -132,49 +108,3 @@ class SraSurveyorTestCase(TestCase):
                           "was also determined by uding stranded sequencing "
                           "methods."))
         self.assertEqual(metadata["submission_title"], "Submitted by RIKEN_CDB on 19-JUL-2013")
-
-    @patch('data_refinery_foreman.surveyor.sra.requests.get')
-    def test_batch_created(self, mock_get):
-        mock_get.side_effect = mocked_requests_get
-
-        # Use same run accession for the start and end of the range to
-        # achieve a length of 1
-        survey_job = SurveyJob(source_type="SRA")
-        survey_job.save()
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="start_accession",
-                                           value=RUN_ACCESSION)
-        key_value_pair.save()
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="end_accession",
-                                           value=RUN_ACCESSION)
-        key_value_pair.save()
-
-        surveyor = SraSurveyor(survey_job)
-
-        self.assertTrue(surveyor.discover_batches())
-        # With only a single run accession there should only be a
-        # single batch.
-        self.assertEqual(len(surveyor.batches), 1)
-
-        batch = surveyor.batches[0]
-        self.assertEqual(batch.survey_job.id, survey_job.id)
-        self.assertEqual(batch.source_type, "SRA")
-        self.assertEqual(batch.pipeline_required, "SALMON")
-        self.assertEqual(batch.platform_accession_code, "IlluminaHiSeq2000")
-        self.assertEqual(batch.experiment_accession_code, "DRX001563")
-        self.assertEqual(batch.experiment_title, ("Illumina HiSeq 2000 sequencing; "
-                                                  "Exp_Gg_HH16_1_embryo_mRNAseq"))
-        self.assertEqual(batch.status, "NEW")
-        self.assertEqual(batch.release_date, "2013-07-19")
-        self.assertEqual(batch.last_uploaded_date, "2017-08-11")
-        self.assertEqual(batch.organism_id, 9031)
-        self.assertEqual(batch.organism_name, "GALLUS GALLUS")
-
-        file = batch.files[0]
-        self.assertEqual(file.size_in_bytes, -1)
-        self.assertEqual(file.download_url, "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/DRR002/DRR002116/DRR002116.fastq.gz")  # noqa
-        self.assertEqual(file.raw_format, "fastq.gz")
-        self.assertEqual(file.processed_format, "tar.gz")
-        self.assertEqual(file.name, "DRR002116.fastq.gz")
-        self.assertEqual(file.internal_location, "IlluminaHiSeq2000/SALMON")

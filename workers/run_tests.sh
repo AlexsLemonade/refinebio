@@ -49,6 +49,17 @@ if [ ! -e "$rna_seq_test_data_1" ]; then
          "$test_data_repo/$read_2_name"
 fi
 
+# Make sure CEL for test is downloaded from S3
+cel_name="GSM1426071_CD_colon_active_1.CEL"
+cel_test_raw_dir="$volume_directory/raw/TEST/CEL"
+cel_test_data_1="$cel_test_raw_dir/$cel_name"
+if [ ! -e "$cel_test_data_1" ]; then
+    mkdir -p $cel_test_raw_dir
+    echo "Downloading CEL for tests."
+    wget -q -O $cel_test_data_1 \
+         "$test_data_repo/$cel_name"
+fi
+
 # Make sure data for Transcriptome Index tests is downloaded.
 tx_index_test_raw_dir="$volume_directory/raw/TEST/TRANSCRIPTOME_INDEX"
 fasta_file="aegilops_tauschii_short.fa.gz"
@@ -56,6 +67,12 @@ if [ ! -e "$tx_index_test_raw_dir/$fasta_file" ]; then
     echo "Downloading fasta file for Transcriptome Index tests."
     wget -q -O "$tx_index_test_raw_dir/$fasta_file" \
          "$test_data_repo/$fasta_file"
+fi
+gtf_file="aegilops_tauschii_short.gtf.gz"
+if [ ! -e "$tx_index_test_raw_dir/$gtf_file" ]; then
+    echo "Downloading GTF file for Transcriptome Index tests."
+    wget -q -O "$tx_index_test_raw_dir/$gtf_file" \
+         "$test_data_repo/$gtf_file"
 fi
 
 # Ensure permissions are set for everything within the test data directory.
@@ -75,6 +92,4 @@ docker run \
        --env-file workers/environments/test \
        --volume $volume_directory:/home/user/data_store \
        --link drdb:postgres $NOMAD_LINK \
-        -i dr_worker_tests python3 manage.py test --no-input "$@" # This runs everything
-       # -i dr_worker_tests python3 manage.py test data_refinery_workers.processors.test_salmon.SalmonTestCase.test_success --no-input "$@" # This runs a specific test
-       # Can also be called like ./workers/run_tests.sh data_refinery_workers.downloaders.test_sra.DownloadSraTestCase.test_aspera_downloader
+       -it dr_worker_tests bash -c 'coverage run --source="." manage.py test --no-input "$@"; coverage report -m' # This runs everything

@@ -6,7 +6,7 @@ import shutil
 import subprocess
 from contextlib import closing
 
-from data_refinery_common.models import File, DownloaderJob, DownloaderJobOriginalFileAssociation
+from data_refinery_common.models import DownloaderJob, DownloaderJobOriginalFileAssociation
 from data_refinery_workers.downloaders import utils
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable

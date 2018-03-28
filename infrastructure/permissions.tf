@@ -94,6 +94,18 @@ resource "aws_iam_policy" "cloudwatch_policy" {
             "Resource": [
                 "arn:aws:logs:*:*:*"
             ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:ListMetrics",
+                "cloudwatch:PutMetricAlarm",
+                "cloudwatch:PutMetricData",
+                "cloudwatch:SetAlarmState"
+            ],
+            "Resource":
+                "*"
         }
     ]
 }

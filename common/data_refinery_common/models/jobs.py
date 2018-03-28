@@ -1,7 +1,6 @@
 from django.db import transaction
 from django.db import models
 from data_refinery_common.models.base_models import TimeTrackedModel
-from data_refinery_common.models.batches import Batch
 
 from data_refinery_common.models.new_models import Sample, Experiment, OriginalFile
 
@@ -12,7 +11,6 @@ class WorkerJob(TimeTrackedModel):
     class Meta:
         abstract = True
 
-    batches = models.ManyToManyField(Batch)
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
     success = models.NullBooleanField(null=True)
@@ -40,27 +38,6 @@ class WorkerJob(TimeTrackedModel):
 
     # If the job is retried, this is the id of the new job
     retried_job = models.ForeignKey('self', on_delete=models.PROTECT, null=True)
-
-    @classmethod
-    @transaction.atomic
-    def create_job_and_relationships(cls, *args, **kwargs):
-        """Inits and saves a job and its relationships to its batches.
-
-        Expects keyword arguments that could be passed to the init
-        method for WorkerJob, with the addition of the keyword
-        argument 'batches', which must be specified as a list of Batch
-        objects which have already been saved (so they have an id).
-        """
-        batches = kwargs.pop('batches', None)
-        this_job = cls(*args, **kwargs)
-        if batches is None:
-            raise KeyError("The 'batches' argument must be specified.")
-        else:
-            this_job.save()
-            this_job.batches.add(*batches)
-
-        return this_job
-
 
 class ProcessorJob(WorkerJob):
     """Records information about running a processor."""

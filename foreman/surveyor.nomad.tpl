@@ -58,6 +58,8 @@ job "SURVEYOR" {
 
         # The args to pass to the Docker container's entrypoint.
         args = [
+          "python3.6",
+          "manage.py",
           "${NOMAD_META_COMMAND}",
           "--file", "${NOMAD_META_FILE}",
         ]

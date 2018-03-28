@@ -17,4 +17,4 @@ RUN sh aspera-cli-3.7.7.608.927cce8-linux-64-release.sh
 
 COPY workers/ .
 
-ENTRYPOINT ["python3", "manage.py"]
+ENTRYPOINT []
