@@ -426,3 +426,4 @@ resource "aws_instance" "api_server_1" {
 output "api_server_1_ip" {
   value = "${aws_instance.api_server_1.public_ip}"
 }
+

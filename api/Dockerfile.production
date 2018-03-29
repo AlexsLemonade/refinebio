@@ -31,3 +31,4 @@ VOLUME /tmp/www/static
 EXPOSE 8081
 
 CMD ["/home/user/collect_and_run_uwsgi.sh"]
+

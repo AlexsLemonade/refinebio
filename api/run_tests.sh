@@ -27,3 +27,4 @@ docker run \
        --env-file api/environments/test \
        --link drdb:postgres $NOMAD_LINK \
        -it dr_api bash -c 'coverage run --source="." manage.py test --no-input "$@"; coverage report -m'
+

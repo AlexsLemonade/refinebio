@@ -105,5 +105,3 @@ if [[ $STAGE = *"prod"* ]]; then
     rm /var/log/syslog
 fi
 
-# docker logs -f dr_api_prod2 > /var/log/docker_api.log &
-

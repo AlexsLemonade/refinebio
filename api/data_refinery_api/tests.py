@@ -13,7 +13,7 @@ from data_refinery_api.serializers import (
     PlatformSerializer,
     InstitutionSerializer,
 
-	# Jobs
+    # Jobs
     SurveyJobSerializer,
     DownloaderJobSerializer,
     ProcessorJobSerializer
@@ -72,3 +72,4 @@ class SanityTestAllEndpoints(APITestCase):
 
         response = self.client.get(reverse('api_root'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+

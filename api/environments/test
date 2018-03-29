@@ -11,7 +11,7 @@ DATABASE_TIMEOUT=5
 NOMAD_HOST=nomad
 
 RUNNING_IN_CLOUD=False
-SERVICE=common
+SERVICE=api
 
 RAW_PREFIX=raw
 TEMP_PREFIX=temp
@@ -20,3 +20,4 @@ LOCAL_ROOT_DIR=/home/user/data_store
 USE_S3=False
 S3_BUCKET_NAME=data-refinery
 DATABASE_TIMEOUT=5
+

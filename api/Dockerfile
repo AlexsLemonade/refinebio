@@ -20,3 +20,4 @@ USER user
 EXPOSE 8000
 
 ENTRYPOINT []
+
