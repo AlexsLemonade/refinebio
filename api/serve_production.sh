@@ -31,3 +31,4 @@ docker run \
        -v "$STATIC_VOLUMES":/tmp/www/static \
        -p 8081:8081 \
        -it -d dr_api_prod2 /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
+

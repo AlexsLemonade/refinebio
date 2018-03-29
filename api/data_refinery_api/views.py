@@ -267,3 +267,4 @@ class Stats(APIView):
         data['processor_jobs']['average_time'] = ProcessorJob.objects.filter(start_time__isnull=False, end_time__isnull=False).aggregate(average_time=Avg(F('end_time') - F('start_time')))['average_time']
 
         return Response(data)
+

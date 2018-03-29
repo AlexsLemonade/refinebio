@@ -75,3 +75,4 @@ def parse_s3_url(url):
         bucket = result.netloc
         path = result.path.strip('/')
     return bucket, path
+

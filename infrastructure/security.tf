@@ -234,3 +234,4 @@ resource "aws_security_group_rule" "data_refinery_api_outbound" {
   ipv6_cidr_blocks = ["::/0"]
   security_group_id = "${aws_security_group.data_refinery_api.id}"
 }
+

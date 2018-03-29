@@ -215,3 +215,4 @@ class ProcessorJobSerializer(serializers.ModelSerializer):
                     'start_time',
                     'end_time'
                 )
+

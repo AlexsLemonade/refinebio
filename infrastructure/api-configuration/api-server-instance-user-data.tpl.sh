@@ -87,3 +87,4 @@ if [[ $STAGE = *"prod"* ]]; then
 fi
 
 # docker logs -f dr_api_prod2 > /var/log/docker_api.log &
+

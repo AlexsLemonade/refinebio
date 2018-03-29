@@ -8,3 +8,4 @@ from data_refinery_common.models import (
 admin.site.register(ProcessorJob)
 admin.site.register(DownloaderJob)
 admin.site.register(SurveyJob)
+

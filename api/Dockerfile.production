@@ -24,9 +24,10 @@ RUN chown user /tmp/www/static
 
 USER user
 
+# We collect Django's static files and expose them
+# as a volume so that Nginx can serve them directly.
 VOLUME /tmp/www/static
 
 EXPOSE 8081
-
 
 CMD ["/home/user/collect_and_run_uwsgi.sh"]
