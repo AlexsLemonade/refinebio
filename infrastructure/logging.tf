@@ -70,7 +70,7 @@ resource "aws_cloudwatch_log_stream" "log_stream_worker_docker" {
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
 }
 
-# API (Docker)
+# API
 resource "aws_cloudwatch_log_stream" "log_stream_api_docker" {
   name           = "log-stream-api-docker-${var.user}-${var.stage}"
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
