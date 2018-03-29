@@ -14,7 +14,7 @@ chips <- c()
 pkg_urls <- c()
 
 # This function parses a data row in the table and saves chip names and
-# the URLs of "P" R source package to chips and pkg_urls repectively.
+# URLs of "P" R source package to chips and pkg_urls respectively.
 save_chip_pkg <- function(row) {
     # Column #3: "Chip"
     chip_name <- xml_text(xml_child(row, 3))
