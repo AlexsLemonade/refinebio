@@ -18,7 +18,7 @@ devtools::install_version('pkgconfig', version='2.0.1')
 
 # Bioconductor packages, installed by devtools::install_url()
 
-# install_url() requires biocLite.R
+# devtools::install_url() requires biocLite.R
 source('https://bioconductor.org/biocLite.R')
 
 # Helper function that installs a list of packages based on input URL
@@ -58,19 +58,8 @@ annotation_pkgs <- c(
 )
 install_with_url(annotation_url, annotation_pkgs)
 
-###############################################################################
-# Use devtools::install_url() to install BrainArray pacakges whose urls match
-# this pattern:
-# http://mbni.org/customcdf/22.0.0/ensg.download/*probe_22.0.0.tar.gz
-
-# Use xml2 to parse the html file
-mbni_url <- "http://mbni.org/customcdf/22.0.0/ensg.download/"
-install.packages("xml2")
-html_file <- xml2::download_html(mbni_url)
-html_content <- xml2::read_html(html_file)
-anchors <- xml2::xml_text(xml2::xml_find_all(html_content, ".//a"))
-probe_pkgs <- anchors[grep("probe_22.0.0.tar.gz", anchors)]
-install_with_url(mbni_url, probe_pkgs)
+# Invoke another R script to install BrainArray ensg packages
+source("install_ensg_pkgs.R")
 
 # Install Bioconductor platform design (pd) packages
 experiment_url <- 'https://bioconductor.org/packages/release/data/experiment/src/contrib/'
