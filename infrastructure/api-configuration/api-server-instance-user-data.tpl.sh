@@ -47,7 +47,7 @@ log_stream_name = log-stream-api-nginx-error-${user}-${stage}
 [/tmp/access.log]
 file = /tmp/access.log
 log_group_name = ${log_group}
-log_stream_name = log-stream-api-nginx-error-${user}-${stage}
+log_stream_name = log-stream-api-nginx-access-${user}-${stage}
 
 EOF
 
