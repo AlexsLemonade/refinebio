@@ -37,7 +37,7 @@ save_chip_pkg <- function(row) {
 lapply(data_rows, save_chip_pkg)
 
 # Write chips and pkg_urls to a tab-delimited file
-output_filename <- paste("/home/user/r_ensg_probe_pkgs.txt", sep="/")
+output_filename <- "/home/user/r_ensg_probe_pkgs.txt"
 write.table(list(chips, pkg_urls), file=output_filename, quote=FALSE,
             row.names=FALSE, col.names=FALSE, sep="\t")
 
