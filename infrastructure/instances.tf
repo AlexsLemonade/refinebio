@@ -389,6 +389,8 @@ data "template_file" "api_server_script_smusher" {
     database_user = "${var.database_user}"
     database_password = "${var.database_password}"
     database_name = "${aws_db_instance.postgres_db.name}"
+    log_group = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
+    log_stream = "${aws_cloudwatch_log_stream.log_stream_api_docker.name}"
   }
 }
 

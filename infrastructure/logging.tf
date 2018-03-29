@@ -70,6 +70,22 @@ resource "aws_cloudwatch_log_stream" "log_stream_worker_docker" {
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
 }
 
+# API (Docker)
+resource "aws_cloudwatch_log_stream" "log_stream_api_docker" {
+  name           = "log-stream-api-docker-${var.user}-${var.stage}"
+  log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
+}
+
+resource "aws_cloudwatch_log_stream" "log_stream_api_nginx_access" {
+  name           = "log-stream-api-nginx-access-${var.user}-${var.stage}"
+  log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
+}
+
+resource "aws_cloudwatch_log_stream" "log_stream_api_nginx_error" {
+  name           = "log-stream-api-nginx-error-${var.user}-${var.stage}"
+  log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
+}
+
 ##
 # Metrics and Alarms
 ##

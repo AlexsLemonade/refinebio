@@ -35,29 +35,44 @@ cp nginx.conf /etc/nginx/nginx.conf
 service nginx restart
 
 # Install, configure and launch our CloudWatch Logs agent
-# cat <<EOF >awslogs.conf
-# [general]
-# state_file = /var/lib/awslogs/agent-state
+cat <<EOF >awslogs.conf
+[general]
+state_file = /var/lib/awslogs/agent-state
 
-# [/var/log/docker_api.log]
-# file = /var/log/nomad_server.log
-# log_group_name = data-refinery-log-group-${user}-${stage}
-# log_stream_name = log-stream-api-server-${user}-${stage}
-# EOF
+[/tmp/error.log]
+file = /tmp/error.log
+log_group_name = ${log_group}
+log_stream_name = log-stream-api-nginx-error-${user}-${stage}
 
-# mkdir /var/lib/awslogs
-# wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
-# python ./awslogs-agent-setup.py --region ${region} --non-interactive --configfile awslogs.conf
-# # Rotate the logs, delete after 3 days.
-# echo "
-# /var/log/docker_api.log {
-#     missingok
-#     notifempty
-#     compress
-#     size 20k
-#     daily
-#     maxage 3
-# }" >> /etc/logrotate.conf
+[/tmp/access.log]
+file = /tmp/access.log
+log_group_name = ${log_group}
+log_stream_name = log-stream-api-nginx-error-${user}-${stage}
+
+EOF
+
+mkdir /var/lib/awslogs
+wget https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
+python ./awslogs-agent-setup.py --region ${region} --non-interactive --configfile awslogs.conf
+# Rotate the logs, delete after 3 days.
+echo "
+/tmp/error.log {
+    missingok
+    notifempty
+    compress
+    size 20k
+    daily
+    maxage 3
+}" >> /etc/logrotate.conf
+echo "
+/tmp/access.log {
+    missingok
+    notifempty
+    compress
+    size 20k
+    daily
+    maxage 3
+}" >> /etc/logrotate.conf
 
 # Install our environment variables
 cat <<"EOF" > environment
@@ -74,6 +89,10 @@ docker run \
        -e DATABASE_USER=${database_user} \
        -e DATABASE_PASSWORD=${database_password} \
        -v "$STATIC_VOLUMES":/tmp/www/static \
+       --log-driver=awslogs \
+       --log-opt awslogs-region=${region} \
+       --log-opt awslogs-group=${log_group} \
+       --log-opt awslogs-stream=${log_stream} \
        -p 8081:8081 \
        -it -d ${api_docker_image} /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
 

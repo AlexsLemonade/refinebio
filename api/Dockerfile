@@ -19,4 +19,4 @@ USER user
 
 EXPOSE 8000
 
-ENTRYPOINT ["python3.6", "manage.py"]
+ENTRYPOINT []
