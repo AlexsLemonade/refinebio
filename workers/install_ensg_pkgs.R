@@ -3,7 +3,7 @@ library("xml2")
 ensg_url <- "http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/22.0.0/ensg.asp"
 html_content <- read_html(ensg_url)
 
-# The second table in the html is the main table that lists all packages.
+# The second table in the html is the main table that lists all ensg packages.
 data_table <- xml_find_all(html_content, ".//table")[[2]]
 
 # Extract data rows from the second table:
@@ -13,8 +13,8 @@ data_rows <- xml_children(data_table)[3:xml_length(data_table)]
 chips <- c()
 pkg_urls <- c()
 
-# This function parses a data row in the table and save chip name and
-# the URL of "P" R source package to chips and pkg_urls repectively.
+# This function parses a data row in the table and saves chip names and
+# the URLs of "P" R source package to chips and pkg_urls repectively.
 save_chip_pkg <- function(row) {
     # Column #3: "Chip"
     chip_name <- xml_text(xml_child(row, 3))
