@@ -20,6 +20,9 @@ jobs:
       # Install our application
       - run: ./common/make_migrations.sh
       - run: cd common && python setup.py sdist
+      
+        # Run Common Tests.
+      - run: ./api/run_tests.sh
 
       # Run Common Tests.
       - run: ./common/run_tests.sh
