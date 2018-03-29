@@ -4,7 +4,7 @@ ensg_url <- "http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/
 html_content <- read_html(ensg_url)
 
 # The second table in the html is the main table that lists all packages.
-data_table = xml_find_all(html_content, ".//table")[[2]]
+data_table <- xml_find_all(html_content, ".//table")[[2]]
 
 # Extract data rows from the second table:
 data_rows <- xml_children(data_table)[3:xml_length(data_table)]

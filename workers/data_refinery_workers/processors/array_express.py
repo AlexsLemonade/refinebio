@@ -39,9 +39,9 @@ def _prepare_files(job_context: Dict) -> Dict:
 
 
 def _create_ensg_pkg_map() -> Dict:
-    """Read the text file that was generated when ionstalling ensg R
-    packages and return a map whose key is chip name and value is the
-    corresponding BrainArray ensg package name.
+    """Reads the text file that was generated when installing ensg R
+    packages, and returns a map whose keys are chip names and values are
+    the corresponding BrainArray ensg package name.
     """
     ensg_pkg_filename = "/home/user/r_ensg_probe_pkgs.txt"
     chip2pkg = dict()
