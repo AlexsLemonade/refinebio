@@ -14,6 +14,7 @@ infrastructure/nomad-job-specs/
 
 # Terraform
 infrastructure/.terraform/
+.circleci/s3_tfstate/.terraform
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -111,3 +112,6 @@ dr_env/
 
 # PyCharm
 .idea
+
+# emacs backup files
+*~
