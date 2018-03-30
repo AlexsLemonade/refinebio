@@ -38,6 +38,25 @@ def _prepare_files(job_context: Dict) -> Dict:
     return job_context
 
 
+def _create_ensg_pkg_map() -> Dict:
+    """Reads the text file that was generated when installing ensg R
+    packages, and returns a map whose keys are chip names and values are
+    the corresponding BrainArray ensg package name.
+    """
+    ensg_pkg_filename = "/home/user/r_ensg_probe_pkgs.txt"
+    chip2pkg = dict()
+    with open(ensg_pkg_filename) as file_handler:
+        for line in file_handler:
+            tokens = line.strip("\n").split("\t")
+            # tokens[0] is (normalized) chip name,
+            # tokens[1] is the package's URL in this format:
+            # http://mbni.org/customcdf/<version>/ensg.download/<pkg>_22.0.0.tar.gz
+            pkg_name = tokens[1].split("/")[-1].split("_")[0]
+            chip2pkg[tokens[0]] = pkg_name
+
+    return chip2pkg
+
+
 def _determine_brainarray_package(job_context: Dict) -> Dict:
     """Determines the right brainarray package to use for the file.
 
@@ -58,6 +77,7 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
 
     # header is a list of vectors. [0][0] contains the package name.
     punctuation_table = str.maketrans(dict.fromkeys(string.punctuation))
+    # Normalize header[0][0]
     package_name = header[0][0].translate(punctuation_table).lower()
 
     # Headers can contain the version "v1" or "v2", which doesn't
@@ -66,13 +86,18 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
     # and we can monitor what packages are added to it and modify
     # accordingly. So far "v1" and "v2" are the only known versions
     # which must be accomodated in this way.
-
-    # XXX: This may need to be made Organism-specific! hsentrezgprobe is for Homo Sapiens(?)
-    # XXX: TODO: We also expect this to be replaced with `ensg`
-    # Related: https://github.com/data-refinery/data-refinery/issues/85
     # Related: https://github.com/data-refinery/data-refinery/issues/141
     package_name_without_version = package_name.replace("v1", "").replace("v2", "")
-    job_context["brainarray_package"] = package_name_without_version + "hsentrezgprobe"
+    chip_pkg_map = _create_ensg_pkg_map()
+    try:
+        job_context["brainarray_package"] = chip_pkg_map[package_name_without_version]
+    except KeyError as e:
+        error_template = ("Unable to find ensg package name from input file {0}"
+                          " (cdfName: {1}) while running AFFY_TO_PCL due to error: {2}")
+        error_message = error_template.format(input_file, header[0][0], str(e))
+        logger.error(error_message, processor_job=job_context["job"].id)
+        job_context["job"].failure_reason = error_message
+        job_context["success"] = False
     return job_context
 
 
@@ -128,7 +153,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     scan_version_parts = []
     for version_part in ro.r("packageVersion('SCAN.UPC')")[0]:
         scan_version_parts.append(str(version_part))
-    scan_version = ".".join(scan_version_parts) 
+    scan_version = ".".join(scan_version_parts)
     result.program_version = scan_version
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
@@ -154,7 +179,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
         failure_reason = "Exception caught while moving file to S3"
         job_context["job"].failure_reason = failure_reason
         job_context["success"] = False
-        return job_context        
+        return job_context
 
     logger.info("Created %s", result)
     job_context["success"] = True
