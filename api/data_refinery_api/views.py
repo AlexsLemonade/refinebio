@@ -60,7 +60,9 @@ class PaginatedAPIView(APIView):
 
 class ExperimentList(PaginatedAPIView):
     """
-    List all Experiments
+    List all Experiments.
+
+    Append the pk to the end of this URL to see a detail view.
     """
 
     def get(self, request, format=None):
@@ -79,7 +81,7 @@ class ExperimentList(PaginatedAPIView):
 
 class ExperimentDetail(APIView):
     """
-    Retriev an Experiment instance.
+    Retrieve an Experiment instance.
     """
     def get_object(self, pk):
         try:
@@ -98,7 +100,10 @@ class ExperimentDetail(APIView):
 
 class SampleList(PaginatedAPIView):
     """
-    List all Samples
+    List all Samples.
+
+    Append the pk to the end of this URL to see a detail view.
+
     """
 
     def get(self, request, format=None):

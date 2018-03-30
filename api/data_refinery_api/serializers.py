@@ -7,7 +7,9 @@ from data_refinery_common.models import (
     SampleAnnotation, 
     Organism,
     OriginalFile,
-    ComputationalResult
+    ComputationalResult,
+    CompultationalResultAnnotation,
+    ComputedFile
 )
 
 ##
@@ -17,7 +19,7 @@ from data_refinery_common.models import (
 class OrganismSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organism
-        fields = (    
+        fields = (
                     'name', 
                     'taxonomy_id',
                 )
@@ -25,15 +27,48 @@ class OrganismSerializer(serializers.ModelSerializer):
 # Results
 ##
 
+class ComputationalResultAnnotationSerializer(serializers.ModelSerializer):
+    data = HStoreField()
+
+    class Meta:
+        model = CompultationalResultAnnotation
+        fields = (
+                    'id',
+                    'data',
+                    'is_ccdl',
+                    'created_at',
+                    'last_modified'
+                )
+
+class ComputedFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ComputedFile
+        fields = (
+                    'id',
+                    'filename',
+                    'absolute_file_path',
+                    'size_in_bytes',
+                    'sha1',
+                    's3_bucket',
+                    's3_key',
+                    'created_at',
+                    'last_modified'
+                )
+
 class ComputationalResultSerializer(serializers.ModelSerializer):
+    annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
+    files = ComputedFileSerializer(many=True, source='computedfile_set')
+
     class Meta:
         model = ComputationalResult
-        fields = (    
-                    'id', 
+        fields = (
+                    'id',
                     'command_executed',
                     'program_version',
                     'system_version',
                     'is_ccdl',
+                    'annotations',
+                    'files',
                     'time_start',
                     'time_end',
                     'created_at',
@@ -49,7 +84,7 @@ class SampleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Sample
-        fields = (    
+        fields = (
                     'id',
                     'accession_code', 
                     'organism', 
@@ -64,9 +99,9 @@ class SampleAnnotationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SampleAnnotation
-        fields = (    
-                    'data', 
-                    'is_ccdl', 
+        fields = (
+                    'data',
+                    'is_ccdl',
                     'created_at',
                     'last_modified',
                 )
@@ -78,16 +113,16 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Sample
-        fields = (    
+        fields = (
                     'id',
-                    'accession_code', 
-                    'organism', 
+                    'accession_code',
+                    'organism',
+                    'annotations',
+                    'results',
                     'is_downloaded',
                     'is_processed',
                     'created_at',
                     'last_modified',
-                    'annotations',
-                    'results'
                 )
 
 ##
@@ -97,9 +132,9 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 class ExperimentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Experiment
-        fields = (    
-                    'id', 
-                    'title', 
+        fields = (
+                    'id',
+                    'title',
                     'description',
                     'platform_accession_code',
                     'samples',
@@ -113,9 +148,9 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Experiment
-        fields = (    
-                    'id', 
-                    'title', 
+        fields = (
+                    'id',
+                    'title',
                     'description',
                     'samples',
                     'protocol_description',
@@ -136,7 +171,7 @@ class PlatformSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Experiment
-        fields = (    
+        fields = (
                     'platform_accession_code',
                     'platform_name',
                 )
@@ -145,7 +180,7 @@ class InstitutionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Experiment
-        fields = (    
+        fields = (
                     'submitter_institution',
                 )
 
@@ -156,7 +191,7 @@ class OriginalFileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OriginalFile
-        fields = (    
+        fields = (
                     'id',
                     'filename',
                     'absolute_file_path',
@@ -178,7 +213,7 @@ class SurveyJobSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SurveyJob
-        fields = (    
+        fields = (
                     'id',
                     'source_type',
                     'success',
@@ -191,7 +226,7 @@ class DownloaderJobSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DownloaderJob
-        fields = (    
+        fields = (
                     'id',
                     'downloader_task',
                     'success',
@@ -206,7 +241,7 @@ class ProcessorJobSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProcessorJob
-        fields = (    
+        fields = (
                     'id',
                     'pipeline_applied',
                     'success',

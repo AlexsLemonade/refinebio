@@ -51,7 +51,7 @@ job "PROCESSOR" {
       # The resources the job will require.
       resources {
         # CPU is in AWS's CPU units.
-        cpu = 500
+        cpu = 1024
         # Memory is in MB of RAM.
         memory = 4048
       }

@@ -48,9 +48,9 @@ job "DOWNLOADER" {
       # The resources the job will require.
       resources {
         # CPU is in AWS's CPU units.
-        cpu = 500
+        cpu = 256
         # Memory is in MB of RAM.
-        memory = 2024
+        memory = 1024
       }
 
       config {
