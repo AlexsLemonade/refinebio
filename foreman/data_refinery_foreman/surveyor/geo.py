@@ -3,6 +3,16 @@ import requests
 
 from re import sub, split, match
 
+from data_refinery_common.models import (
+    SurveyJobKeyValue,
+    Organism,
+    Experiment,
+    ExperimentAnnotation,
+    Sample,
+    SampleAnnotation,
+    ExperimentSampleAssociation,
+    OriginalFile
+)
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.logging import get_and_configure_logger
