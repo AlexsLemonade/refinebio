@@ -2,6 +2,7 @@ import GEOparse
 import requests
 
 from re import sub, split, match
+from typing import List, Dict
 
 from data_refinery_common.models import (
     SurveyJobKeyValue,
@@ -103,7 +104,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 sample_object.save()
 
                 sample_annotation = SampleAnnotation()
-                sample_annotation.sample = sample
+                sample_annotation.sample = sample_object
                 sample_annotation.data = sample.metadata
                 sample_annotation.is_ccdl = False
                 sample_annotation.save()
@@ -111,21 +112,21 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 original_file = OriginalFile()
                 original_file.sample = sample_object
                 original_file.source_filename = sample_accession_code + '.txt.gz'
-                original_file.source_url = get_raw_url(experiment_accession_code)
+                original_file.source_url = self.get_raw_url(experiment_accession_code)
                 original_file.is_downloaded = False
                 original_file.is_archive = True
                 original_file.has_raw = has_raw
                 original_file.save()
 
             association = ExperimentSampleAssociation()
-            association.experiment = experiment
+            association.experiment = experiment_object
             association.sample = sample_object
             association.save()
 
             logger.info("Created Sample: " + str(sample_object))
             created_samples.append(sample_object)
 
-        return experiment, created_samples
+        return experiment_object, created_samples
 
     def discover_experiment_and_samples(self) -> (Experiment, List[Sample]):
         """

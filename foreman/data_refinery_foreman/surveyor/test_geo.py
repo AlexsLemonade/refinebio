@@ -7,11 +7,11 @@ from data_refinery_common.models import (
     DownloaderJob,
     SurveyJob,
     SurveyJobKeyValue,
-    Organism
+    Organism,
+    Sample
 )
 from data_refinery_foreman.surveyor.geo import (
-    GeoSurveyor,
-    EXPERIMENTS_URL,
+    GeoSurveyor
 )
 
 
@@ -39,11 +39,13 @@ class SurveyTestCase(TestCase):
         SurveyJob.objects.all().delete()
 
     @patch('data_refinery_foreman.surveyor.external_source.send_job')
-    def test_survey(self, mock_send_task, mock_get):
+    def test_survey(self, mock_send_task):
         """
         """
 
         ae_surveyor = GeoSurveyor(self.survey_job)
         ae_surveyor.survey()
+
+        self.assertEqual(124, Sample.objects.all().count())
 
         downloader_jobs = DownloaderJob.objects.all()

@@ -234,7 +234,7 @@ SAMPLES_JSON = """
 } """
 
 
-def mocked_requests_get(url):
+def mocked_requests_get(url, timeout=1):
     mock = Mock(ok=True)
     if url == (EXPERIMENTS_URL + "E-GEOD-22166"):
         mock.json.return_value = json.loads(EXPERIMENTS_JSON)

@@ -213,7 +213,7 @@ SAMPLES_JSON = """
 }"""  # noqa
 
 
-def mocked_requests_get(url):
+def mocked_requests_get(url, timeout=1):
     mock = Mock(ok=True)
     if url == (EXPERIMENTS_URL + "E-MTAB-3050"):
         mock.json.return_value = json.loads(EXPERIMENTS_JSON)
