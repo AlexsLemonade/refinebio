@@ -323,7 +323,7 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.OriginalFile'),
         ),
         migrations.AddField(
-            model_name='compultationalresultannotation',
+            model_name='computationalresultannotation',
             name='result',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='data_refinery_common.ComputationalResult'),
         ),
