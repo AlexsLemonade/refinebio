@@ -7,7 +7,6 @@ from typing import List
 from contextlib import closing
 
 from data_refinery_common.models import (
-    File, 
     DownloaderJob,
     Experiment, 
     Sample, 

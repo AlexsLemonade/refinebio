@@ -16,6 +16,10 @@ data "aws_ami" "ubuntu" {
   }
 }
 
+##
+# Nomad Settings
+##
+
 # This script installs Nomad.
 data "local_file" "install_nomad_script" {
   filename = "../install_nomad.sh"
@@ -46,6 +50,10 @@ data "template_file" "nomad_lead_server_script_smusher" {
     region = "${var.region}"
   }
 }
+
+##
+# Nomad Cluster
+##
 
 # This instance will run the lead Nomad Server. We will want three
 # Nomad Servers to prevent data loss, but one server needs to start
@@ -232,7 +240,7 @@ data "template_file" "nomad_client_script_smusher" {
 # do it using a normal ec2 instance.
 resource "aws_instance" "nomad_client_1" {
   ami = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.xlarge"
+  instance_type = "${var.client_instance_type}"
   availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
@@ -259,11 +267,79 @@ resource "aws_instance" "nomad_client_1" {
   }
 }
 
-
-
 output "nomad_client_ip" {
   value = "${aws_instance.nomad_client_1.public_ip}"
 }
+
+##
+# Autoscaling
+##
+
+resource "aws_launch_configuration" "auto_client_configuration" {
+    # Don't include availability_zones because of:
+    # https://github.com/hashicorp/terraform/issues/15978
+    
+    name_prefix = "auto-client-"
+    image_id = "${data.aws_ami.ubuntu.id}"
+    instance_type = "${var.client_instance_type}"
+    security_groups = ["${aws_security_group.data_refinery_worker.id}"]
+    iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
+    depends_on = ["aws_internet_gateway.data_refinery", "aws_instance.nomad_server_1"]
+    user_data = "${data.template_file.nomad_client_script_smusher.rendered}"
+    key_name = "${aws_key_pair.data_refinery.key_name}"
+    spot_price = "${var.spot_price}"
+
+    lifecycle {
+        create_before_destroy = true
+    }
+
+    # I think these are the defaults provided in terraform examples.
+    # They should be removed or revisited.
+    root_block_device = {
+      volume_type = "gp2"
+      volume_size = 100
+    }
+}
+
+resource "aws_autoscaling_group" "clients" {
+    name = "asg-clients-${var.user}-${var.stage}"
+    max_size = "${var.max_clients}"
+    min_size = "1"
+    health_check_grace_period = 300
+    health_check_type = "EC2"
+    desired_capacity = 1
+    force_delete = true
+    launch_configuration = "${aws_launch_configuration.auto_client_configuration.name}"
+    vpc_zone_identifier = ["${aws_subnet.data_refinery_1a.id}"]
+
+    tag {
+        key = "Name"
+        value = "Nomad Client Instance ${var.user}-${var.stage}"
+        propagate_at_launch = true
+    }
+}
+
+resource "aws_autoscaling_policy" "clients_scale_up" {
+    name = "asg-clients-scale-up-${var.user}-${var.stage}"
+    scaling_adjustment = 1
+    adjustment_type = "ChangeInCapacity"
+    cooldown = 60
+    autoscaling_group_name = "${aws_autoscaling_group.clients.name}"
+    depends_on = ["aws_instance.nomad_server_1"]
+}
+
+resource "aws_autoscaling_policy" "clients_scale_down" {
+    name = "asg-clients-scale-down-${var.user}-${var.stage}"
+    scaling_adjustment = -1
+    adjustment_type = "ChangeInCapacity"
+    cooldown = 60
+    autoscaling_group_name = "${aws_autoscaling_group.clients.name}"
+    depends_on = ["aws_instance.nomad_server_1"]
+}
+
+##
+# Database
+##
 
 resource "aws_db_instance" "postgres_db" {
   identifier = "data-refinery-${var.user}-${var.stage}"

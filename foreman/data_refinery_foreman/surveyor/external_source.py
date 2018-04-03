@@ -6,7 +6,6 @@ from retrying import retry
 from typing import List, Dict
 
 from data_refinery_common.models import (
-    File,
     DownloaderJob,
     SurveyJob,
     Sample,
