@@ -28,4 +28,3 @@ docker run \
        --link drdb:postgres $NOMAD_LINK \
        -p 8000:8000 \
        -it dr_api python3.6 manage.py runserver 0.0.0.0:8000 "$@"
-

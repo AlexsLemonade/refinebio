@@ -8,7 +8,7 @@ from data_refinery_common.models import (
     Organism,
     OriginalFile,
     ComputationalResult,
-    CompultationalResultAnnotation,
+    ComputationalResultAnnotation,
     ComputedFile
 )
 
@@ -31,7 +31,7 @@ class ComputationalResultAnnotationSerializer(serializers.ModelSerializer):
     data = HStoreField()
 
     class Meta:
-        model = CompultationalResultAnnotation
+        model = ComputationalResultAnnotation
         fields = (
                     'id',
                     'data',

@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
     operations = [
         HStoreExtension(),
         migrations.CreateModel(
-            name='CompultationalResultAnnotation',
+            name='ComputationalResultAnnotation',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('data', django.contrib.postgres.fields.hstore.HStoreField(default={})),

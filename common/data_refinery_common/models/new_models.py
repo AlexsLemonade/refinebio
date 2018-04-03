@@ -156,7 +156,7 @@ class ComputationalResult(models.Model):
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now) 
 
-class CompultationalResultAnnotation(models.Model):
+class ComputationalResultAnnotation(models.Model):
     """ Non-standard information associated with an ComputationalResult """
 
     class Meta:
