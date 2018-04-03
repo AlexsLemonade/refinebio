@@ -18,24 +18,27 @@ class GeoSurveyor(ExternalSourceSurveyor):
     Implements the ExternalSourceSurveyor interface.
     """
 
-    def get_files(self, accession_code):
-        geo = accession_code.upper()
+    def get_raw_url(self, experiment_accession_code):
+        """ """
+        geo = experiment_accession_code.upper()
         geotype = geo[:3]
         range_subdir = sub(r"\d{1,3}$", "nnn", geo)
 
-        miniml_url_template = ("ftp://ftp.ncbi.nlm.nih.gov/geo/"
-                  "{root}/{range_subdir}/{record}/miniml/{record_file}")
-        miniml_url = miniml_url_template.format(root="series",
-                            range_subdir=range_subdir,
-                            record=geo,
-                            record_file="%s_family.xml.tgz" % geo)
+        # miniml_url_template = ("ftp://ftp.ncbi.nlm.nih.gov/geo/"
+        #           "{root}/{range_subdir}/{record}/miniml/{record_file}")
+        # miniml_url = miniml_url_template.format(root="series",
+        #                     range_subdir=range_subdir,
+        #                     record=geo,
+        #                     record_file="%s_family.xml.tgz" % geo)
 
         raw_url_template = ("ftp://ftp.ncbi.nlm.nih.gov/geo/"
                   "{root}/{range_subdir}/{record}/suppl/{record_file}")
-        raw_url = miniml_url_template.format(root="series",
+        raw_url = raw_url_template.format(root="series",
                             range_subdir=range_subdir,
                             record=geo,
                             record_file="%s_RAW.tar" % geo)
+
+        return raw_url
 
     def create_experiment_and_samples_from_api(self, experiment_accession_code) -> (Experiment, List[Sample]):
         """ """
@@ -60,6 +63,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_object.source_first_published = gse.metadata["submission_date"][0]
             experiment_object.source_last_updated = gse.metadata["last_update_date"][0]
             experiment_object.submitter_institution = ", ".join(list(set(gse.metadata["contact_institute"])))
+            experiment_object.pubmed_id = gse.metadata.get("pubmed_id", [None])[0]
             experiment_object.save()
 
             experiment_annotation = ExperimentAnnotation()
@@ -67,6 +71,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_annotation.experiment = experiment_object
             experiment_annotation.is_ccdl = False
             experiment_annotation.save()
+
+            has_raw = True
 
         created_samples = []
         for sample_accession_code, sample in gse.gsms.items():
@@ -91,6 +97,15 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 sample_annotation.data = sample.metadata
                 sample_annotation.is_ccdl = False
                 sample_annotation.save()
+
+                original_file = OriginalFile()
+                original_file.sample = sample_object
+                original_file.source_filename = sample_accession_code + '.txt.gz'
+                original_file.source_url = get_raw_url(experiment_accession_code)
+                original_file.is_downloaded = False
+                original_file.is_archive = True
+                original_file.has_raw = has_raw
+                original_file.save()
 
             association = ExperimentSampleAssociation()
             association.experiment = experiment
