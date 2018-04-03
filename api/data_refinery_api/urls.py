@@ -1,4 +1,5 @@
 from django.conf.urls import url, include
+from django.conf import settings
 from django.contrib import admin
 from rest_framework.documentation import include_docs_urls
 from rest_framework.views import APIView
@@ -20,12 +21,14 @@ from data_refinery_api.views import (
     Stats
 )
 
+# This provides _public_ access to the /admin interface!
 # Don't uncomment this in production!
 # Uncommenting this will allow unauthenticated access to the admin interface.
 # Very useful for debugging (since we have no User accounts), but very dangerous for prod!
 class AccessUser:
-    has_module_perms = has_perm = __getattr__ = lambda s,*a,**kw: True
-admin.site.has_permission = lambda r: setattr(r, 'user', AccessUser()) or True
+    has_module_perms = has_perm = __getattr__ = lambda s, *a, **kw: True
+if settings.DEBUG:
+    admin.site.has_permission = lambda r: setattr(r, 'user', AccessUser()) or True
 
 # This class provides a friendlier root API page.
 class APIRoot(APIView):

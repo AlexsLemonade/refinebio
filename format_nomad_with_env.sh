@@ -9,7 +9,7 @@ while getopts ":p:e:o:h" opt; do
     case $opt in
         p)
             if [[ $OPTARG != "workers" && $OPTARG != "foreman" && $OPTARG != "api" ]]; then
-                echo 'Error: -p must either specify "api", workers" or "foreman".'
+                echo 'Error: -p must specify either "api", workers" or "foreman".'
                 exit 1
             fi
             project=$OPTARG

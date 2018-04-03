@@ -34,7 +34,7 @@ class Command(BaseCommand):
             return 1
         if options["file"]:
 
-            if 's3://' in file:
+            if 's3://' in options["file"]:
                 bucket, key = parse_s3_url(file)
                 s3 = boto3.resource('s3')
                 try:

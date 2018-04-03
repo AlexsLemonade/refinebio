@@ -95,7 +95,7 @@ class ExperimentDetail(APIView):
         return Response(serializer.data)
 
 ##
-# Experiments
+# Samples
 ##
 
 class SampleList(PaginatedAPIView):
