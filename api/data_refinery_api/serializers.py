@@ -46,7 +46,6 @@ class ComputedFileSerializer(serializers.ModelSerializer):
         fields = (
                     'id',
                     'filename',
-                    'absolute_file_path',
                     'size_in_bytes',
                     'sha1',
                     's3_bucket',
@@ -119,6 +118,8 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
                     'organism',
                     'annotations',
                     'results',
+                    'source_archive_url',
+                    'has_raw',
                     'is_downloaded',
                     'is_processed',
                     'created_at',
