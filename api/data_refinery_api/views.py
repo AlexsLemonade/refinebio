@@ -122,7 +122,7 @@ class SampleList(PaginatedAPIView):
 
 class SampleDetail(APIView):
     """
-    Retriev an Sample instance.
+    Retrieve a Sample instance.
     """
     def get_object(self, pk):
         try:
@@ -180,7 +180,7 @@ class SurveyJobList(PaginatedAPIView):
 	Ex: 
 	  - ?start_time__lte=2018-03-23T15:29:40.848381Z
 	  - ?start_time__lte=2018-03-23T15:29:40.848381Z&start_time__gte=2018-03-23T14:29:40.848381Z
-	  - success=True
+	  - ?success=True
 
     """
 

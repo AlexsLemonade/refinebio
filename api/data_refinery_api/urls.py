@@ -90,5 +90,6 @@ urlpatterns = [
     url(r'^', APIRoot.as_view(), name="api_root"),
 ]
 
+# This adds support explicitly typed endpoints such that appending '.json' returns that application type.
 urlpatterns = format_suffix_patterns(urlpatterns)
 

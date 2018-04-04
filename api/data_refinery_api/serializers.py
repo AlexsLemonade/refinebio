@@ -195,7 +195,6 @@ class OriginalFileSerializer(serializers.ModelSerializer):
         fields = (
                     'id',
                     'filename',
-                    'absolute_file_path',
                     'size_in_bytes',
                     'sha1',
                     'source_url',
@@ -216,6 +215,11 @@ class SurveyJobSerializer(serializers.ModelSerializer):
         model = SurveyJob
         fields = (
                     'id',
+                    'num_retries',
+                    'retried',
+                    'worker_id',
+                    'worker_version',
+                    'failure_reason',
                     'source_type',
                     'success',
                     'start_time',
@@ -230,8 +234,12 @@ class DownloaderJobSerializer(serializers.ModelSerializer):
         fields = (
                     'id',
                     'downloader_task',
-                    'success',
+                    'num_retries',
+                    'retried',
+                    'worker_id',
+                    'worker_version',
                     'failure_reason',
+                    'success',
                     'original_files',
                     'start_time',
                     'end_time'
@@ -245,8 +253,12 @@ class ProcessorJobSerializer(serializers.ModelSerializer):
         fields = (
                     'id',
                     'pipeline_applied',
-                    'success',
+                    'num_retries',
+                    'retried',
+                    'worker_id',
+                    'worker_version',
                     'failure_reason',
+                    'success',
                     'original_files',
                     'start_time',
                     'end_time'

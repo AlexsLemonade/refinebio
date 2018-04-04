@@ -21,7 +21,7 @@ jobs:
       - run: ./common/make_migrations.sh
       - run: cd common && python setup.py sdist
       
-        # Run Common Tests.
+      # Run API Tests.
       - run: ./api/run_tests.sh
 
       # Run Common Tests.
