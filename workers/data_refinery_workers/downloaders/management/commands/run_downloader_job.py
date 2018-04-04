@@ -4,6 +4,7 @@ from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_workers.downloaders.array_express import download_array_express
 from data_refinery_workers.downloaders.transcriptome_index import download_transcriptome
 from data_refinery_workers.downloaders.sra import download_sra
+from data_refinery_workers.downloaders.geo import download_geo
 
 
 logger = get_and_configure_logger(__name__)
@@ -37,6 +38,8 @@ class Command(BaseCommand):
             download_transcriptome(options["job_id"])
         elif job_type is Downloaders.SRA:
             download_sra(options["job_id"])
+        elif job_type is Downloaders.GEO:
+            download_geo(options["job_id"])
         else:
             logger.error(("A valid job name was specified for job %s with id %d but "
                           "no downloader function is known to run it."),
