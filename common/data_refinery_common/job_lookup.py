@@ -26,7 +26,8 @@ class DiscoveryPipeline(PipelineEnums):
 
 
 class Downloaders(Enum):
-    """An enumeration of downloaders for batch.downloader_task."""
+    """An enumeration of downloaders for downloader_task."""
     ARRAY_EXPRESS = "ARRAY_EXPRESS"
     SRA = "SRA"
     TRANSCRIPTOME_INDEX = "TRANSCRIPTOME_INDEX"
+    GEO = "GEO"

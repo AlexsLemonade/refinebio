@@ -16,6 +16,7 @@ from data_refinery_common.models import (
 )
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
+from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 
 logger = get_and_configure_logger(__name__)
@@ -26,21 +27,17 @@ class GeoUnsupportedPlatformException(BaseException):
 class GeoSurveyor(ExternalSourceSurveyor):
     """Surveys NCBI GEO for data.
 
-    Implements the ExternalSourceSurveyor interface.
+    Implements the GEO interface.
     """
+
+    def source_type(self):
+        return Downloaders.GEO.value
 
     def get_raw_url(self, experiment_accession_code):
         """ """
         geo = experiment_accession_code.upper()
         geotype = geo[:3]
         range_subdir = sub(r"\d{1,3}$", "nnn", geo)
-
-        # miniml_url_template = ("ftp://ftp.ncbi.nlm.nih.gov/geo/"
-        #           "{root}/{range_subdir}/{record}/miniml/{record_file}")
-        # miniml_url = miniml_url_template.format(root="series",
-        #                     range_subdir=range_subdir,
-        #                     record=geo,
-        #                     record_file="%s_family.xml.tgz" % geo)
 
         raw_url_template = ("ftp://ftp.ncbi.nlm.nih.gov/geo/"
                   "{root}/{range_subdir}/{record}/suppl/{record_file}")
@@ -74,7 +71,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_object.source_first_published = gse.metadata["submission_date"][0]
             experiment_object.source_last_updated = gse.metadata["last_update_date"][0]
             experiment_object.submitter_institution = ", ".join(list(set(gse.metadata["contact_institute"])))
-            experiment_object.pubmed_id = gse.metadata.get("pubmed_id", [None])[0]
+            experiment_object.pubmed_id = gse.metadata.get("pubmed_id", [""])[0]
             experiment_object.save()
 
             experiment_annotation = ExperimentAnnotation()
