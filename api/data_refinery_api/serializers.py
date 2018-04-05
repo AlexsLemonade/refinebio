@@ -3,6 +3,7 @@ from rest_framework_hstore.fields import HStoreField
 from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
 from data_refinery_common.models import (
     Experiment,
+    ExperimentAnnotation,
     Sample,
     SampleAnnotation, 
     Organism,
@@ -144,7 +145,20 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'last_modified'
                 )
 
+class ExperimentAnnotationSerializer(serializers.ModelSerializer):
+    data = HStoreField()
+
+    class Meta:
+        model = ExperimentAnnotation
+        fields = (
+                    'data',
+                    'is_ccdl',
+                    'created_at',
+                    'last_modified',
+                )
+
 class DetailedExperimentSerializer(serializers.ModelSerializer):
+    annotations = ExperimentAnnotationSerializer(many=True, source='experimentannotation_set')
     samples = SampleSerializer(many=True)
 
     class Meta:
@@ -153,6 +167,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
                     'id',
                     'title',
                     'description',
+                    'annotations',
                     'samples',
                     'protocol_description',
                     'platform_accession_code',

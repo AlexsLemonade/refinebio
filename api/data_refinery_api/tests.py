@@ -3,7 +3,14 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from data_refinery_common.models import Experiment, Sample, Organism
+from data_refinery_common.models import (
+    Experiment,
+    ExperimentAnnotation,
+    Sample,
+    SampleAnnotation,
+    ExperimentSampleAssociation,
+    Organism
+)
 from data_refinery_api.serializers import ( 
     ExperimentSerializer, 
     DetailedExperimentSerializer,
@@ -28,8 +35,24 @@ class SanityTestAllEndpoints(APITestCase):
 
         experiment = Experiment()
         experiment.save()
+
+        experiment_annotation = ExperimentAnnotation()
+        experiment_annotation.data = {"hello": "world", "123": 456}
+        experiment_annotation.experiment = experiment
+        experiment_annotation.save()
+
         sample = Sample()
         sample.save()
+
+        sample_annotation = SampleAnnotation()
+        sample_annotation.data = {"goodbye": "world", "789": 123}
+        sample_annotation.sample = sample
+        sample_annotation.save()
+
+        experiment_sample_association = ExperimentSampleAssociation()
+        experiment_sample_association.sample = sample
+        experiment_sample_association.experiment = experiment
+        experiment_sample_association.save()
 
         return
 
