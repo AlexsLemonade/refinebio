@@ -51,6 +51,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
     def create_experiment_and_samples_from_api(self, experiment_accession_code) -> (Experiment, List[Sample]):
         """ """
 
+        # XXX: Maybe we should have an EFS tmp? This could potentially fill up if not tracked.
+        # Cleaning up is tracked here: https://github.com/guma44/GEOparse/issues/41
         gse = GEOparse.get_GEO(experiment_accession_code, destdir='/tmp')
 
         # Create the experiment object
@@ -108,6 +110,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
                 original_file = OriginalFile()
                 original_file.sample = sample_object
+
+                # So - this is _usually_ true, but not always. I think it's submitter supplied.
                 original_file.source_filename = sample_accession_code + '.txt.gz'
                 original_file.source_url = self.get_raw_url(experiment_accession_code)
                 original_file.is_downloaded = False

@@ -193,6 +193,7 @@ def download_geo(job_id: int) -> None:
         # We're trying to detect technology type here.
         # It may make more sense to try to make this into a higher level Sample property.
         annotations = actual_file.sample.sampleannotation_set.all()[0]
+        # XXX: Make sure this still works if we get arrays back. Should check for the presence of the 'Cy5' string in label_ch2.
         if ('Agilent' in annotations.data.get('label_protocol_ch1', "")) and ('Agilent' in annotations.data.get('label_protocol_ch2', "")):
                 utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="AGILENT_TWOCOLOR_TO_PCL")
         else:
