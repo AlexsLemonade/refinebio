@@ -15,6 +15,7 @@ django==2.0.2
 docutils==0.14            # via botocore
 idna==2.6                 # via requests
 jmespath==0.9.3           # via boto3, botocore
+pip==9.0.3
 psycopg2==2.7.4
 python-dateutil==2.6.1    # via botocore
 python-nomad==0.6.1

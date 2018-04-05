@@ -6,17 +6,5 @@ DATABASE_USER=data_refinery_user
 DATABASE_PASSWORD=data_refinery_password
 DATABASE_HOST=database
 DATABASE_PORT=5432
-
-NOMAD_HOST=nomad
-
-RUNNING_IN_CLOUD=False
-SERVICE=api
-
-RAW_PREFIX=raw
-TEMP_PREFIX=temp
-PROCESSED_PREFIX=processed
-LOCAL_ROOT_DIR=/home/user/data_store
-USE_S3=False
-S3_BUCKET_NAME=data-refinery
 DATABASE_TIMEOUT=5
 

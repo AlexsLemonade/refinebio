@@ -10,7 +10,7 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from data_refinery_api.views import (
     ExperimentList, 
     ExperimentDetail,
-    SampleList, 
+    SampleList,
     SampleDetail,
     OrganismList,
     PlatformList,
@@ -22,8 +22,7 @@ from data_refinery_api.views import (
 )
 
 # This provides _public_ access to the /admin interface!
-# Don't uncomment this in production!
-# Uncommenting this will allow unauthenticated access to the admin interface.
+# Enabling this by setting DEBUG to true this will allow unauthenticated access to the admin interface.
 # Very useful for debugging (since we have no User accounts), but very dangerous for prod!
 class AccessUser:
     has_module_perms = has_perm = __getattr__ = lambda s, *a, **kw: True

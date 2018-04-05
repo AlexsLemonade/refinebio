@@ -6,7 +6,6 @@ WORKDIR /home/user
 COPY common/requirements.txt .
 
 RUN pip install -r requirements.txt
-RUN pip install pip --upgrade
 
 COPY common/ .
 
