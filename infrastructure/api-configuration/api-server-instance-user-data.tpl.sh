@@ -69,6 +69,9 @@ EOF
 STATIC_VOLUMES=/tmp/volumes_static
 mkdir -p /tmp/volumes_static
 chmod a+rwx /tmp/volumes_static
+
+# These database values are created after TF
+# is run, so we have to pass them in programatically
 docker run \
        --env-file environment \
        -e DATABASE_HOST=${database_host} \
