@@ -2,16 +2,12 @@
 
 ##
 # This script takes your environment variables and uses them to populate
-# Nomad job specifications, as defined in each project. 
+# Nomad job specifications, as defined in each project.
 ##
 
 while getopts ":p:e:o:h" opt; do
     case $opt in
         p)
-            if [[ $OPTARG != "workers" && $OPTARG != "foreman" ]]; then
-                echo 'Error: -p must either specify "workers" or "foreman".'
-                exit 1
-            fi
             project=$OPTARG
             ;;
         e)
@@ -38,6 +34,11 @@ while getopts ":p:e:o:h" opt; do
             ;;
     esac
 done
+
+if [[ $project != "workers" && $project != "foreman" ]]; then
+    echo 'Error: must either specify project as either "workers" or "foreman" with -p.'
+    exit 1
+fi
 
 if [[ -z $env ]]; then
     env="dev"
@@ -68,19 +69,38 @@ fi
 # We need to specify the database and Nomad hosts for development, but
 # not for production because we just point directly at the RDS/Nomad
 # instances.
+# Conversely, in prod we need AWS credentials and a logging config but
+# not in development.
+# We do these with multi-line environment variables so that they can
+# be formatted into development job specs.
 if [ $env != "prod" ]; then
-    # This is a multi-line env var so that it can be formatted into
-    # development job specs.
     export EXTRA_HOSTS="
         extra_hosts = [\"database:$DB_HOST_IP\",
                        \"nomad:$NOMAD_HOST_IP\"]
 "
+    export AWS_CREDS=""
+    export LOGGING_CONFIG=""
 else
     export EXTRA_HOSTS=""
+    export AWS_CREDS="
+        AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
+        AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
+    export LOGGING_CONFIG="
+        logging {
+          type = \"awslogs\"
+          config {
+            awslogs-region = \"$REGION\",
+            awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
+            awslogs-stream = \"log-stream-nomad-docker-downloader-$USER-$STAGE\"
+          }
+        }
+"
 fi
 
-# Skip all comments (lines starting with '#')
+# Read all environment variables from the file for the appropriate
+# project and environment we want to run.
 while read line; do
+    # Skip all comments (lines starting with '#')
     is_comment=$(echo $line | grep "^#")
     if [[ -n $line ]] && [[ -z $is_comment ]]; then
         export $line

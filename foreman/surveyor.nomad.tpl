@@ -20,8 +20,7 @@ job "SURVEYOR" {
 
       # This env will be passed into the container for the job.
       env {
-        AWS_ACCESS_KEY_ID = "${{AWS_ACCESS_KEY_ID_WORKER}}"
-        AWS_SECRET_ACCESS_KEY = "${{AWS_SECRET_ACCESS_KEY_WORKER}}"
+        ${{AWS_CREDS}}
         DJANGO_SECRET_KEY = "${{DJANGO_SECRET_KEY}}"
         DJANGO_DEBUG = "${{DJANGO_DEBUG}}"
 
@@ -65,16 +64,7 @@ job "SURVEYOR" {
         ]
         ${{EXTRA_HOSTS}}
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]
-
-        logging {
-          type = "awslogs"
-          config {
-            awslogs-region = "${{REGION}}",
-            awslogs-group = "data-refinery-log-group-${{USER}}-${{STAGE}}",
-            awslogs-stream = "log-stream-nomad-docker-surveyor-${{USER}}-${{STAGE}}"
-          }
-        }
-
+        ${{LOGGING_CONFIG}}
       }
     }
   }
