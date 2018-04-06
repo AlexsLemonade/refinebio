@@ -42,6 +42,8 @@ class Command(BaseCommand):
             build_transcriptome_index(options["job_id"], length="short")
         elif job_type is ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL:
             agilent_twocolor_to_pcl(options["job_id"])
+        elif job_type is ProcessorPipeline.ILLUMINA_TO_PCL:
+            illumina_to_pcl(options["job_id"])
         elif job_type is ProcessorPipeline.SALMON:
             salmon(options["job_id"])
         elif job_type is ProcessorPipeline.NO_OP:
