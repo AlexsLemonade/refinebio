@@ -57,9 +57,8 @@ job "SURVEYOR" {
 
         # The args to pass to the Docker container's entrypoint.
         args = [
-          # Uncomment when image is updated!
-          # "python",
-          # "manage.py",
+          "python",
+          "manage.py",
           "${NOMAD_META_COMMAND}",
           "--file", "${NOMAD_META_FILE}",
         ]

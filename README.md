@@ -455,7 +455,7 @@ TF_VAR_user=myusername TF_VAR_stage=dev TF_VAR_region=us-east-1 terraform plan
 If that worked fine, then to deploy:
 
 ```bash
-TF_VAR_user=myusername TF_VAR_stage=dev TF_VAR_region=us-east-1 terraform apply
+TF_VAR_user=myusername TF_VAR_stage=dev TF_VAR_region=us-east-1 ./deploy.sh
 ```
 
 This will spin up the whole system. It will usually take about 15 minutes, most of which is spent waiting for the Postgres instance to start.

@@ -58,9 +58,8 @@ job "DOWNLOADER" {
 
         # The args to pass to the Docker container's entrypoint.
         args = [
-          # Uncomment when image is updated!
-          # "python",
-          # "manage.py",
+          "python",
+          "manage.py",
           "run_downloader_job",
           "--job-name", "${NOMAD_META_JOB_NAME}",
           "--job-id", "${NOMAD_META_JOB_ID}"
