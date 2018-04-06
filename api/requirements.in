@@ -1,0 +1,9 @@
+coverage
+django
+psycopg2
+boto3
+requests
+python-nomad
+djangorestframework
+djangorestframework-hstore
+coreapi

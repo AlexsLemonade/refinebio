@@ -48,9 +48,9 @@ job "DOWNLOADER" {
       # The resources the job will require.
       resources {
         # CPU is in AWS's CPU units.
-        cpu = 500
+        cpu = 256
         # Memory is in MB of RAM.
-        memory = 2024
+        memory = 1024
       }
 
       config {
@@ -59,8 +59,9 @@ job "DOWNLOADER" {
 
         # The args to pass to the Docker container's entrypoint.
         args = [
-          "python3.6",
-          "manage.py",
+          # Uncomment when image is updated!
+          # "python",
+          # "manage.py",
           "run_downloader_job",
           "--job-name", "${NOMAD_META_JOB_NAME}",
           "--job-id", "${NOMAD_META_JOB_ID}"]

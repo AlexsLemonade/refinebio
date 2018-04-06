@@ -95,6 +95,15 @@ variable "scale_down_threshold" {
   default = "10"
 }
 
+# API
+variable "api_docker_image" {
+  default = "miserlou/dr_api:5"
+}
+
+variable "api_instance_type" {
+  default = "t2.large"
+}
+
 # Output our production environment variables. These should be in
 # parity with the env files such as workers/environments/dev.
 output "environment_variables" {

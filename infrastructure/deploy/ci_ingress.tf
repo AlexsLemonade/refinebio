@@ -1,5 +1,4 @@
 resource "aws_security_group_rule" "data_refinery_ci_nomad" {
-
   type = "ingress"
   from_port = 4646
   to_port = 4646
