@@ -214,6 +214,7 @@ class InstitutionSerializer(serializers.ModelSerializer):
 ##
 # Files
 ##
+
 class OriginalFileSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -226,9 +227,12 @@ class OriginalFileSerializer(serializers.ModelSerializer):
                     'source_url',
                     'source_filename',
                     'is_downloaded',
+                    'is_archve',
                     'has_raw',
                     'is_downloaded',
-                    'is_processed'
+                    'is_processed',
+                    'created_at',
+                    'last_modified'
                 )
 
 ##

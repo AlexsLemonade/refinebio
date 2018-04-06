@@ -7,6 +7,26 @@
 # ingress. This can be run from a CI/CD machine or a local dev box.
 # This script must be run from /infrastructure!
 
+# This function checks what the status of the Nomad agent is.
+# Returns an HTTP response code. i.e. 200 means everything is ok.
+check_nomad_status () {
+    echo $(curl --write-out %{http_code} \
+                  --silent \
+                  --output /dev/null \
+                  $NOMAD_ADDR/v1/status/leader)
+}
+
+# We have terraform output environment variables via a single output
+# variable, which we then read in as json using the command line tool
+# `jq`, so that we can use them via bash.
+format_environment_variables () {
+  for row in $(terraform output -json environment_variables | jq -c '.value[]'); do
+      env_var_assignment=$(echo $row | jq -r ".name")=$(echo $row | jq -r ".value")
+      export $env_var_assignment
+      echo $env_var_assignment >> prod_env
+  done
+}
+
 # Make our IP address known to terraform.
 source ../common.sh
 export TF_VAR_host_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
@@ -14,14 +34,8 @@ export TF_VAR_host_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
 # Copy ingress config to top level so it can be applied.
 cp deploy/ci_ingress.tf .
 
-# We have terraform output environment variables via a single output
-# variable, which we then read in as json using the command line tool
-# `jq`, so that we can use them via bash.
-for row in $(terraform output -json environment_variables | jq -c '.value[]'); do
-    env_var_assignment=$(echo $row | jq -r ".name")=$(echo $row | jq -r ".value")
-    export $env_var_assignment
-    echo $env_var_assignment >> prod_env
-done
+# We have to do this once before the initial deploy..
+format_environment_variables
 
 # Output the plan for debugging deployments later.
 terraform plan
@@ -34,16 +48,6 @@ terraform apply -auto-approve
 # Find address of Nomad server.
 export NOMAD_LEAD_SERVER_IP=`terraform output nomad_server_1_ip`
 export NOMAD_ADDR=http://$NOMAD_LEAD_SERVER_IP:4646
-
-# This function checks what the status of the Nomad agent is.
-# Returns an HTTP response code. i.e. 200 means everything is ok.
-check_nomad_status () {
-    echo $(curl --write-out %{http_code} \
-                  --silent \
-                  --output /dev/null \
-                  $NOMAD_ADDR/v1/status/leader)
-}
-
 
 # Wait for Nomad to get started in case the server just went up for
 # the first time.
@@ -84,14 +88,8 @@ fi
 # `docker run` commands when running migrations.
 rm -f prod_env
 
-# We have terraform output environment variables via a single output
-# variable, which we then read in as json using the command line tool
-# `jq`, so that we can use them via bash.
-for row in $(terraform output -json environment_variables | jq -c '.value[]'); do
-    env_var_assignment=$(echo $row | jq -r ".name")=$(echo $row | jq -r ".value")
-    export $env_var_assignment
-    echo $env_var_assignment >> prod_env
-done
+# (cont'd) ..and once again after the update when this is re-run.
+format_environment_variables
 
 # Get an image to run the migrations with.
 docker pull $FOREMAN_DOCKER_IMAGE
