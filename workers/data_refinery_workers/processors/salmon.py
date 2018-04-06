@@ -18,7 +18,7 @@ from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     OrganismIndex, 
     ComputationalResult, 
-    CompultationalResultAnnotation, 
+    ComputationalResultAnnotation, 
     ComputedFile)
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
@@ -267,14 +267,14 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
 
         with open(os.path.join(job_context['output_directory'], 'lib_format_counts.json')) as lfc_file:
             format_count_data = json.load(lfc_file)
-            kv = CompultationalResultAnnotation()
+            kv = ComputationalResultAnnotation()
             kv.data = format_count_data
             kv.result = result
             kv.is_public = True
             kv.save()
         with open(os.path.join(job_context['output_directory'], 'aux_info', 'meta_info.json')) as mi_file:
             meta_info = json.load(mi_file)
-            kv = CompultationalResultAnnotation()
+            kv = ComputationalResultAnnotation()
             kv.data = meta_info
             kv.result = result
             kv.is_public = True

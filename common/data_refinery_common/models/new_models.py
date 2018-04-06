@@ -37,6 +37,7 @@ class Sample(models.Model):
 
     # Relations
     organism = models.ForeignKey(Organism, blank=True, null=True, on_delete=models.SET_NULL)
+    results = models.ManyToManyField('ComputationalResult', through='SampleResultAssociation')
 
     # Historical Properties
     source_archive_url = models.CharField(max_length=255)
@@ -82,6 +83,8 @@ class Experiment(models.Model):
 
     def __str__ (self):
         return "Experiment: " + self.accession_code
+
+    samples = models.ManyToManyField('Sample', through='ExperimentSampleAssociation')
 
     # Identifiers
     accession_code = models.CharField(max_length=64, unique=True)
@@ -153,7 +156,7 @@ class ComputationalResult(models.Model):
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now) 
 
-class CompultationalResultAnnotation(models.Model):
+class ComputationalResultAnnotation(models.Model):
     """ Non-standard information associated with an ComputationalResult """
 
     class Meta:

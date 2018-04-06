@@ -19,7 +19,7 @@ while getopts ":p:e:o:h" opt; do
         h)
             echo "Formats Nomad Job Specifications with the specified environment overlaid "
             echo "onto the current environment."
-            echo '-p specifies the project to format. Valid values are "workers" or "foreman".'
+            echo '-p specifies the project to format. Valid values are "api", workers" or "foreman".'
             echo '- "dev" is the default enviroment, use -e to specify "prod" or "test".'
             echo '- the project directory will be used as the default output directory, use -o to specify'
             echo '      an absolute path to a directory (trailing / must be included).'
@@ -35,8 +35,8 @@ while getopts ":p:e:o:h" opt; do
     esac
 done
 
-if [[ $project != "workers" && $project != "foreman" ]]; then
-    echo 'Error: must either specify project as either "workers" or "foreman" with -p.'
+if [[ $project != "workers" && $project != "foreman" && $OPTARG != "api" ]]; then
+    echo 'Error: must either specify project as either "api", workers", or "foreman" with -p.'
     exit 1
 fi
 
@@ -72,6 +72,7 @@ fi
 # Conversely, in prod we need AWS credentials and a logging config but
 # not in development.
 # We do these with multi-line environment variables so that they can
+
 # be formatted into development job specs.
 if [ $env != "prod" ]; then
     export EXTRA_HOSTS="
@@ -133,5 +134,10 @@ elif [[ $project == "foreman" ]]; then
     cat surveyor.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                > "$output_dir"surveyor.nomad \
+               2> /dev/null
+elif [[ $project == "api" ]]; then
+    cat environment.tpl \
+        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+               > "$output_dir"environment \
                2> /dev/null
 fi
