@@ -35,6 +35,12 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     return job_context
 
+def _collect_samples(job_context: Dict) -> Dict:
+    """
+    Detection of column type in the data depends upon knowing the sample names in advance.
+    """
+    return
+
 def _detect_columns(job_context: Dict) -> Dict:
     """ Detect which columns match to which inputs.
 
@@ -47,6 +53,7 @@ def _detect_columns(job_context: Dict) -> Dict:
         Expression column (contains sample title and NOT 'BEAD')
 
     """
+
     return
 
 def _run_illumina(job_context: Dict) -> Dict:
@@ -133,6 +140,7 @@ def illumina_to_pcl(job_id: int) -> None:
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
                         _prepare_files,
+                        _collect_samples,
                         _detect_columns,
                         _run_illumina,
                         _create_result_objects,
