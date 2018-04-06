@@ -35,6 +35,20 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     return job_context
 
+def _detect_columns(job_context: Dict) -> Dict:
+    """ Detect which columns match to which inputs.
+
+    Related: https://github.com/AlexsLemonade/refinebio/issues/86#issuecomment-379308817
+
+    We need to find:
+
+        First column should be ID_REF or PROBE_ID and the type should be string.
+        Detection Pval column
+        Expression column (contains sample title and NOT 'BEAD')
+
+    """
+    return
+
 def _run_illumina(job_context: Dict) -> Dict:
     """Processes an input TXT file to an output PCL file.
 
@@ -119,6 +133,7 @@ def illumina_to_pcl(job_id: int) -> None:
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
                         _prepare_files,
+                        _detect_columns,
                         _run_illumina,
                         _create_result_objects,
                         utils.end_job])
