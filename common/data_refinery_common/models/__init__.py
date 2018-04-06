@@ -12,7 +12,7 @@ from data_refinery_common.models.new_models import (
 	Experiment,
 	ExperimentAnnotation, 
 	ComputationalResult,
-	CompultationalResultAnnotation,
+	ComputationalResultAnnotation,
 	OrganismIndex,
 	OriginalFile,
 	ComputedFile,
