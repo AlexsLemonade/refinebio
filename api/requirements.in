@@ -3,9 +3,6 @@ django
 psycopg2
 boto3
 requests
-retrying
-daiquiri
-billiard
 python-nomad
 djangorestframework
 djangorestframework-hstore
