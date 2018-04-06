@@ -70,6 +70,22 @@ resource "aws_cloudwatch_log_stream" "log_stream_worker_docker" {
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
 }
 
+# API
+resource "aws_cloudwatch_log_stream" "log_stream_api_docker" {
+  name           = "log-stream-api-docker-${var.user}-${var.stage}"
+  log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
+}
+
+resource "aws_cloudwatch_log_stream" "log_stream_api_nginx_access" {
+  name           = "log-stream-api-nginx-access-${var.user}-${var.stage}"
+  log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
+}
+
+resource "aws_cloudwatch_log_stream" "log_stream_api_nginx_error" {
+  name           = "log-stream-api-nginx-error-${var.user}-${var.stage}"
+  log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
+}
+
 ##
 # Metrics and Alarms
 ##
@@ -92,7 +108,7 @@ resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm_up" {
     namespace = "${var.user}-${var.stage}"
     period = "120"
     statistic = "Average"
-    threshold = "{var.scale_up_threshold}"
+    threshold = "${var.scale_up_threshold}"
     alarm_description = "The queue is too long - we need more workers!"
     alarm_actions = [
         "${aws_autoscaling_policy.clients_scale_up.arn}"
@@ -108,7 +124,7 @@ resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm_down" {
     namespace = "${var.user}-${var.stage}"
     period = "120"
     statistic = "Average"
-    threshold = "{var.scale_down_threshold}"
+    threshold = "${var.scale_down_threshold}"
     alarm_description = "The queue is too short - we need less workers!"
     alarm_actions = [
         "${aws_autoscaling_policy.clients_scale_down.arn}"

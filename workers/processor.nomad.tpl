@@ -51,7 +51,7 @@ job "PROCESSOR" {
       # The resources the job will require.
       resources {
         # CPU is in AWS's CPU units.
-        cpu = 500
+        cpu = 1024
         # Memory is in MB of RAM.
         memory = 4048
       }
@@ -62,8 +62,9 @@ job "PROCESSOR" {
 
         # The args to pass to the Docker container's entrypoint.
         args = [
-          "python3.6",
-          "manage.py",
+          # Uncomment when image is updated!
+          # "python",
+          # "manage.py",
           "run_processor_job",
           "--job-name", "${NOMAD_META_JOB_NAME}",
           "--job-id", "${NOMAD_META_JOB_ID}"

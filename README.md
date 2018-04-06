@@ -544,6 +544,14 @@ You can also apply a filter on these logs like so:
 awslogs get <your-log-group> ALL --start='1 days' --watch --filter-pattern="DEBUG"
 ```
 
+Or, look at a named log stream (with or without a wildcard.) For instance:
+
+```bash
+awslogs get data-refinery-log-group-myusername-dev log-stream-api-nginx-access-* --watch
+```
+
+will show all of the API access logs made by Nginx.
+
 ## Support
 
 Refine.bio is supported by
