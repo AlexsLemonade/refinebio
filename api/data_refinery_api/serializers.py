@@ -187,7 +187,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
                     'publication_doi',
                     'pubmed_id',
                     'source_first_published',
-                    'source_last_updated',
+                    'source_last_modified',
                     'platform_accession_code',
                     'submitter_institution',
                     'last_modified',
