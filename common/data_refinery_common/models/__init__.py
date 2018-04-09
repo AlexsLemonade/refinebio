@@ -1,16 +1,16 @@
-from data_refinery_common.models.surveys import SurveyJob, SurveyJobKeyValue
 from data_refinery_common.models.jobs import (
-    WorkerJob,
+    SurveyJob,
+    SurveyJobKeyValue,
     DownloaderJob,
     ProcessorJob
 )
 from data_refinery_common.models.organism import Organism
 
-from data_refinery_common.models.new_models import (
+from data_refinery_common.models.models import (
 	Sample,
 	SampleAnnotation,
 	Experiment,
-	ExperimentAnnotation, 
+	ExperimentAnnotation,
 	ComputationalResult,
 	ComputationalResultAnnotation,
 	OrganismIndex,
