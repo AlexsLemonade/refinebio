@@ -9,12 +9,17 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
     ExperimentSampleAssociation,
-    Organism
+    Organism,
+    OriginalFile,
+    DownloaderJob,
+    DownloaderJobOriginalFileAssociation,
+    ProcessorJob,
+    ProcessorJobOriginalFileAssociation
 )
-from data_refinery_api.serializers import ( 
-    ExperimentSerializer, 
+from data_refinery_api.serializers import (
+    ExperimentSerializer,
     DetailedExperimentSerializer,
-    SampleSerializer, 
+    SampleSerializer,
     DetailedSampleSerializer,
     OrganismSerializer,
     PlatformSerializer,
@@ -48,6 +53,26 @@ class SanityTestAllEndpoints(APITestCase):
         sample_annotation.data = {"goodbye": "world", "789": 123}
         sample_annotation.sample = sample
         sample_annotation.save()
+
+        original_file = OriginalFile()
+        original_file.sample = sample
+        original_file.save()
+
+        downloader_job = DownloaderJob()
+        downloader_job.save()
+
+        download_assoc = DownloaderJobOriginalFileAssociation()
+        download_assoc.original_file = original_file
+        download_assoc.downloader_job = downloader_job
+        download_assoc.save()
+
+        processor_job = ProcessorJob()
+        processor_job.save()
+
+        processor_assoc = ProcessorJobOriginalFileAssociation()
+        processor_assoc.original_file = original_file
+        processor_assoc.processor_job = processor_job
+        processor_assoc.save()
 
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample

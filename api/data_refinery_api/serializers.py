@@ -5,7 +5,7 @@ from data_refinery_common.models import (
     Experiment,
     ExperimentAnnotation,
     Sample,
-    SampleAnnotation, 
+    SampleAnnotation,
     Organism,
     OriginalFile,
     ComputationalResult,
@@ -21,7 +21,7 @@ class OrganismSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organism
         fields = (
-                    'name', 
+                    'name',
                     'taxonomy_id',
                 )
 ##
@@ -86,8 +86,8 @@ class SampleSerializer(serializers.ModelSerializer):
         model = Sample
         fields = (
                     'id',
-                    'accession_code', 
-                    'organism', 
+                    'accession_code',
+                    'organism',
                     'is_downloaded',
                     'is_processed',
                     'created_at',
@@ -227,7 +227,7 @@ class OriginalFileSerializer(serializers.ModelSerializer):
                     'source_url',
                     'source_filename',
                     'is_downloaded',
-                    'is_archve',
+                    'is_archive',
                     'has_raw',
                     'is_downloaded',
                     'is_processed',
@@ -245,15 +245,12 @@ class SurveyJobSerializer(serializers.ModelSerializer):
         model = SurveyJob
         fields = (
                     'id',
-                    'num_retries',
-                    'retried',
-                    'worker_id',
-                    'worker_version',
-                    'failure_reason',
                     'source_type',
                     'success',
                     'start_time',
-                    'end_time'
+                    'end_time',
+                    'created_at',
+                    'last_modified'
                 )
 
 class DownloaderJobSerializer(serializers.ModelSerializer):
@@ -272,7 +269,9 @@ class DownloaderJobSerializer(serializers.ModelSerializer):
                     'success',
                     'original_files',
                     'start_time',
-                    'end_time'
+                    'end_time',
+                    'created_at',
+                    'last_modified'
                 )
 
 class ProcessorJobSerializer(serializers.ModelSerializer):
@@ -291,6 +290,8 @@ class ProcessorJobSerializer(serializers.ModelSerializer):
                     'success',
                     'original_files',
                     'start_time',
-                    'end_time'
+                    'end_time',
+                    'created_at',
+                    'last_modified'
                 )
 

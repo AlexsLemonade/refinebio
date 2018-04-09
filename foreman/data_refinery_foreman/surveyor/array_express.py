@@ -105,7 +105,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment_object.platform_name = experiment["platform_accession_name"]
             experiment_object.platform_accession_code = experiment["platform_accession_code"]
             experiment_object.source_first_published = experiment["release_date"]
-            experiment_object.source_last_updated = experiment["last_update_date"]
+            experiment_object.source_last_modified = experiment["last_update_date"]
             experiment_object.save()
 
             # We still create the Experiment and samples if there is processed

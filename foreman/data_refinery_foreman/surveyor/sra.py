@@ -294,7 +294,7 @@ class SraSurveyor(ExternalSourceSurveyor):
             if "study_ena_first_public" in metadata:
                 experiment.source_first_published = metadata["study_ena_first_public"]
             if "study_ena_last_update" in metadata:
-                experiment.source_last_updated = metadata["study_ena_last_update"]
+                experiment.source_last_modified = metadata["study_ena_last_update"]
 
             experiment_object.save()
 
