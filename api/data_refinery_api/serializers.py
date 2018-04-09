@@ -227,7 +227,7 @@ class OriginalFileSerializer(serializers.ModelSerializer):
                     'source_url',
                     'source_filename',
                     'is_downloaded',
-                    'is_archve',
+                    'is_archive',
                     'has_raw',
                     'is_downloaded',
                     'is_processed',
