@@ -3,6 +3,7 @@ from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_workers.processors.array_express import affy_to_pcl
 from data_refinery_workers.processors.agilent_twocolor import agilent_twocolor_to_pcl
+from data_refinery_workers.processors.illumina import illumina_to_pcl
 from data_refinery_workers.processors.transcriptome_index import build_transcriptome_index
 from data_refinery_workers.processors.no_op import no_op_processor
 from data_refinery_workers.processors.salmon import salmon

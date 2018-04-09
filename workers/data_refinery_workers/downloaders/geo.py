@@ -82,7 +82,6 @@ def _extract_tar(file_path: str, accession_code: str) -> List[str]:
     except Exception as e:
         reason = "Exception %s caught while extracting %s", str(e), file_path
         logger.exception(reason)
-        job.failure_reason = reason
         raise
 
     return files
@@ -135,47 +134,87 @@ def download_geo(job_id: int) -> None:
     # contained within the same zip file. Therefore only
     # download the one.
     os.makedirs(LOCAL_ROOT_DIR + '/' + accession_code, exist_ok=True)
-    dl_file_path = LOCAL_ROOT_DIR + '/' + accession_code + '/' + accession_code + ".zip"
+    dl_file_path = LOCAL_ROOT_DIR + '/' + accession_code + '/' + url.split('/')[-1]
     _download_file(url, dl_file_path, job)
 
-    extracted_files = _extract_tar(dl_file_path, accession_code)
+    # This files are tarred, and also subsequently gzipped
+    if '.tar' in dl_file_path:
+        extracted_files = _extract_tar(dl_file_path, accession_code)
 
-    unpacked_sample_files = []
-    for og_file in extracted_files:
+        unpacked_sample_files = []
+        for og_file in extracted_files:
 
-        filename = og_file['filename']
-        sample_id = filename.split('_')[0]
+            filename = og_file['filename']
+            sample_id = filename.split('_')[0]
 
-        try:
-            # Files from the GEO supplemental file are gzipped inside of the tarball. Great!
-            archive_file = OriginalFile.objects.get(source_filename__contains=sample_id)
-            archive_file.is_downloaded=True
-            archive_file.is_archive=True
-            archive_file.absolute_file_path = og_file['absolute_path']
-            archive_file.calculate_size()
-            archive_file.calculate_sha1()
-            archive_file.save()
+            try:
+                # Files from the GEO supplemental file are gzipped inside of the tarball. Great!
+                archive_file = OriginalFile.objects.get(source_filename__contains=sample_id)
+                archive_file.is_downloaded=True
+                archive_file.is_archive=True
+                archive_file.absolute_file_path = og_file['absolute_path']
+                archive_file.calculate_size()
+                archive_file.calculate_sha1()
+                archive_file.save()
 
-            extracted_subfile = _extract_gz(og_file['absolute_path'], accession_code)
-            actual_file = OriginalFile()
-            actual_file.is_downloaded=True
-            actual_file.is_archive=False
-            actual_file.absolute_file_path = extracted_subfile[0]['absolute_path']
-            actual_file.filename = extracted_subfile[0]['filename']
-            actual_file.calculate_size()
-            actual_file.calculate_sha1()
-            actual_file.has_raw = True
-            actual_file.sample = archive_file.sample
-            actual_file.save()
+                extracted_subfile = _extract_gz(og_file['absolute_path'], accession_code)
+                actual_file = OriginalFile()
+                actual_file.is_downloaded=True
+                actual_file.is_archive=False
+                actual_file.absolute_file_path = extracted_subfile[0]['absolute_path']
+                actual_file.filename = extracted_subfile[0]['filename']
+                actual_file.calculate_size()
+                actual_file.calculate_sha1()
+                actual_file.has_raw = True
+                actual_file.sample = archive_file.sample
+                actual_file.save()
 
-            # Question - do we want to delete this extracted archive file?
-            # archive_file.delete()
+                # Question - do we want to delete this extracted archive file?
+                # archive_file.delete()
 
-            unpacked_sample_files.append(actual_file)
-        except Exception:
-            # TODO - is this worth failing a job for?
-            logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'])
+                unpacked_sample_files.append(actual_file)
+            except Exception:
+                # TODO - is this worth failing a job for?
+                logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'])
     
+    # These files are only gzipped.
+    else:
+        extracted_files = _extract_gz(dl_file_path, accession_code)
+        unpacked_sample_files = []
+        for og_file in extracted_files:
+
+            filename = og_file['filename']
+            sample_id = filename.split('.')[0]
+
+            try:
+                # The archive we downloaded
+                archive_file = OriginalFile.objects.get(source_filename__contains=filename)
+                archive_file.is_downloaded=True
+                archive_file.is_archive=True
+                archive_file.absolute_file_path = dl_file_path
+                archive_file.calculate_size()
+                archive_file.calculate_sha1()
+                archive_file.save()
+
+                actual_file = OriginalFile()
+                actual_file.is_downloaded=True
+                actual_file.is_archive=False
+                actual_file.absolute_file_path = og_file['absolute_path']
+                actual_file.filename = og_file['filename']
+                actual_file.calculate_size()
+                actual_file.calculate_sha1()
+                actual_file.has_raw = True
+                actual_file.sample = archive_file.sample
+                actual_file.save()
+
+                # Question - do we want to delete this extracted archive file?
+                # archive_file.delete()
+
+                unpacked_sample_files.append(actual_file)
+            except Exception:
+                # TODO - is this worth failing a job for?
+                logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'])
+
     if len(unpacked_sample_files) > 0:
         success = True
         logger.debug("File downloaded and extracted successfully.",
@@ -193,8 +232,11 @@ def download_geo(job_id: int) -> None:
         # We're trying to detect technology type here.
         # It may make more sense to try to make this into a higher level Sample property.
         annotations = actual_file.sample.sampleannotation_set.all()[0]
+
         # XXX: Make sure this still works if we get arrays back. Should check for the presence of the 'Cy5' string in label_ch2.
         if ('Agilent' in annotations.data.get('label_protocol_ch1', "")) and ('Agilent' in annotations.data.get('label_protocol_ch2', "")):
-                utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="AGILENT_TWOCOLOR_TO_PCL")
+            utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="AGILENT_TWOCOLOR_TO_PCL")
+        if ('Illumina' in annotations.data.get('label_protocol_ch1', "")):
+            utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="ILLUMINA_TO_PCL")
         else:
             utils.create_processor_jobs_for_original_files(unpacked_sample_files)

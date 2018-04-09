@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import csv
 import os
 import string
 import warnings
@@ -10,7 +11,12 @@ import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import OriginalFile, ComputationalResult, ComputedFile
+from data_refinery_common.models import (
+    OriginalFile, 
+    ComputationalResult, 
+    ComputedFile,
+    Sample
+)
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 from data_refinery_common.utils import get_env_variable
@@ -39,7 +45,12 @@ def _collect_samples(job_context: Dict) -> Dict:
     """
     Detection of column type in the data depends upon knowing the sample names in advance.
     """
-    return
+
+    original_files = job_context['original_files']
+    samples = Sample.objects.filter(id__in=original_files.values('sample_id'))
+    job_context['samples'] = samples
+
+    return job_context
 
 def _detect_columns(job_context: Dict) -> Dict:
     """ Detect which columns match to which inputs.
@@ -54,7 +65,27 @@ def _detect_columns(job_context: Dict) -> Dict:
 
     """
 
-    return
+    input_file = job_context["input_file_path"]
+    headers = None
+    with open(input_file, 'r') as tsvin:
+        tsvin = csv.reader(tsvin, delimiter='\t')
+        for row in tsvin:
+            headers = row
+            break
+
+    import pdb
+    pdb.set_trace()
+
+    # First the probe ID column
+    if headers[0] not in ['ID_REF', 'PROBE_ID']:
+        job_context["job"].failure_reason = "Could not find ID reference column"
+        job_context["success"] = False
+        return job_context
+    else:
+        job_context['probeId'] = headers[0]
+
+
+    return job_context
 
 def _run_illumina(job_context: Dict) -> Dict:
     """Processes an input TXT file to an output PCL file.

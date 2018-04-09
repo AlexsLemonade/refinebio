@@ -48,6 +48,21 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         return raw_url
 
+    def get_non_normalized_url(self, experiment_accession_code):
+        """ """
+        geo = experiment_accession_code.upper()
+        geotype = geo[:3]
+        range_subdir = sub(r"\d{1,3}$", "nnn", geo)
+
+        raw_url_template = ("ftp://ftp.ncbi.nlm.nih.gov/geo/"
+                  "{root}/{range_subdir}/{record}/suppl/{record_file}")
+        raw_url = raw_url_template.format(root="series",
+                            range_subdir=range_subdir,
+                            record=geo,
+                            record_file="%s_non-normalized.txt.gz" % geo)
+
+        return raw_url
+
     def create_experiment_and_samples_from_api(self, experiment_accession_code) -> (Experiment, List[Sample]):
         """ """
 
@@ -66,8 +81,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_object.accession_code = experiment_accession_code
             experiment_object.source_url = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=" + experiment_accession_code
             experiment_object.source_database = "GEO"
-            experiment_object.name = gse.metadata['title'][0]
-            experiment_object.description = gse.metadata['summary'][0]
+            experiment_object.name = gse.metadata.get('title', [''])[0]
+            experiment_object.description = gse.metadata.get('summary', [''])[0]
             experiment_object.platform_name = gse.metadata["platform_id"][0] # TODO: Lookup GEO-GPL
             experiment_object.platform_accession_code = gse.metadata["platform_id"][0]
             experiment_object.source_first_published = gse.metadata["submission_date"][0]
@@ -82,8 +97,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_annotation.is_ccdl = False
             experiment_annotation.save()
 
-            has_raw = True
-
+        has_raw = True
         created_samples = []
         for sample_accession_code, sample in gse.gsms.items():
 
@@ -108,16 +122,40 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 sample_annotation.is_ccdl = False
                 sample_annotation.save()
 
-                original_file = OriginalFile()
-                original_file.sample = sample_object
+                no_supplements = False
+                supplements = sample.metadata.get('supplementary_file', [])
+                for supplementary_file_url in supplements:
 
-                # So - this is _usually_ true, but not always. I think it's submitter supplied.
-                original_file.source_filename = sample_accession_code + '.txt.gz'
-                original_file.source_url = self.get_raw_url(experiment_accession_code)
-                original_file.is_downloaded = False
-                original_file.is_archive = True
-                original_file.has_raw = has_raw
-                original_file.save()
+                    # Why do they give us this?
+                    if supplementary_file_url == "NONE":
+                        no_supplements = True
+                        break
+
+                    original_file = OriginalFile()
+                    original_file.sample = sample_object
+
+                    # So - this is _usually_ true, but not always. I think it's submitter supplied.
+                    original_file.source_filename = supplementary_file_url.split('/')[-1]
+                    original_file.source_url = supplementary_file_url
+                    original_file.is_downloaded = False
+                    original_file.is_archive = True
+                    original_file.has_raw = has_raw
+                    original_file.save()
+                if not supplments:
+                    no_supplements = True
+
+                if no_supplements:
+                    for experiment_supplement in gse.metadata.get('supplementary_file', []):
+                        original_file = OriginalFile()
+                        original_file.sample = sample_object
+
+                        # So - this is _usually_ true, but not always. I think it's submitter supplied.
+                        original_file.source_filename = supplementary_file_url.split('/')[-1]
+                        original_file.source_url = supplementary_file_url
+                        original_file.is_downloaded = False
+                        original_file.is_archive = True
+                        original_file.has_raw = has_raw
+                        original_file.save()
 
             association = ExperimentSampleAssociation()
             association.experiment = experiment_object
