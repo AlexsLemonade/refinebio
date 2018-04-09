@@ -7,7 +7,6 @@ from django.utils import timezone
 from data_refinery_common.models.models import Sample, Experiment, OriginalFile
 
 
-
 class SurveyJob(models.Model):
     """Records information about a Surveyor Job."""
 

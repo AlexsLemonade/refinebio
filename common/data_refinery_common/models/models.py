@@ -123,8 +123,8 @@ class Experiment(models.Model):
     publication_title = models.TextField(default="")
     publication_doi = models.CharField(max_length=64, blank=True)
     pubmed_id = models.CharField(max_length=32, blank=True)
-    source_first_published = models.CharField(max_length=256, blank=True)
-    source_last_modified = models.CharField(max_length=256, blank=True)
+    source_first_published = models.DateTimeField(null=True)
+    source_last_modified = models.DateTimeField(null=True)
 
     # Common Properties
     is_public = models.BooleanField(default=False)
