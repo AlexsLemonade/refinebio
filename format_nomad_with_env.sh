@@ -72,7 +72,6 @@ fi
 # Conversely, in prod we need AWS credentials and a logging config but
 # not in development.
 # We do these with multi-line environment variables so that they can
-
 # be formatted into development job specs.
 if [ $env != "prod" ]; then
     export EXTRA_HOSTS="
