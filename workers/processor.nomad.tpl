@@ -61,7 +61,7 @@ job "PROCESSOR" {
 
         # The args to pass to the Docker container's entrypoint.
         args = [
-          "python",
+          "python3",
           "manage.py",
           "run_processor_job",
           "--job-name", "${NOMAD_META_JOB_NAME}",

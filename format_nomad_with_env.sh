@@ -35,7 +35,7 @@ while getopts ":p:e:o:h" opt; do
     esac
 done
 
-if [[ $project != "workers" && $project != "foreman" && $OPTARG != "api" ]]; then
+if [[ $project != "workers" && $project != "foreman" && $project != "api" ]]; then
     echo 'Error: must either specify project as either "api", workers", or "foreman" with -p.'
     exit 1
 fi
