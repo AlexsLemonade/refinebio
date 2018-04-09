@@ -1,6 +1,9 @@
 import requests
 from typing import List, Dict
+
 import xml.etree.ElementTree as ET
+from django.utils.dateparse import parse_datetime
+
 from data_refinery_common.models import (
     SurveyJob,
     Organism,
@@ -292,9 +295,9 @@ class SraSurveyor(ExternalSourceSurveyor):
                 experiment_object.pubmed_id = metadata["pubmed_id"]
                 experiment_object.has_publication = True
             if "study_ena_first_public" in metadata:
-                experiment.source_first_published = metadata["study_ena_first_public"]
+                experiment.source_first_published = parse_datetime(metadata["study_ena_first_public"])
             if "study_ena_last_update" in metadata:
-                experiment.source_last_updated = metadata["study_ena_last_update"]
+                experiment.source_last_modified = parse_datetime(metadata["study_ena_last_update"])
 
             experiment_object.save()
 
