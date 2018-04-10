@@ -12,7 +12,8 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
     ExperimentSampleAssociation,
-    OriginalFile
+    OriginalFile,
+    OriginalFileSampleAssociation
 )
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
@@ -98,7 +99,12 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_annotation.save()
 
         has_raw = True
-        created_samples = []
+
+        # Okay, here's the situation!
+        # Sometimes, samples have a direct single representation for themselves.
+        # Othertimes, there is a single file with references to every sample in it.
+
+        all_samples = []
         for sample_accession_code, sample in gse.gsms.items():
 
             try:
@@ -107,6 +113,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                          sample_accession_code,
                          experiment_object.accession_code,
                          survey_job=self.survey_job.id)
+                all_samples.append(sample_object)
                 continue
             except Sample.DoesNotExist:
                 organism = Organism.get_object_for_name(sample.metadata['organism_ch1'][0].upper())
@@ -116,24 +123,24 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 sample_object.organism = organism
                 sample_object.save()
 
+                all_samples.append(sample_object)
+
+                logger.info("Created Sample: " + str(sample_object))
+
                 sample_annotation = SampleAnnotation()
                 sample_annotation.sample = sample_object
                 sample_annotation.data = sample.metadata
                 sample_annotation.is_ccdl = False
                 sample_annotation.save()
 
-                no_supplements = False
-                supplements = sample.metadata.get('supplementary_file', [])
-                for supplementary_file_url in supplements:
+                sample_supplements = sample.metadata.get('supplementary_file', [])
+                for supplementary_file_url in sample_supplements:
 
                     # Why do they give us this?
                     if supplementary_file_url == "NONE":
-                        no_supplements = True
                         break
 
                     original_file = OriginalFile()
-                    original_file.sample = sample_object
-
                     # So - this is _usually_ true, but not always. I think it's submitter supplied.
                     original_file.source_filename = supplementary_file_url.split('/')[-1]
                     original_file.source_url = supplementary_file_url
@@ -141,31 +148,40 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     original_file.is_archive = True
                     original_file.has_raw = has_raw
                     original_file.save()
-                if not supplments:
-                    no_supplements = True
 
-                if no_supplements:
-                    for experiment_supplement in gse.metadata.get('supplementary_file', []):
-                        original_file = OriginalFile()
-                        original_file.sample = sample_object
+                    logger.info("Created OriginalFile: " + str(original_file))
 
-                        # So - this is _usually_ true, but not always. I think it's submitter supplied.
-                        original_file.source_filename = supplementary_file_url.split('/')[-1]
-                        original_file.source_url = supplementary_file_url
-                        original_file.is_downloaded = False
-                        original_file.is_archive = True
-                        original_file.has_raw = has_raw
-                        original_file.save()
+                    original_file_sample_association = OriginalFileSampleAssociation()
+                    original_file_sample_association.sample = sample_object
+                    original_file_sample_association.original_file = original_file
+                    original_file_sample_association.save()
 
-            association = ExperimentSampleAssociation()
-            association.experiment = experiment_object
-            association.sample = sample_object
-            association.save()
+                    association = ExperimentSampleAssociation()
+                    association.experiment = experiment_object
+                    association.sample = sample_object
+                    association.save()
 
-            logger.info("Created Sample: " + str(sample_object))
-            created_samples.append(sample_object)
+        for experiment_supplement_url in gse.metadata.get('supplementary_file', []):
 
-        return experiment_object, created_samples
+            original_file = OriginalFile()
+
+            # So - this is _usually_ true, but not always. I think it's submitter supplied.
+            original_file.source_filename = experiment_supplement_url.split('/')[-1]
+            original_file.source_url = experiment_supplement_url
+            original_file.is_downloaded = False
+            original_file.is_archive = True
+            original_file.has_raw = has_raw
+            original_file.save()
+
+            logger.info("Created OriginalFile: " + str(original_file))
+
+            for sample_object in all_samples:
+                original_file_sample_association = OriginalFileSampleAssociation()
+                original_file_sample_association.sample = sample_object
+                original_file_sample_association.original_file = original_file
+                original_file_sample_association.save()
+
+        return experiment_object, all_samples
 
     def discover_experiment_and_samples(self) -> (Experiment, List[Sample]):
         """
