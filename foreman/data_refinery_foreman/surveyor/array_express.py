@@ -334,13 +334,17 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     sample_annotation.save()
 
                 original_file = OriginalFile()
-                original_file.sample = sample_object
                 original_file.source_filename = filename
                 original_file.source_url = download_url
                 original_file.is_downloaded = False
                 original_file.is_archive = True
                 original_file.has_raw = has_raw
                 original_file.save()
+
+                original_file_sample_association = OriginalFileSampleAssociation()
+                original_file_sample_association.original_file = original_file
+                original_file_sample_association.sample = sample_object
+                original_file_sample_association.save()
 
             association = ExperimentSampleAssociation()
             association.experiment = experiment

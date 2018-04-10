@@ -11,6 +11,7 @@ from data_refinery_common.models import (
     ExperimentSampleAssociation,
     Organism,
     OriginalFile,
+    OriginalFileSampleAssociation,
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
     ProcessorJob,
@@ -55,8 +56,12 @@ class SanityTestAllEndpoints(APITestCase):
         sample_annotation.save()
 
         original_file = OriginalFile()
-        original_file.sample = sample
         original_file.save()
+
+        original_file_sample_association = OriginalFileSampleAssociation()
+        original_file_sample_association.sample = sample
+        original_file_sample_association.original_file = original_file
+        original_file_sample_association.save()
 
         downloader_job = DownloaderJob()
         downloader_job.save()
