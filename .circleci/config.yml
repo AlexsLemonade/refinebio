@@ -17,7 +17,7 @@ jobs:
       - run: sleep 30
 
       # Install our application
-      - run: chmod -R a+wr data_refinery_common
+      - run: chmod -R a+wr common
       - run: ./update_models.sh
 
       # Run API Tests.
