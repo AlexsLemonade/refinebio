@@ -38,11 +38,13 @@ cp deploy/ci_ingress.tf .
 format_environment_variables
 
 # Output the plan for debugging deployments later.
-terraform plan
+#terraform plan
 
 # Open up ingress to AWS for Circle, stop jobs, migrate DB.
 echo "Deploying with ingress.."
 ../format_nomad_with_env.sh -p api -e prod -o $(pwd)/api-configuration/
+# Output the plan for debugging deployments later.
+terraform plan  # dhu move location
 terraform apply -auto-approve
 
 # Find address of Nomad server.
