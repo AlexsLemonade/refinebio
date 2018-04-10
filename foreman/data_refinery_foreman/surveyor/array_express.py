@@ -1,6 +1,7 @@
 import requests
 
 from django.conf import settings
+from django.utils.dateparse import parse_datetime
 from typing import List, Dict
 
 from data_refinery_common.models import (
@@ -104,8 +105,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment_object.description = parsed_json["description"][0]["text"]
             experiment_object.platform_name = experiment["platform_accession_name"]
             experiment_object.platform_accession_code = experiment["platform_accession_code"]
-            experiment_object.source_first_published = experiment["release_date"]
-            experiment_object.source_last_updated = experiment["last_update_date"]
+            experiment_object.source_first_published = parse_datetime(experiment["release_date"])
+            experiment_object.source_last_modified = parse_datetime(experiment["last_update_date"])
             experiment_object.save()
 
             # We still create the Experiment and samples if there is processed

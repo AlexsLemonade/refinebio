@@ -56,6 +56,14 @@ class Sample(models.Model):
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(Sample, self).save(*args, **kwargs)
+
 
 class SampleAnnotation(models.Model):
     """ Semi-standard information associated with a Sample """
@@ -74,6 +82,14 @@ class SampleAnnotation(models.Model):
     is_public = models.BooleanField(default=False)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(SampleAnnotation, self).save(*args, **kwargs)
 
 class Experiment(models.Model):
     """ An Experiment or Study """
@@ -108,13 +124,21 @@ class Experiment(models.Model):
     publication_title = models.TextField(default="")
     publication_doi = models.CharField(max_length=64, blank=True)
     pubmed_id = models.CharField(max_length=32, blank=True)
-    source_first_published = models.CharField(max_length=256, blank=True)
-    source_last_updated = models.CharField(max_length=256, blank=True)
+    source_first_published = models.DateTimeField(null=True)
+    source_last_modified = models.DateTimeField(null=True)
 
     # Common Properties
     is_public = models.BooleanField(default=False)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(Experiment, self).save(*args, **kwargs)
 
 class ExperimentAnnotation(models.Model):
     """ Semi-standard information associated with an Experiment """
@@ -134,6 +158,14 @@ class ExperimentAnnotation(models.Model):
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(ExperimentAnnotation, self).save(*args, **kwargs)
+
 class ComputationalResult(models.Model):
     """ Meta-information about the output of a computer process. (Ex Salmon) """
 
@@ -149,13 +181,21 @@ class ComputationalResult(models.Model):
     is_ccdl = models.BooleanField(default=True)
 
     # Stats
-    time_start = models.DateTimeField(blank=True, null=True) 
+    time_start = models.DateTimeField(blank=True, null=True)
     time_end = models.DateTimeField(blank=True, null=True)
 
     # Common Properties
     is_public = models.BooleanField(default=False)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now) 
+    last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(ComputationalResult, self).save(*args, **kwargs)
 
 class ComputationalResultAnnotation(models.Model):
     """ Non-standard information associated with an ComputationalResult """
@@ -173,7 +213,15 @@ class ComputationalResultAnnotation(models.Model):
     # Common Properties
     is_public = models.BooleanField(default=False)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now) 
+    last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(ComputationalResultAnnotation, self).save(*args, **kwargs)
 
 # TODO
 # class Gene(models.Model):
@@ -196,7 +244,15 @@ class OrganismIndex(models.Model):
     # Common Properties
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now) 
+    last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(OrganismIndex, self).save(*args, **kwargs)
 
 """
 # Files
@@ -238,17 +294,25 @@ class OriginalFile(models.Model):
     # Common Properties
     is_public = models.BooleanField(default=False)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now) 
+    last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(OriginalFile, self).save(*args, **kwargs)
 
     def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
 
-        hash_object = hashlib.sha1() 
+        hash_object = hashlib.sha1()
         with open(self.absolute_file_path, mode='rb') as open_file:
             for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
                 hash_object.update(buf)
-        
+
         self.sha1 = hash_object.hexdigest()
         return self.sha1
 
@@ -286,10 +350,18 @@ class ComputedFile(models.Model):
     # Common Properties
     is_public = models.BooleanField(default=False)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now) 
+    last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(ComputedFile, self).save(*args, **kwargs)
 
     def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
-        """ Syncs a file to AWS S3. 
+        """ Syncs a file to AWS S3.
 
         XXX: TODO!
         """
@@ -304,7 +376,7 @@ class ComputedFile(models.Model):
         with open(self.absolute_file_path, mode='rb') as open_file:
             for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
                 hash_object.update(buf)
-        
+
         self.sha1 = hash_object.hexdigest()
         return self.sha1
 

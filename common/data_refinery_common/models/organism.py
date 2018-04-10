@@ -1,6 +1,9 @@
 import requests
 from xml.etree import ElementTree
+
 from django.db import models
+from django.utils import timezone
+
 from data_refinery_common.models.base_models import TimeTrackedModel
 
 
@@ -91,6 +94,16 @@ class Organism(models.Model):
     name = models.CharField(max_length=256, unique=True)
     taxonomy_id = models.IntegerField(unique=True)
     is_scientific_name = models.BooleanField(default=False)
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(Organism, self).save(*args, **kwargs)
 
     @classmethod
     def get_name_for_id(cls, taxonomy_id: int) -> str:

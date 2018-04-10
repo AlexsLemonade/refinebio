@@ -27,7 +27,12 @@ setup(
     install_requires=["django>=1.10.6",
                       "boto3>=1.4.4",
                       "daiquiri>=1.3.0",
-                      "billiard>=3.5.0.3"],
+                      "billiard>=3.5.0.3",
+                      "requests>=2.18.4",
+                      "retrying>=1.3.3",
+                      "psycopg2>=2.7.4",
+                      "python-nomad>=0.6.1"
+    ],
     license="BSD License",
     description="Common functionality to be shared between Data Refinery sub-projects.",
     url="https://www.greenelab.com",
