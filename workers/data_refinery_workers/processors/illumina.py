@@ -15,7 +15,8 @@ from data_refinery_common.models import (
     OriginalFile, 
     ComputationalResult, 
     ComputedFile,
-    Sample
+    Sample,
+    OriginalFileSampleAssociation
 )
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
@@ -46,8 +47,9 @@ def _collect_samples(job_context: Dict) -> Dict:
     Detection of column type in the data depends upon knowing the sample names in advance.
     """
 
-    original_files = job_context['original_files']
-    samples = Sample.objects.filter(id__in=original_files.values('sample_id'))
+    original_file = job_context['original_files'][0]
+    assocs = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
+    samples = Sample.objects.filter(id__in=assocs.values('sample_id'))
     job_context['samples'] = samples
 
     return job_context
@@ -70,6 +72,11 @@ def _detect_columns(job_context: Dict) -> Dict:
     with open(input_file, 'r') as tsvin:
         tsvin = csv.reader(tsvin, delimiter='\t')
         for row in tsvin:
+            # Skip comment rows
+            joined = ''.join(row)
+            if '#' in joined or '' == joined:
+                continue
+
             headers = row
             break
 
