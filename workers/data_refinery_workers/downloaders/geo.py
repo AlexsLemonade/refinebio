@@ -150,6 +150,9 @@ def download_geo(job_id: int) -> None:
     url = original_file.source_url
     accession_code = job.accession_code
 
+    sample_assocs  = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
+    related_samples = Sample.objects.filter(id__in=sample_assocs.values('sample_id'))
+
     # First, get all the unique sample archive URLs.
     # There may be more than one!
     # Then, unpack all the ones downloaded.
@@ -242,6 +245,7 @@ def download_geo(job_id: int) -> None:
                 print(og_file['filename'])
 
     # These files are only gzipped.
+    # These are generally the raw-raw data
     else:
         extracted_files = _extract_gz(dl_file_path, accession_code)
         unpacked_sample_files = []
@@ -268,8 +272,13 @@ def download_geo(job_id: int) -> None:
                 actual_file.calculate_size()
                 actual_file.calculate_sha1()
                 actual_file.has_raw = True
-                actual_file.sample = archive_file.sample
                 actual_file.save()
+
+                for sample in related_samples:
+                    new_association = OriginalFileSampleAssociation()
+                    new_association.original_file = actual_file
+                    new_association.sample = sample
+                    new_association.save()
 
                 # Question - do we want to delete this extracted archive file?
                 # archive_file.delete()
