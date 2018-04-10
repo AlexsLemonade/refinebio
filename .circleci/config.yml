@@ -5,36 +5,7 @@ jobs:
     machine: true
     steps:
       - checkout
-
-      # Setup Postgres in a Container
-      - run: ./run_postgres.sh
-      - run: sleep 30
-      - run: ./common/install_db_docker.sh
-      - run: sleep 30
-
-      # Setup Nomad in a Container
-      #- run: ./run_nomad.sh
-      - run: ./run_nomad_docker.sh
-      - run: sleep 30
-
-      # Install our application
-      - run: ./common/make_migrations.sh
-      - run: cd common && python setup.py sdist
-      
-      # Run API Tests.
-      - run: ./api/run_tests.sh
-
-      # Run Common Tests.
-      - run: ./common/run_tests.sh
-
-      # Run Foreman Tests
-      - run: ./foreman/run_tests.sh
-
-      # Run Worker Tests
-      - run: chmod -R a+rw workers/test_volume
-      - run:
-          command: .circleci/filter_tests.sh
-          no_output_timeout: 36000
+      - run: bash .circleci/run_terraform.sh
 
   deploy:
     machine: true

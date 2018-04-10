@@ -96,13 +96,11 @@ docker pull $FOREMAN_DOCKER_IMAGE
 
 # Migrate auth.
 docker run \
-       --volume migrations \
        --env-file prod_env \
        $FOREMAN_DOCKER_IMAGE migrate auth
 
 # Apply general migrations.
 docker run \
-       --volume migrations \
        --env-file prod_env \
        $FOREMAN_DOCKER_IMAGE migrate
 
