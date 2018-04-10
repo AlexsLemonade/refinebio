@@ -5,6 +5,7 @@ jobs:
     machine: true
     steps:
       - checkout
+      - run: bash .circleci/git_decrypt.sh
       - run: bash .circleci/run_terraform.sh
 
   deploy:
