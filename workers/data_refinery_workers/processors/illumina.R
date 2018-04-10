@@ -379,10 +379,6 @@ suppressWarnings(data <- fread(paste0("zcat < ", tmpFileGz), stringsAsFactors=FA
 if (probeIDColumn == "")
   probeIDColumn <- "PROBE_ID"
 
-browser()
-debug()
-trace()
-
 if (!(probeIDColumn %in% colnames(data)))
 {
   stop(paste0("No ", probeIDColumn, " column in the data file."))
