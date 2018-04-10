@@ -14,7 +14,8 @@ from data_refinery_common.models import (
     ExperimentAnnotation, 
     ExperimentSampleAssociation, 
     OriginalFile, 
-    DownloaderJobOriginalFileAssociation
+    DownloaderJobOriginalFileAssociation,
+    OriginalFileSampleAssociation
 )
 from data_refinery_workers.downloaders import utils
 from data_refinery_common.logging import get_and_configure_logger
@@ -86,6 +87,32 @@ def _extract_tar(file_path: str, accession_code: str) -> List[str]:
 
     return files
 
+def _extract_tgz(file_path: str, accession_code: str) -> List[str]:
+    """Extract tgz and return a list of the raw files.
+    """
+
+    logger.debug("Extracting %s!", file_path, file_path=file_path)
+
+    try:
+        extracted_filepath = file_path.replace('.tgz', '.tar')
+        with gzip.open(file_path, 'rb') as f_in:
+            with open(extracted_filepath, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
+
+        zip_ref = tarfile.TarFile(extracted_filepath, "r")
+        abs_with_code_raw = LOCAL_ROOT_DIR + '/' + accession_code + '/raw/'
+        zip_ref.extractall(abs_with_code_raw)
+        zip_ref.close()
+
+        files = [{'absolute_path': abs_with_code_raw + f, 'filename': f} for f in os.listdir(abs_with_code_raw)]
+
+    except Exception as e:
+        reason = "Exception %s caught while extracting %s", str(e), file_path
+        logger.exception(reason)
+        raise
+
+    return files
+
 def _extract_gz(file_path: str, accession_code: str) -> List[str]:
     """Extract gz and return a list of the raw files.
     """
@@ -105,7 +132,6 @@ def _extract_gz(file_path: str, accession_code: str) -> List[str]:
     except Exception as e:
         reason = "Exception %s caught while extracting %s", str(e), file_path
         logger.exception(reason)
-        job.failure_reason = reason
         raise
 
     return files
@@ -136,6 +162,8 @@ def download_geo(job_id: int) -> None:
     os.makedirs(LOCAL_ROOT_DIR + '/' + accession_code, exist_ok=True)
     dl_file_path = LOCAL_ROOT_DIR + '/' + accession_code + '/' + url.split('/')[-1]
     _download_file(url, dl_file_path, job)
+    original_file.is_downloaded = True
+    original_file.save()
 
     # This files are tarred, and also subsequently gzipped
     if '.tar' in dl_file_path:
@@ -173,10 +201,46 @@ def download_geo(job_id: int) -> None:
                 # archive_file.delete()
 
                 unpacked_sample_files.append(actual_file)
-            except Exception:
+            except Exception as e:
                 # TODO - is this worth failing a job for?
                 logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'])
-    
+
+    # This is a .tgz file.
+    elif '.tgz' in dl_file_path:
+        extracted_files = _extract_tgz(dl_file_path, accession_code)
+        unpacked_sample_files = []
+        for og_file in extracted_files:
+
+            if '.txt' in og_file['filename']:
+                try:
+                    gsm_id = og_file['filename'].split('-')[0]
+                    sample = Sample.objects.get(accession_code=gsm_id)
+                except Exception as e:
+                    print(e)
+                    print(og_file)
+                    print
+                    continue
+
+                actual_file = OriginalFile()
+                actual_file.is_downloaded=True
+                actual_file.is_archive=False
+                actual_file.absolute_file_path = og_file['absolute_path']
+                actual_file.filename = og_file['filename']
+                actual_file.calculate_size()
+                actual_file.calculate_sha1()
+                actual_file.has_raw = True
+                actual_file.save()
+
+                original_file_sample_association = OriginalFileSampleAssociation()
+                original_file_sample_association.sample = sample
+                original_file_sample_association.original_file = actual_file
+                original_file_sample_association.save()
+
+                unpacked_sample_files.append(actual_file)
+
+            else:
+                print(og_file['filename'])
+
     # These files are only gzipped.
     else:
         extracted_files = _extract_gz(dl_file_path, accession_code)
@@ -211,7 +275,7 @@ def download_geo(job_id: int) -> None:
                 # archive_file.delete()
 
                 unpacked_sample_files.append(actual_file)
-            except Exception:
+            except Exception as e:
                 # TODO - is this worth failing a job for?
                 logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'])
 
@@ -229,9 +293,10 @@ def download_geo(job_id: int) -> None:
     utils.end_downloader_job(job, success)
 
     if success:
+
         # We're trying to detect technology type here.
         # It may make more sense to try to make this into a higher level Sample property.
-        annotations = actual_file.sample.sampleannotation_set.all()[0]
+        annotations = actual_file.samples.first().sampleannotation_set.all()[0]
 
         # XXX: Make sure this still works if we get arrays back. Should check for the presence of the 'Cy5' string in label_ch2.
         if ('Agilent' in annotations.data.get('label_protocol_ch1', "")) and ('Agilent' in annotations.data.get('label_protocol_ch2', "")):

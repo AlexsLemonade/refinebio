@@ -1,3 +1,4 @@
+import dateutil.parser
 import GEOparse
 import requests
 
@@ -55,14 +56,29 @@ class GeoSurveyor(ExternalSourceSurveyor):
         geotype = geo[:3]
         range_subdir = sub(r"\d{1,3}$", "nnn", geo)
 
-        raw_url_template = ("ftp://ftp.ncbi.nlm.nih.gov/geo/"
+        nn_url_template = ("ftp://ftp.ncbi.nlm.nih.gov/geo/"
                   "{root}/{range_subdir}/{record}/suppl/{record_file}")
-        raw_url = raw_url_template.format(root="series",
+        nn_url = nn_url_template.format(root="series",
                             range_subdir=range_subdir,
                             record=geo,
                             record_file="%s_non-normalized.txt.gz" % geo)
 
-        return raw_url
+        return nn_url
+
+    def get_miniml_url(self, experiment_accession_code):
+        """ """
+        geo = experiment_accession_code.upper()
+        geotype = geo[:3]
+        range_subdir = sub(r"\d{1,3}$", "nnn", geo)
+
+        min_url_template = ("ftp://ftp.ncbi.nlm.nih.gov/geo/"
+                  "{root}/{range_subdir}/{record}/miniml/{record_file}")
+        min_url = min_url_template.format(root="series",
+                            range_subdir=range_subdir,
+                            record=geo,
+                            record_file="%s_family.xml.tgz" % geo)
+
+        return min_url
 
     def create_experiment_and_samples_from_api(self, experiment_accession_code) -> (Experiment, List[Sample]):
         """ """
@@ -86,8 +102,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_object.description = gse.metadata.get('summary', [''])[0]
             experiment_object.platform_name = gse.metadata["platform_id"][0] # TODO: Lookup GEO-GPL
             experiment_object.platform_accession_code = gse.metadata["platform_id"][0]
-            experiment_object.source_first_published = gse.metadata["submission_date"][0]
-            experiment_object.source_last_updated = gse.metadata["last_update_date"][0]
+            experiment_object.source_first_published = dateutil.parser.parse(gse.metadata["submission_date"][0])
+            experiment_object.source_last_updated = dateutil.parser.parse(gse.metadata["last_update_date"][0])
             experiment_object.submitter_institution = ", ".join(list(set(gse.metadata["contact_institute"])))
             experiment_object.pubmed_id = gse.metadata.get("pubmed_id", [""])[0]
             experiment_object.save()
@@ -113,7 +129,13 @@ class GeoSurveyor(ExternalSourceSurveyor):
                          sample_accession_code,
                          experiment_object.accession_code,
                          survey_job=self.survey_job.id)
+
                 all_samples.append(sample_object)
+
+                association = ExperimentSampleAssociation()
+                association.experiment = experiment_object
+                association.sample = sample_object
+                association.save()
                 continue
             except Sample.DoesNotExist:
                 organism = Organism.get_object_for_name(sample.metadata['organism_ch1'][0].upper())
@@ -156,11 +178,12 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     original_file_sample_association.original_file = original_file
                     original_file_sample_association.save()
 
-                    association = ExperimentSampleAssociation()
-                    association.experiment = experiment_object
-                    association.sample = sample_object
-                    association.save()
+                association = ExperimentSampleAssociation()
+                association.experiment = experiment_object
+                association.sample = sample_object
+                association.save()
 
+        # These may or may not contain what we want.
         for experiment_supplement_url in gse.metadata.get('supplementary_file', []):
 
             original_file = OriginalFile()
@@ -168,6 +191,26 @@ class GeoSurveyor(ExternalSourceSurveyor):
             # So - this is _usually_ true, but not always. I think it's submitter supplied.
             original_file.source_filename = experiment_supplement_url.split('/')[-1]
             original_file.source_url = experiment_supplement_url
+            original_file.is_downloaded = False
+            original_file.is_archive = True
+            original_file.has_raw = has_raw
+            original_file.save()
+
+            logger.info("Created OriginalFile: " + str(original_file))
+
+            for sample_object in all_samples:
+                original_file_sample_association = OriginalFileSampleAssociation()
+                original_file_sample_association.sample = sample_object
+                original_file_sample_association.original_file = original_file
+                original_file_sample_association.save()
+
+        # These are the Miniml/Soft/Matrix URLs that are always(?) provided?
+        for family_url in [self.get_miniml_url(experiment_accession_code)]:
+
+            original_file = OriginalFile()
+
+            original_file.source_filename = family_url.split('/')[-1]
+            original_file.source_url = family_url
             original_file.is_downloaded = False
             original_file.is_archive = True
             original_file.has_raw = has_raw
