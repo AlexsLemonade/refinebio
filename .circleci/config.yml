@@ -18,9 +18,8 @@ jobs:
       - run: sleep 30
 
       # Install our application
-      - run: ./common/make_migrations.sh
-      - run: cd common && python setup.py sdist
-      
+      - run: ./update_models.sh
+
       # Run API Tests.
       - run: ./api/run_tests.sh
 
