@@ -35,7 +35,6 @@ class SurveyTestCase(TestCase):
         SurveyJobKeyValue.objects.all().delete()
         SurveyJob.objects.all().delete()
 
-    # @patch('data_refinery_foreman.surveyor.array_express.requests.get')
     @patch('data_refinery_foreman.surveyor.external_source.send_job')
     def test_survey(self, mock_send_task):
         """The 'survey' function generates one Batch per sample.

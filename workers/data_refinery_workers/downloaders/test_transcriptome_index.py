@@ -25,7 +25,8 @@ class DownloadTranscriptomeIndexTestCase(TestCase):
             "ftp://ftp.ensemblgenomes.org/pub/release-37/plants/fasta/"
             "aegilops_tauschii/dna/Aegilops_tauschii.ASM34733v1.dna.toplevel.fa.gz")
 
-    def test_download_file(self):
+    @patch('data_refinery_workers.downloaders.utils.send_job')
+    def test_download_file(self, mock_send_task):
         dlj = DownloaderJob()
         dlj.save()
         og = OriginalFile()
