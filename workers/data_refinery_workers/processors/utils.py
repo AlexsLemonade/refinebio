@@ -4,7 +4,8 @@ from data_refinery_common.models import (
     ProcessorJob, 
     Sample,
     OriginalFile,
-    ProcessorJobOriginalFileAssociation
+    ProcessorJobOriginalFileAssociation,
+    OriginalFileSampleAssociation
 )
 from data_refinery_common.utils import get_worker_id
 from data_refinery_workers._version import __version__
@@ -37,6 +38,12 @@ def start_job(job_context: Dict):
         return job_context
 
     job_context["original_files"] = original_files
+
+    original_file = job_context['original_files'][0]
+    assocs = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
+    samples = Sample.objects.filter(id__in=assocs.values('sample_id'))
+    job_context['samples'] = samples
+
     return job_context
 
 

@@ -4,7 +4,7 @@ import boto3
 from typing import Dict
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import ComputationalResult, ComputedFile
+from data_refinery_common.models import ComputationalResult, ComputedFile, SampleResultAssociation
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
@@ -51,6 +51,12 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
         job_context["job"].failure_reason = failure_reason
         job_context["success"] = False
         return job_context        
+
+    for sample in job_context['samples']:
+        assoc = SampleResultAssociation()
+        assoc.sample = sample
+        assoc.result = result
+        assoc.save()
 
     logger.info("Created %s", result)
     job_context["success"] = True
