@@ -140,9 +140,11 @@ class GeoSurveyor(ExternalSourceSurveyor):
             except Sample.DoesNotExist:
                 organism = Organism.get_object_for_name(sample.metadata['organism_ch1'][0].upper())
 
+                # TODO: This is incomplete
                 sample_object = Sample()
                 sample_object.accession_code = sample_accession_code
                 sample_object.organism = organism
+                sample_object.title = sample.metadata['title'][0]
                 sample_object.save()
 
                 all_samples.append(sample_object)

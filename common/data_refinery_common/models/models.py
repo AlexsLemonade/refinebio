@@ -34,6 +34,7 @@ class Sample(models.Model):
 
     # Identifiers
     accession_code = models.CharField(max_length=255, unique=True)
+    title = models.CharField(max_length=255, unique=False, blank=True)
 
     # Relations
     organism = models.ForeignKey(Organism, blank=True, null=True, on_delete=models.SET_NULL)

@@ -318,8 +318,8 @@ sig = function(y, m, verbose=TRUE)
 library("optparse")
 
 option_list = list(
-  make_option(c("-g", "--gse"), type="character", default="GSE22427", 
-              help="GSE", metavar="character"),
+  # make_option(c("-g", "--gse"), type="character", default="GSE22427", 
+  #             help="GSE", metavar="character"),
   make_option(c("-p", "--probeId"), type="character", default="PROBE_ID", 
               help="Probe ID", metavar="character"),
   make_option(c("-e", "--expression"), type="character", default=".AVG_Signal", 
@@ -347,9 +347,9 @@ opt = parse_args(opt_parser);
 # numCores <- as.integer(commandArgs()[14])
 # url <- commandArgs()[15]
 
-gseID <- opt$gse
+# gseID <- opt$gse
 probeIDColumn <- opt$probeId
-exprColumnPattern <- opt$expression
+exprColumns <- unlist(strsplit(opt$expression, ","))
 detectionPValueColumnPattern <- opt$detection
 platform <- opt$platform
 numCores <- opt$cores
@@ -359,11 +359,11 @@ outFilePath <- opt$outputFile
 
 #tmpDir <- tempdir()
 tmpDir <- "/tmp"
-tmpFile <- paste(tmpDir, "/", gseID, ".txt", sep="")
-tmpFileGz <- paste(tmpFile, ".gz", sep="")
+# tmpFile <- paste(tmpDir, "/", gseID, ".txt", sep="")
+# tmpFileGz <- paste(tmpFile, ".gz", sep="")
 
-if (!file.exists(tmpFileGz))
-  download.file(url, tmpFileGz)
+# if (!file.exists(tmpFileGz))
+#   download.file(url, tmpFileGz)
 
 library(limma)
 library(oligo)
@@ -373,7 +373,7 @@ library(paste(platform, ".db", sep=""), character.only=TRUE)
 
 # Read the data file
 message("Reading data file...")
-suppressWarnings(data <- fread(paste0("zcat < ", tmpFileGz), stringsAsFactors=FALSE, sep="\t", header=TRUE, autostart=10, data.table=FALSE, check.names=FALSE, fill=TRUE, na.strings="", showProgress=FALSE))
+suppressWarnings(data <- fread(paste0("zcat < ", filePath), stringsAsFactors=FALSE, sep="\t", header=TRUE, autostart=10, data.table=FALSE, check.names=FALSE, fill=TRUE, na.strings="", showProgress=FALSE))
 
 # Check input paramters and parse out data we need
 if (probeIDColumn == "")
@@ -386,9 +386,9 @@ if (!(probeIDColumn %in% colnames(data)))
 
 probeIDs <- data[,probeIDColumn]
 
-if (exprColumnPattern == "")
-  exprColumnPattern = ".AVG_Signal"
-exprColumns <- grep(exprColumnPattern, colnames(data), ignore.case=TRUE)
+# if (exprColumnPattern == "")
+#   exprColumnPattern = ".AVG_Signal"
+# exprColumns <- grep(exprColumnPattern, colnames(data), ignore.case=TRUE)
 
 if (length(exprColumns) == 0)
   stop(paste0("No columns match this pattern: ", exprColumnPattern))

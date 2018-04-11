@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import csv
 import os
 import string
+import subprocess
 import warnings
 from django.utils import timezone
 from typing import Dict
@@ -16,7 +17,8 @@ from data_refinery_common.models import (
     ComputationalResult, 
     ComputedFile,
     Sample,
-    OriginalFileSampleAssociation
+    OriginalFileSampleAssociation,
+    SampleResultAssociation
 )
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
@@ -65,6 +67,16 @@ def _detect_columns(job_context: Dict) -> Dict:
         Detection Pval column
         Expression column (contains sample title and NOT 'BEAD')
 
+        Header examples:     
+            ['ID_REF', 'LV-C&si-Control-1', 'Detection Pval',
+            'LV-C&si-Control-2', 'Detection Pval', 'LV-C&si-Control-3', 'Detection
+            Pval', 'LV-C&si-EZH2-1', 'Detection Pval', 'LV-C&si-EZH2-2', 'Detection
+            Pval', 'LV-C&si-EZH2-3', 'Detection Pval', 'LV-EZH2&si-EZH2-1',
+            'Detection Pval', 'LV-EZH2&si-EZH2-2', 'Detection Pval', 'LV-EZH2&si-
+            EZH2-3', 'Detection Pval', 'LV-T350A&si-EZH2-1', 'Detection Pval', 'LV-
+            T350A&si-EZH2-2', 'Detection Pval', 'LV-T350A&si-EZH2-3', 'Detection
+            Pval']
+
     """
 
     input_file = job_context["input_file_path"]
@@ -80,9 +92,6 @@ def _detect_columns(job_context: Dict) -> Dict:
             headers = row
             break
 
-    import pdb
-    pdb.set_trace()
-
     # First the probe ID column
     if headers[0] not in ['ID_REF', 'PROBE_ID']:
         job_context["job"].failure_reason = "Could not find ID reference column"
@@ -91,6 +100,28 @@ def _detect_columns(job_context: Dict) -> Dict:
     else:
         job_context['probeId'] = headers[0]
 
+    # Then the detection Pvalue string, which is always(?) 'Detection Pval'
+    for header in headers:
+        if header == 'Detection Pval':
+            job_context['detectionPval'] = 'Detection Pval'
+        if header == 'Detection_Pval':
+            job_context['detectionPval'] = 'Detection_Pval'
+            break
+    else:
+        logger.info("Could not detect PValue column!")
+        raise
+
+    # Then, finally, create an absolutely bonkers regular expression
+    # which will explictly hit on any sample which contains a 4sample
+    # ID _and_ ignores the magical word 'BEAM'. Great!
+    # TODO: What to do about the ones that say `.AVG_Signal` ?
+    column_ids = ""
+    for sample in job_context['samples']:
+        for offset, header in enumerate(headers):
+            if sample.title == header:
+                column_ids = column_ids + str(offset) + ","
+    column_ids = column_ids[:-1]
+    job_context['columnIds'] = column_ids
 
     return job_context
 
@@ -98,33 +129,41 @@ def _run_illumina(job_context: Dict) -> Dict:
     """Processes an input TXT file to an output PCL file.
 
     Does so using a custom R script.
-    Expects job_context to contain the keys 'input_file', 'output_file'.
+    Expects job_context to contain the keys 'input_file_path', 'output_file_path'.
     """
-    input_file = job_context["input_file_path"]
+    input_file_path = job_context["input_file_path"]
 
     try:
-        # It's necessary to load the foreach library before calling SCANfast
-        # because it doesn't load the library before calling functions
-        # from it.
-        ro.r("suppressMessages(library('foreach'))")
+        job_context['time_start'] = timezone.now()
 
-        # Prevents:
-        # RRuntimeWarning: There were 50 or more warnings (use warnings()
-        # to see the first 50)
-        ro.r("options(warn=1)")
+        print(" ".join([
+                "/usr/bin/Rscript", 
+                "--vanilla", 
+                "/home/user/data_refinery_workers/processors/illumina.R",
+                "--probeId", job_context['probeId'],
+                "--expression", job_context['columnIds'],
+                "--detection", job_context['detectionPval'],
+                "--platform", "illuminaHumanv4", # XXX - choose the correct 2/4
+                "--inputFile", job_context['input_file_path'],
+                "--outputFile", job_context['output_file_path'],
+            ]))
 
-        # All R messages are turned into Python 'warnings' by rpy2. By
-        # filtering all of them we silence a lot of useless output
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            scan_upc = ro.r['::']('XXX', 'XXX')
-            job_context['time_start'] = timezone.now()
-            scan_upc(input_file,
-                     job_context["output_file_path"])
-            job_context['time_end'] = timezone.now()
+        result = subprocess.check_output([
+                "/usr/bin/Rscript", 
+                "--vanilla", 
+                "/home/user/data_refinery_workers/processors/illumina.R",
+                "--probeId", job_context['probeId'],
+                "--expression", job_context['columnIds'],
+                "--detection", job_context['detectionPval'],
+                "--platform", "illuminaHumanv4", # XXX - choose the correct 2/4
+                "--inputFile", job_context['input_file_path'],
+                "--outputFile", job_context['output_file_path'],
+            ])
 
-    except RRuntimeError as e:
-        error_template = ("Encountered error in R code while running AGILENT_TWOCOLOR_TO_PCL"
+        job_context['time_end'] = timezone.now()
+
+    except Exception as e:
+        error_template = ("Encountered error in R code while running illumina.R"
                           " pipeline during processing of {0}: {1}")
         error_message = error_template.format(input_file, str(e))
 
@@ -138,7 +177,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     """ Create the ComputationalResult objects after a Scan run is complete """
 
     result = ComputationalResult()
-    result.command_executed = "Illumina.R" # Need a better way to represent this R code.
+    result.command_executed = "illumina.R" # Need a better way to represent this R code.
     result.is_ccdl = True
     result.is_public = True
     result.system_version = __version__
@@ -168,6 +207,12 @@ def _create_result_objects(job_context: Dict) -> Dict:
         job_context["job"].failure_reason = failure_reason
         job_context["success"] = False
         return job_context
+
+    for sample in job_context['samples']:
+        assoc = SampleResultAssociation()
+        assoc.sample = sample
+        assoc.result = result
+        assoc.save()
 
     logger.info("Created %s", result)
     job_context["success"] = True
