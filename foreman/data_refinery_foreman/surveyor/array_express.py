@@ -179,6 +179,47 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         return experiment_object
 
+    def determine_sample_accession(self, sample_source_name: str, sample_assay_name: str, filename:str) -> str:
+        """Determine what to use as the sample's accession code.
+
+        This is a complicated heuristic to determine the sample
+        accession because there isn't a field that consistently
+        contains it so we're trying to figure out a heuristic that
+        will work for all the data. This may need even further
+        refinements if we come across examples that break it.
+
+        However, what's going on is that we think either the `source`
+        or `assay` field will be the sample accession but it's not
+        always the same.
+        Ex: E-MEXP-669 has it in sample_assay_name.
+        Therefore we try a few different things to determine which it
+        is.
+        """
+        # It SEEMS like the filename often contains part or all of the
+        # sample name so we first try to see if either field contains
+        # the filename with the extension stripped off:
+        stripped_filename = ".".join(filename.split(".")[:-1])
+        if stripped_filename in sample_source_name:
+            return sample_source_name
+        elif stripped_filename in sample_assay_name:
+            return sample_assay_name
+
+        # Accessions don't have spaces in them, but sometimes these
+        # fields do so next we try to see if one has spaces and the
+        # other doesn't:
+        source_has_spaces = " " in sample_source_name
+        assay_has_spaces = " " in sample_assay_name
+        if assay_has_spaces and not source_has_spaces:
+            return sample_source_name
+        elif source_has_spaces and not assay_has_spaces:
+            return sample_assay_name
+
+        # We're out of options so return the longest one.
+        if len(sample_source_name) >= len(sample_assay_name):
+            sample_accession_code = sample_source_name
+        else:
+            sample_accession_code = sample_assay_name
+
     def create_samples_from_api(self,
                           experiment: Experiment
                           ) -> List[Sample]:
@@ -220,17 +261,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             # For some reason, this sample has no files associated with it.
             if "file" not in sample:
                 continue
-
-            # XXX: Somebody needs to explain this to me.
-            # XXX: This looks hacky. Some samples appear to have these fields
-            # reversed - so we always take the longest.
-            # Ex: E-MEXP-669
-            sample_source_name = sample["source"].get("name", "")
-            sample_assay_name = sample["assay"].get("name", "")
-            if len(sample_source_name) >= len(sample_assay_name):
-                sample_accession_code = sample_source_name
-            else:
-                sample_accession_code = sample_assay_name
 
             # Figure out the Organism for this sample
             organism_name = UNKNOWN
@@ -299,6 +329,14 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                             experiment.accession_code,
                             survey_job=self.survey_job.id)
                     continue
+
+            # The accession code is not a simple matter to determine.
+            sample_source_name = sample["source"].get("name", "")
+            sample_assay_name = sample["assay"].get("name", "")
+            sample_accession_code = self.determine_sample_accession(
+                sample_source_name,
+                sample_assay_name,
+                filename)
 
             # Create the sample object
             try:

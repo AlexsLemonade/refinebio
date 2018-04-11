@@ -26,4 +26,4 @@ docker run \
        --add-host=nomad:$NOMAD_HOST_IP \
        --env-file common/environments/test \
        --link drdb:postgres $NOMAD_LINK \
-       -it common_tests bash -c "$run_tests_with_coverage"
+       -it common_tests bash -c "$(run_tests_with_coverage $@)"

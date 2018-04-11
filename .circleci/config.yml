@@ -8,13 +8,11 @@ jobs:
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
-      - run: sleep 30
-      - run: ./common/install_db_docker.sh
-
       # Setup Nomad in a Container
-      #- run: ./run_nomad.sh
       - run: ./run_nomad_docker.sh
       - run: sleep 30
+      # Finish setting up Postgres now that it's running.
+      - run: ./common/install_db_docker.sh
 
       # Install our application
       - run: chmod -R a+wr common

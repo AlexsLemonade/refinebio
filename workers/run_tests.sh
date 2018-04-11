@@ -92,4 +92,4 @@ docker run \
        --env-file workers/environments/test \
        --volume $volume_directory:/home/user/data_store \
        --link drdb:postgres $NOMAD_LINK \
-       -it dr_worker_tests bash -c "$run_tests_with_coverage"
+       -it dr_worker_tests bash -c "$(run_tests_with_coverage $@)"

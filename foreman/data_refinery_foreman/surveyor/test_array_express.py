@@ -7,7 +7,8 @@ from data_refinery_common.models import (
     DownloaderJob,
     SurveyJob,
     SurveyJobKeyValue,
-    Organism
+    Organism,
+    Sample
 )
 from data_refinery_foreman.surveyor.array_express import (
     ArrayExpressSurveyor,
@@ -246,18 +247,21 @@ class SurveyTestCase(TestCase):
         SurveyJobKeyValue.objects.all().delete()
         SurveyJob.objects.all().delete()
 
-    @patch('data_refinery_foreman.surveyor.array_express.requests.get')
+    # @patch('data_refinery_foreman.surveyor.array_express.requests.get')
     @patch('data_refinery_foreman.surveyor.external_source.send_job')
-    def test_survey(self, mock_send_task, mock_get):
+    def test_survey(self, mock_send_task):
         """The 'survey' function generates one Batch per sample.
 
         This test also tests the handle_batches method of ExternalSourceSurveyor
         which isn't tested on its own because it is an abstract class.
         """
-        mock_send_task.return_value = Mock(ok=True)
-        mock_get.side_effect = mocked_requests_get
-
         ae_surveyor = ArrayExpressSurveyor(self.survey_job)
         ae_surveyor.survey()
 
+        samples = Sample.objects.all()
         downloader_jobs = DownloaderJob.objects.all()
+
+        # We are expecting this to discoever 5 samples.
+        self.assertEqual(samples.count(), 5)
+        # And for one DownloaderJob to be created for all of them.
+        self.assertEqual(downloader_jobs.count(), 1)

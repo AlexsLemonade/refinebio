@@ -26,4 +26,4 @@ docker run \
        --add-host=nomad:$NOMAD_HOST_IP \
        --env-file foreman/environments/test \
        --link drdb:postgres $NOMAD_LINK \
-       -it dr_foreman bash -c "$run_tests_with_coverage"
+       -it dr_foreman bash -c "$(run_tests_with_coverage $@)"
