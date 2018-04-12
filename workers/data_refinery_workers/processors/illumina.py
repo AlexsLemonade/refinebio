@@ -42,6 +42,15 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["output_file_path"] = '/'.join(pre_part) + '/processed/' + end_part
     job_context["output_file_path"] = job_context["output_file_path"].replace('.txt', '.PCL')
 
+    finput = open(job_context["input_file_path"], "r")
+    foutput = open(job_context["input_file_path"] + ".sanitized", "w")
+    for line in finput:
+        if '#' not in line and line.strip()!='' and line!='\n' and line!=None:
+            foutput.write(line)    
+    finput.close()
+    foutput.close()
+    job_context['input_file_path'] = job_context["input_file_path"] + ".sanitized"
+
     return job_context
 
 def _detect_columns(job_context: Dict) -> Dict:
@@ -103,13 +112,23 @@ def _detect_columns(job_context: Dict) -> Dict:
     # TODO: What to do about the ones that say `.AVG_Signal` ?
     column_ids = ""
     for sample in job_context['samples']:
-        for offset, header in enumerate(headers):
+        for offset, header in enumerate(headers, start=1):
             if sample.title == header:
                 column_ids = column_ids + str(offset) + "," 
                 continue
             if header.upper().replace(' ', '_') == "RAW_VALUE":
                 column_ids = column_ids + str(offset) + "," 
                 continue
+            if 'AVG_Signal' in header:
+                column_ids = column_ids + str(offset) + "," 
+                continue
+            if sample.title in header and \
+            'BEAD' not in header.upper() and \
+            'NARRAYS' not in header.upper() and \
+            'PVAL' not in header.upper().replace(' ', '').replace('_', ''):
+                column_ids = column_ids + str(offset) + "," 
+                continue
+
     column_ids = column_ids[:-1]
     job_context['columnIds'] = column_ids
 
@@ -155,7 +174,9 @@ def _run_illumina(job_context: Dict) -> Dict:
     except Exception as e:
         error_template = ("Encountered error in R code while running illumina.R"
                           " pipeline during processing of {0}: {1}")
-        error_message = error_template.format(input_file, str(e))
+        error_message = error_template.format(job_context['input_file_path'], str(e))
+        import os
+        os.system('/bin/bash')
 
         logger.error(error_message, processor_job=job_context["job_id"])
         job_context["job"].failure_reason = error_message

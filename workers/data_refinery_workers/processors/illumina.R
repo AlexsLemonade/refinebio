@@ -349,7 +349,8 @@ opt = parse_args(opt_parser);
 
 # gseID <- opt$gse
 probeIDColumn <- opt$probeId
-exprColumns <- unlist(strsplit(opt$expression, ","))
+exprColumns <- strsplit(opt$expression, ",")
+exprColumns <- unlist(lapply(exprColumns, as.integer))
 detectionPValueColumnPattern <- opt$detection
 platform <- opt$platform
 numCores <- opt$cores
@@ -373,7 +374,8 @@ library(paste(platform, ".db", sep=""), character.only=TRUE)
 
 # Read the data file
 message("Reading data file...")
-suppressWarnings(data <- fread(paste0("zcat < ", filePath), stringsAsFactors=FALSE, sep="\t", header=TRUE, autostart=10, data.table=FALSE, check.names=FALSE, fill=TRUE, na.strings="", showProgress=FALSE))
+suppressWarnings(data <- fread(filePath, stringsAsFactors=FALSE, sep="\t", header=TRUE, autostart=10, data.table=FALSE, check.names=FALSE, fill=TRUE, na.strings="", showProgress=FALSE))
+#suppressWarnings(data <- read.table(filePath, header=TRUE, fill=TRUE))
 
 # Check input paramters and parse out data we need
 if (probeIDColumn == "")
