@@ -53,10 +53,10 @@ variable "running_in_cloud" {
 
 # This is a placeholder until there is a production image ready.
 variable "workers_docker_image" {
-  default = "ccdl/data_refinery_workers:v0.1.0"
+  default = "wkurt/dr_worker:5"
 }
 variable "foreman_docker_image" {
-  default = "ccdl/data_refinery_foreman:v0.1.0"
+  default = "wkurt/dr_foreman:5"
 }
 variable "use_s3" {
   default = "True"
