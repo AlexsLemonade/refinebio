@@ -41,6 +41,11 @@ if [[ $project != "workers" && $project != "foreman" && $project != "api" ]]; th
 fi
 
 if [[ -z $env ]]; then
+    # XXX: for now dev==local and prod==cloud. This works because we
+    # don't have a true prod environment yet so using prod for cloud
+    # development is okay, but we definitely need to address
+    # https://github.com/AlexsLemonade/refinebio/issues/199 before we
+    # create an actual prod environment.
     env="dev"
 fi
 
