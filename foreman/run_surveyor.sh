@@ -34,4 +34,4 @@ docker run -it \
        --env-file foreman/environments/dev \
        --volume $volume_directory:/home/user/data_store \
        --link drdb:postgres $NOMAD_LINK \
-       dr_foreman "$@"
+       dr_foreman python3 manage.py "$@"

@@ -103,7 +103,7 @@ be installed by running: `brew install iproute2mac git-crypt terraform jq`.
 Many of the computational processes running are very memory intensive. You will need
 to [raise the amount of virtual memory available to
 Docker](https://docs.docker.com/docker-for-mac/#advanced) from the default of
-2GB to 12GB or 24GB, if possible. 
+2GB to 12GB or 24GB, if possible.
 
 #### Virtual Environment
 
@@ -217,7 +217,7 @@ some things to watch out for:
 
   - If builds are failing, increase the size of Docker's memory allocation.
   - If Docker images are failing mysteriously during creation, it may
-be the result of Docker's `Docker.qcow2` or `Docker.raw` file filling. You 
+be the result of Docker's `Docker.qcow2` or `Docker.raw` file filling. You
 can prune old images with `docker system prune -a`.
   - If it's killed abruptly, the containerized Postgres images can be
   left in an unrecoverable state. Annoying.
@@ -344,18 +344,18 @@ An individual processor job can be run with:
 
 ### Checking on Local Jobs
 
-_Note:_ The following instructions assume you have set the
-environment variable $HOST_IP to the IP address of your
-development machine. This can be done with:
+_Note:_ The following instructions assume you have set the environment
+variable NOMAD_ADDR to include the IP address of your development
+machine. This can be done with:
 
 ```bash
-source common.sh && export HOST_IP=$(get_ip_address)
+source common.sh && export NOMAD_ADDR=http://$(get_ip_address):4646
 ```
 
 To check on the status of a job, run:
 
 ```bash
-nomad status -address http://$HOST_IP:4646
+nomad status
 ```
 
 It should output something like:
@@ -376,7 +376,7 @@ matches the time when the job you want to check on was run, copy that full ID
 after the previous command, like so:
 
 ```bash
-nomad status -address http://$HOST_IP:4646 DOWNLOADER/dispatch-1517441663-4b02e7a3
+nomad status DOWNLOADER/dispatch-1517441663-4b02e7a3
 ```
 
 This will output a lot of information about that `Nomad Dispatch Job`,
@@ -392,14 +392,14 @@ b30e4edd  fda75a5a  jobs        0        run      complete  01/31/18 18:34:23 ES
 If you paste that after the original `nomad status` command, like so:
 
 ```bash
-nomad status -address http://$HOST_IP:4646 b30e4edd
+nomad status b30e4edd
 ```
 
 you'll see a lot of information about allocation, which probably isn't
 what you're interested in. Instead, you should run:
 
 ```bash
-nomad logs -verbose -address http://$HOST_IP:4646 b30e4edd
+nomad logs -verbose b30e4edd
 ```
 
 This command will output both the stderr and stdout logs from the container
@@ -444,7 +444,7 @@ linter.
 
 Refine.bio requires an active, credentialed AWS account with appropriate permissions to create network infrastructure, users, compute instances and databases.
 
-### Terraform 
+### Terraform
 
 Once you have Terraform installed and your AWS account credentials installed, you can plan your terraform deployment like so (from the `infrastructure` directory):
 
@@ -455,7 +455,7 @@ TF_VAR_user=myusername TF_VAR_stage=dev TF_VAR_region=us-east-1 terraform plan
 If that worked fine, then to deploy:
 
 ```bash
-TF_VAR_user=myusername TF_VAR_stage=dev TF_VAR_region=us-east-1 terraform apply
+TF_VAR_user=myusername TF_VAR_stage=dev TF_VAR_region=us-east-1 ./deploy.sh
 ```
 
 This will spin up the whole system. It will usually take about 15 minutes, most of which is spent waiting for the Postgres instance to start.
@@ -502,7 +502,7 @@ tweak these as much.
 
 ### Running Jobs
 
-Jobs can be submitted via Nomad, either from a server/client or a local machine if you supply a server address and have an open network ingress. 
+Jobs can be submitted via Nomad, either from a server/client or a local machine if you supply a server address and have an open network ingress.
 
 To start the Neuroblastoma job:
 
@@ -535,7 +535,7 @@ awslogs groups
 Then, to see all of the logs in that group for the past day, watching as they come in:
 
 ```bash
-awslogs get <your-log-group> ALL --start='1 days' --watch 
+awslogs get <your-log-group> ALL --start='1 days' --watch
 ```
 
 You can also apply a filter on these logs like so:
