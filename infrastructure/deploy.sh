@@ -98,12 +98,12 @@ docker pull $FOREMAN_DOCKER_IMAGE
 # Migrate auth.
 docker run \
        --env-file prod_env \
-       $FOREMAN_DOCKER_IMAGE migrate auth
+       $FOREMAN_DOCKER_IMAGE python3 manage.py migrate auth
 
 # Apply general migrations.
 docker run \
        --env-file prod_env \
-       $FOREMAN_DOCKER_IMAGE migrate
+       $FOREMAN_DOCKER_IMAGE python3 manage.py migrate
 
 # Don't leave secrets lying around!
 rm prod_env
@@ -127,3 +127,5 @@ done
 echo "Removing ingress.."
 rm ci_ingress.tf
 terraform apply -auto-approve
+
+echo "Deploy completed successfully."
