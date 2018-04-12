@@ -23,8 +23,7 @@ job "PROCESSOR" {
 
       # This env will be passed into the container for the job.
       env {
-        AWS_ACCESS_KEY_ID = "${{AWS_ACCESS_KEY_ID_WORKER}}"
-        AWS_SECRET_ACCESS_KEY = "${{AWS_SECRET_ACCESS_KEY_WORKER}}"
+        ${{AWS_CREDS}}
         DJANGO_SECRET_KEY = "${{DJANGO_SECRET_KEY}}"
         DJANGO_DEBUG = "${{DJANGO_DEBUG}}"
 
@@ -62,24 +61,15 @@ job "PROCESSOR" {
 
         # The args to pass to the Docker container's entrypoint.
         args = [
-          # Uncomment when image is updated!
-          # "python",
-          # "manage.py",
+          "python3",
+          "manage.py",
           "run_processor_job",
           "--job-name", "${NOMAD_META_JOB_NAME}",
           "--job-id", "${NOMAD_META_JOB_ID}"
         ]
         ${{EXTRA_HOSTS}}
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]
-
-        logging {
-          type = "awslogs"
-          config {
-            awslogs-region = "${{REGION}}",
-            awslogs-group = "data-refinery-log-group-${{USER}}-${{STAGE}}",
-            awslogs-stream = "log-stream-nomad-docker-processor-${{USER}}-${{STAGE}}"
-          }
-        }
+        ${{LOGGING_CONFIG}}
       }
     }
   }

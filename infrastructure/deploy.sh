@@ -37,12 +37,13 @@ cp deploy/ci_ingress.tf .
 # We have to do this once before the initial deploy..
 format_environment_variables
 
-# Output the plan for debugging deployments later.
-terraform plan
-
 # Open up ingress to AWS for Circle, stop jobs, migrate DB.
 echo "Deploying with ingress.."
 ../format_nomad_with_env.sh -p api -e prod -o $(pwd)/api-configuration/
+
+# Output the plan for debugging deployments later.
+terraform plan
+
 terraform apply -auto-approve
 
 # Find address of Nomad server.
@@ -96,15 +97,13 @@ docker pull $FOREMAN_DOCKER_IMAGE
 
 # Migrate auth.
 docker run \
-       --volume migrations \
        --env-file prod_env \
-       $FOREMAN_DOCKER_IMAGE migrate auth
+       $FOREMAN_DOCKER_IMAGE python3 manage.py migrate auth
 
 # Apply general migrations.
 docker run \
-       --volume migrations \
        --env-file prod_env \
-       $FOREMAN_DOCKER_IMAGE migrate
+       $FOREMAN_DOCKER_IMAGE python3 manage.py migrate
 
 # Don't leave secrets lying around!
 rm prod_env
@@ -128,3 +127,5 @@ done
 echo "Removing ingress.."
 rm ci_ingress.tf
 terraform apply -auto-approve
+
+echo "Deploy completed successfully."
