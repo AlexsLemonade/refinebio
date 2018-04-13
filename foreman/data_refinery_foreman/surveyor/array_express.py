@@ -303,12 +303,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
                 # Skip derived data if we have it raw.
                 if has_raw and not has_platform_warning and "derived data" in sub_file['type']:
-                    skip_sample = True
                     continue
                 elif (not has_raw or has_platform_warning) and "derived data" not in sub_file['type']:
                     # If there is a platform warning then we don't want raw data.
                     has_raw = False
-                    skip_sample = True
                     continue
 
                 download_url = None
