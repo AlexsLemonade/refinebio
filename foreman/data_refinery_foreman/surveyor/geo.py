@@ -102,8 +102,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_object.description = gse.metadata.get('summary', [''])[0]
             experiment_object.platform_name = gse.metadata["platform_id"][0] # TODO: Lookup GEO-GPL
             experiment_object.platform_accession_code = gse.metadata["platform_id"][0]
-            experiment_object.source_first_published = dateutil.parser.parse(gse.metadata["submission_date"][0] + " UTC")
-            experiment_object.source_last_updated = dateutil.parser.parse(gse.metadata["last_update_date"][0] + " UTC")
+            experiment_object.source_first_published = dateutil.parser.parse(gse.metadata["submission_date"][0] + " 00:00:00 UTC")
+            experiment_object.source_last_updated = dateutil.parser.parse(gse.metadata["last_update_date"][0] + " 00:00:00 UTC")
             experiment_object.submitter_institution = ", ".join(list(set(gse.metadata["contact_institute"])))
             experiment_object.pubmed_id = gse.metadata.get("pubmed_id", [""])[0]
             experiment_object.save()
@@ -163,6 +163,10 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     # Why do they give us this?
                     if supplementary_file_url == "NONE":
                         break
+
+                    # We never want these!
+                    if "idat.gz" in supplementary_file_url:
+                        continue
 
                     original_file = OriginalFile()
                     # So - this is _usually_ true, but not always. I think it's submitter supplied.

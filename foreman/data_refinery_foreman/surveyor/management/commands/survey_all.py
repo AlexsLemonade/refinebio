@@ -24,6 +24,12 @@ class Command(BaseCommand):
             type=str,
             help=("An optional file listing accession codes. s3:// URLs are also accepted.")
         )
+        parser.add_argument(
+            "--offset",
+            type=int,
+            help=("Skip a number of lines at the beginning"),
+            default=0
+        )
 
     def handle(self, *args, **options):
         if options['file'] is None:
@@ -48,21 +54,16 @@ class Command(BaseCommand):
                 filepath = options["file"]
 
             with open(filepath) as file:
-                for accession in file:
+                for i, accession in enumerate(file):
+                    if i < options["offset"]:
+                        continue
                     accession = accession.strip()
                     try:
                         if 'GSE' in accession[:3]:
                             surveyor.survey_geo_experiment(accession)
                         elif 'E-' in accession[:2]:
-                            surveyor.survey_ae(accession)
+                            surveyor.survey_ae_experiment(accession)
                         else:
-                            surveyor.survey_ae(accession)
+                            surveyor.survey_sra_experiment(accession)
                     except Exception as e:
-                        print(e)        
-
-    def get_ae_accession(self, accession):
-        """This allows us to support ascession codes in both
-        # ArrayExpress and imported-from-GEO format."""
-        if "GSE" in accession:
-            accession = "E-GEOD-" + accession.split('GSE')[1]
-        return accession.strip()
+                        print(e)       

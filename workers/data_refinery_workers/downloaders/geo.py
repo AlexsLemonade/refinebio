@@ -158,7 +158,6 @@ def download_geo(job_id: int) -> None:
     # Then, unpack all the ones downloaded.
     # Then create processor jobs!
 
-
     # The files for all of the samples are
     # contained within the same zip file. Therefore only
     # download the one.
@@ -225,9 +224,6 @@ def download_geo(job_id: int) -> None:
                     gsm_id = og_file['filename'].split('-')[0]
                     sample = Sample.objects.get(accession_code=gsm_id)
                 except Exception as e:
-                    print(e)
-                    print(og_file)
-                    print
                     continue
 
                 actual_file = OriginalFile()
@@ -252,7 +248,7 @@ def download_geo(job_id: int) -> None:
 
     # These files are only gzipped.
     # These are generally the raw-raw data
-    else:
+    elif '.gz' in dl_file_path:
         extracted_files = _extract_gz(dl_file_path, accession_code)
         unpacked_sample_files = []
         for og_file in extracted_files:
@@ -291,8 +287,35 @@ def download_geo(job_id: int) -> None:
 
                 unpacked_sample_files.append(actual_file)
             except Exception as e:
-                # TODO - is this worth failing a job for?
                 logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'])
+
+    # This is probably just a .txt file
+    else:
+        unpacked_sample_files = []
+
+        filename = dl_file_path.split('/')[-1]
+        sample_id = filename.split('_')[0]
+
+        try:
+            actual_file = OriginalFile()
+            actual_file.is_downloaded=True
+            actual_file.is_archive=False
+            actual_file.absolute_file_path = dl_file_path
+            actual_file.filename = filename
+            actual_file.calculate_size()
+            actual_file.calculate_sha1()
+            actual_file.has_raw = True
+            actual_file.save()
+
+            for sample in related_samples:
+                new_association = OriginalFileSampleAssociation()
+                new_association.original_file = actual_file
+                new_association.sample = sample
+                new_association.save()
+
+            unpacked_sample_files.append(actual_file)
+        except Exception as e:
+            logger.warn(e)
 
     if len(unpacked_sample_files) > 0:
         success = True
