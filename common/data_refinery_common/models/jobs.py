@@ -28,6 +28,9 @@ class SurveyJob(models.Model):
     # The end time of the job
     end_time = models.DateTimeField(null=True)
 
+    # This field allows jobs to specify why they failed.
+    failure_reason = models.TextField(null=True)
+
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 

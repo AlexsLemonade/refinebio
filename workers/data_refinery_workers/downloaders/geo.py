@@ -164,9 +164,11 @@ def download_geo(job_id: int) -> None:
     # download the one.
     os.makedirs(LOCAL_ROOT_DIR + '/' + accession_code, exist_ok=True)
     dl_file_path = LOCAL_ROOT_DIR + '/' + accession_code + '/' + url.split('/')[-1]
+    logger.info("Starting to download: " + url)
     _download_file(url, dl_file_path, job)
     original_file.is_downloaded = True
     original_file.save()
+    no_op = False
 
     # This files are tarred, and also subsequently gzipped
     if '.tar' in dl_file_path:
@@ -210,6 +212,10 @@ def download_geo(job_id: int) -> None:
 
     # This is a .tgz file.
     elif '.tgz' in dl_file_path:
+        # If this is the MINiML file, it has bee preprocessed
+        if '_family.xml.tgz' in dl_file_path:
+            no_op = True
+
         extracted_files = _extract_tgz(dl_file_path, accession_code)
         unpacked_sample_files = []
         for og_file in extracted_files:
@@ -307,10 +313,19 @@ def download_geo(job_id: int) -> None:
         # It may make more sense to try to make this into a higher level Sample property.
         annotations = actual_file.samples.first().sampleannotation_set.all()[0]
 
-        # XXX: Make sure this still works if we get arrays back. Should check for the presence of the 'Cy5' string in label_ch2.
+        if no_op:
+            utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="NO_OP")
+            return success
         if ('Agilent' in annotations.data.get('label_protocol_ch1', "")) and ('Agilent' in annotations.data.get('label_protocol_ch2', "")):
             utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="AGILENT_TWOCOLOR_TO_PCL")
+            return success
         if ('Illumina' in annotations.data.get('label_protocol_ch1', "")):
             utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="ILLUMINA_TO_PCL")
+            return success
+        if ('Affymetrix' in annotations.data.get('label_protocol_ch1', "")):
+            utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="AFFY_TO_PCL")
+            return success             
+        # This should probably never happen, but if it does, we don't want to process it.
         else:
-            utils.create_processor_jobs_for_original_files(unpacked_sample_files)
+            utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="NO_OP")
+            return success

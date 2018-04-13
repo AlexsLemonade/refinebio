@@ -102,8 +102,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_object.description = gse.metadata.get('summary', [''])[0]
             experiment_object.platform_name = gse.metadata["platform_id"][0] # TODO: Lookup GEO-GPL
             experiment_object.platform_accession_code = gse.metadata["platform_id"][0]
-            experiment_object.source_first_published = dateutil.parser.parse(gse.metadata["submission_date"][0])
-            experiment_object.source_last_updated = dateutil.parser.parse(gse.metadata["last_update_date"][0])
+            experiment_object.source_first_published = dateutil.parser.parse(gse.metadata["submission_date"][0] + " UTC")
+            experiment_object.source_last_updated = dateutil.parser.parse(gse.metadata["last_update_date"][0] + " UTC")
             experiment_object.submitter_institution = ", ".join(list(set(gse.metadata["contact_institute"])))
             experiment_object.pubmed_id = gse.metadata.get("pubmed_id", [""])[0]
             experiment_object.save()
