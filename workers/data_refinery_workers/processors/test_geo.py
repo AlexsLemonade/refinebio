@@ -19,8 +19,8 @@ def prepare_job():
 
     og_file = OriginalFile()
     og_file.source_filename = "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427%5Fnon%2Dnormalized%2Etxt.gz"
-    og_file.filename = "GSE22427%5Fnon%2Dnormalized%2Etxt"
-    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/ILLUMINA/GSE22427%5Fnon%2Dnormalized%2Etxt"
+    og_file.filename = "GSE22427_non-normalized.txt"
+    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/ILLUMINA/GSE22427_non-normalized.txt"
     og_file.save()
 
     assoc1 = ProcessorJobOriginalFileAssociation()

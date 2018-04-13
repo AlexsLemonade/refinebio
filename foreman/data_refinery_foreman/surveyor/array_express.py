@@ -12,7 +12,8 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
     ExperimentSampleAssociation,
-    OriginalFile
+    OriginalFile,
+    OriginalFileSampleAssociation
 )
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
