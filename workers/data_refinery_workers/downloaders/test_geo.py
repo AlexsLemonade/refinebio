@@ -11,7 +11,7 @@ from data_refinery_workers.downloaders import geo, utils
 from data_refinery_common.job_lookup import ProcessorPipeline
 
 
-class DownloadGeoestCase(TestCase):
+class DownloadGeoTestCase(TestCase):
     def setUp(self):
         survey_job = SurveyJob(source_type="GEO")
         survey_job.save()
@@ -22,12 +22,16 @@ class DownloadGeoestCase(TestCase):
         dlj.save()
 
         # Miniml
+        dlj = DownloaderJob()
+        dlj.save()
+        og_file = OriginalFile()
+        og_file
+
         geo._download_file('ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE10nnn/GSE10241/miniml/GSE10241_family.xml.tgz', 'GSE10241_family.xml.tgz', dlj)
-        files = geo._extract_files('GSE10241_family.xml.tgz', 'GSE10241')
+        files = geo._extract_tgz('GSE10241_family.xml.tgz', 'GSE10241')
 
         # .txt.gz
         geo._download_file('ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM254nnn/GSM254828/suppl/GSM254828.txt.gz', 'GSM254828.txt.gz', dlj)
-        files = geo._extract_files('GSM254828.txt.gz', 'GSM254828')
+        files = geo._extract_gz('GSM254828.txt.gz', 'GSM254828')
 
         geo._download_file("ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427%5Fnon%2Dnormalized%2Etxt%2Egz")
-        files = geo._extract_files('GSE22427%5Fnon%2Dnormalized%2Etxt%2Egz', 'GSE22427')
