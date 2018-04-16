@@ -30,6 +30,8 @@ def _prepare_files(job_context: Dict) -> Dict:
     # Turns /home/user/data_store/E-GEOD-8607/raw/foo.txt into /home/user/data_store/E-GEOD-8607/processed/foo.cel
     pre_part = original_file.absolute_file_path.split('/')[:-2]
     end_part = original_file.absolute_file_path.split('/')[-1]
+
+    os.makedirs('/'.join(pre_part) + '/processed/', exist_ok=True)
     job_context["output_file_path"] = '/'.join(pre_part) + '/processed/' + end_part
     job_context["output_file_path"] = job_context["output_file_path"].replace('.txt', '.PCL')
 
@@ -132,13 +134,23 @@ def _run_scan_twocolor(job_context: Dict) -> Dict:
             job_context['time_end'] = timezone.now()
 
     except RRuntimeError as e:
-        error_template = ("Encountered error in R code while running AGILENT_TWOCOLOR_TO_PCL"
-                          " pipeline during processing of {0}: {1}")
-        error_message = error_template.format(input_file, str(e))
 
-        logger.error(error_message, processor_job=job_context["job_id"])
-        job_context["job"].failure_reason = error_message
-        job_context["success"] = False
+        # There is a bug in Bioconductor that causes this, but it happens 
+        # _after_ our output file is made and written to disk so..
+        # we can ignore it!
+        # See it for yourself here: https://github.com/Miserlou/SCAN.UPC/blob/master/R/TwoColor.R#L122
+        bugstring = 'Error in sampleNames(expressionSet) = sampleNames : \n  could not find function "sampleNames<-"\n'
+        if str(e) == bugstring:
+            job_context['time_end'] = timezone.now()
+            job_context["success"] = True
+        else:
+            error_template = ("Encountered error in R code while running AGILENT_TWOCOLOR_TO_PCL"
+                              " pipeline during processing of {0}: {1}")
+            error_message = error_template.format(input_file, str(e))
+
+            logger.error(error_message, processor_job=job_context["job_id"])
+            job_context["job"].failure_reason = error_message
+            job_context["success"] = False
 
     return job_context
 

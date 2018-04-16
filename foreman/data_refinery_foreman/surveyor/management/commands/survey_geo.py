@@ -31,7 +31,7 @@ class Command(BaseCommand):
             with open(options["file"]) as file:
                 for accession in file:
                     try:
-                        surveyor.survey_geo_experiment(accession)
+                        surveyor.survey_geo_experiment(accession.strip())
                     except Exception as e:
                         print(e)        
         else:

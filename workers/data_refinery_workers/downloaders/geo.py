@@ -177,7 +177,15 @@ def download_geo(job_id: int) -> None:
         for og_file in extracted_files:
 
             filename = og_file['filename']
-            sample_id = filename.split('_')[0]
+            if '_' in filename:
+                sample_id = filename.split('_')[0]
+            else:
+                sample_id = filename.split('.')[0]
+
+            try:
+                sample = Sample.objects.get(accession_code=sample_id)
+            except Exception as e:
+                continue
 
             try:
                 # Files from the GEO supplemental file are gzipped inside of the tarball. Great!
@@ -189,7 +197,11 @@ def download_geo(job_id: int) -> None:
                 archive_file.calculate_sha1()
                 archive_file.save()
 
-                extracted_subfile = _extract_gz(og_file['absolute_path'], accession_code)
+                if '.gz' in og_file['filename']:
+                    extracted_subfile = _extract_gz(og_file['absolute_path'], accession_code)
+                else:
+                    extracted_subfile = [og_file]
+
                 actual_file = OriginalFile()
                 actual_file.is_downloaded=True
                 actual_file.is_archive=False
@@ -198,14 +210,19 @@ def download_geo(job_id: int) -> None:
                 actual_file.calculate_size()
                 actual_file.calculate_sha1()
                 actual_file.has_raw = True
-                actual_file.sample = archive_file.sample
                 actual_file.save()
+
+                original_file_sample_association = OriginalFileSampleAssociation()
+                original_file_sample_association.sample = sample
+                original_file_sample_association.original_file = actual_file
+                original_file_sample_association.save()
 
                 # Question - do we want to delete this extracted archive file?
                 # archive_file.delete()
 
                 unpacked_sample_files.append(actual_file)
             except Exception as e:
+                print(e)
                 # TODO - is this worth failing a job for?
                 logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'])
 
@@ -287,6 +304,7 @@ def download_geo(job_id: int) -> None:
 
                 unpacked_sample_files.append(actual_file)
             except Exception as e:
+                print(e)
                 logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'])
 
     # This is probably just a .txt file
