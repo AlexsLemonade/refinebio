@@ -10,19 +10,19 @@ from rest_framework import status
 
 from data_refinery_common.models import Experiment, Sample, Organism
 from data_refinery_api.serializers import ( 
-	ExperimentSerializer, 
-	DetailedExperimentSerializer,
-	SampleSerializer, 
-	DetailedSampleSerializer,
-	OrganismSerializer,
-	PlatformSerializer,
-	InstitutionSerializer,
+    ExperimentSerializer, 
+    DetailedExperimentSerializer,
+    SampleSerializer, 
+    DetailedSampleSerializer,
+    OrganismSerializer,
+    PlatformSerializer,
+    InstitutionSerializer,
     ComputationalResultSerializer,
 
-	# Jobs
-	SurveyJobSerializer,
-	DownloaderJobSerializer,
-	ProcessorJobSerializer
+    # Jobs
+    SurveyJobSerializer,
+    DownloaderJobSerializer,
+    ProcessorJobSerializer
 )
 
 class PaginatedAPIView(APIView):
@@ -169,8 +169,8 @@ class ResultsList(PaginatedAPIView):
 
 class OrganismList(APIView):
     """
-	Unpaginated list of all the available organisms
-	"""
+    Unpaginated list of all the available organisms
+    """
      
     def get(self, request, format=None):
         organisms = Organism.objects.all()
@@ -179,8 +179,8 @@ class OrganismList(APIView):
 
 class PlatformList(APIView):
     """
-	Unpaginated list of all the available "platform" information
-	"""
+    Unpaginated list of all the available "platform" information
+    """
      
     def get(self, request, format=None):
         experiments = Experiment.objects.all().values("platform_accession_code", "platform_name").distinct()
@@ -189,8 +189,8 @@ class PlatformList(APIView):
 
 class InstitutionList(APIView):
     """
-	Unpaginated list of all the available "institution" information
-	"""
+    Unpaginated list of all the available "institution" information
+    """
      
     def get(self, request, format=None):
         experiments = Experiment.objects.all().values("submitter_institution").distinct()
@@ -205,10 +205,10 @@ class SurveyJobList(PaginatedAPIView):
     """
     List of all SurveyJob.
 
-	Ex: 
-	  - ?start_time__lte=2018-03-23T15:29:40.848381Z
-	  - ?start_time__lte=2018-03-23T15:29:40.848381Z&start_time__gte=2018-03-23T14:29:40.848381Z
-	  - ?success=True
+    Ex: 
+      - ?start_time__lte=2018-03-23T15:29:40.848381Z
+      - ?start_time__lte=2018-03-23T15:29:40.848381Z&start_time__gte=2018-03-23T14:29:40.848381Z
+      - ?success=True
 
     """
 
@@ -272,8 +272,8 @@ from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
 
 class Stats(APIView):
     """
-	Statistics about the health of the system.
-	"""
+    Statistics about the health of the system.
+    """
 
     def get(self, request, format=None):
         data = {}
