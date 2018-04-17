@@ -353,17 +353,20 @@ def download_geo(job_id: int) -> None:
         # We're trying to detect technology type here.
         # It may make more sense to try to make this into a higher level Sample property.
         annotations = actual_file.samples.first().sampleannotation_set.all()[0]
+        ch1_proto = annotations.data.get('label_protocol_ch1', "").upper()
+        ch2_proto = annotations.data.get('label_protocol_ch2', "").upper()
+        data_processing = annotations.data.get('data_processing', None) # XXX: Confirm this as raw detector
 
         if no_op:
             utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="NO_OP")
             return success
-        if ('Agilent' in annotations.data.get('label_protocol_ch1', "")) and ('Agilent' in annotations.data.get('label_protocol_ch2', "")):
+        if ('AGILENT' in ch1_proto) and ('Agilent' in ch2_proto):
             utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="AGILENT_TWOCOLOR_TO_PCL")
             return success
-        if ('Illumina' in annotations.data.get('label_protocol_ch1', "")):
+        if ('ILLUMINA' in ch1_proto) and (not data_processing):
             utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="ILLUMINA_TO_PCL")
             return success
-        if ('Affymetrix' in annotations.data.get('label_protocol_ch1', "")):
+        if ('AFFYMETRIX' in ch1_proto):
             utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="AFFY_TO_PCL")
             return success             
         # This should probably never happen, but if it does, we don't want to process it.

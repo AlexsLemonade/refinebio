@@ -232,8 +232,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 original_file.is_archive = True
                 original_file.has_raw = has_raw
                 original_file.save()
-
-            logger.info("Created OriginalFile: " + str(original_file))
+                logger.info("Created OriginalFile: " + str(original_file))
 
             for sample_object in all_samples:
                 original_file_sample_association = OriginalFileSampleAssociation()
