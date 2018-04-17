@@ -357,14 +357,6 @@ numCores <- strtoi(opt$cores)
 filePath <- opt$inputFile
 outFilePath <- opt$outputFile
 
-#tmpDir <- tempdir()
-tmpDir <- "/tmp"
-# tmpFile <- paste(tmpDir, "/", gseID, ".txt", sep="")
-# tmpFileGz <- paste(tmpFile, ".gz", sep="")
-
-# if (!file.exists(tmpFileGz))
-#   download.file(url, tmpFileGz)
-
 library(limma)
 library(oligo)
 library(doParallel)
@@ -388,9 +380,6 @@ if (!(probeIDColumn %in% colnames(data)))
 
 probeIDs <- data[,probeIDColumn]
 
-# if (exprColumnPattern == "")
-#   exprColumnPattern = ".AVG_Signal"
-# exprColumns <- grep(exprColumnPattern, colnames(data), ignore.case=TRUE)
 
 if (length(exprColumns) == 0)
   stop(paste0("No columns match this pattern: ", exprColumnPattern))
