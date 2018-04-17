@@ -52,6 +52,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         line.strip() != '' and \
         line != '\n' and \
         '\t' in line and \
+        line[0] != '\t' and \
         line != None:
             file_output.write(line)    
     file_input.close()
@@ -83,61 +84,79 @@ def _detect_columns(job_context: Dict) -> Dict:
 
     """
 
-    input_file = job_context["input_file_path"]
-    headers = None
-    with open(input_file, 'r') as tsvin:
-        tsvin = csv.reader(tsvin, delimiter='\t')
-        for row in tsvin:
-            # Skip comment rows
-            joined = ''.join(row)
-            if '#' in joined or '' == joined:
-                continue
+    try:
+        input_file = job_context["input_file_path"]
+        headers = None
+        with open(input_file, 'r') as tsvin:
+            tsvin = csv.reader(tsvin, delimiter='\t')
+            for row in tsvin:
 
-            headers = row
-            break
+                # Skip sparse header row
+                if row[0] == "":
+                    continue
 
-    # First the probe ID column
-    if headers[0] not in ['ID_REF', 'PROBE_ID']:
-        job_context["job"].failure_reason = "Could not find ID reference column"
-        job_context["success"] = False
-        return job_context
-    else:
-        job_context['probeId'] = headers[0]
+                # Skip comment rows
+                joined = ''.join(row)
+                if '#' in joined or '' == joined:
+                    continue
 
-    # Then the detection Pvalue string, which is always(?) some form of 'Detection Pval'
-    for header in headers:
-        if header.upper().replace(' ', '_') == 'DETECTION_PVAL':
-            job_context['detectionPval'] = header
-            break
-    else:
-        logger.info("Could not detect PValue column!")
-        raise
+                headers = row
+                break
 
-    # Then, finally, create an absolutely bonkers regular expression
-    # which will explictly hit on any sample which contains a 4sample
-    # ID _and_ ignores the magical word 'BEAM'. Great!
-    # TODO: What to do about the ones that say `.AVG_Signal` ?
-    column_ids = ""
-    for sample in job_context['samples']:
+        # First the probe ID column
+        if headers[0] not in ['ID_REF', 'PROBE_ID']:
+            job_context["job"].failure_reason = "Could not find ID reference column"
+            job_context["success"] = False
+            return job_context
+        else:
+            job_context['probeId'] = headers[0]
+
+        # Then the detection Pvalue string, which is always(?) some form of 'Detection Pval'
+        for header in headers:
+            if 'DETECTION_PVAL' in header.upper().replace(' ', '_'):
+                # Could be <SAMPLE_ID>.Detection Pval, etc
+                if '.' in header:
+                    job_context['detectionPval'] = header.split('.')[-1]
+                else:
+                    job_context['detectionPval'] = header
+                break
+        else:
+            job_context["job"].failure_reason = "Could not detect PValue column!"
+            job_context["success"] = False
+            return job_context
+
+        # Then, finally, create an absolutely bonkers regular expression
+        # which will explictly hit on any sample which contains a 4sample
+        # ID _and_ ignores the magical word 'BEAM'. Great!
+        # TODO: What to do about the ones that say `.AVG_Signal` ?
+        column_ids = ""
+        for sample in job_context['samples']:
+            for offset, header in enumerate(headers, start=1):
+
+                if sample.title == header:
+                    column_ids = column_ids + str(offset) + "," 
+                    continue
+                if header.upper().replace(' ', '_') == "RAW_VALUE":
+                    column_ids = column_ids + str(offset) + "," 
+                    continue
+                if sample.title in header and \
+                'BEAD' not in header.upper() and \
+                'NARRAYS' not in header.upper() and \
+                'ARRAY_STDEV' not in header.upper() and \
+                'PVAL' not in header.upper().replace(' ', '').replace('_', ''):
+                    column_ids = column_ids + str(offset) + "," 
+                    continue
         for offset, header in enumerate(headers, start=1):
-            if sample.title == header:
-                column_ids = column_ids + str(offset) + "," 
-                continue
-            if header.upper().replace(' ', '_') == "RAW_VALUE":
-                column_ids = column_ids + str(offset) + "," 
-                continue
             if 'AVG_Signal' in header:
                 column_ids = column_ids + str(offset) + "," 
                 continue
-            if sample.title in header and \
-            'BEAD' not in header.upper() and \
-            'NARRAYS' not in header.upper() and \
-            'PVAL' not in header.upper().replace(' ', '').replace('_', ''):
-                column_ids = column_ids + str(offset) + "," 
-                continue
 
-    column_ids = column_ids[:-1]
-    job_context['columnIds'] = column_ids
+        column_ids = column_ids[:-1]
+        job_context['columnIds'] = column_ids
+    except Exception as e:
+        job_context["job"].failure_reason = str(e)
+        job_context["success"] = False
+        return job_context
 
     return job_context
 
@@ -149,6 +168,15 @@ def _run_illumina(job_context: Dict) -> Dict:
     """
     input_file_path = job_context["input_file_path"]
 
+    # We need to detect the sub-platform. Looking for the chip version
+    # in the metadata is the best we can do for right now.
+    annotation = job_context['samples'][0].sampleannotation_set.all()[0]
+    annotation_data = str(annotation.data).encode('utf-8').upper()
+    if "V2".encode() in annotation_data or "V 2".encode() in annotation_data:
+        platform = "illuminaHumanv2"
+    else:
+        platform = "illuminaHumanv4"
+
     try:
         job_context['time_start'] = timezone.now()
 
@@ -159,10 +187,10 @@ def _run_illumina(job_context: Dict) -> Dict:
                 "--probeId", job_context['probeId'],
                 "--expression", job_context['columnIds'],
                 "--detection", job_context['detectionPval'],
-                "--platform", "illuminaHumanv4", # XXX - choose the correct 2/4
+                "--platform", platform,
                 "--inputFile", job_context['input_file_path'],
                 "--outputFile", job_context['output_file_path'],
-                "--cores", multiprocessing.cpu_count()
+                "--cores", str(multiprocessing.cpu_count())
             ])
 
         job_context['time_end'] = timezone.now()

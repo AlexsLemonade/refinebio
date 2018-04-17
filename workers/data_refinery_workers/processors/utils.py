@@ -175,6 +175,7 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
         if "success" in last_result and last_result["success"] is False:
             logger.error("Processor %s failed. Terminating pipeline.",
                          processor.__name__,
-                         processor_job=job_id)
+                         processor_job=job_id,
+                         failure_reason=last_result["job"].failure_reason)
             end_job(last_result)
             break

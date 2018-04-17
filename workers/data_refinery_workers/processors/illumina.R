@@ -353,8 +353,7 @@ exprColumns <- strsplit(opt$expression, ",")
 exprColumns <- unlist(lapply(exprColumns, as.integer))
 detectionPValueColumnPattern <- opt$detection
 platform <- opt$platform
-numCores <- opt$cores
-numCores <- 1
+numCores <- strtoi(opt$cores)
 filePath <- opt$inputFile
 outFilePath <- opt$outputFile
 
@@ -379,6 +378,7 @@ suppressWarnings(data <- fread(filePath, stringsAsFactors=FALSE, sep="\t", heade
 
 # Check input paramters and parse out data we need
 if (probeIDColumn == "")
+  message("Got no probID column...")
   probeIDColumn <- "PROBE_ID"
 
 if (!(probeIDColumn %in% colnames(data)))
