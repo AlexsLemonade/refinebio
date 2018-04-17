@@ -4,6 +4,7 @@ import csv
 import os
 import string
 import subprocess
+import multiprocessing
 import warnings
 from django.utils import timezone
 from typing import Dict
@@ -151,18 +152,6 @@ def _run_illumina(job_context: Dict) -> Dict:
     try:
         job_context['time_start'] = timezone.now()
 
-        print(" ".join([
-                "/usr/bin/Rscript", 
-                "--vanilla", 
-                "/home/user/data_refinery_workers/processors/illumina.R",
-                "--probeId", job_context['probeId'],
-                "--expression", job_context['columnIds'],
-                "--detection", job_context['detectionPval'],
-                "--platform", "illuminaHumanv4", # XXX - choose the correct 2/4
-                "--inputFile", job_context['input_file_path'],
-                "--outputFile", job_context['output_file_path'],
-            ]))
-
         result = subprocess.check_output([
                 "/usr/bin/Rscript", 
                 "--vanilla", 
@@ -173,6 +162,7 @@ def _run_illumina(job_context: Dict) -> Dict:
                 "--platform", "illuminaHumanv4", # XXX - choose the correct 2/4
                 "--inputFile", job_context['input_file_path'],
                 "--outputFile", job_context['output_file_path'],
+                "--cores", multiprocessing.cpu_count()
             ])
 
         job_context['time_end'] = timezone.now()
