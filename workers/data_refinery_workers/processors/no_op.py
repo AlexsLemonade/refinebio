@@ -23,6 +23,13 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
     """
     original_file = job_context["original_files"][0]
 
+    job_context["input_file_path"] = original_file.absolute_file_path
+    pre_part = original_file.absolute_file_path.split('/')[:-2]
+    end_part = original_file.absolute_file_path.split('/')[-1]
+    os.makedirs('/'.join(pre_part) + '/processed/', exist_ok=True)
+    job_context["output_file_path"] = '/'.join(pre_part) + '/processed/' + end_part
+    shutil.copyfile(job_context["input_file_path"], job_context["output_file_path"])
+
     # This is a NO-OP, but we make a ComputationalResult regardless.
     result = ComputationalResult()
     result.command_executed = "" # No op!

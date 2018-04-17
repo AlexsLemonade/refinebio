@@ -39,7 +39,7 @@ class Command(BaseCommand):
         if options["file"]:
 
             if 's3://' in options["file"]:
-                bucket, key = parse_s3_url(file)
+                bucket, key = parse_s3_url(options["file"])
                 s3 = boto3.resource('s3')
                 try:
                     filepath = "/tmp/input_" + str(uuid.uuid4()) + ".txt"
@@ -53,8 +53,8 @@ class Command(BaseCommand):
             else:
                 filepath = options["file"]
 
-            with open(filepath) as file:
-                for i, accession in enumerate(file):
+            with open(filepath) as accession_file:
+                for i, accession in enumerate(accession_file):
                     if i < options["offset"]:
                         continue
                     accession = accession.strip()

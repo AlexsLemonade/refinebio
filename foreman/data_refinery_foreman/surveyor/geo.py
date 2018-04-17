@@ -168,41 +168,50 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     if "idat.gz" in supplementary_file_url:
                         continue
 
-                    original_file = OriginalFile()
-                    # So - this is _usually_ true, but not always. I think it's submitter supplied.
-                    original_file.source_filename = supplementary_file_url.split('/')[-1]
-                    original_file.source_url = supplementary_file_url
-                    original_file.is_downloaded = False
-                    original_file.is_archive = True
-                    original_file.has_raw = has_raw
-                    original_file.save()
+                    try:
+                        original_file = OriginalFile.objects.get(source_url=supplementary_file_url)
+                    except OriginalFile.DoesNotExist:
+                        original_file = OriginalFile()
+                        # So - this is _usually_ true, but not always. I think it's submitter supplied.
+                        original_file.source_filename = supplementary_file_url.split('/')[-1]
+                        original_file.source_url = supplementary_file_url
+                        original_file.is_downloaded = False
+                        original_file.is_archive = True
+                        original_file.has_raw = has_raw
+                        original_file.save()
 
-                    logger.info("Created OriginalFile: " + str(original_file))
+                        logger.info("Created OriginalFile: " + str(original_file))
 
                     original_file_sample_association = OriginalFileSampleAssociation()
                     original_file_sample_association.sample = sample_object
                     original_file_sample_association.original_file = original_file
                     original_file_sample_association.save()
 
-                association = ExperimentSampleAssociation()
-                association.experiment = experiment_object
-                association.sample = sample_object
-                association.save()
+                try:
+                    assocation = ExperimentSampleAssociation.objects.get(experiment=experiment_object, sample=sample_object)
+                except ExperimentSampleAssociation.DoesNotExist:
+                    association = ExperimentSampleAssociation()
+                    association.experiment = experiment_object
+                    association.sample = sample_object
+                    association.save()
 
         # These may or may not contain what we want.
         for experiment_supplement_url in gse.metadata.get('supplementary_file', []):
 
-            original_file = OriginalFile()
+            try:
+                original_file = OriginalFile.objects.get(source_url=experiment_supplement_url)
+            except OriginalFile.DoesNotExist:
+                original_file = OriginalFile()
 
-            # So - this is _usually_ true, but not always. I think it's submitter supplied.
-            original_file.source_filename = experiment_supplement_url.split('/')[-1]
-            original_file.source_url = experiment_supplement_url
-            original_file.is_downloaded = False
-            original_file.is_archive = True
-            original_file.has_raw = has_raw
-            original_file.save()
+                # So - this is _usually_ true, but not always. I think it's submitter supplied.
+                original_file.source_filename = experiment_supplement_url.split('/')[-1]
+                original_file.source_url = experiment_supplement_url
+                original_file.is_downloaded = False
+                original_file.is_archive = True
+                original_file.has_raw = has_raw
+                original_file.save()
 
-            logger.info("Created OriginalFile: " + str(original_file))
+                logger.info("Created OriginalFile: " + str(original_file))
 
             for sample_object in all_samples:
                 original_file_sample_association = OriginalFileSampleAssociation()
@@ -213,14 +222,16 @@ class GeoSurveyor(ExternalSourceSurveyor):
         # These are the Miniml/Soft/Matrix URLs that are always(?) provided?
         for family_url in [self.get_miniml_url(experiment_accession_code)]:
 
-            original_file = OriginalFile()
-
-            original_file.source_filename = family_url.split('/')[-1]
-            original_file.source_url = family_url
-            original_file.is_downloaded = False
-            original_file.is_archive = True
-            original_file.has_raw = has_raw
-            original_file.save()
+            try:
+                original_file = OriginalFile.objects.get(source_url=family_url)
+            except OriginalFile.DoesNotExist:
+                original_file = OriginalFile()
+                original_file.source_filename = family_url.split('/')[-1]
+                original_file.source_url = family_url
+                original_file.is_downloaded = False
+                original_file.is_archive = True
+                original_file.has_raw = has_raw
+                original_file.save()
 
             logger.info("Created OriginalFile: " + str(original_file))
 
