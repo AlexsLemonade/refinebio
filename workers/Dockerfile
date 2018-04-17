@@ -10,8 +10,8 @@ RUN pip install -r requirements.txt
 # Get the latest version from the dist directory.
 RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
 
-COPY InstallDependencies.R /
-RUN Rscript /InstallDependencies.R
+COPY workers/InstallIlluminaDependencies.R /
+RUN Rscript /InstallIlluminaDependencies.R
 
 USER user
 # Install Aspera
