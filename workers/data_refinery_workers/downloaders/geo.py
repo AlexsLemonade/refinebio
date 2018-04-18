@@ -360,7 +360,7 @@ def download_geo(job_id: int) -> None:
         if no_op:
             utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="NO_OP")
             return success
-        if ('AGILENT' in ch1_proto) and ('Agilent' in ch2_proto):
+        if ('AGILENT' in ch1_proto) and ('AGILENT' in ch2_proto):
             utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="AGILENT_TWOCOLOR_TO_PCL")
             return success
         if ('ILLUMINA' in ch1_proto) and (not data_processing):
