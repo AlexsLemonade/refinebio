@@ -47,9 +47,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         try:
             parsed_json = experiment_request.json()["experiments"]["experiment"][0]
         except KeyError:
-
-            logger.error("Remote experiment " + experiment_accession_code +
-                " has no Experiment data!")
+            logger.error("Remote experiment has no Experiment data!",
+                         experiment_accession_code=experiment_accession_code,
+                         survey_job=self.survey_job.id)
             raise
 
         experiment = {}
@@ -60,8 +60,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         # This experiment has no platform at all, and is therefore useless.
         if 'arraydesign' not in parsed_json or len(parsed_json["arraydesign"]) == 0:
-            logger.warn("Experiment %s has no arraydesign listed.",
-                        experiment_accession_code,
+            logger.warn("Remote experiment has no arraydesign listed.",
+                        experiment_accession_code=experiment_accession_code,
                         survey_job=self.survey_job.id)
             raise UnsupportedPlatformException
         # If there is more than one arraydesign listed in the experiment
@@ -76,8 +76,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment["platform_accession_name"] = UNKNOWN
         else:
             if parsed_json["arraydesign"][0]["accession"] not in settings.SUPPORTED_PLATFORMS:
-                logger.warn("Experiment platform %s is not supported!", 
-                        parsed_json["arraydesign"][0]["accession"])
+                logger.warn("Experiment platform %s is not supported!",
+                            parsed_json["arraydesign"][0]["accession"],
+                            experiment_accession_code=experiment_accession_code,
+                            survey_job=self.survey_job.id)
                 platform_warning = True
 
             experiment["platform_accession_code"] = parsed_json["arraydesign"][0]["accession"]
@@ -93,8 +95,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         # Create the experiment object
         try:
             experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
-            logger.error("Experiment %s already exists, skipping object creation.",
-                experiment_accession_code,
+            logger.error("Experiment already exists, skipping object creation.",
+                experiment_accession_code=experiment_accession_code,
                 survey_job=self.survey_job.id)
         except Experiment.DoesNotExist:
 
@@ -266,20 +268,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             if "file" not in sample or len(sample['file']) == 0:
                 continue
 
-            # Figure out the Organism for this sample
-            organism_name = UNKNOWN
-            for characteristic in sample["characteristic"]:
-                if characteristic["category"].upper() == "ORGANISM":
-                    organism_name = characteristic["value"].upper()
-
-            if organism_name == UNKNOWN:
-                logger.error("Sample from experiment %s did not specify the organism name.",
-                             experiment.accession_code,
-                             survey_job=self.survey_job.id)
-                organism = None
-            else:
-                organism = Organism.get_object_for_name(organism_name)
-
             # A sample may actually have many sub files.
             # If there is raw data, take that.
             # If not, take the derived.
@@ -331,17 +319,17 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     download_url = comments["value"]
 
                 if not download_url:
-                    logger.error("Sample %s from experiment %s did not specify a download url, skipping.",
+                    logger.error("Sample %s did not specify a download url, skipping.",
                             sample_accession_code,
-                            experiment.accession_code,
+                            experiment_accession_code=experiment.accession_code,
                             survey_job=self.survey_job.id)
                     skip_sample = True
                     continue
 
                 if not filename:
-                    logger.error("Sample %s from experiment %s did not specify a filename, skipping.",
+                    logger.error("Sample %s did not specify a filename, skipping.",
                             sample_accession_code,
-                            experiment.accession_code,
+                            experiment_accession_code=experiment.accession_code,
                             survey_job=self.survey_job.id)
                     skip_sample = True
                     continue
@@ -357,12 +345,27 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 sample_assay_name,
                 filename)
 
+            # Figure out the Organism for this sample
+            organism_name = UNKNOWN
+            for characteristic in sample["characteristic"]:
+                if characteristic["category"].upper() == "ORGANISM":
+                    organism_name = characteristic["value"].upper()
+
+            if organism_name == UNKNOWN:
+                logger.error("Sample %s did not specify the organism name.",
+                             sample_accession_code,
+                             experiment_accession_code=experiment.accession_code,
+                             survey_job=self.survey_job.id)
+                organism = None
+            else:
+                organism = Organism.get_object_for_name(organism_name)
+
             # Create the sample object
             try:
                 sample_object = Sample.objects.get(accession_code=sample_accession_code)
-                logger.error("Sample %s from experiment %s already exists, skipping object creation.",
+                logger.error("Sample %s already exists, skipping object creation.",
                          sample_accession_code,
-                         experiment.accession_code,
+                         experiment_accession_code=experiment.accession_code,
                          survey_job=self.survey_job.id)
                 continue
             except Sample.DoesNotExist:
@@ -405,7 +408,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             association.sample = sample_object
             association.save()
 
-            logger.info("Created Sample: " + str(sample_object))
+            logger.info("Created Sample: " + str(sample_object),
+                        experiment_accession_code=experiment.accession_code,
+                        survey_job=self.survey_job.id)
 
             created_samples.append(sample_object)
 
@@ -428,8 +433,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         try:
             experiment = self.create_experiment_from_api(experiment_accession_code)
         except UnsupportedPlatformException as e:
-            logger.info("Experiment with accession code: %s was not on a supported platform, skipping.",
-                experiment_accession_code,
+            logger.info("Experiment was not on a supported platform, skipping.",
+                experiment_accession_code=experiment_accession_code,
                 survey_job=self.survey_job.id)
             return None, []
 
