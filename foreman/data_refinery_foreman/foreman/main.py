@@ -7,7 +7,6 @@ from datetime import timedelta
 from django.utils import timezone
 from django.db import transaction
 from data_refinery_common.models import (
-    WorkerJob,
     DownloaderJob,
     ProcessorJob
 )
@@ -58,7 +57,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
     last_job.save()
 
 
-def handle_repeated_failure(job: WorkerJob) -> None:
+def handle_repeated_failure(job) -> None:
     """If a job fails too many times, log it and stop retrying."""
     # Not strictly retried but will prevent the job from getting
     # retried any more times.

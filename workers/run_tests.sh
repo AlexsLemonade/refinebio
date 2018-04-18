@@ -92,4 +92,4 @@ docker run \
        --env-file workers/environments/test \
        --volume $volume_directory:/home/user/data_store \
        --link drdb:postgres $NOMAD_LINK \
-       -it dr_worker_tests bash -c 'coverage run --source="." manage.py test --no-input "$@"; coverage report -m' # This runs everything
+       -it dr_worker_tests bash -c "$(run_tests_with_coverage $@)"
