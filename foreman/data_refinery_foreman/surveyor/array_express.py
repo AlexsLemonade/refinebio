@@ -42,11 +42,12 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         See an example at: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-3050/sample
         """
-        request_url = EXPERIMENTS_URL + experiment_accession_code;
+        request_url = EXPERIMENTS_URL + experiment_accession_code
         experiment_request = requests.get(request_url)
         try:
             parsed_json = experiment_request.json()["experiments"]["experiment"][0]
         except KeyError:
+
             logger.error("Remote experiment " + experiment_accession_code +
                 " has no Experiment data!")
             raise
@@ -179,6 +180,49 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         return experiment_object
 
+    def determine_sample_accession(self, sample_source_name: str, sample_assay_name: str, filename:str) -> str:
+        """Determine what to use as the sample's accession code.
+
+        This is a complicated heuristic to determine the sample
+        accession because there isn't a field that consistently
+        contains it so we're trying to figure out a heuristic that
+        will work for all the data. This may need even further
+        refinements if we come across examples that break it.
+
+        However, what's going on is that we think either the `source`
+        or `assay` field will be the sample accession but it's not
+        always the same.
+        Ex: E-MEXP-669 has it in sample_assay_name.
+        Therefore we try a few different things to determine which it
+        is.
+        """
+        # It SEEMS like the filename often contains part or all of the
+        # sample name so we first try to see if either field contains
+        # the filename with the extension stripped off:
+        if isinstance(filename, str):
+            stripped_filename = ".".join(filename.split(".")[:-1])
+            if stripped_filename != "":
+                if stripped_filename in sample_source_name:
+                    return sample_source_name
+                elif stripped_filename in sample_assay_name:
+                    return sample_assay_name
+
+        # Accessions don't have spaces in them, but sometimes these
+        # fields do so next we try to see if one has spaces and the
+        # other doesn't:
+        source_has_spaces = " " in sample_source_name
+        assay_has_spaces = " " in sample_assay_name
+        if assay_has_spaces and not source_has_spaces:
+            return sample_source_name
+        elif source_has_spaces and not assay_has_spaces:
+            return sample_assay_name
+
+        # We're out of options so return the longest one.
+        if len(sample_source_name) >= len(sample_assay_name):
+            sample_accession_code = sample_source_name
+        else:
+            sample_accession_code = sample_assay_name
+
     def create_samples_from_api(self,
                           experiment: Experiment
                           ) -> List[Sample]:
@@ -205,7 +249,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         created_samples = []
 
-        r = requests.get(SAMPLES_URL.format(experiment.accession_code))
+        samples_endpoint = SAMPLES_URL.format(experiment.accession_code)
+        r = requests.get(samples_endpoint)
         samples = r.json()["experiment"]["sample"]
 
         try:
@@ -218,19 +263,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         for sample in samples:
 
             # For some reason, this sample has no files associated with it.
-            if "file" not in sample:
+            if "file" not in sample or len(sample['file']) == 0:
                 continue
-
-            # XXX: Somebody needs to explain this to me.
-            # XXX: This looks hacky. Some samples appear to have these fields
-            # reversed - so we always take the longest.
-            # Ex: E-MEXP-669
-            sample_source_name = sample["source"].get("name", "")
-            sample_assay_name = sample["assay"].get("name", "")
-            if len(sample_source_name) >= len(sample_assay_name):
-                sample_accession_code = sample_source_name
-            else:
-                sample_accession_code = sample_assay_name
 
             # Figure out the Organism for this sample
             organism_name = UNKNOWN
@@ -264,12 +298,16 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 if sub_file_mod['type'] == "data" and sub_file_mod['comment'].get('value', None) != None:
                     has_raw = True
 
+            skip_sample = False
             for sub_file in sample['file']:
 
                 # Skip derived data if we have it raw.
-                if has_raw and not has_platform_warning:
-                    if "derived data" in sub_file['type']:
-                        continue
+                if has_raw and not has_platform_warning and "derived data" in sub_file['type']:
+                    continue
+                elif (not has_raw or has_platform_warning) and "derived data" not in sub_file['type']:
+                    # If there is a platform warning then we don't want raw data.
+                    has_raw = False
+                    continue
 
                 download_url = None
                 filename = sub_file["name"]
@@ -291,14 +329,33 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                             break
                 else:
                     download_url = comments["value"]
-                    filename = sub_file["name"]
 
                 if not download_url:
                     logger.error("Sample %s from experiment %s did not specify a download url, skipping.",
                             sample_accession_code,
                             experiment.accession_code,
                             survey_job=self.survey_job.id)
+                    skip_sample = True
                     continue
+
+                if not filename:
+                    logger.error("Sample %s from experiment %s did not specify a filename, skipping.",
+                            sample_accession_code,
+                            experiment.accession_code,
+                            survey_job=self.survey_job.id)
+                    skip_sample = True
+                    continue
+
+            if skip_sample:
+                continue
+
+            # The accession code is not a simple matter to determine.
+            sample_source_name = sample["source"].get("name", "")
+            sample_assay_name = sample["assay"].get("name", "")
+            sample_accession_code = self.determine_sample_accession(
+                sample_source_name,
+                sample_assay_name,
+                filename)
 
             # Create the sample object
             try:
@@ -311,6 +368,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             except Sample.DoesNotExist:
                 sample_object = Sample()
                 sample_object.accession_code = sample_accession_code
+                sample_object.source_archive_url = samples_endpoint
                 sample_object.organism = organism
                 sample_object.save()
 

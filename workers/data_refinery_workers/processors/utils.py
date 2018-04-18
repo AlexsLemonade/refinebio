@@ -57,7 +57,10 @@ def end_job(job_context: Dict):
     job.end_time = timezone.now()
     job.save()
 
-    logger.info("Processor job completed successfully.", processor_job=job.id)
+    if success:
+        logger.info("Processor job completed successfully.", processor_job=job.id)
+    else:
+        logger.info("Processor job failed!", processor_job=job.id)
 
     # Every processor returns a dict, however end_job is always called
     # last so it doesn't need to contain anything.

@@ -31,3 +31,12 @@ get_nomad_link_option () {
         echo "--link nomad:nomad"
     fi
 }
+
+# `coverage report -m` will always have an exit code of 0 which makes
+# it seem like the test is passing. Therefore we store the exit code
+# of running the tests as $exit_code, then report the coverage, and
+# then exit with the appropriate code.
+# This is done a function so arguments to the tests can be passed through.
+run_tests_with_coverage () {
+    echo "coverage run --source=\".\" manage.py test --no-input $@; exit_code=\$?; coverage report -m; exit \$exit_code"
+}
