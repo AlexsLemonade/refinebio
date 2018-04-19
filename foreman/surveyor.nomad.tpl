@@ -48,7 +48,7 @@ job "SURVEYOR" {
         # CPU is in AWS's CPU units.
         cpu = 500
         # Memory is in MB of RAM.
-        memory = 6000
+        memory = 2048
       }
 
       config {

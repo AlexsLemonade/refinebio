@@ -96,7 +96,7 @@ else
           config {
             awslogs-region = \"$REGION\",
             awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
-            awslogs-stream = \"log-stream-$TASK-docker-$USER-$STAGE\"
+            awslogs-stream = \"log-stream-nomad-docker-downloader-$USER-$STAGE\"
           }
         }
 "
@@ -124,7 +124,6 @@ fi
 
 # This actually performs the templating using Perl's regex engine.
 # Perl magic found here: https://stackoverflow.com/a/2916159/6095378
-
 export_log_conf (){
     export LOGGING_CONFIG="
         logging {
