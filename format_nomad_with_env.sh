@@ -124,65 +124,39 @@ fi
 
 # This actually performs the templating using Perl's regex engine.
 # Perl magic found here: https://stackoverflow.com/a/2916159/6095378
-if [[ $project == "workers" ]]; then
-    export TASK="downloader"
+
+export_log_conf (){
     export LOGGING_CONFIG="
         logging {
           type = \"awslogs\"
           config {
             awslogs-region = \"$REGION\",
             awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
-            awslogs-stream = \"log-stream-$TASK-docker-$USER-$STAGE\"
+            awslogs-stream = \"log-stream-$1-docker-$USER-$STAGE\"
           }
         }
 "
+}
+
+if [[ $project == "workers" ]]; then
+    export_log_conf "downloader"
     cat downloader.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                > "$output_dir"downloader.nomad \
                2> /dev/null
-    export TASK="processor"
-    export LOGGING_CONFIG="
-        logging {
-          type = \"awslogs\"
-          config {
-            awslogs-region = \"$REGION\",
-            awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
-            awslogs-stream = \"log-stream-$TASK-docker-$USER-$STAGE\"
-          }
-        }
-"
+    export_log_conf "processor"
     cat processor.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                > "$output_dir"processor.nomad \
                2> /dev/null
 elif [[ $project == "foreman" ]]; then
-    export TASK="surveyor"
-    export LOGGING_CONFIG="
-        logging {
-          type = \"awslogs\"
-          config {
-            awslogs-region = \"$REGION\",
-            awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
-            awslogs-stream = \"log-stream-$TASK-docker-$USER-$STAGE\"
-          }
-        }
-"
+    export_log_conf "surveyor"
     cat surveyor.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                > "$output_dir"surveyor.nomad \
                2> /dev/null
 elif [[ $project == "api" ]]; then
-    export TASK="api"
-    export LOGGING_CONFIG="
-        logging {
-          type = \"awslogs\"
-          config {
-            awslogs-region = \"$REGION\",
-            awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
-            awslogs-stream = \"log-stream-$TASK-docker-$USER-$STAGE\"
-          }
-        }
-"
+    export_log_conf "api"
     cat environment.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                > "$output_dir"environment \
