@@ -3,6 +3,7 @@ import urllib.request
 import os
 import shutil
 import zipfile
+import time
 from typing import List
 from contextlib import closing
 
@@ -95,7 +96,10 @@ def download_array_express(job_id: int) -> None:
     # contained within the same zip file. Therefore only
     # download the one.
     os.makedirs(LOCAL_ROOT_DIR + '/' + accession_code, exist_ok=True)
-    dl_file_path = LOCAL_ROOT_DIR + '/' + accession_code + '/' + accession_code + ".zip"
+
+    # Add a timestamp in milliseconds to filename to prevent multiple jobs from using the same file.
+    filename = url.split('/')[-1] + "." + str(int(time.time() * 1000))
+    dl_file_path = LOCAL_ROOT_DIR + '/' + accession_code + '/' + filename + ".zip"
     _download_file(url, dl_file_path, job)
 
     extracted_files = _extract_files(dl_file_path, accession_code, job)
