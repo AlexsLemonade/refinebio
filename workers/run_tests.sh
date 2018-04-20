@@ -79,6 +79,7 @@ fi
 ilu_file="GSE22427_non-normalized.txt"
 ilu_test_raw_dir="$volume_directory/raw/TEST/ILLUMINA"
 if [ ! -e "$ilu_test_raw_dir/$ilu_file" ]; then
+    mkdir -p $ilu_test_raw_dir
     echo "Downloading Illumina file for Illumina tests."
     wget -q -O "$ilu_test_raw_dir/$ilu_file" \
          "$test_data_repo/$ilu_file"
@@ -88,6 +89,7 @@ fi
 at_file="GSM466597_95899_agilent.txt"
 at_test_raw_dir="$volume_directory/raw/TEST/AGILENT_TWOCOLOR"
 if [ ! -e "$at_test_raw_dir/$at_file" ]; then
+    mkdir -p $at_test_raw_dir
     echo "Downloading Agilent file for A2C tests."
     wget -q -O "$at_test_raw_dir/$at_file" \
          "$test_data_repo/$at_file"
