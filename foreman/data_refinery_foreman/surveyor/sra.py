@@ -13,7 +13,8 @@ from data_refinery_common.models import (
     ExperimentAnnotation,
     Sample,
     SampleAnnotation,
-    ExperimentSampleAssociation
+    ExperimentSampleAssociation,
+    OriginalFileSampleAssociation
 )
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
@@ -367,10 +368,10 @@ class SraSurveyor(ExternalSourceSurveyor):
                 original_file.has_raw = True
                 original_file.save()
 
-                assoc = OriginalFileSampleAssociation
-                assoc.sample = sample_object
-                assoc.original_file = original_file
-                assoc.save()
+                original_file_sample_association = OriginalFileSampleAssociation()
+                original_file_sample_association.original_file = original_file
+                original_file_sample_association.sample = sample_object
+                original_file_sample_association.save()
 
         esa = ExperimentSampleAssociation()
         esa.experiment = experiment_object

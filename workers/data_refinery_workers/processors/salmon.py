@@ -64,7 +64,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["output_archive"] = '/'.join(pre_part) + '/result-' + timestamp +  '.tar.gz'
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
-    job_context['organism'] = job_context['original_files'][0].sample.organism
+    job_context['organism'] = job_context['original_files'][0].samples.first().organism
     job_context["success"] = True
     return job_context
 
@@ -292,11 +292,8 @@ def _run_fastqc(job_context: Dict) -> Dict:
 
     """
 
-    import pdb
-    pdb.set_trace()
-
     command_str = ("./FastQC/fastqc --outdir={qc_directory} {files}")
-    files = ''
+    files = ' '.join(file.absolute_file_path for file in job_context['original_files'])
     formatted_command = command_str.format(qc_directory=job_context["qc_directory"],
                 files=files)
 
@@ -362,9 +359,12 @@ def salmon(job_id: int) -> None:
                        [utils.start_job,
                         _set_job_prefix,
                         _prepare_files,
+                        _run_fastqc,
+
+
                         _determine_index_length,
                         _download_index,
-                        _run_fastqc,
+
                         _run_salmon,
                         _run_salmontools,
                         _run_tximport,

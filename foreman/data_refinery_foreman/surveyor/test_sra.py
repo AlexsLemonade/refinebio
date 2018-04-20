@@ -23,7 +23,7 @@ STUDY_ACCESSION = "DRP000595"
 SUBMISSION_ACCESSION = "DRA000567"
 
 
-def mocked_requests_get(url):
+def mocked_requests_get(url, timeout=1):
     mock = Mock(ok=True)
     if url == ENA_METADATA_URL_TEMPLATE.format(EXPERIMENT_ACCESSION):
         mock.text = EXPERIMENT_XML

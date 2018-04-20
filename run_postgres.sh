@@ -8,7 +8,7 @@ script_directory=`perl -e 'use File::Basename;
 cd $script_directory
 
 # CircleCI Docker won't make this by default for some reason
-if [ ! -d /tmp/volumes_postgres ]; then
+if [ ! -d $script_directory/volumes_postgres ]; then
   mkdir $script_directory/volumes_postgres
 fi
 VOLUMES=$script_directory/volumes_postgres

@@ -12,7 +12,8 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
     ExperimentSampleAssociation,
-    OriginalFile
+    OriginalFile,
+    OriginalFileSampleAssociation
 )
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
@@ -43,11 +44,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         See an example at: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-3050/sample
         """
         request_url = EXPERIMENTS_URL + experiment_accession_code
-        experiment_request = requests.get(request_url)
+        experiment_request = requests.get(request_url, timeout=15)
         try:
             parsed_json = experiment_request.json()["experiments"]["experiment"][0]
         except KeyError:
-
             logger.error("Remote experiment " + experiment_accession_code +
                 " has no Experiment data!")
             raise
@@ -78,7 +78,11 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             if parsed_json["arraydesign"][0]["accession"] not in settings.SUPPORTED_PLATFORMS:
                 logger.warn("Experiment platform %s is not supported!", 
                         parsed_json["arraydesign"][0]["accession"])
-                platform_warning = True
+                
+                # XXX: This is disabled until we can re-do the supported platforms
+                # to support Illumina and Agilent 2C
+                # platform_warning = True
+                platform_warning = False
 
             experiment["platform_accession_code"] = parsed_json["arraydesign"][0]["accession"]
             experiment["platform_accession_name"] = parsed_json["arraydesign"][0]["name"]
@@ -128,7 +132,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             ## Fetch and parse the IDF file for any other fields
             IDF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.idf.txt"
             idf_url = IDF_URL_TEMPLATE.format(code=experiment_accession_code)
-            idf_text = requests.get(idf_url).text
+            idf_text = requests.get(idf_url, timeout=15).text
             lines = idf_text.split('\n')
             idf_dict = {}
             for line in lines:
@@ -250,7 +254,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         created_samples = []
 
         samples_endpoint = SAMPLES_URL.format(experiment.accession_code)
-        r = requests.get(samples_endpoint)
+        r = requests.get(samples_endpoint, timeout=15)
         samples = r.json()["experiment"]["sample"]
 
         try:
@@ -297,6 +301,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 # Ex: E-GEOD-9656
                 if sub_file_mod['type'] == "data" and sub_file_mod['comment'].get('value', None) != None:
                     has_raw = True
+                if 'raw' in sub_file_mod['comment'].get('value', ''):
+                    has_raw = True
 
             skip_sample = False
             for sub_file in sample['file']:
@@ -308,6 +314,11 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     # If there is a platform warning then we don't want raw data.
                     has_raw = False
                     continue
+
+                # XXX: This is a hack.
+                # Don't get the raw data if it's only a 1-color sample.
+                if 'Cy3' in str(sample) and 'Cy5' not in str(sample):
+                    has_raw = False
 
                 download_url = None
                 filename = sub_file["name"]
@@ -392,13 +403,17 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     sample_annotation.save()
 
                 original_file = OriginalFile()
-                original_file.sample = sample_object
                 original_file.source_filename = filename
                 original_file.source_url = download_url
                 original_file.is_downloaded = False
                 original_file.is_archive = True
                 original_file.has_raw = has_raw
                 original_file.save()
+
+                original_file_sample_association = OriginalFileSampleAssociation()
+                original_file_sample_association.original_file = original_file
+                original_file_sample_association.sample = sample_object
+                original_file_sample_association.save()
 
             association = ExperimentSampleAssociation()
             association.experiment = experiment
