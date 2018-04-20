@@ -9,6 +9,7 @@ from data_refinery_common.models import (
     OriginalFile,
     ProcessorJobOriginalFileAssociation,
     Sample,
+    SampleAnnotation,
     OriginalFileSampleAssociation
 )
 from data_refinery_workers.processors import illumina, agilent_twocolor, utils
