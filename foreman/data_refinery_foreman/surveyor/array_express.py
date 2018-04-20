@@ -48,7 +48,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         try:
             parsed_json = experiment_request.json()["experiments"]["experiment"][0]
         except KeyError:
-
             logger.error("Remote experiment " + experiment_accession_code +
                 " has no Experiment data!")
             raise
@@ -79,7 +78,11 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             if parsed_json["arraydesign"][0]["accession"] not in settings.SUPPORTED_PLATFORMS:
                 logger.warn("Experiment platform %s is not supported!", 
                         parsed_json["arraydesign"][0]["accession"])
-                platform_warning = True
+                
+                # XXX: This is disabled until we can re-do the supported platforms
+                # to support Illumina and Agilent 2C
+                # platform_warning = True
+                platform_warning = False
 
             experiment["platform_accession_code"] = parsed_json["arraydesign"][0]["accession"]
             experiment["platform_accession_name"] = parsed_json["arraydesign"][0]["name"]
@@ -298,6 +301,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 # Ex: E-GEOD-9656
                 if sub_file_mod['type'] == "data" and sub_file_mod['comment'].get('value', None) != None:
                     has_raw = True
+                if 'raw' in sub_file_mod['comment'].get('value', ''):
+                    has_raw = True
 
             skip_sample = False
             for sub_file in sample['file']:
@@ -309,6 +314,11 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     # If there is a platform warning then we don't want raw data.
                     has_raw = False
                     continue
+
+                # XXX: This is a hack.
+                # Don't get the raw data if it's only a 1-color sample.
+                if 'Cy3' in str(sample) and 'Cy5' not in str(sample):
+                    has_raw = False
 
                 download_url = None
                 filename = sub_file["name"]

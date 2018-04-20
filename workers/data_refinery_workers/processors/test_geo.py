@@ -50,6 +50,11 @@ def prepare_illumina_job():
         sample.title = name
         sample.save()
 
+        sa = SampleAnnotation()
+        sa.sample = sample
+        sa.data = {}
+        sa.save()
+
         sample_assoc = OriginalFileSampleAssociation()
         sample_assoc.original_file = og_file
         sample_assoc.sample = sample

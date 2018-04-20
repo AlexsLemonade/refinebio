@@ -67,9 +67,12 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
 
         if not pipeline:
             if not original_file.has_raw:
-                processor_job.pipeline_applied = ProcessorPipeline.NO_OP
+                processor_job.pipeline_applied = "NO_OP"
             else:
-                processor_job.pipeline_applied = "AFFY_TO_PCL"
+                if 'CEL' in original_file.filename.upper():
+                    processor_job.pipeline_applied = "AFFY_TO_PCL"
+                else:
+                    processor_job.pipeline_applied = "AGILENT_TWOCOLOR_TO_PCL"
         else:
             processor_job.pipeline_applied = pipeline
 
