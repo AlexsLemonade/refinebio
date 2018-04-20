@@ -277,17 +277,17 @@ The [Sequence Read Archive](https://www.ncbi.nlm.nih.gov/sra) Surveyor expects a
 range of SRA accession codes:
 
 ```bash
-./foreman/run_surveyor.sh survey_sra <ACCESSION>
+./foreman/run_surveyor.sh survey_sra --accession <ACCESSION>
 ```
 
 Example (single read):
 ```bash
-./foreman/run_surveyor.sh survey_sra DRR002116
+./foreman/run_surveyor.sh survey_sra --accession DRR002116
 ```
 
 Example (paired read):
 ```bash
-./foreman/run_surveyor.sh survey_sra SRR6718414
+./foreman/run_surveyor.sh survey_sra --accession SRR6718414
 ```
 
 #### Ensembl Indexes
