@@ -27,7 +27,7 @@ def start_job(job_context: Dict):
     job.start_time = timezone.now()
     job.save()
 
-    logger.info("Starting processor Job.", processor_job=job.id)
+    logger.info("Starting processor Job.", processor_job=job.id, pipeline=job.pipeline_applied)
 
     relations = ProcessorJobOriginalFileAssociation.objects.filter(processor_job=job)
     original_files = OriginalFile.objects.filter(id__in=relations.values('original_file_id'))
