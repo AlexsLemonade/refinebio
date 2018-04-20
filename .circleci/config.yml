@@ -7,3 +7,12 @@ jobs:
       - checkout
 
       - run: ./install_nomad.sh
+
+workflows:
+  version: 2
+  test-and-deploy:
+    jobs:
+      # "test" job will be triggered by:
+      # - any branch commit, or:
+      # - tag commits whose names start with letter "v".
+      - test
