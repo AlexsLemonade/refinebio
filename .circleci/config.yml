@@ -6,7 +6,7 @@ jobs:
     steps:
       - checkout
 
-      - run: ./install_nomad.sh
+      - run: sudo ./install_nomad.sh
 
 workflows:
   version: 2
