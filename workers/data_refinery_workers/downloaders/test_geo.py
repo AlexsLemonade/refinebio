@@ -36,3 +36,4 @@ class DownloadGeoTestCase(TestCase):
         geo._download_file('ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM254nnn/GSM254828/suppl/GSM254828.txt.gz', 'GSM254828.txt.gz', dlj)
         files = geo._extract_gz('GSM254828.txt.gz', 'GSM254828')
         geo._download_file("ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427%5Fnon%2Dnormalized%2Etxt%2Egz", 'GSE22427.txt.gz',  dlj)
+

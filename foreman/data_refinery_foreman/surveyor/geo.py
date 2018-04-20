@@ -35,38 +35,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
     def source_type(self):
         return Downloaders.GEO.value
 
-    def get_raw_url(self, experiment_accession_code):
-        """ """
-        geo = experiment_accession_code.upper()
-        geotype = geo[:3]
-        range_subdir = sub(r"\d{1,3}$", "nnn", geo)
-
-        raw_url_template = ("ftp://ftp.ncbi.nlm.nih.gov/geo/"
-                  "{root}/{range_subdir}/{record}/suppl/{record_file}")
-        raw_url = raw_url_template.format(root="series",
-                            range_subdir=range_subdir,
-                            record=geo,
-                            record_file="%s_RAW.tar" % geo)
-
-        return raw_url
-
-    def get_non_normalized_url(self, experiment_accession_code):
-        """ """
-        geo = experiment_accession_code.upper()
-        geotype = geo[:3]
-        range_subdir = sub(r"\d{1,3}$", "nnn", geo)
-
-        nn_url_template = ("ftp://ftp.ncbi.nlm.nih.gov/geo/"
-                  "{root}/{range_subdir}/{record}/suppl/{record_file}")
-        nn_url = nn_url_template.format(root="series",
-                            range_subdir=range_subdir,
-                            record=geo,
-                            record_file="%s_non-normalized.txt.gz" % geo)
-
-        return nn_url
-
     def get_miniml_url(self, experiment_accession_code):
-        """ """
+        """ Build the URL for the MINiML files for this accession code. """
         geo = experiment_accession_code.upper()
         geotype = geo[:3]
         range_subdir = sub(r"\d{1,3}$", "nnn", geo)
@@ -81,8 +51,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
         return min_url
 
     def create_experiment_and_samples_from_api(self, experiment_accession_code) -> (Experiment, List[Sample]):
-        """ """
-
+        """ The main surveyor - find the Experiment and Samples from NCBI GEO. """
         # XXX: Maybe we should have an EFS tmp? This could potentially fill up if not tracked.
         # Cleaning up is tracked here: https://github.com/guma44/GEOparse/issues/41
         gse = GEOparse.get_GEO(experiment_accession_code, destdir='/tmp')
@@ -102,8 +71,11 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_object.description = gse.metadata.get('summary', [''])[0]
             experiment_object.platform_name = gse.metadata["platform_id"][0] # TODO: Lookup GEO-GPL
             experiment_object.platform_accession_code = gse.metadata["platform_id"][0]
+
+            # Source doesn't provide time information, assume midnight.
             experiment_object.source_first_published = dateutil.parser.parse(gse.metadata["submission_date"][0] + " 00:00:00 UTC")
             experiment_object.source_last_updated = dateutil.parser.parse(gse.metadata["last_update_date"][0] + " 00:00:00 UTC")
+            
             experiment_object.submitter_institution = ", ".join(list(set(gse.metadata["contact_institute"])))
             experiment_object.pubmed_id = gse.metadata.get("pubmed_id", [""])[0]
             experiment_object.save()
@@ -243,9 +215,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
         return experiment_object, all_samples
 
     def discover_experiment_and_samples(self) -> (Experiment, List[Sample]):
-        """
-
-        """
+        """ Dispatches the surveyor, returns the results """
 
         experiment_accession_code = (
             SurveyJobKeyValue

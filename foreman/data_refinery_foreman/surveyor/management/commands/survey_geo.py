@@ -8,9 +8,7 @@ from django.core.management.base import BaseCommand
 from data_refinery_foreman.surveyor import surveyor
 from data_refinery_common.logging import get_and_configure_logger
 
-
 logger = get_and_configure_logger(__name__)
-
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
@@ -33,7 +31,7 @@ class Command(BaseCommand):
                     try:
                         surveyor.survey_geo_experiment(accession.strip())
                     except Exception as e:
-                        print(e)        
+                        print(e)
         else:
             surveyor.survey_geo_experiment(options['accession'])
             return 0

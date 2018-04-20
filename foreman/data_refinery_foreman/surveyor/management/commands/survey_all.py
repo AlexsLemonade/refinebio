@@ -13,9 +13,7 @@ from data_refinery_foreman.surveyor import surveyor
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import parse_s3_url
 
-
 logger = get_and_configure_logger(__name__)
-
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
@@ -66,4 +64,4 @@ class Command(BaseCommand):
                         else:
                             surveyor.survey_sra_experiment(accession)
                     except Exception as e:
-                        print(e)       
+                        print(e)

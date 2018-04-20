@@ -25,12 +25,11 @@ from data_refinery_common.utils import get_env_variable
 logger = get_and_configure_logger(__name__)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 
-
 # chunk_size is in bytes
 CHUNK_SIZE = 1024 * 256
 
 def get_miniml_url(self, experiment_accession_code):
-    """ """
+    """ Create the url for the MINiML file for an accession code"""
     geo = experiment_accession_code.upper()
     geotype = geo[:3]
     range_subdir = sub(r"\d{1,3}$", "nnn", geo)
@@ -355,7 +354,7 @@ def download_geo(job_id: int) -> None:
         annotations = actual_file.samples.first().sampleannotation_set.all()[0]
         ch1_proto = annotations.data.get('label_protocol_ch1', "").upper()
         ch2_proto = annotations.data.get('label_protocol_ch2', "").upper()
-        data_processing = annotations.data.get('data_processing', None) # XXX: Confirm this as raw detector
+        data_processing = annotations.data.get('data_processing', None) # If data processing step, it isn't raw.
 
         if no_op:
             utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="NO_OP")
