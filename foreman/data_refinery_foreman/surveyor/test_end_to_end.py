@@ -42,7 +42,6 @@ def mock_get_sample(accession_code: str):
     if accession_code == "GSM1109016" or accession_code == "GSM1108516":
         raise Sample.DoesNotExist
 
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     # This return value isn't actually used so it doesn't matter what
     # it is. The call to this function is just checking for the
     # existence of the Sample.
