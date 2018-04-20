@@ -9,9 +9,9 @@ cd $script_directory
 
 # CircleCI Docker won't make this by default for some reason
 if [ ! -d /tmp/volumes_postgres ]; then
-  mkdir /tmp/volumes_postgres
+  mkdir $script_directory/volumes_postgres
 fi
-VOLUMES=/tmp/volumes_postgres
+VOLUMES=$script_directory/volumes_postgres
 
 # via https://hub.docker.com/_/postgres/
 # 9.6.6 is the current (as of Jan 23 2018) RDS most recent version.

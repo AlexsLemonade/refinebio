@@ -17,7 +17,8 @@ class DownloadArrayExpressTestCase(TestCase):
         survey_job.save()
         self.survey_job = survey_job
 
-    def test_download_and_extract_file(self):
+    @patch('data_refinery_workers.downloaders.utils.send_job')
+    def test_download_and_extract_file(self, mock_send_job):
         dlj = DownloaderJob()
         dlj.save()
         array_express._download_file('ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip', 'dlme.zip', dlj)

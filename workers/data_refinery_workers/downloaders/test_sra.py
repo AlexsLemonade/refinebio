@@ -20,9 +20,11 @@ class DownloadSraTestCase(TestCase):
         self.survey_job = survey_job
 
     def insert_objects(self):
-        return 
+        return
 
-    def test_download_file(self):
+    @patch('data_refinery_workers.downloaders.utils.send_job')
+    def test_download_file(self, mock_send_job):
+        mock_send_job.return_value = None
         dlj = DownloaderJob()
         dlj.accession_code = "ERR036"
         dlj.save()
