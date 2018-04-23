@@ -369,9 +369,10 @@ suppressWarnings(data <- fread(filePath, stringsAsFactors=FALSE, sep="\t", heade
 #suppressWarnings(data <- read.table(filePath, header=TRUE, fill=TRUE))
 
 # Check input paramters and parse out data we need
-if (probeIDColumn == "")
+if (probeIDColumn == ""){
   message("Got no probID column...")
   probeIDColumn <- "PROBE_ID"
+}
 
 if (!(probeIDColumn %in% colnames(data)))
 {
