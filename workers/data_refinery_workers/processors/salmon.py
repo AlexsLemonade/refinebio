@@ -57,6 +57,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     pre_part = original_files[0].absolute_file_path.split('/')[:-1]
     job_context["output_directory"] = '/'.join(pre_part) + '/processed/'
     os.makedirs(job_context["output_directory"], exist_ok=True)
+    job_context["input_directory"] = '/'.join(pre_part) + '/'
     job_context["qc_directory"] = '/'.join(pre_part) + '/qc/'
     os.makedirs(job_context["qc_directory"], exist_ok=True)
 
@@ -322,6 +323,47 @@ def _run_fastqc(job_context: Dict) -> Dict:
 
     return job_context
 
+
+    return job_context
+
+def _run_multiqc(job_context: Dict) -> Dict:
+    """ Runs the `MultiQC` package to generate the QC report.
+
+    """
+    command_str = ("multiqc {input_directory} --outdir {qc_directory}")
+    formatted_command = command_str.format(input_directory=job_context["input_directory"], 
+                qc_directory=job_context["qc_directory"])
+
+    logger.info("Running MultiQC using the following shell command: %s",
+                formatted_command,
+                processor_job=job_context["job_id"])
+
+    qc_env = os.environ.copy()
+    qc_env["LC_ALL"] = "C.UTF-8"
+    qc_env["LANG"] = "C.UTF-8"
+
+    completed_command = subprocess.run(formatted_command.split(),
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE,
+                                       env=qc_env)
+
+    if completed_command.returncode != 0:
+
+        stderr = str(completed_command.stderr)
+        error_start = stderr.find("Error:")
+        error_start = error_start if error_start != -1 else 0
+        logger.error("Shell call to MultiQC failed with error message: %s",
+                     stderr[error_start:],
+                     processor_job=job_context["job_id"])
+
+        # The failure_reason column is only 256 characters wide.
+        error_end = error_start + 200
+        job_context["job"].failure_reason = ("Shell call to MultiQC failed because: "
+                                             + stderr[error_start:error_end])
+        job_context["success"] = False
+
+    return job_context
+
 def _run_tximport(job_context: Dict) -> Dict:
     """ Runs the `tximport` R package to find genes. 
     
@@ -368,5 +410,6 @@ def salmon(job_id: int) -> None:
                         _run_salmon,
                         _run_salmontools,
                         _run_tximport,
+                        _run_fastqc,
                         _zip_and_upload,
                         utils.end_job])
