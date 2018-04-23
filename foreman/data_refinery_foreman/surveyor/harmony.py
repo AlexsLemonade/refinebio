@@ -29,34 +29,142 @@ def harmonize(metadata):
 
     Given some samples and metadata, harmonize into something universal.
     
+    Array Express Example:
+         {'Array Data File': 'C30061.CEL',
+          'Array Design REF': 'A-AFFY-1',
+          'Assay Name': '1009003-C30061',
+          'Characteristics[age]': '38',
+          'Characteristics[developmental stage]': 'adult',
+          'Characteristics[organism part]': 'islet',
+          'Characteristics[organism]': 'Homo sapiens',
+          'Characteristics[sex]': 'male',
+          'Comment [ArrayExpress FTP file]': 'ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.raw.1.zip',
+          'Comment [Derived ArrayExpress FTP file]': 'ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.processed.1.zip',
+          'Derived Array Data File': 'C30061.txt',
+          'Description': 'Islets from 38 years old male. Time from islet preparation '
+                         'to culture initiation: 96 hours. Provided by the North West '
+                         'Tissue Center Seattle.',
+          'Extract Name': 'donor B differentiated cells RNA',
+          'Factor Value[cell type]': 'differentiated',
+          'Factor Value[individual]': 'B',
+          'Factor Value[test result]': 'unsuccessful',
+          'Image File': 'C30061.DAT',
+          'Label': 'biotin',
+          'Labeled Extract Name': 'donor B differentiated cells LEX',
+          'Material Type': 'cell',
+          'Protocol REF': 'P-MTAB-41862',
+          'Source Name': 'donor B islets',
+          'Technology Type': 'array assay',
+          'Unit [time unit]': 'year',
+          'sex': 'male'}
 
- {'Array Data File': 'C30061.CEL',
-  'Array Design REF': 'A-AFFY-1',
-  'Assay Name': '1009003-C30061',
-  'Characteristics[age]': '38',
-  'Characteristics[developmental stage]': 'adult',
-  'Characteristics[organism part]': 'islet',
-  'Characteristics[organism]': 'Homo sapiens',
-  'Characteristics[sex]': 'male',
-  'Comment [ArrayExpress FTP file]': 'ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.raw.1.zip',
-  'Comment [Derived ArrayExpress FTP file]': 'ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.processed.1.zip',
-  'Derived Array Data File': 'C30061.txt',
-  'Description': 'Islets from 38 years old male. Time from islet preparation '
-                 'to culture initiation: 96 hours. Provided by the North West '
-                 'Tissue Center Seattle.',
-  'Extract Name': 'donor B differentiated cells RNA',
-  'Factor Value[cell type]': 'differentiated',
-  'Factor Value[individual]': 'B',
-  'Factor Value[test result]': 'unsuccessful',
-  'Image File': 'C30061.DAT',
-  'Label': 'biotin',
-  'Labeled Extract Name': 'donor B differentiated cells LEX',
-  'Material Type': 'cell',
-  'Protocol REF': 'P-MTAB-41862',
-  'Source Name': 'donor B islets',
-  'Technology Type': 'array assay',
-  'Unit [time unit]': 'year',
-  'sex': 'male'}
+    SRA Example:
+        {'alias': 'GSM2997959_r1',
+         'broker_name': 'GEO',
+         'center_name': 'GEO',
+         'center_project_name': 'GSE99065',
+         'ena-base-count': '279111754922',
+         'ena-spot-count': '1152605026',
+         'experiment_accession': 'SRX3691797',
+         'experiment_design_description': None,
+         'experiment_title': 'NextSeq 500 paired end sequencing; GSM2997959: INOF_FRT; '
+                             'Homo sapiens; RNA-Seq',
+         'lab_name': '',
+         'library_construction_protocol': 'cDNA library produced with TGIRT RNA was '
+                                          'isolated and DNase treated using RNEasy '
+                                          'mini kit (Qiagen 74106) according to the '
+                                          'manufacturer protocol. 5ug DNA-free total '
+                                          'RNA was then ribodepleted using Ribo-zero '
+                                          'Gold (Illumina RZG1224 ) according to the '
+                                          'manufacturer protocol and purified using a '
+                                          'modified ZYMO RNA Clean and Concentrator '
+                                          '(R1016) protocol where 8 volumes EtOH '
+                                          'instead of 4. rRNA depleted RNA was '
+                                          'fragmented with NEBNext Magnesium RNA '
+                                          'Fragmentation Module (E6150) followed by '
+                                          'dephosphorylation using T4PNK (mandel  ) '
+                                          'and purified by same modified ZYMO '
+                                          'protocol. cDNAs were synthesized via TGIRT '
+                                          'template-switching with 1µM TGIRT-III '
+                                          'reverse transcriptase (Ingex, LLC) for 15 '
+                                          'min at 60o C, during which a DNA '
+                                          'oligonucleotide containing the complement '
+                                          'of an Illumina Read 2 sequencing '
+                                          'primer-binding site becomes seamlessly '
+                                          "linked to the 5' cDNA end. After reaction "
+                                          'cleanup (Qiagen MinElute Reaction cleanup '
+                                          "28206), a 5' adenylated DNA oligonucleotide "
+                                          'containing the complement of an Illumina '
+                                          'Read 1 sequencing primer-binding site is '
+                                          "then ligated to the 3' cDNA end with "
+                                          "Thermostable 5' AppDNA / RNA Ligase (New "
+                                          'England Biolabs M0319). Properly ligated '
+                                          'cDNAs were amplified by PCR (12 cycles) to '
+                                          'synthesize the second strand and add '
+                                          'Illumina flowcell capture and index '
+                                          'sequences. Library was size-selected with '
+                                          'Ampure XP beads (Beckman-Coulter) and '
+                                          'quantified with Qubit and evaluated on an '
+                                          'Agilent 2100 Bioanalyzer.',
+         'library_layout': 'PAIRED',
+         'library_selection': 'cDNA',
+         'library_source': 'TRANSCRIPTOMIC',
+         'library_strategy': 'RNA-Seq',
+         'organism_id': '9606',
+         'organism_name': 'HOMO SAPIENS',
+         'platform_instrument_model': 'NextSeq500',
+         'run_accession': 'SRR6718414',
+         'run_ena_base_count': '1773379870',
+         'run_ena_first_public': '2018-02-17',
+         'run_ena_last_update': '2018-02-17',
+         'run_ena_spot_count': '15046271',
+         'sample_accession': 'SRS2951393',
+         'sample_cell_type': 'Immortalized normal ovarian fibroblast',
+         'sample_ena_base_count': '1773379870',
+         'sample_ena_first_public': '2018-02-14',
+         'sample_ena_last_update': '2018-02-14',
+         'sample_ena_spot_count': '15046271',
+         'sample_source_name': 'INOF cell line',
+         'sample_title': 'INOF_FRT',
+         'sample_treatment': 'none',
+         'study_abstract': 'The ability to compare the abundance of one RNA molecule '
+                           'to another is a crucial step for understanding how gene '
+                           'expression is modulated to shape the transcriptome '
+                           'landscape. However, little information is available about '
+                           'the relative expression of the different classes of coding '
+                           'and non-coding RNA or even between RNA of the same class. '
+                           'In this study, we present a complete portrait of the human '
+                           'transcriptome that depicts the relationship of all classes '
+                           'of non-ribosomal RNA longer than sixty nucleotides. The '
+                           'results show that the most abundant RNA in the human '
+                           'rRNA-depleted transcriptome is tRNA followed by '
+                           'spliceosomal RNA. Surprisingly, the signal recognition '
+                           'particle RNA 7SL by itself occupied 8% of the ribodepleted '
+                           'transcriptome producing a similar number of transcripts as '
+                           'that produced by all snoRNA genes combined. In general, '
+                           'the most abundant RNA are non-coding but many more protein '
+                           'coding than non-coding genes produce more than 1 '
+                           'transcript per million. Examination of gene functions '
+                           'suggests that RNA abundance reflects both gene and cell '
+                           'function. Together, the data indicate that the human '
+                           'transcriptome is shaped by a small number of highly '
+                           'expressed non-coding genes and a large number of '
+                           'moderately expressed protein coding genes that reflect '
+                           'cellular phenotypes. Overall design: RNA was isolated from '
+                           'SKOV3ip1 and INOF human cell lines and selected with '
+                           'different methods. The resulting libraries were '
+                           'multiplexed and paired-end sequenced using Illumina HiSeq.',
+         'study_accession': 'SRP107324',
+         'study_ena_base_count': '279111754922',
+         'study_ena_first_public': '2017-09-25',
+         'study_ena_last_update': '2018-02-15',
+         'study_ena_spot_count': '1152605026',
+         'study_title': 'Simultaneous detection and relative quantification of coding '
+                        'and non-coding RNA using a single sequencing reaction',
+         'study_type': 'Transcriptome Analysis',
+         'submission_accession': 'SRA562540',
+         'submission_comment': 'submission brokered by GEO',
+         'submission_title': 'Submitted by Gene Expression Omnibus on 25-SEP-2017'}
 
     """
 
@@ -64,7 +172,7 @@ def harmonize(metadata):
     original_samples = metadata.copy()
     harmonized_samples = {}
     for sample in original_samples:
-        title = sample['Assay Name']
+        title = sample['title']
         harmonized_samples[title] = {}
 
     ##
@@ -81,7 +189,7 @@ def harmonize(metadata):
     sex_fields = add_variants(sex_fields)
 
     for sample in original_samples:
-        title = sample['Assay Name']
+        title = sample['title']
         for key, value in sample.copy().items():
             lower_key = key.lower().strip()
             if lower_key in sex_fields:
@@ -108,7 +216,7 @@ def harmonize(metadata):
     age_fields = add_variants(age_fields)
 
     for sample in original_samples:
-        title = sample['Assay Name']
+        title = sample['title']
         for key, value in sample.copy().items():
             lower_key = key.lower().strip()
             if lower_key in age_fields:
@@ -119,6 +227,7 @@ def harmonize(metadata):
     # Cell Parts!
     ##
     part_fields = [
+                    # AE
                     'organism part', 
                     'cell type', 
                     'tissue', 
@@ -138,11 +247,14 @@ def harmonize(metadata):
                     'tissue subregion', 
                     'organ',
                     'characteristic [organism part]',
-                    'characteristics [organism part]'
+                    'characteristics [organism part]',
+
+                    # SRA
+                    'sample_cell_type'
                 ]
     part_fields = add_variants(part_fields)
     for sample in original_samples:
-        title = sample['Assay Name']
+        title = sample['title']
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in part_fields:
@@ -166,7 +278,7 @@ def harmonize(metadata):
                 ]
     genotype_fields = add_variants(genotype_fields)
     for sample in original_samples:
-        title = sample['Assay Name']
+        title = sample['title']
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in genotype_fields:
@@ -183,7 +295,7 @@ def harmonize(metadata):
                 ]
     disease_fields = add_variants(disease_fields)
     for sample in original_samples:
-        title = sample['Assay Name']
+        title = sample['title']
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in disease_fields:
@@ -200,7 +312,7 @@ def harmonize(metadata):
                 ]
     disease_stage_fields = add_variants(disease_stage_fields)
     for sample in original_samples:
-        title = sample['Assay Name']
+        title = sample['title']
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in disease_stage_fields:
@@ -214,7 +326,7 @@ def harmonize(metadata):
                 ]
     cell_line_fields = add_variants(cell_line_fields)
     for sample in original_samples:
-        title = sample['Assay Name']
+        title = sample['title']
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in cell_line_fields:
@@ -232,7 +344,7 @@ def harmonize(metadata):
                 ]
     treatment_fields = add_variants(treatment_fields)
     for sample in original_samples:
-        title = sample['Assay Name']
+        title = sample['title']
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in treatment_fields:
@@ -247,7 +359,7 @@ def harmonize(metadata):
                 ]
     race_fields = add_variants(race_fields)
     for sample in original_samples:
-        title = sample['Assay Name']
+        title = sample['title']
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in race_fields:
@@ -257,6 +369,7 @@ def harmonize(metadata):
     # Subject
     ##
     subject_fields = [
+                    # AE
                     'subject', 
                     'subject id', 
                     'subject/sample source id', 
@@ -271,11 +384,14 @@ def harmonize(metadata):
                     'patient number', 
                     'patient no', 
                     'donor id', 
-                    'donor'
+                    'donor',
+
+                    # SRA
+                    'sample_source_name'
                 ]
     subject_fields = add_variants(subject_fields)
     for sample in original_samples:
-        title = sample['Assay Name']
+        title = sample['title']
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in subject_fields:
@@ -291,7 +407,7 @@ def harmonize(metadata):
                 ]
     development_stage_fields = add_variants(development_stage_fields)
     for sample in original_samples:
-        title = sample['Assay Name']
+        title = sample['title']
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in development_stage_fields:
@@ -310,7 +426,7 @@ def harmonize(metadata):
                 ]
     compound_fields = add_variants(compound_fields)
     for sample in original_samples:
-        title = sample['Assay Name']
+        title = sample['title']
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in compound_fields:
@@ -330,7 +446,7 @@ def harmonize(metadata):
                 ]
     time_fields = add_variants(time_fields)
     for sample in original_samples:
-        title = sample['Assay Name']
+        title = sample['title']
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in time_fields:
