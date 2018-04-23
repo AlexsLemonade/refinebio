@@ -16,14 +16,12 @@ cd ..
 docker build -t dr_foreman -f foreman/Dockerfile .
 
 source common.sh
-HOST_IP=$(get_ip_address)
+HOST_IP=127.0.0.1
 DB_HOST_IP=$(get_docker_db_ip_address)
-NOMAD_HOST_IP=$(get_docker_nomad_ip_address)
-NOMAD_LINK=$(get_nomad_link_option)
 
 docker run \
        --add-host=database:$DB_HOST_IP \
-       --add-host=nomad:$NOMAD_HOST_IP \
+       --add-host=nomad:$HOST_IP \
        --env-file foreman/environments/test \
-       --link drdb:postgres $NOMAD_LINK \
+       --link drdb:postgres \
        -it dr_foreman bash -c "$(run_tests_with_coverage $@)"

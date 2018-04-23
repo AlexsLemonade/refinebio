@@ -58,7 +58,7 @@ class ScanUpcEndToEndTestCase(TransactionTestCase):
         """Survey, download, then process an experiment we know is NO_OP."""
         # @patch.object(data_refinery_foreman.surveyor.array_express.Sample.objects, "get", mock_get_sample)
         mocked_get_query.side_effect = mock_get_sample
-        
+
         # Prevent a call being made to NCBI's API to determine
         # organism name/id.
         organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)

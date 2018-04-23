@@ -4,6 +4,7 @@ volume
 .git
 dr_env
 nomad_dir
+nomad_dir_test
 workers-nomad.tar
 volumes_postgres
 nomad.logs

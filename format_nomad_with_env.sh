@@ -64,6 +64,11 @@ export NOMAD_HOST_IP=$(get_ip_address)
 
 if [ $env == "test" ]; then
     export VOLUME_DIR=$script_directory/test_volume
+    # Prevent test Nomad job specifications from overwriting
+    # existing Nomad job specifications.
+    export TEST_POSTFIX="_test"
+    # Use test Nomad address
+    export NOMAD_HOST_IP=127.0.0.1
 elif [ $env == "prod" ]; then
     # In production we use EFS as the mount.
     export VOLUME_DIR=/var/efs
@@ -127,21 +132,21 @@ fi
 if [[ $project == "workers" ]]; then
     cat downloader.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"downloader.nomad \
+               > "$output_dir"downloader.nomad"$TEST_POSTFIX" \
                2> /dev/null
 
     cat processor.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"processor.nomad \
+               > "$output_dir"processor.nomad"$TEST_POSTFIX" \
                2> /dev/null
 elif [[ $project == "foreman" ]]; then
     cat surveyor.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"surveyor.nomad \
+               > "$output_dir"surveyor.nomad"$TEST_POSTFIX" \
                2> /dev/null
 elif [[ $project == "api" ]]; then
     cat environment.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"environment \
+               > "$output_dir"environment"$TEST_POSTFIX" \
                2> /dev/null
 fi
