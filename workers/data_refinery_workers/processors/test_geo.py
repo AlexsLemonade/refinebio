@@ -89,6 +89,8 @@ class IlluminaToPCLTestCase(TestCase):
         illumina.illumina_to_pcl(job.pk)
         self.assertTrue(os.path.isfile('/home/user/data_store/raw/TEST/processed/GSE22427_non-normalized.PCL'))
 
+class AgilentTwoColorTestCase(TestCase):
+
     def test_agilent_twocolor(self):
         """ """
         job = prepare_agilent_twocolor_job()
