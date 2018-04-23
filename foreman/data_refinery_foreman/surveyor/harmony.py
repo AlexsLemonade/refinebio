@@ -478,9 +478,9 @@ def parse_sdrf(sdrf_url):
             continue
 
         sample_values = line.split('\t')
+
+        # Skip malformed lines
         if len(sample_values) != len(keys):
-            import pdb
-            pdb.set_trace()
             continue
 
         sample = {}
