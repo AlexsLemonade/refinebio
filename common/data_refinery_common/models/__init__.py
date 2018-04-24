@@ -19,5 +19,6 @@ from data_refinery_common.models.models import (
 	ExperimentSampleAssociation,
 	DownloaderJobOriginalFileAssociation,
 	ProcessorJobOriginalFileAssociation,
-	SampleResultAssociation
+	SampleResultAssociation,
+	OriginalFileSampleAssociation
 )

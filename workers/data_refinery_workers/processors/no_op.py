@@ -4,7 +4,7 @@ import boto3
 from typing import Dict
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import ComputationalResult, ComputedFile
+from data_refinery_common.models import ComputationalResult, ComputedFile, SampleResultAssociation
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
@@ -22,6 +22,13 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
     processed.
     """
     original_file = job_context["original_files"][0]
+
+    job_context["input_file_path"] = original_file.absolute_file_path
+    pre_part = original_file.absolute_file_path.split('/')[:-2]
+    end_part = original_file.absolute_file_path.split('/')[-1]
+    os.makedirs('/'.join(pre_part) + '/processed/', exist_ok=True)
+    job_context["output_file_path"] = '/'.join(pre_part) + '/processed/' + end_part
+    shutil.copyfile(job_context["input_file_path"], job_context["output_file_path"])
 
     # This is a NO-OP, but we make a ComputationalResult regardless.
     result = ComputationalResult()
@@ -51,6 +58,12 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
         job_context["job"].failure_reason = failure_reason
         job_context["success"] = False
         return job_context        
+
+    for sample in job_context['samples']:
+        assoc = SampleResultAssociation()
+        assoc.sample = sample
+        assoc.result = result
+        assoc.save()
 
     logger.info("Created %s", result)
     job_context["success"] = True

@@ -12,7 +12,8 @@ from data_refinery_common.models import (
     ComputedFile,
     ComputationalResult,
     Sample,
-    ProcessorJobOriginalFileAssociation
+    ProcessorJobOriginalFileAssociation,
+    OriginalFileSampleAssociation
 )
 from data_refinery_workers.processors import salmon, utils
 import pandas as pd
@@ -48,15 +49,23 @@ def prepare_job():
     og_file.source_filename = "ERR003000_1.fastq.gz"
     og_file.filename = "ERR003000_1.fastq.gz"
     og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR003000_1.fastq.gz"
-    og_file.sample = samp
     og_file.save()
 
     og_file2 = OriginalFile()
     og_file2.source_filename = "ERR003000_2.fastq.gz"
     og_file2.filename = "ERR003000_2.fastq.gz"
     og_file2.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR003000_2.fastq.gz"
-    og_file.sample = samp
     og_file2.save()
+
+    og_file_samp_assoc = OriginalFileSampleAssociation()
+    og_file_samp_assoc.original_file = og_file
+    og_file_samp_assoc.sample = samp
+    og_file_samp_assoc.save()
+
+    og_file_samp_assoc2 = OriginalFileSampleAssociation()
+    og_file_samp_assoc2.original_file = og_file2
+    og_file_samp_assoc2.sample = samp
+    og_file_samp_assoc2.save()
 
     assoc1 = ProcessorJobOriginalFileAssociation()
     assoc1.original_file = og_file

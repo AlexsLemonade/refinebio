@@ -6,6 +6,7 @@ options(repos=structure(c(CRAN="https://cloud.r-project.org")))
 
 # Install devtools
 install.packages("devtools")
+install.packages("optparse")
 
 # Use devtools::install_version() to install packages in cran.
 devtools::install_version('ff', version='2.2-13')

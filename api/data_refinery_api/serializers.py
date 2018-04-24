@@ -86,6 +86,7 @@ class SampleSerializer(serializers.ModelSerializer):
         model = Sample
         fields = (
                     'id',
+                    'title',
                     'accession_code',
                     'organism',
                     'is_downloaded',
@@ -115,6 +116,7 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
         model = Sample
         fields = (
                     'id',
+                    'title',
                     'accession_code',
                     'organism',
                     'annotations',

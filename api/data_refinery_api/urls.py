@@ -18,6 +18,7 @@ from data_refinery_api.views import (
     SurveyJobList,
     DownloaderJobList,
     ProcessorJobList,
+    ResultsList,
     Stats
 )
 
@@ -69,6 +70,7 @@ urlpatterns = [
     url(r'^organisms/$', OrganismList.as_view(), name="organisms"),
     url(r'^platforms/$', PlatformList.as_view(), name="platforms"),
     url(r'^institutions/$', InstitutionList.as_view(), name="institutions"),
+    url(r'^results/$', ResultsList.as_view(), name="results"),
 
     # Jobs
     url(r'^jobs/$', JobsRoot.as_view(), name="jobs"),
