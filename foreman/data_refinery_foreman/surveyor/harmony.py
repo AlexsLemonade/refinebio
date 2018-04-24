@@ -4,12 +4,16 @@ import requests
 
 def add_variants(original_list):
     """ Adds variants to a list """
-    copy = original_list.copy()
+    precopy = original_list.copy()
+
     for item in original_list:
         if ' ' in item:
-            copy.append(item.replace(' ', '_'))
-            copy.append(item.replace(' ', '-'))
-            copy.append(item.replace(' ', ''))
+            precopy.append(item.replace(' ', '_'))
+            precopy.append(item.replace(' ', '-'))
+            precopy.append(item.replace(' ', ''))
+
+    copy = precopy.copy()
+    for item in precopy:
         copy.append("characteristic [" + item + "]")
         copy.append("characteristic[" + item + "]")
         copy.append("characteristics [" + item + "]")
@@ -53,7 +57,7 @@ def harmonize(metadata):
           'Labeled Extract Name': 'donor B differentiated cells LEX',
           'Material Type': 'cell',
           'Protocol REF': 'P-MTAB-41862',
-          'Source Name': 'donor B islets',
+          '    ': 'donor B islets',
           'Technology Type': 'array assay',
           'Unit [time unit]': 'year',
           'sex': 'male'}
@@ -262,7 +266,34 @@ def harmonize(metadata):
     # Prepare the harmonized samples
     original_samples = metadata.copy()
     harmonized_samples = {}
+
+    ##
+    # Title!
+    ##
+    title_fields = [    
+                    'title',
+                    'sample title',
+                    'assay name',
+                    'sample name',
+                    'subject number',
+                    'labeled extract name',
+                    'extract name'
+                   ]
+    title_fields = add_variants(title_fields)
+
     for sample in original_samples:
+        if not 'title' in sample.keys():
+            for key, value in sample.copy().items():
+                lower_key = key.lower().strip()
+                if lower_key in title_fields:
+                    sample['title'] = value
+                    break
+
+            # If we can't even find a unique title for this sample
+            # something has gone horribly wrong.
+            if 'title' not in sample:
+                return {}
+
         title = sample['title']
         harmonized_samples[title] = {}
 
@@ -312,9 +343,13 @@ def harmonize(metadata):
             lower_key = key.lower().strip()
             if lower_key in age_fields:
                 try:
-                    harmonized_samples[title]['age'] = int(value)
+                    harmonized_samples[title]['age'] = float(value)
                 except ValueError:
-                    harmonized_samples[title]['age'] = int(value.split(' ')[0])
+                    try:
+                        harmonized_samples[title]['age'] = float(value.split(' ')[0])
+                    except ValueError:
+                    	# This is probably something weird, like a '.'
+                        continue
                 break
 
     ##
@@ -391,6 +426,7 @@ def harmonize(metadata):
                     'disease state', 
                     'disease status', 
                     'diagnosis', 
+                    ''
                 ]
     disease_fields = add_variants(disease_fields)
     for sample in original_samples:
@@ -400,7 +436,11 @@ def harmonize(metadata):
             if lower_key in disease_fields:
                 harmonized_samples[title]['disease'] = value
 
+    ##
+    # Disease Stage!
+    ##
     disease_stage_fields = [
+    	            'disease state',
                     'disease staging', 
                     'disease stage', 
                     'grade', 
@@ -560,7 +600,7 @@ def parse_sdrf(sdrf_url):
     try:
         sdrf_text = requests.get(sdrf_url, timeout=5).text
     except Exception:
-        return []
+        return None
 
     samples = []
 
