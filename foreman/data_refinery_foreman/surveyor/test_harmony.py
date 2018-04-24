@@ -3,7 +3,7 @@ import GEOparse
 import json
 
 from unittest.mock import Mock, patch, call
-from django.test import TestCase
+from django.test import TestCase, tag
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (
     DownloaderJob,
@@ -45,6 +45,7 @@ class HarmonyTestCase(TestCase):
         self.assertTrue('subject' in harmonized['1007409-C30057'].keys())
         self.assertTrue('developmental_stage' in harmonized['1007409-C30057'].keys())
 
+    @tag('slow')
     def test_sdrf_big(self):
         """ """
 
@@ -198,6 +199,7 @@ class HarmonyTestCase(TestCase):
             if not metadata:
                 continue
             harmonized = harmonize(metadata)
+            print(harmonized)
 
     def test_sra_harmony(self):
         """
@@ -205,9 +207,28 @@ class HarmonyTestCase(TestCase):
         """
         
         metadata = SraSurveyor.gather_all_metadata("SRR6718414")
-        metadata['title'] = metadata['sample_title']
         harmonized = harmonize([metadata])
-        print(harmonized)
+
+    def test_sra_lots(self):
+        """
+
+        """
+        lots = [
+            'ERR188021',
+            'ERR188022',
+            'ERR205021',
+            'ERR205022',
+            'ERR205023',
+        ]
+        for accession in lots:
+            try:
+                metadata = SraSurveyor.gather_all_metadata(accession)
+                print(metadata)
+                harmonized = harmonize([metadata])
+                print(harmonized)
+            except Exception as e:
+                import pdb
+                pdb.set_trace()
 
     def test_geo_harmony(self):
         """
@@ -272,4 +293,3 @@ class HarmonyTestCase(TestCase):
                 new_sample[key] = value[0]
             preprocessed_samples.append(new_sample)
         harmonized = harmonize(preprocessed_samples)
-        print(harmonized)

@@ -286,7 +286,7 @@ def harmonize(metadata):
             for key, value in sample.copy().items():
                 lower_key = key.lower().strip()
                 if lower_key in title_fields:
-                    sample['title'] = value
+                    sample['title'] = value.lower()
                     break
 
             # If we can't even find a unique title for this sample
@@ -392,7 +392,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in part_fields:
-                harmonized_samples[title]['part'] = value
+                harmonized_samples[title]['part'] = value.lower()
                 break
 
     ##
@@ -416,7 +416,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in genotype_fields:
-                harmonized_samples[title]['genotype'] = value
+                harmonized_samples[title]['genotype'] = value.lower()
 
     ##
     # Disease!
@@ -434,7 +434,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in disease_fields:
-                harmonized_samples[title]['disease'] = value
+                harmonized_samples[title]['disease'] = value.lower()
 
     ##
     # Disease Stage!
@@ -455,13 +455,14 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in disease_stage_fields:
-                harmonized_samples[title]['disease_stage'] = value
+                harmonized_samples[title]['disease_stage'] = value.lower()
 
     ##
     # Cell Line!
     ##
     cell_line_fields = [
-                    'cell line'
+                    'cell line',
+                    'sample strain'
                 ]
     cell_line_fields = add_variants(cell_line_fields)
     for sample in original_samples:
@@ -469,7 +470,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in cell_line_fields:
-                harmonized_samples[title]['cell_line'] = value
+                harmonized_samples[title]['cell_line'] = value.lower()
 
     ##
     # Treatment!
@@ -487,7 +488,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in treatment_fields:
-                harmonized_samples[title]['treatment'] = value
+                harmonized_samples[title]['treatment'] = value.lower()
     ##
     # Race!
     ##
@@ -502,7 +503,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in race_fields:
-                harmonized_samples[title]['race'] = value
+                harmonized_samples[title]['race'] = value.lower()
 
     ##
     # Subject
@@ -534,7 +535,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in subject_fields:
-                harmonized_samples[title]['subject'] = value
+                harmonized_samples[title]['subject'] = value.lower()
 
     ##
     # Developement Stage!
@@ -550,7 +551,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in development_stage_fields:
-                harmonized_samples[title]['developmental_stage'] = value
+                harmonized_samples[title]['developmental_stage'] = value.lower()
 
     ##
     # Compound!
@@ -569,7 +570,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in compound_fields:
-                harmonized_samples[title]['compound'] = value
+                harmonized_samples[title]['compound'] = value.lower()
 
     ##
     # Time!
@@ -589,7 +590,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in time_fields:
-                harmonized_samples[title]['time'] = value
+                harmonized_samples[title]['time'] = value.lower()
 
     return harmonized_samples
 
