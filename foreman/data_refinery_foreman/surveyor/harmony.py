@@ -311,12 +311,16 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip()
             if lower_key in age_fields:
-                harmonized_samples[title]['age'] = int(value)
+                try:
+                    harmonized_samples[title]['age'] = int(value)
+                except ValueError:
+                    harmonized_samples[title]['age'] = int(value.split(' ')[0])
                 break
 
     ##
     # Organ Parts!
     # XXX: Cell Type and Organ Type are different
+    # See: https://github.com/AlexsLemonade/refinebio/issues/165#issuecomment-376684079
     ##
     part_fields = [
                     # AE
