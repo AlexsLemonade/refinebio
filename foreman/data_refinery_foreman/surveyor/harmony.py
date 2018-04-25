@@ -26,6 +26,9 @@ def add_variants(original_list):
         copy.append("factor value[" + item + "]")
         copy.append("factorvalue [" + item + "]")
         copy.append("factor value [" + item + "]")
+        copy.append("sample_" + item)
+        copy.append("sample_host" + item)
+        copy.append("sample_sample_" + item) # Yes, seriously.
     return copy
 
 def harmonize(metadata):
@@ -381,10 +384,15 @@ def harmonize(metadata):
                     'characteristics [organism part]',
 
                     # SRA
-                    'sample_cell_type'
+                    'cell_type'
+                    'organismpart',
 
                     # GEO
-                    'sample type'
+                    'sample type',
+                    'isolation source',
+                    'tissue sampled',
+                    'cell description'
+
                 ]
     part_fields = add_variants(part_fields)
     for sample in original_samples:
@@ -392,7 +400,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in part_fields:
-                harmonized_samples[title]['part'] = value.lower()
+                harmonized_samples[title]['part'] = value.lower().strip()
                 break
 
     ##
@@ -408,7 +416,7 @@ def harmonize(metadata):
                     'genotype/variation', 
                     'ecotype', 
                     'cultivar', 
-                    'strain/genotype'
+                    'strain/genotype',
                 ]
     genotype_fields = add_variants(genotype_fields)
     for sample in original_samples:
@@ -416,7 +424,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in genotype_fields:
-                harmonized_samples[title]['genotype'] = value.lower()
+                harmonized_samples[title]['genotype'] = value.lower().strip()
 
     ##
     # Disease!
@@ -426,7 +434,8 @@ def harmonize(metadata):
                     'disease state', 
                     'disease status', 
                     'diagnosis', 
-                    ''
+                    'disease',
+                    'infection with'
                 ]
     disease_fields = add_variants(disease_fields)
     for sample in original_samples:
@@ -434,7 +443,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in disease_fields:
-                harmonized_samples[title]['disease'] = value.lower()
+                harmonized_samples[title]['disease'] = value.lower().strip()
 
     ##
     # Disease Stage!
@@ -447,7 +456,9 @@ def harmonize(metadata):
                     'tumor grade', 
                     'who grade', 
                     'histological grade', 
-                    'tumor grading'
+                    'tumor grading',
+                    'disease outcome',
+                    'subject status'
                 ]
     disease_stage_fields = add_variants(disease_stage_fields)
     for sample in original_samples:
@@ -455,14 +466,14 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in disease_stage_fields:
-                harmonized_samples[title]['disease_stage'] = value.lower()
+                harmonized_samples[title]['disease_stage'] = value.lower().strip()
 
     ##
     # Cell Line!
     ##
     cell_line_fields = [
                     'cell line',
-                    'sample strain'
+                    'sample strain',
                 ]
     cell_line_fields = add_variants(cell_line_fields)
     for sample in original_samples:
@@ -470,7 +481,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in cell_line_fields:
-                harmonized_samples[title]['cell_line'] = value.lower()
+                harmonized_samples[title]['cell_line'] = value.lower().strip()
 
     ##
     # Treatment!
@@ -488,14 +499,15 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in treatment_fields:
-                harmonized_samples[title]['treatment'] = value.lower()
+                harmonized_samples[title]['treatment'] = value.lower().strip()
     ##
     # Race!
     ##
     race_fields = [
                     'race', 
                     'ethnicity', 
-                    'race/ethnicity'
+                    'race/ethnicity',
+                    'phenotype'
                 ]
     race_fields = add_variants(race_fields)
     for sample in original_samples:
@@ -503,7 +515,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in race_fields:
-                harmonized_samples[title]['race'] = value.lower()
+                harmonized_samples[title]['race'] = value.lower().strip()
 
     ##
     # Subject
@@ -535,7 +547,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in subject_fields:
-                harmonized_samples[title]['subject'] = value.lower()
+                harmonized_samples[title]['subject'] = value.lower().strip()
 
     ##
     # Developement Stage!
@@ -551,7 +563,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in development_stage_fields:
-                harmonized_samples[title]['developmental_stage'] = value.lower()
+                harmonized_samples[title]['developmental_stage'] = value.lower().strip()
 
     ##
     # Compound!
@@ -570,7 +582,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in compound_fields:
-                harmonized_samples[title]['compound'] = value.lower()
+                harmonized_samples[title]['compound'] = value.lower().strip()
 
     ##
     # Time!
@@ -582,7 +594,8 @@ def harmonize(metadata):
                     'stop time', 
                     'time point', 
                     'sampling time point', 
-                    'sampling time'
+                    'sampling time',
+                    'time post infection'
                 ]
     time_fields = add_variants(time_fields)
     for sample in original_samples:
@@ -590,7 +603,7 @@ def harmonize(metadata):
         for key, value in sample.copy().items():
             lower_key = key.lower().strip() 
             if lower_key in time_fields:
-                harmonized_samples[title]['time'] = value.lower()
+                harmonized_samples[title]['time'] = value.lower().strip()
 
     return harmonized_samples
 
@@ -630,3 +643,22 @@ def parse_sdrf(sdrf_url):
         samples.append(sample)
 
     return samples
+
+def preprocess_geo(items):
+    """
+    Prepares items from GEO for harmonization
+    """
+    preprocessed_samples = []
+    for sample_id, sample in items:
+        new_sample = {}
+        for key, value in sample.metadata.items():
+
+            if key == "characteristics_ch1":
+                for pair in value:
+                    split = pair.split(':')
+                    new_sample[split[0].strip()] = split[1].strip()
+                continue
+
+            new_sample[key] = value[0]
+        preprocessed_samples.append(new_sample)
+    return preprocessed_samples

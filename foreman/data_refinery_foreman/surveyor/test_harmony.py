@@ -13,9 +13,9 @@ from data_refinery_common.models import (
     Sample
 )
 from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
-from data_refinery_foreman.surveyor.sra import SraSurveyor
+from data_refinery_foreman.surveyor.sra import SraSurveyor, UnsupportedDataTypeError
 from data_refinery_foreman.surveyor.geo import GeoSurveyor
-from data_refinery_foreman.surveyor.harmony import harmonize, parse_sdrf
+from data_refinery_foreman.surveyor.harmony import harmonize, parse_sdrf, preprocess_geo
 
 class HarmonyTestCase(TestCase):
     def setUp(self):
@@ -213,12 +213,31 @@ class HarmonyTestCase(TestCase):
         """
 
         """
+
+        # These can be built via
+        #    https://www.ncbi.nlm.nih.gov/sra
+        # Searching for 
+        #    (human) NOT cluster_dbgap[PROP] 
+        # And then Sent To -> File -> Accession List
         lots = [
             'ERR188021',
             'ERR188022',
             'ERR205021',
             'ERR205022',
             'ERR205023',
+            'SRR000001', # Fail
+            'ERR1737666',
+            'ERR030891',
+            'ERR030892',
+            'SRR1542948',
+            'SRR1553477',
+            'SRR1542330',
+            'SRR1538698',
+            'SRR1538760',
+            'SRR1538866',
+            'SRR1539218',
+            'SRR1797277',
+            'SRR1533126'
         ]
         for accession in lots:
             try:
@@ -226,9 +245,8 @@ class HarmonyTestCase(TestCase):
                 print(metadata)
                 harmonized = harmonize([metadata])
                 print(harmonized)
-            except Exception as e:
-                import pdb
-                pdb.set_trace()
+            except UnsupportedDataTypeError as udte:
+                print(udte)
 
     def test_geo_harmony(self):
         """
@@ -238,21 +256,9 @@ class HarmonyTestCase(TestCase):
         # Illumina
         gse = GEOparse.get_GEO("GSE32628", destdir='/tmp')
 
-        preprocessed_samples = []
-        for sample_id, sample in gse.gsms.items():
-            new_sample = {}
-            for key, value in sample.metadata.items():
-
-                if key == "characteristics_ch1":
-                    for pair in value:
-                        split = pair.split(':')
-                        new_sample[split[0].strip()] = split[1].strip()
-                    continue
-
-                new_sample[key] = value[0]
-            preprocessed_samples.append(new_sample)
+        # GEO requires a small amount of preprocessing
+        preprocessed_samples = preprocess_geo(gse.gsms.items())
         harmonized = harmonize(preprocessed_samples)
-        
 
         self.assertTrue('SCC_P-57' in harmonized.keys())
         self.assertTrue('sex' in harmonized['SCC_P-57'].keys())
@@ -262,34 +268,9 @@ class HarmonyTestCase(TestCase):
 
         # Agilent Two Color 
         gse = GEOparse.get_GEO("GSE93857", destdir='/tmp')
-        preprocessed_samples = []
-        for sample_id, sample in gse.gsms.items():
-            new_sample = {}
-            for key, value in sample.metadata.items():
-
-                if key == "characteristics_ch1":
-                    for pair in value:
-                        split = pair.split(':')
-                        new_sample[split[0].strip()] = split[1].strip()
-                    continue
-
-                new_sample[key] = value[0]
-            preprocessed_samples.append(new_sample)
+        preprocessed_samples = preprocess_geo(gse.gsms.items())
         harmonized = harmonize(preprocessed_samples)
     
-
         gse = GEOparse.get_GEO("GSE103060", destdir='/tmp')
-        preprocessed_samples = []
-        for sample_id, sample in gse.gsms.items():
-            new_sample = {}
-            for key, value in sample.metadata.items():
-
-                if key == "characteristics_ch1":
-                    for pair in value:
-                        split = pair.split(':')
-                        new_sample[split[0].strip()] = split[1].strip()
-                    continue
-
-                new_sample[key] = value[0]
-            preprocessed_samples.append(new_sample)
+        preprocessed_samples = preprocess_geo(gse.gsms.items())
         harmonized = harmonize(preprocessed_samples)
