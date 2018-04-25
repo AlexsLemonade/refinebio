@@ -1,7 +1,6 @@
 """
-This command will create and run survey jobs for each experiment in the
-experiment_list. experiment list should be a file containing one
-experiment accession code per line.
+This command will create and run NCBI GEO survey jobs for a given accession,
+or for each accession in a file containing one experiment accession code per line.
 """
 
 from django.core.management.base import BaseCommand

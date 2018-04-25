@@ -31,6 +31,10 @@ CHUNK_SIZE = 1024 * 256
 def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> None:
     """ Download a file from GEO via FTP. There is no Aspera endpoint
     which I can find. """
+
+    # Ensure directory exists
+    os.makedirs(file_path.rsplit('/', 1)[0], exist_ok=True)
+
     try:
         logger.debug("Downloading file from %s to %s.",
                      download_url,
@@ -110,8 +114,9 @@ def _extract_gz(file_path: str, accession_code: str) -> List[str]:
             with open(extracted_filepath, 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
 
-        # os.abspath doesn't do what I thought it does, hency this monstrocity.
-        files = [{'absolute_path': extracted_filepath, 'filename': extracted_filepath.split('/')[-1]} ]
+        files = [{  'absolute_path': extracted_filepath, 
+                    'filename': extracted_filepath.rsplit('/', 1)[1]
+                }]
 
     except Exception as e:
         reason = "Exception %s caught while extracting %s", str(e), file_path
