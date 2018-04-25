@@ -67,8 +67,6 @@ if [ $env == "test" ]; then
     # Prevent test Nomad job specifications from overwriting
     # existing Nomad job specifications.
     export TEST_POSTFIX="_test"
-    # Use test Nomad address
-    export NOMAD_HOST_IP=127.0.0.1
 elif [ $env == "prod" ]; then
     # In production we use EFS as the mount.
     export VOLUME_DIR=/var/efs

@@ -1,6 +1,8 @@
 import time
 import json
 from django.test import TransactionTestCase, tag
+from datetime import timedelta, datetime
+from django.utils import timezone
 from unittest.mock import patch, Mock
 from data_refinery_common.models import (
     Organism,
@@ -19,11 +21,12 @@ logger = logging.getLogger(__name__)
 
 
 LOOP_TIME = 5  # seconds
+MAX_WAIT_TIME = timedelta(minutes=2)
 
-def wait_for_job(job, job_class: type):
+def wait_for_job(job, job_class: type, start_time: datetime):
     """Monitors the `job_class` table for when `job` is done."""
     job = job_class.objects.filter(id=job.id).get()
-    while job.success is None:
+    while job.success is None and timezone.now() - start_time < MAX_WAIT_TIME:
         logger.info("Still polling the %s.",
                     job_class.__name__)
         time.sleep(LOOP_TIME)
@@ -70,14 +73,16 @@ class ScanUpcEndToEndTestCase(TransactionTestCase):
 
         downloader_jobs = DownloaderJob.objects.all()
         logger.info("Survey Job finished, waiting for Downloader Jobs to complete.")
+        start_time = timezone.now()
         for downloader_job in downloader_jobs:
-            downloader_job = wait_for_job(downloader_job, DownloaderJob)
+            downloader_job = wait_for_job(downloader_job, DownloaderJob, start_time)
             self.assertTrue(downloader_job.success)
 
         processor_jobs = ProcessorJob.objects.all()
         logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
+        start_time = timezone.now()
         for processor_job in processor_jobs:
-            processor_job = wait_for_job(processor_job, ProcessorJob)
+            processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
             self.assertTrue(processor_job.success)
 
 

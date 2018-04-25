@@ -70,7 +70,6 @@ if [ $env == "test" ]; then
     # Additional Nomad configuration is necessary to avoid conflicts
     # with non-test Nomad agent.
     export TEST_NOMAD_CONFIG="-config=test_nomad_config.hcl"
-    export HOST_IP=127.0.0.1
 else
     # This is only for running Nomad in non-cloud environments so if
     # its not test then we're in dev (XXX: change this to local.)
