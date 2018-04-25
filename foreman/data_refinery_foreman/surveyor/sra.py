@@ -83,7 +83,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         if metadata["library_strategy"] != "RNA-Seq":
             raise UnsupportedDataTypeError("library_strategy not RNA-Seq.")
         if metadata["library_source"] not in ["TRANSCRIPTOMIC", "OTHER"]:
-            raise UnsupportedDataTypeError("library_source not TRANSCRIPTOMIC or OTHER.")
+            raise UnsupportedDataTypeError("library_source: " + metadata["library_source"] + " not TRANSCRIPTOMIC or OTHER.")
 
     @staticmethod
     def parse_read_spec(metadata: Dict, read_spec: ET.Element, counter: int) -> None:
