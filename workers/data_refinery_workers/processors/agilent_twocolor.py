@@ -20,7 +20,7 @@ logger = get_and_configure_logger(__name__)
 
 
 def _prepare_files(job_context: Dict) -> Dict:
-    """Moves the TXT file from the raw directory to the temp directory.
+    """Populate our job_context with appropriate inputs and outputs
 
     Also adds the keys "input_file_path" and "output_file_path" to
     job_context so everything is prepared for processing.
@@ -40,14 +40,13 @@ def _prepare_files(job_context: Dict) -> Dict:
 def _run_scan_twocolor(job_context: Dict) -> Dict:
     """Processes an input TXT file to an output PCL file.
 
-    Does so using the SCAN.UPC package's SCANfast method using R.
-    Expects job_context to contain the keys 'input_file', 'output_file',
-    and 'brainarray_package'.
+    Does so using the SCAN.UPC package's SCAN_TwoColor method using R.
+    Expects job_context to contain the keys 'input_file' and 'output_file'.
     """
     input_file = job_context["input_file_path"]
 
     try:
-        # It's necessary to load the foreach library before calling SCANfast
+        # It's necessary to load the foreach library before calling SCAN_TwoColor
         # because it doesn't load the library before calling functions
         # from it.
         ro.r("suppressMessages(library('foreach'))")
@@ -94,7 +93,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     """ Create the ComputationalResult objects after a Scan run is complete """
 
     result = ComputationalResult()
-    result.command_executed = "'SCAN.UPC', 'SCAN_TwoColor'" # Need a better way to represent this R code.
+    result.command_executed = "SCAN.UPC::SCAN_TwoColor"
     result.is_ccdl = True
     result.is_public = True
     result.system_version = __version__

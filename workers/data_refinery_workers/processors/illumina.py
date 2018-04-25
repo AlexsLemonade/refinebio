@@ -30,9 +30,7 @@ logger = get_and_configure_logger(__name__)
 
 
 def _prepare_files(job_context: Dict) -> Dict:
-    """Moves the TXT file from the raw directory to the temp directory.
-
-    Also adds the keys "input_file_path" and "output_file_path" to
+    """Adds the keys "input_file_path" and "output_file_path" to
     job_context so everything is prepared for processing.
     """
     original_file = job_context["original_files"][0]
@@ -46,17 +44,16 @@ def _prepare_files(job_context: Dict) -> Dict:
     # Sanitize this file so R doesn't choke.
     # Some have comments, some have non-comment-comments.
     file_input = open(job_context["input_file_path"], "r")
-    file_output = open(job_context["input_file_path"] + ".sanitized", "w")
-    for line in file_input:
-        if '#' not in line and \
-        line.strip() != '' and \
-        line != '\n' and \
-        '\t' in line and \
-        line[0] != '\t' and \
-        line != None:
-            file_output.write(line)    
-    file_input.close()
-    file_output.close()
+    with open(job_context["input_file_path"], "r") as file_input:
+        with open(job_context["input_file_path"] + ".sanitized", "w") as file_output:
+            for line in file_input:
+                if '#' not in line and \
+                line != None and \
+                line.strip() != '' and \
+                line != '\n' and \
+                '\t' in line and \
+                line[0] != '\t':
+                    file_output.write(line)    
     job_context['input_file_path'] = job_context["input_file_path"] + ".sanitized"
 
     return job_context
@@ -83,13 +80,12 @@ def _detect_columns(job_context: Dict) -> Dict:
             Pval']
 
     """
-
     try:
         input_file = job_context["input_file_path"]
         headers = None
-        with open(input_file, 'r') as tsvin:
-            tsvin = csv.reader(tsvin, delimiter='\t')
-            for row in tsvin:
+        with open(input_file, 'r') as tsv_in:
+            tsv_in = csv.reader(tsv_in, delimiter='\t')
+            for row in tsv_in:
 
                 # Skip sparse header row
                 if row[0] == "":
@@ -126,9 +122,8 @@ def _detect_columns(job_context: Dict) -> Dict:
             return job_context
 
         # Then, finally, create an absolutely bonkers regular expression
-        # which will explictly hit on any sample which contains a 4sample
-        # ID _and_ ignores the magical word 'BEAM'. Great!
-        # TODO: What to do about the ones that say `.AVG_Signal` ?
+        # which will explictly hit on any sample which contains a sample
+        # ID _and_ ignores the magical word 'BEAD', etc. Great!
         column_ids = ""
         for sample in job_context['samples']:
             for offset, header in enumerate(headers, start=1):
@@ -161,10 +156,9 @@ def _detect_columns(job_context: Dict) -> Dict:
     return job_context
 
 def _run_illumina(job_context: Dict) -> Dict:
-    """Processes an input TXT file to an output PCL file.
-
-    Does so using a custom R script.
-    Expects job_context to contain the keys 'input_file_path', 'output_file_path'.
+    """Processes an input TXT file to an output PCL file using a custom R script.
+    Expects a job_context which has been pre-populated with inputs, outputs
+    and the column identifiers which the R script needs for processing.
     """
     input_file_path = job_context["input_file_path"]
 

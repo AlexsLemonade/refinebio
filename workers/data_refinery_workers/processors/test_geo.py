@@ -1,5 +1,4 @@
 import os
-import shutil
 from contextlib import closing
 from django.test import TestCase
 from unittest.mock import MagicMock
@@ -95,3 +94,4 @@ class AgilentTwoColorTestCase(TestCase):
         """ """
         job = prepare_agilent_twocolor_job()
         agilent_twocolor.agilent_twocolor_to_pcl(job.pk)
+        self.assertTrue(os.path.isfile('/home/user/data_store/raw/TEST/processed/GSM466597_95899_agilent.PCL'))

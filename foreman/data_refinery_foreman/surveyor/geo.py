@@ -36,22 +36,29 @@ class GeoSurveyor(ExternalSourceSurveyor):
         return Downloaders.GEO.value
 
     def get_miniml_url(self, experiment_accession_code):
-        """ Build the URL for the MINiML files for this accession code. """
+        """ Build the URL for the MINiML files for this accession code. 
+        ex: 
+        'GSE68061' -> 'ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE68nnn/GSE68061/miniml/GSE68061_family.xml.tgz'
+    
+        """
         geo = experiment_accession_code.upper()
         geotype = geo[:3]
         range_subdir = sub(r"\d{1,3}$", "nnn", geo)
 
         min_url_template = ("ftp://ftp.ncbi.nlm.nih.gov/geo/"
-                  "{root}/{range_subdir}/{record}/miniml/{record_file}")
-        min_url = min_url_template.format(root="series",
-                            range_subdir=range_subdir,
+                  "series/{range_subdir}/{record}/miniml/{record_file}")
+        min_url = min_url_template.format(range_subdir=range_subdir,
                             record=geo,
                             record_file="%s_family.xml.tgz" % geo)
 
         return min_url
 
     def create_experiment_and_samples_from_api(self, experiment_accession_code) -> (Experiment, List[Sample]):
-        """ The main surveyor - find the Experiment and Samples from NCBI GEO. """
+        """ The main surveyor - find the Experiment and Samples from NCBI GEO. 
+
+        Uses the GEOParse library, for which docs can be found here: https://geoparse.readthedocs.io/en/latest/usage.html#working-with-geo-objects
+
+        """
         # XXX: Maybe we should have an EFS tmp? This could potentially fill up if not tracked.
         # Cleaning up is tracked here: https://github.com/guma44/GEOparse/issues/41
         gse = GEOparse.get_GEO(experiment_accession_code, destdir='/tmp')
@@ -69,8 +76,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_object.source_database = "GEO"
             experiment_object.name = gse.metadata.get('title', [''])[0]
             experiment_object.description = gse.metadata.get('summary', [''])[0]
-            experiment_object.platform_name = gse.metadata["platform_id"][0] # TODO: Lookup GEO-GPL
-            experiment_object.platform_accession_code = gse.metadata["platform_id"][0]
+            experiment_object.platform_name = gse.metadata.get('platform_id', [''])[0] # TODO: Lookup GEO-GPL
+            experiment_object.platform_accession_code = gse.metadata.get('platform_id', [''])[0]
 
             # Source doesn't provide time information, assume midnight.
             experiment_object.source_first_published = dateutil.parser.parse(gse.metadata["submission_date"][0] + " 00:00:00 UTC")
@@ -97,7 +104,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
             try:
                 sample_object = Sample.objects.get(accession_code=sample_accession_code)
-                logger.error("Sample %s from experiment %s already exists, skipping object creation.",
+                logger.info("Sample %s from experiment %s already exists, skipping object creation.",
                          sample_accession_code,
                          experiment_object.accession_code,
                          survey_job=self.survey_job.id)
@@ -112,7 +119,6 @@ class GeoSurveyor(ExternalSourceSurveyor):
             except Sample.DoesNotExist:
                 organism = Organism.get_object_for_name(sample.metadata['organism_ch1'][0].upper())
 
-                # TODO: This is incomplete
                 sample_object = Sample()
                 sample_object.accession_code = sample_accession_code
                 sample_object.organism = organism
@@ -167,7 +173,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     association.sample = sample_object
                     association.save()
 
-        # These may or may not contain what we want.
+        # These supplementary files _may-or-may-not_ contain the type of raw data we can process.
         for experiment_supplement_url in gse.metadata.get('supplementary_file', []):
 
             try:
@@ -175,7 +181,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
             except OriginalFile.DoesNotExist:
                 original_file = OriginalFile()
 
-                # So - this is _usually_ true, but not always. I think it's submitter supplied.
+                # So - source_filename is _usually_ where we expect it to be, 
+                # but not always. I think it's submitter supplied.
                 original_file.source_filename = experiment_supplement_url.split('/')[-1]
                 original_file.source_url = experiment_supplement_url
                 original_file.is_downloaded = False
@@ -191,7 +198,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 original_file_sample_association.original_file = original_file
                 original_file_sample_association.save()
 
-        # These are the Miniml/Soft/Matrix URLs that are always(?) provided?
+        # These are the Miniml/Soft/Matrix URLs that are always(?) provided.
+        # GEO describes different types of data formatting as "families"
         for family_url in [self.get_miniml_url(experiment_accession_code)]:
 
             try:

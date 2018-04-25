@@ -339,14 +339,6 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-# gseID <- commandArgs()[9]
-# probeIDColumn <- commandArgs()[10]
-# exprColumnPattern <- commandArgs()[11]
-# detectionPValueColumnPattern <- commandArgs()[12]
-# platform <- commandArgs()[13]
-# numCores <- as.integer(commandArgs()[14])
-# url <- commandArgs()[15]
-
 # gseID <- opt$gse
 probeIDColumn <- opt$probeId
 exprColumns <- strsplit(opt$expression, ",")

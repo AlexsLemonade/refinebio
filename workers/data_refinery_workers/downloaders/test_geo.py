@@ -1,15 +1,9 @@
-import copy
-from typing import List
-from unittest.mock import patch, call
 from django.test import TestCase
 from data_refinery_common.models import (
-    SurveyJob,
     DownloaderJob,
-    ProcessorJob,
     OriginalFile
 )
 from data_refinery_workers.downloaders import geo, utils
-from data_refinery_common.job_lookup import ProcessorPipeline
 
 
 class DownloadGeoTestCase(TestCase):
@@ -25,8 +19,6 @@ class DownloadGeoTestCase(TestCase):
         # Miniml
         dlj = DownloaderJob()
         dlj.save()
-        og_file = OriginalFile()
-        og_file
 
         # .xml.tgz
         geo._download_file('ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE10nnn/GSE10241/miniml/GSE10241_family.xml.tgz', 'GSE10241_family.xml.tgz', dlj)

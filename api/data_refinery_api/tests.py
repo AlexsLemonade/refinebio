@@ -15,7 +15,8 @@ from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
     ProcessorJob,
-    ProcessorJobOriginalFileAssociation
+    ProcessorJobOriginalFileAssociation,
+    ComputationalResult
 )
 from data_refinery_api.serializers import (
     ExperimentSerializer,
@@ -84,16 +85,25 @@ class SanityTestAllEndpoints(APITestCase):
         experiment_sample_association.experiment = experiment
         experiment_sample_association.save()
 
+        result = ComputationalResult()
+        result.save()
+
         return
 
     def test_all_endpoints(self):
         response = self.client.get(reverse('experiments'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+        response = self.client.get(reverse('experiments'), kwargs={'page': 1})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
         response = self.client.get(reverse('experiments_detail', kwargs={'pk': '1'}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse('samples'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(reverse('samples'), kwargs={'page': 1})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse('samples_detail', kwargs={'pk': '1'}))
@@ -121,6 +131,12 @@ class SanityTestAllEndpoints(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse('stats'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(reverse('results'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(reverse('results'), kwargs={'page': 1})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse('api_root'))

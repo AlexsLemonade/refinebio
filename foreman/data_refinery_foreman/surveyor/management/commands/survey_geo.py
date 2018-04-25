@@ -31,7 +31,7 @@ class Command(BaseCommand):
                     try:
                         surveyor.survey_geo_experiment(accession.strip())
                     except Exception as e:
-                        print(e)
+                        logger.error(e)
         else:
             surveyor.survey_geo_experiment(options['accession'])
             return 0
