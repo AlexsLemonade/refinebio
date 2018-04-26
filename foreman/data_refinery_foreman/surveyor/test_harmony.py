@@ -30,9 +30,6 @@ class HarmonyTestCase(TestCase):
         """
         
         metadata = parse_sdrf("https://www.ebi.ac.uk/arrayexpress/files/E-MTAB-3050/E-MTAB-3050.sdrf.txt")
-        for sample in metadata:
-            sample['title'] = sample['Assay Name']
-
         harmonized = harmonize(metadata)
         print(harmonized)
 
@@ -281,5 +278,14 @@ class HarmonyTestCase(TestCase):
         harmonized = harmonize(preprocessed_samples)
     
         gse = GEOparse.get_GEO("GSE103060", destdir='/tmp')
+        preprocessed_samples = preprocess_geo(gse.gsms.items())
+        harmonized = harmonize(preprocessed_samples)
+
+    def test_geo_leg_cancer(self):
+        """ Related: https://github.com/AlexsLemonade/refinebio/issues/165#issuecomment-383969447 """
+
+        gse = GEOparse.get_GEO("GSE32628", destdir='/tmp')
+
+        # GEO requires a small amount of preprocessing
         preprocessed_samples = preprocess_geo(gse.gsms.items())
         harmonized = harmonize(preprocessed_samples)

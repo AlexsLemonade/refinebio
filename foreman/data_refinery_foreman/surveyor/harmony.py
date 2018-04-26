@@ -4,40 +4,23 @@ from typing import Dict, List
 from data_refinery_common.models import (
     Sample)
 
-
-def add_variants(original_list: List):
-    """ Adds variants to a list """
-    precopy = original_list.copy()
-
-    for item in original_list:
-        if ' ' in item:
-            precopy.append(item.replace(' ', '_'))
-            precopy.append(item.replace(' ', '-'))
-            precopy.append(item.replace(' ', ''))
-
-    copy = precopy.copy()
-    for item in precopy:
-        copy.append("characteristic [" + item + "]")
-        copy.append("characteristic[" + item + "]")
-        copy.append("characteristics [" + item + "]")
-        copy.append("characteristics[" + item + "]")
-        copy.append("comment [" + item + "]")
-        copy.append("comment[" + item + "]")
-        copy.append("comments [" + item + "]")
-        copy.append("comments[" + item + "]")
-        copy.append("factorvalue[" + item + "]")
-        copy.append("factor value[" + item + "]")
-        copy.append("factorvalue [" + item + "]")
-        copy.append("factor value [" + item + "]")
-        copy.append("sample_" + item)
-        copy.append("sample_host" + item)
-        copy.append("sample_sample_" + item) # Yes, seriously.
-    return copy
-
 def harmonize(metadata: List) -> Dict:
     """ 
+    Given a list of samples and their metadata, extract these common properties:
 
-    Given some samples and metadata, harmonize into something universal.
+      `title`, 
+      `sex`, 
+      `age`, 
+      `part`,
+      `genotype`, 
+      `disease`, 
+      `disease_stage`, 
+      `cell_line`,
+      `treatment`, 
+      `race`,
+      `subject`,
+      `compound`,
+      `time`
     
     Array Express Example:
          {'Array Data File': 'C30061.CEL',
@@ -361,7 +344,7 @@ def harmonize(metadata: List) -> Dict:
 
     ##
     # Organ Parts!
-    # XXX: Cell Type and Organ Type are different
+    # Cell Type and Organ Type are different but grouped,
     # See: https://github.com/AlexsLemonade/refinebio/issues/165#issuecomment-376684079
     ##
     part_fields = [
@@ -392,7 +375,6 @@ def harmonize(metadata: List) -> Dict:
                     'organismpart',
 
                     # GEO
-                    'sample type',
                     'isolation source',
                     'tissue sampled',
                     'cell description'
@@ -439,7 +421,8 @@ def harmonize(metadata: List) -> Dict:
                     'disease status', 
                     'diagnosis', 
                     'disease',
-                    'infection with'
+                    'infection with',
+                    'sample type',
                 ]
     disease_fields = add_variants(disease_fields)
     for sample in original_samples:
@@ -578,7 +561,8 @@ def harmonize(metadata: List) -> Dict:
                     'compound2', 
                     'compound name', 
                     'drug', 
-                    'drugs'
+                    'drugs',
+                    'immunosuppressive drugs'
                 ]
     compound_fields = add_variants(compound_fields)
     for sample in original_samples:
@@ -611,9 +595,42 @@ def harmonize(metadata: List) -> Dict:
 
     return harmonized_samples
 
+def add_variants(original_list: List):
+    """ Given a list of strings, create variations likely to give metadata hits.
+
+    Ex, given 'cell line', add the ability to hit on 'characteristic [cell_line]' as well. 
+    """
+    precopy = original_list.copy()
+
+    # Variate forms of multi-word strings
+    for item in original_list:
+        if ' ' in item:
+            precopy.append(item.replace(' ', '_'))
+            precopy.append(item.replace(' ', '-'))
+            precopy.append(item.replace(' ', ''))
+
+    # Variate to find common key patterns
+    copy = precopy.copy()
+    for item in precopy:
+        copy.append("characteristic [" + item + "]")
+        copy.append("characteristic[" + item + "]")
+        copy.append("characteristics [" + item + "]")
+        copy.append("characteristics[" + item + "]")
+        copy.append("comment [" + item + "]")
+        copy.append("comment[" + item + "]")
+        copy.append("comments [" + item + "]")
+        copy.append("comments[" + item + "]")
+        copy.append("factorvalue[" + item + "]")
+        copy.append("factor value[" + item + "]")
+        copy.append("factorvalue [" + item + "]")
+        copy.append("factor value [" + item + "]")
+        copy.append("sample_" + item)
+        copy.append("sample_host" + item)
+        copy.append("sample_sample_" + item) # Yes, seriously.
+    return copy
 
 def parse_sdrf(sdrf_url: str) -> List:
-    """ Given a URL to an SDRF file, parsers it into JSON """
+    """ Given a URL to an SDRF file, download parses it into JSON. """
 
     try:
         sdrf_text = requests.get(sdrf_url, timeout=5).text
