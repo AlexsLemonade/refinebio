@@ -209,6 +209,7 @@ class HarmonyTestCase(TestCase):
         metadata = SraSurveyor.gather_all_metadata("SRR6718414")
         harmonized = harmonize([metadata])
 
+    @tag('slow')
     def test_sra_lots(self):
         """
 
@@ -242,7 +243,6 @@ class HarmonyTestCase(TestCase):
         for accession in lots:
             try:
                 metadata = SraSurveyor.gather_all_metadata(accession)
-                print(metadata)
                 harmonized = harmonize([metadata])
                 print(harmonized)
             except UnsupportedDataTypeError as udte:
