@@ -206,8 +206,17 @@ class HarmonyTestCase(TestCase):
 
         """
         
-        metadata = SraSurveyor.gather_all_metadata("SRR6718414")
+        metadata = SraSurveyor.gather_all_metadata("SRR1533126")
         harmonized = harmonize([metadata])
+        self.assertTrue('phosphaturic mesenchymal tumour (pmt) case 2 of ntuh' in harmonized.keys())
+        self.assertTrue('sex' in harmonized['phosphaturic mesenchymal tumour (pmt) case 2 of ntuh'].keys())
+        self.assertEqual('female', harmonized['phosphaturic mesenchymal tumour (pmt) case 2 of ntuh']['sex'])
+
+        self.assertTrue('age' in harmonized['phosphaturic mesenchymal tumour (pmt) case 2 of ntuh'].keys())
+        self.assertEqual(57.0, harmonized['phosphaturic mesenchymal tumour (pmt) case 2 of ntuh']['age'])
+
+        self.assertTrue('part' in harmonized['phosphaturic mesenchymal tumour (pmt) case 2 of ntuh'].keys())
+        self.assertTrue('disease' in harmonized['phosphaturic mesenchymal tumour (pmt) case 2 of ntuh'].keys())
 
     @tag('slow')
     def test_sra_lots(self):
@@ -226,7 +235,7 @@ class HarmonyTestCase(TestCase):
             'ERR205021',
             'ERR205022',
             'ERR205023',
-            'SRR000001', # Fail
+            'SRR000001', # Soft fail, bad platform
             'ERR1737666',
             'ERR030891',
             'ERR030892',

@@ -1,8 +1,11 @@
+import requests
+from typing import Dict, List
+
 from data_refinery_common.models import (
     Sample)
-import requests
 
-def add_variants(original_list):
+
+def add_variants(original_list: List):
     """ Adds variants to a list """
     precopy = original_list.copy()
 
@@ -31,7 +34,7 @@ def add_variants(original_list):
         copy.append("sample_sample_" + item) # Yes, seriously.
     return copy
 
-def harmonize(metadata):
+def harmonize(metadata: List) -> Dict:
     """ 
 
     Given some samples and metadata, harmonize into something universal.
@@ -272,6 +275,7 @@ def harmonize(metadata):
 
     ##
     # Title!
+    # We also use the title as the key in the returned dictionary
     ##
     title_fields = [    
                     'title',
@@ -608,7 +612,7 @@ def harmonize(metadata):
     return harmonized_samples
 
 
-def parse_sdrf(sdrf_url):
+def parse_sdrf(sdrf_url: str) -> List:
     """ Given a URL to an SDRF file, parsers it into JSON """
 
     try:
@@ -644,7 +648,7 @@ def parse_sdrf(sdrf_url):
 
     return samples
 
-def preprocess_geo(items):
+def preprocess_geo(items: List) -> List:
     """
     Prepares items from GEO for harmonization
     """
