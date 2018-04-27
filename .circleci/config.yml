@@ -8,8 +8,9 @@ jobs:
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
-      # Setup Nomad in a Container
-      - run: ./run_nomad_docker.sh
+      # Start Nomad.
+      - run: sudo -E ./run_nomad.sh -e test
+      # Let both Nomad and Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
       - run: ./common/install_db_docker.sh
