@@ -18,6 +18,7 @@ from data_refinery_foreman.surveyor import surveyor
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+module_logger = logging.getLogger("data_refinery_foreman.surveyor.array_express")
 
 
 LOOP_TIME = 5  # seconds
@@ -33,6 +34,7 @@ def wait_for_job(job, job_class: type, start_time: datetime):
         job = job_class.objects.filter(id=job.id).get()
 
     return job
+
 
 def mock_get_sample(accession_code: str):
     """Mock out Sample.objects.get to prevent too much work from being done.
@@ -50,17 +52,32 @@ def mock_get_sample(accession_code: str):
     # existence of the Sample.
     return None
 
+def mock_logger_info(message: str, *args, **kwargs):
+    """Silence the log messages we're forcing on purpose.
+
+    Since we fake out having a ton of samples in mock_get_sample, the
+    surveyor logs a bunch of messages about them already
+    existing. However we're expecting this and it blows up the logs
+    for the test. Therefore if the message is about that, don't
+    log.
+    """
+    if "skipping object creation" in message:
+        return None
+
+    module_logger.info(message, *args, **kwargs)
+
 
 # TransactionTestCase makes database calls complete before the test
 # ends.  Otherwise the workers wouldn't actually be able to find the
 # job in the database cause it'd be stuck in a transaction.
 class ScanUpcEndToEndTestCase(TransactionTestCase):
     @tag("slow")
+    @patch('data_refinery_foreman.surveyor.array_express.logger')
     @patch('data_refinery_common.models.Sample.objects.get')
-    def test_no_op(self, mocked_get_query):
+    def test_no_op(self, mocked_get_query, mocked_logger):
         """Survey, download, then process an experiment we know is NO_OP."""
-        # @patch.object(data_refinery_foreman.surveyor.array_express.Sample.objects, "get", mock_get_sample)
         mocked_get_query.side_effect = mock_get_sample
+        mocked_logger.side_effect = mock_logger_info
 
         # Prevent a call being made to NCBI's API to determine
         # organism name/id.

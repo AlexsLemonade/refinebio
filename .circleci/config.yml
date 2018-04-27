@@ -8,20 +8,22 @@ jobs:
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
-      # Install Nomad
-      - run: sudo ./install_nomad.sh
-      # Start Nomad. This takes a while because it has to pull the worker base image.
-      - run:
-          command: sudo -E ./run_nomad.sh -e test
-          no_output_timeout: 36000
-      # Let both Nomad and Postgres start up.
+      # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
       - run: ./common/install_db_docker.sh
 
-      # Install our application
+      # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
       - run: ./update_models.sh
+
+      # Install Nomad
+      - run: sudo ./install_nomad.sh
+      # Start Nomad, build images, and register jobs.
+      # This takes a while because it has to pull the worker base image.
+      - run:
+          command: sudo -E ./run_nomad.sh -e test
+          no_output_timeout: 36000
 
       # Run API Tests.
       - run: ./api/run_tests.sh
