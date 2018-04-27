@@ -177,6 +177,14 @@ If you need to access a `psql` shell for inspecting the database, you can use:
 
 ### Testing
 
+The end to end tests require a separate Nomad client to be running so
+that the tests can be run without interfering with local
+development. The second Nomad client can be started with:
+
+```bash
+sudo -E ./run_nomad.sh -e test
+```
+
 To run the entire test suite:
 
 ```bash
