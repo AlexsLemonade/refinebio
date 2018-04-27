@@ -104,7 +104,7 @@ fi
 
 # Build, tag, and push an image for the workers to the local registry.
 docker build -t dr_worker"$TEST_POSTFIX" -f workers/Dockerfile .
-docker tag dr_worker localhost:5000/dr_worker"$TEST_POSTFIX"
+docker tag dr_worker"$TEST_POSTFIX" localhost:5000/dr_worker"$TEST_POSTFIX"
 docker push localhost:5000/dr_worker"$TEST_POSTFIX"
 
 # This function checks what the status of the Nomad agent is.
