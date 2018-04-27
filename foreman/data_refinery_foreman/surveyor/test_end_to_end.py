@@ -70,7 +70,7 @@ def mock_logger_info(message: str, *args, **kwargs):
 # TransactionTestCase makes database calls complete before the test
 # ends.  Otherwise the workers wouldn't actually be able to find the
 # job in the database cause it'd be stuck in a transaction.
-class ScanUpcEndToEndTestCase(TransactionTestCase):
+class NoOpEndToEndTestCase(TransactionTestCase):
     @tag("slow")
     @patch('data_refinery_foreman.surveyor.array_express.logger')
     @patch('data_refinery_common.models.Sample.objects.get')
@@ -101,41 +101,3 @@ class ScanUpcEndToEndTestCase(TransactionTestCase):
         for processor_job in processor_jobs:
             processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
             self.assertTrue(processor_job.success)
-
-
-    # @patch('data_refinery_foreman.surveyor.array_express.requests.get')
-    # def test_calls_survey(self, mock_get):
-    #     """If source_type is supported calls the appropriate survey method."""
-    #     mock_get.side_effect = mocked_requests_get
-
-    #     # Prevent a call being made to NCBI's API to determine
-    #     # organism name/id.
-    #     organism = Organism(name="HOMO SAPIENS", taxonomy_id=9606, is_scientific_name=True)
-    #     organism.save()
-
-    #     survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
-    #     survey_job.save()
-    #     key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-    #                                        key="experiment_accession_code",
-    #                                        value="E-GEOD-22166")
-    #     key_value_pair.save()
-
-    #     surveyor.run_job(survey_job)
-    #     logger.info("Started Survey Job %d, waiting for it to complete.", survey_job.id)
-    #     survey_job = wait_for_job(survey_job, SurveyJob)
-    #     self.assertTrue(survey_job.success)
-
-    #     batch = Batch.objects.all()[0]
-    #     batch = Batch.objects.filter(survey_job=survey_job).get()
-
-    #     downloader_job = batch.downloaderjob_set.get()
-    #     logger.info("Survey Job finished, waiting for Downloader Job %d to complete.",
-    #                 downloader_job.id)
-    #     downloader_job = wait_for_job(downloader_job, DownloaderJob)
-    #     self.assertTrue(downloader_job.success)
-
-    #     processor_job = batch.processorjob_set.get()
-    #     logger.info("Downloader Job finished, waiting for processor Job %d to complete.",
-    #                 processor_job.id)
-    #     processor_job = wait_for_job(processor_job, ProcessorJob)
-    #     self.assertTrue(processor_job.success)
