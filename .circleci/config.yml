@@ -9,7 +9,7 @@ jobs:
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
       # Install Nomad
-      - run: ./install_nomad.sh
+      - run: sudo ./install_nomad.sh
       # Start Nomad
       - run: sudo -E ./run_nomad.sh -e test
       # Let both Nomad and Postgres start up.

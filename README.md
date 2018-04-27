@@ -77,7 +77,7 @@ The following services will need to be installed:
 (https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
 so Docker does not need sudo permissions.
 - [Terraform](https://www.terraform.io/)
-- [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries)
+- [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./install_nomad.sh`.
 - git-crypt
 - jq
 
