@@ -3,6 +3,10 @@ from typing import Dict, List
 
 from data_refinery_common.models import (
     Sample)
+from data_refinery_common.logging import get_and_configure_logger
+from .utils import requests_retry_session
+
+logger = get_and_configure_logger(__name__)
 
 def harmonize(metadata: List) -> Dict:
     """ 
@@ -633,8 +637,9 @@ def parse_sdrf(sdrf_url: str) -> List:
     """ Given a URL to an SDRF file, download parses it into JSON. """
 
     try:
-        sdrf_text = requests.get(sdrf_url, timeout=5).text
-    except Exception:
+        sdrf_text = requests_retry_session().get(sdrf_url, timeout=5).text
+    except Exception as e:
+        logger.exception("Unable to fetch URL: " + sdrf_url, exception=str(e))
         return None
 
     samples = []

@@ -16,6 +16,7 @@ from data_refinery_common.models import (
     ExperimentSampleAssociation,
     OriginalFileSampleAssociation
 )
+from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -55,7 +56,7 @@ class SraSurveyor(ExternalSourceSurveyor):
     @staticmethod
     def gather_submission_metadata(metadata: Dict) -> None:
 
-        response = requests.get(ENA_METADATA_URL_TEMPLATE.format(metadata["submission_accession"]))
+        response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(metadata["submission_accession"]))
         submission_xml = ET.fromstring(response.text)[0]
         submission_metadata = submission_xml.attrib
 
@@ -112,7 +113,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_experiment_metadata(metadata: Dict) -> None:
-        response = requests.get(ENA_METADATA_URL_TEMPLATE.format(metadata["experiment_accession"]))
+        response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(metadata["experiment_accession"]))
         experiment_xml = ET.fromstring(response.text)
 
         experiment = experiment_xml[0]
@@ -175,7 +176,7 @@ class SraSurveyor(ExternalSourceSurveyor):
     def gather_run_metadata(run_accession: str) -> Dict:
         """A run refers to a specific read in an experiment."""
         discoverable_accessions = ["study_accession", "sample_accession", "submission_accession"]
-        response = requests.get(ENA_METADATA_URL_TEMPLATE.format(run_accession))
+        response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(run_accession))
         run_xml = ET.fromstring(response.text)
         run_item = run_xml[0]
 
@@ -203,7 +204,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_sample_metadata(metadata: Dict) -> None:
-        response = requests.get(ENA_METADATA_URL_TEMPLATE.format(metadata["sample_accession"]))
+        response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(metadata["sample_accession"]))
         sample_xml = ET.fromstring(response.text)
 
         sample = sample_xml[0]
@@ -227,7 +228,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_study_metadata(metadata: Dict) -> None:
-        response = requests.get(ENA_METADATA_URL_TEMPLATE.format(metadata["study_accession"]))
+        response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(metadata["study_accession"]))
         study_xml = ET.fromstring(response.text)
 
         study = study_xml[0]
