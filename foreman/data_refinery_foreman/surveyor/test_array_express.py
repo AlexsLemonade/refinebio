@@ -37,10 +37,7 @@ class SurveyTestCase(TestCase):
 
     @patch('data_refinery_foreman.surveyor.external_source.send_job')
     def test_survey(self, mock_send_task):
-        """The 'survey' function generates one Batch per sample.
-
-        This test also tests the handle_batches method of ExternalSourceSurveyor
-        which isn't tested on its own because it is an abstract class.
+        """A Simple test of the ArrayExpress surveyor.
         """
         ae_surveyor = ArrayExpressSurveyor(self.survey_job)
         ae_surveyor.survey()

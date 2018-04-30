@@ -15,7 +15,8 @@ from data_refinery_common.models import (
     OriginalFile,
     OriginalFileSampleAssociation
 )
-from data_refinery_foreman.surveyor import utils
+
+from data_refinery_foreman.surveyor import harmony, utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -129,9 +130,11 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             json_xa.is_ccdl = False
             json_xa.save()
 
-            ## Fetch and parse the IDF file for any other fields
+            ## Fetch and parse the IDF/SDRF file for any other fields
             IDF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.idf.txt"
+            SDRF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
             idf_url = IDF_URL_TEMPLATE.format(code=experiment_accession_code)
+            sdrf_url = SDRF_URL_TEMPLATE.format(code=experiment_accession_code)
             idf_text = utils.requests_retry_session().get(idf_url, timeout=15).text
             lines = idf_text.split('\n')
             idf_dict = {}
@@ -263,12 +266,24 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         except Exception:
             has_platform_warning = False
 
+        # The SDRF is the complete metadata record on a sample/property basis.
+        # We run this through our harmonizer and then attach the properties
+        # to our created samples.
+        SDRF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
+        sdrf_url = SDRF_URL_TEMPLATE.format(code=experiment.accession_code)
+        sdrf_samples = harmony.parse_sdrf(sdrf_url)
+        harmonized_samples = harmony.harmonize(sdrf_samples)
+
         # An experiment can have many samples
         for sample in samples:
 
             # For some reason, this sample has no files associated with it.
             if "file" not in sample or len(sample['file']) == 0:
                 continue
+
+            # Each sample is given an experimenatlly-unique title.
+            flat_sample = utils.flatten(sample)
+            title = harmony.extract_title(flat_sample)
 
             # Figure out the Organism for this sample
             organism_name = UNKNOWN
@@ -378,16 +393,18 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 continue
             except Sample.DoesNotExist:
                 sample_object = Sample()
+                
+                # The basics
+                sample_object.title = title
                 sample_object.accession_code = sample_accession_code
                 sample_object.source_archive_url = samples_endpoint
                 sample_object.organism = organism
+
+                # Directly assign the harmonized properties
+                harmonized_sample = harmonized_samples[title]
+                for key, value in harmonized_sample.items():
+                    setattr(sample_object, key, value)
                 sample_object.save()
-
-                # This creates key values for a given sample.
-                # This looks a bit of a mess.
-
-                # XXX: TODO: Harmonize desired values to filter on and 
-                # extact to properties of the Sample itself.
 
                 sample_annotation = SampleAnnotation()
                 sample_annotation.data = sample

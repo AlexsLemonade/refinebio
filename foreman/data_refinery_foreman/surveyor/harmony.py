@@ -8,6 +8,28 @@ from .utils import requests_retry_session
 
 logger = get_and_configure_logger(__name__)
 
+def extract_title(sample: Dict) -> str:
+    """ Given a flat sample dictionary, find the title """
+    title_fields = [
+                    'title',
+                    'sample title',
+                    # 'assay name',
+                    'sample name',
+                    'subject number',
+                    'labeled extract name',
+                    'extract name'
+                   ]
+    title_fields = add_variants(title_fields)
+    for key, value in sample.copy().items():
+        lower_key = key.lower().strip()
+
+        if lower_key in title_fields:
+            return value.lower()
+
+    # If we can't even find a unique title for this sample
+    # something has gone horribly wrong.
+    return None
+
 def harmonize(metadata: List) -> Dict:
     """ 
     Given a list of samples and their metadata, extract these common properties:
@@ -264,31 +286,13 @@ def harmonize(metadata: List) -> Dict:
     # Title!
     # We also use the title as the key in the returned dictionary
     ##
-    title_fields = [    
-                    'title',
-                    'sample title',
-                    'assay name',
-                    'sample name',
-                    'subject number',
-                    'labeled extract name',
-                    'extract name'
-                   ]
-    title_fields = add_variants(title_fields)
-
     for sample in original_samples:
-        if not 'title' in sample.keys():
-            for key, value in sample.copy().items():
-                lower_key = key.lower().strip()
-                if lower_key in title_fields:
-                    sample['title'] = value.lower()
-                    break
-
-            # If we can't even find a unique title for this sample
-            # something has gone horribly wrong.
-            if 'title' not in sample:
-                return {}
-
-        title = sample['title']
+        title = extract_title(sample)
+        # If we can't even find a unique title for this sample
+        # something has gone horribly wrong.
+        if not title:
+            return {}
+        sample['title'] = title
         harmonized_samples[title] = {}
 
     ##
