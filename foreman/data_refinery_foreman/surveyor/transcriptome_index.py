@@ -289,13 +289,13 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
 
         # The main division has a different base URL for its REST API.
         if ensembl_division == "Ensembl":
-            r = utils.requests_retry_session().get(MAIN_DIVISION_URL_TEMPLATE)
+            r = requests.get(MAIN_DIVISION_URL_TEMPLATE)
 
             # Yes I'm aware that specieses isn't a word. However I need to
             # distinguish between a singlular species and multiple species.
             specieses = r.json()["species"]
         else:
-            r = utils.requests_retry_session().get(DIVISION_URL_TEMPLATE.format(division=ensembl_division))
+            r = requests.get(DIVISION_URL_TEMPLATE.format(division=ensembl_division))
             specieses = r.json()
 
         try:
