@@ -318,8 +318,6 @@ sig = function(y, m, verbose=TRUE)
 library("optparse")
 
 option_list = list(
-  # make_option(c("-g", "--gse"), type="character", default="GSE22427", 
-  #             help="GSE", metavar="character"),
   make_option(c("-p", "--probeId"), type="character", default="PROBE_ID", 
               help="Probe ID", metavar="character"),
   make_option(c("-e", "--expression"), type="character", default=".AVG_Signal", 
@@ -339,7 +337,6 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-# gseID <- opt$gse
 probeIDColumn <- opt$probeId
 exprColumns <- strsplit(opt$expression, ",")
 exprColumns <- unlist(lapply(exprColumns, as.integer))
@@ -358,7 +355,6 @@ library(paste(platform, ".db", sep=""), character.only=TRUE)
 # Read the data file
 message("Reading data file...")
 suppressWarnings(data <- fread(filePath, stringsAsFactors=FALSE, sep="\t", header=TRUE, autostart=10, data.table=FALSE, check.names=FALSE, fill=TRUE, na.strings="", showProgress=FALSE))
-#suppressWarnings(data <- read.table(filePath, header=TRUE, fill=TRUE))
 
 # Check input paramters and parse out data we need
 if (probeIDColumn == ""){
@@ -394,6 +390,9 @@ pValueData <- as.matrix(data[,pValueColumns,drop=FALSE])
 rownames(pValueData) <- probeIDs
 
 # Extract platform-specific data
+# Currently limited to Human platforms.
+# See here for more discussion:
+# https://github.com/AlexsLemonade/refinebio/pull/212#discussion_r184864928
 if (platform == "illuminaHumanv2") {
   probeSequenceRef <- illuminaHumanv2PROBESEQUENCE
   probeQualityRef <- illuminaHumanv2PROBEQUALITY
@@ -423,7 +422,7 @@ probeSequences <- probeSequences[commonProbes,2]
 normData <- scanNorm(exprData, probeSequences, signalPValueData=pValueData, numCores=numCores)
 
 # Parse probe quality info
-#   (It makes sense to do this after normalization so the SCAN model has more data to work with)
+# (It makes sense to do this after normalization so the SCAN model has more data to work with)
 probeQuality <- as.data.frame(probeQualityRef[mappedkeys(probeQualityRef)])
 goodProbeIndices <- which(grepl("Good", probeQuality$ProbeQuality))
 perfectProbeIndices <- which(grepl("Perfect", probeQuality$ProbeQuality))
@@ -442,6 +441,5 @@ normData <- merge(probeGene, as.data.frame(normData), by=0, sort=FALSE)
 normData <- normData[,-c(1,2)]
 colnames(normData)[1] <- "GeneID"
 
-# # Save to output file
-# outFilePath <- paste("/Output/", gseID, "_SCAN.txt", sep="")
+# Save to output file
 write.table(normData, outFilePath, row.names=FALSE, col.names=TRUE, quote=FALSE, sep="\t")

@@ -63,4 +63,4 @@ class Command(BaseCommand):
                         else:
                             surveyor.survey_sra_experiment(accession)
                     except Exception as e:
-                        logger.error(e)
+                        logger.exception(e)
