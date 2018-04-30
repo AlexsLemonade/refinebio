@@ -32,6 +32,7 @@ job "DOWNLOADER" {
         DATABASE_TIMEOUT = "${{DATABASE_TIMEOUT}}"
 
         NOMAD_HOST = "${{NOMAD_HOST}}"
+        NOMAD_PORT = "${{NOMAD_PORT}}"
 
         RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
 

@@ -9,7 +9,7 @@ chardet==3.0.4            # via requests
 coverage==4.5.1
 django==2.0
 idna==2.6                 # via requests
-psycopg2==2.7.3.2
+psycopg2-binary==2.7.4
 python-nomad==0.5.0
 pytz==2017.3              # via django
 requests==2.18.4
