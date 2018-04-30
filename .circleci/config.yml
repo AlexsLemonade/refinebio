@@ -35,7 +35,7 @@ jobs:
       - run: ./foreman/run_tests.sh
 
       # Run Worker Tests
-      - run: chmod -R a+rw workers/test_volume
+      - run: chmod -R a+rw test_volume
       - run:
           command: .circleci/filter_tests.sh
           no_output_timeout: 36000
