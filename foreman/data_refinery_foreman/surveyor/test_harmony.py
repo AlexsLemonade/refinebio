@@ -33,14 +33,14 @@ class HarmonyTestCase(TestCase):
         harmonized = harmonize(metadata)
         print(harmonized)
 
-        self.assertTrue('1007409-C30057' in harmonized.keys())
-        self.assertTrue('sex' in harmonized['1007409-C30057'].keys())
-        self.assertTrue('female' == harmonized['1007409-C30057']['sex'])
-        self.assertTrue('age' in harmonized['1007409-C30057'].keys())
-        self.assertTrue(54 == harmonized['1007409-C30057']['age'])
-        self.assertTrue('part' in harmonized['1007409-C30057'].keys())
-        self.assertTrue('subject' in harmonized['1007409-C30057'].keys())
-        self.assertTrue('developmental_stage' in harmonized['1007409-C30057'].keys())
+        self.assertTrue('donor a islets rna' in harmonized.keys())
+        self.assertTrue('sex' in harmonized['donor a islets rna'].keys())
+        self.assertTrue('female' == harmonized['donor a islets rna']['sex'])
+        self.assertTrue('age' in harmonized['donor a islets rna'].keys())
+        self.assertTrue(54 == harmonized['donor a islets rna']['age'])
+        self.assertTrue('part' in harmonized['donor a islets rna'].keys())
+        self.assertTrue('subject' in harmonized['donor a islets rna'].keys())
+        self.assertTrue('developmental_stage' in harmonized['donor a islets rna'].keys())
 
     @tag('slow')
     def test_sdrf_big(self):
