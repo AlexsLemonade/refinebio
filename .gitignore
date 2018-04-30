@@ -1,6 +1,8 @@
 # Project specific files
 workers/volume
 foreman/volume
+volume
+test_volume
 workers/downloader.nomad
 workers/processor.nomad
 workers/test_volume/processed/TEST/TRANSCRIPTOME_INDEX/Homo_sapiens_short.tar.gz
