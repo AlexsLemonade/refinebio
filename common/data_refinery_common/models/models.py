@@ -48,7 +48,7 @@ class Sample(models.Model):
 
     # Scientific Properties
     sex = models.CharField(max_length=255, blank=True)
-    age = models.DecimalField(max_length=255, blank=True, max_digits=8, decimal_places=3)
+    age = models.DecimalField(max_length=255, blank=True, max_digits=8, decimal_places=3, null=True)
     part = models.CharField(max_length=255, blank=True)
     genotype = models.CharField(max_length=255, blank=True)
     disease = models.CharField(max_length=255, blank=True)

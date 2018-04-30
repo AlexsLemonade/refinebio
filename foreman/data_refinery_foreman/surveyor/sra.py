@@ -16,7 +16,7 @@ from data_refinery_common.models import (
     ExperimentSampleAssociation,
     OriginalFileSampleAssociation
 )
-from data_refinery_foreman.surveyor import utils
+from data_refinery_foreman.surveyor import utils, harmony
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -359,6 +359,13 @@ class SraSurveyor(ExternalSourceSurveyor):
             sample_object = Sample()
             sample_object.accession_code = sample_accession_code
             sample_object.organism = organism
+
+            # Directly apply the harmonized values
+            sample_object.title = harmony.extract_title(metadata)
+            harmonized_sample = harmony.harmonize([metadata])
+            for key, value in harmonized_sample.items():
+                setattr(sample_object, key, value)
+
             sample_object.save()
 
             for file_url in files_urls:
@@ -378,11 +385,6 @@ class SraSurveyor(ExternalSourceSurveyor):
         esa.experiment = experiment_object
         esa.sample = sample_object
         esa.save()
-
-        ##
-        # Samples K/V
-        # TODO - What do we want to save here?
-        ##
 
         return experiment_object, [sample_object]
 
