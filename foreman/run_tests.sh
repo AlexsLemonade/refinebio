@@ -10,7 +10,7 @@ script_directory=`perl -e 'use File::Basename;
 cd $script_directory
 
 # Set up the data volume directory if it does not already exist
-volume_directory="$script_directory/workers/test_volume"
+volume_directory="$script_directory/test_volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir $volume_directory
     chmod -R a+rwX $volume_directory
