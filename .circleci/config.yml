@@ -32,10 +32,10 @@ jobs:
       - run: ./common/run_tests.sh
 
       # Run Foreman Tests
+      - run: chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
 
       # Run Worker Tests
-      - run: chmod -R a+rw test_volume
       - run:
           command: .circleci/filter_tests.sh
           no_output_timeout: 36000
