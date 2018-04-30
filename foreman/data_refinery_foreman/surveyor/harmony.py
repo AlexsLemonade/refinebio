@@ -24,7 +24,7 @@ def extract_title(sample: Dict) -> str:
         lower_key = key.lower().strip()
 
         if lower_key in title_fields:
-            return value.lower()
+            return value
 
     # If we can't even find a unique title for this sample
     # something has gone horribly wrong.
