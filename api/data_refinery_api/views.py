@@ -8,7 +8,15 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from data_refinery_common.models import Experiment, Sample, Organism
+from data_refinery_common.models import (
+    Experiment, 
+    Sample, 
+    Organism, 
+    ComputationalResult,
+    DownloaderJob,
+    SurveyJob,
+    ProcessorJob
+)
 from data_refinery_api.serializers import ( 
     ExperimentSerializer, 
     DetailedExperimentSerializer,
@@ -152,11 +160,11 @@ class ResultsList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         filter_dict.pop('limit', None)
         filter_dict.pop('offset', None)
-        results = ComputationalResultSerializer.objects.filter(**filter_dict)
+        results = ComputationalResult.objects.filter(**filter_dict)
 
         page = self.paginate_queryset(results)
         if page is not None:
-            serializer = ComputationalResultSer(page, many=True)
+            serializer = ComputationalResultSerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         else:
             serializer = ComputationalResultSerializer(results, many=True)
@@ -267,8 +275,6 @@ class ProcessorJobList(PaginatedAPIView):
 ###
 # Statistics
 ###
-
-from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
 
 class Stats(APIView):
     """

@@ -33,9 +33,9 @@ WORKDIR /home/user
 
 ENV R_LIBS "/usr/local/lib/R/site-library"
 
+# These are for SCAN
 COPY workers/r_dependencies.R .
 COPY workers/install_ensg_pkgs.R .
-
 RUN Rscript r_dependencies.R
 
 # Move these apt-gets up into the other one once I have time for rebuild

@@ -28,24 +28,15 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 # chunk_size is in bytes
 CHUNK_SIZE = 1024 * 256
 
-def get_miniml_url(self, experiment_accession_code):
-    """ Create the url for the MINiML file for an accession code"""
-    geo = experiment_accession_code.upper()
-    geotype = geo[:3]
-    range_subdir = sub(r"\d{1,3}$", "nnn", geo)
-
-    miniml_url_template = ("ftp://ftp.ncbi.nlm.nih.gov/geo/"
-              "{root}/{range_subdir}/{record}/miniml/{record_file}")
-    miniml_url = miniml_url_template.format(root="series",
-                        range_subdir=range_subdir,
-                        record=geo,
-                        record_file="%s_family.xml.tgz" % geo)
-
-    return raw_url
-
 def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> None:
-    """ Download a file from ArrayExpress via FTP. There is no Aspera endpoint
-    which I can find. """
+    """ Download a file from GEO via FTP. There is no Aspera endpoint
+    which I can find, although I know it exists. I think we have to ask GEO for it.
+    In future, this function may become a dispatcher to FTP via aria2 or FASP via ascp.
+    """
+
+    # Ensure directory exists
+    os.makedirs(file_path.rsplit('/', 1)[0], exist_ok=True)
+
     try:
         logger.debug("Downloading file from %s to %s.",
                      download_url,
@@ -81,7 +72,7 @@ def _extract_tar(file_path: str, accession_code: str) -> List[str]:
 
     except Exception as e:
         reason = "Exception %s caught while extracting %s", str(e), file_path
-        logger.exception(reason)
+        logger.exception(reason, accession_code=accession_code, file_path=file_path)
         raise
 
     return files
@@ -107,7 +98,7 @@ def _extract_tgz(file_path: str, accession_code: str) -> List[str]:
 
     except Exception as e:
         reason = "Exception %s caught while extracting %s", str(e), file_path
-        logger.exception(reason)
+        logger.exception(reason, accession_code=accession_code, file_path=file_path)
         raise
 
     return files
@@ -125,12 +116,13 @@ def _extract_gz(file_path: str, accession_code: str) -> List[str]:
             with open(extracted_filepath, 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
 
-        # os.abspath doesn't do what I thought it does, hency this monstrocity.
-        files = [{'absolute_path': extracted_filepath, 'filename': extracted_filepath.split('/')[-1]}]
+        files = [{  'absolute_path': extracted_filepath, 
+                    'filename': extracted_filepath.rsplit('/', 1)[1]
+                }]
 
     except Exception as e:
         reason = "Exception %s caught while extracting %s", str(e), file_path
-        logger.exception(reason)
+        logger.exception(reason, accession_code=accession_code, file_path=file_path)
         raise
 
     return files
@@ -145,7 +137,7 @@ def download_geo(job_id: int) -> None:
     job = utils.start_job(job_id)
 
     file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
-    original_file = file_assocs[0].original_file # GEO should never have more than one zip, but we can iterate here if we discover this is false.
+    original_file = file_assocs[0].original_file 
     url = original_file.source_url
     accession_code = job.accession_code
 
@@ -162,17 +154,25 @@ def download_geo(job_id: int) -> None:
     # download the one.
     os.makedirs(LOCAL_ROOT_DIR + '/' + accession_code, exist_ok=True)
     dl_file_path = LOCAL_ROOT_DIR + '/' + accession_code + '/' + url.split('/')[-1]
-    logger.info("Starting to download: " + url)
+    logger.info("Starting to download: " + url, job_id=job_id, accession_code=accession_code)
     _download_file(url, dl_file_path, job)
+    original_file.absolute_file_path = dl_file_path
     original_file.is_downloaded = True
     original_file.save()
+
     no_op = False
+    unpacked_sample_files = []
 
-    # This files are tarred, and also subsequently gzipped
+    # These files are tarred, and also subsequently gzipped
     if '.tar' in dl_file_path:
-        extracted_files = _extract_tar(dl_file_path, accession_code)
+        try:
+            extracted_files = _extract_tar(dl_file_path, accession_code)
+        except Exception as e:
+            job.failure_reason = e
+            utils.end_downloader_job(job, success=False)
+            logger.exception("Error occured while extracting tar file.", path=dl_file_path, exception=str(e))
+            return
 
-        unpacked_sample_files = []
         for og_file in extracted_files:
 
             filename = og_file['filename']
@@ -184,6 +184,7 @@ def download_geo(job_id: int) -> None:
             try:
                 sample = Sample.objects.get(accession_code=sample_id)
             except Exception as e:
+                # We don't have this sample, but it's not a total failure. This happens.
                 continue
 
             try:
@@ -221,18 +222,24 @@ def download_geo(job_id: int) -> None:
 
                 unpacked_sample_files.append(actual_file)
             except Exception as e:
-                print(e)
                 # TODO - is this worth failing a job for?
-                logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'])
+                logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'],
+                    exc_info=1, file=og_file['filename'], sample_id=sample_id, accession_code=accession_code)
 
     # This is a .tgz file.
     elif '.tgz' in dl_file_path:
-        # If this is the MINiML file, it has bee preprocessed
+        # If this is the MINiML file, it has been preprocessed
         if '_family.xml.tgz' in dl_file_path:
             no_op = True
 
-        extracted_files = _extract_tgz(dl_file_path, accession_code)
-        unpacked_sample_files = []
+        try:
+            extracted_files = _extract_tgz(dl_file_path, accession_code)
+        except Exception as e:
+            job.failure_reason = e
+            utils.end_downloader_job(job, success=False)
+            logger.exception("Error occured while extracting tgz file.", path=dl_file_path, exception=str(e))
+            return
+
         for og_file in extracted_files:
 
             if '.txt' in og_file['filename']:
@@ -249,7 +256,7 @@ def download_geo(job_id: int) -> None:
                 actual_file.filename = og_file['filename']
                 actual_file.calculate_size()
                 actual_file.calculate_sha1()
-                actual_file.has_raw = True
+                actual_file.has_raw = not no_op
                 actual_file.save()
 
                 original_file_sample_association = OriginalFileSampleAssociation()
@@ -259,14 +266,17 @@ def download_geo(job_id: int) -> None:
 
                 unpacked_sample_files.append(actual_file)
 
-            else:
-                print(og_file['filename'])
-
     # These files are only gzipped.
-    # These are generally the raw-raw data
+    # These are generally the _actually_ raw (rather than the non-raw data in a RAW file) data
     elif '.gz' in dl_file_path:
-        extracted_files = _extract_gz(dl_file_path, accession_code)
-        unpacked_sample_files = []
+        try:
+            extracted_files = _extract_gz(dl_file_path, accession_code)
+        except Exception as e:
+            job.failure_reason = e
+            utils.end_downloader_job(job, success=False)
+            logger.exception("Error occured while extracting gz file.", path=dl_file_path, exception=str(e))
+            return
+
         for og_file in extracted_files:
 
             filename = og_file['filename']
@@ -303,36 +313,31 @@ def download_geo(job_id: int) -> None:
 
                 unpacked_sample_files.append(actual_file)
             except Exception as e:
-                print(e)
-                logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'])
+                logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'],
+                    exc_info=1, file=og_file['filename'], sample_id=sample_id, accession_code=accession_code)
 
     # This is probably just a .txt file
     else:
-        unpacked_sample_files = []
-
         filename = dl_file_path.split('/')[-1]
         sample_id = filename.split('_')[0]
 
-        try:
-            actual_file = OriginalFile()
-            actual_file.is_downloaded=True
-            actual_file.is_archive=False
-            actual_file.absolute_file_path = dl_file_path
-            actual_file.filename = filename
-            actual_file.calculate_size()
-            actual_file.calculate_sha1()
-            actual_file.has_raw = True
-            actual_file.save()
+        actual_file = OriginalFile()
+        actual_file.is_downloaded=True
+        actual_file.is_archive=False
+        actual_file.absolute_file_path = dl_file_path
+        actual_file.filename = filename
+        actual_file.calculate_size()
+        actual_file.calculate_sha1()
+        actual_file.has_raw = True
+        actual_file.save()
 
-            for sample in related_samples:
-                new_association = OriginalFileSampleAssociation()
-                new_association.original_file = actual_file
-                new_association.sample = sample
-                new_association.save()
+        for sample in related_samples:
+            new_association = OriginalFileSampleAssociation()
+            new_association.original_file = actual_file
+            new_association.sample = sample
+            new_association.save()
 
-            unpacked_sample_files.append(actual_file)
-        except Exception as e:
-            logger.warn(e)
+        unpacked_sample_files.append(actual_file)
 
     if len(unpacked_sample_files) > 0:
         success = True
@@ -344,31 +349,29 @@ def download_geo(job_id: int) -> None:
         logger.debug("Unable to extract any files.",
                      url,
                      downloader_job=job_id)
-
-    utils.end_downloader_job(job, success)
+        job.failure_reason = "Failed to extract any downloaded files."
 
     if success:
 
         # We're trying to detect technology type here.
         # It may make more sense to try to make this into a higher level Sample property.
         annotations = actual_file.samples.first().sampleannotation_set.all()[0]
-        ch1_proto = annotations.data.get('label_protocol_ch1', "").upper()
-        ch2_proto = annotations.data.get('label_protocol_ch2', "").upper()
+        channel1_protocol = annotations.data.get('label_protocol_ch1', "").upper()
+        channel2_protocol = annotations.data.get('label_protocol_ch2', "").upper()
         data_processing = annotations.data.get('data_processing', None) # If data processing step, it isn't raw.
 
         if no_op:
             utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="NO_OP")
-            return success
-        if ('AGILENT' in ch1_proto) and ('Agilent' in ch2_proto):
+        elif ('AGILENT' in channel1_protocol) and ('AGILENT' in channel2_protocol):
             utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="AGILENT_TWOCOLOR_TO_PCL")
-            return success
-        if ('ILLUMINA' in ch1_proto) and (not data_processing):
+        elif ('ILLUMINA' in channel1_protocol) and (not data_processing):
             utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="ILLUMINA_TO_PCL")
-            return success
-        if ('AFFYMETRIX' in ch1_proto):
-            utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="AFFY_TO_PCL")
-            return success             
+        elif ('AFFYMETRIX' in channel1_protocol):
+            utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="AFFY_TO_PCL")        
         # This should probably never happen, but if it does, we don't want to process it.
         else:
             utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="NO_OP")
-            return success
+
+    utils.end_downloader_job(job, success)
+
+    return success

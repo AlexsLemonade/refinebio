@@ -10,11 +10,10 @@ RUN pip install -r requirements.txt
 # Get the latest version from the dist directory.
 RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
 
-COPY workers/InstallIlluminaDependencies.R /
-RUN Rscript /InstallIlluminaDependencies.R
-
+# We need JRE for QC tools
 RUN apt-get update -y 
-RUN apt-get install -y unzip default-jre  --fix-missing
+RUN apt-get install -y unzip default-jre --fix-missing
+
 USER user
 
 # Install FastQC

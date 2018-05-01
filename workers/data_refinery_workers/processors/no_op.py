@@ -23,11 +23,13 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
     """
     original_file = job_context["original_files"][0]
 
+    # Create the output directory and path
     job_context["input_file_path"] = original_file.absolute_file_path
-    pre_part = original_file.absolute_file_path.split('/')[:-2]
-    end_part = original_file.absolute_file_path.split('/')[-1]
-    os.makedirs('/'.join(pre_part) + '/processed/', exist_ok=True)
-    job_context["output_file_path"] = '/'.join(pre_part) + '/processed/' + end_part
+    base_directory, file_name = original_file.absolute_file_path.rsplit('/', 1)
+    os.makedirs(base_directory + '/processed/', exist_ok=True)
+    job_context["output_file_path"] = base_directory + '/processed/' + file_name
+
+    # Copy the file to the new directory
     shutil.copyfile(job_context["input_file_path"], job_context["output_file_path"])
 
     # This is a NO-OP, but we make a ComputationalResult regardless.
@@ -41,7 +43,7 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
     # sync it S3 and save it.
     try:
         computed_file = ComputedFile()
-        computed_file.absolute_file_path = original_file.absolute_file_path
+        computed_file.absolute_file_path = job_context["output_file_path"]
         computed_file.filename = original_file.filename
         computed_file.calculate_sha1()
         computed_file.calculate_size()
@@ -50,7 +52,7 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
         # TODO here: delete local file after S3 sync
         computed_file.save()
     except Exception:
-        logger.exception("Exception caught while moving file %s",
+        logger.error("Exception caught while moving file %s",
                          raw_path,
                          processor_job=job_context["job_id"])
 

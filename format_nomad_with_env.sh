@@ -122,8 +122,6 @@ if [[ ! -z $output_dir && ! -d "$output_dir" ]]; then
     mkdir $output_dir
 fi
 
-# This actually performs the templating using Perl's regex engine.
-# Perl magic found here: https://stackoverflow.com/a/2916159/6095378
 export_log_conf (){
     export LOGGING_CONFIG="
         logging {
@@ -137,6 +135,8 @@ export_log_conf (){
 "
 }
 
+# This actually performs the templating using Perl's regex engine.
+# Perl magic found here: https://stackoverflow.com/a/2916159/6095378
 if [[ $project == "workers" ]]; then
     export_log_conf "downloader"
     cat downloader.nomad.tpl \
