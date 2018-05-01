@@ -14,7 +14,7 @@ cd $script_directory
 cd ..
 
 
-docker build -t dr_worker -f workers/Dockerfile .
+docker build -t dr_downloaders -f workers/Dockerfile.downloaders .
 
 volume_directory="$script_directory/volume"
 
@@ -30,4 +30,4 @@ docker run \
        --entrypoint ./manage.py \
        --volume $volume_directory:/home/user/data_store \
        --link drdb:postgres \
-       dr_worker "$@"
+       dr_downloaders "$@"
