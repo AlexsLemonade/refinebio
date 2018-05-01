@@ -13,7 +13,6 @@ def extract_title(sample: Dict) -> str:
     title_fields = [
                     'title',
                     'sample title',
-                    # 'assay name',
                     'sample name',
                     'subject number',
                     'labeled extract name',

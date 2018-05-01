@@ -134,7 +134,7 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
                     'race',
                     'subject',
                     'compound',
-                    'time'
+                    'time',
                     'is_downloaded',
                     'is_processed',
                     'created_at',
