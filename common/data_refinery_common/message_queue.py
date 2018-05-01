@@ -14,6 +14,7 @@ logger = get_and_configure_logger(__name__)
 # workers/downloader.nomad.tpl and workers/processor.nomad.tpl.
 # These constants are the identifiers for those two job specifications.
 NOMAD_PROCESSOR_JOB = "PROCESSOR"
+NOMAD_TRANSCRIPTOME_JOB = "TRANSCRIPTOME_INDEX"
 NOMAD_DOWNLOADER_JOB = "DOWNLOADER"
 
 
@@ -32,7 +33,12 @@ def send_job(job_type: Enum, job_id: int) -> None:
     # Once I have every job specced out with its own Nomad job, this
     # code can change and the meta won't need "JOB_NAME" in it because
     # the just specifying the nomad_job to dispatch will be enough.
-    if job_type in list(ProcessorPipeline):
+    if job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_LONG \
+       or job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_SHORT:
+        nomad_job = NOMAD_TRANSCRIPTOME_JOB
+    elif job_type is ProcessorPipeline.SALMON:
+        nomad_job = ProcessorPipeline.SALMON.value
+    elif job_type in list(ProcessorPipeline):
         nomad_job = NOMAD_PROCESSOR_JOB
     elif job_type in list(Downloaders):
         nomad_job = NOMAD_DOWNLOADER_JOB

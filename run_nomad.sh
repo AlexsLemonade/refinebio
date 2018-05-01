@@ -73,7 +73,7 @@ if [ $env == "test" ]; then
 else
     # This is only for running Nomad in non-cloud environments so if
     # its not test then we're in dev (XXX: change this to local.)
-    env = "dev"
+    env="dev"
 fi
 
 
@@ -102,10 +102,19 @@ if [[ -z $(docker ps | grep "image-registry") ]]; then
     docker run -d -p 5000:5000 --restart=always --name image-registry registry:2
 fi
 
-# Build, tag, and push an image for the workers to the local registry.
+# Temporary so this image isn't missing before I've completely replaced it:
 docker build -t dr_worker"$TEST_POSTFIX" -f workers/Dockerfile .
 docker tag dr_worker"$TEST_POSTFIX" localhost:5000/dr_worker"$TEST_POSTFIX"
 docker push localhost:5000/dr_worker"$TEST_POSTFIX"
+
+# Build, tag, and push an image for the workers to the local registry.
+for dockerfile in $(ls -1 workers/dockerfiles); do
+    # Replace 'Dockerfile.' with 'dr_' to get the name of the image.
+    image_name=${dockerfile/Dockerfile./dr_}
+    docker build -t "$image_name$TEST_POSTFIX" -f workers/dockerfiles/$dockerfile .
+    docker tag "$image_name$TEST_POSTFIX" localhost:5000/"$image_name$TEST_POSTFIX"
+    docker push localhost:5000/"$image_name$TEST_POSTFIX"
+done
 
 # This function checks what the status of the Nomad agent is.
 # Returns an HTTP response code. i.e. 200 means everything is ok.
@@ -129,6 +138,9 @@ echo "Nomad is online. Registering jobs."
 ./format_nomad_with_env.sh -p foreman -e $env
 
 # Register the jobs for dispatching.
-nomad run workers/downloader.nomad"$TEST_POSTFIX"
-nomad run workers/processor.nomad"$TEST_POSTFIX"
+for job_spec in $(ls -1 workers/nomad_job_specs | grep "\.nomad$TEST_POSTFIX$"); do
+    nomad run workers/nomad_job_specs/"$job_spec$TEST_POSTFIX"
+done
+
+# There's only one foreman image, so no need to loop.
 nomad run foreman/surveyor.nomad"$TEST_POSTFIX"

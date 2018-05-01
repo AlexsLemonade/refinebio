@@ -121,22 +121,26 @@ done < "environments/$env"
 # issue can be found here:
 # https://github.com/hashicorp/nomad/issues/1185
 
-if [[ ! -z $output_dir && ! -d "$output_dir" ]]; then
+# If output_dir wasn't specified then assume the same folder we're
+# getting the templates from.
+if [[ -z $output_dir ]]; then
+    output_dir=nomad_job_specs
+elif [[ ! -d "$output_dir" ]]; then
     mkdir $output_dir
 fi
 
 # This actually performs the templating using Perl's regex engine.
 # Perl magic found here: https://stackoverflow.com/a/2916159/6095378
 if [[ $project == "workers" ]]; then
-    cat downloader.nomad.tpl \
-        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"downloader.nomad"$TEST_POSTFIX" \
-               2> /dev/null
-
-    cat processor.nomad.tpl \
-        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"processor.nomad"$TEST_POSTFIX" \
-               2> /dev/null
+    # Iterate over all the template files in the directory.
+    for template in $(ls -1 nomad_job_specs | grep \.tpl); do
+        # Strip off the trailing .tpl for once we've formatted it.
+        output_file=${template/.tpl/}
+        cat $output_dir/$template \
+            | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                   > "$output_dir/$output_file$TEST_POSTFIX" \
+                   2> /dev/null
+    done
 elif [[ $project == "foreman" ]]; then
     cat surveyor.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \

@@ -55,6 +55,15 @@ variable "running_in_cloud" {
 variable "workers_docker_image" {
   default = "wkurt/dr_worker:6"
 }
+variable "downloaders_docker_image" {
+  default = "wkurt/dr_downloaders:6"
+}
+variable "transcriptome_docker_image" {
+  default = "wkurt/dr_transcriptome:6"
+}
+variable "salmon_docker_image" {
+  default = "wkurt/dr_salmon:6"
+}
 variable "foreman_docker_image" {
   default = "wkurt/dr_foreman:6"
 }
