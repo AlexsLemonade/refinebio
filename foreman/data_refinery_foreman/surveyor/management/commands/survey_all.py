@@ -19,7 +19,10 @@ class Command(BaseCommand):
         parser.add_argument(
             "--file",
             type=str,
-            help=("An optional file listing accession codes. s3:// URLs are also accepted.")
+            help=("""An optional file listing accession codes. s3:// URLs are also accepted."
+
+Note: One entry per line, GSE* entries survey GEO, E-GEO-* entries survey ArrayExpress.
+""")
         )
         parser.add_argument(
             "--offset",

@@ -165,6 +165,8 @@ def _run_illumina(job_context: Dict) -> Dict:
     # in the metadata is the best we can do for right now.
     annotation = job_context['samples'][0].sampleannotation_set.all()[0]
     annotation_data = str(annotation.data).encode('utf-8').upper()
+
+    # TODO: Look this up in a better way during https://github.com/AlexsLemonade/refinebio/issues/222
     if "V2".encode() in annotation_data or "V 2".encode() in annotation_data:
         platform = "illuminaHumanv2"
     else:

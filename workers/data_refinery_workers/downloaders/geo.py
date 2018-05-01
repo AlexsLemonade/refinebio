@@ -30,7 +30,9 @@ CHUNK_SIZE = 1024 * 256
 
 def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> None:
     """ Download a file from GEO via FTP. There is no Aspera endpoint
-    which I can find. """
+    which I can find, although I know it exists. I think we have to ask GEO for it.
+    In future, this function may become a dispatcher to FTP via aria2 or FASP via ascp.
+    """
 
     # Ensure directory exists
     os.makedirs(file_path.rsplit('/', 1)[0], exist_ok=True)
