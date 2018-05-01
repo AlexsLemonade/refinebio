@@ -36,7 +36,7 @@ class HarmonyTestCase(TestCase):
         self.assertTrue('sex' in harmonized[title].keys())
         self.assertTrue('female' == harmonized[title]['sex'])
         self.assertTrue('age' in harmonized[title].keys())
-        self.assertTrue(54 == harmonized[title])
+        self.assertTrue(54.0 == harmonized[title]['age'])
         self.assertTrue('part' in harmonized[title].keys())
         self.assertTrue('subject' in harmonized[title].keys())
         self.assertTrue('developmental_stage' in harmonized[title].keys())

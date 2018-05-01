@@ -215,28 +215,23 @@ def _run_multiqc(job_context: Dict) -> Dict:
                 formatted_command,
                 processor_job=job_context["job_id"])
 
+    # Needed for MultiQC
     qc_env = os.environ.copy()
     qc_env["LC_ALL"] = "C.UTF-8"
     qc_env["LANG"] = "C.UTF-8"
-
     completed_command = subprocess.run(formatted_command.split(),
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE,
                                        env=qc_env)
 
     if completed_command.returncode != 0:
-
         stderr = str(completed_command.stderr)
-        error_start = stderr.find("Error:")
-        error_start = error_start if error_start != -1 else 0
         logger.error("Shell call to MultiQC failed with error message: %s",
-                     stderr[error_start:],
+                     stderr,
                      processor_job=job_context["job_id"])
 
         # The failure_reason column is only 256 characters wide.
-        error_end = error_start + 200
-        job_context["job"].failure_reason = ("Shell call to MultiQC failed because: "
-                                             + stderr[error_start:error_end])
+        job_context["job"].failure_reason = stderr[0:255]
         job_context["success"] = False
 
     return job_context
