@@ -61,6 +61,8 @@ class DownloadGeoTestCase(TestCase):
     def test_download_geo(self, mock_send_task):
         """ Tests the main 'download_geo' function. """
 
+        mock_send_task.side_effect = lambda x: None
+
         dlj = DownloaderJob()
         dlj.accession_code = 'GSE22427'
         dlj.save()
