@@ -47,7 +47,7 @@ bioc_pkgs <- c(
   'tximport_1.6.0.tar.gz',
   'limma_3.34.9.tar.gz',
   'illuminaHumanv2.db_1.26.0.tar.gz',
-  'lluminaHumanv4.db_1.26.0.tar.gz'
+  'illuminaHumanv4.db_1.26.0.tar.gz'
 )
 install_with_url(bioc_url, bioc_pkgs)
 
