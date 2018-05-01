@@ -1,3 +1,4 @@
+import collections
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
@@ -26,8 +27,6 @@ def requests_retry_session(
     session.mount('http://', adapter)
     session.mount('https://', adapter)
     return session
-
-import collections
 
 def flatten(d, parent_key='', sep='_'):
     """
