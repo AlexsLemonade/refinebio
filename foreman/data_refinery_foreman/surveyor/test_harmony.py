@@ -25,26 +25,25 @@ class HarmonyTestCase(TestCase):
         self.samples = [self.sample]
 
     def test_sdrf_harmony(self):
-        """
-
-        """
+        """ Harmonize SDRF test"""
         
         metadata = parse_sdrf("https://www.ebi.ac.uk/arrayexpress/files/E-MTAB-3050/E-MTAB-3050.sdrf.txt")
         harmonized = harmonize(metadata)
         print(harmonized)
 
-        self.assertTrue('donor a islets rna' in harmonized.keys())
-        self.assertTrue('sex' in harmonized['donor a islets rna'].keys())
-        self.assertTrue('female' == harmonized['donor a islets rna']['sex'])
-        self.assertTrue('age' in harmonized['donor a islets rna'].keys())
-        self.assertTrue(54 == harmonized['donor a islets rna']['age'])
-        self.assertTrue('part' in harmonized['donor a islets rna'].keys())
-        self.assertTrue('subject' in harmonized['donor a islets rna'].keys())
-        self.assertTrue('developmental_stage' in harmonized['donor a islets rna'].keys())
+        title = 'donor A islets RNA'
+        self.assertTrue(title in harmonized.keys())
+        self.assertTrue('sex' in harmonized[title].keys())
+        self.assertTrue('female' == harmonized[title]['sex'])
+        self.assertTrue('age' in harmonized[title].keys())
+        self.assertTrue(54 == harmonized[title])
+        self.assertTrue('part' in harmonized[title].keys())
+        self.assertTrue('subject' in harmonized[title].keys())
+        self.assertTrue('developmental_stage' in harmonized[title].keys())
 
     @tag('slow')
     def test_sdrf_big(self):
-        """ """
+        """ Tests lots of different cases for harmonization"""
 
         lots = [
             'E-GEOD-59071',
@@ -195,30 +194,32 @@ class HarmonyTestCase(TestCase):
             metadata = parse_sdrf("https://www.ebi.ac.uk/arrayexpress/files/" + accession + "/" + accession + ".sdrf.txt")
             if not metadata:
                 continue
+            # No assertions, just making sure we don't barf.
             harmonized = harmonize(metadata)
-            print(harmonized)
 
     def test_sra_harmony(self):
         """
-
+        Tests a specific harmonization from SRA
         """
         
         metadata = SraSurveyor.gather_all_metadata("SRR1533126")
         harmonized = harmonize([metadata])
-        self.assertTrue('phosphaturic mesenchymal tumour (pmt) case 2 of ntuh' in harmonized.keys())
-        self.assertTrue('sex' in harmonized['phosphaturic mesenchymal tumour (pmt) case 2 of ntuh'].keys())
-        self.assertEqual('female', harmonized['phosphaturic mesenchymal tumour (pmt) case 2 of ntuh']['sex'])
 
-        self.assertTrue('age' in harmonized['phosphaturic mesenchymal tumour (pmt) case 2 of ntuh'].keys())
-        self.assertEqual(57.0, harmonized['phosphaturic mesenchymal tumour (pmt) case 2 of ntuh']['age'])
+        title = 'Phosphaturic mesenchymal tumour (PMT) case 2 of NTUH'
+        self.assertTrue(title in harmonized.keys())
+        self.assertTrue('sex' in harmonized[title].keys())
+        self.assertEqual('female', harmonized[title]['sex'])
 
-        self.assertTrue('part' in harmonized['phosphaturic mesenchymal tumour (pmt) case 2 of ntuh'].keys())
-        self.assertTrue('disease' in harmonized['phosphaturic mesenchymal tumour (pmt) case 2 of ntuh'].keys())
+        self.assertTrue('age' in harmonized[title].keys())
+        self.assertEqual(57.0, harmonized[title]['age'])
+
+        self.assertTrue('part' in harmonized[title].keys())
+        self.assertTrue('disease' in harmonized[title].keys())
 
     @tag('slow')
     def test_sra_lots(self):
         """
-
+        Smoke tests a few SRA types
         """
 
         # These can be built via
@@ -256,7 +257,7 @@ class HarmonyTestCase(TestCase):
 
     def test_geo_harmony(self):
         """
-
+        Thoroughly tests a specific GEO harmonization
         """
         
         # Illumina
@@ -266,11 +267,12 @@ class HarmonyTestCase(TestCase):
         preprocessed_samples = preprocess_geo(gse.gsms.items())
         harmonized = harmonize(preprocessed_samples)
 
-        self.assertTrue('SCC_P-57' in harmonized.keys())
-        self.assertTrue('sex' in harmonized['SCC_P-57'].keys())
-        self.assertTrue('age' in harmonized['SCC_P-57'].keys())
-        self.assertTrue('part' in harmonized['SCC_P-57'].keys())
-        self.assertTrue('subject' in harmonized['SCC_P-57'].keys())
+        title = 'SCC_P-57'
+        self.assertTrue(title in harmonized.keys())
+        self.assertTrue('sex' in harmonized[title].keys())
+        self.assertTrue('age' in harmonized[title].keys())
+        self.assertTrue('part' in harmonized[title].keys())
+        self.assertTrue('subject' in harmonized[title].keys())
 
         # Agilent Two Color 
         gse = GEOparse.get_GEO("GSE93857", destdir='/tmp')
@@ -289,3 +291,9 @@ class HarmonyTestCase(TestCase):
         # GEO requires a small amount of preprocessing
         preprocessed_samples = preprocess_geo(gse.gsms.items())
         harmonized = harmonize(preprocessed_samples)
+
+        title = 'SCC_P-57'
+        self.assertTrue(title in harmonized.keys())
+        self.assertTrue('keratinocyte' == harmonized[title]['part'])
+        self.assertTrue('squamous cell carcinoma' == harmonized[title]['disease'])
+        self.assertTrue('azathioprine + prednison' == harmonized[title]['compound'])
