@@ -154,9 +154,10 @@ def download_geo(job_id: int) -> None:
     dl_file_path = LOCAL_ROOT_DIR + '/' + accession_code + '/' + url.split('/')[-1]
     logger.info("Starting to download: " + url, job_id=job_id, accession_code=accession_code)
     _download_file(url, dl_file_path, job)
+    original_file.absolute_file_path = dl_file_path
     original_file.is_downloaded = True
     original_file.save()
-    
+
     no_op = False
     unpacked_sample_files = []
 
@@ -167,6 +168,7 @@ def download_geo(job_id: int) -> None:
         except Exception as e:
             job.failure_reason = e
             utils.end_downloader_job(job, success=False)
+            logger.exception("Error occured while extracting tar file.", path=dl_file_path, exception=str(e))
             return
 
         for og_file in extracted_files:
@@ -180,6 +182,7 @@ def download_geo(job_id: int) -> None:
             try:
                 sample = Sample.objects.get(accession_code=sample_id)
             except Exception as e:
+                # We don't have this sample, but it's not a total failure. This happens.
                 continue
 
             try:
@@ -232,6 +235,7 @@ def download_geo(job_id: int) -> None:
         except Exception as e:
             job.failure_reason = e
             utils.end_downloader_job(job, success=False)
+            logger.exception("Error occured while extracting tgz file.", path=dl_file_path, exception=str(e))
             return
 
         for og_file in extracted_files:
@@ -268,6 +272,7 @@ def download_geo(job_id: int) -> None:
         except Exception as e:
             job.failure_reason = e
             utils.end_downloader_job(job, success=False)
+            logger.exception("Error occured while extracting gz file.", path=dl_file_path, exception=str(e))
             return
 
         for og_file in extracted_files:

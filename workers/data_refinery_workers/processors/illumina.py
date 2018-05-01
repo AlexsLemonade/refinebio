@@ -48,7 +48,6 @@ def _prepare_files(job_context: Dict) -> Dict:
         with open(job_context["input_file_path"] + ".sanitized", "w") as file_output:
             for line in file_input:
                 if '#' not in line and \
-                line != None and \
                 line.strip() != '' and \
                 line != '\n' and \
                 '\t' in line and \
