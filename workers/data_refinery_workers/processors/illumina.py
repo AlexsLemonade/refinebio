@@ -36,8 +36,8 @@ def _prepare_files(job_context: Dict) -> Dict:
     original_file = job_context["original_files"][0]
     job_context["input_file_path"] = original_file.absolute_file_path
     # Turns /home/user/data_store/E-GEOD-8607/raw/foo.txt into /home/user/data_store/E-GEOD-8607/processed/foo.cel
-    pre_part = original_file.absolute_file_path.split('/')[:-2]
-    end_part = original_file.absolute_file_path.split('/')[-1]
+    pre_part = original_file.absolute_file_path.split('/')[:-2] # Cut off '/raw'
+    end_part = original_file.absolute_file_path.split('/')[-1] # Get the filename
     job_context["output_file_path"] = '/'.join(pre_part) + '/processed/' + end_part
     job_context["output_file_path"] = job_context["output_file_path"].replace('.txt', '.PCL')
 
@@ -150,6 +150,7 @@ def _detect_columns(job_context: Dict) -> Dict:
     except Exception as e:
         job_context["job"].failure_reason = str(e)
         job_context["success"] = False
+        logger.exception("Failed to extract columns in " + job_context["input_file_path"], exception=str(e))
         return job_context
 
     return job_context

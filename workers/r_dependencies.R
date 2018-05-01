@@ -4,9 +4,8 @@ options(warn=2)
 
 options(repos=structure(c(CRAN="https://cloud.r-project.org")))
 
-# Install devtools
+# Install dev packages
 install.packages("devtools")
-install.packages("optparse")
 
 # Use devtools::install_version() to install packages in cran.
 devtools::install_version('ff', version='2.2-13')
@@ -16,6 +15,11 @@ devtools::install_version('RSQLite', version='2.0')
 devtools::install_version('tibble', version='1.4.2')
 devtools::install_version('xtable', version='1.8-2')
 devtools::install_version('pkgconfig', version='2.0.1')
+
+# Illumina
+devtools::install_version('doParallel', version='1.0.11')
+devtools::install_version('data.table', version='1.11.0')
+devtools::install_version('optparse', version='1.4.4')
 
 # Bioconductor packages, installed by devtools::install_url()
 
@@ -40,7 +44,10 @@ bioc_pkgs <- c(
   'preprocessCore_1.40.0.tar.gz',
   'genefilter_1.60.0.tar.gz',
   'sva_3.26.0.tar.gz',
-  'tximport_1.6.0.tar.gz'
+  'tximport_1.6.0.tar.gz',
+  'limma_3.34.9.tar.gz',
+  'illuminaHumanv2.db_1.26.0.tar.gz',
+  'lluminaHumanv4.db_1.26.0.tar.gz'
 )
 install_with_url(bioc_url, bioc_pkgs)
 
