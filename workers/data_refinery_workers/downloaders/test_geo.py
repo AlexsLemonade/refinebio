@@ -9,10 +9,34 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
     OriginalFileSampleAssociation,
-    ProcessorJob
+    ProcessorJob,
+    ProcessorJobOriginalFileAssociation
 )
 from data_refinery_workers.downloaders import geo, utils
 
+def create_processor_jobs_for_original_files_no_send(original_files, pipeline):
+    # Iterate over all of our samples.
+    # If we have raw, send it to the correct processor.
+    # Else, treat it as a "NO-OP"
+    for original_file in original_files:
+        processor_job = ProcessorJob()
+        if not pipeline:
+            if not original_file.has_raw:
+                processor_job.pipeline_applied = "NO_OP"
+            else:
+                if 'CEL' in original_file.filename.upper():
+                    processor_job.pipeline_applied = "AFFY_TO_PCL"
+                else:
+                    processor_job.pipeline_applied = "AGILENT_TWOCOLOR_TO_PCL"
+        else:
+            processor_job.pipeline_applied = pipeline
+
+        # Save the Job and create the association
+        processor_job.save()
+        assoc = ProcessorJobOriginalFileAssociation()
+        assoc.original_file = original_file
+        assoc.processor_job = processor_job
+        assoc.save()
 
 class DownloadGeoTestCase(TestCase):
     def setUp(self):
@@ -57,11 +81,9 @@ class DownloadGeoTestCase(TestCase):
 
         self.assertTrue(os.path.isfile('/home/user/data_store/GSE22427/raw/GSE22427_non-normalized.txt'))
 
-    @patch('data_refinery_common.message_queue.send_job')
+    @patch('data_refinery_workers.downloaders.utils.create_processor_jobs_for_original_files', side_effect=create_processor_jobs_for_original_files_no_send)
     def test_download_geo(self, mock_send_task):
         """ Tests the main 'download_geo' function. """
-
-        mock_send_task.side_effect = lambda x: None
 
         dlj = DownloaderJob()
         dlj.accession_code = 'GSE22427'
