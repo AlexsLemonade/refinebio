@@ -12,12 +12,10 @@ while getopts ":p:e:o:h" opt; do
             env=$OPTARG
             ;;
         h)
-            echo "Formats Nomad Job Specifications with the specified environment overlaid "
-            echo "onto the current environment."
-            echo '-p specifies the project to format. Valid values are "api", workers" or "foreman".'
+            echo "Starts Nomad and registers the jobs with it. This involves re-building the "
+            echo "Docker images and running format_nomad_with_env.sh to format the Nomad job "
+            echo "specifications for the correct environment."
             echo '- "dev" is the default enviroment, use -e to specify "prod" or "test".'
-            echo '- the project directory will be used as the default output directory, use -o to specify'
-            echo '      an absolute path to a directory (trailing / must be included).'
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2

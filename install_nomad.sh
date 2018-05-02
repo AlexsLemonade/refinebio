@@ -33,3 +33,8 @@ apt-get install -y unzip
 
 unzip -d /usr/bin nomad_0.7.1_linux_amd64.zip
 chmod a+rx /usr/bin/nomad
+
+# Cleanup after ourselves
+rm nomad_0.7.1_linux_amd64.zip
+rm nomad_0.7.1_SHA256SUMS
+rm nomad_0.7.1_SHA256SUMS.sig

@@ -12,6 +12,7 @@ aspera*
 # Project-specific Nomad related files
 nomad.logs
 nomad_dir
+nomad_dir_test
 infrastructure/nomad-job-specs/
 workers/nomad-job-specs/*
 !workers/nomad-job-specs/*.tpl
