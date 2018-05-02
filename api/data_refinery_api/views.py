@@ -1,11 +1,12 @@
 from django.conf import settings
 from django.db.models.aggregates import Avg
 from django.db.models.expressions import F
-from rest_framework.settings import api_settings
 from django.http import Http404
+from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
 from rest_framework import status
 
 from data_refinery_common.models import Experiment, Sample, Organism
@@ -23,6 +24,10 @@ from data_refinery_api.serializers import (
 	DownloaderJobSerializer,
 	ProcessorJobSerializer
 )
+
+##
+# Custom Views
+##
 
 class PaginatedAPIView(APIView):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
@@ -53,6 +58,34 @@ class PaginatedAPIView(APIView):
         """
         assert self.paginator is not None
         return self.paginator.get_paginated_response(data)
+
+##
+# Search and Filter
+##
+
+class SeachAndFilter(PaginatedAPIView):
+    """
+    Search and filter for experiments and samples.
+    """
+
+    queryset = Experiment.objects.all()
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
+    search_fields = ('title', '@description')
+    filter_fields = ('has_publication', 'submitter_institution', 'source_first_published')
+
+    def get(self, request, format=None):
+        filter_dict = request.query_params.dict()
+        filter_dict.pop('limit', None)
+        filter_dict.pop('offset', None)
+        experiments = Experiment.objects.filter(**filter_dict)
+
+        page = self.paginate_queryset(experiments)
+        if page is not None:
+            serializer = ExperimentSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        else:
+            serializer = ExperimentSerializer(experiments, many=True)
+            return Response(serializer.data)
 
 ##
 # Experiments

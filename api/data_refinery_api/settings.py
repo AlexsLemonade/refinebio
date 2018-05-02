@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_hstore',
     'coreapi',
+    'django-filters',
     
     # Local
     'data_refinery_common',
