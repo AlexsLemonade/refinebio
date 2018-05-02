@@ -101,6 +101,7 @@ class Experiment(models.Model):
         return "Experiment: " + self.accession_code
 
     samples = models.ManyToManyField('Sample', through='ExperimentSampleAssociation')
+    organisms = models.ManyToManyField('Organism', through='ExperimentOrganismAssociation')
 
     # Identifiers
     accession_code = models.CharField(max_length=64, unique=True)
@@ -398,6 +399,14 @@ class ExperimentSampleAssociation(models.Model):
 
     class Meta:
         db_table = "experiment_sample_associations"
+
+class ExperimentOrganismAssociation(models.Model):
+
+    experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
+    organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "experiment_organism_associations"
 
 class DownloaderJobOriginalFileAssociation(models.Model):
 
