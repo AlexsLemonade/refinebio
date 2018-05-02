@@ -124,7 +124,7 @@ done < "environments/$env"
 # If output_dir wasn't specified then assume the same folder we're
 # getting the templates from.
 if [[ -z $output_dir ]]; then
-    output_dir=nomad_job_specs
+    output_dir=nomad-job-specs
 elif [[ ! -d "$output_dir" ]]; then
     mkdir $output_dir
 fi
@@ -133,7 +133,7 @@ fi
 # Perl magic found here: https://stackoverflow.com/a/2916159/6095378
 if [[ $project == "workers" ]]; then
     # Iterate over all the template files in the directory.
-    for template in $(ls -1 nomad_job_specs | grep \.tpl); do
+    for template in $(ls -1 nomad-job-specs | grep \.tpl); do
         # Strip off the trailing .tpl for once we've formatted it.
         output_file=${template/.tpl/}
         cat $output_dir/$template \

@@ -140,8 +140,8 @@ echo "Nomad is online. Registering jobs."
 ./format_nomad_with_env.sh -p foreman -e $env
 
 # Register the jobs for dispatching.
-for job_spec in $(ls -1 workers/nomad_job_specs | grep "\.nomad$TEST_POSTFIX$"); do
-    nomad run workers/nomad_job_specs/"$job_spec$TEST_POSTFIX"
+for job_spec in $(ls -1 workers/nomad-job-specs | grep "\.nomad$TEST_POSTFIX$"); do
+    nomad run workers/nomad-job-specs/"$job_spec$TEST_POSTFIX"
 done
 
 # There's only one foreman image, so no need to loop.

@@ -13,6 +13,10 @@ aspera*
 nomad.logs
 nomad_dir
 infrastructure/nomad-job-specs/
+workers/nomad-job-specs/*
+!workers/nomad-job-specs/*.tpl
+foreman/surveyor.nomad
+foreman/surveyor.nomad_test
 
 # Terraform
 infrastructure/.terraform/
