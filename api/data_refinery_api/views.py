@@ -2,12 +2,13 @@ from django.conf import settings
 from django.db.models.aggregates import Avg
 from django.db.models.expressions import F
 from django.http import Http404
+
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
-from rest_framework import status
+from rest_framework import status, filters
 
 from data_refinery_common.models import Experiment, Sample, Organism
 from data_refinery_api.serializers import ( 

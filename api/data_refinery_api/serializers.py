@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.fields import ListField
 from rest_framework_hstore.fields import HStoreField
 from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
 from data_refinery_common.models import (
@@ -24,6 +25,16 @@ class OrganismSerializer(serializers.ModelSerializer):
                     'name',
                     'taxonomy_id',
                 )
+
+class SimpleOrganismSerializer(serializers.ModelSerializer):
+    class Meta:
+        depth = 1
+        model = Organism
+        fields = (
+                    'name',
+                )
+
+
 ##
 # Results
 ##
@@ -132,6 +143,8 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 ##
 
 class ExperimentSerializer(serializers.ModelSerializer):
+    organisms = SimpleOrganismSerializer(many=True)
+
     class Meta:
         model = Experiment
         fields = (
@@ -148,6 +161,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'publication_doi',
                     'pubmed_id',
                     'samples',
+                    'organisms',
                     'submitter_institution',
                     'created_at',
                     'last_modified'
