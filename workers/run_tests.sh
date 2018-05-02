@@ -81,7 +81,7 @@ chmod -R a+rwX $volume_directory
 docker build -t dr_worker_tests -f workers/Dockerfile.tests .
 
 source common.sh
-HOST_IP=127.0.0.1
+HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 
 docker run \

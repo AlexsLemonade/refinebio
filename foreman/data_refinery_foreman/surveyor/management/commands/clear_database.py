@@ -1,5 +1,5 @@
 """
-This command will create and run survey jobs for the specified ensembl division.
+This command will clear out the database to make repeating tests easier.
 """
 
 from django.core.management.base import BaseCommand

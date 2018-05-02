@@ -1,9 +1,5 @@
 FROM ccdl/data_refinery_worker_base
 
-# Install Aspera
-RUN wget -q https://download.asperasoft.com/download/sw/cli/3.7.7/aspera-cli-3.7.7.608.927cce8-linux-64-release.sh
-RUN sh aspera-cli-3.7.7.608.927cce8-linux-64-release.sh
-
 COPY common/dist/data-refinery-common-* common/
 
 # Get the latest version from the dist directory.
@@ -15,6 +11,10 @@ COPY workers/requirements.txt .
 RUN pip install -r requirements.txt
 
 USER user
+
+# Install Aspera
+RUN wget -q https://download.asperasoft.com/download/sw/cli/3.7.7/aspera-cli-3.7.7.608.927cce8-linux-64-release.sh
+RUN sh aspera-cli-3.7.7.608.927cce8-linux-64-release.sh
 
 COPY workers/ .
 
