@@ -12,6 +12,7 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
     ExperimentSampleAssociation,
+    ExperimentOrganismAssociation,
     OriginalFile
 )
 from data_refinery_foreman.surveyor import utils
@@ -400,10 +401,22 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 original_file.has_raw = has_raw
                 original_file.save()
 
-            association = ExperimentSampleAssociation()
-            association.experiment = experiment
-            association.sample = sample_object
-            association.save()
+            # Create associations if they don't already exist
+            try:
+                assocation = ExperimentSampleAssociation.objects.get(experiment=experiment, sample=sample_object)
+            except ExperimentSampleAssociation.DoesNotExist:
+                association = ExperimentSampleAssociation()
+                association.experiment = experiment
+                association.sample = sample_object
+                association.save()
+
+            try:
+                assocation = ExperimentOrganismAssociation.objects.get(experiment=experiment, organism=organism)
+            except ExperimentOrganismAssociation.DoesNotExist:
+                association = ExperimentOrganismAssociation()
+                association.experiment = experiment
+                association.organism = organism
+                association.save()
 
             logger.info("Created Sample: " + str(sample_object))
 
