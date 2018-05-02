@@ -1,0 +1,70 @@
+FROM ubuntu:16.04
+
+RUN \
+  apt-get update -qq && \
+  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9 && \
+  apt-get update -qq && \
+  apt-get install -y \
+  ed \
+  git \
+  python3 \
+  python3-pip \
+  libcurl4-openssl-dev \
+  libpq-dev \
+  curl \
+  wget && \
+  rm -rf /var/lib/apt/lists/*
+
+RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
+WORKDIR /home/user
+
+RUN git clone https://github.com/deweylab/RSEM.git
+
+RUN cd RSEM && make install
+
+RUN rm -rf RSEM
+
+# Starting here, code is based on:
+# https://github.com/COMBINE-lab/salmon/blob/master/docker/Dockerfile
+ENV PACKAGES gcc make g++ cmake libboost-all-dev liblzma-dev libbz2-dev \
+    ca-certificates zlib1g-dev unzip autoconf
+
+# Version 0.8.2 has an outdated sha hash which breaks its make command.
+# I fixed this in the lastest commit, but that hasn't been cut to a
+# new version yet.
+ENV SALMON_COMMIT_HASH 0b9f1eb8a0a321adc6320f490b015e75ebf3d3bb
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ${PACKAGES} && \
+    apt-get clean
+
+RUN curl -k -L https://github.com/COMBINE-lab/salmon/archive/${SALMON_COMMIT_HASH}.zip \
+         -o salmon-${SALMON_COMMIT_HASH}.zip && \
+    unzip salmon-${SALMON_COMMIT_HASH}.zip && \
+    cd salmon-${SALMON_COMMIT_HASH} && \
+    mkdir build && \
+    cd build && \
+    cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && make && make install
+
+ENV PATH /home/user/salmon-${SALMON_COMMIT_HASH}/bin:${PATH}
+# End code from salmon repo.
+
+RUN pip3 install --upgrade pip
+
+COPY workers/data_refinery_workers/processors/requirements.txt .
+
+RUN  pip3 --no-cache-dir install -r requirements.txt
+
+COPY common/dist/data-refinery-common-* common/
+
+# Get the latest version from the dist directory.
+RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
+
+# Clear our the pip3 cache
+RUN rm -rf /root/.cache
+
+USER user
+
+COPY workers/ .
+
+ENTRYPOINT []

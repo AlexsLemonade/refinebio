@@ -18,7 +18,7 @@ job "TRANSCRIPTOME_INDEX" {
       # delay    = "30s"
     }
 
-    task "processor" {
+    task "transcriptome_index" {
       driver = "docker"
 
       # This env will be passed into the container for the job.

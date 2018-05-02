@@ -38,6 +38,8 @@ def send_job(job_type: Enum, job_id: int) -> None:
         nomad_job = NOMAD_TRANSCRIPTOME_JOB
     elif job_type is ProcessorPipeline.SALMON:
         nomad_job = ProcessorPipeline.SALMON.value
+    elif job_type is ProcessorPipeline.NO_OP:
+        nomad_job = ProcessorPipeline.NO_OP.value
     elif job_type in list(ProcessorPipeline):
         nomad_job = NOMAD_PROCESSOR_JOB
     elif job_type in list(Downloaders):

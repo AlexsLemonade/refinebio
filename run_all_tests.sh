@@ -5,6 +5,7 @@
 # This can be done with:
 # sudo -E ./run_nomad.sh -e test
 # This should mirror what happens in the CircleCI config (.circleci/config).
+./update_models.sh
 ./api/run_tests.sh
 ./common/run_tests.sh
 ./foreman/run_tests.sh

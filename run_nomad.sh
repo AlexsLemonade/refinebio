@@ -100,11 +100,6 @@ if [[ -z $(docker ps | grep "image-registry") ]]; then
     docker run -d -p 5000:5000 --restart=always --name image-registry registry:2
 fi
 
-# Temporary so this image isn't missing before I've completely replaced it:
-docker build -t dr_worker"$TEST_POSTFIX" -f workers/Dockerfile .
-docker tag dr_worker"$TEST_POSTFIX" localhost:5000/dr_worker"$TEST_POSTFIX"
-docker push localhost:5000/dr_worker"$TEST_POSTFIX"
-
 # Build, tag, and push an image for the workers to the local registry.
 for dockerfile in $(ls -1 workers/dockerfiles); do
     # Replace 'Dockerfile.' with 'dr_' to get the name of the image.
@@ -139,7 +134,7 @@ echo "Nomad is online. Registering jobs."
 
 # Register the jobs for dispatching.
 for job_spec in $(ls -1 workers/nomad-job-specs | grep "\.nomad$TEST_POSTFIX$"); do
-    nomad run workers/nomad-job-specs/"$job_spec$TEST_POSTFIX"
+    nomad run workers/nomad-job-specs/"$job_spec"
 done
 
 # There's only one foreman image, so no need to loop.

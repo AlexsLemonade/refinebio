@@ -18,7 +18,7 @@ job "SALMON" {
       # delay    = "30s"
     }
 
-    task "processor" {
+    task "salmon" {
       driver = "docker"
 
       # This env will be passed into the container for the job.

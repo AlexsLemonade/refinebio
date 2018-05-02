@@ -51,7 +51,7 @@ variable "running_in_cloud" {
   default = "True"
 }
 
-# This is a placeholder until there is a production image ready.
+# These are placeholders until there are production images ready.
 variable "workers_docker_image" {
   default = "wkurt/dr_worker:6"
 }
@@ -63,6 +63,9 @@ variable "transcriptome_docker_image" {
 }
 variable "salmon_docker_image" {
   default = "wkurt/dr_salmon:6"
+}
+variable "no_op_docker_image" {
+  default = "wkurt/no_op:6"
 }
 variable "foreman_docker_image" {
   default = "wkurt/dr_foreman:6"
@@ -159,6 +162,12 @@ output "environment_variables" {
       value = "${var.processed_prefix}"},
     {name = "WORKERS_DOCKER_IMAGE"
       value = "${var.workers_docker_image}"},
+    {name = "TRANSCRIPTOME_DOCKER_IMAGE"
+      value = "${var.transcriptome_docker_image}"},
+    {name = "SALMON_DOCKER_IMAGE"
+      value = "${var.salmon_docker_image}"},
+    {name = "NO_OP_DOCKER_IMAGE"
+      value = "${var.no_op_docker_image}"},
     {name = "FOREMAN_DOCKER_IMAGE"
       value = "${var.foreman_docker_image}"},
     {name = "NOMAD_HOST"
