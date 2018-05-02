@@ -1,0 +1,7 @@
+django
+requests
+psycopg2
+boto3
+retrying
+python-nomad
+coveralls

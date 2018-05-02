@@ -111,6 +111,8 @@ docker push localhost:5000/dr_worker"$TEST_POSTFIX"
 for dockerfile in $(ls -1 workers/dockerfiles); do
     # Replace 'Dockerfile.' with 'dr_' to get the name of the image.
     image_name=${dockerfile/Dockerfile./dr_}
+    echo ""
+    echo "Rebuilding the $image_name image."
     docker build -t "$image_name$TEST_POSTFIX" -f workers/dockerfiles/$dockerfile .
     docker tag "$image_name$TEST_POSTFIX" localhost:5000/"$image_name$TEST_POSTFIX"
     docker push localhost:5000/"$image_name$TEST_POSTFIX"
