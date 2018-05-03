@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework.fields import ListField
 from rest_framework_hstore.fields import HStoreField
 from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
 from data_refinery_common.models import (
