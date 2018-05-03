@@ -28,7 +28,7 @@ class OrganismSerializer(serializers.ModelSerializer):
 
 class SimpleOrganismSerializer(serializers.ModelSerializer):
     class Meta:
-        depth = 1
+        depth = 0
         model = Organism
         fields = (
                     'name',
@@ -143,7 +143,7 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 ##
 
 class ExperimentSerializer(serializers.ModelSerializer):
-    organisms = SimpleOrganismSerializer(many=True)
+    organisms = serializers.StringRelatedField(many=True)
 
     class Meta:
         model = Experiment

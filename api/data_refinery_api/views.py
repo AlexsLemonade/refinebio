@@ -5,10 +5,11 @@ from django.http import Http404
 
 from django_filters.rest_framework import DjangoFilterBackend
 
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
-from rest_framework import status, filters
+from rest_framework import status, filters, generics
 
 from data_refinery_common.models import Experiment, Sample, Organism
 from data_refinery_api.serializers import ( 
@@ -64,29 +65,22 @@ class PaginatedAPIView(APIView):
 # Search and Filter
 ##
 
-class SeachAndFilter(PaginatedAPIView):
+# ListAPIView is read-only!
+class SearchAndFilter(generics.ListAPIView):
     """
     Search and filter for experiments and samples.
+
+    Ex: search/?search=human&has_publication=True
+
     """
 
     queryset = Experiment.objects.all()
+    serializer_class = ExperimentSerializer
+    pagination_class = LimitOffsetPagination
+
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
     search_fields = ('title', '@description')
     filter_fields = ('has_publication', 'submitter_institution', 'source_first_published')
-
-    def get(self, request, format=None):
-        filter_dict = request.query_params.dict()
-        filter_dict.pop('limit', None)
-        filter_dict.pop('offset', None)
-        experiments = Experiment.objects.filter(**filter_dict)
-
-        page = self.paginate_queryset(experiments)
-        if page is not None:
-            serializer = ExperimentSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        else:
-            serializer = ExperimentSerializer(experiments, many=True)
-            return Response(serializer.data)
 
 ##
 # Experiments

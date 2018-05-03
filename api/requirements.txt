@@ -11,7 +11,7 @@ chardet==3.0.4            # via requests
 coreapi==2.3.3
 coreschema==0.0.4         # via coreapi
 coverage==4.5
-django-filters==0.2.1
+django-filter==1.1.0
 django-hstore==1.4.2      # via djangorestframework-hstore
 django==2.0.2
 djangorestframework-hstore==1.3
