@@ -24,6 +24,7 @@ class OrganismSerializer(serializers.ModelSerializer):
                     'name',
                     'taxonomy_id',
                 )
+
 ##
 # Results
 ##
@@ -132,6 +133,8 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 ##
 
 class ExperimentSerializer(serializers.ModelSerializer):
+    organisms = serializers.StringRelatedField(many=True)
+
     class Meta:
         model = Experiment
         fields = (
@@ -143,11 +146,13 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'source_database',
                     'source_url',
                     'platform_name',
+                    'technology',
                     'has_publication',
                     'publication_title',
                     'publication_doi',
                     'pubmed_id',
                     'samples',
+                    'organisms',
                     'submitter_institution',
                     'created_at',
                     'last_modified'
@@ -189,6 +194,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
                     'source_first_published',
                     'source_last_modified',
                     'platform_accession_code',
+                    'technology',
                     'submitter_institution',
                     'last_modified',
                     'created_at',
