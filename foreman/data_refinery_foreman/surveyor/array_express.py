@@ -107,6 +107,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment_object.description = parsed_json["description"][0]["text"]
             experiment_object.platform_name = experiment["platform_accession_name"]
             experiment_object.platform_accession_code = experiment["platform_accession_code"]
+            experiment_object.technology = "MICROARRAY"
             experiment_object.source_first_published = parse_datetime(experiment["release_date"])
             experiment_object.source_last_modified = parse_datetime(experiment["last_update_date"])
             experiment_object.save()

@@ -80,7 +80,7 @@ class SearchAndFilter(generics.ListAPIView):
 
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
     search_fields = ('title', '@description')
-    filter_fields = ('has_publication', 'submitter_institution', 'source_first_published')
+    filter_fields = ('has_publication', 'submitter_institution', 'technology', 'source_first_published')
 
 ##
 # Experiments
