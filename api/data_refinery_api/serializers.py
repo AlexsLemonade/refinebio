@@ -26,15 +26,6 @@ class OrganismSerializer(serializers.ModelSerializer):
                     'taxonomy_id',
                 )
 
-class SimpleOrganismSerializer(serializers.ModelSerializer):
-    class Meta:
-        depth = 0
-        model = Organism
-        fields = (
-                    'name',
-                )
-
-
 ##
 # Results
 ##
