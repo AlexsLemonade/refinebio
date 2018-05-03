@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 # Script for migrating the database using a Docker container so no
 # virtual environment is needed on the host machine.
