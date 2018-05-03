@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 # Script for migrating the database using a Docker container so no
 # virtual environment is needed on the host machine.
@@ -29,7 +29,7 @@ docker run \
        --env-file common/environments/dev \
        --interactive \
        --link drdb:postgres $NOMAD_LINK \
-       dr_models python3.6 manage.py makemigrations data_refinery_common
+       dr_models python3.6 manage.py makemigrations data_refinery_common --noinput
 
 docker run \
        --volume $script_directory/data_refinery_common:/home/user/data_refinery_common \
@@ -37,4 +37,4 @@ docker run \
        --add-host=nomad:$NOMAD_HOST_IP \
        --env-file common/environments/dev \
        --link drdb:postgres $NOMAD_LINK \
-       dr_models python3.6 manage.py migrate
+       dr_models python3.6 manage.py migrate --noinput
