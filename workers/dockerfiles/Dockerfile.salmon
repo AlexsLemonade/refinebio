@@ -2,11 +2,6 @@ FROM ubuntu:16.04
 
 RUN \
   apt-get update -qq && \
-  apt-get install -y lsb-release && \
-  echo "deb http://cran.cnr.berkeley.edu/bin/linux/ubuntu $(lsb_release -sc)/" \
-      >> /etc/apt/sources.list.d/added_repos.list && \
-  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9 && \
-  apt-get update -qq && \
   apt-get install -y \
   ed \
   git \
@@ -16,8 +11,6 @@ RUN \
   lsb-release \
   python3 \
   python3-pip \
-  r-base \
-  r-base-dev \
   libxml2-dev \
   libssl-dev \
   libcurl4-openssl-dev \
@@ -27,12 +20,6 @@ RUN \
 
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
-
-ENV R_LIBS "/usr/local/lib/R/site-library"
-
-COPY workers/install_tximport.R .
-
-RUN Rscript install_tximport.R
 
 # Starting here, code is based on:
 # https://github.com/COMBINE-lab/salmon/blob/master/docker/Dockerfile
@@ -63,10 +50,7 @@ RUN pip3 install --upgrade pip
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
 
-# Not all processors need R, so install it separately so we don't need
-# to maintain a separate requirements.txt with/without it.
-RUN pip3 install -r requirements.txt && \
-    pip3 install rpy2
+RUN pip3 install -r requirements.txt
 
 COPY common/dist/data-refinery-common-* common/
 

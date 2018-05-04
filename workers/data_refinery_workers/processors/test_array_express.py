@@ -1,7 +1,7 @@
 import os
 import shutil
 from contextlib import closing
-from django.test import TestCase
+from django.test import TestCase, tag
 from unittest.mock import MagicMock
 from data_refinery_common.models import (
     SurveyJob,
@@ -32,6 +32,7 @@ def prepare_job():
 
 class AffyToPCLTestCase(TestCase):
 
+    @tag("affymetrix")
     def test_affy_to_pc(self):
         """ """
         job = prepare_job()

@@ -75,19 +75,27 @@ if [ ! -e "$tx_index_test_raw_dir/$gtf_file" ]; then
          "$test_data_repo/$gtf_file"
 fi
 
-# Ensure permissions are set for everything within the test data directory.
-chmod -R a+rwX $volume_directory
-
-docker build -t dr_worker_tests -f workers/Dockerfile.tests .
-
 source common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 
-docker run \
+# Ensure permissions are set for everything within the test data directory.
+chmod -R a+rwX $volume_directory
+
+images=(salmon transcriptome no_op downloaders)
+
+for image in ${images[*]}; do
+    image_name=dr_$image
+    echo "Building $image_name image to run tests with."
+    docker build -t $image_name -f workers/dockerfiles/Dockerfile.$image .
+    test_command="$(run_tests_with_coverage --tag=$image $@)"
+    echo "Running tests with the following command:"
+    echo $test_command
+    docker run \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
        --env-file workers/environments/test \
        --volume $volume_directory:/home/user/data_store \
        --link drdb:postgres \
-       -it dr_worker_tests bash -c "$(run_tests_with_coverage $@)"
+       -it $image_name bash -c "$test_command"
+done

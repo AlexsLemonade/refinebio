@@ -10,9 +10,6 @@ import tarfile
 from django.utils import timezone
 from typing import Dict
 
-import rpy2.robjects as ro
-from rpy2.rinterface import RRuntimeError
-
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
@@ -285,25 +282,6 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
 
     return job_context
 
-def _run_tximport(job_context: Dict) -> Dict:
-    """ Runs the `tximport` R package to find genes. 
-    
-    For an R code example of tximport usage, see: 
-    https://github.com/jaclyn-taroni/ref-txome/blob/79e2f64ffe6a71c5103a150bd3159efb784cddeb/4-athaliana_tximport.R
-
-    Related: https://github.com/data-refinery/data-refinery/issues/82
-
-    """
-
-    try:
-        tx_out = ro.r['::']('tximport', 'tximport')(job_context['output_directory'] + 'quant.sf', type="salmon", txOut=True)
-    except RRuntimeError as e:
-        # XXX/TODO: This doesn't work yet.
-        # But, eventually, it will look something like this. ^^
-        return job_context
-
-    return job_context
-
 def _run_salmontools(job_context: Dict) -> Dict:
     """ Run Salmontools to extract unmapped genes. 
 
@@ -326,6 +304,5 @@ def salmon(job_id: int) -> None:
                         _download_index,
                         _run_salmon,
                         _run_salmontools,
-                        _run_tximport,
                         _zip_and_upload,
                         utils.end_job])

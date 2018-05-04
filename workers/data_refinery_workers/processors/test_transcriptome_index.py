@@ -1,8 +1,7 @@
 import os
 import shutil
-from django.test import TestCase
+from django.test import TestCase, tag
 from unittest.mock import patch
-from subprocess import CompletedProcess
 from data_refinery_common.models import (
     SurveyJob,
     Organism,
@@ -53,6 +52,7 @@ def prepare_job():
 
 class TXTestCase(TestCase):
 
+    @tag('transcriptome')
     def test_tx(self):
         """ """
         job = prepare_job()
