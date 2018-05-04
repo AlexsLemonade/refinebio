@@ -39,9 +39,9 @@ COPY workers/install_ensg_pkgs.R .
 
 RUN Rscript r_dependencies.R
 
-RUN \
-  pip3 --no-cache-dir install pip --upgrade && \
-  pip3 --no-cache-dir install setuptools --upgrade && \
+RUN pip3 install pip --upgrade
+
+RUN pip3 install setuptools --upgrade && \
   rm -rf /root/.cache
 
 COPY common/dist/data-refinery-common-* common/
