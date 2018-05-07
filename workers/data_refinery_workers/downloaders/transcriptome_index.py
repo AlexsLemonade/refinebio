@@ -93,9 +93,10 @@ def download_transcriptome(job_id: int) -> None:
             original_file.save()
             files_to_process.append(original_file)
         else:
-            logger.error("Problem during download", 
-                url=original_file.source_url, 
-                original_file_id=original_file.id)
+            logger.error("Problem during download",
+                         url=original_file.source_url,
+                         original_file_id=original_file.id,
+                         downloader_job=job_id)
 
     if success:
         logger.debug("Files downloaded successfully.",
