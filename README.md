@@ -32,6 +32,7 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Surveyor Jobs](#surveyor-jobs)
     - [ArrayExpress](#arrayexpress)
     - [Sequence Read Archive (SRA)](#sequence-read-archive-sra)
+    - [Gene Expression Omnibus (GEO)](#gene-expression-omnibus-geo)
     - [Ensembl Indexes](#ensembl-indexes)
   - [Downloader Jobs](#downloader-jobs)
   - [Processor Jobs](#processor-jobs)
@@ -41,6 +42,7 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Style](#style-1)
 - [Production Deployment](#production-deployment)
   - [Terraform](#terraform)
+  - [Autoscaling and Setting Spot Prices](#autoscaling-and-setting-spot-prices)
   - [Running Jobs](#running-jobs)
   - [Log Consumption](#log-consumption)
 - [Support](#support)
@@ -237,9 +239,11 @@ recording metadata about the samples. A Surveyor Job should queue
 
 The Surveyor can be run with the `./foreman/run_surveyor.sh`
 script. The first argument to this script is the type of Surveyor Job
-to run. The three valid options are:
+to run. The valid options are:
+- `survey_all`
 - `survey_array_express`
 - `survey_sra`
+- `survey_geo`
 - `survey_transcriptome`
 
 Each Surveyor Job type expects unique arguments. Details on these
@@ -247,6 +251,14 @@ arguments can be viewed by running:
 
 ```bash
 ./foreman/run_surveyor.sh <JOB_TYPE> -h
+```
+
+You can also supply a newline-deliminated file to `survey_all` which will 
+dispatch survey jobs based on acession codes like so:
+
+Example:
+```bash
+./foreman/run_surveyor.sh survey_all --file MY_BIG_LIST_OF_CODES.txt
 ```
 
 Templates and examples of valid commands to run the different types of
@@ -288,6 +300,19 @@ Example (single read):
 Example (paired read):
 ```bash
 ./foreman/run_surveyor.sh survey_sra SRR6718414
+```
+
+#### Gene Expression Omnibus (GEO)
+
+The GEO surveyor expects an exession code or a file:
+
+```bash
+./foreman/run_surveyor.sh survey_geo --accession <ARRAY_EXPRESS_ACCESSION_CODE> --file <FILEPATH.txt>
+```
+
+Example:
+```bash
+./foreman/run_surveyor.sh survey_geo --file NEUROBLASTOMA.txt
 ```
 
 #### Ensembl Indexes
