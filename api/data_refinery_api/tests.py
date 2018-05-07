@@ -3,6 +3,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+import json
 import random
 
 from data_refinery_common.models import (
@@ -16,7 +17,8 @@ from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
     ProcessorJob,
-    ProcessorJobOriginalFileAssociation
+    ProcessorJobOriginalFileAssociation,
+    Dataset
 )
 from data_refinery_api.serializers import (
     ExperimentSerializer,
@@ -126,6 +128,12 @@ class SanityTestAllEndpoints(APITestCase):
         response = self.client.get(reverse('search'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+        response = self.client.get(reverse('dataset_root'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(reverse('create_dataset'))
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
     def test_search_and_filter(self):
 
         # Our Docker image doesn't have the standard dict. >=[
@@ -173,3 +181,39 @@ class SanityTestAllEndpoints(APITestCase):
         response = self.client.get(reverse('search'), {'search': 'THISWILLBEINASEARCHRESULT', 'technology': 'MICROARRAY'})
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME')
+
+    def test_create_update_dataset(self):
+
+        # Good
+        jdata = json.dumps({'data': {"A": ["B"]}})
+        response = self.client.post(reverse('create_dataset'), jdata, content_type="application/json")
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['data'], json.loads(jdata)['data'])
+        good_id = response.json()['id']
+
+        response = self.client.get(reverse('dataset', kwargs={'id': good_id}))
+        self.assertEqual(response.json()['id'], good_id)
+        self.assertEqual(response.json()['data'], json.loads(jdata)['data'])
+        self.assertEqual(response.json()['data']["A"], ["B"])
+
+        # Update
+        jdata = json.dumps({'data': {"A": ["C"]}})
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['id'], good_id)
+        self.assertEqual(response.json()['data'], json.loads(jdata)['data'])
+        self.assertEqual(response.json()['data']["A"], ["C"])
+
+        # Can't update if started
+        dataset = Dataset.objects.get(id=good_id)
+        dataset.is_processing = True
+        dataset.save()
+        jdata = json.dumps({'data': {"A": ["D"]}})
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
+        self.assertNotEqual(response.json()['data']["A"], ["D"])
+
+        # Bad
+        jdata = json.dumps({'data': 123})
+        response = self.client.post(reverse('create_dataset'), jdata, content_type="application/json")
+        self.assertEqual(response.status_code, 400)

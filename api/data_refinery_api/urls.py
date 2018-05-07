@@ -19,7 +19,9 @@ from data_refinery_api.views import (
     SurveyJobList,
     DownloaderJobList,
     ProcessorJobList,
-    Stats
+    Stats,
+    CreateDatasetView,
+    DatasetView
 )
 
 # This provides _public_ access to the /admin interface!
@@ -46,7 +48,8 @@ class APIRoot(APIView):
             'platforms': reverse('platforms', request=request),
             'institutions': reverse('institutions', request=request),
             'jobs': reverse('jobs', request=request),
-            'stats': reverse('stats', request=request)
+            'stats': reverse('stats', request=request),
+            'dataset': reverse('dataset_root', request=request)
         })
 
 # This class provides a friendlier jobs API page.
@@ -61,6 +64,20 @@ class JobsRoot(APIView):
             'processor': reverse('processor_jobs', request=request)
         })
 
+# This class provides a friendlier Dataset API page.
+class DatasetRoot(APIView):
+    """
+    Use the 'create' endpoint to create a new dataset,
+    then use the returned 'id' field to see and update all the fields:
+
+    `/dataset/id-1234-1234/`
+
+    """
+    def get(self, request):
+        return Response({
+            'create': reverse('create_dataset', request=request)
+        })
+
 urlpatterns = [
     # Primary search and filter interface
     url(r'^search/$', SearchAndFilter.as_view(), name="search"),
@@ -73,6 +90,11 @@ urlpatterns = [
     url(r'^organisms/$', OrganismList.as_view(), name="organisms"),
     url(r'^platforms/$', PlatformList.as_view(), name="platforms"),
     url(r'^institutions/$', InstitutionList.as_view(), name="institutions"),
+
+    # Deliverables
+    url(r'^dataset/$', DatasetRoot.as_view(), name="dataset_root"),
+    url(r'^dataset/create/$', CreateDatasetView.as_view(), name="create_dataset"),
+    url(r'^dataset/(?P<id>[0-9a-f-]+)/$', DatasetView.as_view(), name="dataset"),
 
     # Jobs
     url(r'^jobs/$', JobsRoot.as_view(), name="jobs"),
