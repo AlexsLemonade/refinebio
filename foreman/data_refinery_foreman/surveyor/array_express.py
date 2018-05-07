@@ -13,7 +13,8 @@ from data_refinery_common.models import (
     SampleAnnotation,
     ExperimentSampleAssociation,
     OriginalFile,
-    OriginalFileSampleAssociation
+    OriginalFileSampleAssociation,
+    ExperimentOrganismAssociation
 )
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
@@ -110,6 +111,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment_object.description = parsed_json["description"][0]["text"]
             experiment_object.platform_name = experiment["platform_accession_name"]
             experiment_object.platform_accession_code = experiment["platform_accession_code"]
+            experiment_object.technology = "MICROARRAY"
             experiment_object.source_first_published = parse_datetime(experiment["release_date"])
             experiment_object.source_last_modified = parse_datetime(experiment["last_update_date"])
             experiment_object.save()
@@ -415,10 +417,22 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 original_file_sample_association.sample = sample_object
                 original_file_sample_association.save()
 
-            association = ExperimentSampleAssociation()
-            association.experiment = experiment
-            association.sample = sample_object
-            association.save()
+            # Create associations if they don't already exist
+            try:
+                assocation = ExperimentSampleAssociation.objects.get(experiment=experiment, sample=sample_object)
+            except ExperimentSampleAssociation.DoesNotExist:
+                association = ExperimentSampleAssociation()
+                association.experiment = experiment
+                association.sample = sample_object
+                association.save()
+
+            try:
+                assocation = ExperimentOrganismAssociation.objects.get(experiment=experiment, organism=organism)
+            except ExperimentOrganismAssociation.DoesNotExist:
+                association = ExperimentOrganismAssociation()
+                association.experiment = experiment
+                association.organism = organism
+                association.save()
 
             logger.info("Created Sample: " + str(sample_object))
 

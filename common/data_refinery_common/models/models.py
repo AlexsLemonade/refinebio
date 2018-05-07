@@ -103,6 +103,7 @@ class Experiment(models.Model):
 
     # Relations
     samples = models.ManyToManyField('Sample', through='ExperimentSampleAssociation')
+    organisms = models.ManyToManyField('Organism', through='ExperimentOrganismAssociation')
 
     # Identifiers
     accession_code = models.CharField(max_length=64, unique=True)
@@ -120,6 +121,7 @@ class Experiment(models.Model):
     protocol_description = models.TextField(default="")
     platform_accession_code = models.CharField(max_length=256, blank=True)
     platform_name = models.CharField(max_length=256, blank=True)
+    technology = models.CharField(max_length=256, blank=True)
     submitter_institution = models.CharField(max_length=256, blank=True)
     has_publication = models.BooleanField(default=False)
     publication_title = models.TextField(default="")
@@ -400,6 +402,14 @@ class ExperimentSampleAssociation(models.Model):
 
     class Meta:
         db_table = "experiment_sample_associations"
+
+class ExperimentOrganismAssociation(models.Model):
+
+    experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
+    organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "experiment_organism_associations"
 
 class DownloaderJobOriginalFileAssociation(models.Model):
 

@@ -13,7 +13,8 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
     ExperimentSampleAssociation,
-    OriginalFileSampleAssociation
+    OriginalFileSampleAssociation,
+    ExperimentOrganismAssociation
 )
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
@@ -277,6 +278,7 @@ class SraSurveyor(ExternalSourceSurveyor):
             experiment_object.source_url = ENA_URL_TEMPLATE.format(experiment_accession_code)
             experiment_object.source_database = "SRA"
             experiment_object.platform_name = metadata.get("platform_instrument_model", "No model.")
+            experiment_object.technology = "RNA-SEQ"
 
             # We don't get this value from the API, unfortunately.
             # experiment_object.platform_accession_code = experiment["platform_accession_code"]
@@ -346,10 +348,22 @@ class SraSurveyor(ExternalSourceSurveyor):
                 original_file_sample_association.sample = sample
                 original_file_sample_association.save()
 
-        esa = ExperimentSampleAssociation()
-        esa.experiment = experiment_object
-        esa.sample = sample_object
-        esa.save()
+        # Create associations if they don't already exist
+        try:
+            assocation = ExperimentSampleAssociation.objects.get(experiment=experiment_object, sample=sample_object)
+        except ExperimentSampleAssociation.DoesNotExist:
+            association = ExperimentSampleAssociation()
+            association.experiment = experiment_object
+            association.sample = sample_object
+            association.save()
+
+        try:
+            assocation = ExperimentOrganismAssociation.objects.get(experiment=experiment_object, organism=organism)
+        except ExperimentOrganismAssociation.DoesNotExist:
+            association = ExperimentOrganismAssociation()
+            association.experiment = experiment_object
+            association.organism = organism
+            association.save()
 
         ##
         # Samples K/V
