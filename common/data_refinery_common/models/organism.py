@@ -89,7 +89,7 @@ class Organism(models.Model):
     """
 
     def __str__ (self):
-        return "Organism: " + str(self.name)
+        return str(self.name)
 
     name = models.CharField(max_length=256, unique=True)
     taxonomy_id = models.IntegerField(unique=True)
