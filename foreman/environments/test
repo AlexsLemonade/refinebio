@@ -1,7 +1,7 @@
 DJANGO_SECRET_KEY=THIS_IS_NOT_A_SECRET_DO_NOT_USE_IN_PROD
 DJANGO_DEBUG=True
 
-DATABASE_NAME=data_refinery
+DATABASE_NAME=test_data_refinery
 DATABASE_USER=data_refinery_user
 DATABASE_PASSWORD=data_refinery_password
 DATABASE_HOST=database
@@ -9,6 +9,9 @@ DATABASE_PORT=5432
 DATABASE_TIMEOUT=5
 
 NOMAD_HOST=nomad
+NOMAD_PORT=5646
+WORKERS_DOCKER_IMAGE=localhost:5000/dr_worker_test
+FOREMAN_DOCKER_IMAGE=localhost:5000/dr_foreman_test
 
 RUNNING_IN_CLOUD=False
 SERVICE=foreman

@@ -66,9 +66,9 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile])
         processor_job = ProcessorJob()
 
         if not original_file.has_raw:
-            processor_job.pipeline_applied = ProcessorPipeline.NO_OP
+            processor_job.pipeline_applied = ProcessorPipeline.NO_OP.value
         else:
-            processor_job.pipeline_applied = "AFFY_TO_PCL"
+            processor_job.pipeline_applied = ProcessorPipeline.AFFY_TO_PCL.value
 
         # Save the Job and create the association
         processor_job.save()

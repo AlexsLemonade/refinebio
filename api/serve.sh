@@ -18,13 +18,11 @@ docker build -t dr_api -f api/Dockerfile .
 source common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
-NOMAD_HOST_IP=$(get_docker_nomad_ip_address)
-NOMAD_LINK=$(get_nomad_link_option)
 
 docker run \
        --add-host=database:$DB_HOST_IP \
-       --add-host=nomad:$NOMAD_HOST_IP \
+       --add-host=nomad:$HOST_IP \
        --env-file api/environments/dev \
-       --link drdb:postgres $NOMAD_LINK \
+       --link drdb:postgres \
        -p 8000:8000 \
        -it dr_api python3.6 manage.py runserver 0.0.0.0:8000 "$@"
