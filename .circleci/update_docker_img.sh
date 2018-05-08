@@ -16,11 +16,15 @@ for IMG in $CCDL_WORKER_IMGS; do
     fi
 done
 
+CCDL_OTHER_IMGS="ccdl/data_refinery_foreman ccdl/data_refinery_api"
+
 # Handle the foreman separately.
-if docker_img_exists ccdl/data_refinery_foreman $CIRCLE_TAG; then
-    echo "Docker image exists, building process terminated: ccdl/data_refinery_foreman:$CIRCLE_TAG"
-    exit
-fi
+for IMG in $CCDL_OTHER_IMGS; do
+    if docker_img_exists $IMG $CIRCLE_TAG; then
+        echo "Docker image exists, building process terminated: $IMG:$CIRCLE_TAG"
+        exit
+    fi
+done
 
 # Create ~/refinebio/common/dist/data-refinery-common-*.tar.gz, which is
 # required by the workers and data_refinery_foreman images.
@@ -46,3 +50,10 @@ docker push ccdl/data_refinery_foreman:$CIRCLE_TAG
 # Update latest version
 docker tag ccdl/data_refinery_foreman:$CIRCLE_TAG ccdl/data_refinery_foreman:latest
 docker push ccdl/data_refinery_foreman:latest
+
+# Build and push API image
+docker build -t ccdl/data_refinery_api:$CIRCLE_TAG -f api/Dockerfile .
+docker push ccdl/data_refinery_api:$CIRCLE_TAG
+# Update latest version
+docker tag ccdl/data_refinery_api:$CIRCLE_TAG ccdl/data_refinery_api:latest
+docker push ccdl/data_refinery_api:latest
