@@ -142,7 +142,7 @@ if [[ $project == "workers" ]]; then
                    2> /dev/null
     done
 elif [[ $project == "foreman" ]]; then
-    cat surveyor.nomad.tpl \
+    cat nomad-job-specs/surveyor.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                > "$output_dir"/surveyor.nomad"$TEST_POSTFIX" \
                2> /dev/null
