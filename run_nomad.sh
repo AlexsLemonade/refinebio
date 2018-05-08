@@ -50,6 +50,7 @@ if [ ! -d "$volume_directory" ]; then
     chmod -R a+rwX $volume_directory
 fi
 
+# Load get_ip_address and docker_img_exists functions.
 source common.sh
 export HOST_IP=$(get_ip_address)
 
@@ -80,7 +81,7 @@ if [ ! -d $nomad_dir ]; then
     mkdir $nomad_dir
 fi
 
-echo "Rebuilding Docker image while waiting for Nomad to come online."
+echo "Pulling/rebuilding Docker images while waiting for Nomad to come online."
 
 # Start Nomad in both server and client mode locally
 nomad agent -bind $HOST_IP \
@@ -100,16 +101,33 @@ if [[ -z $(docker ps | grep "image-registry") ]]; then
     docker run -d -p 5000:5000 --restart=always --name image-registry registry:2
 fi
 
+branch_name=$(git rev-parse --symbolic-full-name --abbrev-ref HEAD)
+
+# We want to check if a test image has been built for this branch. If
+# it has we should use that rather than building it slowly. In the
+# case of affymetrix though, the image takes too long to build so if
+# they haven't built it, just use the latest prod image.
+
+worker_images=(affymetrix salmon transcriptome no_op downloaders)
+
 # Build, tag, and push an image for the workers to the local registry.
-for dockerfile in $(ls -1 workers/dockerfiles); do
-    # Replace 'Dockerfile.' with 'dr_' to get the name of the image.
-    image_name=${dockerfile/Dockerfile./dr_}
-    if [ $image_name != "dr_affymetrix" ]; then
+for image in ${worker_images[*]}; do
+    image_name=ccdl/dr_$image
+    if docker_img_exists $image_name $branch_name ; then
+        docker pull $image_name:$branch_name
+        # Don't push the affymetrix image because it's huge and will
+        # make the tests take forever.
+        if [ $image != "ccdl/dr_affymetrix" ]; then
+            docker push localhost:5000/"$image_name"
+        fi
+    elif [ $image_name == "ccdl/dr_affymetrix" ]; then
+        docker pull $image_name:latest
+    else
         echo ""
         echo "Rebuilding the $image_name image."
-        docker build -t "$image_name$TEST_POSTFIX" -f workers/dockerfiles/$dockerfile .
-        docker tag "$image_name$TEST_POSTFIX" localhost:5000/"$image_name$TEST_POSTFIX"
-        docker push localhost:5000/"$image_name$TEST_POSTFIX"
+        docker build -t "$image_name" -f workers/dockerfiles/Dockerfile.$image .
+        docker tag "$image_name" localhost:5000/"$image_name"
+        docker push localhost:5000/"$image_name"
     fi
 done
 

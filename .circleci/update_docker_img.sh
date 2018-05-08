@@ -1,49 +1,44 @@
-# This function checks whether a given docker image name ($1:$CIRCLE_TAG)
-# exists in Docker Hub or not using Docker Hub API V2. Based on:
-# https://stackoverflow.com/questions/32113330/check-if-imagetag-combination-already-exists-on-docker-hub
-function docker_img_exists() {
-    TOKEN=$(curl -s -H "Content-Type: application/json" -X POST \
-                 -d '{"username": "'${DOCKER_ID}'", "password": "'${DOCKER_PASSWD}'"}' \
-                 https://hub.docker.com/v2/users/login/ | jq -r .token)
-    EXISTS=$(curl -s -H "Authorization: JWT ${TOKEN}" \
-                  https://hub.docker.com/v2/repositories/$1/tags/?page_size=10000 \
-             | jq -r "[.results | .[] | .name == \"${CIRCLE_TAG}\"] | any")
-    test $EXISTS = true
-}
+#!/bin/bash
+
+# Load docker_img_exists function
+source ~/refinebio/common.sh
 
 # Docker images that we want to protect from accidental overwriting in "ccdl" account.
-CCDL_IMGS="data_refinery_worker_base data_refinery_workers data_refinery_foreman"
+CCDL_WORKER_IMGS="affymetrix salmon transcriptome no_op downloaders"
 
 # If any of the three images could be overwritten by the building process,
 # print out a message and terminate immediately.
-for IMG in $CCDL_IMGS; do
-    if docker_img_exists ccdl/$IMG; then
-        echo "Docker image exists, building process terminated: $IMG:$CIRCLE_TAG"
+for IMG in $CCDL_WORKER_IMGS; do
+    image_name=ccdl/dr_$IMG
+    if docker_img_exists $image_name $CIRCLE_TAG; then
+        echo "Docker image exists, building process terminated: $image_name:$CIRCLE_TAG"
         exit
     fi
 done
 
+# Handle the foreman separately.
+if docker_img_exists ccdl/data_refinery_foreman $CIRCLE_TAG; then
+    echo "Docker image exists, building process terminated: ccdl/data_refinery_foreman:$CIRCLE_TAG"
+    exit
+fi
+
 # Create ~/refinebio/common/dist/data-refinery-common-*.tar.gz, which is
-# required by data_refinery_workers and data_refinery_foreman images.
+# required by the workers and data_refinery_foreman images.
 cd ~/refinebio/common && python setup.py sdist
 
 # Log into DockerHub
 docker login -u $DOCKER_ID -p $DOCKER_PASSWD
 
 cd ~/refinebio
-# Build and push worker_base image
-docker build -t ccdl/data_refinery_worker_base:$CIRCLE_TAG -f workers/Dockerfile.base .
-docker push ccdl/data_refinery_worker_base:$CIRCLE_TAG
-# Update latest version
-docker tag ccdl/data_refinery_worker_base:$CIRCLE_TAG ccdl/data_refinery_worker_base:latest
-docker push ccdl/data_refinery_worker_base:latest
-
-# Build and push workers image
-docker build -t ccdl/data_refinery_workers:$CIRCLE_TAG -f workers/Dockerfile .
-docker push ccdl/data_refinery_workers:$CIRCLE_TAG
-# Update latest version
-docker tag ccdl/data_refinery_workers:$CIRCLE_TAG ccdl/data_refinery_workers:latest
-docker push ccdl/data_refinery_workers:latest
+for IMG in $CCDL_IMGS; do
+    image_name=ccdl/dr_$IMG
+    # Build and push image
+    docker build -t $image_name:$CIRCLE_TAG -f workers/dockerfiles/$IMG .
+    docker push $image_name:$CIRCLE_TAG
+    # Update latest version
+    docker tag $image_name:$CIRCLE_TAG $image_name:latest
+    docker push $image_name:latest
+done
 
 # Build and push foreman image
 docker build -t ccdl/data_refinery_foreman:$CIRCLE_TAG -f foreman/Dockerfile .

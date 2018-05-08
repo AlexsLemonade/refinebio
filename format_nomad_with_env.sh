@@ -144,11 +144,11 @@ if [[ $project == "workers" ]]; then
 elif [[ $project == "foreman" ]]; then
     cat surveyor.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"surveyor.nomad"$TEST_POSTFIX" \
+               > "$output_dir"/surveyor.nomad"$TEST_POSTFIX" \
                2> /dev/null
 elif [[ $project == "api" ]]; then
     cat environment.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"environment"$TEST_POSTFIX" \
+               > "$output_dir"/environment"$TEST_POSTFIX" \
                2> /dev/null
 fi
