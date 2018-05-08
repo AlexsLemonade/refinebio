@@ -9,7 +9,7 @@ from rest_framework.urlpatterns import format_suffix_patterns
 
 from data_refinery_api.views import (
     SearchAndFilter,
-    ExperimentList, 
+    ExperimentList,
     ExperimentDetail,
     SampleList,
     SampleDetail,
@@ -46,7 +46,8 @@ class APIRoot(APIView):
             'platforms': reverse('platforms', request=request),
             'institutions': reverse('institutions', request=request),
             'jobs': reverse('jobs', request=request),
-            'stats': reverse('stats', request=request)
+            'stats': reverse('stats', request=request),
+            'search': reverse('search', request=request)
         })
 
 # This class provides a friendlier jobs API page.
