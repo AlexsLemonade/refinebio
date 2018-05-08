@@ -8,10 +8,11 @@ script_directory=`perl -e 'use File::Basename;
 cd $script_directory
 
 # CircleCI Docker won't make this by default for some reason
-if [ ! -d /tmp/volumes_postgres ]; then
-  mkdir $script_directory/volumes_postgres
-fi
 VOLUMES=$script_directory/volumes_postgres
+if [ ! -d $VOLUMES ]; then
+  mkdir $VOLUMES
+fi
+
 
 # via https://hub.docker.com/_/postgres/
 # 9.6.6 is the current (as of Jan 23 2018) RDS most recent version.

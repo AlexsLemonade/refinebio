@@ -4,6 +4,7 @@ import io
 import json
 import gzip
 import os
+import re
 import subprocess
 import tarfile
 
@@ -13,9 +14,9 @@ from typing import Dict
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
-    OrganismIndex, 
-    ComputationalResult, 
-    ComputationalResultAnnotation, 
+    OrganismIndex,
+    ComputationalResult,
+    ComputationalResultAnnotation,
     ComputedFile)
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
@@ -88,7 +89,7 @@ def _determine_index_length(job_context: Dict) -> Dict:
 
     ### $ pigz file.fasq.gz;
     ### $ cat file.fastq | echo $((`wc -l`/4))
-    
+
     ### We may also be able to use io.BufferedReader to improve gzip speed
     ### Ex: (But does this work for text, not binary, gzip?)
     ### buffered_input = io.BufferedReader(input_file)
@@ -142,18 +143,19 @@ def _download_index(job_context: Dict) -> Dict:
     logger.debug("Downloading and installing index..")
 
     index_type = "TRANSCRIPTOME_" + job_context["index_length"].upper()
-    index_object = OrganismIndex.objects.filter(organism=job_context['organism'], 
+    index_object = OrganismIndex.objects.filter(organism=job_context['organism'],
         index_type=index_type).order_by('created_at')[0]
     result = index_object.result
     files = ComputedFile.objects.filter(result=result)
     job_context["index_unpacked"] = '/'.join(files[0].absolute_file_path.split('/')[:-1])
     job_context["index_directory"] = job_context["index_unpacked"] + "/index"
-    
+
     if not os.path.exists(job_context["index_directory"] + '/versionInfo.json'):
         with tarfile.open(files[0].absolute_file_path, "r:gz") as tarball:
             tarball.extractall(job_context["index_unpacked"])
     else:
         logger.info("Index already installed", processor_job=job_context["job_id"])
+<<<<<<< HEAD
 
     job_context["success"] = True
     return job_context
@@ -188,6 +190,8 @@ def _zip_and_upload(job_context: Dict) -> Dict:
     computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
     # TODO here: delete local file after S3 sync#
     computed_file.save()
+=======
+>>>>>>> 04d65f0cf26f2f8ff909677cf5194baa1039b729
 
     job_context["success"] = True
     return job_context
@@ -196,7 +200,7 @@ def _zip_and_upload(job_context: Dict) -> Dict:
 def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
     """ """
     logger.debug("Running Salmon..")
-    
+
     skip = False
     if skip_processed and os.path.exists(os.path.join(job_context['output_directory'] + 'quant.sf')):
         logger.info("Skipping pre-processed Salmon run!")
@@ -238,8 +242,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
     ## even with succesful executions.
     ## Possibly related: https://github.com/COMBINE-lab/salmon/issues/55
     if not skip and completed_command.returncode == 1:
-
-        stderr = str(completed_command.stderr)
+        stderr = completed_command.stderr.decode().strip()
         error_start = stderr.find("Error:")
         error_start = error_start if error_start != -1 else 0
         logger.error("Shell call to salmon failed with error message: %s",
@@ -252,13 +255,14 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
                                              + stderr[error_start:error_end])
         job_context["success"] = False
     else:
-
         result = ComputationalResult()
         result.command_executed = formatted_command
         result.system_version = __version__
         result.time_start = job_context['time_start']
         result.time_end = job_context['time_end']
-        result.program_version = subprocess.run(['salmon', '--version'], stderr=subprocess.PIPE, stdout=subprocess.PIPE).stderr.decode("utf-8").strip()
+        result.program_version = subprocess.run(['salmon', '--version'],
+                                                stderr=subprocess.PIPE,
+                                                stdout=subprocess.PIPE).stderr.decode("utf-8").strip()
         result.is_ccdl = True
         result.save()
 
@@ -282,13 +286,110 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
 
     return job_context
 
-def _run_salmontools(job_context: Dict) -> Dict:
-    """ Run Salmontools to extract unmapped genes. 
 
-    Related: https://github.com/data-refinery/data-refinery/issues/83
-    """
-    # XXX: TODO
+def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
+    """ Run Salmontools to extract unmapped genes. """
+
+    logger.debug("Running SalmonTools ...")
+    skip = False
+    unmapped_filename = job_context['output_directory'] + 'aux_info/unmapped_names.txt'
+    if skip_processed and os.path.exists(unmapped_filename):
+        logger.info("Skipping pre-processed SalmonTools run!")
+        skip = True
+
+    if skip:  # If this procedure should be skipped, return immediately
+        return job_context
+
+    command_str = "salmontools extract-unmapped -u {unmapped_file} -o {output} "
+    output_prefix = job_context["output_directory"] + "unmapped_by_salmon"
+    command_str = command_str.format(unmapped_file=unmapped_filename,
+                                     output=output_prefix)
+    if "input_file_path_2" in job_context:
+        command_str += "-1 {input_1} -2 {input_2}"
+        command_str = command_str.format(input_1=job_context["input_file_path"],
+                                         input_2=job_context["input_file_path_2"])
+    else:
+        command_str += "-r {input_1}"
+        command_str= command_str.format(input_1=job_context["input_file_path"])
+
+    start_time = timezone.now()
+    logger.info("Running the following SalmonTools command: %s",
+                command_str,
+                processor_job=job_context["job_id"])
+
+    completed_command = subprocess.run(command_str.split(),
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+    end_time = timezone.now()
+
+    # As of SalmonTools 0.1.0, completed_command.returncode is always 0,
+    # (even if error happens).  completed_command.stderr is not totally
+    # reliable either, because it will output the following line even
+    # when the execution succeeds:
+    #  "There were <N> unmapped reads\n"
+    # in which "<N>" is the number of lines in input unmapped_names.txt.
+    #
+    # As a workaround, we are using a regular expression here to test
+    # the status of SalmonTools execution.  Any text in stderr that is
+    # not in the above format is treated as error message.
+    status_str = completed_command.stderr.decode().strip()
+    success_pattern = r'^There were \d+ unmapped reads$'
+    if re.match(success_pattern, status_str):
+        result = ComputationalResult()
+        result.command_executed = command_str
+        result.system_version = __version__
+        result.time_start = start_time
+        result.time_end = end_time
+        result.program_version = subprocess.run(['salmontools', '--version'],
+                                                stderr=subprocess.PIPE,
+                                                stdout=subprocess.PIPE).stderr.decode().strip()
+        result.is_ccdl = True
+        result.save()
+        job_context["result"] = result
+        job_context["success"] = True
+    else:   # error in salmontools
+        logger.error("Shell call to salmontools failed with error message: %s",
+                     status_str,
+                     processor_job=job_context["job_id"])
+        job_context["job"].failure_reason = ("Shell call to salmontools failed because: "
+                                             + status_str[0:256])
+        job_context["success"] = False
+
     return job_context
+
+def _zip_and_upload(job_context: Dict) -> Dict:
+    """Zips the directory output by Salmon into a single file and uploads it.
+
+    Adds the 'success' key to job_context because this function is the
+    last in the job.
+    """
+    try:
+        with tarfile.open(job_context['output_archive'], "w:gz") as tar:
+            tar.add(job_context["output_directory"], arcname=os.sep)
+    except Exception:
+        logger.exception("Exception caught while zipping processed directory %s",
+                         job_context["output_directory"],
+                         processor_job=job_context["job_id"]
+                        )
+        failure_template = "Exception caught while zipping processed directory {}"
+        job_context["job"].failure_reason = failure_template.format(first_file.name)
+        job_context["success"] = False
+        return job_context
+
+    computed_file = ComputedFile()
+    computed_file.absolute_file_path = job_context["output_archive"]
+    computed_file.filename = os.path.split(job_context["output_archive"])[-1]
+    computed_file.calculate_sha1()
+    computed_file.calculate_size()
+    computed_file.is_public = True
+    computed_file.result = job_context['result']
+    computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
+    # TODO here: delete local file after S3 sync#
+    computed_file.save()
+
+    job_context["success"] = True
+    return job_context
+
 
 def salmon(job_id: int) -> None:
     """Main processor function for the Salmon Processor.

@@ -75,7 +75,6 @@ else
     env="dev"
 fi
 
-
 nomad_dir="$script_directory/nomad_dir$TEST_POSTFIX"
 if [ ! -d $nomad_dir ]; then
     mkdir $nomad_dir

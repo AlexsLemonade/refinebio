@@ -8,7 +8,8 @@ from rest_framework.reverse import reverse
 from rest_framework.urlpatterns import format_suffix_patterns
 
 from data_refinery_api.views import (
-    ExperimentList, 
+    SearchAndFilter,
+    ExperimentList,
     ExperimentDetail,
     SampleList,
     SampleDetail,
@@ -45,7 +46,8 @@ class APIRoot(APIView):
             'platforms': reverse('platforms', request=request),
             'institutions': reverse('institutions', request=request),
             'jobs': reverse('jobs', request=request),
-            'stats': reverse('stats', request=request)
+            'stats': reverse('stats', request=request),
+            'search': reverse('search', request=request)
         })
 
 # This class provides a friendlier jobs API page.
@@ -61,6 +63,9 @@ class JobsRoot(APIView):
         })
 
 urlpatterns = [
+    # Primary search and filter interface
+    url(r'^search/$', SearchAndFilter.as_view(), name="search"),
+
     # Endpoints / Self-documentation
     url(r'^experiments/$', ExperimentList.as_view(), name="experiments"),
     url(r'^experiments/(?P<pk>[0-9]+)/$', ExperimentDetail.as_view(), name="experiments_detail"),
