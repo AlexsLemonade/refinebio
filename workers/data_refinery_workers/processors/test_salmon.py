@@ -89,13 +89,16 @@ class SalmonTestCase(TestCase):
 
 class SalmonToolsTestCase(TestCase):
     """Test SalmonTools command."""
+
+    def setUp(self):
+        self.test_dir = '/home/user/data_store/salmontools/'
+
     def test_double_reads(self):
-        test_dir = '/home/user/data_store/salmontools/'
         job_context = {
             'job_id': 123,
-            'input_file_path': test_dir + 'double_input/reads_1.fastq',
-            'input_file_path_2': test_dir + 'double_input/reads_2.fastq',
-            'output_directory': test_dir + 'double_output/'
+            'input_file_path': self.test_dir + 'double_input/reads_1.fastq',
+            'input_file_path_2': self.test_dir + 'double_input/reads_2.fastq',
+            'output_directory': self.test_dir + 'double_output/'
         }
         job_context["job"] = ProcessorJob()
         salmon._run_salmontools(job_context, False)
@@ -104,20 +107,19 @@ class SalmonToolsTestCase(TestCase):
         self.assertTrue(job_context["success"])
 
         # Check two output files
-        output_file1 = test_dir + 'double_output/unmapped_by_salmon_1.fa'
-        expected_output_file1 = test_dir + 'expected_double_output/unmapped_by_salmon_1.fa'
+        output_file1 = self.test_dir + 'double_output/unmapped_by_salmon_1.fa'
+        expected_output_file1 = self.test_dir + 'expected_double_output/unmapped_by_salmon_1.fa'
         self.assertTrue(identical_checksum(output_file1, expected_output_file1))
 
-        output_file2 = test_dir + 'double_output/unmapped_by_salmon_2.fa'
-        expected_output_file2 = test_dir + 'expected_double_output/unmapped_by_salmon_2.fa'
+        output_file2 = self.test_dir + 'double_output/unmapped_by_salmon_2.fa'
+        expected_output_file2 = self.test_dir + 'expected_double_output/unmapped_by_salmon_2.fa'
         self.assertTrue(identical_checksum(output_file2, expected_output_file2))
 
     def test_single_read(self):
-        test_dir = '/home/user/data_store/salmontools/'
         job_context = {
             'job_id': 456,
-            'input_file_path': test_dir + 'single_input/single_read.fastq',
-            'output_directory': test_dir + 'single_output/'
+            'input_file_path': self.test_dir + 'single_input/single_read.fastq',
+            'output_directory': self.test_dir + 'single_output/'
         }
         job_context["job"] = ProcessorJob()
         salmon._run_salmontools(job_context, False)
@@ -126,6 +128,6 @@ class SalmonToolsTestCase(TestCase):
         self.assertTrue(job_context["success"])
 
         # Check output file
-        output_file = test_dir + 'single_output/unmapped_by_salmon.fa'
-        expected_output_file = test_dir + 'expected_single_output/unmapped_by_salmon.fa'
+        output_file = self.test_dir + 'single_output/unmapped_by_salmon.fa'
+        expected_output_file = self.test_dir + 'expected_single_output/unmapped_by_salmon.fa'
         self.assertTrue(identical_checksum(output_file, expected_output_file))
