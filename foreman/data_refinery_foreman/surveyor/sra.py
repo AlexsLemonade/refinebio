@@ -269,8 +269,8 @@ class SraSurveyor(ExternalSourceSurveyor):
         experiment_accession_code = metadata.get('experiment_accession')
         try:
             experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
-            logger.error("Experiment %s already exists, skipping object creation.",
-                experiment_accession_code,
+            logger.error("Experiment already exists, skipping object creation.",
+                experiment_accession_code=experiment_accession_code,
                 survey_job=self.survey_job.id)
         except Experiment.DoesNotExist:
             experiment_object = Experiment()
@@ -325,9 +325,9 @@ class SraSurveyor(ExternalSourceSurveyor):
         # Create the sample object
         try:
             sample_object = Sample.objects.get(accession_code=sample_accession_code)
-            logger.error("Sample %s from experiment %s already exists, skipping object creation.",
+            logger.error("Sample %s already exists, skipping object creation.",
                      sample_accession_code,
-                     experiment_object.accession_code,
+                     experiment_accession_code=experiment_object.accession_code,
                      survey_job=self.survey_job.id)
         except Sample.DoesNotExist:
             sample_object = Sample()
@@ -394,6 +394,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         survey_job_properties = survey_job.get_properties()
         accession = survey_job_properties["accession"]
         logger.debug("Surveying SRA Run Accession %s",
-                         accession)
+                     accession,
+                     survey_job=self.survey_job.id)
         return self._generate_experiment_and_samples(accession)
 

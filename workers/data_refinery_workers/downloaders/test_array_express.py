@@ -22,5 +22,5 @@ class DownloadArrayExpressTestCase(TestCase):
         dlj = DownloaderJob()
         dlj.save()
         array_express._download_file('ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip', 'dlme.zip', dlj)
-        files = array_express._extract_files('dlme.zip', '123')
+        files = array_express._extract_files('dlme.zip', '123', dlj)
 

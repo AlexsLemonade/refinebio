@@ -79,7 +79,7 @@ The following services will need to be installed:
 (https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
 so Docker does not need sudo permissions.
 - [Terraform](https://www.terraform.io/)
-- [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries)
+- [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./install_nomad.sh`.
 - git-crypt
 - jq
 
@@ -178,6 +178,14 @@ If you need to access a `psql` shell for inspecting the database, you can use:
 ```
 
 ### Testing
+
+The end to end tests require a separate Nomad client to be running so
+that the tests can be run without interfering with local
+development. The second Nomad client can be started with:
+
+```bash
+sudo -E ./run_nomad.sh -e test
+```
 
 To run the entire test suite:
 

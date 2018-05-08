@@ -26,7 +26,8 @@ def send_job(job_type: Enum, job_id: int) -> None:
     DownloaderJob record.
     """
     nomad_host = get_env_variable("NOMAD_HOST")
-    nomad_client = nomad.Nomad(nomad_host, timeout=5)
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=5)
 
     # Once I have every job specced out with its own Nomad job, this
     # code can change and the meta won't need "JOB_NAME" in it because
@@ -44,4 +45,3 @@ def send_job(job_type: Enum, job_id: int) -> None:
                 job_id)
     nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,
                                                    "JOB_ID": str(job_id)})
-

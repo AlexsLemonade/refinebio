@@ -187,7 +187,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
         assoc.result = result
         assoc.save()
 
-    logger.info("Created %s", result)
+    logger.info("Created %s", result,
+                processor_job=job_context["job_id"])
     job_context["success"] = True
 
     return job_context
