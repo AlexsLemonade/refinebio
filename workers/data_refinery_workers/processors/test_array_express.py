@@ -1,15 +1,11 @@
 import os
-import shutil
-from contextlib import closing
 from django.test import TestCase, tag
-from unittest.mock import MagicMock
 from data_refinery_common.models import (
-    SurveyJob,
     ProcessorJob,
     OriginalFile,
     ProcessorJobOriginalFileAssociation
 )
-from data_refinery_workers.processors import array_express, utils
+from data_refinery_workers.processors import array_express
 
 def prepare_job():
     pj = ProcessorJob()
@@ -32,7 +28,7 @@ def prepare_job():
 class AffyToPCLTestCase(TestCase):
 
     @tag("affymetrix")
-    def test_affy_to_pc(self):
+    def test_affy_to_pcl(self):
         """ """
         job = prepare_job()
         array_express.affy_to_pcl(job.pk)
