@@ -10,7 +10,6 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation
 )
 from data_refinery_workers.processors import array_express, utils
-import pandas as pd
 
 def prepare_job():
     pj = ProcessorJob()
