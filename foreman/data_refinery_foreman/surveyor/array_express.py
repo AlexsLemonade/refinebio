@@ -45,7 +45,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         See an example at: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-3050/sample
         """
         request_url = EXPERIMENTS_URL + experiment_accession_code
-        experiment_request = requests.get(request_url, timeout=30)
+        experiment_request = requests.get(request_url, timeout=60)
 
         try:
             parsed_json = experiment_request.json()["experiments"]["experiment"][0]
@@ -138,7 +138,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             ## Fetch and parse the IDF file for any other fields
             IDF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.idf.txt"
             idf_url = IDF_URL_TEMPLATE.format(code=experiment_accession_code)
-            idf_text = requests.get(idf_url, timeout=15).text
+            idf_text = requests.get(idf_url, timeout=60).text
             lines = idf_text.split('\n')
             idf_dict = {}
             for line in lines:
@@ -260,7 +260,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         created_samples = []
 
         samples_endpoint = SAMPLES_URL.format(experiment.accession_code)
-        r = requests.get(samples_endpoint, timeout=30)
+        r = requests.get(samples_endpoint, timeout=60)
         samples = r.json()["experiment"]["sample"]
 
         try:
