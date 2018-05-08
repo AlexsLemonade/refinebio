@@ -79,8 +79,6 @@ if [ ! -e "$tx_index_test_raw_dir/$gtf_file" ]; then
          "$test_data_repo/$gtf_file"
 fi
 
-# Download salmontools
-
 # Ensure permissions are set for everything within the test data directory.
 chmod -R a+rwX $volume_directory
 
