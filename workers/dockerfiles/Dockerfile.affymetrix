@@ -53,6 +53,10 @@ COPY workers/data_refinery_workers/processors/requirements.txt .
 
 RUN pip3 install -r requirements.txt
 
+# Install this one here instead of via requirements.txt because not
+# all processors need it.
+RUN pip3 install rpy2
+
 USER user
 
 COPY workers/ .
