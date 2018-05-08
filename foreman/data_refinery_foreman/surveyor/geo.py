@@ -61,7 +61,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
         """
         # XXX: Maybe we should have an EFS tmp? This could potentially fill up if not tracked.
         # Cleaning up is tracked here: https://github.com/guma44/GEOparse/issues/41
-        gse = GEOparse.get_GEO(experiment_accession_code, destdir='/tmp')
+        gse = GEOparse.get_GEO(experiment_accession_code, destdir='/tmp', how="brief")
 
         # Create the experiment object
         try:
