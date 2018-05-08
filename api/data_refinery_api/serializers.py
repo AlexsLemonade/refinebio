@@ -326,6 +326,7 @@ class CreateDatasetSerializer(serializers.ModelSerializer):
         fields = (
                     'id',
                     'data',
+                    'email_address'
             )
 
     def validate(self, data):
