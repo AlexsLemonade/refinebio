@@ -308,7 +308,8 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         for species in specieses:
             if species['name'] == organism_name:
                 specieses = [species]
-                logger.info("Found species " + organism_name + " on Ensembl.")
+                logger.info("Found species " + organism_name + " on Ensembl.",
+                            survey_job=self.survey_job.id)
                 break
 
         species_surveyed = 0
