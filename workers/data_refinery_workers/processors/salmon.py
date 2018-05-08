@@ -263,15 +263,13 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         logger.info("Skipping pre-processed SalmonTools run!")
         skip = True
 
-    job_context['time_start'] = timezone.now()
     if skip:  # If this procedure should be skipped, return immediately
-        job_context['time_end'] = timezone.now()
         return job_context
 
     command_str = "salmontools extract-unmapped -u {unmapped_file} -o {output} "
     output_prefix = job_context["output_directory"] + "unmapped_by_salmon"
     command_str = command_str.format(unmapped_file=unmapped_filename,
-                                         output=output_prefix)
+                                     output=output_prefix)
     if "input_file_path_2" in job_context:
         command_str += "-1 {input_1} -2 {input_2}"
         command_str = command_str.format(input_1=job_context["input_file_path"],
@@ -280,6 +278,7 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         command_str += "-r {input_1}"
         command_str= command_str.format(input_1=job_context["input_file_path"])
 
+    start_time = timezone.now()
     logger.info("Running the following SalmonTools command: %s",
                 command_str,
                 processor_job=job_context["job_id"])
@@ -287,7 +286,7 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
     completed_command = subprocess.run(command_str.split(),
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
-    job_context['time_end'] = timezone.now()
+    end_time = timezone.now()
 
     # As of SalmonTools 0.1.0, completed_command.returncode is always 0,
     # (even if error happens).  completed_command.stderr is not totally
@@ -305,8 +304,8 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         result = ComputationalResult()
         result.command_executed = command_str
         result.system_version = __version__
-        result.time_start = job_context['time_start']
-        result.time_end = job_context['time_end']
+        result.time_start = start_time
+        result.time_end = end_time
         result.program_version = subprocess.run(['salmontools', '--version'],
                                                 stderr=subprocess.PIPE,
                                                 stdout=subprocess.PIPE).stderr.decode().strip()
@@ -318,7 +317,7 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         logger.error("Shell call to salmontools failed with error message: %s",
                      status_str,
                      processor_job=job_context["job_id"])
-        job_context["job"].failure_reason = ("Shell call to salmon failed because: "
+        job_context["job"].failure_reason = ("Shell call to salmontools failed because: "
                                              + status_str[0:256])
         job_context["success"] = False
 
