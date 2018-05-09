@@ -57,7 +57,7 @@ class ExternalSourceSurveyor:
         # Get all of the undownloaded original files related to this Experiment.
         relations = ExperimentSampleAssociation.objects.filter(experiment=experiment)
         samples = Sample.objects.filter(id__in=relations.values('sample_id'))
-        files_to_download = OriginalFile.objects.filter(sample__in=samples.values('pk'), is_downloaded=False)
+        files_to_download = OriginalFile.objects.filter(samples__in=samples.values('pk'), is_downloaded=False)
 
         downloaded_urls = []
         for original_file in files_to_download:
@@ -87,14 +87,14 @@ class ExternalSourceSurveyor:
               downloaded_urls.append(original_file.source_url)
 
             try:
-                logger.info("Queuing downloader job.",
+                logger.info("Queuing downloader job for URL: " + original_file.source_url,
                         survey_job=self.survey_job.id,
                         downloader_job=downloader_job.id)
                 send_job(downloader_job.downloader_task, downloader_job.id)
             except:
                 # If the task doesn't get sent we don't want the
                 # downloader_job to be left floating
-                logger.info("Failed to enqueue downloader job.",
+                logger.info("Failed to enqueue downloader job for URL: " + original_file.source_url,
                         survey_job=self.survey_job.id,
                         downloader_job=downloader_job.id)
                 downloader_job.delete()

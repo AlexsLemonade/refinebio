@@ -39,7 +39,7 @@ def send_job(job_type: Enum, job_id: int) -> None:
     else:
         raise ValueError("Invalid job_type.")
 
-    logger.info("Queuing %s nomad job to run DR job %s with id %d.",
+    logger.info("Queuing %s nomad job to run job %s with id %d.",
                 nomad_job,
                 job_type.value,
                 job_id)

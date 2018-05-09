@@ -11,6 +11,16 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework import status, filters, generics
 
+from data_refinery_common.models import (
+    Experiment, 
+    Sample, 
+    Organism, 
+    ComputationalResult,
+    DownloaderJob,
+    SurveyJob,
+    ProcessorJob,
+    Dataset
+)
 from data_refinery_common.models import Experiment, Sample, Organism, Dataset
 from data_refinery_api.serializers import ( 
     ExperimentSerializer, 
@@ -20,6 +30,7 @@ from data_refinery_api.serializers import (
     OrganismSerializer,
     PlatformSerializer,
     InstitutionSerializer,
+    ComputationalResultSerializer,
 
     # Jobs
     SurveyJobSerializer,
@@ -207,6 +218,33 @@ class SampleDetail(APIView):
         return Response(serializer.data)
 
 ##
+# Results
+##
+
+class ResultsList(PaginatedAPIView):
+    """
+    List all ComputationalResults.
+
+    Append the pk to the end of this URL to see a detail view.
+
+    """
+
+    def get(self, request, format=None):
+        filter_dict = request.query_params.dict()
+        filter_dict.pop('limit', None)
+        filter_dict.pop('offset', None)
+        results = ComputationalResult.objects.filter(**filter_dict)
+
+        page = self.paginate_queryset(results)
+        if page is not None:
+            serializer = ComputationalResultSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        else:
+            serializer = ComputationalResultSerializer(results, many=True)
+            return Response(serializer.data)
+
+
+##
 # Search Filter Models
 ##
 
@@ -310,8 +348,6 @@ class ProcessorJobList(PaginatedAPIView):
 ###
 # Statistics
 ###
-
-from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
 
 class Stats(APIView):
     """

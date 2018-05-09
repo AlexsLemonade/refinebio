@@ -3,6 +3,7 @@ from data_refinery_common.models import SurveyJob, SurveyJobKeyValue
 from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
 from data_refinery_foreman.surveyor.sra import SraSurveyor
 from data_refinery_foreman.surveyor.transcriptome_index import TranscriptomeIndexSurveyor
+from data_refinery_foreman.surveyor.geo import GeoSurveyor
 from data_refinery_common.logging import get_and_configure_logger
 
 
@@ -21,6 +22,8 @@ def _get_surveyor_for_source(survey_job: SurveyJob):
         return SraSurveyor(survey_job)
     if survey_job.source_type == "TRANSCRIPTOME_INDEX":
         return TranscriptomeIndexSurveyor(survey_job)
+    if survey_job.source_type == "GEO":
+        return GeoSurveyor(survey_job)
     else:
         raise SourceNotSupportedError(
             "Source " + survey_job.source_type + " is not supported.")
@@ -104,5 +107,14 @@ def survey_sra_experiment(accesion):
                                        value=accesion)
     key_value_pair.save()
     run_job(survey_job)
+    return survey_job
 
+def survey_geo_experiment(accesion):
+    survey_job = SurveyJob(source_type="GEO")
+    survey_job.save()
+    key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                       key="experiment_accession_code",
+                                       value=accesion)
+    key_value_pair.save()
+    run_job(survey_job)
     return survey_job
