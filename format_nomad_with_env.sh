@@ -49,6 +49,29 @@ if [[ -z $env ]]; then
     env="dev"
 fi
 
+# Default docker images.
+# These should work for local and test environments, but we want to
+# let these be set outside the script so only set them if they aren't
+# already set.
+if [[ -z $FOREMAN_DOCKER_IMAGE ]]; then
+    export FOREMAN_DOCKER_IMAGE=localhost:5000/dr_foreman_test
+fi
+if [[ -z $DOWNLOADERS_DOCKER_IMAGE ]]; then
+    export DOWNLOADERS_DOCKER_IMAGE=localhost:5000/dr_downloaders
+fi
+if [[ -z $TRANSCRIPTOME_DOCKER_IMAGE ]]; then
+    export TRANSCRIPTOME_DOCKER_IMAGE=localhost:5000/dr_transcriptome
+fi
+if [[ -z $SALMON_DOCKER_IMAGE ]]; then
+    export SALMON_DOCKER_IMAGE=localhost:5000/dr_salmon
+fi
+if [[ -z $AFFYMETRIX_DOCKER_IMAGE ]]; then
+    export AFFYMETRIX_DOCKER_IMAGE=localhost:5000/dr_affymetrix
+fi
+if [[ -z $NO_OP_DOCKER_IMAGE ]]; then
+    export NO_OP_DOCKER_IMAGE=localhost:5000/dr_no_op
+fi
+
 # This script should always run from the context of the directory of
 # the project it is building.
 script_directory=`perl -e 'use File::Basename;

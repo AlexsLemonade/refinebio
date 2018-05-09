@@ -52,23 +52,24 @@ variable "running_in_cloud" {
 }
 
 # These are placeholders until there are production images ready.
-variable "workers_docker_image" {
-  default = "wkurt/dr_worker:6"
-}
+# We should not use the latest tag here, instead specifying a specific tag.
 variable "downloaders_docker_image" {
-  default = "wkurt/dr_downloaders:6"
+  default = "wkurt/dr_downloaders:latest"
 }
 variable "transcriptome_docker_image" {
-  default = "wkurt/dr_transcriptome:6"
+  default = "wkurt/dr_transcriptome:latest"
 }
 variable "salmon_docker_image" {
-  default = "wkurt/dr_salmon:6"
+  default = "wkurt/dr_salmon:latest"
+}
+variable "affymetrix_docker_image" {
+  default = "wkurt/dr_affymetrix:latest"
 }
 variable "no_op_docker_image" {
-  default = "wkurt/no_op:6"
+  default = "wkurt/no_op:latest"
 }
 variable "foreman_docker_image" {
-  default = "wkurt/dr_foreman:6"
+  default = "wkurt/dr_foreman:latest"
 }
 variable "use_s3" {
   default = "True"

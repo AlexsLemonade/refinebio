@@ -10,12 +10,6 @@ DATABASE_TIMEOUT=5
 
 NOMAD_HOST=nomad
 NOMAD_PORT=5646
-WORKERS_DOCKER_IMAGE=localhost:5000/dr_worker_test
-DOWNLOADERS_DOCKER_IMAGE=localhost:5000/dr_downloaders_test
-TRANSCRIPTOME_DOCKER_IMAGE=localhost:5000/dr_transcriptome_test
-SALMON_DOCKER_IMAGE=localhost:5000/dr_salmon_test
-NO_OP_DOCKER_IMAGE=localhost:5000/dr_no_op_test
-FOREMAN_DOCKER_IMAGE=localhost:5000/dr_foreman_test
 
 RUNNING_IN_CLOUD=False
 SERVICE=worker

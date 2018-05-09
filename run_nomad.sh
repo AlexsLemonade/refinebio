@@ -153,6 +153,7 @@ echo "Nomad is online. Registering jobs."
 
 # Register the jobs for dispatching.
 for job_spec in $(ls -1 workers/nomad-job-specs | grep "\.nomad$TEST_POSTFIX$"); do
+    echo "Registering $job_spec"
     nomad run workers/nomad-job-specs/"$job_spec"
 done
 

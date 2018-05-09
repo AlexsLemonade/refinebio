@@ -13,12 +13,6 @@ SERVICE=worker
 
 NOMAD_HOST=nomad
 NOMAD_PORT=4646
-WORKERS_DOCKER_IMAGE=localhost:5000/dr_worker
-DOWNLOADERS_DOCKER_IMAGE=localhost:5000/dr_downloaders
-TRANSCRIPTOME_DOCKER_IMAGE=localhost:5000/dr_transcriptome
-SALMON_DOCKER_IMAGE=localhost:5000/dr_salmon
-NO_OP_DOCKER_IMAGE=localhost:5000/dr_no_op
-FOREMAN_DOCKER_IMAGE=localhost:5000/dr_foreman
 
 USE_S3=False
 S3_BUCKET_NAME=data-refinery
