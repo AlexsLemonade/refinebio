@@ -158,4 +158,5 @@ for job_spec in $(ls -1 workers/nomad-job-specs | grep "\.nomad$TEST_POSTFIX$");
 done
 
 # There's only one foreman image, so no need to loop.
+echo "Registering surveyor.nomad$TEST_POSTFIX"
 nomad run foreman/nomad-job-specs/surveyor.nomad"$TEST_POSTFIX"
