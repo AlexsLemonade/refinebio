@@ -54,22 +54,22 @@ fi
 # let these be set outside the script so only set them if they aren't
 # already set.
 if [[ -z $FOREMAN_DOCKER_IMAGE ]]; then
-    export FOREMAN_DOCKER_IMAGE=localhost:5000/dr_foreman_test
+    export FOREMAN_DOCKER_IMAGE=localhost:5000/ccdl/dr_foreman_test
 fi
 if [[ -z $DOWNLOADERS_DOCKER_IMAGE ]]; then
-    export DOWNLOADERS_DOCKER_IMAGE=localhost:5000/dr_downloaders
+    export DOWNLOADERS_DOCKER_IMAGE=localhost:5000/ccdl/dr_downloaders
 fi
 if [[ -z $TRANSCRIPTOME_DOCKER_IMAGE ]]; then
-    export TRANSCRIPTOME_DOCKER_IMAGE=localhost:5000/dr_transcriptome
+    export TRANSCRIPTOME_DOCKER_IMAGE=localhost:5000/ccdl/dr_transcriptome
 fi
 if [[ -z $SALMON_DOCKER_IMAGE ]]; then
-    export SALMON_DOCKER_IMAGE=localhost:5000/dr_salmon
+    export SALMON_DOCKER_IMAGE=localhost:5000/ccdl/dr_salmon
 fi
 if [[ -z $AFFYMETRIX_DOCKER_IMAGE ]]; then
-    export AFFYMETRIX_DOCKER_IMAGE=localhost:5000/dr_affymetrix
+    export AFFYMETRIX_DOCKER_IMAGE=ccdl/dr_affymetrix
 fi
 if [[ -z $NO_OP_DOCKER_IMAGE ]]; then
-    export NO_OP_DOCKER_IMAGE=localhost:5000/dr_no_op
+    export NO_OP_DOCKER_IMAGE=localhost:5000/ccdl/dr_no_op
 fi
 
 # This script should always run from the context of the directory of
