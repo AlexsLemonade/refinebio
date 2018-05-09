@@ -1,6 +1,3 @@
-# This job name is temporary. Once resource requirements for various
-# jobs have been properly estimated there should be different job
-# specifications for each processor type.
 job "TRANSCRIPTOME_INDEX" {
   datacenters = ["dc1"]
 

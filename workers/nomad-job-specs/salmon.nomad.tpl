@@ -1,6 +1,3 @@
-# This job name is temporary. Once resource requirements for various
-# jobs have been properly estimated there should be different job
-# specifications for each processor type.
 job "SALMON" {
   datacenters = ["dc1"]
 
