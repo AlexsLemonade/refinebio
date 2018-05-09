@@ -74,9 +74,6 @@ else
     export VOLUME_DIR=$script_directory/volume
 fi
 
-echo "ENV IS!!"
-echo $env
-
 # We need to specify the database and Nomad hosts for development, but
 # not for production because we just point directly at the RDS/Nomad
 # instances.
@@ -129,19 +126,19 @@ if [[ ! -z $output_dir && ! -d "$output_dir" ]]; then
 fi
 
 export_log_conf (){
-    if [[ $env != 'dev' ]]; then	
-	    export LOGGING_CONFIG="
-		logging {
-		  type = \"awslogs\"
-		  config {
-		    awslogs-region = \"$region\",
-		    awslogs-group = \"data-refinery-log-group-$user-$stage\",
-		    awslogs-stream = \"log-stream-$1-docker-$user-$stage\"
-		  }
-		}"
-	else
-		export LOGGING_CONFIG=""
-	fi
+    if [[ $env == 'prod' ]]; then    
+        export LOGGING_CONFIG="
+        logging {
+          type = \"awslogs\"
+          config {
+            awslogs-region = \"$region\",
+            awslogs-group = \"data-refinery-log-group-$user-$stage\",
+            awslogs-stream = \"log-stream-$1-docker-$user-$stage\"
+          }
+        }"
+    else
+        export LOGGING_CONFIG=""
+    fi
 }
 
 # This actually performs the templating using Perl's regex engine.
