@@ -4,3 +4,5 @@ requests
 retrying
 python-nomad
 coverage
+GEOparse
+python-dateutil

@@ -35,6 +35,7 @@ class Sample(models.Model):
 
     # Identifiers
     accession_code = models.CharField(max_length=255, unique=True)
+    title = models.CharField(max_length=255, unique=False, blank=True)
 
     # Relations
     organism = models.ForeignKey(Organism, blank=True, null=True, on_delete=models.SET_NULL)
@@ -101,6 +102,7 @@ class Experiment(models.Model):
     def __str__ (self):
         return "Experiment: " + self.accession_code
 
+    # Relations
     samples = models.ManyToManyField('Sample', through='ExperimentSampleAssociation')
     organisms = models.ManyToManyField('Organism', through='ExperimentOrganismAssociation')
 
@@ -278,8 +280,8 @@ class OriginalFile(models.Model):
     size_in_bytes = models.BigIntegerField(blank=True, null=True)
     sha1 = models.CharField(max_length=64)
 
-    # Reference properties
-    sample = models.ForeignKey(Sample, blank=True, null=True, on_delete=models.CASCADE)
+    # Relations
+    samples = models.ManyToManyField('Sample', through='OriginalFileSampleAssociation')
 
     # Historical Properties
     source_url = models.CharField(max_length=255)
@@ -469,6 +471,14 @@ class ProcessorJobOriginalFileAssociation(models.Model):
 
     class Meta:
         db_table = "processorjob_originalfile_associations"
+
+class OriginalFileSampleAssociation(models.Model):
+
+    original_file = models.ForeignKey(OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
+    sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "original_file_sample_associations"
 
 class SampleResultAssociation(models.Model):
 

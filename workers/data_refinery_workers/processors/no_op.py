@@ -4,7 +4,7 @@ import boto3
 from typing import Dict
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import ComputationalResult, ComputedFile
+from data_refinery_common.models import ComputationalResult, ComputedFile, SampleResultAssociation
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
@@ -23,6 +23,15 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
     """
     original_file = job_context["original_files"][0]
 
+    # Create the output directory and path
+    job_context["input_file_path"] = original_file.absolute_file_path
+    base_directory, file_name = original_file.absolute_file_path.rsplit('/', 1)
+    os.makedirs(base_directory + '/processed/', exist_ok=True)
+    job_context["output_file_path"] = base_directory + '/processed/' + file_name
+
+    # Copy the file to the new directory
+    shutil.copyfile(job_context["input_file_path"], job_context["output_file_path"])
+
     # This is a NO-OP, but we make a ComputationalResult regardless.
     result = ComputationalResult()
     result.command_executed = "" # No op!
@@ -34,7 +43,7 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
     # sync it S3 and save it.
     try:
         computed_file = ComputedFile()
-        computed_file.absolute_file_path = original_file.absolute_file_path
+        computed_file.absolute_file_path = job_context["output_file_path"]
         computed_file.filename = original_file.filename
         computed_file.calculate_sha1()
         computed_file.calculate_size()
@@ -43,7 +52,7 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
         # TODO here: delete local file after S3 sync
         computed_file.save()
     except Exception:
-        logger.exception("Exception caught while moving file %s",
+        logger.error("Exception caught while moving file %s",
                          raw_path,
                          processor_job=job_context["job_id"])
 
@@ -51,6 +60,12 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
         job_context["job"].failure_reason = failure_reason
         job_context["success"] = False
         return job_context        
+
+    for sample in job_context['samples']:
+        assoc = SampleResultAssociation()
+        assoc.sample = sample
+        assoc.result = result
+        assoc.save()
 
     logger.info("Created %s", result)
     job_context["success"] = True

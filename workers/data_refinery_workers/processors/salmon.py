@@ -63,7 +63,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["output_archive"] = '/'.join(pre_part) + '/result-' + timestamp +  '.tar.gz'
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
-    job_context['organism'] = job_context['original_files'][0].sample.organism
+    job_context['organism'] = job_context['original_files'][0].samples.first().organism
     job_context["success"] = True
     return job_context
 

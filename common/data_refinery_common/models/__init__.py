@@ -15,6 +15,7 @@ from data_refinery_common.models.models import (
     ComputationalResultAnnotation,
     OrganismIndex,
     OriginalFile,
+    OriginalFileSampleAssociation,
     ComputedFile,
     ExperimentSampleAssociation,
     DownloaderJobOriginalFileAssociation,

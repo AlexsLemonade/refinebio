@@ -53,7 +53,7 @@ def end_downloader_job(job: DownloaderJob, success: bool):
     job.end_time = timezone.now()
     job.save()
 
-def create_processor_jobs_for_original_files(original_files: List[OriginalFile]):
+def create_processor_jobs_for_original_files(original_files: List[OriginalFile], pipeline=None):
     """
     Create a processor jobs queue a processor task for samples related to an experiment.
     """
@@ -65,10 +65,16 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile])
 
         processor_job = ProcessorJob()
 
-        if not original_file.has_raw:
-            processor_job.pipeline_applied = ProcessorPipeline.NO_OP.value
+        if not pipeline:
+            if not original_file.has_raw:
+                processor_job.pipeline_applied = ProcessorPipeline.NO_OP.value 
+            else:
+                if 'CEL' in original_file.filename.upper():
+                    processor_job.pipeline_applied = ProcessorPipeline.AFFY_TO_PCL.value
+                else:
+                    processor_job.pipeline_applied = ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL.value
         else:
-            processor_job.pipeline_applied = ProcessorPipeline.AFFY_TO_PCL.value
+            processor_job.pipeline_applied = pipeline
 
         # Save the Job and create the association
         processor_job.save()
