@@ -60,6 +60,10 @@ if [ ! -e "$cel_test_data_1" ]; then
          "$test_data_repo/$cel_name"
 fi
 
+# Download salmontools test data
+rm -rf $volume_directory/salmontools/
+git clone git@github.com:dongbohu/salmontools_tests.git $volume_directory/salmontools
+
 # Make sure data for Transcriptome Index tests is downloaded.
 tx_index_test_raw_dir="$volume_directory/raw/TEST/TRANSCRIPTOME_INDEX"
 fasta_file="aegilops_tauschii_short.fa.gz"

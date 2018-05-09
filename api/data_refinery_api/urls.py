@@ -9,7 +9,7 @@ from rest_framework.urlpatterns import format_suffix_patterns
 
 from data_refinery_api.views import (
     SearchAndFilter,
-    ExperimentList, 
+    ExperimentList,
     ExperimentDetail,
     SampleList,
     SampleDetail,
@@ -20,7 +20,9 @@ from data_refinery_api.views import (
     DownloaderJobList,
     ProcessorJobList,
     ResultsList,
-    Stats
+    Stats,
+    CreateDatasetView,
+    DatasetView
 )
 
 # This provides _public_ access to the /admin interface!
@@ -47,7 +49,9 @@ class APIRoot(APIView):
             'platforms': reverse('platforms', request=request),
             'institutions': reverse('institutions', request=request),
             'jobs': reverse('jobs', request=request),
-            'stats': reverse('stats', request=request)
+            'stats': reverse('stats', request=request),
+            'dataset': reverse('dataset_root', request=request),
+            'search': reverse('search', request=request)
         })
 
 # This class provides a friendlier jobs API page.
@@ -60,6 +64,20 @@ class JobsRoot(APIView):
             'survey': reverse('survey_jobs', request=request),
             'downloader': reverse('downloader_jobs', request=request),
             'processor': reverse('processor_jobs', request=request)
+        })
+
+# This class provides a friendlier Dataset API page.
+class DatasetRoot(APIView):
+    """
+    Use the 'create' endpoint to create a new dataset,
+    then use the returned 'id' field to see and update all the fields:
+
+    `/dataset/id-1234-1234/`
+
+    """
+    def get(self, request):
+        return Response({
+            'create': reverse('create_dataset', request=request)
         })
 
 urlpatterns = [
@@ -75,6 +93,11 @@ urlpatterns = [
     url(r'^platforms/$', PlatformList.as_view(), name="platforms"),
     url(r'^institutions/$', InstitutionList.as_view(), name="institutions"),
     url(r'^results/$', ResultsList.as_view(), name="results"),
+
+    # Deliverables
+    url(r'^dataset/$', DatasetRoot.as_view(), name="dataset_root"),
+    url(r'^dataset/create/$', CreateDatasetView.as_view(), name="create_dataset"),
+    url(r'^dataset/(?P<id>[0-9a-f-]+)/$', DatasetView.as_view(), name="dataset"),
 
     # Jobs
     url(r'^jobs/$', JobsRoot.as_view(), name="jobs"),
