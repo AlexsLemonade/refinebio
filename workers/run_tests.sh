@@ -51,13 +51,20 @@ fi
 
 # Make sure CEL for test is downloaded from S3
 cel_name="GSM1426071_CD_colon_active_1.CEL"
+cel_name2="GSM45588.CEL"
 cel_test_raw_dir="$volume_directory/raw/TEST/CEL"
 cel_test_data_1="$cel_test_raw_dir/$cel_name"
+cel_test_data_2="$cel_test_raw_dir/$cel_name2"
 if [ ! -e "$cel_test_data_1" ]; then
     mkdir -p $cel_test_raw_dir
     echo "Downloading CEL for tests."
     wget -q -O $cel_test_data_1 \
          "$test_data_repo/$cel_name"
+fi
+if [ ! -e "$cel_test_data_2" ]; then
+    echo "Downloading Non-Brainarray CEL for tests."
+    wget -q -O $cel_test_data_2 \
+         "$test_data_repo/$cel_name2"
 fi
 
 # Download salmontools test data
