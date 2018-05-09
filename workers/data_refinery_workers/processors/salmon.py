@@ -155,43 +155,6 @@ def _download_index(job_context: Dict) -> Dict:
             tarball.extractall(job_context["index_unpacked"])
     else:
         logger.info("Index already installed", processor_job=job_context["job_id"])
-<<<<<<< HEAD
-
-    job_context["success"] = True
-    return job_context
-
-
-def _zip_and_upload(job_context: Dict) -> Dict:
-    """Zips the directory output by Salmon into a single file and uploads it.
-
-    Adds the 'success' key to job_context because this function is the
-    last in the job.
-    """
-    try:
-        with tarfile.open(job_context['output_archive'], "w:gz") as tar:
-            tar.add(job_context["output_directory"], arcname=os.sep)
-    except Exception:
-        logger.exception("Exception caught while zipping processed directory %s",
-                         job_context["output_directory"],
-                         processor_job=job_context["job_id"]
-                        )
-        failure_template = "Exception caught while zipping processed directory {}"
-        job_context["job"].failure_reason = failure_template.format(first_file.name)
-        job_context["success"] = False
-        return job_context
-
-    computed_file = ComputedFile()
-    computed_file.absolute_file_path = job_context["output_archive"]
-    computed_file.filename = os.path.split(job_context["output_archive"])[-1]
-    computed_file.calculate_sha1()
-    computed_file.calculate_size()
-    computed_file.is_public = True
-    computed_file.result = job_context['result']
-    computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
-    # TODO here: delete local file after S3 sync#
-    computed_file.save()
-=======
->>>>>>> 04d65f0cf26f2f8ff909677cf5194baa1039b729
 
     job_context["success"] = True
     return job_context

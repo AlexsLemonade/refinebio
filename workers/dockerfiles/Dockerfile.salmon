@@ -46,6 +46,9 @@ RUN curl -k -L https://github.com/COMBINE-lab/salmon/archive/${SALMON_COMMIT_HAS
 ENV PATH /home/user/salmon-${SALMON_COMMIT_HASH}/bin:${PATH}
 # End code from salmon repo.
 
+RUN git clone https://github.com/COMBINE-lab/SalmonTools.git
+RUN cd SalmonTools && cmake . -DCMAKE_INSTALL_PREFIX=/usr/local && make install
+
 RUN pip3 install --upgrade pip
 
 COPY workers/data_refinery_workers/processors/requirements.txt .

@@ -14,7 +14,7 @@ cd $script_directory
 cd ..
 
 
-docker build -t dr_downloaders -f workers/Dockerfile.downloaders .
+docker build -t dr_downloaders -f workers/dockerfiles/Dockerfile.downloaders .
 
 volume_directory="$script_directory/volume"
 

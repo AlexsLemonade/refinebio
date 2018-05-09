@@ -30,9 +30,6 @@ def send_job(job_type: Enum, job_id: int) -> None:
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=5)
 
-    # Once I have every job specced out with its own Nomad job, this
-    # code can change and the meta won't need "JOB_NAME" in it because
-    # the just specifying the nomad_job to dispatch will be enough.
     if job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_LONG \
        or job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_SHORT:
         nomad_job = NOMAD_TRANSCRIPTOME_JOB

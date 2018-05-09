@@ -34,7 +34,7 @@ cd ~/refinebio/common && python setup.py sdist
 docker login -u $DOCKER_ID -p $DOCKER_PASSWD
 
 cd ~/refinebio
-for IMG in $CCDL_IMGS; do
+for IMG in $CCDL_WORKER_IMGS; do
     image_name=ccdl/dr_$IMG
     # Build and push image
     docker build -t $image_name:$CIRCLE_TAG -f workers/dockerfiles/$IMG .

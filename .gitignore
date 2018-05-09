@@ -16,8 +16,8 @@ nomad_dir_test
 infrastructure/nomad-job-specs/
 workers/nomad-job-specs/*
 !workers/nomad-job-specs/*.tpl
-foreman/surveyor.nomad
-foreman/surveyor.nomad_test
+foreman/nomad-job-specs/*
+!foreman/nomad-job-specs/*.tpl
 
 # Terraform
 infrastructure/.terraform/
