@@ -223,9 +223,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         # We're out of options so return the longest one.
         if len(sample_source_name) >= len(sample_assay_name):
-            sample_accession_code = sample_source_name
+            return sample_source_name
         else:
-            sample_accession_code = sample_assay_name
+            return sample_assay_name
 
     def create_samples_from_api(self,
                           experiment: Experiment
