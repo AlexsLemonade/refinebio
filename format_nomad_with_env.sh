@@ -181,7 +181,7 @@ if [[ $project == "workers" ]]; then
         output_file=${template/.tpl/}
 
         # Downloader logs go to a separate log stream.
-        if [ $output_file == "downloader.nomad"]; then
+        if [ $output_file == "downloader.nomad" ]; then
             export_log_conf "downloader"
         else
             export_log_conf "processor"
