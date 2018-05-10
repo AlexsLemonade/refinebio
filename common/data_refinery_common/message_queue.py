@@ -3,6 +3,7 @@
 from __future__ import absolute_import, unicode_literals
 from enum import Enum
 import nomad
+from nomad.api.exceptions import URLNotFoundNomadException
 from data_refinery_common.utils import get_env_variable
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -48,5 +49,9 @@ def send_job(job_type: Enum, job_id: int) -> None:
                 nomad_job,
                 job_type.value,
                 job_id)
-    nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,
-                                                   "JOB_ID": str(job_id)})
+    try:
+        nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,
+                                                       "JOB_ID": str(job_id)})
+    except URLNotFoundNomadException:
+        logger.error("Dispatching Nomad job to host %s and port %s failed.")
+        raise

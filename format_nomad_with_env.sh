@@ -111,6 +111,7 @@ if [ $env != "prod" ]; then
 "
     export AWS_CREDS=""
     export LOGGING_CONFIG=""
+    environment_file="environments/$env"
 else
     export EXTRA_HOSTS=""
     export AWS_CREDS="
@@ -126,6 +127,9 @@ else
           }
         }
 "
+    # When deploying prod we write the output of Terraform to a
+    # temporary environment file.
+    environment_file="$script_directory/infrastructure/prod_env"
 fi
 
 # Read all environment variables from the file for the appropriate
@@ -136,7 +140,7 @@ while read line; do
     if [[ -n $line ]] && [[ -z $is_comment ]]; then
         export $line
     fi
-done < "environments/$env"
+done < $environment_file
 
 # There is a current outstanding Nomad issue for the ability to
 # template environment variables into the job specifications. Until
@@ -159,7 +163,7 @@ if [[ $project == "workers" ]]; then
     for template in $(ls -1 nomad-job-specs | grep \.tpl); do
         # Strip off the trailing .tpl for once we've formatted it.
         output_file=${template/.tpl/}
-        cat $output_dir/$template \
+        cat nomad-job-specs/$template \
             | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                    > "$output_dir/$output_file$TEST_POSTFIX" \
                    2> /dev/null

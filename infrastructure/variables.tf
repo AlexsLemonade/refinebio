@@ -66,7 +66,7 @@ variable "affymetrix_docker_image" {
   default = "ccdl/dr_affymetrix:latest"
 }
 variable "no_op_docker_image" {
-  default = "wkurt/no_op:latest"
+  default = "wkurt/dr_no_op:latest"
 }
 variable "foreman_docker_image" {
   default = "wkurt/dr_foreman:latest"
@@ -161,6 +161,8 @@ output "environment_variables" {
       value = "${var.temp_prefix}"},
     {name = "PROCESSED_PREFIX"
       value = "${var.processed_prefix}"},
+    {name = "DOWNLOADERS_DOCKER_IMAGE"
+      value = "${var.downloaders_docker_image}"},
     {name = "TRANSCRIPTOME_DOCKER_IMAGE"
       value = "${var.transcriptome_docker_image}"},
     {name = "SALMON_DOCKER_IMAGE"
