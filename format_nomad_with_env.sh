@@ -117,16 +117,6 @@ else
     export AWS_CREDS="
         AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
         AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
-    export LOGGING_CONFIG="
-        logging {
-          type = \"awslogs\"
-          config {
-            awslogs-region = \"$REGION\",
-            awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
-            awslogs-stream = \"log-stream-nomad-docker-downloader-$USER-$STAGE\"
-          }
-        }
-"
     # When deploying prod we write the output of Terraform to a
     # temporary environment file.
     environment_file="$script_directory/infrastructure/prod_env"
@@ -163,8 +153,8 @@ export_log_conf (){
           type = \"awslogs\"
           config {
             awslogs-region = \"$region\",
-            awslogs-group = \"data-refinery-log-group-$user-$stage\",
-            awslogs-stream = \"log-stream-$1-docker-$user-$stage\"
+            awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
+            awslogs-stream = \"log-stream-$1-$USER-$STAGE\"
           }
         }"
     else

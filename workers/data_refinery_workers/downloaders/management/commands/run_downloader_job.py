@@ -29,7 +29,7 @@ class Command(BaseCommand):
         try:
             job_type = Downloaders[options["job_name"]]
         except KeyError:
-            logger.error("You must specify a valid job name.")
+            logger.error("You must specify a valid job name. %s was given.")
             return 1
 
         if job_type is Downloaders.ARRAY_EXPRESS:
