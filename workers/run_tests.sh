@@ -117,7 +117,7 @@ worker_images=(affymetrix salmon transcriptome no_op downloaders)
 
 for image in ${worker_images[*]}; do
     image_name=ccdl/dr_$image
-    test_command="$(run_tests_with_coverage $@)"
+    test_command="$(run_tests_with_coverage --tag=$image $@)"
 
     echo "Running tests with the following command:"
     echo $test_command
