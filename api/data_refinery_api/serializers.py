@@ -10,7 +10,8 @@ from data_refinery_common.models import (
     OriginalFile,
     ComputationalResult,
     ComputationalResultAnnotation,
-    ComputedFile
+    ComputedFile,
+    Dataset
 )
 
 ##
@@ -24,6 +25,7 @@ class OrganismSerializer(serializers.ModelSerializer):
                     'name',
                     'taxonomy_id',
                 )
+
 ##
 # Results
 ##
@@ -146,6 +148,8 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 ##
 
 class ExperimentSerializer(serializers.ModelSerializer):
+    organisms = serializers.StringRelatedField(many=True)
+
     class Meta:
         model = Experiment
         fields = (
@@ -157,11 +161,13 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'source_database',
                     'source_url',
                     'platform_name',
+                    'technology',
                     'has_publication',
                     'publication_title',
                     'publication_doi',
                     'pubmed_id',
                     'samples',
+                    'organisms',
                     'submitter_institution',
                     'created_at',
                     'last_modified'
@@ -203,6 +209,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
                     'source_first_published',
                     'source_last_modified',
                     'platform_accession_code',
+                    'technology',
                     'submitter_institution',
                     'last_modified',
                     'created_at',
@@ -309,3 +316,100 @@ class ProcessorJobSerializer(serializers.ModelSerializer):
                     'last_modified'
                 )
 
+##
+# Datasets
+##
+
+def validate_dataset(data):
+    """ Basic dataset validation. Currently only checks formatting, not values. """
+    if data['data'] != None:
+        if type(data['data']) != dict:
+            raise serializers.ValidationError("`data` must be a dict of lists.")
+
+        for key, value in data['data'].items():
+            if type(value) != list:
+                raise serializers.ValidationError("`data` must be a dict of lists. Problem with `" + str(key) + "`")
+
+    else:
+        raise serializers.ValidationError("`data` must be a dict of lists.")
+
+class CreateDatasetSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Dataset
+        fields = (
+                    'id',
+                    'data',
+                    'email_address'
+            )
+
+    def validate(self, data):
+        """
+        Ensure this is something we want in our dataset.
+        """
+        try:
+            validate_dataset(data)
+        except Exception:
+            raise
+        return data
+
+class DatasetSerializer(serializers.ModelSerializer):
+
+    start = serializers.NullBooleanField(required=False)
+
+    class Meta:
+        model = Dataset
+        fields = (
+                    'id',
+                    'data',
+                    'aggregate_by',
+                    'is_processing',
+                    'is_processed',
+                    'is_available',
+                    'email_address',
+                    'expires_on',
+                    's3_bucket',
+                    's3_key',
+                    'created_at',
+                    'last_modified',
+                    'start'
+            )
+        extra_kwargs = {
+                        'id': {
+                            'read_only': True,
+                        },
+                        'is_processing': {
+                            'read_only': True,
+                        },
+                        'is_processed': {
+                            'read_only': True,
+                        },
+                        'is_available': {
+                            'read_only': True,
+                        },
+                        'expires_on': {
+                            'read_only': True,
+                        },
+                        's3_bucket': {
+                            'read_only': True,
+                        },
+                        's3_key': {
+                            'read_only': True,
+                        },
+                        'created_at': {
+                            'read_only': True,
+                        },
+                        'last_modified': {
+                            'read_only': True,
+                        }
+                    }
+
+    def validate(self, data):
+        """
+        Ensure this is something we want in our dataset.
+        """
+        try:
+            validate_dataset(data)
+        except Exception:
+            raise
+        return data

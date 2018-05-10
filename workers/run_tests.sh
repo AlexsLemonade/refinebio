@@ -51,14 +51,25 @@ fi
 
 # Make sure CEL for test is downloaded from S3
 cel_name="GSM1426071_CD_colon_active_1.CEL"
+cel_name2="GSM45588.CEL"
 cel_test_raw_dir="$volume_directory/raw/TEST/CEL"
 cel_test_data_1="$cel_test_raw_dir/$cel_name"
+cel_test_data_2="$cel_test_raw_dir/$cel_name2"
 if [ ! -e "$cel_test_data_1" ]; then
     mkdir -p $cel_test_raw_dir
     echo "Downloading CEL for tests."
     wget -q -O $cel_test_data_1 \
          "$test_data_repo/$cel_name"
 fi
+if [ ! -e "$cel_test_data_2" ]; then
+    echo "Downloading Non-Brainarray CEL for tests."
+    wget -q -O $cel_test_data_2 \
+         "$test_data_repo/$cel_name2"
+fi
+
+# Download salmontools test data
+rm -rf $volume_directory/salmontools/
+git clone git@github.com:dongbohu/salmontools_tests.git $volume_directory/salmontools
 
 # Make sure data for Transcriptome Index tests is downloaded.
 tx_index_test_raw_dir="$volume_directory/raw/TEST/TRANSCRIPTOME_INDEX"
@@ -103,13 +114,11 @@ docker build -t dr_worker_tests -f workers/Dockerfile.tests .
 source common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
-NOMAD_HOST_IP=$(get_docker_nomad_ip_address)
-NOMAD_LINK=$(get_nomad_link_option)
 
 docker run \
        --add-host=database:$DB_HOST_IP \
-       --add-host=nomad:$NOMAD_HOST_IP \
+       --add-host=nomad:$HOST_IP \
        --env-file workers/environments/test \
        --volume $volume_directory:/home/user/data_store \
-       --link drdb:postgres $NOMAD_LINK \
+       --link drdb:postgres \
        -it dr_worker_tests bash -c "$(run_tests_with_coverage $@)"

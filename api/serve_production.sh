@@ -18,16 +18,14 @@ docker build -t dr_api_prod2 -f api/Dockerfile.production .
 source common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
-NOMAD_HOST_IP=$(get_docker_nomad_ip_address)
-NOMAD_LINK=$(get_nomad_link_option)
 
 STATIC_VOLUMES=/tmp/volumes_static
 
 docker run \
        --add-host=database:$DB_HOST_IP \
-       --add-host=nomad:$NOMAD_HOST_IP \
+       --add-host=nomad:$HOST_IP \
        --env-file api/environments/dev \
-       --link drdb:postgres $NOMAD_LINK \
+       --link drdb:postgres \
        -v "$STATIC_VOLUMES":/tmp/www/static \
        -p 8081:8081 \
        -it -d dr_api_prod2 /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"

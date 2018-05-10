@@ -79,8 +79,8 @@ def _download_file_aspera(download_url: str, downloader_job: DownloaderJob, targ
             stderr = str(completed_command.stderr)
             logger.error("Shell call to ascp failed with error message: %s\nCommand was: %s",
                          stderr,
-                         formatted_command
-                        )
+                         formatted_command,
+                         downloader_job=downloader_job.id)
             return False
 
     except Exception:
@@ -107,7 +107,9 @@ def download_sra(job_id: int) -> None:
         original_file = assoc.original_file
 
         if original_file.is_downloaded:
-            logger.error("File already downloaded!", original_file_id=original_file.id)
+            logger.error("File already downloaded!",
+                         original_file_id=original_file.id,
+                         downloader_job=job_id)
             continue
 
         os.makedirs(LOCAL_ROOT_DIR + '/' + job.accession_code, exist_ok=True)
@@ -125,7 +127,9 @@ def download_sra(job_id: int) -> None:
 
             downloaded_files.append(original_file)
         else:
-            logger.error("A problem occured while downloading")
+            logger.error("A problem occured while downloading!",
+                         original_file_id=original_file.id,
+                         downloader_job=job_id)
 
     utils.end_downloader_job(job, success)
     if success:

@@ -64,6 +64,9 @@ export NOMAD_HOST_IP=$(get_ip_address)
 
 if [ $env == "test" ]; then
     export VOLUME_DIR=$script_directory/test_volume
+    # Prevent test Nomad job specifications from overwriting
+    # existing Nomad job specifications.
+    export TEST_POSTFIX="_test"
 elif [ $env == "prod" ]; then
     # In production we use EFS as the mount.
     export VOLUME_DIR=/var/efs
@@ -123,16 +126,19 @@ if [[ ! -z $output_dir && ! -d "$output_dir" ]]; then
 fi
 
 export_log_conf (){
-    export LOGGING_CONFIG="
+    if [[ $env == 'prod' ]]; then    
+        export LOGGING_CONFIG="
         logging {
           type = \"awslogs\"
           config {
-            awslogs-region = \"$REGION\",
-            awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
-            awslogs-stream = \"log-stream-$1-docker-$USER-$STAGE\"
+            awslogs-region = \"$region\",
+            awslogs-group = \"data-refinery-log-group-$user-$stage\",
+            awslogs-stream = \"log-stream-$1-docker-$user-$stage\"
           }
-        }
-"
+        }"
+    else
+        export LOGGING_CONFIG=""
+    fi
 }
 
 # This actually performs the templating using Perl's regex engine.
@@ -141,23 +147,23 @@ if [[ $project == "workers" ]]; then
     export_log_conf "downloader"
     cat downloader.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"downloader.nomad \
+               > "$output_dir"downloader.nomad"$TEST_POSTFIX" \
                2> /dev/null
     export_log_conf "processor"
     cat processor.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"processor.nomad \
+               > "$output_dir"processor.nomad"$TEST_POSTFIX" \
                2> /dev/null
 elif [[ $project == "foreman" ]]; then
     export_log_conf "surveyor"
     cat surveyor.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"surveyor.nomad \
+               > "$output_dir"surveyor.nomad"$TEST_POSTFIX" \
                2> /dev/null
 elif [[ $project == "api" ]]; then
     export_log_conf "api"
     cat environment.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"environment \
+               > "$output_dir"environment"$TEST_POSTFIX" \
                2> /dev/null
 fi

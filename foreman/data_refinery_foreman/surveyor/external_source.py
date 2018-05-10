@@ -148,7 +148,8 @@ class ExternalSourceSurveyor:
             return False
 
         if not experiment:
-          logger.info("No experiment found.")
+          logger.info("No experiment found.",
+                      survey_job=self.survey_job.id)
           return False
 
         try:

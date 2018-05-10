@@ -32,6 +32,7 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Surveyor Jobs](#surveyor-jobs)
     - [ArrayExpress](#arrayexpress)
     - [Sequence Read Archive (SRA)](#sequence-read-archive-sra)
+    - [Gene Expression Omnibus (GEO)](#gene-expression-omnibus-geo)
     - [Ensembl Indexes](#ensembl-indexes)
   - [Downloader Jobs](#downloader-jobs)
   - [Processor Jobs](#processor-jobs)
@@ -41,6 +42,7 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Style](#style-1)
 - [Production Deployment](#production-deployment)
   - [Terraform](#terraform)
+  - [Autoscaling and Setting Spot Prices](#autoscaling-and-setting-spot-prices)
   - [Running Jobs](#running-jobs)
   - [Log Consumption](#log-consumption)
 - [Support](#support)
@@ -77,7 +79,7 @@ The following services will need to be installed:
 (https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
 so Docker does not need sudo permissions.
 - [Terraform](https://www.terraform.io/)
-- [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries)
+- [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./install_nomad.sh`.
 - git-crypt
 - jq
 
@@ -177,6 +179,14 @@ If you need to access a `psql` shell for inspecting the database, you can use:
 
 ### Testing
 
+The end to end tests require a separate Nomad client to be running so
+that the tests can be run without interfering with local
+development. The second Nomad client can be started with:
+
+```bash
+sudo -E ./run_nomad.sh -e test
+```
+
 To run the entire test suite:
 
 ```bash
@@ -237,9 +247,11 @@ recording metadata about the samples. A Surveyor Job should queue
 
 The Surveyor can be run with the `./foreman/run_surveyor.sh`
 script. The first argument to this script is the type of Surveyor Job
-to run. The three valid options are:
+to run. The valid options are:
+- `survey_all`
 - `survey_array_express`
 - `survey_sra`
+- `survey_geo`
 - `survey_transcriptome`
 
 Each Surveyor Job type expects unique arguments. Details on these
@@ -247,6 +259,14 @@ arguments can be viewed by running:
 
 ```bash
 ./foreman/run_surveyor.sh <JOB_TYPE> -h
+```
+
+You can also supply a newline-deliminated file to `survey_all` which will 
+dispatch survey jobs based on acession codes like so:
+
+Example:
+```bash
+./foreman/run_surveyor.sh survey_all --file MY_BIG_LIST_OF_CODES.txt
 ```
 
 Templates and examples of valid commands to run the different types of
@@ -288,6 +308,19 @@ Example (single read):
 Example (paired read):
 ```bash
 ./foreman/run_surveyor.sh survey_sra --accession SRR6718414
+```
+
+#### Gene Expression Omnibus (GEO)
+
+The GEO surveyor expects an exession code or a file:
+
+```bash
+./foreman/run_surveyor.sh survey_geo --accession <ARRAY_EXPRESS_ACCESSION_CODE> --file <FILEPATH.txt>
+```
+
+Example:
+```bash
+./foreman/run_surveyor.sh survey_geo --file NEUROBLASTOMA.txt
 ```
 
 #### Ensembl Indexes

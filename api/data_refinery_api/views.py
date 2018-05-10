@@ -1,12 +1,15 @@
 from django.conf import settings
 from django.db.models.aggregates import Avg
 from django.db.models.expressions import F
-from rest_framework.settings import api_settings
 from django.http import Http404
 
+from django_filters.rest_framework import DjangoFilterBackend
+
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.settings import api_settings
+from rest_framework import status, filters, generics
 
 from data_refinery_common.models import (
     Experiment, 
@@ -15,7 +18,8 @@ from data_refinery_common.models import (
     ComputationalResult,
     DownloaderJob,
     SurveyJob,
-    ProcessorJob
+    ProcessorJob,
+    Dataset
 )
 from data_refinery_api.serializers import ( 
     ExperimentSerializer, 
@@ -30,8 +34,16 @@ from data_refinery_api.serializers import (
     # Jobs
     SurveyJobSerializer,
     DownloaderJobSerializer,
-    ProcessorJobSerializer
+    ProcessorJobSerializer,
+
+    # Dataset
+    CreateDatasetSerializer,
+    DatasetSerializer
 )
+
+##
+# Custom Views
+##
 
 class PaginatedAPIView(APIView):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
@@ -62,6 +74,66 @@ class PaginatedAPIView(APIView):
         """
         assert self.paginator is not None
         return self.paginator.get_paginated_response(data)
+
+##
+# Search and Filter
+##
+
+# ListAPIView is read-only!
+class SearchAndFilter(generics.ListAPIView):
+    """
+    Search and filter for experiments and samples.
+
+    Ex: search/?search=human&has_publication=True
+
+    """
+
+    queryset = Experiment.objects.all()
+    serializer_class = ExperimentSerializer
+    pagination_class = LimitOffsetPagination
+
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
+    search_fields = ('title', '@description')
+    filter_fields = ('has_publication', 'submitter_institution', 'technology', 'source_first_published')
+
+##
+# Dataset
+##
+
+class CreateDatasetView(generics.CreateAPIView):
+    """ Creates and returns new Dataset. """
+
+    queryset = Dataset.objects.all()
+    serializer_class = CreateDatasetSerializer
+
+class DatasetView(generics.RetrieveUpdateAPIView):
+    """ View and modify a single Dataset. Set `start` to `true` to begin smashing and delivery."""
+
+    queryset = Dataset.objects.all()
+    serializer_class = DatasetSerializer
+    lookup_field = 'id'
+
+    def perform_update(self, serializer):
+        """ If `start` is set, fire off the job. Disables dataset data updates after that. """
+        old_object = self.get_object()
+        old_data = old_object.data
+        old_aggregate = old_object.aggregate_by
+        already_processing = old_object.is_processing
+        new_data = serializer.validated_data
+
+        if new_data.get('start'):
+            if not already_processing:
+                # TODO: Fire off the Smasher job here
+                serializer.validated_data['is_processing'] = True
+                obj = serializer.save()
+                return obj
+
+        # Don't allow critical data updates to jobs that have already been submitted,
+        # but do allow email address updating.
+        if already_processing:
+            serializer.validated_data['data'] = old_data
+            serializer.validated_data['aggregate_by'] = old_aggregate
+        serializer.save()
 
 ##
 # Experiments

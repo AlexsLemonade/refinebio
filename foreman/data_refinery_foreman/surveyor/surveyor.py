@@ -83,7 +83,8 @@ def test():
                                        value="E-MTAB-3050")
     key_value_pair.save()
     run_job(survey_job)
-    return
+
+    return survey_job
 
 
 def survey_ae_experiment(experiment_accession):
@@ -95,6 +96,8 @@ def survey_ae_experiment(experiment_accession):
     key_value_pair.save()
     run_job(survey_job)
 
+    return survey_job
+
 
 def survey_sra_experiment(accesion):
     survey_job = SurveyJob(source_type="SRA")
@@ -104,6 +107,8 @@ def survey_sra_experiment(accesion):
                                        value=accesion)
     key_value_pair.save()
     run_job(survey_job)
+    
+    return survey_job
 
 def survey_geo_experiment(accesion):
     survey_job = SurveyJob(source_type="GEO")
@@ -113,3 +118,6 @@ def survey_geo_experiment(accesion):
                                        value=accesion)
     key_value_pair.save()
     run_job(survey_job)
+    
+    return survey_job
+

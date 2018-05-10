@@ -78,9 +78,6 @@ ENV PATH /home/user/salmon-${SALMON_COMMIT_HASH}/bin:${PATH}
 
 COPY workers/requirements.txt .
 
-RUN \
-  pip3 --no-cache-dir install pip --upgrade && \
-  pip3 --no-cache-dir install setuptools --upgrade && \
-  pip3 --no-cache-dir install wheel --upgrade && \
-  pip3 --no-cache-dir install -r requirements.txt --upgrade && \
+RUN pip3 install pip --upgrade
+RUN  pip3 install -r requirements.txt && \
   rm -rf /root/.cache

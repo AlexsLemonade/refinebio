@@ -45,6 +45,7 @@ job "PROCESSOR" {
         PROCESSED_PREFIX = "${{PROCESSED_PREFIX}}"
 
         NOMAD_HOST = "${{NOMAD_HOST}}"
+        NOMAD_PORT = "${{NOMAD_PORT}}"
       }
 
       # The resources the job will require.

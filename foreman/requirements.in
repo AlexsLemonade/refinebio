@@ -1,5 +1,5 @@
 django
-psycopg2
+psycopg2-binary
 requests
 retrying
 python-nomad

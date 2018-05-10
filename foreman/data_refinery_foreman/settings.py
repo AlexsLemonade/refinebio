@@ -90,6 +90,13 @@ DATABASES = {
 
         'OPTIONS': {
             'connect_timeout': get_env_variable('DATABASE_TIMEOUT')
+        },
+
+        'TEST': {
+            # Our environment variables for test have a different
+            # database name than the other envs so just use that
+            # rather than letting Django munge it.
+            'NAME': get_env_variable('DATABASE_NAME')
         }
     }
 }
