@@ -380,7 +380,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
                 original_file_sample_association = OriginalFileSampleAssociation()
                 original_file_sample_association.original_file = original_file
-                original_file_sample_association.sample = sample
+                original_file_sample_association.sample = sample_object
                 original_file_sample_association.save()
 
         # Create associations if they don't already exist

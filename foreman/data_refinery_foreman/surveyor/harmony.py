@@ -10,6 +10,13 @@ logger = get_and_configure_logger(__name__)
 
 def extract_title(sample: Dict) -> str:
     """ Given a flat sample dictionary, find the title """
+
+    # Specifically look up for imported, non-SDRF AE samples
+    if 'source_comment' in sample.keys():
+      for comment in sample['source_comment']:
+        if 'title' in comment.get('name', ''):
+          return comment['value']
+
     title_fields = [
                     'title',
                     'sample title',
@@ -443,7 +450,7 @@ def harmonize(metadata: List) -> Dict:
     # Disease Stage!
     ##
     disease_stage_fields = [
-    	            'disease state',
+    	              'disease state',
                     'disease staging', 
                     'disease stage', 
                     'grade', 
@@ -452,7 +459,7 @@ def harmonize(metadata: List) -> Dict:
                     'histological grade', 
                     'tumor grading',
                     'disease outcome',
-                    'subject status'
+                    'subject status',
                 ]
     disease_stage_fields = add_variants(disease_stage_fields)
     for sample in original_samples:
@@ -640,7 +647,7 @@ def parse_sdrf(sdrf_url: str) -> List:
     """ Given a URL to an SDRF file, download parses it into JSON. """
 
     try:
-        sdrf_text = requests_retry_session().get(sdrf_url, timeout=5).text
+        sdrf_text = requests_retry_session().get(sdrf_url, timeout=60).text
     except Exception as e:
         logger.exception("Unable to fetch URL: " + sdrf_url, exception=str(e))
         return None

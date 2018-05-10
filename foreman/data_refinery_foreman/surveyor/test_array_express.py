@@ -45,7 +45,7 @@ class SurveyTestCase(TestCase):
         samples = Sample.objects.all()
         downloader_jobs = DownloaderJob.objects.all()
 
-        # We are expecting this to discoever 5 samples.
+        # We are expecting this to discover 5 samples.
         self.assertEqual(samples.count(), 5)
         # And for one DownloaderJob to be created for all of them.
         self.assertEqual(downloader_jobs.count(), 1)

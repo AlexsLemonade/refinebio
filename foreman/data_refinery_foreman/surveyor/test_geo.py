@@ -46,7 +46,4 @@ class SurveyTestCase(TestCase):
 
         self.assertEqual(124, Sample.objects.all().count())
         downloader_jobs = DownloaderJob.objects.all()
-
-        # 124 individual samples + 1 raw file and 1 miniml file
-        self.assertEqual(126, downloader_jobs.count())
-
+        self.assertEqual(124, downloader_jobs.count())
