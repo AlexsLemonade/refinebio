@@ -13,6 +13,12 @@ bioc_pkgs <- c(
    'limma_3.34.9.tar.gz'
 )
 
+# Helper function that installs a list of packages based on input URL
+install_with_url <- function(main_url, packages) {
+  lapply(packages,
+         function(pkg) devtools::install_url(paste0(main_url, pkg)))
+}
+
 release_url <- 'https://bioconductor.org/packages/release/data/annotation/src/contrib/'
 illumina_pkgs <- c(
   'illuminaHumanv2.db_1.26.0.tar.gz',

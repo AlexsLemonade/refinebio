@@ -66,7 +66,7 @@ variable "affymetrix_docker_image" {
   default = "ccdl/dr_affymetrix:latest"
 }
 variable "illumina_docker_image" {
-  default = "ccdl/dr_illumina:latest"
+  default = "wkurt/dr_illumina:latest"
 }
 variable "no_op_docker_image" {
   default = "wkurt/dr_no_op:latest"
