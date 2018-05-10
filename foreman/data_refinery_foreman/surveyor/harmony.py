@@ -12,10 +12,9 @@ def extract_title(sample: Dict) -> str:
     """ Given a flat sample dictionary, find the title """
 
     # Specifically look up for imported, non-SDRF AE samples
-    if 'source_comment' in sample.keys():
-      for comment in sample['source_comment']:
+    for comment in sample.get('source_comment', []):
         if 'title' in comment.get('name', ''):
-          return comment['value']
+            return comment['value']
 
     title_fields = [
                     'title',
