@@ -59,9 +59,7 @@ def _compute_paths(job_context: Dict) -> str:
 
 
 def _prepare_files(job_context: Dict) -> Dict:
-    """Moves the batch's files from the raw directory to the temp directory.
-
-    Also adds the keys "fasta_file_path" and "gtf_file_path" to
+    """Adds the keys "fasta_file_path" and "gtf_file_path" to
     job_context.
     """
     original_files = job_context["original_files"]

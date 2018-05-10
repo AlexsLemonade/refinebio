@@ -11,20 +11,35 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework import status, filters, generics
 
-from data_refinery_common.models import Experiment, Sample, Organism
+from data_refinery_common.models import (
+    Experiment, 
+    Sample, 
+    Organism, 
+    ComputationalResult,
+    DownloaderJob,
+    SurveyJob,
+    ProcessorJob,
+    Dataset
+)
+from data_refinery_common.models import Experiment, Sample, Organism, Dataset
 from data_refinery_api.serializers import ( 
-	ExperimentSerializer, 
-	DetailedExperimentSerializer,
-	SampleSerializer, 
-	DetailedSampleSerializer,
-	OrganismSerializer,
-	PlatformSerializer,
-	InstitutionSerializer,
+    ExperimentSerializer, 
+    DetailedExperimentSerializer,
+    SampleSerializer, 
+    DetailedSampleSerializer,
+    OrganismSerializer,
+    PlatformSerializer,
+    InstitutionSerializer,
+    ComputationalResultSerializer,
 
-	# Jobs
-	SurveyJobSerializer,
-	DownloaderJobSerializer,
-	ProcessorJobSerializer
+    # Jobs
+    SurveyJobSerializer,
+    DownloaderJobSerializer,
+    ProcessorJobSerializer,
+
+    # Dataset
+    CreateDatasetSerializer,
+    DatasetSerializer
 )
 
 ##
@@ -81,6 +96,45 @@ class SearchAndFilter(generics.ListAPIView):
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
     search_fields = ('title', '@description')
     filter_fields = ('has_publication', 'submitter_institution', 'technology', 'source_first_published')
+
+##
+# Dataset
+##
+
+class CreateDatasetView(generics.CreateAPIView):
+    """ Creates and returns new Dataset. """
+
+    queryset = Dataset.objects.all()
+    serializer_class = CreateDatasetSerializer
+
+class DatasetView(generics.RetrieveUpdateAPIView):
+    """ View and modify a single Dataset. Set `start` to `true` to begin smashing and delivery."""
+
+    queryset = Dataset.objects.all()
+    serializer_class = DatasetSerializer
+    lookup_field = 'id'
+
+    def perform_update(self, serializer):
+        """ If `start` is set, fire off the job. Disables dataset data updates after that. """
+        old_object = self.get_object()
+        old_data = old_object.data
+        old_aggregate = old_object.aggregate_by
+        already_processing = old_object.is_processing
+        new_data = serializer.validated_data
+
+        if new_data.get('start'):
+            if not already_processing:
+                # TODO: Fire off the Smasher job here
+                serializer.validated_data['is_processing'] = True
+                obj = serializer.save()
+                return obj
+
+        # Don't allow critical data updates to jobs that have already been submitted,
+        # but do allow email address updating.
+        if already_processing:
+            serializer.validated_data['data'] = old_data
+            serializer.validated_data['aggregate_by'] = old_aggregate
+        serializer.save()
 
 ##
 # Experiments
@@ -164,13 +218,40 @@ class SampleDetail(APIView):
         return Response(serializer.data)
 
 ##
+# Results
+##
+
+class ResultsList(PaginatedAPIView):
+    """
+    List all ComputationalResults.
+
+    Append the pk to the end of this URL to see a detail view.
+
+    """
+
+    def get(self, request, format=None):
+        filter_dict = request.query_params.dict()
+        filter_dict.pop('limit', None)
+        filter_dict.pop('offset', None)
+        results = ComputationalResult.objects.filter(**filter_dict)
+
+        page = self.paginate_queryset(results)
+        if page is not None:
+            serializer = ComputationalResultSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        else:
+            serializer = ComputationalResultSerializer(results, many=True)
+            return Response(serializer.data)
+
+
+##
 # Search Filter Models
 ##
 
 class OrganismList(APIView):
     """
-	Unpaginated list of all the available organisms
-	"""
+    Unpaginated list of all the available organisms
+    """
      
     def get(self, request, format=None):
         organisms = Organism.objects.all()
@@ -179,8 +260,8 @@ class OrganismList(APIView):
 
 class PlatformList(APIView):
     """
-	Unpaginated list of all the available "platform" information
-	"""
+    Unpaginated list of all the available "platform" information
+    """
      
     def get(self, request, format=None):
         experiments = Experiment.objects.all().values("platform_accession_code", "platform_name").distinct()
@@ -189,8 +270,8 @@ class PlatformList(APIView):
 
 class InstitutionList(APIView):
     """
-	Unpaginated list of all the available "institution" information
-	"""
+    Unpaginated list of all the available "institution" information
+    """
      
     def get(self, request, format=None):
         experiments = Experiment.objects.all().values("submitter_institution").distinct()
@@ -205,10 +286,10 @@ class SurveyJobList(PaginatedAPIView):
     """
     List of all SurveyJob.
 
-	Ex: 
-	  - ?start_time__lte=2018-03-23T15:29:40.848381Z
-	  - ?start_time__lte=2018-03-23T15:29:40.848381Z&start_time__gte=2018-03-23T14:29:40.848381Z
-	  - ?success=True
+    Ex: 
+      - ?start_time__lte=2018-03-23T15:29:40.848381Z
+      - ?start_time__lte=2018-03-23T15:29:40.848381Z&start_time__gte=2018-03-23T14:29:40.848381Z
+      - ?success=True
 
     """
 
@@ -268,12 +349,10 @@ class ProcessorJobList(PaginatedAPIView):
 # Statistics
 ###
 
-from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
-
 class Stats(APIView):
     """
-	Statistics about the health of the system.
-	"""
+    Statistics about the health of the system.
+    """
 
     def get(self, request, format=None):
         data = {}

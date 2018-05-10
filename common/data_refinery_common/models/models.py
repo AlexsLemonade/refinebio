@@ -2,11 +2,12 @@ import hashlib
 import io
 import os
 import pytz
+import uuid
 
 from datetime import datetime
 from functools import partial
 
-from django.contrib.postgres.fields import HStoreField
+from django.contrib.postgres.fields import HStoreField, JSONField
 from django.db import transaction
 from django.db import models
 from django.utils import timezone
@@ -34,6 +35,7 @@ class Sample(models.Model):
 
     # Identifiers
     accession_code = models.CharField(max_length=255, unique=True)
+    title = models.CharField(max_length=255, unique=False, blank=True)
 
     # Relations
     organism = models.ForeignKey(Organism, blank=True, null=True, on_delete=models.SET_NULL)
@@ -100,6 +102,7 @@ class Experiment(models.Model):
     def __str__ (self):
         return "Experiment: " + self.accession_code
 
+    # Relations
     samples = models.ManyToManyField('Sample', through='ExperimentSampleAssociation')
     organisms = models.ManyToManyField('Organism', through='ExperimentOrganismAssociation')
 
@@ -277,8 +280,8 @@ class OriginalFile(models.Model):
     size_in_bytes = models.BigIntegerField(blank=True, null=True)
     sha1 = models.CharField(max_length=64)
 
-    # Reference properties
-    sample = models.ForeignKey(Sample, blank=True, null=True, on_delete=models.CASCADE)
+    # Relations
+    samples = models.ManyToManyField('Sample', through='OriginalFileSampleAssociation')
 
     # Historical Properties
     source_url = models.CharField(max_length=255)
@@ -387,6 +390,50 @@ class ComputedFile(models.Model):
         self.size_in_bytes = os.path.getsize(self.absolute_file_path)
         return self.size_in_bytes
 
+class Dataset(models.Model):
+    """ A Dataset is a desired set of experiments/samples to smash and download """
+
+    AGGREGATE_CHOICES = (
+        ('EXPERIMENT', 'Experiment'),
+        ('SPECIES', 'Species')
+    )
+
+    # ID
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # Experiments and samples live here: {'E-ABC-1': ['SAMP1', 'SAMP2']}
+    # This isn't going to be queryable, so we can use JSON-in-text, just make
+    # sure we validate properly in and out!
+    data = JSONField(default={})
+
+    # Processing properties
+    aggregate_by = models.CharField(max_length=255, choices=AGGREGATE_CHOICES, default="EXPERIMENT")
+
+    # State properties
+    is_processing = models.BooleanField(default=False) # Data is still editable
+    is_processed = models.BooleanField(default=False) # Result has been made
+    is_available = models.BooleanField(default=False) # Result is ready for delivery
+
+    # Delivery properties
+    email_address = models.CharField(max_length=255, blank=True, null=True)
+    expires_on = models.DateTimeField(blank=True, null=True)
+
+    # Deliverables
+    s3_bucket = models.CharField(max_length=255)
+    s3_key = models.CharField(max_length=255)
+
+    # Common Properties
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(Dataset, self).save(*args, **kwargs)    
+
 """
 # Associations
 
@@ -424,6 +471,14 @@ class ProcessorJobOriginalFileAssociation(models.Model):
 
     class Meta:
         db_table = "processorjob_originalfile_associations"
+
+class OriginalFileSampleAssociation(models.Model):
+
+    original_file = models.ForeignKey(OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
+    sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "original_file_sample_associations"
 
 class SampleResultAssociation(models.Model):
 

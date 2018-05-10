@@ -4,7 +4,7 @@ options(warn=2)
 
 options(repos=structure(c(CRAN="https://cloud.r-project.org")))
 
-# Install devtools
+# Install dev packages
 install.packages("devtools")
 
 # Use devtools::install_version() to install packages in cran.
@@ -15,6 +15,11 @@ devtools::install_version('RSQLite', version='2.0')
 devtools::install_version('tibble', version='1.4.2')
 devtools::install_version('xtable', version='1.8-2')
 devtools::install_version('pkgconfig', version='2.0.1')
+
+# Illumina
+devtools::install_version('doParallel', version='1.0.11')
+devtools::install_version('data.table', version='1.11.0')
+devtools::install_version('optparse', version='1.4.4')
 
 # Bioconductor packages, installed by devtools::install_url()
 
@@ -39,9 +44,17 @@ bioc_pkgs <- c(
   'preprocessCore_1.40.0.tar.gz',
   'genefilter_1.60.0.tar.gz',
   'sva_3.26.0.tar.gz',
-  'tximport_1.6.0.tar.gz'
+  'tximport_1.6.0.tar.gz',
+  'limma_3.34.9.tar.gz'
 )
 install_with_url(bioc_url, bioc_pkgs)
+
+release_url <- 'https://bioconductor.org/packages/release/data/annotation/src/contrib/'
+illumina_pkgs <- c(
+  'illuminaHumanv2.db_1.26.0.tar.gz',
+  'illuminaHumanv4.db_1.26.0.tar.gz'
+)
+install_with_url(release_url, illumina_pkgs)
 
 annotation_url <- 'https://bioconductor.org/packages/3.6/data/annotation/src/contrib/'
 annotation_pkgs <- c(

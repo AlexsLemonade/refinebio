@@ -10,7 +10,7 @@ import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import OriginalFile, ComputationalResult, ComputedFile
+from data_refinery_common.models import OriginalFile, ComputationalResult, ComputedFile, SampleResultAssociation
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 from data_refinery_common.utils import get_env_variable
@@ -89,15 +89,7 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
     # Related: https://github.com/data-refinery/data-refinery/issues/141
     package_name_without_version = package_name.replace("v1", "").replace("v2", "")
     chip_pkg_map = _create_ensg_pkg_map()
-    try:
-        job_context["brainarray_package"] = chip_pkg_map[package_name_without_version]
-    except KeyError as e:
-        error_template = ("Unable to find ensg package name from input file {0}"
-                          " (cdfName: {1}) while running AFFY_TO_PCL due to error: {2}")
-        error_message = error_template.format(input_file, header[0][0], str(e))
-        logger.error(error_message, processor_job=job_context["job"].id)
-        job_context["job"].failure_reason = error_message
-        job_context["success"] = False
+    job_context["brainarray_package"] = chip_pkg_map.get(package_name_without_version, None)
     return job_context
 
 
@@ -127,9 +119,15 @@ def _run_scan_upc(job_context: Dict) -> Dict:
             warnings.simplefilter("ignore")
             scan_upc = ro.r['::']('SCAN.UPC', 'SCANfast')
             job_context['time_start'] = timezone.now()
-            scan_upc(input_file,
-                     job_context["output_file_path"],
-                     probeSummaryPackage=job_context["brainarray_package"])
+
+            # Related: https://github.com/AlexsLemonade/refinebio/issues/64
+            if job_context["brainarray_package"]:
+                scan_upc(input_file,
+                         job_context["output_file_path"],
+                         probeSummaryPackage=job_context["brainarray_package"])
+            else:
+                scan_upc(input_file,
+                         job_context["output_file_path"])      
             job_context['time_end'] = timezone.now()
 
     except RRuntimeError as e:
@@ -180,6 +178,12 @@ def _create_result_objects(job_context: Dict) -> Dict:
         job_context["job"].failure_reason = failure_reason
         job_context["success"] = False
         return job_context
+
+    for sample in job_context['samples']:
+        assoc = SampleResultAssociation()
+        assoc.sample = sample
+        assoc.result = result
+        assoc.save()
 
     logger.info("Created %s", result,
                 processor_job=job_context["job_id"])

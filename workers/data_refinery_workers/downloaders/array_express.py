@@ -37,7 +37,7 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
                      file_path,
                      downloader_job=job.id)
         target_file = open(file_path, "wb")
-        with closing(urllib.request.urlopen(download_url)) as request:
+        with closing(urllib.request.urlopen(download_url, timeout=60)) as request:
             shutil.copyfileobj(request, target_file, CHUNK_SIZE)
     except Exception:
         logger.exception("Exception caught while downloading file.",

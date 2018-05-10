@@ -156,6 +156,22 @@ elif [[ ! -d "$output_dir" ]]; then
     mkdir $output_dir
 fi
 
+export_log_conf (){
+    if [[ $env == 'prod' ]]; then
+        export LOGGING_CONFIG="
+        logging {
+          type = \"awslogs\"
+          config {
+            awslogs-region = \"$region\",
+            awslogs-group = \"data-refinery-log-group-$user-$stage\",
+            awslogs-stream = \"log-stream-$1-docker-$user-$stage\"
+          }
+        }"
+    else
+        export LOGGING_CONFIG=""
+    fi
+}
+
 # This actually performs the templating using Perl's regex engine.
 # Perl magic found here: https://stackoverflow.com/a/2916159/6095378
 if [[ $project == "workers" ]]; then
@@ -163,17 +179,27 @@ if [[ $project == "workers" ]]; then
     for template in $(ls -1 nomad-job-specs | grep \.tpl); do
         # Strip off the trailing .tpl for once we've formatted it.
         output_file=${template/.tpl/}
+
+        # Downloader logs go to a separate log stream.
+        if [ $output_file == "downloader.nomad"]; then
+            export_log_conf "downloader"
+        else
+            export_log_conf "processor"
+        fi
+
         cat nomad-job-specs/$template \
             | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                    > "$output_dir/$output_file$TEST_POSTFIX" \
                    2> /dev/null
     done
 elif [[ $project == "foreman" ]]; then
+    export_log_conf "surveyor"
     cat nomad-job-specs/surveyor.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                > "$output_dir"/surveyor.nomad"$TEST_POSTFIX" \
                2> /dev/null
 elif [[ $project == "api" ]]; then
+    export_log_conf "api"
     cat environment.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                > "$output_dir"/environment"$TEST_POSTFIX" \

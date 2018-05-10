@@ -51,13 +51,20 @@ fi
 
 # Make sure CEL for test is downloaded from S3
 cel_name="GSM1426071_CD_colon_active_1.CEL"
+cel_name2="GSM45588.CEL"
 cel_test_raw_dir="$volume_directory/raw/TEST/CEL"
 cel_test_data_1="$cel_test_raw_dir/$cel_name"
+cel_test_data_2="$cel_test_raw_dir/$cel_name2"
 if [ ! -e "$cel_test_data_1" ]; then
     mkdir -p $cel_test_raw_dir
     echo "Downloading CEL for tests."
     wget -q -O $cel_test_data_1 \
          "$test_data_repo/$cel_name"
+fi
+if [ ! -e "$cel_test_data_2" ]; then
+    echo "Downloading Non-Brainarray CEL for tests."
+    wget -q -O $cel_test_data_2 \
+         "$test_data_repo/$cel_name2"
 fi
 
 # Download salmontools test data
@@ -77,6 +84,26 @@ if [ ! -e "$tx_index_test_raw_dir/$gtf_file" ]; then
     echo "Downloading GTF file for Transcriptome Index tests."
     wget -q -O "$tx_index_test_raw_dir/$gtf_file" \
          "$test_data_repo/$gtf_file"
+fi
+
+# Illumina test file
+ilu_file="GSE22427_non-normalized.txt"
+ilu_test_raw_dir="$volume_directory/raw/TEST/ILLUMINA"
+if [ ! -e "$ilu_test_raw_dir/$ilu_file" ]; then
+    mkdir -p $ilu_test_raw_dir
+    echo "Downloading Illumina file for Illumina tests."
+    wget -q -O "$ilu_test_raw_dir/$ilu_file" \
+         "$test_data_repo/$ilu_file"
+fi
+
+# Agilnt Two Color test file
+at_file="GSM466597_95899_agilent.txt"
+at_test_raw_dir="$volume_directory/raw/TEST/AGILENT_TWOCOLOR"
+if [ ! -e "$at_test_raw_dir/$at_file" ]; then
+    mkdir -p $at_test_raw_dir
+    echo "Downloading Agilent file for A2C tests."
+    wget -q -O "$at_test_raw_dir/$at_file" \
+         "$test_data_repo/$at_file"
 fi
 
 source common.sh

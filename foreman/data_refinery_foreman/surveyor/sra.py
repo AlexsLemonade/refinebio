@@ -13,6 +13,7 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
     ExperimentSampleAssociation,
+    OriginalFileSampleAssociation,
     ExperimentOrganismAssociation
 )
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
@@ -362,12 +363,16 @@ class SraSurveyor(ExternalSourceSurveyor):
 
             for file_url in files_urls:
                 original_file = OriginalFile()
-                original_file.sample = sample_object
                 original_file.source_url = file_url
                 original_file.source_filename = file_url.split('/')[-1]
                 original_file.is_downloaded = False
                 original_file.has_raw = True
                 original_file.save()
+
+                original_file_sample_association = OriginalFileSampleAssociation()
+                original_file_sample_association.original_file = original_file
+                original_file_sample_association.sample = sample
+                original_file_sample_association.save()
 
         # Create associations if they don't already exist
         try:

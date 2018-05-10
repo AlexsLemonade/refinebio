@@ -7,18 +7,20 @@ from data_refinery_common.models.jobs import (
 from data_refinery_common.models.organism import Organism
 
 from data_refinery_common.models.models import (
-	Sample,
-	SampleAnnotation,
-	Experiment,
-	ExperimentAnnotation,
-	ComputationalResult,
-	ComputationalResultAnnotation,
-	OrganismIndex,
-	OriginalFile,
-	ComputedFile,
-	ExperimentSampleAssociation,
-	DownloaderJobOriginalFileAssociation,
-	ProcessorJobOriginalFileAssociation,
-	SampleResultAssociation,
-	ExperimentOrganismAssociation
+    Sample,
+    SampleAnnotation,
+    Experiment,
+    ExperimentAnnotation,
+    ComputationalResult,
+    ComputationalResultAnnotation,
+    OrganismIndex,
+    OriginalFile,
+    OriginalFileSampleAssociation,
+    ComputedFile,
+    ExperimentSampleAssociation,
+    DownloaderJobOriginalFileAssociation,
+    ProcessorJobOriginalFileAssociation,
+    SampleResultAssociation,
+    ExperimentOrganismAssociation,
+    Dataset
 )

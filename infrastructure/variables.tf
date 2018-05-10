@@ -65,6 +65,9 @@ variable "salmon_docker_image" {
 variable "affymetrix_docker_image" {
   default = "ccdl/dr_affymetrix:latest"
 }
+variable "illumina_docker_image" {
+  default = "ccdl/dr_illumina:latest"
+}
 variable "no_op_docker_image" {
   default = "wkurt/dr_no_op:latest"
 }
@@ -169,6 +172,8 @@ output "environment_variables" {
       value = "${var.salmon_docker_image}"},
     {name = "AFFYMETRIX_DOCKER_IMAGE"
       value = "${var.affymetrix_docker_image}"},
+    {name = "ILLUMINA_DOCKER_IMAGE"
+      value = "${var.illumina_docker_image}"},
     {name = "NO_OP_DOCKER_IMAGE"
       value = "${var.no_op_docker_image}"},
     {name = "FOREMAN_DOCKER_IMAGE"

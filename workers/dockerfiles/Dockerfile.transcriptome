@@ -18,6 +18,7 @@ RUN \
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
+# It's annoying that this can only be installed via git.
 RUN git clone https://github.com/deweylab/RSEM.git
 
 RUN cd RSEM && make install

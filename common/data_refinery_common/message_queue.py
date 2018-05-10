@@ -39,12 +39,16 @@ def send_job(job_type: Enum, job_id: int) -> None:
         nomad_job = ProcessorPipeline.AFFY_TO_PCL.value
     elif job_type is ProcessorPipeline.NO_OP:
         nomad_job = ProcessorPipeline.NO_OP.value
+    elif job_type is ProcessorPipeline.ILLUMINA_TO_PCL:
+        nomad_job = ProcessorPipeline.ILLUMINA_TO_PCL.value
+    elif job_type is ProcessorPipeline.AGILENT:
+        raise ValueError("XXX: Received AGILENT job to queue but we don't support that yet!")
     elif job_type in list(Downloaders):
         nomad_job = NOMAD_DOWNLOADER_JOB
     else:
         raise ValueError("Invalid job_type.")
 
-    logger.info("Queuing %s nomad job to run DR job %s with id %d.",
+    logger.info("Queuing %s nomad job to run job %s with id %d.",
                 nomad_job,
                 job_type.value,
                 job_id)

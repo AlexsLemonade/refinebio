@@ -33,3 +33,4 @@ docker run -it \
        --volume $volume_directory:/home/user/data_store \
        --link drdb:postgres \
        dr_foreman python3 manage.py "$@"
+

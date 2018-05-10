@@ -2,7 +2,6 @@ from django.core.management.base import BaseCommand
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 
-
 logger = get_and_configure_logger(__name__)
 
 
@@ -38,6 +37,12 @@ class Command(BaseCommand):
         elif job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_LONG:
             from data_refinery_workers.processors.transcriptome_index import build_transcriptome_index
             build_transcriptome_index(options["job_id"], length="short")
+        elif job_type is ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL:
+            from data_refinery_workers.processors.agilent_twocolor import agilent_twocolor_to_pcl
+            agilent_twocolor_to_pcl(options["job_id"])
+        elif job_type is ProcessorPipeline.ILLUMINA_TO_PCL:
+            from data_refinery_workers.processors.illumina import illumina_to_pcl
+            illumina_to_pcl(options["job_id"])
         elif job_type is ProcessorPipeline.SALMON:
             from data_refinery_workers.processors.salmon import salmon
             salmon(options["job_id"])

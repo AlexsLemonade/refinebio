@@ -10,6 +10,9 @@ from data_refinery_common.models.models import Sample, Experiment, OriginalFile
 class SurveyJob(models.Model):
     """Records information about a Surveyor Job."""
 
+    class Meta:
+        db_table = "survey_jobs"
+
     source_type = models.CharField(max_length=256)
     success = models.NullBooleanField(null=True)
 
@@ -25,6 +28,9 @@ class SurveyJob(models.Model):
     # The end time of the job
     end_time = models.DateTimeField(null=True)
 
+    # This field allows jobs to specify why they failed.
+    failure_reason = models.TextField(null=True)
+
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 
@@ -39,8 +45,8 @@ class SurveyJob(models.Model):
     def get_properties(self) -> Dict:
         return {pair.key: pair.value for pair in self.surveyjobkeyvalue_set.all()}
 
-    class Meta:
-        db_table = "survey_jobs"
+    def __str__(self):
+        return "SurveyJob " + str(self.pk) + ": " + str(self.source_type)
 
 
 class SurveyJobKeyValue(models.Model):
@@ -111,7 +117,8 @@ class ProcessorJob(models.Model):
         self.last_modified = current_time
         return super(ProcessorJob, self).save(*args, **kwargs)
 
-
+    def __str__(self):
+        return "ProcessorJob " + str(self.pk) + ": " + str(self.pipeline_applied)
 
 class DownloaderJob(models.Model):
     """Records information about running a Downloader."""
@@ -163,3 +170,6 @@ class DownloaderJob(models.Model):
             self.created_at = current_time
         self.last_modified = current_time
         return super(DownloaderJob, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return "DownloaderJob " + str(self.pk) + ": " + str(self.downloader_task)

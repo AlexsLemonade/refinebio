@@ -34,10 +34,10 @@ WORKDIR /home/user
 
 ENV R_LIBS "/usr/local/lib/R/site-library"
 
-COPY workers/r_dependencies.R .
+COPY workers/affymetrix_dependencies.R .
 COPY workers/install_ensg_pkgs.R .
 
-RUN Rscript r_dependencies.R
+RUN Rscript affymetrix_dependencies.R
 
 RUN pip3 install pip --upgrade
 
