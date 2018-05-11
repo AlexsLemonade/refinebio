@@ -1,12 +1,7 @@
 """
-<<<<<<< HEAD
 This command will create and run survey jobs for each experiment in the
 experiment_list. experiment list should be a file containing one
 experiment accession code per line.
-=======
-This command will create and run survey jobs for each experiment 
-in a file containing one experiment accession code per line.
->>>>>>> cfe2066052b40e28f4eafb08ef4874d298ded609
 """
 
 import boto3

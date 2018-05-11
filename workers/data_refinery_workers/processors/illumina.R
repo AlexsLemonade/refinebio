@@ -318,11 +318,6 @@ sig = function(y, m, verbose=TRUE)
 library("optparse")
 
 option_list = list(
-<<<<<<< HEAD
-  # make_option(c("-g", "--gse"), type="character", default="GSE22427", 
-  #             help="GSE", metavar="character"),
-=======
->>>>>>> cfe2066052b40e28f4eafb08ef4874d298ded609
   make_option(c("-p", "--probeId"), type="character", default="PROBE_ID", 
               help="Probe ID", metavar="character"),
   make_option(c("-e", "--expression"), type="character", default=".AVG_Signal", 
@@ -342,18 +337,6 @@ option_list = list(
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-<<<<<<< HEAD
-# gseID <- commandArgs()[9]
-# probeIDColumn <- commandArgs()[10]
-# exprColumnPattern <- commandArgs()[11]
-# detectionPValueColumnPattern <- commandArgs()[12]
-# platform <- commandArgs()[13]
-# numCores <- as.integer(commandArgs()[14])
-# url <- commandArgs()[15]
-
-# gseID <- opt$gse
-=======
->>>>>>> cfe2066052b40e28f4eafb08ef4874d298ded609
 probeIDColumn <- opt$probeId
 exprColumns <- strsplit(opt$expression, ",")
 exprColumns <- unlist(lapply(exprColumns, as.integer))
@@ -372,10 +355,6 @@ library(paste(platform, ".db", sep=""), character.only=TRUE)
 # Read the data file
 message("Reading data file...")
 suppressWarnings(data <- fread(filePath, stringsAsFactors=FALSE, sep="\t", header=TRUE, autostart=10, data.table=FALSE, check.names=FALSE, fill=TRUE, na.strings="", showProgress=FALSE))
-<<<<<<< HEAD
-#suppressWarnings(data <- read.table(filePath, header=TRUE, fill=TRUE))
-=======
->>>>>>> cfe2066052b40e28f4eafb08ef4874d298ded609
 
 # Check input paramters and parse out data we need
 if (probeIDColumn == ""){

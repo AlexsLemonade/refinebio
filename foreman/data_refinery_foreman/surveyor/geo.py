@@ -175,11 +175,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     association.sample = sample_object
                     association.save()
 
-<<<<<<< HEAD
-        # These may or may not contain what we want.
-=======
         # These supplementary files _may-or-may-not_ contain the type of raw data we can process.
->>>>>>> cfe2066052b40e28f4eafb08ef4874d298ded609
         for experiment_supplement_url in gse.metadata.get('supplementary_file', []):
 
             try:
@@ -187,12 +183,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
             except OriginalFile.DoesNotExist:
                 original_file = OriginalFile()
 
-<<<<<<< HEAD
-                # So - this is _usually_ true, but not always. I think it's submitter supplied.
-=======
                 # So - source_filename is _usually_ where we expect it to be, 
                 # but not always. I think it's submitter supplied.
->>>>>>> cfe2066052b40e28f4eafb08ef4874d298ded609
                 original_file.source_filename = experiment_supplement_url.split('/')[-1]
                 original_file.source_url = experiment_supplement_url
                 original_file.is_downloaded = False
@@ -208,12 +200,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 original_file_sample_association.original_file = original_file
                 original_file_sample_association.save()
 
-<<<<<<< HEAD
-        # These are the Miniml/Soft/Matrix URLs that are always(?) provided?
-=======
         # These are the Miniml/Soft/Matrix URLs that are always(?) provided.
         # GEO describes different types of data formatting as "families"
->>>>>>> cfe2066052b40e28f4eafb08ef4874d298ded609
         for family_url in [self.get_miniml_url(experiment_accession_code)]:
 
             try:

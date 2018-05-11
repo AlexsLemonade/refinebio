@@ -1,14 +1,8 @@
-<<<<<<< HEAD
 import json
 import datetime
 from unittest.mock import Mock, patch, call
 from django.test import TestCase
 from data_refinery_common.job_lookup import Downloaders
-=======
-
-from unittest.mock import patch
-from django.test import TestCase
->>>>>>> cfe2066052b40e28f4eafb08ef4874d298ded609
 from data_refinery_common.models import (
     DownloaderJob,
     SurveyJob,
