@@ -18,12 +18,10 @@ docker build -t dr_api -f api/Dockerfile .
 source common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
-NOMAD_HOST_IP=$(get_docker_nomad_ip_address)
-NOMAD_LINK=$(get_nomad_link_option)
 
 docker run \
        --add-host=database:$DB_HOST_IP \
-       --add-host=nomad:$NOMAD_HOST_IP \
+       --add-host=nomad:$HOST_IP \
        --env-file api/environments/test \
-       --link drdb:postgres $NOMAD_LINK \
+       --link drdb:postgres \
        -it dr_api bash -c "$(run_tests_with_coverage $@)"

@@ -95,6 +95,12 @@ DATABASES = {
         'PASSWORD': get_env_variable('DATABASE_PASSWORD'),
         'HOST': get_env_variable('DATABASE_HOST'),
         'PORT': get_env_variable('DATABASE_PORT'),
+        'TEST': {
+            # Our environment variables for test have a different
+            # database name than the other envs so just use that
+            # rather than letting Django munge it.
+            'NAME': get_env_variable('DATABASE_NAME')
+        }
     }
 }
 

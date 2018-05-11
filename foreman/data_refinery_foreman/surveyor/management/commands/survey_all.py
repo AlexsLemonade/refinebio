@@ -1,7 +1,12 @@
 """
+<<<<<<< HEAD
 This command will create and run survey jobs for each experiment in the
 experiment_list. experiment list should be a file containing one
 experiment accession code per line.
+=======
+This command will create and run survey jobs for each experiment 
+in a file containing one experiment accession code per line.
+>>>>>>> cfe2066052b40e28f4eafb08ef4874d298ded609
 """
 
 import boto3
@@ -20,7 +25,10 @@ class Command(BaseCommand):
         parser.add_argument(
             "--file",
             type=str,
-            help=("An optional file listing accession codes. s3:// URLs are also accepted.")
+            help=("""An optional file listing accession codes. s3:// URLs are also accepted."
+
+Note: One entry per line, GSE* entries survey GEO, E-GEO-* entries survey ArrayExpress.
+""")
         )
         parser.add_argument(
             "--offset",
@@ -64,4 +72,4 @@ class Command(BaseCommand):
                         else:
                             surveyor.survey_sra_experiment(accession)
                     except Exception as e:
-                        print(e)
+                        logger.exception(e)

@@ -14,8 +14,9 @@ RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
 RUN pip3 install pandas
 RUN pip3 install ipdb
 
-COPY workers/InstallIlluminaDependencies.R /
-RUN Rscript /InstallIlluminaDependencies.R
+# Install salmontools
+RUN git clone https://github.com/COMBINE-lab/SalmonTools.git
+RUN cd SalmonTools && cmake . -DCMAKE_INSTALL_PREFIX=/usr/local && make install
 
 USER user
 

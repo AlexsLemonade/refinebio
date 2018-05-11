@@ -17,13 +17,11 @@ docker build -t common_tests -f common/Dockerfile .
 
 source common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
-NOMAD_HOST_IP=$(get_docker_nomad_ip_address)
 HOST_IP=$(get_ip_address)
-NOMAD_LINK=$(get_nomad_link_option)
 
 docker run \
        --add-host=database:$DB_HOST_IP \
-       --add-host=nomad:$NOMAD_HOST_IP \
+       --add-host=nomad:$HOST_IP \
        --env-file common/environments/test \
-       --link drdb:postgres $NOMAD_LINK \
+       --link drdb:postgres \
        -it common_tests bash -c "$(run_tests_with_coverage $@)"

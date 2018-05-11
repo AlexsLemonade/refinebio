@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 import json
 import datetime
 from unittest.mock import Mock, patch, call
 from django.test import TestCase
 from data_refinery_common.job_lookup import Downloaders
+=======
+
+from unittest.mock import patch
+from django.test import TestCase
+>>>>>>> cfe2066052b40e28f4eafb08ef4874d298ded609
 from data_refinery_common.models import (
     DownloaderJob,
     SurveyJob,
@@ -39,13 +45,15 @@ class SurveyTestCase(TestCase):
         SurveyJob.objects.all().delete()
 
     @patch('data_refinery_foreman.surveyor.external_source.send_job')
-    def test_survey(self, mock_send_task):
-        """
+    def test_geo_survey(self, mock_send_task):
+        """ Run the GEO surveyor and make sure we get some files to DL!
         """
 
         ae_surveyor = GeoSurveyor(self.survey_job)
         ae_surveyor.survey()
 
         self.assertEqual(124, Sample.objects.all().count())
-
         downloader_jobs = DownloaderJob.objects.all()
+
+        # 124 individual samples + 1 raw file and 1 miniml file
+        self.assertEqual(126, downloader_jobs.count())

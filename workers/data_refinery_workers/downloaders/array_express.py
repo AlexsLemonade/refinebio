@@ -3,6 +3,7 @@ import urllib.request
 import os
 import shutil
 import zipfile
+import time
 from typing import List
 from contextlib import closing
 
@@ -36,7 +37,7 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
                      file_path,
                      downloader_job=job.id)
         target_file = open(file_path, "wb")
-        with closing(urllib.request.urlopen(download_url)) as request:
+        with closing(urllib.request.urlopen(download_url, timeout=60)) as request:
             shutil.copyfileobj(request, target_file, CHUNK_SIZE)
     except Exception:
         logger.exception("Exception caught while downloading file.",
@@ -46,11 +47,11 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
     finally:
         target_file.close()
 
-def _extract_files(file_path: str, accession_code: str) -> List[str]:
+def _extract_files(file_path: str, accession_code: str, job: DownloaderJob) -> List[str]:
     """Extract zip and return a list of the raw files.
     """
 
-    logger.debug("Extracting %s!", file_path, file_path=file_path)
+    logger.debug("Extracting %s!", file_path, file_path=file_path, downloader_job=job.id)
 
     try:
         # This is technically an unsafe operation.
@@ -64,8 +65,8 @@ def _extract_files(file_path: str, accession_code: str) -> List[str]:
         files = [{'absolute_path': abs_with_code_raw + f, 'filename': f} for f in os.listdir(abs_with_code_raw)]
 
     except Exception as e:
-        reason = "Exception %s caught while extracting %s", str(e), zip_path
-        logger.exception(reason)
+        reason = "Exception %s caught while extracting %s", str(e), str(file_path)
+        logger.exception(reason, downloader_job=job.id)
         job.failure_reason = reason
         raise
 
@@ -95,10 +96,13 @@ def download_array_express(job_id: int) -> None:
     # contained within the same zip file. Therefore only
     # download the one.
     os.makedirs(LOCAL_ROOT_DIR + '/' + accession_code, exist_ok=True)
-    dl_file_path = LOCAL_ROOT_DIR + '/' + accession_code + '/' + accession_code + ".zip"
+
+    # Add a timestamp in milliseconds to filename to prevent multiple jobs from using the same file.
+    filename = url.split('/')[-1] + "." + str(int(time.time() * 1000))
+    dl_file_path = LOCAL_ROOT_DIR + '/' + accession_code + '/' + filename + ".zip"
     _download_file(url, dl_file_path, job)
 
-    extracted_files = _extract_files(dl_file_path, accession_code)
+    extracted_files = _extract_files(dl_file_path, accession_code, job)
 
     for og_file in extracted_files:
         # TODO: We _should_ be able to use GET here - anything more than 1 sample per
@@ -114,7 +118,8 @@ def download_array_express(job_id: int) -> None:
             og_files.append(original_file)
         except Exception:
             # TODO - is this worth failing a job for?
-            logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'])
+            logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'],
+                        downloader_job=job_id)
     success=True
 
     if success:

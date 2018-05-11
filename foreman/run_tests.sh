@@ -9,6 +9,13 @@ script_directory=`perl -e 'use File::Basename;
  print dirname(abs_path(@ARGV[0]));' -- "$0"`
 cd $script_directory
 
+# Set up the data volume directory if it does not already exist
+volume_directory="$script_directory/test_volume"
+if [ ! -d "$volume_directory" ]; then
+    mkdir $volume_directory
+    chmod -R a+rwX $volume_directory
+fi
+
 # However in order to give Docker access to all the code we have to
 # move up a level
 cd ..
@@ -18,12 +25,10 @@ docker build -t dr_foreman -f foreman/Dockerfile .
 source common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
-NOMAD_HOST_IP=$(get_docker_nomad_ip_address)
-NOMAD_LINK=$(get_nomad_link_option)
 
 docker run \
        --add-host=database:$DB_HOST_IP \
-       --add-host=nomad:$NOMAD_HOST_IP \
+       --add-host=nomad:$HOST_IP \
        --env-file foreman/environments/test \
-       --link drdb:postgres $NOMAD_LINK \
+       --link drdb:postgres \
        -it dr_foreman bash -c "$(run_tests_with_coverage $@)"
