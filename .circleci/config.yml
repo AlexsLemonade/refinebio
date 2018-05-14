@@ -25,10 +25,8 @@ jobs:
     machine: true
     steps:
       # Start Nomad, build images, and register jobs.
-      # This takes a while because it has to pull the worker base image.
       - run:
           command: sudo -E ./run_nomad.sh -e test
-          no_output_timeout: 36000
 
       # Run API Tests.
       - run: ./api/run_tests.sh
@@ -44,7 +42,10 @@ jobs:
     working_directory: ~/refinebio
     machine: true
     steps:
-      - run: ./workers/run_tests.sh -t affymetrix
+      - run:
+          command: ./workers/run_tests.sh -t affymetrix
+          # This takes a while because the affymetrix image is huge
+          no_output_timeout: 36000
 
   salmon_tests:
     working_directory: ~/refinebio
