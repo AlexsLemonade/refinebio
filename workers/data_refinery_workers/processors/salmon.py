@@ -451,7 +451,6 @@ def salmon(job_id: int) -> None:
 
                         _run_salmon,
                         _run_salmontools,
-                        _run_tximport,
                         _run_fastqc,
                         _zip_and_upload,
                         utils.end_job])
