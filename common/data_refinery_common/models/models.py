@@ -472,6 +472,14 @@ class ProcessorJobOriginalFileAssociation(models.Model):
     class Meta:
         db_table = "processorjob_originalfile_associations"
 
+class ProcessorJobDatasetAssociation(models.Model):
+
+    processor_job = models.ForeignKey("data_refinery_common.ProcessorJob", blank=False, null=False, on_delete=models.CASCADE)
+    dataset = models.ForeignKey(Dataset, blank=False, null=False, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "processorjob_dataset_associations"
+
 class OriginalFileSampleAssociation(models.Model):
 
     original_file = models.ForeignKey(OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
