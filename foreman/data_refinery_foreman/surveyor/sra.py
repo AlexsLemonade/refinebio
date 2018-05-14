@@ -293,7 +293,7 @@ class SraSurveyor(ExternalSourceSurveyor):
             if "lab_name" in metadata:
                 experiment_object.submitter_institution = metadata["lab_name"]
             if "experiment_design_description" in metadata:
-                experiment_object.protocol_description = metadata["experiment_design_description"]
+                experiment_object.protocol_description = [metadata["experiment_design_description"]]
             if "pubmed_id" in metadata:
                 experiment_object.pubmed_id = metadata["pubmed_id"]
                 experiment_object.has_publication = True

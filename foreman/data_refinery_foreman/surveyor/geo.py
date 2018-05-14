@@ -76,6 +76,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_object.source_database = "GEO"
             experiment_object.name = gse.metadata.get('title', [''])[0]
             experiment_object.description = gse.metadata.get('summary', [''])[0]
+            experiment_object.protocol_description = [] # I don't know how to do any better than this. Summary contains some of this info.
+
             # TODO: Lookup GEO-GPL - Related: https://github.com/AlexsLemonade/refinebio/issues/222
             experiment_object.platform_name = gse.metadata.get('platform_id', [''])[0]
             experiment_object.platform_accession_code = gse.metadata.get('platform_id', [''])[0]

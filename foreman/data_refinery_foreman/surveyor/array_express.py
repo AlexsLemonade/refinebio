@@ -163,7 +163,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 else:
                     experiment_object.submitter_institution = idf_dict['Person Affiliation']
             if 'Protocol Description' in idf_dict:
-                experiment_object.protocol_description = ", ".join(idf_dict['Protocol Description'])
+                experiment_object.protocol_description = json.loads(idf_dict['Protocol Description'])
             if 'Publication Title' in idf_dict:
                 # This will happen for some superseries.
                 # Ex: E-GEOD-29536
