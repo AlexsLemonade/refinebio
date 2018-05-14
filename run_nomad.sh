@@ -107,7 +107,9 @@ branch_name=$(git rev-parse --symbolic-full-name --abbrev-ref HEAD)
 # case of affymetrix though, the image takes too long to build so if
 # they haven't built it, just use the latest prod image.
 
-worker_images=(illumina affymetrix salmon transcriptome no_op downloaders)
+# Test parallelization of CircleCI, so for now just the images needed for end-to-end tests.
+# worker_images=(illumina affymetrix salmon transcriptome no_op downloaders)
+worker_images=(downloaders no_op)
 
 # Build, tag, and push an image for the workers to the local registry.
 for image in ${worker_images[*]}; do

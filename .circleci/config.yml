@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  test:
+  setup:
     working_directory: ~/refinebio
     machine: true
     steps:
@@ -19,6 +19,11 @@ jobs:
 
       # Install Nomad
       - run: sudo ./install_nomad.sh
+
+  main_tests:
+    working_directory: ~/refinebio
+    machine: true
+    steps:
       # Start Nomad, build images, and register jobs.
       # This takes a while because it has to pull the worker base image.
       - run:
@@ -35,10 +40,29 @@ jobs:
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
 
-      # Run Worker Tests
-      - run:
-          command: .circleci/filter_tests.sh
-          no_output_timeout: 36000
+  affymetrix_tests:
+    working_directory: ~/refinebio
+    machine: true
+    steps:
+      - run: ./workers/run_tests.sh -t affymetrix
+
+  salmon_tests:
+    working_directory: ~/refinebio
+    machine: true
+    steps:
+      - run: ./workers/run_tests.sh -t salmon
+
+  illumina__tests:
+    working_directory: ~/refinebio
+    machine: true
+    steps:
+      - run: ./workers/run_tests.sh -t illumina
+
+  transcriptome_tests:
+    working_directory: ~/refinebio
+    machine: true
+    steps:
+      - run: ./workers/run_tests.sh -t transcriptome
 
   deploy:
     machine: true
@@ -53,10 +77,52 @@ workflows:
   version: 2
   test-and-deploy:
     jobs:
-      # "test" job will be triggered by:
+      # "setup" and other test jobs will be triggered by:
       # - any branch commit, or:
       # - tag commits whose names start with letter "v".
-      - test:
+      - setup:
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "setup" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+      - main_tests:
+          requires:
+            - setup
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+      - affymetrix_tests:
+          requires:
+            - setup
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+      - salmon_tests:
+          requires:
+            - setup
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+      - illumina_tests:
+          requires:
+            - setup
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+      - transcriptome_tests:
+          requires:
+            - setup
+            # Force illumina and transcriptome to be run on same machine
+            - illumina
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
@@ -67,7 +133,12 @@ workflows:
       # start with letter "v".
       - deploy:
           requires:
-            - test
+            - setup
+            - main_tests
+            - affymetrix_tests
+            - salmon_tests
+            - illumina_tests
+            - transcriptome_tests
           filters:
             # No branch commit will ever trigger this job.
             branches:
