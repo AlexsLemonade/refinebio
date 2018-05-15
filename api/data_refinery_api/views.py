@@ -11,37 +11,6 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework import status, filters, generics
 
-<<<<<<< Updated upstream
-from data_refinery_common.models import (
-    Experiment, 
-    Sample, 
-    Organism, 
-    ComputationalResult,
-    DownloaderJob,
-    SurveyJob,
-    ProcessorJob,
-    Dataset
-)
-from data_refinery_common.models import Experiment, Sample, Organism, Dataset
-from data_refinery_api.serializers import ( 
-    ExperimentSerializer, 
-    DetailedExperimentSerializer,
-    SampleSerializer, 
-    DetailedSampleSerializer,
-    OrganismSerializer,
-    PlatformSerializer,
-    InstitutionSerializer,
-    ComputationalResultSerializer,
-
-    # Jobs
-    SurveyJobSerializer,
-    DownloaderJobSerializer,
-    ProcessorJobSerializer,
-
-    # Dataset
-    CreateDatasetSerializer,
-    DatasetSerializer
-=======
 from data_refinery_common.models import Experiment, Sample, Organism
 from data_refinery_api.serializers import (
 	ExperimentSerializer,
@@ -56,7 +25,6 @@ from data_refinery_api.serializers import (
 	SurveyJobSerializer,
 	DownloaderJobSerializer,
 	ProcessorJobSerializer
->>>>>>> Stashed changes
 )
 
 ##
@@ -275,15 +243,9 @@ class ResultsList(PaginatedAPIView):
 
 class OrganismList(APIView):
     """
-<<<<<<< Updated upstream
-    Unpaginated list of all the available organisms
-    """
-     
-=======
 	Unpaginated list of all the available organisms
 	"""
 
->>>>>>> Stashed changes
     def get(self, request, format=None):
         organisms = Organism.objects.all()
         serializer = OrganismSerializer(organisms, many=True)
@@ -291,15 +253,9 @@ class OrganismList(APIView):
 
 class PlatformList(APIView):
     """
-<<<<<<< Updated upstream
-    Unpaginated list of all the available "platform" information
-    """
-     
-=======
 	Unpaginated list of all the available "platform" information
 	"""
 
->>>>>>> Stashed changes
     def get(self, request, format=None):
         experiments = Experiment.objects.all().values("platform_accession_code", "platform_name").distinct()
         serializer = PlatformSerializer(experiments, many=True)
@@ -307,15 +263,9 @@ class PlatformList(APIView):
 
 class InstitutionList(APIView):
     """
-<<<<<<< Updated upstream
-    Unpaginated list of all the available "institution" information
-    """
-     
-=======
 	Unpaginated list of all the available "institution" information
 	"""
 
->>>>>>> Stashed changes
     def get(self, request, format=None):
         experiments = Experiment.objects.all().values("submitter_institution").distinct()
         serializer = InstitutionSerializer(experiments, many=True)
@@ -329,17 +279,10 @@ class SurveyJobList(PaginatedAPIView):
     """
     List of all SurveyJob.
 
-<<<<<<< Updated upstream
-    Ex: 
-      - ?start_time__lte=2018-03-23T15:29:40.848381Z
-      - ?start_time__lte=2018-03-23T15:29:40.848381Z&start_time__gte=2018-03-23T14:29:40.848381Z
-      - ?success=True
-=======
 	Ex:
 	  - ?start_time__lte=2018-03-23T15:29:40.848381Z
 	  - ?start_time__lte=2018-03-23T15:29:40.848381Z&start_time__gte=2018-03-23T14:29:40.848381Z
 	  - ?success=True
->>>>>>> Stashed changes
 
     """
 
