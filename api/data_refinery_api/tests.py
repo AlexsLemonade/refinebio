@@ -107,6 +107,9 @@ class SanityTestAllEndpoints(APITestCase):
         response = self.client.get(reverse('samples'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+        response = self.client.get(reverse('samples'), {'ids': '1,2,3'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
         response = self.client.get(reverse('samples'), kwargs={'page': 1})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
