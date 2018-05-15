@@ -145,7 +145,7 @@ chmod -R a+rwX $volume_directory
 worker_images=(affymetrix illumina salmon transcriptome no_op downloaders)
 
 for image in ${worker_images[*]}; do
-    if [[ -z $tag || $tag -eq $image ]]; then
+    if [[ -z $tag || $tag == $image ]]; then
         image_name=ccdl/dr_$image
         docker pull $image_name
 
