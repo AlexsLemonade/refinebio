@@ -43,7 +43,7 @@ def harmonize(metadata: List) -> Dict:
       `sex`, 
       `age`, 
       `part`,
-      `genotype`, 
+      `genetic_information`, 
       `disease`, 
       `disease_stage`, 
       `cell_line`,
@@ -405,27 +405,28 @@ def harmonize(metadata: List) -> Dict:
                 break
 
     ##
-    # Genotype!
+    # Genetic information!
     ##
-    genotype_fields = [
+    genetic_information_fields = [
                     'strain/background', 
                     'strain', 
                     'strain or line', 
                     'background strain', 
                     'genotype', 
-                    'genetic background', 
+                    'genetic background',
+                    'genetic information', 
                     'genotype/variation', 
                     'ecotype', 
                     'cultivar', 
                     'strain/genotype',
                 ]
-    genotype_fields = add_variants(genotype_fields)
+    genetic_information_fields = add_variants(genetic_information_fields)
     for sample in original_samples:
         title = sample['title']
         for key, value in sample.items():
             lower_key = key.lower().strip() 
-            if lower_key in genotype_fields:
-                harmonized_samples[title]['genotype'] = value.lower().strip()
+            if lower_key in genetic_information_fields:
+                harmonized_samples[title]['genetic_information'] = value.lower().strip()
 
     ##
     # Disease!
