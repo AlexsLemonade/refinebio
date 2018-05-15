@@ -57,7 +57,7 @@ jobs:
           no_output_timeout: 36000
 
   salmon_tests:
-    workPing_directory: ~/refinebio
+    working_directory: ~/refinebio
     machine: true
     steps:
       - checkout
@@ -154,6 +154,7 @@ workflows:
             tags:
               only: /v.*/
       - transcriptome_tests:
+          requires:
             # Force illumina and transcriptome to be run on same machine
             - illumina_tests
           filters:
