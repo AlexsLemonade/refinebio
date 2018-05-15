@@ -129,6 +129,27 @@ jobs:
 
       - run: .circleci/filter_tests.sh -t transcriptome
 
+  downloaders_tests:
+    working_directory: ~/refinebio
+    machine: true
+    steps:
+      - checkout
+
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      # Let Postgres start up.
+      - run: sleep 30
+      # Finish setting up Postgres now that it's running.
+      - run: ./common/install_db_docker.sh
+
+      # Install our application. Provides the data_refinery_common package for the other images.
+      - run: chmod -R a+wr common
+      - run: ./update_models.sh
+
+      - run: ./workers/prepare_image.sh -i downloaders
+
+      - run: .circleci/filter_tests.sh -t downloaders
+
   deploy:
     machine: true
     working_directory: ~/refinebio
@@ -171,8 +192,19 @@ workflows:
               only: /v.*/
       - transcriptome_tests:
           requires:
-            # Force illumina and transcriptome to be run on same machine
+            # Force illumina and transcriptome to be run sequentially
             - illumina_tests
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+
+      - downloaders_tests:
+          requires:
+            # Force illumina and transcriptome to be run first
+            - illumina_tests
+            - transcriptome_tests
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
