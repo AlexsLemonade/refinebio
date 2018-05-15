@@ -30,6 +30,10 @@ jobs:
       # Run Common Tests.
       - run: ./common/run_tests.sh
 
+      # Run Downloader Tests
+      - run: ./workers/prepare_image.sh -i downloaders
+      - run: .circleci/filter_tests.sh -t downloaders
+
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
@@ -50,6 +54,9 @@ jobs:
       # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
       - run: ./update_models.sh
+
+      # Pull affy image instead of building it, hence the -p
+      - run: ./workers/prepare_image.sh -p -i affymetrix
 
       - run:
           command: .circleci/filter_tests.sh -t affymetrix
@@ -73,9 +80,11 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
+      - run: ./workers/prepare_image.sh -i salmon
+
       - run:
-          command: .circleci/filter_tests.sh -t salmon
-          no_output_timeout: 20m
+          command: .circleci/filter_tests.sh -i salmon
+          no_output_timeout: 30m
 
 
   illumina_tests:
@@ -95,6 +104,8 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
+      - run: ./workers/prepare_image.sh -i illumina
+
       - run: .circleci/filter_tests.sh -t illumina
 
   transcriptome_tests:
@@ -113,6 +124,8 @@ jobs:
       # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
       - run: ./update_models.sh
+
+      - run: ./workers/prepare_image.sh -i transcriptome
 
       - run: .circleci/filter_tests.sh -t transcriptome
 

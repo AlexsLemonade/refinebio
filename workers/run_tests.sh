@@ -146,19 +146,6 @@ worker_images=(affymetrix illumina salmon transcriptome no_op downloaders)
 
 for image in ${worker_images[*]}; do
     if [[ -z $tag || $tag == $image ]]; then
-        image_name=ccdl/dr_$image
-        docker pull $image_name
-
-        # Build or pull images if they don't already exist.
-        # However for now we're just testing CircleCI parallelization
-        # if (( $(docker image ls --format "{{.Repository}}" | grep "^$image_name$" | wc -c) > 1)); then
-        #     if [ $image != "ccdl/dr_affymetrix" ]; then
-        #         docker pull $image_name:$branch_name
-        #     else
-        #         docker build -t $image_name -f dockerfiles/Dockerfile.$image ..
-        #     fi
-        # fi
-
         # Strip out tag argument
         tag_string="-t $tag"
         args_without_tag="$(echo $@ | sed "s/-t $tag//")"

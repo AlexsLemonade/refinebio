@@ -6,7 +6,7 @@
 # messages telling it to run Processor and Downloader jobs. When it
 # receives them, it will run the jobs within new Docker containers.
 
-while getopts ":p:e:o:h" opt; do
+while getopts ":e:h" opt; do
     case $opt in
         e)
             env=$OPTARG
@@ -50,7 +50,7 @@ if [ ! -d "$volume_directory" ]; then
     chmod -R a+rwX $volume_directory
 fi
 
-# Load get_ip_address and docker_img_exists functions.
+# Load get_ip_address function.
 source common.sh
 export HOST_IP=$(get_ip_address)
 
@@ -80,8 +80,6 @@ if [ ! -d $nomad_dir ]; then
     mkdir $nomad_dir
 fi
 
-echo "Pulling/rebuilding Docker images while waiting for Nomad to come online."
-
 # Start Nomad in both server and client mode locally
 nomad agent -bind $HOST_IP \
       -data-dir $nomad_dir $TEST_NOMAD_CONFIG \
@@ -99,38 +97,6 @@ export NOMAD_ADDR=http://$HOST_IP:$NOMAD_PORT
 if [[ -z $(docker ps | grep "image-registry") ]]; then
     docker run -d -p 5000:5000 --restart=always --name image-registry registry:2
 fi
-
-branch_name=$(git rev-parse --symbolic-full-name --abbrev-ref HEAD)
-
-# We want to check if a test image has been built for this branch. If
-# it has we should use that rather than building it slowly. In the
-# case of affymetrix though, the image takes too long to build so if
-# they haven't built it, just use the latest prod image.
-
-# Test parallelization of CircleCI, so for now just the images needed for end-to-end tests.
-# worker_images=(illumina affymetrix salmon transcriptome no_op downloaders)
-worker_images=(downloaders no_op)
-
-# Build, tag, and push an image for the workers to the local registry.
-for image in ${worker_images[*]}; do
-    image_name=ccdl/dr_$image
-    if docker_img_exists $image_name $branch_name ; then
-        docker pull $image_name:$branch_name
-        # Don't push the affymetrix image because it's huge and will
-        # make the tests take forever.
-        if [ $image != "ccdl/dr_affymetrix" ]; then
-            docker push localhost:5000/"$image_name"
-        fi
-    elif [ $image_name == "ccdl/dr_affymetrix" ]; then
-        docker pull $image_name:latest
-    else
-        echo ""
-        echo "Rebuilding the $image_name image."
-        docker build -t "$image_name" -f workers/dockerfiles/Dockerfile.$image .
-        docker tag "$image_name" localhost:5000/"$image_name"
-        docker push localhost:5000/"$image_name"
-    fi
-done
 
 # This function checks what the status of the Nomad agent is.
 # Returns an HTTP response code. i.e. 200 means everything is ok.
