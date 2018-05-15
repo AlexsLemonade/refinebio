@@ -81,54 +81,24 @@ workflows:
       # "setup" and other test jobs will be triggered by:
       # - any branch commit, or:
       # - tag commits whose names start with letter "v".
-      - setup:
-          filters:
-            # To allow tag commits whose name start with "v" to  trigger
-            # "setup" job, an explicit "tags" filter is required here.
-            tags:
-              only: /v.*/
+      - setup
       - main_tests:
           requires:
             - setup
-          filters:
-            # To allow tag commits whose name start with "v" to trigger
-            # "test" job, an explicit "tags" filter is required here.
-            tags:
-              only: /v.*/
       - affymetrix_tests:
           requires:
             - setup
-          filters:
-            # To allow tag commits whose name start with "v" to trigger
-            # "test" job, an explicit "tags" filter is required here.
-            tags:
-              only: /v.*/
       - salmon_tests:
           requires:
             - setup
-          filters:
-            # To allow tag commits whose name start with "v" to trigger
-            # "test" job, an explicit "tags" filter is required here.
-            tags:
-              only: /v.*/
       - illumina_tests:
           requires:
             - setup
-          filters:
-            # To allow tag commits whose name start with "v" to trigger
-            # "test" job, an explicit "tags" filter is required here.
-            tags:
-              only: /v.*/
       - transcriptome_tests:
           requires:
             - setup
             # Force illumina and transcriptome to be run on same machine
             - illumina
-          filters:
-            # To allow tag commits whose name start with "v" to trigger
-            # "test" job, an explicit "tags" filter is required here.
-            tags:
-              only: /v.*/
 
       # "deploy" job will be triggered ONLY by tag commits whose name
       # start with letter "v".
