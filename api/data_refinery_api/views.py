@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework import status, filters, generics
 
+<<<<<<< Updated upstream
 from data_refinery_common.models import (
     Experiment, 
     Sample, 
@@ -40,6 +41,22 @@ from data_refinery_api.serializers import (
     # Dataset
     CreateDatasetSerializer,
     DatasetSerializer
+=======
+from data_refinery_common.models import Experiment, Sample, Organism
+from data_refinery_api.serializers import (
+	ExperimentSerializer,
+	DetailedExperimentSerializer,
+	SampleSerializer,
+	DetailedSampleSerializer,
+	OrganismSerializer,
+	PlatformSerializer,
+	InstitutionSerializer,
+
+	# Jobs
+	SurveyJobSerializer,
+	DownloaderJobSerializer,
+	ProcessorJobSerializer
+>>>>>>> Stashed changes
 )
 
 ##
@@ -184,6 +201,8 @@ class SampleList(PaginatedAPIView):
     """
     List all Samples.
 
+    Pass in a list of pk to an ids query parameter to filter by id.
+
     Append the pk to the end of this URL to see a detail view.
 
     """
@@ -192,7 +211,13 @@ class SampleList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         filter_dict.pop('limit', None)
         filter_dict.pop('offset', None)
-        samples = Sample.objects.filter(**filter_dict)
+        ids = self.request.query_params.get('ids', None)
+
+        if ids is not None:
+            ids = [ int(x) for x in ids.split(',')]
+            samples = Sample.objects.filter(pk__in=ids)
+        else:
+            samples = Sample.objects.filter(**filter_dict)
 
         page = self.paginate_queryset(samples)
         if page is not None:
@@ -250,9 +275,15 @@ class ResultsList(PaginatedAPIView):
 
 class OrganismList(APIView):
     """
+<<<<<<< Updated upstream
     Unpaginated list of all the available organisms
     """
      
+=======
+	Unpaginated list of all the available organisms
+	"""
+
+>>>>>>> Stashed changes
     def get(self, request, format=None):
         organisms = Organism.objects.all()
         serializer = OrganismSerializer(organisms, many=True)
@@ -260,9 +291,15 @@ class OrganismList(APIView):
 
 class PlatformList(APIView):
     """
+<<<<<<< Updated upstream
     Unpaginated list of all the available "platform" information
     """
      
+=======
+	Unpaginated list of all the available "platform" information
+	"""
+
+>>>>>>> Stashed changes
     def get(self, request, format=None):
         experiments = Experiment.objects.all().values("platform_accession_code", "platform_name").distinct()
         serializer = PlatformSerializer(experiments, many=True)
@@ -270,9 +307,15 @@ class PlatformList(APIView):
 
 class InstitutionList(APIView):
     """
+<<<<<<< Updated upstream
     Unpaginated list of all the available "institution" information
     """
      
+=======
+	Unpaginated list of all the available "institution" information
+	"""
+
+>>>>>>> Stashed changes
     def get(self, request, format=None):
         experiments = Experiment.objects.all().values("submitter_institution").distinct()
         serializer = InstitutionSerializer(experiments, many=True)
@@ -286,10 +329,17 @@ class SurveyJobList(PaginatedAPIView):
     """
     List of all SurveyJob.
 
+<<<<<<< Updated upstream
     Ex: 
       - ?start_time__lte=2018-03-23T15:29:40.848381Z
       - ?start_time__lte=2018-03-23T15:29:40.848381Z&start_time__gte=2018-03-23T14:29:40.848381Z
       - ?success=True
+=======
+	Ex:
+	  - ?start_time__lte=2018-03-23T15:29:40.848381Z
+	  - ?start_time__lte=2018-03-23T15:29:40.848381Z&start_time__gte=2018-03-23T14:29:40.848381Z
+	  - ?success=True
+>>>>>>> Stashed changes
 
     """
 
