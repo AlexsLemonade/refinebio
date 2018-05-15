@@ -29,7 +29,6 @@ class HarmonyTestCase(TestCase):
         
         metadata = parse_sdrf("https://www.ebi.ac.uk/arrayexpress/files/E-MTAB-3050/E-MTAB-3050.sdrf.txt")
         harmonized = harmonize(metadata)
-        print(harmonized)
 
         title = 'donor A islets RNA'
         self.assertTrue(title in harmonized.keys())
@@ -251,9 +250,8 @@ class HarmonyTestCase(TestCase):
             try:
                 metadata = SraSurveyor.gather_all_metadata(accession)
                 harmonized = harmonize([metadata])
-                print(harmonized)
             except UnsupportedDataTypeError as udte:
-                print(udte)
+                continue
 
     def test_geo_harmony(self):
         """

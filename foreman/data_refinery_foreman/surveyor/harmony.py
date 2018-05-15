@@ -25,7 +25,7 @@ def extract_title(sample: Dict) -> str:
                     'extract name'
                    ]
     title_fields = add_variants(title_fields)
-    for key, value in sample.copy().items():
+    for key, value in sample.items():
         lower_key = key.lower().strip()
 
         if lower_key in title_fields:
@@ -308,6 +308,8 @@ def harmonize(metadata: List) -> Dict:
                     'gender',
                     'subject gender',
                     'subjext sex',
+                    # This looks reduntant, but there are some samples which use
+                    # Characteristic[Characteristic[sex]]
                     'characteristic [sex]',
                     'characteristics [sex]',
                    ]
@@ -315,7 +317,7 @@ def harmonize(metadata: List) -> Dict:
 
     for sample in original_samples:
         title = sample['title']
-        for key, value in sample.copy().items():
+        for key, value in sample.items():
             lower_key = key.lower().strip()
             if lower_key in sex_fields:
                 if "f" in value:
@@ -342,7 +344,7 @@ def harmonize(metadata: List) -> Dict:
 
     for sample in original_samples:
         title = sample['title']
-        for key, value in sample.copy().items():
+        for key, value in sample.items():
             lower_key = key.lower().strip()
             if lower_key in age_fields:
                 try:
@@ -396,7 +398,7 @@ def harmonize(metadata: List) -> Dict:
     part_fields = add_variants(part_fields)
     for sample in original_samples:
         title = sample['title']
-        for key, value in sample.copy().items():
+        for key, value in sample.items():
             lower_key = key.lower().strip() 
             if lower_key in part_fields:
                 harmonized_samples[title]['part'] = value.lower().strip()
@@ -420,7 +422,7 @@ def harmonize(metadata: List) -> Dict:
     genotype_fields = add_variants(genotype_fields)
     for sample in original_samples:
         title = sample['title']
-        for key, value in sample.copy().items():
+        for key, value in sample.items():
             lower_key = key.lower().strip() 
             if lower_key in genotype_fields:
                 harmonized_samples[title]['genotype'] = value.lower().strip()
@@ -440,7 +442,7 @@ def harmonize(metadata: List) -> Dict:
     disease_fields = add_variants(disease_fields)
     for sample in original_samples:
         title = sample['title']
-        for key, value in sample.copy().items():
+        for key, value in sample.items():
             lower_key = key.lower().strip() 
             if lower_key in disease_fields:
                 harmonized_samples[title]['disease'] = value.lower().strip()
@@ -463,7 +465,7 @@ def harmonize(metadata: List) -> Dict:
     disease_stage_fields = add_variants(disease_stage_fields)
     for sample in original_samples:
         title = sample['title']
-        for key, value in sample.copy().items():
+        for key, value in sample.items():
             lower_key = key.lower().strip() 
             if lower_key in disease_stage_fields:
                 harmonized_samples[title]['disease_stage'] = value.lower().strip()
@@ -478,7 +480,7 @@ def harmonize(metadata: List) -> Dict:
     cell_line_fields = add_variants(cell_line_fields)
     for sample in original_samples:
         title = sample['title']
-        for key, value in sample.copy().items():
+        for key, value in sample.items():
             lower_key = key.lower().strip() 
             if lower_key in cell_line_fields:
                 harmonized_samples[title]['cell_line'] = value.lower().strip()
@@ -496,7 +498,7 @@ def harmonize(metadata: List) -> Dict:
     treatment_fields = add_variants(treatment_fields)
     for sample in original_samples:
         title = sample['title']
-        for key, value in sample.copy().items():
+        for key, value in sample.items():
             lower_key = key.lower().strip() 
             if lower_key in treatment_fields:
                 harmonized_samples[title]['treatment'] = value.lower().strip()
@@ -512,7 +514,7 @@ def harmonize(metadata: List) -> Dict:
     race_fields = add_variants(race_fields)
     for sample in original_samples:
         title = sample['title']
-        for key, value in sample.copy().items():
+        for key, value in sample.items():
             lower_key = key.lower().strip() 
             if lower_key in race_fields:
                 harmonized_samples[title]['race'] = value.lower().strip()
@@ -544,7 +546,7 @@ def harmonize(metadata: List) -> Dict:
     subject_fields = add_variants(subject_fields)
     for sample in original_samples:
         title = sample['title']
-        for key, value in sample.copy().items():
+        for key, value in sample.items():
             lower_key = key.lower().strip() 
             if lower_key in subject_fields:
                 harmonized_samples[title]['subject'] = value.lower().strip()
@@ -560,7 +562,7 @@ def harmonize(metadata: List) -> Dict:
     development_stage_fields = add_variants(development_stage_fields)
     for sample in original_samples:
         title = sample['title']
-        for key, value in sample.copy().items():
+        for key, value in sample.items():
             lower_key = key.lower().strip() 
             if lower_key in development_stage_fields:
                 harmonized_samples[title]['developmental_stage'] = value.lower().strip()
@@ -580,7 +582,7 @@ def harmonize(metadata: List) -> Dict:
     compound_fields = add_variants(compound_fields)
     for sample in original_samples:
         title = sample['title']
-        for key, value in sample.copy().items():
+        for key, value in sample.items():
             lower_key = key.lower().strip() 
             if lower_key in compound_fields:
                 harmonized_samples[title]['compound'] = value.lower().strip()
@@ -601,7 +603,7 @@ def harmonize(metadata: List) -> Dict:
     time_fields = add_variants(time_fields)
     for sample in original_samples:
         title = sample['title']
-        for key, value in sample.copy().items():
+        for key, value in sample.items():
             lower_key = key.lower().strip() 
             if lower_key in time_fields:
                 harmonized_samples[title]['time'] = value.lower().strip()

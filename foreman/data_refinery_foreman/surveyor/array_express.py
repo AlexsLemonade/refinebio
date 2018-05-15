@@ -298,7 +298,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     organism_name = characteristic["value"].upper()
 
             if organism_name == UNKNOWN:
-                logger.error("Sample from experiment %s did not specify the organism name.",
+                logger.warning("Sample from experiment %s did not specify the organism name.",
                              experiment.accession_code,
                              survey_job=self.survey_job.id)
                 organism = None
@@ -396,7 +396,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     organism_name = characteristic["value"].upper()
 
             if organism_name == UNKNOWN:
-                logger.error("Sample %s did not specify the organism name.",
+                logger.warning("Sample %s did not specify the organism name.",
                              sample_accession_code,
                              experiment_accession_code=experiment.accession_code,
                              survey_job=self.survey_job.id)
