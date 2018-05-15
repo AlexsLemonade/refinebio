@@ -43,7 +43,7 @@ fi
 
 test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 
-if [[ -z $tag || $tag -eq "salmon" ]]; then
+if [[ -z $tag || $tag == "salmon" ]]; then
     # Make sure test Transcriptome Index is downloaded from S3 for salmon tests.
     index_dir="$volume_directory/processed/TEST/TRANSCRIPTOME_INDEX"
     index_tarball="Homo_sapiens_short.tar.gz"
@@ -72,7 +72,7 @@ if [[ -z $tag || $tag -eq "salmon" ]]; then
     fi
 fi
 
-if [[ -z $tag || $tag -eq "affymetrix" || $tag -eq "no_op" ]]; then
+if [[ -z $tag || $tag == "affymetrix" || $tag == "no_op" ]]; then
     # Make sure CEL for test is downloaded from S3
     cel_name="GSM1426071_CD_colon_active_1.CEL"
     cel_name2="GSM45588.CEL"
@@ -92,7 +92,7 @@ if [[ -z $tag || $tag -eq "affymetrix" || $tag -eq "no_op" ]]; then
     fi
 fi
 
-if [[ -z $tag || $tag -eq "transcriptome" ]]; then
+if [[ -z $tag || $tag == "transcriptome" ]]; then
     # Download salmontools test data
     rm -rf $volume_directory/salmontools/
     git clone git@github.com:dongbohu/salmontools_tests.git $volume_directory/salmontools
@@ -113,7 +113,7 @@ if [[ -z $tag || $tag -eq "transcriptome" ]]; then
     fi
 fi
 
-if [[ -z $tag || $tag -eq "illumina" ]]; then
+if [[ -z $tag || $tag == "illumina" ]]; then
     # Illumina test file
     ilu_file="GSE22427_non-normalized.txt"
     ilu_test_raw_dir="$volume_directory/raw/TEST/ILLUMINA"
@@ -159,7 +159,10 @@ for image in ${worker_images[*]}; do
         #     fi
         # fi
 
-        test_command="$(run_tests_with_coverage --tag=$image $@)"
+        # Strip out tag argument
+        tag_string="-t $tag"
+        args_without_tag="$(echo $@ | sed "s/-t $tag//")"
+        test_command="$(run_tests_with_coverage --tag=$image $args_without_tag)"
 
         echo "Running tests with the following command:"
         echo $test_command
