@@ -1,6 +1,6 @@
 import os
 from contextlib import closing
-from django.test import TestCase
+from django.test import TestCase, tag
 from unittest.mock import MagicMock
 from data_refinery_common.models import (
     SurveyJob,
@@ -82,6 +82,7 @@ def prepare_agilent_twocolor_job():
 
 class IlluminaToPCLTestCase(TestCase):
 
+    @tag("illumina")
     def test_illumina_to_pcl(self):
         """ """
         job = prepare_illumina_job()

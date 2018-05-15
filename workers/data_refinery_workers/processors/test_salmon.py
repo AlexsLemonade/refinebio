@@ -102,6 +102,7 @@ class SalmonToolsTestCase(TestCase):
     def setUp(self):
         self.test_dir = '/home/user/data_store/salmontools/'
 
+    @tag('salmon')
     def test_double_reads(self):
         job_context = {
             'job_id': 123,
@@ -124,6 +125,7 @@ class SalmonToolsTestCase(TestCase):
         expected_output_file2 = self.test_dir + 'expected_double_output/unmapped_by_salmon_2.fa'
         self.assertTrue(identical_checksum(output_file2, expected_output_file2))
 
+    @tag('salmon')
     def test_single_read(self):
         job_context = {
             'job_id': 456,
