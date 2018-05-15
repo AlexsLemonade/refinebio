@@ -146,6 +146,8 @@ worker_images=(affymetrix illumina salmon transcriptome no_op downloaders)
 
 for image in ${worker_images[*]}; do
     if [[ -z $tag || $tag == $image ]]; then
+        image_name=ccdl/dr_$image
+
         # Strip out tag argument
         tag_string="-t $tag"
         args_without_tag="$(echo $@ | sed "s/-t $tag//")"

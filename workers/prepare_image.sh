@@ -1,6 +1,6 @@
 #!/bin/bash
 
-while getopts ":i:l:h" opt; do
+while getopts "phi:" opt; do
     case $opt in
         i)
             image=$OPTARG
@@ -9,10 +9,12 @@ while getopts ":i:l:h" opt; do
             pull="True"
             ;;
         h)
-            echo "Starts Nomad and registers the jobs with it. This involves re-building the "
-            echo "Docker images and running format_nomad_with_env.sh to format the Nomad job "
-            echo "specifications for the correct environment."
-            echo '- "dev" is the default enviroment, use -e to specify "prod" or "test".'
+            echo "Prepares an workers image specified by -i."
+            echo "First, it checks to see if there is an existing image on Dockerhub"
+            echo "which is tagged with the current branch name. If there is it pulls that."
+            echo "Otherwise it will build the image locally, unless instructed"
+            echo "to pull the latest version of the image from Dockerhub with -p."
+            exit 0
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
@@ -29,7 +31,7 @@ source common.sh
 
 # We want to check if a test image has been built for this branch. If
 # it has we should use that rather than building it slowly.
-image_name=ccdl/dr_$image
+image_name="ccdl/dr_$image"
 if [[ "$(docker_img_exists $image_name $branch_name)" ]] ; then
     docker pull $image_name:$branch_name
 elif [[ ! -z $pull ]]; then
