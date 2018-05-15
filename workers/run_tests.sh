@@ -49,22 +49,41 @@ if [ ! -e "$rna_seq_test_data_1" ]; then
          "$test_data_repo/$read_2_name"
 fi
 
-# Make sure CEL for test is downloaded from S3
-cel_name="GSM1426071_CD_colon_active_1.CEL"
-cel_name2="GSM45588.CEL"
-cel_test_raw_dir="$volume_directory/raw/TEST/CEL"
-cel_test_data_1="$cel_test_raw_dir/$cel_name"
-cel_test_data_2="$cel_test_raw_dir/$cel_name2"
-if [ ! -e "$cel_test_data_1" ]; then
-    mkdir -p $cel_test_raw_dir
-    echo "Downloading CEL for tests."
-    wget -q -O $cel_test_data_1 \
-         "$test_data_repo/$cel_name"
+# Make sure pcl for test is downloaded from S3
+pcl_name="GSM1426071_CD_colon_active_1.pcl"
+pcl_name2="GSM45588.pcl"
+pcl_test_raw_dir="$volume_directory/raw/TEST/pcl"
+pcl_test_data_1="$pcl_test_raw_dir/$pcl_name"
+pcl_test_data_2="$pcl_test_raw_dir/$pcl_name2"
+if [ ! -e "$pcl_test_data_1" ]; then
+    mkdir -p $pcl_test_raw_dir
+    echo "Downloading pcl for tests."
+    wget -q -O $pcl_test_data_1 \
+         "$test_data_repo/$pcl_name"
 fi
-if [ ! -e "$cel_test_data_2" ]; then
-    echo "Downloading Non-Brainarray CEL for tests."
-    wget -q -O $cel_test_data_2 \
-         "$test_data_repo/$cel_name2"
+if [ ! -e "$pcl_test_data_2" ]; then
+    echo "Downloading Non-Brainarray pcl for tests."
+    wget -q -O $pcl_test_data_2 \
+         "$test_data_repo/$pcl_name2"
+fi
+
+#
+# Make sure PCVLs for test is downloaded from S3
+pcl_name="GSE22427_non-normalized.PCL"
+pcl_name2="GSM466597_95899_agilent.PCL"
+pcl_test_raw_dir="$volume_directory/raw/TEST/PCL"
+pcl_test_data_1="$pcl_test_raw_dir/$pcl_name"
+pcl_test_data_2="$pcl_test_raw_dir/$pcl_name2"
+if [ ! -e "$pcl_test_data_1" ]; then
+    mkdir -p $pcl_test_raw_dir
+    echo "Downloading pcl for tests."
+    wget -q -O $pcl_test_data_1 \
+         "$test_data_repo/$pcl_name"
+fi
+if [ ! -e "$pcl_test_data_2" ]; then
+    echo "Downloading pcl for tests."
+    wget -q -O $pcl_test_data_2 \
+         "$test_data_repo/$pcl_name2"
 fi
 
 # Download salmontools test data
