@@ -74,8 +74,8 @@ jobs:
       - run: ./update_models.sh
 
       - run:
-          - command: .circleci/filter_tests.sh -t salmon
-            no_output_timeout: 20m
+          command: .circleci/filter_tests.sh -t salmon
+          no_output_timeout: 20m
 
 
   illumina_tests:
