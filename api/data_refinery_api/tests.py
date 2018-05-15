@@ -54,6 +54,7 @@ class SanityTestAllEndpoints(APITestCase):
 
         sample = Sample()
         sample.save()
+        self.sample = sample
 
         sample_annotation = SampleAnnotation()
         sample_annotation.data = {"goodbye": "world", "789": 123}
@@ -107,7 +108,7 @@ class SanityTestAllEndpoints(APITestCase):
         response = self.client.get(reverse('samples'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('samples'), {'ids': '1,2,3'})
+        response = self.client.get(reverse('samples'), {'ids': str(self.sample.id) + ',1000'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse('samples'), kwargs={'page': 1})
