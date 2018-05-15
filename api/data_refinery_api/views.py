@@ -11,20 +11,35 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework import status, filters, generics
 
-from data_refinery_common.models import Experiment, Sample, Organism
+from data_refinery_common.models import (
+    Experiment,
+    Sample,
+    Organism,
+    ComputationalResult,
+    DownloaderJob,
+    SurveyJob,
+    ProcessorJob,
+    Dataset
+)
+from data_refinery_common.models import Experiment, Sample, Organism, Dataset
 from data_refinery_api.serializers import (
-	ExperimentSerializer,
-	DetailedExperimentSerializer,
-	SampleSerializer,
-	DetailedSampleSerializer,
-	OrganismSerializer,
-	PlatformSerializer,
-	InstitutionSerializer,
+    ExperimentSerializer,
+    DetailedExperimentSerializer,
+    SampleSerializer,
+    DetailedSampleSerializer,
+    OrganismSerializer,
+    PlatformSerializer,
+    InstitutionSerializer,
+    ComputationalResultSerializer,
 
-	# Jobs
-	SurveyJobSerializer,
-	DownloaderJobSerializer,
-	ProcessorJobSerializer
+    # Jobs
+    SurveyJobSerializer,
+    DownloaderJobSerializer,
+    ProcessorJobSerializer,
+
+    # Dataset
+    CreateDatasetSerializer,
+    DatasetSerializer
 )
 
 ##
