@@ -73,7 +73,10 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
-      - run: ./workers/run_tests.sh -t salmon
+      - run:
+          - command: ./workers/run_tests.sh -t salmon
+            no_output_timeout: 20m
+
 
   illumina_tests:
     working_directory: ~/refinebio
