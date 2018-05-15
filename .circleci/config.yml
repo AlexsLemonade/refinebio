@@ -24,6 +24,8 @@ jobs:
     working_directory: ~/refinebio
     machine: true
     steps:
+      - checkout
+
       # Start Nomad, build images, and register jobs.
       - run:
           command: sudo -E ./run_nomad.sh -e test
@@ -42,6 +44,8 @@ jobs:
     working_directory: ~/refinebio
     machine: true
     steps:
+      - checkout
+
       - run:
           command: ./workers/run_tests.sh -t affymetrix
           # This takes a while because the affymetrix image is huge
@@ -51,18 +55,24 @@ jobs:
     workPing_directory: ~/refinebio
     machine: true
     steps:
+      - checkout
+
       - run: ./workers/run_tests.sh -t salmon
 
   illumina_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
+      - checkout
+
       - run: ./workers/run_tests.sh -t illumina
 
   transcriptome_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
+      - checkout
+
       - run: ./workers/run_tests.sh -t transcriptome
 
   deploy:
