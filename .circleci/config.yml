@@ -83,7 +83,7 @@ workflows:
       # - tag commits whose names start with letter "v".
       - setup:
           filters:
-            # To allow tag commits whose name start with "v" to  trigger
+            # To allow tag commits whose name start with "v" to trigger
             # "setup" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
