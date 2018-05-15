@@ -47,32 +47,32 @@ jobs:
           # This takes a while because the affymetrix image is huge
           no_output_timeout: 36000
 
-  # salmon_tests:
-  #   working_directory: ~/refinebio
-  #   machine: true
-  #   steps:
-  #     - run: ./workers/run_tests.sh -t salmon
+  salmon_tests:
+    workPing_directory: ~/refinebio
+    machine: true
+    steps:
+      - run: ./workers/run_tests.sh -t salmon
 
-  # illumina_tests:
-  #   working_directory: ~/refinebio
-  #   machine: true
-  #   steps:
-  #     - run: ./workers/run_tests.sh -t illumina
+  illumina_tests:
+    working_directory: ~/refinebio
+    machine: true
+    steps:
+      - run: ./workers/run_tests.sh -t illumina
 
-  # transcriptome_tests:
-  #   working_directory: ~/refinebio
-  #   machine: true
-  #   steps:
-  #     - run: ./workers/run_tests.sh -t transcriptome
+  transcriptome_tests:
+    working_directory: ~/refinebio
+    machine: true
+    steps:
+      - run: ./workers/run_tests.sh -t transcriptome
 
-  # deploy:
-  #   machine: true
-  #   working_directory: ~/refinebio
-  #   steps:
-  #     - checkout
-  #     - run: bash .circleci/git_decrypt.sh
-  #     - run: bash .circleci/update_docker_img.sh
-  #     - run: bash .circleci/run_terraform.sh
+  deploy:
+    machine: true
+    working_directory: ~/refinebio
+    steps:
+      - checkout
+      - run: bash .circleci/git_decrypt.sh
+      - run: bash .circleci/update_docker_img.sh
+      - run: bash .circleci/run_terraform.sh
 
 workflows:
   version: 2
@@ -103,32 +103,32 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      # - salmon_tests:
-      #     requires:
-      #       - setup
-      #     filters:
-      #       # To allow tag commits whose name start with "v" to trigger
-      #       # "test" job, an explicit "tags" filter is required here.
-      #       tags:
-      #         only: /v.*/
-      # - illumina_tests:
-      #     requires:
-      #       - setup
-      #     filters:
-      #       # To allow tag commits whose name start with "v" to trigger
-      #       # "test" job, an explicit "tags" filter is required here.
-      #       tags:
-      #         only: /v.*/
-      # - transcriptome_tests:
-      #     requires:
-      #       - setup
-      #       # Force illumina and transcriptome to be run on same machine
-      #       - illumina
-      #     filters:
-      #       # To allow tag commits whose name start with "v" to trigger
-      #       # "test" job, an explicit "tags" filter is required here.
-      #       tags:
-      #         only: /v.*/
+      - salmon_tests:
+          requires:
+            - setup
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+      - illumina_tests:
+          requires:
+            - setup
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+      - transcriptome_tests:
+          requires:
+            - setup
+            # Force illumina and transcriptome to be run on same machine
+            - illumina_tests
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
 
       # "deploy" job will be triggered ONLY by tag commits whose name
       # start with letter "v".
