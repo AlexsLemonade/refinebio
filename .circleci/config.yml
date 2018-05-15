@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  setup:
+  main_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
@@ -19,12 +19,6 @@ jobs:
 
       # Install Nomad
       - run: sudo ./install_nomad.sh
-
-  main_tests:
-    working_directory: ~/refinebio
-    machine: true
-    steps:
-      - checkout
 
       # Start Nomad, build images, and register jobs.
       - run:
@@ -46,6 +40,17 @@ jobs:
     steps:
       - checkout
 
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      # Let Postgres start up.
+      - run: sleep 30
+      # Finish setting up Postgres now that it's running.
+      - run: ./common/install_db_docker.sh
+
+      # Install our application. Provides the data_refinery_common package for the other images.
+      - run: chmod -R a+wr common
+      - run: ./update_models.sh
+
       - run:
           command: ./workers/run_tests.sh -t affymetrix
           # This takes a while because the affymetrix image is huge
@@ -57,6 +62,17 @@ jobs:
     steps:
       - checkout
 
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      # Let Postgres start up.
+      - run: sleep 30
+      # Finish setting up Postgres now that it's running.
+      - run: ./common/install_db_docker.sh
+
+      # Install our application. Provides the data_refinery_common package for the other images.
+      - run: chmod -R a+wr common
+      - run: ./update_models.sh
+
       - run: ./workers/run_tests.sh -t salmon
 
   illumina_tests:
@@ -65,6 +81,17 @@ jobs:
     steps:
       - checkout
 
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      # Let Postgres start up.
+      - run: sleep 30
+      # Finish setting up Postgres now that it's running.
+      - run: ./common/install_db_docker.sh
+
+      # Install our application. Provides the data_refinery_common package for the other images.
+      - run: chmod -R a+wr common
+      - run: ./update_models.sh
+
       - run: ./workers/run_tests.sh -t illumina
 
   transcriptome_tests:
@@ -72,6 +99,17 @@ jobs:
     machine: true
     steps:
       - checkout
+
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      # Let Postgres start up.
+      - run: sleep 30
+      # Finish setting up Postgres now that it's running.
+      - run: ./common/install_db_docker.sh
+
+      # Install our application. Provides the data_refinery_common package for the other images.
+      - run: chmod -R a+wr common
+      - run: ./update_models.sh
 
       - run: ./workers/run_tests.sh -t transcriptome
 
@@ -88,50 +126,34 @@ workflows:
   version: 2
   test-and-deploy:
     jobs:
-      # "setup" and other test jobs will be triggered by:
+      # test jobs will be triggered by:
       # - any branch commit, or:
       # - tag commits whose names start with letter "v".
-      - setup:
-          filters:
-            # To allow tag commits whose name start with "v" to  trigger
-            # "setup" job, an explicit "tags" filter is required here.
-            tags:
-              only: /v.*/
       - main_tests:
-          requires:
-            - setup
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
       - affymetrix_tests:
-          requires:
-            - setup
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
       - salmon_tests:
-          requires:
-            - setup
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
       - illumina_tests:
-          requires:
-            - setup
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
       - transcriptome_tests:
-          requires:
-            - setup
             # Force illumina and transcriptome to be run on same machine
             - illumina_tests
           filters:
@@ -144,12 +166,11 @@ workflows:
       # start with letter "v".
       - deploy:
           requires:
-            - setup
             - main_tests
-            # - affymetrix_tests
-            # - salmon_tests
-            # - illumina_tests
-            # - transcriptome_tests
+            - affymetrix_tests
+            - salmon_tests
+            - illumina_tests
+            - transcriptome_tests
           filters:
             # No branch commit will ever trigger this job.
             branches:
