@@ -52,7 +52,7 @@ jobs:
       - run: ./update_models.sh
 
       - run:
-          command: ./workers/run_tests.sh -t affymetrix
+          command: .circleci/filter_tests.sh -t affymetrix
           # This takes a while because the affymetrix image is huge
           no_output_timeout: 36000
 
@@ -74,7 +74,7 @@ jobs:
       - run: ./update_models.sh
 
       - run:
-          - command: ./workers/run_tests.sh -t salmon
+          - command: .circleci/filter_tests.sh -t salmon
             no_output_timeout: 20m
 
 
@@ -95,7 +95,7 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
-      - run: ./workers/run_tests.sh -t illumina
+      - run: .circleci/filter_tests.sh -t illumina
 
   transcriptome_tests:
     working_directory: ~/refinebio
@@ -114,7 +114,7 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
-      - run: ./workers/run_tests.sh -t transcriptome
+      - run: .circleci/filter_tests.sh -t transcriptome
 
   deploy:
     machine: true
