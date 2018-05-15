@@ -194,13 +194,13 @@ class SampleList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         filter_dict.pop('limit', None)
         filter_dict.pop('offset', None)
-        ids = self.request.query_params.get('ids', None)
+        ids = filter_dict.pop('ids', None)
 
         if ids is not None:
             ids = [ int(x) for x in ids.split(',')]
-            samples = Sample.objects.filter(pk__in=ids)
-        else:
-            samples = Sample.objects.filter(**filter_dict)
+            filter_dict['pk__in'] = ids
+
+        samples = Sample.objects.filter(**filter_dict)
 
         page = self.paginate_queryset(samples)
         if page is not None:
