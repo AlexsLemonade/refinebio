@@ -119,7 +119,7 @@ class Experiment(models.Model):
     ## https://www.postgresql.org/docs/9.0/static/datatype-character.html
     title = models.TextField()
     description = models.TextField()
-    protocol_description = models.JSONField(default={})
+    protocol_description = JSONField(default={})
     platform_accession_code = models.CharField(max_length=256, blank=True)
     platform_name = models.CharField(max_length=256, blank=True)
     technology = models.CharField(max_length=256, blank=True)
