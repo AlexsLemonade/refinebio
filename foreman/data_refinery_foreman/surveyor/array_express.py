@@ -206,6 +206,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         Therefore we try a few different things to determine which it
         is.
         """
+
         # It SEEMS like the filename often contains part or all of the
         # sample name so we first try to see if either field contains
         # the filename with the extension stripped off:
@@ -229,9 +230,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         # We're out of options so return the longest one.
         if len(sample_source_name) >= len(sample_assay_name):
-            sample_accession_code = sample_source_name
+            return sample_source_name
         else:
-            sample_accession_code = sample_assay_name
+            return sample_assay_name
 
     def create_samples_from_api(self,
                           experiment: Experiment
