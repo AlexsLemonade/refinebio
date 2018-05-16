@@ -10,6 +10,17 @@ COPY workers/requirements.txt .
 # to pip or python are by default calls to pip3 or python3
 RUN pip install -r requirements.txt
 
+# We need JRE for QC tools
+RUN apt-get update -y 
+RUN apt-get install -y unzip default-jre --fix-missing
+
+USER user
+
+# Install FastQC
+RUN wget -q https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.7.zip
+RUN unzip fastqc_v0.11.7.zip
+RUN chmod +x ./FastQC/fastqc
+
 USER user
 
 # Install Aspera

@@ -16,7 +16,7 @@ from data_refinery_common.models import (
     OriginalFile,
     OriginalFileSampleAssociation
 )
-from data_refinery_foreman.surveyor import utils
+from data_refinery_foreman.surveyor import utils, harmony
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -62,6 +62,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
         # XXX: Maybe we should have an EFS tmp? This could potentially fill up if not tracked.
         # Cleaning up is tracked here: https://github.com/guma44/GEOparse/issues/41
         gse = GEOparse.get_GEO(experiment_accession_code, destdir='/tmp', how="brief")
+        preprocessed_samples = harmony.preprocess_geo(gse.gsms.items())
+        harmonized_samples = harmony.harmonize(preprocessed_samples)
 
         # Create the experiment object
         try:
@@ -123,7 +125,14 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 sample_object = Sample()
                 sample_object.accession_code = sample_accession_code
                 sample_object.organism = organism
-                sample_object.title = sample.metadata['title'][0]
+                title = sample.metadata['title'][0]
+                sample_object.title = title
+
+                # Directly assign the harmonized properties
+                harmonized_sample = harmonized_samples[title]
+                for key, value in harmonized_sample.items():
+                    setattr(sample_object, key, value)
+
                 sample_object.save()
 
                 all_samples.append(sample_object)

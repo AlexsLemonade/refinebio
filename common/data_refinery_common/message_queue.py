@@ -45,3 +45,4 @@ def send_job(job_type: Enum, job_id: int) -> None:
                 job_id)
     nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,
                                                    "JOB_ID": str(job_id)})
+

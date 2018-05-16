@@ -37,10 +37,7 @@ class SurveyTestCase(TestCase):
 
     @patch('data_refinery_foreman.surveyor.external_source.send_job')
     def test_survey(self, mock_send_task):
-        """The 'survey' function generates one Batch per sample.
-
-        This test also tests the handle_batches method of ExternalSourceSurveyor
-        which isn't tested on its own because it is an abstract class.
+        """A Simple test of the ArrayExpress surveyor.
         """
         ae_surveyor = ArrayExpressSurveyor(self.survey_job)
         ae_surveyor.survey()
@@ -48,7 +45,7 @@ class SurveyTestCase(TestCase):
         samples = Sample.objects.all()
         downloader_jobs = DownloaderJob.objects.all()
 
-        # We are expecting this to discoever 5 samples.
+        # We are expecting this to discover 5 samples.
         self.assertEqual(samples.count(), 5)
         # And for one DownloaderJob to be created for all of them.
         self.assertEqual(downloader_jobs.count(), 1)
