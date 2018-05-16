@@ -176,7 +176,6 @@ workflows:
             - main_tests
             - affymetrix_tests
             - salmon_tests
-            - illumina_tests
             - transcriptome_and_downloaders_tests
           filters:
             # No branch commit will ever trigger this job.
