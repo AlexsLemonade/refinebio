@@ -93,6 +93,16 @@ else
     export AWS_CREDS="
         AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
         AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
+    export LOGGING_CONFIG="
+        logging {
+          type = \"awslogs\"
+          config {
+            awslogs-region = \"$REGION\",
+            awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
+            awslogs-stream = \"log-stream-nomad-docker-downloader-$USER-$STAGE\"
+          }
+        }
+"
 fi
 
 # Read all environment variables from the file for the appropriate
@@ -121,9 +131,9 @@ export_log_conf (){
         logging {
           type = \"awslogs\"
           config {
-            awslogs-region = \"$REGION\",
-            awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
-            awslogs-stream = \"log-stream-$1-docker-$USER-$STAGE\"
+            awslogs-region = \"$region\",
+            awslogs-group = \"data-refinery-log-group-$user-$stage\",
+            awslogs-stream = \"log-stream-$1-docker-$user-$stage\"
           }
         }"
     else
