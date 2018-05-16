@@ -173,7 +173,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
     # XXX: TODO: We need to tune the -p/--numThreads to the machines this process wil run on.
     if "input_file_path_2" in job_context:
         second_read_str = " -2 {}".format(job_context["input_file_path_2"])
-        command_str = ("salmon --no-version-check quant -l A -i {index}"
+        command_str = ("salmon --no-version-check quant -l A --biasSpeedSamp 5 -i {index}"
                        " -1 {input_one}{second_read_str}"
                        " -p 20 -o {output_directory} --seqBias --gcBias --dumpEq --writeUnmappedNames")
         formatted_command = command_str.format(index=job_context["index_directory"],
