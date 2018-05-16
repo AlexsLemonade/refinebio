@@ -58,6 +58,10 @@ jobs:
       # Pull affy image instead of building it, hence the -p
       - run: ./workers/prepare_image.sh -p -i affymetrix
 
+      # Push the affy image to the local docker repo so Nomad can pull from there.
+      - run: docker tag ccdl/dr_affymetrix localhost:5000/dr_affymetrix
+      - run: docker push localhost:5000/dr_affymetrix
+
       - run:
           command: .circleci/filter_tests.sh -t affymetrix
           # This takes a while because the affymetrix image is huge
@@ -83,7 +87,7 @@ jobs:
       - run: ./workers/prepare_image.sh -i salmon
 
       - run:
-          command: .circleci/filter_tests.sh -i salmon
+          command: .circleci/filter_tests.sh -t salmon
           no_output_timeout: 30m
 
 
