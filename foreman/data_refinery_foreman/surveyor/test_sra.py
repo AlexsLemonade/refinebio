@@ -48,6 +48,36 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(SraSurveyor.get_next_accession("DRR12345678"), "DRR12345679")
         self.assertEqual(SraSurveyor.get_next_accession("DRR123456789"), "DRR123456790")
 
+    @patch('data_refinery_foreman.surveyor.external_source.send_job')
+    def test_survey(self, mock_send_task):
+        """A Simple test of the SRA surveyor.
+        """
+        sra_surveyor = SraSurveyor(self.survey_job)
+        sra_surveyor.discover_experiment_and_samples()
+
+        samples = Sample.objects.all()
+        downloader_jobs = DownloaderJob.objects.all()
+
+        # We are expecting this to discover 1 sample.
+        self.assertEqual(samples.count(), 1)
+
+    @patch('data_refinery_foreman.surveyor.external_source.send_job')
+    def test_srp_survey(self, mock_send_task):
+        """A slightly harder test of the SRA surveyor.
+        """
+
+        survey_job = SurveyJob(source_type="SRA")
+        survey_job.save()
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                           key="accession",
+                                           value="SRP068364")
+        key_value_pair.save()
+
+        sra_surveyor = SraSurveyor(survey_job)
+        experiment, samples = sra_surveyor.discover_experiment_and_samples()
+        self.assertEqual(experiment.accession_code, "SRX1528549")
+        self.assertEqual(len(samples), 4)
+
     @patch('data_refinery_foreman.surveyor.sra.requests.get')
     def test_metadata_is_gathered_correctly(self, mock_get):
         mock_get.side_effect = mocked_requests_get

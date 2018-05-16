@@ -174,8 +174,10 @@ class SraSurveyor(ExternalSourceSurveyor):
     @staticmethod
     def gather_run_metadata(run_accession: str) -> Dict:
         """A run refers to a specific read in an experiment."""
+
         discoverable_accessions = ["study_accession", "sample_accession", "submission_accession"]
-        response = requests.get(ENA_METADATA_URL_TEMPLATE.format(run_accession))
+        
+        response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(run_accession))
         run_xml = ET.fromstring(response.text)
         run_item = run_xml[0]
 
@@ -302,6 +304,10 @@ class SraSurveyor(ExternalSourceSurveyor):
             if "study_ena_last_update" in metadata:
                 experiment.source_last_modified = parse_datetime(metadata["study_ena_last_update"])
 
+            # Rare, but it happens.
+            if not experiment_object.protocol_description:
+                experiment_object.protocol_description = metadata.get("library_construction_protocol", "Protocol was never provided.")
+
             experiment_object.save()
 
             ##
@@ -393,8 +399,50 @@ class SraSurveyor(ExternalSourceSurveyor):
         survey_job = SurveyJob.objects.get(id=self.survey_job.id)
         survey_job_properties = survey_job.get_properties()
         accession = survey_job_properties["accession"]
-        logger.debug("Surveying SRA Run Accession %s",
-                     accession,
-                     survey_job=self.survey_job.id)
-        return self._generate_experiment_and_samples(accession)
+
+        # SRA Surveyor is mainly designed for SRRs, this handles SRPs
+        if 'SRP' in accession or 'ERP' in accession:
+            response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(accession))
+            experiment_xml = ET.fromstring(response.text)[0]
+            study_links = experiment_xml[2] # STUDY_LINKS
+
+            accessions_to_run = []
+            for child in study_links:
+                if child[0][0].text == 'ENA-RUN':
+
+                    all_runs = child[0][1].text
+
+                    # Ranges can be disjoint, separated by commas
+                    run_segments = all_runs.split(',')
+                    for segment in run_segments:
+                        if '-' in segment:
+                            start, end = segment.split('-')
+                        else:
+                            start = segment
+                            end = segment
+                        start_id = start[3::]
+                        end_id = end[3::]
+
+                        for run_id in range(int(start_id), int(end_id) + 1):
+                            accessions_to_run.append(accession[0] + "RR" + str(run_id))
+                    break
+
+            all_samples = []
+            for run_id in accessions_to_run:
+                logger.debug("Surveying SRA Run Accession %s for Experiment %s",
+                             run_id,
+                             accession,
+                             survey_job=self.survey_job.id)
+
+                experiment, samples = self._generate_experiment_and_samples(run_id)
+                all_samples += samples
+
+            # Experiment will always be the same
+            return experiment, all_samples
+
+        else:
+            logger.debug("Surveying SRA Run Accession %s",
+                         accession,
+                         survey_job=self.survey_job.id)
+            return self._generate_experiment_and_samples(accession)
 
