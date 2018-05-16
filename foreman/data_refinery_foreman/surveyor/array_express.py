@@ -190,7 +190,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         return experiment_object
 
-    def determine_sample_accession(self, sample_source_name: str, sample_assay_name: str, filename:str) -> str:
+    def determine_sample_accession(self, experiment_accession: str, sample_source_name: str, sample_assay_name: str, filename:str) -> str:
         """Determine what to use as the sample's accession code.
 
         This is a complicated heuristic to determine the sample
@@ -205,6 +205,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         Ex: E-MEXP-669 has it in sample_assay_name.
         Therefore we try a few different things to determine which it
         is.
+
+        The experiment accession must be prefixed since accessions
+        are non-unique on AE, ex "Sample 1" is a valid assay name.
+
         """
 
         # It SEEMS like the filename often contains part or all of the
@@ -214,9 +218,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             stripped_filename = ".".join(filename.split(".")[:-1])
             if stripped_filename != "":
                 if stripped_filename in sample_source_name:
-                    return sample_source_name
+                    return experiment_accession + "-" + sample_source_name
                 elif stripped_filename in sample_assay_name:
-                    return sample_assay_name
+                    return experiment_accession + "-" + sample_assay_name
 
         # Accessions don't have spaces in them, but sometimes these
         # fields do so next we try to see if one has spaces and the
@@ -224,15 +228,15 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         source_has_spaces = " " in sample_source_name
         assay_has_spaces = " " in sample_assay_name
         if assay_has_spaces and not source_has_spaces:
-            return sample_source_name
+            return experiment_accession + "-" + sample_source_name
         elif source_has_spaces and not assay_has_spaces:
-            return sample_assay_name
+            return experiment_accession + "-" + sample_assay_name
 
         # We're out of options so return the longest one.
         if len(sample_source_name) >= len(sample_assay_name):
-            return sample_source_name
+            return experiment_accession + "-" + sample_source_name
         else:
-            return sample_assay_name
+            return experiment_accession + "-" + sample_assay_name
 
     def create_samples_from_api(self,
                           experiment: Experiment
@@ -357,6 +361,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             sample_source_name = sample["source"].get("name", "")
             sample_assay_name = sample["assay"].get("name", "")
             sample_accession_code = self.determine_sample_accession(
+                experiment.accession_code,
                 sample_source_name,
                 sample_assay_name,
                 filename)

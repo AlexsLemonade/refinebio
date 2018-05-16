@@ -68,7 +68,8 @@ class SurveyTestCase(TestCase):
                             "E-MEXP-669", 
                             "E-MEXP-2215", 
                             "E-MEXP-2288", 
-                            "E-MEXP-2381"
+                            "E-MEXP-2381",
+                            "E-MTAB-6739",
                         ]
 
         for ex_accesion in ex_accessions:
@@ -112,6 +113,7 @@ class SurveyTestCase(TestCase):
                     filename = sub_file["name"]
 
                 sample_accession_code = ae_surveyor.determine_sample_accession(
+                    ex_accesion,
                     sample_source_name,
                     sample_assay_name,
                     filename)
