@@ -1,21 +1,29 @@
+# This setup is common for every test.
+# For an explanation of how this YAML feature works, see:
+# https://circleci.com/blog/circleci-hacks-reuse-yaml-in-your-circleci-config-with-yaml/
+common_setup: &common_setup
+  - checkout
+
+  # Setup Postgres in a Container
+  - run: ./run_postgres.sh
+  # Let Postgres start up.
+  - run: sleep 30
+  # Finish setting up Postgres now that it's running.
+  - run: ./common/install_db_docker.sh
+
+  # Install our application. Provides the data_refinery_common package for the other images.
+  - run: chmod -R a+wr common
+  - run: ./update_models.sh
+
 version: 2
 jobs:
+  # This runs api, common, foreman, and end-to-end tests.
+  # These are grouped together because in total they take less time than our other tests individually.
   main_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
-      - checkout
-
-      # Setup Postgres in a Container
-      - run: ./run_postgres.sh
-      # Let Postgres start up.
-      - run: sleep 30
-      # Finish setting up Postgres now that it's running.
-      - run: ./common/install_db_docker.sh
-
-      # Install our application. Provides the data_refinery_common package for the other images.
-      - run: chmod -R a+wr common
-      - run: ./update_models.sh
+      <<: *common_setup
 
       # Install Nomad
       - run: sudo ./install_nomad.sh
@@ -47,22 +55,12 @@ jobs:
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
 
+  # This tests workers tests tagged as 'affymetrix'
   affymetrix_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
-      - checkout
-
-      # Setup Postgres in a Container
-      - run: ./run_postgres.sh
-      # Let Postgres start up.
-      - run: sleep 30
-      # Finish setting up Postgres now that it's running.
-      - run: ./common/install_db_docker.sh
-
-      # Install our application. Provides the data_refinery_common package for the other images.
-      - run: chmod -R a+wr common
-      - run: ./update_models.sh
+      <<: *common_setup
 
       # Pull affy image instead of building it, hence the -p
       - run: ./workers/prepare_image.sh -p -i affymetrix
@@ -72,22 +70,12 @@ jobs:
           # This takes a while because the affymetrix image is huge
           no_output_timeout: 36000
 
+  # This tests workers tests tagged as 'salmon'
   salmon_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
-      - checkout
-
-      # Setup Postgres in a Container
-      - run: ./run_postgres.sh
-      # Let Postgres start up.
-      - run: sleep 30
-      # Finish setting up Postgres now that it's running.
-      - run: ./common/install_db_docker.sh
-
-      # Install our application. Provides the data_refinery_common package for the other images.
-      - run: chmod -R a+wr common
-      - run: ./update_models.sh
+      <<: *common_setup
 
       - run: ./workers/prepare_image.sh -i salmon
 
@@ -96,64 +84,34 @@ jobs:
           no_output_timeout: 1h
 
 
+  # This tests workers tests tagged as 'illumina'
   illumina_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
-      - checkout
-
-      # Setup Postgres in a Container
-      - run: ./run_postgres.sh
-      # Let Postgres start up.
-      - run: sleep 30
-      # Finish setting up Postgres now that it's running.
-      - run: ./common/install_db_docker.sh
-
-      # Install our application. Provides the data_refinery_common package for the other images.
-      - run: chmod -R a+wr common
-      - run: ./update_models.sh
+      <<: *common_setup
 
       - run: ./workers/prepare_image.sh -i illumina
 
       - run: .circleci/filter_tests.sh -t illumina
 
+  # This tests workers tests tagged as 'transcriptome'
   transcriptome_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
-      - checkout
-
-      # Setup Postgres in a Container
-      - run: ./run_postgres.sh
-      # Let Postgres start up.
-      - run: sleep 30
-      # Finish setting up Postgres now that it's running.
-      - run: ./common/install_db_docker.sh
-
-      # Install our application. Provides the data_refinery_common package for the other images.
-      - run: chmod -R a+wr common
-      - run: ./update_models.sh
+      <<: *common_setup
 
       - run: ./workers/prepare_image.sh -i transcriptome
 
       - run: .circleci/filter_tests.sh -t transcriptome
 
+  # This tests workers tests tagged as 'downloaders'
   downloaders_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
-      - checkout
-
-      # Setup Postgres in a Container
-      - run: ./run_postgres.sh
-      # Let Postgres start up.
-      - run: sleep 30
-      # Finish setting up Postgres now that it's running.
-      - run: ./common/install_db_docker.sh
-
-      # Install our application. Provides the data_refinery_common package for the other images.
-      - run: chmod -R a+wr common
-      - run: ./update_models.sh
+      <<: *common_setup
 
       - run: ./workers/prepare_image.sh -i downloaders
 
@@ -168,6 +126,16 @@ jobs:
       - run: bash .circleci/update_docker_img.sh
       - run: bash .circleci/run_terraform.sh
 
+# These workflows are designed around the fact that CircleCI is giving us 4x parallelism.
+# Therefore the tests are batched into 4 flows, so that we can ensure that the slowest tests start first.
+# These flows are as follows:
+# - main_tests -> illumina_tests
+# - trainscriptome_tests -> downloader_tests
+# - salmon_tests
+# - affymetrix_tests
+# These could be combined at the job level rather than the workflow level and this
+# would save us the time it takes to run the common_setup, however combining them
+# at the workflow level means that we can rerun just a single job later if we'd like.
 workflows:
   version: 2
   test-and-deploy:
@@ -194,9 +162,9 @@ workflows:
             tags:
               only: /v.*/
       - illumina_tests:
-          # Force affymetrix to be run first
+          # Force the main tests to be run first
           requires:
-            - affymetrix_tests
+            - main_tests
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
