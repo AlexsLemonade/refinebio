@@ -22,7 +22,7 @@ from data_refinery_common.logging import get_and_configure_logger
 logger = get_and_configure_logger(__name__)
 
 
-class InvalidProcessedFormatError(BaseException):
+class InvalidProcessedFormatError(Exception):
     pass
 
 
