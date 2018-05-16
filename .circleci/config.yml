@@ -38,7 +38,7 @@ jobs:
 
       # Push the no_op and downloader images to the local docker repo so Nomad
       # can pullfrom there when running end-to-end tests.
-      - run: docker tag ccdl/dr_downloader localhost:5000/dr_downloaders
+      - run: docker tag ccdl/dr_downloaders localhost:5000/dr_downloaders
       - run: docker push localhost:5000/dr_downloaders
       - run: docker tag ccdl/dr_no_op localhost:5000/dr_no_op
       - run: docker push localhost:5000/dr_no_op
@@ -93,7 +93,7 @@ jobs:
 
       - run:
           command: .circleci/filter_tests.sh -t salmon
-          no_output_timeout: 40m
+          no_output_timeout: 1h
 
 
   illumina_tests:
@@ -194,15 +194,15 @@ workflows:
             tags:
               only: /v.*/
       - illumina_tests:
+          # Force affymetrix to be run first
+          requires:
+            - affymetrix_tests
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
       - transcriptome_tests:
-          requires:
-            # Force illumina and transcriptome to be run sequentially
-            - illumina_tests
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
@@ -211,8 +211,7 @@ workflows:
 
       - downloaders_tests:
           requires:
-            # Force illumina and transcriptome to be run first
-            - illumina_tests
+            # Force transcriptome to be run first
             - transcriptome_tests
           filters:
             # To allow tag commits whose name start with "v" to trigger
