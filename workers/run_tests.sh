@@ -106,12 +106,6 @@ if [[ -z $tag || $tag == "transcriptome" ]]; then
         wget -q -O "$tx_index_test_raw_dir/$fasta_file" \
              "$test_data_repo/$fasta_file"
     fi
-    gtf_file="aegilops_tauschii_short.gtf.gz"
-    if [ ! -e "$tx_index_test_raw_dir/$gtf_file" ]; then
-        echo "Downloading GTF file for Transcriptome Index tests."
-        wget -q -O "$tx_index_test_raw_dir/$gtf_file" \
-             "$test_data_repo/$gtf_file"
-    fi
 fi
 
 if [[ -z $tag || $tag == "illumina" ]]; then

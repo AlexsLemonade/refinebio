@@ -125,6 +125,10 @@ jobs:
       - run: ./workers/prepare_image.sh -i transcriptome
       - run: .circleci/filter_tests.sh -t transcriptome
 
+      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
+      # from making sure all the files in workers/test_volume have read/write permissions.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+
       - run: ./workers/prepare_image.sh -i downloaders
       - run: .circleci/filter_tests.sh -t downloaders
 
@@ -150,24 +154,24 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      # - affymetrix_tests:
-      #     filters:
-      #       # To allow tag commits whose name start with "v" to trigger
-      #       # "test" job, an explicit "tags" filter is required here.
-      #       tags:
-      #         only: /v.*/
+      - affymetrix_tests:
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
       - salmon_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      # - transcriptome_and_downloaders_tests:
-      #     filters:
-      #       # To allow tag commits whose name start with "v" to trigger
-      #       # "test" job, an explicit "tags" filter is required here.
-      #       tags:
-      #         only: /v.*/
+      - transcriptome_and_downloaders_tests:
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
 
       # "deploy" job will be triggered ONLY by tag commits whose name
       # start with letter "v".
