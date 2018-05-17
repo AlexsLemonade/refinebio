@@ -72,8 +72,8 @@ class SurveyTestCase(TestCase):
                             "E-MTAB-6739",
                         ]
 
-        for ex_accesion in ex_accessions:
-            samples_endpoint = SAMPLES_URL.format(ex_accesion)
+        for ex_accession in ex_accessions:
+            samples_endpoint = SAMPLES_URL.format(ex_accession)
             r = requests.get(samples_endpoint, timeout=60)
             samples = r.json()["experiment"]["sample"]
 
@@ -113,7 +113,7 @@ class SurveyTestCase(TestCase):
                     filename = sub_file["name"]
 
                 sample_accession_code = ae_surveyor.determine_sample_accession(
-                    ex_accesion,
+                    ex_accession,
                     sample_source_name,
                     sample_assay_name,
                     filename)
