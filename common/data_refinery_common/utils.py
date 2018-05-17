@@ -2,6 +2,7 @@ import csv
 import os
 import requests
 from urllib.parse import urlparse
+from typing import Dict
 
 from billiard import current_process
 from django.core.exceptions import ImproperlyConfigured
@@ -43,12 +44,13 @@ def get_worker_id() -> str:
     """Returns <instance_id>/<thread_id>."""
     return get_instance_id() + "/" + current_process().name
 
-def get_supported_platforms(platforms_csv:str="supported_platforms.csv") -> list:
+def get_supported_microarray_platforms(platforms_csv:str="supported_microarray_platforms.csv") -> list:
     """
-    Loads our supported platforms file and returns a list of supported
-    platform ascession codes.
+    Loads our supported microarray platforms file and returns a list of dictionaries
+    containing the internal accession, the external accession, and a boolean indicating
+    whether or not the platform supports brainarray.
     CSV must be in the format:
-    Species | Platform | Name | Assays | Supported | Processor
+    Internal Accession | External Accession | Supports Brainarray
     """
     supported_platforms = []
     with open(platforms_csv) as platforms_file:
@@ -58,10 +60,43 @@ def get_supported_platforms(platforms_csv:str="supported_platforms.csv") -> list
             # Lines are 1 indexed, #BecauseCSV
             if reader.line_num is 1:
                 continue
-            if line[4] is "Y":
-                supported_platforms.append(line[1])
+
+            supported_platforms.append({"platform_accession": line[0],
+                                        "external_accession": line[1],
+                                        "is_brainarray": True if line[2] == 'y' else False})
 
     return supported_platforms
+
+def get_supported_rnaseq_platforms(platforms_list:str="supported_rnaseq_platforms.txt") -> list:
+    """
+    Returns a list of RNASeq platforms which are currently supported.
+    """
+    supported_platforms = []
+    with open(platforms_list) as platforms_file:
+        for line in platforms_file:
+            supported_platforms.append(line.strip())
+
+    return supported_platforms
+
+def get_readable_platform_names(mapping_csv:str="readable_platform_names.csv") -> Dict:
+    """
+    Loads the mapping from human readble names to internal accessions for Microarray platforms.
+    CSV must be in the format:
+    Internal Accession | External Accession | Supports Brainarray
+    Returns a dictionary mapping from internal accessions to human readable names.
+    """
+    names_mapping = {}
+    with open(mapping_csv) as mapping_file:
+        reader = csv.reader(mapping_file)
+        for line in reader:
+            # Skip the header row
+            # Lines are 1 indexed, #BecauseCSV
+            if reader.line_num is 1:
+                continue
+
+            names_mapping[line[1]] = line[0]
+
+    return names_mapping
 
 def parse_s3_url(url):
     """
