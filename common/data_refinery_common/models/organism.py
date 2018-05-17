@@ -19,11 +19,11 @@ EFETCH_URL = NCBI_ROOT_URL + "efetch.fcgi"
 TAXONOMY_DATABASE = "taxonomy"
 
 
-class UnscientificNameError(BaseException):
+class UnscientificNameError(Exception):
     pass
 
 
-class InvalidNCBITaxonomyId(BaseException):
+class InvalidNCBITaxonomyId(Exception):
     pass
 
 

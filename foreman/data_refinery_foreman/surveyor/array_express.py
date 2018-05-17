@@ -28,7 +28,7 @@ EXPERIMENTS_URL = "https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/"
 SAMPLES_URL = EXPERIMENTS_URL + "{}/samples"
 UNKNOWN="UNKNOWN"
 
-class UnsupportedPlatformException(BaseException):
+class UnsupportedPlatformException(Exception):
     pass
 
 class ArrayExpressSurveyor(ExternalSourceSurveyor):
