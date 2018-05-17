@@ -1,6 +1,7 @@
 from unittest.mock import Mock, patch
 from django.test import TestCase
 from data_refinery_common import utils
+from django.conf import settings
 
 
 class UtilsTestCase(TestCase):
@@ -39,3 +40,34 @@ class UtilsTestCase(TestCase):
         # resulted in one call to get_env_variable)
         utils.get_worker_id()
         mock_get_env_variable.assert_called_once()
+
+    def test_supported_microarray_platforms(self):
+        """Test that supported microarray platforms setting is set correctly."""
+        has_equgene11st = False
+        has_A_AFFY_59 = False
+        has_GPL23026 = False
+        for platform in settings.SUPPORTED_MICROARRAY_PLATFORMS:
+            if platform["platform_accession"] == "equgene11st" and platform["is_brainarray"]:
+                has_equgene11st = True
+
+            if platform["external_accession"] == "A-AFFY-59" and not platform["is_brainarray"]:
+                has_A_AFFY_59 = True
+
+            if platform["external_accession"] == "GPL23026" and not platform["is_brainarray"]:
+                has_GPL23026 = True
+
+        self.assertTrue(has_equgene11st)
+        self.assertTrue(has_A_AFFY_59)
+        self.assertTrue(has_GPL23026)
+
+    def test_supported_rnaseq_platforms(self):
+        """Test that supported RNASeq platforms setting is set correctly."""
+        self.assertTrue("Illumina HiSeq 1000" in settings.SUPPORTED_RNASEQ_PLATFORMS)
+
+    def test_readable_platform_names(self):
+        """Test that the setting for mapping platform accessions to
+        human readable names is set correctly."""
+        expected_readable_name = "[ChiGene-1_0-st] Affymetrix Chicken Gene 1.0 ST Array"
+        self.assertTrue(settings.READABLE_PLATFORM_NAMES["chigene10st"] == expected_readable_name)
+        expected_readable_name = "[Xenopus_laevis] Affymetrix Xenopus laevis Genome Array"
+        self.assertTrue(settings.READABLE_PLATFORM_NAMES["xenopuslaevis"] == expected_readable_name)

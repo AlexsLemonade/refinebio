@@ -1,0 +1,15 @@
+Illumina Genome Analyzer
+Illumina Genome Analyzer II
+Illumina Genome Analyzer IIx
+Illumina HiScanSQ
+Illumina HiSeq 1000
+Illumina HiSeq 1500
+Illumina HiSeq 2000
+Illumina HiSeq 2500
+Illumina HiSeq 3000
+Illumina HiSeq 4000
+NextSeq 500
+NextSeq 550
+Ion Torrent Proton
+Ion Torrent S5
+Ion Torrent S5 XL
