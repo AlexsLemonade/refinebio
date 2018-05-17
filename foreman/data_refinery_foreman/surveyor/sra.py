@@ -31,7 +31,7 @@ ENA_DOWNLOAD_URL_TEMPLATE = ("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/{short_accessio
 ENA_SUB_DIR_PREFIX = "/00"
 
 
-class UnsupportedDataTypeError(BaseException):
+class UnsupportedDataTypeError(Exception):
     pass
 
 

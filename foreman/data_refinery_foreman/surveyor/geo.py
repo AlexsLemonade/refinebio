@@ -23,7 +23,7 @@ from data_refinery_common.logging import get_and_configure_logger
 
 logger = get_and_configure_logger(__name__)
 
-class GeoUnsupportedPlatformException(BaseException):
+class GeoUnsupportedPlatformException(Exception):
     pass
 
 class GeoSurveyor(ExternalSourceSurveyor):
