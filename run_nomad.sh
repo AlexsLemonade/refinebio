@@ -71,7 +71,7 @@ if [ $env == "test" ]; then
 else
     # This is only for running Nomad in non-cloud environments so if
     # its not test then we're in dev (XXX: change this to local.)
-    env = "dev"
+    env="dev"
 fi
 
 
