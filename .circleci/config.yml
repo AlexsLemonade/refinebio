@@ -33,6 +33,7 @@ jobs:
       - run: ./common/run_tests.sh
 
       - run: ./workers/prepare_image.sh -i no_op
+      - run: ./workers/prepare_image.sh -i downloaders
 
       # Push the no_op and downloader images to the local docker repo so Nomad
       # can pullfrom there when running end-to-end tests.
