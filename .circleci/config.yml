@@ -32,10 +32,6 @@ jobs:
       # Run Common Tests.
       - run: ./common/run_tests.sh
 
-      # Run Downloader Tests
-      - run: ./workers/prepare_image.sh -i downloaders
-      - run: .circleci/filter_tests.sh -t downloaders
-
       - run: ./workers/prepare_image.sh -i no_op
 
       # Push the no_op and downloader images to the local docker repo so Nomad
