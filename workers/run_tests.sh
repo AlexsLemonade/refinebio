@@ -44,6 +44,10 @@ fi
 test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 
 if [[ -z $tag || $tag == "salmon" ]]; then
+    # Download salmontools test data
+    rm -rf $volume_directory/salmontools/
+    git clone git@github.com:dongbohu/salmontools_tests.git $volume_directory/salmontools
+
     # Make sure test Transcriptome Index is downloaded from S3 for salmon tests.
     index_dir="$volume_directory/processed/TEST/TRANSCRIPTOME_INDEX"
     index_tarball="Homo_sapiens_short.tar.gz"
@@ -93,14 +97,11 @@ if [[ -z $tag || $tag == "affymetrix" || $tag == "no_op" ]]; then
 fi
 
 if [[ -z $tag || $tag == "transcriptome" ]]; then
-    # Download salmontools test data
-    rm -rf $volume_directory/salmontools/
-    git clone git@github.com:dongbohu/salmontools_tests.git $volume_directory/salmontools
-
     # Make sure data for Transcriptome Index tests is downloaded.
     tx_index_test_raw_dir="$volume_directory/raw/TEST/TRANSCRIPTOME_INDEX"
     fasta_file="aegilops_tauschii_short.fa.gz"
     if [ ! -e "$tx_index_test_raw_dir/$fasta_file" ]; then
+        mkdir -p $tx_index_test_raw_dir
         echo "Downloading fasta file for Transcriptome Index tests."
         wget -q -O "$tx_index_test_raw_dir/$fasta_file" \
              "$test_data_repo/$fasta_file"

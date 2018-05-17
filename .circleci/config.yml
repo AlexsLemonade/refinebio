@@ -40,10 +40,10 @@ jobs:
 
       # Push the no_op and downloader images to the local docker repo so Nomad
       # can pullfrom there when running end-to-end tests.
-      - run: docker tag ccdl/dr_downloaders localhost:5000/dr_downloaders
-      - run: docker push localhost:5000/dr_downloaders
-      - run: docker tag ccdl/dr_no_op localhost:5000/dr_no_op
-      - run: docker push localhost:5000/dr_no_op
+      - run: docker tag ccdl/dr_downloaders localhost:5000/ccdl/dr_downloaders
+      - run: docker push localhost:5000/ccdl/dr_downloaders
+      - run: docker tag ccdl/dr_no_op localhost:5000/ccdl/dr_no_op
+      - run: docker push localhost:5000/ccdl/dr_no_op
 
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
@@ -150,24 +150,24 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      - affymetrix_tests:
-          filters:
-            # To allow tag commits whose name start with "v" to trigger
-            # "test" job, an explicit "tags" filter is required here.
-            tags:
-              only: /v.*/
+      # - affymetrix_tests:
+      #     filters:
+      #       # To allow tag commits whose name start with "v" to trigger
+      #       # "test" job, an explicit "tags" filter is required here.
+      #       tags:
+      #         only: /v.*/
       - salmon_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      - transcriptome_and_downloaders_tests:
-          filters:
-            # To allow tag commits whose name start with "v" to trigger
-            # "test" job, an explicit "tags" filter is required here.
-            tags:
-              only: /v.*/
+      # - transcriptome_and_downloaders_tests:
+      #     filters:
+      #       # To allow tag commits whose name start with "v" to trigger
+      #       # "test" job, an explicit "tags" filter is required here.
+      #       tags:
+      #         only: /v.*/
 
       # "deploy" job will be triggered ONLY by tag commits whose name
       # start with letter "v".
