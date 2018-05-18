@@ -35,22 +35,9 @@ class Command(BaseCommand):
             logger.error("You must specify an ensembl_division.")
             return 1
         else:
-            survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
-            survey_job.save()
-            key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                               key="ensembl_division",
-                                               value=options["ensembl_division"])
-            key_value_pair.save()
-
-            key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                               key="number_of_organisms",
-                                               value=options["number_of_organisms"])
-            key_value_pair.save()
-
-            key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                               key="organism_name",
-                                               value=options["organism_name"])
-            key_value_pair.save()
-
-            surveyor.run_job(survey_job)
+            surveyor.survey_transcriptome_index(
+                organism_name=options['organism_name'],
+                ensembl_division=options['ensembl_division'],
+                organism_name=options['organism_name'],
+            )
             return 0

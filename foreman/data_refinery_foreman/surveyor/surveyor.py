@@ -118,3 +118,28 @@ def survey_geo_experiment(accesion):
     key_value_pair.save()
     run_job(survey_job)
     return survey_job
+
+def survey_transcriptome_index( organism_name,
+                                ensembl_division='Ensembl',
+                                number_of_organisms=1
+                            ):
+    survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
+    survey_job.save()
+    key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                       key="ensembl_division",
+                                       value=ensembl_division)
+    key_value_pair.save()
+
+    key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                       key="number_of_organisms",
+                                       value=number_of_organisms)
+    key_value_pair.save()
+
+    key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                       key="organism_name",
+                                       value=organism_name)
+    key_value_pair.save()
+    run_job(survey_job)
+
+    return survey_job
+
