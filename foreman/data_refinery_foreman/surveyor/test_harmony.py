@@ -36,7 +36,7 @@ class HarmonyTestCase(TestCase):
         self.assertTrue('female' == harmonized[title]['sex'])
         self.assertTrue('age' in harmonized[title].keys())
         self.assertTrue(54.0 == harmonized[title]['age'])
-        self.assertTrue('part' in harmonized[title].keys())
+        self.assertTrue('specimen_part' in harmonized[title].keys())
         self.assertTrue('subject' in harmonized[title].keys())
         self.assertTrue('developmental_stage' in harmonized[title].keys())
 
@@ -212,7 +212,7 @@ class HarmonyTestCase(TestCase):
         self.assertTrue('age' in harmonized[title].keys())
         self.assertEqual(57.0, harmonized[title]['age'])
 
-        self.assertTrue('part' in harmonized[title].keys())
+        self.assertTrue('specimen_part' in harmonized[title].keys())
         self.assertTrue('disease' in harmonized[title].keys())
 
     @tag('slow')
@@ -269,7 +269,7 @@ class HarmonyTestCase(TestCase):
         self.assertTrue(title in harmonized.keys())
         self.assertTrue('sex' in harmonized[title].keys())
         self.assertTrue('age' in harmonized[title].keys())
-        self.assertTrue('part' in harmonized[title].keys())
+        self.assertTrue('specimen_part' in harmonized[title].keys())
         self.assertTrue('subject' in harmonized[title].keys())
 
         # Agilent Two Color 
@@ -292,6 +292,6 @@ class HarmonyTestCase(TestCase):
 
         title = 'SCC_P-57'
         self.assertTrue(title in harmonized.keys())
-        self.assertTrue('keratinocyte' == harmonized[title]['part'])
+        self.assertTrue('keratinocyte' == harmonized[title]['specimen_part'])
         self.assertTrue('squamous cell carcinoma' == harmonized[title]['disease'])
         self.assertTrue('azathioprine + prednison' == harmonized[title]['compound'])

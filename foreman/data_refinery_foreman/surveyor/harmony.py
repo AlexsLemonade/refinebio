@@ -42,7 +42,7 @@ def harmonize(metadata: List) -> Dict:
       `title`, 
       `sex`, 
       `age`, 
-      `part`,
+      `specimen_part`,
       `genetic_information`, 
       `disease`, 
       `disease_stage`, 
@@ -404,7 +404,7 @@ def harmonize(metadata: List) -> Dict:
         for key, value in sample.items():
             lower_key = key.lower().strip() 
             if lower_key in part_fields:
-                harmonized_samples[title]['part'] = value.lower().strip()
+                harmonized_samples[title]['specimen_part'] = value.lower().strip()
                 break
 
     ##
