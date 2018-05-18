@@ -46,7 +46,7 @@ DIVISION_LOOKUP = {"EnsemblPlants": "plants",
 # versions are the latest version as of whenever it was last
 # updated. It is unclear when we will want to update these, but
 # presumably we will do so once we have a reason to.
-MAIN_DIVISION_ASSEMBLY_VERSION = "91"
+MAIN_DIVISION_ASSEMBLY_VERSION = "92"
 OTHER_DIVISIONS_ASSEMBLY_VERSION = "38"
 
 
