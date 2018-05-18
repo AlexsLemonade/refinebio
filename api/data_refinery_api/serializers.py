@@ -127,7 +127,7 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
                     'has_raw',
                     'sex',
                     'age',
-                    'part',
+                    'specimen_part',
                     'genotype',
                     'disease',
                     'disease_stage',
