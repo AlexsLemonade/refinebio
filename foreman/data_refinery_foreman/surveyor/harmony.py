@@ -320,11 +320,14 @@ def harmonize(metadata: List) -> Dict:
         for key, value in sample.items():
             lower_key = key.lower().strip()
             if lower_key in sex_fields:
-                if "f" in value:
+                if value.lower() in ['f', 'female', 'woman']:
                     harmonized_samples[title]['sex'] = "female"
                     break
-                else:
+                if value.lower() in ['m', 'male', 'man']:
                     harmonized_samples[title]['sex'] = "male"
+                    break                
+                else:
+                    harmonized_samples[title]['sex'] = value.lower()
                     break
 
     ##
@@ -510,7 +513,6 @@ def harmonize(metadata: List) -> Dict:
                     'race', 
                     'ethnicity', 
                     'race/ethnicity',
-                    'phenotype'
                 ]
     race_fields = add_variants(race_fields)
     for sample in original_samples:
