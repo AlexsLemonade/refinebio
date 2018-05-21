@@ -348,12 +348,12 @@ resource "aws_db_parameter_group" "postgres_parameters" {
 
   parameter {
     name = "deadlock_timeout"
-    value = "60000" # 60000ms = 60m
+    value = "60000" # 60000ms = 60s
   }
 
   parameter {
     name = "statement_timeout"
-    value = "60000" # 60000ms = 60m
+    value = "60000" # 60000ms = 60s
   }
 }
 
