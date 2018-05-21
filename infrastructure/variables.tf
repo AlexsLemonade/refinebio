@@ -47,6 +47,10 @@ variable "database_timeout" {
   default = "30"
 }
 
+variable "database_instance_type" {
+  default = "t2.micro"
+}
+
 variable "running_in_cloud" {
   default = "True"
 }
@@ -72,7 +76,7 @@ variable "no_op_docker_image" {
   default = "wkurt/dr_no_op:latest"
 }
 variable "foreman_docker_image" {
-  default = "wkurt/dr_foreman:latest"
+  default = "miserlou/data_refinery_foreman"
 }
 variable "use_s3" {
   default = "True"

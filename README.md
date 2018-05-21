@@ -297,7 +297,7 @@ The [Sequence Read Archive](https://www.ncbi.nlm.nih.gov/sra) Surveyor expects a
 range of SRA accession codes:
 
 ```bash
-./foreman/run_surveyor.sh survey_sra <ACCESSION>
+./foreman/run_surveyor.sh survey_sra --accession <ACCESSION>
 ```
 
 Example (single read):

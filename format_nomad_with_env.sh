@@ -152,9 +152,9 @@ export_log_conf (){
         logging {
           type = \"awslogs\"
           config {
-            awslogs-region = \"$region\",
+            awslogs-region = \"$REGION\",
             awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
-            awslogs-stream = \"log-stream-$1-$USER-$STAGE\"
+            awslogs-stream = \"log-stream-$1-docker-$USER-$STAGE\"
           }
         }"
     else

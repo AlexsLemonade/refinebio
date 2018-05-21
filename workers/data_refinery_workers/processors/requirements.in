@@ -5,3 +5,4 @@ boto3
 retrying
 python-nomad
 coveralls
+multiqc

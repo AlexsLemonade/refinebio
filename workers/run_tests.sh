@@ -46,7 +46,7 @@ test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 if [[ -z $tag || $tag == "salmon" ]]; then
     # Download salmontools test data
     rm -rf $volume_directory/salmontools/
-    git clone git@github.com:dongbohu/salmontools_tests.git $volume_directory/salmontools
+    git clone https://github.com/dongbohu/salmontools_tests.git $volume_directory/salmontools
 
     # Make sure test Transcriptome Index is downloaded from S3 for salmon tests.
     index_dir="$volume_directory/processed/TEST/TRANSCRIPTOME_INDEX"

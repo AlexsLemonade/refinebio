@@ -22,7 +22,7 @@ from data_refinery_common.logging import get_and_configure_logger
 logger = get_and_configure_logger(__name__)
 
 
-class InvalidProcessedFormatError(BaseException):
+class InvalidProcessedFormatError(Exception):
     pass
 
 
@@ -57,7 +57,7 @@ class ExternalSourceSurveyor:
         # Get all of the undownloaded original files related to this Experiment.
         relations = ExperimentSampleAssociation.objects.filter(experiment=experiment)
         samples = Sample.objects.filter(id__in=relations.values('sample_id'))
-        files_to_download = OriginalFile.objects.filter(samples__in=samples.values('pk'), is_downloaded=False)
+        files_to_download = OriginalFile.objects.filter(originalfilesampleassociation__in=samples.values('pk'), is_downloaded=False)
 
         downloaded_urls = []
         for original_file in files_to_download:
