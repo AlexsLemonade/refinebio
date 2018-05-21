@@ -6,6 +6,13 @@ Include an issue number if applicable.
 
 Describe the big picture of your changes.
 
+## Methods
+
+If this pull request has any implications for data or metadata processing, please include an overview of the methods used (e.g., briefly explain _how_ the data gets processed). 
+Include sufficient detail for reviewers or users that are not expert developers to evaluate the validity of the approach. 
+Please attach or link to example input and output data if applicable.
+It may also be appropriate to include a description of any functional or unit tests in this section depending on their content.
+
 ## Types of changes
 
 What types of changes does your code introduce?
