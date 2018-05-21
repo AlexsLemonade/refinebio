@@ -21,9 +21,8 @@ from data_refinery_common.models import (
     ProcessorJob,
     Dataset
 )
-from data_refinery_common.models import Experiment, Sample, Organism, Dataset
-from data_refinery_api.serializers import (
-    ExperimentSerializer,
+from data_refinery_api.serializers import ( 
+    ExperimentSerializer, 
     DetailedExperimentSerializer,
     SampleSerializer,
     DetailedSampleSerializer,
