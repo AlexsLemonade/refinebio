@@ -7,3 +7,4 @@ retrying
 rpy2
 python-nomad
 coveralls
+multiqc

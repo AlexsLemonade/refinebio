@@ -58,6 +58,9 @@ def _prepare_files(job_context: Dict) -> Dict:
     pre_part = original_files[0].absolute_file_path.split('/')[:-1]
     job_context["output_directory"] = '/'.join(pre_part) + '/processed/'
     os.makedirs(job_context["output_directory"], exist_ok=True)
+    job_context["input_directory"] = '/'.join(pre_part) + '/'
+    job_context["qc_directory"] = '/'.join(pre_part) + '/qc/'
+    os.makedirs(job_context["qc_directory"], exist_ok=True)
 
     timestamp = str(timezone.now().timestamp()).split('.')[0]
     job_context["output_archive"] = '/'.join(pre_part) + '/result-' + timestamp +  '.tar.gz'
@@ -252,6 +255,35 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
 
     return job_context
 
+def _run_fastqc(job_context: Dict) -> Dict:
+    """ Runs the `FastQC` package to generate the QC report.
+
+    """
+
+    command_str = ("./FastQC/fastqc --outdir={qc_directory} {files}")
+    files = ' '.join(file.absolute_file_path for file in job_context['original_files'])
+    formatted_command = command_str.format(qc_directory=job_context["qc_directory"],
+                files=files)
+
+    logger.info("Running FastQC using the following shell command: %s",
+                formatted_command,
+                processor_job=job_context["job_id"])
+
+    completed_command = subprocess.run(formatted_command.split(),
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+
+    if completed_command.returncode != 0:
+        stderr = str(completed_command.stderr)
+        logger.error("Shell call to FastQC failed with error message: %s",
+                     stderr,
+                     processor_job=job_context["job_id"])
+
+        # The failure_reason column is only 256 characters wide.
+        job_context["job"].failure_reason = stderr[0:255]
+        job_context["success"] = False
+
+    return job_context
 
 def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
     """ Run Salmontools to extract unmapped genes. """
@@ -372,5 +404,7 @@ def salmon(job_id: int) -> None:
                         _download_index,
                         _run_salmon,
                         _run_salmontools,
+                        _run_fastqc,
                         _zip_and_upload,
                         utils.end_job])
+
