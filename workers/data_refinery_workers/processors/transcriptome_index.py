@@ -139,8 +139,6 @@ def _handle_shell_error(job_context: Dict, stderr: str, command: str) -> None:
                  stderr,
                  processor_job=job_context["job_id"])
 
-    job_context["gtf_file"].remove_temp_directory(job_context["job_dir_prefix"])
-
     # The failure_reason column is only 256 characters wide.
     error_end = 200
     job_context["job"].failure_reason = ("Shell call to {} failed because: ".format(command)

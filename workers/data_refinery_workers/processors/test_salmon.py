@@ -94,6 +94,8 @@ class SalmonTestCase(TestCase):
         """ """
         job = prepare_job()
         salmon.salmon(job.pk)
+        job = ProcessorJob.objects.get(id=job.pk)
+        self.assertTrue(job.success)
 
 
 class SalmonToolsTestCase(TestCase):

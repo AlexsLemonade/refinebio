@@ -12,7 +12,6 @@ from data_refinery_common.models import (
     OriginalFileSampleAssociation
 )
 from data_refinery_workers.processors import illumina, agilent_twocolor, utils
-import pandas as pd
 
 def prepare_illumina_job():
     pj = ProcessorJob()

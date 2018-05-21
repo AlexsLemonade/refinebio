@@ -33,6 +33,8 @@ RUN tar -xzf Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
 # Salmon can extract to a different directory than the name of the tar file.
 RUN cp `tar -tzf Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz | head -1 | cut -f1 -d"/"`/bin/salmon /usr/local/bin
 
+RUN cp `tar -tzf Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz | head -1 | cut -f1 -d"/"`/lib/* /usr/local/lib
+
 RUN rm -r Salmon*
 # End Salmon installation.
 

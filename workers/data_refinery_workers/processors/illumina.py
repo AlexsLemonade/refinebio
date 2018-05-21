@@ -9,9 +9,6 @@ import warnings
 from django.utils import timezone
 from typing import Dict
 
-import rpy2.robjects as ro
-from rpy2.rinterface import RRuntimeError
-
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     OriginalFile, 

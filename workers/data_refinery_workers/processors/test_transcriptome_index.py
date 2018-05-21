@@ -66,3 +66,5 @@ class TXTestCase(TestCase):
         """ """
         job = prepare_job()
         transcriptome_index.build_transcriptome_index(job.pk)
+        job = ProcessorJob.objects.get(id=job.pk)
+        self.assertTrue(job.success)
