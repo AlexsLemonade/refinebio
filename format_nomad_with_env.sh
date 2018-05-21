@@ -54,7 +54,7 @@ fi
 # let these be set outside the script so only set them if they aren't
 # already set.
 if [[ -z $FOREMAN_DOCKER_IMAGE ]]; then
-    export FOREMAN_DOCKER_IMAGE=localhost:5000/ccdl/dr_foreman_test
+    export FOREMAN_DOCKER_IMAGE=localhost:5000/ccdl/dr_foreman
 fi
 if [[ -z $DOWNLOADERS_DOCKER_IMAGE ]]; then
     export DOWNLOADERS_DOCKER_IMAGE=localhost:5000/ccdl/dr_downloaders
