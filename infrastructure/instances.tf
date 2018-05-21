@@ -341,23 +341,43 @@ resource "aws_autoscaling_policy" "clients_scale_down" {
 # Database
 ##
 
+resource "aws_db_parameter_group" "postgres_parameters" {
+  name = "postgres-parameters-${var.user}-${var.stage}"
+  description = "Postgres Parameters ${var.user} ${var.stage}"
+  family = "postgres9.6"
+
+  parameter {
+    name = "deadlock_timeout"
+    value = "60000" # 60000ms = 60s
+  }
+
+  parameter {
+    name = "statement_timeout"
+    value = "60000" # 60000ms = 60s
+  }
+}
+
 resource "aws_db_instance" "postgres_db" {
   identifier = "data-refinery-${var.user}-${var.stage}"
   allocated_storage = 100
   storage_type = "gp2"
   engine = "postgres"
   engine_version = "9.6.6"
-  instance_class = "db.t2.micro"
+  instance_class = "db.${var.database_instance_type}"
   name = "data_refinery"
   username = "${var.database_user}"
   password = "${var.database_password}"
+
   db_subnet_group_name = "${aws_db_subnet_group.data_refinery.name}"
+  parameter_group_name = "${aws_db_parameter_group.postgres_parameters.name}"
+
   # We probably actually want to keep this, but TF is broken here.
   # Related: https://github.com/hashicorp/terraform/issues/5417
   skip_final_snapshot = true
   vpc_security_group_ids = ["${aws_security_group.data_refinery_db.id}"]
   multi_az = true
   publicly_accessible = true
+  
 }
 
 ##
