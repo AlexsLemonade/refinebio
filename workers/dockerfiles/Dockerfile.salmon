@@ -21,30 +21,27 @@ RUN \
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
-# Starting here, code is based on:
+# Install Salmon
+ENV SALMON_VERSION 0.9.1
+
+RUN wget https://github.com/COMBINE-lab/salmon/releases/download/v${SALMON_VERSION}/Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
+
+RUN tar -xzf Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
+
+# Salmon can extract to a different directory than the name of the tar file.
+RUN cp `tar -tzf Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz | head -1 | cut -f1 -d"/"`/bin/salmon /usr/local/bin
+
+RUN rm -r Salmon*
+# End Salmon installation.
+
+# Package list based on:
 # https://github.com/COMBINE-lab/salmon/blob/master/docker/Dockerfile
 ENV PACKAGES gcc make g++ cmake libboost-all-dev liblzma-dev libbz2-dev \
     ca-certificates zlib1g-dev unzip autoconf
 
-# Version 0.8.2 has an outdated sha hash which breaks its make command.
-# I fixed this in the lastest commit, but that hasn't been cut to a
-# new version yet.
-ENV SALMON_COMMIT_HASH 0b9f1eb8a0a321adc6320f490b015e75ebf3d3bb
-
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ${PACKAGES} && \
     apt-get clean
-
-RUN curl -k -L https://github.com/COMBINE-lab/salmon/archive/${SALMON_COMMIT_HASH}.zip \
-         -o salmon-${SALMON_COMMIT_HASH}.zip && \
-    unzip salmon-${SALMON_COMMIT_HASH}.zip && \
-    cd salmon-${SALMON_COMMIT_HASH} && \
-    mkdir build && \
-    cd build && \
-    cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && make && make install
-
-ENV PATH /home/user/salmon-${SALMON_COMMIT_HASH}/bin:${PATH}
-# End code from salmon repo.
 
 RUN git clone https://github.com/COMBINE-lab/SalmonTools.git
 RUN cd SalmonTools && cmake . -DCMAKE_INSTALL_PREFIX=/usr/local && make install
