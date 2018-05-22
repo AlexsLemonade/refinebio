@@ -10,7 +10,7 @@ from data_refinery_common.logging import get_and_configure_logger
 logger = get_and_configure_logger(__name__)
 
 
-class SourceNotSupportedError(BaseException):
+class SourceNotSupportedError(Exception):
     pass
 
 
@@ -107,6 +107,7 @@ def survey_sra_experiment(accesion):
                                        value=accesion)
     key_value_pair.save()
     run_job(survey_job)
+    
     return survey_job
 
 def survey_geo_experiment(accesion):
@@ -117,4 +118,6 @@ def survey_geo_experiment(accesion):
                                        value=accesion)
     key_value_pair.save()
     run_job(survey_job)
+    
     return survey_job
+
