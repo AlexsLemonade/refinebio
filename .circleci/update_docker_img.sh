@@ -4,7 +4,7 @@
 source ~/refinebio/common.sh
 
 # Docker images that we want to protect from accidental overwriting in "ccdl" account.
-CCDL_WORKER_IMGS="affymetrix salmon transcriptome no_op downloaders"
+CCDL_WORKER_IMGS="illumina affymetrix salmon transcriptome no_op downloaders"
 
 # If any of the three images could be overwritten by the building process,
 # print out a message and terminate immediately.
@@ -45,7 +45,7 @@ for IMG in $CCDL_WORKER_IMGS; do
 done
 
 # Build and push foreman image
-docker build -t ccdl/data_refinery_foreman:$CIRCLE_TAG -f foreman/Dockerfile .
+./prepare_image.sh -i foreman -s foreman
 docker push ccdl/data_refinery_foreman:$CIRCLE_TAG
 # Update latest version
 docker tag ccdl/data_refinery_foreman:$CIRCLE_TAG ccdl/data_refinery_foreman:latest

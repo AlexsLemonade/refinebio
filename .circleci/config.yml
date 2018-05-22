@@ -47,7 +47,6 @@ jobs:
       - run: ./foreman/run_tests.sh
 
       # Run Illumna tests.
-      - run: ./prepare_image.sh -i illumina -s workers
       - run: .circleci/filter_tests.sh -t illumina
 
   # This tests workers tests tagged as 'affymetrix'
@@ -67,9 +66,6 @@ jobs:
       # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
       - run: ./update_models.sh
-
-      # Pull affy image instead of building it, hence the -p
-      - run: ./prepare_image.sh -p -i affymetrix -s workers
 
       - run:
           command: .circleci/filter_tests.sh -t affymetrix
@@ -93,8 +89,6 @@ jobs:
       # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
       - run: ./update_models.sh
-
-      - run: ./prepare_image.sh -i salmon -s workers
 
       - run:
           command: .circleci/filter_tests.sh -t salmon

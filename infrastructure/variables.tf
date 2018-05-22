@@ -67,7 +67,7 @@ variable "salmon_docker_image" {
   default = "wkurt/dr_salmon:latest"
 }
 variable "affymetrix_docker_image" {
-  default = "ccdl/dr_affymetrix:latest"
+  default = "wkurt/dr_affymetrix:latest"
 }
 variable "illumina_docker_image" {
   default = "wkurt/dr_illumina:latest"
@@ -76,7 +76,7 @@ variable "no_op_docker_image" {
   default = "wkurt/dr_no_op:latest"
 }
 variable "foreman_docker_image" {
-  default = "miserlou/data_refinery_foreman"
+  default = "wkurt/data_refinery_foreman:latest"
 }
 variable "use_s3" {
   default = "True"

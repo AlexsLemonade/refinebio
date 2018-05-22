@@ -92,6 +92,9 @@ class SalmonTestCase(TestCase):
     @tag('salmon')
     def test_salmon(self):
         """ """
+        # Ensure any computed files from previous tests are removed.
+        os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
+
         job = prepare_job()
         salmon.salmon(job.pk)
         job = ProcessorJob.objects.get(id=job.pk)

@@ -141,6 +141,12 @@ worker_images=(affymetrix illumina salmon transcriptome no_op downloaders)
 
 for image in ${worker_images[*]}; do
     if [[ -z $tag || $tag == $image ]]; then
+        if [[ $image == "affymetrix" ]]; then
+            ./prepare_image.sh -p -i $image -s workers
+        else
+            ./prepare_image.sh -i $image -s workers
+        fi
+
         image_name=ccdl/dr_$image
 
         # Strip out tag argument
