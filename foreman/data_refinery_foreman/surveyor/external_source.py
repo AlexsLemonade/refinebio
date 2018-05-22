@@ -94,10 +94,9 @@ class ExternalSourceSurveyor:
             except Exception as e:
                 # If the task doesn't get sent we don't want the
                 # downloader_job to be left floating
-                logger.info("Failed to enqueue downloader job for URL: " + original_file.source_url,
+                logger.exception("Failed to enqueue downloader job for URL: " + original_file.source_url,
                         survey_job=self.survey_job.id,
-                        downloader_job=downloader_job.id,
-                        exception=str(e))
+                        downloader_job=downloader_job.id)
                 downloader_job.success = False
                 downloader_job.failure_reason = str(e)
                 downloader_job.save()
@@ -134,10 +133,9 @@ class ExternalSourceSurveyor:
         except Exception as e:
             # If the task doesn't get sent we don't want the
             # downloader_job to be left floating
-            logger.info("Failed to enqueue downloader job.",
+            logger.exception("Failed to enqueue downloader job.",
                     survey_job=self.survey_job.id,
-                    downloader_job=downloader_job.id,
-                    exception=str(e))
+                    downloader_job=downloader_job.id)
             downloader_job.success = False
             downloader_job.failure_reason = str(e)
             downloader_job.save()
