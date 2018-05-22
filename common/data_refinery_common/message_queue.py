@@ -11,9 +11,8 @@ from data_refinery_common.logging import get_and_configure_logger
 logger = get_and_configure_logger(__name__)
 
 
-# There are currently two Nomad Job Specifications defined in
-# workers/downloader.nomad.tpl and workers/processor.nomad.tpl.
-# These constants are the identifiers for those two job specifications.
+# These two constants refer to image names that should be used for
+# multiple jobs.
 NOMAD_TRANSCRIPTOME_JOB = "TRANSCRIPTOME_INDEX"
 NOMAD_DOWNLOADER_JOB = "DOWNLOADER"
 
@@ -41,8 +40,9 @@ def send_job(job_type: Enum, job_id: int) -> None:
         nomad_job = ProcessorPipeline.NO_OP.value
     elif job_type is ProcessorPipeline.ILLUMINA_TO_PCL:
         nomad_job = ProcessorPipeline.ILLUMINA_TO_PCL.value
-    elif job_type is ProcessorPipeline.AGILENT:
-        raise ValueError("XXX: Received AGILENT job to queue but we don't support that yet!")
+    elif job_type is ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL:
+        # Agilent twocolor uses the same job specification as Affy.
+        nomad_job = ProcessorPipeline.AFFY_TO_PCL.value
     elif job_type in list(Downloaders):
         nomad_job = NOMAD_DOWNLOADER_JOB
     else:

@@ -52,7 +52,8 @@ docker tag ccdl/data_refinery_foreman:$CIRCLE_TAG ccdl/data_refinery_foreman:lat
 docker push ccdl/data_refinery_foreman:latest
 
 # Build and push API image
-docker build -t ccdl/data_refinery_api:$CIRCLE_TAG -f api/Dockerfile .
+./prepare_image.sh -i api -s api
+docker tag ccdl/data_refinery_api ccdl/data_refinery_api:$CIRCLE_TAG
 docker push ccdl/data_refinery_api:$CIRCLE_TAG
 # Update latest version
 docker tag ccdl/data_refinery_api:$CIRCLE_TAG ccdl/data_refinery_api:latest

@@ -32,11 +32,11 @@ jobs:
       # Run Common Tests.
       - run: ./common/run_tests.sh
 
-      - run: ./workers/prepare_image.sh -i no_op
-      - run: ./workers/prepare_image.sh -i downloaders
+      - run: ./prepare_image.sh -i no_op -s workers
+      - run: ./prepare_image.sh -i downloaders -s workers
 
       # Push the no_op and downloader images to the local docker repo so Nomad
-      # can pullfrom there when running end-to-end tests.
+      # can pull from there when running end-to-end tests.
       - run: docker tag ccdl/dr_downloaders localhost:5000/ccdl/dr_downloaders
       - run: docker push localhost:5000/ccdl/dr_downloaders
       - run: docker tag ccdl/dr_no_op localhost:5000/ccdl/dr_no_op
@@ -47,7 +47,7 @@ jobs:
       - run: ./foreman/run_tests.sh
 
       # Run Illumna tests.
-      - run: ./workers/prepare_image.sh -i illumina
+      - run: ./prepare_image.sh -i illumina -s workers
       - run: .circleci/filter_tests.sh -t illumina
 
   # This tests workers tests tagged as 'affymetrix'
@@ -69,7 +69,7 @@ jobs:
       - run: ./update_models.sh
 
       # Pull affy image instead of building it, hence the -p
-      - run: ./workers/prepare_image.sh -p -i affymetrix
+      - run: ./prepare_image.sh -p -i affymetrix -s workers
 
       - run:
           command: .circleci/filter_tests.sh -t affymetrix
@@ -94,7 +94,7 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
-      - run: ./workers/prepare_image.sh -i salmon
+      - run: ./prepare_image.sh -i salmon -s workers
 
       - run:
           command: .circleci/filter_tests.sh -t salmon
@@ -119,14 +119,14 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
-      - run: ./workers/prepare_image.sh -i transcriptome
+      - run: ./prepare_image.sh -i transcriptome -s workers
       - run: .circleci/filter_tests.sh -t transcriptome
 
       # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
       # from making sure all the files in workers/test_volume have read/write permissions.
       - run: sudo chown -R circleci:circleci workers/test_volume/
 
-      - run: ./workers/prepare_image.sh -i downloaders
+      - run: ./prepare_image.sh -i downloaders -s workers
       - run: .circleci/filter_tests.sh -t downloaders
 
   deploy:

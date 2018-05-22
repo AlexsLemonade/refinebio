@@ -68,6 +68,9 @@ fi
 if [[ -z $AFFYMETRIX_DOCKER_IMAGE ]]; then
     export AFFYMETRIX_DOCKER_IMAGE=ccdl/dr_affymetrix
 fi
+if [[ -z $ILLUMINA_DOCKER_IMAGE ]]; then
+    export ILLUMINA_DOCKER_IMAGE=ccdl/dr_illumina
+fi
 if [[ -z $NO_OP_DOCKER_IMAGE ]]; then
     export NO_OP_DOCKER_IMAGE=localhost:5000/ccdl/dr_no_op
 fi

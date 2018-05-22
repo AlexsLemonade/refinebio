@@ -20,7 +20,7 @@ if [ ! -d "$volume_directory" ]; then
     chmod -R a+rwX $volume_directory
 fi
 
-docker build -t dr_foreman -f foreman/Dockerfile .
+./prepare_image.sh -i api -s api
 
 source common.sh
 HOST_IP=$(get_ip_address)
@@ -32,5 +32,4 @@ docker run -it \
        --env-file foreman/environments/dev \
        --volume $volume_directory:/home/user/data_store \
        --link drdb:postgres \
-       dr_foreman python3 manage.py "$@"
-
+       ccdl/dr_foreman python3 manage.py "$@"
