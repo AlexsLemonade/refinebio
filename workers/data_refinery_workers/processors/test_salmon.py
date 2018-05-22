@@ -93,7 +93,10 @@ class SalmonTestCase(TestCase):
     def test_salmon(self):
         """ """
         # Ensure any computed files from previous tests are removed.
-        os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
+        try:
+            os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
+        except FileNotFoundError:
+            pass
 
         job = prepare_job()
         salmon.salmon(job.pk)
