@@ -26,7 +26,7 @@ exp.directory <- opt$exp_dir
 samples <- list.dirs(exp.directory, full.names = FALSE, recursive = FALSE)
 
 # Get a list of "quant.sf" files in experiment directory.
-# The path of each "quant.sf" are in this format:
+# The paths of "quant.sf" files are in this format:
 # <exp_dir>/<sample>/processed/quant.sf
 sf.files <- list.files(exp.directory, pattern="^quant.sf$", full.names = TRUE, recursive = TRUE)
 
