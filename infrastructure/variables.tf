@@ -79,16 +79,20 @@ variable "processed_prefix" {
 }
 
 # Instance types / ASG
+variable "nomad_server_instance_type" {
+  default = "m5.xlarge"
+}
+
 variable "client_instance_type" {
-  default = "m4.large"
+  default = "m5.4xlarge"
 }
 
 variable "spot_price" {
-  default = "0.04"
+  default = "0.28"
 }
 
 variable "max_clients" {
-  default = "20"
+  default = "10"
 }
 
 variable "scale_up_threshold" {
