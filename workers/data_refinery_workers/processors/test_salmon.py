@@ -152,6 +152,7 @@ class SalmonToolsTestCase(TestCase):
             'output_directory': self.test_dir + 'double_output/'
         }
         job_context["job"] = ProcessorJob()
+        job_context = salmon._prepare_files(job_context)
         salmon._run_salmontools(job_context, False)
 
         # Confirm job status
@@ -174,7 +175,7 @@ class SalmonToolsTestCase(TestCase):
             'output_directory': self.test_dir + 'single_output/'
         }
         job_context["job"] = ProcessorJob()
-        job_context = _prepare_files(job_context)
+        job_context = salmon._prepare_files(job_context)
         salmon._run_salmontools(job_context, False)
 
         # Confirm job status
