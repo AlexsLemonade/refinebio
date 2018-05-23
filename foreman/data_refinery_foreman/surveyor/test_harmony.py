@@ -1,6 +1,7 @@
 import datetime
 import GEOparse
 import json
+import logging
 
 from unittest.mock import Mock, patch, call
 from django.test import TestCase, tag
@@ -16,6 +17,9 @@ from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
 from data_refinery_foreman.surveyor.sra import SraSurveyor, UnsupportedDataTypeError
 from data_refinery_foreman.surveyor.geo import GeoSurveyor
 from data_refinery_foreman.surveyor.harmony import harmonize, parse_sdrf, preprocess_geo
+
+# Taken from GEOparse source code cause the docs lie.
+GEOparse.logger.setLevel(logging.getLevelName("WARN"))
 
 class HarmonyTestCase(TestCase):
     def setUp(self):
