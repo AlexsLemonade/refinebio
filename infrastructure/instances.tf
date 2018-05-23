@@ -60,7 +60,7 @@ data "template_file" "nomad_lead_server_script_smusher" {
 # first so that the others can be aware of its IP address to join it.
 resource "aws_instance" "nomad_server_1" {
   ami = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.small"
+  instance_type = "${var.nomad_server_instance_type}"
   availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
@@ -127,7 +127,7 @@ data "template_file" "nomad_server_script_smusher" {
 # at least three to avoid data loss.
 resource "aws_instance" "nomad_server_2" {
   ami = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.small"
+  instance_type = "${var.nomad_server_instance_type}"
   availability_zone = "${var.region}b"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
@@ -168,7 +168,7 @@ output "nomad_server_2_ip" {
 # at least three to avoid data loss.
 resource "aws_instance" "nomad_server_3" {
   ami = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.small"
+  instance_type = "${var.nomad_server_instance_type}"
   availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
