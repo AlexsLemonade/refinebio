@@ -172,7 +172,7 @@ workflows:
       - deploy:
           requires:
             - main_tests
-            - affymetrix_tests
+            - affymetrix_and_agilent_tests
             - salmon_tests
             - transcriptome_and_downloaders_tests
           filters:
