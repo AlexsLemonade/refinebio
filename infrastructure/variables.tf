@@ -88,7 +88,7 @@ variable "client_instance_type" {
 }
 
 variable "spot_price" {
-  default = "0.28"
+  default = "0.291"
 }
 
 variable "max_clients" {
