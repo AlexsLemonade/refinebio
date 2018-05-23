@@ -38,6 +38,6 @@ class Command(BaseCommand):
             surveyor.survey_transcriptome_index(
                 organism_name=options['organism_name'],
                 ensembl_division=options['ensembl_division'],
-                organism_name=options['organism_name'],
+                number_of_organisms=options['number_of_organisms'],
             )
             return 0
