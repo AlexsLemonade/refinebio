@@ -70,7 +70,7 @@ chmod +x install_nomad.sh
 ./install_nomad.sh
 
 # Start the Nomad agent in server mode.
-nohup nomad agent -config server.hcl > /var/log/nomad_server.log &
+nohup nomad agent -config server.hcl > /tmp/nomad_server.log &
 
 # Create the CW metric job in a crontab
 # write out current crontab
