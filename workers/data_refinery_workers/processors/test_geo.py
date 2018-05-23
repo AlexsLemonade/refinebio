@@ -11,7 +11,7 @@ from data_refinery_common.models import (
     SampleAnnotation,
     OriginalFileSampleAssociation
 )
-from data_refinery_workers.processors import illumina, agilent_twocolor, utils
+from data_refinery_workers.processors import utils
 
 def prepare_illumina_job():
     pj = ProcessorJob()
@@ -84,14 +84,17 @@ class IlluminaToPCLTestCase(TestCase):
     @tag("illumina")
     def test_illumina_to_pcl(self):
         """ """
+        from data_refinery_workers.processors import illumina
         job = prepare_illumina_job()
         illumina.illumina_to_pcl(job.pk)
         self.assertTrue(os.path.isfile('/home/user/data_store/raw/TEST/processed/GSE22427_non-normalized.PCL'))
 
 class AgilentTwoColorTestCase(TestCase):
 
+    @tag("agilent")
     def test_agilent_twocolor(self):
         """ """
+        from data_refinery_workers.processors import agilent_twocolor
         job = prepare_agilent_twocolor_job()
         agilent_twocolor.agilent_twocolor_to_pcl(job.pk)
         self.assertTrue(os.path.isfile('/home/user/data_store/raw/TEST/processed/GSM466597_95899_agilent.PCL'))

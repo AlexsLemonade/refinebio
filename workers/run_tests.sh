@@ -118,7 +118,9 @@ if [[ -z $tag || $tag == "illumina" ]]; then
         wget -q -O "$ilu_test_raw_dir/$ilu_file" \
              "$test_data_repo/$ilu_file"
     fi
+fi
 
+if [[ -z $tag || $tag == "agilent" ]]; then
     # Agilnt Two Color test file
     at_file="GSM466597_95899_agilent.txt"
     at_test_raw_dir="$volume_directory/raw/TEST/AGILENT_TWOCOLOR"
@@ -137,17 +139,22 @@ DB_HOST_IP=$(get_docker_db_ip_address)
 # Ensure permissions are set for everything within the test data directory.
 chmod -R a+rwX $volume_directory
 
-worker_images=(affymetrix illumina salmon transcriptome no_op downloaders)
+worker_images=(affymetrix illumina salmon transcriptome no_op downloaders agilent)
 
 for image in ${worker_images[*]}; do
     if [[ -z $tag || $tag == $image ]]; then
-        if [[ $image == "affymetrix" ]]; then
+        if [[ $image == "agilent" ]]; then
+            # Agilent uses the same docker image as Affymetrix
+            ./prepare_image.sh -p -i affymetrix -s workers
+            image_name=ccdl/dr_affymetrix
+        elif [[ $image == "affymetrix" ]]; then
             ./prepare_image.sh -p -i $image -s workers
+            image_name=ccdl/dr_$image
         else
             ./prepare_image.sh -i $image -s workers
+            image_name=ccdl/dr_$image
         fi
 
-        image_name=ccdl/dr_$image
 
         # Strip out tag argument
         tag_string="-t $tag"
