@@ -72,6 +72,10 @@ jobs:
           # This takes a while because the affymetrix image is huge
           no_output_timeout: 36000
 
+      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
+      # from making sure all the files in workers/test_volume have read/write permissions.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+
       # This doesn't take as long because the image has already been pulled.
       - run: .circleci/filter_tests.sh -t agilent
 
