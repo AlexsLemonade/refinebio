@@ -5,6 +5,7 @@ import json
 import gzip
 import os
 import re
+import shutil
 import subprocess
 import tarfile
 
@@ -20,7 +21,9 @@ from data_refinery_common.models import (
     OrganismIndex,
     ComputationalResult,
     ComputationalResultAnnotation,
-    ComputedFile)
+    ComputedFile,
+    SampleResultAssociation
+    )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
@@ -66,8 +69,11 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["output_archive"] = '/'.join(pre_part) + '/result-' + timestamp +  '.tar.gz'
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
-    job_context['organism'] = job_context['original_files'][0].samples.first().organism
+    # There should only ever be one per Salmon run
+    job_context['sample'] = job_context['original_files'][0].samples.first()
+    job_context['organism'] = job_context['sample'].organism
     job_context["success"] = True
+
     return job_context
 
 
@@ -259,7 +265,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
     """ Runs the `MultiQC` package to generate the QC report.
 
     """
-    command_str = ("multiqc {input_directory} --outdir {qc_directory}")
+    command_str = ("multiqc {input_directory} --outdir {qc_directory} --zip-data-dir")
     formatted_command = command_str.format(input_directory=job_context["input_directory"], 
                 qc_directory=job_context["qc_directory"])
 
@@ -271,10 +277,12 @@ def _run_multiqc(job_context: Dict) -> Dict:
     qc_env["LC_ALL"] = "C.UTF-8"
     qc_env["LANG"] = "C.UTF-8"
 
+    time_start = timezone.now()
     completed_command = subprocess.run(formatted_command.split(),
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE,
                                        env=qc_env)
+    time_end = timezone.now()
 
     if completed_command.returncode != 0:
 
@@ -291,6 +299,45 @@ def _run_multiqc(job_context: Dict) -> Dict:
                                              + stderr[error_start:error_end])
         job_context["success"] = False
 
+    result = ComputationalResult()
+    result.command_executed = formatted_command
+    result.system_version = __version__
+    result.time_start = time_start
+    result.time_end = time_end
+    result.program_version = subprocess.run(['multiqc', '--version'],
+                                            stderr=subprocess.PIPE,
+                                            stdout=subprocess.PIPE,
+                                            env=qc_env).stderr.decode("utf-8").strip()
+    result.is_ccdl = True
+    result.save()
+
+    assoc = SampleResultAssociation()
+    assoc.sample = job_context["sample"]
+    assoc.result = result
+    assoc.save()
+    
+    job_context['qc_result'] = result
+
+    data_file = ComputedFile()
+    data_file.filename = "multiqc_data.zip" # This is deterministic
+    data_file.absolute_file_path = os.path.join(job_context["qc_directory"], data_file.filename)
+    data_file.calculate_sha1()
+    data_file.calculate_size()
+    data_file.is_public = True
+    data_file.result = job_context['qc_result']
+    data_file.save()
+
+    report_file = ComputedFile()
+    report_file.filename = "multiqc_report.html" # This is deterministic
+    report_file.absolute_file_path = os.path.join(job_context["qc_directory"], report_file.filename)
+    report_file.calculate_sha1()
+    report_file.calculate_size()
+    report_file.is_public = True
+    report_file.result = job_context['qc_result']
+    report_file.save()
+
+    job_context['qc_files'] = [data_file, report_file]
+
     return job_context
 
 def _run_fastqc(job_context: Dict) -> Dict:
@@ -298,6 +345,7 @@ def _run_fastqc(job_context: Dict) -> Dict:
 
     """
 
+    # We could use --noextract here, but MultiQC wants extracted files.
     command_str = ("./FastQC/fastqc --outdir={qc_directory} {files}")
     files = ' '.join(file.absolute_file_path for file in job_context['original_files'])
     formatted_command = command_str.format(qc_directory=job_context["qc_directory"],
@@ -307,11 +355,16 @@ def _run_fastqc(job_context: Dict) -> Dict:
                 formatted_command,
                 processor_job=job_context["job_id"])
 
+    start_time = timezone.now()
     completed_command = subprocess.run(formatted_command.split(),
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
+    end_time = timezone.now()
 
-    if completed_command.returncode != 0:
+    # Java returns a 0 error code for runtime-related errors and FastQC puts progress
+    # information in stderr rather than stdout, so handle both.
+    if completed_command.returncode != 0 or b"complete for" not in completed_command.stderr:
+
         stderr = str(completed_command.stderr)
         logger.error("Shell call to FastQC failed with error message: %s",
                      stderr,
@@ -320,6 +373,9 @@ def _run_fastqc(job_context: Dict) -> Dict:
         # The failure_reason column is only 256 characters wide.
         job_context["job"].failure_reason = stderr[0:255]
         job_context["success"] = False
+
+    # We don't need to make a ComputationalResult here because
+    # MultiQC will read these files in as well.
 
     return job_context
 
@@ -381,6 +437,12 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
                                                 stdout=subprocess.PIPE).stderr.decode().strip()
         result.is_ccdl = True
         result.save()
+
+        assoc = SampleResultAssociation()
+        assoc.sample = job_context["sample"]
+        assoc.result = result
+        assoc.save()
+
         job_context["result"] = result
         job_context["success"] = True
     else:   # error in salmontools

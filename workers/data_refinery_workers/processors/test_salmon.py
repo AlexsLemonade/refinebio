@@ -78,7 +78,7 @@ def prepare_job():
     assoc1.processor_job = pj
     assoc1.save()
 
-    return pj
+    return pj, [og_file, og_file2]
 
 
 def identical_checksum(file1, file2):
@@ -95,6 +95,39 @@ class SalmonTestCase(TestCase):
         job = prepare_job()
         salmon.salmon(job.pk)
 
+    def test_fastqc(self):
+
+        job, og_files = prepare_job()
+        win_context = {
+            'job': job,
+            'job_id': 789,
+            'qc_directory': "/home/user/data_store/raw/TEST/SALMON/qc",
+            'original_files': og_files,
+            'success': True
+        }
+
+        # Ensure clean testdir
+        shutil.rmtree(win_context['qc_directory'], ignore_errors=True)
+        os.makedirs(win_context['qc_directory'], exist_ok=True)
+        win_context = salmon._prepare_files(win_context)
+
+        win = salmon._run_fastqc(win_context)
+        self.assertTrue(win['success'])
+        win = salmon._run_multiqc(win_context)
+        self.assertTrue(win['success'])
+
+        for file in win['qc_files']:
+            self.assertTrue(os.path.isfile(file.absolute_file_path))
+
+        fail_context = {
+            'job': job,
+            'job_id': 'hippityhoppity',
+            'qc_directory': "/home/user/data_store/raw/TEST/SALMON/derp",
+            'original_files': [],
+            'success': True
+        }       
+        fail = salmon._run_fastqc(fail_context)
+        self.assertFalse(fail['success']) 
 
 class SalmonToolsTestCase(TestCase):
     """Test SalmonTools command."""
