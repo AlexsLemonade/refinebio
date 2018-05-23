@@ -13,7 +13,7 @@ cd $script_directory
 # move up a level
 cd ..
 
-docker build -t dr_api -f api/Dockerfile .
+./prepare_image.sh -i api -s api
 
 source common.sh
 HOST_IP=$(get_ip_address)
@@ -25,4 +25,4 @@ docker run \
        --env-file api/environments/dev \
        --link drdb:postgres \
        -p 8000:8000 \
-       -it dr_api python3.6 manage.py runserver 0.0.0.0:8000 "$@"
+       -it ccdl/dr_api python3.6 manage.py runserver 0.0.0.0:8000 "$@"

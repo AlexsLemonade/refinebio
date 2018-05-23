@@ -55,12 +55,28 @@ variable "running_in_cloud" {
   default = "True"
 }
 
-# This is a placeholder until there is a production image ready.
-variable "workers_docker_image" {
-  default = "miserlou/data_refinery_workers"
+# These are placeholders until there are production images ready.
+# We should not use the latest tag here, instead specifying a specific tag.
+variable "downloaders_docker_image" {
+  default = "wkurt/dr_downloaders:latest"
+}
+variable "transcriptome_docker_image" {
+  default = "wkurt/dr_transcriptome:latest"
+}
+variable "salmon_docker_image" {
+  default = "wkurt/dr_salmon:latest"
+}
+variable "affymetrix_docker_image" {
+  default = "wkurt/dr_affymetrix:latest"
+}
+variable "illumina_docker_image" {
+  default = "wkurt/dr_illumina:latest"
+}
+variable "no_op_docker_image" {
+  default = "wkurt/dr_no_op:latest"
 }
 variable "foreman_docker_image" {
-  default = "miserlou/data_refinery_foreman"
+  default = "wkurt/data_refinery_foreman:latest"
 }
 variable "use_s3" {
   default = "True"
@@ -152,8 +168,18 @@ output "environment_variables" {
       value = "${var.temp_prefix}"},
     {name = "PROCESSED_PREFIX"
       value = "${var.processed_prefix}"},
-    {name = "WORKERS_DOCKER_IMAGE"
-      value = "${var.workers_docker_image}"},
+    {name = "DOWNLOADERS_DOCKER_IMAGE"
+      value = "${var.downloaders_docker_image}"},
+    {name = "TRANSCRIPTOME_DOCKER_IMAGE"
+      value = "${var.transcriptome_docker_image}"},
+    {name = "SALMON_DOCKER_IMAGE"
+      value = "${var.salmon_docker_image}"},
+    {name = "AFFYMETRIX_DOCKER_IMAGE"
+      value = "${var.affymetrix_docker_image}"},
+    {name = "ILLUMINA_DOCKER_IMAGE"
+      value = "${var.illumina_docker_image}"},
+    {name = "NO_OP_DOCKER_IMAGE"
+      value = "${var.no_op_docker_image}"},
     {name = "FOREMAN_DOCKER_IMAGE"
       value = "${var.foreman_docker_image}"},
     {name = "NOMAD_HOST"

@@ -1,6 +1,7 @@
 import dateutil.parser
 import GEOparse
 import requests
+import logging
 
 from re import sub, split, match
 from typing import List, Dict
@@ -22,6 +23,8 @@ from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 
 logger = get_and_configure_logger(__name__)
+# Taken from GEOparse source code cause the docs lie.
+GEOparse.logger.setLevel(logging.getLevelName("WARN"))
 
 class GeoUnsupportedPlatformException(Exception):
     pass

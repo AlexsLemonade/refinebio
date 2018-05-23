@@ -12,9 +12,6 @@ import tarfile
 from django.utils import timezone
 from typing import Dict
 
-import rpy2.robjects as ro
-from rpy2.rinterface import RRuntimeError
-
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
@@ -185,7 +182,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
     # XXX: TODO: We need to tune the -p/--numThreads to the machines this process wil run on.
     if "input_file_path_2" in job_context:
         second_read_str = " -2 {}".format(job_context["input_file_path_2"])
-        command_str = ("salmon --no-version-check quant -l A -i {index}"
+        command_str = ("salmon --no-version-check quant -l A --biasSpeedSamp 5 -i {index}"
                        " -1 {input_one}{second_read_str}"
                        " -p 20 -o {output_directory} --seqBias --gcBias --dumpEq --writeUnmappedNames")
         formatted_command = command_str.format(index=job_context["index_directory"],
@@ -454,7 +451,6 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         job_context["success"] = False
 
     return job_context
-
 
 def _zip_and_upload(job_context: Dict) -> Dict:
     """Zips the directory output by Salmon into a single file and uploads it.
