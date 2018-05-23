@@ -50,7 +50,7 @@ jobs:
       - run: .circleci/filter_tests.sh -t illumina
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
-  affymetrix_and_affymetrix_tests:
+  affymetrix_and_agilent_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
