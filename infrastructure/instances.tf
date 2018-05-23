@@ -278,7 +278,7 @@ output "nomad_client_ip" {
 resource "aws_launch_configuration" "auto_client_configuration" {
     # Don't include availability_zones because of:
     # https://github.com/hashicorp/terraform/issues/15978
-    
+
     name_prefix = "auto-client-"
     image_id = "${data.aws_ami.ubuntu.id}"
     instance_type = "${var.client_instance_type}"
@@ -410,7 +410,7 @@ data "template_file" "api_server_script_smusher" {
     database_password = "${var.database_password}"
     database_name = "${aws_db_instance.postgres_db.name}"
     log_group = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
-    log_stream = "${aws_cloudwatch_log_stream.log_stream_api_docker.name}"
+    log_stream = "${aws_cloudwatch_log_stream.log_stream_api.name}"
   }
 }
 
@@ -446,4 +446,3 @@ resource "aws_instance" "api_server_1" {
 output "api_server_1_ip" {
   value = "${aws_instance.api_server_1.public_ip}"
 }
-

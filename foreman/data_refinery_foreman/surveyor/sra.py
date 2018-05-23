@@ -293,7 +293,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         ##
         # Experiment
         ##
-        
+
         experiment_accession_code = metadata.get('study_accession')
         try:
             experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)

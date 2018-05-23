@@ -84,7 +84,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                             parsed_json["arraydesign"][0]["accession"],
                             experiment_accession_code=experiment_accession_code,
                             survey_job=self.survey_job.id)
-                
+
                 # XXX: This is disabled until we can re-do the supported platforms
                 # to support Illumina and Agilent 2C
                 # platform_warning = True
@@ -420,7 +420,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 continue
             except Sample.DoesNotExist:
                 sample_object = Sample()
-                
+
                 # The basics
                 sample_object.title = title
                 sample_object.accession_code = sample_accession_code

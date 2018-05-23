@@ -1,13 +1,6 @@
 from django.core.management.base import BaseCommand
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_workers.processors.array_express import affy_to_pcl
-from data_refinery_workers.processors.agilent_twocolor import agilent_twocolor_to_pcl
-from data_refinery_workers.processors.illumina import illumina_to_pcl
-from data_refinery_workers.processors.transcriptome_index import build_transcriptome_index
-from data_refinery_workers.processors.no_op import no_op_processor
-from data_refinery_workers.processors.salmon import salmon
-
 
 logger = get_and_configure_logger(__name__)
 
@@ -36,18 +29,25 @@ class Command(BaseCommand):
             return 1
 
         if job_type is ProcessorPipeline.AFFY_TO_PCL:
+            from data_refinery_workers.processors.array_express import affy_to_pcl
             affy_to_pcl(options["job_id"])
         elif job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_SHORT:
+            from data_refinery_workers.processors.transcriptome_index import build_transcriptome_index
             build_transcriptome_index(options["job_id"], length="long")
         elif job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_LONG:
+            from data_refinery_workers.processors.transcriptome_index import build_transcriptome_index
             build_transcriptome_index(options["job_id"], length="short")
         elif job_type is ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL:
+            from data_refinery_workers.processors.agilent_twocolor import agilent_twocolor_to_pcl
             agilent_twocolor_to_pcl(options["job_id"])
         elif job_type is ProcessorPipeline.ILLUMINA_TO_PCL:
+            from data_refinery_workers.processors.illumina import illumina_to_pcl
             illumina_to_pcl(options["job_id"])
         elif job_type is ProcessorPipeline.SALMON:
+            from data_refinery_workers.processors.salmon import salmon
             salmon(options["job_id"])
         elif job_type is ProcessorPipeline.NO_OP:
+            from data_refinery_workers.processors.no_op import no_op_processor
             no_op_processor(options["job_id"])
         else:
             logger.error(("A valid job name was specified for job %s with id %d but "

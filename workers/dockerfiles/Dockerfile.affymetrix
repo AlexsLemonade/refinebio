@@ -1,0 +1,64 @@
+FROM ubuntu:16.04
+
+# Much of this dockerfile is based off of the rpy2 docker image found:
+# https://hub.docker.com/r/rpy2/rpy2/~/dockerfile/
+
+RUN \
+  apt-get update -qq && \
+  apt-get install -y lsb-release && \
+  echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
+      >> /etc/apt/sources.list.d/added_repos.list && \
+  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9 && \
+  apt-get update -qq && \
+  apt-get install -y \
+  ed \
+  git \
+  mercurial \
+  libcairo-dev \
+  libedit-dev \
+  lsb-release \
+  python3 \
+  python3-pip \
+  r-base \
+  r-base-dev \
+  libpq-dev \
+  libxml2-dev \
+  libssl-dev \
+  libcurl4-openssl-dev \
+  curl \
+  wget && \
+  rm -rf /var/lib/apt/lists/*
+
+RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
+WORKDIR /home/user
+
+ENV R_LIBS "/usr/local/lib/R/site-library"
+
+COPY workers/affymetrix_dependencies.R .
+COPY workers/install_ensg_pkgs.R .
+
+RUN Rscript affymetrix_dependencies.R
+
+RUN pip3 install pip --upgrade
+
+RUN pip3 install setuptools --upgrade && \
+  rm -rf /root/.cache
+
+COPY common/dist/data-refinery-common-* common/
+
+# Get the latest version from the dist directory.
+RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
+
+COPY workers/data_refinery_workers/processors/requirements.txt .
+
+RUN pip3 install -r requirements.txt
+
+# Install this one here instead of via requirements.txt because not
+# all processors need it.
+RUN pip3 install rpy2
+
+USER user
+
+COPY workers/ .
+
+ENTRYPOINT []

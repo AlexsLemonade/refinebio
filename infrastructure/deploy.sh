@@ -35,6 +35,7 @@ export TF_VAR_host_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
 cp deploy/ci_ingress.tf .
 
 # We have to do this once before the initial deploy..
+rm -f prod_env
 format_environment_variables
 
 # Open up ingress to AWS for Circle, stop jobs, migrate DB.
@@ -105,14 +106,14 @@ docker run \
        --env-file prod_env \
        $FOREMAN_DOCKER_IMAGE python3 manage.py migrate
 
-# Don't leave secrets lying around!
-rm prod_env
-
 # Template the environment variables for production into the Nomad Job
 # specs and API confs.
 mkdir -p nomad-job-specs
-../format_nomad_with_env.sh -p workers -e prod -o $(pwd)/nomad-job-specs/
-../format_nomad_with_env.sh -p foreman -e prod -o $(pwd)/nomad-job-specs/
+../format_nomad_with_env.sh -p workers -e prod -o $(pwd)/nomad-job-specs
+../format_nomad_with_env.sh -p foreman -e prod -o $(pwd)/nomad-job-specs
+
+# Don't leave secrets lying around!
+rm -f prod_env
 
 # Re-register Nomad jobs.
 echo "Registering new job specifications.."

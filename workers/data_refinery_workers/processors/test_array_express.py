@@ -1,14 +1,13 @@
 import os
-from django.test import TestCase
+from django.test import TestCase, tag
 from data_refinery_common.models import (
-    SurveyJob,
     ProcessorJob,
     OriginalFile,
     ProcessorJobOriginalFileAssociation,
     ComputationalResult,
     ComputedFile
 )
-from data_refinery_workers.processors import array_express, utils
+from data_refinery_workers.processors import array_express
 
 def prepare_ba_job():
     pj = ProcessorJob()
@@ -48,6 +47,7 @@ def prepare_non_ba_job():
 
 class AffyToPCLTestCase(TestCase):
 
+    @tag("affymetrix")
     def test_affy_to_pcl(self):
         """ """
         job = prepare_ba_job()
@@ -62,6 +62,7 @@ class AffyToPCLTestCase(TestCase):
         os.remove(ComputedFile.objects.all()[0].absolute_file_path)
         ComputationalResult.objects.all()[0].delete() # ComputedFile deleted by cascade
 
+    @tag("affymetrix")
     def test_affy_to_pcl_no_brainarray(self):
         """ """
         job = prepare_non_ba_job()
