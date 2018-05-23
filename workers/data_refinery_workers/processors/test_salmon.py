@@ -98,7 +98,7 @@ class SalmonTestCase(TestCase):
         except FileNotFoundError:
             pass
 
-        job = prepare_job()
+        job, files = prepare_job()
         salmon.salmon(job.pk)
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertTrue(job.success)
@@ -174,6 +174,7 @@ class SalmonToolsTestCase(TestCase):
             'output_directory': self.test_dir + 'single_output/'
         }
         job_context["job"] = ProcessorJob()
+        job_context = _prepare_files(job_context)
         salmon._run_salmontools(job_context, False)
 
         # Confirm job status
