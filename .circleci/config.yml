@@ -72,9 +72,8 @@ jobs:
           # This takes a while because the affymetrix image is huge
           no_output_timeout: 36000
 
-      - run:
-          # This doesn't take as long because the image has already been pulled.
-          command: .circleci/filter_tests.sh -t agilent
+      # This doesn't take as long because the image has already been pulled.
+      - run: .circleci/filter_tests.sh -t agilent
 
   # This tests workers tests tagged as 'salmon'
   salmon_tests:
