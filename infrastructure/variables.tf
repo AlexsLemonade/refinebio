@@ -47,16 +47,20 @@ variable "database_timeout" {
   default = "30"
 }
 
+variable "database_instance_type" {
+  default = "t2.micro"
+}
+
 variable "running_in_cloud" {
   default = "True"
 }
 
 # This is a placeholder until there is a production image ready.
 variable "workers_docker_image" {
-  default = "wkurt/dr_worker:6"
+  default = "miserlou/data_refinery_workers"
 }
 variable "foreman_docker_image" {
-  default = "wkurt/dr_foreman:6"
+  default = "miserlou/data_refinery_foreman"
 }
 variable "use_s3" {
   default = "True"
