@@ -127,7 +127,7 @@ class Experiment(models.Model):
 
     # Properties
     ## I was always under the impression that TextFields were slower
-    ## than CharFields, however the Postgres documentation disagrees: 
+    ## than CharFields, however the Postgres documentation disagrees:
     ## https://www.postgresql.org/docs/9.0/static/datatype-character.html
     title = models.TextField()
     description = models.TextField()

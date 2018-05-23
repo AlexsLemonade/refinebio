@@ -43,36 +43,30 @@ resource "aws_cloudwatch_log_stream" "log_stream_nomad_client" {
 }
 
 # Nomad / Docker
-resource "aws_cloudwatch_log_stream" "log_stream_nomad_docker_surveyor" {
-  name           = "log-stream-nomad-docker-surveyor-${var.user}-${var.stage}"
+resource "aws_cloudwatch_log_stream" "log_stream_surveyor" {
+  name           = "log-stream-surveyor-${var.user}-${var.stage}"
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
 }
 
-resource "aws_cloudwatch_log_stream" "log_stream_nomad_docker_processor" {
-  name           = "log-stream-nomad-docker-processor-${var.user}-${var.stage}"
+resource "aws_cloudwatch_log_stream" "log_stream_processor" {
+  name           = "log-stream-processor-${var.user}-${var.stage}"
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
 }
 
-resource "aws_cloudwatch_log_stream" "log_stream_nomad_docker_downloader" {
-  name           = "log-stream-nomad-docker-downloader-${var.user}-${var.stage}"
+resource "aws_cloudwatch_log_stream" "log_stream_downloader" {
+  name           = "log-stream-downloader-${var.user}-${var.stage}"
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
 }
 
 # Foreman
-resource "aws_cloudwatch_log_stream" "log_stream_foreman_docker" {
-  name           = "log-stream-foreman-docker-${var.user}-${var.stage}"
-  log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
-}
-
-# Worker
-resource "aws_cloudwatch_log_stream" "log_stream_worker_docker" {
-  name           = "log-stream-worker-docker-${var.user}-${var.stage}"
+resource "aws_cloudwatch_log_stream" "log_stream_foreman" {
+  name           = "log-stream-foreman-${var.user}-${var.stage}"
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
 }
 
 # API
-resource "aws_cloudwatch_log_stream" "log_stream_api_docker" {
-  name           = "log-stream-api-docker-${var.user}-${var.stage}"
+resource "aws_cloudwatch_log_stream" "log_stream_api" {
+  name           = "log-stream-api-${var.user}-${var.stage}"
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
 }
 

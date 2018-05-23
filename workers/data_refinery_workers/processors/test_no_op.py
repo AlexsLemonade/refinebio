@@ -1,7 +1,7 @@
 import os
 import shutil
 from contextlib import closing
-from django.test import TestCase
+from django.test import TestCase, tag
 from unittest.mock import MagicMock
 from data_refinery_common.models import (
     SurveyJob,
@@ -10,7 +10,6 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation
 )
 from data_refinery_workers.processors import no_op, utils
-import pandas as pd
 
 def prepare_job():
     pj = ProcessorJob()
@@ -32,6 +31,7 @@ def prepare_job():
 
 class NOOPTestCase(TestCase):
 
+    @tag('no_op')
     def test_noop(self):
         """ """
         job = prepare_job()
