@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ -z $DOCKER_ID ]]; then
+    echo 'Please set $DOCKER_ID!'
+    exit 1
+fi
+
 # Log into DockerHub
 echo "Please enter your password for Dockerhub.com"
 docker login -u $DOCKER_ID
