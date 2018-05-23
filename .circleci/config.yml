@@ -49,8 +49,8 @@ jobs:
       # Run Illumna tests.
       - run: .circleci/filter_tests.sh -t illumina
 
-  # This tests workers tests tagged as 'affymetrix'
-  affymetrix_tests:
+  # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
+  affymetrix_and_affymetrix_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
@@ -71,6 +71,10 @@ jobs:
           command: .circleci/filter_tests.sh -t affymetrix
           # This takes a while because the affymetrix image is huge
           no_output_timeout: 36000
+
+      - run:
+          # This doesn't take as long because the image has already been pulled.
+          command: .circleci/filter_tests.sh -t agilent
 
   # This tests workers tests tagged as 'salmon'
   salmon_tests:
@@ -145,7 +149,7 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      - affymetrix_tests:
+      - affymetrix_and_agilent_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.

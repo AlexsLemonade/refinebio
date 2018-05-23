@@ -20,7 +20,7 @@ if [ ! -d "$volume_directory" ]; then
     chmod -R a+rwX $volume_directory
 fi
 
-./prepare_image.sh -i api -s api
+./prepare_image.sh -i foreman -s foreman
 
 source common.sh
 HOST_IP=$(get_ip_address)
