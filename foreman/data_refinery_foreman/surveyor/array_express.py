@@ -140,15 +140,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             IDF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.idf.txt"
             SDRF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
             idf_url = IDF_URL_TEMPLATE.format(code=experiment_accession_code)
-<<<<<<< HEAD
-            idf_text = requests.get(idf_url, timeout=60).text
-            
-||||||| merged common ancestors
-            idf_text = requests.get(idf_url, timeout=60).text
-=======
             sdrf_url = SDRF_URL_TEMPLATE.format(code=experiment_accession_code)
             idf_text = utils.requests_retry_session().get(idf_url, timeout=60).text
->>>>>>> d98739a7baf01c8976cd8351c017c75377a931c2
+            
             lines = idf_text.split('\n')
             idf_dict = {}
             for line in lines:
