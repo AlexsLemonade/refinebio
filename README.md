@@ -525,7 +525,7 @@ your instance type, use the [spot request
 page](https://console.aws.amazon.com/ec2sp/v1/spot/home?region=us-east-1) and
 then click on the **view pricing history** chart. Choose your instance type and
 then choose a bid price that is slightly higher than the current price for your
-availability zone (AZ).
+availability zone (AZ). [This graph](https://cdn-images-1.medium.com/max/1600/0*gk64fOrhSFBoFGXK.) is useful for understanding instance types.
 
 Then set your `TF_VAR_client_instance_type`, `TF_VAR_spot_price` and
 `TF_VAR_max_clients` to configure your scaling instance types, cost and size.
