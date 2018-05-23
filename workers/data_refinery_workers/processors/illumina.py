@@ -9,9 +9,6 @@ import warnings
 from django.utils import timezone
 from typing import Dict
 
-import rpy2.robjects as ro
-from rpy2.rinterface import RRuntimeError
-
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     OriginalFile, 
@@ -38,10 +35,13 @@ def _prepare_files(job_context: Dict) -> Dict:
     # Turns /home/user/data_store/E-GEOD-8607/raw/foo.txt into /home/user/data_store/E-GEOD-8607/processed/foo.cel
     pre_part = original_file.absolute_file_path.split('/')[:-2] # Cut off '/raw'
     end_part = original_file.absolute_file_path.split('/')[-1] # Get the filename
-    job_context["output_file_path"] = '/'.join(pre_part) + '/processed/' + end_part
+    output_directory = '/'.join(pre_part) + '/processed/'
+    os.makedirs(output_directory, exist_ok=True)
+
+    job_context["output_file_path"] = output_directory + end_part.replace('.txt', '.PCL')
     job_context["input_directory"] = '/'.join(pre_part) + '/'
     job_context["qc_directory"] = '/'.join(pre_part) + '/qc/'
-    job_context["output_file_path"] = job_context["output_file_path"].replace('.txt', '.PCL')
+    os.makedirs(job_context["qc_directory"], exist_ok=True)
 
     # Sanitize this file so R doesn't choke.
     # Some have comments, some have non-comment-comments.

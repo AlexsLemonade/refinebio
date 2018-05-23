@@ -1,7 +1,7 @@
 import copy
 from typing import List
 from unittest.mock import patch, call
-from django.test import TestCase
+from django.test import TestCase, tag
 from data_refinery_common.models import (
     SurveyJob,
     DownloaderJob,
@@ -17,6 +17,7 @@ class DownloadArrayExpressTestCase(TestCase):
         survey_job.save()
         self.survey_job = survey_job
 
+    @tag('downloaders')
     @patch('data_refinery_workers.downloaders.utils.send_job')
     def test_download_and_extract_file(self, mock_send_job):
         dlj = DownloaderJob()
