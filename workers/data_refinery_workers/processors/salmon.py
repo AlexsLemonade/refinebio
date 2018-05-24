@@ -10,7 +10,7 @@ import tarfile
 
 from django.db import transaction
 from django.utils import timezone
-from typing import Dict
+from typing import Dict, List
 
 import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
@@ -297,7 +297,7 @@ def _get_salmon_completed_exp_dirs(job_context: Dict) -> List[str]:
     return salmon_completed_exp_dirs
 
 
-def _tximport(exp_dir -> str, genes_to_transcripts_path -> str):
+def _tximport(exp_dir: str, genes_to_transcripts_path: str):
     """Run tximport R script based on input exp_dir and the path of
     genes_to_transcripts.txt."""
 
