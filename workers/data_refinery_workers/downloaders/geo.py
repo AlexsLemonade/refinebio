@@ -137,6 +137,7 @@ def download_geo(job_id: int) -> None:
     job = utils.start_job(job_id)
 
     file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
+
     original_file = file_assocs[0].original_file 
     url = original_file.source_url
     accession_code = job.accession_code
@@ -154,6 +155,7 @@ def download_geo(job_id: int) -> None:
     # download the one.
     os.makedirs(LOCAL_ROOT_DIR + '/' + accession_code, exist_ok=True)
     dl_file_path = LOCAL_ROOT_DIR + '/' + accession_code + '/' + url.split('/')[-1]
+
     logger.info("Starting to download: " + url, job_id=job_id, accession_code=accession_code)
     _download_file(url, dl_file_path, job)
     original_file.absolute_file_path = dl_file_path
@@ -256,6 +258,7 @@ def download_geo(job_id: int) -> None:
                 actual_file.filename = og_file['filename']
                 actual_file.calculate_size()
                 actual_file.calculate_sha1()
+
                 actual_file.has_raw = not no_op
                 actual_file.save()
 
@@ -313,6 +316,7 @@ def download_geo(job_id: int) -> None:
 
                 unpacked_sample_files.append(actual_file)
             except Exception as e:
+
                 logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'],
                     exc_info=1, file=og_file['filename'], sample_id=sample_id, accession_code=accession_code)
 
