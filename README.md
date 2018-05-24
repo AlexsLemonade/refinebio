@@ -261,7 +261,7 @@ arguments can be viewed by running:
 ./foreman/run_surveyor.sh <JOB_TYPE> -h
 ```
 
-You can also supply a newline-deliminated file to `survey_all` which will 
+You can also supply a newline-deliminated file to `survey_all` which will
 dispatch survey jobs based on acession codes like so:
 
 Example:
@@ -347,32 +347,40 @@ A specific organism can also be specified:
 
 Downloader Jobs will be queued automatically when `Surveyor Jobs`
 discover new samples. However, if you just want to queue a `Downloader Job`
-without running the `Surveyor`, the following command will queue a
-`Downloader Job` which will download a sample from Array Express:
-
+yourself rather than having the Surveyor do it for you, you can use the `./workers/tester.sh`
+script:
 ```bash
-./workers/tester.sh queue_downloader
+./workers/tester.sh run_downloader_job --job-name=<EXTERNAL_SOURCE> --job-id=<JOB_ID>
 ```
 
 For example:
 ```bash
-./update_models.sh; ./workers/tester.sh run_downloader_job --job-name=ARRAY_EXPRESS --job-id=1
+./workers/tester.sh run_downloader_job --job-name=SRA --job-id=12345
+```
+
+Or for more information run:
+```bash
+./workers/tester.sh -h
 ```
 
 ### Processor Jobs
 
 Processor Jobs will be queued automatically by successful `Downloader Jobs`.
-However, if you just want to run a `Processor Job` without first running
-a `Downloader Job`, the following command will do so:
+However, if you just want to run a `Processor Job` without yourself without having
+a `Downloader Job` do it for you, the following command will do so:
 
 ```bash
-./workers/tester.sh queue_processor <PROCESSOR_TYPE>
+./workers/tester.sh -i <IMAGE_NAME> run_processor_job --job-name=<JOB_NAME> --job-id=<JOB_ID>
 ```
 
-An individual processor job can be run with:
+For example
 ```bash
-./workers/tester.sh queue_processor SRA
-./workers/tester.sh queue_processor TRANSCRIPTOME_INDEX
+./workers/tester.sh -i affymetrix run_processor_job --job-name=AFFY_TO_PCL --job-id=54321
+```
+
+Or for more information run:
+```bash
+./workers/tester.sh -h
 ```
 
 ### Checking on Local Jobs

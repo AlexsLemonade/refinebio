@@ -2,6 +2,65 @@
 
 # Script for running a django management command to test the worker.
 
+while getopts "hi:" opt; do
+    case $opt in
+        i)
+            image=$OPTARG
+            ;;
+        h)
+            echo "Runs a downloader or processor job. The following arguments are supported:"
+            echo "-h : Print this help message and exit."
+            echo "-i <IMAGE_NAME> : The image to use. Options are:"
+            echo "    downloaders (default)"
+            echo "    salmon"
+            echo "    transcriptome"
+            echo "    no_op"
+            echo "    downloaders"
+            echo "    illumina"
+            echo "    affymetrix"
+            echo "<MANAGEMENT COMMAND> : What kind of job to run."
+            echo "    Must be either 'run_downloader_job' or 'run_processor_job'."
+            echo "--job-name=<JOB_NAME> : The type of job to run."
+            echo "    For processor jobs, options are:"
+            echo "        AFFY_TO_PCL"
+            echo "        AGILENT_TWOCOLOR_TO_PCL"
+            echo "        SALMON"
+            echo "        ILLUMINA_TO_PCL"
+            echo "        TRANSCRIPTOME_INDEX_LONG"
+            echo "        TRANSCRIPTOME_INDEX_SHORT"
+            echo "        NO_OP"
+            echo "    For downloader jobs, options are:"
+            echo "        ARRAY_EXPRESS"
+            echo "        SRA"
+            echo "        TRANSCRIPTOME_INDEX"
+            echo "        GEO"
+            echo "--job-id=<JOB_ID> : The id of the job you want to run. Must already exist in the database."
+            echo ""
+            echo "Note that the <IMAGE_NAME> must correspond to the <JOB_NAME>."
+            echo "     AGILENT_TWOCOLOR_TO_PCL is a special case because it requires the 'affymetrix' image."
+            echo ""
+            echo "Examples:"
+            echo "    ./workers/tester.sh run_downloader_job --job-name=SRA --job-id=12345"
+            echo "    ./workers/tester.sh -i affymetrix run_processor_job --job-name=AGILENT_TWOCOLOR_TO_PCL --job-id=54321"
+            exit 0
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1
+            ;;
+    esac
+done
+
+if [[ -z $image ]]; then
+    image="downloaders"
+fi
+
+image_name="ccdl/dr_$image"
+
 # This script should always run as if it were being called from
 # the directory it lives in.
 script_directory=`perl -e 'use File::Basename;
@@ -13,8 +72,11 @@ cd $script_directory
 # move up a level
 cd ..
 
-
-docker build -t dr_downloaders -f workers/dockerfiles/Dockerfile.downloaders .
+if [[ $image == "affymetrix" ]]; then
+    ./prepare_image.sh -p -i $image
+else
+    ./prepare_image.sh -i $image
+fi
 
 volume_directory="$script_directory/volume"
 
@@ -30,4 +92,4 @@ docker run \
        --entrypoint ./manage.py \
        --volume $volume_directory:/home/user/data_store \
        --link drdb:postgres \
-       dr_downloaders "$@"
+       $image_name "${@: -3}" "${@: -2}" "${@: -1}"
