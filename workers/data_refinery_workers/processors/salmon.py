@@ -351,12 +351,9 @@ def _run_fastqc(job_context: Dict) -> Dict:
     logger.info("Running FastQC using the following shell command: %s",
                 formatted_command,
                 processor_job=job_context["job_id"])
-
-    start_time = timezone.now()
     completed_command = subprocess.run(formatted_command.split(),
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
-    end_time = timezone.now()
 
     # Java returns a 0 error code for runtime-related errors and FastQC puts progress
     # information in stderr rather than stdout, so handle both.
