@@ -30,12 +30,13 @@ def start_job(job_id: int) -> DownloaderJob:
     Retrieves the job from the database and returns it after marking
     it as started.
     """
-    logger.info("Starting Downloader Job.", downloader_job=job_id)
     try:
         job = DownloaderJob.objects.get(id=job_id)
     except DownloaderJob.DoesNotExist:
         logger.error("Cannot find downloader job record.", downloader_job=job_id)
         raise
+
+    logger.info("Starting Downloader Job to run: %s", job.downloader_task, downloader_job=job_id)
 
     job.worker_id = get_worker_id()
     job.worker_version = __version__
