@@ -8,6 +8,7 @@ from data_refinery_common.models import (
     SurveyJob,
     Organism,
     OriginalFile,
+    OriginalFileSampleAssociation,
     Experiment,
     ExperimentAnnotation,
     Sample,
@@ -16,6 +17,7 @@ from data_refinery_common.models import (
     OriginalFileSampleAssociation,
     ExperimentOrganismAssociation
 )
+from data_refinery_foreman.surveyor import utils, harmony
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -31,7 +33,7 @@ ENA_DOWNLOAD_URL_TEMPLATE = ("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/{short_accessio
 ENA_SUB_DIR_PREFIX = "/00"
 
 
-class UnsupportedDataTypeError(BaseException):
+class UnsupportedDataTypeError(Exception):
     pass
 
 
@@ -55,7 +57,7 @@ class SraSurveyor(ExternalSourceSurveyor):
     @staticmethod
     def gather_submission_metadata(metadata: Dict) -> None:
 
-        response = requests.get(ENA_METADATA_URL_TEMPLATE.format(metadata["submission_accession"]))
+        response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(metadata["submission_accession"]))
         submission_xml = ET.fromstring(response.text)[0]
         submission_metadata = submission_xml.attrib
 
@@ -84,7 +86,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         if metadata["library_strategy"] != "RNA-Seq":
             raise UnsupportedDataTypeError("library_strategy not RNA-Seq.")
         if metadata["library_source"] not in ["TRANSCRIPTOMIC", "OTHER"]:
-            raise UnsupportedDataTypeError("library_source not TRANSCRIPTOMIC or OTHER.")
+            raise UnsupportedDataTypeError("library_source: " + metadata["library_source"] + " not TRANSCRIPTOMIC or OTHER.")
 
     @staticmethod
     def parse_read_spec(metadata: Dict, read_spec: ET.Element, counter: int) -> None:
@@ -112,7 +114,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_experiment_metadata(metadata: Dict) -> None:
-        response = requests.get(ENA_METADATA_URL_TEMPLATE.format(metadata["experiment_accession"]))
+        response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(metadata["experiment_accession"]))
         experiment_xml = ET.fromstring(response.text)
 
         experiment = experiment_xml[0]
@@ -176,7 +178,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         """A run refers to a specific read in an experiment."""
 
         discoverable_accessions = ["study_accession", "sample_accession", "submission_accession"]
-        
+
         response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(run_accession))
         run_xml = ET.fromstring(response.text)
         run_item = run_xml[0]
@@ -205,7 +207,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_sample_metadata(metadata: Dict) -> None:
-        response = requests.get(ENA_METADATA_URL_TEMPLATE.format(metadata["sample_accession"]))
+        response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(metadata["sample_accession"]))
         sample_xml = ET.fromstring(response.text)
 
         sample = sample_xml[0]
@@ -229,7 +231,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_study_metadata(metadata: Dict) -> None:
-        response = requests.get(ENA_METADATA_URL_TEMPLATE.format(metadata["study_accession"]))
+        response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(metadata["study_accession"]))
         study_xml = ET.fromstring(response.text)
 
         study = study_xml[0]
@@ -264,11 +266,37 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         return metadata
 
+    @staticmethod
+    def _build_file_url(run_accession: str, read_suffix=""):
+        # ENA has a weird way of nesting data: if the run accession is
+        # greater than 9 characters long then there is an extra
+        # sub-directory in the path which is "00" + the last digit of
+        # the run accession.
+        sub_dir = ""
+        if len(run_accession) > 9:
+            sub_dir = ENA_SUB_DIR_PREFIX + run_accession[-1]
+
+        return ENA_DOWNLOAD_URL_TEMPLATE.format(
+                        short_accession=run_accession[:6],
+                        sub_dir=sub_dir,
+                        long_accession=run_accession,
+                        read_suffix=read_suffix)
+
+    def _generate_experiment_and_samples(self, run_accession: str) -> None:
+        """Generates Experiments and Samples for the provided run_accession."""
+        metadata = SraSurveyor.gather_all_metadata(run_accession)
+
+        if metadata["library_layout"] == "PAIRED":
+            files_urls = [SraSurveyor._build_file_url(run_accession, "_1"),
+                     SraSurveyor._build_file_url(run_accession, "_2")]
+        else:
+            files_urls = [SraSurveyor._build_file_url(run_accession)]
+
         ##
         # Experiment
         ##
-        
-        experiment_accession_code = metadata.get('experiment_accession')
+
+        experiment_accession_code = metadata.get('study_accession')
         try:
             experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
             logger.error("Experiment already exists, skipping object creation.",
@@ -300,9 +328,9 @@ class SraSurveyor(ExternalSourceSurveyor):
                 experiment_object.pubmed_id = metadata["pubmed_id"]
                 experiment_object.has_publication = True
             if "study_ena_first_public" in metadata:
-                experiment.source_first_published = parse_datetime(metadata["study_ena_first_public"])
+                experiment_object.source_first_published = parse_datetime(metadata["study_ena_first_public"])
             if "study_ena_last_update" in metadata:
-                experiment.source_last_modified = parse_datetime(metadata["study_ena_last_update"])
+                experiment_object.source_last_modified = parse_datetime(metadata["study_ena_last_update"])
 
             # Rare, but it happens.
             if not experiment_object.protocol_description:
@@ -339,6 +367,13 @@ class SraSurveyor(ExternalSourceSurveyor):
             sample_object = Sample()
             sample_object.accession_code = sample_accession_code
             sample_object.organism = organism
+
+            # Directly apply the harmonized values
+            sample_object.title = harmony.extract_title(metadata)
+            harmonized_sample = harmony.harmonize([metadata])
+            for key, value in harmonized_sample.items():
+                setattr(sample_object, key, value)
+
             sample_object.save()
 
             for file_url in files_urls:
@@ -351,7 +386,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
                 original_file_sample_association = OriginalFileSampleAssociation()
                 original_file_sample_association.original_file = original_file
-                original_file_sample_association.sample = sample
+                original_file_sample_association.sample = sample_object
                 original_file_sample_association.save()
 
         # Create associations if they don't already exist
@@ -370,11 +405,6 @@ class SraSurveyor(ExternalSourceSurveyor):
             association.experiment = experiment_object
             association.organism = organism
             association.save()
-
-        ##
-        # Samples K/V
-        # TODO - What do we want to save here?
-        ##
 
         return experiment_object, [sample_object]
 

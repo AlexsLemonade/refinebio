@@ -2,7 +2,7 @@ import hashlib
 import os
 import shutil
 from contextlib import closing
-from django.test import TestCase
+from django.test import TestCase, tag
 from unittest.mock import MagicMock
 from data_refinery_common.models import (
     SurveyJob,
@@ -17,7 +17,6 @@ from data_refinery_common.models import (
     OriginalFileSampleAssociation
 )
 from data_refinery_workers.processors import salmon, utils
-import pandas as pd
 
 def prepare_job():
     pj = ProcessorJob()
@@ -90,10 +89,19 @@ def identical_checksum(file1, file2):
 
 class SalmonTestCase(TestCase):
 
+    @tag('salmon')
     def test_salmon(self):
         """ """
+        # Ensure any computed files from previous tests are removed.
+        try:
+            os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
+        except FileNotFoundError:
+            pass
+
         job = prepare_job()
         salmon.salmon(job.pk)
+        job = ProcessorJob.objects.get(id=job.pk)
+        self.assertTrue(job.success)
 
 
 class SalmonToolsTestCase(TestCase):
@@ -102,6 +110,7 @@ class SalmonToolsTestCase(TestCase):
     def setUp(self):
         self.test_dir = '/home/user/data_store/salmontools/'
 
+    @tag('salmon')
     def test_double_reads(self):
         job_context = {
             'job_id': 123,
@@ -124,6 +133,7 @@ class SalmonToolsTestCase(TestCase):
         expected_output_file2 = self.test_dir + 'expected_double_output/unmapped_by_salmon_2.fa'
         self.assertTrue(identical_checksum(output_file2, expected_output_file2))
 
+    @tag('salmon')
     def test_single_read(self):
         job_context = {
             'job_id': 456,

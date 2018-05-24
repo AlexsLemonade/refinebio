@@ -49,6 +49,32 @@ if [[ -z $env ]]; then
     env="dev"
 fi
 
+# Default docker images.
+# These should work for local and test environments, but we want to
+# let these be set outside the script so only set them if they aren't
+# already set.
+if [[ -z $FOREMAN_DOCKER_IMAGE ]]; then
+    export FOREMAN_DOCKER_IMAGE=localhost:5000/ccdl/dr_foreman
+fi
+if [[ -z $DOWNLOADERS_DOCKER_IMAGE ]]; then
+    export DOWNLOADERS_DOCKER_IMAGE=localhost:5000/ccdl/dr_downloaders
+fi
+if [[ -z $TRANSCRIPTOME_DOCKER_IMAGE ]]; then
+    export TRANSCRIPTOME_DOCKER_IMAGE=localhost:5000/ccdl/dr_transcriptome
+fi
+if [[ -z $SALMON_DOCKER_IMAGE ]]; then
+    export SALMON_DOCKER_IMAGE=localhost:5000/ccdl/dr_salmon
+fi
+if [[ -z $AFFYMETRIX_DOCKER_IMAGE ]]; then
+    export AFFYMETRIX_DOCKER_IMAGE=ccdl/dr_affymetrix
+fi
+if [[ -z $ILLUMINA_DOCKER_IMAGE ]]; then
+    export ILLUMINA_DOCKER_IMAGE=ccdl/dr_illumina
+fi
+if [[ -z $NO_OP_DOCKER_IMAGE ]]; then
+    export NO_OP_DOCKER_IMAGE=localhost:5000/ccdl/dr_no_op
+fi
+
 # This script should always run from the context of the directory of
 # the project it is building.
 script_directory=`perl -e 'use File::Basename;
@@ -88,21 +114,15 @@ if [ $env != "prod" ]; then
 "
     export AWS_CREDS=""
     export LOGGING_CONFIG=""
+    environment_file="environments/$env"
 else
     export EXTRA_HOSTS=""
     export AWS_CREDS="
         AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
         AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
-    export LOGGING_CONFIG="
-        logging {
-          type = \"awslogs\"
-          config {
-            awslogs-region = \"$REGION\",
-            awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
-            awslogs-stream = \"log-stream-nomad-docker-downloader-$USER-$STAGE\"
-          }
-        }
-"
+    # When deploying prod we write the output of Terraform to a
+    # temporary environment file.
+    environment_file="$script_directory/infrastructure/prod_env"
 fi
 
 # Read all environment variables from the file for the appropriate
@@ -113,7 +133,7 @@ while read line; do
     if [[ -n $line ]] && [[ -z $is_comment ]]; then
         export $line
     fi
-done < "environments/$env"
+done < $environment_file
 
 # There is a current outstanding Nomad issue for the ability to
 # template environment variables into the job specifications. Until
@@ -121,19 +141,23 @@ done < "environments/$env"
 # issue can be found here:
 # https://github.com/hashicorp/nomad/issues/1185
 
-if [[ ! -z $output_dir && ! -d "$output_dir" ]]; then
+# If output_dir wasn't specified then assume the same folder we're
+# getting the templates from.
+if [[ -z $output_dir ]]; then
+    output_dir=nomad-job-specs
+elif [[ ! -d "$output_dir" ]]; then
     mkdir $output_dir
 fi
 
 export_log_conf (){
-    if [[ $env == 'prod' ]]; then    
+    if [[ $env == 'prod' ]]; then
         export LOGGING_CONFIG="
         logging {
           type = \"awslogs\"
           config {
-            awslogs-region = \"$region\",
-            awslogs-group = \"data-refinery-log-group-$user-$stage\",
-            awslogs-stream = \"log-stream-$1-docker-$user-$stage\"
+            awslogs-region = \"$REGION\",
+            awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
+            awslogs-stream = \"log-stream-$1-docker-$USER-$STAGE\"
           }
         }"
     else
@@ -144,26 +168,33 @@ export_log_conf (){
 # This actually performs the templating using Perl's regex engine.
 # Perl magic found here: https://stackoverflow.com/a/2916159/6095378
 if [[ $project == "workers" ]]; then
-    export_log_conf "downloader"
-    cat downloader.nomad.tpl \
-        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"downloader.nomad"$TEST_POSTFIX" \
-               2> /dev/null
-    export_log_conf "processor"
-    cat processor.nomad.tpl \
-        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"processor.nomad"$TEST_POSTFIX" \
-               2> /dev/null
+    # Iterate over all the template files in the directory.
+    for template in $(ls -1 nomad-job-specs | grep \.tpl); do
+        # Strip off the trailing .tpl for once we've formatted it.
+        output_file=${template/.tpl/}
+
+        # Downloader logs go to a separate log stream.
+        if [ $output_file == "downloader.nomad" ]; then
+            export_log_conf "downloader"
+        else
+            export_log_conf "processor"
+        fi
+
+        cat nomad-job-specs/$template \
+            | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                   > "$output_dir/$output_file$TEST_POSTFIX" \
+                   2> /dev/null
+    done
 elif [[ $project == "foreman" ]]; then
     export_log_conf "surveyor"
-    cat surveyor.nomad.tpl \
+    cat nomad-job-specs/surveyor.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"surveyor.nomad"$TEST_POSTFIX" \
+               > "$output_dir"/surveyor.nomad"$TEST_POSTFIX" \
                2> /dev/null
 elif [[ $project == "api" ]]; then
     export_log_conf "api"
     cat environment.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"environment"$TEST_POSTFIX" \
+               > "$output_dir"/environment"$TEST_POSTFIX" \
                2> /dev/null
 fi

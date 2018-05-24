@@ -9,9 +9,6 @@ import warnings
 from django.utils import timezone
 from typing import Dict
 
-import rpy2.robjects as ro
-from rpy2.rinterface import RRuntimeError
-
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     OriginalFile, 
@@ -38,8 +35,13 @@ def _prepare_files(job_context: Dict) -> Dict:
     # Turns /home/user/data_store/E-GEOD-8607/raw/foo.txt into /home/user/data_store/E-GEOD-8607/processed/foo.cel
     pre_part = original_file.absolute_file_path.split('/')[:-2] # Cut off '/raw'
     end_part = original_file.absolute_file_path.split('/')[-1] # Get the filename
-    job_context["output_file_path"] = '/'.join(pre_part) + '/processed/' + end_part
-    job_context["output_file_path"] = job_context["output_file_path"].replace('.txt', '.PCL')
+    output_directory = '/'.join(pre_part) + '/processed/'
+    os.makedirs(output_directory, exist_ok=True)
+
+    job_context["output_file_path"] = output_directory + end_part.replace('.txt', '.PCL')
+    job_context["input_directory"] = '/'.join(pre_part) + '/'
+    job_context["qc_directory"] = '/'.join(pre_part) + '/qc/'
+    os.makedirs(job_context["qc_directory"], exist_ok=True)
 
     # Sanitize this file so R doesn't choke.
     # Some have comments, some have non-comment-comments.
@@ -201,6 +203,39 @@ def _run_illumina(job_context: Dict) -> Dict:
 
     return job_context
 
+def _run_multiqc(job_context: Dict) -> Dict:
+    """ Runs the `MultiQC` package to generate the QC report.
+
+    """
+    command_str = ("multiqc {input_directory} --outdir {qc_directory}")
+    formatted_command = command_str.format(input_directory=job_context["input_directory"], 
+                qc_directory=job_context["qc_directory"])
+
+    logger.info("Running MultiQC using the following shell command: %s",
+                formatted_command,
+                processor_job=job_context["job_id"])
+
+    # Needed for MultiQC
+    qc_env = os.environ.copy()
+    qc_env["LC_ALL"] = "C.UTF-8"
+    qc_env["LANG"] = "C.UTF-8"
+    completed_command = subprocess.run(formatted_command.split(),
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE,
+                                       env=qc_env)
+
+    if completed_command.returncode != 0:
+        stderr = str(completed_command.stderr)
+        logger.error("Shell call to MultiQC failed with error message: %s",
+                     stderr,
+                     processor_job=job_context["job_id"])
+
+        # The failure_reason column is only 256 characters wide.
+        job_context["job"].failure_reason = stderr[0:255]
+        job_context["success"] = False
+
+    return job_context
+
 def _create_result_objects(job_context: Dict) -> Dict:
     """ Create the ComputationalResult objects after a Scan run is complete """
 
@@ -257,5 +292,6 @@ def illumina_to_pcl(job_id: int) -> None:
                         _prepare_files,
                         _detect_columns,
                         _run_illumina,
+                        _run_multiqc,
                         _create_result_objects,
                         utils.end_job])

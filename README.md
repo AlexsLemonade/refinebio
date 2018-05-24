@@ -297,17 +297,17 @@ The [Sequence Read Archive](https://www.ncbi.nlm.nih.gov/sra) Surveyor expects a
 range of SRA accession codes:
 
 ```bash
-./foreman/run_surveyor.sh survey_sra <ACCESSION>
+./foreman/run_surveyor.sh survey_sra --accession <ACCESSION>
 ```
 
 Example (single read):
 ```bash
-./foreman/run_surveyor.sh survey_sra DRR002116
+./foreman/run_surveyor.sh survey_sra --accession DRR002116
 ```
 
 Example (paired read):
 ```bash
-./foreman/run_surveyor.sh survey_sra SRR6718414
+./foreman/run_surveyor.sh survey_sra --accession SRR6718414
 ```
 
 #### Gene Expression Omnibus (GEO)
@@ -525,7 +525,7 @@ your instance type, use the [spot request
 page](https://console.aws.amazon.com/ec2sp/v1/spot/home?region=us-east-1) and
 then click on the **view pricing history** chart. Choose your instance type and
 then choose a bid price that is slightly higher than the current price for your
-availability zone (AZ).
+availability zone (AZ). [This graph](https://cdn-images-1.medium.com/max/1600/0*gk64fOrhSFBoFGXK.) is useful for understanding instance types.
 
 Then set your `TF_VAR_client_instance_type`, `TF_VAR_spot_price` and
 `TF_VAR_max_clients` to configure your scaling instance types, cost and size.

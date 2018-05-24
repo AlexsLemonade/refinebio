@@ -12,8 +12,11 @@ from data_refinery_foreman.surveyor.test_sra_xml import (
     SUBMISSION_XML
 )
 from data_refinery_common.models import (
+    DownloaderJob,
     SurveyJob,
-    SurveyJobKeyValue
+    SurveyJobKeyValue,
+    Organism,
+    Sample
 )
 
 EXPERIMENT_ACCESSION = "DRX001563"
@@ -42,6 +45,28 @@ def mocked_requests_get(url, timeout=1):
 
 
 class SraSurveyorTestCase(TestCase):
+    def setUp(self):
+        survey_job = SurveyJob(source_type="SRA")
+        survey_job.save()
+        self.survey_job = survey_job
+
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                           key="accession",
+                                           value="DRR002116")
+        key_value_pair.save()
+
+        # Insert the organism into the database so the model doesn't call the
+        # taxonomy API to populate it.
+        organism = Organism(name="HOMO_SAPIENS",
+                            taxonomy_id=9606,
+                            is_scientific_name=True)
+        organism.save()
+
+    def tearDown(self):
+        DownloaderJob.objects.all().delete()
+        SurveyJobKeyValue.objects.all().delete()
+        SurveyJob.objects.all().delete()
+
     def test_get_next_accession(self):
         self.assertEqual(SraSurveyor.get_next_accession("DRR123456"), "DRR123457")
         self.assertEqual(SraSurveyor.get_next_accession("DRR1234567"), "DRR1234568")

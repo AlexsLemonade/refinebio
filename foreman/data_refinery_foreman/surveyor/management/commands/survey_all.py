@@ -43,7 +43,7 @@ Note: One entry per line, GSE* entries survey GEO, E-GEO-* entries survey ArrayE
                 s3 = boto3.resource('s3')
                 try:
                     filepath = "/tmp/input_" + str(uuid.uuid4()) + ".txt"
-                    s3.Bucket(bucket).download_file(key, "/tmp/input_" + str(uuid.uuid4()) + ".txt")
+                    s3.Bucket(bucket).download_file(key, filepath)
                 except botocore.exceptions.ClientError as e:
                     if e.response['Error']['Code'] == "404":
                         logger.error("The remote file does not exist.")
@@ -63,6 +63,8 @@ Note: One entry per line, GSE* entries survey GEO, E-GEO-* entries survey ArrayE
                             surveyor.survey_geo_experiment(accession)
                         elif 'E-' in accession[:2]:
                             surveyor.survey_ae_experiment(accession)
+                        elif " " in accession:
+                            surveyor.survey_transcriptome_index(accession)
                         else:
                             surveyor.survey_sra_experiment(accession)
                     except Exception as e:

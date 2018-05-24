@@ -1,8 +1,7 @@
 # This is a Nomad Configuration file for server instances.
 # I.e. the instances that assign Nomad jobs to run on client instances.
 
-# Increase log verbosity for now.
-log_level = "DEBUG"
+log_level = "INFO"
 
 # Setup data dir
 data_dir = "/tmp/nomad_server1"

@@ -11,7 +11,7 @@ class PipelineEnums(Enum):
 
 
 class ProcessorPipeline(PipelineEnums):
-    """Pipelines which perform some kind of processing on the data."""
+    """An enumeration of supported processors"""
     AFFY_TO_PCL = "AFFY_TO_PCL"
     AGILENT_TWOCOLOR_TO_PCL = "AGILENT_TWOCOLOR_TO_PCL"
     SALMON = "SALMON"

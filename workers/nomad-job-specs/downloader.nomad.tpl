@@ -1,14 +1,11 @@
-# This job name is temporary. Once resource requirements for various
-# jobs have been properly estimated there should be different job
-# specifications for each processor type.
-job "PROCESSOR" {
+job "DOWNLOADER" {
   datacenters = ["dc1"]
 
   type = "batch"
 
   parameterized {
     payload       = "forbidden"
-    meta_required = [ "JOB_NAME", "JOB_ID"]
+    meta_required = ["JOB_NAME", "JOB_ID"]
   }
 
   group "jobs" {
@@ -18,7 +15,7 @@ job "PROCESSOR" {
       # delay    = "30s"
     }
 
-    task "processor" {
+    task "downloader" {
       driver = "docker"
 
       # This env will be passed into the container for the job.
@@ -34,6 +31,9 @@ job "PROCESSOR" {
         DATABASE_PORT = "${{DATABASE_PORT}}"
         DATABASE_TIMEOUT = "${{DATABASE_TIMEOUT}}"
 
+        NOMAD_HOST = "${{NOMAD_HOST}}"
+        NOMAD_PORT = "${{NOMAD_PORT}}"
+
         RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
 
         USE_S3 = "${{USE_S3}}"
@@ -43,28 +43,25 @@ job "PROCESSOR" {
         RAW_PREFIX = "${{RAW_PREFIX}}"
         TEMP_PREFIX = "${{RAW_PREFIX}}"
         PROCESSED_PREFIX = "${{PROCESSED_PREFIX}}"
-
-        NOMAD_HOST = "${{NOMAD_HOST}}"
-        NOMAD_PORT = "${{NOMAD_PORT}}"
       }
 
       # The resources the job will require.
       resources {
         # CPU is in AWS's CPU units.
-        cpu = 1024
+        cpu = 256
         # Memory is in MB of RAM.
-        memory = 4048
+        memory = 1024
       }
 
       config {
-        image = "${{WORKERS_DOCKER_IMAGE}}"
+        image = "${{DOWNLOADERS_DOCKER_IMAGE}}"
         force_pull = false
 
         # The args to pass to the Docker container's entrypoint.
         args = [
           "python3",
           "manage.py",
-          "run_processor_job",
+          "run_downloader_job",
           "--job-name", "${NOMAD_META_JOB_NAME}",
           "--job-id", "${NOMAD_META_JOB_ID}"
         ]

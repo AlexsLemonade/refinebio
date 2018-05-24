@@ -9,8 +9,8 @@ cd $script_directory
 
 # CircleCI Docker won't make this by default for some reason
 VOLUMES=$script_directory/volumes_postgres
-if [ ! -d $script_directory/$VOLUMES ]; then
-  mkdir $script_directory/$VOLUMES
+if [ ! -d $VOLUMES ]; then
+  mkdir $VOLUMES
 fi
 
 

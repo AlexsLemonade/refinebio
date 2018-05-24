@@ -1,4 +1,4 @@
-job "DOWNLOADER" {
+job "NO_OP" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -15,7 +15,7 @@ job "DOWNLOADER" {
       # delay    = "30s"
     }
 
-    task "downloader" {
+    task "no_op" {
       driver = "docker"
 
       # This env will be passed into the container for the job.
@@ -54,14 +54,14 @@ job "DOWNLOADER" {
       }
 
       config {
-        image = "${{WORKERS_DOCKER_IMAGE}}"
+        image = "${{NO_OP_DOCKER_IMAGE}}"
         force_pull = false
 
         # The args to pass to the Docker container's entrypoint.
         args = [
           "python3",
           "manage.py",
-          "run_downloader_job",
+          "run_processor_job",
           "--job-name", "${NOMAD_META_JOB_NAME}",
           "--job-id", "${NOMAD_META_JOB_ID}"
         ]
