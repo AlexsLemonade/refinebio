@@ -83,7 +83,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                             parsed_json["arraydesign"][0]["accession"],
                             experiment_accession_code=experiment_accession_code,
                             survey_job=self.survey_job.id)
-                
+
                 # XXX: This is disabled until we can re-do the supported platforms
                 # to support Illumina and Agilent 2C
                 # platform_warning = True
@@ -113,9 +113,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment_object.source_database = "ARRAY_EXPRESS"
             experiment_object.name = parsed_json["name"]
             experiment_object.description = parsed_json["description"][0]["text"]
-            experiment_object.platform_name = experiment["platform_accession_name"]
-            experiment_object.platform_accession_code = experiment["platform_accession_code"]
-            experiment_object.technology = "MICROARRAY"
             experiment_object.source_first_published = parse_datetime(experiment["release_date"])
             experiment_object.source_last_modified = parse_datetime(experiment["last_update_date"])
             experiment_object.save()
@@ -388,6 +385,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 sample_object.accession_code = sample_accession_code
                 sample_object.source_archive_url = samples_endpoint
                 sample_object.organism = organism
+                sample_object.platform_name = experiment["platform_accession_name"]
+                sample_object.platform_accession_code = experiment["platform_accession_code"]
+                sample_object.technology = "MICROARRAY"
                 sample_object.save()
 
                 # This creates key values for a given sample.
