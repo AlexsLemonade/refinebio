@@ -431,7 +431,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         accession = survey_job_properties["accession"]
 
         # SRA Surveyor is mainly designed for SRRs, this handles SRPs
-        if 'SRP' in accession or 'ERP' in accession:
+        if 'SRP' in accession or 'ERP' in accession or 'DRP' in accession:
             response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(accession))
             experiment_xml = ET.fromstring(response.text)[0]
             study_links = experiment_xml[2] # STUDY_LINKS
