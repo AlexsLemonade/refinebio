@@ -50,7 +50,7 @@ if [[ -z $tag || $tag == "salmon" ]]; then
 
     # Make sure test Transcriptome Index is downloaded from S3 for salmon tests.
     index_dir="$volume_directory/processed/TEST/TRANSCRIPTOME_INDEX"
-    index_tarball="Homo_sapiens_short.tar.gz"
+    index_tarball="Caenorhabditis_elegans_short_1527089586.tar.gz"
     gz_index_path="$index_dir/$index_tarball"
     if [ ! -e "$gz_index_path" ]; then
         mkdir -p $index_dir
@@ -61,16 +61,16 @@ if [[ -z $tag || $tag == "salmon" ]]; then
 
     # Make sure data for Salmon test is downloaded from S3.
     rna_seq_test_raw_dir="$volume_directory/raw/TEST/SALMON"
-    read_1_name="ERR003000_1.fastq.gz"
-    read_2_name="ERR003000_2.fastq.gz"
+    read_1_name="ERR1562482_1.fastq.gz"
+    read_2_name="ERR1562482_2.fastq.gz"
     rna_seq_test_data_1="$rna_seq_test_raw_dir/$read_1_name"
     rna_seq_test_data_2="$rna_seq_test_raw_dir/$read_2_name"
     if [ ! -e "$rna_seq_test_data_1" ]; then
         mkdir -p $rna_seq_test_raw_dir
-        echo "Downloading ERR003000_1.fastq.gz for Salmon tests."
+        echo "Downloading $read_1_name for Salmon tests."
         wget -q -O $rna_seq_test_data_1 \
              "$test_data_repo/$read_1_name"
-        echo "Downloading ERR003000_2.fastq.gz for Salmon tests."
+        echo "Downloading $read_2_name for Salmon tests."
         wget -q -O $rna_seq_test_data_2 \
              "$test_data_repo/$read_2_name"
     fi
