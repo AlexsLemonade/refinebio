@@ -63,6 +63,8 @@ Note: One entry per line, GSE* entries survey GEO, E-GEO-* entries survey ArrayE
                             surveyor.survey_geo_experiment(accession)
                         elif 'E-' in accession[:2]:
                             surveyor.survey_ae_experiment(accession)
+                        elif " " in accession:
+                            surveyor.survey_transcriptome_index(accession)
                         else:
                             surveyor.survey_sra_experiment(accession)
                     except Exception as e:
