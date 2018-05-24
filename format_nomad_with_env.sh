@@ -167,19 +167,6 @@ export_log_conf (){
 
 # This actually performs the templating using Perl's regex engine.
 # Perl magic found here: https://stackoverflow.com/a/2916159/6095378
-export_log_conf (){
-    export LOGGING_CONFIG="
-        logging {
-          type = \"awslogs\"
-          config {
-            awslogs-region = \"$REGION\",
-            awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
-            awslogs-stream = \"log-stream-$1-docker-$USER-$STAGE\"
-          }
-        }
-"
-}
-
 if [[ $project == "workers" ]]; then
     # Iterate over all the template files in the directory.
     for template in $(ls -1 nomad-job-specs | grep \.tpl); do
