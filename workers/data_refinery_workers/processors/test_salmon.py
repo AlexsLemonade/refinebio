@@ -81,10 +81,10 @@ def prepare_job():
     return pj
 
 
-def identical_checksum(file1, file2):
+def identical_checksum(filename1, filename2):
     """Confirm that the two files have identical checksum."""
-    checksum_1 = hashlib.md5(open(file1, 'rb').read()).hexdigest()
-    checksum_2 = hashlib.md5(open(file2, 'rb').read()).hexdigest()
+    checksum_1 = hashlib.md5(open(filename1, 'rb').read()).hexdigest()
+    checksum_2 = hashlib.md5(open(filename2, 'rb').read()).hexdigest()
     return checksum_1 == checksum_2
 
 
@@ -140,3 +140,18 @@ class SalmonToolsTestCase(TestCase):
         output_file = self.test_dir + 'single_output/unmapped_by_salmon.fa'
         expected_output_file = self.test_dir + 'expected_single_output/unmapped_by_salmon.fa'
         self.assertTrue(identical_checksum(output_file, expected_output_file))
+
+
+class TximportTestCase(TestCase):
+    """Test salmon._tximport function, which launches tximport.R script."""
+
+    def test_tximport_experiment(self):
+        experiment_dir = '/home/user/data_store/tximport_test/PRJNA408323/'
+        genes_to_transcripts_path = '/home/user/data_store/tximport_test/np_gene2txmap.txt'
+        salmon._tximport(experiment_dir, genes_to_transcripts_path)
+
+        expected_output_dir = '/home/user/data_store/tximport_test/expected_output/'
+        for filename in ['txi_out.RDS', 'gene_lengthScaledTPM.tsv.gz']:
+            output_path = experiment_dir + filename
+            expected_output = expected_output_dir + filename
+            self.assertTrue(identical_checksum(output_path, expected_output))
