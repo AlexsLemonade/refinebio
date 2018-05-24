@@ -145,6 +145,7 @@ class SalmonToolsTestCase(TestCase):
 
     @tag('salmon')
     def test_double_reads(self):
+
         job_context = {
             'job_id': 123,
             'input_file_path': self.test_dir + 'double_input/reads_1.fastq',
@@ -152,7 +153,13 @@ class SalmonToolsTestCase(TestCase):
             'output_directory': self.test_dir + 'double_output/'
         }
         job_context["job"] = ProcessorJob()
-        job_context = salmon._prepare_files(job_context)
+
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        samp = Sample()
+        samp.organism = homo_sapiens
+        samp.save()
+        job_context["sample"] = sample
+
         salmon._run_salmontools(job_context, False)
 
         # Confirm job status
@@ -175,7 +182,13 @@ class SalmonToolsTestCase(TestCase):
             'output_directory': self.test_dir + 'single_output/'
         }
         job_context["job"] = ProcessorJob()
-        job_context = salmon._prepare_files(job_context)
+        
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        samp = Sample()
+        samp.organism = homo_sapiens
+        samp.save()
+        job_context["sample"] = sample
+
         salmon._run_salmontools(job_context, False)
 
         # Confirm job status
