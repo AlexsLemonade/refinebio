@@ -370,7 +370,7 @@ def download_geo(job_id: int) -> None:
             utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="AGILENT_TWOCOLOR_TO_PCL")
         elif ('ILLUMINA' in channel1_protocol) and (not data_processing):
             utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="ILLUMINA_TO_PCL")
-        elif ('AFFYMETRIX' in channel1_protocol) or (".CEL" in unpacked_sample_files[0].filename):
+        elif ('AFFYMETRIX' in channel1_protocol) or (".CEL" in unpacked_sample_files[0].filename.upper()):
             utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="AFFY_TO_PCL")
         else:
             # This should probably never happen, but if it does, we don't want to process it.
