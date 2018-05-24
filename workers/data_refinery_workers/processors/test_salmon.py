@@ -155,9 +155,9 @@ class SalmonToolsTestCase(TestCase):
         job_context["job"] = ProcessorJob()
 
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
-        samp = Sample()
-        samp.organism = homo_sapiens
-        samp.save()
+        sample = Sample()
+        sample.organism = homo_sapiens
+        sample.save()
         job_context["sample"] = sample
 
         salmon._run_salmontools(job_context, False)
@@ -184,9 +184,9 @@ class SalmonToolsTestCase(TestCase):
         job_context["job"] = ProcessorJob()
         
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
-        samp = Sample()
-        samp.organism = homo_sapiens
-        samp.save()
+        sample = Sample()
+        sample.organism = homo_sapiens
+        sample.save()
         job_context["sample"] = sample
 
         salmon._run_salmontools(job_context, False)
