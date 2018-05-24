@@ -23,7 +23,7 @@ def prepare_job():
     pj.pipeline_applied = "SALMON"
     pj.save()
 
-    homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+    homo_sapiens = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
 
     samp = Sample()
     samp.organism = homo_sapiens
@@ -39,22 +39,22 @@ def prepare_job():
     organism_index.save()
 
     comp_file = ComputedFile()
-    comp_file.absolute_file_path = "/home/user/data_store/processed/TEST/TRANSCRIPTOME_INDEX/Homo_sapiens_short.tar.gz"
+    comp_file.absolute_file_path = "/home/user/data_store/processed/TEST/TRANSCRIPTOME_INDEX/Caenorhabditis_elegans_short_1527089586.tar.gz"
     comp_file.result = computational_result
     comp_file.calculate_size()
     comp_file.calculate_sha1()
     comp_file.save()
 
     og_file = OriginalFile()
-    og_file.source_filename = "ERR003000_1.fastq.gz"
-    og_file.filename = "ERR003000_1.fastq.gz"
-    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR003000_1.fastq.gz"
+    og_file.source_filename = "ERR1562482_1.fastq.gz"
+    og_file.filename = "ERR1562482_1.fastq.gz"
+    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR1562482_1.fastq.gz"
     og_file.save()
 
     og_file2 = OriginalFile()
-    og_file2.source_filename = "ERR003000_2.fastq.gz"
-    og_file2.filename = "ERR003000_2.fastq.gz"
-    og_file2.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR003000_2.fastq.gz"
+    og_file2.source_filename = "ERR1562482_2.fastq.gz"
+    og_file2.filename = "ERR1562482_2.fastq.gz"
+    og_file2.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR1562482_2.fastq.gz"
     og_file2.save()
 
     og_file_samp_assoc = OriginalFileSampleAssociation()
