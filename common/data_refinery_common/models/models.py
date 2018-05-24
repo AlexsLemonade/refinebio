@@ -48,6 +48,9 @@ class Sample(models.Model):
 
     # Scientific Properties
     has_raw = models.BooleanField(default=True) # Did this sample have a raw data source?
+    platform_accession_code = models.CharField(max_length=256, blank=True)
+    platform_name = models.CharField(max_length=256, blank=True)
+    technology = models.CharField(max_length=256, blank=True)
 
     # Crunch Properties
     is_downloaded = models.BooleanField(default=False)
@@ -120,9 +123,6 @@ class Experiment(models.Model):
     title = models.TextField()
     description = models.TextField()
     protocol_description = models.TextField(default="")
-    platform_accession_code = models.CharField(max_length=256, blank=True)
-    platform_name = models.CharField(max_length=256, blank=True)
-    technology = models.CharField(max_length=256, blank=True)
     submitter_institution = models.CharField(max_length=256, blank=True)
     has_publication = models.BooleanField(default=False)
     publication_title = models.TextField(default="")
