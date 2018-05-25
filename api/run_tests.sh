@@ -24,4 +24,4 @@ docker run \
        --add-host=nomad:$HOST_IP \
        --env-file api/environments/test \
        --link drdb:postgres \
-       -it ccdl/dr_api bash -c "$(run_tests_with_coverage $@)"
+       -it ccdl/dr_api_local bash -c "$(run_tests_with_coverage $@)"
