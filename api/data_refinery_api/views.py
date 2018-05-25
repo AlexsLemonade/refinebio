@@ -12,20 +12,19 @@ from rest_framework.settings import api_settings
 from rest_framework import status, filters, generics
 
 from data_refinery_common.models import (
-    Experiment, 
-    Sample, 
-    Organism, 
+    Experiment,
+    Sample,
+    Organism,
     ComputationalResult,
     DownloaderJob,
     SurveyJob,
     ProcessorJob,
     Dataset
 )
-from data_refinery_common.models import Experiment, Sample, Organism, Dataset
 from data_refinery_api.serializers import ( 
     ExperimentSerializer, 
     DetailedExperimentSerializer,
-    SampleSerializer, 
+    SampleSerializer,
     DetailedSampleSerializer,
     OrganismSerializer,
     PlatformSerializer,
@@ -184,6 +183,8 @@ class SampleList(PaginatedAPIView):
     """
     List all Samples.
 
+    Pass in a list of pk to an ids query parameter to filter by id.
+
     Append the pk to the end of this URL to see a detail view.
 
     """
@@ -192,6 +193,12 @@ class SampleList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         filter_dict.pop('limit', None)
         filter_dict.pop('offset', None)
+        ids = filter_dict.pop('ids', None)
+
+        if ids is not None:
+            ids = [ int(x) for x in ids.split(',')]
+            filter_dict['pk__in'] = ids
+
         samples = Sample.objects.filter(**filter_dict)
 
         page = self.paginate_queryset(samples)
@@ -250,9 +257,9 @@ class ResultsList(PaginatedAPIView):
 
 class OrganismList(APIView):
     """
-    Unpaginated list of all the available organisms
-    """
-     
+	Unpaginated list of all the available organisms
+	"""
+
     def get(self, request, format=None):
         organisms = Organism.objects.all()
         serializer = OrganismSerializer(organisms, many=True)
@@ -260,9 +267,9 @@ class OrganismList(APIView):
 
 class PlatformList(APIView):
     """
-    Unpaginated list of all the available "platform" information
-    """
-     
+	Unpaginated list of all the available "platform" information
+	"""
+
     def get(self, request, format=None):
         experiments = Experiment.objects.all().values("platform_accession_code", "platform_name").distinct()
         serializer = PlatformSerializer(experiments, many=True)
@@ -270,9 +277,9 @@ class PlatformList(APIView):
 
 class InstitutionList(APIView):
     """
-    Unpaginated list of all the available "institution" information
-    """
-     
+	Unpaginated list of all the available "institution" information
+	"""
+
     def get(self, request, format=None):
         experiments = Experiment.objects.all().values("submitter_institution").distinct()
         serializer = InstitutionSerializer(experiments, many=True)
@@ -286,10 +293,10 @@ class SurveyJobList(PaginatedAPIView):
     """
     List of all SurveyJob.
 
-    Ex: 
-      - ?start_time__lte=2018-03-23T15:29:40.848381Z
-      - ?start_time__lte=2018-03-23T15:29:40.848381Z&start_time__gte=2018-03-23T14:29:40.848381Z
-      - ?success=True
+	Ex:
+	  - ?start_time__lte=2018-03-23T15:29:40.848381Z
+	  - ?start_time__lte=2018-03-23T15:29:40.848381Z&start_time__gte=2018-03-23T14:29:40.848381Z
+	  - ?success=True
 
     """
 

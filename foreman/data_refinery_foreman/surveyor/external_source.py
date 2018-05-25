@@ -22,7 +22,7 @@ from data_refinery_common.logging import get_and_configure_logger
 logger = get_and_configure_logger(__name__)
 
 
-class InvalidProcessedFormatError(BaseException):
+class InvalidProcessedFormatError(Exception):
     pass
 
 
@@ -91,14 +91,15 @@ class ExternalSourceSurveyor:
                         survey_job=self.survey_job.id,
                         downloader_job=downloader_job.id)
                 send_job(downloader_job.downloader_task, downloader_job.id)
-            except:
+            except Exception as e:
                 # If the task doesn't get sent we don't want the
                 # downloader_job to be left floating
-                logger.info("Failed to enqueue downloader job for URL: " + original_file.source_url,
+                logger.exception("Failed to enqueue downloader job for URL: " + original_file.source_url,
                         survey_job=self.survey_job.id,
                         downloader_job=downloader_job.id)
-                downloader_job.delete()
-                raise
+                downloader_job.success = False
+                downloader_job.failure_reason = str(e)
+                downloader_job.save()
 
     @retry(stop_max_attempt_number=3)
     def queue_downloader_job_for_original_files(self, original_files: List[OriginalFile]):
@@ -129,14 +130,15 @@ class ExternalSourceSurveyor:
                     survey_job=self.survey_job.id,
                     downloader_job=downloader_job.id)
             send_job(downloader_job.downloader_task, downloader_job.id)
-        except:
+        except Exception as e:
             # If the task doesn't get sent we don't want the
             # downloader_job to be left floating
-            logger.info("Failed to enqueue downloader job.",
+            logger.exception("Failed to enqueue downloader job.",
                     survey_job=self.survey_job.id,
                     downloader_job=downloader_job.id)
-            downloader_job.delete()
-            raise
+            downloader_job.success = False
+            downloader_job.failure_reason = str(e)
+            downloader_job.save()
 
     def survey(self) -> bool:
         try:

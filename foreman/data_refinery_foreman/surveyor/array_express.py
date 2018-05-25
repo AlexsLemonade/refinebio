@@ -16,7 +16,8 @@ from data_refinery_common.models import (
     OriginalFileSampleAssociation,
     ExperimentOrganismAssociation
 )
-from data_refinery_foreman.surveyor import utils
+
+from data_refinery_foreman.surveyor import harmony, utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -28,7 +29,7 @@ EXPERIMENTS_URL = "https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/"
 SAMPLES_URL = EXPERIMENTS_URL + "{}/samples"
 UNKNOWN="UNKNOWN"
 
-class UnsupportedPlatformException(BaseException):
+class UnsupportedPlatformException(Exception):
     pass
 
 class ArrayExpressSurveyor(ExternalSourceSurveyor):
@@ -45,7 +46,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         See an example at: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-3050/sample
         """
         request_url = EXPERIMENTS_URL + experiment_accession_code
-        experiment_request = requests.get(request_url, timeout=60)
+        experiment_request = utils.requests_retry_session().get(request_url, timeout=60)
 
         try:
             parsed_json = experiment_request.json()["experiments"]["experiment"][0]
@@ -83,7 +84,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                             parsed_json["arraydesign"][0]["accession"],
                             experiment_accession_code=experiment_accession_code,
                             survey_job=self.survey_job.id)
-                
+
                 # XXX: This is disabled until we can re-do the supported platforms
                 # to support Illumina and Agilent 2C
                 # platform_warning = True
@@ -135,10 +136,13 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             json_xa.is_ccdl = False
             json_xa.save()
 
-            ## Fetch and parse the IDF file for any other fields
+            ## Fetch and parse the IDF/SDRF file for any other fields
             IDF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.idf.txt"
+            SDRF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
             idf_url = IDF_URL_TEMPLATE.format(code=experiment_accession_code)
-            idf_text = requests.get(idf_url, timeout=60).text
+            sdrf_url = SDRF_URL_TEMPLATE.format(code=experiment_accession_code)
+            idf_text = utils.requests_retry_session().get(idf_url, timeout=60).text
+            
             lines = idf_text.split('\n')
             idf_dict = {}
             for line in lines:
@@ -190,7 +194,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         return experiment_object
 
-    def determine_sample_accession(self, sample_source_name: str, sample_assay_name: str, filename:str) -> str:
+    def determine_sample_accession(self, experiment_accession: str, sample_source_name: str, sample_assay_name: str, filename:str) -> str:
         """Determine what to use as the sample's accession code.
 
         This is a complicated heuristic to determine the sample
@@ -205,7 +209,12 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         Ex: E-MEXP-669 has it in sample_assay_name.
         Therefore we try a few different things to determine which it
         is.
+
+        The experiment accession must be prefixed since accessions
+        are non-unique on AE, ex "Sample 1" is a valid assay name.
+
         """
+
         # It SEEMS like the filename often contains part or all of the
         # sample name so we first try to see if either field contains
         # the filename with the extension stripped off:
@@ -213,9 +222,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             stripped_filename = ".".join(filename.split(".")[:-1])
             if stripped_filename != "":
                 if stripped_filename in sample_source_name:
-                    return sample_source_name
+                    return experiment_accession + "-" + sample_source_name
                 elif stripped_filename in sample_assay_name:
-                    return sample_assay_name
+                    return experiment_accession + "-" + sample_assay_name
 
         # Accessions don't have spaces in them, but sometimes these
         # fields do so next we try to see if one has spaces and the
@@ -223,15 +232,15 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         source_has_spaces = " " in sample_source_name
         assay_has_spaces = " " in sample_assay_name
         if assay_has_spaces and not source_has_spaces:
-            return sample_source_name
+            return experiment_accession + "-" + sample_source_name
         elif source_has_spaces and not assay_has_spaces:
-            return sample_assay_name
+            return experiment_accession + "-" + sample_assay_name
 
         # We're out of options so return the longest one.
         if len(sample_source_name) >= len(sample_assay_name):
-            sample_accession_code = sample_source_name
+            return experiment_accession + "-" + sample_source_name
         else:
-            sample_accession_code = sample_assay_name
+            return experiment_accession + "-" + sample_assay_name
 
     def create_samples_from_api(self,
                           experiment: Experiment
@@ -260,7 +269,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         created_samples = []
 
         samples_endpoint = SAMPLES_URL.format(experiment.accession_code)
-        r = requests.get(samples_endpoint, timeout=60)
+        r = utils.requests_retry_session().get(samples_endpoint, timeout=60)
         samples = r.json()["experiment"]["sample"]
 
         try:
@@ -269,12 +278,38 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         except Exception:
             has_platform_warning = False
 
+        # The SDRF is the complete metadata record on a sample/property basis.
+        # We run this through our harmonizer and then attach the properties
+        # to our created samples.
+        SDRF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
+        sdrf_url = SDRF_URL_TEMPLATE.format(code=experiment.accession_code)
+        sdrf_samples = harmony.parse_sdrf(sdrf_url)
+        harmonized_samples = harmony.harmonize(sdrf_samples)
+
         # An experiment can have many samples
         for sample in samples:
 
             # For some reason, this sample has no files associated with it.
             if "file" not in sample or len(sample['file']) == 0:
                 continue
+
+            # Each sample is given an experimenatlly-unique title.
+            flat_sample = utils.flatten(sample)
+            title = harmony.extract_title(flat_sample)
+
+            # Figure out the Organism for this sample
+            organism_name = UNKNOWN
+            for characteristic in sample["characteristic"]:
+                if characteristic["category"].upper() == "ORGANISM":
+                    organism_name = characteristic["value"].upper()
+
+            if organism_name == UNKNOWN:
+                logger.warning("Sample from experiment %s did not specify the organism name.",
+                             experiment.accession_code,
+                             survey_job=self.survey_job.id)
+                organism = None
+            else:
+                organism = Organism.get_object_for_name(organism_name)
 
             # A sample may actually have many sub files.
             # If there is raw data, take that.
@@ -356,6 +391,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             sample_source_name = sample["source"].get("name", "")
             sample_assay_name = sample["assay"].get("name", "")
             sample_accession_code = self.determine_sample_accession(
+                experiment.accession_code,
                 sample_source_name,
                 sample_assay_name,
                 filename)
@@ -367,7 +403,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     organism_name = characteristic["value"].upper()
 
             if organism_name == UNKNOWN:
-                logger.error("Sample %s did not specify the organism name.",
+                logger.warning("Sample %s did not specify the organism name.",
                              sample_accession_code,
                              experiment_accession_code=experiment.accession_code,
                              survey_job=self.survey_job.id)
@@ -385,16 +421,18 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 continue
             except Sample.DoesNotExist:
                 sample_object = Sample()
+
+                # The basics
+                sample_object.title = title
                 sample_object.accession_code = sample_accession_code
                 sample_object.source_archive_url = samples_endpoint
                 sample_object.organism = organism
+
+                # Directly assign the harmonized properties
+                harmonized_sample = harmonized_samples[title]
+                for key, value in harmonized_sample.items():
+                    setattr(sample_object, key, value)
                 sample_object.save()
-
-                # This creates key values for a given sample.
-                # This looks a bit of a mess.
-
-                # XXX: TODO: Harmonize desired values to filter on and 
-                # extact to properties of the Sample itself.
 
                 sample_annotation = SampleAnnotation()
                 sample_annotation.data = sample
@@ -421,6 +459,11 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 original_file_sample_association.original_file = original_file
                 original_file_sample_association.sample = sample_object
                 original_file_sample_association.save()
+
+            association = ExperimentSampleAssociation()
+            association.experiment = experiment
+            association.sample = sample_object
+            association.save()
 
             # Create associations if they don't already exist
             try:
