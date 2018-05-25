@@ -81,7 +81,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_object.source_database = "GEO"
             experiment_object.name = gse.metadata.get('title', [''])[0]
             experiment_object.description = gse.metadata.get('summary', [''])[0]
-
+            # TODO: Lookup GEO-GPL - Related: https://github.com/AlexsLemonade/refinebio/issues/222
+            experiment_object.platform_name = gse.metadata.get('platform_id', [''])[0]
             experiment_object.platform_accession_code = gse.metadata.get('platform_id', [''])[0]
             # Related: https://github.com/AlexsLemonade/refinebio/issues/222
             gpl = GEOparse.get_GEO(gse.metadata.get('platform_id', [''])[0], destdir='/tmp', how="brief")

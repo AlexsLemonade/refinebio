@@ -142,6 +142,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             idf_url = IDF_URL_TEMPLATE.format(code=experiment_accession_code)
             sdrf_url = SDRF_URL_TEMPLATE.format(code=experiment_accession_code)
             idf_text = utils.requests_retry_session().get(idf_url, timeout=60).text
+            
             lines = idf_text.split('\n')
             idf_dict = {}
             for line in lines:
@@ -458,6 +459,11 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 original_file_sample_association.original_file = original_file
                 original_file_sample_association.sample = sample_object
                 original_file_sample_association.save()
+
+            association = ExperimentSampleAssociation()
+            association.experiment = experiment
+            association.sample = sample_object
+            association.save()
 
             # Create associations if they don't already exist
             try:
