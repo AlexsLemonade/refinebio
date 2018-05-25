@@ -30,7 +30,7 @@ setup(
                       "billiard>=3.5.0.3",
                       "requests>=2.18.4",
                       "retrying>=1.3.3",
-                      "psycopg2>=2.7.4",
+                      "psycopg2-binary>=2.7.4",
                       "python-nomad>=0.6.1"
     ],
     license="BSD License",
