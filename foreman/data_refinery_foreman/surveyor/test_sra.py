@@ -100,7 +100,7 @@ class SraSurveyorTestCase(TestCase):
 
         sra_surveyor = SraSurveyor(survey_job)
         experiment, samples = sra_surveyor.discover_experiment_and_samples()
-        self.assertEqual(experiment.accession_code, "SRX1528549")
+        self.assertEqual(experiment.accession_code, "SRP068364")
         self.assertEqual(len(samples), 4)
 
     @patch('data_refinery_foreman.surveyor.sra.requests.get')
