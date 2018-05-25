@@ -81,17 +81,14 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_object.source_database = "GEO"
             experiment_object.name = gse.metadata.get('title', [''])[0]
             experiment_object.description = gse.metadata.get('summary', [''])[0]
-            # TODO: Lookup GEO-GPL - Related: https://github.com/AlexsLemonade/refinebio/issues/222
-            experiment_object.platform_name = gse.metadata.get('platform_id', [''])[0]
-            experiment_object.platform_accession_code = gse.metadata.get('platform_id', [''])[0]
             # Related: https://github.com/AlexsLemonade/refinebio/issues/222
             gpl = GEOparse.get_GEO(gse.metadata.get('platform_id', [''])[0], destdir='/tmp', how="brief")
             experiment_object.platform_name = gpl.metadata.get("title", [""])[0]
             # TODO: This is probably going to require a fair bit of sanding.
             if 'AFFYMETRIX' in str(gpl.metadata).upper():
-                experiment.technology = "MICROARRAY"
+                experiment_object.technology = "MICROARRAY"
             else:
-                experiment.technology = "RNA-SEQ"
+                experiment_object.technology = "RNA-SEQ"
 
             # Source doesn't provide time information, assume midnight.
             experiment_object.source_first_published = dateutil.parser.parse(gse.metadata["submission_date"][0] + " 00:00:00 UTC")
