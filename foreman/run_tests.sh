@@ -20,7 +20,7 @@ fi
 # move up a level
 cd ..
 
-docker build -t dr_foreman -f foreman/Dockerfile .
+./prepare_image.sh -i foreman -s foreman
 
 source common.sh
 HOST_IP=$(get_ip_address)
@@ -31,4 +31,4 @@ docker run \
        --add-host=nomad:$HOST_IP \
        --env-file foreman/environments/test \
        --link drdb:postgres \
-       -it dr_foreman bash -c "$(run_tests_with_coverage $@)"
+       -it ccdl/dr_foreman bash -c "$(run_tests_with_coverage $@)"

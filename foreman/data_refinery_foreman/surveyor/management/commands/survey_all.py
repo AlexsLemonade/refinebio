@@ -1,6 +1,7 @@
 """
-This command will create and run survey jobs for each experiment 
-in a file containing one experiment accession code per line.
+This command will create and run survey jobs for each experiment in the
+experiment_list. experiment list should be a file containing one
+experiment accession code per line.
 """
 
 import boto3
@@ -63,6 +64,8 @@ Note: One entry per line, GSE* entries survey GEO, E-GEO-* entries survey ArrayE
                             surveyor.survey_geo_experiment(accession)
                         elif 'E-' in accession[:2]:
                             surveyor.survey_ae_experiment(accession)
+                        elif " " in accession:
+                            surveyor.survey_transcriptome_index(accession)
                         else:
                             surveyor.survey_sra_experiment(accession)
                     except Exception as e:

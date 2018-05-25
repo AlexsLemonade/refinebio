@@ -33,6 +33,9 @@ def wait_for_job(job, job_class: type, start_time: datetime):
         time.sleep(LOOP_TIME)
         job = job_class.objects.filter(id=job.id).get()
 
+    if timezone.now() - start_time > MAX_WAIT_TIME:
+        logger.error("%s job timed out!", job_class.__name__)
+
     return job
 
 
