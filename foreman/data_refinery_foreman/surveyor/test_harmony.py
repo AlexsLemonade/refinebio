@@ -262,6 +262,10 @@ class HarmonyTestCase(TestCase):
         Thoroughly tests a specific GEO harmonization
         """
         
+        # Weird ones caused bugs
+        gse = GEOparse.get_GEO("GSE94532", destdir='/tmp')
+        preprocessed_samples = preprocess_geo(gse.gsms.items())
+
         # Illumina
         gse = GEOparse.get_GEO("GSE32628", destdir='/tmp')
 
