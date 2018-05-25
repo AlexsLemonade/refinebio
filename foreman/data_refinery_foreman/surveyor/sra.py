@@ -62,8 +62,8 @@ class SraSurveyor(ExternalSourceSurveyor):
         submission_metadata = submission_xml.attrib
 
         # We already have these
-        submission_metadata.pop("accession")
-        submission_metadata.pop("alias")
+        submission_metadata.pop("accession", '')
+        submission_metadata.pop("alias", '')
 
         metadata.update(submission_metadata)
 
