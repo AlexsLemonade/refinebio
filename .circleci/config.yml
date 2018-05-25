@@ -1,6 +1,8 @@
 version: 2
 jobs:
-  test:
+  # This runs api, common, foreman, end-to-end, and illumina tests.
+  # These are grouped together because in total they take less time than our other tests individually.
+  main_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
@@ -19,11 +21,10 @@ jobs:
 
       # Install Nomad
       - run: sudo ./install_nomad.sh
+
       # Start Nomad, build images, and register jobs.
-      # This takes a while because it has to pull the worker base image.
       - run:
           command: sudo -E ./run_nomad.sh -e test
-          no_output_timeout: 36000
 
       # Run API Tests.
       - run: ./api/run_tests.sh
@@ -31,14 +32,103 @@ jobs:
       # Run Common Tests.
       - run: ./common/run_tests.sh
 
+      - run: ./prepare_image.sh -i no_op -s workers
+      - run: ./prepare_image.sh -i downloaders -s workers
+
+      # Push the no_op and downloader images to the local docker repo so Nomad
+      # can pull from there when running end-to-end tests.
+      - run: docker tag ccdl/dr_downloaders localhost:5000/ccdl/dr_downloaders
+      - run: docker push localhost:5000/ccdl/dr_downloaders
+      - run: docker tag ccdl/dr_no_op localhost:5000/ccdl/dr_no_op
+      - run: docker push localhost:5000/ccdl/dr_no_op
+
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
 
-      # Run Worker Tests
+      # Run Illumna tests.
+      - run: .circleci/filter_tests.sh -t illumina
+
+  # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
+  affymetrix_and_agilent_tests:
+    working_directory: ~/refinebio
+    machine: true
+    steps:
+      - checkout
+
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      # Let Postgres start up.
+      - run: sleep 30
+      # Finish setting up Postgres now that it's running.
+      - run: ./common/install_db_docker.sh
+
+      # Install our application. Provides the data_refinery_common package for the other images.
+      - run: chmod -R a+wr common
+      - run: ./update_models.sh
+
       - run:
-          command: .circleci/filter_tests.sh
+          command: .circleci/filter_tests.sh -t affymetrix
+          # This takes a while because the affymetrix image is huge
           no_output_timeout: 36000
+
+      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
+      # from making sure all the files in workers/test_volume have read/write permissions.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+
+      # This doesn't take as long because the image has already been pulled.
+      - run: .circleci/filter_tests.sh -t agilent
+
+  # This tests workers tests tagged as 'salmon'
+  salmon_tests:
+    working_directory: ~/refinebio
+    machine: true
+    steps:
+      - checkout
+
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      # Let Postgres start up.
+      - run: sleep 30
+      # Finish setting up Postgres now that it's running.
+      - run: ./common/install_db_docker.sh
+
+      # Install our application. Provides the data_refinery_common package for the other images.
+      - run: chmod -R a+wr common
+      - run: ./update_models.sh
+
+      - run:
+          command: .circleci/filter_tests.sh -t salmon
+          no_output_timeout: 1h
+
+  # This tests workers tests tagged as 'transcriptome' and 'downloaders'
+  # These are grouped together because together they take less time than affy or salmon.
+  transcriptome_and_downloaders_tests:
+    working_directory: ~/refinebio
+    machine: true
+    steps:
+      - checkout
+
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      # Let Postgres start up.
+      - run: sleep 30
+      # Finish setting up Postgres now that it's running.
+      - run: ./common/install_db_docker.sh
+
+      # Install our application. Provides the data_refinery_common package for the other images.
+      - run: chmod -R a+wr common
+      - run: ./update_models.sh
+
+      - run: ./prepare_image.sh -i transcriptome -s workers
+      - run: .circleci/filter_tests.sh -t transcriptome
+
+      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
+      # from making sure all the files in workers/test_volume have read/write permissions.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+
+      - run: ./prepare_image.sh -i downloaders -s workers
+      - run: .circleci/filter_tests.sh -t downloaders
 
   deploy:
     machine: true
@@ -53,10 +143,28 @@ workflows:
   version: 2
   test-and-deploy:
     jobs:
-      # "test" job will be triggered by:
+      # test jobs will be triggered by:
       # - any branch commit, or:
       # - tag commits whose names start with letter "v".
-      - test:
+      - main_tests:
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+      - affymetrix_and_agilent_tests:
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+      - salmon_tests:
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+      - transcriptome_and_downloaders_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
@@ -67,7 +175,10 @@ workflows:
       # start with letter "v".
       - deploy:
           requires:
-            - test
+            - main_tests
+            - affymetrix_and_agilent_tests
+            - salmon_tests
+            - transcriptome_and_downloaders_tests
           filters:
             # No branch commit will ever trigger this job.
             branches:

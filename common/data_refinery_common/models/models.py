@@ -45,12 +45,26 @@ class Sample(models.Model):
     source_archive_url = models.CharField(max_length=255)
     source_filename = models.CharField(max_length=255, blank=False)
     source_absolute_file_path = models.CharField(max_length=255)
-
-    # Scientific Properties
     has_raw = models.BooleanField(default=True) # Did this sample have a raw data source?
+
+    # Technological Properties
     platform_accession_code = models.CharField(max_length=256, blank=True)
     platform_name = models.CharField(max_length=256, blank=True)
     technology = models.CharField(max_length=256, blank=True)
+
+    # Scientific Properties
+    sex = models.CharField(max_length=255, blank=True)
+    age = models.DecimalField(max_length=255, blank=True, max_digits=8, decimal_places=3, null=True)
+    specimen_part = models.CharField(max_length=255, blank=True)
+    genotype = models.CharField(max_length=255, blank=True)
+    disease = models.CharField(max_length=255, blank=True)
+    disease_stage = models.CharField(max_length=255, blank=True)
+    cell_line = models.CharField(max_length=255, blank=True)
+    treatment = models.CharField(max_length=255, blank=True)
+    race = models.CharField(max_length=255, blank=True)
+    subject = models.CharField(max_length=255, blank=True)
+    compound = models.CharField(max_length=255, blank=True)
+    time = models.CharField(max_length=255, blank=True)
 
     # Crunch Properties
     is_downloaded = models.BooleanField(default=False)
@@ -118,7 +132,7 @@ class Experiment(models.Model):
 
     # Properties
     ## I was always under the impression that TextFields were slower
-    ## than CharFields, however the Postgres documentation disagrees: 
+    ## than CharFields, however the Postgres documentation disagrees:
     ## https://www.postgresql.org/docs/9.0/static/datatype-character.html
     title = models.TextField()
     description = models.TextField()

@@ -1,6 +1,7 @@
 import dateutil.parser
 import GEOparse
 import requests
+import logging
 
 from re import sub, split, match
 from typing import List, Dict
@@ -16,14 +17,16 @@ from data_refinery_common.models import (
     OriginalFile,
     OriginalFileSampleAssociation
 )
-from data_refinery_foreman.surveyor import utils
+from data_refinery_foreman.surveyor import utils, harmony
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 
 logger = get_and_configure_logger(__name__)
+# Taken from GEOparse source code cause the docs lie.
+GEOparse.logger.setLevel(logging.getLevelName("WARN"))
 
-class GeoUnsupportedPlatformException(BaseException):
+class GeoUnsupportedPlatformException(Exception):
     pass
 
 class GeoSurveyor(ExternalSourceSurveyor):
@@ -62,6 +65,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
         # XXX: Maybe we should have an EFS tmp? This could potentially fill up if not tracked.
         # Cleaning up is tracked here: https://github.com/guma44/GEOparse/issues/41
         gse = GEOparse.get_GEO(experiment_accession_code, destdir='/tmp', how="brief")
+        preprocessed_samples = harmony.preprocess_geo(gse.gsms.items())
+        harmonized_samples = harmony.harmonize(preprocessed_samples)
 
         # Create the experiment object
         try:
@@ -76,6 +81,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_object.source_database = "GEO"
             experiment_object.name = gse.metadata.get('title', [''])[0]
             experiment_object.description = gse.metadata.get('summary', [''])[0]
+            
             # TODO: Lookup GEO-GPL - Related: https://github.com/AlexsLemonade/refinebio/issues/222
             experiment_object.platform_name = gse.metadata.get('platform_id', [''])[0]
             experiment_object.platform_accession_code = gse.metadata.get('platform_id', [''])[0]
@@ -123,7 +129,14 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 sample_object = Sample()
                 sample_object.accession_code = sample_accession_code
                 sample_object.organism = organism
-                sample_object.title = sample.metadata['title'][0]
+                title = sample.metadata['title'][0]
+                sample_object.title = title
+
+                # Directly assign the harmonized properties
+                harmonized_sample = harmonized_samples[title]
+                for key, value in harmonized_sample.items():
+                    setattr(sample_object, key, value)
+
                 sample_object.save()
 
                 all_samples.append(sample_object)

@@ -1,6 +1,8 @@
-
-from unittest.mock import patch
+import json
+import datetime
+from unittest.mock import Mock, patch, call
 from django.test import TestCase
+from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (
     DownloaderJob,
     SurveyJob,
@@ -46,6 +48,6 @@ class SurveyTestCase(TestCase):
 
         self.assertEqual(124, Sample.objects.all().count())
         downloader_jobs = DownloaderJob.objects.all()
-
-        # 124 individual samples + 1 raw file and 1 miniml file
+        
+        # 124 samples + 2 metadata files that get picked up
         self.assertEqual(126, downloader_jobs.count())

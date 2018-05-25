@@ -170,13 +170,13 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
         try:
             last_result = processor(last_result)
         except Exception:
-            logger.exception("Unhandled exception caught while running processor %s in pipeline",
+            logger.exception("Unhandled exception caught while running processor function %s in pipeline",
                              processor.__name__,
                              processor_job=job_id)
             last_result["success"] = False
             end_job(last_result)
         if "success" in last_result and last_result["success"] is False:
-            logger.error("Processor %s failed. Terminating pipeline.",
+            logger.error("Processor function %s failed. Terminating pipeline.",
                          processor.__name__,
                          processor_job=job_id,
                          failure_reason=last_result["job"].failure_reason)

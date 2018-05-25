@@ -60,7 +60,7 @@ data "template_file" "nomad_lead_server_script_smusher" {
 # first so that the others can be aware of its IP address to join it.
 resource "aws_instance" "nomad_server_1" {
   ami = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.small"
+  instance_type = "${var.nomad_server_instance_type}"
   availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
@@ -127,7 +127,7 @@ data "template_file" "nomad_server_script_smusher" {
 # at least three to avoid data loss.
 resource "aws_instance" "nomad_server_2" {
   ami = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.small"
+  instance_type = "${var.nomad_server_instance_type}"
   availability_zone = "${var.region}b"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
@@ -168,7 +168,7 @@ output "nomad_server_2_ip" {
 # at least three to avoid data loss.
 resource "aws_instance" "nomad_server_3" {
   ami = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.small"
+  instance_type = "${var.nomad_server_instance_type}"
   availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
@@ -278,7 +278,7 @@ output "nomad_client_ip" {
 resource "aws_launch_configuration" "auto_client_configuration" {
     # Don't include availability_zones because of:
     # https://github.com/hashicorp/terraform/issues/15978
-    
+
     name_prefix = "auto-client-"
     image_id = "${data.aws_ami.ubuntu.id}"
     instance_type = "${var.client_instance_type}"
@@ -341,23 +341,43 @@ resource "aws_autoscaling_policy" "clients_scale_down" {
 # Database
 ##
 
+resource "aws_db_parameter_group" "postgres_parameters" {
+  name = "postgres-parameters-${var.user}-${var.stage}"
+  description = "Postgres Parameters ${var.user} ${var.stage}"
+  family = "postgres9.6"
+
+  parameter {
+    name = "deadlock_timeout"
+    value = "60000" # 60000ms = 60s
+  }
+
+  parameter {
+    name = "statement_timeout"
+    value = "60000" # 60000ms = 60s
+  }
+}
+
 resource "aws_db_instance" "postgres_db" {
   identifier = "data-refinery-${var.user}-${var.stage}"
   allocated_storage = 100
   storage_type = "gp2"
   engine = "postgres"
   engine_version = "9.6.6"
-  instance_class = "db.t2.micro"
+  instance_class = "db.${var.database_instance_type}"
   name = "data_refinery"
   username = "${var.database_user}"
   password = "${var.database_password}"
+
   db_subnet_group_name = "${aws_db_subnet_group.data_refinery.name}"
+  parameter_group_name = "${aws_db_parameter_group.postgres_parameters.name}"
+
   # We probably actually want to keep this, but TF is broken here.
   # Related: https://github.com/hashicorp/terraform/issues/5417
   skip_final_snapshot = true
   vpc_security_group_ids = ["${aws_security_group.data_refinery_db.id}"]
   multi_az = true
   publicly_accessible = true
+  
 }
 
 ##
@@ -390,7 +410,7 @@ data "template_file" "api_server_script_smusher" {
     database_password = "${var.database_password}"
     database_name = "${aws_db_instance.postgres_db.name}"
     log_group = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
-    log_stream = "${aws_cloudwatch_log_stream.log_stream_api_docker.name}"
+    log_stream = "${aws_cloudwatch_log_stream.log_stream_api.name}"
   }
 }
 
@@ -426,4 +446,3 @@ resource "aws_instance" "api_server_1" {
 output "api_server_1_ip" {
   value = "${aws_instance.api_server_1.public_ip}"
 }
-
