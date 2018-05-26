@@ -32,6 +32,7 @@ WORKDIR /home/user
 ENV SALMON_VERSION 0.9.1
 RUN wget https://github.com/COMBINE-lab/salmon/releases/download/v${SALMON_VERSION}/Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
 RUN tar -xzf Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
+RUN ln -sf `pwd`/Salmon-latest_linux_x86_64/bin/salmon /usr/local/bin/
 RUN rm -f Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
 # End Salmon installation.
 
@@ -42,6 +43,7 @@ RUN Rscript install_tximport.R
 # Install SalmonTools
 RUN git clone https://github.com/COMBINE-lab/SalmonTools.git
 RUN cd SalmonTools && cmake . -DCMAKE_INSTALL_PREFIX=/usr/local && make install
+RUN rm -rf SalmonTools
 
 RUN pip3 install --upgrade pip
 
@@ -64,7 +66,7 @@ COPY common/dist/data-refinery-common-* common/
 RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
 
 USER user
-RUN echo "export PATH=`pwd`/Salmon-latest_linux_x86_64/bin:$PATH" >> ~/.bashrc
+
 COPY workers/ .
 
 ENTRYPOINT []
