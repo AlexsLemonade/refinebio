@@ -2,7 +2,7 @@
 # https://github.com/jaclyn-taroni/ref-txome/blob/master/4-athaliana_tximport.R
 #
 # Two required arguments:
-# (1) --exp_dir    <experiement_dir> (directory where "quant.sf" files are found)
+# (1) --exp_dir    <experiment_dir> (directory where "quant.sf" files are found)
 # (2) --gene2txmap <path_of_gene2txmap_file>
 #
 # Two Output files:
