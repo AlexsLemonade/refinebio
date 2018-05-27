@@ -253,7 +253,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         with transaction.atomic():
             ComputationalResult.objects.select_for_update()
             result.save()
-            salmon_completed_exp_dirs = _get_salmon_completed_experiements(job_context)
+            salmon_completed_exp_dirs = _get_salmon_completed_exp_dirs(job_context)
 
         # tximport analysis is done outside of the transaction so that
         # the mutex wouldn't hold the other jobs too long.
