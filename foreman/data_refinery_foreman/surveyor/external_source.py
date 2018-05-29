@@ -163,8 +163,6 @@ class ExternalSourceSurveyor:
                 for sample in samples:
                     sample_files = sample.original_files.all()
                     self.queue_downloader_job_for_original_files(sample_files)
-              import pdb
-              pdb.set_trace()
             else:
                   self.queue_downloader_jobs(experiment)
         except Exception:
