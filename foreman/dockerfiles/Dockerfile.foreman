@@ -3,6 +3,8 @@ FROM python:3.6.1-slim
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
+COPY config config
+
 COPY foreman/requirements.txt .
 
 # The base image does not have Python 2.X on it at all, so all calls

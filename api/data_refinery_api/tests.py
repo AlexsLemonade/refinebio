@@ -37,7 +37,9 @@ from data_refinery_api.serializers import (
     ProcessorJobSerializer
 )
 
+
 class SanityTestAllEndpoints(APITestCase):
+
     def setUp(self):
         # Saving this for if we have protected endpoints
         # self.superuser = User.objects.create_superuser('john', 'john@snow.com', 'johnpassword')
@@ -169,26 +171,24 @@ class SanityTestAllEndpoints(APITestCase):
         experiments = []
         for x in range(1, LOTS):
             ex = Experiment()
-            ex.accession_code = "".join(random.choice(words) for i in range(3)) + str(random.randint(0, 1000))[:64]
-            ex.title =  " ".join(random.choice(words) for i in range(10))
+            ex.accession_code = "".join(random.choice(words)
+                                        for i in range(3)) + str(random.randint(0, 1000))[:64]
+            ex.title = " ".join(random.choice(words) for i in range(10))
             ex.description = " ".join(random.choice(words) for i in range(100))
-            ex.technology = random.choice(["RNA-SEQ", "MICROARRAY"])
             ex.submitter_institution = random.choice(["Funkytown", "Monkeytown"])
             experiments.append(ex)
 
         ex = Experiment()
         ex.accession_code = "FINDME"
-        ex.title =  "THISWILLBEINASEARCHRESULT"
-        ex.description =  "SOWILLTHIS"
-        ex.technology ="MICROARRAY"
+        ex.title = "THISWILLBEINASEARCHRESULT"
+        ex.description = "SOWILLTHIS"
         ex.submitter_institution = "Funkytown"
         experiments.append(ex)
 
         ex = Experiment()
         ex.accession_code = "FINDME2"
-        ex.title =  "THISWILLBEINASEARCHRESULT"
-        ex.description =  "SOWILLTHIS"
-        ex.technology = "RNA-SEQ"
+        ex.title = "THISWILLBEINASEARCHRESULT"
+        ex.description = "SOWILLTHIS"
         ex.submitter_institution = "Funkytown"
         experiments.append(ex)
 
@@ -203,7 +203,8 @@ class SanityTestAllEndpoints(APITestCase):
         self.assertEqual(response.json()['count'], 2)
 
         # Test search and filter
-        response = self.client.get(reverse('search'), {'search': 'THISWILLBEINASEARCHRESULT', 'technology': 'MICROARRAY'})
+        response = self.client.get(
+            reverse('search'), {'search': 'THISWILLBEINASEARCHRESULT', 'technology': 'MICROARRAY'})
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME')
 
@@ -211,7 +212,8 @@ class SanityTestAllEndpoints(APITestCase):
 
         # Good
         jdata = json.dumps({'data': {"A": ["B"]}})
-        response = self.client.post(reverse('create_dataset'), jdata, content_type="application/json")
+        response = self.client.post(
+            reverse('create_dataset'), jdata, content_type="application/json")
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['data'], json.loads(jdata)['data'])
@@ -224,7 +226,8 @@ class SanityTestAllEndpoints(APITestCase):
 
         # Update
         jdata = json.dumps({'data': {"A": ["C"]}})
-        response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
+        response = self.client.put(
+            reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['id'], good_id)
         self.assertEqual(response.json()['data'], json.loads(jdata)['data'])
@@ -235,10 +238,12 @@ class SanityTestAllEndpoints(APITestCase):
         dataset.is_processing = True
         dataset.save()
         jdata = json.dumps({'data': {"A": ["D"]}})
-        response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
+        response = self.client.put(
+            reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
         self.assertNotEqual(response.json()['data']["A"], ["D"])
 
         # Bad
         jdata = json.dumps({'data': 123})
-        response = self.client.post(reverse('create_dataset'), jdata, content_type="application/json")
+        response = self.client.post(
+            reverse('create_dataset'), jdata, content_type="application/json")
         self.assertEqual(response.status_code, 400)

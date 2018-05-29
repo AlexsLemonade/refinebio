@@ -26,10 +26,16 @@ logger = get_and_configure_logger(__name__)
 # Taken from GEOparse source code cause the docs lie.
 GEOparse.logger.setLevel(logging.getLevelName("WARN"))
 
+
+UNKNOWN = "UNKNOWN"
+
+
 class GeoUnsupportedPlatformException(Exception):
     pass
 
+
 class GeoSurveyor(ExternalSourceSurveyor):
+
     """Surveys NCBI GEO for data.
 
     Implements the GEO interface.
@@ -39,25 +45,25 @@ class GeoSurveyor(ExternalSourceSurveyor):
         return Downloaders.GEO.value
 
     def get_miniml_url(self, experiment_accession_code):
-        """ Build the URL for the MINiML files for this accession code. 
-        ex: 
+        """ Build the URL for the MINiML files for this accession code.
+        ex:
         'GSE68061' -> 'ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE68nnn/GSE68061/miniml/GSE68061_family.xml.tgz'
-    
+
         """
         geo = experiment_accession_code.upper()
         geotype = geo[:3]
         range_subdir = sub(r"\d{1,3}$", "nnn", geo)
 
         min_url_template = ("ftp://ftp.ncbi.nlm.nih.gov/geo/"
-                  "series/{range_subdir}/{record}/miniml/{record_file}")
+                            "series/{range_subdir}/{record}/miniml/{record_file}")
         min_url = min_url_template.format(range_subdir=range_subdir,
-                            record=geo,
-                            record_file="%s_family.xml.tgz" % geo)
+                                          record=geo,
+                                          record_file="%s_family.xml.tgz" % geo)
 
         return min_url
 
     def create_experiment_and_samples_from_api(self, experiment_accession_code) -> (Experiment, List[Sample]):
-        """ The main surveyor - find the Experiment and Samples from NCBI GEO. 
+        """ The main surveyor - find the Experiment and Samples from NCBI GEO.
 
         Uses the GEOParse library, for which docs can be found here: https://geoparse.readthedocs.io/en/latest/usage.html#working-with-geo-objects
 
@@ -72,25 +78,25 @@ class GeoSurveyor(ExternalSourceSurveyor):
         try:
             experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
             logger.error("Experiment %s already exists, skipping object creation.",
-                experiment_accession_code,
-                survey_job=self.survey_job.id)
+                         experiment_accession_code,
+                         survey_job=self.survey_job.id)
         except Experiment.DoesNotExist:
             experiment_object = Experiment()
             experiment_object.accession_code = experiment_accession_code
-            experiment_object.source_url = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=" + experiment_accession_code
+            experiment_object.source_url = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=" + \
+                experiment_accession_code
             experiment_object.source_database = "GEO"
             experiment_object.name = gse.metadata.get('title', [''])[0]
             experiment_object.description = gse.metadata.get('summary', [''])[0]
-            
-            # TODO: Lookup GEO-GPL - Related: https://github.com/AlexsLemonade/refinebio/issues/222
-            experiment_object.platform_name = gse.metadata.get('platform_id', [''])[0]
-            experiment_object.platform_accession_code = gse.metadata.get('platform_id', [''])[0]
 
             # Source doesn't provide time information, assume midnight.
-            experiment_object.source_first_published = dateutil.parser.parse(gse.metadata["submission_date"][0] + " 00:00:00 UTC")
-            experiment_object.source_last_updated = dateutil.parser.parse(gse.metadata["last_update_date"][0] + " 00:00:00 UTC")
-            
-            experiment_object.submitter_institution = ", ".join(list(set(gse.metadata["contact_institute"])))
+            experiment_object.source_first_published = dateutil.parser.parse(
+                gse.metadata["submission_date"][0] + " 00:00:00 UTC")
+            experiment_object.source_last_updated = dateutil.parser.parse(
+                gse.metadata["last_update_date"][0] + " 00:00:00 UTC")
+
+            experiment_object.submitter_institution = ", ".join(
+                list(set(gse.metadata["contact_institute"])))
             experiment_object.pubmed_id = gse.metadata.get("pubmed_id", [""])[0]
             experiment_object.save()
 
@@ -111,7 +117,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
             try:
                 sample_object = Sample.objects.get(accession_code=sample_accession_code)
-                logger.info("Sample %s from experiment %s already exists, skipping object creation.",
+                logger.info(
+                    "Sample %s from experiment %s already exists, skipping object creation.",
                          sample_accession_code,
                          experiment_object.accession_code,
                          survey_job=self.survey_job.id)
@@ -132,10 +139,31 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 title = sample.metadata['title'][0]
                 sample_object.title = title
 
+                # For now, assume we're only getting Microarray from GEO
+                sample_object.technology = "MICROARRAY"
+
                 # Directly assign the harmonized properties
                 harmonized_sample = harmonized_samples[title]
                 for key, value in harmonized_sample.items():
                     setattr(sample_object, key, value)
+
+                # Determine platform information
+                external_accession = gse.metadata.get('platform_id', [UNKNOWN])[0]
+                if external_accession == UNKNOWN:
+                    sample_object.platform_accession_code = UNKNOWN
+                    sample_object.platform_name = UNKNOWN
+                else:
+                    platform_accession_code = UNKNOWN
+                    for platform in get_supported_microarray_platforms():
+                        if platform["external_accession"] == external_accession:
+                            platform_accession_code = platform["platform_accession"]
+
+                    sample_object.platform_accession_code = platform_accession_code
+                    if sample_object.platform_accession_code == UNKNOWN:
+                        sample_object.platform_name = UNKNOWN
+                    else:
+                        sample_object.platform_name = get_readable_platform_names()[
+                            platform_accession_code]
 
                 sample_object.save()
 
@@ -164,7 +192,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
                         original_file = OriginalFile.objects.get(source_url=supplementary_file_url)
                     except OriginalFile.DoesNotExist:
                         original_file = OriginalFile()
-                        # So - this is _usually_ true, but not always. I think it's submitter supplied.
+                        # So - this is _usually_ true, but not always. I think it's submitter
+                        # supplied.
                         original_file.source_filename = supplementary_file_url.split('/')[-1]
                         original_file.source_url = supplementary_file_url
                         original_file.is_downloaded = False
@@ -180,7 +209,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     original_file_sample_association.save()
 
                 try:
-                    assocation = ExperimentSampleAssociation.objects.get(experiment=experiment_object, sample=sample_object)
+                    assocation = ExperimentSampleAssociation.objects.get(
+                        experiment=experiment_object, sample=sample_object)
                 except ExperimentSampleAssociation.DoesNotExist:
                     association = ExperimentSampleAssociation()
                     association.experiment = experiment_object
@@ -195,7 +225,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
             except OriginalFile.DoesNotExist:
                 original_file = OriginalFile()
 
-                # So - source_filename is _usually_ where we expect it to be, 
+                # So - source_filename is _usually_ where we expect it to be,
                 # but not always. I think it's submitter supplied.
                 original_file.source_filename = experiment_supplement_url.split('/')[-1]
                 original_file.source_url = experiment_supplement_url
@@ -252,9 +282,11 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     survey_job=self.survey_job.id)
 
         try:
-            experiment, samples = self.create_experiment_and_samples_from_api(experiment_accession_code)
+            experiment, samples = self.create_experiment_and_samples_from_api(
+                experiment_accession_code)
         except GeoUnsupportedPlatformException as e:
-            logger.info("Experiment with accession code: %s was not on a supported platform, skipping.",
+            logger.info(
+                "Experiment with accession code: %s was not on a supported platform, skipping.",
                 experiment_accession_code,
                 survey_job=self.survey_job.id)
             return None, []
