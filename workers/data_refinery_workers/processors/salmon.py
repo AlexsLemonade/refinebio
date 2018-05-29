@@ -367,7 +367,7 @@ def _zip_and_upload(job_context: Dict) -> Dict:
                          processor_job=job_context["job_id"]
                         )
         failure_template = "Exception caught while zipping processed directory {}"
-        job_context["job"].failure_reason = failure_template.format(first_file.name)
+        job_context["job"].failure_reason = failure_template.format(job_context['output_archive'])
         job_context["success"] = False
         return job_context
 
@@ -403,4 +403,3 @@ def salmon(job_id: int) -> None:
                         _run_fastqc,
                         _zip_and_upload,
                         utils.end_job])
-
