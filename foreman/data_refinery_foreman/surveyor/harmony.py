@@ -695,8 +695,12 @@ def preprocess_geo(items: List) -> List:
 
             if key == "characteristics_ch1":
                 for pair in value:
-                    split = pair.split(':')
-                    new_sample[split[0].strip()] = split[1].strip()
+
+                    # This will almost always happen, except if we get
+                    # a malformed response from the server.
+                    if ':' in pair:
+                        split = pair.split(':')
+                        new_sample[split[0].strip()] = split[1].strip()
                 continue
 
             new_sample[key] = value[0]
