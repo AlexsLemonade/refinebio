@@ -38,6 +38,7 @@ class UnsupportedDataTypeError(Exception):
 
 
 class SraSurveyor(ExternalSourceSurveyor):
+
     """Surveys SRA for data.
 
     Implements the ExternalSourceSurveyor interface. It is worth
@@ -57,7 +58,8 @@ class SraSurveyor(ExternalSourceSurveyor):
     @staticmethod
     def gather_submission_metadata(metadata: Dict) -> None:
 
-        response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(metadata["submission_accession"]))
+        response = utils.requests_retry_session().get(
+            ENA_METADATA_URL_TEMPLATE.format(metadata["submission_accession"]))
         submission_xml = ET.fromstring(response.text)[0]
         submission_metadata = submission_xml.attrib
 
@@ -86,7 +88,8 @@ class SraSurveyor(ExternalSourceSurveyor):
         if metadata["library_strategy"] != "RNA-Seq":
             raise UnsupportedDataTypeError("library_strategy not RNA-Seq.")
         if metadata["library_source"] not in ["TRANSCRIPTOMIC", "OTHER"]:
-            raise UnsupportedDataTypeError("library_source: " + metadata["library_source"] + " not TRANSCRIPTOMIC or OTHER.")
+            raise UnsupportedDataTypeError("library_source: " + metadata["library_source"]
+                                           + " not TRANSCRIPTOMIC or OTHER.")
 
     @staticmethod
     def parse_read_spec(metadata: Dict, read_spec: ET.Element, counter: int) -> None:
@@ -114,7 +117,8 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_experiment_metadata(metadata: Dict) -> None:
-        response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(metadata["experiment_accession"]))
+        response = utils.requests_retry_session().get(
+            ENA_METADATA_URL_TEMPLATE.format(metadata["experiment_accession"]))
         experiment_xml = ET.fromstring(response.text)
 
         experiment = experiment_xml[0]
@@ -177,14 +181,15 @@ class SraSurveyor(ExternalSourceSurveyor):
     def gather_run_metadata(run_accession: str) -> Dict:
         """A run refers to a specific read in an experiment."""
         discoverable_accessions = ["study_accession", "sample_accession", "submission_accession"]
-        response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(run_accession))
+        response = utils.requests_retry_session().get(
+            ENA_METADATA_URL_TEMPLATE.format(run_accession))
         run_xml = ET.fromstring(response.text)
         run_item = run_xml[0]
 
         useful_attributes = ["center_name", "run_center", "run_date", "broker_name", "alias"]
         metadata = {}
         for attribute in useful_attributes:
-            if attribute in run_item.attrib: 
+            if attribute in run_item.attrib:
                 metadata[attribute] = run_item.attrib[attribute]
         metadata["run_accession"] = run_accession
 
@@ -205,7 +210,8 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_sample_metadata(metadata: Dict) -> None:
-        response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(metadata["sample_accession"]))
+        response = utils.requests_retry_session().get(
+            ENA_METADATA_URL_TEMPLATE.format(metadata["sample_accession"]))
         sample_xml = ET.fromstring(response.text)
 
         sample = sample_xml[0]
@@ -229,7 +235,8 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_study_metadata(metadata: Dict) -> None:
-        response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(metadata["study_accession"]))
+        response = utils.requests_retry_session().get(
+            ENA_METADATA_URL_TEMPLATE.format(metadata["study_accession"]))
         study_xml = ET.fromstring(response.text)
 
         study = study_xml[0]
@@ -275,10 +282,10 @@ class SraSurveyor(ExternalSourceSurveyor):
             sub_dir = ENA_SUB_DIR_PREFIX + run_accession[-1]
 
         return ENA_DOWNLOAD_URL_TEMPLATE.format(
-                        short_accession=run_accession[:6],
-                        sub_dir=sub_dir,
-                        long_accession=run_accession,
-                        read_suffix=read_suffix)
+            short_accession=run_accession[:6],
+            sub_dir=sub_dir,
+            long_accession=run_accession,
+            read_suffix=read_suffix)
 
     def _generate_experiment_and_samples(self, run_accession: str) -> None:
         """Generates Experiments and Samples for the provided run_accession."""
@@ -286,27 +293,25 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         if metadata["library_layout"] == "PAIRED":
             files_urls = [SraSurveyor._build_file_url(run_accession, "_1"),
-                     SraSurveyor._build_file_url(run_accession, "_2")]
+                          SraSurveyor._build_file_url(run_accession, "_2")]
         else:
             files_urls = [SraSurveyor._build_file_url(run_accession)]
 
-        ##
+        #
         # Experiment
-        ##
+        #
 
         experiment_accession_code = metadata.get('study_accession')
         try:
             experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
             logger.error("Experiment already exists, skipping object creation.",
-                experiment_accession_code=experiment_accession_code,
-                survey_job=self.survey_job.id)
+                         experiment_accession_code=experiment_accession_code,
+                         survey_job=self.survey_job.id)
         except Experiment.DoesNotExist:
             experiment_object = Experiment()
             experiment_object.accession_code = experiment_accession_code
             experiment_object.source_url = ENA_URL_TEMPLATE.format(experiment_accession_code)
             experiment_object.source_database = "SRA"
-            experiment_object.platform_name = metadata.get("platform_instrument_model", "No model.")
-            experiment_object.technology = "RNA-SEQ"
 
             # We don't get this value from the API, unfortunately.
             # experiment_object.platform_accession_code = experiment["platform_accession_code"]
@@ -326,9 +331,11 @@ class SraSurveyor(ExternalSourceSurveyor):
                 experiment_object.pubmed_id = metadata["pubmed_id"]
                 experiment_object.has_publication = True
             if "study_ena_first_public" in metadata:
-                experiment_object.source_first_published = parse_datetime(metadata["study_ena_first_public"])
+                experiment_object.source_first_published = parse_datetime(
+                    metadata["study_ena_first_public"])
             if "study_ena_last_update" in metadata:
-                experiment_object.source_last_modified = parse_datetime(metadata["study_ena_last_update"])
+                experiment_object.source_last_modified = parse_datetime(
+                    metadata["study_ena_last_update"])
 
             experiment_object.save()
 
@@ -354,13 +361,18 @@ class SraSurveyor(ExternalSourceSurveyor):
         try:
             sample_object = Sample.objects.get(accession_code=sample_accession_code)
             logger.error("Sample %s already exists, skipping object creation.",
-                     sample_accession_code,
-                     experiment_accession_code=experiment_object.accession_code,
-                     survey_job=self.survey_job.id)
+                         sample_accession_code,
+                         experiment_accession_code=experiment_object.accession_code,
+                         survey_job=self.survey_job.id)
         except Sample.DoesNotExist:
             sample_object = Sample()
             sample_object.accession_code = sample_accession_code
             sample_object.organism = organism
+
+            sample_object.platform_name = metadata.get("platform_instrument_model", "No model.")
+            # No platform accession nonsense with RNASeq, just use the name:
+            sample_object.platform_accession_code = sample_object.platform_name
+            sample_object.technology = "RNA-SEQ"
 
             # Directly apply the harmonized values
             sample_object.title = harmony.extract_title(metadata)
@@ -385,7 +397,8 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         # Create associations if they don't already exist
         try:
-            assocation = ExperimentSampleAssociation.objects.get(experiment=experiment_object, sample=sample_object)
+            assocation = ExperimentSampleAssociation.objects.get(
+                experiment=experiment_object, sample=sample_object)
         except ExperimentSampleAssociation.DoesNotExist:
             association = ExperimentSampleAssociation()
             association.experiment = experiment_object
@@ -393,7 +406,8 @@ class SraSurveyor(ExternalSourceSurveyor):
             association.save()
 
         try:
-            assocation = ExperimentOrganismAssociation.objects.get(experiment=experiment_object, organism=organism)
+            assocation = ExperimentOrganismAssociation.objects.get(
+                experiment=experiment_object, organism=organism)
         except ExperimentOrganismAssociation.DoesNotExist:
             association = ExperimentOrganismAssociation()
             association.experiment = experiment_object
@@ -427,4 +441,3 @@ class SraSurveyor(ExternalSourceSurveyor):
                      accession,
                      survey_job=self.survey_job.id)
         return self._generate_experiment_and_samples(accession)
-

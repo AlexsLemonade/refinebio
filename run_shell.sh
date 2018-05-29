@@ -24,7 +24,7 @@ if [ ! -d "$volume_directory" ]; then
     chmod -R a+rwX $volume_directory
 fi
 
-docker build -t dr_shell -f foreman/Dockerfile .
+docker build -t dr_shell -f workers/dockerfiles/Dockerfile.downloaders .
 
 source common.sh
 HOST_IP=$(get_ip_address)

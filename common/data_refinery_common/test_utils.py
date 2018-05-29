@@ -1,10 +1,10 @@
 from unittest.mock import Mock, patch
 from django.test import TestCase
 from data_refinery_common import utils
-from django.conf import settings
 
 
 class UtilsTestCase(TestCase):
+
     @patch('data_refinery_common.utils.get_env_variable')
     @patch('data_refinery_common.utils.requests.get')
     def test_get_worker_id_cloud(self, mock_get, mock_get_env_variable):
@@ -43,10 +43,12 @@ class UtilsTestCase(TestCase):
 
     def test_supported_microarray_platforms(self):
         """Test that supported microarray platforms setting is set correctly."""
+        supported_microarray_platforms = utils.get_supported_microarray_platforms()
+
         has_equgene11st = False
         has_A_AFFY_59 = False
         has_GPL23026 = False
-        for platform in settings.SUPPORTED_MICROARRAY_PLATFORMS:
+        for platform in supported_microarray_platforms:
             if platform["platform_accession"] == "equgene11st" and platform["is_brainarray"]:
                 has_equgene11st = True
 
@@ -62,12 +64,13 @@ class UtilsTestCase(TestCase):
 
     def test_supported_rnaseq_platforms(self):
         """Test that supported RNASeq platforms setting is set correctly."""
-        self.assertTrue("Illumina HiSeq 1000" in settings.SUPPORTED_RNASEQ_PLATFORMS)
+        self.assertTrue("Illumina HiSeq 1000" in utils.get_supported_rnaseq_platforms())
 
     def test_readable_platform_names(self):
         """Test that the setting for mapping platform accessions to
         human readable names is set correctly."""
+        readable_platform_names = utils.get_readable_platform_names()
         expected_readable_name = "[ChiGene-1_0-st] Affymetrix Chicken Gene 1.0 ST Array"
-        self.assertTrue(settings.READABLE_PLATFORM_NAMES["chigene10st"] == expected_readable_name)
+        self.assertTrue(readable_platform_names["chigene10st"] == expected_readable_name)
         expected_readable_name = "[Xenopus_laevis] Affymetrix Xenopus laevis Genome Array"
-        self.assertTrue(settings.READABLE_PLATFORM_NAMES["xenopuslaevis"] == expected_readable_name)
+        self.assertTrue(readable_platform_names["xenopuslaevis"] == expected_readable_name)
