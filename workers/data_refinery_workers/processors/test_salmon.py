@@ -77,7 +77,7 @@ def prepare_job():
     assoc1.processor_job = pj
     assoc1.save()
 
-    return pj
+    return pj, [og_file, og_file2]
 
 
 def identical_checksum(file1, file2):
@@ -98,11 +98,44 @@ class SalmonTestCase(TestCase):
         except FileNotFoundError:
             pass
 
-        job = prepare_job()
+        job, files = prepare_job()
         salmon.salmon(job.pk)
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertTrue(job.success)
 
+    def test_fastqc(self):
+
+        job, og_files = prepare_job()
+        win_context = {
+            'job': job,
+            'job_id': 789,
+            'qc_directory': "/home/user/data_store/raw/TEST/SALMON/qc",
+            'original_files': og_files,
+            'success': True
+        }
+
+        # Ensure clean testdir
+        shutil.rmtree(win_context['qc_directory'], ignore_errors=True)
+        os.makedirs(win_context['qc_directory'], exist_ok=True)
+        win_context = salmon._prepare_files(win_context)
+
+        win = salmon._run_fastqc(win_context)
+        self.assertTrue(win['success'])
+        win = salmon._run_multiqc(win_context)
+        self.assertTrue(win['success'])
+
+        for file in win['qc_files']:
+            self.assertTrue(os.path.isfile(file.absolute_file_path))
+
+        fail_context = {
+            'job': job,
+            'job_id': 'hippityhoppity',
+            'qc_directory': "/home/user/data_store/raw/TEST/SALMON/derp",
+            'original_files': [],
+            'success': True
+        }       
+        fail = salmon._run_fastqc(fail_context)
+        self.assertFalse(fail['success']) 
 
 class SalmonToolsTestCase(TestCase):
     """Test SalmonTools command."""
@@ -112,6 +145,7 @@ class SalmonToolsTestCase(TestCase):
 
     @tag('salmon')
     def test_double_reads(self):
+
         job_context = {
             'job_id': 123,
             'input_file_path': self.test_dir + 'double_input/reads_1.fastq',
@@ -119,6 +153,13 @@ class SalmonToolsTestCase(TestCase):
             'output_directory': self.test_dir + 'double_output/'
         }
         job_context["job"] = ProcessorJob()
+
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        sample = Sample()
+        sample.organism = homo_sapiens
+        sample.save()
+        job_context["sample"] = sample
+
         salmon._run_salmontools(job_context, False)
 
         # Confirm job status
@@ -141,6 +182,13 @@ class SalmonToolsTestCase(TestCase):
             'output_directory': self.test_dir + 'single_output/'
         }
         job_context["job"] = ProcessorJob()
+        
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        sample = Sample()
+        sample.organism = homo_sapiens
+        sample.save()
+        job_context["sample"] = sample
+
         salmon._run_salmontools(job_context, False)
 
         # Confirm job status
