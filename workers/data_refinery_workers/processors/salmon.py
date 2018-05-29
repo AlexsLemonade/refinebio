@@ -149,11 +149,21 @@ def _download_index(job_context: Dict) -> Dict:
     this function retrieves the correct index for the organism and
     read length from Permanent Storage.
     """
-    logger.debug("Downloading and installing index..")
+    logger.debug("Fetching and installing index..")
 
     index_type = "TRANSCRIPTOME_" + job_context["index_length"].upper()
     index_object = OrganismIndex.objects.filter(organism=job_context['organism'],
-        index_type=index_type).order_by('created_at')[0]
+            index_type=index_type).order_by('created_at').first()
+
+    if not index_object:
+        logger.error("Could not run Salmon processor without index for organism",
+            organism=job_context['organism'],
+            processor_job=job_context["job_id"]
+        )
+        job_context["failure_reason"] = "Missing transcriptome index."
+        job_context["success"] = False
+        return job_context
+
     result = index_object.result
     files = ComputedFile.objects.filter(result=result)
     job_context["index_unpacked"] = '/'.join(files[0].absolute_file_path.split('/')[:-1])

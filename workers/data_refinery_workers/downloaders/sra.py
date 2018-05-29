@@ -141,7 +141,6 @@ def download_sra(job_id: int) -> None:
                          downloader_job=job_id)
             continue
 
-        
         sample_accession_code = original_file.samples.first().accession_code
         exp_path = LOCAL_ROOT_DIR + '/' + job.accession_code
         samp_path = exp_path + '/' + sample_accession_code
