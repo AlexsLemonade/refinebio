@@ -21,6 +21,9 @@ from data_refinery_foreman.surveyor import utils, harmony
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.utils import (
+    get_supported_microarray_platforms,
+    get_readable_platform_names)
 
 logger = get_and_configure_logger(__name__)
 # Taken from GEOparse source code cause the docs lie.

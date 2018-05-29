@@ -20,7 +20,9 @@ from data_refinery_foreman.surveyor import harmony, utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.utils import get_supported_microarray_platforms
+from data_refinery_common.utils import (
+    get_supported_microarray_platforms,
+    get_readable_platform_names)
 
 logger = get_and_configure_logger(__name__)
 
@@ -88,6 +90,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             for platform in get_supported_microarray_platforms():
                 if platform["external_accession"] == external_accession:
                     experiment["platform_accession_code"] = platform["platform_accession"]
+                    platform_mapping = get_readable_platform_names()
+                    experiment["platform_accession_name"] = platform_mapping[
+                        platform["platform_accession"]]
 
             if "platform_accession_code" not in experiment:
                 # We don't know what platform this accession corresponds to.
