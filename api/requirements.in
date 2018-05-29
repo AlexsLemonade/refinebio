@@ -1,6 +1,6 @@
 coverage
 django
-psycopg2
+psycopg2-binary
 boto3
 requests
 python-nomad
