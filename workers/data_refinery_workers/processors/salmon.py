@@ -55,9 +55,6 @@ def _prepare_files(job_context: Dict) -> Dict:
     # Salmon outputs an entire directory of files, so create a temp
     # directory to output it to until we can zip it to
 
-    import pdb
-    pdb.set_trace()
-
     pre_part = '/'.join(original_files[0].absolute_file_path.split('/')[:-1])
     job_context["output_directory"] = pre_part + '/processed/'
     os.makedirs(job_context["output_directory"], exist_ok=True)
