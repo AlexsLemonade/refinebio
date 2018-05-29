@@ -102,11 +102,15 @@ class ExternalSourceSurveyor:
                 downloader_job.save()
 
     @retry(stop_max_attempt_number=3)
-    def queue_downloader_job_for_original_files(self, original_files: List[OriginalFile]):
+    def queue_downloader_job_for_original_files(  self, 
+                                                  original_files: List[OriginalFile],
+                                                  experiment_accession_code=None
+                                                ):
         """ Creates a single DownloaderJob with multiple files to download."""
 
         downloader_job = DownloaderJob()
         downloader_job.downloader_task = self.downloader_task()
+        downloader_job.accession_code = experiment_accession_code
         downloader_job.save()
 
         downloaded_urls = []
@@ -162,7 +166,8 @@ class ExternalSourceSurveyor:
             if source_type == "SRA":
                 for sample in samples:
                     sample_files = sample.original_files.all()
-                    self.queue_downloader_job_for_original_files(sample_files)
+                    self.queue_downloader_job_for_original_files(sample_files, 
+                        experiment_accession_code=experiment.accession_code)
             else:
                   self.queue_downloader_jobs(experiment)
         except Exception:

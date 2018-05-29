@@ -141,8 +141,13 @@ def download_sra(job_id: int) -> None:
                          downloader_job=job_id)
             continue
 
-        os.makedirs(LOCAL_ROOT_DIR + '/' + job.accession_code, exist_ok=True)
-        dl_file_path = LOCAL_ROOT_DIR + '/' + job.accession_code + '/' + original_file.source_filename
+        
+        sample_accession_code = original_file.samples.first().accession_code
+        exp_path = LOCAL_ROOT_DIR + '/' + job.accession_code
+        samp_path = exp_path + '/' + sample_accession_code
+        os.makedirs(exp_path, exist_ok=True)
+        os.makedirs(samp_path, exist_ok=True)
+        dl_file_path = samp_path + '/' + original_file.source_filename
         success = _download_file(original_file.source_url, job, dl_file_path)
 
         if success:

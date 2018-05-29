@@ -55,15 +55,18 @@ def _prepare_files(job_context: Dict) -> Dict:
     # Salmon outputs an entire directory of files, so create a temp
     # directory to output it to until we can zip it to
 
-    pre_part = original_files[0].absolute_file_path.split('/')[:-1]
-    job_context["output_directory"] = '/'.join(pre_part) + '/processed/'
+    import pdb
+    pdb.set_trace()
+
+    pre_part = '/'.join(original_files[0].absolute_file_path.split('/')[:-1])
+    job_context["output_directory"] = pre_part + '/processed/'
     os.makedirs(job_context["output_directory"], exist_ok=True)
-    job_context["input_directory"] = '/'.join(pre_part) + '/'
-    job_context["qc_directory"] = '/'.join(pre_part) + '/qc/'
+    job_context["qc_input_directory"] = pre_part + '/'
+    job_context["qc_directory"] = pre_part + '/qc/'
     os.makedirs(job_context["qc_directory"], exist_ok=True)
 
     timestamp = str(timezone.now().timestamp()).split('.')[0]
-    job_context["output_archive"] = '/'.join(pre_part) + '/result-' + timestamp +  '.tar.gz'
+    job_context["output_archive"] = pre_part + '/result-' + timestamp +  '.tar.gz'
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
     # There should only ever be one per Salmon run
@@ -263,7 +266,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
 
     """
     command_str = ("multiqc {input_directory} --outdir {qc_directory} --zip-data-dir")
-    formatted_command = command_str.format(input_directory=job_context["input_directory"], 
+    formatted_command = command_str.format(input_directory=job_context["qc_input_directory"], 
                 qc_directory=job_context["qc_directory"])
 
     logger.info("Running MultiQC using the following shell command: %s",
