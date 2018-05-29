@@ -4,6 +4,7 @@ import urllib.request
 import os
 import shutil
 import subprocess
+import time
 from contextlib import closing
 
 from data_refinery_common.models import DownloaderJob, DownloaderJobOriginalFileAssociation
@@ -55,7 +56,10 @@ def _download_file_ftp(download_url: str, downloader_job: DownloaderJob, target_
 
     return True
 
-def _download_file_aspera(download_url: str, downloader_job: DownloaderJob, target_file_path: str) -> bool:
+def _download_file_aspera(  download_url: str, 
+                            downloader_job: DownloaderJob, 
+                            target_file_path: str,
+                            attempt=0) -> bool:
     """ Download a file to a location using Aspera by shelling out to the `ascp` client. """
 
     try:
@@ -76,19 +80,31 @@ def _download_file_aspera(download_url: str, downloader_job: DownloaderJob, targ
 
         # Something went wrong! Else, just fall through to returning True.
         if completed_command.returncode != 0:
-            stderr = str(completed_command.stderr)
+
+            stderr = str(completed_command.stderr).strip()
             logger.error("Shell call to ascp failed with error message: %s\nCommand was: %s",
                          stderr,
                          formatted_command,
                          downloader_job=downloader_job.id)
-            return False
 
+            # Sometimes, SRA fails mysteriously.
+            # Wait a few minutes and try again.
+            if attempt > 5:
+                downloader_job.failure_reason = stderr
+                return False
+            else:
+                time.sleep(300)
+                return _download_file_aspera(   download_url, 
+                                                download_job, 
+                                                target_file_path, 
+                                                attempt + 1
+                                            )
     except Exception:
-        logger.exception("Exception caught while downloading batch from the URL via Aspera: %s",
+        logger.exception("Exception caught while downloading file from the URL via Aspera: %s",
                          download_url,
                          downloader_job=downloader_job.id)
         downloader_job.failure_reason = ("Exception caught while downloading "
-                                         "batch from the URL via Aspera: {}").format(download_url)
+                                         "file from the URL via Aspera: {}").format(download_url)
         return False
     return True
 
