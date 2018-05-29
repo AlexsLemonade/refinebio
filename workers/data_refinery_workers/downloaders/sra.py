@@ -94,9 +94,9 @@ def _download_file_aspera(  download_url: str,
                 return False
             else:
                 time.sleep(300)
-                return _download_file_aspera(   download_url, 
-                                                download_job, 
-                                                target_file_path, 
+                return _download_file_aspera(   download_url,
+                                                download_job,
+                                                target_file_path,
                                                 attempt + 1
                                             )
     except Exception:
@@ -106,6 +106,19 @@ def _download_file_aspera(  download_url: str,
         downloader_job.failure_reason = ("Exception caught while downloading "
                                          "file from the URL via Aspera: {}").format(download_url)
         return False
+
+
+    # If Aspera has given a zero-byte file for some reason, let's back off and retry.
+    if os.path.getsize(target_file_path) < 1:
+        logger.error("Got zero byte ascp download for target, retrying.",
+                    target_url=download_url,
+                    downloader_job=downloader_job.id)
+        time.sleep(300)
+        return _download_file_aspera(   download_url,
+                                        download_job,
+                                        target_file_path,
+                                        attempt + 1
+                                    )
     return True
 
 def download_sra(job_id: int) -> None:
