@@ -292,6 +292,16 @@ class SraSurveyor(ExternalSourceSurveyor):
         else:
             files_urls = [SraSurveyor._build_file_url(run_accession)]
 
+        # Figure out the Organism for this sample
+        organism_name = metadata.pop("organism_name", None)
+        if not organism_name:
+            logger.error("Could not discover organism type for run.",
+                accession=run_accession)
+            return (None, None) # This will cascade properly
+
+        organism_name = organism_name.upper()
+        organism = Organism.get_object_for_name(organism_name)
+
         ##
         # Experiment
         ##
@@ -350,10 +360,6 @@ class SraSurveyor(ExternalSourceSurveyor):
         ##
         # Samples
         ##
-
-        # Figure out the Organism for this sample
-        organism_name = metadata.pop("organism_name").upper()
-        organism = Organism.get_object_for_name(organism_name)
 
         sample_accession_code = metadata.pop('sample_accession')
         # Create the sample object
