@@ -20,6 +20,7 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
     ComputedFile,
+    ExperimentSampleAssociation,
     SampleResultAssociation
     )
 from data_refinery_common.utils import get_env_variable
@@ -285,7 +286,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
 
     """
     command_str = ("multiqc {input_directory} --outdir {qc_directory} --zip-data-dir")
-    formatted_command = command_str.format(input_directory=job_context["input_directory"], 
+    formatted_command = command_str.format(input_directory=job_context["input_directory"],
                 qc_directory=job_context["qc_directory"])
 
     logger.info("Running MultiQC using the following shell command: %s",
@@ -334,7 +335,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
     assoc.sample = job_context["sample"]
     assoc.result = result
     assoc.save()
-    
+
     job_context['qc_result'] = result
 
     data_file = ComputedFile()
@@ -577,4 +578,3 @@ def salmon(job_id: int) -> None:
                         _run_multiqc,
                         _zip_and_upload,
                         utils.end_job])
-

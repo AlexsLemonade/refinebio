@@ -43,6 +43,7 @@ def _compute_paths(job_context: Dict) -> str:
     os.makedirs(job_context["work_dir"], exist_ok=True)
 
     job_context["output_dir"] = job_context["work_dir"] + "/" + "index"
+    os.makedirs(job_context["output_dir"], exist_ok=True)
     job_context["rsem_index_dir"] = job_context["work_dir"] + "/" + "rsem_index"
     os.makedirs(job_context["rsem_index_dir"], exist_ok=True)
 

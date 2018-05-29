@@ -133,9 +133,10 @@ class SalmonTestCase(TestCase):
             'qc_directory': "/home/user/data_store/raw/TEST/SALMON/derp",
             'original_files': [],
             'success': True
-        }       
+        }
         fail = salmon._run_fastqc(fail_context)
-        self.assertFalse(fail['success']) 
+        self.assertFalse(fail['success'])
+
 
 class SalmonToolsTestCase(TestCase):
     """Test SalmonTools command."""
@@ -182,7 +183,7 @@ class SalmonToolsTestCase(TestCase):
             'output_directory': self.test_dir + 'single_output/'
         }
         job_context["job"] = ProcessorJob()
-        
+
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
         sample = Sample()
         sample.organism = homo_sapiens
