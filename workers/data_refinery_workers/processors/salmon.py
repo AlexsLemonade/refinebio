@@ -55,15 +55,15 @@ def _prepare_files(job_context: Dict) -> Dict:
     # Salmon outputs an entire directory of files, so create a temp
     # directory to output it to until we can zip it to
 
-    pre_part = original_files[0].absolute_file_path.split('/')[:-1]
-    job_context["output_directory"] = '/'.join(pre_part) + '/processed/'
+    pre_part = '/'.join(original_files[0].absolute_file_path.split('/')[:-1])
+    job_context["output_directory"] = pre_part + '/processed/'
     os.makedirs(job_context["output_directory"], exist_ok=True)
-    job_context["input_directory"] = '/'.join(pre_part) + '/'
-    job_context["qc_directory"] = '/'.join(pre_part) + '/qc/'
+    job_context["qc_input_directory"] = pre_part + '/'
+    job_context["qc_directory"] = pre_part + '/qc/'
     os.makedirs(job_context["qc_directory"], exist_ok=True)
 
     timestamp = str(timezone.now().timestamp()).split('.')[0]
-    job_context["output_archive"] = '/'.join(pre_part) + '/result-' + timestamp +  '.tar.gz'
+    job_context["output_archive"] = pre_part + '/result-' + timestamp +  '.tar.gz'
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
     # There should only ever be one per Salmon run
@@ -149,11 +149,21 @@ def _download_index(job_context: Dict) -> Dict:
     this function retrieves the correct index for the organism and
     read length from Permanent Storage.
     """
-    logger.debug("Downloading and installing index..")
+    logger.debug("Fetching and installing index..")
 
     index_type = "TRANSCRIPTOME_" + job_context["index_length"].upper()
     index_object = OrganismIndex.objects.filter(organism=job_context['organism'],
-        index_type=index_type).order_by('created_at')[0]
+            index_type=index_type).order_by('created_at').first()
+
+    if not index_object:
+        logger.error("Could not run Salmon processor without index for organism",
+            organism=job_context['organism'],
+            processor_job=job_context["job_id"]
+        )
+        job_context["failure_reason"] = "Missing transcriptome index."
+        job_context["success"] = False
+        return job_context
+
     result = index_object.result
     files = ComputedFile.objects.filter(result=result)
     job_context["index_unpacked"] = '/'.join(files[0].absolute_file_path.split('/')[:-1])
@@ -263,7 +273,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
 
     """
     command_str = ("multiqc {input_directory} --outdir {qc_directory} --zip-data-dir")
-    formatted_command = command_str.format(input_directory=job_context["input_directory"], 
+    formatted_command = command_str.format(input_directory=job_context["qc_input_directory"], 
                 qc_directory=job_context["qc_directory"])
 
     logger.info("Running MultiQC using the following shell command: %s",
@@ -464,7 +474,7 @@ def _zip_and_upload(job_context: Dict) -> Dict:
                          processor_job=job_context["job_id"]
                         )
         failure_template = "Exception caught while zipping processed directory {}"
-        job_context["job"].failure_reason = failure_template.format(first_file.name)
+        job_context["job"].failure_reason = failure_template.format(job_context['output_archive'])
         job_context["success"] = False
         return job_context
 
@@ -503,4 +513,3 @@ def salmon(job_id: int) -> None:
                         _run_multiqc,
                         _zip_and_upload,
                         utils.end_job])
-
