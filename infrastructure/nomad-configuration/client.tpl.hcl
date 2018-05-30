@@ -12,3 +12,10 @@ client {
 
     servers = ["${nomad_server_address}:4647"]
 }
+
+consul {
+  auto_advertise      = false
+  server_auto_join    = false
+  client_auto_join    = false
+}
+

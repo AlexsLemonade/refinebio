@@ -71,7 +71,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
         # Create the experiment object
         try:
             experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
-            logger.error("Experiment %s already exists, skipping object creation.",
+            logger.debug("Experiment %s already exists, skipping object creation.",
                 experiment_accession_code,
                 survey_job=self.survey_job.id)
         except Experiment.DoesNotExist:
@@ -116,7 +116,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
             try:
                 sample_object = Sample.objects.get(accession_code=sample_accession_code)
-                logger.info("Sample %s from experiment %s already exists, skipping object creation.",
+                logger.debug("Sample %s from experiment %s already exists, skipping object creation.",
                          sample_accession_code,
                          experiment_object.accession_code,
                          survey_job=self.survey_job.id)
