@@ -1,128 +1,128 @@
-			#!/bin/bash
+#!/bin/bash
 
-	##
-	# This script takes your environment variables and uses them to populate
-	# Nomad job specifications, as defined in each project.
-	##
+##
+# This script takes your environment variables and uses them to populate
+# Nomad job specifications, as defined in each project.
+##
 
-	while getopts ":p:e:o:h" opt; do
-	    case $opt in
-		p)
-		    project=$OPTARG
-		    ;;
-		e)
-		    env=$OPTARG
-		    ;;
-		o)
-		    output_dir=$OPTARG
-		    ;;
-		h)
-		    echo "Formats Nomad Job Specifications with the specified environment overlaid "
-		    echo "onto the current environment."
-		    echo '-p specifies the project to format. Valid values are "api", workers" or "foreman".'
-		    echo '- "dev" is the default enviroment, use -e to specify "prod" or "test".'
-		    echo '- the project directory will be used as the default output directory, use -o to specify'
-		    echo '      an absolute path to a directory (trailing / must be included).'
-		    ;;
-		\?)
-		    echo "Invalid option: -$OPTARG" >&2
-		    exit 1
-		    ;;
-		:)
-		    echo "Option -$OPTARG requires an argument." >&2
-		    exit 1
-		    ;;
-	    esac
-	done
-
-	if [[ $project != "workers" && $project != "foreman" && $project != "api" ]]; then
-	    echo 'Error: must specify project as either "api", workers", or "foreman" with -p.'
+while getopts ":p:e:o:h" opt; do
+    case $opt in
+	p)
+	    project=$OPTARG
+	    ;;
+	e)
+	    env=$OPTARG
+	    ;;
+	o)
+	    output_dir=$OPTARG
+	    ;;
+	h)
+	    echo "Formats Nomad Job Specifications with the specified environment overlaid "
+	    echo "onto the current environment."
+	    echo '-p specifies the project to format. Valid values are "api", workers" or "foreman".'
+	    echo '- "dev" is the default enviroment, use -e to specify "prod" or "test".'
+	    echo '- the project directory will be used as the default output directory, use -o to specify'
+	    echo '      an absolute path to a directory (trailing / must be included).'
+	    ;;
+	\?)
+	    echo "Invalid option: -$OPTARG" >&2
 	    exit 1
-	fi
+	    ;;
+	:)
+	    echo "Option -$OPTARG requires an argument." >&2
+	    exit 1
+	    ;;
+    esac
+done
 
-	if [[ -z $env ]]; then
-	    # XXX: for now dev==local and prod==cloud. This works because we
-	    # don't have a true prod environment yet so using prod for cloud
-	    # development is okay, but we definitely need to address
-	    # https://github.com/AlexsLemonade/refinebio/issues/199 before we
-	    # create an actual prod environment.
-	    env="dev"
-	fi
+if [[ $project != "workers" && $project != "foreman" && $project != "api" ]]; then
+    echo 'Error: must specify project as either "api", workers", or "foreman" with -p.'
+    exit 1
+fi
 
-	# Default docker images.
-	# These should work for local and test environments, but we want to
-	# let these be set outside the script so only set them if they aren't
-	# already set.
-	if [[ -z $FOREMAN_DOCKER_IMAGE ]]; then
-	    export FOREMAN_DOCKER_IMAGE=localhost:5000/ccdl/dr_foreman
-	fi
-	if [[ -z $DOWNLOADERS_DOCKER_IMAGE ]]; then
-	    export DOWNLOADERS_DOCKER_IMAGE=localhost:5000/ccdl/dr_downloaders
-	fi
-	if [[ -z $TRANSCRIPTOME_DOCKER_IMAGE ]]; then
-	    export TRANSCRIPTOME_DOCKER_IMAGE=localhost:5000/ccdl/dr_transcriptome
-	fi
-	if [[ -z $SALMON_DOCKER_IMAGE ]]; then
-	    export SALMON_DOCKER_IMAGE=localhost:5000/ccdl/dr_salmon
-	fi
-	if [[ -z $AFFYMETRIX_DOCKER_IMAGE ]]; then
-	    export AFFYMETRIX_DOCKER_IMAGE=ccdl/dr_affymetrix
-	fi
-	if [[ -z $ILLUMINA_DOCKER_IMAGE ]]; then
-	    export ILLUMINA_DOCKER_IMAGE=ccdl/dr_illumina
-	fi
-	if [[ -z $NO_OP_DOCKER_IMAGE ]]; then
-	    export NO_OP_DOCKER_IMAGE=localhost:5000/ccdl/dr_no_op
-	fi
+if [[ -z $env ]]; then
+    # XXX: for now dev==local and prod==cloud. This works because we
+    # don't have a true prod environment yet so using prod for cloud
+    # development is okay, but we definitely need to address
+    # https://github.com/AlexsLemonade/refinebio/issues/199 before we
+    # create an actual prod environment.
+    env="dev"
+fi
 
-	# This script should always run from the context of the directory of
-	# the project it is building.
-	script_directory=`perl -e 'use File::Basename;
-	 use Cwd "abs_path";
-	 print dirname(abs_path(@ARGV[0]));' -- "$0"`
-	cd $script_directory/$project
+# Default docker images.
+# These should work for local and test environments, but we want to
+# let these be set outside the script so only set them if they aren't
+# already set.
+if [[ -z $FOREMAN_DOCKER_IMAGE ]]; then
+    export FOREMAN_DOCKER_IMAGE=localhost:5000/ccdl/dr_foreman
+fi
+if [[ -z $DOWNLOADERS_DOCKER_IMAGE ]]; then
+    export DOWNLOADERS_DOCKER_IMAGE=localhost:5000/ccdl/dr_downloaders
+fi
+if [[ -z $TRANSCRIPTOME_DOCKER_IMAGE ]]; then
+    export TRANSCRIPTOME_DOCKER_IMAGE=localhost:5000/ccdl/dr_transcriptome
+fi
+if [[ -z $SALMON_DOCKER_IMAGE ]]; then
+    export SALMON_DOCKER_IMAGE=localhost:5000/ccdl/dr_salmon
+fi
+if [[ -z $AFFYMETRIX_DOCKER_IMAGE ]]; then
+    export AFFYMETRIX_DOCKER_IMAGE=ccdl/dr_affymetrix
+fi
+if [[ -z $ILLUMINA_DOCKER_IMAGE ]]; then
+    export ILLUMINA_DOCKER_IMAGE=ccdl/dr_illumina
+fi
+if [[ -z $NO_OP_DOCKER_IMAGE ]]; then
+    export NO_OP_DOCKER_IMAGE=localhost:5000/ccdl/dr_no_op
+fi
 
-	# It's important that these are run first so they will be overwritten
-	# by environment variables.
-	source ../common.sh
-	export DB_HOST_IP=$(get_docker_db_ip_address)
-	export NOMAD_HOST_IP=$(get_ip_address)
+# This script should always run from the context of the directory of
+# the project it is building.
+script_directory=`perl -e 'use File::Basename;
+ use Cwd "abs_path";
+ print dirname(abs_path(@ARGV[0]));' -- "$0"`
+cd $script_directory/$project
 
-	if [ $env == "test" ]; then
-	    export VOLUME_DIR=$script_directory/test_volume
-	    # Prevent test Nomad job specifications from overwriting
-	    # existing Nomad job specifications.
-	    export TEST_POSTFIX="_test"
-	elif [ $env == "prod" ]; then
-	    # In production we use EFS as the mount.
-	    export VOLUME_DIR=/var/efs
-	else
-	    export VOLUME_DIR=$script_directory/volume
-	fi
+# It's important that these are run first so they will be overwritten
+# by environment variables.
+source ../common.sh
+export DB_HOST_IP=$(get_docker_db_ip_address)
+export NOMAD_HOST_IP=$(get_ip_address)
 
-	# We need to specify the database and Nomad hosts for development, but
-	# not for production because we just point directly at the RDS/Nomad
-	# instances.
-	# Conversely, in prod we need AWS credentials and a logging config but
-	# not in development.
-	# We do these with multi-line environment variables so that they can
-	# be formatted into development job specs.
-	if [ $env != "prod" ]; then
-	    export EXTRA_HOSTS="
-		extra_hosts = [\"database:$DB_HOST_IP\",
-			       \"nomad:$NOMAD_HOST_IP\"]
-	"
-	    export AWS_CREDS=""
-	    export LOGGING_CONFIG=""
-	    environment_file="environments/$env"
-	else
-	    export EXTRA_HOSTS=""
-	    export AWS_CREDS="
-		AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
-		AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
-	    # When deploying prod we write the output of Terraform to a
-	    # temporary environment file.
-	    environment_file="$script_directory/infrastructure/prod_env"
+if [ $env == "test" ]; then
+    export VOLUME_DIR=$script_directory/test_volume
+    # Prevent test Nomad job specifications from overwriting
+    # existing Nomad job specifications.
+    export TEST_POSTFIX="_test"
+elif [ $env == "prod" ]; then
+    # In production we use EFS as the mount.
+    export VOLUME_DIR=/var/efs
+else
+    export VOLUME_DIR=$script_directory/volume
+fi
+
+# We need to specify the database and Nomad hosts for development, but
+# not for production because we just point directly at the RDS/Nomad
+# instances.
+# Conversely, in prod we need AWS credentials and a logging config but
+# not in development.
+# We do these with multi-line environment variables so that they can
+# be formatted into development job specs.
+if [ $env != "prod" ]; then
+    export EXTRA_HOSTS="
+	extra_hosts = [\"database:$DB_HOST_IP\",
+		       \"nomad:$NOMAD_HOST_IP\"]
+"
+    export AWS_CREDS=""
+    export LOGGING_CONFIG=""
+    environment_file="environments/$env"
+else
+    export EXTRA_HOSTS=""
+    export AWS_CREDS="
+	AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
+	AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
+    # When deploying prod we write the output of Terraform to a
+    # temporary environment file.
+    environment_file="$script_directory/infrastructure/prod_env"
 fi
 
 # Read all environment variables from the file for the appropriate
