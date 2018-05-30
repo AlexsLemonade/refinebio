@@ -111,8 +111,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         try:
             experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
             logger.debug("Experiment already exists, skipping object creation.",
-                experiment_accession_code=experiment_accession_code,
-                survey_job=self.survey_job.id)
+                         experiment_accession_code=experiment_accession_code,
+                         survey_job=self.survey_job.id)
         except Experiment.DoesNotExist:
 
             experiment_object = Experiment()
