@@ -1,7 +1,7 @@
 from urllib.error import URLError
 from typing import List
 from unittest.mock import patch, call
-from django.test import TestCase
+from django.test import TestCase, tag
 from data_refinery_common.models import (
     SurveyJob,
     DownloaderJob,
@@ -22,6 +22,7 @@ class DownloadSraTestCase(TestCase):
     def insert_objects(self):
         return
 
+    @tag('downloaders')
     @patch('data_refinery_workers.downloaders.utils.send_job')
     def test_download_file(self, mock_send_job):
         mock_send_job.return_value = None

@@ -1,5 +1,6 @@
 import os
 import json
+import urllib
 from unittest.mock import Mock, patch, call
 from django.test import TestCase
 from urllib.request import URLError
@@ -65,3 +66,33 @@ class SurveyTestCase(TestCase):
                      downloader_job.id))
 
         mock_send_job.assert_has_calls(send_job_calls)
+
+    def test_correct_index_location(self):
+        """ Tests that the files returned actually exist.
+        This will break whenever this is a new Ensembl release.
+        """
+
+        survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
+        survey_job.save()
+        self.survey_job = survey_job
+
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                           key="ensembl_division",
+                                           value="Ensembl")
+        key_value_pair.save()
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                                key="number_of_organisms",
+                                                value=1)
+        key_value_pair.save()
+        
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                                key="organism_name",
+                                                value="Danio rerio")
+        key_value_pair.save()
+
+        surveyor = TranscriptomeIndexSurveyor(self.survey_job)
+        files = surveyor.discover_species()[0]
+
+        # This will URLError/550 is there is a new release
+        for file in files:
+            urllib.request.urlopen(file.source_url)

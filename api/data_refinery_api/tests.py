@@ -54,6 +54,7 @@ class SanityTestAllEndpoints(APITestCase):
 
         sample = Sample()
         sample.save()
+        self.sample = sample
 
         sample_annotation = SampleAnnotation()
         sample_annotation.data = {"goodbye": "world", "789": 123}
@@ -105,6 +106,9 @@ class SanityTestAllEndpoints(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse('samples'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(reverse('samples'), {'ids': str(self.sample.id) + ',1000'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse('samples'), kwargs={'page': 1})
@@ -165,7 +169,7 @@ class SanityTestAllEndpoints(APITestCase):
         experiments = []
         for x in range(1, LOTS):
             ex = Experiment()
-            ex.accession_code = "".join(random.choice(words) for i in range(3)) + str(random.randint(0, 1000))
+            ex.accession_code = "".join(random.choice(words) for i in range(3)) + str(random.randint(0, 1000))[:64]
             ex.title =  " ".join(random.choice(words) for i in range(10))
             ex.description = " ".join(random.choice(words) for i in range(100))
             ex.technology = random.choice(["RNA-SEQ", "MICROARRAY"])

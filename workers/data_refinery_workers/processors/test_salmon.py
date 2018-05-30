@@ -2,7 +2,7 @@ import hashlib
 import os
 import shutil
 from contextlib import closing
-from django.test import TestCase
+from django.test import TestCase, tag
 from unittest.mock import MagicMock
 from data_refinery_common.models import (
     SurveyJob,
@@ -17,14 +17,13 @@ from data_refinery_common.models import (
     OriginalFileSampleAssociation
 )
 from data_refinery_workers.processors import salmon, utils
-import pandas as pd
 
 def prepare_job():
     pj = ProcessorJob()
     pj.pipeline_applied = "SALMON"
     pj.save()
 
-    homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+    homo_sapiens = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
 
     samp = Sample()
     samp.organism = homo_sapiens
@@ -40,22 +39,22 @@ def prepare_job():
     organism_index.save()
 
     comp_file = ComputedFile()
-    comp_file.absolute_file_path = "/home/user/data_store/processed/TEST/TRANSCRIPTOME_INDEX/Homo_sapiens_short.tar.gz"
+    comp_file.absolute_file_path = "/home/user/data_store/processed/TEST/TRANSCRIPTOME_INDEX/Caenorhabditis_elegans_short_1527089586.tar.gz"
     comp_file.result = computational_result
     comp_file.calculate_size()
     comp_file.calculate_sha1()
     comp_file.save()
 
     og_file = OriginalFile()
-    og_file.source_filename = "ERR003000_1.fastq.gz"
-    og_file.filename = "ERR003000_1.fastq.gz"
-    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR003000_1.fastq.gz"
+    og_file.source_filename = "ERR1562482_1.fastq.gz"
+    og_file.filename = "ERR1562482_1.fastq.gz"
+    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR1562482_1.fastq.gz"
     og_file.save()
 
     og_file2 = OriginalFile()
-    og_file2.source_filename = "ERR003000_2.fastq.gz"
-    og_file2.filename = "ERR003000_2.fastq.gz"
-    og_file2.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR003000_2.fastq.gz"
+    og_file2.source_filename = "ERR1562482_2.fastq.gz"
+    og_file2.filename = "ERR1562482_2.fastq.gz"
+    og_file2.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR1562482_2.fastq.gz"
     og_file2.save()
 
     og_file_samp_assoc = OriginalFileSampleAssociation()
@@ -78,7 +77,7 @@ def prepare_job():
     assoc1.processor_job = pj
     assoc1.save()
 
-    return pj
+    return pj, [og_file, og_file2]
 
 
 def identical_checksum(file1, file2):
@@ -90,11 +89,53 @@ def identical_checksum(file1, file2):
 
 class SalmonTestCase(TestCase):
 
+    @tag('salmon')
     def test_salmon(self):
         """ """
-        job = prepare_job()
-        salmon.salmon(job.pk)
+        # Ensure any computed files from previous tests are removed.
+        try:
+            os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
+        except FileNotFoundError:
+            pass
 
+        job, files = prepare_job()
+        salmon.salmon(job.pk)
+        job = ProcessorJob.objects.get(id=job.pk)
+        self.assertTrue(job.success)
+
+    def test_fastqc(self):
+
+        job, og_files = prepare_job()
+        win_context = {
+            'job': job,
+            'job_id': 789,
+            'qc_directory': "/home/user/data_store/raw/TEST/SALMON/qc",
+            'original_files': og_files,
+            'success': True
+        }
+
+        # Ensure clean testdir
+        shutil.rmtree(win_context['qc_directory'], ignore_errors=True)
+        os.makedirs(win_context['qc_directory'], exist_ok=True)
+        win_context = salmon._prepare_files(win_context)
+
+        win = salmon._run_fastqc(win_context)
+        self.assertTrue(win['success'])
+        win = salmon._run_multiqc(win_context)
+        self.assertTrue(win['success'])
+
+        for file in win['qc_files']:
+            self.assertTrue(os.path.isfile(file.absolute_file_path))
+
+        fail_context = {
+            'job': job,
+            'job_id': 'hippityhoppity',
+            'qc_directory': "/home/user/data_store/raw/TEST/SALMON/derp",
+            'original_files': [],
+            'success': True
+        }       
+        fail = salmon._run_fastqc(fail_context)
+        self.assertFalse(fail['success']) 
 
 class SalmonToolsTestCase(TestCase):
     """Test SalmonTools command."""
@@ -102,7 +143,9 @@ class SalmonToolsTestCase(TestCase):
     def setUp(self):
         self.test_dir = '/home/user/data_store/salmontools/'
 
+    @tag('salmon')
     def test_double_reads(self):
+
         job_context = {
             'job_id': 123,
             'input_file_path': self.test_dir + 'double_input/reads_1.fastq',
@@ -110,6 +153,13 @@ class SalmonToolsTestCase(TestCase):
             'output_directory': self.test_dir + 'double_output/'
         }
         job_context["job"] = ProcessorJob()
+
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        sample = Sample()
+        sample.organism = homo_sapiens
+        sample.save()
+        job_context["sample"] = sample
+
         salmon._run_salmontools(job_context, False)
 
         # Confirm job status
@@ -124,6 +174,7 @@ class SalmonToolsTestCase(TestCase):
         expected_output_file2 = self.test_dir + 'expected_double_output/unmapped_by_salmon_2.fa'
         self.assertTrue(identical_checksum(output_file2, expected_output_file2))
 
+    @tag('salmon')
     def test_single_read(self):
         job_context = {
             'job_id': 456,
@@ -131,6 +182,13 @@ class SalmonToolsTestCase(TestCase):
             'output_directory': self.test_dir + 'single_output/'
         }
         job_context["job"] = ProcessorJob()
+        
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        sample = Sample()
+        sample.organism = homo_sapiens
+        sample.save()
+        job_context["sample"] = sample
+
         salmon._run_salmontools(job_context, False)
 
         # Confirm job status
