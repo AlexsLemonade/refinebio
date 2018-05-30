@@ -79,6 +79,9 @@ class Sample(models.Model):
         self.last_modified = current_time
         return super(Sample, self).save(*args, **kwargs)
 
+    def get_result_files(self):
+        """ Get all of the ComputedFile objects associated with this Sample """
+        return ComputedFile.objects.filter(result__in=self.results.all())
 
 class SampleAnnotation(models.Model):
     """ Semi-standard information associated with a Sample """
@@ -423,7 +426,7 @@ class Dataset(models.Model):
     aggregate_by = models.CharField(max_length=255, choices=AGGREGATE_CHOICES, default="EXPERIMENT")
 
     # State properties
-    is_processing = models.BooleanField(default=False) # Data is still editable
+    is_processing = models.BooleanField(default=False) # Data is still editable when False
     is_processed = models.BooleanField(default=False) # Result has been made
     is_available = models.BooleanField(default=False) # Result is ready for delivery
 
@@ -445,7 +448,28 @@ class Dataset(models.Model):
         if not self.id:
             self.created_at = current_time
         self.last_modified = current_time
-        return super(Dataset, self).save(*args, **kwargs)    
+        return super(Dataset, self).save(*args, **kwargs)
+
+
+    def get_samples(self):
+        """ Retuns all of the Sample objects in this Dataset """
+
+        all_samples = []
+        for sample_list in self.data.values(): 
+            all_samples = all_samples + sample_list
+        all_samples = list(set(all_samples))
+
+        return Sample.objects.filter(accession_code__in=all_samples)
+
+    def get_experiments(self):
+        """ Retuns all of the Experiments objects in this Dataset """
+
+        all_experiments = []
+        for experiment in self.data.keys(): 
+            all_experiments.append(experiment)
+        all_experiments = list(set(all_experiments))
+
+        return Experiment.objects.filter(accession_code__in=all_experiments)
 
 """
 # Associations

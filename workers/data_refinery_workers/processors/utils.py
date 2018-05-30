@@ -4,8 +4,9 @@ from data_refinery_common.models import (
     ProcessorJob, 
     Sample,
     OriginalFile,
+    Dataset,
     ProcessorJobOriginalFileAssociation,
-    ProcessorJobDatasetAssociation
+    ProcessorJobDatasetAssociation,
     OriginalFileSampleAssociation
 )
 from data_refinery_common.utils import get_worker_id
@@ -51,7 +52,13 @@ def start_job(job_context: Dict):
         relations = ProcessorJobDatasetAssociation.objects.filter(processor_job=job)
 
         # This should never be more than one!
-        job_context["dataset"] = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+        dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+        dataset.is_processing = True
+        dataset.save()
+
+        job_context["dataset"] = dataset
+        job_context["samples"] = dataset.get_samples()
+        job_context["experiments"] = dataset.get_experiments()
 
         # Just in case
         job_context["original_files"] = []
@@ -81,9 +88,8 @@ def end_job(job_context: Dict):
     else:
         logger.info("Processor job failed!", processor_job=job.id)
 
-    # Every processor returns a dict, however end_job is always called
-    # last so it doesn't need to contain anything.
-    return {}
+    # Return Final Job context so testers can check it
+    return job_context
 
 
 def upload_processed_files(job_context: Dict) -> Dict:
@@ -186,11 +192,11 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
                              processor.__name__,
                              processor_job=job_id)
             last_result["success"] = False
-            end_job(last_result)
+            return end_job(last_result)
         if "success" in last_result and last_result["success"] is False:
             logger.error("Processor function %s failed. Terminating pipeline.",
                          processor.__name__,
                          processor_job=job_id,
                          failure_reason=last_result["job"].failure_reason)
-            end_job(last_result)
-            break
+            return end_job(last_result)
+    return last_result
