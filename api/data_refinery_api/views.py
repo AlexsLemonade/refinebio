@@ -22,8 +22,8 @@ from data_refinery_common.models import (
     ProcessorJob,
     Dataset
 )
-from data_refinery_api.serializers import ( 
-    ExperimentSerializer, 
+from data_refinery_api.serializers import (
+    ExperimentSerializer,
     DetailedExperimentSerializer,
     SampleSerializer,
     DetailedSampleSerializer,
@@ -96,7 +96,7 @@ class SearchAndFilter(generics.ListAPIView):
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
     search_fields = ('title', '@description')
     filter_fields = ('has_publication', 'submitter_institution', 'technology', 'source_first_published')
-    
+
 
     def list(self, request, *args, **kwargs):
         """ Adds counts on certain filter fields to result JSON."""
@@ -299,8 +299,8 @@ class PlatformList(APIView):
 	"""
 
     def get(self, request, format=None):
-        experiments = Experiment.objects.all().values("platform_accession_code", "platform_name").distinct()
-        serializer = PlatformSerializer(experiments, many=True)
+        samples = Sample.objects.all().values("platform_accession_code", "platform_name").distinct()
+        serializer = PlatformSerializer(samples, many=True)
         return Response(serializer.data)
 
 class InstitutionList(APIView):
@@ -414,4 +414,3 @@ class Stats(APIView):
         data['processor_jobs']['average_time'] = ProcessorJob.objects.filter(start_time__isnull=False, end_time__isnull=False).aggregate(average_time=Avg(F('end_time') - F('start_time')))['average_time']
 
         return Response(data)
-

@@ -138,6 +138,7 @@ class Experiment(models.Model):
     title = models.TextField()
     description = models.TextField()
     protocol_description = models.TextField(default="")
+    technology = models.CharField(max_length=256, blank=True)
     submitter_institution = models.CharField(max_length=256, blank=True)
     has_publication = models.BooleanField(default=False)
     publication_title = models.TextField(default="")
@@ -391,7 +392,7 @@ class ComputedFile(models.Model):
     def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
-        hash_object = hashlib.sha1() 
+        hash_object = hashlib.sha1()
         with open(self.absolute_file_path, mode='rb') as open_file:
             for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
                 hash_object.update(buf)
@@ -447,12 +448,12 @@ class Dataset(models.Model):
         if not self.id:
             self.created_at = current_time
         self.last_modified = current_time
-        return super(Dataset, self).save(*args, **kwargs)    
+        return super(Dataset, self).save(*args, **kwargs)
 
 """
 # Associations
 
-These represent the relationships between items in the other tables. 
+These represent the relationships between items in the other tables.
 """
 
 class ExperimentSampleAssociation(models.Model):
