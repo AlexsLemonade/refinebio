@@ -22,6 +22,7 @@ from data_refinery_common.models.models import (
     ProcessorJobOriginalFileAssociation,
     SampleResultAssociation,
     ExperimentOrganismAssociation,
-    Dataset
+    Dataset,
+    ProcessorJobDatasetAssociation
 )
 
