@@ -64,8 +64,8 @@ class SraSurveyor(ExternalSourceSurveyor):
         submission_metadata = submission_xml.attrib
 
         # We already have these
-        submission_metadata.pop("accession")
-        submission_metadata.pop("alias")
+        submission_metadata.pop("accession", '')
+        submission_metadata.pop("alias", '')
 
         metadata.update(submission_metadata)
 
@@ -180,6 +180,7 @@ class SraSurveyor(ExternalSourceSurveyor):
     @staticmethod
     def gather_run_metadata(run_accession: str) -> Dict:
         """A run refers to a specific read in an experiment."""
+
         discoverable_accessions = ["study_accession", "sample_accession", "submission_accession"]
         response = utils.requests_retry_session().get(
             ENA_METADATA_URL_TEMPLATE.format(run_accession))
@@ -297,6 +298,16 @@ class SraSurveyor(ExternalSourceSurveyor):
         else:
             files_urls = [SraSurveyor._build_file_url(run_accession)]
 
+        # Figure out the Organism for this sample
+        organism_name = metadata.pop("organism_name", None)
+        if not organism_name:
+            logger.error("Could not discover organism type for run.",
+                         accession=run_accession)
+            return (None, None)  # This will cascade properly
+
+        organism_name = organism_name.upper()
+        organism = Organism.get_object_for_name(organism_name)
+
         #
         # Experiment
         #
@@ -304,7 +315,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         experiment_accession_code = metadata.get('study_accession')
         try:
             experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
-            logger.error("Experiment already exists, skipping object creation.",
+            logger.debug("Experiment already exists, skipping object creation.",
                          experiment_accession_code=experiment_accession_code,
                          survey_job=self.survey_job.id)
         except Experiment.DoesNotExist:
@@ -337,30 +348,31 @@ class SraSurveyor(ExternalSourceSurveyor):
                 experiment_object.source_last_modified = parse_datetime(
                     metadata["study_ena_last_update"])
 
+            # Rare, but it happens.
+            if not experiment_object.protocol_description:
+                experiment_object.protocol_description = metadata.get(
+                    "library_construction_protocol", "Protocol was never provided.")
+
             experiment_object.save()
 
-            ##
+            #
             # Experiment Metadata
-            ##
+            #
             json_xa = ExperimentAnnotation()
             json_xa.experiment = experiment_object
             json_xa.data = metadata
             json_xa.is_ccdl = False
             json_xa.save()
 
-        ##
+        #
         # Samples
-        ##
-
-        # Figure out the Organism for this sample
-        organism_name = metadata.pop("organism_name").upper()
-        organism = Organism.get_object_for_name(organism_name)
+        #
 
         sample_accession_code = metadata.pop('sample_accession')
         # Create the sample object
         try:
             sample_object = Sample.objects.get(accession_code=sample_accession_code)
-            logger.error("Sample %s already exists, skipping object creation.",
+            logger.debug("Sample %s already exists, skipping object creation.",
                          sample_accession_code,
                          experiment_accession_code=experiment_object.accession_code,
                          survey_job=self.survey_job.id)
@@ -437,7 +449,50 @@ class SraSurveyor(ExternalSourceSurveyor):
         survey_job = SurveyJob.objects.get(id=self.survey_job.id)
         survey_job_properties = survey_job.get_properties()
         accession = survey_job_properties["accession"]
-        logger.debug("Surveying SRA Run Accession %s",
-                     accession,
-                     survey_job=self.survey_job.id)
-        return self._generate_experiment_and_samples(accession)
+
+        # SRA Surveyor is mainly designed for SRRs, this handles SRPs
+        if 'SRP' in accession or 'ERP' in accession or 'DRP' in accession:
+            response = utils.requests_retry_session().get(
+                ENA_METADATA_URL_TEMPLATE.format(accession))
+            experiment_xml = ET.fromstring(response.text)[0]
+            study_links = experiment_xml[2]  # STUDY_LINKS
+
+            accessions_to_run = []
+            for child in study_links:
+                if child[0][0].text == 'ENA-RUN':
+
+                    all_runs = child[0][1].text
+
+                    # Ranges can be disjoint, separated by commas
+                    run_segments = all_runs.split(',')
+                    for segment in run_segments:
+                        if '-' in segment:
+                            start, end = segment.split('-')
+                        else:
+                            start = segment
+                            end = segment
+                        start_id = start[3::]
+                        end_id = end[3::]
+
+                        for run_id in range(int(start_id), int(end_id) + 1):
+                            accessions_to_run.append(accession[0] + "RR" + str(run_id))
+                    break
+
+            all_samples = []
+            for run_id in accessions_to_run:
+                logger.debug("Surveying SRA Run Accession %s for Experiment %s",
+                             run_id,
+                             accession,
+                             survey_job=self.survey_job.id)
+
+                experiment, samples = self._generate_experiment_and_samples(run_id)
+                all_samples += samples
+
+            # Experiment will always be the same
+            return experiment, all_samples
+
+        else:
+            logger.debug("Surveying SRA Run Accession %s",
+                         accession,
+                         survey_job=self.survey_job.id)
+            return self._generate_experiment_and_samples(accession)

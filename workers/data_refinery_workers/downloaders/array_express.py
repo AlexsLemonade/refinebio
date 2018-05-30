@@ -120,6 +120,7 @@ def download_array_express(job_id: int) -> None:
             original_file.is_downloaded = True
             original_file.is_archive = False
             original_file.absolute_file_path = og_file['absolute_path']
+            original_file.filename = og_file['absolute_path'].split('/')[-1]
             original_file.calculate_size()
             original_file.save()
             original_file.calculate_sha1()

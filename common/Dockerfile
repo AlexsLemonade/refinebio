@@ -3,6 +3,8 @@ FROM python:3.6.1-slim
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
+RUN pip install --upgrade pip
+
 COPY config config
 
 COPY common/requirements.txt .
