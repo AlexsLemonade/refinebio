@@ -1,98 +1,128 @@
-#!/bin/bash
+			#!/bin/bash
 
-##
-# This script takes your environment variables and uses them to populate
-# Nomad job specifications, as defined in each project.
-##
+	##
+	# This script takes your environment variables and uses them to populate
+	# Nomad job specifications, as defined in each project.
+	##
 
-while getopts ":p:e:o:h" opt; do
-    case $opt in
-        p)
-            project=$OPTARG
-            ;;
-        e)
-            env=$OPTARG
-            ;;
-        o)
-            output_dir=$OPTARG
-            ;;
-        h)
-            echo "Formats Nomad Job Specifications with the specified environment overlaid "
-            echo "onto the current environment."
-            echo '-p specifies the project to format. Valid values are "api", workers" or "foreman".'
-            echo '- "dev" is the default enviroment, use -e to specify "prod" or "test".'
-            echo '- the project directory will be used as the default output directory, use -o to specify'
-            echo '      an absolute path to a directory (trailing / must be included).'
-            ;;
-        \?)
-            echo "Invalid option: -$OPTARG" >&2
-            exit 1
-            ;;
-        :)
-            echo "Option -$OPTARG requires an argument." >&2
-            exit 1
-            ;;
-    esac
-done
+	while getopts ":p:e:o:h" opt; do
+	    case $opt in
+		p)
+		    project=$OPTARG
+		    ;;
+		e)
+		    env=$OPTARG
+		    ;;
+		o)
+		    output_dir=$OPTARG
+		    ;;
+		h)
+		    echo "Formats Nomad Job Specifications with the specified environment overlaid "
+		    echo "onto the current environment."
+		    echo '-p specifies the project to format. Valid values are "api", workers" or "foreman".'
+		    echo '- "dev" is the default enviroment, use -e to specify "prod" or "test".'
+		    echo '- the project directory will be used as the default output directory, use -o to specify'
+		    echo '      an absolute path to a directory (trailing / must be included).'
+		    ;;
+		\?)
+		    echo "Invalid option: -$OPTARG" >&2
+		    exit 1
+		    ;;
+		:)
+		    echo "Option -$OPTARG requires an argument." >&2
+		    exit 1
+		    ;;
+	    esac
+	done
 
-if [[ $project != "workers" && $project != "foreman" && $project != "api" ]]; then
-    echo 'Error: must specify project as either "api", workers", or "foreman" with -p.'
-    exit 1
-fi
+	if [[ $project != "workers" && $project != "foreman" && $project != "api" ]]; then
+	    echo 'Error: must specify project as either "api", workers", or "foreman" with -p.'
+	    exit 1
+	fi
 
-if [[ -z $env ]]; then
-    # XXX: for now dev==local and prod==cloud. This works because we
-    # don't have a true prod environment yet so using prod for cloud
-    # development is okay, but we definitely need to address
-    # https://github.com/AlexsLemonade/refinebio/issues/199 before we
-    # create an actual prod environment.
-    env="dev"
-fi
+	if [[ -z $env ]]; then
+	    # XXX: for now dev==local and prod==cloud. This works because we
+	    # don't have a true prod environment yet so using prod for cloud
+	    # development is okay, but we definitely need to address
+	    # https://github.com/AlexsLemonade/refinebio/issues/199 before we
+	    # create an actual prod environment.
+	    env="dev"
+	fi
 
-# This script should always run from the context of the directory of
-# the project it is building.
-script_directory=`perl -e 'use File::Basename;
- use Cwd "abs_path";
- print dirname(abs_path(@ARGV[0]));' -- "$0"`
-cd $script_directory/$project
+	# Default docker images.
+	# These should work for local and test environments, but we want to
+	# let these be set outside the script so only set them if they aren't
+	# already set.
+	if [[ -z $FOREMAN_DOCKER_IMAGE ]]; then
+	    export FOREMAN_DOCKER_IMAGE=localhost:5000/ccdl/dr_foreman
+	fi
+	if [[ -z $DOWNLOADERS_DOCKER_IMAGE ]]; then
+	    export DOWNLOADERS_DOCKER_IMAGE=localhost:5000/ccdl/dr_downloaders
+	fi
+	if [[ -z $TRANSCRIPTOME_DOCKER_IMAGE ]]; then
+	    export TRANSCRIPTOME_DOCKER_IMAGE=localhost:5000/ccdl/dr_transcriptome
+	fi
+	if [[ -z $SALMON_DOCKER_IMAGE ]]; then
+	    export SALMON_DOCKER_IMAGE=localhost:5000/ccdl/dr_salmon
+	fi
+	if [[ -z $AFFYMETRIX_DOCKER_IMAGE ]]; then
+	    export AFFYMETRIX_DOCKER_IMAGE=ccdl/dr_affymetrix
+	fi
+	if [[ -z $ILLUMINA_DOCKER_IMAGE ]]; then
+	    export ILLUMINA_DOCKER_IMAGE=ccdl/dr_illumina
+	fi
+	if [[ -z $NO_OP_DOCKER_IMAGE ]]; then
+	    export NO_OP_DOCKER_IMAGE=localhost:5000/ccdl/dr_no_op
+	fi
 
-# It's important that these are run first so they will be overwritten
-# by environment variables.
-source ../common.sh
-export DB_HOST_IP=$(get_docker_db_ip_address)
-export NOMAD_HOST_IP=$(get_ip_address)
+	# This script should always run from the context of the directory of
+	# the project it is building.
+	script_directory=`perl -e 'use File::Basename;
+	 use Cwd "abs_path";
+	 print dirname(abs_path(@ARGV[0]));' -- "$0"`
+	cd $script_directory/$project
 
-if [ $env == "test" ]; then
-    export VOLUME_DIR=$script_directory/test_volume
-    # Prevent test Nomad job specifications from overwriting
-    # existing Nomad job specifications.
-    export TEST_POSTFIX="_test"
-elif [ $env == "prod" ]; then
-    # In production we use EFS as the mount.
-    export VOLUME_DIR=/var/efs
-else
-    export VOLUME_DIR=$script_directory/volume
-fi
+	# It's important that these are run first so they will be overwritten
+	# by environment variables.
+	source ../common.sh
+	export DB_HOST_IP=$(get_docker_db_ip_address)
+	export NOMAD_HOST_IP=$(get_ip_address)
 
-# We need to specify the database and Nomad hosts for development, but
-# not for production because we just point directly at the RDS/Nomad
-# instances.
-# Conversely, in prod we need AWS credentials and a logging config but
-# not in development.
-# We do these with multi-line environment variables so that they can
-# be formatted into development job specs.
-if [ $env != "prod" ]; then
-    export EXTRA_HOSTS="
-        extra_hosts = [\"database:$DB_HOST_IP\",
-                       \"nomad:$NOMAD_HOST_IP\"]
-"
-    export AWS_CREDS=""
-    export LOGGING_CONFIG=""
-else
-    export EXTRA_HOSTS=""
-    export AWS_CREDS="
-        AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
-        AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
+	if [ $env == "test" ]; then
+	    export VOLUME_DIR=$script_directory/test_volume
+	    # Prevent test Nomad job specifications from overwriting
+	    # existing Nomad job specifications.
+	    export TEST_POSTFIX="_test"
+	elif [ $env == "prod" ]; then
+	    # In production we use EFS as the mount.
+	    export VOLUME_DIR=/var/efs
+	else
+	    export VOLUME_DIR=$script_directory/volume
+	fi
+
+	# We need to specify the database and Nomad hosts for development, but
+	# not for production because we just point directly at the RDS/Nomad
+	# instances.
+	# Conversely, in prod we need AWS credentials and a logging config but
+	# not in development.
+	# We do these with multi-line environment variables so that they can
+	# be formatted into development job specs.
+	if [ $env != "prod" ]; then
+	    export EXTRA_HOSTS="
+		extra_hosts = [\"database:$DB_HOST_IP\",
+			       \"nomad:$NOMAD_HOST_IP\"]
+	"
+	    export AWS_CREDS=""
+	    export LOGGING_CONFIG=""
+	    environment_file="environments/$env"
+	else
+	    export EXTRA_HOSTS=""
+	    export AWS_CREDS="
+		AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
+		AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
+	    # When deploying prod we write the output of Terraform to a
+	    # temporary environment file.
+	    environment_file="$script_directory/infrastructure/prod_env"
 fi
 
 # Read all environment variables from the file for the appropriate
@@ -103,7 +133,7 @@ while read line; do
     if [[ -n $line ]] && [[ -z $is_comment ]]; then
         export $line
     fi
-done < "environments/$env"
+done < $environment_file
 
 # There is a current outstanding Nomad issue for the ability to
 # template environment variables into the job specifications. Until
@@ -111,12 +141,16 @@ done < "environments/$env"
 # issue can be found here:
 # https://github.com/hashicorp/nomad/issues/1185
 
-if [[ ! -z $output_dir && ! -d "$output_dir" ]]; then
+# If output_dir wasn't specified then assume the same folder we're
+# getting the templates from.
+if [[ -z $output_dir ]]; then
+    output_dir=nomad-job-specs
+elif [[ ! -d "$output_dir" ]]; then
     mkdir $output_dir
 fi
 
 export_log_conf (){
-    if [[ $env == 'prod' ]]; then    
+    if [[ $env == 'prod' ]]; then
         export LOGGING_CONFIG="
         logging {
           type = \"awslogs\"
@@ -134,26 +168,33 @@ export_log_conf (){
 # This actually performs the templating using Perl's regex engine.
 # Perl magic found here: https://stackoverflow.com/a/2916159/6095378
 if [[ $project == "workers" ]]; then
-    export_log_conf "downloader"
-    cat downloader.nomad.tpl \
-        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"downloader.nomad"$TEST_POSTFIX" \
-               2> /dev/null
-    export_log_conf "processor"
-    cat processor.nomad.tpl \
-        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"processor.nomad"$TEST_POSTFIX" \
-               2> /dev/null
+    # Iterate over all the template files in the directory.
+    for template in $(ls -1 nomad-job-specs | grep \.tpl); do
+        # Strip off the trailing .tpl for once we've formatted it.
+        output_file=${template/.tpl/}
+
+        # Downloader logs go to a separate log stream.
+        if [ $output_file == "downloader.nomad" ]; then
+            export_log_conf "downloader"
+        else
+            export_log_conf "processor"
+        fi
+
+        cat nomad-job-specs/$template \
+            | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                   > "$output_dir/$output_file$TEST_POSTFIX" \
+                   2> /dev/null
+    done
 elif [[ $project == "foreman" ]]; then
     export_log_conf "surveyor"
-    cat surveyor.nomad.tpl \
+    cat nomad-job-specs/surveyor.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"surveyor.nomad"$TEST_POSTFIX" \
+               > "$output_dir"/surveyor.nomad"$TEST_POSTFIX" \
                2> /dev/null
 elif [[ $project == "api" ]]; then
     export_log_conf "api"
     cat environment.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"environment"$TEST_POSTFIX" \
+               > "$output_dir"/environment"$TEST_POSTFIX" \
                2> /dev/null
 fi

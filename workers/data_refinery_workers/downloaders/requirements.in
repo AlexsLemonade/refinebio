@@ -1,9 +1,6 @@
-amqp
 django
 requests
-psycopg2
-boto3
+psycopg2-binary
 retrying
-rpy2
 python-nomad
 coveralls

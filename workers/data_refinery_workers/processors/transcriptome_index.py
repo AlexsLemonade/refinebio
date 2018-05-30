@@ -30,8 +30,31 @@ GENE_TYPE_COLUMN = 2
 IDS_CLEANUP_TABLE = str.maketrans({";": None, "\"": None})
 
 
-def _set_job_prefix(job_context: Dict) -> str:
-    job_context["job_dir_prefix"] = JOB_DIR_PREFIX + str(job_context["job_id"])
+def _compute_paths(job_context: Dict) -> str:
+    """Computes the paths for all the directories used/created by this processor.
+
+    Also computes a couple other path-based properties and adds them to the job_context.
+    """
+    # All files for the job are in the same directory.
+    first_file_path = job_context["original_files"][0].absolute_file_path
+    job_context["base_file_path"] = '/'.join(first_file_path.split('/')[:-1])
+    job_context["work_dir"] = job_context["base_file_path"] + '/' + \
+                              JOB_DIR_PREFIX + str(job_context["job_id"])
+    os.makedirs(job_context["work_dir"], exist_ok=True)
+
+    job_context["output_dir"] = job_context["work_dir"] + "/" + "index"
+    job_context["rsem_index_dir"] = job_context["work_dir"] + "/" + "rsem_index"
+    os.makedirs(job_context["rsem_index_dir"], exist_ok=True)
+
+
+    job_context["organism_name"] = job_context["base_file_path"].split('/')[-1]
+    job_context["organism_with_size"] = job_context["organism_name"] + "_" + job_context['length']
+
+    stamp = str(timezone.now().timestamp()).split('.')[0]
+    archive_file_name = job_context["organism_name"] + "_" + \
+                        job_context['length'] + "_" + stamp + '.tar.gz'
+    job_context["computed_archive"] = job_context['base_file_path'] + '/' + archive_file_name
+
     return job_context
 
 
@@ -46,21 +69,19 @@ def _prepare_files(job_context: Dict) -> Dict:
             gzipped_fasta_file_path = og_file.absolute_file_path
             job_context["fasta_file"] = og_file
             job_context["fasta_file_path"] = gzipped_fasta_file_path.replace(".gz", "")
-            job_context["base_file_path"] = '/'.join(job_context["fasta_file_path"].split('/')[:-1])
             with gzip.open(gzipped_fasta_file_path, "rb") as gzipped_file, \
                     open(job_context["fasta_file_path"], "wb") as gunzipped_file:
                 shutil.copyfileobj(gzipped_file, gunzipped_file)
         elif "gtf.gz" in og_file.source_filename:
             gzipped_gtf_file_path = og_file.absolute_file_path
             job_context["gtf_file"] = og_file
-            job_context["gtf_file_path"] = gzipped_gtf_file_path.replace(".gz", "")
-            job_context["base_file_path"] = '/'.join(job_context["gtf_file_path"].split('/')[:-1])
+            # Gunzip the GTF file into the work directory.
+            gunzipped_path = gzipped_gtf_file_path.replace(".gz", "")
+            job_context["gtf_file_path"] = os.path.join(job_context["work_dir"],
+                                                        gunzipped_path.split("/")[-1])
             with gzip.open(gzipped_gtf_file_path, "rb") as gzipped_file, \
                     open(job_context["gtf_file_path"], "wb") as gunzipped_file:
                 shutil.copyfileobj(gzipped_file, gunzipped_file)
-
-    job_context["organism_name"] = job_context["base_file_path"].split('/')[-1]
-    job_context["organism_with_size"] = job_context["organism_name"] + "_" + job_context['length']
 
     job_context["success"] = True
     return job_context
@@ -74,12 +95,8 @@ def _process_gtf(job_context: Dict) -> Dict:
     and transcript_ids.  Adds the keys "gtf_file_path" and
     "genes_to_transcripts_path" to job_context.
     """
-
-    work_dir = os.path.join(job_context["base_file_path"], 'work', job_context['length'])
-    os.makedirs(work_dir, exist_ok=True)
-    job_context["work_dir"] = work_dir
-    filtered_gtf_path = os.path.join(work_dir, "no_pseudogenes.gtf")
-    genes_to_transcripts_path = os.path.join(work_dir, "genes_to_transcripts.txt")
+    filtered_gtf_path = os.path.join(job_context["work_dir"], "no_pseudogenes.gtf")
+    genes_to_transcripts_path = os.path.join(job_context["work_dir"], "genes_to_transcripts.txt")
 
     with open(job_context["gtf_file_path"], 'r') as input_gtf, \
             open(filtered_gtf_path, "w") as filtered_gtf, \
@@ -122,8 +139,6 @@ def _handle_shell_error(job_context: Dict, stderr: str, command: str) -> None:
                  stderr,
                  processor_job=job_context["job_id"])
 
-    job_context["gtf_file"].remove_temp_directory(job_context["job_dir_prefix"])
-
     # The failure_reason column is only 256 characters wide.
     error_end = 200
     job_context["job"].failure_reason = ("Shell call to {} failed because: ".format(command)
@@ -145,14 +160,9 @@ def _create_index(job_context: Dict) -> Dict:
     well.  For reads shorter than 75bp ... one should absolutely use a
     shorter k (probably 23 or 21)."
     """
-    work_dir = job_context["work_dir"]
-    job_context["output_dir"] = os.path.join(work_dir, "index")
-    rsem_index_dir = os.path.join(work_dir, "rsem_index")
-    os.makedirs(rsem_index_dir, exist_ok=True)
-
     # RSEM takes a prefix path and then all files generated by it will
     # start with that
-    rsem_prefix = os.path.join(rsem_index_dir,
+    rsem_prefix = os.path.join(job_context["rsem_index_dir"],
                                job_context['base_file_path'].split('/')[-1])
 
     rsem_command_string = (
@@ -219,21 +229,17 @@ def _zip_index(job_context: Dict) -> Dict:
     only be a single file along with compressing the size of the file
     during storage.
     """
-
-    stamp = str(timezone.now().timestamp()).split('.')[0]
-    job_context["computed_archive"] = job_context['base_file_path'] + '/' + job_context['organism_with_size'] + "_" + stamp + '.tar.gz'
-
     try:
         with tarfile.open(job_context["computed_archive"], "w:gz") as tar:
             tar.add(job_context["output_dir"],
                     arcname=os.path.basename(job_context["output_dir"]))
     except:
         logger.exception("Exception caught while zipping index directory %s",
-                         temp_post_path,
+                         job_context["output_dir"],
                          processor_job=job_context["job_id"]
                          )
         failure_template = "Exception caught while zipping index directory {}"
-        job_context["job"].failure_reason = failure_template.format(temp_post_path)
+        job_context["job"].failure_reason = failure_template.format(job_context["output_dir"])
         job_context["success"] = False
         try:
             os.remove(job_context["computed_archive"])
@@ -294,7 +300,7 @@ def build_transcriptome_index(job_id: int, length="long") -> None:
     """
     utils.run_pipeline({"job_id": job_id, "length": length},
                        [utils.start_job,
-                        _set_job_prefix,
+                        _compute_paths,
                         _prepare_files,
                         _process_gtf,
                         _create_index,

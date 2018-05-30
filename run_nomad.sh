@@ -6,7 +6,7 @@
 # messages telling it to run Processor and Downloader jobs. When it
 # receives them, it will run the jobs within new Docker containers.
 
-while getopts ":p:e:o:h" opt; do
+while getopts ":e:h" opt; do
     case $opt in
         e)
             env=$OPTARG
@@ -44,12 +44,13 @@ script_directory=`perl -e 'use File::Basename;
 cd $script_directory
 
 # Set up the data volume directory if it does not already exist
-volume_directory="$script_directory/workers/volume"
+volume_directory="$script_directory/volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir $volume_directory
     chmod -R a+rwX $volume_directory
 fi
 
+# Load get_ip_address function.
 source common.sh
 export HOST_IP=$(get_ip_address)
 
@@ -71,16 +72,13 @@ if [ $env == "test" ]; then
 else
     # This is only for running Nomad in non-cloud environments so if
     # its not test then we're in dev (XXX: change this to local.)
-    env = "dev"
+    env="dev"
 fi
-
 
 nomad_dir="$script_directory/nomad_dir$TEST_POSTFIX"
 if [ ! -d $nomad_dir ]; then
     mkdir $nomad_dir
 fi
-
-echo "Rebuilding Docker image while waiting for Nomad to come online."
 
 # Start Nomad in both server and client mode locally
 nomad agent -bind $HOST_IP \
@@ -99,11 +97,6 @@ export NOMAD_ADDR=http://$HOST_IP:$NOMAD_PORT
 if [[ -z $(docker ps | grep "image-registry") ]]; then
     docker run -d -p 5000:5000 --restart=always --name image-registry registry:2
 fi
-
-# Build, tag, and push an image for the workers to the local registry.
-docker build -t dr_worker"$TEST_POSTFIX" -f workers/Dockerfile .
-docker tag dr_worker"$TEST_POSTFIX" localhost:5000/dr_worker"$TEST_POSTFIX"
-docker push localhost:5000/dr_worker"$TEST_POSTFIX"
 
 # This function checks what the status of the Nomad agent is.
 # Returns an HTTP response code. i.e. 200 means everything is ok.
@@ -127,6 +120,11 @@ echo "Nomad is online. Registering jobs."
 ./format_nomad_with_env.sh -p foreman -e $env
 
 # Register the jobs for dispatching.
-nomad run workers/downloader.nomad"$TEST_POSTFIX"
-nomad run workers/processor.nomad"$TEST_POSTFIX"
-nomad run foreman/surveyor.nomad"$TEST_POSTFIX"
+for job_spec in $(ls -1 workers/nomad-job-specs | grep "\.nomad$TEST_POSTFIX$"); do
+    echo "Registering $job_spec"
+    nomad run workers/nomad-job-specs/"$job_spec"
+done
+
+# There's only one foreman image, so no need to loop.
+echo "Registering surveyor.nomad$TEST_POSTFIX"
+nomad run foreman/nomad-job-specs/surveyor.nomad"$TEST_POSTFIX"

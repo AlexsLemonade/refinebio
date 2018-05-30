@@ -261,7 +261,7 @@ arguments can be viewed by running:
 ./foreman/run_surveyor.sh <JOB_TYPE> -h
 ```
 
-You can also supply a newline-deliminated file to `survey_all` which will 
+You can also supply a newline-deliminated file to `survey_all` which will
 dispatch survey jobs based on acession codes like so:
 
 Example:
@@ -297,17 +297,17 @@ The [Sequence Read Archive](https://www.ncbi.nlm.nih.gov/sra) Surveyor expects a
 range of SRA accession codes:
 
 ```bash
-./foreman/run_surveyor.sh survey_sra <ACCESSION>
+./foreman/run_surveyor.sh survey_sra --accession <ACCESSION>
 ```
 
 Example (single read):
 ```bash
-./foreman/run_surveyor.sh survey_sra DRR002116
+./foreman/run_surveyor.sh survey_sra --accession DRR002116
 ```
 
 Example (paired read):
 ```bash
-./foreman/run_surveyor.sh survey_sra SRR6718414
+./foreman/run_surveyor.sh survey_sra --accession SRR6718414
 ```
 
 #### Gene Expression Omnibus (GEO)
@@ -347,32 +347,40 @@ A specific organism can also be specified:
 
 Downloader Jobs will be queued automatically when `Surveyor Jobs`
 discover new samples. However, if you just want to queue a `Downloader Job`
-without running the `Surveyor`, the following command will queue a
-`Downloader Job` which will download a sample from Array Express:
-
+yourself rather than having the Surveyor do it for you, you can use the `./workers/tester.sh`
+script:
 ```bash
-./workers/tester.sh queue_downloader
+./workers/tester.sh run_downloader_job --job-name=<EXTERNAL_SOURCE> --job-id=<JOB_ID>
 ```
 
 For example:
 ```bash
-./update_models.sh; ./workers/tester.sh run_downloader_job --job-name=ARRAY_EXPRESS --job-id=1
+./workers/tester.sh run_downloader_job --job-name=SRA --job-id=12345
+```
+
+Or for more information run:
+```bash
+./workers/tester.sh -h
 ```
 
 ### Processor Jobs
 
 Processor Jobs will be queued automatically by successful `Downloader Jobs`.
-However, if you just want to run a `Processor Job` without first running
-a `Downloader Job`, the following command will do so:
+However, if you just want to run a `Processor Job` without yourself without having
+a `Downloader Job` do it for you, the following command will do so:
 
 ```bash
-./workers/tester.sh queue_processor <PROCESSOR_TYPE>
+./workers/tester.sh -i <IMAGE_NAME> run_processor_job --job-name=<JOB_NAME> --job-id=<JOB_ID>
 ```
 
-An individual processor job can be run with:
+For example
 ```bash
-./workers/tester.sh queue_processor SRA
-./workers/tester.sh queue_processor TRANSCRIPTOME_INDEX
+./workers/tester.sh -i affymetrix run_processor_job --job-name=AFFY_TO_PCL --job-id=54321
+```
+
+Or for more information run:
+```bash
+./workers/tester.sh -h
 ```
 
 ### Checking on Local Jobs
@@ -525,7 +533,7 @@ your instance type, use the [spot request
 page](https://console.aws.amazon.com/ec2sp/v1/spot/home?region=us-east-1) and
 then click on the **view pricing history** chart. Choose your instance type and
 then choose a bid price that is slightly higher than the current price for your
-availability zone (AZ).
+availability zone (AZ). [This graph](https://cdn-images-1.medium.com/max/1600/0*gk64fOrhSFBoFGXK.) is useful for understanding instance types.
 
 Then set your `TF_VAR_client_instance_type`, `TF_VAR_spot_price` and
 `TF_VAR_max_clients` to configure your scaling instance types, cost and size.
