@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.db.models import Count
 from django.db.models.aggregates import Avg
 from django.db.models.expressions import F
 from django.http import Http404
@@ -95,6 +96,33 @@ class SearchAndFilter(generics.ListAPIView):
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
     search_fields = ('title', '@description')
     filter_fields = ('has_publication', 'submitter_institution', 'technology', 'source_first_published')
+    
+
+    def list(self, request, *args, **kwargs):
+        """ Adds counts on certain filter fields to result JSON."""
+        response = super(SearchAndFilter, self).list(request, args, kwargs)
+
+        response.data['filters'] = {}
+        response.data['filters']['technology'] = {}
+        response.data['filters']['publication'] = {}
+        response.data['filters']['organism'] = {}
+
+        techs = self.get_queryset().values('technology').annotate(Count('technology', unique=True))
+        for tech in techs:
+            response.data['filters']['technology'][tech['technology']] = tech['technology__count']
+
+        pubs = self.get_queryset().values('has_publication').annotate(Count('has_publication', unique=True))
+        for pub in pubs:
+            if pub['has_publication']:
+                response.data['filters']['publication']['has_publication'] = pub['has_publication__count']
+        if 'has_publication' not in response.data['filters']:
+            response.data['filters']['publication']['has_publication'] = 0
+
+        organisms = self.get_queryset().values('organisms__name').annotate(Count('organisms__name', unique=True))
+        for organism in organisms:
+            response.data['filters']['organism'][organism['organisms__name']] = organism['organisms__name__count']
+
+        return response
 
 ##
 # Dataset
