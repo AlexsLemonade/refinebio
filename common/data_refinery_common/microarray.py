@@ -4,7 +4,6 @@ import rpy2.robjects as ro
 
 from rpy2.rinterface import RRuntimeError
 from typing import Dict
-from Bio.Affy import CelFile
 
 
 ENSG_PKG_FILENAME = "/home/user/r_ensg_probe_pkgs.txt"

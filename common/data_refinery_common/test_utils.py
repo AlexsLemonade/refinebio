@@ -19,11 +19,13 @@ class UtilsTestCase(TestCase):
         self.assertEqual(utils.get_worker_id(), "instance_id/MainProcess")
 
         # Ensure that the second call uses the now-set global value.
-        # (By calling it again and checking that two function calls
-        # resulted in one call to each of the invoked functions.)
+        # (By resetting the mocks, calling it again, and checking that
+        # the values didn't need to be set again).
+        mock_get.reset_mock()
+        mock_get_env_variable.reset_mock()
         utils.get_worker_id()
-        mock_get.assert_called_once()
-        mock_get_env_variable.assert_called_once()
+        mock_get.assert_not_called()
+        mock_get_env_variable.assert_not_called()
 
     @patch('data_refinery_common.utils.get_env_variable')
     def test_get_worker_id_local(self, mock_get_env_variable):
@@ -36,10 +38,11 @@ class UtilsTestCase(TestCase):
         self.assertEqual(utils.get_worker_id(), "local/MainProcess")
 
         # Ensure that the second call uses the now-set global value.
-        # (By calling it again and checking that two function calls
-        # resulted in one call to get_env_variable)
+        # (By resetting the mocks, calling it again, and checking that
+        # the values didn't need to be set again).
+        mock_get_env_variable.reset_mock()
         utils.get_worker_id()
-        mock_get_env_variable.assert_called_once()
+        mock_get_env_variable.assert_not_called()
 
     def test_supported_microarray_platforms(self):
         """Test that supported microarray platforms setting is set correctly."""
