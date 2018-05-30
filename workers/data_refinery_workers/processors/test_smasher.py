@@ -73,7 +73,7 @@ def prepare_job():
 
     return pj
 
-class AFSmasherTestCase(TestCase):
+class SmasherTestCase(TestCase):
 
     @tag("smasher")
     def test_smasher(self):
