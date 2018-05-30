@@ -1,28 +1,16 @@
-#!/bin/bash
+#!/bin/bash -e
 
-##
-# This script takes your environment variables and uses them to populate
-# Nomad job specifications, as defined in each project.
-##
+# Script for executing Django PyUnit tests within a Docker container.
 
-while getopts ":p:e:o:h" opt; do
+while getopts ":t:h" opt; do
     case $opt in
-        p)
-            project=$OPTARG
-            ;;
-        e)
-            env=$OPTARG
-            ;;
-        o)
-            output_dir=$OPTARG
+        t)
+            tag=$OPTARG
             ;;
         h)
-            echo "Formats Nomad Job Specifications with the specified environment overlaid "
-            echo "onto the current environment."
-            echo '-p specifies the project to format. Valid values are "api", workers" or "foreman".'
-            echo '- "dev" is the default enviroment, use -e to specify "prod" or "test".'
-            echo '- the project directory will be used as the default output directory, use -o to specify'
-            echo '      an absolute path to a directory (trailing / must be included).'
+            echo "Runs the workers tests. These tests require different Docker containers depending "
+            echo "on which code will be tested."
+            echo '- by default runs all tests in the workers project, use -t to specify a tag to pass in.'
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
@@ -35,167 +23,152 @@ while getopts ":p:e:o:h" opt; do
     esac
 done
 
-if [[ $project != "workers" && $project != "foreman" && $project != "api" ]]; then
-    echo 'Error: must specify project as either "api", workers", or "foreman" with -p.'
-    exit 1
-fi
-
-if [[ -z $env ]]; then
-    # XXX: for now dev==local and prod==cloud. This works because we
-    # don't have a true prod environment yet so using prod for cloud
-    # development is okay, but we definitely need to address
-    # https://github.com/AlexsLemonade/refinebio/issues/199 before we
-    # create an actual prod environment.
-    env="dev"
-fi
-
-# Default docker images.
-# These should work for local and test environments, but we want to
-# let these be set outside the script so only set them if they aren't
-# already set.
-if [[ -z $FOREMAN_DOCKER_IMAGE ]]; then
-    export FOREMAN_DOCKER_IMAGE=localhost:5000/ccdl/dr_foreman
-fi
-if [[ -z $DOWNLOADERS_DOCKER_IMAGE ]]; then
-    export DOWNLOADERS_DOCKER_IMAGE=localhost:5000/ccdl/dr_downloaders
-fi
-if [[ -z $TRANSCRIPTOME_DOCKER_IMAGE ]]; then
-    export TRANSCRIPTOME_DOCKER_IMAGE=localhost:5000/ccdl/dr_transcriptome
-fi
-if [[ -z $SALMON_DOCKER_IMAGE ]]; then
-    export SALMON_DOCKER_IMAGE=localhost:5000/ccdl/dr_salmon
-fi
-if [[ -z $AFFYMETRIX_DOCKER_IMAGE ]]; then
-    export AFFYMETRIX_DOCKER_IMAGE=ccdl/dr_affymetrix
-fi
-if [[ -z $ILLUMINA_DOCKER_IMAGE ]]; then
-    export ILLUMINA_DOCKER_IMAGE=ccdl/dr_illumina
-fi
-if [[ -z $NO_OP_DOCKER_IMAGE ]]; then
-    export NO_OP_DOCKER_IMAGE=localhost:5000/ccdl/dr_no_op
-fi
-
-# This script should always run from the context of the directory of
-# the project it is building.
+# This script should always run as if it were being called from
+# the directory it lives in.
 script_directory=`perl -e 'use File::Basename;
  use Cwd "abs_path";
  print dirname(abs_path(@ARGV[0]));' -- "$0"`
-cd $script_directory/$project
+cd $script_directory
 
-# It's important that these are run first so they will be overwritten
-# by environment variables.
-source ../common.sh
-export DB_HOST_IP=$(get_docker_db_ip_address)
-export NOMAD_HOST_IP=$(get_ip_address)
+# However in order to give Docker access to all the code we have to
+# move up a level
+cd ..
 
-if [ $env == "test" ]; then
-    export VOLUME_DIR=$script_directory/test_volume
-    # Prevent test Nomad job specifications from overwriting
-    # existing Nomad job specifications.
-    export TEST_POSTFIX="_test"
-elif [ $env == "prod" ]; then
-    # In production we use EFS as the mount.
-    export VOLUME_DIR=/var/efs
-else
-    export VOLUME_DIR=$script_directory/volume
+# Set up the test data volume directory if it does not already exist
+volume_directory="$script_directory/test_volume"
+if [ ! -d "$volume_directory" ]; then
+    mkdir $volume_directory
+    chmod -R a+rwX $volume_directory
 fi
 
-# We need to specify the database and Nomad hosts for development, but
-# not for production because we just point directly at the RDS/Nomad
-# instances.
-# Conversely, in prod we need AWS credentials and a logging config but
-# not in development.
-# We do these with multi-line environment variables so that they can
-# be formatted into development job specs.
-if [ $env != "prod" ]; then
-    export EXTRA_HOSTS="
-        extra_hosts = [\"database:$DB_HOST_IP\",
-                       \"nomad:$NOMAD_HOST_IP\"]
-"
-    export AWS_CREDS=""
-    export LOGGING_CONFIG=""
-    environment_file="environments/$env"
-else
-    export EXTRA_HOSTS=""
-    export AWS_CREDS="
-        AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
-        AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
-    # When deploying prod we write the output of Terraform to a
-    # temporary environment file.
-    environment_file="$script_directory/infrastructure/prod_env"
-fi
+test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 
-# Read all environment variables from the file for the appropriate
-# project and environment we want to run.
-while read line; do
-    # Skip all comments (lines starting with '#')
-    is_comment=$(echo $line | grep "^#")
-    if [[ -n $line ]] && [[ -z $is_comment ]]; then
-        export $line
+if [[ -z $tag || $tag == "salmon" ]]; then
+    # Download salmontools test data
+    rm -rf $volume_directory/salmontools/
+    git clone https://github.com/dongbohu/salmontools_tests.git $volume_directory/salmontools
+
+    # Make sure test Transcriptome Index is downloaded from S3 for salmon tests.
+    index_dir="$volume_directory/processed/TEST/TRANSCRIPTOME_INDEX"
+    index_tarball="Caenorhabditis_elegans_short_1527089586.tar.gz"
+    gz_index_path="$index_dir/$index_tarball"
+    if [ ! -e "$gz_index_path" ]; then
+        mkdir -p $index_dir
+        echo "Downloading Salmon index for Salmon tests."
+        wget -q -O $gz_index_path \
+             "$test_data_repo/$index_tarball"
     fi
-done < $environment_file
 
-# There is a current outstanding Nomad issue for the ability to
-# template environment variables into the job specifications. Until
-# this issue is resolved, we are using perl to accomplish this. The
-# issue can be found here:
-# https://github.com/hashicorp/nomad/issues/1185
-
-# If output_dir wasn't specified then assume the same folder we're
-# getting the templates from.
-if [[ -z $output_dir ]]; then
-    output_dir=nomad-job-specs
-elif [[ ! -d "$output_dir" ]]; then
-    mkdir $output_dir
+    # Make sure data for Salmon test is downloaded from S3.
+    rna_seq_test_raw_dir="$volume_directory/raw/TEST/SALMON"
+    read_1_name="ERR1562482_1.fastq.gz"
+    read_2_name="ERR1562482_2.fastq.gz"
+    rna_seq_test_data_1="$rna_seq_test_raw_dir/$read_1_name"
+    rna_seq_test_data_2="$rna_seq_test_raw_dir/$read_2_name"
+    if [ ! -e "$rna_seq_test_data_1" ]; then
+        mkdir -p $rna_seq_test_raw_dir
+        echo "Downloading $read_1_name for Salmon tests."
+        wget -q -O $rna_seq_test_data_1 \
+             "$test_data_repo/$read_1_name"
+        echo "Downloading $read_2_name for Salmon tests."
+        wget -q -O $rna_seq_test_data_2 \
+             "$test_data_repo/$read_2_name"
+    fi
 fi
 
-export_log_conf (){
-    if [[ $env == 'prod' ]]; then
-        export LOGGING_CONFIG="
-        logging {
-          type = \"awslogs\"
-          config {
-            awslogs-region = \"$REGION\",
-            awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
-            awslogs-stream = \"log-stream-$1-docker-$USER-$STAGE\"
-          }
-        }"
-    else
-        export LOGGING_CONFIG=""
+if [[ -z $tag || $tag == "affymetrix" || $tag == "no_op" ]]; then
+    # Make sure CEL for test is downloaded from S3
+    cel_name="GSM1426071_CD_colon_active_1.CEL"
+    cel_name2="GSM45588.CEL"
+    cel_test_raw_dir="$volume_directory/raw/TEST/CEL"
+    cel_test_data_1="$cel_test_raw_dir/$cel_name"
+    cel_test_data_2="$cel_test_raw_dir/$cel_name2"
+    if [ ! -e "$cel_test_data_1" ]; then
+        mkdir -p $cel_test_raw_dir
+        echo "Downloading CEL for tests."
+        wget -q -O $cel_test_data_1 \
+             "$test_data_repo/$cel_name"
     fi
-}
+    if [ ! -e "$cel_test_data_2" ]; then
+        echo "Downloading Non-Brainarray CEL for tests."
+        wget -q -O $cel_test_data_2 \
+             "$test_data_repo/$cel_name2"
+    fi
+fi
 
-# This actually performs the templating using Perl's regex engine.
-# Perl magic found here: https://stackoverflow.com/a/2916159/6095378
-if [[ $project == "workers" ]]; then
-    # Iterate over all the template files in the directory.
-    for template in $(ls -1 nomad-job-specs | grep \.tpl); do
-        # Strip off the trailing .tpl for once we've formatted it.
-        output_file=${template/.tpl/}
+if [[ -z $tag || $tag == "transcriptome" ]]; then
+    # Make sure data for Transcriptome Index tests is downloaded.
+    tx_index_test_raw_dir="$volume_directory/raw/TEST/TRANSCRIPTOME_INDEX"
+    fasta_file="aegilops_tauschii_short.fa.gz"
+    if [ ! -e "$tx_index_test_raw_dir/$fasta_file" ]; then
+        mkdir -p $tx_index_test_raw_dir
+        echo "Downloading fasta file for Transcriptome Index tests."
+        wget -q -O "$tx_index_test_raw_dir/$fasta_file" \
+             "$test_data_repo/$fasta_file"
+    fi
+fi
 
-        # Downloader logs go to a separate log stream.
-        if [ $output_file == "downloader.nomad" ]; then
-            export_log_conf "downloader"
+if [[ -z $tag || $tag == "illumina" ]]; then
+    # Illumina test file
+    ilu_file="GSE22427_non-normalized.txt"
+    ilu_test_raw_dir="$volume_directory/raw/TEST/ILLUMINA"
+    if [ ! -e "$ilu_test_raw_dir/$ilu_file" ]; then
+        mkdir -p $ilu_test_raw_dir
+        echo "Downloading Illumina file for Illumina tests."
+        wget -q -O "$ilu_test_raw_dir/$ilu_file" \
+             "$test_data_repo/$ilu_file"
+    fi
+fi
+
+if [[ -z $tag || $tag == "agilent" ]]; then
+    # Agilnt Two Color test file
+    at_file="GSM466597_95899_agilent.txt"
+    at_test_raw_dir="$volume_directory/raw/TEST/AGILENT_TWOCOLOR"
+    if [ ! -e "$at_test_raw_dir/$at_file" ]; then
+        mkdir -p $at_test_raw_dir
+        echo "Downloading Agilent file for A2C tests."
+        wget -q -O "$at_test_raw_dir/$at_file" \
+             "$test_data_repo/$at_file"
+    fi
+fi
+
+source common.sh
+HOST_IP=$(get_ip_address)
+DB_HOST_IP=$(get_docker_db_ip_address)
+
+# Ensure permissions are set for everything within the test data directory.
+chmod -R a+rwX $volume_directory
+
+worker_images=(affymetrix illumina salmon transcriptome no_op downloaders agilent)
+
+for image in ${worker_images[*]}; do
+    if [[ -z $tag || $tag == $image ]]; then
+        if [[ $image == "agilent" ]]; then
+            # Agilent uses the same docker image as Affymetrix
+            ./prepare_image.sh -p -i affymetrix -s workers
+            image_name=ccdl/dr_affymetrix
+        elif [[ $image == "affymetrix" ]]; then
+            ./prepare_image.sh -p -i $image -s workers
+            image_name=ccdl/dr_$image
         else
-            export_log_conf "processor"
+            ./prepare_image.sh -i $image -s workers
+            image_name=ccdl/dr_$image
         fi
 
-        cat nomad-job-specs/$template \
-            | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-                   > "$output_dir/$output_file$TEST_POSTFIX" \
-                   2> /dev/null
-    done
-elif [[ $project == "foreman" ]]; then
-    export_log_conf "surveyor"
-    cat nomad-job-specs/surveyor.nomad.tpl \
-        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"/surveyor.nomad"$TEST_POSTFIX" \
-               2> /dev/null
-elif [[ $project == "api" ]]; then
-    export_log_conf "api"
-    cat environment.tpl \
-        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"/environment"$TEST_POSTFIX" \
-               2> /dev/null
-fi
 
+        # Strip out tag argument
+        tag_string="-t $tag"
+        args_without_tag="$(echo $@ | sed "s/-t $tag//")"
+        test_command="$(run_tests_with_coverage --tag=$image $args_without_tag)"
+
+        echo "Running tests with the following command:"
+        echo $test_command
+        docker run \
+               --add-host=database:$DB_HOST_IP \
+               --add-host=nomad:$HOST_IP \
+               --env-file workers/environments/test \
+               --volume $volume_directory:/home/user/data_store \
+               --link drdb:postgres \
+               -it $image_name bash -c "$test_command"
+    fi
+done
