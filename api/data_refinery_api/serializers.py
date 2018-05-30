@@ -91,6 +91,9 @@ class SampleSerializer(serializers.ModelSerializer):
                     'title',
                     'accession_code',
                     'organism',
+                    'platform_accession_code',
+                    'platform_name',
+                    'technology',
                     'is_downloaded',
                     'is_processed',
                     'created_at',
@@ -121,6 +124,9 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
                     'title',
                     'accession_code',
                     'organism',
+                    'platform_accession_code',
+                    'platform_name',
+                    'technology',
                     'annotations',
                     'results',
                     'source_archive_url',
@@ -157,11 +163,8 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'title',
                     'description',
                     'accession_code',
-                    'platform_accession_code',
                     'source_database',
                     'source_url',
-                    'platform_name',
-                    'technology',
                     'has_publication',
                     'publication_title',
                     'publication_doi',
@@ -201,15 +204,12 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
                     'accession_code',
                     'source_database',
                     'source_url',
-                    'platform_name',
                     'has_publication',
                     'publication_title',
                     'publication_doi',
                     'pubmed_id',
                     'source_first_published',
                     'source_last_modified',
-                    'platform_accession_code',
-                    'technology',
                     'submitter_institution',
                     'last_modified',
                     'created_at',
@@ -218,7 +218,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
 class PlatformSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Experiment
+        model = Sample
         fields = (
                     'platform_accession_code',
                     'platform_name',

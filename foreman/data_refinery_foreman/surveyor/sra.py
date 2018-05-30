@@ -323,6 +323,7 @@ class SraSurveyor(ExternalSourceSurveyor):
             experiment_object.accession_code = experiment_accession_code
             experiment_object.source_url = ENA_URL_TEMPLATE.format(experiment_accession_code)
             experiment_object.source_database = "SRA"
+            experiment_object.technology = "RNA-SEQ"
 
             # We don't get this value from the API, unfortunately.
             # experiment_object.platform_accession_code = experiment["platform_accession_code"]

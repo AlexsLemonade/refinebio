@@ -72,22 +72,28 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         platform_accession_code = UNKNOWN
 
+        gpl = GEOparse.get_GEO(external_accession, destdir='/tmp', how="brief")
+        platform_title = gpl.metadata.get("title", [UNKNOWN])[0]
+
         # Check if this is a supported microarray platform.
         for platform in get_supported_microarray_platforms():
             if platform["external_accession"] == external_accession:
                 platform_accession_code = platform["platform_accession"]
 
         if platform_accession_code != UNKNOWN:
-            # It's a supported microarray platform so we can lookup its name!
+            # It's a supported microarray platform.
             sample_object.platform_accession_code = platform_accession_code
             sample_object.technology = "MICROARRAY"
-            sample_object.platform_name = get_readable_platform_names()[platform_accession_code]
+            try:
+                # If it's Affy we can get a readable name:
+                sample_object.platform_name = get_readable_platform_names()[platform_accession_code]
+            except KeyError:
+                # Otherwise we'll use what we've got.
+                sample_object.platform_name = platform_title
 
             return sample_object
 
         # Check to see if this is a supported RNASeq technology:
-        gpl = GEOparse.get_GEO(external_accession, destdir='/tmp', how="brief")
-        platform_title = gpl.metadata.get("title", [UNKNOWN])[0]
 
         # GEO RNASeq platform titles often have organisms appended to
         # an otherwise recognizable platform. The list of supported
@@ -225,10 +231,15 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     setattr(sample_object, key, value)
 
                 sample_object.save()
-
                 all_samples.append(sample_object)
-
                 logger.debug("Created Sample: " + str(sample_object))
+
+                # Now that we've determined the technology at the
+                # sample level, we can set it at the experiment level,
+                # just gotta make sure to only do it once.
+                if not experiment_object.technology:
+                    experiment_object.technology = sample_object.technology
+                    experiment_object.save()
 
                 sample_annotation = SampleAnnotation()
                 sample_annotation.sample = sample_object
@@ -260,7 +271,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                         original_file.has_raw = has_raw
                         original_file.save()
 
-                        logger.info("Created OriginalFile: " + str(original_file))
+                        logger.debug("Created OriginalFile: " + str(original_file))
 
                     original_file_sample_association = OriginalFileSampleAssociation()
                     original_file_sample_association.sample = sample_object

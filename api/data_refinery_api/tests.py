@@ -182,6 +182,7 @@ class SanityTestAllEndpoints(APITestCase):
         ex.accession_code = "FINDME"
         ex.title = "THISWILLBEINASEARCHRESULT"
         ex.description = "SOWILLTHIS"
+        ex.technology = "MICROARRAY"
         ex.submitter_institution = "Funkytown"
         experiments.append(ex)
 
@@ -189,6 +190,7 @@ class SanityTestAllEndpoints(APITestCase):
         ex.accession_code = "FINDME2"
         ex.title = "THISWILLBEINASEARCHRESULT"
         ex.description = "SOWILLTHIS"
+        ex.technology = "RNA_SEQ"
         ex.submitter_institution = "Funkytown"
         experiments.append(ex)
 
