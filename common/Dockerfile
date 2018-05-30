@@ -1,15 +1,48 @@
-FROM python:3.6.1-slim
+FROM ubuntu:16.04
+
+RUN \
+  apt-get update -qq && \
+  apt-get install -y lsb-release && \
+  echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
+      >> /etc/apt/sources.list.d/added_repos.list && \
+  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9 && \
+  apt-get update -qq && \
+  apt-get install -y \
+  ed \
+  git \
+  python3 \
+  python3-pip \
+  r-base \
+  r-base-dev \
+  libpq-dev \
+  libxml2-dev \
+  libssl-dev \
+  libcurl4-openssl-dev \
+  libpq-dev \
+  curl \
+  wget && \
+  rm -rf /var/lib/apt/lists/*
 
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
-RUN pip install --upgrade pip
+ENV R_LIBS "/usr/local/lib/R/site-library"
+
+COPY workers/install_affy_only.R .
+
+RUN Rscript install_affy_only.R
+
+RUN pip3 install --upgrade pip
 
 COPY config config
 
 COPY common/requirements.txt .
 
-RUN pip install -r requirements.txt
+RUN pip3 install -r requirements.txt
+
+# Install this rpy2 here instead of via requirements.txt because
+# pip-compile throws an error for it.
+RUN pip3 install rpy2
 
 COPY common/ .
 
