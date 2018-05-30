@@ -24,13 +24,13 @@ if [ ! -d "$volume_directory" ]; then
     chmod -R a+rwX $volume_directory
 fi
 
-docker build -t dr_shell -f foreman/Dockerfile .
+docker build -t dr_shell -f foreman/dockerfiles/Dockerfile.foreman .
 
 source common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 
-docker run \
+docker run -it \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
        --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \

@@ -13,3 +13,10 @@ server {
     # Only 1 for the lead server, 3 for the others. Tx Kurt.
     bootstrap_expect = 1
 }
+
+consul {
+  auto_advertise      = false
+  server_auto_join    = false
+  client_auto_join    = false
+}
+

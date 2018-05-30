@@ -62,8 +62,8 @@ class SraSurveyor(ExternalSourceSurveyor):
         submission_metadata = submission_xml.attrib
 
         # We already have these
-        submission_metadata.pop("accession")
-        submission_metadata.pop("alias")
+        submission_metadata.pop("accession", '')
+        submission_metadata.pop("alias", '')
 
         metadata.update(submission_metadata)
 
@@ -292,6 +292,16 @@ class SraSurveyor(ExternalSourceSurveyor):
         else:
             files_urls = [SraSurveyor._build_file_url(run_accession)]
 
+        # Figure out the Organism for this sample
+        organism_name = metadata.pop("organism_name", None)
+        if not organism_name:
+            logger.error("Could not discover organism type for run.",
+                accession=run_accession)
+            return (None, None) # This will cascade properly
+
+        organism_name = organism_name.upper()
+        organism = Organism.get_object_for_name(organism_name)
+
         ##
         # Experiment
         ##
@@ -299,7 +309,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         experiment_accession_code = metadata.get('study_accession')
         try:
             experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
-            logger.info("Experiment already exists, skipping object creation.",
+            logger.debug("Experiment already exists, skipping object creation.",
                 experiment_accession_code=experiment_accession_code,
                 survey_job=self.survey_job.id)
         except Experiment.DoesNotExist:
@@ -351,15 +361,11 @@ class SraSurveyor(ExternalSourceSurveyor):
         # Samples
         ##
 
-        # Figure out the Organism for this sample
-        organism_name = metadata.pop("organism_name").upper()
-        organism = Organism.get_object_for_name(organism_name)
-
         sample_accession_code = metadata.pop('sample_accession')
         # Create the sample object
         try:
             sample_object = Sample.objects.get(accession_code=sample_accession_code)
-            logger.error("Sample %s already exists, skipping object creation.",
+            logger.debug("Sample %s already exists, skipping object creation.",
                      sample_accession_code,
                      experiment_accession_code=experiment_object.accession_code,
                      survey_job=self.survey_job.id)

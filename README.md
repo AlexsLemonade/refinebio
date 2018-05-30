@@ -551,6 +551,12 @@ To start the Neuroblastoma job:
 nomad job dispatch -meta COMMAND=survey_array_express -meta FILE=NEUROBLASTOMA.txt SURVEYOR
 ```
 
+or the Zebrafish job:
+
+```
+nomad job dispatch -meta COMMAND=survey_all -meta FILE=s3://data-refinery-test-assets/ZEBRAFISH.txt SURVEYOR
+```
+
 ### Log Consumption
 
 All of the different Refine.bio subservices log to the same AWS CloudWatch Log
