@@ -13,7 +13,7 @@ cd $script_directory
 # move up a level
 cd ..
 
-docker build -t dr_api_prod2 -f api/dockerfiles/Dockerfile.production .
+./prepare_image.sh -i api_production -s api
 
 source common.sh
 HOST_IP=$(get_ip_address)
