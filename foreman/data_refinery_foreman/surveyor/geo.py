@@ -23,7 +23,9 @@ from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import (
     get_supported_microarray_platforms,
-    get_readable_platform_names)
+    get_supported_rnaseq_platforms,
+    get_readable_platform_names
+)
 
 logger = get_and_configure_logger(__name__)
 # Taken from GEOparse source code cause the docs lie.
@@ -46,6 +48,78 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
     def source_type(self):
         return Downloaders.GEO.value
+
+    def set_platform_properties(self, sample_object: Sample, gse: GEOparse.GSM) -> Sample:
+        """Sets platform-related properties on `sample_object`.
+
+        Uses metadata from `gse` to populate platform_name,
+        platform_accession_code, and technology on `sample_object`.
+        """
+
+        # Determine platform information
+        external_accession = gse.metadata.get('platform_id', [UNKNOWN])[0]
+
+        if external_accession == UNKNOWN:
+            sample_object.platform_accession_code = UNKNOWN
+            sample_object.platform_name = UNKNOWN
+            # If this sample is Affy, we potentially can extract the
+            # platform information from the .CEL file. If it's not we
+            # can't do anything. Therefore assume the technology is
+            # microarray when we have no platform information.
+            sample_object.technology = "MICROARRAY"
+
+            return sample_object
+
+        platform_accession_code = UNKNOWN
+
+        # Check if this is a supported microarray platform.
+        for platform in get_supported_microarray_platforms():
+            if platform["external_accession"] == external_accession:
+                platform_accession_code = platform["platform_accession"]
+
+        if platform_accession_code != UNKNOWN:
+            # It's a supported microarray platform so we can lookup its name!
+            sample_object.platform_accession_code = platform_accession_code
+            sample_object.technology = "MICROARRAY"
+            sample_object.platform_name = get_readable_platform_names()[platform_accession_code]
+
+            return sample_object
+
+        # Check to see if this is a supported RNASeq technology:
+        gpl = GEOparse.get_GEO(external_accession, destdir='/tmp', how="brief")
+        platform_title = gpl.metadata.get("title", [UNKNOWN])[0]
+
+        # GEO RNASeq platform titles often have organisms appended to
+        # an otherwise recognizable platform. The list of supported
+        # RNASeq platforms isn't long, so see if any of them are
+        # contained within what GEO gave us.
+        # Example: GSE69572 has a platform title of:
+        # 'Illumina Genome Analyzer IIx (Glycine max)'
+        # Which should really just be 'Illumina Genome Analyzer IIx'
+        # because RNASeq platforms are organism agnostic.  However,
+        # the platforms 'Illumina Genome Analyzer' and 'Illumina
+        # Genome Analyzer II' would also be matched, so make sure that
+        # the longest platform names are tested first:
+        sorted_platform_list = get_supported_rnaseq_platforms().copy()
+        sorted_platform_list.sort(key=len, reverse=True)
+
+        for platform in sorted_platform_list:
+            if platform.upper() in platform_title.upper():
+                sample_object.technology = "RNA-SEQ"
+                sample_object.platform_name = platform
+                # We just use RNASeq platform titles as accessions
+                sample_object.platform_accession_code = platform
+                return sample_object
+
+        # If we've made it this far, we don't know what this platform
+        # is, therefore we can't know what its technology is. What we
+        # do know is what GEO said was it's platform's accession and
+        # title are, and that it's unsupported.
+        sample_object.platform_name = platform_title
+        sample_object.platform_accession_code = external_accession
+        sample_object.technology = UNKNOWN
+
+        return sample_object
 
     def get_miniml_url(self, experiment_accession_code):
         """ Build the URL for the MINiML files for this accession code.
@@ -91,17 +165,6 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_object.source_database = "GEO"
             experiment_object.name = gse.metadata.get('title', [''])[0]
             experiment_object.description = gse.metadata.get('summary', [''])[0]
-
-            # XXX: Incorporate this!!
-            # Related: https://github.com/AlexsLemonade/refinebio/issues/222
-            gpl = GEOparse.get_GEO(
-                gse.metadata.get('platform_id', [''])[0], destdir='/tmp', how="brief")
-            experiment_object.platform_name = gpl.metadata.get("title", [""])[0]
-            # TODO: This is probably going to require a fair bit of sanding.
-            if 'AFFYMETRIX' in str(gpl.metadata).upper():
-                experiment_object.technology = "MICROARRAY"
-            else:
-                experiment_object.technology = "RNA-SEQ"
 
             # Source doesn't provide time information, assume midnight.
             experiment_object.source_first_published = dateutil.parser.parse(
@@ -154,37 +217,18 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 title = sample.metadata['title'][0]
                 sample_object.title = title
 
-                # For now, assume we're only getting Microarray from GEO
-                sample_object.technology = "MICROARRAY"
+                self.set_platform_properties(sample_object, gse)
 
                 # Directly assign the harmonized properties
                 harmonized_sample = harmonized_samples[title]
                 for key, value in harmonized_sample.items():
                     setattr(sample_object, key, value)
 
-                # Determine platform information
-                external_accession = gse.metadata.get('platform_id', [UNKNOWN])[0]
-                if external_accession == UNKNOWN:
-                    sample_object.platform_accession_code = UNKNOWN
-                    sample_object.platform_name = UNKNOWN
-                else:
-                    platform_accession_code = UNKNOWN
-                    for platform in get_supported_microarray_platforms():
-                        if platform["external_accession"] == external_accession:
-                            platform_accession_code = platform["platform_accession"]
-
-                    sample_object.platform_accession_code = platform_accession_code
-                    if sample_object.platform_accession_code == UNKNOWN:
-                        sample_object.platform_name = UNKNOWN
-                    else:
-                        sample_object.platform_name = get_readable_platform_names()[
-                            platform_accession_code]
-
                 sample_object.save()
 
                 all_samples.append(sample_object)
 
-                logger.info("Created Sample: " + str(sample_object))
+                logger.debug("Created Sample: " + str(sample_object))
 
                 sample_annotation = SampleAnnotation()
                 sample_annotation.sample = sample_object
