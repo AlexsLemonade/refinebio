@@ -90,6 +90,7 @@ def _update_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 def smash(job_id: int) -> None:
+    """ Main Smasher interface """
 
     return utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,

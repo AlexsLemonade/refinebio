@@ -450,10 +450,10 @@ class Dataset(models.Model):
         self.last_modified = current_time
         return super(Dataset, self).save(*args, **kwargs)
 
-
     def get_samples(self):
         """ Retuns all of the Sample objects in this Dataset """
 
+        if self.aggregate_by == self.
         all_samples = []
         for sample_list in self.data.values(): 
             all_samples = all_samples + sample_list
