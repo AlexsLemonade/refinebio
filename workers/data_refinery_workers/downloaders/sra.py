@@ -4,6 +4,7 @@ import urllib.request
 import os
 import shutil
 import subprocess
+import time
 from contextlib import closing
 
 from data_refinery_common.models import DownloaderJob, DownloaderJobOriginalFileAssociation
@@ -55,7 +56,10 @@ def _download_file_ftp(download_url: str, downloader_job: DownloaderJob, target_
 
     return True
 
-def _download_file_aspera(download_url: str, downloader_job: DownloaderJob, target_file_path: str) -> bool:
+def _download_file_aspera(  download_url: str, 
+                            downloader_job: DownloaderJob, 
+                            target_file_path: str,
+                            attempt=0) -> bool:
     """ Download a file to a location using Aspera by shelling out to the `ascp` client. """
 
     try:
@@ -76,20 +80,45 @@ def _download_file_aspera(download_url: str, downloader_job: DownloaderJob, targ
 
         # Something went wrong! Else, just fall through to returning True.
         if completed_command.returncode != 0:
-            stderr = str(completed_command.stderr)
+
+            stderr = str(completed_command.stderr).strip()
             logger.error("Shell call to ascp failed with error message: %s\nCommand was: %s",
                          stderr,
                          formatted_command,
                          downloader_job=downloader_job.id)
-            return False
 
+            # Sometimes, SRA fails mysteriously.
+            # Wait a few minutes and try again.
+            if attempt > 5:
+                downloader_job.failure_reason = stderr
+                return False
+            else:
+                time.sleep(300)
+                return _download_file_aspera(   download_url,
+                                                download_job,
+                                                target_file_path,
+                                                attempt + 1
+                                            )
     except Exception:
-        logger.exception("Exception caught while downloading batch from the URL via Aspera: %s",
+        logger.exception("Exception caught while downloading file from the URL via Aspera: %s",
                          download_url,
                          downloader_job=downloader_job.id)
         downloader_job.failure_reason = ("Exception caught while downloading "
-                                         "batch from the URL via Aspera: {}").format(download_url)
+                                         "file from the URL via Aspera: {}").format(download_url)
         return False
+
+
+    # If Aspera has given a zero-byte file for some reason, let's back off and retry.
+    if os.path.getsize(target_file_path) < 1:
+        logger.error("Got zero byte ascp download for target, retrying.",
+                    target_url=download_url,
+                    downloader_job=downloader_job.id)
+        time.sleep(300)
+        return _download_file_aspera(   download_url,
+                                        download_job,
+                                        target_file_path,
+                                        attempt + 1
+                                    )
     return True
 
 def download_sra(job_id: int) -> None:
@@ -112,8 +141,12 @@ def download_sra(job_id: int) -> None:
                          downloader_job=job_id)
             continue
 
-        os.makedirs(LOCAL_ROOT_DIR + '/' + job.accession_code, exist_ok=True)
-        dl_file_path = LOCAL_ROOT_DIR + '/' + job.accession_code + '/' + original_file.source_filename
+        sample_accession_code = original_file.samples.first().accession_code
+        exp_path = LOCAL_ROOT_DIR + '/' + job.accession_code
+        samp_path = exp_path + '/' + sample_accession_code
+        os.makedirs(exp_path, exist_ok=True)
+        os.makedirs(samp_path, exist_ok=True)
+        dl_file_path = samp_path + '/' + original_file.source_filename
         success = _download_file(original_file.source_url, job, dl_file_path)
 
         if success:
