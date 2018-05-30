@@ -77,7 +77,7 @@ def _smash(job_context: Dict) -> Dict:
 
 def _upload_and_notify(job_context: Dict) -> Dict:
     """ Uploads the result file to S3 and notifies user. """
-    return
+    return job_context
 
 def _update_result_objects(job_context: Dict) -> Dict:
     """ Create the ComputationalResult objects after a run is complete """

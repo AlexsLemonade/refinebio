@@ -132,6 +132,26 @@ if [[ -z $tag || $tag == "agilent" ]]; then
     fi
 fi
 
+if [[ -z $tag || $tag == "smasher" ]]; then
+    # Make sure PCL for test is downloaded from S3
+    pcl_name="GSM1237810_T09-1084.PCL"
+    pcl_name2="GSM1237812_S97-PURE.PCL"
+    pcl_test_raw_dir="$volume_directory/PCL"
+    pcl_test_data_1="$pcl_test_raw_dir/$pcl_name"
+    pcl_test_data_2="$pcl_test_raw_dir/$pcl_name2"
+    if [ ! -e "$pcl_test_data_1" ]; then
+        mkdir -p $pcl_test_raw_dir
+        echo "Downloading PCL for tests."
+        wget -q -O $pcl_test_data_1 \
+             "$test_data_repo/$pcl_name"
+    fi
+    if [ ! -e "$pcl_test_data_2" ]; then
+        echo "Downloading PCL for tests."
+        wget -q -O $pcl_test_data_2 \
+             "$test_data_repo/$pcl_name2"
+    fi
+fi
+
 source common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
