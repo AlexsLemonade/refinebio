@@ -90,11 +90,28 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
         send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)
 
 
-def create_processor_job_for_original_files(original_files: List[OriginalFile], sample: Sample=None):
+def create_processor_job_for_original_files(original_files: List[OriginalFile],
+                                            sample_object: Sample=None):
     """
     Create a processor job and queue a processor task for sample related to an experiment.
 
     """
+    if not sample_object:
+        # XXX: do this right, but for now I wanna keep moving
+        # Also consider what happens if there isn't one? That's a pretty BFD
+        sample_object = Sample.objects.filter(original_file=original_files[0]).first()
+
+    processor_job = ProcessorJob()
+    processor_job.pipeline_applied = "SALMON"
+    processor_job.save()
+    for original_file in original_files:
+        assoc = ProcessorJobOriginalFileAssociation()
+        assoc.original_file = original_file
+        assoc.processor_job = processor_job
+        assoc.save()
+
+    send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)
+
     # YYY: All of these files either need to come from the same sample
     # or a sample object needs to be passed in as well. Not 100% on
     # which is better yet, it's only called from one place thus far.
