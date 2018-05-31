@@ -37,7 +37,7 @@ from data_refinery_api.serializers import (
     ProcessorJobSerializer
 )
 
-class SanityTestAllEndpoints(APITestCase):
+class APITestCases(APITestCase):
     def setUp(self):
         # Saving this for if we have protected endpoints
         # self.superuser = User.objects.create_superuser('john', 'john@snow.com', 'johnpassword')
@@ -242,3 +242,11 @@ class SanityTestAllEndpoints(APITestCase):
         jdata = json.dumps({'data': 123})
         response = self.client.post(reverse('create_dataset'), jdata, content_type="application/json")
         self.assertEqual(response.status_code, 400)
+
+        dataset = Dataset.objects.get(id=good_id)
+        dataset.is_processing = False
+        dataset.save()
+        jdata = json.dumps({'data': {"A": ["D"]}, 'start': True,} )
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
+        self.assertEqual(response.json()["is_processing"], True)
+
