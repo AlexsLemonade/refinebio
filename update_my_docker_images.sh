@@ -25,5 +25,5 @@ docker build -t $DOCKER_ID/data_refinery_foreman -f foreman/dockerfiles/Dockerfi
 docker push $DOCKER_ID/data_refinery_foreman
 
 # Build and push API image
-docker build -t $DOCKER_ID/data_refinery_api -f api/dockerfiles/Dockerfile.api .
+docker build -t $DOCKER_ID/data_refinery_api -f api/dockerfiles/Dockerfile.api_production .
 docker push $DOCKER_ID/data_refinery_api

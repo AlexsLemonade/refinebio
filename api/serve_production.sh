@@ -13,7 +13,7 @@ cd $script_directory
 # move up a level
 cd ..
 
-docker build -t dr_api_prod2 -f api/dockerfiles/Dockerfile.production .
+./prepare_image.sh -i api_production -s api
 
 source common.sh
 HOST_IP=$(get_ip_address)
@@ -28,4 +28,4 @@ docker run \
        --link drdb:postgres \
        -v "$STATIC_VOLUMES":/tmp/www/static \
        -p 8081:8081 \
-       -it -d dr_api_prod2 /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
+       -it -d ccdl/api_production /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"

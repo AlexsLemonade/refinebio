@@ -3,6 +3,8 @@ FROM python:3.6.1-slim
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
+RUN pip install --upgrade pip
+
 COPY api/requirements.txt .
 
 RUN pip install -r requirements.txt
@@ -20,4 +22,3 @@ USER user
 EXPOSE 8000
 
 ENTRYPOINT []
-
