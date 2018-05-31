@@ -13,7 +13,7 @@ cd $script_directory
 # move up a level
 cd ..
 
-./prepare_image.sh -i api -s api
+./prepare_image.sh -i api_local -s api
 
 source common.sh
 HOST_IP=$(get_ip_address)
@@ -24,4 +24,4 @@ docker run \
        --add-host=nomad:$HOST_IP \
        --env-file api/environments/test \
        --link drdb:postgres \
-       -it ccdl/dr_api bash -c "$(run_tests_with_coverage $@)"
+       -it ccdl/dr_api_local bash -c "$(run_tests_with_coverage $@)"

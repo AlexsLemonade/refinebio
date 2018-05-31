@@ -16,3 +16,10 @@ server {
   # This is the IP address of the first server we provisioned
   retry_join = ["${nomad_lead_server_ip}:4648"]
 }
+
+consul {
+  auto_advertise      = false
+  server_auto_join    = false
+  client_auto_join    = false
+}
+

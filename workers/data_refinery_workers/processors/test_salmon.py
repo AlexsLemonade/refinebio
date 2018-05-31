@@ -13,6 +13,8 @@ from data_refinery_common.models import (
     ComputedFile,
     ComputationalResult,
     Sample,
+    Experiment,
+    ExperimentSampleAssociation,
     ProcessorJobOriginalFileAssociation,
     OriginalFileSampleAssociation
 )
@@ -77,13 +79,13 @@ def prepare_job():
     assoc1.processor_job = pj
     assoc1.save()
 
-    return pj
+    return pj, [og_file, og_file2]
 
 
-def identical_checksum(file1, file2):
+def identical_checksum(filename1, filename2):
     """Confirm that the two files have identical checksum."""
-    checksum_1 = hashlib.md5(open(file1, 'rb').read()).hexdigest()
-    checksum_2 = hashlib.md5(open(file2, 'rb').read()).hexdigest()
+    checksum_1 = hashlib.md5(open(filename1, 'rb').read()).hexdigest()
+    checksum_2 = hashlib.md5(open(filename2, 'rb').read()).hexdigest()
     return checksum_1 == checksum_2
 
 
@@ -98,10 +100,44 @@ class SalmonTestCase(TestCase):
         except FileNotFoundError:
             pass
 
-        job = prepare_job()
+        job, files = prepare_job()
         salmon.salmon(job.pk)
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertTrue(job.success)
+
+    def test_fastqc(self):
+
+        job, og_files = prepare_job()
+        win_context = {
+            'job': job,
+            'job_id': 789,
+            'qc_directory': "/home/user/data_store/raw/TEST/SALMON/qc",
+            'original_files': og_files,
+            'success': True
+        }
+
+        # Ensure clean testdir
+        shutil.rmtree(win_context['qc_directory'], ignore_errors=True)
+        os.makedirs(win_context['qc_directory'], exist_ok=True)
+        win_context = salmon._prepare_files(win_context)
+
+        win = salmon._run_fastqc(win_context)
+        self.assertTrue(win['success'])
+        win = salmon._run_multiqc(win_context)
+        self.assertTrue(win['success'])
+
+        for file in win['qc_files']:
+            self.assertTrue(os.path.isfile(file.absolute_file_path))
+
+        fail_context = {
+            'job': job,
+            'job_id': 'hippityhoppity',
+            'qc_directory': "/home/user/data_store/raw/TEST/SALMON/derp",
+            'original_files': [],
+            'success': True
+        }
+        fail = salmon._run_fastqc(fail_context)
+        self.assertFalse(fail['success'])
 
 
 class SalmonToolsTestCase(TestCase):
@@ -112,6 +148,7 @@ class SalmonToolsTestCase(TestCase):
 
     @tag('salmon')
     def test_double_reads(self):
+
         job_context = {
             'job_id': 123,
             'input_file_path': self.test_dir + 'double_input/reads_1.fastq',
@@ -119,6 +156,13 @@ class SalmonToolsTestCase(TestCase):
             'output_directory': self.test_dir + 'double_output/'
         }
         job_context["job"] = ProcessorJob()
+
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        sample = Sample()
+        sample.organism = homo_sapiens
+        sample.save()
+        job_context["sample"] = sample
+
         salmon._run_salmontools(job_context, False)
 
         # Confirm job status
@@ -141,6 +185,13 @@ class SalmonToolsTestCase(TestCase):
             'output_directory': self.test_dir + 'single_output/'
         }
         job_context["job"] = ProcessorJob()
+
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        sample = Sample()
+        sample.organism = homo_sapiens
+        sample.save()
+        job_context["sample"] = sample
+
         salmon._run_salmontools(job_context, False)
 
         # Confirm job status
@@ -150,3 +201,32 @@ class SalmonToolsTestCase(TestCase):
         output_file = self.test_dir + 'single_output/unmapped_by_salmon.fa'
         expected_output_file = self.test_dir + 'expected_single_output/unmapped_by_salmon.fa'
         self.assertTrue(identical_checksum(output_file, expected_output_file))
+
+
+class TximportTestCase(TestCase):
+    """Test salmon._tximport function, which launches tximport.R script."""
+
+    def setUp(self):
+        experiment = Experiment(accession_code='PRJNA408323')
+        experiment.save()
+        for id in ['07', '08', '09', '12', '13', '14']:
+            sample = Sample(accession_code=('SRR60800' + id))
+            sample.save()
+            e_s = ExperimentSampleAssociation(experiment=experiment, sample=sample)
+            e_s.save()
+
+    def test_tximport_experiment(self):
+        job_context = {
+            'job_id': 456,
+            'genes_to_transcripts_path': '/home/user/data_store/tximport_test/np_gene2txmap.txt'
+        }
+        job_context["job"] = ProcessorJob()
+
+        experiment_dir = '/home/user/data_store/tximport_test/PRJNA408323'
+        salmon._tximport(job_context, experiment_dir)
+
+        expected_output_dir = '/home/user/data_store/tximport_test/expected_output'
+        for filename in ['txi_out.RDS', 'gene_lengthScaledTPM.tsv.gz']:
+            output_path = experiment_dir + '/' + filename
+            expected_output = expected_output_dir + '/' + filename
+            self.assertTrue(identical_checksum(output_path, expected_output))

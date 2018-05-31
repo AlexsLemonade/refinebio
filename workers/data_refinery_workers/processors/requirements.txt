@@ -28,7 +28,7 @@ matplotlib==2.1.0         # via multiqc
 multiqc==1.5
 networkx==2.1             # via colormath
 numpy==1.14.3             # via colormath, matplotlib, multiqc
-psycopg2==2.7.4
+psycopg2-binary==2.7.4
 pyparsing==2.2.0          # via matplotlib
 python-dateutil==2.7.3    # via botocore, matplotlib
 python-nomad==0.8.0
