@@ -65,6 +65,9 @@ fi
 if [[ -z $SALMON_DOCKER_IMAGE ]]; then
     export SALMON_DOCKER_IMAGE=localhost:5000/ccdl/dr_salmon
 fi
+if [[ -z $SMASHER_DOCKER_IMAGE ]]; then
+    export SMASHER_DOCKER_IMAGE=localhost:5000/ccdl/dr_smasher
+fi
 if [[ -z $AFFYMETRIX_DOCKER_IMAGE ]]; then
     export AFFYMETRIX_DOCKER_IMAGE=ccdl/dr_affymetrix
 fi

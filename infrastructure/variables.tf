@@ -66,6 +66,9 @@ variable "transcriptome_docker_image" {
 variable "salmon_docker_image" {
   default = "wkurt/dr_salmon:latest"
 }
+variable "smasher_docker_image" {
+  default = "ccdl/dr_smasher:latest"
+}
 variable "affymetrix_docker_image" {
   default = "wkurt/dr_affymetrix:latest"
 }
@@ -164,6 +167,8 @@ output "environment_variables" {
       value = "${var.use_s3}"},
     {name = "S3_BUCKET_NAME"
       value = "${aws_s3_bucket.data_refinery_bucket.id}"},
+    {name = "S3_RESULTS_BUCKET_NAME"
+      value = "${aws_s3_bucket.data_refinery_results_bucket.id}"},
     {name = "LOCAL_ROOT_DIR"
       value = "${var.local_root_dir}"},
     {name = "RAW_PREFIX"
@@ -186,6 +191,8 @@ output "environment_variables" {
       value = "${var.no_op_docker_image}"},
     {name = "FOREMAN_DOCKER_IMAGE"
       value = "${var.foreman_docker_image}"},
+    {name = "SMASHER_DOCKER_IMAGE"
+      value = "${var.smasher_docker_image}"},
     {name = "NOMAD_HOST"
       value = "${aws_instance.nomad_server_1.private_ip}"},
     {name = "NOMAD_PUBLIC_HOST"
