@@ -13,6 +13,8 @@ from data_refinery_common.models import (
     ComputedFile,
     ComputationalResult,
     Sample,
+    Experiment,
+    ExperimentSampleAssociation,
     ProcessorJobOriginalFileAssociation,
     OriginalFileSampleAssociation
 )
@@ -204,13 +206,27 @@ class SalmonToolsTestCase(TestCase):
 class TximportTestCase(TestCase):
     """Test salmon._tximport function, which launches tximport.R script."""
 
-    def test_tximport_experiment(self):
-        experiment_dir = '/home/user/data_store/tximport_test/PRJNA408323/'
-        genes_to_transcripts_path = '/home/user/data_store/tximport_test/np_gene2txmap.txt'
-        salmon._tximport(experiment_dir, genes_to_transcripts_path)
+    def setUp(self):
+        experiment = Experiment(accession_code='PRJNA408323')
+        experiment.save()
+        for id in ['07', '08', '09', '12', '13', '14']:
+            sample = Sample(accession_code=('SRR60800' + id))
+            sample.save()
+            e_s = ExperimentSampleAssociation(experiment=experiment, sample=sample)
+            e_s.save()
 
-        expected_output_dir = '/home/user/data_store/tximport_test/expected_output/'
+    def test_tximport_experiment(self):
+        job_context = {
+            'job_id': 456,
+            'genes_to_transcripts_path': '/home/user/data_store/tximport_test/np_gene2txmap.txt'
+        }
+        job_context["job"] = ProcessorJob()
+
+        experiment_dir = '/home/user/data_store/tximport_test/PRJNA408323'
+        salmon._tximport(job_context, experiment_dir)
+
+        expected_output_dir = '/home/user/data_store/tximport_test/expected_output'
         for filename in ['txi_out.RDS', 'gene_lengthScaledTPM.tsv.gz']:
-            output_path = experiment_dir + filename
-            expected_output = expected_output_dir + filename
+            output_path = experiment_dir + '/' + filename
+            expected_output = expected_output_dir + '/' + filename
             self.assertTrue(identical_checksum(output_path, expected_output))
