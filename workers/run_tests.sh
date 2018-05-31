@@ -48,6 +48,10 @@ if [[ -z $tag || $tag == "salmon" ]]; then
     rm -rf $volume_directory/salmontools/
     git clone https://github.com/dongbohu/salmontools_tests.git $volume_directory/salmontools
 
+    # Download tximport test data
+    rm -rf $volume_directory/tximport_test/
+    git clone https://github.com/dongbohu/tximport_test.git $volume_directory/tximport_test
+
     # Make sure test Transcriptome Index is downloaded from S3 for salmon tests.
     index_dir="$volume_directory/processed/TEST/TRANSCRIPTOME_INDEX"
     index_tarball="Caenorhabditis_elegans_short_1527089586.tar.gz"

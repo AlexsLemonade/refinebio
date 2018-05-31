@@ -9,7 +9,7 @@ from typing import Dict
 from django.utils import timezone
 
 from data_refinery_common.models import (
-    Organism, 
+    Organism,
     ProcessorJob,
     OriginalFile,
     ComputationalResult,
@@ -43,6 +43,7 @@ def _compute_paths(job_context: Dict) -> str:
     os.makedirs(job_context["work_dir"], exist_ok=True)
 
     job_context["output_dir"] = job_context["work_dir"] + "/" + "index"
+    os.makedirs(job_context["output_dir"], exist_ok=True)
     job_context["rsem_index_dir"] = job_context["work_dir"] + "/" + "rsem_index"
     os.makedirs(job_context["rsem_index_dir"], exist_ok=True)
 
@@ -96,7 +97,9 @@ def _process_gtf(job_context: Dict) -> Dict:
     "genes_to_transcripts_path" to job_context.
     """
     filtered_gtf_path = os.path.join(job_context["work_dir"], "no_pseudogenes.gtf")
-    genes_to_transcripts_path = os.path.join(job_context["work_dir"], "genes_to_transcripts.txt")
+    # Generate "genes_to_transcripts.txt" in job_context["output_dir"]
+    # so that it will be saved later.
+    genes_to_transcripts_path = os.path.join(job_context["output_dir"], "genes_to_transcripts.txt")
 
     with open(job_context["gtf_file_path"], 'r') as input_gtf, \
             open(filtered_gtf_path, "w") as filtered_gtf, \
