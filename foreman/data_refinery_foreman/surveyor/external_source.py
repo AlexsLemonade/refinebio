@@ -61,6 +61,9 @@ class ExternalSourceSurveyor:
             samples__in=samples.values('pk'), is_downloaded=False)
 
         downloaded_urls = []
+        # YYY
+        # Ok so it's lookin like I should probably nest this within another loop specific to samples.
+        # That way I can get properties from the sample to pass to determiners
         for original_file in files_to_download:
 
             # We don't need to create multiple downloaders for the same file.
@@ -108,9 +111,16 @@ class ExternalSourceSurveyor:
     @retry(stop_max_attempt_number=3)
     def queue_downloader_job_for_original_files(self,
                                                 original_files: List[OriginalFile],
-                                                experiment_accession_code=None
+                                                experiment_accession_code: str=None,
+                                                sample: Sample=None,
+                                                downloader_task: Downloaders=None
                                                 ):
         """ Creates a single DownloaderJob with multiple files to download."""
+        # YYY: this is different because all this is getting is a list of original files.
+        # I suspect they all probably relate to the same sample though, so that
+        # could probably be reworked.
+        # So let's make this use downloader_task if it's passed, otherwise determine things with sample.
+        # We'll have to require that one of the two is passed in.
 
         downloader_job = DownloaderJob()
         downloader_job.downloader_task = self.downloader_task()

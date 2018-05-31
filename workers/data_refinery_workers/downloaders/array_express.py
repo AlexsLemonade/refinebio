@@ -172,7 +172,7 @@ def download_array_express(job_id: int) -> None:
                      url,
                      downloader_job=job_id)
 
-    utils.end_downloader_job(job, success)
-
     if success:
         utils.create_processor_jobs_for_original_files(og_files)
+
+    utils.end_downloader_job(job, success)

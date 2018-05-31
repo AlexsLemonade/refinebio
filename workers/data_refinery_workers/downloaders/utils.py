@@ -44,6 +44,7 @@ def start_job(job_id: int) -> DownloaderJob:
 
     return job
 
+
 def end_downloader_job(job: DownloaderJob, success: bool):
     """
     Record in the database that this job has completed.
@@ -53,10 +54,13 @@ def end_downloader_job(job: DownloaderJob, success: bool):
     job.end_time = timezone.now()
     job.save()
 
+
 def create_processor_jobs_for_original_files(original_files: List[OriginalFile], pipeline=None):
     """
     Create a processor jobs queue a processor task for samples related to an experiment.
     """
+    # YYY: ok so it looks like the thing to do here is have this guy
+    # take a list of {"sample": Sample, "og_file": OGFile} dicts.
 
     # Iterate over all of our samples.
     # If we have raw, send it to the correct processor.
@@ -67,7 +71,7 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
 
         if not pipeline:
             if not original_file.has_raw:
-                processor_job.pipeline_applied = ProcessorPipeline.NO_OP.value 
+                processor_job.pipeline_applied = ProcessorPipeline.NO_OP.value
             else:
                 if 'CEL' in original_file.filename.upper():
                     processor_job.pipeline_applied = ProcessorPipeline.AFFY_TO_PCL.value
@@ -85,20 +89,26 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
 
         send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)
 
-def create_processor_job_for_original_files(original_files: List[OriginalFile]):
+
+def create_processor_job_for_original_files(original_files: List[OriginalFile], sample: Sample=None):
     """
     Create a processor job and queue a processor task for sample related to an experiment.
 
     """
+    # YYY: All of these files either need to come from the same sample
+    # or a sample object needs to be passed in as well. Not 100% on
+    # which is better yet, it's only called from one place thus far.
     original_file = original_files[0]
 
     # This is a paired read. Make sure the other one is downloaded, this start the job
     if '_' in original_file.filename:
         split = original_file.filename.split('_')
         if '1' in split[1]:
-            other_file = OriginalFile.objects.get(source_filename='_'.join([split[0], split[1].replace('1', '2')]))
+            other_file = OriginalFile.objects.get(
+                source_filename='_'.join([split[0], split[1].replace('1', '2')]))
         else:
-            other_file = OriginalFile.objects.get(source_filename='_'.join([split[0], split[1].replace('2', '1')]))
+            other_file = OriginalFile.objects.get(
+                source_filename='_'.join([split[0], split[1].replace('2', '1')]))
         if not other_file.is_downloaded:
             logger.info("Need other file to download before starting paired read Salmon.")
             return
@@ -130,4 +140,3 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile]):
         assoc.save()
 
     send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)
-
