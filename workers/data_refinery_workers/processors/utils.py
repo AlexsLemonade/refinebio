@@ -56,8 +56,9 @@ def start_job(job_context: Dict):
         dataset.is_processing = True
         dataset.save()
 
+        # Get the samples to smash
         job_context["dataset"] = dataset
-        job_context["samples"] = dataset.get_samples()
+        job_context["samples"] = dataset.get_aggregated_samples()
         job_context["experiments"] = dataset.get_experiments()
 
         # Just in case
