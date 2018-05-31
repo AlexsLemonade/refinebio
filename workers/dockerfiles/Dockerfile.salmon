@@ -32,6 +32,7 @@ WORKDIR /home/user
 ENV SALMON_VERSION 0.9.1
 RUN wget https://github.com/COMBINE-lab/salmon/releases/download/v${SALMON_VERSION}/Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
 RUN tar -xzf Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
+# Create soft link `/usr/local/bin/salmon` that points to the actual program
 RUN ln -sf `pwd`/Salmon-latest_linux_x86_64/bin/salmon /usr/local/bin/
 RUN rm -f Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
 # End Salmon installation.
