@@ -71,7 +71,7 @@ def prepare_job():
     ds.data = {'GSE51081': ['GSM1237810', 'GSM1237812']}
     ds.aggregate_by = 'EXPERIMENT' # [ALL or SPECIES or EXPERIMENT]
     ds.scale_by = 'NONE' # [NONE or MINMAX or STANDARD or ROBUST]
-    ds.email_address = "null@null.null"
+    ds.email_address = "miserlou@gmail"
     ds.save()
 
     pjda = ProcessorJobDatasetAssociation()
@@ -106,7 +106,7 @@ class SmasherTestCase(TestCase):
             dataset.aggregate_by = ag_type
             dataset.save()
 
-            final_context = smasher.smash(job.pk)
+            final_context = smasher.smash(job.pk, upload=False)
             # Make sure the file exists and is a valid size
             self.assertNotEqual(os.path.getsize(final_context['output_file']), 0)
             self.assertEqual(final_context['dataset'].is_processed, True)
@@ -121,7 +121,7 @@ class SmasherTestCase(TestCase):
             dataset.scale_by = scale_type
             dataset.save()
 
-            final_context = smasher.smash(job.pk)
+            final_context = smasher.smash(job.pk, upload=False)
             # Make sure the file exists and is a valid size
             self.assertNotEqual(os.path.getsize(final_context['output_file']), 0)
             self.assertEqual(final_context['dataset'].is_processed, True)

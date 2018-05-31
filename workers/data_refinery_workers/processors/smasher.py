@@ -1,11 +1,14 @@
 from __future__ import absolute_import, unicode_literals
 
+import boto3
 import json
 import os
 import shutil
 import string
 import warnings
-from datetime import datetime
+
+from botocore.exceptions import ClientError
+from datetime import datetime, timedelta
 from django.utils import timezone
 from typing import Dict
 
@@ -17,6 +20,8 @@ from data_refinery_common.models import OriginalFile, ComputationalResult, Compu
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 from data_refinery_common.utils import get_env_variable
+
+RESULTS_BUCKET = get_env_variable("S3_RESULTS_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
 logger = get_and_configure_logger(__name__)
@@ -131,6 +136,76 @@ def _smash(job_context: Dict) -> Dict:
 
 def _upload_and_notify(job_context: Dict) -> Dict:
     """ Uploads the result file to S3 and notifies user. """
+
+    if job_context.get("upload", True):
+
+        ##
+        # S3
+        ##
+        s3_client = boto3.client('s3')
+
+        # Note that file expiry is handled by the S3 object lifecycle,
+        # managed by terraform.
+        s3_client.upload_file(
+                job_context["output_file"], 
+                RESULTS_BUCKET, 
+                job_context["output_file"].split('/')[-1],
+                ExtraArgs={'ACL':'public-read'}
+            )
+        result_url = "https://s3.amazonaws.com/" + RESULTS_BUCKET + "/" + job_context["output_file"].split('/')[-1]
+        job_context["result_url"] = result_url
+
+        job_context["dataset"].s3_bucket = RESULTS_BUCKET
+        job_context["dataset"].s3_key = job_context["output_file"].split('/')[-1]
+        job_context["dataset"].save()
+
+        ##
+        # SES
+        ##
+
+        # XXX: This address must be verified with Amazon SES.
+        SENDER = "Refine.bio Mail Robot <noreply@refine.bio>"
+        RECIPIENT = job_context["dataset"].email_address
+        AWS_REGION = "us-east-1"
+        SUBJECT = "Your refine.bio Dataset is Ready!"
+        BODY_TEXT = "Get it here: " + result_url + "\n\nLove,\nrefine.bio"
+        BODY_HTML = "Get it here: " + result_url + "\n\nLove,\nrefine.bio"     
+        CHARSET = "UTF-8"
+
+        # Create a new SES resource and specify a region.
+        client = boto3.client('ses',region_name=AWS_REGION)
+
+        # Try to send the email.
+        try:
+            #Provide the contents of the email.
+            response = client.send_email(
+                Destination={
+                    'ToAddresses': [
+                        RECIPIENT,
+                    ],
+                },
+                Message={
+                    'Body': {
+                        'Html': {
+                            'Charset': CHARSET,
+                            'Data': BODY_HTML,
+                        },
+                        'Text': {
+                            'Charset': CHARSET,
+                            'Data': BODY_TEXT,
+                        },
+                    },
+                    'Subject': {
+                        'Charset': CHARSET,
+                        'Data': SUBJECT,
+                    },
+                },
+                Source=SENDER,
+            )
+        # Display an error if something goes wrong. 
+        except ClientError as e:
+            logger.error(e.response['Error']['Message'])
+
     return job_context
 
 def _update_result_objects(job_context: Dict) -> Dict:
@@ -139,14 +214,16 @@ def _update_result_objects(job_context: Dict) -> Dict:
     dataset = job_context["dataset"]
     dataset.is_processing = False
     dataset.is_processed = True
+    dataset.is_available = True
+    dataset.expires_on = datetime.utcnow() + timedelta(days=1)
     dataset.save()
 
     return job_context
 
-def smash(job_id: int) -> None:
+def smash(job_id: int, upload=True) -> None:
     """ Main Smasher interface """
 
-    return utils.run_pipeline({"job_id": job_id},
+    return utils.run_pipeline({"job_id": job_id, "upload": upload},
                        [utils.start_job,
                         _prepare_files,
                         _smash,

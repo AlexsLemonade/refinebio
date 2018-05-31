@@ -150,6 +150,9 @@ if [[ -z $tag || $tag == "smasher" ]]; then
         wget -q -O $pcl_test_data_2 \
              "$test_data_repo/$pcl_name2"
     fi
+
+    export AWS_ACCESS_KEY_ID=`~/bin/aws configure get default.aws_access_key_id`
+    export AWS_SECRET_ACCESS_KEY=`~/bin/aws configure get default.aws_secret_access_key`
 fi
 
 source common.sh
@@ -186,6 +189,8 @@ for image in ${worker_images[*]}; do
                --add-host=database:$DB_HOST_IP \
                --add-host=nomad:$HOST_IP \
                --env-file workers/environments/test \
+               --env AWS_ACCESS_KEY_ID \
+               --env AWS_SECRET_ACCESS_KEY \
                --volume $volume_directory:/home/user/data_store \
                --link drdb:postgres \
                -it $image_name bash -c "$test_command"
