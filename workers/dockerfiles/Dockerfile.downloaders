@@ -32,6 +32,8 @@ COPY workers/install_affy_only.R .
 
 RUN Rscript install_affy_only.R
 
+RUN pip3 install --upgrade pip
+
 # Aspera will only install as the current user.
 # Even using `su - user &&` doesn't work...
 USER user
@@ -42,8 +44,6 @@ RUN sh aspera-cli-3.7.7.608.927cce8-linux-64-release.sh
 
 # Now that we're done installing Aspera go back to being root for a bit.
 USER root
-
-RUN pip3 install --upgrade pip
 
 COPY config config
 
