@@ -1,9 +1,11 @@
 from __future__ import absolute_import, unicode_literals
 
+import json
 import os
 import shutil
 import string
 import warnings
+from datetime import datetime
 from django.utils import timezone
 from typing import Dict
 
@@ -40,7 +42,7 @@ def _smash(job_context: Dict) -> Dict:
     Smash all of the samples together!
 
     Steps:
-        Combine common genes (Pandas merge? ^)
+        Combine common genes (pandas merge)
         Transpose such that genes are columns (features)
         Scale features with sci-kit learn
         Transpose again such that samples are columns and genes are rows
@@ -56,6 +58,7 @@ def _smash(job_context: Dict) -> Dict:
         'ROBUST': preprocessing.RobustScaler,
     }
 
+    num_samples = 0
     # Smash all of the sample sets
     for key, input_files in job_context['input_files'].items():
 
@@ -64,6 +67,7 @@ def _smash(job_context: Dict) -> Dict:
         for computed_file in input_files:
             data = pd.DataFrame.from_csv(computed_file.absolute_file_path, sep='\t', header=0)
             all_frames.append(data)
+            num_samples = num_samples + 1
         merged = all_frames[0]
         i = 1
         while i < len(all_frames):
@@ -89,9 +93,35 @@ def _smash(job_context: Dict) -> Dict:
             untransposed = transposed.transpose()
 
         # Write to temp file with dataset UUID in filename.
-        outfile = smash_path + key + ".csv"
+        outfile = smash_path + key + ".tsv"
         untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
-    
+
+    # Copy LICENSE.txt and README.md files
+    shutil.copy("README_DATASET.md", smash_path + "README.md")
+    shutil.copy("LICENSE_DATASET.txt", smash_path + "LICENSE.TXT")
+
+    # Create metadata file.
+    metadata = {}
+    metadata['files'] = os.listdir(smash_path)
+    metadata['num_samples'] = num_samples
+    metadata['num_experiments'] = job_context["experiments"].count()
+    metadata['aggregate_by'] = job_context["dataset"].aggregate_by
+    metadata['scale_by'] = job_context["dataset"].scale_by
+
+    samples = {}
+    for sample in job_context["dataset"].get_samples():
+        samples[sample.title] = sample.to_metadata_dict()
+    metadata['samples'] = samples
+
+    experiments = {}
+    for experiment in job_context["dataset"].get_experiments():
+        experiments[experiment.accession_code] = experiment.to_metadata_dict()
+    metadata['experiments'] = experiments
+
+    metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+    with open(smash_path + 'metadata.json', 'w') as metadata_file: 
+        json.dump(metadata, metadata_file, indent=4, sort_keys=True)
+
     # Finally, compress all files into a zip
     final_zip = smash_path + str(job_context['dataset'].id)
     shutil.make_archive(final_zip, 'zip', smash_path)

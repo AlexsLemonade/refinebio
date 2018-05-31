@@ -83,6 +83,27 @@ class Sample(models.Model):
         """ Get all of the ComputedFile objects associated with this Sample """
         return ComputedFile.objects.filter(result__in=self.results.all())
 
+    def to_metadata_dict(self):
+        """ Render this Sample as a dict """
+        metadata = {}
+        metadata['title'] = self.title
+        metadata['accession_code'] = self.accession_code
+        metadata['organism'] = self.organism.name
+        metadata['source_archive_url'] = self.source_archive_url
+        metadata['sex'] = self.sex
+        metadata['age'] = self.age or ''
+        metadata['specimen_part'] = self.specimen_part
+        metadata['genotype'] = self.genotype
+        metadata['disease'] = self.disease
+        metadata['disease_stage'] = self.disease_stage
+        metadata['cell_line'] = self.cell_line
+        metadata['treatment'] = self.treatment
+        metadata['race'] = self.race
+        metadata['subject'] = self.subject
+        metadata['compound'] = self.compound
+        metadata['time'] = self.time
+        return metadata
+
 class SampleAnnotation(models.Model):
     """ Semi-standard information associated with a Sample """
 
@@ -159,6 +180,33 @@ class Experiment(models.Model):
             self.created_at = current_time
         self.last_modified = current_time
         return super(Experiment, self).save(*args, **kwargs)
+
+    def to_metadata_dict(self):
+        """ Render this Experiment as a dict """
+
+        metadata = {}
+        metadata['title'] = self.title
+        metadata['accession_code'] = self.accession_code
+        metadata['description'] = self.description
+        metadata['protocol_description'] = self.protocol_description
+        metadata['platform_accession_code'] = self.platform_accession_code
+        metadata['platform_name'] = self.platform_name
+        metadata['technology'] = self.technology
+        metadata['submitter_institution'] = self.submitter_institution
+        metadata['has_publication'] = self.has_publication
+        metadata['publication_title'] = self.publication_title
+        metadata['publication_doi'] = self.publication_doi
+        metadata['pubmed_id'] = self.pubmed_id
+        if self.source_first_published:
+            metadata['source_first_published'] = self.source_first_published.strftime('%Y-%m-%dT%H:%M:%S')
+        else:
+            metadata['source_first_published'] = ''
+        if self.source_last_modified:
+            metadata['source_last_modified'] = self.source_last_modified.strftime('%Y-%m-%dT%H:%M:%S')
+        else:
+            metadata['source_last_modified'] = ''
+
+        return metadata
 
 class ExperimentAnnotation(models.Model):
     """ Semi-standard information associated with an Experiment """

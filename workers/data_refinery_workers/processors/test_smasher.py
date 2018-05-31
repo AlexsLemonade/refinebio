@@ -33,6 +33,7 @@ def prepare_job():
 
     sample = Sample()
     sample.accession_code = 'GSM1237810'
+    sample.title = 'GSM1237810'
     sample.organism = homo_sapiens
     sample.save()
 
@@ -50,6 +51,7 @@ def prepare_job():
 
     sample = Sample()
     sample.accession_code = 'GSM1237812'
+    sample.title = 'GSM1237812'
     sample.organism = homo_sapiens
     sample.save()
 
