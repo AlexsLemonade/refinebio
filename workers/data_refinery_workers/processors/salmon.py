@@ -358,16 +358,10 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
     return job_context
 
 def _run_multiqc(job_context: Dict) -> Dict:
-    """ Runs the `MultiQC` package to generate the QC report.
-
-    """
+    """Runs the `MultiQC` package to generate the QC report."""
     command_str = ("multiqc {input_directory} --outdir {qc_directory} --zip-data-dir")
-<<<<<<< HEAD
-    formatted_command = command_str.format(input_directory=job_context["input_directory"],
-=======
     formatted_command = command_str.format(input_directory=job_context["qc_input_directory"],
->>>>>>> 463b9a37a781b8a7cddeb2ff1c4f5e09c2e2c8af
-                qc_directory=job_context["qc_directory"])
+                                           qc_directory=job_context["qc_directory"])
 
     logger.info("Running MultiQC using the following shell command: %s",
                 formatted_command,
