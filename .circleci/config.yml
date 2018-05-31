@@ -39,6 +39,8 @@ jobs:
       - run: docker push localhost:5000/ccdl/dr_downloaders
       - run: docker tag ccdl/dr_no_op localhost:5000/ccdl/dr_no_op
       - run: docker push localhost:5000/ccdl/dr_no_op
+      - run: docker tag ccdl/dr_smasher localhost:5000/ccdl/dr_smasher
+      - run: docker push localhost:5000/ccdl/dr_smasher
 
       # Run API Tests.
       - run: ./api/run_tests.sh
