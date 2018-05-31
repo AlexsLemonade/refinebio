@@ -51,6 +51,7 @@ jobs:
       - run: .circleci/filter_tests.sh -t illumina
       
         # Run Smasher tests.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
       - run: .circleci/filter_tests.sh -t smasher 
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
