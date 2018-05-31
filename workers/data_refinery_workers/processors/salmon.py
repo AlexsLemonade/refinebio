@@ -63,7 +63,6 @@ def _prepare_files(job_context: Dict) -> Dict:
 <<<<<<< HEAD
     # The paths of original_files are in this format:
     #   <experiment_accession_code>/raw/<filename>
-
     # Salmon outputs an entire directory of files, so create a temp
     # directory to output it to until we can zip it to.
     # The path of temp directory is in this format:
