@@ -20,6 +20,7 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
     ComputedFile,
+    Experiment,
     ExperimentSampleAssociation,
     SampleResultAssociation
     )
@@ -199,7 +200,7 @@ def _get_salmon_completed_exp_dirs(job_context: Dict) -> List[str]:
     return salmon_completed_exp_dirs
 
 
-def _tximport(job_context: Dict, experiment_dir: str, genes_to_transcripts_path: str): -> Dict
+def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
     """Run tximport R script based on input experiment_dir and the path
     of genes_to_transcripts.txt."""
 
@@ -208,7 +209,7 @@ def _tximport(job_context: Dict, experiment_dir: str, genes_to_transcripts_path:
         "/usr/bin/Rscript", "--vanilla",
         "/home/user/data_refinery_workers/processors/tximport.R",
         "--exp_dir", experiment_dir,
-        "--gene2txmap", genes_to_transcripts_path
+        "--gene2txmap", job_context["genes_to_transcripts_path"]
     ]
     result.time_start = timezone.now()
 
@@ -233,8 +234,9 @@ def _tximport(job_context: Dict, experiment_dir: str, genes_to_transcripts_path:
     # done at experiment level, not at sample level.
     experiment_accession = experiment_dir.split('/')[-1]
     current_experiment = Experiment.objects.get(accession_code=experiment_accession)
-    for sample in current_experiment.samples:
-        sample.results.add(result)
+    for sample in current_experiment.samples.all():
+        s_r = SampleResultAssociation(sample=sample, result=result)
+        s_r.save()
 
     return job_context
 
@@ -320,7 +322,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         # tximport analysis is done outside of the transaction so that
         # the mutex wouldn't hold the other jobs too long.
         for experiment_dir in salmon_completed_exp_dirs:
-            _tximport(experiment_dir, job_context["genes_to_transcripts_path"])
+            _tximport(job_context, experiment_dir)
             # If `tximport` on any related experiment fails, exit immediately.
             if not job_context["success"]:
                 return job_context
