@@ -26,9 +26,6 @@ jobs:
       - run:
           command: sudo -E ./run_nomad.sh -e test
 
-      # Run API Tests.
-      - run: ./api/run_tests.sh
-
       # Run Common Tests.
       - run: ./common/run_tests.sh
 
@@ -42,6 +39,9 @@ jobs:
       - run: docker push localhost:5000/ccdl/dr_downloaders
       - run: docker tag ccdl/dr_no_op localhost:5000/ccdl/dr_no_op
       - run: docker push localhost:5000/ccdl/dr_no_op
+
+      # Run API Tests.
+      - run: ./api/run_tests.sh
 
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
