@@ -8,6 +8,7 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
     Experiment,
+    Organism,
     Sample,
     SampleResultAssociation,
     Dataset,
@@ -28,8 +29,11 @@ def prepare_job():
     result = ComputationalResult()
     result.save()
 
+    homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+
     sample = Sample()
     sample.accession_code = 'GSM1237810'
+    sample.organism = homo_sapiens
     sample.save()
 
     sra = SampleResultAssociation()
@@ -46,6 +50,7 @@ def prepare_job():
 
     sample = Sample()
     sample.accession_code = 'GSM1237812'
+    sample.organism = homo_sapiens
     sample.save()
 
     sra = SampleResultAssociation()
@@ -62,7 +67,7 @@ def prepare_job():
 
     ds = Dataset()
     ds.data = {'GSE51081': ['GSM1237810', 'GSM1237812']}
-    ds.aggregate_by = 'SAMPLE' # [SAMPLE or EXPERIMENT]
+    ds.aggregate_by = 'EXPERIMENT' # [ALL or SPECIES or EXPERIMENT]
     ds.email_address = "null@null.null"
     ds.save()
 
@@ -89,11 +94,25 @@ class SmasherTestCase(TestCase):
         self.assertEqual(len(job_context_check['samples']), 2)
         self.assertEqual(len(job_context_check['experiments']), 1)
 
-        final_context = smasher.smash(job.pk)
-        # Make sure the file exists and is our desired size
-        self.assertNotEqual(os.path.getsize(final_context['output_file']), 0)
-        self.assertEqual(os.path.getsize(final_context['output_file']), 2876517)
-        self.assertEqual(final_context['dataset'].is_processed, True)
+        # Smoke test while we're here..
+        dataset.get_samples_by_experiment()
+        dataset.get_samples_by_species()
+        dataset.get_aggregated_samples()
+
+        for ag_type in ['ALL', 'EXPERIMENT', 'SPECIES']:
+            dataset.aggregate_by = ag_type
+            dataset.save()
+
+            final_context = smasher.smash(job.pk)
+            # Make sure the file exists and is a valid size
+            self.assertNotEqual(os.path.getsize(final_context['output_file']), 0)
+            self.assertEqual(final_context['dataset'].is_processed, True)
+
+            dataset.is_processed = False
+            dataset.save()
+
+            # Cleanup
+            os.remove(final_context['output_file']) 
 
     @tag("smasher")
     def test_get_results(self):

@@ -410,6 +410,7 @@ class Dataset(models.Model):
     """ A Dataset is a desired set of experiments/samples to smash and download """
 
     AGGREGATE_CHOICES = (
+        ('ALL', 'All'),
         ('EXPERIMENT', 'Experiment'),
         ('SPECIES', 'Species')
     )
@@ -453,7 +454,6 @@ class Dataset(models.Model):
     def get_samples(self):
         """ Retuns all of the Sample objects in this Dataset """
 
-        if self.aggregate_by == self.
         all_samples = []
         for sample_list in self.data.values(): 
             all_samples = all_samples + sample_list
@@ -470,6 +470,38 @@ class Dataset(models.Model):
         all_experiments = list(set(all_experiments))
 
         return Experiment.objects.filter(accession_code__in=all_experiments)
+
+    def get_samples_by_experiment(self):
+        """ Returns a dict of sample QuerySets, for samples grouped by experiment. """
+        all_samples = {}
+
+        for experiment, samples in self.data.items():
+            all_samples[experiment] = Sample.objects.filter(accession_code__in=samples)
+
+        return all_samples
+
+    def get_samples_by_species(self):
+        """ Returns a dict of sample QuerySets, for samples grouped by species. """
+
+        by_species = {}
+        all_samples = self.get_samples()
+        for sample in all_samples:
+            if not by_species.get(sample.organism.name, None):
+                by_species[sample.organism.name] = [sample]
+            else:
+                by_species[sample.organism.name].append(sample)
+
+        return by_species
+
+    def get_aggregated_samples(self):
+        """ Uses aggregate_by to return smasher-ready a sample dict. """
+
+        if self.aggregate_by == "ALL":
+            return {'ALL': self.get_samples()}
+        elif self.aggregate_by == "EXPERIMENT":
+            return self.get_samples_by_experiment()
+        else:
+            return self.get_samples_by_species()
 
 """
 # Associations
