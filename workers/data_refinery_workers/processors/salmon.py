@@ -60,7 +60,6 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context['organism'] = job_context['sample'].organism
     job_context["success"] = True
 
-<<<<<<< HEAD
     # The paths of original_files are in this format:
     #   <experiment_accession_code>/raw/<filename>
     # Salmon outputs an entire directory of files, so create a temp
@@ -70,8 +69,8 @@ def _prepare_files(job_context: Dict) -> Dict:
     pre_part = '/'.join(original_files[0].absolute_file_path.split('/')[:-2])
     sample_accession = job_context['sample'].accession_code
     job_context["output_directory"] = pre_part + "/" + sample_accession + '/processed/'
-
     os.makedirs(job_context["output_directory"], exist_ok=True)
+
     job_context["qc_input_directory"] = pre_part + '/'
     job_context["qc_directory"] = pre_part + '/qc/'
     os.makedirs(job_context["qc_directory"], exist_ok=True)
