@@ -89,14 +89,15 @@ def _determine_microarray_manufacturer(platform: str) -> str:
         "Cannot determine manufacterer for unsupported platform: " + platform)
 
 
-def determine_downloader_task(source_database: str,
-                              technology: str,
-                              has_raw: bool,
-                              platform: str,
-                              original_files: List[OriginalFile]=[]) -> Downloaders:
-    if _is_platform_supported(platform):
+def determine_downloader_task(sample_object: Sample) -> Downloaders:
+    if _is_platform_supported(sample_object.platform_accession_code):
         return Downloaders[source_database]
-    elif has_raw:
+    elif sample_object.has_raw:
+        # Sometimes Array Express lies about what a sample's platform
+        # is. Therefore, if there's a .CEL file we'll download it and
+        # determine the platform from that.
+        relations = OriginalFileSampleAssociation.objects.filter(sample=sample_object)
+        original_files = OriginalFile.objects.filter(id__in=relations.values('original_file_id'))
         for original_file in original_files:
             if original_file.source_filename[-4:].upper() == ".CEL":
                 return Downloaders[source_database]
@@ -104,19 +105,17 @@ def determine_downloader_task(source_database: str,
     return Downloaders.NONE
 
 
-def determine_processor_pipeline(source_database: str,
-                                 technology: str,
-                                 has_raw: bool,
-                                 platform: str) -> ProcessorPipeline:
-    if not _is_platform_supported(platform):
+def determine_processor_pipeline(sample_object: Sample) -> ProcessorPipeline:
+    if not _is_platform_supported(sample_object.platform_accession_code):
         return ProcessorPipeline.NONE
 
-    if technology == "MICROARRAY":
-        if not has_raw:
+    if sample_object.technology == "MICROARRAY":
+        if not sample_object.has_raw:
             return ProcessorPipeline.NO_OP
         else:
             try:
-                manufacterer = _determine_microarray_manufacturer(platform)
+                manufacterer = _determine_microarray_manufacturer(
+                    sample_object.platform_accession_code)
             except UnsupportedPlatformError:
                 # This shouldn't happen since we first check that the
                 # platform is supported.
@@ -128,11 +127,11 @@ def determine_processor_pipeline(source_database: str,
                 return ProcessorPipeline.AFFY_TO_PCL
 
     else:
-        if not has_raw:
+        if not sample_object.has_raw:
             # Only NO_OP RNASeq data if it's from SRA, because
             # ArrayExpress and GEO often only have processed data
             # while linking to SRA for the raw data.
-            if source_database == "SRA":
+            if sample_object.source_database == "SRA":
                 return ProcessorPipeline.NO_OP
             else:
                 return ProcessorPipeline.NONE

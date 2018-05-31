@@ -9,11 +9,11 @@ from contextlib import closing
 
 from data_refinery_common.models import (
     DownloaderJob,
-    Experiment, 
-    Sample, 
-    ExperimentAnnotation, 
-    ExperimentSampleAssociation, 
-    OriginalFile, 
+    Experiment,
+    Sample,
+    ExperimentAnnotation,
+    ExperimentSampleAssociation,
+    OriginalFile,
     DownloaderJobOriginalFileAssociation,
     OriginalFileSampleAssociation
 )
@@ -27,6 +27,7 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 
 # chunk_size is in bytes
 CHUNK_SIZE = 1024 * 256
+
 
 def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> None:
     """ Download a file from GEO via FTP. There is no Aspera endpoint
@@ -53,6 +54,7 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
     finally:
         target_file.close()
 
+
 def _extract_tar(file_path: str, accession_code: str) -> List[str]:
     """Extract tar and return a list of the raw files.
     """
@@ -68,7 +70,8 @@ def _extract_tar(file_path: str, accession_code: str) -> List[str]:
         zip_ref.close()
 
         # os.abspath doesn't do what I thought it does, hency this monstrocity.
-        files = [{'absolute_path': abs_with_code_raw + f, 'filename': f} for f in os.listdir(abs_with_code_raw)]
+        files = [{'absolute_path': abs_with_code_raw + f, 'filename': f}
+                 for f in os.listdir(abs_with_code_raw)]
 
     except Exception as e:
         reason = "Exception %s caught while extracting %s", str(e), file_path
@@ -76,6 +79,7 @@ def _extract_tar(file_path: str, accession_code: str) -> List[str]:
         raise
 
     return files
+
 
 def _extract_tgz(file_path: str, accession_code: str) -> List[str]:
     """Extract tgz and return a list of the raw files.
@@ -94,7 +98,8 @@ def _extract_tgz(file_path: str, accession_code: str) -> List[str]:
         zip_ref.extractall(abs_with_code_raw)
         zip_ref.close()
 
-        files = [{'absolute_path': abs_with_code_raw + f, 'filename': f} for f in os.listdir(abs_with_code_raw)]
+        files = [{'absolute_path': abs_with_code_raw + f, 'filename': f}
+                 for f in os.listdir(abs_with_code_raw)]
 
     except Exception as e:
         reason = "Exception %s caught while extracting %s", str(e), file_path
@@ -102,6 +107,7 @@ def _extract_tgz(file_path: str, accession_code: str) -> List[str]:
         raise
 
     return files
+
 
 def _extract_gz(file_path: str, accession_code: str) -> List[str]:
     """Extract gz and return a list of the raw files.
@@ -116,9 +122,9 @@ def _extract_gz(file_path: str, accession_code: str) -> List[str]:
             with open(extracted_filepath, 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
 
-        files = [{  'absolute_path': extracted_filepath, 
-                    'filename': extracted_filepath.rsplit('/', 1)[1]
-                }]
+        files = [{'absolute_path': extracted_filepath,
+                  'filename': extracted_filepath.rsplit('/', 1)[1]
+                  }]
 
     except Exception as e:
         reason = "Exception %s caught while extracting %s", str(e), file_path
@@ -126,6 +132,7 @@ def _extract_gz(file_path: str, accession_code: str) -> List[str]:
         raise
 
     return files
+
 
 def download_geo(job_id: int) -> None:
     """The main function for the GEO Downloader.
@@ -138,11 +145,11 @@ def download_geo(job_id: int) -> None:
 
     file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
 
-    original_file = file_assocs[0].original_file 
+    original_file = file_assocs[0].original_file
     url = original_file.source_url
     accession_code = job.accession_code
 
-    sample_assocs  = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
+    sample_assocs = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
     related_samples = Sample.objects.filter(id__in=sample_assocs.values('sample_id'))
 
     # First, get all the unique sample archive URLs.
@@ -172,7 +179,8 @@ def download_geo(job_id: int) -> None:
         except Exception as e:
             job.failure_reason = e
             utils.end_downloader_job(job, success=False)
-            logger.exception("Error occured while extracting tar file.", path=dl_file_path, exception=str(e))
+            logger.exception(
+                "Error occured while extracting tar file.", path=dl_file_path, exception=str(e))
             return
 
         for og_file in extracted_files:
@@ -192,8 +200,8 @@ def download_geo(job_id: int) -> None:
             try:
                 # Files from the GEO supplemental file are gzipped inside of the tarball. Great!
                 archive_file = OriginalFile.objects.get(source_filename__contains=sample_id)
-                archive_file.is_downloaded=True
-                archive_file.is_archive=True
+                archive_file.is_downloaded = True
+                archive_file.is_archive = True
                 archive_file.absolute_file_path = og_file['absolute_path']
                 archive_file.calculate_size()
                 archive_file.calculate_sha1()
@@ -205,8 +213,8 @@ def download_geo(job_id: int) -> None:
                     extracted_subfile = [og_file]
 
                 actual_file = OriginalFile()
-                actual_file.is_downloaded=True
-                actual_file.is_archive=False
+                actual_file.is_downloaded = True
+                actual_file.is_archive = False
                 actual_file.absolute_file_path = extracted_subfile[0]['absolute_path']
                 actual_file.filename = extracted_subfile[0]['filename']
                 actual_file.calculate_size()
@@ -252,8 +260,8 @@ def download_geo(job_id: int) -> None:
                     continue
 
                 actual_file = OriginalFile()
-                actual_file.is_downloaded=True
-                actual_file.is_archive=False
+                actual_file.is_downloaded = True
+                actual_file.is_archive = False
                 actual_file.absolute_file_path = og_file['absolute_path']
                 actual_file.filename = og_file['filename']
                 actual_file.calculate_size()
@@ -288,16 +296,16 @@ def download_geo(job_id: int) -> None:
             try:
                 # The archive we downloaded
                 archive_file = OriginalFile.objects.get(source_filename__contains=filename)
-                archive_file.is_downloaded=True
-                archive_file.is_archive=True
+                archive_file.is_downloaded = True
+                archive_file.is_archive = True
                 archive_file.absolute_file_path = dl_file_path
                 archive_file.calculate_size()
                 archive_file.calculate_sha1()
                 archive_file.save()
 
                 actual_file = OriginalFile()
-                actual_file.is_downloaded=True
-                actual_file.is_archive=False
+                actual_file.is_downloaded = True
+                actual_file.is_archive = False
                 actual_file.absolute_file_path = og_file['absolute_path']
                 actual_file.filename = og_file['filename']
                 actual_file.calculate_size()
@@ -326,8 +334,8 @@ def download_geo(job_id: int) -> None:
         sample_id = filename.split('_')[0]
 
         actual_file = OriginalFile()
-        actual_file.is_downloaded=True
-        actual_file.is_archive=False
+        actual_file.is_downloaded = True
+        actual_file.is_archive = False
         actual_file.absolute_file_path = dl_file_path
         actual_file.filename = filename
         actual_file.calculate_size()

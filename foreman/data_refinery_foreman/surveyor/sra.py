@@ -379,10 +379,11 @@ class SraSurveyor(ExternalSourceSurveyor):
                          survey_job=self.survey_job.id)
         except Sample.DoesNotExist:
             sample_object = Sample()
+            sample_object.source_database = "SRA"
             sample_object.accession_code = sample_accession_code
             sample_object.organism = organism
 
-            sample_object.platform_name = metadata.get("platform_instrument_model", "No model.")
+            sample_object.platform_name = metadata.get("platform_instrument_model", "UNKNOWN")
             # No platform accession nonsense with RNASeq, just use the name:
             sample_object.platform_accession_code = sample_object.platform_name
             sample_object.technology = "RNA-SEQ"

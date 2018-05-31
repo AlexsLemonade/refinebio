@@ -218,6 +218,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 organism = Organism.get_object_for_name(sample.metadata['organism_ch1'][0].upper())
 
                 sample_object = Sample()
+                sample_object.source_database = "GEO"
                 sample_object.accession_code = sample_accession_code
                 sample_object.organism = organism
                 title = sample.metadata['title'][0]

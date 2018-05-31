@@ -422,6 +422,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 sample_object = Sample()
 
                 # The basics
+                sample_object.source_database = "ARRAY_EXPRESS"
                 sample_object.title = title
                 sample_object.accession_code = sample_accession_code
                 sample_object.source_archive_url = samples_endpoint
