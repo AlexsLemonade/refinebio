@@ -415,6 +415,13 @@ class Dataset(models.Model):
         ('SPECIES', 'Species')
     )
 
+    SCALE_CHOICES = (
+        ('NONE', 'None'),
+        ('MINMAX', 'Minmax'),
+        ('STANDARD', 'Standard'),
+        ('ROBUST', 'Robust'),
+    )
+
     # ID
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -425,6 +432,7 @@ class Dataset(models.Model):
 
     # Processing properties
     aggregate_by = models.CharField(max_length=255, choices=AGGREGATE_CHOICES, default="EXPERIMENT")
+    scale_by = models.CharField(max_length=255, choices=SCALE_CHOICES, default="MINMAX")
 
     # State properties
     is_processing = models.BooleanField(default=False) # Data is still editable when False

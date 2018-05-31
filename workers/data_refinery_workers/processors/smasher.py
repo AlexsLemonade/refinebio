@@ -50,6 +50,12 @@ def _smash(job_context: Dict) -> Dict:
     smash_path = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk) + "/"
     os.makedirs(smash_path, exist_ok=True)
 
+    scalers = {
+        'MINMAX': preprocessing.MinMaxScaler,
+        'STANDARD': preprocessing.StandardScaler,
+        'ROBUST': preprocessing.RobustScaler,
+    }
+
     # Smash all of the sample sets
     for key, input_files in job_context['input_files'].items():
 
@@ -67,17 +73,20 @@ def _smash(job_context: Dict) -> Dict:
         # Transpose before scaling
         transposed = merged.transpose()
         
-        # Scale
-        # XXX/TODO: Is MinMaxScaler or Standard or Robust the right scaler here?
-        scaler = preprocessing.MinMaxScaler(copy=True)
-        scaler.fit(transposed)
-        scaled = pd.DataFrame(  scaler.transform(transposed), 
-                                index=transposed.index, 
-                                columns=transposed.columns
-                            )
-
-        # Untranspose
-        untransposed = scaled.transpose()
+        # Scaler
+        if job_context['dataset'].scale_by != "NONE":
+            scale_funtion = scalers[job_context['dataset'].scale_by]
+            scaler = scale_funtion(copy=True)
+            scaler.fit(transposed)
+            scaled = pd.DataFrame(  scaler.transform(transposed), 
+                                    index=transposed.index, 
+                                    columns=transposed.columns
+                                )
+            # Untranspose
+            untransposed = scaled.transpose()
+        else:
+            # Wheeeeeeeeeee
+            untransposed = transposed.transpose()
 
         # Write to temp file with dataset UUID in filename.
         outfile = smash_path + key + ".csv"
