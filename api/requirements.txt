@@ -22,7 +22,8 @@ itypes==1.1.0             # via coreapi
 jinja2==2.10              # via coreschema
 jmespath==0.9.3           # via boto3, botocore
 markupsafe==1.0           # via jinja2
-psycopg2==2.7.4
+psycopg2-binary==2.7.4
+psycopg2==2.7.4           # via djangorestframework-hstore
 python-dateutil==2.6.1    # via botocore
 python-nomad==0.6.1
 pytz==2018.3              # via django
