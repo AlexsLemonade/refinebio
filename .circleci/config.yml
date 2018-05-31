@@ -34,6 +34,7 @@ jobs:
 
       - run: ./prepare_image.sh -i no_op -s workers
       - run: ./prepare_image.sh -i downloaders -s workers
+      - run: ./prepare_image.sh -i smasher -s workers
 
       # Push the no_op and downloader images to the local docker repo so Nomad
       # can pull from there when running end-to-end tests.
@@ -48,6 +49,9 @@ jobs:
 
       # Run Illumna tests.
       - run: .circleci/filter_tests.sh -t illumina
+      
+        # Run Smasher tests.
+      - run: .circleci/filter_tests.sh -t smasher 
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
   affymetrix_and_agilent_tests:

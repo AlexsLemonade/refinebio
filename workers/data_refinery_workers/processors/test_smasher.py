@@ -68,6 +68,7 @@ def prepare_job():
     ds = Dataset()
     ds.data = {'GSE51081': ['GSM1237810', 'GSM1237812']}
     ds.aggregate_by = 'EXPERIMENT' # [ALL or SPECIES or EXPERIMENT]
+    ds.scale_by = 'NONE' # [NONE or MINMAX or STANDARD or ROBUST]
     ds.email_address = "null@null.null"
     ds.save()
 
@@ -101,6 +102,21 @@ class SmasherTestCase(TestCase):
 
         for ag_type in ['ALL', 'EXPERIMENT', 'SPECIES']:
             dataset.aggregate_by = ag_type
+            dataset.save()
+
+            final_context = smasher.smash(job.pk)
+            # Make sure the file exists and is a valid size
+            self.assertNotEqual(os.path.getsize(final_context['output_file']), 0)
+            self.assertEqual(final_context['dataset'].is_processed, True)
+
+            dataset.is_processed = False
+            dataset.save()
+
+            # Cleanup
+            os.remove(final_context['output_file']) 
+
+        for scale_type in ['NONE', 'MINMAX', 'STANDARD', 'ROBUST']:
+            dataset.scale_by = scale_type
             dataset.save()
 
             final_context = smasher.smash(job.pk)
