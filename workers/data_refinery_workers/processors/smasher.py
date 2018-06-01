@@ -70,7 +70,7 @@ def _smash(job_context: Dict) -> Dict:
         # Merge all the frames into one
         all_frames = []
         for computed_file in input_files:
-            data = pd.DataFrame.from_csv(computed_file.absolute_file_path, sep='\t', header=0)
+            data = pd.DataFrame.from_csv(str(computed_file.absolute_file_path), sep='\t', header=0)
             all_frames.append(data)
             num_samples = num_samples + 1
         merged = all_frames[0]
@@ -81,7 +81,7 @@ def _smash(job_context: Dict) -> Dict:
 
         # Transpose before scaling
         transposed = merged.transpose()
-        
+
         # Scaler
         if job_context['dataset'].scale_by != "NONE":
             scale_funtion = scalers[job_context['dataset'].scale_by]
@@ -220,7 +220,7 @@ def _update_result_objects(job_context: Dict) -> Dict:
     dataset.is_processing = False
     dataset.is_processed = True
     dataset.is_available = True
-    dataset.expires_on = datetime.utcnow() + timedelta(days=1)
+    dataset.expires_on = timezone.now() + timedelta(days=1)
     dataset.save()
 
     return job_context
