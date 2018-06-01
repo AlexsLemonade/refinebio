@@ -79,7 +79,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_object.accession_code = experiment_accession_code
             experiment_object.source_url = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=" + experiment_accession_code
             experiment_object.source_database = "GEO"
-            experiment_object.name = gse.metadata.get('title', [''])[0]
+            experiment_object.title = gse.metadata.get('title', [''])[0]
             experiment_object.description = gse.metadata.get('summary', [''])[0]
             
             # Related: https://github.com/AlexsLemonade/refinebio/issues/222
