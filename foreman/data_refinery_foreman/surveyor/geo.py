@@ -14,6 +14,7 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
     ExperimentSampleAssociation,
+    ExperimentOrganismAssociation,
     OriginalFile,
     OriginalFileSampleAssociation
 )
@@ -124,10 +125,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
                 all_samples.append(sample_object)
 
-                association = ExperimentSampleAssociation()
-                association.experiment = experiment_object
-                association.sample = sample_object
-                association.save()
+                ExperimentSampleAssociation.objects.get_or_create(
+                    experiment=experiment_object, sample=sample_object)
                 continue
             except Sample.DoesNotExist:
                 organism = Organism.get_object_for_name(sample.metadata['organism_ch1'][0].upper())
@@ -135,6 +134,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 sample_object = Sample()
                 sample_object.accession_code = sample_accession_code
                 sample_object.organism = organism
+                ExperimentOrganismAssociation.objects.get_or_create(
+                    experiment=experiment_object, organism=organism)
                 title = sample.metadata['title'][0]
                 sample_object.title = title
 
@@ -213,10 +214,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 logger.info("Created OriginalFile: " + str(original_file))
 
             for sample_object in all_samples:
-                original_file_sample_association = OriginalFileSampleAssociation()
-                original_file_sample_association.sample = sample_object
-                original_file_sample_association.original_file = original_file
-                original_file_sample_association.save()
+                OriginalFileSampleAssociation.objects.get_or_create(
+                    sample=sample_object, original_file=original_file)
 
         # These are the Miniml/Soft/Matrix URLs that are always(?) provided.
         # GEO describes different types of data formatting as "families"
@@ -235,10 +234,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 logger.info("Created OriginalFile: " + str(original_file))
 
             for sample_object in all_samples:
-                original_file_sample_association = OriginalFileSampleAssociation()
-                original_file_sample_association.sample = sample_object
-                original_file_sample_association.original_file = original_file
-                original_file_sample_association.save()
+                OriginalFileSampleAssociation.objects.get_or_create(
+                    sample=sample_object, original_file=original_file)
 
         return experiment_object, all_samples
 

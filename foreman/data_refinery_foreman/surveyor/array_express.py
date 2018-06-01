@@ -460,11 +460,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 original_file_sample_association.sample = sample_object
                 original_file_sample_association.save()
 
-            association = ExperimentSampleAssociation()
-            association.experiment = experiment
-            association.sample = sample_object
-            association.save()
-
             # Create associations if they don't already exist
             try:
                 assocation = ExperimentSampleAssociation.objects.get(experiment=experiment, sample=sample_object)

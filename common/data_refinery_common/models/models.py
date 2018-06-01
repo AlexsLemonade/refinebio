@@ -460,6 +460,8 @@ class ExperimentSampleAssociation(models.Model):
 
     class Meta:
         db_table = "experiment_sample_associations"
+        unique_together = ('experiment', 'sample')
+
 
 class ExperimentOrganismAssociation(models.Model):
 
@@ -468,35 +470,50 @@ class ExperimentOrganismAssociation(models.Model):
 
     class Meta:
         db_table = "experiment_organism_associations"
+        unique_together = ('experiment', 'organism')
+
 
 class DownloaderJobOriginalFileAssociation(models.Model):
 
-    downloader_job = models.ForeignKey("data_refinery_common.DownloaderJob", blank=False, null=False, on_delete=models.CASCADE)
-    original_file = models.ForeignKey(OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
+    downloader_job = models.ForeignKey(
+        "data_refinery_common.DownloaderJob", blank=False, null=False, on_delete=models.CASCADE)
+    original_file = models.ForeignKey(
+        OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "downloaderjob_originalfile_associations"
+        unique_together = ('downloader_job', 'original_file')
+
 
 class ProcessorJobOriginalFileAssociation(models.Model):
 
-    processor_job = models.ForeignKey("data_refinery_common.ProcessorJob", blank=False, null=False, on_delete=models.CASCADE)
-    original_file = models.ForeignKey(OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
+    processor_job = models.ForeignKey(
+        "data_refinery_common.ProcessorJob", blank=False, null=False, on_delete=models.CASCADE)
+    original_file = models.ForeignKey(
+        OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "processorjob_originalfile_associations"
+        unique_together = ('processor_job', 'original_file')
+
 
 class OriginalFileSampleAssociation(models.Model):
 
-    original_file = models.ForeignKey(OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
+    original_file = models.ForeignKey(
+        OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
     sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "original_file_sample_associations"
+        unique_together = ('original_file', 'sample')
+
 
 class SampleResultAssociation(models.Model):
 
     sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
-    result = models.ForeignKey(ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+    result = models.ForeignKey(
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "sample_result_associations"
+        unique_together = ('result', 'sample')
