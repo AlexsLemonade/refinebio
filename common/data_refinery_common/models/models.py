@@ -489,6 +489,7 @@ class Dataset(models.Model):
 
     # Delivery properties
     email_address = models.CharField(max_length=255, blank=True, null=True)
+    email_sent = models.BooleanField(default=False) # Result has been made
     expires_on = models.DateTimeField(blank=True, null=True)
 
     # Deliverables

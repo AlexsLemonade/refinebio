@@ -246,7 +246,7 @@ class APITestCases(APITestCase):
         dataset = Dataset.objects.get(id=good_id)
         dataset.is_processing = False
         dataset.save()
-        jdata = json.dumps({'data': {"A": ["D"]}, 'start': True,} )
+        jdata = json.dumps({'data': {"A": ["D"]}, 'start': True} )
         response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
         self.assertEqual(response.json()["is_processing"], True)
 

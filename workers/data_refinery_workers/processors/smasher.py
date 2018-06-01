@@ -164,16 +164,17 @@ def _upload_and_notify(job_context: Dict) -> Dict:
         ##
 
         # XXX: This address must be verified with Amazon SES.
-        SENDER = "Refine.bio Mail Robot <noreply@refine.bio>"
+        #SENDER = "Refine.bio Mail Robot <noreply@refine.bio>"
+        SENDER = "Refine.bio Mail Robot <miserlou@gmail.com>"
         RECIPIENT = job_context["dataset"].email_address
         AWS_REGION = "us-east-1"
         SUBJECT = "Your refine.bio Dataset is Ready!"
-        BODY_TEXT = "Get it here: " + result_url + "\n\nLove,\nrefine.bio"
-        BODY_HTML = "Get it here: " + result_url + "\n\nLove,\nrefine.bio"     
+        BODY_TEXT = "Hot off the presses:\n\n" + result_url + "\n\nLove!,\nThe refine.bio Team"
+        BODY_HTML = "Hot off the presses:<br /><br />" + result_url + "<br /><br />Love!,<br />The refine.bio Team"
         CHARSET = "UTF-8"
 
         # Create a new SES resource and specify a region.
-        client = boto3.client('ses',region_name=AWS_REGION)
+        client = boto3.client('ses', region_name=AWS_REGION)
 
         # Try to send the email.
         try:
@@ -205,6 +206,10 @@ def _upload_and_notify(job_context: Dict) -> Dict:
         # Display an error if something goes wrong. 
         except ClientError as e:
             logger.error(e.response['Error']['Message'])
+        else:
+            job_context["dataset"].email_sent = True
+            job_context["dataset"].save()
+
 
     return job_context
 
