@@ -54,6 +54,13 @@ class SanityTestAllEndpoints(APITestCase):
         experiment_annotation.save()
 
         sample = Sample()
+        sample.title = "123"
+        sample.accession_code = "123"
+        sample.save()
+
+        sample = Sample()
+        sample.title = "789"
+        sample.accession_code = "789"
         sample.save()
         self.sample = sample
 
@@ -174,6 +181,25 @@ class SanityTestAllEndpoints(APITestCase):
 
         response = self.client.get(reverse('create_dataset'))
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_sample_pagination(self):
+
+        response = self.client.get(reverse('samples'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()['results']), 2)
+
+        response = self.client.get(reverse('samples'), {'limit': 1})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()['results']), 1)
+
+        response = self.client.get(reverse('samples'), {'limit': 1, 'order_by': '-title'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()['results'][0]['title'], '789')
+
+        response = self.client.get(reverse('samples'), {'limit': 1, 'order_by': 'title'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()['results'][0]['title'], '123')
+
 
     def test_search_and_filter(self):
 
