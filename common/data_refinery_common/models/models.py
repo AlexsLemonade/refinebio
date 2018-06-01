@@ -487,6 +487,10 @@ class Dataset(models.Model):
     is_processed = models.BooleanField(default=False) # Result has been made
     is_available = models.BooleanField(default=False) # Result is ready for delivery
 
+    # Fail handling
+    success = models.NullBooleanField(null=True)
+    failure_reason = models.TextField()
+
     # Delivery properties
     email_address = models.CharField(max_length=255, blank=True, null=True)
     email_sent = models.BooleanField(default=False) # Result has been made

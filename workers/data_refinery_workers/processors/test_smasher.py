@@ -71,7 +71,8 @@ def prepare_job():
     ds.data = {'GSE51081': ['GSM1237810', 'GSM1237812']}
     ds.aggregate_by = 'EXPERIMENT' # [ALL or SPECIES or EXPERIMENT]
     ds.scale_by = 'NONE' # [NONE or MINMAX or STANDARD or ROBUST]
-    ds.email_address = "miserlou@gmail"
+    ds.email_address = "null@derp.com"
+    #ds.email_address = "miserlou+heyo@gmail.com"
     ds.save()
 
     pjda = ProcessorJobDatasetAssociation()
@@ -156,6 +157,51 @@ class SmasherTestCase(TestCase):
 
         computed_files = sample.get_result_files()
         self.assertEqual(computed_files.count(), 1)
+
+    @tag("smasher")
+    def test_fail(self):
+        """ Test our ability to fail """
+
+        result = ComputationalResult()
+        result.save()
+
+        sample = Sample()
+        sample.accession_code = 'XXX'
+        sample.title = 'XXX'
+        sample.organism = Organism.get_object_for_name("HOMO_SAPIENS")
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "NOT_REAL.PCL"
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
+        computed_file.result = result
+        computed_file.size_in_bytes = 123
+        computed_file.save()
+
+        ds = Dataset()
+        ds.data = {'GSE51081': ['XXX']}
+        ds.aggregate_by = 'EXPERIMENT'
+        ds.scale_by = 'MINMAX'
+        ds.email_address = "null@derp.com"
+        ds.save()
+        dsid = ds.id
+
+        job = prepare_job()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = job
+        pjda.dataset = ds
+        pjda.save()
+
+        final_context = smasher.smash(job.pk, upload=False)
+        ds = Dataset.objects.get(id=dsid)
+        self.assertFalse(ds.success)
+        self.assertNotEqual(ds.failure_reason, "")
 
     @tag("smasher")
     def test_sanity_imports(self):
