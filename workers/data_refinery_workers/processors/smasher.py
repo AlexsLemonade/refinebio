@@ -163,53 +163,53 @@ def _upload_and_notify(job_context: Dict) -> Dict:
         # SES
         ##
 
-        # XXX: This address must be verified with Amazon SES.
-        #SENDER = "Refine.bio Mail Robot <noreply@refine.bio>"
-        SENDER = "Refine.bio Mail Robot <miserlou@gmail.com>"
-        RECIPIENT = job_context["dataset"].email_address
-        AWS_REGION = "us-east-1"
-        SUBJECT = "Your refine.bio Dataset is Ready!"
-        BODY_TEXT = "Hot off the presses:\n\n" + result_url + "\n\nLove!,\nThe refine.bio Team"
-        BODY_HTML = "Hot off the presses:<br /><br />" + result_url + "<br /><br />Love!,<br />The refine.bio Team"
-        CHARSET = "UTF-8"
+        # Don't send an email if we don't have address.
+        if job_context["dataset"].email_address:
+            # XXX: This address must be verified with Amazon SES.
+            SENDER = "Refine.bio Mail Robot <noreply@refine.bio>"
+            RECIPIENT = job_context["dataset"].email_address
+            AWS_REGION = "us-east-1"
+            SUBJECT = "Your refine.bio Dataset is Ready!"
+            BODY_TEXT = "Hot off the presses:\n\n" + result_url + "\n\nLove!,\nThe refine.bio Team"
+            BODY_HTML = "Hot off the presses:<br /><br />" + result_url + "<br /><br />Love!,<br />The refine.bio Team"
+            CHARSET = "UTF-8"
 
-        # Create a new SES resource and specify a region.
-        client = boto3.client('ses', region_name=AWS_REGION)
+            # Create a new SES resource and specify a region.
+            client = boto3.client('ses', region_name=AWS_REGION)
 
-        # Try to send the email.
-        try:
-            #Provide the contents of the email.
-            response = client.send_email(
-                Destination={
-                    'ToAddresses': [
-                        RECIPIENT,
-                    ],
-                },
-                Message={
-                    'Body': {
-                        'Html': {
-                            'Charset': CHARSET,
-                            'Data': BODY_HTML,
+            # Try to send the email.
+            try:
+                #Provide the contents of the email.
+                response = client.send_email(
+                    Destination={
+                        'ToAddresses': [
+                            RECIPIENT,
+                        ],
+                    },
+                    Message={
+                        'Body': {
+                            'Html': {
+                                'Charset': CHARSET,
+                                'Data': BODY_HTML,
+                            },
+                            'Text': {
+                                'Charset': CHARSET,
+                                'Data': BODY_TEXT,
+                            },
                         },
-                        'Text': {
+                        'Subject': {
                             'Charset': CHARSET,
-                            'Data': BODY_TEXT,
+                            'Data': SUBJECT,
                         },
                     },
-                    'Subject': {
-                        'Charset': CHARSET,
-                        'Data': SUBJECT,
-                    },
-                },
-                Source=SENDER,
-            )
-        # Display an error if something goes wrong. 
-        except ClientError as e:
-            logger.error(e.response['Error']['Message'])
-        else:
-            job_context["dataset"].email_sent = True
-            job_context["dataset"].save()
-
+                    Source=SENDER,
+                )
+            # Display an error if something goes wrong. 
+            except ClientError as e:
+                logger.error(e.response['Error']['Message'])
+            else:
+                job_context["dataset"].email_sent = True
+                job_context["dataset"].save()
 
     return job_context
 
