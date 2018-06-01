@@ -88,9 +88,9 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_object.platform_name = gpl.metadata.get("title", [""])[0]
             # TODO: This is probably going to require a fair bit of sanding.
             if 'AFFYMETRIX' in str(gpl.metadata).upper():
-                experiment.technology = "MICROARRAY"
+                experiment_object.technology = "MICROARRAY"
             else:
-                experiment.technology = "RNA-SEQ"
+                experiment_object.technology = "RNA-SEQ"
             
             # Source doesn't provide time information, assume midnight.
             experiment_object.source_first_published = dateutil.parser.parse(gse.metadata["submission_date"][0] + " 00:00:00 UTC")
