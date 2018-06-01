@@ -55,6 +55,7 @@ class Sample(models.Model):
     platform_accession_code = models.CharField(max_length=256, blank=True)
     platform_name = models.CharField(max_length=256, blank=True)
     technology = models.CharField(max_length=256, blank=True)
+    manufacturer = models.CharField(max_length=256, blank=True)
 
     # Scientific Properties
     sex = models.CharField(max_length=255, blank=True)
@@ -264,16 +265,21 @@ class ComputationalResultAnnotation(models.Model):
 #     class Meta:
 #         db_table = "genes"
 
+
 class OrganismIndex(models.Model):
+
     """ A special type of process result, necessary for processing other SRA samples """
 
     class Meta:
         db_table = "organism_index"
 
     organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
-    index_type = models.CharField(max_length=255) # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
-    source_version = models.CharField(max_length=255) # Where do we get this from
-    result = models.ForeignKey(ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+
+    # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
+    index_type = models.CharField(max_length=255)
+    source_version = models.CharField(max_length=255)  # Where do we get this from
+    result = models.ForeignKey(
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
     # Common Properties
     is_public = models.BooleanField(default=True)

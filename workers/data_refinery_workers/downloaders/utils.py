@@ -57,15 +57,14 @@ def end_downloader_job(job: DownloaderJob, success: bool):
 
 def create_processor_jobs_for_original_files(original_files: List[OriginalFile]):
     """
-    Create a processor jobs queue a processor task for samples related to an experiment.
+    Create a processor jobs and queue a processor task for samples related to an experiment.
     """
     for original_file in original_files:
-        # sample_object = Sample.objects.filter(original_file=original_file).first()
-        # Might work?
         sample_object = original_file.samples.first().accession_code
+        pipeline_to_apply = determine_processor_pipeline(sample_object)
 
         processor_job = ProcessorJob()
-        processor_job.pipeline_applied = determine_processor_pipeline(sample_object)
+        processor_job.pipeline_applied = pipeline_to_apply.value
         processor_job.save()
 
         assoc = ProcessorJobOriginalFileAssociation()
@@ -73,27 +72,20 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile])
         assoc.processor_job = processor_job
         assoc.save()
 
-        send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)
+        send_job(pipeline_to_apply, processor_job.id)
 
 
-def create_processor_job_for_original_files(original_files: List[OriginalFile],
-                                            sample_object: Sample=None):
+def create_processor_job_for_original_files(original_files: List[OriginalFile]):
     """
     Create a processor job and queue a processor task for sample related to an experiment.
 
     """
-    if not sample_object:
-        # XXX: do this right, but for now I wanna keep moving
-        # I should probably get the samples for each one and make sure they are the same sample.
-        # Also consider what happens if there isn't one? That's a pretty BFD
-        # Actual comment:
-        # For anything that has raw data there should only be one Sample per OriginalFile
-        # sample_object = Sample.objects.filter(original_file=original_files[0]).first()
-        # Might work?
-        sample_object = original_files[0].samples.first().accession_code
+    # For anything that has raw data there should only be one Sample per OriginalFile
+    sample_object = original_files[0].samples.first().accession_code
+    pipeline_to_apply = determine_processor_pipeline(sample_object)
 
     processor_job = ProcessorJob()
-    processor_job.pipeline_applied = determine_processor_pipeline(sample_object)
+    processor_job.pipeline_applied = pipeline_to_apply.value
     processor_job.save()
     for original_file in original_files:
         assoc = ProcessorJobOriginalFileAssociation()
@@ -101,4 +93,4 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
         assoc.processor_job = processor_job
         assoc.save()
 
-    send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)
+    send_job(pipeline_to_apply, processor_job.id)

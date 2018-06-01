@@ -94,10 +94,21 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     experiment["platform_accession_name"] = platform_mapping[
                         platform["platform_accession"]]
 
+                    # Illumina appears in the accession codes for
+                    # platforms manufactured by Illumina
+                    if "ILLUMINA" in experiment["platform_accession_code"]:
+                        experiment["manufacturer"] = "ILLUMINA"
+                    else:
+                        # It's not Illumina, the only other supported Microarray platform is
+                        # Affy. As our list of supported platforms grows this logic will
+                        # need to get more sophisticated.
+                        experiment["manufacturer"] = "AFFYMETRIX"
+
             if "platform_accession_code" not in experiment:
                 # We don't know what platform this accession corresponds to.
                 experiment["platform_accession_code"] = external_accession
                 experiment["platform_accession_name"] = UNKNOWN
+                experiment["manufacturer"] = UNKNOWN
                 platform_warning = True
 
         experiment["release_date"] = parsed_json["releasedate"]
@@ -198,8 +209,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
             experiment_object.save()
 
-        platform_dict = {k: experiment[k]
-                         for k in ('platform_accession_code', 'platform_accession_name')}
+        for k in ('platform_accession_code', 'platform_accession_name', 'manufacturer'):
+            platform_dict[k] = experiment[k]
         return experiment_object, platform_dict
 
     def determine_sample_accession(self, experiment_accession: str, sample_source_name: str, sample_assay_name: str, filename: str) -> str:
@@ -429,6 +440,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 sample_object.organism = organism
                 sample_object.platform_name = platform_dict["platform_accession_name"]
                 sample_object.platform_accession_code = platform_dict["platform_accession_code"]
+                sample_object.manufacturer = platform_dict["manufacturer"]
                 sample_object.technology = "MICROARRAY"
                 sample_object.save()
 

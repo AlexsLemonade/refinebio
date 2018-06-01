@@ -139,9 +139,10 @@ def download_array_express(job_id: int) -> None:
                         filename,
                         downloader_job=job_id)
 
-        # The .CEL file is the ultimate source of truth about the sample's platform.
+        # If the file is a .CEL file, it is the ultimate
+        # source of truth about the sample's platform.
         sample_object = sample_objects[0]
-        if sample_object.has_raw:
+        if og_file.source_filename.upper()[-4:] == ".CEL" and sample_object.has_raw:
             try:
                 external_platform = microarray.get_platform_from_CEL(
                     original_file.absolute_file_path)
@@ -161,6 +162,8 @@ def download_array_express(job_id: int) -> None:
 
                 sample_object.platform_accession_code = platform_accession_code
                 sample_object.platform_name = get_readable_platform_names()[platform_accession_code]
+                sample_object.technology = "MICROARRAY"
+                sample_object.manufacterer = "AFFYMETRIX"
                 sample_object.save()
             except Exception:
                 logger.warn("Unable to determine platform from CEL file: ",

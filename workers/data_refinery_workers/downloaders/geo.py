@@ -169,7 +169,7 @@ def download_geo(job_id: int) -> None:
     original_file.is_downloaded = True
     original_file.save()
 
-    no_op = False
+    has_raw = True
     unpacked_sample_files = []
 
     # These files are tarred, and also subsequently gzipped
@@ -233,21 +233,26 @@ def download_geo(job_id: int) -> None:
                 unpacked_sample_files.append(actual_file)
             except Exception as e:
                 # TODO - is this worth failing a job for?
-                logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'],
-                    exc_info=1, file=og_file['filename'], sample_id=sample_id, accession_code=accession_code)
+                logger.warn(
+                    "Found a file we didn't have an OriginalFile for! Why did this happen?: " +
+                        og_file['filename'],
+                    exc_info=1, file=og_file['filename'],
+                    sample_id=sample_id,
+                    accession_code=accession_code)
 
     # This is a .tgz file.
     elif '.tgz' in dl_file_path:
         # If this is the MINiML file, it has been preprocessed
         if '_family.xml.tgz' in dl_file_path:
-            no_op = True
+            has_raw = False
 
         try:
             extracted_files = _extract_tgz(dl_file_path, accession_code)
         except Exception as e:
             job.failure_reason = e
             utils.end_downloader_job(job, success=False)
-            logger.exception("Error occured while extracting tgz file.", path=dl_file_path, exception=str(e))
+            logger.exception(
+                "Error occured while extracting tgz file.", path=dl_file_path, exception=str(e))
             return
 
         for og_file in extracted_files:
@@ -267,7 +272,7 @@ def download_geo(job_id: int) -> None:
                 actual_file.calculate_size()
                 actual_file.calculate_sha1()
 
-                actual_file.has_raw = not no_op
+                actual_file.has_raw = has_raw
                 actual_file.save()
 
                 original_file_sample_association = OriginalFileSampleAssociation()
@@ -285,7 +290,8 @@ def download_geo(job_id: int) -> None:
         except Exception as e:
             job.failure_reason = e
             utils.end_downloader_job(job, success=False)
-            logger.exception("Error occured while extracting gz file.", path=dl_file_path, exception=str(e))
+            logger.exception(
+                "Error occured while extracting gz file.", path=dl_file_path, exception=str(e))
             return
 
         for og_file in extracted_files:
@@ -325,7 +331,9 @@ def download_geo(job_id: int) -> None:
                 unpacked_sample_files.append(actual_file)
             except Exception as e:
 
-                logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'],
+                logger.warn(
+                    "Found a file we didn't have an OriginalFile for! Why did this happen?: " +
+                        og_file['filename'],
                     exc_info=1, file=og_file['filename'], sample_id=sample_id, accession_code=accession_code)
 
     # This is probably just a .txt file
@@ -364,28 +372,7 @@ def download_geo(job_id: int) -> None:
         job.failure_reason = "Failed to extract any downloaded files."
 
     if success:
-
-        # We're trying to detect technology type here.
-        # It may make more sense to try to make this into a higher level Sample property.
-        annotations = actual_file.samples.first().sampleannotation_set.all()[0]
-        channel1_protocol = annotations.data.get('label_protocol_ch1', "").upper()
-        channel2_protocol = annotations.data.get('label_protocol_ch2', "").upper()
-        data_processing = annotations.data.get('data_processing', None) # If data processing step, it isn't raw.
-
-        if no_op:
-            utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="NO_OP")
-        elif ('AGILENT' in channel1_protocol) and ('AGILENT' in channel2_protocol):
-            utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="AGILENT_TWOCOLOR_TO_PCL")
-        elif ('ILLUMINA' in channel1_protocol) and (not data_processing):
-            utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="ILLUMINA_TO_PCL")
-        elif ('AFFYMETRIX' in channel1_protocol) or (".CEL" in unpacked_sample_files[0].filename.upper()):
-            utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="AFFY_TO_PCL")
-        else:
-            # This should probably never happen, but if it does, we don't want to process it.
-            logger.info("Applying NO_OP pipeline to files we didn't know what to do with.",
-                files=unpacked_sample_files,
-                job=job)
-            utils.create_processor_jobs_for_original_files(unpacked_sample_files, pipeline="NO_OP")
+        utils.create_processor_jobs_for_original_files(unpacked_sample_files)
 
     utils.end_downloader_job(job, success)
 

@@ -3,6 +3,10 @@ from typing import List
 
 from data_refinery_common import utils
 from data_refinery_common.models import OriginalFile
+from data_refinery_common.logging import get_and_configure_logger
+
+
+logger = get_and_configure_logger(__name__)
 
 
 class PipelineEnums(Enum):
@@ -19,6 +23,7 @@ class ProcessorPipeline(PipelineEnums):
 
     """An enumeration of supported processors"""
     AFFY_TO_PCL = "AFFY_TO_PCL"
+    AGILENT_ONECOLOR_TO_PCL = "AGILENT_ONECOLOR_TO_PCL"  # Currently unsupported
     AGILENT_TWOCOLOR_TO_PCL = "AGILENT_TWOCOLOR_TO_PCL"
     SALMON = "SALMON"
     ILLUMINA_TO_PCL = "ILLUMINA_TO_PCL"
@@ -69,26 +74,6 @@ def _is_platform_supported(platform: str) -> bool:
     return False
 
 
-def _determine_microarray_manufacturer(platform: str) -> str:
-    upper_platform = platform.upper()
-    for supported_platform in utils.get_supported_microarray_platforms():
-        # Check both the internal and external accessions so we don't
-        # have to worry about the wrong accession getting passed in.
-        upper_internal_accession = supported_platform["platform_accession"].upper()
-        if (platform == upper_internal_accession
-                or platform == supported_platform["external_accession"].upper()):
-            # Found the right accession, now determine if the manufacturer is Illumina:
-            if "ILLUMINA" in supported_platform["platform_accession"]:
-                return "ILLUMINA"
-            else:
-                # It's not Illumina, the only other supported Microarray platform is Affy:
-                return "AFFYMETRIX"
-
-    # This is easily prevented by only calling this function after _is_platform_supported()
-    raise UnsupportedPlatformError(
-        "Cannot determine manufacterer for unsupported platform: " + platform)
-
-
 def determine_downloader_task(sample_object: Sample) -> Downloaders:
     if _is_platform_supported(sample_object.platform_accession_code):
         return Downloaders[source_database]
@@ -121,10 +106,26 @@ def determine_processor_pipeline(sample_object: Sample) -> ProcessorPipeline:
                 # platform is supported.
                 return ProcessorPipeline.NONE
 
-            if manufacterer == "ILLUMINA":
+            if sample_object.manufacterer == "ILLUMINA":
                 return ProcessorPipeline.ILLUMINA_TO_PCL
-            elif manufacterer == "AFFYMETRIX":
+            elif sample_object.manufacterer == "AFFYMETRIX":
                 return ProcessorPipeline.AFFY_TO_PCL
+            elif sample_object.manufacterer == "AGILENT":
+                # We currently aren't prepared to process Agilent because we don't have
+                # whitelist of supported platforms for it. However this code works so
+                # let's keep it around until we're ready for Agilent.
+                annotations = sample_object.sampleannotation_set.all()[0]
+                channel1_protocol = annotations.data.get('label_protocol_ch1', "").upper()
+                channel2_protocol = annotations.data.get('label_protocol_ch2', "").upper()
+                if ('AGILENT' in channel1_protocol) and ('AGILENT' in channel2_protocol):
+                    return ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL
+                else:
+                    return ProcessorPipeline.AGILENT_ONECOLOR_TO_PCL
+            elif sample_object.manufacterer == "UNKNOWN":
+                logger.error("Found a Sample on a supported platform with an unknown manufacterer."
+                             sample=sample_object.id,
+                             platform_accession=sample_object.platform_accession_code)
+                return ProcessorPipeline.NONE
 
     else:
         if not sample_object.has_raw:

@@ -387,6 +387,14 @@ class SraSurveyor(ExternalSourceSurveyor):
             # No platform accession nonsense with RNASeq, just use the name:
             sample_object.platform_accession_code = sample_object.platform_name
             sample_object.technology = "RNA-SEQ"
+            if "ILLUMINA" in sample_object.platform_name.upper():
+                sample_object.manufacturer = "ILLUMINA"
+            elif "NEXTSEQ" in sample_object.platform_name.upper():
+                sample_object.manufacturer = "NEXTSEQ"
+            elif "ION TORRENT" in sample_object.platform_name.upper():
+                sample_object.manufacturer = "ION_TORRENT"
+            else:
+                sample_object.manufacturer = "UNKNOWN"
 
             # Directly apply the harmonized values
             sample_object.title = harmony.extract_title(metadata)

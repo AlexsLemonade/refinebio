@@ -14,12 +14,10 @@ from data_refinery_common.models import (
     OriginalFile,
     DownloaderJobOriginalFileAssociation
 )
-from data_refinery_common.message_queue import send_job
-from data_refinery_common.job_lookup import Downloaders
-from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common import message_queue, job_lookup, logging
 
 
-logger = get_and_configure_logger(__name__)
+logger = logging.get_and_configure_logger(__name__)
 
 
 class InvalidProcessedFormatError(Exception):
@@ -35,11 +33,6 @@ class ExternalSourceSurveyor:
     @abc.abstractproperty
     def source_type(self):
         return
-
-    def downloader_task(self):
-        """Returns the Downloaders Enum for the source.
-        """
-        return Downloaders[self.source_type()]
 
     @abc.abstractmethod
     def discover_experiments_and_samples(self):
@@ -61,9 +54,6 @@ class ExternalSourceSurveyor:
             samples__in=samples.values('pk'), is_downloaded=False)
 
         downloaded_urls = []
-        # YYY
-        # Ok so it's lookin like I should probably nest this within another loop specific to samples.
-        # That way I can get properties from the sample to pass to determiners
         for original_file in files_to_download:
 
             # We don't need to create multiple downloaders for the same file.
@@ -78,10 +68,10 @@ class ExternalSourceSurveyor:
                              original_file_id=original_file.id)
                 continue
 
+            downloader_task = job_lookup.determine_downloader_task(original_file.samples.first())
             with transaction.atomic():
-
                 downloader_job = DownloaderJob()
-                downloader_job.downloader_task = self.downloader_task()
+                downloader_job.downloader_task = downloader_task.value
                 downloader_job.accession_code = experiment.accession_code
                 downloader_job.save()
 
@@ -90,13 +80,13 @@ class ExternalSourceSurveyor:
                 asoc.original_file = original_file
                 asoc.save()
 
-                downloaded_urls.append(original_file.source_url)
+            downloaded_urls.append(original_file.source_url)
 
             try:
                 logger.info("Queuing downloader job for URL: " + original_file.source_url,
                             survey_job=self.survey_job.id,
                             downloader_job=downloader_job.id)
-                send_job(downloader_job.downloader_task, downloader_job.id)
+                message_queue.send_job(downloader_task, downloader_job.id)
             except Exception as e:
                 # If the task doesn't get sent we don't want the
                 # downloader_job to be left floating
@@ -112,18 +102,12 @@ class ExternalSourceSurveyor:
     def queue_downloader_job_for_original_files(self,
                                                 original_files: List[OriginalFile],
                                                 experiment_accession_code: str=None,
-                                                sample: Sample=None,
-                                                downloader_task: Downloaders=None
                                                 ):
-        """ Creates a single DownloaderJob with multiple files to download."""
-        # YYY: this is different because all this is getting is a list of original files.
-        # I suspect they all probably relate to the same sample though, so that
-        # could probably be reworked.
-        # So let's make this use downloader_task if it's passed, otherwise determine things with sample.
-        # We'll have to require that one of the two is passed in.
-
+        """ Creates a single DownloaderJob with multiple files to download.
+        """
+        downloader_task = job_lookup.determine_downloader_task(original_files[0].samples.first())
         downloader_job = DownloaderJob()
-        downloader_job.downloader_task = self.downloader_task()
+        downloader_job.downloader_task = downloader_task.value
         downloader_job.accession_code = experiment_accession_code
         downloader_job.save()
 
@@ -148,7 +132,7 @@ class ExternalSourceSurveyor:
                         survey_job=self.survey_job.id,
                         downloader_job=downloader_job.id,
                         downloaded_urls=downloaded_urls)
-            send_job(downloader_job.downloader_task, downloader_job.id)
+            message_queue.send_job(downloader_task, downloader_job.id)
         except Exception as e:
             # If the task doesn't get sent we don't want the
             # downloader_job to be left floating
