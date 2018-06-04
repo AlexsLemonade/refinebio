@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+from unittest.mock import patch
 
 import json
 import random
@@ -233,7 +234,8 @@ class APITestCases(APITestCase):
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME')
 
-    def test_create_update_dataset(self):
+    @patch('data_refinery_common.message_queue.send_job')
+    def test_create_update_dataset(self, mock_send_job):
 
         # Good
         jdata = json.dumps({'data': {"A": ["B"]}})
@@ -269,6 +271,7 @@ class APITestCases(APITestCase):
         response = self.client.post(reverse('create_dataset'), jdata, content_type="application/json")
         self.assertEqual(response.status_code, 400)
 
+        # This will actually kick off a job if we don't patch send_job
         dataset = Dataset.objects.get(id=good_id)
         dataset.is_processing = False
         dataset.save()
