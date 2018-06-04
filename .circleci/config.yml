@@ -51,7 +51,10 @@ jobs:
       
         # Run Smasher tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
-      - run: .circleci/filter_tests.sh -t smasher 
+      - run:
+          command: .circleci/filter_tests.sh -t smasher 
+          # Smashing can apparently take a long time on CI 
+          no_output_timeout: 36000
       
         # Run API Tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
