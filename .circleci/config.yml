@@ -19,11 +19,18 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
+        # Install Nomad
+      - run: sudo ./install_nomad.sh
+
+        # Start Nomad, build images, and register jobs.
+      - run:
+          command: sudo -E ./run_nomad.sh -e test
+      
       - run: ./prepare_image.sh -i no_op -s workers
       - run: ./prepare_image.sh -i downloaders -s workers
       - run: ./prepare_image.sh -i smasher -s workers
       
-       # Push the no_op and downloader images to the local docker repo so Nomad
+      # Push the no_op and downloader images to the local docker repo so Nomad
       # can pull from there when running end-to-end tests.
       - run: docker tag ccdl/dr_downloaders localhost:5000/ccdl/dr_downloaders
       - run: docker push localhost:5000/ccdl/dr_downloaders
@@ -32,14 +39,7 @@ jobs:
       - run: docker tag ccdl/dr_smasher localhost:5000/ccdl/dr_smasher
       - run: docker push localhost:5000/ccdl/dr_smasher
       
-        # Install Nomad
-      - run: sudo ./install_nomad.sh
-
-        # Start Nomad, build images, and register jobs.
-      - run:
-          command: sudo -E ./run_nomad.sh -e test
-      
-        # Run Common Tests.
+      # Run Common Tests.
       - run: ./common/run_tests.sh
 
       # Run Foreman Tests
