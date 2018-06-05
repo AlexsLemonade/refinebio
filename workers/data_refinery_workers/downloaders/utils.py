@@ -49,6 +49,9 @@ def end_downloader_job(job: DownloaderJob, success: bool):
     """
     Record in the database that this job has completed.
     """
+    if success:
+        logger.info("Downloader Job completed successfully.",
+                    downloader_job=job.id)
 
     job.success = success
     job.end_time = timezone.now()
@@ -60,19 +63,24 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile])
     Create a processor jobs and queue a processor task for samples related to an experiment.
     """
     for original_file in original_files:
-        sample_object = original_file.samples.first().accession_code
+        sample_object = original_file.samples.first()
         pipeline_to_apply = determine_processor_pipeline(sample_object)
 
-        processor_job = ProcessorJob()
-        processor_job.pipeline_applied = pipeline_to_apply.value
-        processor_job.save()
+        if pipeline_to_apply == ProcessorPipeline.NONE:
+            logger.info("No valid processor pipeline found to apply to sample.",
+                        sample=sample_object.id,
+                        original_file=original_files[0].id)
+        else:
+            processor_job = ProcessorJob()
+            processor_job.pipeline_applied = pipeline_to_apply.value
+            processor_job.save()
 
-        assoc = ProcessorJobOriginalFileAssociation()
-        assoc.original_file = original_file
-        assoc.processor_job = processor_job
-        assoc.save()
+            assoc = ProcessorJobOriginalFileAssociation()
+            assoc.original_file = original_file
+            assoc.processor_job = processor_job
+            assoc.save()
 
-        send_job(pipeline_to_apply, processor_job.id)
+            send_job(pipeline_to_apply, processor_job.id)
 
 
 def create_processor_job_for_original_files(original_files: List[OriginalFile]):
@@ -84,13 +92,18 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile]):
     sample_object = original_files[0].samples.first().accession_code
     pipeline_to_apply = determine_processor_pipeline(sample_object)
 
-    processor_job = ProcessorJob()
-    processor_job.pipeline_applied = pipeline_to_apply.value
-    processor_job.save()
-    for original_file in original_files:
-        assoc = ProcessorJobOriginalFileAssociation()
-        assoc.original_file = original_file
-        assoc.processor_job = processor_job
-        assoc.save()
+    if pipeline_to_apply == ProcessorPipeline.NONE:
+        logger.info("No valid processor pipeline found to apply to sample.",
+                    sample=sample_object.id,
+                    original_file=original_files[0].id)
+    else:
+        processor_job = ProcessorJob()
+        processor_job.pipeline_applied = pipeline_to_apply.value
+        processor_job.save()
+        for original_file in original_files:
+            assoc = ProcessorJobOriginalFileAssociation()
+            assoc.original_file = original_file
+            assoc.processor_job = processor_job
+            assoc.save()
 
-    send_job(pipeline_to_apply, processor_job.id)
+        send_job(pipeline_to_apply, processor_job.id)

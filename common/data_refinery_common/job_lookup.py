@@ -2,7 +2,7 @@ from enum import Enum
 from typing import List
 
 from data_refinery_common import utils
-from data_refinery_common.models import OriginalFile
+from data_refinery_common.models import Sample, OriginalFile, OriginalFileSampleAssociation
 from data_refinery_common.logging import get_and_configure_logger
 
 
@@ -76,7 +76,7 @@ def _is_platform_supported(platform: str) -> bool:
 
 def determine_downloader_task(sample_object: Sample) -> Downloaders:
     if _is_platform_supported(sample_object.platform_accession_code):
-        return Downloaders[source_database]
+        return Downloaders[sample_object.source_database]
     elif sample_object.has_raw:
         # Sometimes Array Express lies about what a sample's platform
         # is. Therefore, if there's a .CEL file we'll download it and
@@ -85,7 +85,7 @@ def determine_downloader_task(sample_object: Sample) -> Downloaders:
         original_files = OriginalFile.objects.filter(id__in=relations.values('original_file_id'))
         for original_file in original_files:
             if original_file.source_filename[-4:].upper() == ".CEL":
-                return Downloaders[source_database]
+                return Downloaders[sample_object.source_database]
 
     return Downloaders.NONE
 
@@ -98,19 +98,11 @@ def determine_processor_pipeline(sample_object: Sample) -> ProcessorPipeline:
         if not sample_object.has_raw:
             return ProcessorPipeline.NO_OP
         else:
-            try:
-                manufacterer = _determine_microarray_manufacturer(
-                    sample_object.platform_accession_code)
-            except UnsupportedPlatformError:
-                # This shouldn't happen since we first check that the
-                # platform is supported.
-                return ProcessorPipeline.NONE
-
-            if sample_object.manufacterer == "ILLUMINA":
+            if sample_object.manufacturer == "ILLUMINA":
                 return ProcessorPipeline.ILLUMINA_TO_PCL
-            elif sample_object.manufacterer == "AFFYMETRIX":
+            elif sample_object.manufacturer == "AFFYMETRIX":
                 return ProcessorPipeline.AFFY_TO_PCL
-            elif sample_object.manufacterer == "AGILENT":
+            elif sample_object.manufacturer == "AGILENT":
                 # We currently aren't prepared to process Agilent because we don't have
                 # whitelist of supported platforms for it. However this code works so
                 # let's keep it around until we're ready for Agilent.
@@ -121,8 +113,8 @@ def determine_processor_pipeline(sample_object: Sample) -> ProcessorPipeline:
                     return ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL
                 else:
                     return ProcessorPipeline.AGILENT_ONECOLOR_TO_PCL
-            elif sample_object.manufacterer == "UNKNOWN":
-                logger.error("Found a Sample on a supported platform with an unknown manufacterer."
+            elif sample_object.manufacturer == "UNKNOWN":
+                logger.error("Found a Sample on a supported platform with an unknown manufacturer.",
                              sample=sample_object.id,
                              platform_accession=sample_object.platform_accession_code)
                 return ProcessorPipeline.NONE

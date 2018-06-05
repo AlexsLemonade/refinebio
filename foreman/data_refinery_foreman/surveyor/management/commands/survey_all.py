@@ -25,6 +25,13 @@ class Command(BaseCommand):
 Note: One entry per line, GSE* entries survey GEO, E-GEO-* entries survey ArrayExpress.
 """)
         )
+
+        parser.add_argument(
+            "--accession",
+            type=str,
+            help=("An optional accession code to survey.")
+        )
+
         parser.add_argument(
             "--offset",
             type=int,
@@ -33,9 +40,9 @@ Note: One entry per line, GSE* entries survey GEO, E-GEO-* entries survey ArrayE
         )
 
     def handle(self, *args, **options):
-        if options['file'] is None:
-            logger.error("You must specify a file.")
-            return 1
+        if options['file'] is None and options['accession'] is None:
+            logger.error("You must specify a file or an accession.")
+            return "1"
 
         if options["file"]:
 
@@ -70,3 +77,17 @@ Note: One entry per line, GSE* entries survey GEO, E-GEO-* entries survey ArrayE
                             surveyor.survey_sra_experiment(accession)
                     except Exception as e:
                         logger.exception(e)
+
+        if options["accession"]:
+            accession = options["accession"]
+            try:
+                if 'GSE' in accession[:3]:
+                    surveyor.survey_geo_experiment(accession)
+                elif 'E-' in accession[:2]:
+                    surveyor.survey_ae_experiment(accession)
+                elif " " in accession:
+                    surveyor.survey_transcriptome_index(accession)
+                else:
+                    surveyor.survey_sra_experiment(accession)
+            except Exception as e:
+                logger.exception(e)

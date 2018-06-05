@@ -24,7 +24,7 @@ from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import (
     get_supported_microarray_platforms,
     get_supported_rnaseq_platforms,
-    get_readable_platform_names
+    get_readable_affymetrix_names
 )
 
 logger = get_and_configure_logger(__name__)
@@ -90,13 +90,26 @@ class GeoSurveyor(ExternalSourceSurveyor):
             sample_object.technology = "MICROARRAY"
             try:
                 # If it's Affy we can get a readable name:
-                sample_object.platform_name = get_readable_platform_names()[platform_accession_code]
+                sample_object.platform_name = get_readable_affymetrix_names()[
+                    platform_accession_code]
+                sample_object.manufacturer = "AFFYMETRIX"
+
+                # Sometimes Affymetrix samples have weird channel
+                # protocol metadata, so if we find that it's
+                # Affymetrix return it now. Example: GSE113945
+                return sample_object
             except KeyError:
                 # Otherwise we'll use what we've got.
                 sample_object.platform_name = platform_title
 
             # Determine manufacturer
-            channel1_protocol = sample_metadata.get('label_protocol_ch1', "").upper()
+
+            # Sometimes this field is a list, other times it's not.
+            channel1_temp = sample_metadata.get('label_protocol_ch1', "")
+            if type(channel1_temp) == list:
+                channel1_protocol = channel1_temp[0].upper()
+            else:
+                channel1_protocol = channel1_temp.upper()
 
             if ('AGILENT' in channel1_protocol):
                 sample_object.manufacturer = "AGILENT"
@@ -240,7 +253,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 continue
             except Sample.DoesNotExist:
                 # If data processing step, it isn't raw.
-                has_raw = not sample.get('data_processing', None)
+                has_raw = not sample.metadata.get('data_processing', None)
                 organism = Organism.get_object_for_name(sample.metadata['organism_ch1'][0].upper())
 
                 sample_object = Sample()
@@ -250,7 +263,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 title = sample.metadata['title'][0]
                 sample_object.title = title
 
-                self.set_platform_properties(sample_object, sample, gse)
+                self.set_platform_properties(sample_object, sample.metadata, gse)
 
                 # Directly assign the harmonized properties
                 harmonized_sample = harmonized_samples[title]
