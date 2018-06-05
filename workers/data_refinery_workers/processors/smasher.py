@@ -68,9 +68,16 @@ def _smash(job_context: Dict) -> Dict:
         # Smash all of the sample sets
         for key, input_files in job_context['input_files'].items():
 
+            print(key)
+            print(input_files)
+
             # Merge all the frames into one
             all_frames = []
             for computed_file in input_files:
+
+                print(computed_file.absolute_file_path)
+                print(os.path.exists(computed_file.absolute_file_path))
+
                 data = pd.DataFrame.from_csv(str(computed_file.absolute_file_path), sep='\t', header=0)
                 all_frames.append(data)
                 num_samples = num_samples + 1
@@ -134,7 +141,7 @@ def _smash(job_context: Dict) -> Dict:
         job_context["output_file"] = final_zip + ".zip"
     except Exception as e:
         job_context['dataset'].success = False
-        job_context['dataset'].failure_reason = str(e)
+        job_context['dataset'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].save()
         job_context['success'] = False
         job_context['failure_reason'] = str(e)

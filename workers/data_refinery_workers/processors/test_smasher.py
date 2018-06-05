@@ -104,14 +104,17 @@ class SmasherTestCase(TestCase):
         dataset.get_aggregated_samples()
 
         for ag_type in ['ALL', 'EXPERIMENT', 'SPECIES']:
+            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
             dataset.aggregate_by = ag_type
             dataset.save()
 
+            print ("Smashing " + ag_type)
             final_context = smasher.smash(job.pk, upload=False)
             # Make sure the file exists and is a valid size
             self.assertNotEqual(os.path.getsize(final_context['output_file']), 0)
             self.assertEqual(final_context['dataset'].is_processed, True)
 
+            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
             dataset.is_processed = False
             dataset.save()
 
@@ -119,14 +122,17 @@ class SmasherTestCase(TestCase):
             os.remove(final_context['output_file']) 
 
         for scale_type in ['NONE', 'MINMAX', 'STANDARD', 'ROBUST']:
+            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
             dataset.scale_by = scale_type
             dataset.save()
 
+            print ("Smashing " + scale_type)
             final_context = smasher.smash(job.pk, upload=False)
             # Make sure the file exists and is a valid size
             self.assertNotEqual(os.path.getsize(final_context['output_file']), 0)
             self.assertEqual(final_context['dataset'].is_processed, True)
 
+            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
             dataset.is_processed = False
             dataset.save()
 
@@ -191,7 +197,9 @@ class SmasherTestCase(TestCase):
         ds.save()
         dsid = ds.id
 
-        job = prepare_job()
+        job = ProcessorJob()
+        job.pipeline_applied = "SMASHER"
+        job.save()
 
         pjda = ProcessorJobDatasetAssociation()
         pjda.processor_job = job
@@ -200,6 +208,8 @@ class SmasherTestCase(TestCase):
 
         final_context = smasher.smash(job.pk, upload=False)
         ds = Dataset.objects.get(id=dsid)
+        print(ds.failure_reason)
+        print(final_context['dataset'].failure_reason)
         self.assertFalse(ds.success)
         self.assertNotEqual(ds.failure_reason, "")
 
