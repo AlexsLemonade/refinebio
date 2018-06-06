@@ -186,13 +186,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     original_file_sample_association.original_file = original_file
                     original_file_sample_association.save()
 
-                try:
-                    assocation = ExperimentSampleAssociation.objects.get(experiment=experiment_object, sample=sample_object)
-                except ExperimentSampleAssociation.DoesNotExist:
-                    association = ExperimentSampleAssociation()
-                    association.experiment = experiment_object
-                    association.sample = sample_object
-                    association.save()
+                ExperimentSampleAssociation.objects.get_or_create(
+                    experiment=experiment_object, sample=sample_object)
 
         # These supplementary files _may-or-may-not_ contain the type of raw data we can process.
         for experiment_supplement_url in gse.metadata.get('supplementary_file', []):
@@ -202,7 +197,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
             except OriginalFile.DoesNotExist:
                 original_file = OriginalFile()
 
-                # So - source_filename is _usually_ where we expect it to be, 
+                # So - source_filename is _usually_ where we expect it to be,
                 # but not always. I think it's submitter supplied.
                 original_file.source_filename = experiment_supplement_url.split('/')[-1]
                 original_file.source_url = experiment_supplement_url

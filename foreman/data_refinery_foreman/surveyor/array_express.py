@@ -104,8 +104,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         try:
             experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
             logger.debug("Experiment already exists, skipping object creation.",
-                experiment_accession_code=experiment_accession_code,
-                survey_job=self.survey_job.id)
+                         experiment_accession_code=experiment_accession_code,
+                         survey_job=self.survey_job.id)
         except Experiment.DoesNotExist:
 
             experiment_object = Experiment()
@@ -194,7 +194,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         return experiment_object
 
-    def determine_sample_accession(self, experiment_accession: str, sample_source_name: str, sample_assay_name: str, filename:str) -> str:
+    def determine_sample_accession(self, experiment_accession: str, sample_source_name: str, sample_assay_name: str, filename: str) -> str:
         """Determine what to use as the sample's accession code.
 
         This is a complicated heuristic to determine the sample
@@ -243,8 +243,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             return experiment_accession + "-" + sample_assay_name
 
     def create_samples_from_api(self,
-                          experiment: Experiment
-                          ) -> List[Sample]:
+                                experiment: Experiment
+                                ) -> List[Sample]:
         """Generates a Sample item for each sample in an AE experiment..
 
         There are many possible data situations for a sample:
@@ -305,8 +305,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
             if organism_name == UNKNOWN:
                 logger.warning("Sample from experiment %s did not specify the organism name.",
-                             experiment.accession_code,
-                             survey_job=self.survey_job.id)
+                               experiment.accession_code,
+                               survey_job=self.survey_job.id)
                 organism = None
             else:
                 organism = Organism.get_object_for_name(organism_name)
@@ -370,17 +370,17 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
                 if not download_url:
                     logger.error("Sample %s did not specify a download url, skipping.",
-                            sample_accession_code,
-                            experiment_accession_code=experiment.accession_code,
-                            survey_job=self.survey_job.id)
+                                 sample_accession_code,
+                                 experiment_accession_code=experiment.accession_code,
+                                 survey_job=self.survey_job.id)
                     skip_sample = True
                     continue
 
                 if not filename:
                     logger.error("Sample %s did not specify a filename, skipping.",
-                            sample_accession_code,
-                            experiment_accession_code=experiment.accession_code,
-                            survey_job=self.survey_job.id)
+                                 sample_accession_code,
+                                 experiment_accession_code=experiment.accession_code,
+                                 survey_job=self.survey_job.id)
                     skip_sample = True
                     continue
 
@@ -404,9 +404,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
             if organism_name == UNKNOWN:
                 logger.warning("Sample %s did not specify the organism name.",
-                             sample_accession_code,
-                             experiment_accession_code=experiment.accession_code,
-                             survey_job=self.survey_job.id)
+                               sample_accession_code,
+                               experiment_accession_code=experiment.accession_code,
+                               survey_job=self.survey_job.id)
                 organism = None
             else:
                 organism = Organism.get_object_for_name(organism_name)
@@ -415,9 +415,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             try:
                 sample_object = Sample.objects.get(accession_code=sample_accession_code)
                 logger.debug("Sample %s already exists, skipping object creation.",
-                         sample_accession_code,
-                         experiment_accession_code=experiment.accession_code,
-                         survey_job=self.survey_job.id)
+                             sample_accession_code,
+                             experiment_accession_code=experiment.accession_code,
+                             survey_job=self.survey_job.id)
                 continue
             except Sample.DoesNotExist:
                 sample_object = Sample()
@@ -461,21 +461,11 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 original_file_sample_association.save()
 
             # Create associations if they don't already exist
-            try:
-                assocation = ExperimentSampleAssociation.objects.get(experiment=experiment, sample=sample_object)
-            except ExperimentSampleAssociation.DoesNotExist:
-                association = ExperimentSampleAssociation()
-                association.experiment = experiment
-                association.sample = sample_object
-                association.save()
+            ExperimentSampleAssociation.objects.get_or_create(
+                experiment=experiment_object, sample=sample_object)
 
-            try:
-                assocation = ExperimentOrganismAssociation.objects.get(experiment=experiment, organism=organism)
-            except ExperimentOrganismAssociation.DoesNotExist:
-                association = ExperimentOrganismAssociation()
-                association.experiment = experiment
-                association.organism = organism
-                association.save()
+            ExperimentOrganismAssociation.objects.get_or_create(
+                experiment=experiment, organism=organism)
 
             logger.info("Created Sample: " + str(sample_object),
                         experiment_accession_code=experiment.accession_code,
@@ -503,8 +493,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment = self.create_experiment_from_api(experiment_accession_code)
         except UnsupportedPlatformException as e:
             logger.info("Experiment was not on a supported platform, skipping.",
-                experiment_accession_code=experiment_accession_code,
-                survey_job=self.survey_job.id)
+                        experiment_accession_code=experiment_accession_code,
+                        survey_job=self.survey_job.id)
             return None, []
 
         samples = self.create_samples_from_api(experiment)

@@ -179,14 +179,15 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         discoverable_accessions = ["study_accession", "sample_accession", "submission_accession"]
 
-        response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(run_accession))
+        response = utils.requests_retry_session().get(
+            ENA_METADATA_URL_TEMPLATE.format(run_accession))
         run_xml = ET.fromstring(response.text)
         run_item = run_xml[0]
 
         useful_attributes = ["center_name", "run_center", "run_date", "broker_name", "alias"]
         metadata = {}
         for attribute in useful_attributes:
-            if attribute in run_item.attrib: 
+            if attribute in run_item.attrib:
                 metadata[attribute] = run_item.attrib[attribute]
         metadata["run_accession"] = run_accession
 
@@ -396,21 +397,11 @@ class SraSurveyor(ExternalSourceSurveyor):
                 original_file_sample_association.save()
 
         # Create associations if they don't already exist
-        try:
-            assocation = ExperimentSampleAssociation.objects.get(experiment=experiment_object, sample=sample_object)
-        except ExperimentSampleAssociation.DoesNotExist:
-            association = ExperimentSampleAssociation()
-            association.experiment = experiment_object
-            association.sample = sample_object
-            association.save()
+        ExperimentSampleAssociation.objects.get_or_create(
+            experiment=experiment_object, sample=sample_object)
 
-        try:
-            assocation = ExperimentOrganismAssociation.objects.get(experiment=experiment_object, organism=organism)
-        except ExperimentOrganismAssociation.DoesNotExist:
-            association = ExperimentOrganismAssociation()
-            association.experiment = experiment_object
-            association.organism = organism
-            association.save()
+        ExperimentOrganismAssociation.objects.get_or_create(
+            experiment=experiment_object, organism=organism)
 
         return experiment_object, [sample_object]
 
