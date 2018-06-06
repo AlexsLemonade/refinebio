@@ -141,7 +141,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             json_xa.is_ccdl = False
             json_xa.save()
 
-            # Fetch and parse the IDF/SDRF file for any other fields
+            ## Fetch and parse the IDF/SDRF file for any other fields
             IDF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.idf.txt"
             SDRF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
             idf_url = IDF_URL_TEMPLATE.format(code=experiment_accession_code)
@@ -168,8 +168,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             if 'Person Affiliation' in idf_dict:
                 # This is very rare, ex: E-MEXP-32
                 if isinstance(idf_dict['Person Affiliation'], list):
-                    experiment_object.submitter_institution = ", ".join(
-                        list(set(idf_dict['Person Affiliation'])))[:255]
+                    unique_people = list(set(idf_dict['Person Affiliation']))
+                    experiment_object.submitter_institution = ", ".join(unique_people)[:255]
                 else:
                     experiment_object.submitter_institution = idf_dict['Person Affiliation']
             if 'Protocol Description' in idf_dict:
