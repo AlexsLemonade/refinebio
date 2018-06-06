@@ -121,6 +121,9 @@ class SmasherTestCase(TestCase):
             # Cleanup
             os.remove(final_context['output_file']) 
 
+            # Hack
+            time.sleep(10)
+
         for scale_type in ['NONE', 'MINMAX', 'STANDARD', 'ROBUST']:
             dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
             dataset.scale_by = scale_type
@@ -137,7 +140,9 @@ class SmasherTestCase(TestCase):
             dataset.save()
 
             # Cleanup
-            os.remove(final_context['output_file']) 
+            os.remove(final_context['output_file'])
+
+            time.sleep(10) 
 
     @tag("smasher")
     def test_get_results(self):
