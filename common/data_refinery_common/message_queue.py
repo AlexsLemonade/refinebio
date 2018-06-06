@@ -48,7 +48,7 @@ def send_job(job_type: Enum, job_id: int) -> None:
     elif job_type in list(Downloaders):
         nomad_job = NOMAD_DOWNLOADER_JOB
     else:
-        raise ValueError("Invalid job_type.")
+        raise ValueError("Invalid job_type: {}".format(job_type.value))
 
     logger.info("Queuing %s nomad job to run job %s with id %d.",
                 nomad_job,

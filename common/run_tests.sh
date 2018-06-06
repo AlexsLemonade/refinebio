@@ -13,7 +13,7 @@ cd $script_directory
 # move up a level
 cd ..
 
-docker build -t common_tests -f common/Dockerfile .
+docker build -t common_tests -f common/Dockerfile.tests .
 
 source common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
