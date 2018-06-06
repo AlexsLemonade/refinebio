@@ -107,18 +107,20 @@ class SearchAndFilter(generics.ListAPIView):
         response.data['filters']['publication'] = {}
         response.data['filters']['organism'] = {}
 
-        techs = self.get_queryset().values('technology').annotate(Count('technology', unique=True))
+        qs = self.filter_queryset(self.get_queryset())
+
+        techs = qs.values('technology').annotate(Count('technology', unique=True))
         for tech in techs:
             response.data['filters']['technology'][tech['technology']] = tech['technology__count']
 
-        pubs = self.get_queryset().values('has_publication').annotate(Count('has_publication', unique=True))
+        pubs = qs.values('has_publication').annotate(Count('has_publication', unique=True))
         for pub in pubs:
             if pub['has_publication']:
                 response.data['filters']['publication']['has_publication'] = pub['has_publication__count']
-        if 'has_publication' not in response.data['filters']:
+        if 'has_publication' not in response.data['filters']['publication']:
             response.data['filters']['publication']['has_publication'] = 0
 
-        organisms = self.get_queryset().values('organisms__name').annotate(Count('organisms__name', unique=True))
+        organisms = qs.values('organisms__name').annotate(Count('organisms__name', unique=True))
         for organism in organisms:
             response.data['filters']['organism'][organism['organisms__name']] = organism['organisms__name__count']
 
@@ -221,6 +223,7 @@ class SampleList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         filter_dict.pop('limit', None)
         filter_dict.pop('offset', None)
+        order_by = filter_dict.pop('order_by', None)
         ids = filter_dict.pop('ids', None)
 
         if ids is not None:
@@ -228,13 +231,15 @@ class SampleList(PaginatedAPIView):
             filter_dict['pk__in'] = ids
 
         samples = Sample.objects.filter(**filter_dict)
+        if order_by:
+            samples = samples.order_by(order_by)
 
         page = self.paginate_queryset(samples)
         if page is not None:
-            serializer = SampleSerializer(page, many=True)
+            serializer = DetailedSampleSerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         else:
-            serializer = SampleSerializer(samples, many=True)
+            serializer = DetailedSampleSerializer(samples, many=True)
             return Response(serializer.data)
 
 class SampleDetail(APIView):

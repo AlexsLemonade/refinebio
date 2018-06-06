@@ -237,6 +237,7 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
     result.command_executed = " ".join(cmd_tokens)
     result.system_version = __version__
     result.is_ccdl = True
+    result.pipeline = "tximport"
     result.save()
 
     # Associate this result with all samples in this experiment.
@@ -318,6 +319,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
                                                 stderr=subprocess.PIPE,
                                                 stdout=subprocess.PIPE).stderr.decode("utf-8").strip()
         result.is_ccdl = True
+        result.pipeline = "Salmon"
 
         # Here select_for_update() is used as a mutex that forces multiple
         # jobs to execute this block of code in serial manner. See:
@@ -403,6 +405,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
                                             stdout=subprocess.PIPE,
                                             env=qc_env).stderr.decode("utf-8").strip()
     result.is_ccdl = True
+    result.pipeline = "MultiQC"
     result.save()
 
     assoc = SampleResultAssociation()
@@ -528,6 +531,7 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
                                                 stderr=subprocess.PIPE,
                                                 stdout=subprocess.PIPE).stderr.decode().strip()
         result.is_ccdl = True
+        result.pipeline = "Salmontools"
         result.save()
 
         assoc = SampleResultAssociation()
