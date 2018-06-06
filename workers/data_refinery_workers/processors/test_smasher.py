@@ -218,6 +218,89 @@ class SmasherTestCase(TestCase):
         self.assertNotEqual(ds.failure_reason, "")
 
     @tag("smasher")
+    def test_no_smash_all_diff_species(self):
+        """ Smashing together with 'ALL' with different species should 
+        cause a 0 length data frame after inner join. """
+
+        job = ProcessorJob()
+        job.pipeline_applied = "SMASHER"
+        job.save()
+
+        experiment = Experiment()
+        experiment.accession_code = "GSE51081"
+        experiment.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+
+        sample = Sample()
+        sample.accession_code = 'GSM1237810'
+        sample.title = 'GSM1237810'
+        sample.organism = homo_sapiens
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "GSM1237810_T09-1084.PCL"
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
+        computed_file.result = result
+        computed_file.size_in_bytes = 123
+        computed_file.save()
+
+        experiment = Experiment()
+        experiment.accession_code = "GSE51084"
+        experiment.save()
+
+        mus_mus = Organism.get_object_for_name("MUS_MUSCULUS")
+
+        sample = Sample()
+        sample.accession_code = 'GSM1238108'
+        sample.title = 'GSM1238108'
+        sample.organism = homo_sapiens
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "GSM1238108-tbl-1.txt"
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
+        computed_file.result = result
+        computed_file.size_in_bytes = 123
+        computed_file.save()
+
+        ds = Dataset()
+        ds.data = {'GSE51081': ['GSM1237810'], 'GSE51084': ['GSM1238108']}
+        ds.aggregate_by = 'ALL'
+        ds.scale_by = 'STANDARD'
+        ds.email_address = "null@derp.com"
+        ds.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = job
+        pjda.dataset = ds
+        pjda.save()
+
+        final_context = smasher.smash(job.pk, upload=False)
+
+        dsid = ds.id
+        ds = Dataset.objects.get(id=dsid)
+        print(ds.failure_reason)
+        print(final_context['dataset'].failure_reason)
+
+        self.assertFalse(ds.success)
+        self.assertNotEqual(ds.failure_reason, "")
+        self.assertEqual(len(final_context['merged']), 0)
+
+    @tag("smasher")
     def test_sanity_imports(self):
         """ Sci imports can be tricky, make sure this works. """
 
