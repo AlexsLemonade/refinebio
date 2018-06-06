@@ -81,11 +81,15 @@ def _smash(job_context: Dict) -> Dict:
                 data = pd.DataFrame.from_csv(str(computed_file.absolute_file_path), sep='\t', header=0)
                 all_frames.append(data)
                 num_samples = num_samples + 1
+            job_context['all_frames'] = all_frames
+
             merged = all_frames[0]
             i = 1
             while i < len(all_frames):
                 merged = merged.merge(all_frames[i], left_index=True, right_index=True)
                 i = i + 1
+
+            job_context['merged'] = merged
 
             # Transpose before scaling
             transposed = merged.transpose()
