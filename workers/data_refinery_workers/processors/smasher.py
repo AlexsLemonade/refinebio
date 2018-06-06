@@ -76,7 +76,7 @@ def _smash(job_context: Dict) -> Dict:
                 if not os.path.exists(computed_file.absolute_file_path):
                     raise
 
-                data = pd.DataFrame.from_csv(str(computed_file.absolute_file_path), sep='\t', header=0)
+                data = pd.read_csv(str(computed_file.absolute_file_path), sep='\t', header=0, index_col=0)
 
                 # Detect if this data hasn't been log2 scaled yet.
                 # Ideally done in the NO-OPPER, but sanity check here.
