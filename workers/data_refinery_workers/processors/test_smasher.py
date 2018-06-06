@@ -143,20 +143,40 @@ class SmasherTestCase(TestCase):
             # Cleanup
             os.remove(final_context['output_file'])
 
-        # Stats    
-        dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
-        dataset.aggregate_by = 'EXPERIMENT'
-        dataset.scale_by = 'MINMAX'
-        dataset.save()
+        # Stats
+        for scale_type in ['MINMAX', 'STANDARD']:
+            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+            dataset.aggregate_by = 'EXPERIMENT'
+            dataset.scale_by = scale_type
+            dataset.save()
 
-        final_context = smasher.smash(job.pk, upload=False)
-        final_frame = final_context['final_frame']
-        print(final_frame.mean(axis=1))
-        print(final_frame.min(axis=1))
-        print(final_frame.max(axis=1))
-        print(final_frame.mean(axis=1))
+            print("###")
+            print("# " + scale_type)
+            print('###')
 
-        os.remove(final_context['output_file'])
+            final_context = smasher.smash(job.pk, upload=False)
+            final_frame = final_context['final_frame']
+            print("MEAN (per row):")
+            print(final_frame.mean(axis=1))
+            print("")
+
+            print("MIN (per row):")
+            print(final_frame.min(axis=1))
+            print("")
+
+            print("Max (per row):")
+            print(final_frame.max(axis=1))
+            print("")
+
+            print("STD (per row):")
+            print(final_frame.std(axis=1))
+            print("")
+
+            print("MEDIAN (per row):")
+            print(final_frame.median(axis=1))
+            print("")
+
+            os.remove(final_context['output_file'])
 
 
     @tag("smasher")
