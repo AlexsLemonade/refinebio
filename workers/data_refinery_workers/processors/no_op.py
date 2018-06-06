@@ -37,6 +37,7 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
     result.command_executed = "" # No op!
     result.is_ccdl = True
     result.system_version = __version__
+    result.pipeline = "Submitter-processed"
     result.save()
 
     # Create a ComputedFile for the original file,
