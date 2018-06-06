@@ -204,6 +204,77 @@ class SmasherTestCase(TestCase):
         self.assertNotEqual(ds.failure_reason, "")
 
     @tag("smasher")
+    def test_log2(self):
+        pj = ProcessorJob()
+        pj.pipeline_applied = "SMASHER"
+        pj.save()
+
+        # Has non-log2 data:
+        # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE44421
+        # ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE44nnn/GSE44421/miniml/GSE44421_family.xml.tgz
+        experiment = Experiment()
+        experiment.accession_code = "GSE44421"
+        experiment.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+
+        sample = Sample()
+        sample.accession_code = 'GSM1084806'
+        sample.title = 'GSM1084806'
+        sample.organism = homo_sapiens
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "GSM1084806-tbl-1.txt"
+        computed_file.absolute_file_path = "/home/user/data_store/raw/TEST/NO_OP/" + computed_file.filename
+        computed_file.result = result
+        computed_file.size_in_bytes = 123
+        computed_file.save()
+
+        sample = Sample()
+        sample.accession_code = 'GSM1084807'
+        sample.title = 'GSM1084807'
+        sample.organism = homo_sapiens
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "GSM1084807-tbl-1.txt"
+        computed_file.absolute_file_path = "/home/user/data_store/raw/TEST/NO_OP/" + computed_file.filename
+        computed_file.result = result
+        computed_file.size_in_bytes = 123
+        computed_file.save()
+
+        ds = Dataset()
+        ds.data = {'GSE44421': ['GSM1084806', 'GSM1084807']}
+        ds.aggregate_by = 'EXPERIMENT'
+        ds.scale_by = 'MINMAX'
+        ds.email_address = "null@derp.com"
+        ds.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = pj
+        pjda.dataset = ds
+        pjda.save()
+
+        final_context = smasher.smash(pj.pk, upload=False)
+        ds = Dataset.objects.get(id=ds.id)
+        self.assertTrue(ds.success)
+        self.assertEqual(ds.failure_reason, "")
+
+    @tag("smasher")
     def test_sanity_imports(self):
         """ Sci imports can be tricky, make sure this works. """
 
