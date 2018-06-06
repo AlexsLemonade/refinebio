@@ -115,8 +115,7 @@ def download_array_express(job_id: int) -> None:
         # TODO: We _should_ be able to use GET here - anything more than 1 sample per
         # filename is a problem. However, I need to know more about the naming convention.
         try:
-            original_file = OriginalFile.objects.filter(
-                source_filename=og_file['filename']).order_by('created_at')[0]
+            original_file = OriginalFile.objects.filter(source_filename=og_file['filename']).order_by('created_at')[0]
             original_file.is_downloaded = True
             original_file.is_archive = False
             original_file.absolute_file_path = og_file['absolute_path']
@@ -127,9 +126,8 @@ def download_array_express(job_id: int) -> None:
             og_files.append(original_file)
         except Exception:
             # TODO - is this worth failing a job for?
-            logger.warn(
-                "Found a file we didn't have an OriginalFile for! Why did this happen?: " +
-                    og_file['filename'],
+            logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: "
+                        + og_file['filename'],
                         downloader_job=job_id)
             continue
 

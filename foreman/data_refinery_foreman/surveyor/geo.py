@@ -174,13 +174,13 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_object.description = gse.metadata.get('summary', [''])[0]
 
             # Source doesn't provide time information, assume midnight.
-            experiment_object.source_first_published = dateutil.parser.parse(
-                gse.metadata["submission_date"][0] + " 00:00:00 UTC")
-            experiment_object.source_last_updated = dateutil.parser.parse(
-                gse.metadata["last_update_date"][0] + " 00:00:00 UTC")
+            submission_date = gse.metadata["submission_date"][0] + " 00:00:00 UTC"
+            experiment_object.source_first_published = dateutil.parser.parse(submission_date)
+            last_updated_date = gse.metadata["last_update_date"][0] + " 00:00:00 UTC"
+            experiment_object.source_last_updated = dateutil.parser.parse(last_update_date)
 
-            experiment_object.submitter_institution = ", ".join(
-                list(set(gse.metadata["contact_institute"])))
+            unique_institutions = list(set(gse.metadata["contact_institute"]))
+            experiment_object.submitter_institution = ", ".join(unique_institutions)
             experiment_object.pubmed_id = gse.metadata.get("pubmed_id", [""])[0]
 
             experiment_object.save()
@@ -202,8 +202,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
             try:
                 sample_object = Sample.objects.get(accession_code=sample_accession_code)
-                logger.debug(
-                    "Sample %s from experiment %s already exists, skipping object creation.",
+                logger.debug("Sample %s from experiment %s already exists, skipping object creation.",
                          sample_accession_code,
                          experiment_object.accession_code,
                          survey_job=self.survey_job.id)

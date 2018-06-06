@@ -25,9 +25,6 @@ class SurveyTestCase(TestCase):
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
                                            key="experiment_accession_code",
                                            value=experiment_accession)
-                                           # value="GSE25624")
-                                           # value="GSE107837")
-        # value=)
         key_value_pair.save()
 
     def tearDown(self):
