@@ -68,16 +68,9 @@ def _smash(job_context: Dict) -> Dict:
         # Smash all of the sample sets
         for key, input_files in job_context['input_files'].items():
 
-            print(key)
-            print(input_files)
-
             # Merge all the frames into one
             all_frames = []
             for computed_file in input_files:
-
-                print(computed_file.absolute_file_path)
-                print(os.path.exists(computed_file.absolute_file_path))
-
                 data = pd.DataFrame.from_csv(str(computed_file.absolute_file_path), sep='\t', header=0)
                 all_frames.append(data)
                 num_samples = num_samples + 1
@@ -109,6 +102,8 @@ def _smash(job_context: Dict) -> Dict:
                 # Wheeeeeeeeeee
                 untransposed = transposed.transpose()
 
+            job_context['final_frame'] = untransposed
+            
             # Write to temp file with dataset UUID in filename.
             outfile = smash_path + key + ".tsv"
             untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
