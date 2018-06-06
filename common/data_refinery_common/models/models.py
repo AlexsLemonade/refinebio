@@ -591,6 +591,8 @@ class ExperimentSampleAssociation(models.Model):
 
     class Meta:
         db_table = "experiment_sample_associations"
+        unique_together = ('experiment', 'sample')
+
 
 
 class ExperimentOrganismAssociation(models.Model):
@@ -600,6 +602,8 @@ class ExperimentOrganismAssociation(models.Model):
 
     class Meta:
         db_table = "experiment_organism_associations"
+        unique_together = ('experiment', 'organism')
+
 
 
 class DownloaderJobOriginalFileAssociation(models.Model):
@@ -611,6 +615,8 @@ class DownloaderJobOriginalFileAssociation(models.Model):
 
     class Meta:
         db_table = "downloaderjob_originalfile_associations"
+        unique_together = ('downloader_job', 'original_file')
+
 
 
 class ProcessorJobOriginalFileAssociation(models.Model):
@@ -622,6 +628,8 @@ class ProcessorJobOriginalFileAssociation(models.Model):
 
     class Meta:
         db_table = "processorjob_originalfile_associations"
+        unique_together = ('processor_job', 'original_file')
+
 
 
 class ProcessorJobDatasetAssociation(models.Model):
@@ -642,6 +650,8 @@ class OriginalFileSampleAssociation(models.Model):
 
     class Meta:
         db_table = "original_file_sample_associations"
+        unique_together = ('original_file', 'sample')
+
 
 
 class SampleResultAssociation(models.Model):
@@ -652,3 +662,4 @@ class SampleResultAssociation(models.Model):
 
     class Meta:
         db_table = "sample_result_associations"
+        unique_together = ('result', 'sample')
