@@ -104,6 +104,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.program_version = scan_version
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
+    result.pipeline = "Agilent SCAN TwoColor"
     result.save()
 
     # Create a ComputedFile for the sample,
