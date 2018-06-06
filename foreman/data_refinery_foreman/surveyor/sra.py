@@ -58,8 +58,8 @@ class SraSurveyor(ExternalSourceSurveyor):
     @staticmethod
     def gather_submission_metadata(metadata: Dict) -> None:
 
-        response = utils.requests_retry_session().get(
-            ENA_METADATA_URL_TEMPLATE.format(metadata["submission_accession"]))
+        formatted_metadata_URL = ENA_METADATA_URL_TEMPLATE.format(metadata["submission_accession"])
+        response = utils.requests_retry_session().get(formatted_metadata_URL)
         submission_xml = ET.fromstring(response.text)[0]
         submission_metadata = submission_xml.attrib
 
@@ -117,8 +117,8 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_experiment_metadata(metadata: Dict) -> None:
-        response = utils.requests_retry_session().get(
-            ENA_METADATA_URL_TEMPLATE.format(metadata["experiment_accession"]))
+        formatted_metadata_URL = ENA_METADATA_URL_TEMPLATE.format(metadata["experiment_accession"])
+        response = utils.requests_retry_session().get(formatted_metadata_URL)
         experiment_xml = ET.fromstring(response.text)
 
         experiment = experiment_xml[0]
@@ -213,8 +213,8 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_sample_metadata(metadata: Dict) -> None:
-        response = utils.requests_retry_session().get(
-            ENA_METADATA_URL_TEMPLATE.format(metadata["sample_accession"]))
+        formatted_metadata_URL = ENA_METADATA_URL_TEMPLATE.format(metadata["sample_accession"])
+        response = utils.requests_retry_session().get(formatted_metadata_URL)
         sample_xml = ET.fromstring(response.text)
 
         sample = sample_xml[0]
@@ -238,8 +238,8 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_study_metadata(metadata: Dict) -> None:
-        response = utils.requests_retry_session().get(
-            ENA_METADATA_URL_TEMPLATE.format(metadata["study_accession"]))
+        formatted_metadata_URL = ENA_METADATA_URL_TEMPLATE.format(metadata["study_accession"])
+        response = utils.requests_retry_session().get(formatted_metadata_URL)
         study_xml = ET.fromstring(response.text)
 
         study = study_xml[0]
@@ -310,9 +310,9 @@ class SraSurveyor(ExternalSourceSurveyor):
         organism_name = organism_name.upper()
         organism = Organism.get_object_for_name(organism_name)
 
-        #
+        ##
         # Experiment
-        #
+        ##
 
         experiment_accession_code = metadata.get('study_accession')
         try:
@@ -345,31 +345,29 @@ class SraSurveyor(ExternalSourceSurveyor):
                 experiment_object.pubmed_id = metadata["pubmed_id"]
                 experiment_object.has_publication = True
             if "study_ena_first_public" in metadata:
-                experiment_object.source_first_published = parse_datetime(
-                    metadata["study_ena_first_public"])
-            if "study_ena_last_update" in metadata:
-                experiment_object.source_last_modified = parse_datetime(
+                experiment_object.source_first_published = parse_datetime(metadata["study_ena_first_public"])
+            if "study_ena_last_update" in metadata: experiment_object.source_last_modified = parse_datetime(
                     metadata["study_ena_last_update"])
 
             # Rare, but it happens.
             if not experiment_object.protocol_description:
-                experiment_object.protocol_description = metadata.get(
-                    "library_construction_protocol", "Protocol was never provided.")
+                experiment_object.protocol_description = metadata.get("library_construction_protocol",
+                                                                      "Protocol was never provided.")
 
             experiment_object.save()
 
-            #
+            ##
             # Experiment Metadata
-            #
+            ##
             json_xa = ExperimentAnnotation()
             json_xa.experiment = experiment_object
             json_xa.data = metadata
             json_xa.is_ccdl = False
             json_xa.save()
 
-        #
+        ##
         # Samples
-        #
+        ##
 
         sample_accession_code = metadata.pop('sample_accession')
         # Create the sample object
@@ -443,8 +441,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         # SRA Surveyor is mainly designed for SRRs, this handles SRPs
         if 'SRP' in accession or 'ERP' in accession or 'DRP' in accession:
-            response = utils.requests_retry_session().get(
-                ENA_METADATA_URL_TEMPLATE.format(accession))
+            response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(accession))
             experiment_xml = ET.fromstring(response.text)[0]
             study_links = experiment_xml[2]  # STUDY_LINKS
 
