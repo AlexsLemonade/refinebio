@@ -21,6 +21,7 @@ from data_refinery_common.models import (
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
     ComputationalResult,
+    SampleResultAssociation,
     Dataset
 )
 from data_refinery_api.serializers import (
@@ -99,7 +100,22 @@ class APITestCases(APITestCase):
         experiment_sample_association.save()
 
         result = ComputationalResult()
+        result.pipeline = "Affymetrix SCAN"
         result.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        result = ComputationalResult()
+        result.pipeline = "MultiQC"
+        result.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
 
         return
 

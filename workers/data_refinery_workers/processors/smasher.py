@@ -86,11 +86,15 @@ def _smash(job_context: Dict) -> Dict:
 
                 all_frames.append(data)
                 num_samples = num_samples + 1
+            job_context['all_frames'] = all_frames
+
             merged = all_frames[0]
             i = 1
             while i < len(all_frames):
                 merged = merged.merge(all_frames[i], left_index=True, right_index=True)
                 i = i + 1
+
+            job_context['merged'] = merged
 
             # Transpose before scaling
             transposed = merged.transpose()
@@ -110,6 +114,8 @@ def _smash(job_context: Dict) -> Dict:
                 # Wheeeeeeeeeee
                 untransposed = transposed.transpose()
 
+            job_context['final_frame'] = untransposed
+            
             # Write to temp file with dataset UUID in filename.
             outfile = smash_path + key + ".tsv"
             untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
@@ -147,7 +153,7 @@ def _smash(job_context: Dict) -> Dict:
     except Exception as e:
         logger.error(e)
         job_context['dataset'].success = False
-        job_context['dataset'].failure_reason = str(e)
+        job_context['dataset'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].save()
         job_context['success'] = False
         job_context['failure_reason'] = str(e)
