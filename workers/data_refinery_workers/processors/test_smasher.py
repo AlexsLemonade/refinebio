@@ -143,6 +143,22 @@ class SmasherTestCase(TestCase):
             # Cleanup
             os.remove(final_context['output_file'])
 
+        # Stats    
+        dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+        dataset.aggregate_by = 'EXPERIMENT'
+        dataset.scale_by = 'MINMAX'
+        dataset.save()
+
+        final_context = smasher.smash(job.pk, upload=False)
+        final_frame = final_context['final_frame']
+        print(final_frame.mean(axis=1))
+        print(final_frame.min(axis=1))
+        print(final_frame.max(axis=1))
+        print(final_frame.mean(axis=1))
+
+        os.remove(final_context['output_file'])
+
+
     @tag("smasher")
     def test_get_results(self):
         """ Test our ability to collect the appropriate samples. """
