@@ -14,7 +14,7 @@ S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 logger = get_and_configure_logger(__name__)
 
 
-def _no_op_processor_fn(job_context: Dict) -> Dict:
+def _prepare_files(job_context: Dict) -> Dict:
     """A processor which does nothing other than move files.
 
     Simply moves the file from its raw location to its
@@ -31,6 +31,22 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
 
     # Copy the file to the new directory
     shutil.copyfile(job_context["input_file_path"], job_context["output_file_path"])
+    job_context["success"] = True
+    return job_context
+
+
+def _convert_genes(job_context: Dict) -> Dict:
+    """ Convert to Ensembl genes if we can"""
+
+    import pdb
+    pdb.set_trace()
+
+    job_context["success"] = True
+    return job_context
+
+
+def _create_result(job_context: Dict) -> Dict:
+    """ Create the actual Result object"""
 
     # This is a NO-OP, but we make a ComputationalResult regardless.
     result = ComputationalResult()
@@ -71,9 +87,10 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
     job_context["success"] = True
     return job_context
 
-
 def no_op_processor(job_id: int) -> None:
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
-                        _no_op_processor_fn,
+                        _prepare_files,
+                        _convert_genes,
+                        _create_result,
                         utils.end_job])
