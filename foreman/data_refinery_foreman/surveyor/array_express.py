@@ -462,7 +462,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
             # Create associations if they don't already exist
             ExperimentSampleAssociation.objects.get_or_create(
-                experiment=experiment_object, sample=sample_object)
+                experiment=experiment, sample=sample_object)
 
             ExperimentOrganismAssociation.objects.get_or_create(
                 experiment=experiment, organism=organism)
