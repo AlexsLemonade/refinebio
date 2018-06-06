@@ -1,4 +1,5 @@
 import os
+import time
 from django.test import TestCase, tag
 from data_refinery_common.models import (
     SurveyJob,
@@ -70,7 +71,7 @@ def prepare_job():
     ds = Dataset()
     ds.data = {'GSE51081': ['GSM1237810', 'GSM1237812']}
     ds.aggregate_by = 'EXPERIMENT' # [ALL or SPECIES or EXPERIMENT]
-    ds.scale_by = 'NONE' # [NONE or MINMAX or STANDARD or ROBUST]
+    ds.scale_by = 'STANDARD' # [NONE or MINMAX or STANDARD or ROBUST]
     ds.email_address = "null@derp.com"
     #ds.email_address = "miserlou+heyo@gmail.com"
     ds.save()
@@ -126,6 +127,7 @@ class SmasherTestCase(TestCase):
 
         for scale_type in ['NONE', 'MINMAX', 'STANDARD', 'ROBUST']:
             dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+            dataset.aggregate_by = 'EXPERIMENT'
             dataset.scale_by = scale_type
             dataset.save()
 
