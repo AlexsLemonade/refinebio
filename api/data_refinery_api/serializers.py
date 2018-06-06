@@ -123,6 +123,7 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
                     'organism',
                     'annotations',
                     'results',
+                    'pipelines',
                     'source_archive_url',
                     'has_raw',
                     'sex',

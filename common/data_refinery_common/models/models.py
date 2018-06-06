@@ -79,10 +79,6 @@ class Sample(models.Model):
         self.last_modified = current_time
         return super(Sample, self).save(*args, **kwargs)
 
-    def get_result_files(self):
-        """ Get all of the ComputedFile objects associated with this Sample """
-        return ComputedFile.objects.filter(result__in=self.results.all())
-
     def to_metadata_dict(self):
         """ Render this Sample as a dict """
         metadata = {}
@@ -103,6 +99,15 @@ class Sample(models.Model):
         metadata['compound'] = self.compound
         metadata['time'] = self.time
         return metadata
+
+    def get_result_files(self):
+        """ Get all of the ComputedFile objects associated with this Sample """
+        return ComputedFile.objects.filter(result__in=self.results.all())
+
+    @property
+    def pipelines(self):
+        """ Returns a list of related pipelines """
+        return [p for p in self.results.values_list('pipeline', flat=True).distinct()]
 
 class SampleAnnotation(models.Model):
     """ Semi-standard information associated with a Sample """
@@ -247,6 +252,9 @@ class ComputationalResult(models.Model):
     program_version = models.TextField(blank=True)
     system_version = models.CharField(max_length=255) # Generally defined in from data_refinery_workers._version import __version__
     is_ccdl = models.BooleanField(default=True)
+
+    # Human-readable nickname for this computation
+    pipeline = models.CharField(max_length=255)
 
     # Stats
     time_start = models.DateTimeField(blank=True, null=True)

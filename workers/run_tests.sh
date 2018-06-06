@@ -140,9 +140,11 @@ if [[ -z $tag || $tag == "smasher" ]]; then
     # Make sure PCL for test is downloaded from S3
     pcl_name="GSM1237810_T09-1084.PCL"
     pcl_name2="GSM1237812_S97-PURE.PCL"
+    pcl_name3="GSM1238108-tbl-1.txt"
     pcl_test_raw_dir="$volume_directory/PCL"
     pcl_test_data_1="$pcl_test_raw_dir/$pcl_name"
     pcl_test_data_2="$pcl_test_raw_dir/$pcl_name2"
+    pcl_test_data_3="$pcl_test_raw_dir/$pcl_name3"
     if [ ! -e "$pcl_test_data_1" ]; then
         mkdir -p $pcl_test_raw_dir
         echo "Downloading PCL for tests."
@@ -150,9 +152,14 @@ if [[ -z $tag || $tag == "smasher" ]]; then
              "$test_data_repo/$pcl_name"
     fi
     if [ ! -e "$pcl_test_data_2" ]; then
-        echo "Downloading PCL for tests."
+        echo "Downloading PCL2 for tests."
         wget -q -O $pcl_test_data_2 \
              "$test_data_repo/$pcl_name2"
+    fi
+    if [ ! -e "$pcl_test_data_3" ]; then
+        echo "Downloading PCL3 for tests."
+        wget -q -O $pcl_test_data_3 \
+             "$test_data_repo/$pcl_name3"
     fi
 
     export AWS_ACCESS_KEY_ID=`~/bin/aws configure get default.aws_access_key_id`
