@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from typing import Dict
 
+import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 
@@ -71,7 +72,18 @@ def _smash(job_context: Dict) -> Dict:
             # Merge all the frames into one
             all_frames = []
             for computed_file in input_files:
+
+                if not os.path.exists(computed_file.absolute_file_path):
+                    raise
+
                 data = pd.DataFrame.from_csv(str(computed_file.absolute_file_path), sep='\t', header=0)
+
+                # Detect if this data hasn't been log2 scaled yet.
+                # Ideally done in the NO-OPPER, but sanity check here.
+                if (data.max() > 100).any():
+                    logger.info("Detected non-log2 data.", file=computed_file)
+                    data = np.log2(data)
+
                 all_frames.append(data)
                 num_samples = num_samples + 1
             merged = all_frames[0]
@@ -133,6 +145,7 @@ def _smash(job_context: Dict) -> Dict:
         shutil.make_archive(final_zip, 'zip', smash_path)
         job_context["output_file"] = final_zip + ".zip"
     except Exception as e:
+        logger.error(e)
         job_context['dataset'].success = False
         job_context['dataset'].failure_reason = str(e)
         job_context['dataset'].save()
