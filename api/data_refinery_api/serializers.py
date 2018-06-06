@@ -129,6 +129,7 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
                     'technology',
                     'annotations',
                     'results',
+                    'pipelines',
                     'source_archive_url',
                     'has_raw',
                     'sex',

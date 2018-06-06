@@ -22,7 +22,9 @@ and filtering against.
 
 """
 
+
 class Sample(models.Model):
+
     """
     An individual sample.
     """
@@ -30,7 +32,7 @@ class Sample(models.Model):
     class Meta:
         db_table = "samples"
 
-    def __str__ (self):
+    def __str__(self):
         return "Sample: " + self.accession_code
 
     # Identifiers
@@ -46,7 +48,7 @@ class Sample(models.Model):
     source_archive_url = models.CharField(max_length=255)
     source_filename = models.CharField(max_length=255, blank=False)
     source_absolute_file_path = models.CharField(max_length=255)
-    has_raw = models.BooleanField(default=True) # Did this sample have a raw data source?
+    has_raw = models.BooleanField(default=True)  # Did this sample have a raw data source?
 
     # Technological Properties
     platform_accession_code = models.CharField(max_length=256, blank=True)
@@ -84,8 +86,18 @@ class Sample(models.Model):
         self.last_modified = current_time
         return super(Sample, self).save(*args, **kwargs)
 
+    def get_result_files(self):
+        """ Get all of the ComputedFile objects associated with this Sample """
+        return ComputedFile.objects.filter(result__in=self.results.all())
+
+    @property
+    def pipelines(self):
+        """ Returns a list of related pipelines """
+        return [p for p in self.results.values_list('pipeline', flat=True).distinct()]
+
 
 class SampleAnnotation(models.Model):
+
     """ Semi-standard information associated with a Sample """
 
     class Meta:
@@ -111,13 +123,15 @@ class SampleAnnotation(models.Model):
         self.last_modified = current_time
         return super(SampleAnnotation, self).save(*args, **kwargs)
 
+
 class Experiment(models.Model):
+
     """ An Experiment or Study """
 
     class Meta:
         db_table = "experiments"
 
-    def __str__ (self):
+    def __str__(self):
         return "Experiment: " + self.accession_code
 
     # Relations
@@ -128,13 +142,13 @@ class Experiment(models.Model):
     accession_code = models.CharField(max_length=64, unique=True)
 
     # Historical Properties
-    source_database = models.CharField(max_length=32) # "ArrayExpress, "SRA"
+    source_database = models.CharField(max_length=32)  # "ArrayExpress, "SRA"
     source_url = models.CharField(max_length=256)
 
     # Properties
-    ## I was always under the impression that TextFields were slower
-    ## than CharFields, however the Postgres documentation disagrees:
-    ## https://www.postgresql.org/docs/9.0/static/datatype-character.html
+    # I was always under the impression that TextFields were slower
+    # than CharFields, however the Postgres documentation disagrees:
+    # https://www.postgresql.org/docs/9.0/static/datatype-character.html
     title = models.TextField()
     description = models.TextField()
     protocol_description = models.TextField(default="")
@@ -160,7 +174,38 @@ class Experiment(models.Model):
         self.last_modified = current_time
         return super(Experiment, self).save(*args, **kwargs)
 
+    def to_metadata_dict(self):
+        """ Render this Experiment as a dict """
+
+        metadata = {}
+        metadata['title'] = self.title
+        metadata['accession_code'] = self.accession_code
+        metadata['description'] = self.description
+        metadata['protocol_description'] = self.protocol_description
+        metadata['platform_accession_code'] = self.platform_accession_code
+        metadata['platform_name'] = self.platform_name
+        metadata['technology'] = self.technology
+        metadata['submitter_institution'] = self.submitter_institution
+        metadata['has_publication'] = self.has_publication
+        metadata['publication_title'] = self.publication_title
+        metadata['publication_doi'] = self.publication_doi
+        metadata['pubmed_id'] = self.pubmed_id
+        if self.source_first_published:
+            metadata['source_first_published'] = self.source_first_published.strftime(
+                '%Y-%m-%dT%H:%M:%S')
+        else:
+            metadata['source_first_published'] = ''
+        if self.source_last_modified:
+            metadata['source_last_modified'] = self.source_last_modified.strftime(
+                '%Y-%m-%dT%H:%M:%S')
+        else:
+            metadata['source_last_modified'] = ''
+
+        return metadata
+
+
 class ExperimentAnnotation(models.Model):
+
     """ Semi-standard information associated with an Experiment """
 
     class Meta:
@@ -186,19 +231,25 @@ class ExperimentAnnotation(models.Model):
         self.last_modified = current_time
         return super(ExperimentAnnotation, self).save(*args, **kwargs)
 
+
 class ComputationalResult(models.Model):
+
     """ Meta-information about the output of a computer process. (Ex Salmon) """
 
     class Meta:
         db_table = "computational_results"
 
-    def __str__ (self):
+    def __str__(self):
         return "ComputationalResult: " + str(self.pk)
 
     command_executed = models.TextField(blank=True)
     program_version = models.TextField(blank=True)
-    system_version = models.CharField(max_length=255) # Generally defined in from data_refinery_workers._version import __version__
+    system_version = models.CharField(
+        max_length=255)  # Generally defined in from data_refinery_workers._version import __version__
     is_ccdl = models.BooleanField(default=True)
+
+    # Human-readable nickname for this computation
+    pipeline = models.CharField(max_length=255)
 
     # Stats
     time_start = models.DateTimeField(blank=True, null=True)
@@ -217,14 +268,17 @@ class ComputationalResult(models.Model):
         self.last_modified = current_time
         return super(ComputationalResult, self).save(*args, **kwargs)
 
+
 class ComputationalResultAnnotation(models.Model):
+
     """ Non-standard information associated with an ComputationalResult """
 
     class Meta:
         db_table = "computational_result_annotations"
 
     # Relations
-    result = models.ForeignKey(ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+    result = models.ForeignKey(
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
     # Properties
     data = HStoreField(default={})
@@ -250,16 +304,20 @@ class ComputationalResultAnnotation(models.Model):
 #     class Meta:
 #         db_table = "genes"
 
+
 class OrganismIndex(models.Model):
+
     """ A special type of process result, necessary for processing other SRA samples """
 
     class Meta:
         db_table = "organism_index"
 
     organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
-    index_type = models.CharField(max_length=255) # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
-    source_version = models.CharField(max_length=255) # Where do we get this from
-    result = models.ForeignKey(ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+    index_type = models.CharField(max_length=255)
+                                  # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
+    source_version = models.CharField(max_length=255)  # Where do we get this from
+    result = models.ForeignKey(
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
     # Common Properties
     is_public = models.BooleanField(default=True)
@@ -282,13 +340,15 @@ which live on local disk, on ephemeral storage,
 or on AWS cloud services.
 """
 
+
 class OriginalFile(models.Model):
+
     """ A representation of a file from an external source """
 
     class Meta:
         db_table = "original_files"
 
-    def __str__ (self):
+    def __str__(self):
         return "OriginalFile: " + self.get_display_name()
 
     filename = models.CharField(max_length=255)
@@ -305,7 +365,7 @@ class OriginalFile(models.Model):
     source_filename = models.CharField(max_length=255, blank=False)
 
     # Scientific Properties
-    has_raw = models.BooleanField(default=True) # Did this sample have a raw data source?
+    has_raw = models.BooleanField(default=True)  # Did this sample have a raw data source?
 
     # Crunch Properties
     is_downloaded = models.BooleanField(default=False)
@@ -349,13 +409,15 @@ class OriginalFile(models.Model):
         else:
             return self.filename
 
+
 class ComputedFile(models.Model):
+
     """ A representation of a file created by a data-refinery process """
 
     class Meta:
         db_table = "computed_files"
 
-    def __str__ (self):
+    def __str__(self):
         return "ComputedFile: " + str(self.filename)
 
     filename = models.CharField(max_length=255)
@@ -363,7 +425,8 @@ class ComputedFile(models.Model):
     size_in_bytes = models.BigIntegerField()
     sha1 = models.CharField(max_length=64)
 
-    result = models.ForeignKey(ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+    result = models.ForeignKey(
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
     s3_bucket = models.CharField(max_length=255)
     s3_key = models.CharField(max_length=255)
 
@@ -406,12 +469,22 @@ class ComputedFile(models.Model):
         self.size_in_bytes = os.path.getsize(self.absolute_file_path)
         return self.size_in_bytes
 
+
 class Dataset(models.Model):
+
     """ A Dataset is a desired set of experiments/samples to smash and download """
 
     AGGREGATE_CHOICES = (
+        ('ALL', 'All'),
         ('EXPERIMENT', 'Experiment'),
         ('SPECIES', 'Species')
+    )
+
+    SCALE_CHOICES = (
+        ('NONE', 'None'),
+        ('MINMAX', 'Minmax'),
+        ('STANDARD', 'Standard'),
+        ('ROBUST', 'Robust'),
     )
 
     # ID
@@ -424,14 +497,16 @@ class Dataset(models.Model):
 
     # Processing properties
     aggregate_by = models.CharField(max_length=255, choices=AGGREGATE_CHOICES, default="EXPERIMENT")
+    scale_by = models.CharField(max_length=255, choices=SCALE_CHOICES, default="MINMAX")
 
     # State properties
-    is_processing = models.BooleanField(default=False) # Data is still editable
-    is_processed = models.BooleanField(default=False) # Result has been made
-    is_available = models.BooleanField(default=False) # Result is ready for delivery
+    is_processing = models.BooleanField(default=False)  # Data is still editable when False
+    is_processed = models.BooleanField(default=False)  # Result has been made
+    is_available = models.BooleanField(default=False)  # Result is ready for delivery
 
     # Delivery properties
     email_address = models.CharField(max_length=255, blank=True, null=True)
+    email_sent = models.BooleanField(default=False)  # Result has been made
     expires_on = models.DateTimeField(blank=True, null=True)
 
     # Deliverables
@@ -450,11 +525,64 @@ class Dataset(models.Model):
         self.last_modified = current_time
         return super(Dataset, self).save(*args, **kwargs)
 
+    def get_samples(self):
+        """ Retuns all of the Sample objects in this Dataset """
+
+        all_samples = []
+        for sample_list in self.data.values():
+            all_samples = all_samples + sample_list
+        all_samples = list(set(all_samples))
+
+        return Sample.objects.filter(accession_code__in=all_samples)
+
+    def get_experiments(self):
+        """ Retuns all of the Experiments objects in this Dataset """
+
+        all_experiments = []
+        for experiment in self.data.keys():
+            all_experiments.append(experiment)
+        all_experiments = list(set(all_experiments))
+
+        return Experiment.objects.filter(accession_code__in=all_experiments)
+
+    def get_samples_by_experiment(self):
+        """ Returns a dict of sample QuerySets, for samples grouped by experiment. """
+        all_samples = {}
+
+        for experiment, samples in self.data.items():
+            all_samples[experiment] = Sample.objects.filter(accession_code__in=samples)
+
+        return all_samples
+
+    def get_samples_by_species(self):
+        """ Returns a dict of sample QuerySets, for samples grouped by species. """
+
+        by_species = {}
+        all_samples = self.get_samples()
+        for sample in all_samples:
+            if not by_species.get(sample.organism.name, None):
+                by_species[sample.organism.name] = [sample]
+            else:
+                by_species[sample.organism.name].append(sample)
+
+        return by_species
+
+    def get_aggregated_samples(self):
+        """ Uses aggregate_by to return smasher-ready a sample dict. """
+
+        if self.aggregate_by == "ALL":
+            return {'ALL': self.get_samples()}
+        elif self.aggregate_by == "EXPERIMENT":
+            return self.get_samples_by_experiment()
+        else:
+            return self.get_samples_by_species()
+
 """
 # Associations
 
 These represent the relationships between items in the other tables.
 """
+
 
 class ExperimentSampleAssociation(models.Model):
 
@@ -464,6 +592,7 @@ class ExperimentSampleAssociation(models.Model):
     class Meta:
         db_table = "experiment_sample_associations"
 
+
 class ExperimentOrganismAssociation(models.Model):
 
     experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
@@ -472,34 +601,54 @@ class ExperimentOrganismAssociation(models.Model):
     class Meta:
         db_table = "experiment_organism_associations"
 
+
 class DownloaderJobOriginalFileAssociation(models.Model):
 
-    downloader_job = models.ForeignKey("data_refinery_common.DownloaderJob", blank=False, null=False, on_delete=models.CASCADE)
-    original_file = models.ForeignKey(OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
+    downloader_job = models.ForeignKey(
+        "data_refinery_common.DownloaderJob", blank=False, null=False, on_delete=models.CASCADE)
+    original_file = models.ForeignKey(
+        OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "downloaderjob_originalfile_associations"
 
+
 class ProcessorJobOriginalFileAssociation(models.Model):
 
-    processor_job = models.ForeignKey("data_refinery_common.ProcessorJob", blank=False, null=False, on_delete=models.CASCADE)
-    original_file = models.ForeignKey(OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
+    processor_job = models.ForeignKey(
+        "data_refinery_common.ProcessorJob", blank=False, null=False, on_delete=models.CASCADE)
+    original_file = models.ForeignKey(
+        OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "processorjob_originalfile_associations"
 
+
+class ProcessorJobDatasetAssociation(models.Model):
+
+    processor_job = models.ForeignKey(
+        "data_refinery_common.ProcessorJob", blank=False, null=False, on_delete=models.CASCADE)
+    dataset = models.ForeignKey(Dataset, blank=False, null=False, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "processorjob_dataset_associations"
+
+
 class OriginalFileSampleAssociation(models.Model):
 
-    original_file = models.ForeignKey(OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
+    original_file = models.ForeignKey(
+        OriginalFile, blank=False, null=False, on_delete=models.CASCADE)
     sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "original_file_sample_associations"
 
+
 class SampleResultAssociation(models.Model):
 
     sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
-    result = models.ForeignKey(ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+    result = models.ForeignKey(
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "sample_result_associations"
