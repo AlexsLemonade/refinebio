@@ -1,5 +1,4 @@
 import os
-import time
 from django.test import TestCase, tag
 from data_refinery_common.models import (
     SurveyJob,
@@ -104,7 +103,9 @@ class SmasherTestCase(TestCase):
         dataset.get_samples_by_species()
         dataset.get_aggregated_samples()
 
-        #for ag_type in ['ALL', 'EXPERIMENT', 'SPECIES']:
+        # XXX: agg_type 'SPECIES' hangs on Linux, not OSX.
+        # Don't know why yet.
+        # for ag_type in ['ALL', 'EXPERIMENT', 'SPECIES']:
         for ag_type in ['ALL', 'EXPERIMENT']:
             dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
             dataset.aggregate_by = ag_type
@@ -122,9 +123,6 @@ class SmasherTestCase(TestCase):
 
             # Cleanup
             os.remove(final_context['output_file']) 
-
-            # Hack
-            time.sleep(10)
 
         for scale_type in ['NONE', 'MINMAX', 'STANDARD', 'ROBUST']:
             dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
@@ -144,8 +142,6 @@ class SmasherTestCase(TestCase):
 
             # Cleanup
             os.remove(final_context['output_file'])
-
-            time.sleep(10) 
 
     @tag("smasher")
     def test_get_results(self):

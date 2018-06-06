@@ -166,7 +166,7 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 pjda.save()
 
                 # Hidden method of non-dispatching for testing purposes.
-                if not new_data.get('no_send_job', False):
+                if not self.request.data.get('no_send_job', False):
                     send_job(ProcessorPipeline.SMASHER, processor_job.id)
 
                 serializer.validated_data['is_processing'] = True
