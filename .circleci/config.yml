@@ -26,14 +26,17 @@ jobs:
       - run:
           command: sudo -E ./run_nomad.sh -e test
 
-      # Run API Tests.
-      - run: ./api/run_tests.sh
-
       # Run Common Tests.
       - run: ./common/run_tests.sh
 
       - run: ./prepare_image.sh -i no_op -s workers
       - run: ./prepare_image.sh -i downloaders -s workers
+
+      # Run Downloader Tests
+      # Running these in the same job as the common tests is good
+      # because their dockerfiles are very similar so a lot of the
+      # build time is saved by only building those layers once.
+      - run: .circleci/filter_tests.sh -t downloaders
 
       # Push the no_op and downloader images to the local docker repo so Nomad
       # can pull from there when running end-to-end tests.
@@ -45,9 +48,6 @@ jobs:
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
-
-      # Run Illumna tests.
-      - run: .circleci/filter_tests.sh -t illumina
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
   affymetrix_and_agilent_tests:
@@ -80,7 +80,7 @@ jobs:
       - run: .circleci/filter_tests.sh -t agilent
 
   # This tests workers tests tagged as 'salmon'
-  salmon_tests:
+  salmon_and_api_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
@@ -97,13 +97,16 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
+      # Run API Tests.
+      - run: ./api/run_tests.sh
+
       - run:
           command: .circleci/filter_tests.sh -t salmon
           no_output_timeout: 1h
 
   # This tests workers tests tagged as 'transcriptome' and 'downloaders'
   # These are grouped together because together they take less time than affy or salmon.
-  transcriptome_and_downloaders_tests:
+  transcriptome_and_illumina_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
@@ -127,8 +130,9 @@ jobs:
       # from making sure all the files in workers/test_volume have read/write permissions.
       - run: sudo chown -R circleci:circleci workers/test_volume/
 
-      - run: ./prepare_image.sh -i downloaders -s workers
-      - run: .circleci/filter_tests.sh -t downloaders
+      # Run Illumna tests.
+      - run: .circleci/filter_tests.sh -t illumina
+
 
   deploy:
     machine: true
@@ -158,13 +162,13 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      - salmon_tests:
+      - salmon_and_api_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      - transcriptome_and_downloaders_tests:
+      - transcriptome_and_illumina_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
@@ -177,8 +181,8 @@ workflows:
           requires:
             - main_tests
             - affymetrix_and_agilent_tests
-            - salmon_tests
-            - transcriptome_and_downloaders_tests
+            - salmon_and_api_tests
+            - transcriptome_and_illumina_tests
           filters:
             # No branch commit will ever trigger this job.
             branches:

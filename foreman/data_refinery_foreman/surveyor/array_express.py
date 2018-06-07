@@ -1,6 +1,5 @@
 import requests
 
-from django.conf import settings
 from django.utils.dateparse import parse_datetime
 from typing import List, Dict
 
@@ -21,24 +20,32 @@ from data_refinery_foreman.surveyor import harmony, utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.utils import (
+    get_supported_microarray_platforms,
+    get_readable_platform_names)
 
 logger = get_and_configure_logger(__name__)
 
 
 EXPERIMENTS_URL = "https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/"
 SAMPLES_URL = EXPERIMENTS_URL + "{}/samples"
-UNKNOWN="UNKNOWN"
+UNKNOWN = "UNKNOWN"
+
 
 class UnsupportedPlatformException(Exception):
     pass
 
+
 class ArrayExpressSurveyor(ExternalSourceSurveyor):
+
     def source_type(self):
         return Downloaders.ARRAY_EXPRESS.value
 
-    def create_experiment_from_api(self, experiment_accession_code: str) -> Dict:
-        """
-        Given an experiment accession code, create an Experiment object.
+    def create_experiment_from_api(self, experiment_accession_code: str) -> (Experiment, Dict):
+        """Given an experiment accession code, create an Experiment object.
+
+        Also returns a dictionary of additional information about the
+        platform discovered for the experiment.
 
         Will raise an UnsupportedPlatformException if this experiment was
         conducting using a platform which we don't support.
@@ -79,19 +86,19 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment["platform_accession_code"] = UNKNOWN
             experiment["platform_accession_name"] = UNKNOWN
         else:
-            if parsed_json["arraydesign"][0]["accession"] not in settings.SUPPORTED_PLATFORMS:
-                logger.warn("Experiment platform %s is not supported!",
-                            parsed_json["arraydesign"][0]["accession"],
-                            experiment_accession_code=experiment_accession_code,
-                            survey_job=self.survey_job.id)
+            external_accession = parsed_json["arraydesign"][0]["accession"]
+            for platform in get_supported_microarray_platforms():
+                if platform["external_accession"] == external_accession:
+                    experiment["platform_accession_code"] = platform["platform_accession"]
+                    platform_mapping = get_readable_platform_names()
+                    experiment["platform_accession_name"] = platform_mapping[
+                        platform["platform_accession"]]
 
-                # XXX: This is disabled until we can re-do the supported platforms
-                # to support Illumina and Agilent 2C
-                # platform_warning = True
-                platform_warning = False
-
-            experiment["platform_accession_code"] = parsed_json["arraydesign"][0]["accession"]
-            experiment["platform_accession_name"] = parsed_json["arraydesign"][0]["name"]
+            if "platform_accession_code" not in experiment:
+                # We don't know what platform this accession corresponds to.
+                experiment["platform_accession_code"] = external_accession
+                experiment["platform_accession_name"] = UNKNOWN
+                platform_warning = True
 
         experiment["release_date"] = parsed_json["releasedate"]
 
@@ -113,10 +120,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment_object.source_url = request_url
             experiment_object.source_database = "ARRAY_EXPRESS"
             experiment_object.name = parsed_json["name"]
-            experiment_object.description = parsed_json["description"][0]["text"]
-            experiment_object.platform_name = experiment["platform_accession_name"]
-            experiment_object.platform_accession_code = experiment["platform_accession_code"]
             experiment_object.technology = "MICROARRAY"
+            experiment_object.description = parsed_json["description"][0]["text"]
             experiment_object.source_first_published = parse_datetime(experiment["release_date"])
             experiment_object.source_last_modified = parse_datetime(experiment["last_update_date"])
             experiment_object.save()
@@ -142,7 +147,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             idf_url = IDF_URL_TEMPLATE.format(code=experiment_accession_code)
             sdrf_url = SDRF_URL_TEMPLATE.format(code=experiment_accession_code)
             idf_text = utils.requests_retry_session().get(idf_url, timeout=60).text
-            
+
             lines = idf_text.split('\n')
             idf_dict = {}
             for line in lines:
@@ -163,7 +168,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             if 'Person Affiliation' in idf_dict:
                 # This is very rare, ex: E-MEXP-32
                 if isinstance(idf_dict['Person Affiliation'], list):
-                    experiment_object.submitter_institution = ", ".join(list(set(idf_dict['Person Affiliation'])))[:255]
+                    unique_people = list(set(idf_dict['Person Affiliation']))
+                    experiment_object.submitter_institution = ", ".join(unique_people)[:255]
                 else:
                     experiment_object.submitter_institution = idf_dict['Person Affiliation']
             if 'Protocol Description' in idf_dict:
@@ -192,7 +198,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
             experiment_object.save()
 
-        return experiment_object
+        platform_dict = {k: experiment[k]
+                         for k in ('platform_accession_code', 'platform_accession_name')}
+        return experiment_object, platform_dict
 
     def determine_sample_accession(self, experiment_accession: str, sample_source_name: str, sample_assay_name: str, filename: str) -> str:
         """Determine what to use as the sample's accession code.
@@ -243,7 +251,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             return experiment_accession + "-" + sample_assay_name
 
     def create_samples_from_api(self,
-                                experiment: Experiment
+                                experiment: Experiment,
+                                platform_dict: Dict
                                 ) -> List[Sample]:
         """Generates a Sample item for each sample in an AE experiment..
 
@@ -271,12 +280,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         samples_endpoint = SAMPLES_URL.format(experiment.accession_code)
         r = utils.requests_retry_session().get(samples_endpoint, timeout=60)
         samples = r.json()["experiment"]["sample"]
-
-        try:
-            ExperimentAnnotation.objects.get(data__has_unsupported_platform=True, experiment=experiment)
-            has_platform_warning = True
-        except Exception:
-            has_platform_warning = False
 
         # The SDRF is the complete metadata record on a sample/property basis.
         # We run this through our harmonizer and then attach the properties
@@ -335,11 +338,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             for sub_file in sample['file']:
 
                 # Skip derived data if we have it raw.
-                if has_raw and not has_platform_warning and "derived data" in sub_file['type']:
-                    continue
-                elif (not has_raw or has_platform_warning) and "derived data" not in sub_file['type']:
-                    # If there is a platform warning then we don't want raw data.
-                    has_raw = False
+                if has_raw and "derived data" in sub_file['type']:
                     continue
 
                 # XXX: This is a hack.
@@ -427,6 +426,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 sample_object.accession_code = sample_accession_code
                 sample_object.source_archive_url = samples_endpoint
                 sample_object.organism = organism
+                sample_object.platform_name = platform_dict["platform_accession_name"]
+                sample_object.platform_accession_code = platform_dict["platform_accession_code"]
+                sample_object.technology = "MICROARRAY"
+                sample_object.save()
 
                 # Directly assign the harmonized properties
                 harmonized_sample = harmonized_samples[title]
@@ -439,13 +442,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 sample_annotation.sample = sample_object
                 sample_annotation.is_ccdl = False
                 sample_annotation.save()
-
-                if has_platform_warning and has_raw:
-                    sample_annotation = SampleAnnotation()
-                    sample_annotation.data = {'has_raw': True, 'has_unsupported_platform': True}
-                    sample_annotation.sample = sample_object
-                    sample_annotation.is_ccdl = True
-                    sample_annotation.save()
 
                 original_file = OriginalFile()
                 original_file.source_filename = filename
@@ -490,12 +486,12 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     survey_job=self.survey_job.id)
 
         try:
-            experiment = self.create_experiment_from_api(experiment_accession_code)
+            experiment, platform_dict = self.create_experiment_from_api(experiment_accession_code)
         except UnsupportedPlatformException as e:
             logger.info("Experiment was not on a supported platform, skipping.",
                         experiment_accession_code=experiment_accession_code,
                         survey_job=self.survey_job.id)
             return None, []
 
-        samples = self.create_samples_from_api(experiment)
+        samples = self.create_samples_from_api(experiment, platform_dict)
         return experiment, samples

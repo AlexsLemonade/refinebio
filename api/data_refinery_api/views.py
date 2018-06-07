@@ -304,8 +304,8 @@ class PlatformList(APIView):
 	"""
 
     def get(self, request, format=None):
-        experiments = Experiment.objects.all().values("platform_accession_code", "platform_name").distinct()
-        serializer = PlatformSerializer(experiments, many=True)
+        samples = Sample.objects.all().values("platform_accession_code", "platform_name").distinct()
+        serializer = PlatformSerializer(samples, many=True)
         return Response(serializer.data)
 
 class InstitutionList(APIView):
@@ -419,4 +419,3 @@ class Stats(APIView):
         data['processor_jobs']['average_time'] = ProcessorJob.objects.filter(start_time__isnull=False, end_time__isnull=False).aggregate(average_time=Avg(F('end_time') - F('start_time')))['average_time']
 
         return Response(data)
-
