@@ -177,7 +177,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
             submission_date = gse.metadata["submission_date"][0] + " 00:00:00 UTC"
             experiment_object.source_first_published = dateutil.parser.parse(submission_date)
             last_updated_date = gse.metadata["last_update_date"][0] + " 00:00:00 UTC"
-            experiment_object.source_last_updated = dateutil.parser.parse(last_update_date)
+            experiment_object.source_last_updated = dateutil.parser.parse(last_updated_date)
 
             unique_institutions = list(set(gse.metadata["contact_institute"]))
             experiment_object.submitter_institution = ", ".join(unique_institutions)
