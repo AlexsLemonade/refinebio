@@ -73,8 +73,9 @@ def _smash(job_context: Dict) -> Dict:
             all_frames = []
             for computed_file in input_files:
 
+                # Bail appropriately if this isn't a real file.
                 if not os.path.exists(computed_file.absolute_file_path):
-                    raise
+                    raise ValueError("Smasher received non-existent file path.")
 
                 data = pd.read_csv(str(computed_file.absolute_file_path), sep='\t', header=0, index_col=0)
 
@@ -83,6 +84,11 @@ def _smash(job_context: Dict) -> Dict:
                 if (data.max() > 100).any():
                     logger.info("Detected non-log2 data.", file=computed_file)
                     data = np.log2(data)
+
+                # Squish duplicated rows together.
+                # XXX/TODO: Is mean the appropriate method here? 
+                #           We can make this an option in future.
+                data = data.groupby(data.index, sort=False).mean()
 
                 all_frames.append(data)
                 num_samples = num_samples + 1
