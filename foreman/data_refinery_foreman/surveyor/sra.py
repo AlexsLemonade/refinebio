@@ -185,6 +185,12 @@ class SraSurveyor(ExternalSourceSurveyor):
         response = utils.requests_retry_session().get(
             ENA_METADATA_URL_TEMPLATE.format(run_accession))
         run_xml = ET.fromstring(response.text)
+
+        # Necessary because ERP000263 has only one ROOT element containing this error:
+        # Entry: ERR15562 display type is either not supported or entry is not found.
+        if len(run_xml) == 0:
+            return {}
+
         run_item = run_xml[0]
 
         useful_attributes = ["center_name", "run_center", "run_date", "broker_name", "alias"]
@@ -265,10 +271,11 @@ class SraSurveyor(ExternalSourceSurveyor):
     def gather_all_metadata(run_accession):
         metadata = SraSurveyor.gather_run_metadata(run_accession)
 
-        SraSurveyor.gather_experiment_metadata(metadata)
-        SraSurveyor.gather_sample_metadata(metadata)
-        SraSurveyor.gather_study_metadata(metadata)
-        SraSurveyor.gather_submission_metadata(metadata)
+        if metadata != {}:
+            SraSurveyor.gather_experiment_metadata(metadata)
+            SraSurveyor.gather_sample_metadata(metadata)
+            SraSurveyor.gather_study_metadata(metadata)
+            SraSurveyor.gather_submission_metadata(metadata)
 
         return metadata
 
@@ -288,9 +295,14 @@ class SraSurveyor(ExternalSourceSurveyor):
             long_accession=run_accession,
             read_suffix=read_suffix)
 
-    def _generate_experiment_and_samples(self, run_accession: str) -> None:
+    def _generate_experiment_and_samples(self, run_accession: str) -> (Experiment, List[Sample]):
         """Generates Experiments and Samples for the provided run_accession."""
         metadata = SraSurveyor.gather_all_metadata(run_accession)
+
+        if metadata == {}:
+            logger.error("Could not discover any metadata for run.",
+                         accession=run_accession)
+            return (None, None)  # This will cascade properly
 
         if metadata["library_layout"] == "PAIRED":
             files_urls = [SraSurveyor._build_file_url(run_accession, "_1"),
@@ -488,6 +500,7 @@ class SraSurveyor(ExternalSourceSurveyor):
                             accessions_to_run.append(accession[0] + "RR" + str(run_id))
                     break
 
+            experiment = None
             all_samples = []
             for run_id in accessions_to_run:
                 logger.debug("Surveying SRA Run Accession %s for Experiment %s",
@@ -495,8 +508,15 @@ class SraSurveyor(ExternalSourceSurveyor):
                              accession,
                              survey_job=self.survey_job.id)
 
-                experiment, samples = self._generate_experiment_and_samples(run_id)
-                all_samples += samples
+                returned_experiment, samples = self._generate_experiment_and_samples(run_id)
+
+                # Some runs may return (None, None). If this happens
+                # we don't want to set experiment to None.
+                if returned_experiment:
+                    experiment = returned_experiment
+
+                if samples:
+                    all_samples += samples
 
             # Experiment will always be the same
             return experiment, all_samples

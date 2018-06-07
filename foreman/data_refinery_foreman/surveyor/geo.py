@@ -105,6 +105,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
             # Determine manufacturer
 
             # Sometimes this field is a list, other times it's not.
+            # Example of it being a list: GSE113945
             channel1_temp = sample_metadata.get('label_protocol_ch1', "")
             if type(channel1_temp) == list:
                 channel1_protocol = channel1_temp[0].upper()

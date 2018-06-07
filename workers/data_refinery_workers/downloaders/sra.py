@@ -103,7 +103,7 @@ def _download_file_aspera(download_url: str,
             else:
                 time.sleep(300)
                 return _download_file_aspera(download_url,
-                                             download_job,
+                                             downloader_job,
                                              target_file_path,
                                              attempt + 1
                                              )
@@ -122,7 +122,7 @@ def _download_file_aspera(download_url: str,
                      downloader_job=downloader_job.id)
         time.sleep(300)
         return _download_file_aspera(download_url,
-                                     download_job,
+                                     downloader_job,
                                      target_file_path,
                                      attempt + 1
                                      )

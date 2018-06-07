@@ -68,7 +68,8 @@ def _is_platform_supported(platform: str) -> bool:
     # Which should match 'Illumina Genome Analyzer IIx'
     # because RNASeq platforms are organism agnostic.
     for supported_platform in utils.get_supported_rnaseq_platforms():
-        if supported_platform.upper() in upper_platform:
+        # Spacing can be inconsistent, easiest to just remove it entirely.
+        if supported_platform.upper().replace(" ", "") in upper_platform.replace(" ", ""):
             return True
 
     return False
