@@ -32,7 +32,7 @@ class SurveyTestCase(TestCase):
         SurveyJobKeyValue.objects.all().delete()
         SurveyJob.objects.all().delete()
 
-    @patch('data_refinery_foreman.surveyor.external_source.send_job')
+    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_geo_survey_microarray(self, mock_send_task):
         """ Run the GEO surveyor and make sure we get some files to DL!
 
@@ -53,7 +53,7 @@ class SurveyTestCase(TestCase):
         downloader_jobs = DownloaderJob.objects.all()
         self.assertEqual(4, downloader_jobs.count())
 
-    @patch('data_refinery_foreman.surveyor.external_source.send_job')
+    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_geo_survey_agilent(self, mock_send_task):
         """ Run the GEO surveyor and make sure we get some files to DL!
 
@@ -78,7 +78,7 @@ class SurveyTestCase(TestCase):
         # 124 samples + 2 metadata files.
         self.assertEqual(126, downloader_jobs.count())
 
-    @patch('data_refinery_foreman.surveyor.external_source.send_job')
+    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_geo_survey_rnaseq(self, mock_send_task):
         """ Run the GEO surveyor and make sure we get some files to DL!
 
@@ -99,7 +99,7 @@ class SurveyTestCase(TestCase):
         downloader_jobs = DownloaderJob.objects.all()
         self.assertEqual(2, downloader_jobs.count())
 
-    @patch('data_refinery_foreman.surveyor.external_source.send_job')
+    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_geo_survey_superseries(self, mock_send_task):
         """ Run the GEO surveyor and make sure we get some files to DL!
 

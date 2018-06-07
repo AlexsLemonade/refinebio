@@ -25,7 +25,7 @@ class SurveyTestCase(TestCase):
                                            value="EnsemblPlants")
         key_value_pair.save()
 
-    @patch('data_refinery_foreman.surveyor.external_source.send_job')
+    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     @patch("data_refinery_foreman.surveyor.transcriptome_index.urllib.request.urlopen")
     @patch("data_refinery_foreman.surveyor.transcriptome_index.requests.get")
     def test_survey(self, mock_get, mock_urlopen, mock_send_job):
@@ -84,7 +84,7 @@ class SurveyTestCase(TestCase):
                                                 key="number_of_organisms",
                                                 value=1)
         key_value_pair.save()
-        
+
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
                                                 key="organism_name",
                                                 value="Danio rerio")

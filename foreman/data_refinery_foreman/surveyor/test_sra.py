@@ -73,7 +73,7 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(SraSurveyor.get_next_accession("DRR12345678"), "DRR12345679")
         self.assertEqual(SraSurveyor.get_next_accession("DRR123456789"), "DRR123456790")
 
-    @patch('data_refinery_foreman.surveyor.external_source.send_job')
+    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_survey(self, mock_send_task):
         """A Simple test of the SRA surveyor.
         """
@@ -86,7 +86,7 @@ class SraSurveyorTestCase(TestCase):
         # We are expecting this to discover 1 sample.
         self.assertEqual(samples.count(), 1)
 
-    @patch('data_refinery_foreman.surveyor.external_source.send_job')
+    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_srp_survey(self, mock_send_task):
         """A slightly harder test of the SRA surveyor.
         """

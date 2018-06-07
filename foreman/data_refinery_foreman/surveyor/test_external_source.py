@@ -13,7 +13,7 @@ from data_refinery_common.models import (
 )
 
 class SraSurveyorTestCase(TestCase):
-    @patch('data_refinery_foreman.surveyor.external_source.send_job')
+    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_queue_downloader_jobs(self, mock_send_task):
         """Make sure that queue_downloader_jobs queues all expected Downloader
         jobs for a given experiment.
