@@ -25,38 +25,11 @@ jobs:
         # Start Nomad, build images, and register jobs.
       - run:
           command: sudo -E ./run_nomad.sh -e test
-<<<<<<< HEAD
-      
-||||||| merged common ancestors
 
-      # Run API Tests.
-      - run: ./api/run_tests.sh
-
-      # Run Common Tests.
-      - run: ./common/run_tests.sh
-
-=======
-
-      # Run Common Tests.
-      - run: ./common/run_tests.sh
-
->>>>>>> c8fd859cf9d29deb6aed17d1dc6f17624b4663f8
       - run: ./prepare_image.sh -i no_op -s workers
       - run: ./prepare_image.sh -i downloaders -s workers
-<<<<<<< HEAD
       - run: ./prepare_image.sh -i smasher -s workers
-      
-||||||| merged common ancestors
 
-=======
-
-      # Run Downloader Tests
-      # Running these in the same job as the common tests is good
-      # because their dockerfiles are very similar so a lot of the
-      # build time is saved by only building those layers once.
-      - run: .circleci/filter_tests.sh -t downloaders
-
->>>>>>> c8fd859cf9d29deb6aed17d1dc6f17624b4663f8
       # Push the no_op and downloader images to the local docker repo so Nomad
       # can pull from there when running end-to-end tests.
       - run: docker tag ccdl/dr_downloaders localhost:5000/ccdl/dr_downloaders
@@ -66,34 +39,30 @@ jobs:
       - run: docker tag ccdl/dr_smasher localhost:5000/ccdl/dr_smasher
       - run: docker push localhost:5000/ccdl/dr_smasher
       
-      # Run Common Tests.
-      - run: ./common/run_tests.sh
-
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
 
-<<<<<<< HEAD
       # Run Illumna tests.
       - run: .circleci/filter_tests.sh -t illumina
       
-        # Run Smasher tests.
+      # Run Smasher tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
           command: .circleci/filter_tests.sh -t smasher 
           # Smashing can apparently take a long time on CI 
           no_output_timeout: 36000
       
-        # Run API Tests.
+      # Run API Tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run: ./api/run_tests.sh
 
-||||||| merged common ancestors
-      # Run Illumna tests.
-      - run: .circleci/filter_tests.sh -t illumina
+      # Run Downloader Tests
+      # Running these in the same job as the common tests is good
+      # because their dockerfiles are very similar so a lot of the
+      # build time is saved by only building those layers once.
+      - run: .circleci/filter_tests.sh -t downloaders
 
-=======
->>>>>>> c8fd859cf9d29deb6aed17d1dc6f17624b4663f8
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
   affymetrix_and_agilent_tests:
     working_directory: ~/refinebio
