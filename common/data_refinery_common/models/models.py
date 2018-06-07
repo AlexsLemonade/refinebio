@@ -88,6 +88,14 @@ class Sample(models.Model):
         self.last_modified = current_time
         return super(Sample, self).save(*args, **kwargs)
 
+    def get_result_files(self):
+        """ Get all of the ComputedFile objects associated with this Sample """
+        return ComputedFile.objects.filter(result__in=self.results.all())
+
+    @property
+    def pipelines(self):
+        """ Returns a list of related pipelines """
+        return [p for p in self.results.values_list('pipeline', flat=True).distinct()]
 
 class SampleAnnotation(models.Model):
 
@@ -167,6 +175,32 @@ class Experiment(models.Model):
         self.last_modified = current_time
         return super(Experiment, self).save(*args, **kwargs)
 
+    def to_metadata_dict(self):
+        """ Render this Experiment as a dict """
+
+        metadata = {}
+        metadata['title'] = self.title
+        metadata['accession_code'] = self.accession_code
+        metadata['description'] = self.description
+        metadata['protocol_description'] = self.protocol_description
+        metadata['platform_accession_code'] = self.platform_accession_code
+        metadata['platform_name'] = self.platform_name
+        metadata['technology'] = self.technology
+        metadata['submitter_institution'] = self.submitter_institution
+        metadata['has_publication'] = self.has_publication
+        metadata['publication_title'] = self.publication_title
+        metadata['publication_doi'] = self.publication_doi
+        metadata['pubmed_id'] = self.pubmed_id
+        if self.source_first_published:
+            metadata['source_first_published'] = self.source_first_published.strftime('%Y-%m-%dT%H:%M:%S')
+        else:
+            metadata['source_first_published'] = ''
+        if self.source_last_modified:
+            metadata['source_last_modified'] = self.source_last_modified.strftime('%Y-%m-%dT%H:%M:%S')
+        else:
+            metadata['source_last_modified'] = ''
+
+        return metadata
 
 class ExperimentAnnotation(models.Model):
 
@@ -211,6 +245,9 @@ class ComputationalResult(models.Model):
     system_version = models.CharField(
         max_length=255)  # Generally defined in from data_refinery_workers._version import __version__
     is_ccdl = models.BooleanField(default=True)
+
+    # Human-readable nickname for this computation
+    pipeline = models.CharField(max_length=255)
 
     # Stats
     time_start = models.DateTimeField(blank=True, null=True)
@@ -437,8 +474,16 @@ class Dataset(models.Model):
     """ A Dataset is a desired set of experiments/samples to smash and download """
 
     AGGREGATE_CHOICES = (
+        ('ALL', 'All'),
         ('EXPERIMENT', 'Experiment'),
         ('SPECIES', 'Species')
+    )
+
+    SCALE_CHOICES = (
+        ('NONE', 'None'),
+        ('MINMAX', 'Minmax'),
+        ('STANDARD', 'Standard'),
+        ('ROBUST', 'Robust'),
     )
 
     # ID
@@ -451,6 +496,7 @@ class Dataset(models.Model):
 
     # Processing properties
     aggregate_by = models.CharField(max_length=255, choices=AGGREGATE_CHOICES, default="EXPERIMENT")
+    scale_by = models.CharField(max_length=255, choices=SCALE_CHOICES, default="MINMAX")
 
     # State properties
     is_processing = models.BooleanField(default=False)  # Data is still editable
@@ -459,6 +505,7 @@ class Dataset(models.Model):
 
     # Delivery properties
     email_address = models.CharField(max_length=255, blank=True, null=True)
+    email_sent = models.BooleanField(default=False) # Result has been made
     expires_on = models.DateTimeField(blank=True, null=True)
 
     # Deliverables
@@ -477,6 +524,58 @@ class Dataset(models.Model):
         self.last_modified = current_time
         return super(Dataset, self).save(*args, **kwargs)
 
+    def get_samples(self):
+        """ Retuns all of the Sample objects in this Dataset """
+
+        all_samples = []
+        for sample_list in self.data.values():
+            all_samples = all_samples + sample_list
+        all_samples = list(set(all_samples))
+
+        return Sample.objects.filter(accession_code__in=all_samples)
+
+    def get_experiments(self):
+        """ Retuns all of the Experiments objects in this Dataset """
+
+        all_experiments = []
+        for experiment in self.data.keys():
+            all_experiments.append(experiment)
+        all_experiments = list(set(all_experiments))
+
+        return Experiment.objects.filter(accession_code__in=all_experiments)
+
+    def get_samples_by_experiment(self):
+        """ Returns a dict of sample QuerySets, for samples grouped by experiment. """
+        all_samples = {}
+
+        for experiment, samples in self.data.items():
+            all_samples[experiment] = Sample.objects.filter(accession_code__in=samples)
+
+        return all_samples
+
+    def get_samples_by_species(self):
+        """ Returns a dict of sample QuerySets, for samples grouped by species. """
+
+        by_species = {}
+        all_samples = self.get_samples()
+        for sample in all_samples:
+            if not by_species.get(sample.organism.name, None):
+                by_species[sample.organism.name] = [sample]
+            else:
+                by_species[sample.organism.name].append(sample)
+
+        return by_species
+
+    def get_aggregated_samples(self):
+        """ Uses aggregate_by to return smasher-ready a sample dict. """
+
+        if self.aggregate_by == "ALL":
+            return {'ALL': self.get_samples()}
+        elif self.aggregate_by == "EXPERIMENT":
+            return self.get_samples_by_experiment()
+        else:
+            return self.get_samples_by_species()
+
 """
 # Associations
 
@@ -491,6 +590,8 @@ class ExperimentSampleAssociation(models.Model):
 
     class Meta:
         db_table = "experiment_sample_associations"
+        unique_together = ('experiment', 'sample')
+
 
 
 class ExperimentOrganismAssociation(models.Model):
@@ -500,6 +601,8 @@ class ExperimentOrganismAssociation(models.Model):
 
     class Meta:
         db_table = "experiment_organism_associations"
+        unique_together = ('experiment', 'organism')
+
 
 
 class DownloaderJobOriginalFileAssociation(models.Model):
@@ -511,6 +614,8 @@ class DownloaderJobOriginalFileAssociation(models.Model):
 
     class Meta:
         db_table = "downloaderjob_originalfile_associations"
+        unique_together = ('downloader_job', 'original_file')
+
 
 
 class ProcessorJobOriginalFileAssociation(models.Model):
@@ -522,6 +627,16 @@ class ProcessorJobOriginalFileAssociation(models.Model):
 
     class Meta:
         db_table = "processorjob_originalfile_associations"
+        unique_together = ('processor_job', 'original_file')
+
+
+class ProcessorJobDatasetAssociation(models.Model):
+
+    processor_job = models.ForeignKey("data_refinery_common.ProcessorJob", blank=False, null=False, on_delete=models.CASCADE)
+    dataset = models.ForeignKey(Dataset, blank=False, null=False, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "processorjob_dataset_associations"
 
 
 class OriginalFileSampleAssociation(models.Model):
@@ -532,6 +647,8 @@ class OriginalFileSampleAssociation(models.Model):
 
     class Meta:
         db_table = "original_file_sample_associations"
+        unique_together = ('original_file', 'sample')
+
 
 
 class SampleResultAssociation(models.Model):
@@ -542,3 +659,4 @@ class SampleResultAssociation(models.Model):
 
     class Meta:
         db_table = "sample_result_associations"
+        unique_together = ('result', 'sample')

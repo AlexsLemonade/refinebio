@@ -472,29 +472,12 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 original_file_sample_association.sample = sample_object
                 original_file_sample_association.save()
 
-            association = ExperimentSampleAssociation()
-            association.experiment = experiment
-            association.sample = sample_object
-            association.save()
-
             # Create associations if they don't already exist
-            try:
-                assocation = ExperimentSampleAssociation.objects.get(
-                    experiment=experiment, sample=sample_object)
-            except ExperimentSampleAssociation.DoesNotExist:
-                association = ExperimentSampleAssociation()
-                association.experiment = experiment
-                association.sample = sample_object
-                association.save()
+            ExperimentSampleAssociation.objects.get_or_create(
+                experiment=experiment, sample=sample_object)
 
-            try:
-                assocation = ExperimentOrganismAssociation.objects.get(
-                    experiment=experiment, organism=organism)
-            except ExperimentOrganismAssociation.DoesNotExist:
-                association = ExperimentOrganismAssociation()
-                association.experiment = experiment
-                association.organism = organism
-                association.save()
+            ExperimentOrganismAssociation.objects.get_or_create(
+                experiment=experiment, organism=organism)
 
             logger.info("Created " + str(sample_object),
                         experiment_accession_code=experiment.accession_code,
