@@ -97,6 +97,7 @@ class Sample(models.Model):
         """ Returns a list of related pipelines """
         return [p for p in self.results.values_list('pipeline', flat=True).distinct()]
 
+
 class SampleAnnotation(models.Model):
 
     """ Semi-standard information associated with a Sample """
@@ -147,9 +148,9 @@ class Experiment(models.Model):
     source_url = models.CharField(max_length=256)
 
     # Properties
-    ## I was always under the impression that TextFields were slower
-    ## than CharFields, however the Postgres documentation disagrees:
-    ## https://www.postgresql.org/docs/9.0/static/datatype-character.html
+    # I was always under the impression that TextFields were slower
+    # than CharFields, however the Postgres documentation disagrees:
+    # https://www.postgresql.org/docs/9.0/static/datatype-character.html
     title = models.TextField()
     description = models.TextField()
     protocol_description = models.TextField(default="")
@@ -192,15 +193,18 @@ class Experiment(models.Model):
         metadata['publication_doi'] = self.publication_doi
         metadata['pubmed_id'] = self.pubmed_id
         if self.source_first_published:
-            metadata['source_first_published'] = self.source_first_published.strftime('%Y-%m-%dT%H:%M:%S')
+            metadata['source_first_published'] = self.source_first_published.strftime(
+                '%Y-%m-%dT%H:%M:%S')
         else:
             metadata['source_first_published'] = ''
         if self.source_last_modified:
-            metadata['source_last_modified'] = self.source_last_modified.strftime('%Y-%m-%dT%H:%M:%S')
+            metadata['source_last_modified'] = self.source_last_modified.strftime(
+                '%Y-%m-%dT%H:%M:%S')
         else:
             metadata['source_last_modified'] = ''
 
         return metadata
+
 
 class ExperimentAnnotation(models.Model):
 
@@ -499,13 +503,13 @@ class Dataset(models.Model):
     scale_by = models.CharField(max_length=255, choices=SCALE_CHOICES, default="MINMAX")
 
     # State properties
-    is_processing = models.BooleanField(default=False)  # Data is still editable
+    is_processing = models.BooleanField(default=False)  # Data is still editable when False
     is_processed = models.BooleanField(default=False)  # Result has been made
     is_available = models.BooleanField(default=False)  # Result is ready for delivery
 
     # Delivery properties
     email_address = models.CharField(max_length=255, blank=True, null=True)
-    email_sent = models.BooleanField(default=False) # Result has been made
+    email_sent = models.BooleanField(default=False)  # Result has been made
     expires_on = models.DateTimeField(blank=True, null=True)
 
     # Deliverables
@@ -630,9 +634,11 @@ class ProcessorJobOriginalFileAssociation(models.Model):
         unique_together = ('processor_job', 'original_file')
 
 
+
 class ProcessorJobDatasetAssociation(models.Model):
 
-    processor_job = models.ForeignKey("data_refinery_common.ProcessorJob", blank=False, null=False, on_delete=models.CASCADE)
+    processor_job = models.ForeignKey(
+        "data_refinery_common.ProcessorJob", blank=False, null=False, on_delete=models.CASCADE)
     dataset = models.ForeignKey(Dataset, blank=False, null=False, on_delete=models.CASCADE)
 
     class Meta:

@@ -155,6 +155,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     sample_object.manufacturer = "ION_TORRENT"
                 else:
                     sample_object.manufacturer = UNKNOWN
+
                 return sample_object
 
         # If we've made it this far, we don't know what this platform
@@ -207,20 +208,20 @@ class GeoSurveyor(ExternalSourceSurveyor):
         except Experiment.DoesNotExist:
             experiment_object = Experiment()
             experiment_object.accession_code = experiment_accession_code
-            experiment_object.source_url = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=" + \
-                experiment_accession_code
+            experiment_object.source_url = ("https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc="
+                                            + experiment_accession_code)
             experiment_object.source_database = "GEO"
             experiment_object.title = gse.metadata.get('title', [''])[0]
             experiment_object.description = gse.metadata.get('summary', [''])[0]
 
             # Source doesn't provide time information, assume midnight.
-            experiment_object.source_first_published = dateutil.parser.parse(
-                gse.metadata["submission_date"][0] + " 00:00:00 UTC")
-            experiment_object.source_last_updated = dateutil.parser.parse(
-                gse.metadata["last_update_date"][0] + " 00:00:00 UTC")
+            submission_date = gse.metadata["submission_date"][0] + " 00:00:00 UTC"
+            experiment_object.source_first_published = dateutil.parser.parse(submission_date)
+            last_updated_date = gse.metadata["last_update_date"][0] + " 00:00:00 UTC"
+            experiment_object.source_last_updated = dateutil.parser.parse(last_updated_date)
 
-            experiment_object.submitter_institution = ", ".join(
-                list(set(gse.metadata["contact_institute"])))
+            unique_institutions = list(set(gse.metadata["contact_institute"]))
+            experiment_object.submitter_institution = ", ".join(unique_institutions)
             experiment_object.pubmed_id = gse.metadata.get("pubmed_id", [""])[0]
 
             experiment_object.save()

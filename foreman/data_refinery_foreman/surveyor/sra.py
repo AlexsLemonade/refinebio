@@ -58,8 +58,8 @@ class SraSurveyor(ExternalSourceSurveyor):
     @staticmethod
     def gather_submission_metadata(metadata: Dict) -> None:
 
-        response = utils.requests_retry_session().get(
-            ENA_METADATA_URL_TEMPLATE.format(metadata["submission_accession"]))
+        formatted_metadata_URL = ENA_METADATA_URL_TEMPLATE.format(metadata["submission_accession"])
+        response = utils.requests_retry_session().get(formatted_metadata_URL)
         submission_xml = ET.fromstring(response.text)[0]
         submission_metadata = submission_xml.attrib
 
@@ -117,8 +117,8 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_experiment_metadata(metadata: Dict) -> None:
-        response = utils.requests_retry_session().get(
-            ENA_METADATA_URL_TEMPLATE.format(metadata["experiment_accession"]))
+        formatted_metadata_URL = ENA_METADATA_URL_TEMPLATE.format(metadata["experiment_accession"])
+        response = utils.requests_retry_session().get(formatted_metadata_URL)
         experiment_xml = ET.fromstring(response.text)
 
         experiment = experiment_xml[0]
@@ -183,6 +183,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         discoverable_accessions = ["study_accession", "sample_accession", "submission_accession"]
 
+
         response = utils.requests_retry_session().get(
             ENA_METADATA_URL_TEMPLATE.format(run_accession))
         run_xml = ET.fromstring(response.text)
@@ -218,8 +219,8 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_sample_metadata(metadata: Dict) -> None:
-        response = utils.requests_retry_session().get(
-            ENA_METADATA_URL_TEMPLATE.format(metadata["sample_accession"]))
+        formatted_metadata_URL = ENA_METADATA_URL_TEMPLATE.format(metadata["sample_accession"])
+        response = utils.requests_retry_session().get(formatted_metadata_URL)
         sample_xml = ET.fromstring(response.text)
 
         sample = sample_xml[0]
@@ -243,8 +244,8 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def gather_study_metadata(metadata: Dict) -> None:
-        response = utils.requests_retry_session().get(
-            ENA_METADATA_URL_TEMPLATE.format(metadata["study_accession"]))
+        formatted_metadata_URL = ENA_METADATA_URL_TEMPLATE.format(metadata["study_accession"])
+        response = utils.requests_retry_session().get(formatted_metadata_URL)
         study_xml = ET.fromstring(response.text)
 
         study = study_xml[0]
@@ -356,16 +357,14 @@ class SraSurveyor(ExternalSourceSurveyor):
                 experiment_object.pubmed_id = metadata["pubmed_id"]
                 experiment_object.has_publication = True
             if "study_ena_first_public" in metadata:
-                experiment_object.source_first_published = parse_datetime(
-                    metadata["study_ena_first_public"])
+                experiment_object.source_first_published = parse_datetime(metadata["study_ena_first_public"])
             if "study_ena_last_update" in metadata:
-                experiment_object.source_last_modified = parse_datetime(
-                    metadata["study_ena_last_update"])
+                    experiment_object.source_last_modified = parse_datetime(metadata["study_ena_last_update"])
 
             # Rare, but it happens.
             if not experiment_object.protocol_description:
-                experiment_object.protocol_description = metadata.get(
-                    "library_construction_protocol", "Protocol was never provided.")
+                experiment_object.protocol_description = metadata.get("library_construction_protocol",
+                                                                      "Protocol was never provided.")
 
             experiment_object.save()
 

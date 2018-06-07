@@ -181,8 +181,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             if 'Person Affiliation' in idf_dict:
                 # This is very rare, ex: E-MEXP-32
                 if isinstance(idf_dict['Person Affiliation'], list):
-                    experiment_object.submitter_institution = ", ".join(
-                        list(set(idf_dict['Person Affiliation'])))[:255]
+
+                    unique_people = list(set(idf_dict['Person Affiliation']))
+                    experiment_object.submitter_institution = ", ".join(unique_people)[:255]
                 else:
                     experiment_object.submitter_institution = idf_dict['Person Affiliation']
             if 'Protocol Description' in idf_dict:
@@ -214,6 +215,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         platform_dict = {}
         for k in ('platform_accession_code', 'platform_accession_name', 'manufacturer'):
             platform_dict[k] = experiment[k]
+
         return experiment_object, platform_dict
 
     def determine_sample_accession(self, experiment_accession: str, sample_source_name: str, sample_assay_name: str, filename: str) -> str:

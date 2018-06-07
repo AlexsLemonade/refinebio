@@ -131,9 +131,8 @@ def download_array_express(job_id: int) -> None:
             og_files.append(original_file)
         except Exception:
             # TODO - is this worth failing a job for?
-            logger.warn(
-                "Found a file we didn't have an OriginalFile for! Why did this happen?: " +
-                    og_file['filename'],
+            logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: "
+                        + og_file['filename'],
                         downloader_job=job_id)
             continue
 
