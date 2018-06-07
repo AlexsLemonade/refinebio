@@ -80,7 +80,7 @@ if [[ -z $tag || $tag == "salmon" ]]; then
     fi
 fi
 
-if [[ -z $tag || $tag == "affymetrix" || $tag == "no_op" ]]; then
+if [[ -z $tag || $tag == "affymetrix" ]]; then
     # Make sure CEL for test is downloaded from S3
     cel_name="GSM1426071_CD_colon_active_1.CEL"
     cel_name2="GSM45588.CEL"
@@ -133,6 +133,24 @@ if [[ -z $tag || $tag == "agilent" ]]; then
         echo "Downloading Agilent file for A2C tests."
         wget -q -O "$at_test_raw_dir/$at_file" \
              "$test_data_repo/$at_file"
+    fi
+fi
+
+if [[ -z $tag || $tag == "no_op" ]]; then
+    no_file="GSM269747-tbl-1.txt"
+    no_test_raw_dir="$volume_directory/raw/TEST/NO_OP"
+    if [ ! -e "$no_test_raw_dir/$no_file" ]; then
+        mkdir -p $no_test_raw_dir
+        echo "Downloading NOOP file1."
+        wget -q -O "$no_test_raw_dir/$no_file" \
+             "$test_data_repo/$no_file"
+    fi
+    no_file2="GSM269747-tbl-1.txt"
+    if [ ! -e "$no_test_raw_dir/$no2_file" ]; then
+        mkdir -p $no_test_raw_dir
+        echo "Downloading NOOP file2."
+        wget -q -O "$no_test_raw_dir/$no_file2" \
+             "$test_data_repo/$no_file2"
     fi
 fi
 
