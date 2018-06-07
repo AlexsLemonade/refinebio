@@ -233,12 +233,11 @@ def download_geo(job_id: int) -> None:
                 unpacked_sample_files.append(actual_file)
             except Exception as e:
                 # TODO - is this worth failing a job for?
-                logger.warn(
-                    "Found a file we didn't have an OriginalFile for! Why did this happen?: " +
-                        og_file['filename'],
-                    exc_info=1, file=og_file['filename'],
-                    sample_id=sample_id,
-                    accession_code=accession_code)
+                logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: "
+                            + og_file['filename'],
+                            exc_info=1, file=og_file['filename'],
+                            sample_id=sample_id,
+                            accession_code=accession_code)
 
     # This is a .tgz file.
     elif '.tgz' in dl_file_path:
@@ -251,8 +250,9 @@ def download_geo(job_id: int) -> None:
         except Exception as e:
             job.failure_reason = e
             utils.end_downloader_job(job, success=False)
-            logger.exception(
-                "Error occured while extracting tgz file.", path=dl_file_path, exception=str(e))
+            logger.exception("Error occured while extracting tgz file.",
+                             path=dl_file_path,
+                             exception=str(e))
             return
 
         for og_file in extracted_files:
@@ -290,8 +290,9 @@ def download_geo(job_id: int) -> None:
         except Exception as e:
             job.failure_reason = e
             utils.end_downloader_job(job, success=False)
-            logger.exception(
-                "Error occured while extracting gz file.", path=dl_file_path, exception=str(e))
+            logger.exception("Error occured while extracting gz file.",
+                             path=dl_file_path,
+                             exception=str(e))
             return
 
         for og_file in extracted_files:
@@ -331,10 +332,12 @@ def download_geo(job_id: int) -> None:
                 unpacked_sample_files.append(actual_file)
             except Exception as e:
 
-                logger.warn(
-                    "Found a file we didn't have an OriginalFile for! Why did this happen?: " +
-                        og_file['filename'],
-                    exc_info=1, file=og_file['filename'], sample_id=sample_id, accession_code=accession_code)
+                logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: "
+                            + og_file['filename'],
+                            exc_info=1,
+                            file=og_file['filename'],
+                            sample_id=sample_id,
+                            accession_code=accession_code)
 
     # This is probably just a .txt file
     else:

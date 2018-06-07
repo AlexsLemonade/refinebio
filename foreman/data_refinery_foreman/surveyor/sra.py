@@ -322,9 +322,9 @@ class SraSurveyor(ExternalSourceSurveyor):
         organism_name = organism_name.upper()
         organism = Organism.get_object_for_name(organism_name)
 
-        #
+        ##
         # Experiment
-        #
+        ##
 
         experiment_accession_code = metadata.get('study_accession')
         try:
@@ -368,18 +368,18 @@ class SraSurveyor(ExternalSourceSurveyor):
 
             experiment_object.save()
 
-            #
+            ##
             # Experiment Metadata
-            #
+            ##
             json_xa = ExperimentAnnotation()
             json_xa.experiment = experiment_object
             json_xa.data = metadata
             json_xa.is_ccdl = False
             json_xa.save()
 
-        #
+        ##
         # Samples
-        #
+        ##
 
         sample_accession_code = metadata.pop('sample_accession')
         # Create the sample object
@@ -462,8 +462,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         # SRA Surveyor is mainly designed for SRRs, this handles SRPs
         if 'SRP' in accession or 'ERP' in accession or 'DRP' in accession:
-            response = utils.requests_retry_session().get(
-                ENA_METADATA_URL_TEMPLATE.format(accession))
+            response = utils.requests_retry_session().get(ENA_METADATA_URL_TEMPLATE.format(accession))
             experiment_xml = ET.fromstring(response.text)[0]
             study_links = experiment_xml[2]  # STUDY_LINKS
 

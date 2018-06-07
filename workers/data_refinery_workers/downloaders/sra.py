@@ -78,8 +78,7 @@ def _download_file_aspera(download_url: str,
         # aspera.sra.ebi.ac.uk users port 33001 for SSH communication
         # We are also NOT using encryption (-T) to avoid slowdown,
         # and we are not using any kind of rate limiting.
-        command_str = (
-            ".aspera/cli/bin/ascp -P33001 -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}")
+        command_str = ".aspera/cli/bin/ascp -P33001 -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
         formatted_command = command_str.format(src=download_url,
                                                dest=target_file_path)
         completed_command = subprocess.run(formatted_command.split(),

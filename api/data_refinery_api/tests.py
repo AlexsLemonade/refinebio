@@ -217,6 +217,7 @@ class SanityTestAllEndpoints(APITestCase):
                                         for i in range(3)) + str(random.randint(0, 1000))[:64]
             ex.title = " ".join(random.choice(words) for i in range(10))
             ex.description = " ".join(random.choice(words) for i in range(100))
+            ex.technology = random.choice(["RNA-SEQ", "MICROARRAY"])
             ex.submitter_institution = random.choice(["Funkytown", "Monkeytown"])
             experiments.append(ex)
 

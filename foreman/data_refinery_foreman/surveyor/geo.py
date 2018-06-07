@@ -253,23 +253,23 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     experiment=experiment_object, sample=sample_object)
                 continue
             except Sample.DoesNotExist:
-                # If data processing step, it isn't raw.
-                has_raw = not sample.metadata.get('data_processing', None)
                 organism = Organism.get_object_for_name(sample.metadata['organism_ch1'][0].upper())
 
                 sample_object = Sample()
                 sample_object.source_database = "GEO"
                 sample_object.accession_code = sample_accession_code
                 sample_object.organism = organism
+                # If data processing step, it isn't raw.
+                sample_object.has_raw = not sample.metadata.get('data_processing', None)
+
                 ExperimentOrganismAssociation.objects.get_or_create(
                     experiment=experiment_object, organism=organism)
-                title = sample.metadata['title'][0]
-                sample_object.title = title
+                sample_object.title = sample.metadata['title'][0]
 
                 self.set_platform_properties(sample_object, sample.metadata, gse)
 
                 # Directly assign the harmonized properties
-                harmonized_sample = harmonized_samples[title]
+                harmonized_sample = harmonized_samples[sample_object.title]
                 for key, value in harmonized_sample.items():
                     setattr(sample_object, key, value)
 
