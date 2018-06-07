@@ -13,15 +13,23 @@ from data_refinery_common.models import (
     Organism,
     Sample
 )
-from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
+from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor, SAMPLES_URL
 from data_refinery_foreman.surveyor.sra import SraSurveyor, UnsupportedDataTypeError
 from data_refinery_foreman.surveyor.geo import GeoSurveyor
-from data_refinery_foreman.surveyor.harmony import harmonize, parse_sdrf, preprocess_geo
+from data_refinery_foreman.surveyor import utils
+from data_refinery_foreman.surveyor.harmony import (
+    harmonize,
+    parse_sdrf,
+    preprocess_geo,
+    extract_title
+)
 
 # Taken from GEOparse source code cause the docs lie.
 GEOparse.logger.setLevel(logging.getLevelName("WARN"))
 
+
 class HarmonyTestCase(TestCase):
+
     def setUp(self):
         self.sample = Sample()
         self.sample.save()
@@ -30,8 +38,9 @@ class HarmonyTestCase(TestCase):
 
     def test_sdrf_harmony(self):
         """ Harmonize SDRF test"""
-        
-        metadata = parse_sdrf("https://www.ebi.ac.uk/arrayexpress/files/E-MTAB-3050/E-MTAB-3050.sdrf.txt")
+
+        metadata = parse_sdrf(
+            "https://www.ebi.ac.uk/arrayexpress/files/E-MTAB-3050/E-MTAB-3050.sdrf.txt")
         harmonized = harmonize(metadata)
 
         title = 'donor A islets RNA'
@@ -191,10 +200,11 @@ class HarmonyTestCase(TestCase):
             'E-GEOD-19617',
             'E-MTAB-1944',
             'E-GEOD-17114',
-    ]
+        ]
 
         for accession in lots:
-            metadata = parse_sdrf("https://www.ebi.ac.uk/arrayexpress/files/" + accession + "/" + accession + ".sdrf.txt")
+            metadata = parse_sdrf("https://www.ebi.ac.uk/arrayexpress/files/"
+                                  + accession + "/" + accession + ".sdrf.txt")
             if not metadata:
                 continue
             # No assertions, just making sure we don't barf.
@@ -204,7 +214,7 @@ class HarmonyTestCase(TestCase):
         """
         Tests a specific harmonization from SRA
         """
-        
+
         metadata = SraSurveyor.gather_all_metadata("SRR1533126")
         harmonized = harmonize([metadata])
 
@@ -227,8 +237,8 @@ class HarmonyTestCase(TestCase):
 
         # These can be built via
         #    https://www.ncbi.nlm.nih.gov/sra
-        # Searching for 
-        #    (human) NOT cluster_dbgap[PROP] 
+        # Searching for
+        #    (human) NOT cluster_dbgap[PROP]
         # And then Sent To -> File -> Accession List
         lots = [
             'ERR188021',
@@ -236,7 +246,7 @@ class HarmonyTestCase(TestCase):
             'ERR205021',
             'ERR205022',
             'ERR205023',
-            'SRR000001', # Soft fail, bad platform
+            'SRR000001',  # Soft fail, bad platform
             'ERR1737666',
             'ERR030891',
             'ERR030892',
@@ -261,7 +271,7 @@ class HarmonyTestCase(TestCase):
         """
         Thoroughly tests a specific GEO harmonization
         """
-        
+
         # Weird ones caused bugs
         gse = GEOparse.get_GEO("GSE94532", destdir='/tmp')
         preprocessed_samples = preprocess_geo(gse.gsms.items())
@@ -280,11 +290,11 @@ class HarmonyTestCase(TestCase):
         self.assertTrue('specimen_part' in harmonized[title].keys())
         self.assertTrue('subject' in harmonized[title].keys())
 
-        # Agilent Two Color 
+        # Agilent Two Color
         gse = GEOparse.get_GEO("GSE93857", destdir='/tmp')
         preprocessed_samples = preprocess_geo(gse.gsms.items())
         harmonized = harmonize(preprocessed_samples)
-    
+
         gse = GEOparse.get_GEO("GSE103060", destdir='/tmp')
         preprocessed_samples = preprocess_geo(gse.gsms.items())
         harmonized = harmonize(preprocessed_samples)
@@ -303,3 +313,25 @@ class HarmonyTestCase(TestCase):
         self.assertTrue('keratinocyte' == harmonized[title]['specimen_part'])
         self.assertTrue('squamous cell carcinoma' == harmonized[title]['disease'])
         self.assertTrue('azathioprine + prednison' == harmonized[title]['compound'])
+
+    def test_ordering_mismatch(self):
+        """Makes sure that the order samples' keys are in does not affect the title chosen.
+
+        Related: https://github.com/AlexsLemonade/refinebio/pull/304
+        """
+        experiment_accession_code = "E-TABM-38"
+
+        samples_endpoint = SAMPLES_URL.format(experiment_accession_code)
+        r = utils.requests_retry_session().get(samples_endpoint, timeout=60)
+        json_samples = r.json()["experiment"]["sample"]
+        json_titles = [extract_title(utils.flatten(json_sample)) for json_sample in json_samples]
+
+        SDRF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
+        sdrf_url = SDRF_URL_TEMPLATE.format(code=experiment_accession_code)
+        sdrf_samples = harmonize(parse_sdrf(sdrf_url))
+
+        # The titles won't match up if the order of the sample dicts
+        # isn't corrected for, resulting in a KeyError being raised.
+        # So if this doesn't raise a KeyError, then we're good.
+        for title in json_titles:
+            sdrf_samples[title]
