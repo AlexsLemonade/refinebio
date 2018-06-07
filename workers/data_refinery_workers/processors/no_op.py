@@ -1,11 +1,15 @@
 import os
 import shutil
 import boto3
+
+import subprocess
+import numpy as np
+import pandas as pd
 from typing import Dict
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import ComputationalResult, ComputedFile, SampleResultAssociation
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable, get_internal_microarray_accession
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 
@@ -25,6 +29,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     # Create the output directory and path
     job_context["input_file_path"] = original_file.absolute_file_path
+    job_context["input_file_path"] = original_file.absolute_file_path
     base_directory, file_name = original_file.absolute_file_path.rsplit('/', 1)
     os.makedirs(base_directory + '/processed/', exist_ok=True)
     job_context["output_file_path"] = base_directory + '/processed/' + file_name
@@ -32,14 +37,40 @@ def _prepare_files(job_context: Dict) -> Dict:
     # Copy the file to the new directory
     shutil.copyfile(job_context["input_file_path"], job_context["output_file_path"])
     job_context["success"] = True
+
+    # Platform
+    job_context["platform"] = job_context["samples"][0].platform_accession_code
+    job_context["internal_accession"] = get_internal_microarray_accession(job_context["platform"])
+    if not job_context["internal_accession"]:
+        logger.error("Failed to find internal accession for code", code=job_context["platform"])
+        job_context['success'] = False
+
     return job_context
 
 
 def _convert_genes(job_context: Dict) -> Dict:
     """ Convert to Ensembl genes if we can"""
 
-    import pdb
-    pdb.set_trace()
+    # data = pd.read_csv(job_context["input_file_path"], sep='\t', header=1, index_col=0)
+
+    try:
+        result = subprocess.check_output([
+                "/usr/bin/Rscript", 
+                "--vanilla", 
+                "/home/user/data_refinery_workers/processors/gene_convert.R",
+                "--platform", job_context["internal_accession"],
+                "--inputFile", job_context['input_file_path'],
+                "--outputFile", job_context['output_file_path']
+            ])
+    except Exception as e:
+        print(e)
+        error_template = ("Encountered error in R code while running illumina.R"
+                          " pipeline during processing of {0}: {1}")
+        error_message = error_template.format(job_context['input_file_path'], str(e))
+        logger.error(error_message, processor_job=job_context["job_id"])
+        job_context["job"].failure_reason = error_message
+        job_context["success"] = False
+        return job_context
 
     job_context["success"] = True
     return job_context
@@ -50,7 +81,7 @@ def _create_result(job_context: Dict) -> Dict:
 
     # This is a NO-OP, but we make a ComputationalResult regardless.
     result = ComputationalResult()
-    result.command_executed = "" # No op!
+    result.command_executed = "gene_convert.R"
     result.is_ccdl = True
     result.system_version = __version__
     result.pipeline = "Submitter-processed"
@@ -61,7 +92,7 @@ def _create_result(job_context: Dict) -> Dict:
     try:
         computed_file = ComputedFile()
         computed_file.absolute_file_path = job_context["output_file_path"]
-        computed_file.filename = original_file.filename
+        computed_file.filename = job_context['output_file_path'].split('/')[-1]
         computed_file.calculate_sha1()
         computed_file.calculate_size()
         computed_file.result = result
