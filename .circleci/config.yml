@@ -26,9 +26,18 @@ jobs:
       - run:
           command: sudo -E ./run_nomad.sh -e test
 
+      # Run Common Tests.
+      - run: ./common/run_tests.sh
+
       - run: ./prepare_image.sh -i no_op -s workers
       - run: ./prepare_image.sh -i downloaders -s workers
       - run: ./prepare_image.sh -i smasher -s workers
+
+      # Run Downloader Tests
+      # Running these in the same job as the common tests is good
+      # because their dockerfiles are very similar so a lot of the
+      # build time is saved by only building those layers once.
+      - run: .circleci/filter_tests.sh -t downloaders
 
       # Push the no_op and downloader images to the local docker repo so Nomad
       # can pull from there when running end-to-end tests.
@@ -62,6 +71,9 @@ jobs:
       # because their dockerfiles are very similar so a lot of the
       # build time is saved by only building those layers once.
       - run: .circleci/filter_tests.sh -t downloaders
+
+      # Run Illumna tests.
+      - run: .circleci/filter_tests.sh -t illumina
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
   affymetrix_and_agilent_tests:
