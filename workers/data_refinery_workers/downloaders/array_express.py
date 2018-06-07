@@ -151,7 +151,7 @@ def download_array_express(job_id: int) -> None:
 
                 if platform_accession_code == "UNSUPPORTED":
                     logger.error("Found a raw file with an unsupported platform!",
-                                 file_name: filename,
+                                 file_name=filename,
                                  sample=sample_id,
                                  downloader_job=job_id)
                     job.failure_reason = "Found a raw file with an unsupported platform."
