@@ -1,3 +1,4 @@
+import csv
 import os
 import shutil
 import boto3
@@ -34,9 +35,42 @@ def _prepare_files(job_context: Dict) -> Dict:
     os.makedirs(base_directory + '/processed/', exist_ok=True)
     job_context["output_file_path"] = base_directory + '/processed/' + file_name
 
+    # XXX: Are there files we still want to do this to?
     # Copy the file to the new directory
-    shutil.copyfile(job_context["input_file_path"], job_context["output_file_path"])
-    job_context["success"] = True
+    # shutil.copyfile(job_context["input_file_path"], job_context["output_file_path"])
+    # job_context["success"] = True
+
+    # Make sure header column is correct
+    with open(job_context["input_file_path"], 'r') as tsv_in:
+        tsv_in = csv.reader(tsv_in, delimiter='\t')
+        for line in tsv_in:
+            row = line
+            joined = ''.join(row)
+            break
+
+    # If ID_REF already, we're good.
+    if 'ID_REF' not in joined:
+        try:
+            float(row[1])
+            # Okay, there's no header so can just prepend to the file.
+            with open(job_context["input_file_path"], 'r') as f:
+                all_content = f.read()
+
+            job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
+            with open(job_context["input_file_path"], 'w+') as f:
+                f.seek(0, 0)
+                f.write('ID_REF\tVALUE' + '\n' + all_content)
+
+        except ValueError:
+            # There is already a header row. Let's replace it with ID_Ref
+            with open(job_context["input_file_path"], 'r') as f:
+                all_content = f.read()
+
+            job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
+            with open(job_context["input_file_path"], 'w+') as f:
+                f.seek(0, 0)
+                f.write('ID_REF\tVALUE' + '\n' + ("\n".join(all_content[1:])))
+            job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
 
     # Platform
     job_context["platform"] = job_context["samples"][0].platform_accession_code

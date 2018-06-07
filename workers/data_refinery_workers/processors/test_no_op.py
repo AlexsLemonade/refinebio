@@ -32,6 +32,7 @@ class NOOPTestCase(TestCase):
         og_file.save()
 
         sample = Sample()
+        sample.accession_code = "GSM1234847"
         sample.title = "GSM1234847"
         sample.platform_accession_code = 'A-AFFY-38'
         sample.save()
@@ -50,9 +51,30 @@ class NOOPTestCase(TestCase):
 
         # No header - ex 
         # AFFX-BioB-3_at  0.74218756
-        # og_file = OriginalFile()
-        # og_file.source_filename = "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE10188&format=file"
-        # og_file.filename = "GSM269747-tbl-1.txt"
-        # og_file.absolute_file_path = "/home/user/data_store/raw/TEST/NO_OP/GSM269747-tbl-1.txt"
-        # og_file.save()
+        og_file = OriginalFile()
+        og_file.source_filename = "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE10nnn/GSE10188/miniml/GSE10188_family.xml.tgz"
+        og_file.filename = "GSM269747-tbl-1.txt"
+        og_file.absolute_file_path = "/home/user/data_store/raw/TEST/NO_OP/GSM269747-tbl-1.txt"
+        og_file.save()
 
+        sample = Sample()
+        sample.accession_code = "GSM269747"
+        sample.title = "GSM269747"
+        sample.platform_accession_code = 'GPL1319'
+        sample.save()
+
+        assoc = OriginalFileSampleAssociation()
+        assoc.original_file = og_file
+        assoc.sample = sample
+        assoc.save()
+             
+        job = ProcessorJob()
+        job.pipeline_applied = "NO_OP"
+        job.save()
+
+        assoc1 = ProcessorJobOriginalFileAssociation()
+        assoc1.original_file = og_file
+        assoc1.processor_job = job
+        assoc1.save()
+
+        no_op.no_op_processor(job.pk)

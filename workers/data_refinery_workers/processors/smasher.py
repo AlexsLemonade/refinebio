@@ -88,6 +88,7 @@ def _smash(job_context: Dict) -> Dict:
                 # Squish duplicated rows together.
                 # XXX/TODO: Is mean the appropriate method here? 
                 #           We can make this an option in future.
+                # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
                 data = data.groupby(data.index, sort=False).mean()
 
                 all_frames.append(data)
