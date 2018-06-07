@@ -127,14 +127,12 @@ class ExternalSourceSurveyor:
 
             downloaded_urls = []
             for original_file in original_files:
-                with transaction.atomic():
+                asoc = DownloaderJobOriginalFileAssociation()
+                asoc.downloader_job = downloader_job
+                asoc.original_file = original_file
+                asoc.save()
 
-                    asoc = DownloaderJobOriginalFileAssociation()
-                    asoc.downloader_job = downloader_job
-                    asoc.original_file = original_file
-                    asoc.save()
-
-                    downloaded_urls.append(original_file.source_url)
+                downloaded_urls.append(original_file.source_url)
 
             try:
                 logger.info("Queuing downloader job.",
