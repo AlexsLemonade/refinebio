@@ -231,7 +231,7 @@ def _upload_and_notify(job_context: Dict) -> Dict:
     return job_context
 
 def _update_result_objects(job_context: Dict) -> Dict:
-    """ Create the ComputationalResult objects after a run is complete """
+    """ Update the final Dataset object with expiry time. """
 
     dataset = job_context["dataset"]
     dataset.is_processing = False
