@@ -50,6 +50,12 @@ class Downloaders(Enum):
 
 
 def _is_platform_supported(platform: str) -> bool:
+    """Determines if platform is a platform_accession we support or not.
+
+    It does so by trying to correct for common string issues such as
+    case and spacing and then comparing against our configuration
+    files which specify which platform are supported.
+    """
     upper_platform = platform.upper()
 
     # Check if this is a supported Microarray platform.
@@ -76,6 +82,16 @@ def _is_platform_supported(platform: str) -> bool:
 
 
 def determine_downloader_task(sample_object: Sample) -> Downloaders:
+    """Returns the Downloaders enum appropriate for the sample.
+
+    For any sample which has a supported platform this is entirely
+    based on the source database since we have a one-to-one mapping
+    between sources and downloader tasks. If the platform isn't
+    supported, then we don't want to download the sample so we return
+    Downloaders.NONE. However any sample with a .CEl file could have
+    inaccurate platform information which we potentially correct for
+    after downloading it.
+    """
     if _is_platform_supported(sample_object.platform_accession_code):
         return Downloaders[sample_object.source_database]
     elif sample_object.has_raw:
@@ -92,6 +108,16 @@ def determine_downloader_task(sample_object: Sample) -> Downloaders:
 
 
 def determine_processor_pipeline(sample_object: Sample) -> ProcessorPipeline:
+    """Determines the appropriate processor pipeline for the sample.
+
+    This is mostly a giant set of nested if statements, so describing
+    the logic wouldn't add very much. However, the general flow is:
+      - Is the platform supported? If not return NONE cause we don't want it.
+      - Does it have raw data? If not NO_OP the data.
+        (With one exception explained in comments.)
+      - Is it Microarray data? If so determine which processor based on its
+        manufacturer Otherwise it's SALMON-time.
+    """
     if not _is_platform_supported(sample_object.platform_accession_code):
         return ProcessorPipeline.NONE
 
