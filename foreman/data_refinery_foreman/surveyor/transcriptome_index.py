@@ -39,15 +39,10 @@ DIVISION_LOOKUP = {"EnsemblPlants": "plants",
 
 # Ensembl will periodically release updated versions of the
 # assemblies.  All divisions other than the main one have identical
-# release versions.  The latest assembly version for the main division
-# can be found by going to ftp://ftp.ensembl.org/pub/ and looking for
-# the latest version. All other divisions' latest assembly version can
-# be found by going to ftp://ftp.ensemblgenomes.org/pub/plants. These
-# versions are the latest version as of whenever it was last
-# updated. It is unclear when we will want to update these, but
-# presumably we will do so once we have a reason to.
-MAIN_DIVISION_ASSEMBLY_VERSION = "92"
-OTHER_DIVISIONS_ASSEMBLY_VERSION = "39"
+# release versions. These urls will return what the most recent
+# release version is.
+MAIN_RELEASE_URL = "http://rest.ensembl.org/info/software?content-type=application/json"
+DIVISION_RELEASE_URL = "http://rest.ensemblgenomes.org/info/software?content-type=application/json"
 
 
 class EnsemblUrlBuilder(ABC):
@@ -65,7 +60,7 @@ class EnsemblUrlBuilder(ABC):
         self.url_root = "ensemblgenomes.org/pub/release-{assembly_version}/{short_division}"
         self.short_division = DIVISION_LOOKUP[species["division"]]
         self.assembly = species["assembly_name"].replace(" ", "_")
-        self.assembly_version = OTHER_DIVISIONS_ASSEMBLY_VERSION
+        self.assembly_version = requests.get(DIVISION_RELEASE_URL).json()["release"]
 
         # Some species are nested within a collection directory. If
         # this is the case, then we need to add that extra directory
@@ -130,7 +125,7 @@ class MainEnsemblUrlBuilder(EnsemblUrlBuilder):
         self.species_sub_dir = species["name"]
         self.filename_species = species["name"].capitalize()
         self.assembly = species["assembly"]
-        self.assembly_version = MAIN_DIVISION_ASSEMBLY_VERSION
+        self.assembly_version = requests.get(MAIN_RELEASE_URL).json()["release"]
 
         self.scientific_name = self.filename_species.replace("_", " ")
         self.taxonomy_id = species["taxon_id"]
@@ -236,7 +231,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
 
         return all_new_files
 
-    def survey(self) -> bool:
+    def survey(self, source_type=None) -> bool:
         """
         Surveying here is a bit different than discovering an experiment
         and samples.
@@ -251,7 +246,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             return False
 
         try:
-            for specie_file_list in species_files: 
+            for specie_file_list in species_files:
                 self.queue_downloader_job_for_original_files(specie_file_list)
         except Exception:
             logger.exception(("Failed to queue downloader jobs. "
@@ -320,5 +315,5 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
 
             all_new_species.append(self._generate_files(species))
             species_surveyed += 1
-        
+
         return all_new_species
