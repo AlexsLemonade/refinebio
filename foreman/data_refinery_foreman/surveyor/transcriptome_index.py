@@ -60,7 +60,7 @@ class EnsemblUrlBuilder(ABC):
         self.url_root = "ensemblgenomes.org/pub/release-{assembly_version}/{short_division}"
         self.short_division = DIVISION_LOOKUP[species["division"]]
         self.assembly = species["assembly_name"].replace(" ", "_")
-        self.assembly_version = requests.get(DIVISION_RELEASE_URL).json()["release"]
+        self.assembly_version = utils.requests_retry_session().get(DIVISION_RELEASE_URL).json()["release"]
 
         # Some species are nested within a collection directory. If
         # this is the case, then we need to add that extra directory
@@ -125,7 +125,7 @@ class MainEnsemblUrlBuilder(EnsemblUrlBuilder):
         self.species_sub_dir = species["name"]
         self.filename_species = species["name"].capitalize()
         self.assembly = species["assembly"]
-        self.assembly_version = requests.get(MAIN_RELEASE_URL).json()["release"]
+        self.assembly_version = utils.requests_retry_session().get(MAIN_RELEASE_URL).json()["release"]
 
         self.scientific_name = self.filename_species.replace("_", " ")
         self.taxonomy_id = species["taxon_id"]
@@ -284,13 +284,13 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
 
         # The main division has a different base URL for its REST API.
         if ensembl_division == "Ensembl":
-            r = requests.get(MAIN_DIVISION_URL_TEMPLATE)
+            r = utils.requests_retry_session().get(MAIN_DIVISION_URL_TEMPLATE)
 
             # Yes I'm aware that specieses isn't a word. However I need to
             # distinguish between a singlular species and multiple species.
             specieses = r.json()["species"]
         else:
-            r = requests.get(DIVISION_URL_TEMPLATE.format(division=ensembl_division))
+            r = utils.requests_retry_session().get(DIVISION_URL_TEMPLATE.format(division=ensembl_division))
             specieses = r.json()
 
         try:
