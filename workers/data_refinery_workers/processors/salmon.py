@@ -255,7 +255,7 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
 
     # Split the tximport result into smashable subfiles
     big_tsv = experiment_dir + '/gene_lengthScaledTPM.tsv'
-    data = pd.DataFrame.from_csv(big_tsv, sep='\t', header=0)
+    data = pd.read_csv(big_tsv, sep='\t', header=0, index_col=0)
     individual_files = []
     frames = np.split(data, len(data.columns), axis=1)
     for frame in frames:
