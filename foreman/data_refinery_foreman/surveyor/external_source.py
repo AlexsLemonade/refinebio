@@ -109,11 +109,16 @@ class ExternalSourceSurveyor:
     def queue_downloader_job_for_original_files(self,
                                                 original_files: List[OriginalFile],
                                                 experiment_accession_code: str=None,
+                                                is_transcriptome: bool=False
                                                 ):
         """ Creates a single DownloaderJob with multiple files to download.
         """
-        sample_object = original_files[0].samples.first()
-        downloader_task = job_lookup.determine_downloader_task(sample_object)
+        # Transcriptome is a special case because there's no sample_object.
+        if is_transcriptome:
+            downloader_task = job_lookup.Downloaders.TRANSCRIPTOME_INDEX
+        else:
+            sample_object = original_files[0].samples.first()
+            downloader_task = job_lookup.determine_downloader_task(sample_object)
 
         if downloader_task == job_lookup.Downloaders.NONE:
             logger.info("No valid downloader task found for sample.",

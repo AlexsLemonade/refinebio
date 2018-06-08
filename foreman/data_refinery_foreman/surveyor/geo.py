@@ -311,7 +311,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                         original_file.source_url = supplementary_file_url
                         original_file.is_downloaded = False
                         original_file.is_archive = True
-                        original_file.has_raw = has_raw
+                        original_file.has_raw = sample_object.has_raw
                         original_file.save()
 
                         logger.debug("Created OriginalFile: " + str(original_file))

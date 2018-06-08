@@ -75,8 +75,10 @@ class SurveyTestCase(TestCase):
         self.assertEqual(sample_object.technology, "UNKNOWN")
 
         downloader_jobs = DownloaderJob.objects.all()
-        # 124 samples + 2 metadata files.
-        self.assertEqual(126, downloader_jobs.count())
+        # There would be 124 samples + 2 metadata files. However at
+        # the moment Agilent is unsupported so we don't want to queue
+        # downloader jobs.
+        self.assertEqual(0, downloader_jobs.count())
 
     @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_geo_survey_rnaseq(self, mock_send_task):

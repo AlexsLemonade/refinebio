@@ -25,9 +25,19 @@ class SraSurveyorTestCase(TestCase):
 
         sample_object_1 = Sample()
         sample_object_1.accession_code = "Sample1"
+        sample_object_1.platform_accession_code = "Illumina Genome Analyzer"
+        sample_object_1.platform_accession_name = "Illumina Genome Analyzer"
+        sample_object_1.technology = "RNA-SEQ"
+        sample_object_1.manufacturer = "ILLUMINA"
+        sample_object_1.source_database = "SRA"
         sample_object_1.save()
         sample_object_2 = Sample()
         sample_object_2.accession_code = "Sample2"
+        sample_object_2.platform_accession_code = "Illumina Genome Analyzer"
+        sample_object_2.platform_accession_name = "Illumina Genome Analyzer"
+        sample_object_2.technology = "RNA-SEQ"
+        sample_object_2.manufacturer = "ILLUMINA"
+        sample_object_2.source_database = "SRA"
         sample_object_2.save()
 
         association = ExperimentSampleAssociation()

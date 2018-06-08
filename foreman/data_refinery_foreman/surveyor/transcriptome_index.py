@@ -251,8 +251,9 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             return False
 
         try:
-            for specie_file_list in species_files: 
-                self.queue_downloader_job_for_original_files(specie_file_list)
+            for specie_file_list in species_files:
+                self.queue_downloader_job_for_original_files(specie_file_list,
+                                                             is_transcriptome=True)
         except Exception:
             logger.exception(("Failed to queue downloader jobs. "
                               "Terminating survey job."),
@@ -320,5 +321,5 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
 
             all_new_species.append(self._generate_files(species))
             species_surveyed += 1
-        
+
         return all_new_species
