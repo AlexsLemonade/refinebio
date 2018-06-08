@@ -346,8 +346,8 @@ class SraSurveyor(ExternalSourceSurveyor):
                 experiment_object.has_publication = True
             if "study_ena_first_public" in metadata:
                 experiment_object.source_first_published = parse_datetime(metadata["study_ena_first_public"])
-            if "study_ena_last_update" in metadata: experiment_object.source_last_modified = parse_datetime(
-                    metadata["study_ena_last_update"])
+            if "study_ena_last_update" in metadata:
+                experiment_object.source_last_modified = parse_datetime(metadata["study_ena_last_update"])
 
             # Rare, but it happens.
             if not experiment_object.protocol_description:
