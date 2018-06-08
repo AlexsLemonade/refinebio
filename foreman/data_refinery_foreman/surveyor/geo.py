@@ -108,10 +108,12 @@ class GeoSurveyor(ExternalSourceSurveyor):
             # Sometimes this field is a list, other times it's not.
             # Example of it being a list: GSE113945
             channel1_temp = sample_metadata.get('label_protocol_ch1', "")
-            if type(channel1_temp) == list:
+            if type(channel1_temp) != list:
+                channel1_protocol = channel1_temp.upper()
+            elif len(channel1_temp) > 0:
                 channel1_protocol = channel1_temp[0].upper()
             else:
-                channel1_protocol = channel1_temp.upper()
+                channel1_protocol = ""
 
             if ('AGILENT' in channel1_protocol):
                 sample_object.manufacturer = "AGILENT"

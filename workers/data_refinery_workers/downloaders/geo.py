@@ -235,7 +235,8 @@ def download_geo(job_id: int) -> None:
                 # TODO - is this worth failing a job for?
                 logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: "
                             + og_file['filename'],
-                            exc_info=1, file=og_file['filename'],
+                            exc_info=1,
+                            file=og_file['filename'],
                             sample_id=sample_id,
                             accession_code=accession_code)
 
