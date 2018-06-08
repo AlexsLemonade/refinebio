@@ -210,8 +210,6 @@ class Experiment(models.Model):
         metadata['accession_code'] = self.accession_code
         metadata['description'] = self.description
         metadata['protocol_description'] = self.protocol_description
-        metadata['platform_accession_code'] = self.platform_accession_code
-        metadata['platform_name'] = self.platform_name
         metadata['technology'] = self.technology
         metadata['submitter_institution'] = self.submitter_institution
         metadata['has_publication'] = self.has_publication

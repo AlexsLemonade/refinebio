@@ -104,22 +104,23 @@ class SmasherTestCase(TestCase):
         dataset.get_samples_by_experiment()
         dataset.get_samples_by_species()
         dataset.get_aggregated_samples()
+        dsid = dataset.id
 
         # XXX: agg_type 'SPECIES' hangs on Linux, not OSX.
         # Don't know why yet.
         # for ag_type in ['ALL', 'EXPERIMENT', 'SPECIES']:
         for ag_type in ['ALL', 'EXPERIMENT']:
-            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+            dataset = Dataset.objects.get(id=dsid)
             dataset.aggregate_by = ag_type
             dataset.save()
 
-            print ("Smashing " + ag_type)
             final_context = smasher.smash(job.pk, upload=False)
+
             # Make sure the file exists and is a valid size
             self.assertNotEqual(os.path.getsize(final_context['output_file']), 0)
             self.assertEqual(final_context['dataset'].is_processed, True)
 
-            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+            dataset = Dataset.objects.get(id=dsid)
             dataset.is_processed = False
             dataset.save()
 
@@ -127,18 +128,19 @@ class SmasherTestCase(TestCase):
             os.remove(final_context['output_file']) 
 
         for scale_type in ['NONE', 'MINMAX', 'STANDARD', 'ROBUST']:
-            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+            dataset = Dataset.objects.get(id=dsid)
             dataset.aggregate_by = 'EXPERIMENT'
             dataset.scale_by = scale_type
             dataset.save()
 
             print ("Smashing " + scale_type)
             final_context = smasher.smash(job.pk, upload=False)
+
             # Make sure the file exists and is a valid size
             self.assertNotEqual(os.path.getsize(final_context['output_file']), 0)
             self.assertEqual(final_context['dataset'].is_processed, True)
 
-            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+            dataset = Dataset.objects.get(id=dsid)
             dataset.is_processed = False
             dataset.save()
 
@@ -147,7 +149,7 @@ class SmasherTestCase(TestCase):
 
         # Make sure we can use our outputs mathematically
         for scale_type in ['MINMAX', 'STANDARD']:
-            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+            dataset = Dataset.objects.get(id=dsid)
             dataset.aggregate_by = 'EXPERIMENT'
             dataset.scale_by = scale_type
             dataset.save()
@@ -332,12 +334,18 @@ class SmasherTestCase(TestCase):
 
         dsid = ds.id
         ds = Dataset.objects.get(id=dsid)
+
+        print("This is supposed to fail!:")
         print(ds.failure_reason)
         print(final_context['dataset'].failure_reason)
 
         self.assertFalse(ds.success)
         self.assertNotEqual(ds.failure_reason, "")
         self.assertEqual(len(final_context['merged']), 0)
+
+        ds.delete()
+        job.delete()
+
 
     @tag("smasher")
     def test_sanity_imports(self):
