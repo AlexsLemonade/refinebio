@@ -59,6 +59,7 @@ jobs:
       - run: ./foreman/run_tests.sh
 
       # Run Illumna tests.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
       - run: .circleci/filter_tests.sh -t illumina
       
         # Run Smasher tests.
