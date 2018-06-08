@@ -236,11 +236,13 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
 
         return all_new_files
 
-    def survey(self) -> bool:
+    def survey(self, source_type: None) -> bool:
         """
         Surveying here is a bit different than discovering an experiment
         and samples.
         """
+        if source_type is not "TRANSCRIPTOME_INDEX":
+            return False
 
         try:
             species_files = self.discover_species()
