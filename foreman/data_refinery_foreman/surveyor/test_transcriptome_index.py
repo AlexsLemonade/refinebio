@@ -55,7 +55,7 @@ class SurveyTestCase(TestCase):
         mock_urlopen.side_effect = URLError("404 or something")
 
         surveyor = TranscriptomeIndexSurveyor(self.survey_job)
-        surveyor.survey()
+        surveyor.survey(source_type="TRANSCRIPTOME_INDEX")
 
         downloader_jobs = DownloaderJob.objects.order_by("id").all()
         self.assertEqual(downloader_jobs.count(), len(species_json))
