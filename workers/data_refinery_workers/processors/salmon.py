@@ -9,6 +9,9 @@ import shutil
 import subprocess
 import tarfile
 
+import pandas as pd
+import numpy as np
+
 from django.db import transaction
 from django.utils import timezone
 from typing import Dict, List
@@ -22,7 +25,8 @@ from data_refinery_common.models import (
     ComputedFile,
     Experiment,
     ExperimentSampleAssociation,
-    SampleResultAssociation
+    SampleResultAssociation,
+    Sample
     )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
@@ -115,8 +119,6 @@ def _determine_index_length(job_context: Dict) -> Dict:
     ###         total_base_pairs += len(line.replace("\n", ""))
     ###         number_of_reads += 1
     ###     counter += 1
-
-    input_file = gzip.open(job_context["input_file_path"], "rt")
 
     with gzip.open(job_context["input_file_path"], "rt") as input_file:
         for line in input_file:
@@ -214,6 +216,8 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
     """Run tximport R script based on input experiment_dir and the path
     of genes_to_transcripts.txt."""
 
+    logger.info("Running tximport!", processor_job=job_context['job_id'], ex_dir=experiment_dir)
+
     result = ComputationalResult()
     cmd_tokens = [
         "/usr/bin/Rscript", "--vanilla",
@@ -249,6 +253,37 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
         s_r = SampleResultAssociation(sample=sample, result=result)
         s_r.save()
 
+    # Split the tximport result into smashable subfiles
+    big_tsv = experiment_dir + '/gene_lengthScaledTPM.tsv'
+    data = pd.DataFrame.from_csv(big_tsv, sep='\t', header=0)
+    individual_files = []
+    frames = np.split(data, len(data.columns), axis=1)
+    for frame in frames:
+        frame_path = os.path.join(experiment_dir, frame.columns.values[0]) + '.tsv'
+        frame.to_csv(frame_path, sep='\t', encoding='utf-8')
+
+        sample = Sample.objects.get(accession_code=frame.columns.values[0])
+
+        computed_file = ComputedFile()
+        computed_file.absolute_file_path = frame_path
+        computed_file.filename = frame_path.split('/')[-1]
+        computed_file.result = result
+        computed_file.is_smashable = True
+        computed_file.is_qc = False
+        computed_file.is_public = True
+        computed_file.calculate_sha1()
+        computed_file.calculate_size()
+        computed_file.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        individual_files.append(computed_file)
+
+    job_context['tximported'] = True
+    job_context['individual_files'] = individual_files
     return job_context
 
 
