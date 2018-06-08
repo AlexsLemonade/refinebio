@@ -47,6 +47,7 @@ def prepare_job():
     computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
     computed_file.result = result
     computed_file.size_in_bytes = 123
+    computed_file.is_smashable = True
     computed_file.save()
 
     sample = Sample()
@@ -65,6 +66,7 @@ def prepare_job():
     computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
     computed_file.result = result
     computed_file.size_in_bytes = 123
+    computed_file.is_smashable = True
     computed_file.save()
 
     ds = Dataset()
@@ -176,6 +178,14 @@ class SmasherTestCase(TestCase):
         computed_file.filename = "oh_boy.txt"
         computed_file.result = result
         computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
+        computed_file.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "gee_whiz.bmp"
+        computed_file.result = result
+        computed_file.size_in_bytes = 123
+        computed_file.is_smashable = False
         computed_file.save()
 
         assoc = SampleResultAssociation()
@@ -184,7 +194,10 @@ class SmasherTestCase(TestCase):
         assoc.save()
 
         computed_files = sample.get_result_files()
-        self.assertEqual(computed_files.count(), 1)
+        self.assertEqual(computed_files.count(), 2)
+
+        smashable_file = sample.get_most_recent_smashable_result_file()
+        self.assertTrue(smashable_file.is_smashable)
 
     @tag("smasher")
     def test_fail(self):
@@ -209,6 +222,7 @@ class SmasherTestCase(TestCase):
         computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
         computed_file.save()
 
         ds = Dataset()
@@ -244,6 +258,7 @@ class SmasherTestCase(TestCase):
         job.pipeline_applied = "SMASHER"
         job.save()
 
+
         experiment = Experiment()
         experiment.accession_code = "GSE51081"
         experiment.save()
@@ -269,7 +284,12 @@ class SmasherTestCase(TestCase):
         computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
         computed_file.save()
+
+
+        result = ComputationalResult()
+        result.save()
 
         experiment = Experiment()
         experiment.accession_code = "GSE51084"
@@ -293,6 +313,7 @@ class SmasherTestCase(TestCase):
         computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
         computed_file.save()
 
         ds = Dataset()

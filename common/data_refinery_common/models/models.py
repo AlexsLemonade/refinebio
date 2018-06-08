@@ -104,6 +104,13 @@ class Sample(models.Model):
         """ Get all of the ComputedFile objects associated with this Sample """
         return ComputedFile.objects.filter(result__in=self.results.all())
 
+    def get_most_recent_smashable_result_file(self):
+        """ Get all of the ComputedFile objects associated with this Sample """
+        return ComputedFile.objects.filter(
+                        result__in=self.results.all(),
+                        is_smashable=True,
+                    ).first()
+
     @property
     def pipelines(self):
         """ Returns a list of related pipelines """
@@ -414,12 +421,20 @@ class ComputedFile(models.Model):
     def __str__ (self):
         return "ComputedFile: " + str(self.filename)
 
+    # File related
     filename = models.CharField(max_length=255)
     absolute_file_path = models.CharField(max_length=255, blank=True, null=True)
     size_in_bytes = models.BigIntegerField()
     sha1 = models.CharField(max_length=64)
 
+    # Relations
     result = models.ForeignKey(ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+    
+    # Scientific
+    is_smashable = models.BooleanField(default=False)
+    is_qc = models.BooleanField(default=False)
+
+    # AWS
     s3_bucket = models.CharField(max_length=255)
     s3_key = models.CharField(max_length=255)
 
