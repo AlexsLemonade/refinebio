@@ -275,10 +275,9 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
         computed_file.calculate_size()
         computed_file.save()
 
-        sra = SampleResultAssociation()
-        sra.sample = sample
-        sra.result = result
-        sra.save()
+        SampleResultAssociation.objects.get_or_create(
+            sample=sample,
+            result=result)
 
         individual_files.append(computed_file)
 
