@@ -25,7 +25,7 @@ def extract_title(sample: Dict) -> str:
                     'extract name'
                    ]
     title_fields = add_variants(title_fields)
-    for key, value in sample.items():
+    for key, value in sorted(sample.items(), key=lambda x: x[0].lower()):
         lower_key = key.lower().strip()
 
         if lower_key in title_fields:
@@ -36,23 +36,23 @@ def extract_title(sample: Dict) -> str:
     return None
 
 def harmonize(metadata: List) -> Dict:
-    """ 
+    """
     Given a list of samples and their metadata, extract these common properties:
 
-      `title`, 
-      `sex`, 
-      `age`, 
+      `title`,
+      `sex`,
+      `age`,
       `specimen_part`,
-      `genetic_information`, 
-      `disease`, 
-      `disease_stage`, 
+      `genetic_information`,
+      `disease`,
+      `disease_stage`,
       `cell_line`,
-      `treatment`, 
+      `treatment`,
       `race`,
       `subject`,
       `compound`,
       `time`
-    
+
     Array Express Example:
          {'Array Data File': 'C30061.CEL',
           'Array Design REF': 'A-AFFY-1',
@@ -303,7 +303,7 @@ def harmonize(metadata: List) -> Dict:
     ##
     # Sex!
     ##
-    sex_fields = [    
+    sex_fields = [
                     'sex',
                     'gender',
                     'subject gender',
@@ -325,7 +325,7 @@ def harmonize(metadata: List) -> Dict:
                     break
                 if value.lower() in ['m', 'male', 'man']:
                     harmonized_samples[title]['sex'] = "male"
-                    break                
+                    break
                 else:
                     harmonized_samples[title]['sex'] = value.lower()
                     break
@@ -333,7 +333,7 @@ def harmonize(metadata: List) -> Dict:
     ##
     # Age!
     ##
-    age_fields = [    
+    age_fields = [
                     'age',
                     'patient age',
                     'age of patient',
@@ -367,23 +367,23 @@ def harmonize(metadata: List) -> Dict:
     ##
     part_fields = [
                     # AE
-                    'organism part', 
-                    'cell type', 
-                    'tissue', 
-                    'tissue type', 
-                    'tissue source', 
-                    'tissue origin', 
-                    'source tissue', 
-                    'tissue subtype', 
-                    'tissue/cell type', 
-                    'tissue region', 
-                    'tissue compartment', 
-                    'tissues', 
-                    'tissue of origin', 
-                    'tissue-type', 
-                    'tissue harvested', 
-                    'cell/tissue type', 
-                    'tissue subregion', 
+                    'organism part',
+                    'cell type',
+                    'tissue',
+                    'tissue type',
+                    'tissue source',
+                    'tissue origin',
+                    'source tissue',
+                    'tissue subtype',
+                    'tissue/cell type',
+                    'tissue region',
+                    'tissue compartment',
+                    'tissues',
+                    'tissue of origin',
+                    'tissue-type',
+                    'tissue harvested',
+                    'cell/tissue type',
+                    'tissue subregion',
                     'organ',
                     'characteristic [organism part]',
                     'characteristics [organism part]',
@@ -402,7 +402,7 @@ def harmonize(metadata: List) -> Dict:
     for sample in original_samples:
         title = sample['title']
         for key, value in sample.items():
-            lower_key = key.lower().strip() 
+            lower_key = key.lower().strip()
             if lower_key in part_fields:
                 harmonized_samples[title]['specimen_part'] = value.lower().strip()
                 break
@@ -411,23 +411,23 @@ def harmonize(metadata: List) -> Dict:
     # Genetic information!
     ##
     genetic_information_fields = [
-                    'strain/background', 
-                    'strain', 
-                    'strain or line', 
-                    'background strain', 
-                    'genotype', 
+                    'strain/background',
+                    'strain',
+                    'strain or line',
+                    'background strain',
+                    'genotype',
                     'genetic background',
-                    'genetic information', 
-                    'genotype/variation', 
-                    'ecotype', 
-                    'cultivar', 
+                    'genetic information',
+                    'genotype/variation',
+                    'ecotype',
+                    'cultivar',
                     'strain/genotype',
                 ]
     genetic_information_fields = add_variants(genetic_information_fields)
     for sample in original_samples:
         title = sample['title']
         for key, value in sample.items():
-            lower_key = key.lower().strip() 
+            lower_key = key.lower().strip()
             if lower_key in genetic_information_fields:
                 harmonized_samples[title]['genetic_information'] = value.lower().strip()
 
@@ -435,10 +435,10 @@ def harmonize(metadata: List) -> Dict:
     # Disease!
     ##
     disease_fields = [
-                    'disease', 
-                    'disease state', 
-                    'disease status', 
-                    'diagnosis', 
+                    'disease',
+                    'disease state',
+                    'disease status',
+                    'diagnosis',
                     'disease',
                     'infection with',
                     'sample type',
@@ -447,7 +447,7 @@ def harmonize(metadata: List) -> Dict:
     for sample in original_samples:
         title = sample['title']
         for key, value in sample.items():
-            lower_key = key.lower().strip() 
+            lower_key = key.lower().strip()
             if lower_key in disease_fields:
                 harmonized_samples[title]['disease'] = value.lower().strip()
 
@@ -456,12 +456,12 @@ def harmonize(metadata: List) -> Dict:
     ##
     disease_stage_fields = [
     	              'disease state',
-                    'disease staging', 
-                    'disease stage', 
-                    'grade', 
-                    'tumor grade', 
-                    'who grade', 
-                    'histological grade', 
+                    'disease staging',
+                    'disease stage',
+                    'grade',
+                    'tumor grade',
+                    'who grade',
+                    'histological grade',
                     'tumor grading',
                     'disease outcome',
                     'subject status',
@@ -470,7 +470,7 @@ def harmonize(metadata: List) -> Dict:
     for sample in original_samples:
         title = sample['title']
         for key, value in sample.items():
-            lower_key = key.lower().strip() 
+            lower_key = key.lower().strip()
             if lower_key in disease_stage_fields:
                 harmonized_samples[title]['disease_stage'] = value.lower().strip()
 
@@ -485,7 +485,7 @@ def harmonize(metadata: List) -> Dict:
     for sample in original_samples:
         title = sample['title']
         for key, value in sample.items():
-            lower_key = key.lower().strip() 
+            lower_key = key.lower().strip()
             if lower_key in cell_line_fields:
                 harmonized_samples[title]['cell_line'] = value.lower().strip()
 
@@ -493,32 +493,32 @@ def harmonize(metadata: List) -> Dict:
     # Treatment!
     ##
     treatment_fields = [
-                    'treatment', 
-                    'treatment group', 
-                    'treatment protocol', 
-                    'drug treatment', 
+                    'treatment',
+                    'treatment group',
+                    'treatment protocol',
+                    'drug treatment',
                     'clinical treatment',
                 ]
     treatment_fields = add_variants(treatment_fields)
     for sample in original_samples:
         title = sample['title']
         for key, value in sample.items():
-            lower_key = key.lower().strip() 
+            lower_key = key.lower().strip()
             if lower_key in treatment_fields:
                 harmonized_samples[title]['treatment'] = value.lower().strip()
     ##
     # Race!
     ##
     race_fields = [
-                    'race', 
-                    'ethnicity', 
+                    'race',
+                    'ethnicity',
                     'race/ethnicity',
                 ]
     race_fields = add_variants(race_fields)
     for sample in original_samples:
         title = sample['title']
         for key, value in sample.items():
-            lower_key = key.lower().strip() 
+            lower_key = key.lower().strip()
             if lower_key in race_fields:
                 harmonized_samples[title]['race'] = value.lower().strip()
 
@@ -527,20 +527,20 @@ def harmonize(metadata: List) -> Dict:
     ##
     subject_fields = [
                     # AE
-                    'subject', 
-                    'subject id', 
-                    'subject/sample source id', 
-                    'subject identifier', 
-                    'human subject anonymized id', 
-                    'individual', 
-                    'individual identifier', 
-                    'individual id', 
-                    'patient', 
-                    'patient id', 
-                    'patient identifier', 
-                    'patient number', 
-                    'patient no', 
-                    'donor id', 
+                    'subject',
+                    'subject id',
+                    'subject/sample source id',
+                    'subject identifier',
+                    'human subject anonymized id',
+                    'individual',
+                    'individual identifier',
+                    'individual id',
+                    'patient',
+                    'patient id',
+                    'patient identifier',
+                    'patient number',
+                    'patient no',
+                    'donor id',
                     'donor',
 
                     # SRA
@@ -550,7 +550,7 @@ def harmonize(metadata: List) -> Dict:
     for sample in original_samples:
         title = sample['title']
         for key, value in sample.items():
-            lower_key = key.lower().strip() 
+            lower_key = key.lower().strip()
             if lower_key in subject_fields:
                 harmonized_samples[title]['subject'] = value.lower().strip()
 
@@ -558,15 +558,15 @@ def harmonize(metadata: List) -> Dict:
     # Developement Stage!
     ##
     development_stage_fields = [
-                    'developmental stage', 
-                    'development stage', 
+                    'developmental stage',
+                    'development stage',
                     'development stages'
                 ]
     development_stage_fields = add_variants(development_stage_fields)
     for sample in original_samples:
         title = sample['title']
         for key, value in sample.items():
-            lower_key = key.lower().strip() 
+            lower_key = key.lower().strip()
             if lower_key in development_stage_fields:
                 harmonized_samples[title]['developmental_stage'] = value.lower().strip()
 
@@ -574,11 +574,11 @@ def harmonize(metadata: List) -> Dict:
     # Compound!
     ##
     compound_fields = [
-                    'compound', 
-                    'compound1', 
-                    'compound2', 
-                    'compound name', 
-                    'drug', 
+                    'compound',
+                    'compound1',
+                    'compound2',
+                    'compound name',
+                    'drug',
                     'drugs',
                     'immunosuppressive drugs'
                 ]
@@ -586,7 +586,7 @@ def harmonize(metadata: List) -> Dict:
     for sample in original_samples:
         title = sample['title']
         for key, value in sample.items():
-            lower_key = key.lower().strip() 
+            lower_key = key.lower().strip()
             if lower_key in compound_fields:
                 harmonized_samples[title]['compound'] = value.lower().strip()
 
@@ -594,12 +594,12 @@ def harmonize(metadata: List) -> Dict:
     # Time!
     ##
     time_fields = [
-                    'time', 
-                    'initial time point', 
-                    'start time', 
-                    'stop time', 
-                    'time point', 
-                    'sampling time point', 
+                    'time',
+                    'initial time point',
+                    'start time',
+                    'stop time',
+                    'time point',
+                    'sampling time point',
                     'sampling time',
                     'time post infection'
                 ]
@@ -607,7 +607,7 @@ def harmonize(metadata: List) -> Dict:
     for sample in original_samples:
         title = sample['title']
         for key, value in sample.items():
-            lower_key = key.lower().strip() 
+            lower_key = key.lower().strip()
             if lower_key in time_fields:
                 harmonized_samples[title]['time'] = value.lower().strip()
 
@@ -616,7 +616,7 @@ def harmonize(metadata: List) -> Dict:
 def add_variants(original_list: List):
     """ Given a list of strings, create variations likely to give metadata hits.
 
-    Ex, given 'cell line', add the ability to hit on 'characteristic [cell_line]' as well. 
+    Ex, given 'cell line', add the ability to hit on 'characteristic [cell_line]' as well.
     """
     precopy = original_list.copy()
 

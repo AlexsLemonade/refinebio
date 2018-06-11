@@ -2,6 +2,7 @@ import csv
 import os
 import requests
 from urllib.parse import urlparse
+from typing import Dict
 
 from billiard import current_process
 from django.core.exceptions import ImproperlyConfigured
@@ -11,8 +12,12 @@ from retrying import retry
 METADATA_URL = "http://169.254.169.254/latest/meta-data"
 INSTANCE_ID = None
 
+SUPPORTED_MICROARRAY_PLATFORMS = None
+SUPPORTED_RNASEQ_PLATFORMS = None
+READABLE_PLATFORM_NAMES = None
 
-def get_env_variable(var_name: str, default:str=None) -> str:
+
+def get_env_variable(var_name: str, default: str=None) -> str:
     """ Get an environment variable or return a default value """
     try:
         return os.environ[var_name]
@@ -43,14 +48,21 @@ def get_worker_id() -> str:
     """Returns <instance_id>/<thread_id>."""
     return get_instance_id() + "/" + current_process().name
 
-def get_supported_platforms(platforms_csv:str="supported_platforms.csv") -> list:
+
+def get_supported_microarray_platforms(platforms_csv: str="config/supported_microarray_platforms.csv"
+                                       ) -> list:
     """
-    Loads our supported platforms file and returns a list of supported
-    platform ascession codes.
+    Loads our supported microarray platforms file and returns a list of dictionaries
+    containing the internal accession, the external accession, and a boolean indicating
+    whether or not the platform supports brainarray.
     CSV must be in the format:
-    Species | Platform | Name | Assays | Supported | Processor
+    Internal Accession | External Accession | Supports Brainarray
     """
-    supported_platforms = []
+    global SUPPORTED_MICROARRAY_PLATFORMS
+    if SUPPORTED_MICROARRAY_PLATFORMS is not None:
+        return SUPPORTED_MICROARRAY_PLATFORMS
+
+    SUPPORTED_MICROARRAY_PLATFORMS = []
     with open(platforms_csv) as platforms_file:
         reader = csv.reader(platforms_file)
         for line in reader:
@@ -58,10 +70,56 @@ def get_supported_platforms(platforms_csv:str="supported_platforms.csv") -> list
             # Lines are 1 indexed, #BecauseCSV
             if reader.line_num is 1:
                 continue
-            if line[4] is "Y":
-                supported_platforms.append(line[1])
 
-    return supported_platforms
+            SUPPORTED_MICROARRAY_PLATFORMS.append({"platform_accession": line[0],
+                                                   "external_accession": line[1],
+                                                   "is_brainarray": True if line[2] == 'y' else False})
+
+    return SUPPORTED_MICROARRAY_PLATFORMS
+
+
+def get_supported_rnaseq_platforms(platforms_list: str="config/supported_rnaseq_platforms.txt"
+                                   ) -> list:
+    """
+    Returns a list of RNASeq platforms which are currently supported.
+    """
+    global SUPPORTED_RNASEQ_PLATFORMS
+    if SUPPORTED_RNASEQ_PLATFORMS is not None:
+        return SUPPORTED_RNASEQ_PLATFORMS
+
+    SUPPORTED_RNASEQ_PLATFORMS = []
+    with open(platforms_list) as platforms_file:
+        for line in platforms_file:
+            SUPPORTED_RNASEQ_PLATFORMS.append(line.strip())
+
+    return SUPPORTED_RNASEQ_PLATFORMS
+
+
+def get_readable_platform_names(mapping_csv: str="config/readable_platform_names.csv") -> Dict:
+    """
+    Loads the mapping from human readble names to internal accessions for Microarray platforms.
+    CSV must be in the format:
+    Readable Name | Internal Accession
+    Returns a dictionary mapping from internal accessions to human readable names.
+    """
+    global READABLE_PLATFORM_NAMES
+
+    if READABLE_PLATFORM_NAMES is not None:
+        return READABLE_PLATFORM_NAMES
+
+    READABLE_PLATFORM_NAMES = {}
+    with open(mapping_csv, encoding='utf-8') as mapping_file:
+        reader = csv.reader(mapping_file, )
+        for line in reader:
+            # Skip the header row
+            # Lines are 1 indexed, #BecauseCSV
+            if reader.line_num is 1:
+                continue
+
+            READABLE_PLATFORM_NAMES[line[1]] = line[0]
+
+    return READABLE_PLATFORM_NAMES
+
 
 def parse_s3_url(url):
     """
@@ -75,4 +133,3 @@ def parse_s3_url(url):
         bucket = result.netloc
         path = result.path.strip('/')
     return bucket, path
-

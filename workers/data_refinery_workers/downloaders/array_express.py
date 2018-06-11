@@ -9,16 +9,17 @@ from contextlib import closing
 
 from data_refinery_common.models import (
     DownloaderJob,
-    Experiment, 
-    Sample, 
-    ExperimentAnnotation, 
-    ExperimentSampleAssociation, 
-    OriginalFile, 
+    Experiment,
+    Sample,
+    ExperimentAnnotation,
+    ExperimentSampleAssociation,
+    OriginalFile,
     DownloaderJobOriginalFileAssociation
 )
 from data_refinery_workers.downloaders import utils
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable, get_readable_platform_names
+from data_refinery_common import microarray
 
 
 logger = get_and_configure_logger(__name__)
@@ -27,6 +28,7 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 
 # chunk_size is in bytes
 CHUNK_SIZE = 1024 * 256
+
 
 def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> None:
     """ Download a file from ArrayExpress via FTP. There is no Aspera endpoint
@@ -47,6 +49,7 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
     finally:
         target_file.close()
 
+
 def _extract_files(file_path: str, accession_code: str, job: DownloaderJob) -> List[str]:
     """Extract zip and return a list of the raw files.
     """
@@ -62,7 +65,8 @@ def _extract_files(file_path: str, accession_code: str, job: DownloaderJob) -> L
         zip_ref.close()
 
         # os.abspath doesn't do what I thought it does, hency this monstrocity.
-        files = [{'absolute_path': abs_with_code_raw + f, 'filename': f} for f in os.listdir(abs_with_code_raw)]
+        files = [{'absolute_path': abs_with_code_raw + f, 'filename': f}
+                 for f in os.listdir(abs_with_code_raw)]
 
     except Exception as e:
         reason = "Exception %s caught while extracting %s", str(e), str(file_path)
@@ -72,6 +76,7 @@ def _extract_files(file_path: str, accession_code: str, job: DownloaderJob) -> L
 
     return files
 
+
 def download_array_express(job_id: int) -> None:
     """The main function for the Array Express Downloader.
 
@@ -80,9 +85,11 @@ def download_array_express(job_id: int) -> None:
     ArrayExpress.
     """
     job = utils.start_job(job_id)
+    success = True
 
     file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
-    original_file = file_assocs[0].original_file # AE should never have more than one zip, but we can iterate here if we discover this is false.
+    # AE should never have more than one zip, but we can iterate here if we discover this is false.
+    original_file = file_assocs[0].original_file
     url = original_file.source_url
     accession_code = job.accession_code
 
@@ -109,19 +116,54 @@ def download_array_express(job_id: int) -> None:
         # filename is a problem. However, I need to know more about the naming convention.
         try:
             original_file = OriginalFile.objects.filter(source_filename=og_file['filename']).order_by('created_at')[0]
-            original_file.is_downloaded=True
-            original_file.is_archive=False
+            original_file.is_downloaded = True
+            original_file.is_archive = False
             original_file.absolute_file_path = og_file['absolute_path']
             original_file.filename = og_file['absolute_path'].split('/')[-1]
             original_file.calculate_size()
-            original_file.calculate_sha1()
             original_file.save()
+            original_file.calculate_sha1()
             og_files.append(original_file)
         except Exception:
             # TODO - is this worth failing a job for?
-            logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: " + og_file['filename'],
+            logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: "
+                        + og_file['filename'],
                         downloader_job=job_id)
-    success=True
+            continue
+
+        sample_objects = Sample.objects.filter(originalfile=original_file).order_by('created_at')
+        if sample_objects.count() > 1:
+            logger.warn("Found an Array Express OriginalFile with more than one sample: %s",
+                        filename,
+                        downloader_job=job_id)
+
+        # The .CEL file is the ultimate source of truth about the sample's platform.
+        sample_object = sample_objects[0]
+        if sample_object.has_raw:
+            try:
+                external_platform = microarray.get_platform_from_CEL(
+                    original_file.absolute_file_path)
+
+                platform_accession_code = "UNSUPPORTED"
+                for platform in get_supported_microarray_platforms():
+                    if platform["external_accession"] == external_accession:
+                        platform_accession_code = platform["platform_accession"]
+
+                if platform_accession_code == "UNSUPPORTED":
+                    logger.error("Found a raw file with an unsupported platform!",
+                                 file_name=filename,
+                                 sample=sample_id,
+                                 downloader_job=job_id)
+                    job.failure_reason = "Found a raw file with an unsupported platform."
+                    success = False
+
+                sample_object.platform_accession_code = platform_accession_code
+                sample_object.platform_name = get_readable_platform_names()[platform_accession_code]
+                sample_object.save()
+            except Exception:
+                logger.warn("Unable to determine platform from CEL file: ",
+                            filename,
+                            downloader_job=job_id)
 
     if success:
         logger.debug("File downloaded and extracted successfully.",

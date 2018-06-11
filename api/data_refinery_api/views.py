@@ -12,6 +12,8 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework import status, filters, generics
 
+from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     Experiment,
     Sample,
@@ -20,10 +22,11 @@ from data_refinery_common.models import (
     DownloaderJob,
     SurveyJob,
     ProcessorJob,
-    Dataset
+    Dataset,
+    ProcessorJobDatasetAssociation
 )
-from data_refinery_api.serializers import ( 
-    ExperimentSerializer, 
+from data_refinery_api.serializers import (
+    ExperimentSerializer,
     DetailedExperimentSerializer,
     SampleSerializer,
     DetailedSampleSerializer,
@@ -32,7 +35,7 @@ from data_refinery_api.serializers import (
     InstitutionSerializer,
     ComputationalResultSerializer,
 
-    # Jobs
+    # Job
     SurveyJobSerializer,
     DownloaderJobSerializer,
     ProcessorJobSerializer,
@@ -96,7 +99,7 @@ class SearchAndFilter(generics.ListAPIView):
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
     search_fields = ('title', '@description')
     filter_fields = ('has_publication', 'submitter_institution', 'technology', 'source_first_published')
-    
+
 
     def list(self, request, *args, **kwargs):
         """ Adds counts on certain filter fields to result JSON."""
@@ -107,18 +110,20 @@ class SearchAndFilter(generics.ListAPIView):
         response.data['filters']['publication'] = {}
         response.data['filters']['organism'] = {}
 
-        techs = self.get_queryset().values('technology').annotate(Count('technology', unique=True))
+        qs = self.filter_queryset(self.get_queryset())
+
+        techs = qs.values('technology').annotate(Count('technology', unique=True))
         for tech in techs:
             response.data['filters']['technology'][tech['technology']] = tech['technology__count']
 
-        pubs = self.get_queryset().values('has_publication').annotate(Count('has_publication', unique=True))
+        pubs = qs.values('has_publication').annotate(Count('has_publication', unique=True))
         for pub in pubs:
             if pub['has_publication']:
                 response.data['filters']['publication']['has_publication'] = pub['has_publication__count']
-        if 'has_publication' not in response.data['filters']:
+        if 'has_publication' not in response.data['filters']['publication']:
             response.data['filters']['publication']['has_publication'] = 0
 
-        organisms = self.get_queryset().values('organisms__name').annotate(Count('organisms__name', unique=True))
+        organisms = qs.values('organisms__name').annotate(Count('organisms__name', unique=True))
         for organism in organisms:
             response.data['filters']['organism'][organism['organisms__name']] = organism['organisms__name__count']
 
@@ -151,7 +156,21 @@ class DatasetView(generics.RetrieveUpdateAPIView):
 
         if new_data.get('start'):
             if not already_processing:
-                # TODO: Fire off the Smasher job here
+
+                # Create and dispatch the new job.
+                processor_job = ProcessorJob()
+                processor_job.pipeline_applied = "SMASHER"
+                processor_job.save()
+
+                pjda = ProcessorJobDatasetAssociation()
+                pjda.processor_job = processor_job
+                pjda.dataset = old_object
+                pjda.save()
+
+                # Hidden method of non-dispatching for testing purposes.
+                if not self.request.data.get('no_send_job', False):
+                    send_job(ProcessorPipeline.SMASHER, processor_job.id)
+
                 serializer.validated_data['is_processing'] = True
                 obj = serializer.save()
                 return obj
@@ -221,6 +240,7 @@ class SampleList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         filter_dict.pop('limit', None)
         filter_dict.pop('offset', None)
+        order_by = filter_dict.pop('order_by', None)
         ids = filter_dict.pop('ids', None)
 
         if ids is not None:
@@ -228,13 +248,15 @@ class SampleList(PaginatedAPIView):
             filter_dict['pk__in'] = ids
 
         samples = Sample.objects.filter(**filter_dict)
+        if order_by:
+            samples = samples.order_by(order_by)
 
         page = self.paginate_queryset(samples)
         if page is not None:
-            serializer = SampleSerializer(page, many=True)
+            serializer = DetailedSampleSerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         else:
-            serializer = SampleSerializer(samples, many=True)
+            serializer = DetailedSampleSerializer(samples, many=True)
             return Response(serializer.data)
 
 class SampleDetail(APIView):
@@ -299,8 +321,8 @@ class PlatformList(APIView):
 	"""
 
     def get(self, request, format=None):
-        experiments = Experiment.objects.all().values("platform_accession_code", "platform_name").distinct()
-        serializer = PlatformSerializer(experiments, many=True)
+        samples = Sample.objects.all().values("platform_accession_code", "platform_name").distinct()
+        serializer = PlatformSerializer(samples, many=True)
         return Response(serializer.data)
 
 class InstitutionList(APIView):
@@ -414,4 +436,3 @@ class Stats(APIView):
         data['processor_jobs']['average_time'] = ProcessorJob.objects.filter(start_time__isnull=False, end_time__isnull=False).aggregate(average_time=Avg(F('end_time') - F('start_time')))['average_time']
 
         return Response(data)
-

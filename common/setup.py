@@ -32,7 +32,7 @@ setup(
                       "retrying>=1.3.3",
                       "psycopg2-binary>=2.7.4",
                       "python-nomad>=0.6.1"
-    ],
+                      ],
     license="BSD License",
     description="Common functionality to be shared between Data Refinery sub-projects.",
     url="https://www.greenelab.com",
