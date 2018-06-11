@@ -6,3 +6,4 @@ retrying
 python-nomad
 coveralls
 multiqc
+scipy
