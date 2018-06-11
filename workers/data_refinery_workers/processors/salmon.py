@@ -237,6 +237,7 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
     result.command_executed = " ".join(cmd_tokens)
     result.system_version = __version__
     result.is_ccdl = True
+    result.pipeline = "tximport"
     result.save()
 
     # Associate this result with all samples in this experiment.
@@ -318,6 +319,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
                                                 stderr=subprocess.PIPE,
                                                 stdout=subprocess.PIPE).stderr.decode("utf-8").strip()
         result.is_ccdl = True
+        result.pipeline = "Salmon"
 
         # Here select_for_update() is used as a mutex that forces multiple
         # jobs to execute this block of code in serial manner. See:
@@ -403,6 +405,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
                                             stdout=subprocess.PIPE,
                                             env=qc_env).stderr.decode("utf-8").strip()
     result.is_ccdl = True
+    result.pipeline = "MultiQC"
     result.save()
 
     assoc = SampleResultAssociation()
@@ -419,6 +422,8 @@ def _run_multiqc(job_context: Dict) -> Dict:
     data_file.calculate_size()
     data_file.is_public = True
     data_file.result = job_context['qc_result']
+    data_file.is_smashable = False
+    data_file.is_qc = True
     data_file.save()
 
     report_file = ComputedFile()
@@ -427,6 +432,8 @@ def _run_multiqc(job_context: Dict) -> Dict:
     report_file.calculate_sha1()
     report_file.calculate_size()
     report_file.is_public = True
+    report_file.is_smashable = False
+    report_file.is_qc = True
     report_file.result = job_context['qc_result']
     report_file.save()
 
@@ -528,6 +535,7 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
                                                 stderr=subprocess.PIPE,
                                                 stdout=subprocess.PIPE).stderr.decode().strip()
         result.is_ccdl = True
+        result.pipeline = "Salmontools"
         result.save()
 
         assoc = SampleResultAssociation()
@@ -553,7 +561,9 @@ def _zip_and_upload(job_context: Dict) -> Dict:
 
     Adds the 'success' key to job_context because this function is the
     last in the job.
+
     """
+
     try:
         with tarfile.open(job_context['output_archive'], "w:gz") as tar:
             tar.add(job_context["output_directory"], arcname=os.sep)
@@ -574,8 +584,10 @@ def _zip_and_upload(job_context: Dict) -> Dict:
     computed_file.calculate_size()
     computed_file.is_public = True
     computed_file.result = job_context['result']
+    computed_file.is_smashable = True
+    computed_file.is_qc = False
     computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
-    # TODO here: delete local file after S3 sync#
+    # TODO here: delete local file after S3 sync
     computed_file.save()
 
     job_context["success"] = True
