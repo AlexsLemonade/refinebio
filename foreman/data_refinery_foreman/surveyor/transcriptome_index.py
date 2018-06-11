@@ -1,5 +1,4 @@
 import re
-import requests
 import urllib
 
 from abc import ABC
