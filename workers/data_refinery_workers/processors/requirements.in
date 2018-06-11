@@ -6,3 +6,9 @@ retrying
 python-nomad
 coveralls
 multiqc
+numpy
+scipy
+matplotlib
+pandas
+scikit-learn 
+sympy

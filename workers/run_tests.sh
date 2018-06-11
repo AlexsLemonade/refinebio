@@ -51,7 +51,6 @@ if [[ -z $tag || $tag == "salmon" ]]; then
     # Download tximport test data
     rm -rf $volume_directory/tximport_test/
     git clone https://github.com/dongbohu/tximport_test.git $volume_directory/tximport_test
-    gunzip $volume_directory/tximport_test/expected_output/gene_lengthScaledTPM.tsv.gz
 
     # Make sure test Transcriptome Index is downloaded from S3 for salmon tests.
     index_dir="$volume_directory/processed/TEST/TRANSCRIPTOME_INDEX"

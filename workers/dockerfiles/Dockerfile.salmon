@@ -61,9 +61,6 @@ COPY workers/data_refinery_workers/processors/requirements.txt .
 
 RUN pip3 install -r requirements.txt
 
-# Install our python data tools
-RUN pip3 install numpy scipy matplotlib pandas scikit-learn sympy nose
-
 COPY common/dist/data-refinery-common-* common/
 
 # Get the latest version from the dist directory.
