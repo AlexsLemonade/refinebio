@@ -114,7 +114,7 @@ class SalmonTestCase(TestCase):
 
     @tag('salmon')
     def test_salmon(self):
-        """ """
+        """Test the whole pipeline."""
         # Ensure any computed files from previous tests are removed.
         try:
             os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
@@ -127,7 +127,9 @@ class SalmonTestCase(TestCase):
         self.assertTrue(job.success)
 
     def chk_salmon_quant(self, job_context, sample_dir):
-        """Helper function that runs `salmon quant` and assert correlation."""
+        """Helper function that calls salmon._run_salmon and confirms
+        strong correlation.
+        """
 
         shutil.rmtree(job_context['output_directory'], ignore_errors=True)  # clean up
         salmon._run_salmon(job_context, skip_processed=False)
@@ -180,9 +182,9 @@ class SalmonTestCase(TestCase):
         """Test `salmon quant` outputs on two samples that have single
         read and that belong to same experiment.
         """
-        # Create one experiment and two samples, based on:
-        # https://www.ncbi.nlm.nih.gov/sra/?term=SRP040623
-        # (For testing purpose, only two of the four samples are donwloaded.)
+        # Create one experiment and two related samples, based on:
+        #   https://www.ncbi.nlm.nih.gov/sra/?term=SRP040623
+        # (For testing purpose, only two of the four samples' data are included.)
         experiment_accession = 'PRJNA242809'
         experiment = Experiment.objects.create(accession_code=experiment_accession)
 
@@ -197,7 +199,7 @@ class SalmonTestCase(TestCase):
         experiment_dir = os.path.join(self.test_dir, experiment_accession)
         # Clean up tximport output:
         rds_filename = os.path.join(experiment_dir, 'txi_out.RDS')
-        if (os.path.exists(rds_filename)):
+        if (os.path.isfile(rds_filename)):
             os.remove(rds_filename)
 
         # Test `salmon quant` on sample1 (SRR1206053)

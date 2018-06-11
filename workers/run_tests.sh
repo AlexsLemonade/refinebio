@@ -44,6 +44,11 @@ fi
 test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 
 if [[ -z $tag || $tag == "salmon" ]]; then
+    # Download "salmon quant" test data
+    rm -rf $volume_directory/salmon_tests/
+    wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests.tar.gz
+    tar xzf salmon_tests.tar.gz -C $volume_directory
+
     # Download salmontools test data
     rm -rf $volume_directory/salmontools/
     git clone https://github.com/dongbohu/salmontools_tests.git $volume_directory/salmontools
