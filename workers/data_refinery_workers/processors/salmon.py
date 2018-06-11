@@ -194,19 +194,22 @@ def _get_salmon_completed_exp_dirs(job_context: Dict) -> List[str]:
     have all been processed by `salmon quant` command.
     """
 
-    experiments = ExperimentSampleAssociation.objects.filter(sample=job_context['sample'])
+    experiments_set = ExperimentSampleAssociation.objects.filter(
+        sample=job_context['sample']).values_list('experiment')
+    experiments = Experiment.objects.filter(pk__in=experiments_set)
     salmon_completed_exp_dirs = []
     salmon_cmd_str = 'salmon --no-version-check quant'
     for experiment in experiments:
         num_salmon_completed_samples = experiment.samples.filter(
             results__command_executed__startswith=salmon_cmd_str).distinct().count()
         if num_salmon_completed_samples == experiment.samples.count():
-            # Remove the last two parts from the path of job_context["original_files"]
+            # Remove the last two parts from the path of job_context['input_file_path']
             # (which is "<experiment_accession_code>/raw/<filename>")
             # to get the experiment directory name.
-            dir_tokens = job_context["original_files"][0].absolute_file_path.split('/')[:-2]
-            experiment_dir = '/'.join(dir_tokens)
-            salmon_completed_exp_dirs.add(experiment_dir)
+            tokens = job_context["input_file_path"].split('/')[:-2]
+            experiment_dir = '/'.join(tokens)
+            salmon_completed_exp_dirs.append(experiment_dir)
+
     return salmon_completed_exp_dirs
 
 
@@ -293,7 +296,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
 
     ## To me, this looks broken: error codes are anything non-zero.
     ## However, Salmon (seems) to output with negative status codes
-    ## even with succesful executions.
+    ## even with successful executions.
     ## Possibly related: https://github.com/COMBINE-lab/salmon/issues/55
     if not skip and completed_command.returncode == 1:
         stderr = completed_command.stderr.decode().strip()
@@ -327,6 +330,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         with transaction.atomic():
             ComputationalResult.objects.select_for_update()
             result.save()
+            SampleResultAssociation.objects.create(sample=job_context['sample'], result=result)
             salmon_completed_exp_dirs = _get_salmon_completed_exp_dirs(job_context)
 
         # tximport analysis is done outside of the transaction so that
@@ -433,6 +437,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
     job_context['qc_files'] = [data_file, report_file]
 
     return job_context
+
 
 def _run_fastqc(job_context: Dict) -> Dict:
     """ Runs the `FastQC` package to generate the QC report.
