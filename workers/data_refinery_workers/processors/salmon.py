@@ -330,7 +330,8 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         with transaction.atomic():
             ComputationalResult.objects.select_for_update()
             result.save()
-            SampleResultAssociation.objects.create(sample=job_context['sample'], result=result)
+            SampleResultAssociation.objects.get_or_create(sample=job_context['sample'],
+                                                          result=result)
             salmon_completed_exp_dirs = _get_salmon_completed_exp_dirs(job_context)
 
         # tximport analysis is done outside of the transaction so that
