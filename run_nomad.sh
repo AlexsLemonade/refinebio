@@ -15,7 +15,7 @@ while getopts ":e:h" opt; do
             echo "Starts Nomad and registers the jobs with it. This involves re-building the "
             echo "Docker images and running format_nomad_with_env.sh to format the Nomad job "
             echo "specifications for the correct environment."
-            echo '- "dev" is the default enviroment, use -e to specify "prod" or "test".'
+            echo '- "local" is the default enviroment, use -e to specify "prod" or "test".'
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
@@ -29,12 +29,12 @@ while getopts ":e:h" opt; do
 done
 
 if [[ -z $env ]]; then
-    # XXX: for now dev==local and prod==cloud. This works because we
+    # XXX: for now local==local and prod==cloud. This works because we
     # don't have a true prod environment yet so using prod for cloud
-    # development is okay, but we definitely need to address
+    # localelopment is okay, but we definitely need to address
     # https://github.com/AlexsLemonade/refinebio/issues/199 before we
     # create an actual prod environment.
-    env="dev"
+    env="local"
 fi
 
 # Figure out the right location to put the nomad directory.
@@ -71,8 +71,8 @@ if [ $env == "test" ]; then
     export TEST_NOMAD_CONFIG="-config=test_nomad_config.hcl"
 else
     # This is only for running Nomad in non-cloud environments so if
-    # its not test then we're in dev (XXX: change this to local.)
-    env="dev"
+    # its not test then we're in local
+    env="local"
 fi
 
 nomad_dir="$script_directory/nomad_dir$TEST_POSTFIX"

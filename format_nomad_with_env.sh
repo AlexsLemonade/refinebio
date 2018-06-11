@@ -20,7 +20,7 @@ while getopts ":p:e:o:h" opt; do
         echo "Formats Nomad Job Specifications with the specified environment overlaid "
         echo "onto the current environment."
         echo '-p specifies the project to format. Valid values are "api", workers" or "foreman".'
-        echo '- "dev" is the default enviroment, use -e to specify "prod" or "test".'
+        echo '- "local" is the default enviroment, use -e to specify "prod" or "test".'
         echo '- the project directory will be used as the default output directory, use -o to specify'
         echo '      an absolute path to a directory (trailing / must be included).'
         ;;
@@ -41,12 +41,7 @@ if [[ $project != "workers" && $project != "foreman" && $project != "api" ]]; th
 fi
 
 if [[ -z $env ]]; then
-    # XXX: for now dev==local and prod==cloud. This works because we
-    # don't have a true prod environment yet so using prod for cloud
-    # development is okay, but we definitely need to address
-    # https://github.com/AlexsLemonade/refinebio/issues/199 before we
-    # create an actual prod environment.
-    env="dev"
+    env="local"
 fi
 
 # Default docker images.
