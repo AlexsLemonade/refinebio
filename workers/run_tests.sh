@@ -183,6 +183,7 @@ if [[ -z $tag || $tag == "smasher" ]]; then
     export AWS_SECRET_ACCESS_KEY=`~/bin/aws configure get default.aws_secret_access_key`
 fi
 
+source common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 
