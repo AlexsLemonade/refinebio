@@ -103,11 +103,15 @@ def _extract_assembly_version(job_context: Dict) -> Dict:
     until processing is complete, there's no other way to pass this
     information through to this processor without modifying the
     OriginalFile model.
+
+    The URL path we're attempting follows this pattern (defined in the surveyor)
+    ftp://ftp.{url_root}/gtf/{species_sub_dir}/{filename_species}.{assembly}.{assembly_version}.gtf.gz
+    and we are attempting to extract {assembly_version}.
     """
     original_files = job_context["original_files"]
 
     for og_file in original_files:
-        if "gtf.gz" in og_file.source_filename:
+        if ".gtf.gz" in og_file.source_filename:
             extensionless_url = og_file.source_url[:-7]
             version_start_index = extensionless_url.rfind(".") + 1
             job_context["assembly_version"] = extensionless_url[version_start_index:]
