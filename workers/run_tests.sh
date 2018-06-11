@@ -47,7 +47,7 @@ if [[ -z $tag || $tag == "salmon" ]]; then
     # Download "salmon quant" test data
     rm -rf $volume_directory/salmon_tests/
     wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests.tar.gz
-    tar xzf salmon_tests.tar.gz -C $volume_directory
+    tar xzf $volume_directory/salmon_tests.tar.gz -C $volume_directory
 
     # Download salmontools test data
     rm -rf $volume_directory/salmontools/
