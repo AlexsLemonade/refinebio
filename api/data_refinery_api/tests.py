@@ -297,8 +297,8 @@ class APITestCases(APITestCase):
                                     jdata,
                                     content_type="application/json")
         self.assertEqual(response.status_code, 400)
-
-        # This will actually kick off a job if we don't patch send_job
+        
+        # This will actually kick off a job if we don't patch send_job or supply no_send_job
         dataset = Dataset.objects.get(id=good_id)
         dataset.is_processing = False
         dataset.save()

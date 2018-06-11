@@ -26,6 +26,9 @@ jobs:
       - run:
           command: sudo -E ./run_nomad.sh -e test
 
+      # Run API Tests.
+      - run: ./api/run_tests.sh
+
       # Run Common Tests.
       - run: ./common/run_tests.sh
 
@@ -48,13 +51,13 @@ jobs:
       - run: docker tag ccdl/dr_smasher localhost:5000/ccdl/dr_smasher
       - run: docker push localhost:5000/ccdl/dr_smasher
       
+      # Run Common Tests.
+      - run: ./common/run_tests.sh
+
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
 
-      # Run Illumna tests.
-      - run: .circleci/filter_tests.sh -t illumina
-      
       # Run Smasher tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
@@ -70,9 +73,11 @@ jobs:
       # Running these in the same job as the common tests is good
       # because their dockerfiles are very similar so a lot of the
       # build time is saved by only building those layers once.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
       - run: .circleci/filter_tests.sh -t downloaders
 
       # Run Illumna tests.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
       - run: .circleci/filter_tests.sh -t illumina
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
