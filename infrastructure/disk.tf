@@ -37,3 +37,30 @@ resource "aws_s3_bucket" "data_refinery_bucket" {
     Environment = "${var.stage}"
   }
 }
+
+resource "aws_s3_bucket" "data_refinery_results_bucket" {
+  bucket = "data-refinery-s3-results-${var.user}-${var.stage}"
+  acl    = "public"
+
+  tags {
+    Name        = "data-refinery-s3-results-${var.user}-${var.stage}"
+    Environment = "${var.stage}"
+  }
+
+  lifecycle_rule {
+    id = "auto-delete-after-1-days-${var.user}-${var.stage}"
+    prefix = ""
+    enabled = true
+    abort_incomplete_multipart_upload_days = 1
+
+    expiration {
+      days = 1
+      expired_object_delete_marker = true
+    }
+
+    noncurrent_version_expiration {
+      days = 1
+    }
+  }
+
+}
