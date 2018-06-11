@@ -59,5 +59,3 @@ lstpm_df <- as.data.frame(txi_length_scaled$counts)
 lstpm_df <- tibble::rownames_to_column(lstpm_df, var = "Gene")
 tpm_filename <- file.path(exp_dir, "gene_lengthScaledTPM.tsv")
 readr::write_tsv(lstpm_df, path = tpm_filename)
-# Compress this output file
-R.utils::gzip(tpm_filename)

@@ -9,7 +9,6 @@ install.packages("devtools")
 devtools::install_version('optparse', version='1.4.4')
 devtools::install_version('rjson', version='0.2.19')
 devtools::install_version('readr', version='1.1.1')
-devtools::install_version('R.utils', version='2.6.0')
 
 # devtools::install_url() requires biocLite.R
 source('https://bioconductor.org/biocLite.R')
