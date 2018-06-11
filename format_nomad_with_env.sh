@@ -112,16 +112,8 @@ fi
 # be formatted into development job specs.
 if [ $env != "prod" ]; then
     export EXTRA_HOSTS="
-<<<<<<< HEAD
-	extra_hosts = [\"database:$DB_HOST_IP\",
-		       \"nomad:$NOMAD_HOST_IP\"]
-||||||| merged common ancestors
-        extra_hosts = [\"database:$DB_HOST_IP\",
+        extra_hosts = [\"database:$DB_HOST_IP\"
                        \"nomad:$NOMAD_HOST_IP\"]
-=======
-    extra_hosts = [\"database:$DB_HOST_IP\",
-               \"nomad:$NOMAD_HOST_IP\"]
->>>>>>> 220537e621d6355b2e54faa125ee84edeef3b55e
 "
     export AWS_CREDS=""
     export LOGGING_CONFIG=""
@@ -129,16 +121,9 @@ if [ $env != "prod" ]; then
 else
     export EXTRA_HOSTS=""
     export AWS_CREDS="
-<<<<<<< HEAD
-	AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
-	AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
-||||||| merged common ancestors
         AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
-        AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
-=======
-    AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
-    AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
->>>>>>> 220537e621d6355b2e54faa125ee84edeef3b55e
+        AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\"
+"
     # When deploying prod we write the output of Terraform to a
     # temporary environment file.
     environment_file="$script_directory/infrastructure/prod_env"
