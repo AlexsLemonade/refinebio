@@ -146,17 +146,8 @@ def determine_processor_pipeline(sample_object: Sample) -> ProcessorPipeline:
                              platform_accession=sample_object.platform_accession_code)
                 return ProcessorPipeline.NONE
 
-    else:
-        if not sample_object.has_raw:
-            # Only NO_OP RNASeq data if it's from SRA, because
-            # ArrayExpress and GEO often only have processed data
-            # while linking to SRA for the raw data.
-            if sample_object.source_database == "SRA":
-                return ProcessorPipeline.NO_OP
-            else:
-                return ProcessorPipeline.NONE
-        else:
-            return ProcessorPipeline.SALMON
+    elif sample_object.has_raw:
+        return ProcessorPipeline.SALMON
 
     # Shouldn't get here, but just in case
     return ProcessorPipeline.NONE
