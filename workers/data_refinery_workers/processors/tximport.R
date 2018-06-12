@@ -20,14 +20,20 @@ opt <- optparse::parse_args(opt_parser)
 
 # directory of the experiment data
 exp_dir <- opt$exp_dir
-
-# Each sample's data is in a sub-dir of experiment directory.
-samples <- list.dirs(exp_dir, full.names = FALSE, recursive = FALSE)
+# Make sure that exp_dir always has a trailing '/'
+if (!endsWith(exp_dir, '/')) {
+    exp_dir <- paste0(exp_dir, '/')
+}
 
 # Get a list of "quant.sf" files in experiment directory.
 # The paths of "quant.sf" files are in this format:
-# <exp_dir>/<sample>/processed/quant.sf
-sf_files <- list.files(exp_dir, pattern="^quant.sf$", full.names = TRUE, recursive = TRUE)
+# <experiment>/<sample>/processed/quant.sf
+sf_pattern <- paste0(exp_dir, "*/processed/quant.sf")
+sf_files <- Sys.glob(sf_pattern)
+samples <- lapply(sf_files, function(filename) {
+    tokens <- unlist(strsplit(filename, "/")); tokens[length(tokens) - 2]
+})
+samples <- unlist(samples)
 
 # Name each "sf_files" entry with the corresponding sample's name.
 names(sf_files) <- samples

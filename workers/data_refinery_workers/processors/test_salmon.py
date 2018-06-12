@@ -1,6 +1,8 @@
 import hashlib
 import os
 import shutil
+import numpy
+import scipy.stats
 from contextlib import closing
 from django.test import TestCase, tag
 from unittest.mock import MagicMock
@@ -90,11 +92,30 @@ def identical_checksum(filename1, filename2):
     return checksum_1 == checksum_2
 
 
+def strong_quant_correlation(ref_filename, output_filename):
+    """Return true if both columns #3 and #4 (zero-indexed) of the two
+    input quant files are strongly correlated (correlation >= 0.99).
+    """
+    ref_col34 = numpy.loadtxt(ref_filename, delimiter='\t', skiprows=1, usecols=(3,4))
+    ref_TPM = ref_col34[:, 0]
+    ref_NumReads = ref_col34[:, 1]
+
+    out_col34 = numpy.loadtxt(output_filename, delimiter='\t', skiprows=1, usecols=(3,4))
+    out_TPM = out_col34[:, 0]
+    out_NumReads = out_col34[:, 1]
+
+    TPM_stats = scipy.stats.spearmanr(ref_TPM, out_TPM)
+    NumReads_stats = scipy.stats.spearmanr(ref_NumReads, out_NumReads)
+    return TPM_stats.correlation >= 0.99 and NumReads_stats.correlation >= 0.99
+
+
 class SalmonTestCase(TestCase):
+    def setUp(self):
+        self.test_dir = '/home/user/data_store/salmon_tests'
 
     @tag('salmon')
     def test_salmon(self):
-        """ """
+        """Test the whole pipeline."""
         # Ensure any computed files from previous tests are removed.
         try:
             os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
@@ -105,6 +126,130 @@ class SalmonTestCase(TestCase):
         salmon.salmon(job.pk)
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertTrue(job.success)
+
+    def chk_salmon_quant(self, job_context, sample_dir):
+        """Helper function that calls salmon._run_salmon and confirms
+        strong correlation.
+        """
+
+        shutil.rmtree(job_context['output_directory'], ignore_errors=True)  # clean up
+        salmon._run_salmon(job_context, skip_processed=False)
+        output_quant_filename = os.path.join(job_context['output_directory'], 'quant.sf')
+        self.assertTrue(os.path.exists(output_quant_filename))
+
+        # Confirm strong correlation between the new "quant.sf" and reference file
+        ref_quant_filename = os.path.join(sample_dir, 'ref_files/quant.sf')
+        self.assertTrue(strong_quant_correlation(ref_quant_filename, output_quant_filename))
+
+    @tag('salmon')
+    def test_salmon_quant_one_sample_double_reads(self):
+        """Test `salmon quant` on a sample that has double reads."""
+
+        # Create an Experiment that includes two samples.
+        # (The first sample has test data available, but the second does not.)
+        experiment_accession = 'test_experiment'
+        experiment = Experiment.objects.create(accession_code=experiment_accession)
+        # test_sample record
+        sample_accession = 'test_sample'
+        test_sample = Sample.objects.create(accession_code=sample_accession)
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=test_sample)
+        # fake_sample record (created to prevent tximport step in this experiment)
+        fake_sample = Sample.objects.create(accession_code='fake_sample')
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=fake_sample)
+
+        experiment_dir = os.path.join(self.test_dir, experiment_accession)
+        sample_dir = os.path.join(experiment_dir, 'test_sample')
+
+        job_context = {
+            'job_id': 1,
+            'job': ProcessorJob(),
+            'sample': test_sample,
+            'input_file_path': os.path.join(experiment_dir, 'raw/reads_1.fastq'),
+            'input_file_path_2': os.path.join(experiment_dir, 'raw/reads_2.fastq'),
+            'index_directory': os.path.join(experiment_dir, 'index'),
+            'output_directory': os.path.join(sample_dir, 'processed'),
+            'success': True
+        }
+        # Check quant.sf in `salmon quant` output dir
+        self.chk_salmon_quant(job_context, sample_dir)
+
+        # Confirm that this experiment is not ready for tximport yet,
+        # because `salmon quant` is not run on 'fake_sample'.
+        experiments_ready = salmon._get_salmon_completed_exp_dirs(job_context)
+        self.assertEqual(len(experiments_ready), 0)
+
+    @tag('salmon')
+    def test_salmon_quant_two_samples_single_read(self):
+        """Test `salmon quant` outputs on two samples that have single
+        read and that belong to same experiment.
+        """
+        # Create one experiment and two related samples, based on:
+        #   https://www.ncbi.nlm.nih.gov/sra/?term=SRP040623
+        # (For testing purpose, only two of the four samples' data are included.)
+        experiment_accession = 'PRJNA242809'
+        experiment = Experiment.objects.create(accession_code=experiment_accession)
+
+        sample1_accession = 'SRR1206053'
+        sample1 = Sample.objects.create(accession_code=sample1_accession)
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample1)
+
+        sample2_accession = 'SRR1206054'
+        sample2 = Sample.objects.create(accession_code=sample2_accession)
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample2)
+
+        experiment_dir = os.path.join(self.test_dir, experiment_accession)
+        # Clean up tximport output:
+        rds_filename = os.path.join(experiment_dir, 'txi_out.RDS')
+        if (os.path.isfile(rds_filename)):
+            os.remove(rds_filename)
+
+        # Test `salmon quant` on sample1 (SRR1206053)
+        sample1_dir = os.path.join(experiment_dir, sample1_accession)
+        job1_context = {
+            'job_id': 1,
+            'job': ProcessorJob(),
+            'sample': sample1,
+            'input_file_path': os.path.join(experiment_dir, 'raw/SRR1206053.fastq.gz'),
+            'index_directory': os.path.join(experiment_dir, 'index'),
+            'genes_to_transcripts_path': os.path.join(experiment_dir, 'index',
+                                                      'genes_to_transcripts.txt'),
+            'output_directory': os.path.join(sample1_dir, 'processed'),
+            'success': True
+        }
+
+        # Check quant.sf in `salmon quant` output dir of sample1
+        self.chk_salmon_quant(job1_context, sample1_dir)
+        # Confirm that this experiment is not ready for tximport yet.
+        experiments_ready = salmon._get_salmon_completed_exp_dirs(job1_context)
+        self.assertEqual(len(experiments_ready), 0)
+        self.assertFalse(os.path.exists(rds_filename))
+
+        # Now run `salmon quant` on sample2 (SRR1206054) too
+        sample2_dir = os.path.join(experiment_dir, sample2_accession)
+        job2_context = {
+            'job_id': 2,
+            'job': ProcessorJob(),
+            'sample': sample2,
+            'input_file_path': os.path.join(experiment_dir, 'raw/SRR1206054.fastq.gz'),
+            'index_directory': os.path.join(experiment_dir, 'index'),
+            'genes_to_transcripts_path': os.path.join(experiment_dir, 'index',
+                                                      'genes_to_transcripts.txt'),
+            'output_directory': os.path.join(sample2_dir, 'processed'),
+            'success': True
+        }
+
+        # Check quant.sf in `salmon quant` output dir of sample2
+        self.chk_salmon_quant(job2_context, sample2_dir)
+        # Confirm that this experiment is ready for tximport now:
+        experiments_ready = salmon._get_salmon_completed_exp_dirs(job2_context)
+        self.assertEqual(len(experiments_ready), 1)
+        self.assertEqual(experiments_ready[0], experiment_dir)
+
+        # rds_filename should have been generated bytximport at this point.
+        # Note: `tximport` step is launched by subprocess module in Python.
+        # If input "quant.sf" files are too large, we may have to wait for
+        # a few seconds before testing the existence of rds_filename.
+        self.assertTrue(os.path.exists(rds_filename))
 
     def test_fastqc(self):
 
@@ -149,7 +294,7 @@ class SalmonToolsTestCase(TestCase):
 
     @tag('salmon')
     def test_double_reads(self):
-
+        """Test outputs when the sample has both left and right reads."""
         job_context = {
             'job_id': 123,
             'input_file_path': self.test_dir + 'double_input/reads_1.fastq',
@@ -180,6 +325,7 @@ class SalmonToolsTestCase(TestCase):
 
     @tag('salmon')
     def test_single_read(self):
+        """Test outputs when the sample has one read only."""
         job_context = {
             'job_id': 456,
             'input_file_path': self.test_dir + 'single_input/single_read.fastq',
