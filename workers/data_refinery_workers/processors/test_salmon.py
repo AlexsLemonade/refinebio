@@ -27,10 +27,11 @@ def prepare_job():
     pj.pipeline_applied = "SALMON"
     pj.save()
 
-    homo_sapiens = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+    c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
 
     samp = Sample()
-    samp.organism = homo_sapiens
+    samp.accession_code = "SALMON" # So the test files go to the right place
+    samp.organism = c_elegans
     samp.save()
 
     computational_result = ComputationalResult()
@@ -38,7 +39,7 @@ def prepare_job():
 
     organism_index = OrganismIndex()
     organism_index.index_type = "TRANSCRIPTOME_SHORT"
-    organism_index.organism = homo_sapiens
+    organism_index.organism = c_elegans
     organism_index.result = computational_result
     organism_index.save()
 
@@ -361,6 +362,7 @@ class TximportTestCase(TestCase):
             e_s = ExperimentSampleAssociation(experiment=experiment, sample=sample)
             e_s.save()
 
+    @tag('salmon')
     def test_tximport_experiment(self):
         job_context = {
             'job_id': 456,
@@ -369,10 +371,15 @@ class TximportTestCase(TestCase):
         job_context["job"] = ProcessorJob()
 
         experiment_dir = '/home/user/data_store/tximport_test/PRJNA408323'
-        salmon._tximport(job_context, experiment_dir)
+        final_context = salmon._tximport(job_context, experiment_dir)
 
         expected_output_dir = '/home/user/data_store/tximport_test/expected_output'
-        for filename in ['txi_out.RDS', 'gene_lengthScaledTPM.tsv.gz']:
+        for filename in ['txi_out.RDS', 'gene_lengthScaledTPM.tsv']:
             output_path = experiment_dir + '/' + filename
             expected_output = expected_output_dir + '/' + filename
             self.assertTrue(identical_checksum(output_path, expected_output))
+
+        # Check the individual files
+        self.assertTrue(len(final_context['individual_files']), 6)
+        for file in final_context['individual_files']:
+            self.assertTrue(os.path.isfile(file.absolute_file_path))

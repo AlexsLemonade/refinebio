@@ -14,7 +14,7 @@ cd $script_directory
 # move up a level
 cd ..
 
-docker build -t dr_models -f common/Dockerfile .
+docker build -t dr_models -f common/Dockerfile.migrations .
 
 source common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)

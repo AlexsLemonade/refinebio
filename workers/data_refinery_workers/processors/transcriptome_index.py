@@ -271,6 +271,8 @@ def _populate_index_object(job_context: Dict) -> Dict:
     computed_file.calculate_sha1()
     computed_file.calculate_size()
     computed_file.result = result
+    computed_file.is_smashable = False
+    computed_file.is_qc = False
     #computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
     # TODO here: delete local file after S3 sync
     computed_file.save()

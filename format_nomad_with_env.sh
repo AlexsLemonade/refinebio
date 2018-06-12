@@ -7,31 +7,31 @@
 
 while getopts ":p:e:o:h" opt; do
     case $opt in
-        p)
-            project=$OPTARG
-            ;;
-        e)
-            env=$OPTARG
-            ;;
-        o)
-            output_dir=$OPTARG
-            ;;
-        h)
-            echo "Formats Nomad Job Specifications with the specified environment overlaid "
-            echo "onto the current environment."
-            echo '-p specifies the project to format. Valid values are "api", workers" or "foreman".'
-            echo '- "dev" is the default enviroment, use -e to specify "prod" or "test".'
-            echo '- the project directory will be used as the default output directory, use -o to specify'
-            echo '      an absolute path to a directory (trailing / must be included).'
-            ;;
-        \?)
-            echo "Invalid option: -$OPTARG" >&2
-            exit 1
-            ;;
-        :)
-            echo "Option -$OPTARG requires an argument." >&2
-            exit 1
-            ;;
+    p)
+        project=$OPTARG
+        ;;
+    e)
+        env=$OPTARG
+        ;;
+    o)
+        output_dir=$OPTARG
+        ;;
+    h)
+        echo "Formats Nomad Job Specifications with the specified environment overlaid "
+        echo "onto the current environment."
+        echo '-p specifies the project to format. Valid values are "api", workers" or "foreman".'
+        echo '- "dev" is the default enviroment, use -e to specify "prod" or "test".'
+        echo '- the project directory will be used as the default output directory, use -o to specify'
+        echo '      an absolute path to a directory (trailing / must be included).'
+        ;;
+    \?)
+        echo "Invalid option: -$OPTARG" >&2
+        exit 1
+        ;;
+    :)
+        echo "Option -$OPTARG requires an argument." >&2
+        exit 1
+        ;;
     esac
 done
 
@@ -64,6 +64,9 @@ if [[ -z $TRANSCRIPTOME_DOCKER_IMAGE ]]; then
 fi
 if [[ -z $SALMON_DOCKER_IMAGE ]]; then
     export SALMON_DOCKER_IMAGE=localhost:5000/ccdl/dr_salmon
+fi
+if [[ -z $SMASHER_DOCKER_IMAGE ]]; then
+    export SMASHER_DOCKER_IMAGE=localhost:5000/ccdl/dr_smasher
 fi
 if [[ -z $AFFYMETRIX_DOCKER_IMAGE ]]; then
     export AFFYMETRIX_DOCKER_IMAGE=ccdl/dr_affymetrix
@@ -109,8 +112,8 @@ fi
 # be formatted into development job specs.
 if [ $env != "prod" ]; then
     export EXTRA_HOSTS="
-        extra_hosts = [\"database:$DB_HOST_IP\",
-                       \"nomad:$NOMAD_HOST_IP\"]
+    extra_hosts = [\"database:$DB_HOST_IP\",
+               \"nomad:$NOMAD_HOST_IP\"]
 "
     export AWS_CREDS=""
     export LOGGING_CONFIG=""
@@ -118,8 +121,8 @@ if [ $env != "prod" ]; then
 else
     export EXTRA_HOSTS=""
     export AWS_CREDS="
-        AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
-        AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
+    AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
+    AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
     # When deploying prod we write the output of Terraform to a
     # temporary environment file.
     environment_file="$script_directory/infrastructure/prod_env"

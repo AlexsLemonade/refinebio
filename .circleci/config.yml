@@ -19,10 +19,10 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
-      # Install Nomad
+        # Install Nomad
       - run: sudo ./install_nomad.sh
 
-      # Start Nomad, build images, and register jobs.
+        # Start Nomad, build images, and register jobs.
       - run:
           command: sudo -E ./run_nomad.sh -e test
 
@@ -34,6 +34,13 @@ jobs:
 
       - run: ./prepare_image.sh -i no_op -s workers
       - run: ./prepare_image.sh -i downloaders -s workers
+      - run: ./prepare_image.sh -i smasher -s workers
+      
+      # Run Downloader Tests
+      # Running these in the same job as the common tests is good
+      # because their dockerfiles are very similar so a lot of the
+      # build time is saved by only building those layers once.
+      - run: .circleci/filter_tests.sh -t downloaders
 
       # Push the no_op and downloader images to the local docker repo so Nomad
       # can pull from there when running end-to-end tests.
@@ -41,13 +48,30 @@ jobs:
       - run: docker push localhost:5000/ccdl/dr_downloaders
       - run: docker tag ccdl/dr_no_op localhost:5000/ccdl/dr_no_op
       - run: docker push localhost:5000/ccdl/dr_no_op
+      - run: docker tag ccdl/dr_smasher localhost:5000/ccdl/dr_smasher
+      - run: docker push localhost:5000/ccdl/dr_smasher
+      
+      # Run Common Tests.
+      - run: ./common/run_tests.sh
 
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
 
       # Run Illumna tests.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
       - run: .circleci/filter_tests.sh -t illumina
+      
+        # Run Smasher tests.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run:
+          command: .circleci/filter_tests.sh -t smasher 
+          # Smashing can apparently take a long time on CI 
+          no_output_timeout: 36000
+      
+        # Run API Tests.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run: ./api/run_tests.sh
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
   affymetrix_and_agilent_tests:
@@ -80,7 +104,7 @@ jobs:
       - run: .circleci/filter_tests.sh -t agilent
 
   # This tests workers tests tagged as 'salmon'
-  salmon_tests:
+  salmon_and_api_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
@@ -97,13 +121,16 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
+      # Run API Tests.
+      - run: ./api/run_tests.sh
+
       - run:
           command: .circleci/filter_tests.sh -t salmon
           no_output_timeout: 1h
 
   # This tests workers tests tagged as 'transcriptome' and 'downloaders'
   # These are grouped together because together they take less time than affy or salmon.
-  transcriptome_and_downloaders_tests:
+  transcriptome_and_illumina_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
@@ -127,8 +154,9 @@ jobs:
       # from making sure all the files in workers/test_volume have read/write permissions.
       - run: sudo chown -R circleci:circleci workers/test_volume/
 
-      - run: ./prepare_image.sh -i downloaders -s workers
-      - run: .circleci/filter_tests.sh -t downloaders
+      # Run Illumna tests.
+      - run: .circleci/filter_tests.sh -t illumina
+
 
   deploy:
     machine: true
@@ -158,13 +186,13 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      - salmon_tests:
+      - salmon_and_api_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      - transcriptome_and_downloaders_tests:
+      - transcriptome_and_illumina_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
@@ -177,8 +205,8 @@ workflows:
           requires:
             - main_tests
             - affymetrix_and_agilent_tests
-            - salmon_tests
-            - transcriptome_and_downloaders_tests
+            - salmon_and_api_tests
+            - transcriptome_and_illumina_tests
           filters:
             # No branch commit will ever trigger this job.
             branches:
