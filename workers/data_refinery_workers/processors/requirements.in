@@ -10,5 +10,5 @@ numpy
 scipy
 matplotlib
 pandas
-scikit-learn 
+scikit-learn
 sympy
