@@ -44,7 +44,8 @@ check_nomad_status () {
 # variable, which we then read in as json using the command line tool
 # `jq`, so that we can use them via bash.
 format_environment_variables () {
-  for row in $(terraform output -json environment_variables | jq -c '.value[]'); do
+  json_env_vars=$(terraform output -json environment_variables | jq -c '.value[]')
+  for row in $json_env_vars; do
       env_var_assignment=$(echo $row | jq -r ".name")=$(echo $row | jq -r ".value")
       export $env_var_assignment
       echo $env_var_assignment >> prod_env
@@ -55,8 +56,28 @@ format_environment_variables () {
 source ../common.sh
 export TF_VAR_host_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
 
+# If the Dockerhub repo isn't already set, then assume ccdlstaging is
+# desired, unless the env is prod, in which case use the prod repo.
+# This setting will be used by format_nomad_with_env.sh.
+if [[ -z $TF_VAR_dockerhub_repo ]]; then
+    if [[ $env == "prod" ]]; then
+        export TF_VAR_dockerhub_repo="ccdl"
+    else
+        export TF_VAR_dockerhub_repo="ccdlstaging"
+    fi
+fi
+
 # Copy ingress config to top level so it can be applied.
 cp deploy/ci_ingress.tf .
+
+if [[ ! -f terraform.tfstate ]]; then
+    echo "No terraform state file found, initializing and applying initial terraform deployment."
+    terraform init
+    # Output the plan for debugging deployments later.
+    terraform plan -var-file=environments/$env.tfvars
+
+    terraform apply -var-file=environments/$env.tfvars -auto-approve
+fi
 
 # We have to do this once before the initial deploy..
 rm -f prod_env
@@ -67,12 +88,13 @@ echo "Deploying with ingress.."
 ../format_nomad_with_env.sh -p api -e prod -o $(pwd)/api-configuration/
 
 # Output the plan for debugging deployments later.
-terraform plan
+terraform plan -var-file=environments/$env.tfvars
 
-terraform apply -auto-approve
+terraform apply -var-file=environments/$env.tfvars -auto-approve
 
 # Find address of Nomad server.
 export NOMAD_LEAD_SERVER_IP=`terraform output nomad_server_1_ip`
+
 export NOMAD_ADDR=http://$NOMAD_LEAD_SERVER_IP:4646
 
 # Wait for Nomad to get started in case the server just went up for
@@ -118,17 +140,17 @@ rm -f prod_env
 format_environment_variables
 
 # Get an image to run the migrations with.
-docker pull $FOREMAN_DOCKER_IMAGE
+docker pull $TF_VAR_dockerhub_repo/$FOREMAN_DOCKER_IMAGE
 
 # Migrate auth.
 docker run \
        --env-file prod_env \
-       $FOREMAN_DOCKER_IMAGE python3 manage.py migrate auth
+       $TF_VAR_dockerhub_repo/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate auth
 
 # Apply general migrations.
 docker run \
        --env-file prod_env \
-       $FOREMAN_DOCKER_IMAGE python3 manage.py migrate
+       $TF_VAR_dockerhub_repo/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate
 
 # Template the environment variables for production into the Nomad Job
 # specs and API confs.
@@ -151,6 +173,6 @@ done
 # access for Circle.
 echo "Removing ingress.."
 rm ci_ingress.tf
-terraform apply -auto-approve
+terraform apply -var-file=environments/$env.tfvars -auto-approve
 
 echo "Deploy completed successfully."

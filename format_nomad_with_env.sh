@@ -45,12 +45,36 @@ if [[ -z $env ]]; then
 fi
 
 # Default docker repo.
-# This should work for local and test environments, but we want to
-# let this be set outside the script so only set it if it isn't
-# already set.
+# This are very sensible defaults, but we want to let these be set
+# outside the script so only set them if they aren't already set.
 if [[ -z $DOCKERHUB_REPO ]]; then
     export DOCKERHUB_REPO="ccdlstaging"
 fi
+if [[ -z $FOREMAN_DOCKER_IMAGE ]]; then
+    export FOREMAN_DOCKER_IMAGE=dr_foreman:latest
+fi
+if [[ -z $DOWNLOADERS_DOCKER_IMAGE ]]; then
+    export DOWNLOADERS_DOCKER_IMAGE=dr_downloaders:latest
+fi
+if [[ -z $TRANSCRIPTOME_DOCKER_IMAGE ]]; then
+    export TRANSCRIPTOME_DOCKER_IMAGE=dr_transcriptome:latest
+fi
+if [[ -z $SALMON_DOCKER_IMAGE ]]; then
+    export SALMON_DOCKER_IMAGE=dr_salmon:latest
+fi
+if [[ -z $SMASHER_DOCKER_IMAGE ]]; then
+    export SMASHER_DOCKER_IMAGE=dr_smasher:latest
+fi
+if [[ -z $AFFYMETRIX_DOCKER_IMAGE ]]; then
+    export AFFYMETRIX_DOCKER_IMAGE=dr_affymetrix:latest
+fi
+if [[ -z $ILLUMINA_DOCKER_IMAGE ]]; then
+    export ILLUMINA_DOCKER_IMAGE=dr_illumina:latest
+fi
+if [[ -z $NO_OP_DOCKER_IMAGE ]]; then
+    export NO_OP_DOCKER_IMAGE=dr_no_op:latest
+fi
+
 
 # This script should always run from the context of the directory of
 # the project it is building.
@@ -84,7 +108,7 @@ fi
 # not in development.
 # We do these with multi-line environment variables so that they can
 # be formatted into development job specs.
-if [ $env != "prod" && $env != "staging" && $env != "dev"]; then
+if [[ $env != "prod" && $env != "staging" && $env != "dev" ]]; then
     export EXTRA_HOSTS="
     extra_hosts = [\"database:$DB_HOST_IP\",
                \"nomad:$NOMAD_HOST_IP\"]

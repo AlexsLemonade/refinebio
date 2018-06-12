@@ -21,9 +21,9 @@ for IMG in $CCDL_WORKER_IMGS; do
 done
 
 # Build and push foreman image
-docker build -t $DOCKER_ID/data_refinery_foreman -f foreman/dockerfiles/Dockerfile.foreman .
-docker push $DOCKER_ID/data_refinery_foreman
+docker build -t $DOCKER_ID/dr_foreman -f foreman/dockerfiles/Dockerfile.foreman .
+docker push $DOCKER_ID/dr_foreman
 
 # Build and push API image
-docker build -t $DOCKER_ID/data_refinery_api -f api/dockerfiles/Dockerfile.api_production .
-docker push $DOCKER_ID/data_refinery_api
+docker build -t $DOCKER_ID/dr_api -f api/dockerfiles/Dockerfile.api_production .
+docker push $DOCKER_ID/dr_api

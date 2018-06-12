@@ -40,7 +40,7 @@ resource "aws_s3_bucket" "data_refinery_bucket" {
 
 resource "aws_s3_bucket" "data_refinery_results_bucket" {
   bucket = "data-refinery-s3-results-${var.user}-${var.stage}"
-  acl    = "public"
+  acl    = "public-read"
 
   tags {
     Name        = "data-refinery-s3-results-${var.user}-${var.stage}"

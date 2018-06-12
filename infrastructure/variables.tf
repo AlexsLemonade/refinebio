@@ -83,7 +83,7 @@ variable "no_op_docker_image" {
   default = "dr_no_op:latest"
 }
 variable "foreman_docker_image" {
-  default = "data_refinery_foreman:latest"
+  default = "dr_foreman:latest"
 }
 variable "use_s3" {
   default = "True"
@@ -166,12 +166,6 @@ output "environment_variables" {
       value = "${aws_s3_bucket.data_refinery_results_bucket.id}"},
     {name = "LOCAL_ROOT_DIR"
       value = "${var.local_root_dir}"},
-    {name = "RAW_PREFIX"
-      value = "${var.raw_prefix}"},
-    {name = "TEMP_PREFIX"
-      value = "${var.temp_prefix}"},
-    {name = "PROCESSED_PREFIX"
-      value = "${var.processed_prefix}"},
     {name = "DOCKERHUB_REPO"
       value = "${var.dockerhub_repo}"},
     {name = "DOWNLOADERS_DOCKER_IMAGE"
