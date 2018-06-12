@@ -21,8 +21,8 @@ opt <- optparse::parse_args(opt_parser)
 # directory of the experiment data
 exp_dir <- opt$exp_dir
 # Make sure that exp_dir always has a trailing '/'
-if (!endsWith(exp_dir, "/")) {
-    exp_dir <- paste0(exp_dir, "/")
+if (!endsWith(exp_dir, '/')) {
+    exp_dir <- paste0(exp_dir, '/')
 }
 
 # Get a list of "quant.sf" files in experiment directory.
