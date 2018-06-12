@@ -32,4 +32,4 @@ docker run -it \
        --env-file foreman/environments/dev \
        --volume $volume_directory:/home/user/data_store \
        --link drdb:postgres \
-       ccdl/dr_foreman python3 manage.py "$@"
+       ccdlstaging/dr_foreman python3 manage.py "$@"

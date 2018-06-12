@@ -1,9 +1,12 @@
 #!/bin/bash
 
-while getopts "phi:s:" opt; do
+while getopts "phi:d:s:" opt; do
     case $opt in
         i)
             image=$OPTARG
+            ;;
+        d)
+            dockerhub_repo=$OTPARG
             ;;
         p)
             pull="True"
@@ -39,9 +42,13 @@ if [[ -z $service ]]; then
     service="workers"
 fi
 
+if [[ -z $dockerhub_repo ]]; then
+    dockerhub_repo="ccdlstaging"
+fi
+
 # We want to check if a test image has been built for this branch. If
 # it has we should use that rather than building it slowly.
-image_name="ccdl/dr_$image"
+image_name="$dockerhub_repo/dr_$image"
 if [[ "$(docker_img_exists $image_name $branch_name)" ]] ; then
     docker pull $image_name:$branch_name
 elif [[ ! -z $pull ]]; then

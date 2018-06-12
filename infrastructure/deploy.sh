@@ -7,6 +7,30 @@
 # ingress. This can be run from a CI/CD machine or a local dev box.
 # This script must be run from /infrastructure!
 
+while getopts ":e:h" opt; do
+    case $opt in
+    e)
+        env=$OPTARG
+        ;;
+    h)
+        echo "TODO: fill me in."
+        ;;
+    \?)
+        echo "Invalid option: -$OPTARG" >&2
+        exit 1
+        ;;
+    :)
+        echo "Option -$OPTARG requires an argument." >&2
+        exit 1
+        ;;
+    esac
+done
+
+if [[ $env != "dev" && $env != "staging" && $env != "prod" ]]; then
+    echo 'Error: must specify environment as either "dev", "staging", or "prod" with -e.'
+    exit 1
+fi
+
 # This function checks what the status of the Nomad agent is.
 # Returns an HTTP response code. i.e. 200 means everything is ok.
 check_nomad_status () {

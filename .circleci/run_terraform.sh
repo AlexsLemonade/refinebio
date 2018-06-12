@@ -53,8 +53,15 @@ fi
 unzip nomad_$NOMAD_VERSION_linux_amd64.zip
 sudo mv nomad /usr/local/bin/
 
-cd ~/refinebio/.circleci/s3_tfstate
-BUCKET_NAME=`terraform output terraform_state_s3_bucket`
+BUCKET_NAME=refinebio-tfstate
+if [ $CIRCLE_BRANCH = "master" ]; then
+    ENVIRONMENT=prod
+elif [ $CIRCLE_BRANCH = "dev" ]; then
+    ENVIRONMENT=staging
+else
+    echo "Why in the world was run_terraform.sh called from a branch other than `dev` or `master`?!?!?"
+    exit 1
+done
 
 cd ~/refinebio/infrastructure
 terraform init
@@ -68,7 +75,7 @@ openssl aes-256-cbc -d -in $TFSTATE.enc -out $TFSTATE -k $OPENSSL_KEY
 openssl aes-256-cbc -d -in $TFSTATE_BAK.enc -out $TFSTATE_BAK -k $OPENSSL_KEY
 
 # New deployment
-TF_VAR_user=circleci TF_VAR_stage=prod ./deploy.sh
+TF_VAR_user=circleci TF_VAR_stage=$ENVIRONMENT ./deploy.sh -e $ENVIRONMENT
 
 # Encrypt new tfstate files
 openssl aes-256-cbc -e -in $TFSTATE -out $TFSTATE.enc -k $OPENSSL_KEY

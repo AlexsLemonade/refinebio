@@ -31,4 +31,4 @@ docker run \
        --add-host=nomad:$HOST_IP \
        --env-file foreman/environments/test \
        --link drdb:postgres \
-       -it ccdl/dr_foreman bash -c "$(run_tests_with_coverage $@)"
+       -it ccdlstaging/dr_foreman bash -c "$(run_tests_with_coverage $@)"

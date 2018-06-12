@@ -28,4 +28,4 @@ docker run \
        --link drdb:postgres \
        -v "$STATIC_VOLUMES":/tmp/www/static \
        -p 8081:8081 \
-       -it -d ccdl/api_production /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
+       -it -d ccdlstaging/api_production /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"

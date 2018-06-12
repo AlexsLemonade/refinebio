@@ -36,7 +36,7 @@ while getopts ":p:e:o:h" opt; do
 done
 
 if [[ $project != "workers" && $project != "foreman" && $project != "api" ]]; then
-    echo 'Error: must specify project as either "api", workers", or "foreman" with -p.'
+    echo 'Error: must specify project as either "api", "workers", or "foreman" with -p.'
     exit 1
 fi
 
@@ -44,33 +44,12 @@ if [[ -z $env ]]; then
     env="local"
 fi
 
-# Default docker images.
-# These should work for local and test environments, but we want to
-# let these be set outside the script so only set them if they aren't
+# Default docker repo.
+# This should work for local and test environments, but we want to
+# let this be set outside the script so only set it if it isn't
 # already set.
-if [[ -z $FOREMAN_DOCKER_IMAGE ]]; then
-    export FOREMAN_DOCKER_IMAGE=localhost:5000/ccdl/dr_foreman
-fi
-if [[ -z $DOWNLOADERS_DOCKER_IMAGE ]]; then
-    export DOWNLOADERS_DOCKER_IMAGE=localhost:5000/ccdl/dr_downloaders
-fi
-if [[ -z $TRANSCRIPTOME_DOCKER_IMAGE ]]; then
-    export TRANSCRIPTOME_DOCKER_IMAGE=localhost:5000/ccdl/dr_transcriptome
-fi
-if [[ -z $SALMON_DOCKER_IMAGE ]]; then
-    export SALMON_DOCKER_IMAGE=localhost:5000/ccdl/dr_salmon
-fi
-if [[ -z $SMASHER_DOCKER_IMAGE ]]; then
-    export SMASHER_DOCKER_IMAGE=localhost:5000/ccdl/dr_smasher
-fi
-if [[ -z $AFFYMETRIX_DOCKER_IMAGE ]]; then
-    export AFFYMETRIX_DOCKER_IMAGE=ccdl/dr_affymetrix
-fi
-if [[ -z $ILLUMINA_DOCKER_IMAGE ]]; then
-    export ILLUMINA_DOCKER_IMAGE=ccdl/dr_illumina
-fi
-if [[ -z $NO_OP_DOCKER_IMAGE ]]; then
-    export NO_OP_DOCKER_IMAGE=localhost:5000/ccdl/dr_no_op
+if [[ -z $DOCKERHUB_REPO ]]; then
+    export DOCKERHUB_REPO="ccdlstaging"
 fi
 
 # This script should always run from the context of the directory of
@@ -91,7 +70,7 @@ if [ $env == "test" ]; then
     # Prevent test Nomad job specifications from overwriting
     # existing Nomad job specifications.
     export TEST_POSTFIX="_test"
-elif [ $env == "prod" ]; then
+elif [[ $env == "prod" || $env == "staging" || $env == "dev" ]]; then
     # In production we use EFS as the mount.
     export VOLUME_DIR=/var/efs
 else
@@ -105,7 +84,7 @@ fi
 # not in development.
 # We do these with multi-line environment variables so that they can
 # be formatted into development job specs.
-if [ $env != "prod" ]; then
+if [ $env != "prod" && $env != "staging" && $env != "dev"]; then
     export EXTRA_HOSTS="
     extra_hosts = [\"database:$DB_HOST_IP\",
                \"nomad:$NOMAD_HOST_IP\"]

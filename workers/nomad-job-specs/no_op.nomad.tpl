@@ -54,7 +54,7 @@ job "NO_OP" {
       }
 
       config {
-        image = "${{NO_OP_DOCKER_IMAGE}}"
+        image = "${{DOCKERHUB_REPO}}/${{NO_OP_DOCKER_IMAGE}}"
         force_pull = false
 
         # The args to pass to the Docker container's entrypoint.
