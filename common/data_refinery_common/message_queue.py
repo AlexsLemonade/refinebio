@@ -40,13 +40,15 @@ def send_job(job_type: Enum, job_id: int) -> None:
         nomad_job = ProcessorPipeline.NO_OP.value
     elif job_type is ProcessorPipeline.ILLUMINA_TO_PCL:
         nomad_job = ProcessorPipeline.ILLUMINA_TO_PCL.value
+    elif job_type is ProcessorPipeline.SMASHER:
+        nomad_job = ProcessorPipeline.SMASHER.value
     elif job_type is ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL:
         # Agilent twocolor uses the same job specification as Affy.
         nomad_job = ProcessorPipeline.AFFY_TO_PCL.value
     elif job_type in list(Downloaders):
         nomad_job = NOMAD_DOWNLOADER_JOB
     else:
-        raise ValueError("Invalid job_type.")
+        raise ValueError("Invalid job_type: {}".format(job_type.value))
 
     logger.info("Queuing %s nomad job to run job %s with id %d.",
                 nomad_job,

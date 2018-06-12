@@ -9,6 +9,9 @@ import shutil
 import subprocess
 import tarfile
 
+import pandas as pd
+import numpy as np
+
 from django.db import transaction
 from django.utils import timezone
 from typing import Dict, List
@@ -22,7 +25,8 @@ from data_refinery_common.models import (
     ComputedFile,
     Experiment,
     ExperimentSampleAssociation,
-    SampleResultAssociation
+    SampleResultAssociation,
+    Sample
     )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
@@ -115,8 +119,6 @@ def _determine_index_length(job_context: Dict) -> Dict:
     ###         total_base_pairs += len(line.replace("\n", ""))
     ###         number_of_reads += 1
     ###     counter += 1
-
-    input_file = gzip.open(job_context["input_file_path"], "rt")
 
     with gzip.open(job_context["input_file_path"], "rt") as input_file:
         for line in input_file:
@@ -217,6 +219,8 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
     """Run tximport R script based on input experiment_dir and the path
     of genes_to_transcripts.txt."""
 
+    logger.info("Running tximport!", processor_job=job_context['job_id'], ex_dir=experiment_dir)
+
     result = ComputationalResult()
     cmd_tokens = [
         "/usr/bin/Rscript", "--vanilla",
@@ -240,6 +244,7 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
     result.command_executed = " ".join(cmd_tokens)
     result.system_version = __version__
     result.is_ccdl = True
+    result.pipeline = "tximport"
     result.save()
 
     # Associate this result with all samples in this experiment.
@@ -251,6 +256,36 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
         s_r = SampleResultAssociation(sample=sample, result=result)
         s_r.save()
 
+    # Split the tximport result into smashable subfiles
+    big_tsv = experiment_dir + '/gene_lengthScaledTPM.tsv'
+    data = pd.read_csv(big_tsv, sep='\t', header=0, index_col=0)
+    individual_files = []
+    frames = np.split(data, len(data.columns), axis=1)
+    for frame in frames:
+        frame_path = os.path.join(experiment_dir, frame.columns.values[0]) + '.tsv'
+        frame.to_csv(frame_path, sep='\t', encoding='utf-8')
+
+        sample = Sample.objects.get(accession_code=frame.columns.values[0])
+
+        computed_file = ComputedFile()
+        computed_file.absolute_file_path = frame_path
+        computed_file.filename = frame_path.split('/')[-1]
+        computed_file.result = result
+        computed_file.is_smashable = True
+        computed_file.is_qc = False
+        computed_file.is_public = True
+        computed_file.calculate_sha1()
+        computed_file.calculate_size()
+        computed_file.save()
+
+        SampleResultAssociation.objects.get_or_create(
+            sample=sample,
+            result=result)
+
+        individual_files.append(computed_file)
+
+    job_context['tximported'] = True
+    job_context['individual_files'] = individual_files
     return job_context
 
 
@@ -321,6 +356,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
                                                 stderr=subprocess.PIPE,
                                                 stdout=subprocess.PIPE).stderr.decode("utf-8").strip()
         result.is_ccdl = True
+        result.pipeline = "Salmon"
 
         # Here select_for_update() is used as a mutex that forces multiple
         # jobs to execute this block of code in serial manner. See:
@@ -408,6 +444,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
                                             stdout=subprocess.PIPE,
                                             env=qc_env).stderr.decode("utf-8").strip()
     result.is_ccdl = True
+    result.pipeline = "MultiQC"
     result.save()
 
     assoc = SampleResultAssociation()
@@ -424,6 +461,8 @@ def _run_multiqc(job_context: Dict) -> Dict:
     data_file.calculate_size()
     data_file.is_public = True
     data_file.result = job_context['qc_result']
+    data_file.is_smashable = False
+    data_file.is_qc = True
     data_file.save()
 
     report_file = ComputedFile()
@@ -432,6 +471,8 @@ def _run_multiqc(job_context: Dict) -> Dict:
     report_file.calculate_sha1()
     report_file.calculate_size()
     report_file.is_public = True
+    report_file.is_smashable = False
+    report_file.is_qc = True
     report_file.result = job_context['qc_result']
     report_file.save()
 
@@ -534,6 +575,7 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
                                                 stderr=subprocess.PIPE,
                                                 stdout=subprocess.PIPE).stderr.decode().strip()
         result.is_ccdl = True
+        result.pipeline = "Salmontools"
         result.save()
 
         assoc = SampleResultAssociation()
@@ -559,7 +601,9 @@ def _zip_and_upload(job_context: Dict) -> Dict:
 
     Adds the 'success' key to job_context because this function is the
     last in the job.
+
     """
+
     try:
         with tarfile.open(job_context['output_archive'], "w:gz") as tar:
             tar.add(job_context["output_directory"], arcname=os.sep)
@@ -580,8 +624,10 @@ def _zip_and_upload(job_context: Dict) -> Dict:
     computed_file.calculate_size()
     computed_file.is_public = True
     computed_file.result = job_context['result']
+    computed_file.is_smashable = True
+    computed_file.is_qc = False
     computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
-    # TODO here: delete local file after S3 sync#
+    # TODO here: delete local file after S3 sync
     computed_file.save()
 
     job_context["success"] = True
