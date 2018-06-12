@@ -341,7 +341,11 @@ class OrganismIndex(models.Model):
     organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
     index_type = models.CharField(max_length=255)
                                   # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
-    source_version = models.CharField(max_length=255)  # Where do we get this from
+    # This corresponds to Ensembl's release number:
+    # http://ensemblgenomes.org/info/about/release_cycle
+    # Determined by hitting:
+    # http://rest.ensembl.org/info/software?content-type=application/json
+    source_version = models.CharField(max_length=255)
     result = models.ForeignKey(
         ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
