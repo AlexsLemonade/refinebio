@@ -37,7 +37,7 @@ wget https://releases.hashicorp.com/nomad/$NOMAD_VERSION/nomad_${NOMAD_VERSION}_
 
 
 # Verify the signature file is untampered.
-gpg_ok=$(gpg --verify terraform_${NOMAD_VERSION}_SHA256SUMS.sig nomad_${NOMAD_VERSION}_SHA256SUMS |& grep Good)
+gpg_ok=$(gpg --verify nomad_${NOMAD_VERSION}_SHA256SUMS.sig nomad_${NOMAD_VERSION}_SHA256SUMS |& grep Good)
 if [[ "$gpg_ok" == "" ]]; then
     echo "Could not verify the signature from HashiCorp Security <security@hashicorp.com>."
     exit 1
