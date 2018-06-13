@@ -27,7 +27,7 @@ while getopts "phi:d:s:" opt; do
             echo "The image is prepared by default for the Dockerhub repo: ccdlstaging."
             echo "This can be changed by specifying the -d option."
             echo "(i.e:"
-            echo "  `./prepare_image.sh -i downloaders -d ccdl"
+            echo "  ./prepare_image.sh -i downloaders -d ccdl"
             echo "  would result in the image ccdl/dr_downloaders being built)"
             exit 0
             ;;
