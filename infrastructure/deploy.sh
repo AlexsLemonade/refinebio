@@ -81,7 +81,7 @@ if [[ ! -f terraform.tfstate ]]; then
     echo "No terraform state file found, initializing and applying initial terraform deployment."
     terraform init
     # Output the plan for debugging deployments later.
-    terraform plan -var-file=environments/$env.tfvars
+    terraform plan
 
     terraform apply -var-file=environments/$env.tfvars -auto-approve
 fi
@@ -95,7 +95,7 @@ echo "Deploying with ingress.."
 ../format_nomad_with_env.sh -p api -e prod -o $(pwd)/api-configuration/
 
 # Output the plan for debugging deployments later.
-terraform plan -var-file=environments/$env.tfvars
+terraform plan
 
 terraform apply -var-file=environments/$env.tfvars -auto-approve
 
