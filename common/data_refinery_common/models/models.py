@@ -88,9 +88,37 @@ class Sample(models.Model):
         self.last_modified = current_time
         return super(Sample, self).save(*args, **kwargs)
 
+    def to_metadata_dict(self):
+        """ Render this Sample as a dict """
+        metadata = {}
+        metadata['title'] = self.title
+        metadata['accession_code'] = self.accession_code
+        metadata['organism'] = self.organism.name
+        metadata['source_archive_url'] = self.source_archive_url
+        metadata['sex'] = self.sex
+        metadata['age'] = self.age or ''
+        metadata['specimen_part'] = self.specimen_part
+        metadata['genotype'] = self.genotype
+        metadata['disease'] = self.disease
+        metadata['disease_stage'] = self.disease_stage
+        metadata['cell_line'] = self.cell_line
+        metadata['treatment'] = self.treatment
+        metadata['race'] = self.race
+        metadata['subject'] = self.subject
+        metadata['compound'] = self.compound
+        metadata['time'] = self.time
+        return metadata
+
     def get_result_files(self):
         """ Get all of the ComputedFile objects associated with this Sample """
         return ComputedFile.objects.filter(result__in=self.results.all())
+
+    def get_most_recent_smashable_result_file(self):
+        """ Get all of the ComputedFile objects associated with this Sample """
+        return ComputedFile.objects.filter(
+                        result__in=self.results.all(),
+                        is_smashable=True,
+                    ).first()
 
     @property
     def pipelines(self):
@@ -184,8 +212,6 @@ class Experiment(models.Model):
         metadata['accession_code'] = self.accession_code
         metadata['description'] = self.description
         metadata['protocol_description'] = self.protocol_description
-        metadata['platform_accession_code'] = self.platform_accession_code
-        metadata['platform_name'] = self.platform_name
         metadata['technology'] = self.technology
         metadata['submitter_institution'] = self.submitter_institution
         metadata['has_publication'] = self.has_publication
@@ -318,7 +344,11 @@ class OrganismIndex(models.Model):
 
     # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
     index_type = models.CharField(max_length=255)
-    source_version = models.CharField(max_length=255)  # Where do we get this from
+    # This corresponds to Ensembl's release number:
+    # http://ensemblgenomes.org/info/about/release_cycle
+    # Determined by hitting:
+    # http://rest.ensembl.org/info/software?content-type=application/json
+    source_version = models.CharField(max_length=255)
     result = models.ForeignKey(
         ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
@@ -423,13 +453,21 @@ class ComputedFile(models.Model):
     def __str__(self):
         return "ComputedFile: " + str(self.filename)
 
+    # File related
     filename = models.CharField(max_length=255)
     absolute_file_path = models.CharField(max_length=255, blank=True, null=True)
     size_in_bytes = models.BigIntegerField()
     sha1 = models.CharField(max_length=64)
 
+    # Relations
     result = models.ForeignKey(
         ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+
+    # Scientific
+    is_smashable = models.BooleanField(default=False)
+    is_qc = models.BooleanField(default=False)
+
+    # AWS
     s3_bucket = models.CharField(max_length=255)
     s3_key = models.CharField(max_length=255)
 
@@ -506,6 +544,10 @@ class Dataset(models.Model):
     is_processing = models.BooleanField(default=False)  # Data is still editable when False
     is_processed = models.BooleanField(default=False)  # Result has been made
     is_available = models.BooleanField(default=False)  # Result is ready for delivery
+
+    # Fail handling
+    success = models.NullBooleanField(null=True)
+    failure_reason = models.TextField()
 
     # Delivery properties
     email_address = models.CharField(max_length=255, blank=True, null=True)

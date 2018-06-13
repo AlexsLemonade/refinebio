@@ -19,19 +19,23 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
-      # Install Nomad
+        # Install Nomad
       - run: sudo ./install_nomad.sh
 
-      # Start Nomad, build images, and register jobs.
+        # Start Nomad, build images, and register jobs.
       - run:
           command: sudo -E ./run_nomad.sh -e test
+
+      # Run API Tests.
+      - run: ./api/run_tests.sh
 
       # Run Common Tests.
       - run: ./common/run_tests.sh
 
       - run: ./prepare_image.sh -i no_op -s workers
       - run: ./prepare_image.sh -i downloaders -s workers
-
+      - run: ./prepare_image.sh -i smasher -s workers
+      
       # Run Downloader Tests
       # Running these in the same job as the common tests is good
       # because their dockerfiles are very similar so a lot of the
@@ -44,10 +48,30 @@ jobs:
       - run: docker push localhost:5000/ccdl/dr_downloaders
       - run: docker tag ccdl/dr_no_op localhost:5000/ccdl/dr_no_op
       - run: docker push localhost:5000/ccdl/dr_no_op
+      - run: docker tag ccdl/dr_smasher localhost:5000/ccdl/dr_smasher
+      - run: docker push localhost:5000/ccdl/dr_smasher
+      
+      # Run Common Tests.
+      - run: ./common/run_tests.sh
 
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
+
+      # Run Illumna tests.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run: .circleci/filter_tests.sh -t illumina
+      
+        # Run Smasher tests.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run:
+          command: .circleci/filter_tests.sh -t smasher 
+          # Smashing can apparently take a long time on CI 
+          no_output_timeout: 36000
+      
+        # Run API Tests.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run: ./api/run_tests.sh
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
   affymetrix_and_agilent_tests:

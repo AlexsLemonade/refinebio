@@ -87,6 +87,37 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["success"] = True
     return job_context
 
+def _extract_assembly_version(job_context: Dict) -> Dict:
+    """Determine the Ensembl assembly version used for this index.
+
+    Ensembl will periodically release updated versions of the
+    assemblies which are where the input files for this processor
+    comes from.  All divisions other than the main one have identical
+    release versions, but we don't know which division these files
+    came from so we can't just hit thier API again. Therefore, look at
+    the URL we used to get the files because it contains the assembly
+    version.
+
+    I'll admit this isn't the most elegant solution, but since the
+    transcriptome index's only database model is the OriginalFiles
+    until processing is complete, there's no other way to pass this
+    information through to this processor without modifying the
+    OriginalFile model.
+
+    The URL path we're attempting follows this pattern (defined in the surveyor)
+    ftp://ftp.{url_root}/gtf/{species_sub_dir}/{filename_species}.{assembly}.{assembly_version}.gtf.gz
+    and we are attempting to extract {assembly_version}.
+    """
+    original_files = job_context["original_files"]
+
+    for og_file in original_files:
+        if ".gtf.gz" in og_file.source_filename:
+            extensionless_url = og_file.source_url[:-7]
+            version_start_index = extensionless_url.rfind(".") + 1
+            job_context["assembly_version"] = extensionless_url[version_start_index:]
+
+    return job_context
+
 
 def _process_gtf(job_context: Dict) -> Dict:
     """Reads in a .gtf file and generates two new files from it.
@@ -271,6 +302,8 @@ def _populate_index_object(job_context: Dict) -> Dict:
     computed_file.calculate_sha1()
     computed_file.calculate_size()
     computed_file.result = result
+    computed_file.is_smashable = False
+    computed_file.is_qc = False
     #computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
     # TODO here: delete local file after S3 sync
     computed_file.save()
@@ -278,8 +311,7 @@ def _populate_index_object(job_context: Dict) -> Dict:
     organism_object = Organism.get_object_for_name(job_context['organism_name'])
     index_object = OrganismIndex()
     index_object.organism = organism_object
-    # Related TODO: https://github.com/AlexsLemonade/refinebio/issues/158
-    index_object.version = "XXX" # XXX: I don't know how this is tracked
+    index_object.source_version = job_context["assembly_version"]
     index_object.index_type = "TRANSCRIPTOME_" + job_context['length'].upper()
     index_object.result = result
     index_object.save()
@@ -305,6 +337,7 @@ def build_transcriptome_index(job_id: int, length="long") -> None:
                        [utils.start_job,
                         _compute_paths,
                         _prepare_files,
+                        _extract_assembly_version,
                         _process_gtf,
                         _create_index,
                         _zip_index,

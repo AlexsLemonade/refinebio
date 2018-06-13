@@ -12,6 +12,8 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework import status, filters, generics
 
+from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     Experiment,
     Sample,
@@ -20,7 +22,8 @@ from data_refinery_common.models import (
     DownloaderJob,
     SurveyJob,
     ProcessorJob,
-    Dataset
+    Dataset,
+    ProcessorJobDatasetAssociation
 )
 from data_refinery_api.serializers import (
     ExperimentSerializer,
@@ -32,7 +35,7 @@ from data_refinery_api.serializers import (
     InstitutionSerializer,
     ComputationalResultSerializer,
 
-    # Jobs
+    # Job
     SurveyJobSerializer,
     DownloaderJobSerializer,
     ProcessorJobSerializer,
@@ -153,7 +156,21 @@ class DatasetView(generics.RetrieveUpdateAPIView):
 
         if new_data.get('start'):
             if not already_processing:
-                # TODO: Fire off the Smasher job here
+
+                # Create and dispatch the new job.
+                processor_job = ProcessorJob()
+                processor_job.pipeline_applied = "SMASHER"
+                processor_job.save()
+
+                pjda = ProcessorJobDatasetAssociation()
+                pjda.processor_job = processor_job
+                pjda.dataset = old_object
+                pjda.save()
+
+                # Hidden method of non-dispatching for testing purposes.
+                if not self.request.data.get('no_send_job', False):
+                    send_job(ProcessorPipeline.SMASHER, processor_job.id)
+
                 serializer.validated_data['is_processing'] = True
                 obj = serializer.save()
                 return obj

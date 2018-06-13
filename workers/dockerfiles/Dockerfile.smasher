@@ -16,9 +16,13 @@ RUN \
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
-COPY workers/data_refinery_workers/downloaders/requirements.txt .
-
 RUN pip3 install --upgrade pip
+
+# Smasher-specific requirements
+RUN pip3 install numpy scipy matplotlib pandas scikit-learn sympy nose
+# End smasher-specific
+
+COPY workers/data_refinery_workers/processors/requirements.txt .
 
 RUN  pip3 --no-cache-dir install -r requirements.txt
 

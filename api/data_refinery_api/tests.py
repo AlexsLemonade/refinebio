@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+from unittest.mock import patch
 
 import json
 import random
@@ -38,9 +39,7 @@ from data_refinery_api.serializers import (
     ProcessorJobSerializer
 )
 
-
-class SanityTestAllEndpoints(APITestCase):
-
+class APITestCases(APITestCase):
     def setUp(self):
         # Saving this for if we have protected endpoints
         # self.superuser = User.objects.create_superuser('john', 'john@snow.com', 'johnpassword')
@@ -254,7 +253,8 @@ class SanityTestAllEndpoints(APITestCase):
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME')
 
-    def test_create_update_dataset(self):
+    @patch('data_refinery_common.message_queue.send_job')
+    def test_create_update_dataset(self, mock_send_job):
 
         # Good
         jdata = json.dumps({'data': {"A": ["B"]}})
@@ -297,3 +297,12 @@ class SanityTestAllEndpoints(APITestCase):
                                     jdata,
                                     content_type="application/json")
         self.assertEqual(response.status_code, 400)
+
+        # This will actually kick off a job if we don't patch send_job or supply no_send_job
+        dataset = Dataset.objects.get(id=good_id)
+        dataset.is_processing = False
+        dataset.save()
+        jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True} )
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
+        self.assertEqual(response.json()["is_processing"], True)
+
