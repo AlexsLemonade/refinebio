@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This won't be testable without this var, so mock it out
+CIRCLE_TAG="vTesting"
+
 # Load docker_img_exists function
 source ~/refinebio/common.sh
 
