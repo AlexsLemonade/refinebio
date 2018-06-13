@@ -29,11 +29,6 @@ while getopts ":e:h" opt; do
 done
 
 if [[ -z $env ]]; then
-    # XXX: for now local==local and prod==cloud. This works because we
-    # don't have a true prod environment yet so using prod for cloud
-    # localelopment is okay, but we definitely need to address
-    # https://github.com/AlexsLemonade/refinebio/issues/199 before we
-    # create an actual prod environment.
     env="local"
 fi
 

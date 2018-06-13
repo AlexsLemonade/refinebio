@@ -48,7 +48,13 @@ fi
 # This are very sensible defaults, but we want to let these be set
 # outside the script so only set them if they aren't already set.
 if [[ -z $DOCKERHUB_REPO ]]; then
-    export DOCKERHUB_REPO="ccdlstaging"
+    # If someone wants to override this field we'll let them, but
+    # test env should probably use the local docker registry.
+    if [ $env == "test" ]; then
+        export DOCKERHUB_REPO="localhost:5000"
+    else
+        export DOCKERHUB_REPO="ccdlstaging"
+    fi
 fi
 if [[ -z $FOREMAN_DOCKER_IMAGE ]]; then
     export FOREMAN_DOCKER_IMAGE=dr_foreman:latest

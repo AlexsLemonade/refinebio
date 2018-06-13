@@ -93,7 +93,7 @@ class ExternalSourceSurveyor:
                 logger.info("Queuing downloader job for URL: " + original_file.source_url,
                             survey_job=self.survey_job.id,
                             downloader_job=downloader_job.id)
-                send_job(downloader_job.downloader_task, downloader_job.id)
+                send_job(downloader_job.downloader_task, downloader_job)
             except Exception as e:
                 # If the task doesn't get sent we don't want the
                 # downloader_job to be left floating
@@ -138,7 +138,7 @@ class ExternalSourceSurveyor:
                         survey_job=self.survey_job.id,
                         downloader_job=downloader_job.id,
                         downloaded_urls=downloaded_urls)
-            send_job(downloader_job.downloader_task, downloader_job.id)
+            send_job(downloader_job.downloader_task, downloader_job)
         except Exception as e:
             # If the task doesn't get sent we don't want the
             # downloader_job to be left floating
