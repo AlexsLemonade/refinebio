@@ -69,13 +69,15 @@ fi
 cd ~/refinebio/infrastructure
 terraform init
 
-# Download encrypted tfstate files from S3
-aws s3 cp s3://$BUCKET_NAME/$TFSTATE.enc .
-aws s3 cp s3://$BUCKET_NAME/$TFSTATE_BAK.enc .
+if [[ $(aws s3 ls s3://$BUCKET_NAME) =! "" ]];
+   # Download encrypted tfstate files from S3, if they exist
+   aws s3 cp s3://$BUCKET_NAME/$TFSTATE.enc .
+   aws s3 cp s3://$BUCKET_NAME/$TFSTATE_BAK.enc .
 
-# Decrypt tfstate files
-openssl aes-256-cbc -d -in $TFSTATE.enc -out $TFSTATE -k $OPENSSL_KEY
-openssl aes-256-cbc -d -in $TFSTATE_BAK.enc -out $TFSTATE_BAK -k $OPENSSL_KEY
+   # Decrypt tfstate files
+   openssl aes-256-cbc -d -in $TFSTATE.enc -out $TFSTATE -k $OPENSSL_KEY
+   openssl aes-256-cbc -d -in $TFSTATE_BAK.enc -out $TFSTATE_BAK -k $OPENSSL_KEY
+fi
 
 # New deployment
 TF_VAR_user=circleci TF_VAR_stage=$ENVIRONMENT ./deploy.sh -e $ENVIRONMENT
