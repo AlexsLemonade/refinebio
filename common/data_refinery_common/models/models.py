@@ -45,6 +45,7 @@ class Sample(models.Model):
     original_files = models.ManyToManyField('OriginalFile', through='OriginalFileSampleAssociation')
 
     # Historical Properties
+    source_database = models.CharField(max_length=255, blank=False)
     source_archive_url = models.CharField(max_length=255)
     source_filename = models.CharField(max_length=255, blank=False)
     source_absolute_file_path = models.CharField(max_length=255)
@@ -54,6 +55,7 @@ class Sample(models.Model):
     platform_accession_code = models.CharField(max_length=256, blank=True)
     platform_name = models.CharField(max_length=256, blank=True)
     technology = models.CharField(max_length=256, blank=True)
+    manufacturer = models.CharField(max_length=256, blank=True)
 
     # Scientific Properties
     sex = models.CharField(max_length=255, blank=True)
@@ -339,9 +341,14 @@ class OrganismIndex(models.Model):
         db_table = "organism_index"
 
     organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
+
+    # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
     index_type = models.CharField(max_length=255)
-                                  # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
-    source_version = models.CharField(max_length=255)  # Where do we get this from
+    # This corresponds to Ensembl's release number:
+    # http://ensemblgenomes.org/info/about/release_cycle
+    # Determined by hitting:
+    # http://rest.ensembl.org/info/software?content-type=application/json
+    source_version = models.CharField(max_length=255)
     result = models.ForeignKey(
         ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
@@ -455,7 +462,7 @@ class ComputedFile(models.Model):
     # Relations
     result = models.ForeignKey(
         ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
-    
+
     # Scientific
     is_smashable = models.BooleanField(default=False)
     is_qc = models.BooleanField(default=False)
