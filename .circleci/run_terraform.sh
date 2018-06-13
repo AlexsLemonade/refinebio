@@ -69,7 +69,8 @@ fi
 cd ~/refinebio/infrastructure
 terraform init
 
-if [[ $(aws s3 ls s3://$BUCKET_NAME) =! "" ]];
+state_files=$(aws s3 ls s3://$BUCKET_NAME)
+if [[ "$state_files" =! "" ]];
    # Download encrypted tfstate files from S3, if they exist
    aws s3 cp s3://$BUCKET_NAME/$TFSTATE.enc .
    aws s3 cp s3://$BUCKET_NAME/$TFSTATE_BAK.enc .
