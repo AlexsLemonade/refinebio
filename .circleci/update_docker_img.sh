@@ -3,9 +3,9 @@
 # Load docker_img_exists function
 source ~/refinebio/common.sh
 
-if [ $CIRCLE_BRANCH = "master" ]; then
+if [ $CIRCLE_BRANCH == "master" ]; then
     DOCKERHUB_REPO=ccdl
-elif [ $CIRCLE_BRANCH = "dev" ]; then
+elif [[ $CIRCLE_BRANCH == "dev" || $CIRCLE_BRANCH == "kurtwheeler-addtional-envs" ]]; then
     DOCKERHUB_REPO=ccdlstaging
 else
     echo "Why in the world was update_docker_img.sh called from a branch other than `dev` or `master`?!?!?"

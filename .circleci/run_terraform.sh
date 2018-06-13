@@ -58,7 +58,7 @@ if [ $CIRCLE_BRANCH == "master" ]; then
     BUCKET_NAME="refinebio-tfstate-deploy-production"
 # TEMPORARY to test deploy of staging. Yes addtional is spelled wrong,
 # I made that mistake when I made my branch though.
-elif [[ $CIRCLE_BRANCH == "dev" || $CIRCLE_BRANCH == "kurtwheeler-addtional-envs"]]; then
+elif [[ $CIRCLE_BRANCH == "dev" || $CIRCLE_BRANCH == "kurtwheeler-addtional-envs" ]]; then
     ENVIRONMENT=staging
     BUCKET_NAME="refinebio-tfstate-deploy-staging"
 else
