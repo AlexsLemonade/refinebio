@@ -29,9 +29,6 @@ jobs:
       # Run API Tests.
       - run: ./api/run_tests.sh
 
-      # Run Common Tests.
-      - run: ./common/run_tests.sh
-
       - run: ./prepare_image.sh -i no_op -s workers -d localhost:5000
       - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
       - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
@@ -71,7 +68,7 @@ jobs:
       - run: ./api/run_tests.sh
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
-  affymetrix_and_agilent_tests:
+  affymetrix_common_agilent_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
@@ -87,6 +84,9 @@ jobs:
       # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
       - run: ./update_models.sh
+
+      # Run Common Tests.
+      - run: ./common/run_tests.sh
 
       - run:
           command: .circleci/filter_tests.sh -t affymetrix
@@ -177,7 +177,7 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      - affymetrix_and_agilent_tests:
+      - affymetrix_common_agilent_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
@@ -201,7 +201,7 @@ workflows:
       - deploy:
           requires:
             - main_tests
-            - affymetrix_and_agilent_tests
+            - affymetrix_comon_agilent_tests
             - salmon_and_api_tests
             - transcriptome_and_illumina_tests
           filters:
