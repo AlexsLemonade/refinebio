@@ -44,7 +44,7 @@ if [[ "$gpg_ok" == "" ]]; then
 fi
 
 # Verify the SHASUM matches the binary.
-shasum_ok=$(sha256sum -c nomad_$NOMAD_VERSION_SHA256SUMS |& grep OK)
+shasum_ok=$(sha256sum -c nomad_${NOMAD_VERSION}_SHA256SUMS |& grep OK)
 if [[ "$shasum_ok" == "" ]]; then
     echo "Could not verify the Nomad checksum provided by Hashicorp."
     exit 1
