@@ -235,6 +235,8 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         Surveying here is a bit different than discovering an experiment
         and samples.
         """
+        if source_type is not "TRANSCRIPTOME_INDEX":
+            return False
 
         try:
             species_files = self.discover_species()
@@ -246,7 +248,8 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
 
         try:
             for specie_file_list in species_files:
-                self.queue_downloader_job_for_original_files(specie_file_list)
+                self.queue_downloader_job_for_original_files(specie_file_list,
+                                                             is_transcriptome=True)
         except Exception:
             logger.exception(("Failed to queue downloader jobs. "
                               "Terminating survey job."),
