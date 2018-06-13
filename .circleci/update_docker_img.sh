@@ -10,7 +10,7 @@ elif [ $CIRCLE_BRANCH = "dev" ]; then
 else
     echo "Why in the world was update_docker_img.sh called from a branch other than `dev` or `master`?!?!?"
     exit 1
-done
+fi
 
 # Docker images that we want to protect from accidental overwriting in "ccdl" account.
 CCDL_WORKER_IMGS="illumina affymetrix salmon transcriptome no_op downloaders"
