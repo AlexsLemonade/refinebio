@@ -15,6 +15,17 @@ from data_refinery_common.utils import parse_s3_url
 
 logger = get_and_configure_logger(__name__)
 
+def run_surveyor_for_accession(accession: str) -> None:
+    """Chooses the correct surveyor based on the patter of the accession"""
+    if 'GSE' in accession[:3]:
+        surveyor.survey_geo_experiment(accession)
+    elif 'E-' in accession[:2]:
+        surveyor.survey_ae_experiment(accession)
+    elif " " in accession:
+        surveyor.survey_transcriptome_index(accession)
+    else:
+        surveyor.survey_sra_experiment(accession)
+
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
@@ -25,6 +36,13 @@ class Command(BaseCommand):
 Note: One entry per line, GSE* entries survey GEO, E-GEO-* entries survey ArrayExpress.
 """)
         )
+
+        parser.add_argument(
+            "--accession",
+            type=str,
+            help=("An optional accession code to survey.")
+        )
+
         parser.add_argument(
             "--offset",
             type=int,
@@ -33,9 +51,9 @@ Note: One entry per line, GSE* entries survey GEO, E-GEO-* entries survey ArrayE
         )
 
     def handle(self, *args, **options):
-        if options['file'] is None:
-            logger.error("You must specify a file.")
-            return 1
+        if options['file'] is None and options['accession'] is None:
+            logger.error("You must specify a file or an accession.")
+            return "1"
 
         if options["file"]:
 
@@ -60,13 +78,13 @@ Note: One entry per line, GSE* entries survey GEO, E-GEO-* entries survey ArrayE
                         continue
                     accession = accession.strip()
                     try:
-                        if 'GSE' in accession[:3]:
-                            surveyor.survey_geo_experiment(accession)
-                        elif 'E-' in accession[:2]:
-                            surveyor.survey_ae_experiment(accession)
-                        elif " " in accession:
-                            surveyor.survey_transcriptome_index(accession)
-                        else:
-                            surveyor.survey_sra_experiment(accession)
+                        run_surveyor_for_accession(accession)
                     except Exception as e:
                         logger.exception(e)
+
+        if options["accession"]:
+            accession = options["accession"]
+            try:
+                run_surveyor_for_accession(accession)
+            except Exception as e:
+                logger.exception(e)

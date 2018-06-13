@@ -9,6 +9,9 @@ import shutil
 import subprocess
 import tarfile
 
+import pandas as pd
+import numpy as np
+
 from django.db import transaction
 from django.utils import timezone
 from typing import Dict, List
@@ -22,7 +25,8 @@ from data_refinery_common.models import (
     ComputedFile,
     Experiment,
     ExperimentSampleAssociation,
-    SampleResultAssociation
+    SampleResultAssociation,
+    Sample
     )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
@@ -116,8 +120,6 @@ def _determine_index_length(job_context: Dict) -> Dict:
     ###         number_of_reads += 1
     ###     counter += 1
 
-    input_file = gzip.open(job_context["input_file_path"], "rt")
-
     with gzip.open(job_context["input_file_path"], "rt") as input_file:
         for line in input_file:
             # In the FASTQ file format, there are 4 lines for each
@@ -194,25 +196,30 @@ def _get_salmon_completed_exp_dirs(job_context: Dict) -> List[str]:
     have all been processed by `salmon quant` command.
     """
 
-    experiments = ExperimentSampleAssociation.objects.filter(sample=job_context['sample'])
+    experiments_set = ExperimentSampleAssociation.objects.filter(
+        sample=job_context['sample']).values_list('experiment')
+    experiments = Experiment.objects.filter(pk__in=experiments_set)
     salmon_completed_exp_dirs = []
     salmon_cmd_str = 'salmon --no-version-check quant'
     for experiment in experiments:
         num_salmon_completed_samples = experiment.samples.filter(
             results__command_executed__startswith=salmon_cmd_str).distinct().count()
         if num_salmon_completed_samples == experiment.samples.count():
-            # Remove the last two parts from the path of job_context["original_files"]
+            # Remove the last two parts from the path of job_context['input_file_path']
             # (which is "<experiment_accession_code>/raw/<filename>")
             # to get the experiment directory name.
-            dir_tokens = job_context["original_files"][0].absolute_file_path.split('/')[:-2]
-            experiment_dir = '/'.join(dir_tokens)
-            salmon_completed_exp_dirs.add(experiment_dir)
+            tokens = job_context["input_file_path"].split('/')[:-2]
+            experiment_dir = '/'.join(tokens)
+            salmon_completed_exp_dirs.append(experiment_dir)
+
     return salmon_completed_exp_dirs
 
 
 def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
     """Run tximport R script based on input experiment_dir and the path
     of genes_to_transcripts.txt."""
+
+    logger.info("Running tximport!", processor_job=job_context['job_id'], ex_dir=experiment_dir)
 
     result = ComputationalResult()
     cmd_tokens = [
@@ -249,6 +256,36 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
         s_r = SampleResultAssociation(sample=sample, result=result)
         s_r.save()
 
+    # Split the tximport result into smashable subfiles
+    big_tsv = experiment_dir + '/gene_lengthScaledTPM.tsv'
+    data = pd.read_csv(big_tsv, sep='\t', header=0, index_col=0)
+    individual_files = []
+    frames = np.split(data, len(data.columns), axis=1)
+    for frame in frames:
+        frame_path = os.path.join(experiment_dir, frame.columns.values[0]) + '.tsv'
+        frame.to_csv(frame_path, sep='\t', encoding='utf-8')
+
+        sample = Sample.objects.get(accession_code=frame.columns.values[0])
+
+        computed_file = ComputedFile()
+        computed_file.absolute_file_path = frame_path
+        computed_file.filename = frame_path.split('/')[-1]
+        computed_file.result = result
+        computed_file.is_smashable = True
+        computed_file.is_qc = False
+        computed_file.is_public = True
+        computed_file.calculate_sha1()
+        computed_file.calculate_size()
+        computed_file.save()
+
+        SampleResultAssociation.objects.get_or_create(
+            sample=sample,
+            result=result)
+
+        individual_files.append(computed_file)
+
+    job_context['tximported'] = True
+    job_context['individual_files'] = individual_files
     return job_context
 
 
@@ -294,7 +331,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
 
     ## To me, this looks broken: error codes are anything non-zero.
     ## However, Salmon (seems) to output with negative status codes
-    ## even with succesful executions.
+    ## even with successful executions.
     ## Possibly related: https://github.com/COMBINE-lab/salmon/issues/55
     if not skip and completed_command.returncode == 1:
         stderr = completed_command.stderr.decode().strip()
@@ -329,6 +366,8 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         with transaction.atomic():
             ComputationalResult.objects.select_for_update()
             result.save()
+            SampleResultAssociation.objects.get_or_create(sample=job_context['sample'],
+                                                          result=result)
             salmon_completed_exp_dirs = _get_salmon_completed_exp_dirs(job_context)
 
         # tximport analysis is done outside of the transaction so that
@@ -440,6 +479,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
     job_context['qc_files'] = [data_file, report_file]
 
     return job_context
+
 
 def _run_fastqc(job_context: Dict) -> Dict:
     """ Runs the `FastQC` package to generate the QC report.

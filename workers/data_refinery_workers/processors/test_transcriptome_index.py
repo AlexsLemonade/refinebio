@@ -60,6 +60,20 @@ def prepare_job():
     return pj
 
 class TXTestCase(TestCase):
+    @tag('transcriptome')
+    def test_assembly_version(self):
+        og_file = OriginalFile()
+        og_file.source_url = "ftp://ftp.ensemblgenomes.org/pub/release-39/plants/fasta/aegilops_tauschii/dna/Aegilops_tauschii.ASM34733v1.dna.toplevel.fa.gz"
+        og_file.source_filename = "aegilops_tauschii_short.fa.gz"
+
+        og_file2 = OriginalFile()
+        og_file2.source_url = "ftp://ftp.ensemblgenomes.org/pub/release-39/plants/gtf/aegilops_tauschii/Aegilops_tauschii.ASM34733v1.39.gtf.gz"
+        og_file2.source_filename = "aegilops_tauschii_short.gtf.gz"
+
+        job_context = {"original_files": [og_file, og_file2]}
+        job_context = transcriptome_index._extract_assembly_version(job_context)
+        self.assertEqual("39", job_context["assembly_version"])
+
 
     @tag('transcriptome')
     def test_tx(self):
