@@ -66,7 +66,7 @@ docker push "$FOREMAN_DOCKER_IMAGE:latest"
 
 # Build and push API image
 API_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_api"
-./prepare_image.sh -i api_production -s api -d DOCKERHUB_REPO
+./prepare_image.sh -i api_production -s api -d $DOCKERHUB_REPO
 docker tag "$API_DOCKER_IMAGE" "$API_DOCKER_IMAGE:$CIRCLE_TAG"
 docker push "$API_DOCKER_IMAGE:$CIRCLE_TAG"
 # Update latest version
