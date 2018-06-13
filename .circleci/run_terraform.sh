@@ -53,15 +53,16 @@ fi
 unzip nomad_${NOMAD_VERSION}_linux_amd64.zip
 sudo mv nomad /usr/local/bin/
 
-BUCKET_NAME=refinebio-tfstate
 if [ $CIRCLE_BRANCH = "master" ]; then
     ENVIRONMENT=prod
+    BUCKET_NAME="refinebio-tfstate-deploy-production"
 elif [ $CIRCLE_BRANCH = "dev" ]; then
     ENVIRONMENT=staging
+    BUCKET_NAME="refinebio-tfstate-deploy-staging"
 else
     echo "Why in the world was run_terraform.sh called from a branch other than `dev` or `master`?!?!?"
     exit 1
-done
+fi
 
 cd ~/refinebio/infrastructure
 terraform init

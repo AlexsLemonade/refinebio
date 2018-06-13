@@ -1,11 +1,5 @@
 #!/bin/bash -e
 
-# This script can be used to deploy and update a `refine.bio` instance stack.
-# It will create all of the AWS infrasctructure (roles/instances/db/network/etc),
-# open an ingress, kill all running Nomad jobs, perform a database migration,
-# re-define and re-register Nomad job specifications, and finally close the
-# ingress. This can be run from a CI/CD machine or a local dev box.
-# This script must be run from /infrastructure!
 
 while getopts ":e:h" opt; do
     case $opt in
@@ -13,7 +7,20 @@ while getopts ":e:h" opt; do
         env=$OPTARG
         ;;
     h)
-        echo "TODO: fill me in."
+        echo 'This script can be used to deploy and update a `refine.bio` instance stack.'
+        echo 'It will create all of the AWS infrasctructure (roles/instances/db/network/etc),'
+        echo 'open an ingress, kill all running Nomad jobs, perform a database migration,'
+        echo 're-define and re-register Nomad job specifications, and finally close the'
+        echo 'ingress. This can be run from a CI/CD machine or a local dev box.'
+        echo 'This script must be run from /infrastructure!'
+        echo ''
+        echo 'There is only one argument for this script, -e, and it is not optional.'
+        echo '-e specifies the environment you would like to deploy to. Its valid values are:'
+        echo '"-e prod" will deploy the production stack. This should only be used from a CD machine.'
+        echo '"-e staging" will deploy the staging stack. This should only be used from a CD machine.'
+        echo '"-e dev" will deploy a dev stack which will namespace all of its resources with the value'
+        echo 'of $TF_VAR_username. '
+        echo 'DO NOT DEPLOY without setting that $TF_VAR_username or modifying the value in variables.tf!'
         ;;
     \?)
         echo "Invalid option: -$OPTARG" >&2
