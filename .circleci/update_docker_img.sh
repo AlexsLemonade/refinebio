@@ -25,9 +25,9 @@ for IMG in $CCDL_WORKER_IMGS; do
     fi
 done
 
-CCDL_OTHER_IMGS="$DOCKERHUB_REPO/data_refinery_foreman $DOCKERHUB_REPO/data_refinery_api"
+CCDL_OTHER_IMGS="$DOCKERHUB_REPO/dr_foreman $DOCKERHUB_REPO/dr_api"
 
-# Handle the foreman separately.
+# Handle the foreman and API separately.
 for IMG in $CCDL_OTHER_IMGS; do
     if docker_img_exists $IMG $CIRCLE_TAG; then
         echo "Docker image exists, building process terminated: $IMG:$CIRCLE_TAG"
@@ -54,7 +54,7 @@ for IMG in $CCDL_WORKER_IMGS; do
 done
 
 # Build and push foreman image
-FOREMAN_DOCKER_IMAGE="$DOCKERHUB_REPO/data_refinery_foreman"
+FOREMAN_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_foreman"
 ./prepare_image.sh -i foreman -s foreman -d $DOCKERHUB_REPO
 docker push "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG"
 # Update latest version
@@ -62,7 +62,7 @@ docker tag "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG" "$FOREMAN_DOCKER_IMAGE:latest"
 docker push "$FOREMAN_DOCKER_IMAGE:latest"
 
 # Build and push API image
-API_DOCKER_IMAGE="$DOCKERHUB_REPO/data_refinery_api"
+API_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_api"
 ./prepare_image.sh -i api_production -s api -d DOCKERHUB_REPO
 docker tag "$API_DOCKER_IMAGE" "$API_DOCKER_IMAGE:$CIRCLE_TAG"
 docker push "$API_DOCKER_IMAGE:$CIRCLE_TAG"
