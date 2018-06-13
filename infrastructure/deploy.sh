@@ -80,6 +80,12 @@ cp deploy/ci_ingress.tf .
 if [[ ! -f terraform.tfstate ]]; then
     echo "No terraform state file found, initializing and applying initial terraform deployment."
     terraform init
+
+    # This file is an input but is created by format_nomad_with_env.sh
+    # based on outputs from terraform. Kinda a Catch 22, but we can
+    # get around it by providing a dummy file to get bootstrapped.
+    touch api-configuration/environment
+
     # Output the plan for debugging deployments later.
     terraform plan
 
