@@ -15,6 +15,7 @@ logger = get_and_configure_logger(__name__)
 # multiple jobs.
 NOMAD_TRANSCRIPTOME_JOB = "TRANSCRIPTOME_INDEX"
 NOMAD_DOWNLOADER_JOB = "DOWNLOADER"
+NONE_JOB_ERROR_TEMPLATE = "send_job was called with NONE job_type: {} for {} job {}"
 
 
 def send_job(job_type: Enum, job) -> None:
@@ -44,6 +45,12 @@ def send_job(job_type: Enum, job) -> None:
     elif job_type is ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL:
         # Agilent twocolor uses the same job specification as Affy.
         nomad_job = ProcessorPipeline.AFFY_TO_PCL.value
+    elif job_type is Downloaders.NONE:
+        logger.warn("Not queuing %s job.", job_type, job_id=job_id)
+        raise ValueError(NONE_JOB_ERROR_TEMPLATE.format(job_type.value, "Downloader", job_id))
+    elif job_type is ProcessorPipeline.NONE:
+        logger.warn("Not queuing %s job.", job_type, job_id=job_id)
+        raise ValueError(NONE_JOB_ERROR_TEMPLATE.format(job_type.value, "Processor", job_id))
     elif job_type in list(Downloaders):
         nomad_job = NOMAD_DOWNLOADER_JOB
     else:

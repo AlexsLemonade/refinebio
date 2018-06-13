@@ -19,14 +19,19 @@ CCDL_WORKER_IMGS="salmon transcriptome no_op downloaders illumina"
 for IMG in $CCDL_WORKER_IMGS; do
     image_name=$DOCKERHUB_REPO/dr_$IMG
     # Build and push image
+    echo "Building $image_name"
     docker build -t $image_name -f workers/dockerfiles/Dockerfile.$IMG .
     docker push $image_name
 done
 
 # Build and push foreman image
-docker build -t $DOCKERHUB_REPO/dr_foreman -f foreman/dockerfiles/Dockerfile.foreman .
-docker push $DOCKERHUB_REPO/dr_foreman
+image_name="$DOCKERHUB_REPO/dr_foreman"
+echo "Building $image_name"
+docker build -t $image_name -f foreman/dockerfiles/Dockerfile.foreman .
+docker push $image_name
 
 # Build and push API image
-docker build -t $DOCKERHUB_REPO/dr_api -f api/dockerfiles/Dockerfile.api_production .
-docker push $DOCKERHUB_REPO/dr_api
+image_name="$DOCKERHUB_REPO/dr_api"
+echo "Building $image_name"
+docker build -t $image_name -f api/dockerfiles/Dockerfile.api_production .
+docker push $image_name

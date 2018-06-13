@@ -95,9 +95,9 @@ def get_supported_rnaseq_platforms(platforms_list: str="config/supported_rnaseq_
     return SUPPORTED_RNASEQ_PLATFORMS
 
 
-def get_readable_platform_names(mapping_csv: str="config/readable_platform_names.csv") -> Dict:
+def get_readable_affymetrix_names(mapping_csv: str="config/readable_affymetrix_names.csv") -> Dict:
     """
-    Loads the mapping from human readble names to internal accessions for Microarray platforms.
+    Loads the mapping from human readble names to internal accessions for Affymetrix platforms.
     CSV must be in the format:
     Readable Name | Internal Accession
     Returns a dictionary mapping from internal accessions to human readable names.
