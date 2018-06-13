@@ -1,0 +1,7 @@
+# progam_name	program_version	command
+salmon	0.9.1	salmon --no-version-check quant -l A --biasSpeedSamp 5 -i <index_dir> -1 <input_file_1> -2 <input_file_2> -p 20 -o <output_dir> --seqBias --gcBias --dumpEq --writeUnmappedNames
+salmon	0.9.1	salmon --no-version-check quant -l A --biasSpeedSamp 5 -i <index_dir> -r <file> -p 20 -o <output_dir> --seqBias --gcBias --dumpEq --writeUnmappedNames
+salmontools	0.1.0	salmontools extract-unmapped -u <unmapped_file> -o <output> -1 <input_file_1> -2 <input_file_2>
+salmontools	0.1.0	salmontools extract-unmapped -u <unmapped_file> -o <output> -r <input_file>
+FastQC	0.11.7	fastqc --outdir=<qc_dir> <files>
+tximport	1.6.0	tximport::tximport(files = sf_files, type = "salmon", txOut = FALSE, tx2gene = tx2gene, countsFromAbundance = "no" or "lengthScaledTPM")

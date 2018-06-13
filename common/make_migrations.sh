@@ -26,7 +26,7 @@ docker run \
        --add-host=nomad:$HOST_IP \
        --env-file common/environments/dev \
        --interactive \
-       --link drdb:postgres\
+       --link drdb:postgres \
        dr_models python3.6 manage.py makemigrations data_refinery_common --noinput
 
 docker run \

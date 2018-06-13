@@ -17,7 +17,7 @@ from data_refinery_common.models.organism import Organism
 """
 # First Order Classes
 
-This represent the primary data types we will be querying
+This represents the primary data types we will be querying
 and filtering against.
 
 """
@@ -362,6 +362,7 @@ class OrganismIndex(models.Model):
         self.last_modified = current_time
         return super(OrganismIndex, self).save(*args, **kwargs)
 
+
 """
 # Files
 
@@ -459,7 +460,7 @@ class ComputedFile(models.Model):
     # Relations
     result = models.ForeignKey(
         ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
-    
+
     # Scientific
     is_smashable = models.BooleanField(default=False)
     is_qc = models.BooleanField(default=False)
@@ -705,3 +706,48 @@ class SampleResultAssociation(models.Model):
     class Meta:
         db_table = "sample_result_associations"
         unique_together = ('result', 'sample')
+
+
+# New tables to track reproducibility information
+
+class Program(models.Model):
+    """This model keeps track of all programs run by processors."""
+
+    name = models.CharField(max_length=255, blank=False, null=False)
+    version = models.CharField(max_length=255, blank=False, null=False)
+    command = models.CharField(max_length=255, blank=False, null=False)
+    system_version = models.CharField(max_length=255, blank=False, null=False)
+
+    class Meta:
+        db_table = "programs"
+        unique_together = ('version', 'command', 'system_version')
+
+
+class ProcessStep(models.Model):
+    """This model keeps track of exact programs that have been executed
+    whose end result is a certain ComputationalResult.
+    """
+
+    computational_result = models.ForeignKey(ComputationalResult, blank=False, null=False,
+                                    on_delete=models.CASCADE)
+    program = models.ForeignKey(Program, blank=False, null=False, on_delete=models.CASCADE)
+    order = models.PositiveIntegerField(blank=False, null=False)
+
+    class Meta:
+        db_table = "process_steps"
+        unique_together = ('computational_result', 'order')
+
+
+class Dependency(models.Model):
+    """This model keeps track of all the other packages that are
+    required by a certain refine.bio version (but are not invoked
+    explicitly by any processors).
+    """
+
+    name = models.CharField(max_length=255, blank=False, null=False)
+    version = models.CharField(max_length=255, blank=False, null=False)
+    system_version = models.CharField(max_length=255, blank=False, null=False)
+
+    class Meta:
+        db_table = "dependencies"
+        unique_together = ('name', 'version', 'system_version')
