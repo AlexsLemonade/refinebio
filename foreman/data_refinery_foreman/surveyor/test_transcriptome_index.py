@@ -25,7 +25,7 @@ class SurveyTestCase(TestCase):
                                            value="EnsemblPlants")
         key_value_pair.save()
 
-    @patch('data_refinery_foreman.surveyor.external_source.send_job')
+    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_survey(self, mock_send_job):
         surveyor = TranscriptomeIndexSurveyor(self.survey_job)
         surveyor.survey(source_type="TRANSCRIPTOME_INDEX")
