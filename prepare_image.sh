@@ -23,6 +23,12 @@ while getopts "phi:d:s:" opt; do
             echo "which is tagged with the current branch name. If there is it pulls that."
             echo "Otherwise it will build the image locally, unless instructed"
             echo "to pull the latest version of the image from Dockerhub with -p."
+            echo ""
+            echo "The image is prepared by default for the Dockerhub repo: ccdlstaging."
+            echo "This can be changed by specifying the -d option."
+            echo "(i.e:"
+            echo "  `./prepare_image.sh -i downloaders -d ccdl"
+            echo "  would result in the image ccdl/dr_downloaders being built)"
             exit 0
             ;;
         \?)

@@ -127,7 +127,7 @@ variable "api_instance_type" {
 }
 
 # Output our production environment variables. These should be in
-# parity with the env files such as workers/environments/dev.
+# parity with the env files such as workers/environments/local.
 output "environment_variables" {
   value = [
     {name = "REGION"

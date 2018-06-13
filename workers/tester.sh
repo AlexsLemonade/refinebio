@@ -92,7 +92,7 @@ docker run \
 	   -it \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
-       --env-file workers/environments/dev \
+       --env-file workers/environments/local \
        --env AWS_ACCESS_KEY_ID \
        --env AWS_SECRET_ACCESS_KEY \
        --entrypoint ./manage.py \
