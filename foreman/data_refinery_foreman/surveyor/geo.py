@@ -25,7 +25,7 @@ from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import (
     get_supported_microarray_platforms,
     get_supported_rnaseq_platforms,
-    get_readable_platform_names
+    get_readable_affymetrix_names
 )
 
 logger = get_and_configure_logger(__name__)
@@ -50,7 +50,10 @@ class GeoSurveyor(ExternalSourceSurveyor):
     def source_type(self):
         return Downloaders.GEO.value
 
-    def set_platform_properties(self, sample_object: Sample, gse: GEOparse.GSM) -> Sample:
+    def set_platform_properties(self,
+                                sample_object: Sample,
+                                sample_metadata: Dict,
+                                gse: GEOparse.GSM) -> Sample:
         """Sets platform-related properties on `sample_object`.
 
         Uses metadata from `gse` to populate platform_name,
@@ -63,6 +66,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
         if external_accession == UNKNOWN:
             sample_object.platform_accession_code = UNKNOWN
             sample_object.platform_name = UNKNOWN
+            sample_object.manufacturer = UNKNOWN
             # If this sample is Affy, we potentially can extract the
             # platform information from the .CEL file. If it's not we
             # can't do anything. Therefore assume the technology is
@@ -87,10 +91,38 @@ class GeoSurveyor(ExternalSourceSurveyor):
             sample_object.technology = "MICROARRAY"
             try:
                 # If it's Affy we can get a readable name:
-                sample_object.platform_name = get_readable_platform_names()[platform_accession_code]
+                sample_object.platform_name = get_readable_affymetrix_names()[
+                    platform_accession_code]
+                sample_object.manufacturer = "AFFYMETRIX"
+
+                # Sometimes Affymetrix samples have weird channel
+                # protocol metadata, so if we find that it's
+                # Affymetrix return it now. Example: GSE113945
+                return sample_object
             except KeyError:
                 # Otherwise we'll use what we've got.
                 sample_object.platform_name = platform_title
+
+            # Determine manufacturer
+
+            # Sometimes this field is a list, other times it's not.
+            # Example of it being a list: GSE113945
+            channel1_temp = sample_metadata.get('label_protocol_ch1', "")
+            if type(channel1_temp) != list:
+                channel1_protocol = channel1_temp.upper()
+            elif len(channel1_temp) > 0:
+                channel1_protocol = channel1_temp[0].upper()
+            else:
+                channel1_protocol = ""
+
+            if ('AGILENT' in channel1_protocol):
+                sample_object.manufacturer = "AGILENT"
+            elif ('ILLUMINA' in channel1_protocol):
+                sample_object.manufacturer = "ILLUMINA"
+            elif ('AFFYMETRIX' in channel1_protocol):
+                sample_object.manufacturer = "AFFYMETRIX"
+            else:
+                sample_object.manufacturer = UNKNOWN
 
             return sample_object
 
@@ -116,6 +148,16 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 sample_object.platform_name = platform
                 # We just use RNASeq platform titles as accessions
                 sample_object.platform_accession_code = platform
+
+                if "ILLUMINA" in sample_object.platform_name.upper():
+                    sample_object.manufacturer = "ILLUMINA"
+                elif "NEXTSEQ" in sample_object.platform_name.upper():
+                    sample_object.manufacturer = "NEXTSEQ"
+                elif "ION TORRENT" in sample_object.platform_name.upper():
+                    sample_object.manufacturer = "ION_TORRENT"
+                else:
+                    sample_object.manufacturer = UNKNOWN
+
                 return sample_object
 
         # If we've made it this far, we don't know what this platform
@@ -125,6 +167,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
         sample_object.platform_name = platform_title
         sample_object.platform_accession_code = external_accession
         sample_object.technology = UNKNOWN
+        sample_object.manufacturer = UNKNOWN
 
         return sample_object
 
@@ -191,8 +234,6 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_annotation.is_ccdl = False
             experiment_annotation.save()
 
-        has_raw = True
-
         # Okay, here's the situation!
         # Sometimes, samples have a direct single representation for themselves.
         # Othertimes, there is a single file with references to every sample in it.
@@ -202,7 +243,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
             try:
                 sample_object = Sample.objects.get(accession_code=sample_accession_code)
-                logger.debug("Sample %s from experiment %s already exists, skipping object creation.",
+                logger.debug(
+                    "Sample %s from experiment %s already exists, skipping object creation.",
                          sample_accession_code,
                          experiment_object.accession_code,
                          survey_job=self.survey_job.id)
@@ -216,17 +258,20 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 organism = Organism.get_object_for_name(sample.metadata['organism_ch1'][0].upper())
 
                 sample_object = Sample()
+                sample_object.source_database = "GEO"
                 sample_object.accession_code = sample_accession_code
                 sample_object.organism = organism
+                # If data processing step, it isn't raw.
+                sample_object.has_raw = not sample.metadata.get('data_processing', None)
+
                 ExperimentOrganismAssociation.objects.get_or_create(
                     experiment=experiment_object, organism=organism)
-                title = sample.metadata['title'][0]
-                sample_object.title = title
+                sample_object.title = sample.metadata['title'][0]
 
-                self.set_platform_properties(sample_object, gse)
+                self.set_platform_properties(sample_object, sample.metadata, gse)
 
                 # Directly assign the harmonized properties
-                harmonized_sample = harmonized_samples[title]
+                harmonized_sample = harmonized_samples[sample_object.title]
                 for key, value in harmonized_sample.items():
                     setattr(sample_object, key, value)
 
@@ -268,7 +313,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                         original_file.source_url = supplementary_file_url
                         original_file.is_downloaded = False
                         original_file.is_archive = True
-                        original_file.has_raw = has_raw
+                        original_file.has_raw = sample_object.has_raw
                         original_file.save()
 
                         logger.debug("Created OriginalFile: " + str(original_file))
@@ -295,7 +340,6 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 original_file.source_url = experiment_supplement_url
                 original_file.is_downloaded = False
                 original_file.is_archive = True
-                original_file.has_raw = has_raw
                 original_file.save()
 
                 logger.info("Created OriginalFile: " + str(original_file))
@@ -316,7 +360,6 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 original_file.source_url = family_url
                 original_file.is_downloaded = False
                 original_file.is_archive = True
-                original_file.has_raw = has_raw
                 original_file.save()
                 logger.info("Created OriginalFile: " + str(original_file))
 

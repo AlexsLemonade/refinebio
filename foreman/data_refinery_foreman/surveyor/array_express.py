@@ -22,7 +22,7 @@ from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import (
     get_supported_microarray_platforms,
-    get_readable_platform_names)
+    get_readable_affymetrix_names)
 
 logger = get_and_configure_logger(__name__)
 
@@ -85,19 +85,32 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         elif len(parsed_json["arraydesign"]) > 1:
             experiment["platform_accession_code"] = UNKNOWN
             experiment["platform_accession_name"] = UNKNOWN
+            experiment["manufacturer"] = UNKNOWN
         else:
             external_accession = parsed_json["arraydesign"][0]["accession"]
             for platform in get_supported_microarray_platforms():
                 if platform["external_accession"] == external_accession:
                     experiment["platform_accession_code"] = platform["platform_accession"]
-                    platform_mapping = get_readable_platform_names()
-                    experiment["platform_accession_name"] = platform_mapping[
-                        platform["platform_accession"]]
+
+                    # Illumina appears in the accession codes for
+                    # platforms manufactured by Illumina
+                    if "ILLUMINA" in experiment["platform_accession_code"].upper():
+                        experiment["manufacturer"] = "ILLUMINA"
+                        experiment["platform_accession_name"] = platform["platform_accession"]
+                    else:
+                        # It's not Illumina, the only other supported Microarray platform is
+                        # Affy. As our list of supported platforms grows this logic will
+                        # need to get more sophisticated.
+                        experiment["manufacturer"] = "AFFYMETRIX"
+                        platform_mapping = get_readable_affymetrix_names()
+                        experiment["platform_accession_name"] = platform_mapping[
+                            platform["platform_accession"]]
 
             if "platform_accession_code" not in experiment:
                 # We don't know what platform this accession corresponds to.
                 experiment["platform_accession_code"] = external_accession
                 experiment["platform_accession_name"] = UNKNOWN
+                experiment["manufacturer"] = UNKNOWN
                 platform_warning = True
 
         experiment["release_date"] = parsed_json["releasedate"]
@@ -168,6 +181,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             if 'Person Affiliation' in idf_dict:
                 # This is very rare, ex: E-MEXP-32
                 if isinstance(idf_dict['Person Affiliation'], list):
+
                     unique_people = list(set(idf_dict['Person Affiliation']))
                     experiment_object.submitter_institution = ", ".join(unique_people)[:255]
                 else:
@@ -198,8 +212,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
             experiment_object.save()
 
-        platform_dict = {k: experiment[k]
-                         for k in ('platform_accession_code', 'platform_accession_name')}
+        platform_dict = {}
+        for k in ('platform_accession_code', 'platform_accession_name', 'manufacturer'):
+            platform_dict[k] = experiment[k]
+
         return experiment_object, platform_dict
 
     def determine_sample_accession(self, experiment_accession: str, sample_source_name: str, sample_assay_name: str, filename: str) -> str:
@@ -422,12 +438,14 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 sample_object = Sample()
 
                 # The basics
+                sample_object.source_database = "ARRAY_EXPRESS"
                 sample_object.title = title
                 sample_object.accession_code = sample_accession_code
                 sample_object.source_archive_url = samples_endpoint
                 sample_object.organism = organism
                 sample_object.platform_name = platform_dict["platform_accession_name"]
                 sample_object.platform_accession_code = platform_dict["platform_accession_code"]
+                sample_object.manufacturer = platform_dict["manufacturer"]
                 sample_object.technology = "MICROARRAY"
                 sample_object.save()
 
@@ -463,9 +481,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             ExperimentOrganismAssociation.objects.get_or_create(
                 experiment=experiment, organism=organism)
 
-            logger.info("Created Sample: " + str(sample_object),
+            logger.info("Created " + str(sample_object),
                         experiment_accession_code=experiment.accession_code,
-                        survey_job=self.survey_job.id)
+                        survey_job=self.survey_job.id,
+                        sample=sample_object.id)
 
             created_samples.append(sample_object)
 
