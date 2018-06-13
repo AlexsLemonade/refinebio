@@ -6,7 +6,7 @@ while getopts "phi:d:s:" opt; do
             image=$OPTARG
             ;;
         d)
-            dockerhub_repo=$OTPARG
+            dockerhub_repo=$OPTARG
             ;;
         p)
             pull="True"

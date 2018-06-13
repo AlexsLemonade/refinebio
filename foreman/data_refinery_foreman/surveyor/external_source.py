@@ -186,5 +186,5 @@ class ExternalSourceSurveyor:
                              survey_job=self.survey_job.id)
             return False
 
-        logger.info("Survey job completed successfully." survey_job=self.survey_job.id)
+        logger.info("Survey job completed successfully.", survey_job=self.survey_job.id)
         return True
