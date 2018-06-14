@@ -157,7 +157,7 @@ elif [[ ! -d "$output_dir" ]]; then
 fi
 
 export_log_conf (){
-    if [[ $env == 'prod' ]]; then
+    if [[ $env == 'prod' || $env == 'staging' || $env == 'dev' ]]; then
         export LOGGING_CONFIG="
         logging {
           type = \"awslogs\"

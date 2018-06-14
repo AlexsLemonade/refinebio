@@ -98,7 +98,6 @@ format_environment_variables
 
 # Open up ingress to AWS for Circle, stop jobs, migrate DB.
 echo "Deploying with ingress.."
-../format_nomad_with_env.sh -p api -e prod -o $(pwd)/api-configuration/
 
 # Output the plan for debugging deployments later.
 terraform plan
@@ -168,8 +167,10 @@ docker run \
 # Template the environment variables for production into the Nomad Job
 # specs and API confs.
 mkdir -p nomad-job-specs
-../format_nomad_with_env.sh -p workers -e prod -o $(pwd)/nomad-job-specs
-../format_nomad_with_env.sh -p foreman -e prod -o $(pwd)/nomad-job-specs
+../format_nomad_with_env.sh -p workers -e $env -o $(pwd)/nomad-job-specs
+../format_nomad_with_env.sh -p foreman -e $env -o $(pwd)/nomad-job-specs
+../format_nomad_with_env.sh -p api -e $env -o $(pwd)/api-configuration/
+
 
 # Don't leave secrets lying around!
 rm -f prod_env
