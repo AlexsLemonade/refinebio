@@ -25,6 +25,6 @@ from data_refinery_common.models.models import (
     Dataset,
     ProcessorJobDatasetAssociation,
     Program,
-    ProcessStep,
+    PipelineStep,
     Dependency
 )

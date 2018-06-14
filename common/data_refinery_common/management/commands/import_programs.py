@@ -4,7 +4,7 @@
 This management commands requires an input filename, and the envioronment
 variable $CIRCLE_TAG must be defined with its value starting with "v".
 Each line in <filename> must have exactly three columns delimited by tab.
-All lines that start with "#" will be ignored.
+All lines that are blank or start with "#" will be skipped.
 
 Usage:
   python manage.py import_programs <filename>
@@ -29,13 +29,13 @@ class Command(BaseCommand):
         help = ("Input tab-separated file that lists programs.")
 
     def handle(self, **options):
-        # Verify that $GIT_TAG is defined and its value starts with "v".
+        # Verify that $CIRCLE_TAG a valid envioronment variable
         try:
             git_tag = os.environ['CIRCLE_TAG']
         except:
             logger.error("CIRCLE_TAG not defined")
             return 1
-
+        # Verify that $CIRCLE_TAG starts with 'v'.
         if not git_tag.startswith('v'):
             logger.error("CIRCLE_TAG must start with 'v'")
             return 1
@@ -57,9 +57,12 @@ def import_data(file_handle, git_tag):
 
     with transaction.atomic():
         for line_index, line in enumerate(file_handle):
-            if line.startswith('#'):  # Skip lines that start with "#"
+            line = line.strip()
+              # Skip lines that are blank or start with "#"
+            if len(line) == 0 or line.startswith('#'):
                 continue
-            tokens = line.rstrip('\r\n').split('\t')
+
+            tokens = line.split('\t')
             if len(tokens) != 3:
                 raise Exception("Input file line #%: number of columns is not 3" %
                                 (line_index + 1))

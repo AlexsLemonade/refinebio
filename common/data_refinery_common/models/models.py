@@ -275,6 +275,9 @@ class ComputationalResult(models.Model):
     is_ccdl = models.BooleanField(default=True)
 
     # Human-readable nickname for this computation
+    # TODO: We may need a separate table to keep track of the exact pipeline that is
+    # associated with each computational result. See:
+    # https://github.com/AlexsLemonade/refinebio/pull/313#pullrequestreview-128570427
     pipeline = models.CharField(max_length=255)
 
     # Stats
@@ -711,7 +714,9 @@ class SampleResultAssociation(models.Model):
 # New tables to track reproducibility information
 
 class Program(models.Model):
-    """This model keeps track of all programs run by processors."""
+    """This model keeps track of all programs run by processors.
+    TODO: Further discussion needed for this model.
+    """
 
     name = models.CharField(max_length=255, blank=False, null=False)
     version = models.CharField(max_length=255, blank=False, null=False)
@@ -723,25 +728,27 @@ class Program(models.Model):
         unique_together = ('version', 'command', 'system_version')
 
 
-class ProcessStep(models.Model):
-    """This model keeps track of exact programs that have been executed
-    whose end result is a certain ComputationalResult.
+class PipelineStep(models.Model):
+    """This model keeps track of exact programs that will be executed
+    in a certain pipeline.
+    TODO: Further discussion needed for this model.
     """
 
-    computational_result = models.ForeignKey(ComputationalResult, blank=False, null=False,
-                                    on_delete=models.CASCADE)
+    pipeline = models.CharField(max_length=255, blank=False, null=False)
     program = models.ForeignKey(Program, blank=False, null=False, on_delete=models.CASCADE)
     order = models.PositiveIntegerField(blank=False, null=False)
 
     class Meta:
-        db_table = "process_steps"
-        unique_together = ('computational_result', 'order')
+        db_table = "pipeline_steps"
+        unique_together = ('pipeline', 'order')
 
 
 class Dependency(models.Model):
     """This model keeps track of all the other packages that are
-    required by a certain refine.bio version (but are not invoked
-    explicitly by any processors).
+    not executed explicitly by any pipelines but are still required by
+    a certain refine.bio version.
+
+    TODO: Further discussion needed for this model.
     """
 
     name = models.CharField(max_length=255, blank=False, null=False)
