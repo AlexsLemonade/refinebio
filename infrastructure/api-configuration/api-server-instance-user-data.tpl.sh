@@ -70,6 +70,22 @@ STATIC_VOLUMES=/tmp/volumes_static
 mkdir -p /tmp/volumes_static
 chmod a+rwx /tmp/volumes_static
 
+cat <<EOF >docker_run_command.txt
+docker run \
+       --env-file environment \
+       -e DATABASE_HOST=${database_host} \
+       -e DATABASE_NAME=${database_name} \
+       -e DATABASE_USER=${database_user} \
+       -e DATABASE_PASSWORD=${database_password} \
+       -v "$STATIC_VOLUMES":/tmp/www/static \
+       --log-driver=awslogs \
+       --log-opt awslogs-region=${region} \
+       --log-opt awslogs-group=${log_group} \
+       --log-opt awslogs-stream=${log_stream} \
+       -p 8081:8081 \
+       -it -d ${dockerhub_repo}/${api_docker_image} /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
+EOF
+
 # These database values are created after TF
 # is run, so we have to pass them in programatically
 docker run \
