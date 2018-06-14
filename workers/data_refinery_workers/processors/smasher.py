@@ -91,6 +91,11 @@ def _smash(job_context: Dict) -> Dict:
                 # So, we chop them off and don't worry about it.
                 data.index = data.index.str.replace('_at', '')
 
+                # If there are any _versioned_ gene identifiers, remove that
+                # version information. We're using the latest brainarray for everything anyway. 
+                # Jackie says this is okay.
+                data.index = data.index.str.replace(r"\..*$", '')
+
                 # Squish duplicated rows together.
                 # XXX/TODO: Is mean the appropriate method here? 
                 #           We can make this an option in future.
