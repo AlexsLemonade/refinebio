@@ -96,6 +96,8 @@ fi
 rm -f prod_env
 format_environment_variables
 
+../format_nomad_with_env.sh -p api -e $env -o $(pwd)/api-configuration/
+
 # Open up ingress to AWS for Circle, stop jobs, migrate DB.
 echo "Deploying with ingress.."
 
