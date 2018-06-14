@@ -80,7 +80,7 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile])
             assoc.processor_job = processor_job
             assoc.save()
 
-            send_job(pipeline_to_apply, processor_job.id)
+            send_job(pipeline_to_apply, processor_job)
 
 
 def create_processor_job_for_original_files(original_files: List[OriginalFile]):
@@ -106,4 +106,4 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile]):
             assoc.processor_job = processor_job
             assoc.save()
 
-        send_job(pipeline_to_apply, processor_job.id)
+        send_job(pipeline_to_apply, processor_job)
