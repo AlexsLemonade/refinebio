@@ -65,7 +65,7 @@ resource "aws_s3_bucket" "data_refinery_results_bucket" {
 }
 
 resource "aws_s3_bucket" "data-refinery-static" {
-  bucket = "${var.static_bucket_name}"
+  bucket = "${var.static_bucket_prefix == "dev" ? var.user : var.static_bucket_prefix}${var.static_bucket_root}"
 
   cors_rule {
     allowed_origins = ["*"]

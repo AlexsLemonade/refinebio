@@ -84,7 +84,7 @@ docker run \
        --log-opt awslogs-group=${log_group} \
        --log-opt awslogs-stream=${log_stream} \
        -p 8081:8081 \
-       -it -d ${api_docker_image} /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
+       -it -d ${dockerhub_repo}/${api_docker_image} /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
 
 
 # Delete the cloudinit and syslog in production.

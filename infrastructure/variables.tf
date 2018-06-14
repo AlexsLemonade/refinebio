@@ -13,8 +13,12 @@ variable "stage" {
   default = "dev"
 }
 
-variable "static_bucket_name" {
-  default = "staging.refine.bio"
+variable "static_bucket_prefix" {
+  default = "staging"
+}
+
+variable "static_bucket_root" {
+  default = ".refine.bio"
 }
 
 variable "region" {

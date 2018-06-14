@@ -1,3 +1,5 @@
+static_bucket_prefix = "staging"
+static_bucket_root = ".refine.bio"
 static_bucket_name = "staging.refine.bio"
 database_password = "drpostgrespassword"
 database_instance_type = "t2.micro"
