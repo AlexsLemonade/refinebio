@@ -85,6 +85,12 @@ def _smash(job_context: Dict) -> Dict:
                     logger.info("Detected non-log2 data.", file=computed_file)
                     data = np.log2(data)
 
+                # Ensure that we don't have any dangling Brainarray-generated probe symbols.
+                # BA likes to leave '_at', signifying probe identifiers,
+                # on their converted, non-probe identifiers. It makes no sense.
+                # So, we chop them off and don't worry about it.
+                data.index = data.index.str.replace('_at', '')
+
                 # Squish duplicated rows together.
                 # XXX/TODO: Is mean the appropriate method here? 
                 #           We can make this an option in future.
