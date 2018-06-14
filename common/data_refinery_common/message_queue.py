@@ -15,15 +15,15 @@ logger = get_and_configure_logger(__name__)
 # multiple jobs.
 NOMAD_TRANSCRIPTOME_JOB = "TRANSCRIPTOME_INDEX"
 NOMAD_DOWNLOADER_JOB = "DOWNLOADER"
-NONE_JOB_ERROR_TEMPLATE = "send_job was called with NONE job_type: {} for {} job {}"
 
 
-def send_job(job_type: Enum, job) -> None:
+def send_job(job_type: Enum, job_id: int) -> None:
     """Queues a worker job by sending a Nomad Job dispatch message.
 
     job_type must be a valid Enum for ProcessorPipelines or
     Downloaders as defined in data_refinery_common.job_lookup.
-    job must be an existing ProcessorJob or DownloaderJob record.
+    job_id must correspond to an existing ProcessorJob or
+    DownloaderJob record.
     """
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
@@ -45,12 +45,6 @@ def send_job(job_type: Enum, job) -> None:
     elif job_type is ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL:
         # Agilent twocolor uses the same job specification as Affy.
         nomad_job = ProcessorPipeline.AFFY_TO_PCL.value
-    elif job_type is Downloaders.NONE:
-        logger.warn("Not queuing %s job.", job_type, job_id=job_id)
-        raise ValueError(NONE_JOB_ERROR_TEMPLATE.format(job_type.value, "Downloader", job_id))
-    elif job_type is ProcessorPipeline.NONE:
-        logger.warn("Not queuing %s job.", job_type, job_id=job_id)
-        raise ValueError(NONE_JOB_ERROR_TEMPLATE.format(job_type.value, "Processor", job_id))
     elif job_type in list(Downloaders):
         nomad_job = NOMAD_DOWNLOADER_JOB
     else:
@@ -59,13 +53,11 @@ def send_job(job_type: Enum, job) -> None:
     logger.info("Queuing %s nomad job to run job %s with id %d.",
                 nomad_job,
                 job_type.value,
-                job.id)
+                job_id)
     try:
-        nomad_response = nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,
-                                                                        "JOB_ID": str(job.id)})
-        job.nomad_job_id = nomad_response["DispatchedJobID"]
-        job.save()
+        nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,
+                                                       "JOB_ID": str(job_id)})
     except URLNotFoundNomadException:
         logger.error("Dispatching Nomad job of type %s to host %s and port %s failed.",
-                     job_type, nomad_host, nomad_port, job=str(job))
+                     job_type, nomad_host, nomad_port)
         raise
