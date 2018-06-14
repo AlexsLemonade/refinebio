@@ -221,7 +221,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     logger.info("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",
                 last_job.id,
                 new_job.id)
-    send_job(ProcessorPipeline[last_job.pipeline_applied], new_job.id)
+    send_job(ProcessorPipeline[last_job.pipeline_applied], new_job)
 
     last_job.retried = True
     last_job.success = False

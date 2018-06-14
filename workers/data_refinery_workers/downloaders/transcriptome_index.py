@@ -119,7 +119,7 @@ def create_long_and_short_processor_jobs(files_to_process):
         assoc.processor_job = processor_job_long
         assoc.save()
 
-    send_job(ProcessorPipeline[processor_job_long.pipeline_applied], processor_job_long.id)
+    send_job(ProcessorPipeline[processor_job_long.pipeline_applied], processor_job_long)
 
     processor_job_short = ProcessorJob()
     processor_job_short.pipeline_applied = "TRANSCRIPTOME_INDEX_SHORT"
@@ -132,4 +132,5 @@ def create_long_and_short_processor_jobs(files_to_process):
         assoc.processor_job = processor_job_short
         assoc.save()
 
-    send_job(ProcessorPipeline[processor_job_short.pipeline_applied], processor_job_short.id)
+    send_job(ProcessorPipeline[processor_job_short.pipeline_applied], processor_job_short)
+
