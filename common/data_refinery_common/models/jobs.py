@@ -76,11 +76,13 @@ class ProcessorJob(models.Model):
     pipeline_applied = models.CharField(max_length=256)
 
     original_files = models.ManyToManyField('OriginalFile', through='ProcessorJobOriginalFileAssociation')
+    data_sets = models.ManyToManyField('DataSet', through='ProcessorJobDataSetAssociation')
 
     # Tracking
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
     success = models.NullBooleanField(null=True)
+    nomad_job_id = models.CharField(max_length=256, null=True)
 
     # This field represents how many times this job has been
     # retried. It starts at 0 and each time the job has to be retried
@@ -138,6 +140,7 @@ class DownloaderJob(models.Model):
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
     success = models.NullBooleanField(null=True)
+    nomad_job_id = models.CharField(max_length=256, null=True)
 
     # This field represents how many times this job has been
     # retried. It starts at 0 and each time the job has to be retried
@@ -159,6 +162,9 @@ class DownloaderJob(models.Model):
 
     # This field allows jobs to specify why they failed.
     failure_reason = models.TextField(null=True)
+
+    # If the job is retried, this is the id of the new job
+    retried_job = models.ForeignKey('self', on_delete=models.PROTECT, null=True)
 
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)

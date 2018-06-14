@@ -169,7 +169,7 @@ class DatasetView(generics.RetrieveUpdateAPIView):
 
                 # Hidden method of non-dispatching for testing purposes.
                 if not self.request.data.get('no_send_job', False):
-                    send_job(ProcessorPipeline.SMASHER, processor_job.id)
+                    send_job(ProcessorPipeline.SMASHER, processor_job)
 
                 serializer.validated_data['is_processing'] = True
                 obj = serializer.save()
