@@ -18,6 +18,7 @@ from data_refinery_common.models import (
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.utils import get_env_variable
 
 
 logger = get_and_configure_logger(__name__)
@@ -53,7 +54,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
     new_job.save()
 
     for original_file in last_job.original_files.all():
-        DownloaderJobOriginalFileAssociation.get_or_create(downloader_job=new_job,
+        DownloaderJobOriginalFileAssociation.objects.get_or_create(downloader_job=new_job,
                                                            original_file=original_file)
 
     logger.info("Requeuing Downloader Job which had ID %d with a new Downloader Job with ID %d.",
@@ -205,16 +206,16 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     """
     num_retries = last_job.num_retries + 1
 
-    new_job = DownloaderJob(num_retries=num_retries,
+    new_job = ProcessorJob(num_retries=num_retries,
                             pipeline_applied=last_job.pipeline_applied)
     new_job.save()
 
     for original_file in last_job.original_files.all():
-        ProcessorJobOriginalFileAssociation.get_or_create(processor_job=new_job,
+        ProcessorJobOriginalFileAssociation.objects.get_or_create(processor_job=new_job,
                                                           original_file=original_file)
 
     for data_set in last_job.data_sets.all():
-        ProcessorJobDataSetAssociation.get_or_create(processor_job=new_job,
+        ProcessorJobDataSetAssociation.objects.get_or_create(processor_job=new_job,
                                                      data_set=data_set)
 
     logger.info("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",

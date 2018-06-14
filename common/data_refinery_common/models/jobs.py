@@ -76,6 +76,7 @@ class ProcessorJob(models.Model):
     pipeline_applied = models.CharField(max_length=256)
 
     original_files = models.ManyToManyField('OriginalFile', through='ProcessorJobOriginalFileAssociation')
+    data_sets = models.ManyToManyField('DataSet', through='ProcessorJobDataSetAssociation')
 
     # Tracking
     start_time = models.DateTimeField(null=True)
