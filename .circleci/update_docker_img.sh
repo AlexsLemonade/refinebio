@@ -66,7 +66,6 @@ docker push "$FOREMAN_DOCKER_IMAGE:latest"
 
 # Build and push API image
 API_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_api"
-# docker tag "$API_DOCKER_IMAGE" "$API_DOCKER_IMAGE:$CIRCLE_TAG"
 docker build -t "$API_DOCKER_IMAGE:$CIRCLE_TAG" -f api/dockerfiles/Dockerfile.api_production .
 docker push "$API_DOCKER_IMAGE:$CIRCLE_TAG"
 # Update latest version

@@ -67,8 +67,6 @@ variable "dockerhub_repo" {
   default = "ccdlstaging"
 }
 
-# These are placeholders until there are production images ready.
-# We should not use the latest tag here, instead specifying a specific tag.
 variable "downloaders_docker_image" {
   default = "dr_downloaders:latest"
 }
@@ -134,8 +132,7 @@ variable "api_instance_type" {
   default = "t2.large"
 }
 
-# Output our production environment variables. These should be in
-# parity with the env files such as workers/environments/local.
+# Output our production environment variables.
 output "environment_variables" {
   value = [
     {name = "REGION"

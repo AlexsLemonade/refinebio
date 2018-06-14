@@ -308,6 +308,10 @@ resource "aws_autoscaling_group" "clients" {
     health_check_grace_period = 300
     health_check_type = "EC2"
     desired_capacity = 1
+
+    # Super important flag. Makes it so that terraform doesn't fail
+    # every time because it can't acquire spot instances fast enough
+    # for the autoscaling group.
     wait_for_capacity_timeout = "0"
     force_delete = true
     launch_configuration = "${aws_launch_configuration.auto_client_configuration.name}"
