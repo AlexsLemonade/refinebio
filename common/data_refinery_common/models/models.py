@@ -125,7 +125,6 @@ class Sample(models.Model):
         """ Returns a list of related pipelines """
         return [p for p in self.results.values_list('pipeline', flat=True).distinct()]
 
-
 class SampleAnnotation(models.Model):
 
     """ Semi-standard information associated with a Sample """
@@ -231,6 +230,10 @@ class Experiment(models.Model):
 
         return metadata
 
+    @property
+    def platforms(self):
+        """ Returns a list of related pipelines """
+        return [p for p in self.samples.values_list('platform_name', flat=True).distinct()]
 
 class ExperimentAnnotation(models.Model):
 
