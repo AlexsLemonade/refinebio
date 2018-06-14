@@ -47,7 +47,7 @@ class NOOPTestCase(TestCase):
         assoc1.processor_job = job
         assoc1.save()
 
-        no_op.no_op_processor(job.pk)
+        final_context = no_op.no_op_processor(job.pk)
 
         # No header - ex 
         # AFFX-BioB-3_at  0.74218756

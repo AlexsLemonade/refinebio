@@ -156,7 +156,7 @@ def _create_result(job_context: Dict) -> Dict:
     return job_context
 
 def no_op_processor(job_id: int) -> None:
-    utils.run_pipeline({"job_id": job_id},
+    return utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
                         _prepare_files,
                         _convert_genes,
