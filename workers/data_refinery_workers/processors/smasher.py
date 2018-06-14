@@ -94,7 +94,14 @@ def _smash(job_context: Dict) -> Dict:
                 # If there are any _versioned_ gene identifiers, remove that
                 # version information. We're using the latest brainarray for everything anyway. 
                 # Jackie says this is okay.
-                data.index = data.index.str.replace(r"\..*$", '')
+                # She also says that in the future, we may only want to do this
+                # for cross-technology smashes.
+
+                # This regex needs to be able to handle EGIDs in the form:
+                #       ENSGXXXXYYYZZZZ.6
+                # and
+                #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg.7__3016__AT5G35080.1;db=core)
+                data.index = data.index.str.replace(r"(\.[^.]*)$", '')
 
                 # Squish duplicated rows together.
                 # XXX/TODO: Is mean the appropriate method here? 
