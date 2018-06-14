@@ -402,6 +402,7 @@ data "template_file" "api_server_script_smusher" {
   vars {
     nginx_config = "${data.local_file.api_nginx_config.content}"
     api_environment = "${data.local_file.api_environment.content}"
+    dockerhub_repo = "${var.api_docker_image}"
     api_docker_image = "${var.api_docker_image}"
     user = "${var.user}"
     stage = "${var.stage}"
