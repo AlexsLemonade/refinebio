@@ -13,7 +13,7 @@ library("optparse")
 library(data.table)
 
 option_list = list(
-  make_option(c("-p", "--platform"), type="character", default="illuminaHumanv4", 
+  make_option(c("-p", "--platform"), type="character", default="", 
               help="Platform", metavar="character"),
   make_option(c("-i", "--inputFile"), type="character", default="", 
               help="inputFile", metavar="character"),
@@ -32,23 +32,63 @@ outFilePath <- opt$outputFile
 message("Loading...")
 source("http://bioconductor.org/biocLite.R")
 
-#biocLite(paste(platform, ".db", sep="")) # This is handled at the image level
-library(paste(platform, ".db", sep=""), character.only=TRUE)
 library(Biobase)
 library("AnnotationDbi")
 
 # Read the data file
 message("Reading data file...")
-suppressWarnings(data <- fread(filePath, stringsAsFactors=FALSE, sep="\t", header=TRUE, autostart=10, data.table=FALSE, check.names=FALSE, fill=TRUE, na.strings="", showProgress=FALSE))
+suppressWarnings(data <- fread(filePath, 
+					stringsAsFactors=FALSE, 
+					sep="\t", header=TRUE, 
+					autostart=10, 
+					data.table=FALSE, 
+					check.names=FALSE, 
+					fill=TRUE, 
+					na.strings="", 
+					showProgress=FALSE)
+				)
 
-# Build a PROBEID:ENSEMBL map
-res <- select(get(paste0(platform, ".db", sep="")), keys=data$ID_REF, columns=c("ENSEMBL"), keytype="PROBEID")
+# Read the data file
+message("Reading master index...")
+index_path = paste0('zcat /home/user/data_store/gene_indexes/', platform, '.tsv.gz')
+suppressWarnings(index_data <- fread(index_path, 
+					stringsAsFactors=FALSE, 
+					sep="\t", 
+					header=TRUE, 
+					autostart=10, 
+					data.table=FALSE, 
+					check.names=FALSE, 
+					fill=TRUE, 
+					na.strings="", 
+					showProgress=FALSE)
+				)
+
+# we'll call these the supported identifiers
+supported_ids <- c("PROBEID", "ENTREZID", "SYMBOL", "ENSEMBL", "UNIGENE")
+
+# message(index_data)
+# res <- select(index_data, keys=keys(index_data), columns=supported_ids)
+
+# find % overlap by column
+overlap <- apply(index_data, 2, function(x) length(intersect(data$ID_REF, x)) / length(data$ID_REF))
+
+# threshold here can be adjusted
+# if (any(overlap > 0.9)) {
+if (any(overlap > 0.6)) {
+	# take column name with highest overlap value 
+  	# overlap is a named numeric vector
+  	detected_id <- names(which.max(overlap))
+} else {
+  	stop("Not enough overlapping ids detected!")
+}
 
 # Replace the probe IDs with Ensembles
 i <- 0
+c <- which( colnames(index_data) == detected_id )
+
 for(m in data[, 1]){
-  data[i, 1] = res[i, 2]
-  i <- i + 1;
+	data[i, 1] = index_data[i, c]
+	i <- i + 1;
 }
 
 # Remove all of the unmapped (NA) values (likely control probes?)
