@@ -92,4 +92,4 @@ openssl aes-256-cbc -e -in $TFSTATE_BAK -out $TFSTATE_BAK.enc -k $OPENSSL_KEY
 aws s3 cp $TFSTATE.enc s3://$BUCKET_NAME/
 aws s3 cp $TFSTATE_BAK.enc s3://$BUCKET_NAME/
 
-exit exit_code
+exit $exit_code
