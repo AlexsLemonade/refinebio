@@ -58,7 +58,7 @@ def import_data(file_handle, git_tag):
     with transaction.atomic():
         for line_index, line in enumerate(file_handle):
             line = line.strip()
-              # Skip lines that are blank or start with "#"
+            # Skip lines that are blank or start with "#"
             if len(line) == 0 or line.startswith('#'):
                 continue
 
