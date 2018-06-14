@@ -82,6 +82,7 @@ fi
 
 # New deployment
 TF_VAR_user=circleci TF_VAR_stage=$ENVIRONMENT ./deploy.sh -e $ENVIRONMENT
+exit_code=$?
 
 # Encrypt new tfstate files
 openssl aes-256-cbc -e -in $TFSTATE -out $TFSTATE.enc -k $OPENSSL_KEY
@@ -90,3 +91,5 @@ openssl aes-256-cbc -e -in $TFSTATE_BAK -out $TFSTATE_BAK.enc -k $OPENSSL_KEY
 # Upload encrypted tfstate files back to S3
 aws s3 cp $TFSTATE.enc s3://$BUCKET_NAME/
 aws s3 cp $TFSTATE_BAK.enc s3://$BUCKET_NAME/
+
+exit exit_code
