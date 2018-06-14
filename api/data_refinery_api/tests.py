@@ -327,3 +327,9 @@ class ProgramTestCases(APITestCase):
     def test_endpoint(self):
         response = self.client.get(reverse('programs'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        programs = response.json()
+        self.assertEqual(programs[0]['name'], 'salmon')
+        self.assertEqual(programs[0]['version'], '0.9.1')
+        self.assertEqual(programs[1]['name'], 'salmontools')
+        self.assertEqual(programs[1]['version'], '0.1.0')
