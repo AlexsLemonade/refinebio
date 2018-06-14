@@ -65,7 +65,7 @@ resource "aws_s3_bucket" "data_refinery_results_bucket" {
 }
 
 resource "aws_s3_bucket" "data-refinery-static" {
-  bucket = "staging.refine.bio"
+  bucket = "${var.static_bucket_name}"
 
   cors_rule {
     allowed_origins = ["*"]

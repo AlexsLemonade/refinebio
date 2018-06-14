@@ -13,6 +13,10 @@ variable "stage" {
   default = "dev"
 }
 
+variable "static_bucket_name" {
+  default = "staging.refine.bio"
+}
+
 variable "region" {
   default = "us-east-1"
 }

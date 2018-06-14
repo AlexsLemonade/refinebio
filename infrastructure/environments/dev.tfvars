@@ -1,3 +1,4 @@
+static_bucket_name = "${var.user}.refine.bio"
 database_password = "drpostgrespassword"
 database_instance_type = "t2.micro"
 django_secret_key = "NtG1bxZU115GThwrLuAJe0PhTVN9hJ4P"
