@@ -228,15 +228,37 @@ class APITestCases(APITestCase):
         ex.submitter_institution = "Funkytown"
         experiments.append(ex)
 
-        ex = Experiment()
-        ex.accession_code = "FINDME2"
-        ex.title = "THISWILLBEINASEARCHRESULT"
-        ex.description = "SOWILLTHIS"
-        ex.technology = "RNA-SEQ"
-        ex.submitter_institution = "Funkytown"
-        experiments.append(ex)
+        ex2 = Experiment()
+        ex2.accession_code = "FINDME2"
+        ex2.title = "THISWILLBEINASEARCHRESULT"
+        ex2.description = "SOWILLTHIS"
+        ex2.technology = "RNA-SEQ"
+        ex2.submitter_institution = "Funkytown"
+        experiments.append(ex2)
+
+        sample1 = Sample()
+        sample1.title = "1123"
+        sample1.accession_code = "1123"
+        sample1.platform_name = "AFFY"
+        sample1.save()
+
+        sample2 = Sample()
+        sample2.title = "3345"
+        sample2.accession_code = "3345"
+        sample2.platform_name = "ILLUMINA"
+        sample2.save()
 
         Experiment.objects.bulk_create(experiments)
+
+        experiment_sample_association = ExperimentSampleAssociation()
+        experiment_sample_association.sample = sample1
+        experiment_sample_association.experiment = ex
+        experiment_sample_association.save()
+
+        experiment_sample_association = ExperimentSampleAssociation()
+        experiment_sample_association.sample = sample2
+        experiment_sample_association.experiment = ex
+        experiment_sample_association.save()
 
         # Test all
         response = self.client.get(reverse('search'))
@@ -252,6 +274,9 @@ class APITestCases(APITestCase):
                                     'technology': 'MICROARRAY'})
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME')
+        self.assertEqual(len(response.json()['results'][0]['platforms']), 2)
+        self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(ex.platforms))
+        self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(['AFFY', 'ILLUMINA']))
 
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
