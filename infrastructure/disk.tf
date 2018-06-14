@@ -62,5 +62,23 @@ resource "aws_s3_bucket" "data_refinery_results_bucket" {
       days = 1
     }
   }
+}
 
+resource "aws_s3_bucket" "data-refinery-static" {
+  bucket = "refine.bio"
+
+  cors_rule {
+    allowed_origins = ["*"]
+    allowed_methods = ["GET"]
+    max_age_seconds = 3000
+    allowed_headers = ["Authorization"]
+  }
+
+  tags {
+    Name = "data-refinery-static-site-${var.user}-${var.stage}"
+  }
+
+  website {
+    index_document = "index.html"
+  }
 }

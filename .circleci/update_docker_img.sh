@@ -46,15 +46,15 @@ cd ~/refinebio/common && python setup.py sdist
 docker login -u $DOCKER_ID -p $DOCKER_PASSWD
 
 cd ~/refinebio
-# for IMG in $CCDL_WORKER_IMGS; do
-#     image_name="$DOCKERHUB_REPO/dr_$IMG"
-#     # Build and push image
-#     docker build -t $image_name:$CIRCLE_TAG -f workers/dockerfiles/Dockerfile.$IMG .
-#     docker push $image_name:$CIRCLE_TAG
-#     # Update latest version
-#     docker tag $image_name:$CIRCLE_TAG $image_name:latest
-#     docker push $image_name:latest
-# done
+for IMG in $CCDL_WORKER_IMGS; do
+    image_name="$DOCKERHUB_REPO/dr_$IMG"
+    # Build and push image
+    docker build -t $image_name:$CIRCLE_TAG -f workers/dockerfiles/Dockerfile.$IMG .
+    docker push $image_name:$CIRCLE_TAG
+    # Update latest version
+    docker tag $image_name:$CIRCLE_TAG $image_name:latest
+    docker push $image_name:latest
+done
 
 # Build and push foreman image
 FOREMAN_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_foreman"
