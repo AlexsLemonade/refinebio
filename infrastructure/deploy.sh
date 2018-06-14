@@ -78,6 +78,7 @@ fi
 cp deploy/ci_ingress.tf .
 
 if [[ ! -f terraform.tfstate ]]; then
+    ran_init_build=true
     echo "No terraform state file found, initializing and applying initial terraform deployment."
     terraform init
 
@@ -98,13 +99,15 @@ format_environment_variables
 
 ../format_nomad_with_env.sh -p api -e $env -o $(pwd)/api-configuration/
 
-# Open up ingress to AWS for Circle, stop jobs, migrate DB.
-echo "Deploying with ingress.."
+if [[ -z $ran_init_build ]]; then
+    # Open up ingress to AWS for Circle, stop jobs, migrate DB.
+    echo "Deploying with ingress.."
 
-# Output the plan for debugging deployments later.
-terraform plan
+    # Output the plan for debugging deployments later.
+    terraform plan
 
-terraform apply -var-file=environments/$env.tfvars -auto-approve
+    terraform apply -var-file=environments/$env.tfvars -auto-approve
+fi
 
 # Find address of Nomad server.
 export NOMAD_LEAD_SERVER_IP=`terraform output nomad_server_1_ip`
