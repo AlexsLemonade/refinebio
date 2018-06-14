@@ -1,4 +1,6 @@
 import time
+import nomad
+from nomad.api.exceptions import URLNotFoundNomadException
 from typing import Callable, List
 from threading import Thread
 from functools import wraps
@@ -8,7 +10,10 @@ from django.utils import timezone
 from django.db import transaction
 from data_refinery_common.models import (
     DownloaderJob,
-    ProcessorJob
+    ProcessorJob,
+    DownloaderJobOriginalFileAssociation,
+    ProcessorJobOriginalFileAssociation,
+    ProcessorJobDatasetAssociation
 )
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
@@ -27,9 +32,8 @@ MAX_DOWNLOADER_RUN_TIME = timedelta(days=1)
 MAX_PROCESSOR_RUN_TIME = timedelta(days=1)
 MAX_QUEUE_TIME = timedelta(days=1)
 
-# To prevent excessive spinning loop no more than once every 10
-# seconds.
-MIN_LOOP_TIME = timedelta(seconds=10)
+# To prevent excessive spinning loop no more than once every 30 minutes.
+MIN_LOOP_TIME = timedelta(minutes=30)
 THREAD_WAIT_TIME = 10.0
 
 
@@ -43,13 +47,19 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
     """
     num_retries = last_job.num_retries + 1
 
-    new_job = DownloaderJob.create_job_and_relationships(num_retries=num_retries,
-                                                         batches=list(last_job.batches.all()),
-                                                         downloader_task=last_job.downloader_task)
+    new_job = DownloaderJob(num_retries=num_retries,
+                            downloader_task=last_job.downloader_task,
+                            accession_code=last_job.accession_code)
+    new_job.save()
+
+    for original_file in last_job.original_files.all():
+        DownloaderJobOriginalFileAssociation.get_or_create(downloader_job=new_job,
+                                                           original_file=original_file)
+
     logger.info("Requeuing Downloader Job which had ID %d with a new Downloader Job with ID %d.",
                 last_job.id,
                 new_job.id)
-    send_job(Downloaders[last_job.downloader_task], new_job.id)
+    send_job(Downloaders[last_job.downloader_task], new_job)
 
     last_job.retried = True
     last_job.success = False
@@ -69,9 +79,9 @@ def handle_repeated_failure(job) -> None:
     job.save()
 
     # At some point this should become more noisy/attention
-    # grabbing. However for the time just logging should be sufficient
-    # because all log messages will be closely monitored during early
-    # testing stages.
+    # grabbing. However for the time being just logging should be
+    # sufficient because all log messages will be closely monitored
+    # during early testing stages.
     logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1)
 
 
@@ -119,12 +129,27 @@ def retry_failed_downloader_jobs() -> None:
 def retry_hung_downloader_jobs() -> None:
     """Retry downloader jobs that were started but never finished."""
     minimum_start_time = timezone.now() - MAX_DOWNLOADER_RUN_TIME
-    hung_jobs = DownloaderJob.objects.filter(
+    potentially_hung_jobs = DownloaderJob.objects.filter(
         success=None,
         retried=False,
         end_time=None,
         start_time__lt=minimum_start_time
     )
+
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    hung_jobs = []
+    for job in potentially_hung_jobs:
+        try:
+            job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+            if job_status != "running":
+                # Make sure it didn't finish since our original query.
+                job.refresh_from_db()
+                if job.end_time is None:
+                    hung_jobs.append(job)
+        except URLNotFoundNomadException:
+            hung_jobs.append(job)
 
     handle_downloader_jobs(hung_jobs)
 
@@ -141,13 +166,31 @@ def retry_lost_downloader_jobs() -> None:
     price.
     """
     minimum_creation_time = timezone.now() - MAX_QUEUE_TIME
-    lost_jobs = DownloaderJob.objects.filter(
+    potentially_lost_jobs = DownloaderJob.objects.filter(
         success=None,
         retried=False,
         start_time=None,
         end_time=None,
         created_at__lt=minimum_creation_time
     )
+
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    lost_jobs = []
+    for job in potentially_lost_jobs:
+        try:
+            job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+            # If the job is still pending, then it makes sense that it hasn't started.
+            if job_status is not "pending":
+                # However if it's not pending, then it may have
+                # started since our original query.
+                job.refresh_from_db()
+                if job.start_time is None:
+                    # Nope, this job is lost.
+                    lost_jobs.append(job)
+        except URLNotFoundNomadException:
+            lost_jobs.append(job)
 
     handle_downloader_jobs(lost_jobs)
 
@@ -162,9 +205,18 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     """
     num_retries = last_job.num_retries + 1
 
-    new_job = ProcessorJob.create_job_and_relationships(num_retries=num_retries,
-                                                        batches=list(last_job.batches.all()),
-                                                        pipeline_applied=last_job.pipeline_applied)
+    new_job = DownloaderJob(num_retries=num_retries,
+                            pipeline_applied=last_job.pipeline_applied)
+    new_job.save()
+
+    for original_file in last_job.original_files.all():
+        ProcessorJobOriginalFileAssociation.get_or_create(processor_job=new_job,
+                                                          original_file=original_file)
+
+    for data_set in last_job.data_sets.all():
+        ProcessorJobDataSetAssociation.get_or_create(processor_job=new_job,
+                                                     data_set=data_set)
+
     logger.info("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",
                 last_job.id,
                 new_job.id)
@@ -196,28 +248,60 @@ def retry_failed_processor_jobs() -> None:
 def retry_hung_processor_jobs() -> None:
     """Retry processor jobs that were started but never finished."""
     minimum_start_time = timezone.now() - MAX_PROCESSOR_RUN_TIME
-    hung_jobs = ProcessorJob.objects.filter(
+    potentially_hung_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
         end_time=None,
         start_time__lt=minimum_start_time
     )
 
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    hung_jobs = []
+    for job in potentially_hung_jobs:
+        try:
+            job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+            if job_status != "running":
+                # Make sure it didn't finish since our original query.
+                job.refresh_from_db()
+                if job.end_time is None:
+                    hung_jobs.append(job)
+        except URLNotFoundNomadException:
+            hung_jobs.append(job)
+
     handle_processor_jobs(hung_jobs)
 
 
 @do_forever(MIN_LOOP_TIME)
 def retry_lost_processor_jobs() -> None:
-    """Retry processor jobs who never even got started for too long."""
+    """Retry processor jobs which never even got started for too long."""
     minimum_creation_time = timezone.now() - MAX_QUEUE_TIME
-    lost_jobs = ProcessorJob.objects.filter(
+    potentially_lost_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
         start_time=None,
         end_time=None,
         created_at__lt=minimum_creation_time
-        # TEMPORARY for Jackie's grant
-    ).exclude(pipeline_applied=ProcessorPipeline.NONE.value)
+    )
+
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    lost_jobs = []
+    for job in potentially_lost_jobs:
+        try:
+            job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+            # If the job is still pending, then it makes sense that it hasn't started.
+            if job_status is not "pending":
+                # However if it's not pending, then it may have
+                # started since our original query.
+                job.refresh_from_db()
+                if job.start_time is None:
+                    # Nope, this job is lost.
+                    lost_jobs.append(job)
+        except URLNotFoundNomadException:
+            lost_jobs.append(job)
 
     handle_processor_jobs(lost_jobs)
 

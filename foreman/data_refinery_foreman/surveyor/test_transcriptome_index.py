@@ -36,7 +36,7 @@ class SurveyTestCase(TestCase):
         for downloader_job in downloader_jobs:
             send_job_calls.append(
                 call(Downloaders.TRANSCRIPTOME_INDEX,
-                     downloader_job.id))
+                     downloader_job))
 
         mock_send_job.assert_has_calls(send_job_calls)
 
