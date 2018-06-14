@@ -11,7 +11,8 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
     ComputedFile,
-    Dataset
+    Dataset,
+    Program
 )
 
 ##
@@ -414,3 +415,18 @@ class DatasetSerializer(serializers.ModelSerializer):
         except Exception:
             raise
         return data
+
+
+##
+# Programs used in various pipelines.
+##
+class ProgramSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Program
+        fields = (
+            'name',
+            'version',
+            'command',
+            'system_version'
+        )

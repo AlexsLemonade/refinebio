@@ -20,6 +20,7 @@ from data_refinery_api.views import (
     DownloaderJobList,
     ProcessorJobList,
     ResultsList,
+    ProgramList,
     Stats,
     CreateDatasetView,
     DatasetView
@@ -93,6 +94,7 @@ urlpatterns = [
     url(r'^platforms/$', PlatformList.as_view(), name="platforms"),
     url(r'^institutions/$', InstitutionList.as_view(), name="institutions"),
     url(r'^results/$', ResultsList.as_view(), name="results"),
+    url(r'^programs/$', ProgramList.as_view(), name="programs"),
 
     # Deliverables
     url(r'^dataset/$', DatasetRoot.as_view(), name="dataset_root"),
@@ -120,4 +122,3 @@ urlpatterns = [
 
 # This adds support explicitly typed endpoints such that appending '.json' returns that application type.
 urlpatterns = format_suffix_patterns(urlpatterns)
-

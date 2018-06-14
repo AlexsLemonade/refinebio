@@ -22,7 +22,8 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     ComputationalResult,
     SampleResultAssociation,
-    Dataset
+    Dataset,
+    Program
 )
 from data_refinery_api.serializers import (
     ExperimentSerializer,
@@ -32,6 +33,7 @@ from data_refinery_api.serializers import (
     OrganismSerializer,
     PlatformSerializer,
     InstitutionSerializer,
+    ProgramSerializer,
 
     # Jobs
     SurveyJobSerializer,
@@ -306,3 +308,22 @@ class APITestCases(APITestCase):
         response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
         self.assertEqual(response.json()["is_processing"], True)
 
+
+class ProgramTestCases(APITestCase):
+    def setUp(self):
+        Program.objects.create(
+            name="salmon",
+            version="0.9.1",
+            command="salmon quant -i <index_dir> -r <input_file> -o <output_dir>",
+            system_version="0.83"
+        )
+        Program.objects.create(
+            name="salmontools",
+            version="0.1.0",
+            command="salmontools extract-unmapped -u <file> -o <output> -r <data_file>",
+            system_version="0.83"
+        )
+
+    def test_endpoint(self):
+        response = self.client.get(reverse('programs'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

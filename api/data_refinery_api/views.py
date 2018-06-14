@@ -19,6 +19,7 @@ from data_refinery_common.models import (
     Sample,
     Organism,
     ComputationalResult,
+    Program,
     DownloaderJob,
     SurveyJob,
     ProcessorJob,
@@ -34,6 +35,7 @@ from data_refinery_api.serializers import (
     PlatformSerializer,
     InstitutionSerializer,
     ComputationalResultSerializer,
+    ProgramSerializer,
 
     # Job
     SurveyJobSerializer,
@@ -436,3 +438,11 @@ class Stats(APIView):
         data['processor_jobs']['average_time'] = ProcessorJob.objects.filter(start_time__isnull=False, end_time__isnull=False).aggregate(average_time=Avg(F('end_time') - F('start_time')))['average_time']
 
         return Response(data)
+
+
+class ProgramList(APIView):
+    """All programs used by pipelines"""
+    def get(self, request, format=None):
+        programs = Program.objects.all()
+        serializer = ProgramSerializer(programs, many=True)
+        return Response(serializer.data)
