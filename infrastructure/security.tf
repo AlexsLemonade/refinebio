@@ -89,6 +89,16 @@ resource "aws_security_group_rule" "data_refinery_worker_nomad_serf_udp" {
   security_group_id = "${aws_security_group.data_refinery_worker.id}"
 }
 
+# Allow statsd updates from clients to lead server. See:
+resource "aws_security_group_rule" "data_refinery_statsd" {
+  type = "ingress"
+  from_port = 8125
+  to_port = 8125
+  protocol = "udp"
+  self = true
+  security_group_id = "${aws_security_group.data_refinery_worker.id}"
+}
+
 # Allow SSH connections to Nomad instances. This is pretty much the
 # only way to debug issues until we get the Nomad UI up and running.
 # XXX: THIS DEFINITELY NEEDS TO BE REMOVED LONG TERM!!!!!!!!!!
