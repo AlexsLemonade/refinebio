@@ -92,7 +92,7 @@ class SearchAndFilter(generics.ListAPIView):
 
     """
 
-    queryset = Experiment.objects.all()
+    queryset = Experiment.public_objects.all()
     serializer_class = ExperimentSerializer
     pagination_class = LimitOffsetPagination
 
@@ -197,7 +197,7 @@ class ExperimentList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         filter_dict.pop('limit', None)
         filter_dict.pop('offset', None)
-        experiments = Experiment.objects.filter(**filter_dict)
+        experiments = Experiment.public_objects.filter(**filter_dict)
 
         page = self.paginate_queryset(experiments)
         if page is not None:
@@ -213,7 +213,7 @@ class ExperimentDetail(APIView):
     """
     def get_object(self, pk):
         try:
-            return Experiment.objects.get(pk=pk)
+            return Experiment.public_objects.get(pk=pk)
         except Experiment.DoesNotExist:
             raise Http404
 
@@ -247,7 +247,7 @@ class SampleList(PaginatedAPIView):
             ids = [ int(x) for x in ids.split(',')]
             filter_dict['pk__in'] = ids
 
-        samples = Sample.objects.filter(**filter_dict)
+        samples = Sample.public_objects.filter(**filter_dict)
         if order_by:
             samples = samples.order_by(order_by)
 
@@ -265,7 +265,7 @@ class SampleDetail(APIView):
     """
     def get_object(self, pk):
         try:
-            return Sample.objects.get(pk=pk)
+            return Sample.public_objects.get(pk=pk)
         except Sample.DoesNotExist:
             raise Http404
 
@@ -290,7 +290,7 @@ class ResultsList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         filter_dict.pop('limit', None)
         filter_dict.pop('offset', None)
-        results = ComputationalResult.objects.filter(**filter_dict)
+        results = ComputationalResult.public_objects.filter(**filter_dict)
 
         page = self.paginate_queryset(results)
         if page is not None:
@@ -321,7 +321,7 @@ class PlatformList(APIView):
 	"""
 
     def get(self, request, format=None):
-        samples = Sample.objects.all().values("platform_accession_code", "platform_name").distinct()
+        samples = Sample.public_objects.all().values("platform_accession_code", "platform_name").distinct()
         serializer = PlatformSerializer(samples, many=True)
         return Response(serializer.data)
 
@@ -331,7 +331,7 @@ class InstitutionList(APIView):
 	"""
 
     def get(self, request, format=None):
-        experiments = Experiment.objects.all().values("submitter_institution").distinct()
+        experiments = Experiment.public_objects.all().values("submitter_institution").distinct()
         serializer = InstitutionSerializer(experiments, many=True)
         return Response(serializer.data)
 

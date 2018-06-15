@@ -161,6 +161,7 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 class ExperimentSerializer(serializers.ModelSerializer):
     organisms = serializers.StringRelatedField(many=True)
     platforms = serializers.ReadOnlyField()
+    samples = serializers.StringRelatedField(many=True)
 
     class Meta:
         model = Experiment
@@ -258,7 +259,6 @@ class OriginalFileSerializer(serializers.ModelSerializer):
                     'is_archive',
                     'has_raw',
                     'is_downloaded',
-                    'is_processed',
                     'created_at',
                     'last_modified'
                 )
