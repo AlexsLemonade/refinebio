@@ -67,6 +67,9 @@ def import_data(file_handle, git_tag):
                 raise Exception("Input file line #%: number of columns is not 3" %
                                 (line_index + 1))
 
+            if tokens[2] == 'N/A':   # Skip lines whose "command" field is "N/A"
+                continue
+
             Program.objects.create(name=tokens[0],
                                    version=tokens[1],
                                    command=tokens[2],
