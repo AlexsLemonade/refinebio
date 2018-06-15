@@ -33,13 +33,6 @@ platform <- opt$platform
 filePath <- opt$inputFile
 outFilePath <- opt$outputFile
 
-# Get and use this DB
-message("Loading...")
-source("http://bioconductor.org/biocLite.R")
-
-# library(Biobase)
-# library("AnnotationDbi")
-
 # Read the data file
 message("Reading data file...")
 suppressWarnings(data <- fread(filePath, 
@@ -83,15 +76,6 @@ if (any(overlap >= 0.5)) {
 
 message("Merging..")
 colnames(data)[1] <- detected_id
-#merged <- merge(data, index_data, by=detected_id, all.x=TRUE)
-
-# Old version - R has 'choose the first' behavior
-#out<-join(df1, df2, type="full")
-
-# Take 2
-# merged <- dplyr::inner_join(data, index_data, by=detected_id)
-# message(head(merged))
-
 converted_exprs <- index_data %>%  
   dplyr::select(c("ENSEMBL", detected_id)) %>%  # sub "ENSEMBL" for "GENEID"
   dplyr::inner_join(data, by = detected_id)
@@ -100,21 +84,6 @@ converted_exprs <- converted_exprs %>%
   dplyr::select(-rlang::UQ(rlang::sym(detected_id)))
 
 message(head(converted_exprs))
-
-# data <- merged[, c(3,2)]
-
-# message("Replacing..")
-# # Replace the probe IDs with Ensembles
-# i <- 0
-# c <- which( colnames(index_data) == detected_id )
-# ec <- which( colnames(index_data) == "ENSEMBL" )
-# for(m in data[, 1]){
-# 	data[i, 1] = index_data[i, ec]
-# 	i <- i + 1;
-# }
-
-# Remove all of the unmapped (NA) values (likely control probes?)
-# data <- data[complete.cases(data), ]
 
 # Data here can have duplicate rows that need to be squished together (via mean/max/etc),
 # but this should be done at smash-time so that we can provide options on the squish method.
