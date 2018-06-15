@@ -80,6 +80,18 @@ def end_job(job_context: Dict):
     else:
         success = True
 
+    if job_context["success"] and job_context["job"].pipeline_applied != "SMASHER":
+        # This handles most of our cases
+        for sample in job_context["samples"]:
+            sample.is_processed = True
+            sample.save()
+
+        # Explicitly for the single-salmon scenario
+        if 'sample' in job_context:
+            sample = job_context['sample']
+            sample.is_processed = True
+            sample.save()
+
     job.success = success
     job.end_time = timezone.now()
     job.save()
