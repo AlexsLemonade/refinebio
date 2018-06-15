@@ -24,7 +24,7 @@ option_list = list(
               help="inputFile", metavar="character"),
   make_option(c("-o", "--outputFile"), type="character", default="", 
               help="outputFile", metavar="character")
-); 
+)
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
@@ -35,7 +35,7 @@ outFilePath <- opt$outputFile
 
 # Read the data file
 message("Reading data file...")
-suppressWarnings(data <- fread(filePath, 
+suppressWarnings(exprs <- fread(filePath, 
 					stringsAsFactors=FALSE, 
 					sep="\t", header=TRUE, 
 					autostart=10, 
@@ -49,7 +49,7 @@ suppressWarnings(data <- fread(filePath,
 # Read the data file
 message("Reading master index...")
 index_path = paste0('zcat /home/user/gene_indexes/', platform, '.tsv.gz')
-suppressWarnings(index_data <- fread(index_path, 
+suppressWarnings(index_exprs <- fread(index_path, 
 					stringsAsFactors=FALSE, 
 					sep="\t", 
 					header=TRUE, 
@@ -62,7 +62,7 @@ suppressWarnings(index_data <- fread(index_path,
 				)
 
 # find % overlap by column
-overlap <- apply(index_data, 2, function(x) length(intersect(data$ID_REF, x)) / length(data$ID_REF))
+overlap <- apply(index_exprs, 2, function(x) length(intersect(exprs$ID_REF, x)) / length(exprs$ID_REF))
 
 # threshold here can be adjusted
 if (any(overlap >= 0.5)) {
@@ -75,15 +75,10 @@ if (any(overlap >= 0.5)) {
 }
 
 message("Merging..")
-colnames(data)[1] <- detected_id
-converted_exprs <- index_data %>%  
-  dplyr::select(c("ENSEMBL", detected_id)) %>%  # sub "ENSEMBL" for "GENEID"
-  dplyr::inner_join(data, by = detected_id)
-
-converted_exprs <- converted_exprs %>%
-  dplyr::select(-rlang::UQ(rlang::sym(detected_id)))
-
-message(head(converted_exprs))
+converted_exprs <- identifier_df %>%  
+    dplyr::select(c("ENSEMBL", detected_id)) %>%
+    dplyr::inner_join(exprs, by = detected_id) %>%
+    dplyr::select(-rlang::UQ(rlang::sym(detected_id)))
 
 # Data here can have duplicate rows that need to be squished together (via mean/max/etc),
 # but this should be done at smash-time so that we can provide options on the squish method.

@@ -102,7 +102,7 @@ def _convert_genes(job_context: Dict) -> Dict:
                 "--outputFile", job_context['output_file_path']
             ])
     except Exception as e:
-        error_template = ("Encountered error in R code while running illumina.R"
+        error_template = ("Encountered error in R code while running gene_convert.R"
                           " pipeline during processing of {0}: {1}")
         error_message = error_template.format(job_context['input_file_path'], str(e))
         logger.error(error_message, processor_job=job_context["job_id"])
