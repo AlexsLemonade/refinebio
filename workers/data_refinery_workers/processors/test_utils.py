@@ -7,6 +7,9 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     SurveyJob,
     ProcessorJob,
+    Sample,
+    OriginalFileSampleAssociation,
+    Organism
 )
 from data_refinery_workers.processors import utils
 
@@ -26,6 +29,19 @@ def prepare_job():
     assoc1.processor_job = pj
     assoc1.save()
 
+    c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+    
+    sample = Sample()
+    sample.title = "Heyo"
+    sample.organism = c_elegans
+    sample.is_processed = False
+    sample.save()
+
+    ogsa = OriginalFileSampleAssociation()
+    ogsa.sample = sample
+    ogsa.original_file = original_file
+    ogsa.save()
+
     return pj
 
 class StartJobTestCase(TestCase):
@@ -37,6 +53,11 @@ class StartJobTestCase(TestCase):
 
         # start_job preserves the "job" key
         self.assertEqual(job_context["job"], processor_job)
+
+        job_context['success'] = True
+        job_context = utils.end_job(job_context)
+        for sample in job_context['samples']
+            self.assertTrue(sample.is_processed)
 
     def test_failure(self):
         """Fails because there are no files for the job."""

@@ -161,6 +161,7 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 class ExperimentSerializer(serializers.ModelSerializer):
     organisms = serializers.StringRelatedField(many=True)
     platforms = serializers.ReadOnlyField()
+    samples = serializers.StringRelatedField(many=True)
 
     class Meta:
         model = Experiment
