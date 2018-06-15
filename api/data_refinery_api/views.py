@@ -232,7 +232,7 @@ class SampleList(PaginatedAPIView):
 
     Pass in a list of pk to an ids query parameter to filter by id.
 
-    Append the pk to the end of this URL to see a detail view.
+    Append the pk or accession_code to the end of this URL to see a detail view.
 
     """
 
@@ -242,10 +242,15 @@ class SampleList(PaginatedAPIView):
         filter_dict.pop('offset', None)
         order_by = filter_dict.pop('order_by', None)
         ids = filter_dict.pop('ids', None)
+        accession_codes = filter_dict.pop('accession_codes', None)
 
         if ids is not None:
             ids = [ int(x) for x in ids.split(',')]
             filter_dict['pk__in'] = ids
+
+        if accession_codes is not None:
+            accession_codes = [ x for x in accession_codes.split(',')]
+            filter_dict['accession_code__in'] = accession_codes
 
         samples = Sample.public_objects.filter(**filter_dict)
         if order_by:
