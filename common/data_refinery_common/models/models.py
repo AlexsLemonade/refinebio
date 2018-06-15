@@ -424,7 +424,6 @@ class OriginalFile(models.Model):
 
     class Meta:
         db_table = "original_files"
-        base_manager_name = 'processed_objects'
 
     def __str__(self):
         return "OriginalFile: " + self.get_display_name()
@@ -432,7 +431,6 @@ class OriginalFile(models.Model):
     # Managers
     objects = models.Manager()
     public_objects = PublicObjectsManager()
-    processed_objects = ProcessedObjectsManager()
 
     filename = models.CharField(max_length=255)
     absolute_file_path = models.CharField(max_length=255, blank=True, null=True)
@@ -452,7 +450,6 @@ class OriginalFile(models.Model):
 
     # Crunch Properties
     is_downloaded = models.BooleanField(default=False)
-    is_processed = models.BooleanField(default=False)
 
     # Common Properties
     is_public = models.BooleanField(default=True)
