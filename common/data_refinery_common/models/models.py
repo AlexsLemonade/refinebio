@@ -22,9 +22,21 @@ and filtering against.
 
 """
 
+class PublicObjectsManager(models.Manager):
+    """
+    Only returns objects that have is_public
+    """
+    def get_queryset(self):
+        return super().get_queryset().filter(is_public=True)
+
+class ProcessedObjectsManager(models.Manager):
+    """
+    Only returns objects that have is_processed
+    """
+    def get_queryset(self):
+        return super().get_queryset().filter(is_processed=True)
 
 class Sample(models.Model):
-
     """
     An individual sample.
     """
@@ -34,6 +46,10 @@ class Sample(models.Model):
 
     def __str__(self):
         return "Sample: " + self.accession_code
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
 
     # Identifiers
     accession_code = models.CharField(max_length=255, unique=True)
@@ -132,6 +148,10 @@ class SampleAnnotation(models.Model):
     class Meta:
         db_table = "sample_annotations"
 
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
+
     # Relations
     sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
 
@@ -162,6 +182,10 @@ class Experiment(models.Model):
 
     def __str__(self):
         return "Experiment: " + self.accession_code
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
 
     # Relations
     samples = models.ManyToManyField('Sample', through='ExperimentSampleAssociation')
@@ -236,11 +260,14 @@ class Experiment(models.Model):
         return [p for p in self.samples.values_list('platform_name', flat=True).distinct()]
 
 class ExperimentAnnotation(models.Model):
-
     """ Semi-standard information associated with an Experiment """
 
     class Meta:
         db_table = "experiment_annotations"
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
 
     # Relations
     experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
@@ -264,7 +291,6 @@ class ExperimentAnnotation(models.Model):
 
 
 class ComputationalResult(models.Model):
-
     """ Meta-information about the output of a computer process. (Ex Salmon) """
 
     class Meta:
@@ -272,6 +298,10 @@ class ComputationalResult(models.Model):
 
     def __str__(self):
         return "ComputationalResult: " + str(self.pk)
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
 
     command_executed = models.TextField(blank=True)
     program_version = models.TextField(blank=True)
@@ -301,11 +331,14 @@ class ComputationalResult(models.Model):
 
 
 class ComputationalResultAnnotation(models.Model):
-
     """ Non-standard information associated with an ComputationalResult """
 
     class Meta:
         db_table = "computational_result_annotations"
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
 
     # Relations
     result = models.ForeignKey(
@@ -337,12 +370,16 @@ class ComputationalResultAnnotation(models.Model):
 
 
 class OrganismIndex(models.Model):
-
     """ A special type of process result, necessary for processing other SRA samples """
 
     class Meta:
         db_table = "organism_index"
 
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
+
+    # Relations
     organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
 
     # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
@@ -386,6 +423,11 @@ class OriginalFile(models.Model):
 
     def __str__(self):
         return "OriginalFile: " + self.get_display_name()
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
+    processed_objects = ProcessedObjectsManager()
 
     filename = models.CharField(max_length=255)
     absolute_file_path = models.CharField(max_length=255, blank=True, null=True)
@@ -455,6 +497,10 @@ class ComputedFile(models.Model):
 
     def __str__(self):
         return "ComputedFile: " + str(self.filename)
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
 
     # File related
     filename = models.CharField(max_length=255)
