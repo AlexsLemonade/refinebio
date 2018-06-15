@@ -259,7 +259,6 @@ class OriginalFileSerializer(serializers.ModelSerializer):
                     'is_archive',
                     'has_raw',
                     'is_downloaded',
-                    'is_processed',
                     'created_at',
                     'last_modified'
                 )

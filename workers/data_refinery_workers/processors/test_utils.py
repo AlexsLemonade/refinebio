@@ -56,7 +56,7 @@ class StartJobTestCase(TestCase):
 
         job_context['success'] = True
         job_context = utils.end_job(job_context)
-        for sample in job_context['samples']
+        for sample in job_context['samples']:
             self.assertTrue(sample.is_processed)
 
     def test_failure(self):
