@@ -85,7 +85,12 @@ def _prepare_files(job_context: Dict) -> Dict:
 def _convert_genes(job_context: Dict) -> Dict:
     """ Convert to Ensembl genes if we can"""
 
-    # data = pd.read_csv(job_context["input_file_path"], sep='\t', header=1, index_col=0)
+    gene_index_path = "/home/user/data_store/" + job_context["internal_accession"] + ".tsv.gz"
+    if not os.path.exists(gene_index_path):
+        logger.error("Missing gene index file for platform!". ,
+            platform=job_context["internal_accession"])
+        job_context["success"] = False
+        return job_context
 
     try:
         result = subprocess.check_output([
@@ -97,7 +102,6 @@ def _convert_genes(job_context: Dict) -> Dict:
                 "--outputFile", job_context['output_file_path']
             ])
     except Exception as e:
-        print(e)
         error_template = ("Encountered error in R code while running illumina.R"
                           " pipeline during processing of {0}: {1}")
         error_message = error_template.format(job_context['input_file_path'], str(e))
