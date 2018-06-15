@@ -33,12 +33,12 @@ COPY workers/data_refinery_workers/downloaders/requirements.txt .
 
 RUN pip3 install --upgrade pip
 
-# Smasher-specific requirements
+# Noop-specific requirements
 ENV R_LIBS "/usr/local/lib/R/site-library"
+COPY workers/gene_indexes gene_indexes/
 COPY workers/install_gene_convert.R .
 RUN Rscript install_gene_convert.R
-RUN pip3 install numpy scipy matplotlib pandas scikit-learn sympy
-# End smasher-specific
+# End Noop-specific
 
 RUN  pip3 --no-cache-dir install -r requirements.txt
 
