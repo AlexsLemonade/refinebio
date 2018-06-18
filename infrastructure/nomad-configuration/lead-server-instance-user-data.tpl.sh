@@ -54,7 +54,6 @@ echo "
 # Note that the lines starting with "$" are where
 # Terraform will template in the contents of those files.
 
-
 # Create the script to install Nomad.
 cat <<"EOF" > install_nomad.sh
 ${install_nomad_script}
@@ -68,6 +67,18 @@ EOF
 # Install Nomad.
 chmod +x install_nomad.sh
 ./install_nomad.sh
+
+# Install our graphite/statsd container
+# Based on: https://github.com/graphite-project/docker-graphite-statsd
+docker run -d\
+ --name graphite\
+ --restart=always\
+ -p 80:80\
+ -p 2003-2004:2003-2004\
+ -p 2023-2024:2023-2024\
+ -p 8125:8125/udp\
+ -p 8126:8126\
+ graphiteapp/graphite-statsd
 
 # Start the Nomad agent in server mode.
 nohup nomad agent -config server.hcl > /tmp/nomad_server.log &

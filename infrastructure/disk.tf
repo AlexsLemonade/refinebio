@@ -40,7 +40,7 @@ resource "aws_s3_bucket" "data_refinery_bucket" {
 
 resource "aws_s3_bucket" "data_refinery_results_bucket" {
   bucket = "data-refinery-s3-results-${var.user}-${var.stage}"
-  acl    = "public"
+  acl    = "public-read"
 
   tags {
     Name        = "data-refinery-s3-results-${var.user}-${var.stage}"
@@ -62,5 +62,23 @@ resource "aws_s3_bucket" "data_refinery_results_bucket" {
       days = 1
     }
   }
+}
 
+resource "aws_s3_bucket" "data-refinery-static" {
+  bucket = "${var.static_bucket_prefix == "dev" ? var.user : var.static_bucket_prefix}${var.static_bucket_root}"
+
+  cors_rule {
+    allowed_origins = ["*"]
+    allowed_methods = ["GET"]
+    max_age_seconds = 3000
+    allowed_headers = ["Authorization"]
+  }
+
+  tags {
+    Name = "data-refinery-static-site-${var.user}-${var.stage}"
+  }
+
+  website {
+    index_document = "index.html"
+  }
 }

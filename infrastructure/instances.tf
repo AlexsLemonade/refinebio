@@ -308,6 +308,11 @@ resource "aws_autoscaling_group" "clients" {
     health_check_grace_period = 300
     health_check_type = "EC2"
     desired_capacity = 1
+
+    # Super important flag. Makes it so that terraform doesn't fail
+    # every time because it can't acquire spot instances fast enough
+    # for the autoscaling group.
+    wait_for_capacity_timeout = "0"
     force_delete = true
     launch_configuration = "${aws_launch_configuration.auto_client_configuration.name}"
     vpc_zone_identifier = ["${aws_subnet.data_refinery_1a.id}"]
@@ -377,7 +382,7 @@ resource "aws_db_instance" "postgres_db" {
   vpc_security_group_ids = ["${aws_security_group.data_refinery_db.id}"]
   multi_az = true
   publicly_accessible = true
-  
+
 }
 
 ##
@@ -401,6 +406,7 @@ data "template_file" "api_server_script_smusher" {
   vars {
     nginx_config = "${data.local_file.api_nginx_config.content}"
     api_environment = "${data.local_file.api_environment.content}"
+    dockerhub_repo = "${var.dockerhub_repo}"
     api_docker_image = "${var.api_docker_image}"
     user = "${var.user}"
     stage = "${var.stage}"

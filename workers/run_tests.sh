@@ -182,16 +182,13 @@ worker_images=(affymetrix illumina salmon transcriptome no_op downloaders agilen
 
 for image in ${worker_images[*]}; do
     if [[ -z $tag || $tag == $image ]]; then
-        if [[ $image == "agilent" ]]; then
+        if [[ $image == "agilent" || $image == "affymetrix" ]]; then
             # Agilent uses the same docker image as Affymetrix
             ./prepare_image.sh -p -i affymetrix -s workers
-            image_name=ccdl/dr_affymetrix
-        elif [[ $image == "affymetrix" ]]; then
-            ./prepare_image.sh -p -i $image -s workers
-            image_name=ccdl/dr_$image
+            image_name=ccdlstaging/dr_affymetrix
         else
             ./prepare_image.sh -i $image -s workers
-            image_name=ccdl/dr_$image
+            image_name=ccdlstaging/dr_$image
         fi
 
         # Strip out tag argument
