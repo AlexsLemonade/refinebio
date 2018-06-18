@@ -55,7 +55,7 @@ job "SMASHER" {
       }
 
       config {
-        image = "${{SMASHER_DOCKER_IMAGE}}"
+        image = "${{DOCKERHUB_REPO}}/${{SMASHER_DOCKER_IMAGE}}"
         force_pull = false
 
         # The args to pass to the Docker container's entrypoint.

@@ -1,9 +1,12 @@
 #!/bin/bash
 
-while getopts "phi:s:" opt; do
+while getopts "phi:d:s:" opt; do
     case $opt in
         i)
             image=$OPTARG
+            ;;
+        d)
+            dockerhub_repo=$OPTARG
             ;;
         p)
             pull="True"
@@ -20,6 +23,12 @@ while getopts "phi:s:" opt; do
             echo "which is tagged with the current branch name. If there is it pulls that."
             echo "Otherwise it will build the image locally, unless instructed"
             echo "to pull the latest version of the image from Dockerhub with -p."
+            echo ""
+            echo "The image is prepared by default for the Dockerhub repo: ccdlstaging."
+            echo "This can be changed by specifying the -d option."
+            echo "(i.e:"
+            echo "  ./prepare_image.sh -i downloaders -d ccdl"
+            echo "  would result in the image ccdl/dr_downloaders being built)"
             exit 0
             ;;
         \?)
@@ -39,9 +48,13 @@ if [[ -z $service ]]; then
     service="workers"
 fi
 
+if [[ -z $dockerhub_repo ]]; then
+    dockerhub_repo="ccdlstaging"
+fi
+
 # We want to check if a test image has been built for this branch. If
 # it has we should use that rather than building it slowly.
-image_name="ccdl/dr_$image"
+image_name="$dockerhub_repo/dr_$image"
 if [[ "$(docker_img_exists $image_name $branch_name)" ]] ; then
     docker pull $image_name:$branch_name
 elif [[ ! -z $pull ]]; then

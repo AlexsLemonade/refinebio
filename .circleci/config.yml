@@ -29,13 +29,10 @@ jobs:
       # Run API Tests.
       - run: ./api/run_tests.sh
 
-      # Run Common Tests.
-      - run: ./common/run_tests.sh
+      - run: ./prepare_image.sh -i no_op -s workers -d localhost:5000
+      - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
+      - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
 
-      - run: ./prepare_image.sh -i no_op -s workers
-      - run: ./prepare_image.sh -i downloaders -s workers
-      - run: ./prepare_image.sh -i smasher -s workers
-      
       # Run Downloader Tests
       # Running these in the same job as the common tests is good
       # because their dockerfiles are very similar so a lot of the
@@ -44,13 +41,10 @@ jobs:
 
       # Push the no_op and downloader images to the local docker repo so Nomad
       # can pull from there when running end-to-end tests.
-      - run: docker tag ccdl/dr_downloaders localhost:5000/ccdl/dr_downloaders
-      - run: docker push localhost:5000/ccdl/dr_downloaders
-      - run: docker tag ccdl/dr_no_op localhost:5000/ccdl/dr_no_op
-      - run: docker push localhost:5000/ccdl/dr_no_op
-      - run: docker tag ccdl/dr_smasher localhost:5000/ccdl/dr_smasher
-      - run: docker push localhost:5000/ccdl/dr_smasher
-      
+      - run: docker push localhost:5000/dr_downloaders
+      - run: docker push localhost:5000/dr_no_op
+      - run: docker push localhost:5000/dr_smasher
+
       # Run Common Tests.
       - run: ./common/run_tests.sh
 
@@ -61,20 +55,20 @@ jobs:
       # Run Illumna tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run: .circleci/filter_tests.sh -t illumina
-      
+
         # Run Smasher tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
-          command: .circleci/filter_tests.sh -t smasher 
-          # Smashing can apparently take a long time on CI 
+          command: .circleci/filter_tests.sh -t smasher
+          # Smashing can apparently take a long time on CI
           no_output_timeout: 36000
-      
+
         # Run API Tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run: ./api/run_tests.sh
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
-  affymetrix_and_agilent_tests:
+  affymetrix_common_agilent_tests:
     working_directory: ~/refinebio
     machine: true
     steps:
@@ -90,6 +84,9 @@ jobs:
       # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
       - run: ./update_models.sh
+
+      # Run Common Tests.
+      - run: ./common/run_tests.sh
 
       - run:
           command: .circleci/filter_tests.sh -t affymetrix
@@ -180,7 +177,7 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      - affymetrix_and_agilent_tests:
+      - affymetrix_common_agilent_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
@@ -204,7 +201,7 @@ workflows:
       - deploy:
           requires:
             - main_tests
-            - affymetrix_and_agilent_tests
+            - affymetrix_common_agilent_tests
             - salmon_and_api_tests
             - transcriptome_and_illumina_tests
           filters:

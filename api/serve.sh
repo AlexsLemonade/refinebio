@@ -22,7 +22,7 @@ DB_HOST_IP=$(get_docker_db_ip_address)
 docker run \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
-       --env-file api/environments/dev \
+       --env-file api/environments/local \
        --link drdb:postgres \
        -p 8000:8000 \
-       -it ccdl/dr_api_local python3.6 manage.py runserver 0.0.0.0:8000 "$@"
+       -it ccdlstaging/dr_api_local python3.6 manage.py runserver 0.0.0.0:8000 "$@"
