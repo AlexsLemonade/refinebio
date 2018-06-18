@@ -54,7 +54,7 @@ job "AFFY_TO_PCL" {
       }
 
       config {
-        image = "${{AFFYMETRIX_DOCKER_IMAGE}}"
+        image = "${{DOCKERHUB_REPO}}/${{AFFYMETRIX_DOCKER_IMAGE}}"
         force_pull = false
 
         # The args to pass to the Docker container's entrypoint.

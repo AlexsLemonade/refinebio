@@ -53,7 +53,7 @@ job "SURVEYOR" {
       }
 
       config {
-        image = "${{FOREMAN_DOCKER_IMAGE}}"
+        image = "${{DOCKERHUB_REPO}}/${{FOREMAN_DOCKER_IMAGE}}"
         force_pull = false
 
         # The args to pass to the Docker container's entrypoint.
