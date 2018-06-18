@@ -249,7 +249,7 @@ class SampleList(PaginatedAPIView):
             filter_dict['pk__in'] = ids
 
         if accession_codes is not None:
-            accession_codes = [ x for x in accession_codes.split(',')]
+            accession_codes = accession_codes.split(',')
             filter_dict['accession_code__in'] = accession_codes
 
         samples = Sample.public_objects.filter(**filter_dict)
