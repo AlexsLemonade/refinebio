@@ -6,6 +6,7 @@ install.packages("devtools")
 devtools::install_version('doParallel', version='1.0.11')
 devtools::install_version('data.table', version='1.11.0')
 devtools::install_version('optparse', version='1.4.4')
+devtools::install_version('lazyeval', version='0.2.1')
 
 # devtools::install_url() requires biocLite.R
 source('https://bioconductor.org/biocLite.R')
@@ -25,7 +26,13 @@ install_with_url(bioc_url, bioc_pkgs)
 
 release_url <- 'https://bioconductor.org/packages/release/data/annotation/src/contrib/'
 illumina_pkgs <- c(
+  'illuminaHumanv1.db_1.26.0.tar.gz',
   'illuminaHumanv2.db_1.26.0.tar.gz',
-  'illuminaHumanv4.db_1.26.0.tar.gz'
+  'illuminaHumanv3.db_1.26.0.tar.gz',
+  'illuminaHumanv4.db_1.26.0.tar.gz',
+  'illuminaMousev1.db',
+  'illuminaMousev1p1.db',
+  'illuminaMousev2.db',
+  'illuminaRatv1.db'
 )
 install_with_url(release_url, illumina_pkgs)

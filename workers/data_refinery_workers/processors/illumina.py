@@ -156,6 +156,19 @@ def _detect_columns(job_context: Dict) -> Dict:
 
     return job_context
 
+def _detect_platform(job_context: Dict) -> Dict:
+    """
+    Determine the platform/database to process this sample with.
+    They often provide something like "V2" or "V 2", but we don't trust them so we detect it ourselves.
+
+    Related: https://github.com/AlexsLemonade/refinebio/issues/232
+    """
+
+    import pdb
+    pdb.set_trace()
+
+    return job_context
+
 def _run_illumina(job_context: Dict) -> Dict:
     """Processes an input TXT file to an output PCL file using a custom R script.
     Expects a job_context which has been pre-populated with inputs, outputs
@@ -168,12 +181,6 @@ def _run_illumina(job_context: Dict) -> Dict:
     annotation = job_context['samples'][0].sampleannotation_set.all()[0]
     annotation_data = str(annotation.data).encode('utf-8').upper()
 
-    # TODO: Look this up in a better way during https://github.com/AlexsLemonade/refinebio/issues/222
-    if "V2".encode() in annotation_data or "V 2".encode() in annotation_data:
-        platform = "illuminaHumanv2"
-    else:
-        platform = "illuminaHumanv4"
-
     try:
         job_context['time_start'] = timezone.now()
 
@@ -184,7 +191,7 @@ def _run_illumina(job_context: Dict) -> Dict:
                 "--probeId", job_context['probeId'],
                 "--expression", job_context['columnIds'],
                 "--detection", job_context['detectionPval'],
-                "--platform", platform,
+                "--platform", job_context['platform'],
                 "--inputFile", job_context['input_file_path'],
                 "--outputFile", job_context['output_file_path'],
                 "--cores", str(multiprocessing.cpu_count())
@@ -259,6 +266,7 @@ def illumina_to_pcl(job_id: int) -> None:
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
                         _prepare_files,
+                        _detect_database,
                         _detect_columns,
                         _run_illumina,
                         _create_result_objects,
