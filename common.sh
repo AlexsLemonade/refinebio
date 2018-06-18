@@ -2,7 +2,7 @@
 
 get_ip_address () {
     if [ `uname` == "Linux" ]; then
-        echo $(hostname -i | awk '{print $1; exit}')
+        echo $(dig +short myip.opendns.com @resolver1.opendns.com)
     elif [ `uname` == 'Darwin' ]; then # MacOS
         echo $(ifconfig | grep "inet " | grep -v 127.0.0.1 | cut -d\  -f2)
     fi
