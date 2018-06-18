@@ -35,7 +35,7 @@ docker run -it \
        --add-host=nomad:$HOST_IP \
        --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
        --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-       --env-file foreman/environments/dev \
+       --env-file foreman/environments/local \
        --volume /tmp:/tmp \
        --volume $volume_directory:/home/user/data_store \
        --entrypoint ./manage.py \

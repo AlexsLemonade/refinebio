@@ -54,7 +54,7 @@ job "SALMON" {
       }
 
       config {
-        image = "${{SALMON_DOCKER_IMAGE}}"
+        image = "${{DOCKERHUB_REPO}}/${{SALMON_DOCKER_IMAGE}}"
         force_pull = false
 
         # The args to pass to the Docker container's entrypoint.

@@ -13,6 +13,14 @@ variable "stage" {
   default = "dev"
 }
 
+variable "static_bucket_prefix" {
+  default = "staging"
+}
+
+variable "static_bucket_root" {
+  default = ".refine.bio"
+}
+
 variable "region" {
   default = "us-east-1"
 }
@@ -55,46 +63,39 @@ variable "running_in_cloud" {
   default = "True"
 }
 
-# These are placeholders until there are production images ready.
-# We should not use the latest tag here, instead specifying a specific tag.
+variable "dockerhub_repo" {
+  default = "ccdlstaging"
+}
+
 variable "downloaders_docker_image" {
-  default = "wkurt/dr_downloaders:latest"
+  default = "dr_downloaders:latest"
 }
 variable "transcriptome_docker_image" {
-  default = "wkurt/dr_transcriptome:latest"
+  default = "dr_transcriptome:latest"
 }
 variable "salmon_docker_image" {
-  default = "wkurt/dr_salmon:latest"
+  default = "dr_salmon:latest"
 }
 variable "smasher_docker_image" {
-  default = "ccdl/dr_smasher:latest"
+  default = "dr_smasher:latest"
 }
 variable "affymetrix_docker_image" {
-  default = "wkurt/dr_affymetrix:latest"
+  default = "dr_affymetrix:latest"
 }
 variable "illumina_docker_image" {
-  default = "wkurt/dr_illumina:latest"
+  default = "dr_illumina:latest"
 }
 variable "no_op_docker_image" {
-  default = "wkurt/dr_no_op:latest"
+  default = "dr_no_op:latest"
 }
 variable "foreman_docker_image" {
-  default = "wkurt/data_refinery_foreman:latest"
+  default = "dr_foreman:latest"
 }
 variable "use_s3" {
   default = "True"
 }
 variable "local_root_dir" {
   default = "/home/user/data_store"
-}
-variable "raw_prefix" {
-  default = "raw"
-}
-variable "temp_prefix" {
-  default = "temp"
-}
-variable "processed_prefix" {
-  default = "processed"
 }
 
 # Instance types / ASG
@@ -124,15 +125,14 @@ variable "scale_down_threshold" {
 
 # API
 variable "api_docker_image" {
-  default = "miserlou/dr_api:5"
+  default = "dr_api:latest"
 }
 
 variable "api_instance_type" {
   default = "t2.large"
 }
 
-# Output our production environment variables. These should be in
-# parity with the env files such as workers/environments/dev.
+# Output our production environment variables.
 output "environment_variables" {
   value = [
     {name = "REGION"
@@ -171,12 +171,8 @@ output "environment_variables" {
       value = "${aws_s3_bucket.data_refinery_results_bucket.id}"},
     {name = "LOCAL_ROOT_DIR"
       value = "${var.local_root_dir}"},
-    {name = "RAW_PREFIX"
-      value = "${var.raw_prefix}"},
-    {name = "TEMP_PREFIX"
-      value = "${var.temp_prefix}"},
-    {name = "PROCESSED_PREFIX"
-      value = "${var.processed_prefix}"},
+    {name = "DOCKERHUB_REPO"
+      value = "${var.dockerhub_repo}"},
     {name = "DOWNLOADERS_DOCKER_IMAGE"
       value = "${var.downloaders_docker_image}"},
     {name = "TRANSCRIPTOME_DOCKER_IMAGE"
