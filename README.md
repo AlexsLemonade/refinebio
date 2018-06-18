@@ -17,7 +17,8 @@ Refine.bio currently has four sub-projects contained within this repo:
 - [Development](#development)
   - [Git Workflow](#git-workflow)
   - [Installation](#installation)
-    - [Linux](#linux)
+    - [Ubuntu](#ubuntu)
+    - [Arch Linux](#arch-linux)
     - [Mac](#mac)
     - [Virtual Environment](#virtual-environment)
     - [Common Dependecies](#common-dependecies)
@@ -70,7 +71,7 @@ have been tested on Ubuntu 16.04 or later, but other Linux distributions
 _should_ be able to run the necessary services. Microsoft Windows is currently
 unsupported by this project.
 
-#### Linux
+#### Ubuntu
 
 The following services will need to be installed:
 - [Python3 and Pip]: `sudo apt-get -y install python3-pip`
@@ -86,6 +87,32 @@ so Docker does not need sudo permissions.
 Instructions for installing Docker and Nomad can be found by
 following the link for each service. git-crypt and jq can be installed via
 `sudo apt-get install git-crypt jq`.
+
+#### Arch Linux
+The following services will need to be installed with the package manager:
+- [Python3 and Pip]
+- [Docker](https://www.docker.com/community-edition): Be sure to follow the
+[post installation steps]
+(https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
+so Docker does not need sudo permissions.
+- [Terraform](https://www.terraform.io/)
+- [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries)
+- git-crypt
+- jq
+
+Everything except Nomad can be installed with: `sudo pacman -S python docker terraform git-crypt jq`
+
+Nomad needs the AUR, so it is installed with: `yaourt -S nomad-bin`
+
+Pip and pacman tend to fight over installing packages, so in order to fix this you have to edit your `~/.config/pip/pip.conf` to add this:
+
+```
+[install]
+user = yes
+no-binary = :all:
+```
+
+This sets pip to install all packages in your user directory so sudo is not required for pip intalls.
 
 #### Mac
 
@@ -170,6 +197,10 @@ Finally, to make the migrations to the database, use:
 ```bash
 ./common/make_migrations.sh
 ```
+
+Note: there is a small chance this might fail with a `can't stat`, error. If this happens, you have
+to manually change permissions on the volumes directory with `sudo chmod -R 740 volumes_postgres`
+then re-run the migrations.
 
 If you need to access a `psql` shell for inspecting the database, you can use:
 
