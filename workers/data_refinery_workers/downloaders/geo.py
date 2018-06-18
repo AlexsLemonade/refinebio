@@ -2,8 +2,10 @@ from __future__ import absolute_import, unicode_literals
 import urllib.request
 import os
 import shutil
+import subprocess
 import gzip
 import tarfile
+import time
 from typing import List
 from contextlib import closing
 
@@ -29,7 +31,7 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 CHUNK_SIZE = 1024 * 256
 
 
-def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> None:
+def _download_file(download_url: str, file_path: str, job: DownloaderJob, force_ftp=False) -> None:
     """ Download a file from GEO via FTP. There is no Aspera endpoint
     which I can find, although I know it exists. I think we have to ask GEO for it.
     In future, this function may become a dispatcher to FTP via aria2 or FASP via ascp.
@@ -38,21 +40,98 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
     # Ensure directory exists
     os.makedirs(file_path.rsplit('/', 1)[0], exist_ok=True)
 
-    try:
-        logger.debug("Downloading file from %s to %s.",
-                     download_url,
-                     file_path,
-                     downloader_job=job.id)
-        target_file = open(file_path, "wb")
-        with closing(urllib.request.urlopen(download_url)) as request:
-            shutil.copyfileobj(request, target_file, CHUNK_SIZE)
-    except Exception:
-        logger.exception("Exception caught while downloading file.",
+    if 'ftp.ncbi.nlm.nih.gov' in download_url:
+        return _download_file_aspera(download_url=download_url, downloader_job=job, target_file_path=file_path)
+    else: 
+        try:
+            logger.debug("Downloading file from %s to %s.",
+                         download_url,
+                         file_path,
                          downloader_job=job.id)
-        job.failure_reason = "Exception caught while downloading file"
-        raise
-    finally:
-        target_file.close()
+            target_file = open(file_path, "wb")
+            with closing(urllib.request.urlopen(download_url)) as request:
+                shutil.copyfileobj(request, target_file, CHUNK_SIZE)
+        except Exception:
+            logger.exception("Exception caught while downloading file.",
+                             downloader_job=job.id)
+            job.failure_reason = "Exception caught while downloading file"
+            raise
+        finally:
+            target_file.close()
+
+        return True
+
+
+def _download_file_aspera(download_url: str,
+                          downloader_job: DownloaderJob,
+                          target_file_path: str,
+                          attempt=0) -> bool:
+    """ Download a file to a location using Aspera by shelling out to the `ascp` client. """
+
+    try:
+        logger.debug("Downloading file from %s to %s via Aspera.",
+                     download_url,
+                     target_file_path,
+                     downloader_job=downloader_job.id)
+
+        ascp = ".aspera/cli/bin/ascp"
+        key = ".aspera/cli/etc/asperaweb_id_dsa.openssh"
+        url = download_url
+        user = "anonftp"
+        ftp = "ftp-trace.ncbi.nlm.nih.gov"
+        if url.startswith("ftp://"):
+            url = url.replace("ftp://", "")
+        url = url.replace(ftp, "").replace('ftp.ncbi.nlm.nih.gov', '')
+
+        # Resume level 1, use encryption, unlimited speed
+        command_str = "{} -i {} -k1 -T {}@{}:{} {}".format(ascp, key, user, ftp, url, target_file_path) 
+        formatted_command = command_str.format(src=download_url,
+                                               dest=target_file_path)
+        completed_command = subprocess.run(formatted_command.split(),
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE)
+
+        # Something went wrong! Else, just fall through to returning True.
+        if completed_command.returncode != 0:
+
+            stderr = str(completed_command.stderr).strip()
+            logger.error("Shell call to ascp failed with error message: %s\nCommand was: %s",
+                         stderr,
+                         formatted_command,
+                         downloader_job=downloader_job.id)
+
+            # Sometimes, GEO fails mysteriously.
+            # Wait a few minutes and try again.
+            if attempt >= 5:
+                downloader_job.failure_reason = stderr
+                return False
+            else:
+                time.sleep(300)
+                return _download_file_aspera(download_url,
+                                             downloader_job,
+                                             target_file_path,
+                                             attempt + 1
+                                             )
+    except Exception:
+        logger.exception("Exception caught while downloading file from the URL via Aspera: %s",
+                         download_url,
+                         downloader_job=downloader_job.id)
+        downloader_job.failure_reason = ("Exception caught while downloading "
+                                         "file from the URL via Aspera: {}").format(download_url)
+        return False
+
+    # If Aspera has given a zero-byte file for some reason, let's back off and retry.
+    if os.path.getsize(target_file_path) < 1:
+        logger.error("Got zero byte ascp download for target, retrying.",
+                     target_url=download_url,
+                     downloader_job=downloader_job.id)
+        time.sleep(300)
+        return _download_file_aspera(download_url,
+                                     downloader_job,
+                                     target_file_path,
+                                     attempt + 1
+                                     )
+    return True
 
 
 def _extract_tar(file_path: str, accession_code: str) -> List[str]:
