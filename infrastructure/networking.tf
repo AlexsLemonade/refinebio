@@ -80,3 +80,40 @@ resource "aws_db_subnet_group" "data_refinery" {
     Name = "Data Refinery DB Subnet ${var.user}-${var.stage}"
   }
 }
+
+# Get the API a static IP address.
+resource "aws_eip" "data_refinery_api_ip" {
+  vpc      = true
+}
+
+# As per https://aws.amazon.com/elasticloadbalancing/details/:
+#
+# You can select the appropriate load balancer based on your
+# application needs. If you need flexible application management, we
+# recommend that you use an Application Load Balancer. If extreme
+# performance and static IP is needed for your application, we
+# recommend that you use a Network Load Balancer. If you have an
+# existing application that was built within the EC2-Classic network,
+# then you should use a Classic Load Balancer.
+#
+# it appears an Application Load Balancer would be best for us.
+resource "aws_lb" "data_refinery_api_load_balancer" {
+  name = "data-refinery-api-${var.user}-${var.stage}"
+  internal = false
+  load_balancer_type = "application"
+  security_groups = ["${aws_security_group.data_refinery_api.id}"]
+  subnets = ["${aws_subnet.data_refinery_1b.id}", "${aws_subnet.data_refinery_1b.id}"]
+
+  enable_deletion_protection = true
+
+  subnet_mapping {
+    subnet_id = "${aws_subnet.data_refinery_1a.id}"
+    allocation_id = "${aws_eip.data_refinery_api_ip.id}"
+  }
+
+  subnet_mapping {
+    subnet_id = "${aws_subnet.data_refinery_1b.id}"
+    allocation_id = "${aws_eip.data_refinery_api_ip.id}"
+  }
+
+}
