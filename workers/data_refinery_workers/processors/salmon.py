@@ -2,7 +2,6 @@ from __future__ import absolute_import, unicode_literals
 
 import io
 import json
-import gzip
 import os
 import re
 import shutil
@@ -99,29 +98,10 @@ def _determine_index_length(job_context: Dict) -> Dict:
     number_of_reads = 0
     counter = 1
 
-    ### TODO: This process is really slow!
-    ### Related: https://github.com/AlexsLemonade/refinebio/issues/157
-
-    ### I bet there is a faster way of doing this, maybe by
-    ### shelling and using UNIX!
-    ### Python is single-core gunziping this line by line,
-    ### I think it'd be faster to gunzip with multicores
-    ### and then count lines that way, ex:
-
-    ### $ pigz file.fasq.gz;
-    ### $ cat file.fastq | echo $((`wc -l`/4))
-
-    ### We may also be able to use io.BufferedReader to improve gzip speed
-    ### Ex: (But does this work for text, not binary, gzip?)
-    ### buffered_input = io.BufferedReader(input_file)
-    ### for line in buffered_input.readlines():
-    ###     if counter % 4 == 2:
-    ###         total_base_pairs += len(line.replace("\n", ""))
-    ###         number_of_reads += 1
-    ###     counter += 1
-
-    with gzip.open(job_context["input_file_path"], "rt") as input_file:
-        for line in input_file:
+    # zcat unzips the file provided and dumps the output to STDOUT.
+    # It is installed by default in Debian so it should be included
+    # in every docker image already.
+    for line in os.popen("zcat %s" % job_context["input_file_path"]):
             # In the FASTQ file format, there are 4 lines for each
             # read. Three of these contain metadata about the
             # read. The string representing the read itself is found
@@ -132,12 +112,11 @@ def _determine_index_length(job_context: Dict) -> Dict:
             counter += 1
 
     if "input_file_path_2" in job_context:
-        with gzip.open(job_context["input_file_path_2"], "rt") as input_file:
-            for line in input_file:
-                if counter % 4 == 2:
-                    total_base_pairs += len(line.replace("\n", ""))
-                    number_of_reads += 1
-                counter += 1
+        for line in os.popen("zcat %s" % job_context["input_file_path_2"]):
+            if counter % 4 == 2:
+                total_base_pairs += len(line.replace("\n", ""))
+                number_of_reads += 1
+            counter += 1
 
     if total_base_pairs / number_of_reads > 75:
         job_context["index_length"] = "long"
