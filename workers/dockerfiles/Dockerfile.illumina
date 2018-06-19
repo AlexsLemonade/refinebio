@@ -53,4 +53,7 @@ USER user
 
 COPY workers/ .
 
+COPY workers/data_refinery_workers/processors/detect_database.R .
+
 ENTRYPOINT []
+
