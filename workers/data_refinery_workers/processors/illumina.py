@@ -22,7 +22,9 @@ from data_refinery_common.models import (
     SampleAnnotation,
     OriginalFileSampleAssociation,
     SampleResultAssociation,
-    SampleComputedFileAssociation
+    SampleComputedFileAssociation,
+    ProcessorJob,
+    ProcessorJobOriginalFileAssociation
 )
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
@@ -187,7 +189,7 @@ def _detect_platform(job_context: Dict) -> Dict:
             'illuminaMousev2',
         ],
         'RATTUS_NORVEGICUS': [
-            'illuminaRatv1.db'
+            'illuminaRatv1'
         ]
     }
 
@@ -242,7 +244,11 @@ def _detect_platform(job_context: Dict) -> Dict:
         assoc.processor_job = processor_job
         assoc.save()
 
-        send_job(ProcessorPipeline.NO_OP, processor_job)
+        try:
+            send_job(ProcessorPipeline.NO_OP, processor_job)
+        except Exception as e:
+            # Nomad dispatch error, likely during local test.
+            logger.error(e, job=processor_job)
 
         job_context['abort'] = True
 
