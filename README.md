@@ -82,10 +82,11 @@ so Docker does not need sudo permissions.
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./install_nomad.sh`.
 - git-crypt
 - jq
+- iproute2
 
 Instructions for installing Docker and Nomad can be found by
-following the link for each service. git-crypt and jq can be installed via
-`sudo apt-get install git-crypt jq`.
+following the link for each service. git-crypt, jq, and iproute2 can be installed via
+`sudo apt-get install git-crypt jq iproute2`.
 
 When installing pip packages later in the install, you might get an error saying you need sudo permissions.
 In order to fix this you have to edit your `~/.config/pip/pip.conf` to add this:
