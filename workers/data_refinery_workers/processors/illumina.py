@@ -19,13 +19,18 @@ from data_refinery_common.models import (
     ComputationalResult, 
     ComputedFile,
     Sample,
+    SampleAnnotation,
     OriginalFileSampleAssociation,
     SampleResultAssociation,
     SampleComputedFileAssociation
 )
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
+from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.message_queue import send_job
 from data_refinery_common.utils import get_env_variable
+
+
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
 logger = get_and_configure_logger(__name__)
@@ -189,6 +194,7 @@ def _detect_platform(job_context: Dict) -> Dict:
     sample0 = job_context['samples'][0]
     databases = all_databases[sample0.organism.name]
 
+    # Loop over all of the possible platforms and find the one with the best match.
     highest = 0.0
     high_db = None
     for platform in databases:
@@ -205,14 +211,40 @@ def _detect_platform(job_context: Dict) -> Dict:
             if cleaned_result > highest:
                 highest = cleaned_result
                 high_db = platform
+
         except Exception as e:
             continue
 
+    # If the match is over 75%, record this and process it on that platform.
     if highest > 75.0:
         job_context['platform'] = high_db
+
+        for sample in job_context['samples']:
+            sa = SampleAnnotation()
+            sa.sample = sample
+            sa.data = {
+                "detected_platform": high_db, 
+                "detection_percentage": highest
+            }
+            sa.save()
+    # The match percentage is too low - send this to the no-opper instead.
     else:
-        # TODO: dispatch NO_OP
-        pass
+
+        logger.info("Match percentage too low, NO_OP'ing and aborting.",
+            job=job_context['job_id'])
+
+        processor_job = ProcessorJob()
+        processor_job.pipeline_applied = "NO_OP"
+        processor_job.save()
+
+        assoc = ProcessorJobOriginalFileAssociation()
+        assoc.original_file = job_context["original_files"][0]
+        assoc.processor_job = processor_job
+        assoc.save()
+
+        send_job(ProcessorPipeline.NO_OP, processor_job)
+
+        job_context['abort'] = True
 
     return job_context
 
