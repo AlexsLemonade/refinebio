@@ -6,6 +6,10 @@ import string
 import subprocess
 import multiprocessing
 import warnings
+
+import pandas as pd
+import numpy as np
+
 from django.utils import timezone
 from typing import Dict
 
@@ -16,7 +20,8 @@ from data_refinery_common.models import (
     ComputedFile,
     Sample,
     OriginalFileSampleAssociation,
-    SampleResultAssociation
+    SampleResultAssociation,
+    SampleComputedFileAssociation
 )
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
@@ -196,18 +201,10 @@ def _detect_platform(job_context: Dict) -> Dict:
                     "--inputFile", job_context['input_file_path'],
                 ])
 
-            print("Platform: ")
-            print(platform)
-            print("Result: ")
-            print(result)
-
             cleaned_result = float(result.strip())
             if cleaned_result > highest:
                 highest = cleaned_result
                 high_db = platform
-
-            print(cleaned_result)
-
         except Exception as e:
             continue
 
@@ -273,47 +270,51 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.pipeline = "Illumina SCAN"
     result.save()
 
-    # Create a ComputedFile for the sample,
-    # sync it S3 and save it.
-    try:
+    # Split the result into smashable subfiles
+    big_tsv = job_context["output_file_path"]
+    data = pd.read_csv(big_tsv, sep='\t', header=0, index_col=0)
+    individual_files = []
+    frames = np.split(data, len(data.columns), axis=1)
+    for frame in frames:
+        frame_path = job_context["output_file_path"] + '.' + frame.columns.values[0].replace('&', '') + '.tsv'
+        frame.to_csv(frame_path, sep='\t', encoding='utf-8')
+
+        # This needs to be the same as the ones in the job context!
+        sample = Sample.objects.get(accession_code=frame.columns.values[0])
+
         computed_file = ComputedFile()
-        computed_file.absolute_file_path = job_context["output_file_path"]
-        computed_file.filename = os.path.split(job_context["output_file_path"])[-1]
-        computed_file.calculate_sha1()
-        computed_file.calculate_size()
+        computed_file.absolute_file_path = frame_path
+        computed_file.filename = frame_path.split('/')[-1]
         computed_file.result = result
         computed_file.is_smashable = True
         computed_file.is_qc = False
-        # computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
-        # TODO here: delete local file after S3 sync
+        computed_file.is_public = True
+        computed_file.calculate_sha1()
+        computed_file.calculate_size()
         computed_file.save()
 
-        logger.info("Created new ComputedFile: " + computed_file.absolute_file_path + " [" + str(computed_file.sha1) + "](" + str(computed_file.size_in_bytes) + ")",
+        SampleResultAssociation.objects.get_or_create(
+            sample=sample,
+            result=result)
+
+        SampleComputedFileAssociation.objects.get_or_create(
+            sample=sample,
             computed_file=computed_file)
 
-    except Exception:
-        logger.exception("Exception caught while moving file %s to S3",
-                         computed_file.filename,
-                         processor_job=job_context["job_id"],
-                         )
-        failure_reason = "Exception caught while moving file to S3"
-        job_context["job"].failure_reason = failure_reason
-        job_context["success"] = False
-        return job_context
+        individual_files.append(computed_file)
 
-    for sample in job_context['samples']:
-        assoc = SampleResultAssociation()
-        assoc.sample = sample
-        assoc.result = result
-        assoc.save()
+    # Don't need the big one after it's split.
+    os.remove(job_context["output_file_path"])
 
     logger.info("Created %s", result)
     job_context["success"] = True
+    job_context["individual_files"] = individual_files
+    job_context["result"] = result
 
     return job_context
 
 def illumina_to_pcl(job_id: int) -> None:
-    utils.run_pipeline({"job_id": job_id},
+    return utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
                         _prepare_files,
                         _detect_platform,
