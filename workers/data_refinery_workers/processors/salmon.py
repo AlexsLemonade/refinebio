@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import gzip
 import io
 import json
 import os
@@ -118,7 +119,12 @@ def _determine_index_length(job_context: Dict) -> Dict:
                 number_of_reads += 1
             counter += 1
 
-    if total_base_pairs / number_of_reads > 75:
+    index_length_raw = total_base_pairs / number_of_reads
+
+    # Put the raw index length into the job context in a new field for regression testing purposes
+    job_context["index_length_raw"] = index_length_raw
+
+    if index_length_raw > 75:
         job_context["index_length"] = "long"
     else:
         job_context["index_length"] = "short"
