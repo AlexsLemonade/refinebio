@@ -87,6 +87,17 @@ Instructions for installing Docker and Nomad can be found by
 following the link for each service. git-crypt and jq can be installed via
 `sudo apt-get install git-crypt jq`.
 
+When installing pip packages later in the install, you might get an error saying you need sudo permissions.
+In order to fix this you have to edit your `~/.config/pip/pip.conf` to add this:
+
+```
+[install]
+user = yes
+no-binary = :all:
+```
+
+This sets pip to install all packages in your user directory so sudo is not required for pip intalls.
+
 #### Mac
 
 The following services will need to be installed:
@@ -170,6 +181,10 @@ Finally, to make the migrations to the database, use:
 ```bash
 ./common/make_migrations.sh
 ```
+
+Note: there is a small chance this might fail with a `can't stat`, error. If this happens, you have
+to manually change permissions on the volumes directory with `sudo chmod -R 740 volumes_postgres`
+then re-run the migrations.
 
 If you need to access a `psql` shell for inspecting the database, you can use:
 
