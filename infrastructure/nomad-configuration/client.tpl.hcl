@@ -22,5 +22,5 @@ consul {
 telemetry {
   publish_allocation_metrics = true
   publish_node_metrics       = true
-  statsd_address = "${nomad_lead_server_ip}:8125"
+  statsd_address = "${nomad_server_address}:8125"
 }
