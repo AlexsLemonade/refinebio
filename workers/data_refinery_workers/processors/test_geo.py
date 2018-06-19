@@ -106,6 +106,50 @@ class IlluminaToPCLTestCase(TestCase):
         final_context = illumina.illumina_to_pcl(job.pk)
         self.assertTrue(final_context['abort'])
 
+    @tag("illumina")
+    def test_good_detection(self):
+        """GSE54661 appears to be mislabled (illuminaHumanv4) on GEO. Shows our detector works. """
+        from data_refinery_workers.processors import illumina
+
+        pj = ProcessorJob()
+        pj.pipeline_applied = "ILLUMINA_TO_PCL"
+        pj.save()
+
+        og_file = OriginalFile()
+        og_file.source_filename = "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE54nnn/GSE54661/suppl/GSE54661%5Fnon%5Fnormalized%2Etxt%2Egz"
+        og_file.filename = "GSE54661_non_normalized.txt"
+        og_file.absolute_file_path = "/home/user/data_store/raw/TEST/ILLUMINA/GSE54661_non_normalized.txt"
+        og_file.save()
+
+        assoc1 = ProcessorJobOriginalFileAssociation()
+        assoc1.original_file = og_file
+        assoc1.processor_job = pj
+        assoc1.save()
+
+        sample_names = [
+            "hypoxia_Signal",
+        ]
+
+        for name in sample_names:
+            sample = Sample()
+            sample.accession_code = name
+            sample.title = name
+            sample.organism = Organism.get_object_for_name("Homo sapiens")
+            sample.save()
+
+            sa = SampleAnnotation()
+            sa.sample = sample
+            sa.data = {}
+            sa.save()
+
+            sample_assoc = OriginalFileSampleAssociation()
+            sample_assoc.original_file = og_file
+            sample_assoc.sample = sample
+            sample_assoc.save()
+
+        final_context = illumina.illumina_to_pcl(pj.pk)
+        self.assertEqual(final_context['platform'], 'illuminaHumanv3')
+
 class AgilentTwoColorTestCase(TestCase):
 
     @tag("agilent")
