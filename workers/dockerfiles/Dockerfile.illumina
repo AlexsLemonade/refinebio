@@ -34,7 +34,6 @@ ENV R_LIBS "/usr/local/lib/R/site-library"
 # These are for Illumina
 COPY workers/illumina_dependencies.R .
 RUN Rscript illumina_dependencies.R
-COPY workers/data_refinery_workers/processors/detect_database.R .
 
 RUN pip3 install --upgrade pip
 
@@ -52,6 +51,7 @@ RUN rm -rf /root/.cache
 
 USER user
 
+COPY workers/data_refinery_workers/processors/detect_database.R .
 COPY workers/ .
 
 ENTRYPOINT []
