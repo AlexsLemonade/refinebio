@@ -111,13 +111,18 @@ def _detect_columns(job_context: Dict) -> Dict:
                 headers = row
                 break
 
+        # Ex GSE45331_non-normalized.txt
+        predicted_header = 0
+        if headers[0].upper() in ["TARGETID", "TARGET_ID"]:
+            predicted_header = 1
+
         # First the probe ID column
-        if headers[0] not in ['ID_REF', 'PROBE_ID']:
+        if headers[predicted_header].upper() not in ['ID_REF', 'PROBE_ID', "IDREF", "PROBEID"]:
             job_context["job"].failure_reason = "Could not find ID reference column"
             job_context["success"] = False
             return job_context
         else:
-            job_context['probeId'] = headers[0]
+            job_context['probeId'] = headers[predicted_header]
 
         # Then the detection Pvalue string, which is always(?) some form of 'Detection Pval'
         for header in headers:
@@ -207,6 +212,7 @@ def _detect_platform(job_context: Dict) -> Dict:
                     "/home/user/data_refinery_workers/processors/detect_database.R",
                     "--platform", platform,
                     "--inputFile", job_context['input_file_path'],
+                    "--column", job_context['probeId']
                 ])
 
             cleaned_result = float(result.strip())
@@ -355,8 +361,8 @@ def illumina_to_pcl(job_id: int) -> None:
     return utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
                         _prepare_files,
-                        _detect_platform,
                         _detect_columns,
+                        _detect_platform,
                         _run_illumina,
                         _create_result_objects,
                         utils.end_job])
