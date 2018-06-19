@@ -20,7 +20,8 @@ install_with_url <- function(main_url, packages) {
 bioc_url <- 'https://bioconductor.org/packages/3.6/bioc/src/contrib/'
 bioc_pkgs <- c(
    'oligo_1.42.0.tar.gz',
-   'limma_3.34.9.tar.gz'
+   'limma_3.34.9.tar.gz',
+   'AnnotationDbi_1.40.0.tar.gz'
 )
 install_with_url(bioc_url, bioc_pkgs)
 

@@ -164,8 +164,58 @@ def _detect_platform(job_context: Dict) -> Dict:
     Related: https://github.com/AlexsLemonade/refinebio/issues/232
     """
 
-    import pdb
-    pdb.set_trace()
+    all_databases = {
+        'HOMO_SAPIENS': [
+            'illuminaHumanv1',
+            'illuminaHumanv2',
+            'illuminaHumanv3',
+            'illuminaHumanv4',
+        ],
+        'MUS_MUSCULUS': [
+            'illuminaMousev1',
+            'illuminaMousev1p1',
+            'illuminaMousev2',
+        ],
+        'RATTUS_NORVEGICUS': [
+            'illuminaRatv1.db'
+        ]
+    }
+
+    sample0 = job_context['samples'][0]
+    databases = all_databases[sample0.organism.name]
+
+    highest = 0.0
+    high_db = None
+    for platform in databases:
+        try:
+            result = subprocess.check_output([
+                    "/usr/bin/Rscript", 
+                    "--vanilla", 
+                    "/home/user/data_refinery_workers/processors/detect_database.R",
+                    "--platform", platform,
+                    "--inputFile", job_context['input_file_path'],
+                ])
+
+            print("Platform: ")
+            print(platform)
+            print("Result: ")
+            print(result)
+
+            cleaned_result = float(result.strip())
+            if cleaned_result > highest:
+                highest = cleaned_result
+                high_db = platform
+
+            print(cleaned_result)
+
+        except Exception as e:
+            continue
+
+    if highest > 75.0:
+        job_context['platform'] = high_db
+    else:
+        # TODO: dispatch NO_OP
+        pass
 
     return job_context
 
@@ -266,7 +316,7 @@ def illumina_to_pcl(job_id: int) -> None:
     utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
                         _prepare_files,
-                        _detect_database,
+                        _detect_platform,
                         _detect_columns,
                         _run_illumina,
                         _create_result_objects,
