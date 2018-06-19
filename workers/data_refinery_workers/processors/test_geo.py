@@ -15,7 +15,7 @@ from data_refinery_common.models import (
 )
 from data_refinery_workers.processors import utils
 
-def prepare_illumina_job():
+def prepare_illumina_job(species="Homo sapiens"):
     pj = ProcessorJob()
     pj.pipeline_applied = "ILLUMINA_TO_PCL"
     pj.save()
@@ -49,7 +49,7 @@ def prepare_illumina_job():
         sample = Sample()
         sample.accession_code = name
         sample.title = name
-        sample.organism = Organism.get_object_for_name("Homo sapiens")
+        sample.organism = Organism.get_object_for_name(species)
         sample.save()
 
         sa = SampleAnnotation()
@@ -97,6 +97,14 @@ class IlluminaToPCLTestCase(TestCase):
             print(smashme)
             self.assertTrue(os.path.exists(smashme.absolute_file_path))
             os.remove(smashme.absolute_file_path)
+
+    @tag("illumina")
+    def test_bad_illumina_detection(self):
+        """ With the wrong species, this will fail the platform detection threshold. """
+        from data_refinery_workers.processors import illumina
+        job = prepare_illumina_job('RATTUS_NORVEGICUS')
+        final_context = illumina.illumina_to_pcl(job.pk)
+        self.assertTrue(final_context['abort'])
 
 class AgilentTwoColorTestCase(TestCase):
 
