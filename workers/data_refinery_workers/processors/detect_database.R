@@ -58,5 +58,6 @@ probes <- AnnotationDbi::keys(get(x))
 # Calculate the overlap
 commonProbes <- intersect(unlist(expr_ids), probes)
 percent <- ( length(commonProbes) / length(probes) ) * 100.0
-message(percent)
+
+# Send the result to stdout so parent process can pick it up
 write(percent, stdout())

@@ -26,7 +26,8 @@ from data_refinery_common.models import (
     Experiment,
     ExperimentSampleAssociation,
     SampleResultAssociation,
-    Sample
+    Sample,
+    SampleComputedFileAssociation
     )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
@@ -281,6 +282,10 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
         SampleResultAssociation.objects.get_or_create(
             sample=sample,
             result=result)
+
+        SampleComputedFileAssociation.objects.get_or_create(
+            sample=sample,
+            computed_file=computed_file)
 
         individual_files.append(computed_file)
 

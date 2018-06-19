@@ -10,7 +10,8 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
     SampleAnnotation,
-    OriginalFileSampleAssociation
+    OriginalFileSampleAssociation,
+    Organism
 )
 from data_refinery_workers.processors import utils
 
@@ -48,6 +49,7 @@ def prepare_illumina_job():
         sample = Sample()
         sample.accession_code = name
         sample.title = name
+        sample.organism = Organism.get_object_for_name("Homo sapiens")
         sample.save()
 
         sa = SampleAnnotation()
@@ -87,8 +89,14 @@ class IlluminaToPCLTestCase(TestCase):
         """ """
         from data_refinery_workers.processors import illumina
         job = prepare_illumina_job()
-        illumina.illumina_to_pcl(job.pk)
-        self.assertTrue(os.path.isfile('/home/user/data_store/raw/TEST/processed/GSE22427_non-normalized.PCL'))
+        final_context = illumina.illumina_to_pcl(job.pk)
+
+        for sample in final_context['samples']:
+            print(sample)
+            smashme = sample.get_most_recent_smashable_result_file()
+            print(smashme)
+            self.assertTrue(os.path.exists(smashme.absolute_file_path))
+            os.remove(smashme.absolute_file_path)
 
 class AgilentTwoColorTestCase(TestCase):
 
