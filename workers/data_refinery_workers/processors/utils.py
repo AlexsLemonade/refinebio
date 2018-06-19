@@ -215,7 +215,7 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
                          failure_reason=last_result["job"].failure_reason)
             return end_job(last_result)
 
-        if "abort" in last_result and last_result["abort"] is True:
+        if last_result.get("abort", False):
             return end_job(last_result, abort=True)
 
     return last_result
