@@ -38,6 +38,10 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Processor Jobs](#processor-jobs)
   - [Checking on Local Jobs](#checking-on-local-jobs)
   - [Testing](#testing-1)
+    - [API](#api)
+    - [Common](#common)
+    - [Foreman](#foreman)
+    - [Workers](#workers)
   - [Development Helpers](#development-helpers-1)
   - [Style](#style-1)
 - [Production Deployment](#production-deployment)
@@ -208,6 +212,8 @@ To run the entire test suite:
 ```bash
 ./run_all_tests.sh
 ```
+
+(_Note:_ Running all the tests can take some time because it downloads a lot of files)
 
 These tests will also be run continuosly for each commit via CircleCI.
 
@@ -471,6 +477,44 @@ To run the entire test suite:
 ```
 
 These tests will also be run continuosly for each commit via CircleCI.
+
+For more granular testing, you can just run the tests for specific parts of the system.
+
+#### API
+To just run the API tests:
+
+```bash
+./api/run_tests.sh
+```
+
+#### Common
+To just run the common tests:
+
+```bash
+./common/run_tests.sh
+```
+
+#### Foreman
+To just run the foreman tests:
+
+```bash
+./foreman/run_tests.sh
+```
+
+#### Workers
+To just run the workers tests:
+
+```bash
+./workers/run_tests.sh
+```
+
+If you only want to run tests with a specific tag, you can do that too. For
+example, to run just the salmon tests:
+
+```bash
+./workers/run_tests.sh -t salmon
+```
+
 
 ### Development Helpers
 
