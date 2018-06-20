@@ -13,8 +13,15 @@ if [ ! -d $VOLUMES ]; then
   mkdir $VOLUMES
 fi
 
-
-# via https://hub.docker.com/_/postgres/
-# 9.6.6 is the current (as of Jan 23 2018) RDS most recent version.
-# Password can be exposed to git/CI because this is only for dev/testing purposes, not real data.
-docker run -p 5432:5432 --name drdb -v "$VOLUMES":/var/lib/postgresql/data -e POSTGRES_PASSWORD=mysecretpassword -d postgres:9.6.6
+# Check if a docker database named "drdb" exists, and if so just run it
+if [[ $(docker ps -a --filter name=drdb | wc -l) > 1 ]]; then
+  docker start drdb > /dev/null
+  echo "Started database."
+# Otherwise, install it from docker hub
+else
+  # via https://hub.docker.com/_/postgres/
+  # 9.6.6 is the current (as of Jan 23 2018) RDS most recent version.
+  # Password can be exposed to git/CI because this is only for dev/testing purposes, not real data.
+  echo "Installing database..."
+  docker run -p 5432:5432 --name drdb -v "$VOLUMES":/var/lib/postgresql/data -e POSTGRES_PASSWORD=mysecretpassword -d postgres:9.6.6
+fi
