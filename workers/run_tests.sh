@@ -204,6 +204,7 @@ for image in ${worker_images[*]}; do
                --env-file workers/environments/test \
                --env AWS_ACCESS_KEY_ID \
                --env AWS_SECRET_ACCESS_KEY \
+	       --env COVERAGE_FILE=/home/user/data_store/.$image.coverage \
                --volume $volume_directory:/home/user/data_store \
                --link drdb:postgres \
                -it $image_name bash -c "$test_command"

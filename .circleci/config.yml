@@ -68,7 +68,7 @@ jobs:
       - run: ./api/run_tests.sh
       
         # Submit coveralls
-      - run: pip install pyyaml coveralls 
+      - run: pip install pyyaml python-coveralls 
       - run: coveralls 
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
@@ -105,7 +105,7 @@ jobs:
       - run: .circleci/filter_tests.sh -t agilent
         
         # Submit coveralls
-      - run: pip install pyyaml coveralls 
+      - run: pip install pyyaml python-coveralls 
       - run: coveralls 
 
   # This tests workers tests tagged as 'salmon'
@@ -167,7 +167,7 @@ jobs:
       - run: .circleci/filter_tests.sh -t illumina
         
         # Submit coveralls
-      - run: pip install pyyaml coveralls 
+      - run: pip install pyyaml python-coveralls 
       - run: coveralls 
 
 
