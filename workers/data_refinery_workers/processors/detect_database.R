@@ -1,6 +1,6 @@
 ###
 # detect_database.R
-# Alex's Lemonad Stand Foundation
+# Alex's Lemonade Stand Foundation
 # Childhood Cancer Data Lab
 #
 ###
@@ -52,15 +52,15 @@ library(paste(platform, ".db", sep=""), character.only=TRUE)
 
 # Read the data file
 suppressWarnings(exprs <- fread(filePath, stringsAsFactors=FALSE, sep="\t", header=TRUE, autostart=10, data.table=FALSE, check.names=FALSE, fill=TRUE, na.strings="", showProgress=FALSE))
-expr_ids <- exprs[probeIdColumn]
+expr_probes <- exprs[probeIdColumn]
 
 # Load these probes
-x <- paste(platform, ".db", sep="")
-probes <- AnnotationDbi::keys(get(x))
+db_name <- paste(platform, ".db", sep="")
+database_probes <- AnnotationDbi::keys(get(db_name))
 
 # Calculate the overlap
-commonProbes <- intersect(unlist(expr_ids), probes)
-percent <- ( length(commonProbes) / length(probes) ) * 100.0
+common_probes <- intersect(unlist(expr_probes), database_probes)
+percent <- ( length(common_probes) / length(database_probes) ) * 100.0
 
 # Send the result to stdout so parent process can pick it up
 write(percent, stdout())
