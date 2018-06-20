@@ -66,6 +66,10 @@ jobs:
         # Run API Tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run: ./api/run_tests.sh
+      
+        # Submit coveralls
+      - run: pip install coveralls 
+      - run: coveralls 
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
   affymetrix_common_agilent_tests:
@@ -99,6 +103,10 @@ jobs:
 
       # This doesn't take as long because the image has already been pulled.
       - run: .circleci/filter_tests.sh -t agilent
+        
+        # Submit coveralls
+      - run: pip install coveralls 
+      - run: coveralls 
 
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
@@ -124,6 +132,10 @@ jobs:
       - run:
           command: .circleci/filter_tests.sh -t salmon
           no_output_timeout: 1h
+        
+        # Submit coveralls
+      - run: pip install coveralls 
+      - run: coveralls 
 
   # This tests workers tests tagged as 'transcriptome' and 'downloaders'
   # These are grouped together because together they take less time than affy or salmon.
@@ -153,6 +165,10 @@ jobs:
 
       # Run Illumna tests.
       - run: .circleci/filter_tests.sh -t illumina
+        
+        # Submit coveralls
+      - run: pip install coveralls 
+      - run: coveralls 
 
 
   deploy:
