@@ -16,11 +16,6 @@ devtools::install_version('tibble', version='1.4.2')
 devtools::install_version('xtable', version='1.8-2')
 devtools::install_version('pkgconfig', version='2.0.1')
 
-# Illumina
-devtools::install_version('doParallel', version='1.0.11')
-devtools::install_version('data.table', version='1.11.0')
-devtools::install_version('optparse', version='1.4.4')
-
 # Bioconductor packages, installed by devtools::install_url()
 
 # devtools::install_url() requires biocLite.R
