@@ -135,6 +135,9 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('samples'), {'ids': str(self.sample.id) + ',1000'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+        response = self.client.get(reverse('samples'), {'accession_codes': str(self.sample.accession_code) + ',1000'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
         response = self.client.get(reverse('samples'), kwargs={'page': 1})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
