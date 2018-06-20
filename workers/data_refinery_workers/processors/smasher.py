@@ -139,6 +139,7 @@ def _smash(job_context: Dict) -> Dict:
         shutil.make_archive(final_zip, 'zip', smash_path)
         job_context["output_file"] = final_zip + ".zip"
     except Exception as e:
+        logger.error(e)
         job_context['dataset'].success = False
         job_context['dataset'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].save()
