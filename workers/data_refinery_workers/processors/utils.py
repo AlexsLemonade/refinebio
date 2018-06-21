@@ -45,7 +45,7 @@ def start_job(job_context: Dict):
         job_context["original_files"] = original_files
         original_file = job_context['original_files'][0]
         assocs = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
-        samples = Sample.objects.filter(id__in=assocs.values('sample_id'))
+        samples = Sample.objects.filter(id__in=assocs.values('sample_id')).distinct()
         job_context['samples'] = samples
 
     else:
