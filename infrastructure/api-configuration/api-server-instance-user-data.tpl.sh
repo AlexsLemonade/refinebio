@@ -21,6 +21,26 @@ apt-get install nginx -y
 cp nginx.conf /etc/nginx/nginx.conf
 service nginx restart
 
+# Create and install SSL Certificate
+apt-get install software-properties-common
+add-apt-repository ppa:certbot/certbot
+apt-get update
+apt-get install python-certbot-nginx
+
+certbot --nginx -d api.staging.refine.bio -n --agree-tos -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
+
+# Let's Encrypt certs are eligible for renewal 30 days before they
+# expire so try to renew every 29 days and we'll be sure to hit the
+# window. (They are valid for 90 days and renewing too early has no
+# consequences other than potentially hitting a rate limit if you do
+# it too often, which this won't.)
+# See https://certbot.eff.org/docs/using.html#renewing-certificates
+# The command to create this crontab was made with help from:
+# https://stackoverflow.com/a/610860/6095378
+# and
+# https://stackoverflow.com/a/550808/6095378
+echo '0 0 */29 * * root certbot renew' | sudo tee --append /etc/cron.d/renew_ssl_cert
+
 # Install, configure and launch our CloudWatch Logs agent
 cat <<EOF >awslogs.conf
 [general]
