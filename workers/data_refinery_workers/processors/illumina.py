@@ -216,9 +216,6 @@ def _detect_platform(job_context: Dict) -> Dict:
                     "--column", job_context['probeId'],
                 ])
 
-            # import pdb
-            # pdb.set_trace()
-
             results = result.decode().split('\n')
             cleaned_result = float(results[0].strip())
 
