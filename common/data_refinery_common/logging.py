@@ -41,4 +41,17 @@ def get_and_configure_logger(name: str) -> logging.Logger:
         fmt=FORMAT_STRING, keywords=[]))
     logger.logger.addHandler(handler)
 
+    # This is the Sentry handler
+    raven_dsn = get_env_variable("RAVEN_DSN", "not set")
+
+    if raven_dsn != "not set":
+        logger.info("Setting up Raven logger for DSN: %s", raven_dsn)
+        from raven.contrib.django.handlers import SentryHandler
+
+        handler = SentryHandler(raven_dsn)
+        handler.setFormatter(daiquiri.formatter.ColorExtrasFormatter(
+            fmt=FORMAT_STRING, keywords=[]))
+        handler.setLevel(logging.WARN)
+        logger.logger.addHandler(handler)
+
     return logger

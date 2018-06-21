@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'data_refinery_common',
     'data_refinery_foreman.surveyor',
     'data_refinery_foreman.foreman',
+    'raven.contrib.django.raven_compat',
 ]
 
 MIDDLEWARE = [
