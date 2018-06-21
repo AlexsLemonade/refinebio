@@ -84,6 +84,10 @@ resource "aws_db_subnet_group" "data_refinery" {
 # Get the API a static IP address.
 resource "aws_eip" "data_refinery_api_ip" {
   vpc = true
+
+  tags {
+    Name = "Data Refinery API Elastic IP ${var.user}-${var.stage}"
+  }
 }
 
 # As per https://aws.amazon.com/elasticloadbalancing/details/:
@@ -113,15 +117,15 @@ resource "aws_lb" "data_refinery_api_load_balancer" {
 
 }
 
-resource "aws_lb_target_group" "api" {
-  name = "dr-api-${var.user}-${var.stage}"
+resource "aws_lb_target_group" "api-http" {
+  name = "dr-api-${var.user}-${var.stage}-http"
   port = 80
   protocol = "TCP"
   vpc_id = "${aws_vpc.data_refinery_vpc.id}"
   stickiness = []
 }
 
-resource "aws_lb_listener" "api" {
+resource "aws_lb_listener" "api-http" {
   load_balancer_arn = "${aws_lb.data_refinery_api_load_balancer.arn}"
   protocol = "TCP"
   port = 80
@@ -132,8 +136,33 @@ resource "aws_lb_listener" "api" {
   }
 }
 
-resource "aws_lb_target_group_attachment" "api" {
+resource "aws_lb_target_group_attachment" "api-http" {
   target_group_arn = "${aws_lb_target_group.api.arn}"
   target_id = "${aws_instance.api_server_1.id}"
   port = 80
+}
+
+resource "aws_lb_target_group" "api-https" {
+  name = "dr-api-${var.user}-${var.stage}-https"
+  port = 443
+  protocol = "TCP"
+  vpc_id = "${aws_vpc.data_refinery_vpc.id}"
+  stickiness = []
+}
+
+resource "aws_lb_listener" "api-https" {
+  load_balancer_arn = "${aws_lb.data_refinery_api_load_balancer.arn}"
+  protocol = "TCP"
+  port = 443
+
+  default_action {
+    target_group_arn = "${aws_lb_target_group.api.arn}"
+    type = "forward"
+  }
+}
+
+resource "aws_lb_target_group_attachment" "api-https" {
+  target_group_arn = "${aws_lb_target_group.api.arn}"
+  target_id = "${aws_instance.api_server_1.id}"
+  port = 443
 }
