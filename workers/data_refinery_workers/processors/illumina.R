@@ -315,7 +315,7 @@ sig = function(y, m, verbose=TRUE)
 # The command interface!
 #######################
 
-library("optparse")
+suppressPackageStartupMessages(library("optparse"))
 
 option_list = list(
   make_option(c("-p", "--probeId"), type="character", default="PROBE_ID", 
@@ -346,12 +346,12 @@ numCores <- strtoi(opt$cores)
 filePath <- opt$inputFile
 outFilePath <- opt$outputFile
 
-library(limma)
-library(oligo)
-library(doParallel)
-library(data.table)
-library(lazyeval)
-library(paste(platform, ".db", sep=""), character.only=TRUE)
+suppressPackageStartupMessages(library(limma))
+suppressPackageStartupMessages(library(oligo))
+suppressPackageStartupMessages(library(doParallel))
+suppressPackageStartupMessages(library(data.table))
+suppressPackageStartupMessages(library(lazyeval))
+suppressPackageStartupMessages(library(paste(platform, ".db", sep=""), character.only=TRUE))
 
 # Read the data file
 message("Reading data file...")
