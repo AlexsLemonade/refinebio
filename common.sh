@@ -18,7 +18,7 @@ get_docker_db_ip_address () {
 # then exit with the appropriate code.
 # This is done a function so arguments to the tests can be passed through.
 run_tests_with_coverage () {
-    echo "coverage run --source=\".\" manage.py test --no-input $@; exit_code=\$?; coverage report -m; exit \$exit_code"
+    echo "coverage run --fail-under=1 --source=\".\" manage.py test --no-input $@; exit_code=\$?; coverage report -m; exit \$exit_code"
 }
 
 # This function checks whether a given docker image name ($1:$CIRCLE_TAG)

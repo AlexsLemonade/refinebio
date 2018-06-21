@@ -69,9 +69,9 @@ jobs:
       
         # Submit coveralls
       - run: pip install pyyaml python-coveralls 
-      - run: coveralls --ignore-errors --data_file workers/test_volume/.illumina.coverage
-      - run: coveralls --ignore-errors --data_file workers/test_volume/.smasher.coverage
-      - run: coveralls --ignore-errors --data_file workers/test_volume/.downloaders.coverage
+      - run: coveralls --ignore-errors --base_dir=workers/ --data_file workers/test_volume/.illumina.coverage
+      - run: coveralls --ignore-errors --base_dir=workers/ --data_file workers/test_volume/.smasher.coverage
+      - run: coveralls --ignore-errors --base_dir=workers/ --data_file workers/test_volume/.downloaders.coverage
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
   affymetrix_common_agilent_tests:
