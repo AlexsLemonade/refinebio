@@ -100,7 +100,8 @@ resource "aws_eip" "data_refinery_api_ip" {
 # existing application that was built within the EC2-Classic network,
 # then you should use a Classic Load Balancer.
 #
-# it appears an Application Load Balancer would be best for us.
+# it appears an Network Load Balancer would be best for us because we
+# need a static IP address to point DNS to.
 resource "aws_lb" "data_refinery_api_load_balancer" {
   # Extra short because there is a 32 char limit on this name
   name = "DR-api-${var.user}-${var.stage}"
