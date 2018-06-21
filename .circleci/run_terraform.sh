@@ -56,7 +56,7 @@ sudo mv nomad /usr/local/bin/
 if [ $CIRCLE_BRANCH == "master" ]; then
     ENVIRONMENT=prod
     BUCKET_NAME="refinebio-tfstate-deploy-production"
-elif [[ $CIRCLE_BRANCH == "dev" || $CIRCLE_BRANCH == "kurtwheeler-make-api-persistent" ]]; then
+elif [[ $CIRCLE_BRANCH == "dev" ]]; then
     ENVIRONMENT=staging
     BUCKET_NAME="refinebio-tfstate-deploy-staging"
 else
