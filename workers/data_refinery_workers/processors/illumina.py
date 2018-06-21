@@ -203,6 +203,7 @@ def _detect_platform(job_context: Dict) -> Dict:
 
     # Loop over all of the possible platforms and find the one with the best match.
     highest = 0.0
+    high_mapped_percent = 0.0
     high_db = None
     for platform in databases:
         try:
@@ -212,19 +213,26 @@ def _detect_platform(job_context: Dict) -> Dict:
                     "/home/user/data_refinery_workers/processors/detect_database.R",
                     "--platform", platform,
                     "--inputFile", job_context['input_file_path'],
-                    "--column", job_context['probeId']
+                    "--column", job_context['probeId'],
                 ])
 
-            cleaned_result = float(result.strip())
+            # import pdb
+            # pdb.set_trace()
+
+            results = result.decode().split('\n')
+            cleaned_result = float(results[0].strip())
+
             if cleaned_result > highest:
                 highest = cleaned_result
                 high_db = platform
+                high_mapped_percent = float(results[1].strip())
 
         except Exception as e:
+            logger.exception(e)
             continue
 
     # If the match is over 75%, record this and process it on that platform.
-    if highest > 75.0:
+    if high_mapped_percent > 75.0:
         job_context['platform'] = high_db
 
         for sample in job_context['samples']:
@@ -232,7 +240,8 @@ def _detect_platform(job_context: Dict) -> Dict:
             sa.sample = sample
             sa.data = {
                 "detected_platform": high_db, 
-                "detection_percentage": highest
+                "detection_percentage": highest,
+                "mapped_percentage": high_mapped_percent
             }
             sa.save()
     # The match percentage is too low - send this to the no-opper instead.

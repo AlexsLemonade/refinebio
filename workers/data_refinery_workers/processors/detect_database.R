@@ -58,9 +58,15 @@ expr_probes <- exprs[probeIdColumn]
 db_name <- paste(platform, ".db", sep="")
 database_probes <- AnnotationDbi::keys(get(db_name))
 
-# Calculate the overlap
+# Calculate the overlap (% of probes in the IDs for current package)
 common_probes <- intersect(unlist(expr_probes), database_probes)
 percent <- ( length(common_probes) / length(database_probes) ) * 100.0
 
 # Send the result to stdout so parent process can pick it up
 write(percent, stdout())
+
+# “the proportion of the IDs in the submitter-processed data can be mapped”
+mapped_percent <- ( length(common_probes) / length(unlist(expr_probes)) ) * 100.0
+
+# Send the result to stdout so parent process can pick it up
+write(mapped_percent, stdout())

@@ -137,11 +137,6 @@ class IlluminaToPCLTestCase(TestCase):
             sample.organism = Organism.get_object_for_name("Homo sapiens")
             sample.save()
 
-            sa = SampleAnnotation()
-            sa.sample = sample
-            sa.data = {}
-            sa.save()
-
             sample_assoc = OriginalFileSampleAssociation()
             sample_assoc.original_file = og_file
             sample_assoc.sample = sample
@@ -149,6 +144,9 @@ class IlluminaToPCLTestCase(TestCase):
 
         final_context = illumina.illumina_to_pcl(pj.pk)
         self.assertEqual(final_context['platform'], 'illuminaHumanv3')
+
+        for key in final_context['samples'][0].sampleannotation_set.all()[0].data.keys():
+            self.assertTrue(key in ['detected_platform', 'detection_percentage', 'mapped_percentage'])
 
 class AgilentTwoColorTestCase(TestCase):
 
