@@ -26,10 +26,10 @@
 # The command interface!
 #######################
 
-library("optparse")
-library(data.table)
-library(lazyeval)
-library(AnnotationDbi)
+suppressPackageStartupMessages(library("optparse"))
+suppressPackageStartupMessages(library(data.table))
+suppressPackageStartupMessages(library(lazyeval))
+suppressPackageStartupMessages(library(AnnotationDbi))
 
 option_list = list(
   make_option(c("-p", "--platform"), type="character", default="", 
@@ -48,7 +48,7 @@ filePath <- opt$inputFile
 probeIdColumn <- opt$column
 
 # Load the platform
-library(paste(platform, ".db", sep=""), character.only=TRUE)
+suppressPackageStartupMessages(library(paste(platform, ".db", sep=""), character.only=TRUE))
 
 # Read the data file
 suppressWarnings(exprs <- fread(filePath, stringsAsFactors=FALSE, sep="\t", header=TRUE, autostart=10, data.table=FALSE, check.names=FALSE, fill=TRUE, na.strings="", showProgress=FALSE))
