@@ -31,9 +31,9 @@ illumina_pkgs <- c(
   'illuminaHumanv2.db_1.26.0.tar.gz',
   'illuminaHumanv3.db_1.26.0.tar.gz',
   'illuminaHumanv4.db_1.26.0.tar.gz',
-  'illuminaMousev1.db',
-  'illuminaMousev1p1.db',
-  'illuminaMousev2.db',
-  'illuminaRatv1.db'
+  'illuminaMousev1.db_1.26.0.tar.gz',
+  'illuminaMousev1p1.db_1.26.0.tar.gz',
+  'illuminaMousev2.db_1.26.0.tar.gz',
+  'illuminaRatv1.db_1.26.0.tar.gz'
 )
 install_with_url(release_url, illumina_pkgs)
