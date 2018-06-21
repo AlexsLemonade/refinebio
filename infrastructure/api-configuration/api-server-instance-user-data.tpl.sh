@@ -30,9 +30,9 @@ if [[ ${stage} == "staging" || ${stage} == "prod" ]]; then
     apt-get install python-certbot-nginx
 
     if [[ ${stage} == "staging" ]]; then
-        certbot --nginx -d api.staging.refine.bio -n --agree-tos -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
+        certbot --nginx -d api.staging.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
     elif [[ ${stage} == "prod" ]]; then
-        certbot --nginx -d api.refine.bio -n --agree-tos -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
+        certbot --nginx -d api.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
     fi
 fi
 
