@@ -69,9 +69,9 @@ jobs:
       
         # Submit coveralls
       - run: pip install pyyaml python-coveralls 
-      - run: coveralls --data_file workers/test_volume/.illumina.coverage
-      - run: coveralls --data_file workers/test_volume/.smasher.coverage
-      - run: coveralls --data_file workers/test_volume/.downloaders.coverage
+      - run: coveralls --ignore-errors --data_file workers/test_volume/.illumina.coverage
+      - run: coveralls --ignore-errors --data_file workers/test_volume/.smasher.coverage
+      - run: coveralls --ignore-errors --data_file workers/test_volume/.downloaders.coverage
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
   affymetrix_common_agilent_tests:
@@ -108,8 +108,8 @@ jobs:
         
         # Submit coveralls
       - run: pip install pyyaml python-coveralls 
-      - run: coveralls --data_file workers/test_volume/.agilent.coverage
-      - run: coveralls --data_file workers/test_volume/.affymetrix.coverage
+      - run: coveralls --ignore-errors --data_file workers/test_volume/.agilent.coverage
+      - run: coveralls --ignore-errors --data_file workers/test_volume/.affymetrix.coverage
 
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
@@ -138,7 +138,7 @@ jobs:
         
         # Submit coveralls
       - run: pip install pyyaml coveralls 
-      - run: coveralls --data_file workers/test_volume/.salmon.coverage
+      - run: coveralls --ignore-errors --data_file workers/test_volume/.salmon.coverage
 
   # This tests workers tests tagged as 'transcriptome' and 'downloaders'
   # These are grouped together because together they take less time than affy or salmon.
@@ -171,7 +171,7 @@ jobs:
         
         # Submit coveralls
       - run: pip install pyyaml python-coveralls 
-      - run: coveralls --data_file workers/test_volume/.transcriptome.coverage
+      - run: coveralls --ignore-errors --data_file workers/test_volume/.transcriptome.coverage
 
 
   deploy:
