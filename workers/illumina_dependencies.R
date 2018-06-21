@@ -1,3 +1,5 @@
+options(warn=2)
+
 options(repos=structure(c(CRAN="https://cloud.r-project.org")))
 
 # Install dev packages
