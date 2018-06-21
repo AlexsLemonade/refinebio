@@ -123,6 +123,10 @@ variable "scale_down_threshold" {
   default = "10"
 }
 
+variable "raven_dsn" {
+  default = ""
+}
+
 # API
 variable "api_docker_image" {
   default = "dr_api:latest"
