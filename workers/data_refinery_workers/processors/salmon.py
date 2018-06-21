@@ -101,22 +101,26 @@ def _determine_index_length(job_context: Dict) -> Dict:
     # zcat unzips the file provided and dumps the output to STDOUT.
     # It is installed by default in Debian so it should be included
     # in every docker image already.
-    for line in os.popen("zcat %s" % job_context["input_file_path"]):
-            # In the FASTQ file format, there are 4 lines for each
-            # read. Three of these contain metadata about the
-            # read. The string representing the read itself is found
-            # on the second line of each quartet.
-            if counter % 4 == 2:
-                total_base_pairs += len(line.replace("\n", ""))
-                number_of_reads += 1
-            counter += 1
+    with subprocess.Popen(['zcat', job_context["input_file_path"]], stdout=subprocess.PIPE,
+                          universal_newlines=True) as process:
+        for line in process.stdout:
+                # In the FASTQ file format, there are 4 lines for each
+                # read. Three of these contain metadata about the
+                # read. The string representing the read itself is found
+                # on the second line of each quartet.
+                if counter % 4 == 2:
+                    total_base_pairs += len(line.replace("\n", ""))
+                    number_of_reads += 1
+                counter += 1
 
     if "input_file_path_2" in job_context:
-        for line in os.popen("zcat %s" % job_context["input_file_path_2"]):
-            if counter % 4 == 2:
-                total_base_pairs += len(line.replace("\n", ""))
-                number_of_reads += 1
-            counter += 1
+        with subprocess.Popen(['zcat', job_context["input_file_path_2"]], stdout=subprocess.PIPE,
+                              universal_newlines=True) as process:
+            for line in process.stdout:
+                if counter % 4 == 2:
+                    total_base_pairs += len(line.replace("\n", ""))
+                    number_of_reads += 1
+                counter += 1
 
     index_length_raw = total_base_pairs / number_of_reads
 
