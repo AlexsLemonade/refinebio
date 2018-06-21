@@ -195,6 +195,7 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
+
       # "deploy" job will be triggered ONLY by tag commits whose name
       # start with letter "v".
       - deploy:
