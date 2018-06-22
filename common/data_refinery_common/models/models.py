@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 from functools import partial
 
-from django.contrib.postgres.fields import HStoreField, JSONField
+from django.contrib.postgres.fields import ArrayField, HStoreField, JSONField
 from django.db import transaction
 from django.db import models
 from django.utils import timezone
@@ -306,13 +306,11 @@ class ComputationalResult(models.Model):
     # Managers
     objects = models.Manager()
     public_objects = PublicObjectsManager()
+    commands = ArrayField(models.TextField())
 
-    command_executed = models.TextField(blank=True)
-    program_version = models.TextField(blank=True)
-    system_version = models.CharField(
-        max_length=255)  # Generally defined in from data_refinery_workers._version import __version__
     is_ccdl = models.BooleanField(default=True)
 
+    # TODO: This field should be changed into "processor" (foreign key to "Processor").
     # Human-readable nickname for this computation
     pipeline = models.CharField(max_length=255)
 
@@ -365,6 +363,29 @@ class ComputationalResultAnnotation(models.Model):
             self.created_at = current_time
         self.last_modified = current_time
         return super(ComputationalResultAnnotation, self).save(*args, **kwargs)
+
+
+class Pipeline(models.Model):
+    "Pipeline that is associated with a series of ComputationalResult records."""
+
+    name = models.CharField(max_length=255)
+    steps = ArrayField(models.IntegerField(), default=[])
+
+    class Meta:
+        db_table = "pipelines"
+
+
+class Processor(models.Model):
+    """Processor associated with a certain ComputationalResult."""
+
+    name = models.CharField(max_length=255)
+    docker_img = models.CharField(max_length=255)
+    env = JSONField(default={})
+
+    class Meta:
+        db_table = "processors"
+        unique_together = ('name', 'docker_img')
+
 
 # TODO
 # class Gene(models.Model):
@@ -688,7 +709,6 @@ class ExperimentSampleAssociation(models.Model):
         unique_together = ('experiment', 'sample')
 
 
-
 class ExperimentOrganismAssociation(models.Model):
 
     experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
@@ -697,7 +717,6 @@ class ExperimentOrganismAssociation(models.Model):
     class Meta:
         db_table = "experiment_organism_associations"
         unique_together = ('experiment', 'organism')
-
 
 
 class DownloaderJobOriginalFileAssociation(models.Model):
@@ -712,7 +731,6 @@ class DownloaderJobOriginalFileAssociation(models.Model):
         unique_together = ('downloader_job', 'original_file')
 
 
-
 class ProcessorJobOriginalFileAssociation(models.Model):
 
     processor_job = models.ForeignKey(
@@ -723,7 +741,6 @@ class ProcessorJobOriginalFileAssociation(models.Model):
     class Meta:
         db_table = "processorjob_originalfile_associations"
         unique_together = ('processor_job', 'original_file')
-
 
 
 class ProcessorJobDatasetAssociation(models.Model):
@@ -745,7 +762,6 @@ class OriginalFileSampleAssociation(models.Model):
     class Meta:
         db_table = "original_file_sample_associations"
         unique_together = ('original_file', 'sample')
-
 
 
 class SampleResultAssociation(models.Model):
