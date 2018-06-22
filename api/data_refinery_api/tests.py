@@ -351,8 +351,6 @@ class APITestCases(APITestCase):
         # With bad token first
         jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True, 'token_id': "HEYO" } )
         response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
-        import pdb
-        pdb.set_trace()
         self.assertEqual(response.status_code, 500)
 
         jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True, 'token_id': token_id } )

@@ -7,6 +7,7 @@ import uuid
 from datetime import datetime
 from functools import partial
 
+from django.conf import settings
 from django.contrib.postgres.fields import HStoreField, JSONField
 from django.db import transaction
 from django.db import models
@@ -695,7 +696,7 @@ class APIToken(models.Model):
     @property
     def terms_and_conditions(self):
         """ """
-        return "By using the Refine.bio service you agree to blah blah blah lawyers lawyers lawyers blah blah blah [ .. ] blah blah blah"
+        return settings.TERMS_AND_CONDITIONS
 
 """
 # Associations
