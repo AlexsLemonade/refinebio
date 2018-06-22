@@ -84,9 +84,9 @@ The following services will need to be installed:
 so Docker does not need sudo permissions.
 - [Terraform](https://www.terraform.io/)
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./install_nomad.sh`.
-- git-crypt
-- jq
-- iproute2
+- [git-crypt](https://www.agwa.name/projects/git-crypt/)
+- [jq](https://stedolan.github.io/jq/)
+- [iproute2](https://wiki.linuxfoundation.org/networking/iproute2)
 
 Instructions for installing Docker and Nomad can be found by
 following the link for each service. git-crypt, jq, and iproute2 can be installed via
@@ -110,9 +110,9 @@ The following services will need to be installed:
 - [Terraform](https://www.terraform.io/)
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries)
 - [Homebrew](https://brew.sh/)
-- git-crypt
-- iproute2mac
-- jq
+- [git-crypt](https://www.agwa.name/projects/git-crypt/)
+- [iproute2mac](https://github.com/brona/iproute2mac)
+- [jq](https://stedolan.github.io/jq/)
 
 Instructions for installing Docker, Nomad, and Homebrew can be found by
 following the link for those services. The others on that list can
