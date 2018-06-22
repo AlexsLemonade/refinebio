@@ -186,6 +186,9 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('create_dataset'))
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
+        response = self.client.get(reverse('token'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     def test_sample_pagination(self):
 
         response = self.client.get(reverse('samples'))
@@ -284,6 +287,20 @@ class APITestCases(APITestCase):
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
 
+        # Get a token first
+        response = self.client.get(reverse('token'),
+                                    content_type="application/json")
+        token = response.json()
+        token['is_activated'] = True
+        token_id = token['id']
+        response = self.client.post(reverse('token'),
+                                    json.dumps(token),
+                                    content_type="application/json")
+
+        activated_token = response.json()
+        self.assertEqual(activated_token['id'], token_id)
+        self.assertEqual(activated_token['is_activated'], True)
+
         # Good
         jdata = json.dumps({'data': {"A": ["B"]}})
         response = self.client.post(reverse('create_dataset'),
@@ -330,7 +347,15 @@ class APITestCases(APITestCase):
         dataset = Dataset.objects.get(id=good_id)
         dataset.is_processing = False
         dataset.save()
-        jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True} )
+
+        # With bad token first
+        jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True, 'token_id': "HEYO" } )
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
+        import pdb
+        pdb.set_trace()
+        self.assertEqual(response.status_code, 500)
+
+        jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True, 'token_id': token_id } )
         response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
         self.assertEqual(response.json()["is_processing"], True)
 
