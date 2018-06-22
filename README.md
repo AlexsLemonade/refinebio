@@ -82,10 +82,22 @@ so Docker does not need sudo permissions.
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./install_nomad.sh`.
 - git-crypt
 - jq
+- iproute2
 
 Instructions for installing Docker and Nomad can be found by
-following the link for each service. git-crypt and jq can be installed via
-`sudo apt-get install git-crypt jq`.
+following the link for each service. git-crypt, jq, and iproute2 can be installed via
+`sudo apt-get install git-crypt jq iproute2`.
+
+When installing pip packages later in the install, you might get an error saying you need sudo permissions.
+In order to fix this you have to edit your `~/.config/pip/pip.conf` to add this:
+
+```
+[install]
+user = yes
+no-binary = :all:
+```
+
+This sets pip to install all packages in your user directory so sudo is not required for pip intalls.
 
 #### Mac
 
@@ -170,6 +182,10 @@ Finally, to make the migrations to the database, use:
 ```bash
 ./common/make_migrations.sh
 ```
+
+Note: there is a small chance this might fail with a `can't stat`, error. If this happens, you have
+to manually change permissions on the volumes directory with `sudo chmod -R 740 volumes_postgres`
+then re-run the migrations.
 
 If you need to access a `psql` shell for inspecting the database, you can use:
 
