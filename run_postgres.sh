@@ -14,7 +14,7 @@ if [ ! -d $VOLUMES ]; then
 fi
 
 # Check if a docker database named "drdb" exists, and if so just run it
-if [[ $(docker ps -a --filter name=drdb | wc -l) > 1 ]]; then
+if [[ $(docker ps -a --filter NAME=drdb -q) ]]; then
   docker start drdb > /dev/null
   echo "Started database."
 # Otherwise, install it from docker hub
