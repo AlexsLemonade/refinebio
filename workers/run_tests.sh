@@ -68,8 +68,8 @@ if [[ -z $tag || $tag == "salmon" ]]; then
     # Download "salmon quant" test data
     echo "Downloading 'salmon quant' test data..."
     rm -rf $volume_directory/salmon_tests/
-    # Since this is a big file, show download progress
-    wget -q --show-progress -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests.tar.gz
+
+    wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests.tar.gz
     tar xzf $volume_directory/salmon_tests.tar.gz -C $volume_directory
 
     # Download salmontools test data
