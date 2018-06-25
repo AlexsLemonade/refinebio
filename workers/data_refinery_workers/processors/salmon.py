@@ -165,6 +165,9 @@ def _download_index(job_context: Dict) -> Dict:
     index_object = OrganismIndex.objects.filter(organism=job_context['organism'],
             index_type=index_type).order_by('created_at').first()
 
+    import pdb
+    pdb.set_trace()
+
     if not index_object:
         logger.error("Could not run Salmon processor without index for organism",
             organism=job_context['organism'],

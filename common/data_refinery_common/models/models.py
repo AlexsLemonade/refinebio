@@ -73,7 +73,7 @@ class Sample(models.Model):
     # Technological Properties
     platform_accession_code = models.CharField(max_length=256, blank=True)
     platform_name = models.CharField(max_length=256, blank=True)
-    technology = models.CharField(max_length=256, blank=True)
+    technology = models.CharField(max_length=256, blank=True) # MICROARRAY, RNA-SEQ
     manufacturer = models.CharField(max_length=256, blank=True)
 
     # Scientific Properties
@@ -679,6 +679,14 @@ class Dataset(models.Model):
             return self.get_samples_by_experiment()
         else:
             return self.get_samples_by_species()
+
+    def is_cross_technology(self):
+        """ Determine if this involves both Microarray + RNASeq"""
+
+        if len(self.get_samples().values('technology').distinct()) > 1:
+            return True
+        else:
+            return False
 
 class APIToken(models.Model):
     """ Required for starting a smash job """
