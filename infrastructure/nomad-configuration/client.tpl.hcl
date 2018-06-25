@@ -10,7 +10,7 @@ data_dir = "/tmp/nomad_client1"
 client {
     enabled = true
 
-    servers = ["${nomad_server_address}:4647"]
+    servers = ["${nomad_lead_server_ip}:4647"]
 }
 
 consul {
@@ -22,5 +22,5 @@ consul {
 telemetry {
   publish_allocation_metrics = true
   publish_node_metrics       = true
-  statsd_address = "${nomad_server_address}:8125"
+  statsd_address = "${nomad_lead_server_ip}:8125"
 }
