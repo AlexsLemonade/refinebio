@@ -113,10 +113,10 @@ urlpatterns = [
     url(r'^stats/$', Stats.as_view(), name="stats"),
 
     # Admin
-    url(r'^admin', admin.site.urls),
+    url(r'^admin/', admin.site.urls),
 
     # Core API schema docs
-    url(r'^docs', include_docs_urls(title='Refine.bio API'), name="docs_schema"),
+    url(r'^docs/', include_docs_urls(title='Refine.bio API'), name="docs_schema"),
 
     # Root
     url(r'^', APIRoot.as_view(), name="api_root"),

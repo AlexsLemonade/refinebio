@@ -217,7 +217,7 @@ def _upload_and_notify(job_context: Dict) -> Dict:
                         'Subject': {
                             'Charset': CHARSET,
                             'Data': SUBJECT,
-                        },
+                        }
                     },
                     Source=SENDER,
                 )
