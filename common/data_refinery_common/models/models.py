@@ -91,6 +91,7 @@ class Sample(models.Model):
     time = models.CharField(max_length=255, blank=True)
 
     # Crunch Properties
+    # TODO: rm is_downloaded from sample, it is on original_file instead
     is_downloaded = models.BooleanField(default=False)
     is_processed = models.BooleanField(default=False)
 
@@ -302,7 +303,7 @@ class ComputationalResult(models.Model):
         base_manager_name = 'public_objects'
 
     def __str__(self):
-        return "ComputationalResult: " + str(self.pk)
+        return "ComputationalResult " + str(self.pk) + ": " + str(self.command_executed)
 
     # Managers
     objects = models.Manager()
@@ -382,6 +383,9 @@ class OrganismIndex(models.Model):
         db_table = "organism_index"
         base_manager_name = 'public_objects'
 
+    def __str__(self):
+        return "OrganismIndex " + str(self.pk) + ": " + self.organism.name + ' [' + self.index_type + ']'
+
     # Managers
     objects = models.Manager()
     public_objects = PublicObjectsManager()
@@ -411,6 +415,10 @@ class OrganismIndex(models.Model):
             self.created_at = current_time
         self.last_modified = current_time
         return super(OrganismIndex, self).save(*args, **kwargs)
+
+    @property
+    def index_file(self):
+        return
 
 """
 # Files
