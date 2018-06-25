@@ -26,7 +26,7 @@ if ! ps aux | grep test_nomad | grep -v grep > /dev/null; then
     echo "'sudo -E ./run_nomad.sh -e test'" >&2
     exit 1
 # Then ensure postgres is running
-elif ! docker ps | tail -n +2 | awk '{ print $NF }' | grep drdb > /dev/null; then
+elif ! [[ $(docker ps --filter name=drdb -q) ]]; then
     echo "You must start posgres first with './run_postgres.sh'" >&2
     exit 1
 fi
