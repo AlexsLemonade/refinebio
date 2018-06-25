@@ -124,21 +124,16 @@ class IlluminaToPCLTestCase(TestCase):
         assoc1.processor_job = pj
         assoc1.save()
 
-        sample_names = [
-            "hypoxia_Signal",
-        ]
+        sample = Sample()
+        sample.accession_code = "ABCD-1234"
+        sample.title = "hypoxia_Signal"
+        sample.organism = Organism.get_object_for_name("Homo sapiens")
+        sample.save()
 
-        for name in sample_names:
-            sample = Sample()
-            sample.accession_code = name
-            sample.title = name
-            sample.organism = Organism.get_object_for_name("Homo sapiens")
-            sample.save()
-
-            sample_assoc = OriginalFileSampleAssociation()
-            sample_assoc.original_file = og_file
-            sample_assoc.sample = sample
-            sample_assoc.save()
+        sample_assoc = OriginalFileSampleAssociation()
+        sample_assoc.original_file = og_file
+        sample_assoc.sample = sample
+        sample_assoc.save()
 
         final_context = illumina.illumina_to_pcl(pj.pk)
         self.assertEqual(final_context['platform'], 'illuminaHumanv3')
