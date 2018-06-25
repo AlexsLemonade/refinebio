@@ -14,7 +14,7 @@ cd $script_directory
 cd ..
 
 # Ensure that postgres is running
-if [[ $(docker ps --filter NAME=drdb -q) ]]; then
+if ! [[ $(docker ps --filter name=drdb -q) ]]; then
     echo "You must start posgres first with './run_postgres.sh'" >&2
     exit 1
 fi
