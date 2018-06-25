@@ -216,6 +216,8 @@ def _create_index(job_context: Dict) -> Dict:
                                             stderr=subprocess.PIPE)
 
     if rsem_completed_command.returncode != 0:
+        import pdb
+        pdb.set_trace()
         stderr = str(rsem_completed_command.stderr)
         error_start = stderr.find("Error:")
         error_start = error_start if error_start != -1 else 0
