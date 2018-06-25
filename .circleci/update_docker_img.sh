@@ -3,22 +3,31 @@
 # Load docker_img_exists function
 source ~/refinebio/common.sh
 
+if [ $CIRCLE_BRANCH == "master" ]; then
+    DOCKERHUB_REPO=ccdl
+elif [[ $CIRCLE_BRANCH == "dev" ]]; then
+    DOCKERHUB_REPO=ccdlstaging
+else
+    echo "Why in the world was update_docker_img.sh called from a branch other than `dev` or `master`?!?!?"
+    exit 1
+fi
+
 # Docker images that we want to protect from accidental overwriting in "ccdl" account.
 CCDL_WORKER_IMGS="illumina affymetrix salmon transcriptome no_op downloaders"
 
 # If any of the three images could be overwritten by the building process,
 # print out a message and terminate immediately.
 for IMG in $CCDL_WORKER_IMGS; do
-    image_name=ccdl/dr_$IMG
+    image_name="$DOCKERHUB_REPO/dr_$IMG"
     if docker_img_exists $image_name $CIRCLE_TAG; then
         echo "Docker image exists, building process terminated: $image_name:$CIRCLE_TAG"
         exit
     fi
 done
 
-CCDL_OTHER_IMGS="ccdl/data_refinery_foreman ccdl/data_refinery_api"
+CCDL_OTHER_IMGS="$DOCKERHUB_REPO/dr_foreman $DOCKERHUB_REPO/dr_api"
 
-# Handle the foreman separately.
+# Handle the foreman and API separately.
 for IMG in $CCDL_OTHER_IMGS; do
     if docker_img_exists $IMG $CIRCLE_TAG; then
         echo "Docker image exists, building process terminated: $IMG:$CIRCLE_TAG"
@@ -35,9 +44,9 @@ docker login -u $DOCKER_ID -p $DOCKER_PASSWD
 
 cd ~/refinebio
 for IMG in $CCDL_WORKER_IMGS; do
-    image_name=ccdl/dr_$IMG
+    image_name="$DOCKERHUB_REPO/dr_$IMG"
     # Build and push image
-    docker build -t $image_name:$CIRCLE_TAG -f workers/dockerfiles/$IMG .
+    docker build -t $image_name:$CIRCLE_TAG -f workers/dockerfiles/Dockerfile.$IMG .
     docker push $image_name:$CIRCLE_TAG
     # Update latest version
     docker tag $image_name:$CIRCLE_TAG $image_name:latest
@@ -45,16 +54,17 @@ for IMG in $CCDL_WORKER_IMGS; do
 done
 
 # Build and push foreman image
-./prepare_image.sh -i foreman -s foreman
-docker push ccdl/data_refinery_foreman:$CIRCLE_TAG
+FOREMAN_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_foreman"
+docker build -t "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG" -f foreman/dockerfiles.foreman .
+docker push "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG"
 # Update latest version
-docker tag ccdl/data_refinery_foreman:$CIRCLE_TAG ccdl/data_refinery_foreman:latest
-docker push ccdl/data_refinery_foreman:latest
+docker tag "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG" "$FOREMAN_DOCKER_IMAGE:latest"
+docker push "$FOREMAN_DOCKER_IMAGE:latest"
 
 # Build and push API image
-./prepare_image.sh -i api_production -s api
-docker tag ccdl/data_refinery_api ccdl/data_refinery_api:$CIRCLE_TAG
-docker push ccdl/data_refinery_api:$CIRCLE_TAG
+API_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_api"
+docker build -t "$API_DOCKER_IMAGE:$CIRCLE_TAG" -f api/dockerfiles/Dockerfile.api_production .
+docker push "$API_DOCKER_IMAGE:$CIRCLE_TAG"
 # Update latest version
-docker tag ccdl/data_refinery_api:$CIRCLE_TAG ccdl/data_refinery_api:latest
-docker push ccdl/data_refinery_api:latest
+docker tag "$API_DOCKER_IMAGE:$CIRCLE_TAG" "$API_DOCKER_IMAGE:latest"
+docker push "$API_DOCKER_IMAGE:latest"

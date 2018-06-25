@@ -69,10 +69,10 @@ class UtilsTestCase(TestCase):
         """Test that supported RNASeq platforms setting is set correctly."""
         self.assertTrue("Illumina HiSeq 1000" in utils.get_supported_rnaseq_platforms())
 
-    def test_readable_platform_names(self):
-        """Test that the setting for mapping platform accessions to
+    def test_readable_affymetrix_names(self):
+        """Test that the setting for Affymetrix accessions to
         human readable names is set correctly."""
-        readable_platform_names = utils.get_readable_platform_names()
+        readable_platform_names = utils.get_readable_affymetrix_names()
         expected_readable_name = "[ChiGene-1_0-st] Affymetrix Chicken Gene 1.0 ST Array"
         self.assertTrue(readable_platform_names["chigene10st"] == expected_readable_name)
         expected_readable_name = "[Xenopus_laevis] Affymetrix Xenopus laevis Genome Array"

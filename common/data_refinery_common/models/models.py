@@ -7,6 +7,7 @@ import uuid
 from datetime import datetime
 from functools import partial
 
+from django.conf import settings
 from django.contrib.postgres.fields import HStoreField, JSONField
 from django.db import transaction
 from django.db import models
@@ -22,18 +23,36 @@ and filtering against.
 
 """
 
+class PublicObjectsManager(models.Manager):
+    """
+    Only returns objects that have is_public
+    """
+    def get_queryset(self):
+        return super().get_queryset().filter(is_public=True)
+
+class ProcessedObjectsManager(models.Manager):
+    """
+    Only returns objects that have is_processed and is_public
+    """
+    def get_queryset(self):
+        return super().get_queryset().filter(is_processed=True, is_public=True)
 
 class Sample(models.Model):
-
     """
     An individual sample.
     """
 
     class Meta:
         db_table = "samples"
+        base_manager_name = 'public_objects'
 
     def __str__(self):
-        return "Sample: " + self.accession_code
+        return self.accession_code
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
+    processed_objects = ProcessedObjectsManager()
 
     # Identifiers
     accession_code = models.CharField(max_length=255, unique=True)
@@ -45,6 +64,7 @@ class Sample(models.Model):
     original_files = models.ManyToManyField('OriginalFile', through='OriginalFileSampleAssociation')
 
     # Historical Properties
+    source_database = models.CharField(max_length=255, blank=False)
     source_archive_url = models.CharField(max_length=255)
     source_filename = models.CharField(max_length=255, blank=False)
     source_absolute_file_path = models.CharField(max_length=255)
@@ -54,6 +74,7 @@ class Sample(models.Model):
     platform_accession_code = models.CharField(max_length=256, blank=True)
     platform_name = models.CharField(max_length=256, blank=True)
     technology = models.CharField(max_length=256, blank=True)
+    manufacturer = models.CharField(max_length=256, blank=True)
 
     # Scientific Properties
     sex = models.CharField(max_length=255, blank=True)
@@ -74,7 +95,7 @@ class Sample(models.Model):
     is_processed = models.BooleanField(default=False)
 
     # Common Properties
-    is_public = models.BooleanField(default=False)
+    is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 
@@ -123,13 +144,16 @@ class Sample(models.Model):
         """ Returns a list of related pipelines """
         return [p for p in self.results.values_list('pipeline', flat=True).distinct()]
 
-
 class SampleAnnotation(models.Model):
-
     """ Semi-standard information associated with a Sample """
 
     class Meta:
         db_table = "sample_annotations"
+        base_manager_name = 'public_objects'
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
 
     # Relations
     sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
@@ -139,7 +163,7 @@ class SampleAnnotation(models.Model):
     is_ccdl = models.BooleanField(default=False)
 
     # Common Properties
-    is_public = models.BooleanField(default=False)
+    is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 
@@ -153,14 +177,18 @@ class SampleAnnotation(models.Model):
 
 
 class Experiment(models.Model):
-
     """ An Experiment or Study """
 
     class Meta:
         db_table = "experiments"
+        base_manager_name = 'public_objects'
 
     def __str__(self):
         return "Experiment: " + self.accession_code
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
 
     # Relations
     samples = models.ManyToManyField('Sample', through='ExperimentSampleAssociation')
@@ -190,7 +218,7 @@ class Experiment(models.Model):
     source_last_modified = models.DateTimeField(null=True)
 
     # Common Properties
-    is_public = models.BooleanField(default=False)
+    is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 
@@ -229,13 +257,21 @@ class Experiment(models.Model):
 
         return metadata
 
+    @property
+    def platforms(self):
+        """ Returns a list of related pipelines """
+        return [p for p in self.samples.values_list('platform_name', flat=True).distinct()]
 
 class ExperimentAnnotation(models.Model):
-
     """ Semi-standard information associated with an Experiment """
 
     class Meta:
         db_table = "experiment_annotations"
+        base_manager_name = 'public_objects'
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
 
     # Relations
     experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
@@ -245,7 +281,7 @@ class ExperimentAnnotation(models.Model):
     is_ccdl = models.BooleanField(default=False)
 
     # Common Properties
-    is_public = models.BooleanField(default=False)
+    is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 
@@ -259,14 +295,18 @@ class ExperimentAnnotation(models.Model):
 
 
 class ComputationalResult(models.Model):
-
     """ Meta-information about the output of a computer process. (Ex Salmon) """
 
     class Meta:
         db_table = "computational_results"
+        base_manager_name = 'public_objects'
 
     def __str__(self):
         return "ComputationalResult: " + str(self.pk)
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
 
     command_executed = models.TextField(blank=True)
     program_version = models.TextField(blank=True)
@@ -282,7 +322,7 @@ class ComputationalResult(models.Model):
     time_end = models.DateTimeField(blank=True, null=True)
 
     # Common Properties
-    is_public = models.BooleanField(default=False)
+    is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 
@@ -296,11 +336,15 @@ class ComputationalResult(models.Model):
 
 
 class ComputationalResultAnnotation(models.Model):
-
     """ Non-standard information associated with an ComputationalResult """
 
     class Meta:
         db_table = "computational_result_annotations"
+        base_manager_name = 'public_objects'
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
 
     # Relations
     result = models.ForeignKey(
@@ -311,7 +355,7 @@ class ComputationalResultAnnotation(models.Model):
     is_ccdl = models.BooleanField(default=True)
 
     # Common Properties
-    is_public = models.BooleanField(default=False)
+    is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 
@@ -332,16 +376,26 @@ class ComputationalResultAnnotation(models.Model):
 
 
 class OrganismIndex(models.Model):
-
     """ A special type of process result, necessary for processing other SRA samples """
 
     class Meta:
         db_table = "organism_index"
+        base_manager_name = 'public_objects'
 
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
+
+    # Relations
     organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
+
+    # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
     index_type = models.CharField(max_length=255)
-                                  # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
-    source_version = models.CharField(max_length=255)  # Where do we get this from
+    # This corresponds to Ensembl's release number:
+    # http://ensemblgenomes.org/info/about/release_cycle
+    # Determined by hitting:
+    # http://rest.ensembl.org/info/software?content-type=application/json
+    source_version = models.CharField(max_length=255)
     result = models.ForeignKey(
         ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
@@ -366,9 +420,7 @@ which live on local disk, on ephemeral storage,
 or on AWS cloud services.
 """
 
-
 class OriginalFile(models.Model):
-
     """ A representation of a file from an external source """
 
     class Meta:
@@ -376,6 +428,10 @@ class OriginalFile(models.Model):
 
     def __str__(self):
         return "OriginalFile: " + self.get_display_name()
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
 
     filename = models.CharField(max_length=255)
     absolute_file_path = models.CharField(max_length=255, blank=True, null=True)
@@ -395,10 +451,9 @@ class OriginalFile(models.Model):
 
     # Crunch Properties
     is_downloaded = models.BooleanField(default=False)
-    is_processed = models.BooleanField(default=False)
 
     # Common Properties
-    is_public = models.BooleanField(default=False)
+    is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 
@@ -437,7 +492,6 @@ class OriginalFile(models.Model):
 
 
 class ComputedFile(models.Model):
-
     """ A representation of a file created by a data-refinery process """
 
     class Meta:
@@ -445,6 +499,10 @@ class ComputedFile(models.Model):
 
     def __str__(self):
         return "ComputedFile: " + str(self.filename)
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
 
     # File related
     filename = models.CharField(max_length=255)
@@ -455,7 +513,7 @@ class ComputedFile(models.Model):
     # Relations
     result = models.ForeignKey(
         ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
-    
+
     # Scientific
     is_smashable = models.BooleanField(default=False)
     is_qc = models.BooleanField(default=False)
@@ -465,7 +523,7 @@ class ComputedFile(models.Model):
     s3_key = models.CharField(max_length=255)
 
     # Common Properties
-    is_public = models.BooleanField(default=False)
+    is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 
@@ -505,7 +563,6 @@ class ComputedFile(models.Model):
 
 
 class Dataset(models.Model):
-
     """ A Dataset is a desired set of experiments/samples to smash and download """
 
     AGGREGATE_CHOICES = (
@@ -614,6 +671,32 @@ class Dataset(models.Model):
             return self.get_samples_by_experiment()
         else:
             return self.get_samples_by_species()
+
+class APIToken(models.Model):
+    """ Required for starting a smash job """
+
+    # ID
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # Activation
+    is_activated = models.BooleanField(default=False)
+
+    # Common Properties
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(APIToken, self).save(*args, **kwargs)
+
+    @property
+    def terms_and_conditions(self):
+        """ """
+        return settings.TERMS_AND_CONDITIONS
 
 """
 # Associations

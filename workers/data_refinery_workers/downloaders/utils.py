@@ -14,7 +14,7 @@ from data_refinery_common.models import (
     OriginalFile,
     ProcessorJobOriginalFileAssociation
 )
-from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.job_lookup import ProcessorPipeline, determine_processor_pipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_workers._version import __version__
@@ -44,90 +44,66 @@ def start_job(job_id: int) -> DownloaderJob:
 
     return job
 
+
 def end_downloader_job(job: DownloaderJob, success: bool):
     """
     Record in the database that this job has completed.
     """
+    if success:
+        logger.info("Downloader Job completed successfully.",
+                    downloader_job=job.id)
 
     job.success = success
     job.end_time = timezone.now()
     job.save()
 
-def create_processor_jobs_for_original_files(original_files: List[OriginalFile], pipeline=None):
-    """
-    Create a processor jobs queue a processor task for samples related to an experiment.
-    """
 
-    # Iterate over all of our samples.
-    # If we have raw, send it to the correct processor.
-    # Else, treat it as a "NO-OP"
+def create_processor_jobs_for_original_files(original_files: List[OriginalFile]):
+    """
+    Create a processor jobs and queue a processor task for samples related to an experiment.
+    """
     for original_file in original_files:
+        sample_object = original_file.samples.first()
+        pipeline_to_apply = determine_processor_pipeline(sample_object)
 
-        processor_job = ProcessorJob()
-
-        if not pipeline:
-            if not original_file.has_raw:
-                processor_job.pipeline_applied = ProcessorPipeline.NO_OP.value 
-            else:
-                if 'CEL' in original_file.filename.upper():
-                    processor_job.pipeline_applied = ProcessorPipeline.AFFY_TO_PCL.value
-                else:
-                    processor_job.pipeline_applied = ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL.value
+        if pipeline_to_apply == ProcessorPipeline.NONE:
+            logger.info("No valid processor pipeline found to apply to sample.",
+                        sample=sample_object.id,
+                        original_file=original_files[0].id)
         else:
-            processor_job.pipeline_applied = pipeline
+            processor_job = ProcessorJob()
+            processor_job.pipeline_applied = pipeline_to_apply.value
+            processor_job.save()
 
-        # Save the Job and create the association
-        processor_job.save()
-        assoc = ProcessorJobOriginalFileAssociation()
-        assoc.original_file = original_file
-        assoc.processor_job = processor_job
-        assoc.save()
+            assoc = ProcessorJobOriginalFileAssociation()
+            assoc.original_file = original_file
+            assoc.processor_job = processor_job
+            assoc.save()
 
-        send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)
+            send_job(pipeline_to_apply, processor_job)
+
 
 def create_processor_job_for_original_files(original_files: List[OriginalFile]):
     """
     Create a processor job and queue a processor task for sample related to an experiment.
 
     """
-    original_file = original_files[0]
+    # For anything that has raw data there should only be one Sample per OriginalFile
+    sample_object = original_files[0].samples.first()
+    pipeline_to_apply = determine_processor_pipeline(sample_object)
 
-    # This is a paired read. Make sure the other one is downloaded, this start the job
-    if '_' in original_file.filename:
-        split = original_file.filename.split('_')
-        if '1' in split[1]:
-            other_file = OriginalFile.objects.get(source_filename='_'.join([split[0], split[1].replace('1', '2')]))
-        else:
-            other_file = OriginalFile.objects.get(source_filename='_'.join([split[0], split[1].replace('2', '1')]))
-        if not other_file.is_downloaded:
-            logger.info("Need other file to download before starting paired read Salmon.")
-            return
-        else:
-            processor_job = ProcessorJob()
-            processor_job.pipeline_applied = "SALMON"
-            processor_job.save()
-
-            assoc1 = ProcessorJobOriginalFileAssociation()
-            assoc1.original_file = original_file
-            assoc1.processor_job = processor_job
-            assoc1.save()
-
-            assoc2 = ProcessorJobOriginalFileAssociation()
-            assoc2.original_file = other_file
-            assoc2.processor_job = processor_job
-            assoc2.save()
-
-    # This is a single read. Let's rock now.
+    if pipeline_to_apply == ProcessorPipeline.NONE:
+        logger.info("No valid processor pipeline found to apply to sample.",
+                    sample=sample_object.id,
+                    original_file=original_files[0].id)
     else:
-        # Only one file to download, start the job now.
         processor_job = ProcessorJob()
-        processor_job.pipeline_applied = "SALMON"
+        processor_job.pipeline_applied = pipeline_to_apply.value
         processor_job.save()
+        for original_file in original_files:
+            assoc = ProcessorJobOriginalFileAssociation()
+            assoc.original_file = original_file
+            assoc.processor_job = processor_job
+            assoc.save()
 
-        assoc = ProcessorJobOriginalFileAssociation()
-        assoc.original_file = original_file
-        assoc.processor_job = processor_job
-        assoc.save()
-
-    send_job(ProcessorPipeline[processor_job.pipeline_applied], processor_job.id)
-
+        send_job(pipeline_to_apply, processor_job)

@@ -24,15 +24,15 @@ docker run \
        --volume $script_directory/data_refinery_common:/home/user/data_refinery_common \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
-       --env-file common/environments/dev \
+       --env-file common/environments/local \
        --interactive \
        --link drdb:postgres\
-       dr_models python3.6 manage.py makemigrations data_refinery_common --noinput
+       dr_models python3.6 manage.py makemigrations data_refinery_common
 
 docker run \
        --volume $script_directory/data_refinery_common:/home/user/data_refinery_common \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
-       --env-file common/environments/dev \
+       --env-file common/environments/local \
        --link drdb:postgres \
-       dr_models python3.6 manage.py migrate --noinput
+       dr_models python3.6 manage.py migrate
