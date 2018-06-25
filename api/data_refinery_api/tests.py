@@ -135,6 +135,9 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('samples'), {'ids': str(self.sample.id) + ',1000'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+        response = self.client.get(reverse('samples'), {'accession_codes': str(self.sample.accession_code) + ',1000'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
         response = self.client.get(reverse('samples'), kwargs={'page': 1})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -183,6 +186,9 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('create_dataset'))
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
+        response = self.client.get(reverse('token'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     def test_sample_pagination(self):
 
         response = self.client.get(reverse('samples'))
@@ -228,15 +234,37 @@ class APITestCases(APITestCase):
         ex.submitter_institution = "Funkytown"
         experiments.append(ex)
 
-        ex = Experiment()
-        ex.accession_code = "FINDME2"
-        ex.title = "THISWILLBEINASEARCHRESULT"
-        ex.description = "SOWILLTHIS"
-        ex.technology = "RNA-SEQ"
-        ex.submitter_institution = "Funkytown"
-        experiments.append(ex)
+        ex2 = Experiment()
+        ex2.accession_code = "FINDME2"
+        ex2.title = "THISWILLBEINASEARCHRESULT"
+        ex2.description = "SOWILLTHIS"
+        ex2.technology = "RNA-SEQ"
+        ex2.submitter_institution = "Funkytown"
+        experiments.append(ex2)
+
+        sample1 = Sample()
+        sample1.title = "1123"
+        sample1.accession_code = "1123"
+        sample1.platform_name = "AFFY"
+        sample1.save()
+
+        sample2 = Sample()
+        sample2.title = "3345"
+        sample2.accession_code = "3345"
+        sample2.platform_name = "ILLUMINA"
+        sample2.save()
 
         Experiment.objects.bulk_create(experiments)
+
+        experiment_sample_association = ExperimentSampleAssociation()
+        experiment_sample_association.sample = sample1
+        experiment_sample_association.experiment = ex
+        experiment_sample_association.save()
+
+        experiment_sample_association = ExperimentSampleAssociation()
+        experiment_sample_association.sample = sample2
+        experiment_sample_association.experiment = ex
+        experiment_sample_association.save()
 
         # Test all
         response = self.client.get(reverse('search'))
@@ -252,9 +280,26 @@ class APITestCases(APITestCase):
                                     'technology': 'MICROARRAY'})
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME')
+        self.assertEqual(len(response.json()['results'][0]['platforms']), 2)
+        self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(ex.platforms))
+        self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(['AFFY', 'ILLUMINA']))
 
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
+
+        # Get a token first
+        response = self.client.get(reverse('token'),
+                                    content_type="application/json")
+        token = response.json()
+        token['is_activated'] = True
+        token_id = token['id']
+        response = self.client.post(reverse('token'),
+                                    json.dumps(token),
+                                    content_type="application/json")
+
+        activated_token = response.json()
+        self.assertEqual(activated_token['id'], token_id)
+        self.assertEqual(activated_token['is_activated'], True)
 
         # Good
         jdata = json.dumps({'data': {"A": ["B"]}})
@@ -302,7 +347,13 @@ class APITestCases(APITestCase):
         dataset = Dataset.objects.get(id=good_id)
         dataset.is_processing = False
         dataset.save()
-        jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True} )
+
+        # With bad token first
+        jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True, 'token_id': "HEYO" } )
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
+        self.assertEqual(response.status_code, 500)
+
+        jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True, 'token_id': token_id } )
         response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
         self.assertEqual(response.json()["is_processing"], True)
 

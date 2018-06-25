@@ -1,5 +1,5 @@
 import os
-from django.test import TestCase
+from django.test import TestCase, tag
 from unittest.mock import patch
 
 from data_refinery_common.models import (
@@ -14,7 +14,7 @@ from data_refinery_common.models import (
 )
 from data_refinery_workers.downloaders import geo, utils
 
-def create_processor_jobs_for_original_files_no_send(original_files, pipeline):
+def create_processor_jobs_for_original_files_no_send(original_files, pipeline="AGILENT_TWOCOLOR_TO_PCL"):
     # Iterate over all of our samples.
     # If we have raw, send it to the correct processor.
     # Else, treat it as a "NO-OP"
@@ -42,6 +42,7 @@ class DownloadGeoTestCase(TestCase):
     def setUp(self):
         return
 
+    @tag('downloaders')    
     def test_download_and_extract_file(self):
 
         # Download function requires a DownloaderJob object,
@@ -75,12 +76,67 @@ class DownloadGeoTestCase(TestCase):
         self.assertEqual(1, len(files))
         self.assertTrue(os.path.isfile('/home/user/data_store/GSM254828/raw/GSM254828.txt'))
 
-        geo._download_file("ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427%5Fnon%2Dnormalized%2Etxt%2Egz", '/home/user/data_store/GSE22427/raw/GSE22427_non-normalized.txt.gz',  dlj)
+        geo._download_file("ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427_non-normalized.txt.gz", '/home/user/data_store/GSE22427/raw/GSE22427_non-normalized.txt.gz',  dlj)
         files = geo._extract_gz('/home/user/data_store/GSE22427/raw/GSE22427_non-normalized.txt.gz', 'GSE22427')
         self.assertEqual(1, len(files))
 
         self.assertTrue(os.path.isfile('/home/user/data_store/GSE22427/raw/GSE22427_non-normalized.txt'))
 
+    @tag('downloaders')
+    def test_download_aspera_and_ftp(self):
+        """ Tests the main 'download_geo' function. """
+
+        dlj = DownloaderJob()
+        dlj.accession_code = 'GSE22427'
+        dlj.save()
+
+        original_file = OriginalFile()
+        original_file.source_url = "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427_non-normalized.txt.gz"
+        original_file.source_filename = "GSE22427_non-normalized.txt.gz"
+        original_file.save()
+
+        assoc = DownloaderJobOriginalFileAssociation()
+        assoc.original_file = original_file
+        assoc.downloader_job = dlj
+        assoc.save()
+
+        sample = Sample()
+        sample.accession_code = 'GSE22427'
+        sample.save()
+
+        sample_annotation = SampleAnnotation()
+        sample_annotation.sample = sample
+        sample_annotation.data = {'label_protocol_ch1': 'Agilent', 'label_protocol_ch2': 'Agilent'}
+        sample_annotation.save()
+
+        og_assoc = OriginalFileSampleAssociation()
+        og_assoc.sample = sample
+        og_assoc.original_file = original_file
+        og_assoc.save()
+
+        LOCAL_ROOT_DIR = "/home/user/data_store"
+        os.makedirs(LOCAL_ROOT_DIR + '/' + sample.accession_code, exist_ok=True)
+        dl_file_path = LOCAL_ROOT_DIR + '/' + sample.accession_code + '/' + original_file.source_url.split('/')[-1]
+
+        # Aspera
+        result = geo._download_file(original_file.source_url, file_path=dl_file_path, job=dlj, force_ftp=False)
+        self.assertTrue(result)
+        self.assertTrue(os.path.exists(dl_file_path))
+        os.remove(dl_file_path)
+
+        # FTP
+        result = geo._download_file(original_file.source_url, file_path=dl_file_path, job=dlj, force_ftp=True)
+        self.assertTrue(result)
+        self.assertTrue(os.path.exists(dl_file_path))
+        os.remove(dl_file_path)
+
+        # Aspera, fail
+        result = geo._download_file_aspera("https://rich.zone/cool_horse.jpg", target_file_path=dl_file_path, downloader_job=dlj, attempt=5)
+        self.assertFalse(result)
+        self.assertTrue(dlj.failure_reason != None)
+
+
+    @tag('downloaders')
     @patch('data_refinery_workers.downloaders.utils.create_processor_jobs_for_original_files', side_effect=create_processor_jobs_for_original_files_no_send)
     def test_download_geo(self, mock_send_task):
         """ Tests the main 'download_geo' function. """

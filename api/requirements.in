@@ -6,5 +6,6 @@ requests
 python-nomad
 djangorestframework
 djangorestframework-hstore
+django-cors-headers
 django-filter
 coreapi

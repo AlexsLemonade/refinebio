@@ -6,8 +6,13 @@ import shutil
 import subprocess
 import time
 from contextlib import closing
+from typing import List
 
-from data_refinery_common.models import DownloaderJob, DownloaderJobOriginalFileAssociation
+from data_refinery_common.models import (
+    DownloaderJob,
+    DownloaderJobOriginalFileAssociation,
+    OriginalFile
+)
 from data_refinery_workers.downloaders import utils
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable
@@ -33,6 +38,7 @@ def _download_file(download_url: str, downloader_job: DownloaderJob, target_file
     else:
         return _download_file_ftp(download_url, downloader_job, target_file_path)
 
+
 def _download_file_ftp(download_url: str, downloader_job: DownloaderJob, target_file_path: str) -> bool:
     """ Download a file to a location using FTP via urllib. """
     try:
@@ -56,10 +62,11 @@ def _download_file_ftp(download_url: str, downloader_job: DownloaderJob, target_
 
     return True
 
-def _download_file_aspera(  download_url: str, 
-                            downloader_job: DownloaderJob, 
-                            target_file_path: str,
-                            attempt=0) -> bool:
+
+def _download_file_aspera(download_url: str,
+                          downloader_job: DownloaderJob,
+                          target_file_path: str,
+                          attempt=0) -> bool:
     """ Download a file to a location using Aspera by shelling out to the `ascp` client. """
 
     try:
@@ -71,7 +78,7 @@ def _download_file_aspera(  download_url: str,
         # aspera.sra.ebi.ac.uk users port 33001 for SSH communication
         # We are also NOT using encryption (-T) to avoid slowdown,
         # and we are not using any kind of rate limiting.
-        command_str = (".aspera/cli/bin/ascp -P33001 -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}")
+        command_str = ".aspera/cli/bin/ascp -P33001 -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
         formatted_command = command_str.format(src=download_url,
                                                dest=target_file_path)
         completed_command = subprocess.run(formatted_command.split(),
@@ -94,11 +101,11 @@ def _download_file_aspera(  download_url: str,
                 return False
             else:
                 time.sleep(300)
-                return _download_file_aspera(   download_url,
-                                                download_job,
-                                                target_file_path,
-                                                attempt + 1
-                                            )
+                return _download_file_aspera(download_url,
+                                             downloader_job,
+                                             target_file_path,
+                                             attempt + 1
+                                             )
     except Exception:
         logger.exception("Exception caught while downloading file from the URL via Aspera: %s",
                          download_url,
@@ -107,19 +114,38 @@ def _download_file_aspera(  download_url: str,
                                          "file from the URL via Aspera: {}").format(download_url)
         return False
 
-
     # If Aspera has given a zero-byte file for some reason, let's back off and retry.
     if os.path.getsize(target_file_path) < 1:
         logger.error("Got zero byte ascp download for target, retrying.",
-                    target_url=download_url,
-                    downloader_job=downloader_job.id)
+                     target_url=download_url,
+                     downloader_job=downloader_job.id)
         time.sleep(300)
-        return _download_file_aspera(   download_url,
-                                        download_job,
-                                        target_file_path,
-                                        attempt + 1
-                                    )
+        return _download_file_aspera(download_url,
+                                     downloader_job,
+                                     target_file_path,
+                                     attempt + 1
+                                     )
     return True
+
+
+def _are_downloads_ready(original_file: OriginalFile) -> bool:
+    """RNASeq reads can be paired. Makes sure both files are downloaded if applicable.
+    """
+    # This is a paired read. Make sure the other one is downloaded, this start the job
+    if '_' in original_file.filename:
+        split = original_file.filename.split('_')
+        if '1' in split[1]:
+            other_file = OriginalFile.objects.get(
+                source_filename='_'.join([split[0], split[1].replace('1', '2')]))
+        else:
+            other_file = OriginalFile.objects.get(
+                source_filename='_'.join([split[0], split[1].replace('2', '1')]))
+        if not other_file.is_downloaded:
+            logger.info("Need other file to download before starting paired read Salmon.")
+            return False
+
+    return True
+
 
 def download_sra(job_id: int) -> None:
     """The main function for the SRA Downloader.
@@ -164,6 +190,7 @@ def download_sra(job_id: int) -> None:
                          original_file_id=original_file.id,
                          downloader_job=job_id)
 
-    utils.end_downloader_job(job, success)
-    if success:
+    if success and _are_downloads_ready(downloaded_files[0]):
         utils.create_processor_job_for_original_files(downloaded_files)
+
+    utils.end_downloader_job(job, success)

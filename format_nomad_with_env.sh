@@ -7,76 +7,80 @@
 
 while getopts ":p:e:o:h" opt; do
     case $opt in
-        p)
-            project=$OPTARG
-            ;;
-        e)
-            env=$OPTARG
-            ;;
-        o)
-            output_dir=$OPTARG
-            ;;
-        h)
-            echo "Formats Nomad Job Specifications with the specified environment overlaid "
-            echo "onto the current environment."
-            echo '-p specifies the project to format. Valid values are "api", workers" or "foreman".'
-            echo '- "dev" is the default enviroment, use -e to specify "prod" or "test".'
-            echo '- the project directory will be used as the default output directory, use -o to specify'
-            echo '      an absolute path to a directory (trailing / must be included).'
-            ;;
-        \?)
-            echo "Invalid option: -$OPTARG" >&2
-            exit 1
-            ;;
-        :)
-            echo "Option -$OPTARG requires an argument." >&2
-            exit 1
-            ;;
+    p)
+        project=$OPTARG
+        ;;
+    e)
+        env=$OPTARG
+        ;;
+    o)
+        output_dir=$OPTARG
+        ;;
+    h)
+        echo "Formats Nomad Job Specifications with the specified environment overlaid "
+        echo "onto the current environment."
+        echo '-p specifies the project to format. Valid values are "api", workers" or "foreman".'
+        echo '- "local" is the default enviroment, use -e to specify "prod" or "test".'
+        echo '- the project directory will be used as the default output directory, use -o to specify'
+        echo '      an absolute path to a directory (trailing / must be included).'
+        ;;
+    \?)
+        echo "Invalid option: -$OPTARG" >&2
+        exit 1
+        ;;
+    :)
+        echo "Option -$OPTARG requires an argument." >&2
+        exit 1
+        ;;
     esac
 done
 
 if [[ $project != "workers" && $project != "foreman" && $project != "api" ]]; then
-    echo 'Error: must specify project as either "api", workers", or "foreman" with -p.'
+    echo 'Error: must specify project as either "api", "workers", or "foreman" with -p.'
     exit 1
 fi
 
 if [[ -z $env ]]; then
-    # XXX: for now dev==local and prod==cloud. This works because we
-    # don't have a true prod environment yet so using prod for cloud
-    # development is okay, but we definitely need to address
-    # https://github.com/AlexsLemonade/refinebio/issues/199 before we
-    # create an actual prod environment.
-    env="dev"
+    env="local"
 fi
 
-# Default docker images.
-# These should work for local and test environments, but we want to
-# let these be set outside the script so only set them if they aren't
-# already set.
+# Default docker repo.
+# This are very sensible defaults, but we want to let these be set
+# outside the script so only set them if they aren't already set.
+if [[ -z $DOCKERHUB_REPO ]]; then
+    # If someone wants to override this field we'll let them, but
+    # test env should probably use the local docker registry.
+    if [ $env == "test" ]; then
+        export DOCKERHUB_REPO="localhost:5000"
+    else
+        export DOCKERHUB_REPO="ccdlstaging"
+    fi
+fi
 if [[ -z $FOREMAN_DOCKER_IMAGE ]]; then
-    export FOREMAN_DOCKER_IMAGE=localhost:5000/ccdl/dr_foreman
+    export FOREMAN_DOCKER_IMAGE=dr_foreman:latest
 fi
 if [[ -z $DOWNLOADERS_DOCKER_IMAGE ]]; then
-    export DOWNLOADERS_DOCKER_IMAGE=localhost:5000/ccdl/dr_downloaders
+    export DOWNLOADERS_DOCKER_IMAGE=dr_downloaders:latest
 fi
 if [[ -z $TRANSCRIPTOME_DOCKER_IMAGE ]]; then
-    export TRANSCRIPTOME_DOCKER_IMAGE=localhost:5000/ccdl/dr_transcriptome
+    export TRANSCRIPTOME_DOCKER_IMAGE=dr_transcriptome:latest
 fi
 if [[ -z $SALMON_DOCKER_IMAGE ]]; then
-    export SALMON_DOCKER_IMAGE=localhost:5000/ccdl/dr_salmon
+    export SALMON_DOCKER_IMAGE=dr_salmon:latest
 fi
 if [[ -z $SMASHER_DOCKER_IMAGE ]]; then
-    export SMASHER_DOCKER_IMAGE=localhost:5000/ccdl/dr_smasher
+    export SMASHER_DOCKER_IMAGE=dr_smasher:latest
 fi
 if [[ -z $AFFYMETRIX_DOCKER_IMAGE ]]; then
-    export AFFYMETRIX_DOCKER_IMAGE=ccdl/dr_affymetrix
+    export AFFYMETRIX_DOCKER_IMAGE=dr_affymetrix:latest
 fi
 if [[ -z $ILLUMINA_DOCKER_IMAGE ]]; then
-    export ILLUMINA_DOCKER_IMAGE=ccdl/dr_illumina
+    export ILLUMINA_DOCKER_IMAGE=dr_illumina:latest
 fi
 if [[ -z $NO_OP_DOCKER_IMAGE ]]; then
-    export NO_OP_DOCKER_IMAGE=localhost:5000/ccdl/dr_no_op
+    export NO_OP_DOCKER_IMAGE=dr_no_op:latest
 fi
+
 
 # This script should always run from the context of the directory of
 # the project it is building.
@@ -96,7 +100,7 @@ if [ $env == "test" ]; then
     # Prevent test Nomad job specifications from overwriting
     # existing Nomad job specifications.
     export TEST_POSTFIX="_test"
-elif [ $env == "prod" ]; then
+elif [[ $env == "prod" || $env == "staging" || $env == "dev" ]]; then
     # In production we use EFS as the mount.
     export VOLUME_DIR=/var/efs
 else
@@ -110,7 +114,7 @@ fi
 # not in development.
 # We do these with multi-line environment variables so that they can
 # be formatted into development job specs.
-if [ $env != "prod" ]; then
+if [[ $env != "prod" && $env != "staging" && $env != "dev" ]]; then
     export EXTRA_HOSTS="
         extra_hosts = [\"database:$DB_HOST_IP\"
                        \"nomad:$NOMAD_HOST_IP\"]
@@ -121,9 +125,34 @@ if [ $env != "prod" ]; then
 else
     export EXTRA_HOSTS=""
     export AWS_CREDS="
+<<<<<<< HEAD
         AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
         AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\"
 "
+||||||| merged common ancestors
+<<<<<<<<< Temporary merge branch 1
+        AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
+        AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
+||||||||| merged common ancestors
+        AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
+        AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
+    export LOGGING_CONFIG="
+        logging {
+          type = \"awslogs\"
+          config {
+            awslogs-region = \"$REGION\",
+            awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
+            awslogs-stream = \"log-stream-nomad-docker-downloader-$USER-$STAGE\"
+          }
+        }
+"
+=========
+    AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
+    AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
+=======
+    AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
+    AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
+>>>>>>> 57b4bdf9a1234a4236c533f3789e1ed5df9fdba5
     # When deploying prod we write the output of Terraform to a
     # temporary environment file.
     environment_file="$script_directory/infrastructure/prod_env"
@@ -154,7 +183,7 @@ elif [[ ! -d "$output_dir" ]]; then
 fi
 
 export_log_conf (){
-    if [[ $env == 'prod' ]]; then
+    if [[ $env == 'prod' || $env == 'staging' || $env == 'dev' ]]; then
         export LOGGING_CONFIG="
         logging {
           type = \"awslogs\"

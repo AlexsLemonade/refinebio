@@ -14,12 +14,10 @@ from data_refinery_common.models import (
     OriginalFile,
     DownloaderJobOriginalFileAssociation
 )
-from data_refinery_common.message_queue import send_job
-from data_refinery_common.job_lookup import Downloaders
-from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common import message_queue, job_lookup, logging
 
 
-logger = get_and_configure_logger(__name__)
+logger = logging.get_and_configure_logger(__name__)
 
 
 class InvalidProcessedFormatError(Exception):
@@ -35,11 +33,6 @@ class ExternalSourceSurveyor:
     @abc.abstractproperty
     def source_type(self):
         return
-
-    def downloader_task(self):
-        """Returns the Downloaders Enum for the source.
-        """
-        return Downloaders[self.source_type()]
 
     @abc.abstractmethod
     def discover_experiments_and_samples(self):
@@ -75,13 +68,70 @@ class ExternalSourceSurveyor:
                              original_file_id=original_file.id)
                 continue
 
-            with transaction.atomic():
+            sample_object = original_file.samples.first()
+            downloader_task = job_lookup.determine_downloader_task(sample_object)
 
-                downloader_job = DownloaderJob()
-                downloader_job.downloader_task = self.downloader_task()
-                downloader_job.accession_code = experiment.accession_code
-                downloader_job.save()
+            if downloader_task == job_lookup.Downloaders.NONE:
+                logger.info("No valid downloader task found for sample.",
+                            sample=sample_object.id,
+                            original_file=original_file.id)
+            else:
+                with transaction.atomic():
+                    downloader_job = DownloaderJob()
+                    downloader_job.downloader_task = downloader_task.value
+                    downloader_job.accession_code = experiment.accession_code
+                    downloader_job.save()
 
+                    asoc = DownloaderJobOriginalFileAssociation()
+                    asoc.downloader_job = downloader_job
+                    asoc.original_file = original_file
+                    asoc.save()
+
+                downloaded_urls.append(original_file.source_url)
+
+                try:
+                    logger.info("Queuing downloader job for URL: " + original_file.source_url,
+                                survey_job=self.survey_job.id,
+                                downloader_job=downloader_job.id)
+                    message_queue.send_job(downloader_task, downloader_job)
+                except Exception as e:
+                    # If the task doesn't get sent we don't want the
+                    # downloader_job to be left floating
+                    logger.exception("Failed to enqueue downloader job for URL: "
+                                     + original_file.source_url,
+                                     survey_job=self.survey_job.id,
+                                     downloader_job=downloader_job.id)
+                    downloader_job.success = False
+                    downloader_job.failure_reason = str(e)
+                    downloader_job.save()
+
+    @retry(stop_max_attempt_number=3)
+    def queue_downloader_job_for_original_files(self,
+                                                original_files: List[OriginalFile],
+                                                experiment_accession_code: str=None,
+                                                is_transcriptome: bool=False
+                                                ):
+        """ Creates a single DownloaderJob with multiple files to download.
+        """
+        # Transcriptome is a special case because there's no sample_object.
+        if is_transcriptome:
+            downloader_task = job_lookup.Downloaders.TRANSCRIPTOME_INDEX
+        else:
+            sample_object = original_files[0].samples.first()
+            downloader_task = job_lookup.determine_downloader_task(sample_object)
+
+        if downloader_task == job_lookup.Downloaders.NONE:
+            logger.info("No valid downloader task found for sample.",
+                        sample=sample_object.id,
+                        original_file=original_files[0].id)
+        else:
+            downloader_job = DownloaderJob()
+            downloader_job.downloader_task = downloader_task.value
+            downloader_job.accession_code = experiment_accession_code
+            downloader_job.save()
+
+            downloaded_urls = []
+            for original_file in original_files:
                 asoc = DownloaderJobOriginalFileAssociation()
                 asoc.downloader_job = downloader_job
                 asoc.original_file = original_file
@@ -90,64 +140,20 @@ class ExternalSourceSurveyor:
                 downloaded_urls.append(original_file.source_url)
 
             try:
-                logger.info("Queuing downloader job for URL: " + original_file.source_url,
+                logger.info("Queuing downloader job.",
                             survey_job=self.survey_job.id,
-                            downloader_job=downloader_job.id)
-                send_job(downloader_job.downloader_task, downloader_job.id)
+                            downloader_job=downloader_job.id,
+                            downloaded_urls=downloaded_urls)
+                message_queue.send_job(downloader_task, downloader_job)
             except Exception as e:
                 # If the task doesn't get sent we don't want the
                 # downloader_job to be left floating
-                logger.exception("Failed to enqueue downloader job for URL: "
-                                 + original_file.source_url,
+                logger.exception("Failed to enqueue downloader job.",
                                  survey_job=self.survey_job.id,
                                  downloader_job=downloader_job.id)
                 downloader_job.success = False
                 downloader_job.failure_reason = str(e)
                 downloader_job.save()
-
-    @retry(stop_max_attempt_number=3)
-    def queue_downloader_job_for_original_files(self,
-                                                original_files: List[OriginalFile],
-                                                experiment_accession_code=None
-                                                ):
-        """ Creates a single DownloaderJob with multiple files to download."""
-
-        downloader_job = DownloaderJob()
-        downloader_job.downloader_task = self.downloader_task()
-        downloader_job.accession_code = experiment_accession_code
-        downloader_job.save()
-
-        downloaded_urls = []
-        for original_file in original_files:
-
-            # We don't need to create multiple downloaders for the same file.
-            if original_file.source_url in downloaded_urls:
-                continue
-
-            with transaction.atomic():
-
-                asoc = DownloaderJobOriginalFileAssociation()
-                asoc.downloader_job = downloader_job
-                asoc.original_file = original_file
-                asoc.save()
-
-                downloaded_urls.append(original_file.source_url)
-
-        try:
-            logger.info("Queuing downloader job.",
-                        survey_job=self.survey_job.id,
-                        downloader_job=downloader_job.id,
-                        downloaded_urls=downloaded_urls)
-            send_job(downloader_job.downloader_task, downloader_job.id)
-        except Exception as e:
-            # If the task doesn't get sent we don't want the
-            # downloader_job to be left floating
-            logger.exception("Failed to enqueue downloader job.",
-                             survey_job=self.survey_job.id,
-                             downloader_job=downloader_job.id)
-            downloader_job.success = False
-            downloader_job.failure_reason = str(e)
-            downloader_job.save()
 
     def survey(self, source_type=None) -> bool:
         try:
@@ -179,4 +185,6 @@ class ExternalSourceSurveyor:
                               "Terminating survey job."),
                              survey_job=self.survey_job.id)
             return False
+
+        logger.info("Survey job completed successfully.", survey_job=self.survey_job.id)
         return True

@@ -21,4 +21,3 @@ LOCAL_ROOT_DIR=/home/user/data_store
 RAW_PREFIX=raw
 TEMP_PREFIX=temp
 PROCESSED_PREFIX=processed
-

@@ -59,8 +59,6 @@ if [[ -z $image ]]; then
     image="downloaders"
 fi
 
-image_name="ccdl/dr_$image"
-
 # This script should always run as if it were being called from
 # the directory it lives in.
 script_directory=`perl -e 'use File::Basename;
@@ -72,10 +70,13 @@ cd $script_directory
 # move up a level
 cd ..
 
-if [[ $image == "affymetrix" ]]; then
-    ./prepare_image.sh -p -i $image
+# Agilent uses the same image as affymetrix
+if [[ $image == "affymetrix" || $image == "agilent" ]]; then
+    ./prepare_image.sh -p -i affymetrix
+    image_name="ccdlstaging/dr_affymetrix"
 else
     ./prepare_image.sh -i $image
+    image_name="ccdlstaging/dr_$image"
 fi
 
 volume_directory="$script_directory/volume"
@@ -91,7 +92,7 @@ docker run \
 	   -it \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
-       --env-file workers/environments/dev \
+       --env-file workers/environments/local \
        --env AWS_ACCESS_KEY_ID \
        --env AWS_SECRET_ACCESS_KEY \
        --entrypoint ./manage.py \

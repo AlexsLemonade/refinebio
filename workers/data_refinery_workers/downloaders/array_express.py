@@ -18,7 +18,11 @@ from data_refinery_common.models import (
 )
 from data_refinery_workers.downloaders import utils
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.utils import get_env_variable, get_readable_platform_names
+from data_refinery_common.utils import (
+    get_env_variable,
+    get_readable_affymetrix_names,
+    get_supported_microarray_platforms
+)
 from data_refinery_common import microarray
 
 
@@ -115,7 +119,8 @@ def download_array_express(job_id: int) -> None:
         # TODO: We _should_ be able to use GET here - anything more than 1 sample per
         # filename is a problem. However, I need to know more about the naming convention.
         try:
-            original_file = OriginalFile.objects.filter(source_filename=og_file['filename']).order_by('created_at')[0]
+            original_file = OriginalFile.objects.filter(
+                source_filename=og_file['filename']).order_by('created_at')[0]
             original_file.is_downloaded = True
             original_file.is_archive = False
             original_file.absolute_file_path = og_file['absolute_path']
@@ -137,40 +142,54 @@ def download_array_express(job_id: int) -> None:
                         filename,
                         downloader_job=job_id)
 
-        # The .CEL file is the ultimate source of truth about the sample's platform.
+        # If the file is a .CEL file, it is the ultimate
+        # source of truth about the sample's platform.
         sample_object = sample_objects[0]
-        if sample_object.has_raw:
+        if og_file["filename"].upper()[-4:] == ".CEL" and sample_object.has_raw:
+            platform_accession_code = "UNSUPPORTED"
             try:
-                external_platform = microarray.get_platform_from_CEL(
+                cel_file_platform = microarray.get_platform_from_CEL(
                     original_file.absolute_file_path)
 
-                platform_accession_code = "UNSUPPORTED"
                 for platform in get_supported_microarray_platforms():
-                    if platform["external_accession"] == external_accession:
+                    if platform["platform_accession"] == cel_file_platform:
                         platform_accession_code = platform["platform_accession"]
-
-                if platform_accession_code == "UNSUPPORTED":
-                    logger.error("Found a raw file with an unsupported platform!",
-                                 file_name=filename,
-                                 sample=sample_id,
-                                 downloader_job=job_id)
-                    job.failure_reason = "Found a raw file with an unsupported platform."
-                    success = False
-
-                sample_object.platform_accession_code = platform_accession_code
-                sample_object.platform_name = get_readable_platform_names()[platform_accession_code]
-                sample_object.save()
             except Exception:
-                logger.warn("Unable to determine platform from CEL file: ",
-                            filename,
+                platform_accession_code = "UNDETERMINABLE"
+                logger.warn("Unable to determine platform from CEL file: "
+                            + original_file.absolute_file_path,
                             downloader_job=job_id)
+
+            if platform_accession_code == "UNSUPPORTED":
+                logger.error("Found a raw .CEL file with an unsupported platform!",
+                             file_name=original_file.absolute_file_path,
+                             sample=sample_object.id,
+                             downloader_job=job_id)
+                job.failure_reason = ("Found a raw .CEL file with an unsupported platform: "
+                                      + original_file.absolute_file_path)
+                success = False
+            elif platform_accession_code == "UNDETERMINABLE":
+                # If we cannot determine the platform from the
+                # .CEL file, the platform discovered via metadata
+                # may be correct so just leave it be.
+                pass
+            else:
+                # We determined the file was collected with a supported Affymetrix platform.
+                sample_object.platform_accession_code = platform_accession_code
+                sample_object.platform_name = get_readable_affymetrix_names()[
+                    platform_accession_code]
+
+            # However, if the filename contains '.CEL' we know
+            # it's an Affymetrix Microarray
+            sample_object.technology = "MICROARRAY"
+            sample_object.manufacterer = "AFFYMETRIX"
+            sample_object.save()
 
     if success:
         logger.debug("File downloaded and extracted successfully.",
                      url,
                      downloader_job=job_id)
 
-    utils.end_downloader_job(job, success)
-
-    if success:
         utils.create_processor_jobs_for_original_files(og_files)
+
+    utils.end_downloader_job(job, success)

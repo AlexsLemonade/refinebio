@@ -23,3 +23,8 @@ consul {
   client_auto_join    = false
 }
 
+telemetry {
+  publish_allocation_metrics = true
+  publish_node_metrics       = true
+  statsd_address = "${nomad_lead_server_ip}:8125"
+}

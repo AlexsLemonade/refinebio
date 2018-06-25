@@ -11,7 +11,8 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
     ComputedFile,
-    Dataset
+    Dataset,
+    APIToken
 )
 
 ##
@@ -90,10 +91,12 @@ class SampleSerializer(serializers.ModelSerializer):
                     'id',
                     'title',
                     'accession_code',
+                    'source_database',
                     'organism',
                     'platform_accession_code',
                     'platform_name',
                     'technology',
+                    'manufacturer',
                     'is_downloaded',
                     'is_processed',
                     'created_at',
@@ -123,10 +126,12 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
                     'id',
                     'title',
                     'accession_code',
+                    'source_database',
                     'organism',
                     'platform_accession_code',
                     'platform_name',
                     'technology',
+                    'manufacturer',
                     'annotations',
                     'results',
                     'pipelines',
@@ -156,6 +161,8 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 
 class ExperimentSerializer(serializers.ModelSerializer):
     organisms = serializers.StringRelatedField(many=True)
+    platforms = serializers.ReadOnlyField()
+    samples = serializers.StringRelatedField(many=True)
 
     class Meta:
         model = Experiment
@@ -166,6 +173,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'accession_code',
                     'source_database',
                     'source_url',
+                    'platforms',
                     'has_publication',
                     'publication_title',
                     'publication_doi',
@@ -252,7 +260,6 @@ class OriginalFileSerializer(serializers.ModelSerializer):
                     'is_archive',
                     'has_raw',
                     'is_downloaded',
-                    'is_processed',
                     'created_at',
                     'last_modified'
                 )
@@ -414,3 +421,24 @@ class DatasetSerializer(serializers.ModelSerializer):
         except Exception:
             raise
         return data
+
+class APITokenSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = APIToken
+        fields = (
+                'id',
+                'is_activated',
+                'terms_and_conditions'
+            )
+        extra_kwargs = {
+                        'id': {
+                            'read_only': True
+                        },
+                        'is_activated': {
+                            'read_only': False
+                        },
+                        'terms_and_conditions': {
+                            'read_only': True
+                        }
+                    }

@@ -37,7 +37,7 @@ class SurveyTestCase(TestCase):
         SurveyJobKeyValue.objects.all().delete()
         SurveyJob.objects.all().delete()
 
-    @patch('data_refinery_foreman.surveyor.external_source.send_job')
+    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_survey(self, mock_send_task):
         """A Simple test of the ArrayExpress surveyor.
         """
@@ -61,10 +61,10 @@ class SurveyTestCase(TestCase):
         SAMPLES_URL = EXPERIMENTS_URL + "{}/samples"
 
         ex_accessions = [
-                            "E-MTAB-3050", 
-                            "E-MEXP-669", 
-                            "E-MEXP-2215", 
-                            "E-MEXP-2288", 
+                            "E-MTAB-3050",
+                            "E-MEXP-669",
+                            "E-MEXP-2215",
+                            "E-MEXP-2288",
                             "E-MEXP-2381",
                             "E-MTAB-6739",
                         ]

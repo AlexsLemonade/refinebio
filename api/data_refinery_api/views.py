@@ -2,13 +2,16 @@ from django.conf import settings
 from django.db.models import Count
 from django.db.models.aggregates import Avg
 from django.db.models.expressions import F
-from django.http import Http404
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 
 from django_filters.rest_framework import DjangoFilterBackend
 
+from rest_framework.exceptions import APIException
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.reverse import reverse
 from rest_framework.settings import api_settings
 from rest_framework import status, filters, generics
 
@@ -23,6 +26,7 @@ from data_refinery_common.models import (
     SurveyJob,
     ProcessorJob,
     Dataset,
+    APIToken,
     ProcessorJobDatasetAssociation
 )
 from data_refinery_api.serializers import (
@@ -42,7 +46,8 @@ from data_refinery_api.serializers import (
 
     # Dataset
     CreateDatasetSerializer,
-    DatasetSerializer
+    DatasetSerializer,
+    APITokenSerializer
 )
 
 ##
@@ -92,7 +97,7 @@ class SearchAndFilter(generics.ListAPIView):
 
     """
 
-    queryset = Experiment.objects.all()
+    queryset = Experiment.public_objects.all()
     serializer_class = ExperimentSerializer
     pagination_class = LimitOffsetPagination
 
@@ -140,7 +145,9 @@ class CreateDatasetView(generics.CreateAPIView):
     serializer_class = CreateDatasetSerializer
 
 class DatasetView(generics.RetrieveUpdateAPIView):
-    """ View and modify a single Dataset. Set `start` to `true` to begin smashing and delivery."""
+    """ View and modify a single Dataset. Set `start` to `true` along with a valid 
+    activated API token (from /token/) to begin smashing and delivery.
+    """
 
     queryset = Dataset.objects.all()
     serializer_class = DatasetSerializer
@@ -155,6 +162,14 @@ class DatasetView(generics.RetrieveUpdateAPIView):
         new_data = serializer.validated_data
 
         if new_data.get('start'):
+
+            # Make sure we have a valid activated token.
+            token_id = self.request.data.get('token_id')
+            try:
+                token = APIToken.objects.get(id=token_id, is_activated=True)
+            except Exception: # Generall APIToken.DoesNotExist or django.core.exceptions.ValidationError
+                raise APIException("You must provide an active API token ID") 
+
             if not already_processing:
 
                 # Create and dispatch the new job.
@@ -169,7 +184,7 @@ class DatasetView(generics.RetrieveUpdateAPIView):
 
                 # Hidden method of non-dispatching for testing purposes.
                 if not self.request.data.get('no_send_job', False):
-                    send_job(ProcessorPipeline.SMASHER, processor_job.id)
+                    send_job(ProcessorPipeline.SMASHER, processor_job)
 
                 serializer.validated_data['is_processing'] = True
                 obj = serializer.save()
@@ -181,6 +196,35 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             serializer.validated_data['data'] = old_data
             serializer.validated_data['aggregate_by'] = old_aggregate
         serializer.save()
+
+class APITokenView(APIView):
+    """
+    Return this response to this endpoint with `is_activated: true` to activate this API token.
+
+    You must include an activated token's ID to download processed datasets.
+    """
+
+    def get(self, request, id=None):
+        """ Create a new token, or fetch a token by its ID. """
+
+        if id:
+            token = get_object_or_404(APIToken, id=id)
+        else:
+            token = APIToken()
+            token.save()
+        serializer = APITokenSerializer(token)
+        return Response(serializer.data)
+
+    def post(self, request, id=None):
+        """ Given a token's ID, activate it."""
+
+        id = request.data.get('id', None)
+        activated_token = get_object_or_404(APIToken, id=id)
+        activated_token.is_activated = request.data.get('is_activated', False)
+        activated_token.save()
+
+        serializer = APITokenSerializer(activated_token)
+        return Response(serializer.data)
 
 ##
 # Experiments
@@ -197,7 +241,7 @@ class ExperimentList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         filter_dict.pop('limit', None)
         filter_dict.pop('offset', None)
-        experiments = Experiment.objects.filter(**filter_dict)
+        experiments = Experiment.public_objects.filter(**filter_dict)
 
         page = self.paginate_queryset(experiments)
         if page is not None:
@@ -213,7 +257,7 @@ class ExperimentDetail(APIView):
     """
     def get_object(self, pk):
         try:
-            return Experiment.objects.get(pk=pk)
+            return Experiment.public_objects.get(pk=pk)
         except Experiment.DoesNotExist:
             raise Http404
 
@@ -232,7 +276,7 @@ class SampleList(PaginatedAPIView):
 
     Pass in a list of pk to an ids query parameter to filter by id.
 
-    Append the pk to the end of this URL to see a detail view.
+    Append the pk or accession_code to the end of this URL to see a detail view.
 
     """
 
@@ -242,12 +286,17 @@ class SampleList(PaginatedAPIView):
         filter_dict.pop('offset', None)
         order_by = filter_dict.pop('order_by', None)
         ids = filter_dict.pop('ids', None)
+        accession_codes = filter_dict.pop('accession_codes', None)
 
         if ids is not None:
             ids = [ int(x) for x in ids.split(',')]
             filter_dict['pk__in'] = ids
 
-        samples = Sample.objects.filter(**filter_dict)
+        if accession_codes is not None:
+            accession_codes = accession_codes.split(',')
+            filter_dict['accession_code__in'] = accession_codes
+
+        samples = Sample.public_objects.filter(**filter_dict)
         if order_by:
             samples = samples.order_by(order_by)
 
@@ -265,7 +314,7 @@ class SampleDetail(APIView):
     """
     def get_object(self, pk):
         try:
-            return Sample.objects.get(pk=pk)
+            return Sample.public_objects.get(pk=pk)
         except Sample.DoesNotExist:
             raise Http404
 
@@ -290,7 +339,7 @@ class ResultsList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         filter_dict.pop('limit', None)
         filter_dict.pop('offset', None)
-        results = ComputationalResult.objects.filter(**filter_dict)
+        results = ComputationalResult.public_objects.filter(**filter_dict)
 
         page = self.paginate_queryset(results)
         if page is not None:
@@ -321,7 +370,7 @@ class PlatformList(APIView):
 	"""
 
     def get(self, request, format=None):
-        samples = Sample.objects.all().values("platform_accession_code", "platform_name").distinct()
+        samples = Sample.public_objects.all().values("platform_accession_code", "platform_name").distinct()
         serializer = PlatformSerializer(samples, many=True)
         return Response(serializer.data)
 
@@ -331,7 +380,7 @@ class InstitutionList(APIView):
 	"""
 
     def get(self, request, format=None):
-        experiments = Experiment.objects.all().values("submitter_institution").distinct()
+        experiments = Experiment.public_objects.all().values("submitter_institution").distinct()
         serializer = InstitutionSerializer(experiments, many=True)
         return Response(serializer.data)
 
