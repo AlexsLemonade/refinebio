@@ -92,9 +92,7 @@ class IlluminaToPCLTestCase(TestCase):
         final_context = illumina.illumina_to_pcl(job.pk)
 
         for sample in final_context['samples']:
-            print(sample)
             smashme = sample.get_most_recent_smashable_result_file()
-            print(smashme)
             self.assertTrue(os.path.exists(smashme.absolute_file_path))
             os.remove(smashme.absolute_file_path)
 

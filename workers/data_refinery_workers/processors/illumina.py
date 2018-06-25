@@ -228,19 +228,20 @@ def _detect_platform(job_context: Dict) -> Dict:
             logger.exception(e)
             continue
 
+    # Record our sample detection outputs for every sample.
+    for sample in job_context['samples']:
+        sa = SampleAnnotation()
+        sa.sample = sample
+        sa.data = {
+            "detected_platform": high_db, 
+            "detection_percentage": highest,
+            "mapped_percentage": high_mapped_percent
+        }
+        sa.save()
+
     # If the match is over 75%, record this and process it on that platform.
     if high_mapped_percent > 75.0:
         job_context['platform'] = high_db
-
-        for sample in job_context['samples']:
-            sa = SampleAnnotation()
-            sa.sample = sample
-            sa.data = {
-                "detected_platform": high_db, 
-                "detection_percentage": highest,
-                "mapped_percentage": high_mapped_percent
-            }
-            sa.save()
     # The match percentage is too low - send this to the no-opper instead.
     else:
 
@@ -330,7 +331,15 @@ def _create_result_objects(job_context: Dict) -> Dict:
         frame.to_csv(frame_path, sep='\t', encoding='utf-8')
 
         # This needs to be the same as the ones in the job context!
-        sample = Sample.objects.get(accession_code=frame.columns.values[0])
+        try:
+            sample = job_context['samples'].get(title=frame.columns.values[0])
+        except Sample.DoesNotExist:
+            logger.error("Could not find sample for column while splitting Illumina file.",
+                        title=frame.columns.values[0],
+                        processor_job=job_context["job_id"],
+                        file_path=big_tsv,
+            )
+            continue
 
         computed_file = ComputedFile()
         computed_file.absolute_file_path = frame_path
