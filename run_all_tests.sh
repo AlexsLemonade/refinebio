@@ -13,7 +13,7 @@ if ! ps aux | grep test_nomad | grep -v grep > /dev/null; then
     exit 1
 # Then ensure postgres is running
 elif ! docker ps | tail -n +2 | awk '{ print $NF }' | grep drdb > /dev/null; then
-    echo "You must start posgres first with './run_postgres.sh'" >&2
+    echo "You must start Postgres first with './run_postgres.sh'" >&2
     exit 1
 fi
 
