@@ -258,6 +258,8 @@ def _create_index(job_context: Dict) -> Dict:
     if salmon_completed_command.returncode != 0:
         stderr = str(salmon_completed_command.stderr)
         _handle_shell_error(job_context, stderr, "salmon")
+        job_context["success"] = False
+        return job_context
 
     job_context["success"] = True
     return job_context
