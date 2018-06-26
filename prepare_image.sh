@@ -1,5 +1,25 @@
 #!/bin/bash
 
+print_description() {
+    echo "Prepares an image specified by -i."
+    echo "Must be called from the repo root."
+}
+
+print_options() {
+    echo "Options:"
+    echo "    -h           Prints the help message"
+    echo "    -i IMAGE     The image to be prepared. This must be specified."
+    echo "    -s SERVICE   The service to seach for a dockerfile."
+    echo "                 The default option is 'workers'"
+    echo "    -p           Pull the latest version of the image from Dockerhub"
+    echo "    -d REPO      The docker repo to pull images from."
+    echo "                 The default option is 'ccdl'"
+    echo
+    echo "Examples:"
+    echo "    Build the image ccdl/dr_downloaders:"
+    echo "    ./prepare_image.sh -i downloaders -d ccdl"
+}
+
 while getopts "phi:d:s:" opt; do
     case $opt in
         i)
@@ -15,32 +35,28 @@ while getopts "phi:d:s:" opt; do
             service=$OPTARG
             ;;
         h)
-            echo "Prepares an image specified by -i."
-            echo "Must be called from the repo root."
-            echo "Looks in the workers directory for a dockerfile by default,"
-            echo "-s can be used to specify a different service."
-            echo "First, it checks to see if there is an existing image on Dockerhub"
-            echo "which is tagged with the current branch name. If there is it pulls that."
-            echo "Otherwise it will build the image locally, unless instructed"
-            echo "to pull the latest version of the image from Dockerhub with -p."
-            echo ""
-            echo "The image is prepared by default for the Dockerhub repo: ccdlstaging."
-            echo "This can be changed by specifying the -d option."
-            echo "(i.e:"
-            echo "  ./prepare_image.sh -i downloaders -d ccdl"
-            echo "  would result in the image ccdl/dr_downloaders being built)"
+            print_description
+            echo
+            print_options
             exit 0
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
+            print_options >&2
             exit 1
             ;;
         :)
             echo "Option -$OPTARG requires an argument." >&2
+            print_options >&2
             exit 1
             ;;
     esac
 done
+
+if [[ -z $image ]]; then
+    echo "Error: you must specify an image with -i" >&2
+    exit 1
+fi
 
 source common.sh
 

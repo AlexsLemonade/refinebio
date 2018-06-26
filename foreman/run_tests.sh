@@ -20,6 +20,17 @@ fi
 # move up a level
 cd ..
 
+# Ensure that Nomad is running first
+if ! ps aux | grep test_nomad | grep -v grep > /dev/null; then
+    echo "You must start the nomad test environment first with" >&2
+    echo "'sudo -E ./run_nomad.sh -e test'" >&2
+    exit 1
+# Then ensure postgres is running
+elif ! [[ $(docker ps --filter name=drdb -q) ]]; then
+    echo "You must start Postgres first with './run_postgres.sh'" >&2
+    exit 1
+fi
+
 ./prepare_image.sh -i foreman -s foreman
 
 source common.sh
