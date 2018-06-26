@@ -7,7 +7,9 @@ import uuid
 from datetime import datetime
 from functools import partial
 
+from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, HStoreField, JSONField
+
 from django.db import transaction
 from django.db import models
 from django.utils import timezone
