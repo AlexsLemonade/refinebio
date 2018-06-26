@@ -384,7 +384,7 @@ class OrganismIndex(models.Model):
         base_manager_name = 'public_objects'
 
     def __str__(self):
-        return "OrganismIndex " + str(self.pk) + ": " + self.organism.name + ' [' + self.index_type + ']'
+        return "OrganismIndex " + str(self.pk) + ": " + self.organism.name + ' [' + self.index_type + '] - ' + str(self.salmon_version) 
 
     # Managers
     objects = models.Manager()
@@ -392,16 +392,20 @@ class OrganismIndex(models.Model):
 
     # Relations
     organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
+    result = models.ForeignKey(
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
     # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
     index_type = models.CharField(max_length=255)
+
     # This corresponds to Ensembl's release number:
     # http://ensemblgenomes.org/info/about/release_cycle
     # Determined by hitting:
     # http://rest.ensembl.org/info/software?content-type=application/json
     source_version = models.CharField(max_length=255)
-    result = models.ForeignKey(
-        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+
+    # This matters, for instance salmon 0.9.0 indexes don't work with 0.10.0
+    salmon_version = models.CharField(max_length=255)
 
     # Common Properties
     is_public = models.BooleanField(default=True)

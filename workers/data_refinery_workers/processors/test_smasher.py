@@ -11,6 +11,7 @@ from data_refinery_common.models import (
     Organism,
     Sample,
     SampleResultAssociation,
+    ExperimentSampleAssociation,
     Dataset,
     ProcessorJobDatasetAssociation
 )
@@ -42,6 +43,11 @@ def prepare_job():
     sra.result = result
     sra.save()
 
+    esa = ExperimentSampleAssociation()
+    esa.experiment = experiment
+    esa.sample = sample
+    esa.save()
+
     computed_file = ComputedFile()
     computed_file.filename = "GSM1237810_T09-1084.PCL"
     computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
@@ -55,6 +61,11 @@ def prepare_job():
     sample.title = 'GSM1237812'
     sample.organism = homo_sapiens
     sample.save()
+
+    esa = ExperimentSampleAssociation()
+    esa.experiment = experiment
+    esa.sample = sample
+    esa.save()
 
     sra = SampleResultAssociation()
     sra.sample = sample
@@ -260,7 +271,6 @@ class SmasherTestCase(TestCase):
         job.pipeline_applied = "SMASHER"
         job.save()
 
-
         experiment = Experiment()
         experiment.accession_code = "GSE51081"
         experiment.save()
@@ -281,6 +291,11 @@ class SmasherTestCase(TestCase):
         sra.result = result
         sra.save()
 
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
         computed_file = ComputedFile()
         computed_file.filename = "GSM1237810_T09-1084.PCL"
         computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
@@ -288,7 +303,6 @@ class SmasherTestCase(TestCase):
         computed_file.size_in_bytes = 123
         computed_file.is_smashable = True
         computed_file.save()
-
 
         result = ComputationalResult()
         result.save()
@@ -309,6 +323,11 @@ class SmasherTestCase(TestCase):
         sra.sample = sample
         sra.result = result
         sra.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
 
         computed_file = ComputedFile()
         computed_file.filename = "GSM1238108-tbl-1.txt"
