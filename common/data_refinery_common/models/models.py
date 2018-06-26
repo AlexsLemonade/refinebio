@@ -306,8 +306,8 @@ class ComputationalResult(models.Model):
     # Managers
     objects = models.Manager()
     public_objects = PublicObjectsManager()
-    commands = ArrayField(models.TextField())
 
+    commands = ArrayField(models.TextField())
     is_ccdl = models.BooleanField(default=True)
 
     # TODO: This field should be changed into "processor" (foreign key to "Processor").
@@ -379,13 +379,15 @@ class Processor(models.Model):
     """Processor associated with a certain ComputationalResult."""
 
     name = models.CharField(max_length=255)
-    docker_img = models.CharField(max_length=255)
-    env = JSONField(default={})
+    docker_image = models.CharField(max_length=255)
+    environment = JSONField(default={})
 
     class Meta:
         db_table = "processors"
-        unique_together = ('name', 'docker_img')
+        unique_together = ('name', 'docker_image')
 
+    def __str__(self):
+        return "Processor: %s (docker_image: %s" % (name, docker_image)
 
 # TODO
 # class Gene(models.Model):
