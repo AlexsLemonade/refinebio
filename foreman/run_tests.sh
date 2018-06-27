@@ -21,7 +21,8 @@ fi
 cd ..
 
 # Ensure that Nomad is running first
-if ! ps aux | grep test_nomad | grep -v grep > /dev/null; then
+# Double w in `ps` will cause the columns to never be truncated regardless of environment.
+if ! ps auxww | grep test_nomad | grep -v grep > /dev/null; then
     echo "You must start the nomad test environment first with" >&2
     echo "'sudo -E ./run_nomad.sh -e test'" >&2
     exit 1
