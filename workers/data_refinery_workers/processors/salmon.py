@@ -23,6 +23,8 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
     ComputedFile,
+    Processor,
+    Pipeline,
     Experiment,
     ExperimentSampleAssociation,
     SampleResultAssociation,
@@ -191,20 +193,34 @@ def _download_index(job_context: Dict) -> Dict:
     return job_context
 
 
+def _count_samples_processed_by_salmon(experiment):
+    """Count the number of salmon-quant-processed samples in an experiment."""
+    counter = 0
+    salmon_cmd_str = 'salmon --no-version-check quant'
+    for sample in experiment.samples:
+        cmd_found = False
+        for result in sample.results:
+            for command in result.commands:
+              if command.startWith(salmon_cmd_str):
+                  counter += 1
+                  cmd_found = True
+                  break
+            if cmd_found:
+                break
+
+    return counter
+
+
 def _get_salmon_completed_exp_dirs(job_context: Dict) -> List[str]:
     """Return a list of directory names of experiments whose samples
     have all been processed by `salmon quant` command.
     """
-
     experiments_set = ExperimentSampleAssociation.objects.filter(
         sample=job_context['sample']).values_list('experiment')
     experiments = Experiment.objects.filter(pk__in=experiments_set)
     salmon_completed_exp_dirs = []
-    salmon_cmd_str = 'salmon --no-version-check quant'
     for experiment in experiments:
-        num_salmon_completed_samples = experiment.samples.filter(
-            results__command_executed__startswith=salmon_cmd_str).distinct().count()
-        if num_salmon_completed_samples == experiment.samples.count():
+        if _count_samples_processed_by_salmon(experiment) == experiment.samples.count():
             # Remove the last two parts from the path of job_context['input_file_path']
             # (which is "<experiment_accession_code>/raw/<filename>")
             # to get the experiment directory name.
@@ -241,11 +257,12 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
         return job_context
 
     result.time_end = timezone.now()
-    result.command_executed = " ".join(cmd_tokens)
-    result.system_version = __version__
+    result.commands.push(" ".join(cmd_tokens))
     result.is_ccdl = True
-    result.pipeline = "tximport"
+    processor_name =  "Tximport " + __version__
+    result.processor = Processor.objects.get(name=processor_name)
     result.save()
+    job_context['pipeline'].steps.push(result.id)
 
     # Associate this result with all samples in this experiment.
     # TODO: This may not be completely sensible, because `tximport` is
@@ -348,15 +365,12 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         job_context["success"] = False
     else:
         result = ComputationalResult()
-        result.command_executed = formatted_command
-        result.system_version = __version__
+        result.commands.push(formatted_command)
         result.time_start = job_context['time_start']
         result.time_end = job_context['time_end']
-        result.program_version = subprocess.run(['salmon', '--version'],
-                                                stderr=subprocess.PIPE,
-                                                stdout=subprocess.PIPE).stderr.decode("utf-8").strip()
         result.is_ccdl = True
-        result.pipeline = "Salmon"
+        processor_name = "Salmon " + __version__
+        result.processor = Processor.objects.get(name=processor_name)
 
         # Here select_for_update() is used as a mutex that forces multiple
         # jobs to execute this block of code in serial manner. See:
@@ -366,6 +380,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         with transaction.atomic():
             ComputationalResult.objects.select_for_update()
             result.save()
+            job_context['pipeline'].steps.push(result.id)
             SampleResultAssociation.objects.get_or_create(sample=job_context['sample'],
                                                           result=result)
             salmon_completed_exp_dirs = _get_salmon_completed_exp_dirs(job_context)
@@ -435,17 +450,14 @@ def _run_multiqc(job_context: Dict) -> Dict:
         job_context["success"] = False
 
     result = ComputationalResult()
-    result.command_executed = formatted_command
-    result.system_version = __version__
+    result.commands.push(formatted_command)
     result.time_start = time_start
     result.time_end = time_end
-    result.program_version = subprocess.run(['multiqc', '--version'],
-                                            stderr=subprocess.PIPE,
-                                            stdout=subprocess.PIPE,
-                                            env=qc_env).stderr.decode("utf-8").strip()
     result.is_ccdl = True
-    result.pipeline = "MultiQC"
+    processor_name = "MultiQC " + __version__
+    result.processor = Processor.objects.get(name=processor_name)
     result.save()
+    job_context['pipeline'].steps.push(result.id)
 
     assoc = SampleResultAssociation()
     assoc.sample = job_context["sample"]
@@ -567,16 +579,14 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
     success_pattern = r'^There were \d+ unmapped reads$'
     if re.match(success_pattern, status_str):
         result = ComputationalResult()
-        result.command_executed = command_str
-        result.system_version = __version__
+        result.commands.push(command_str)
         result.time_start = start_time
         result.time_end = end_time
-        result.program_version = subprocess.run(['salmontools', '--version'],
-                                                stderr=subprocess.PIPE,
-                                                stdout=subprocess.PIPE).stderr.decode().strip()
         result.is_ccdl = True
-        result.pipeline = "Salmontools"
+        processor_name = "Salmontools " + __version__
+        result.processor = Processor.objects.get(name=processor_name)
         result.save()
+        job_context['pipeline'].steps.push(result.id)
 
         assoc = SampleResultAssociation()
         assoc.sample = job_context["sample"]
@@ -640,7 +650,8 @@ def salmon(job_id: int) -> None:
     Runs salmon quant command line tool, specifying either a long or
     short read length.
     """
-    utils.run_pipeline({"job_id": job_id},
+    pipeline = Pipeline(name='Salmon')
+    utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _set_job_prefix,
                         _prepare_files,

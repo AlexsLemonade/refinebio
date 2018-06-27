@@ -4,7 +4,13 @@ import boto3
 from typing import Dict
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import ComputationalResult, ComputedFile, SampleResultAssociation
+from data_refinery_common.models import (
+    ComputationalResult,
+    ComputedFile,
+    SampleResultAssociation,
+    Processor,
+    Pipeline
+)
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
@@ -34,11 +40,12 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
 
     # This is a NO-OP, but we make a ComputationalResult regardless.
     result = ComputationalResult()
-    result.command_executed = "" # No op!
+    result.commands.push("") # No op!
     result.is_ccdl = True
-    result.system_version = __version__
-    result.pipeline = "Submitter-processed"
+    processor_name = "Submitter-processed " + __version__
+    result.processor = Processor.objects.get(name=processor_name)
     result.save()
+    job_context['pipeline'].steps.push(result.id)
 
     # Create a ComputedFile for the original file,
     # sync it S3 and save it.
@@ -62,7 +69,7 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
         failure_reason = "Exception caught while moving file {}".format(file.name)
         job_context["job"].failure_reason = failure_reason
         job_context["success"] = False
-        return job_context        
+        return job_context
 
     for sample in job_context['samples']:
         assoc = SampleResultAssociation()
@@ -76,7 +83,8 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
 
 
 def no_op_processor(job_id: int) -> None:
-    utils.run_pipeline({"job_id": job_id},
+    pipeline = Pipeline(name='No Op')
+    utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _no_op_processor_fn,
                         utils.end_job])

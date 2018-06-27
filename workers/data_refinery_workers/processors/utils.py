@@ -1,7 +1,8 @@
 from typing import List, Dict, Callable
 from django.utils import timezone
 from data_refinery_common.models import (
-    ProcessorJob, 
+    ProcessorJob,
+    Pipeline,
     Sample,
     OriginalFile,
     Dataset,
@@ -91,6 +92,11 @@ def end_job(job_context: Dict):
             sample = job_context['sample']
             sample.is_processed = True
             sample.save()
+
+        # If the sample-level pipeline includes any steps, save it.
+        pipeline = job_context['pipeline']
+        if len(pipeline.steps):
+            pipeline.save()
 
     job.success = success
     job.end_time = timezone.now()
