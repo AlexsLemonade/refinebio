@@ -369,7 +369,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         result.time_start = job_context['time_start']
         result.time_end = job_context['time_end']
         result.is_ccdl = True
-        processor_name = "Salmon " + __version__
+        processor_name = "Salmon Quant " + __version__
         result.processor = Processor.objects.get(name=processor_name)
 
         # Here select_for_update() is used as a mutex that forces multiple

@@ -333,8 +333,8 @@ class ComputationalResult(models.Model):
     public_objects = PublicObjectsManager()
 
     commands = ArrayField(models.TextField(), default=[])
+    processor = models.ForeignKey(Processor, blank=True, null=True, on_delete=models.CASCADE)
     is_ccdl = models.BooleanField(default=True)
-    processor = models.ForeignKey(Processor, on_delete=models.CASCADE)
 
     # Stats
     time_start = models.DateTimeField(blank=True, null=True)
