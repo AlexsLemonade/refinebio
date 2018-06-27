@@ -201,10 +201,10 @@ def _count_samples_processed_by_salmon(experiment):
         cmd_found = False
         for result in sample.results:
             for command in result.commands:
-              if command.startWith(salmon_cmd_str):
-                  counter += 1
-                  cmd_found = True
-                  break
+                if command.startswith(salmon_cmd_str):
+                    counter += 1
+                    cmd_found = True
+                    break
             if cmd_found:
                 break
 
