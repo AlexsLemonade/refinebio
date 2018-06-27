@@ -37,7 +37,9 @@ jobs:
       # Running these in the same job as the common tests is good
       # because their dockerfiles are very similar so a lot of the
       # build time is saved by only building those layers once.
-      - run: .circleci/filter_tests.sh -t downloaders
+      - run:
+          command: .circleci/filter_tests.sh -t downloaders
+          no_output_timeout: 36000
 
       # Push the no_op and downloader images to the local docker repo so Nomad
       # can pull from there when running end-to-end tests.
