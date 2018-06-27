@@ -13,6 +13,8 @@ from data_refinery_common.models.models import (
     ExperimentAnnotation,
     ComputationalResult,
     ComputationalResultAnnotation,
+    Processor,
+    Pipeline,
     OrganismIndex,
     OriginalFile,
     OriginalFileSampleAssociation,
@@ -26,4 +28,3 @@ from data_refinery_common.models.models import (
     APIToken,
     ProcessorJobDatasetAssociation
 )
-

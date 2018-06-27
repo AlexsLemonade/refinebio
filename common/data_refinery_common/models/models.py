@@ -308,12 +308,9 @@ class ComputationalResult(models.Model):
     objects = models.Manager()
     public_objects = PublicObjectsManager()
 
-    commands = ArrayField(models.TextField())
+    commands = ArrayField(models.TextField(), default=[])
     is_ccdl = models.BooleanField(default=True)
-
-    # TODO: This field should be changed into "processor" (foreign key to "Processor").
-    # Human-readable nickname for this computation
-    pipeline = models.CharField(max_length=255)
+    processor = models.ForeignKey(Processor, on_delete=models.CASCADE)
 
     # Stats
     time_start = models.DateTimeField(blank=True, null=True)
