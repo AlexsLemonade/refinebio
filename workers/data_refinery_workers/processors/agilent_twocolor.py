@@ -93,7 +93,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     """ Create the ComputationalResult objects after a Scan run is complete """
 
     result = ComputationalResult()
-    result.commands.push("SCAN.UPC::SCAN_TwoColor")
+    result.commands.append("SCAN.UPC::SCAN_TwoColor")
     result.is_ccdl = True
     result.is_public = True
     result.time_start = job_context['time_start']
@@ -101,7 +101,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     processor_name = "Agilent SCAN TwoColor " + __version__
     result.processor = Processor.objects.get(name=processor_name)
     result.save()
-    job_context['pipeline'].steps.push(result.id)
+    job_context['pipeline'].steps.append(result.id)
 
     # Create a ComputedFile for the sample,
     # sync it S3 and save it.

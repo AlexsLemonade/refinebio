@@ -197,9 +197,9 @@ def _count_samples_processed_by_salmon(experiment):
     """Count the number of salmon-quant-processed samples in an experiment."""
     counter = 0
     salmon_cmd_str = 'salmon --no-version-check quant'
-    for sample in experiment.samples:
+    for sample in experiment.samples.all():
         cmd_found = False
-        for result in sample.results:
+        for result in sample.results.all():
             for command in result.commands:
                 if command.startswith(salmon_cmd_str):
                     counter += 1
@@ -257,12 +257,12 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
         return job_context
 
     result.time_end = timezone.now()
-    result.commands.push(" ".join(cmd_tokens))
+    result.commands.append(" ".join(cmd_tokens))
     result.is_ccdl = True
     processor_name =  "Tximport " + __version__
     result.processor = Processor.objects.get(name=processor_name)
     result.save()
-    job_context['pipeline'].steps.push(result.id)
+    job_context['pipeline'].steps.append(result.id)
 
     # Associate this result with all samples in this experiment.
     # TODO: This may not be completely sensible, because `tximport` is
@@ -365,7 +365,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         job_context["success"] = False
     else:
         result = ComputationalResult()
-        result.commands.push(formatted_command)
+        result.commands.append(formatted_command)
         result.time_start = job_context['time_start']
         result.time_end = job_context['time_end']
         result.is_ccdl = True
@@ -380,7 +380,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         with transaction.atomic():
             ComputationalResult.objects.select_for_update()
             result.save()
-            job_context['pipeline'].steps.push(result.id)
+            job_context['pipeline'].steps.append(result.id)
             SampleResultAssociation.objects.get_or_create(sample=job_context['sample'],
                                                           result=result)
             salmon_completed_exp_dirs = _get_salmon_completed_exp_dirs(job_context)
@@ -450,14 +450,14 @@ def _run_multiqc(job_context: Dict) -> Dict:
         job_context["success"] = False
 
     result = ComputationalResult()
-    result.commands.push(formatted_command)
+    result.commands.append(formatted_command)
     result.time_start = time_start
     result.time_end = time_end
     result.is_ccdl = True
     processor_name = "MultiQC " + __version__
     result.processor = Processor.objects.get(name=processor_name)
     result.save()
-    job_context['pipeline'].steps.push(result.id)
+    job_context['pipeline'].steps.append(result.id)
 
     assoc = SampleResultAssociation()
     assoc.sample = job_context["sample"]
@@ -579,14 +579,14 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
     success_pattern = r'^There were \d+ unmapped reads$'
     if re.match(success_pattern, status_str):
         result = ComputationalResult()
-        result.commands.push(command_str)
+        result.commands.append(command_str)
         result.time_start = start_time
         result.time_end = end_time
         result.is_ccdl = True
         processor_name = "Salmontools " + __version__
         result.processor = Processor.objects.get(name=processor_name)
         result.save()
-        job_context['pipeline'].steps.push(result.id)
+        job_context['pipeline'].steps.append(result.id)
 
         assoc = SampleResultAssociation()
         assoc.sample = job_context["sample"]

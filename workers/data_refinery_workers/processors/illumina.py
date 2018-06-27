@@ -208,7 +208,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     """ Create the ComputationalResult objects after a Scan run is complete """
 
     result = ComputationalResult()
-    result.commands.push("illumina.R") # Need a better way to represent this R code.
+    result.commands.append("illumina.R") # Need a better way to represent this R code.
     result.is_ccdl = True
     result.is_public = True
     result.time_start = job_context['time_start']
@@ -216,7 +216,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     processor_name = "Illumina SCAN " + __version__
     result.processor = Processor.objects.get(name=processor_name)
     result.save()
-    job_context['pipeline'].steps.push(result.id)
+    job_context['pipeline'].steps.append(result.id)
 
     # Create a ComputedFile for the sample,
     # sync it S3 and save it.

@@ -15,6 +15,7 @@ from data_refinery_common.models import (
     ComputedFile,
     ComputationalResult,
     Processor,
+    Pipeline,
     Sample,
     Experiment,
     ExperimentSampleAssociation,
@@ -28,7 +29,7 @@ from data_refinery_workers._version import __version__
 def setUpModule():
     for program in ["Salmon", "Tximport", "MultiQC", "Salmontools"]:
         processor_name = program + " " + __version__
-        Processor.objectes.create(name=processor_name)
+        Processor.objects.create(name=processor_name)
 
 
 def prepare_job():
@@ -43,7 +44,7 @@ def prepare_job():
     samp.organism = c_elegans
     samp.save()
 
-    computational_result = ComputationalResult()
+    computational_result = ComputationalResult(processor=Processor.objects.first())
     computational_result.save()
 
     organism_index = OrganismIndex()
@@ -240,6 +241,7 @@ class SalmonTestCase(TestCase):
         job2_context = {
             'job_id': 2,
             'job': ProcessorJob(),
+            'pipeline': Pipeline(name="Salmon"),
             'sample': sample2,
             'input_file_path': os.path.join(experiment_dir, 'raw/SRR1206054.fastq.gz'),
             'index_directory': os.path.join(experiment_dir, 'index'),
