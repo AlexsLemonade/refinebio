@@ -10,6 +10,13 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation
 )
 from data_refinery_workers.processors import no_op, utils
+from data_refinery_workers._version import __version__
+
+
+def setUpModule():
+    processor_name = "Submitter-processed " + __version__
+    Processor.objects.create(name=processor_name)
+
 
 def prepare_job():
     pj = ProcessorJob()
