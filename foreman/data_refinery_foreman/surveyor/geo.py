@@ -261,6 +261,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 sample_object.source_database = "GEO"
                 sample_object.accession_code = sample_accession_code
                 sample_object.organism = organism
+
                 # If data processing step, it isn't raw.
                 sample_object.has_raw = not sample.metadata.get('data_processing', None)
 
@@ -302,6 +303,11 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     # We never want these!
                     if "idat.gz" in supplementary_file_url:
                         continue
+
+                    # Sometimes, we are lied to about the data processing step.
+                    if '.CEL' in supplementary_file_url:
+                        sample_object.has_raw = True
+                        sampe_object.save()
 
                     try:
                         original_file = OriginalFile.objects.get(source_url=supplementary_file_url)
