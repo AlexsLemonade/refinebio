@@ -12,6 +12,13 @@ from data_refinery_common.models import (
     ProcessorJob
 )
 from data_refinery_workers.processors import transcriptome_index, utils
+from data_refinery_workers._version import __version__
+
+
+def setUpModule():
+    processor_name = "Transcriptome Index " + __version__
+    Processor.objects.create(name=processor_name)
+
 
 def prepare_job():
     pj = ProcessorJob()

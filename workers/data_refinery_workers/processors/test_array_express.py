@@ -7,7 +7,13 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile
 )
+from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import array_express
+
+
+def setUpModule():
+    processor_name = "Affymetrix SCAN " + __version__
+    Processor.objects.create(name=processor_name)
 
 def prepare_ba_job():
     pj = ProcessorJob()
