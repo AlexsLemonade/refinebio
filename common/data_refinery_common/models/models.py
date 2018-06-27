@@ -3,6 +3,9 @@ import io
 import os
 import pytz
 import uuid
+import boto3
+
+from botocore.client import Config
 
 from datetime import datetime
 from functools import partial
@@ -14,6 +17,10 @@ from django.db import models
 from django.utils import timezone
 
 from data_refinery_common.models.organism import Organism
+from data_refinery_common.utils import get_env_variable
+
+S3 = boto3.client('s3', config=Config(signature_version='s3v4'))
+ORGANISM_INDEX_BUCKET = get_env_variable("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", "")
 
 """
 # First Order Classes
@@ -399,10 +406,20 @@ class OrganismIndex(models.Model):
     result = models.ForeignKey(
         ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
+    # S3 Key
+    s3_key = models.CharField(max_length=255, default="")
+
     # Common Properties
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
+
+    def upload_to_s3(self, absolute_file_path):
+        if ORGANISM_INDEX_BUCKET != "":
+            s3_key = self.organism.name + '_' + self.index_type + '.tar.gz'
+            S3.upload_file(absolute_file_path, ORGANISM_INDEX_BUCKET, s3_key,
+                           ExtraArgs={'ACL': 'public-read'})
+            self.s3_key = s3_key
 
     def save(self, *args, **kwargs):
         """ On save, update timestamps """
