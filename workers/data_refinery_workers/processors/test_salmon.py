@@ -27,7 +27,7 @@ from data_refinery_workers._version import __version__
 
 
 def setUpModule():
-    for program in ["Salmon", "Tximport", "MultiQC", "Salmontools"]:
+    for program in ["Salmon Quant", "Tximport", "MultiQC", "Salmontools"]:
         processor_name = program + " " + __version__
         Processor.objects.create(name=processor_name)
 
