@@ -2,13 +2,16 @@ from django.conf import settings
 from django.db.models import Count
 from django.db.models.aggregates import Avg
 from django.db.models.expressions import F
-from django.http import Http404
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 
 from django_filters.rest_framework import DjangoFilterBackend
 
+from rest_framework.exceptions import APIException
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.reverse import reverse
 from rest_framework.settings import api_settings
 from rest_framework import status, filters, generics
 
@@ -23,6 +26,7 @@ from data_refinery_common.models import (
     SurveyJob,
     ProcessorJob,
     Dataset,
+    APIToken,
     ProcessorJobDatasetAssociation
 )
 from data_refinery_api.serializers import (
@@ -42,7 +46,8 @@ from data_refinery_api.serializers import (
 
     # Dataset
     CreateDatasetSerializer,
-    DatasetSerializer
+    DatasetSerializer,
+    APITokenSerializer
 )
 
 ##
@@ -140,7 +145,9 @@ class CreateDatasetView(generics.CreateAPIView):
     serializer_class = CreateDatasetSerializer
 
 class DatasetView(generics.RetrieveUpdateAPIView):
-    """ View and modify a single Dataset. Set `start` to `true` to begin smashing and delivery."""
+    """ View and modify a single Dataset. Set `start` to `true` along with a valid 
+    activated API token (from /token/) to begin smashing and delivery.
+    """
 
     queryset = Dataset.objects.all()
     serializer_class = DatasetSerializer
@@ -155,6 +162,14 @@ class DatasetView(generics.RetrieveUpdateAPIView):
         new_data = serializer.validated_data
 
         if new_data.get('start'):
+
+            # Make sure we have a valid activated token.
+            token_id = self.request.data.get('token_id')
+            try:
+                token = APIToken.objects.get(id=token_id, is_activated=True)
+            except Exception: # Generall APIToken.DoesNotExist or django.core.exceptions.ValidationError
+                raise APIException("You must provide an active API token ID") 
+
             if not already_processing:
 
                 # Create and dispatch the new job.
@@ -181,6 +196,35 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             serializer.validated_data['data'] = old_data
             serializer.validated_data['aggregate_by'] = old_aggregate
         serializer.save()
+
+class APITokenView(APIView):
+    """
+    Return this response to this endpoint with `is_activated: true` to activate this API token.
+
+    You must include an activated token's ID to download processed datasets.
+    """
+
+    def get(self, request, id=None):
+        """ Create a new token, or fetch a token by its ID. """
+
+        if id:
+            token = get_object_or_404(APIToken, id=id)
+        else:
+            token = APIToken()
+            token.save()
+        serializer = APITokenSerializer(token)
+        return Response(serializer.data)
+
+    def post(self, request, id=None):
+        """ Given a token's ID, activate it."""
+
+        id = request.data.get('id', None)
+        activated_token = get_object_or_404(APIToken, id=id)
+        activated_token.is_activated = request.data.get('is_activated', False)
+        activated_token.save()
+
+        serializer = APITokenSerializer(activated_token)
+        return Response(serializer.data)
 
 ##
 # Experiments

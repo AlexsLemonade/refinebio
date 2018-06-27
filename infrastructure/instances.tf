@@ -211,7 +211,7 @@ data "template_file" "nomad_client_config" {
   template = "${file("nomad-configuration/client.tpl.hcl")}"
 
   vars {
-    nomad_server_address = "${aws_instance.nomad_server_1.private_ip}"
+    nomad_lead_server_ip = "${aws_instance.nomad_server_1.private_ip}"
   }
 }
 
