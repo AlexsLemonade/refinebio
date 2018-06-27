@@ -14,6 +14,8 @@ from data_refinery_common.models import (
     OriginalFile,
     ComputationalResult,
     ComputedFile,
+    Processor,
+    Pipeline,
     OrganismIndex
 )
 from data_refinery_workers._version import __version__
@@ -289,12 +291,14 @@ def _populate_index_object(job_context: Dict) -> Dict:
     """ """
 
     result = ComputationalResult()
-    result.command_executed = job_context["salmon_formatted_command"]
+    result.commands.push(job_context["salmon_formatted_command"])
+    processor_name = "Transcriptome Index " + __version__
+    result.processor = Processor.objects.get(name=processor_name)
     result.is_ccdl = True
-    result.system_version = __version__
     result.time_start = job_context["time_start"]
     result.time_end = job_context["time_end"]
     result.save()
+    job_context['pipeline'].steps.push(result.id)
 
     computed_file = ComputedFile()
     computed_file.absolute_file_path = job_context["computed_archive"]
@@ -333,7 +337,8 @@ def build_transcriptome_index(job_id: int, length="long") -> None:
     The output of salmon index is a directory which is pushed in full
     to Permanent Storage.
     """
-    utils.run_pipeline({"job_id": job_id, "length": length},
+    pipeline = Pipeline(name='Transcriptome Index')
+    utils.run_pipeline({"job_id": job_id, "length": length, "pipeline": pipeline},
                        [utils.start_job,
                         _compute_paths,
                         _prepare_files,

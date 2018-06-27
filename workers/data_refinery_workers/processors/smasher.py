@@ -92,8 +92,8 @@ def _smash(job_context: Dict) -> Dict:
                 scale_funtion = scalers[job_context['dataset'].scale_by]
                 scaler = scale_funtion(copy=True)
                 scaler.fit(transposed)
-                scaled = pd.DataFrame(  scaler.transform(transposed), 
-                                        index=transposed.index, 
+                scaled = pd.DataFrame(  scaler.transform(transposed),
+                                        index=transposed.index,
                                         columns=transposed.columns
                                     )
                 # Untranspose
@@ -103,7 +103,7 @@ def _smash(job_context: Dict) -> Dict:
                 untransposed = transposed.transpose()
 
             job_context['final_frame'] = untransposed
-            
+
             # Write to temp file with dataset UUID in filename.
             outfile = smash_path + key + ".tsv"
             untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
@@ -131,7 +131,7 @@ def _smash(job_context: Dict) -> Dict:
         metadata['experiments'] = experiments
 
         metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-        with open(smash_path + 'metadata.json', 'w') as metadata_file: 
+        with open(smash_path + 'metadata.json', 'w') as metadata_file:
             json.dump(metadata, metadata_file, indent=4, sort_keys=True)
 
         # Finally, compress all files into a zip
@@ -164,8 +164,8 @@ def _upload_and_notify(job_context: Dict) -> Dict:
         # Note that file expiry is handled by the S3 object lifecycle,
         # managed by terraform.
         s3_client.upload_file(
-                job_context["output_file"], 
-                RESULTS_BUCKET, 
+                job_context["output_file"],
+                RESULTS_BUCKET,
                 job_context["output_file"].split('/')[-1],
                 ExtraArgs={'ACL':'public-read'}
             )
@@ -221,7 +221,7 @@ def _upload_and_notify(job_context: Dict) -> Dict:
                     },
                     Source=SENDER,
                 )
-            # Display an error if something goes wrong. 
+            # Display an error if something goes wrong.
             except ClientError as e:
                 logger.error(e.response['Error']['Message'])
             else:
@@ -245,7 +245,8 @@ def _update_result_objects(job_context: Dict) -> Dict:
 def smash(job_id: int, upload=True) -> None:
     """ Main Smasher interface """
 
-    return utils.run_pipeline({"job_id": job_id, "upload": upload},
+    pipeline = Pipeline(name='Smasher')
+    return utils.run_pipeline({"job_id": job_id, "upload": upload, "pipeline": pipeline},
                        [utils.start_job,
                         _prepare_files,
                         _smash,
