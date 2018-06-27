@@ -221,8 +221,6 @@ def _create_index(job_context: Dict) -> Dict:
                                             stderr=subprocess.PIPE)
 
     if rsem_completed_command.returncode != 0:
-        import pdb
-        pdb.set_trace()
         stderr = str(rsem_completed_command.stderr)
         error_start = stderr.find("Error:")
         error_start = error_start if error_start != -1 else 0
@@ -321,7 +319,7 @@ def _populate_index_object(job_context: Dict) -> Dict:
     index_object = OrganismIndex()
     index_object.organism = organism_object
     index_object.source_version = job_context["assembly_version"]
-    index_object.source_version = job_context["salmon_version"]
+    index_object.salmon_version = job_context["salmon_version"]
     index_object.index_type = "TRANSCRIPTOME_" + job_context['length'].upper()
     index_object.result = result
     index_object.save()
