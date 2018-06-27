@@ -11,7 +11,8 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
     ComputedFile,
-    Dataset
+    Dataset,
+    APIToken
 )
 
 ##
@@ -420,3 +421,24 @@ class DatasetSerializer(serializers.ModelSerializer):
         except Exception:
             raise
         return data
+
+class APITokenSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = APIToken
+        fields = (
+                'id',
+                'is_activated',
+                'terms_and_conditions'
+            )
+        extra_kwargs = {
+                        'id': {
+                            'read_only': True
+                        },
+                        'is_activated': {
+                            'read_only': False
+                        },
+                        'terms_and_conditions': {
+                            'read_only': True
+                        }
+                    }
