@@ -293,6 +293,30 @@ class ExperimentAnnotation(models.Model):
         self.last_modified = current_time
         return super(ExperimentAnnotation, self).save(*args, **kwargs)
 
+class Pipeline(models.Model):
+    "Pipeline that is associated with a series of ComputationalResult records."""
+
+    name = models.CharField(max_length=255)
+    steps = ArrayField(models.IntegerField(), default=[])
+
+    class Meta:
+        db_table = "pipelines"
+
+
+class Processor(models.Model):
+    """Processor associated with a certain ComputationalResult."""
+
+    name = models.CharField(max_length=255)
+    docker_image = models.CharField(max_length=255)
+    environment = JSONField(default={})
+
+    class Meta:
+        db_table = "processors"
+        unique_together = ('name', 'docker_image')
+
+    def __str__(self):
+        return "Processor: %s (docker_image: %s" % (name, docker_image)
+
 
 class ComputationalResult(models.Model):
     """ Meta-information about the output of a computer process. (Ex Salmon) """
@@ -362,30 +386,6 @@ class ComputationalResultAnnotation(models.Model):
         self.last_modified = current_time
         return super(ComputationalResultAnnotation, self).save(*args, **kwargs)
 
-
-class Pipeline(models.Model):
-    "Pipeline that is associated with a series of ComputationalResult records."""
-
-    name = models.CharField(max_length=255)
-    steps = ArrayField(models.IntegerField(), default=[])
-
-    class Meta:
-        db_table = "pipelines"
-
-
-class Processor(models.Model):
-    """Processor associated with a certain ComputationalResult."""
-
-    name = models.CharField(max_length=255)
-    docker_image = models.CharField(max_length=255)
-    environment = JSONField(default={})
-
-    class Meta:
-        db_table = "processors"
-        unique_together = ('name', 'docker_image')
-
-    def __str__(self):
-        return "Processor: %s (docker_image: %s" % (name, docker_image)
 
 # TODO
 # class Gene(models.Model):

@@ -160,7 +160,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     processor_name = "Affymetrix SCAN " + __version__
     result.processor = Processor.objects.get(name=processor_name)
     result.save()
-    job_context['pipeline'].steps.push(result.id)
+    job_context['pipeline'].steps.append(result.id)
 
     # Create a ComputedFile for the sample,
     # sync it S3 and save it.

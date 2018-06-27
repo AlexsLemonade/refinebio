@@ -40,12 +40,12 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
 
     # This is a NO-OP, but we make a ComputationalResult regardless.
     result = ComputationalResult()
-    result.commands.push("") # No op!
+    result.commands.append("") # No op!
     result.is_ccdl = True
     processor_name = "Submitter-processed " + __version__
     result.processor = Processor.objects.get(name=processor_name)
     result.save()
-    job_context['pipeline'].steps.push(result.id)
+    job_context['pipeline'].steps.append(result.id)
 
     # Create a ComputedFile for the original file,
     # sync it S3 and save it.

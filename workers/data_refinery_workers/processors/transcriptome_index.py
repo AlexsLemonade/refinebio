@@ -291,14 +291,14 @@ def _populate_index_object(job_context: Dict) -> Dict:
     """ """
 
     result = ComputationalResult()
-    result.commands.push(job_context["salmon_formatted_command"])
+    result.commands.append(job_context["salmon_formatted_command"])
     processor_name = "Transcriptome Index " + __version__
     result.processor = Processor.objects.get(name=processor_name)
     result.is_ccdl = True
     result.time_start = job_context["time_start"]
     result.time_end = job_context["time_end"]
     result.save()
-    job_context['pipeline'].steps.push(result.id)
+    job_context['pipeline'].steps.append(result.id)
 
     computed_file = ComputedFile()
     computed_file.absolute_file_path = job_context["computed_archive"]
