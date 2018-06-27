@@ -72,7 +72,6 @@ class GeoSurveyor(ExternalSourceSurveyor):
             # can't do anything. Therefore assume the technology is
             # microarray when we have no platform information.
             sample_object.technology = "MICROARRAY"
-
             return sample_object
 
         platform_accession_code = UNKNOWN
