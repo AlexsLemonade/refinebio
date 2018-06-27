@@ -23,7 +23,8 @@ from data_refinery_api.views import (
     Stats,
     CreateDatasetView,
     DatasetView,
-    APITokenView
+    APITokenView,
+    TranscriptomeIndexDetail
 )
 
 # This provides _public_ access to the /admin interface!
@@ -111,6 +112,10 @@ urlpatterns = [
 
     # Dashboard Driver
     url(r'^stats/$', Stats.as_view(), name="stats"),
+
+    # Transcriptome Indices
+    url(r'^transcriptome_indices', TranscriptomeIndexDetail.as_view(),
+        name="transcriptome-indices"),
 
     # Admin
     url(r'^admin', admin.site.urls),

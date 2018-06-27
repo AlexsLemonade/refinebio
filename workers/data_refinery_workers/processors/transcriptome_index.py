@@ -314,6 +314,8 @@ def _populate_index_object(job_context: Dict) -> Dict:
     index_object.source_version = job_context["assembly_version"]
     index_object.index_type = "TRANSCRIPTOME_" + job_context['length'].upper()
     index_object.result = result
+    logger.info("Uploading %s %s to s3" % (job_context['organism_name'], job_context['length']))
+    index_object.upload_to_s3(computed_file.absolute_file_path)
     index_object.save()
 
     job_context['result'] = result
