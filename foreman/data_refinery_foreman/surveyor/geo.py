@@ -87,9 +87,14 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         if platform_accession_code != UNKNOWN:
             # It's a supported microarray platform.
+
+            # We are using the brain array package as the platform accession code,
+            # so, for instance, GPL3213 becomes 'chicken'.
             sample_object.platform_accession_code = platform_accession_code
             sample_object.technology = "MICROARRAY"
             try:
+
+                # XXX: Remove prepended [$Organism] here?
                 # If it's Affy we can get a readable name:
                 sample_object.platform_name = get_readable_affymetrix_names()[
                     platform_accession_code]
@@ -307,7 +312,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     # Sometimes, we are lied to about the data processing step.
                     if '.CEL' in supplementary_file_url:
                         sample_object.has_raw = True
-                        sampe_object.save()
+                        sample_object.save()
 
                     try:
                         original_file = OriginalFile.objects.get(source_url=supplementary_file_url)
