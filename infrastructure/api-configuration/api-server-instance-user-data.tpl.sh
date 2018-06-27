@@ -29,6 +29,10 @@ if [[ ${stage} == "staging" || ${stage} == "prod" ]]; then
     apt-get update
     apt-get install python-certbot-nginx
 
+    # g3w4k4t5n3s7p7v8@alexslemonade.slack.com is the email address we
+    # have configured to forward mail to the #teamcontact channel in
+    # slack. Certbot will use it for "important account
+    # notifications".
     if [[ ${stage} == "staging" ]]; then
         certbot --nginx -d api.staging.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
     elif [[ ${stage} == "prod" ]]; then

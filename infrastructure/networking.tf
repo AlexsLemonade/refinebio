@@ -115,7 +115,6 @@ resource "aws_lb" "data_refinery_api_load_balancer" {
     subnet_id = "${aws_subnet.data_refinery_1a.id}"
     allocation_id = "${aws_eip.data_refinery_api_ip.id}"
   }
-
 }
 
 resource "aws_lb_target_group" "api-http" {
