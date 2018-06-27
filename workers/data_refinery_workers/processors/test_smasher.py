@@ -158,13 +158,13 @@ class SmasherTestCase(TestCase):
 
             final_context = smasher.smash(job.pk, upload=False)
             final_frame = final_context['final_frame']
+
+            # Sanity test that these frames can be computed upon
             final_frame.mean(axis=1)
             final_frame.min(axis=1)
             final_frame.max(axis=1)
             final_frame.std(axis=1)
             final_frame.median(axis=1)
-
-            final_context['output_file']
 
             zf = zipfile.ZipFile(final_context['output_file'])
             namelist = zf.namelist()

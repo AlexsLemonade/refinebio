@@ -57,6 +57,8 @@ def _smash(job_context: Dict) -> Dict:
     try:
         # Prepare the output directory
         smash_path = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk) + "/"
+        # Ensure we have a fresh smash directory
+        shutil.rmtree(smash_path, ignore_errors=True)
         os.makedirs(smash_path, exist_ok=True)
 
         scalers = {
@@ -133,8 +135,8 @@ def _smash(job_context: Dict) -> Dict:
 
         # Metadata to TSV
         with open(smash_path + 'metadata.tsv', 'w') as output_file:
-            sample_ids = [k for k in metadata['samples'].keys()]
-            keys = [k for k in metadata['samples'][sample_ids[0]].keys()] + ['sample_id']
+            sample_ids = list(metadata['samples'].keys())
+            keys = list(metadata['samples'][sample_ids[0]].keys()) + ['sample_id']
             dw = csv.DictWriter(output_file, keys, delimiter='\t')
             dw.writeheader()
             for key, value in metadata['samples'].items():
