@@ -38,6 +38,10 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Processor Jobs](#processor-jobs)
   - [Checking on Local Jobs](#checking-on-local-jobs)
   - [Testing](#testing-1)
+    - [API](#api)
+    - [Common](#common)
+    - [Foreman](#foreman)
+    - [Workers](#workers)
   - [Development Helpers](#development-helpers-1)
   - [Style](#style-1)
 - [Production Deployment](#production-deployment)
@@ -80,9 +84,9 @@ The following services will need to be installed:
 so Docker does not need sudo permissions.
 - [Terraform](https://www.terraform.io/)
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./install_nomad.sh`.
-- git-crypt
-- jq
-- iproute2
+- [git-crypt](https://www.agwa.name/projects/git-crypt/)
+- [jq](https://stedolan.github.io/jq/)
+- [iproute2](https://wiki.linuxfoundation.org/networking/iproute2)
 
 Instructions for installing Docker and Nomad can be found by
 following the link for each service. git-crypt, jq, and iproute2 can be installed via
@@ -106,9 +110,9 @@ The following services will need to be installed:
 - [Terraform](https://www.terraform.io/)
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries)
 - [Homebrew](https://brew.sh/)
-- git-crypt
-- iproute2mac
-- jq
+- [git-crypt](https://www.agwa.name/projects/git-crypt/)
+- [iproute2mac](https://github.com/brona/iproute2mac)
+- [jq](https://stedolan.github.io/jq/)
 
 Instructions for installing Docker, Nomad, and Homebrew can be found by
 following the link for those services. The others on that list can
@@ -123,7 +127,7 @@ Docker](https://docs.docker.com/docker-for-mac/#advanced) from the default of
 
 Run `./create_virtualenv.sh` to set up the virtualenv. It will activate the `dr_env`
 for you the first time. This virtualenv is valid for the entire `refinebio`
-repo. Sub-projects each have their own virtualenvs which are managed by their
+repo. Sub-projects each have their own environments managed by their
 containers. When returning to this project you should run
 `source dr_env/bin/activate` to reactivate the virtualenv.
 
@@ -208,6 +212,8 @@ To run the entire test suite:
 ```bash
 ./run_all_tests.sh
 ```
+
+(_Note:_ Running all the tests can take some time because it downloads a lot of files)
 
 These tests will also be run continuosly for each commit via CircleCI.
 
@@ -472,6 +478,44 @@ To run the entire test suite:
 
 These tests will also be run continuosly for each commit via CircleCI.
 
+For more granular testing, you can just run the tests for specific parts of the system.
+
+#### API
+To just run the API tests:
+
+```bash
+./api/run_tests.sh
+```
+
+#### Common
+To just run the common tests:
+
+```bash
+./common/run_tests.sh
+```
+
+#### Foreman
+To just run the foreman tests:
+
+```bash
+./foreman/run_tests.sh
+```
+
+#### Workers
+To just run the workers tests:
+
+```bash
+./workers/run_tests.sh
+```
+
+If you only want to run tests with a specific tag, you can do that too. For
+example, to run just the salmon tests:
+
+```bash
+./workers/run_tests.sh -t salmon
+```
+
+
 ### Development Helpers
 
 It can be useful to have an interactive Python interpreter running within the
@@ -538,7 +582,7 @@ For convenience, a `deploy.sh` script is also provided, which will perform addit
 steps to configure (such as setting up Nomad job specifications and performing database migrations) and prepare the entire system. It can be used simply (from the `infrastructure` directory), like so:
 
 ```
-./deploy.sh
+./deploy.sh -e dev
 ```
 
 ### Autoscaling and Setting Spot Prices
