@@ -58,10 +58,6 @@ jobs:
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
 
-      # Run Illumna tests.
-      - run: sudo chown -R circleci:circleci workers/test_volume/
-      - run: .circleci/filter_tests.sh -t illumina
-
       # Run Smasher tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
@@ -72,13 +68,6 @@ jobs:
       # Run API Tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run: ./api/run_tests.sh
-
-      # Run Downloader Tests
-      # Running these in the same job as the common tests is good
-      # because their dockerfiles are very similar so a lot of the
-      # build time is saved by only building those layers once.
-      - run: sudo chown -R circleci:circleci workers/test_volume/
-      - run: .circleci/filter_tests.sh -t downloaders
 
       # Run Illumna tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
