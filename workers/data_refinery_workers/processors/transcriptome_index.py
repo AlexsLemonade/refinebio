@@ -215,6 +215,9 @@ def _create_index(job_context: Dict) -> Dict:
                                             stdout=subprocess.PIPE,
                                             stderr=subprocess.PIPE)
 
+    # The extracted fasta file can be large, no need to leave it lying around.
+    os.remove(job_context["fasta_file_path"])
+
     if rsem_completed_command.returncode != 0:
         stderr = str(rsem_completed_command.stderr)
         error_start = stderr.find("Error:")
@@ -333,15 +336,15 @@ def build_transcriptome_index(job_id: int, length="long") -> None:
     The output of salmon index is a directory which is pushed in full
     to Permanent Storage.
     """
-    utils.run_pipeline({"job_id": job_id, "length": length},
-                       [utils.start_job,
-                        _compute_paths,
-                        _prepare_files,
-                        _extract_assembly_version,
-                        _process_gtf,
-                        _create_index,
-                        _zip_index,
-                        _populate_index_object,
-                        #utils.upload_processed_files,
-                        #utils.cleanup_raw_files,
-                        utils.end_job])
+    return utils.run_pipeline({"job_id": job_id, "length": length},
+                              [utils.start_job,
+                               _compute_paths,
+                               _prepare_files,
+                               _extract_assembly_version,
+                               _process_gtf,
+                               _create_index,
+                               _zip_index,
+                               _populate_index_object,
+                               #utils.upload_processed_files,
+                               #utils.cleanup_raw_files,
+                               utils.end_job])

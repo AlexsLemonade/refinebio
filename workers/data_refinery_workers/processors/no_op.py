@@ -9,8 +9,9 @@ import pandas as pd
 from typing import Dict
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import ComputationalResult, ComputedFile, SampleResultAssociation
+from data_refinery_common.models import ComputationalResult, ComputedFile, SampleResultAssociation, SampleComputedFileAssociation
 from data_refinery_common.utils import get_env_variable, get_internal_microarray_accession
+from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 
@@ -149,6 +150,11 @@ def _create_result(job_context: Dict) -> Dict:
         assoc.sample = sample
         assoc.result = result
         assoc.save()
+
+        SampleComputedFileAssociation.objects.get_or_create(
+            sample=sample,
+            computed_file=computed_file)
+
 
     logger.info("Created %s", result)
     job_context["success"] = True
