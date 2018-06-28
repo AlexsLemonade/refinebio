@@ -142,34 +142,8 @@ if [[ $env != "prod" && $env != "staging" && $env != "dev" ]]; then
 else
     export EXTRA_HOSTS=""
     export AWS_CREDS="
-<<<<<<< HEAD
-        AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
-        AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\"
-"
-||||||| merged common ancestors
-<<<<<<<<< Temporary merge branch 1
-        AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
-        AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
-||||||||| merged common ancestors
-        AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
-        AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
-    export LOGGING_CONFIG="
-        logging {
-          type = \"awslogs\"
-          config {
-            awslogs-region = \"$REGION\",
-            awslogs-group = \"data-refinery-log-group-$USER-$STAGE\",
-            awslogs-stream = \"log-stream-nomad-docker-downloader-$USER-$STAGE\"
-          }
-        }
-"
-=========
     AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
     AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
-=======
-    AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
-    AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
->>>>>>> 57b4bdf9a1234a4236c533f3789e1ed5df9fdba5
     # When deploying prod we write the output of Terraform to a
     # temporary environment file.
     environment_file="$script_directory/infrastructure/prod_env"
