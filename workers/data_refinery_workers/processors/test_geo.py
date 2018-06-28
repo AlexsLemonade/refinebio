@@ -10,6 +10,7 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
     SampleAnnotation,
+    Processor,
     OriginalFileSampleAssociation
 )
 from data_refinery_workers.processors import utils
