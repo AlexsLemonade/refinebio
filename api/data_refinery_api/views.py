@@ -53,7 +53,7 @@ from data_refinery_api.serializers import (
     APITokenSerializer
 )
 
-ORGANISM_INDEX_BUCKET = get_env_variable("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", "")
+ORGANISM_INDEX_BUCKET = get_env_variable("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", "NO_ENV_VARIABLE")
 
 ##
 # Custom Views
@@ -506,7 +506,7 @@ class TranscriptomeIndexDetail(APIView):
         Length must either be "long" or "short"
         """
 
-        if ORGANISM_INDEX_BUCKET == "":
+        if ORGANISM_INDEX_BUCKET == "NO_ENV_VARIABLE":
             raise Http404
 
         transcription_length = "TRANSCRIPTOME_" + transcription_length.upper()
