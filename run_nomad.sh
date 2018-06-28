@@ -6,23 +6,38 @@
 # messages telling it to run Processor and Downloader jobs. When it
 # receives them, it will run the jobs within new Docker containers.
 
+print_description() {
+    echo "Starts Nomad and registers the jobs with it. This involves re-building the "
+    echo "Docker images and running format_nomad_with_env.sh to format the Nomad job "
+    echo "specifications for the correct environment."
+}
+
+print_options() {
+    echo "Options:"
+    echo "    -h               Prints the help message"
+    echo "    -e ENVIRONMENT   The environment to start. 'local' is the default option."
+    echo "                     The other options are 'prod' and 'test'"
+}
+
 while getopts ":e:h" opt; do
     case $opt in
         e)
             env=$OPTARG
             ;;
         h)
-            echo "Starts Nomad and registers the jobs with it. This involves re-building the "
-            echo "Docker images and running format_nomad_with_env.sh to format the Nomad job "
-            echo "specifications for the correct environment."
-            echo '- "local" is the default enviroment, use -e to specify "prod" or "test".'
+            print_description
+            echo
+            print_options
+            exit 0
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
+            print_options >&2
             exit 1
             ;;
         :)
             echo "Option -$OPTARG requires an argument." >&2
+            print_options >&2
             exit 1
             ;;
     esac
