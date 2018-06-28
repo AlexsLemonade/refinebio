@@ -10,7 +10,7 @@ data_dir = "/tmp/nomad_client1"
 client {
     enabled = true
 
-    servers = ["${nomad_server_address}:4647"]
+    servers = ["${nomad_lead_server_ip}:4647"]
 }
 
 consul {

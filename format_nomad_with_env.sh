@@ -5,6 +5,23 @@
 # Nomad job specifications, as defined in each project.
 ##
 
+print_description() {
+    echo "Formats Nomad Job Specifications with the specified environment overlaid "
+    echo "onto the current environment."
+}
+
+print_options() {
+    echo "Options:"
+    echo "    -h               Prints the help message"
+    echo "    -p PROJECT       The project to format."
+    echo "                     Valid values are 'api', 'workers' or 'foreman'."
+    echo "    -e ENVIRONMENT   The environemnt to run. 'local' is the default."
+    echo "                     Other valid values are 'prod' or 'testing'."
+    echo "    -o OUTPUT_DIR    The output directory. The default directory is the"
+    echo "                     project directory, but you can specify an absolute"
+    echo "                     path to another directory (trailing / must be included)."
+}
+
 while getopts ":p:e:o:h" opt; do
     case $opt in
     p)
@@ -17,19 +34,19 @@ while getopts ":p:e:o:h" opt; do
         output_dir=$OPTARG
         ;;
     h)
-        echo "Formats Nomad Job Specifications with the specified environment overlaid "
-        echo "onto the current environment."
-        echo '-p specifies the project to format. Valid values are "api", workers" or "foreman".'
-        echo '- "local" is the default enviroment, use -e to specify "prod" or "test".'
-        echo '- the project directory will be used as the default output directory, use -o to specify'
-        echo '      an absolute path to a directory (trailing / must be included).'
+        print_description
+        echo
+        print_options
+        exit 0
         ;;
     \?)
         echo "Invalid option: -$OPTARG" >&2
+        print_options >&2
         exit 1
         ;;
     :)
         echo "Option -$OPTARG requires an argument." >&2
+        print_options >&2
         exit 1
         ;;
     esac
