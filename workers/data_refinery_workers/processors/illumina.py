@@ -6,6 +6,10 @@ import string
 import subprocess
 import multiprocessing
 import warnings
+
+import pandas as pd
+import numpy as np
+
 from django.utils import timezone
 from typing import Dict
 
@@ -15,12 +19,20 @@ from data_refinery_common.models import (
     ComputationalResult, 
     ComputedFile,
     Sample,
+    SampleAnnotation,
     OriginalFileSampleAssociation,
-    SampleResultAssociation
+    SampleResultAssociation,
+    SampleComputedFileAssociation,
+    ProcessorJob,
+    ProcessorJobOriginalFileAssociation
 )
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
+from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.message_queue import send_job
 from data_refinery_common.utils import get_env_variable
+
+
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
 logger = get_and_configure_logger(__name__)
@@ -99,13 +111,18 @@ def _detect_columns(job_context: Dict) -> Dict:
                 headers = row
                 break
 
+        # Ex GSE45331_non-normalized.txt
+        predicted_header = 0
+        if headers[0].upper() in ["TARGETID", "TARGET_ID"]:
+            predicted_header = 1
+
         # First the probe ID column
-        if headers[0] not in ['ID_REF', 'PROBE_ID']:
+        if headers[predicted_header].upper() not in ['ID_REF', 'PROBE_ID', "IDREF", "PROBEID"]:
             job_context["job"].failure_reason = "Could not find ID reference column"
             job_context["success"] = False
             return job_context
         else:
-            job_context['probeId'] = headers[0]
+            job_context['probeId'] = headers[predicted_header]
 
         # Then the detection Pvalue string, which is always(?) some form of 'Detection Pval'
         for header in headers:
@@ -156,6 +173,100 @@ def _detect_columns(job_context: Dict) -> Dict:
 
     return job_context
 
+def _detect_platform(job_context: Dict) -> Dict:
+    """
+    Determine the platform/database to process this sample with.
+    They often provide something like "V2" or "V 2", but we don't trust them so we detect it ourselves.
+
+    Related: https://github.com/AlexsLemonade/refinebio/issues/232
+    """
+
+    all_databases = {
+        'HOMO_SAPIENS': [
+            'illuminaHumanv1',
+            'illuminaHumanv2',
+            'illuminaHumanv3',
+            'illuminaHumanv4',
+        ],
+        'MUS_MUSCULUS': [
+            'illuminaMousev1',
+            'illuminaMousev1p1',
+            'illuminaMousev2',
+        ],
+        'RATTUS_NORVEGICUS': [
+            'illuminaRatv1'
+        ]
+    }
+
+    sample0 = job_context['samples'][0]
+    databases = all_databases[sample0.organism.name]
+
+    # Loop over all of the possible platforms and find the one with the best match.
+    highest = 0.0
+    high_mapped_percent = 0.0
+    high_db = None
+    for platform in databases:
+        try:
+            result = subprocess.check_output([
+                    "/usr/bin/Rscript", 
+                    "--vanilla", 
+                    "/home/user/data_refinery_workers/processors/detect_database.R",
+                    "--platform", platform,
+                    "--inputFile", job_context['input_file_path'],
+                    "--column", job_context['probeId'],
+                ])
+
+            results = result.decode().split('\n')
+            cleaned_result = float(results[0].strip())
+
+            if cleaned_result > highest:
+                highest = cleaned_result
+                high_db = platform
+                high_mapped_percent = float(results[1].strip())
+
+        except Exception as e:
+            logger.exception(e)
+            continue
+
+    # Record our sample detection outputs for every sample.
+    for sample in job_context['samples']:
+        sa = SampleAnnotation()
+        sa.sample = sample
+        sa.data = {
+            "detected_platform": high_db, 
+            "detection_percentage": highest,
+            "mapped_percentage": high_mapped_percent
+        }
+        sa.save()
+
+    # If the match is over 75%, record this and process it on that platform.
+    if high_mapped_percent > 75.0:
+        job_context['platform'] = high_db
+    # The match percentage is too low - send this to the no-opper instead.
+    else:
+
+        logger.info("Match percentage too low, NO_OP'ing and aborting.",
+            job=job_context['job_id'])
+
+        processor_job = ProcessorJob()
+        processor_job.pipeline_applied = "NO_OP"
+        processor_job.save()
+
+        assoc = ProcessorJobOriginalFileAssociation()
+        assoc.original_file = job_context["original_files"][0]
+        assoc.processor_job = processor_job
+        assoc.save()
+
+        try:
+            send_job(ProcessorPipeline.NO_OP, processor_job)
+        except Exception as e:
+            # Nomad dispatch error, likely during local test.
+            logger.error(e, job=processor_job)
+
+        job_context['abort'] = True
+
+    return job_context
+
 def _run_illumina(job_context: Dict) -> Dict:
     """Processes an input TXT file to an output PCL file using a custom R script.
     Expects a job_context which has been pre-populated with inputs, outputs
@@ -168,12 +279,6 @@ def _run_illumina(job_context: Dict) -> Dict:
     annotation = job_context['samples'][0].sampleannotation_set.all()[0]
     annotation_data = str(annotation.data).encode('utf-8').upper()
 
-    # TODO: Look this up in a better way during https://github.com/AlexsLemonade/refinebio/issues/222
-    if "V2".encode() in annotation_data or "V 2".encode() in annotation_data:
-        platform = "illuminaHumanv2"
-    else:
-        platform = "illuminaHumanv4"
-
     try:
         job_context['time_start'] = timezone.now()
 
@@ -184,7 +289,7 @@ def _run_illumina(job_context: Dict) -> Dict:
                 "--probeId", job_context['probeId'],
                 "--expression", job_context['columnIds'],
                 "--detection", job_context['detectionPval'],
-                "--platform", platform,
+                "--platform", job_context['platform'],
                 "--inputFile", job_context['input_file_path'],
                 "--outputFile", job_context['output_file_path'],
                 "--cores", str(multiprocessing.cpu_count())
@@ -216,50 +321,63 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.pipeline = "Illumina SCAN"
     result.save()
 
-    # Create a ComputedFile for the sample,
-    # sync it S3 and save it.
-    try:
+    # Split the result into smashable subfiles
+    big_tsv = job_context["output_file_path"]
+    data = pd.read_csv(big_tsv, sep='\t', header=0, index_col=0)
+    individual_files = []
+    frames = np.split(data, len(data.columns), axis=1)
+    for frame in frames:
+        frame_path = job_context["output_file_path"] + '.' + frame.columns.values[0].replace('&', '') + '.tsv'
+        frame.to_csv(frame_path, sep='\t', encoding='utf-8')
+
+        # This needs to be the same as the ones in the job context!
+        try:
+            sample = job_context['samples'].get(title=frame.columns.values[0])
+        except Sample.DoesNotExist:
+            logger.error("Could not find sample for column while splitting Illumina file.",
+                        title=frame.columns.values[0],
+                        processor_job=job_context["job_id"],
+                        file_path=big_tsv,
+            )
+            continue
+
         computed_file = ComputedFile()
-        computed_file.absolute_file_path = job_context["output_file_path"]
-        computed_file.filename = os.path.split(job_context["output_file_path"])[-1]
-        computed_file.calculate_sha1()
-        computed_file.calculate_size()
+        computed_file.absolute_file_path = frame_path
+        computed_file.filename = frame_path.split('/')[-1]
         computed_file.result = result
         computed_file.is_smashable = True
         computed_file.is_qc = False
-        # computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
-        # TODO here: delete local file after S3 sync
+        computed_file.is_public = True
+        computed_file.calculate_sha1()
+        computed_file.calculate_size()
         computed_file.save()
 
-        logger.info("Created new ComputedFile: " + computed_file.absolute_file_path + " [" + str(computed_file.sha1) + "](" + str(computed_file.size_in_bytes) + ")",
+        SampleResultAssociation.objects.get_or_create(
+            sample=sample,
+            result=result)
+
+        SampleComputedFileAssociation.objects.get_or_create(
+            sample=sample,
             computed_file=computed_file)
 
-    except Exception:
-        logger.exception("Exception caught while moving file %s to S3",
-                         computed_file.filename,
-                         processor_job=job_context["job_id"],
-                         )
-        failure_reason = "Exception caught while moving file to S3"
-        job_context["job"].failure_reason = failure_reason
-        job_context["success"] = False
-        return job_context
+        individual_files.append(computed_file)
 
-    for sample in job_context['samples']:
-        assoc = SampleResultAssociation()
-        assoc.sample = sample
-        assoc.result = result
-        assoc.save()
+    # Don't need the big one after it's split.
+    os.remove(job_context["output_file_path"])
 
     logger.info("Created %s", result)
     job_context["success"] = True
+    job_context["individual_files"] = individual_files
+    job_context["result"] = result
 
     return job_context
 
 def illumina_to_pcl(job_id: int) -> None:
-    utils.run_pipeline({"job_id": job_id},
+    return utils.run_pipeline({"job_id": job_id},
                        [utils.start_job,
                         _prepare_files,
                         _detect_columns,
+                        _detect_platform,
                         _run_illumina,
                         _create_result_objects,
                         utils.end_job])

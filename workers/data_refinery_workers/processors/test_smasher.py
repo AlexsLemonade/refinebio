@@ -14,7 +14,8 @@ from data_refinery_common.models import (
     Sample,
     SampleResultAssociation,
     Dataset,
-    ProcessorJobDatasetAssociation
+    ProcessorJobDatasetAssociation,
+    SampleComputedFileAssociation
 )
 from data_refinery_workers.processors import smasher
 from data_refinery_workers.processors import utils
@@ -51,11 +52,21 @@ def prepare_job():
     computed_file.size_in_bytes = 123
     computed_file.save()
 
+    assoc = SampleComputedFileAssociation()
+    assoc.sample = sample
+    assoc.computed_file = computed_file
+    assoc.save()
+
     sample = Sample()
     sample.accession_code = 'GSM1237812'
     sample.title = 'GSM1237812'
     sample.organism = homo_sapiens
     sample.save()
+
+    assoc = SampleComputedFileAssociation()
+    assoc.sample = sample
+    assoc.computed_file = computed_file
+    assoc.save()
 
     sra = SampleResultAssociation()
     sra.sample = sample
@@ -68,6 +79,11 @@ def prepare_job():
     computed_file.result = result
     computed_file.size_in_bytes = 123
     computed_file.save()
+
+    assoc = SampleComputedFileAssociation()
+    assoc.sample = sample
+    assoc.computed_file = computed_file
+    assoc.save()
 
     ds = Dataset()
     ds.data = {'GSE51081': ['GSM1237810', 'GSM1237812']}
@@ -189,15 +205,33 @@ class SmasherTestCase(TestCase):
         result = ComputationalResult()
         result.save()
 
-        computed_file = ComputedFile()
-        computed_file.filename = "oh_boy.txt"
-        computed_file.result = result
-        computed_file.size_in_bytes = 123
-        computed_file.save()
+        computed_file1 = ComputedFile()
+        computed_file1.filename = "oh_boy.txt"
+        computed_file1.result = result
+        computed_file1.size_in_bytes = 123
+        computed_file1.is_smashable = True
+        computed_file1.save()
+
+        computed_file2 = ComputedFile()
+        computed_file2.filename = "gee_whiz.bmp"
+        computed_file2.result = result
+        computed_file2.size_in_bytes = 123
+        computed_file2.is_smashable = False
+        computed_file2.save()
 
         assoc = SampleResultAssociation()
         assoc.sample = sample
         assoc.result = result
+        assoc.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file1
+        assoc.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file2
         assoc.save()
 
         computed_files = sample.get_result_files()
@@ -227,6 +261,11 @@ class SmasherTestCase(TestCase):
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
 
         ds = Dataset()
         ds.data = {'GSE51081': ['XXX']}
@@ -288,6 +327,14 @@ class SmasherTestCase(TestCase):
         computed_file.size_in_bytes = 123
         computed_file.save()
 
+        result = ComputationalResult()
+        result.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
         experiment = Experiment()
         experiment.accession_code = "GSE51084"
         experiment.save()
@@ -311,6 +358,11 @@ class SmasherTestCase(TestCase):
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
 
         ds = Dataset()
         ds.data = {'GSE51081': ['GSM1237810'], 'GSE51084': ['GSM1238108']}
