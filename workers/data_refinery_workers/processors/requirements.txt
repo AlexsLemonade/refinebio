@@ -29,7 +29,7 @@ mpmath==1.0.0             # via sympy
 multiqc==1.5
 networkx==2.1             # via colormath
 numpy==1.14.4
-pandas==0.23.0
+pandas>=0.23.1
 psycopg2-binary==2.7.4
 pyparsing==2.2.0          # via matplotlib
 python-dateutil==2.7.3    # via botocore, matplotlib, pandas
