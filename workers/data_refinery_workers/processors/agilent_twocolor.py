@@ -98,6 +98,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.is_public = True
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
+    result.pipeline = "Agilent SCAN TwoColor"  # TODO: should be removed
     processor_name = "Agilent SCAN TwoColor " + __version__
     result.processor = Processor.objects.get(name=processor_name)
     result.save()

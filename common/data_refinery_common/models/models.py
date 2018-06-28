@@ -335,6 +335,11 @@ class ComputationalResult(models.Model):
     commands = ArrayField(models.TextField(), default=[])
     processor = models.ForeignKey(Processor, blank=True, null=True, on_delete=models.CASCADE)
     is_ccdl = models.BooleanField(default=True)
+    # TODO: "pipeline" field is now redundant due to "processor". Should be removed later.
+    # Human-readable nickname for this computation
+    pipeline = models.CharField(max_length=255)
+
+
 
     # Stats
     time_start = models.DateTimeField(blank=True, null=True)

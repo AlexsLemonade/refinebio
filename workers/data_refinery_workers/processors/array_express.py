@@ -157,6 +157,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
+    result.pipeline = "Affymetrix SCAN"  # TODO: should be removed
     processor_name = "Affymetrix SCAN " + __version__
     result.processor = Processor.objects.get(name=processor_name)
     result.save()
