@@ -133,7 +133,7 @@ fi
 # be formatted into development job specs.
 if [[ $env != "prod" && $env != "staging" && $env != "dev" ]]; then
     export EXTRA_HOSTS="
-        extra_hosts = [\"database:$DB_HOST_IP\"
+        extra_hosts = [\"database:$DB_HOST_IP\",
                        \"nomad:$NOMAD_HOST_IP\"]
 "
     export AWS_CREDS=""
