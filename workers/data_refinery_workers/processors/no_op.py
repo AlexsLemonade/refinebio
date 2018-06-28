@@ -20,11 +20,7 @@ logger = get_and_configure_logger(__name__)
 
 
 def _prepare_files(job_context: Dict) -> Dict:
-    """A processor which does nothing other than move files.
-
-    Simply moves the file from its raw location to its
-    processed location. Useful for handling data that has already been
-    processed.
+    """A processor which takes externally-processed sample data and makes it smashable. 
     """
     original_file = job_context["original_files"][0]
 
@@ -35,11 +31,6 @@ def _prepare_files(job_context: Dict) -> Dict:
     os.makedirs(base_directory + '/processed/', exist_ok=True)
     job_context["output_file_path"] = base_directory + '/processed/' + file_name
 
-    # XXX: Are there files we still want to do this to?
-    # Copy the file to the new directory
-    # shutil.copyfile(job_context["input_file_path"], job_context["output_file_path"])
-    # job_context["success"] = True
-
     # Make sure header column is correct
     with open(job_context["input_file_path"], 'r') as tsv_in:
         tsv_in = csv.reader(tsv_in, delimiter='\t')
@@ -48,7 +39,9 @@ def _prepare_files(job_context: Dict) -> Dict:
             joined = ''.join(row)
             break
 
-    # If ID_REF already, we're good.
+    # We want to make sure that all of our columns for conversion and smashing
+    # use the same column name for gene identifiers for later lookup. ID_REF 
+    # is the most common, so we use that.
     if 'ID_REF' not in joined:
         try:
             float(row[1])
@@ -88,7 +81,9 @@ def _convert_genes(job_context: Dict) -> Dict:
     gene_index_path = "/home/user/data_store/" + job_context["internal_accession"] + ".tsv.gz"
     if not os.path.exists(gene_index_path):
         logger.error("Missing gene index file for platform!". ,
-            platform=job_context["internal_accession"])
+            platform=job_context["internal_accession"],
+            job_id=job_context["job_id"])
+        job_context["failure_reason"] = "Missing gene index for " + job_context['internal_accession']
         job_context["success"] = False
         return job_context
 
