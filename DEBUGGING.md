@@ -12,14 +12,19 @@ The ProcessorJob with the smallest id will be left for reach OriginalFile.
 
 WARNING: Any time you run a DELETE query, you should first replace `DELETE` with `SELECT *` or `SELECT COUNT(*)` to make sure that you know what you will be deleting and that it makes sense.
 
+
+```SQL
 DELETE FROM processor_jobs WHERE id NOT IN
 (SELECT pj_id FROM
         (SELECT MIN(processorjob_originalfile_associations.processor_job_id) pj_id, original_file_id
          FROM processorjob_originalfile_associations
          GROUP BY original_file_id) AS pjs);
+```
 
+```SQL
 DELETE FROM processorjob_originalfile_associations WHERE processor_job_id NOT IN
 (SELECT pj_id FROM
         (SELECT MIN(processorjob_originalfile_associations.processor_job_id) pj_id, original_file_id
          FROM processorjob_originalfile_associations
          GROUP BY original_file_id) AS pjs);
+```
