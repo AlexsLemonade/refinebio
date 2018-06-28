@@ -4,7 +4,7 @@ import boto3
 from typing import Dict
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import ComputationalResult, ComputedFile, SampleResultAssociation
+from data_refinery_common.models import ComputationalResult, ComputedFile, SampleResultAssociation, SampleComputedFileAssociation
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
@@ -69,6 +69,11 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
         assoc.sample = sample
         assoc.result = result
         assoc.save()
+
+        SampleComputedFileAssociation.objects.get_or_create(
+            sample=sample,
+            computed_file=computed_file)
+
 
     logger.info("Created %s", result)
     job_context["success"] = True
