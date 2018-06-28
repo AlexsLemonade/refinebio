@@ -42,6 +42,7 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
     result = ComputationalResult()
     result.commands.append("") # No op!
     result.is_ccdl = True
+    result.pipeline = "Submitter-processed"  # TODO: should be removed
     processor_name = "Submitter-processed " + __version__
     result.processor = Processor.objects.get(name=processor_name)
     result.save()

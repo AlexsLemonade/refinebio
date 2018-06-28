@@ -259,6 +259,7 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
     result.time_end = timezone.now()
     result.commands.append(" ".join(cmd_tokens))
     result.is_ccdl = True
+    result.pipeline = "tximport"  # TODO: should be removed
     processor_name =  "Tximport " + __version__
     result.processor = Processor.objects.get(name=processor_name)
     result.save()
@@ -368,6 +369,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         result.commands.append(formatted_command)
         result.time_start = job_context['time_start']
         result.time_end = job_context['time_end']
+        result.pipeline = "Salmon"  # TODO: should be removed
         result.is_ccdl = True
         processor_name = "Salmon Quant " + __version__
         result.processor = Processor.objects.get(name=processor_name)
@@ -454,6 +456,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
     result.time_start = time_start
     result.time_end = time_end
     result.is_ccdl = True
+    result.pipeline = "MultiQC"  # TODO: should be removed
     processor_name = "MultiQC " + __version__
     result.processor = Processor.objects.get(name=processor_name)
     result.save()
@@ -583,6 +586,7 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         result.time_start = start_time
         result.time_end = end_time
         result.is_ccdl = True
+        result.pipeline = "Salmontools"  # TODO: should be removed
         processor_name = "Salmontools " + __version__
         result.processor = Processor.objects.get(name=processor_name)
         result.save()
