@@ -13,6 +13,12 @@ cd $script_directory
 # move up a level
 cd ..
 
+# Ensure that postgres is running
+if ! [[ $(docker ps --filter name=drdb -q) ]]; then
+    echo "You must start Postgres first with './run_postgres.sh'" >&2
+    exit 1
+fi
+
 docker build -t common_tests -f common/Dockerfile.tests .
 
 source common.sh

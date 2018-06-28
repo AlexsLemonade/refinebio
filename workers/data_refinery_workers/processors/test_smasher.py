@@ -1,4 +1,6 @@
 import os
+import zipfile
+
 from django.test import TestCase, tag
 from data_refinery_common.models import (
     SurveyJob,
@@ -167,11 +169,22 @@ class SmasherTestCase(TestCase):
 
             final_context = smasher.smash(job.pk, upload=False)
             final_frame = final_context['final_frame']
+
+            # Sanity test that these frames can be computed upon
             final_frame.mean(axis=1)
             final_frame.min(axis=1)
             final_frame.max(axis=1)
             final_frame.std(axis=1)
             final_frame.median(axis=1)
+
+            zf = zipfile.ZipFile(final_context['output_file'])
+            namelist = zf.namelist()
+
+            self.assertTrue('metadata.tsv' in namelist)
+            self.assertTrue('metadata.json' in namelist)
+            self.assertTrue('README.md' in namelist)
+            self.assertTrue('LICENSE.TXT' in namelist)
+            self.assertTrue('GSE51081.tsv' in namelist)
 
             os.remove(final_context['output_file'])
 
