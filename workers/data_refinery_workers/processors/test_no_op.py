@@ -77,4 +77,5 @@ class NOOPTestCase(TestCase):
         assoc1.processor_job = job
         assoc1.save()
 
-        no_op.no_op_processor(job.pk)
+        final_context = no_op.no_op_processor(job.pk)
+        self.assertTrue(final_context['success'])
