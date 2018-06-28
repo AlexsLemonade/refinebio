@@ -420,10 +420,6 @@ class OrganismIndex(models.Model):
         self.last_modified = current_time
         return super(OrganismIndex, self).save(*args, **kwargs)
 
-    @property
-    def index_file(self):
-        return
-
 """
 # Files
 
