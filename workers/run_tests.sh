@@ -2,22 +2,37 @@
 
 # Script for executing Django PyUnit tests within a Docker container.
 
+print_description() {
+    echo "Runs the tests for workers. These tests require different Docker containers"
+    echo "depending on which code will be tested. By default all tests in the workers"
+    echo "project are run."
+}
+
+print_options() {
+    echo "Options:"
+    echo "    -h       Prints the help message"
+    echo "    -t TAG   Runs all tests that are tagged with \$TAG"
+}
+
 while getopts ":t:h" opt; do
     case $opt in
         t)
             tag=$OPTARG
             ;;
         h)
-            echo "Runs the workers tests. These tests require different Docker containers depending "
-            echo "on which code will be tested."
-            echo '- by default runs all tests in the workers project, use -t to specify a tag to pass in.'
+            print_description
+            echo
+            print_options
+            exit 0
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
+            print_options >&2
             exit 1
             ;;
         :)
             echo "Option -$OPTARG requires an argument." >&2
+            print_options >&2
             exit 1
             ;;
     esac
@@ -34,6 +49,12 @@ cd $script_directory
 # move up a level
 cd ..
 
+# Ensure that postgres is running
+if ! [[ $(docker ps --filter name=drdb -q) ]]; then
+    echo "You must start Postgres first with './run_postgres.sh'" >&2
+    exit 1
+fi
+
 # Set up the test data volume directory if it does not already exist
 volume_directory="$script_directory/test_volume"
 if [ ! -d "$volume_directory" ]; then
@@ -45,7 +66,9 @@ test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 
 if [[ -z $tag || $tag == "salmon" ]]; then
     # Download "salmon quant" test data
+    echo "Downloading 'salmon quant' test data..."
     rm -rf $volume_directory/salmon_tests/
+
     wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests.tar.gz
     tar xzf $volume_directory/salmon_tests.tar.gz -C $volume_directory
 

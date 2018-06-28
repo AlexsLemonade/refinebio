@@ -21,6 +21,25 @@ apt-get install nginx -y
 cp nginx.conf /etc/nginx/nginx.conf
 service nginx restart
 
+if [[ ${stage} == "staging" || ${stage} == "prod" ]]; then
+    # Create and install SSL Certificate
+    # Only necessary on staging and prod
+    apt-get install software-properties-common
+    add-apt-repository ppa:certbot/certbot
+    apt-get update
+    apt-get install python-certbot-nginx
+
+    # g3w4k4t5n3s7p7v8@alexslemonade.slack.com is the email address we
+    # have configured to forward mail to the #teamcontact channel in
+    # slack. Certbot will use it for "important account
+    # notifications".
+    if [[ ${stage} == "staging" ]]; then
+        certbot --nginx -d api.staging.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
+    elif [[ ${stage} == "prod" ]]; then
+        certbot --nginx -d api.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
+    fi
+fi
+
 # Install, configure and launch our CloudWatch Logs agent
 cat <<EOF >awslogs.conf
 [general]
