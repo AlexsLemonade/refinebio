@@ -132,49 +132,6 @@ def get_internal_microarray_accession(accession_code):
     return None
 
 
-def get_supported_rnaseq_platforms(platforms_list: str="config/supported_rnaseq_platforms.txt"
-                                   ) -> list:
-    """
-    Returns a list of RNASeq platforms which are currently supported.
-    """
-    global SUPPORTED_RNASEQ_PLATFORMS
-    if SUPPORTED_RNASEQ_PLATFORMS is not None:
-        return SUPPORTED_RNASEQ_PLATFORMS
-
-    SUPPORTED_RNASEQ_PLATFORMS = []
-    with open(platforms_list) as platforms_file:
-        for line in platforms_file:
-            SUPPORTED_RNASEQ_PLATFORMS.append(line.strip())
-
-    return SUPPORTED_RNASEQ_PLATFORMS
-
-
-def get_readable_platform_names(mapping_csv: str="config/readable_platform_names.csv") -> Dict:
-    """
-    Loads the mapping from human readble names to internal accessions for Microarray platforms.
-    CSV must be in the format:
-    Readable Name | Internal Accession
-    Returns a dictionary mapping from internal accessions to human readable names.
-    """
-    global READABLE_PLATFORM_NAMES
-
-    if READABLE_PLATFORM_NAMES is not None:
-        return READABLE_PLATFORM_NAMES
-
-    READABLE_PLATFORM_NAMES = {}
-    with open(mapping_csv, encoding='utf-8') as mapping_file:
-        reader = csv.reader(mapping_file, )
-        for line in reader:
-            # Skip the header row
-            # Lines are 1 indexed, #BecauseCSV
-            if reader.line_num is 1:
-                continue
-
-            READABLE_PLATFORM_NAMES[line[1]] = line[0]
-
-    return READABLE_PLATFORM_NAMES
-
-
 def parse_s3_url(url):
     """
     Parses S3 URL.
