@@ -51,6 +51,8 @@ RUN rm -rf /root/.cache
 
 USER user
 
+COPY workers/data_refinery_workers/processors/detect_database.R .
 COPY workers/ .
 
 ENTRYPOINT []
+

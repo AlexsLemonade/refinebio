@@ -150,6 +150,13 @@ if [[ -z $tag || $tag == "illumina" ]]; then
         wget -q -O "$ilu_test_raw_dir/$ilu_file" \
              "$test_data_repo/$ilu_file"
     fi
+    ilu_file2="GSE54661_non_normalized.txt"
+    if [ ! -e "$ilu_test_raw_dir/$ilu_file2" ]; then
+        mkdir -p $ilu_test_raw_dir
+        echo "Downloading Illumina file 2 for Illumina tests."
+        wget -q -O "$ilu_test_raw_dir/$ilu_file2" \
+             "$test_data_repo/$ilu_file2"
+    fi
 fi
 
 if [[ -z $tag || $tag == "agilent" ]]; then
