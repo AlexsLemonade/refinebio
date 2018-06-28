@@ -383,3 +383,31 @@ class TximportTestCase(TestCase):
         self.assertTrue(len(final_context['individual_files']), 6)
         for file in final_context['individual_files']:
             self.assertTrue(os.path.isfile(file.absolute_file_path))
+
+
+class DetermineIndexLengthTestCase(TestCase):
+    """Test salmon._determine_index_length function, which gets the salmon index length of a sample.
+    For now, these tests only ensure that the output of the new faster salmon index function match
+    that of the old one for the test data."""
+
+    @tag('salmon')
+    def test_salmon_determine_index_length_single_read(self):
+        """Test that the right length is calculated when the sample has one read."""
+        job, files = prepare_job()
+
+        job_context = salmon._prepare_files({'original_files': [files[0]]})
+        results = salmon._determine_index_length(job_context)
+
+        self.assertEqual(results['index_length_raw'], 41)
+        self.assertEqual(results['index_length'], 'short')
+
+    @tag('salmon')
+    def test_salmon_determine_index_length_double_read(self):
+        """Test that the right length is calculated when the sample has two reads."""
+        job, files = prepare_job()
+
+        job_context = salmon._prepare_files({'original_files': files})
+        results = salmon._determine_index_length(job_context)
+
+        self.assertEqual(results['index_length_raw'], 41)
+        self.assertEqual(results['index_length'], 'short')
