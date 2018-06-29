@@ -210,10 +210,18 @@ if [[ $project == "workers" ]]; then
                    2> /dev/null
     done
 elif [[ $project == "foreman" ]]; then
+    # surveyor sub-project
     export_log_conf "surveyor"
     cat nomad-job-specs/surveyor.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                > "$output_dir"/surveyor.nomad"$TEST_POSTFIX" \
+               2> /dev/null
+
+    # foreman sub-project
+    export_log_conf "foreman"
+    cat environment.tpl \
+        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+               > "$output_dir"/environment"$TEST_POSTFIX" \
                2> /dev/null
 elif [[ $project == "api" ]]; then
     export_log_conf "api"

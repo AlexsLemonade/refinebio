@@ -3,12 +3,21 @@
 # Load docker_img_exists function
 source ~/refinebio/common.sh
 
-if [ $CIRCLE_BRANCH == "master" ]; then
+# Circle doesn't provide $CIRCLE_BRANCH on tag commits. These
+# commands will determine what branch the commit belongs to if it
+# belongs to a single branch.
+num_branches=$(git branch --contains $(git rev-parse HEAD) | wc -l)
+if [[ $num_branches == 2 ]]; then
+    BRANCH_NAME=$(git branch --contains $(git rev-parse HEAD) | tail -n 1 | cut -d' ' -f3)
+fi
+
+
+if [ $BRANCH_NAME == "master" ]; then
     DOCKERHUB_REPO=ccdl
-elif [[ $CIRCLE_BRANCH == "dev" ]]; then
+elif [[ $BRANCH_NAME == "dev" ]]; then
     DOCKERHUB_REPO=ccdlstaging
 else
-    echo "Why in the world was update_docker_img.sh called from a branch other than `dev` or `master`?!?!?"
+    echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"
     exit 1
 fi
 

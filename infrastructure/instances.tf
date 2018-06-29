@@ -452,3 +452,64 @@ resource "aws_instance" "api_server_1" {
 output "api_server_1_ip" {
   value = "${aws_instance.api_server_1.public_ip}"
 }
+
+##
+# Foreman Server
+##
+
+data "local_file" "foreman_environment" {
+  filename = "foreman-configuration/environment"
+}
+
+# This script smusher serves a similar purpose to
+# ${data.template_file.nomad_lead_server_script_smusher} but for the Foreman.
+data "template_file" "foreman_server_script_smusher" {
+  template = "${file("foreman-configuration/foreman-server-instance-user-data.tpl.sh")}"
+
+  vars {
+    foreman_environment = "${data.local_file.foreman_environment.content}"
+    dockerhub_repo = "${var.dockerhub_repo}"
+    foreman_docker_image = "${var.foreman_docker_image}"
+    user = "${var.user}"
+    stage = "${var.stage}"
+    region = "${var.region}"
+    database_host = "${aws_db_instance.postgres_db.address}"
+    database_user = "${var.database_user}"
+    database_password = "${var.database_password}"
+    database_name = "${aws_db_instance.postgres_db.name}"
+    log_group = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
+  }
+}
+
+resource "aws_instance" "foreman_server_1" {
+  ami = "${data.aws_ami.ubuntu.id}"
+  instance_type = "${var.foreman_instance_type}"
+  availability_zone = "${var.region}a"
+  vpc_security_group_ids = ["${aws_security_group.data_refinery_foreman.id}"]
+  iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
+  subnet_id = "${aws_subnet.data_refinery_1a.id}"
+  depends_on = ["aws_db_instance.postgres_db"]
+  user_data = "${data.template_file.api_server_script_smusher.rendered}"
+  key_name = "${aws_key_pair.data_refinery.key_name}"
+
+  tags = {
+    Name = "Foreman Server 1 ${var.user}-${var.stage}"
+  }
+
+  # I think these are the defaults provided in terraform examples.
+  # They should be removed or revisited.
+  root_block_device = {
+    volume_type = "gp2"
+    volume_size = 100
+  }
+
+  ebs_block_device = {
+    device_name = "/dev/xvdcz"
+    volume_type = "gp2"
+    volume_size = 40
+  }
+}
+
+output "foreman_server_1_ip" {
+  value = "${aws_instance.foreman_server_1.public_ip}"
+}

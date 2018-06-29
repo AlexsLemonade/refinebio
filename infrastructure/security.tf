@@ -245,3 +245,26 @@ resource "aws_security_group_rule" "data_refinery_api_outbound" {
   security_group_id = "${aws_security_group.data_refinery_api.id}"
 }
 
+##
+# Foreman
+##
+
+resource "aws_security_group" "data_refinery_foreman" {
+  name = "data-refinery-foreman-${var.user}-${var.stage}"
+  description = "data-refinery-foreman-${var.user}-${var.stage}"
+  vpc_id = "${aws_vpc.data_refinery_vpc.id}"
+
+  tags {
+    Name = "data-refinery-foreman-${var.user}-${var.stage}"
+  }
+}
+
+# XXX: THIS DEFINITELY NEEDS TO BE REMOVED LONG TERM!!!!!!!!!!
+resource "aws_security_group_rule" "data_refinery_foreman_ssh" {
+  type = "ingress"
+  from_port = 22
+  to_port = 22
+  protocol = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = "${aws_security_group.data_refinery_foreman.id}"
+}

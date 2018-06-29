@@ -92,10 +92,11 @@ if [[ ! -f terraform.tfstate ]]; then
     echo "No terraform state file found, initializing and applying initial terraform deployment."
     terraform init
 
-    # This file is an input but is created by format_nomad_with_env.sh
+    # These files are inputs but are created by format_nomad_with_env.sh
     # based on outputs from terraform. Kinda a Catch 22, but we can
-    # get around it by providing a dummy file to get bootstrapped.
+    # get around it by providing dummy files to get bootstrapped.
     touch api-configuration/environment
+    touch foreman-configuration/environment
 
     # Output the plan for debugging deployments later.
     terraform plan
@@ -108,6 +109,7 @@ rm -f prod_env
 format_environment_variables
 
 ../format_nomad_with_env.sh -p api -e $env -o $(pwd)/api-configuration/
+../format_nomad_with_env.sh -p foreman -e $env -o $(pwd)/foreman-configuration/
 
 if [[ -z $ran_init_build ]]; then
     # Open up ingress to AWS for Circle, stop jobs, migrate DB.

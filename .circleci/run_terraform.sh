@@ -53,10 +53,19 @@ fi
 unzip nomad_${NOMAD_VERSION}_linux_amd64.zip
 sudo mv nomad /usr/local/bin/
 
-if [ $CIRCLE_BRANCH == "master" ]; then
+
+# Circle doesn't provide $CIRCLE_BRANCH on tag commits. These
+# commands will determine what branch the commit belongs to if it
+# belongs to a single branch.
+num_branches=$(git branch --contains $(git rev-parse HEAD) | wc -l)
+if [[ $num_branches == 2 ]]; then
+    BRANCH_NAME=$(git branch --contains $(git rev-parse HEAD) | tail -n 1 | cut -d' ' -f3)
+fi
+
+if [ $BRANCH_NAME == "master" ]; then
     ENVIRONMENT=prod
     BUCKET_NAME="refinebio-tfstate-deploy-production"
-elif [[ $CIRCLE_BRANCH == "dev" ]]; then
+elif [[ $BRANCH_NAME == "dev" ]]; then
     ENVIRONMENT=staging
     BUCKET_NAME="refinebio-tfstate-deploy-staging"
 else

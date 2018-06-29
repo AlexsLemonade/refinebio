@@ -321,6 +321,7 @@ def monitor_jobs():
         thread = Thread(target=f, name=f.__name__)
         thread.start()
         threads.append(thread)
+        logger.info("Thread started for monitoring function: %s", f.__name__)
 
     # Make sure that no threads die quietly.
     while(True):
