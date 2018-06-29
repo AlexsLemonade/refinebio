@@ -15,9 +15,11 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
     SampleResultAssociation,
+    SampleComputedFileAssociation,
     Processor,
     Pipeline
 )
+
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 from data_refinery_common.utils import get_env_variable
@@ -192,6 +194,10 @@ def _create_result_objects(job_context: Dict) -> Dict:
         assoc.sample = sample
         assoc.result = result
         assoc.save()
+
+        SampleComputedFileAssociation.objects.get_or_create(
+            sample=sample,
+            computed_file=computed_file)
 
     logger.info("Created %s", result,
                 processor_job=job_context["job_id"])

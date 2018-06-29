@@ -127,7 +127,7 @@ Docker](https://docs.docker.com/docker-for-mac/#advanced) from the default of
 
 Run `./create_virtualenv.sh` to set up the virtualenv. It will activate the `dr_env`
 for you the first time. This virtualenv is valid for the entire `refinebio`
-repo. Sub-projects each have their own virtualenvs which are managed by their
+repo. Sub-projects each have their own environments managed by their
 containers. When returning to this project you should run
 `source dr_env/bin/activate` to reactivate the virtualenv.
 
@@ -582,7 +582,7 @@ For convenience, a `deploy.sh` script is also provided, which will perform addit
 steps to configure (such as setting up Nomad job specifications and performing database migrations) and prepare the entire system. It can be used simply (from the `infrastructure` directory), like so:
 
 ```
-./deploy.sh
+./deploy.sh -e dev
 ```
 
 ### Autoscaling and Setting Spot Prices

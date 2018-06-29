@@ -46,7 +46,7 @@ def start_job(job_context: Dict):
         job_context["original_files"] = original_files
         original_file = job_context['original_files'][0]
         assocs = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
-        samples = Sample.objects.filter(id__in=assocs.values('sample_id'))
+        samples = Sample.objects.filter(id__in=assocs.values('sample_id')).distinct()
         job_context['samples'] = samples
 
     else:
@@ -68,11 +68,11 @@ def start_job(job_context: Dict):
     return job_context
 
 
-def end_job(job_context: Dict):
+def end_job(job_context: Dict, abort=False):
     """A processor function to end jobs.
 
     Record in the database that this job has completed and that
-    the batch has been processed if successful.
+    the samples have been processed if not aborted.
     """
     job = job_context["job"]
 
@@ -81,17 +81,18 @@ def end_job(job_context: Dict):
     else:
         success = True
 
-    if job_context.get("success", False) and job_context["job"].pipeline_applied != "SMASHER":
-        # This handles most of our cases
-        for sample in job_context["samples"]:
-            sample.is_processed = True
-            sample.save()
+    if not abort:
+        if job_context.get("success", False) and job_context["job"].pipeline_applied != "SMASHER":
+            # This handles most of our cases
+            for sample in job_context["samples"]:
+                sample.is_processed = True
+                sample.save()
 
-        # Explicitly for the single-salmon scenario
-        if 'sample' in job_context:
-            sample = job_context['sample']
-            sample.is_processed = True
-            sample.save()
+            # Explicitly for the single-salmon scenario
+            if 'sample' in job_context:
+                sample = job_context['sample']
+                sample.is_processed = True
+                sample.save()
 
         # If the sample-level pipeline includes any steps, save it.
         pipeline = job_context['pipeline']
@@ -212,10 +213,15 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
                              processor_job=job_id)
             last_result["success"] = False
             return end_job(last_result)
+
         if "success" in last_result and last_result["success"] is False:
             logger.error("Processor function %s failed. Terminating pipeline.",
                          processor.__name__,
                          processor_job=job_id,
                          failure_reason=last_result["job"].failure_reason)
             return end_job(last_result)
+
+        if last_result.get("abort", False):
+            return end_job(last_result, abort=True)
+
     return last_result

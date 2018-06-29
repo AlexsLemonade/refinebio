@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import boto3
+import csv
 import json
 import os
 import shutil
@@ -62,6 +63,8 @@ def _smash(job_context: Dict) -> Dict:
     try:
         # Prepare the output directory
         smash_path = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk) + "/"
+        # Ensure we have a fresh smash directory
+        shutil.rmtree(smash_path, ignore_errors=True)
         os.makedirs(smash_path, exist_ok=True)
 
         scalers = {
@@ -120,7 +123,7 @@ def _smash(job_context: Dict) -> Dict:
 
         # Create metadata file.
         metadata = {}
-        metadata['files'] = os.listdir(smash_path)
+
         metadata['num_samples'] = num_samples
         metadata['num_experiments'] = job_context["experiments"].count()
         metadata['aggregate_by'] = job_context["dataset"].aggregate_by
@@ -136,6 +139,18 @@ def _smash(job_context: Dict) -> Dict:
             experiments[experiment.accession_code] = experiment.to_metadata_dict()
         metadata['experiments'] = experiments
 
+        # Metadata to TSV
+        with open(smash_path + 'metadata.tsv', 'w') as output_file:
+            sample_ids = list(metadata['samples'].keys())
+            keys = list(metadata['samples'][sample_ids[0]].keys()) + ['sample_id']
+            dw = csv.DictWriter(output_file, keys, delimiter='\t')
+            dw.writeheader()
+            for key, value in metadata['samples'].items():
+                value['sample_id'] = key
+                dw.writerow(value)
+
+        metadata['files'] = os.listdir(smash_path)
+        # Metadata to JSON
         metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
         with open(smash_path + 'metadata.json', 'w') as metadata_file:
             json.dump(metadata, metadata_file, indent=4, sort_keys=True)
@@ -145,6 +160,10 @@ def _smash(job_context: Dict) -> Dict:
         shutil.make_archive(final_zip, 'zip', smash_path)
         job_context["output_file"] = final_zip + ".zip"
     except Exception as e:
+        logger.exception("Could not smash dataset.", 
+                        dataset_id=job_context['dataset'].id,
+                        job_id=job_context['job_id'],
+                        input_files=job_context['input_files'])
         job_context['dataset'].success = False
         job_context['dataset'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].save()
@@ -223,7 +242,7 @@ def _upload_and_notify(job_context: Dict) -> Dict:
                         'Subject': {
                             'Charset': CHARSET,
                             'Data': SUBJECT,
-                        },
+                        }
                     },
                     Source=SENDER,
                 )

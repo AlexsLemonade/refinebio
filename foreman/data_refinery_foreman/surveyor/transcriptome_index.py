@@ -125,7 +125,6 @@ class MainEnsemblUrlBuilder(EnsemblUrlBuilder):
         self.filename_species = species["name"].capitalize()
         self.assembly = species["assembly"]
         self.assembly_version = utils.requests_retry_session().get(MAIN_RELEASE_URL).json()["release"]
-
         self.scientific_name = self.filename_species.replace("_", " ")
         self.taxonomy_id = species["taxon_id"]
 

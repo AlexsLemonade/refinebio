@@ -10,7 +10,7 @@ import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import OriginalFile, ComputationalResult, ComputedFile, SampleResultAssociation
+from data_refinery_common.models import OriginalFile, ComputationalResult, ComputedFile, SampleResultAssociation, SampleComputedFileAssociation
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 from data_refinery_common.utils import get_env_variable
@@ -133,6 +133,10 @@ def _create_result_objects(job_context: Dict) -> Dict:
         assoc.sample = sample
         assoc.result = result
         assoc.save()
+
+        SampleComputedFileAssociation.objects.get_or_create(
+            sample=sample,
+            computed_file=computed_file)
 
     logger.info("Created %s", result)
     job_context["success"] = True
