@@ -32,10 +32,10 @@ RUN rm -rf RSEM
 # Install Salmon
 
 # Old and busted
-ENV SALMON_VERSION 0.8.0
+# ENV SALMON_VERSION 0.8.0
 
 # Newer hotness
-# ENV SALMON_VERSION 0.9.1
+ENV SALMON_VERSION 0.9.1
 
 # Doesn't work:
 # salmon: relocation error: /usr/local/bin/../lib/librt.so.1: symbol __vdso_clock_gettime, version GLIBC_PRIVATE not defined in file libc.so.6 with link time reference 
