@@ -1,6 +1,0 @@
-FROM ccdl/dr_affymetrix 
-
-WORKDIR /home/user
-USER user
-COPY workers/ .
-ENTRYPOINT []
