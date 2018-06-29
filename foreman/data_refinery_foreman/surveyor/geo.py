@@ -72,7 +72,6 @@ class GeoSurveyor(ExternalSourceSurveyor):
             # can't do anything. Therefore assume the technology is
             # microarray when we have no platform information.
             sample_object.technology = "MICROARRAY"
-
             return sample_object
 
         platform_accession_code = UNKNOWN
@@ -87,9 +86,15 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         if platform_accession_code != UNKNOWN:
             # It's a supported microarray platform.
+
+            # We are using the brain array package as the platform accession code,
+            # so, for instance, GPL3213 becomes 'chicken'.
             sample_object.platform_accession_code = platform_accession_code
             sample_object.technology = "MICROARRAY"
             try:
+
+                # XXX: Remove prepended [$Organism] here?
+                # Related: https://github.com/AlexsLemonade/refinebio/issues/354
                 # If it's Affy we can get a readable name:
                 sample_object.platform_name = get_readable_affymetrix_names()[
                     platform_accession_code]
@@ -261,6 +266,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 sample_object.source_database = "GEO"
                 sample_object.accession_code = sample_accession_code
                 sample_object.organism = organism
+
                 # If data processing step, it isn't raw.
                 sample_object.has_raw = not sample.metadata.get('data_processing', None)
 
@@ -302,6 +308,11 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     # We never want these!
                     if "idat.gz" in supplementary_file_url:
                         continue
+
+                    # Sometimes, we are lied to about the data processing step.
+                    if '.CEL' in supplementary_file_url:
+                        sample_object.has_raw = True
+                        sample_object.save()
 
                     try:
                         original_file = OriginalFile.objects.get(source_url=supplementary_file_url)

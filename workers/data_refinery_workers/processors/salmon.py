@@ -637,11 +637,11 @@ def salmon(job_id: int) -> None:
                        [utils.start_job,
                         _set_job_prefix,
                         _prepare_files,
-                        _run_fastqc,
 
                         _determine_index_length,
                         _download_index,
 
+                        _run_fastqc,
                         _run_salmon,
                         _run_salmontools,
                         _run_multiqc,
