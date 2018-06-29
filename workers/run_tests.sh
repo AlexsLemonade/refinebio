@@ -66,11 +66,12 @@ test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 
 if [[ -z $tag || $tag == "salmon" ]]; then
     # Download "salmon quant" test data
-    echo "Downloading 'salmon quant' test data..."
-    rm -rf $volume_directory/salmon_tests/
-
-    wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests.tar.gz
-    tar xzf $volume_directory/salmon_tests.tar.gz -C $volume_directory
+    if [ ! -e $volume_directory/salmon_tests ]; then
+        echo "Downloading 'salmon quant' test data..."
+        wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests.tar.gz
+        tar xzf $volume_directory/salmon_tests.tar.gz -C $volume_directory
+        rm $volume_directory/salmon_tests.tar.gz
+    fi
 
     # Download salmontools test data
     rm -rf $volume_directory/salmontools/
@@ -150,6 +151,13 @@ if [[ -z $tag || $tag == "illumina" ]]; then
         wget -q -O "$ilu_test_raw_dir/$ilu_file" \
              "$test_data_repo/$ilu_file"
     fi
+    ilu_file2="GSE54661_non_normalized.txt"
+    if [ ! -e "$ilu_test_raw_dir/$ilu_file2" ]; then
+        mkdir -p $ilu_test_raw_dir
+        echo "Downloading Illumina file 2 for Illumina tests."
+        wget -q -O "$ilu_test_raw_dir/$ilu_file2" \
+             "$test_data_repo/$ilu_file2"
+    fi
 fi
 
 if [[ -z $tag || $tag == "agilent" ]]; then
@@ -169,10 +177,14 @@ if [[ -z $tag || $tag == "smasher" ]]; then
     pcl_name="GSM1237810_T09-1084.PCL"
     pcl_name2="GSM1237812_S97-PURE.PCL"
     pcl_name3="GSM1238108-tbl-1.txt"
+    pcl_name4="GSM1487313_liver.PCL"
+    pcl_name5="SRP149598_gene_lengthScaledTPM.tsv"
     pcl_test_raw_dir="$volume_directory/PCL"
     pcl_test_data_1="$pcl_test_raw_dir/$pcl_name"
     pcl_test_data_2="$pcl_test_raw_dir/$pcl_name2"
     pcl_test_data_3="$pcl_test_raw_dir/$pcl_name3"
+    pcl_test_data_4="$pcl_test_raw_dir/$pcl_name4"
+    pcl_test_data_5="$pcl_test_raw_dir/$pcl_name5"
     if [ ! -e "$pcl_test_data_1" ]; then
         mkdir -p $pcl_test_raw_dir
         echo "Downloading PCL for tests."
@@ -188,6 +200,16 @@ if [[ -z $tag || $tag == "smasher" ]]; then
         echo "Downloading PCL3 for tests."
         wget -q -O $pcl_test_data_3 \
              "$test_data_repo/$pcl_name3"
+    fi
+    if [ ! -e "$pcl_test_data_4" ]; then
+        echo "Downloading PCL4 for tests."
+        wget -q -O $pcl_test_data_4 \
+             "$test_data_repo/$pcl_name4"
+    fi
+    if [ ! -e "$pcl_test_data_5" ]; then
+        echo "Downloading PCL5 for tests."
+        wget -q -O $pcl_test_data_5 \
+             "$test_data_repo/$pcl_name5"
     fi
 
     export AWS_ACCESS_KEY_ID=`~/bin/aws configure get default.aws_access_key_id`
