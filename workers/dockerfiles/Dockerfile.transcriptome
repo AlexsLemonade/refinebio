@@ -1,5 +1,6 @@
 FROM ubuntu:16.04
 
+RUN apt-get install -y software-properties-common
 RUN add-apt-repository ppa:apt-fast/stable
 RUN apt-get update
 RUN apt-get -y install apt-fast
@@ -28,7 +29,19 @@ RUN cd RSEM && make install
 RUN rm -rf RSEM
 
 # Install Salmon
-ENV SALMON_VERSION 0.9.1
+
+# Old and busted
+ENV SALMON_VERSION 0.8.0
+
+# Newer hotness
+# ENV SALMON_VERSION 0.9.1
+
+# Doesn't work:
+# salmon: relocation error: /usr/local/bin/../lib/librt.so.1: symbol __vdso_clock_gettime, version GLIBC_PRIVATE not defined in file libc.so.6 with link time reference 
+# ENV SALMON_VERSION 0.10.0
+
+# Binary releases moved to bioconda, doesn't work anymore.
+# ENV SALMON_VERSION 0.10.2
 
 RUN wget https://github.com/COMBINE-lab/salmon/releases/download/v${SALMON_VERSION}/Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
 
