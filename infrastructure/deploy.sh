@@ -73,17 +73,6 @@ format_environment_variables () {
 source ../common.sh
 export TF_VAR_host_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
 
-# If the Dockerhub repo isn't already set, then assume ccdlstaging is
-# desired, unless the env is prod, in which case use the prod repo.
-# This setting will be used by format_nomad_with_env.sh.
-if [[ -z $TF_VAR_dockerhub_repo ]]; then
-    if [[ $env == "prod" ]]; then
-        export TF_VAR_dockerhub_repo="ccdl"
-    else
-        export TF_VAR_dockerhub_repo="ccdlstaging"
-    fi
-fi
-
 # Copy ingress config to top level so it can be applied.
 cp deploy/ci_ingress.tf .
 
@@ -99,7 +88,8 @@ if [[ ! -f terraform.tfstate ]]; then
     touch foreman-configuration/environment
 
     # Output the plan for debugging deployments later.
-    terraform plan
+    # Until terraform plan supports -var-file the plan is wrong.
+    # terraform plan
 
     terraform apply -var-file=environments/$env.tfvars -auto-approve
 fi
@@ -116,7 +106,8 @@ if [[ -z $ran_init_build ]]; then
     echo "Deploying with ingress.."
 
     # Output the plan for debugging deployments later.
-    terraform plan
+    # Until terraform plan supports -var-file the plan is wrong.
+    # terraform plan
 
     terraform apply -var-file=environments/$env.tfvars -auto-approve
 fi
@@ -169,17 +160,17 @@ rm -f prod_env
 format_environment_variables
 
 # Get an image to run the migrations with.
-docker pull $TF_VAR_dockerhub_repo/$FOREMAN_DOCKER_IMAGE
+docker pull $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE
 
 # Migrate auth.
 docker run \
        --env-file prod_env \
-       $TF_VAR_dockerhub_repo/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate auth
+       $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate auth
 
 # Apply general migrations.
 docker run \
        --env-file prod_env \
-       $TF_VAR_dockerhub_repo/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate
+       $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate
 
 # Template the environment variables for production into the Nomad Job
 # specs and API confs.

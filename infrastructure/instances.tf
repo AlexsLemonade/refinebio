@@ -473,6 +473,7 @@ data "template_file" "foreman_server_script_smusher" {
     user = "${var.user}"
     stage = "${var.stage}"
     region = "${var.region}"
+    nomad_lead_server_ip = "${aws_instance.nomad_server_1.private_ip}"
     database_host = "${aws_db_instance.postgres_db.address}"
     database_user = "${var.database_user}"
     database_password = "${var.database_password}"
@@ -489,7 +490,7 @@ resource "aws_instance" "foreman_server_1" {
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_db_instance.postgres_db"]
-  user_data = "${data.template_file.api_server_script_smusher.rendered}"
+  user_data = "${data.template_file.foreman_server_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
   tags = {

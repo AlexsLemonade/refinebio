@@ -325,6 +325,8 @@ def monitor_jobs():
 
     # Make sure that no threads die quietly.
     while(True):
+        # This doesn't need to spin faster than this.
+        time.sleep(remaining_time.seconds)
         for thread in threads:
             thread.join(THREAD_WAIT_TIME)
             if not thread.is_alive():
