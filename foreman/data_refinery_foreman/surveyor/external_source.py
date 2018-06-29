@@ -176,7 +176,6 @@ class ExternalSourceSurveyor:
             return False
 
         try:
-
             # SRA can have samples with multiple related files,
             # so make sure we download those together.
             if source_type == "SRA":
