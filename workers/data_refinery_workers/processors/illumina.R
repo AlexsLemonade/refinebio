@@ -315,7 +315,7 @@ sig = function(y, m, verbose=TRUE)
 # The command interface!
 #######################
 
-library("optparse")
+suppressPackageStartupMessages(library("optparse"))
 
 option_list = list(
   make_option(c("-p", "--probeId"), type="character", default="PROBE_ID", 
@@ -346,11 +346,12 @@ numCores <- strtoi(opt$cores)
 filePath <- opt$inputFile
 outFilePath <- opt$outputFile
 
-library(limma)
-library(oligo)
-library(doParallel)
-library(data.table)
-library(paste(platform, ".db", sep=""), character.only=TRUE)
+suppressPackageStartupMessages(library(limma))
+suppressPackageStartupMessages(library(oligo))
+suppressPackageStartupMessages(library(doParallel))
+suppressPackageStartupMessages(library(data.table))
+suppressPackageStartupMessages(library(lazyeval))
+suppressPackageStartupMessages(library(paste(platform, ".db", sep=""), character.only=TRUE))
 
 # Read the data file
 message("Reading data file...")
@@ -390,20 +391,11 @@ pValueData <- as.matrix(data[,pValueColumns,drop=FALSE])
 rownames(pValueData) <- probeIDs
 
 # Extract platform-specific data
-# Currently limited to Human platforms.
 # See here for more discussion:
 # https://github.com/AlexsLemonade/refinebio/pull/212#discussion_r184864928
-if (platform == "illuminaHumanv2") {
-  probeSequenceRef <- illuminaHumanv2PROBESEQUENCE
-  probeQualityRef <- illuminaHumanv2PROBEQUALITY
-  #probeReporterRef <- illuminaHumanv2REPORTERGROUPID # This indicates control probe info
-  probeGeneRef <- illuminaHumanv2ENSEMBLREANNOTATED
-} else {
-  probeSequenceRef <- illuminaHumanv4PROBESEQUENCE
-  probeQualityRef <- illuminaHumanv4PROBEQUALITY
-  #probeReporterRef <- illuminaHumanv4REPORTERGROUPID # This indicates control probe info
-  probeGeneRef <- illuminaHumanv4ENSEMBLREANNOTATED
-}
+probeSequenceRef <- lazy_eval(paste0(platform, ".db::", platform, "PROBESEQUENCE"))
+probeQualityRef <- lazy_eval(paste0(platform, ".db::", platform, "PROBEQUALITY"))
+probeGeneRef <-  lazy_eval(paste0(platform, ".db::", platform, "ENSEMBLREANNOTATED"))
 
 # Parse probe sequence info
 probeSequences <- as.data.frame(probeSequenceRef[mappedkeys(probeSequenceRef)])

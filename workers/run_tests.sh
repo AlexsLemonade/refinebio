@@ -66,11 +66,12 @@ test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 
 if [[ -z $tag || $tag == "salmon" ]]; then
     # Download "salmon quant" test data
-    echo "Downloading 'salmon quant' test data..."
-    rm -rf $volume_directory/salmon_tests/
-
-    wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests.tar.gz
-    tar xzf $volume_directory/salmon_tests.tar.gz -C $volume_directory
+    if [ ! -e $volume_directory/salmon_tests ]; then
+        echo "Downloading 'salmon quant' test data..."
+        wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests.tar.gz
+        tar xzf $volume_directory/salmon_tests.tar.gz -C $volume_directory
+        rm $volume_directory/salmon_tests.tar.gz
+    fi
 
     # Download salmontools test data
     rm -rf $volume_directory/salmontools/
@@ -149,6 +150,13 @@ if [[ -z $tag || $tag == "illumina" ]]; then
         echo "Downloading Illumina file for Illumina tests."
         wget -q -O "$ilu_test_raw_dir/$ilu_file" \
              "$test_data_repo/$ilu_file"
+    fi
+    ilu_file2="GSE54661_non_normalized.txt"
+    if [ ! -e "$ilu_test_raw_dir/$ilu_file2" ]; then
+        mkdir -p $ilu_test_raw_dir
+        echo "Downloading Illumina file 2 for Illumina tests."
+        wget -q -O "$ilu_test_raw_dir/$ilu_file2" \
+             "$test_data_repo/$ilu_file2"
     fi
 fi
 

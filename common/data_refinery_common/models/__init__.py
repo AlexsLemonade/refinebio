@@ -23,7 +23,8 @@ from data_refinery_common.models.models import (
     SampleResultAssociation,
     ExperimentOrganismAssociation,
     Dataset,
-    APIToken,
-    ProcessorJobDatasetAssociation
+    ProcessorJobDatasetAssociation,
+    SampleComputedFileAssociation,
+    APIToken
 )
 
