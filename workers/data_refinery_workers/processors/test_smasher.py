@@ -13,6 +13,7 @@ from data_refinery_common.models import (
     Organism,
     Sample,
     SampleResultAssociation,
+    ExperimentSampleAssociation,
     Dataset,
     ProcessorJobDatasetAssociation,
     SampleComputedFileAssociation
@@ -45,6 +46,11 @@ def prepare_job():
     sra.result = result
     sra.save()
 
+    esa = ExperimentSampleAssociation()
+    esa.experiment = experiment
+    esa.sample = sample
+    esa.save()
+
     computed_file = ComputedFile()
     computed_file.filename = "GSM1237810_T09-1084.PCL"
     computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
@@ -62,6 +68,11 @@ def prepare_job():
     sample.title = 'GSM1237812'
     sample.organism = homo_sapiens
     sample.save()
+
+    esa = ExperimentSampleAssociation()
+    esa.experiment = experiment
+    esa.sample = sample
+    esa.save()
 
     assoc = SampleComputedFileAssociation()
     assoc.sample = sample
@@ -320,6 +331,11 @@ class SmasherTestCase(TestCase):
         sra.result = result
         sra.save()
 
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
         computed_file = ComputedFile()
         computed_file.filename = "GSM1237810_T09-1084.PCL"
         computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
@@ -351,6 +367,11 @@ class SmasherTestCase(TestCase):
         sra.sample = sample
         sra.result = result
         sra.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
 
         computed_file = ComputedFile()
         computed_file.filename = "GSM1238108-tbl-1.txt"
@@ -457,6 +478,108 @@ class SmasherTestCase(TestCase):
         ds = Dataset.objects.get(id=ds.id)
         self.assertTrue(ds.success)
         self.assertEqual(ds.failure_reason, "")
+    
+    @tag("smasher")
+    def test_dualtech_smash(self):
+        """ """
+
+        pj = ProcessorJob()
+        pj.pipeline_applied = "SMASHER"
+        pj.save()
+
+        # MICROARRAY TECH
+        experiment = Experiment()
+        experiment.accession_code = "GSM1487313"
+        experiment.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS")
+
+        sample = Sample()
+        sample.accession_code = 'GSM1487313'
+        sample.title = 'GSM1487313'
+        sample.organism = gallus_gallus
+        sample.technology="MICROARRAY"
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "GSM1487313_liver.PCL"
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
+        computed_file.result = result
+        computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
+        computed_file.save()
+
+        # RNASEQ TECH
+        experiment = Experiment()
+        experiment.accession_code = "SRS332914"
+        experiment.save()
+
+        result2 = ComputationalResult()
+        result2.save()
+
+        sample = Sample()
+        sample.accession_code = 'SRS332914'
+        sample.title = 'SRS332914'
+        sample.organism = gallus_gallus
+        sample.technology="RNA-SEQ"
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result2
+        sra.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "SRP149598_gene_lengthScaledTPM.tsv"
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
+        computed_file.result = result2
+        computed_file.size_in_bytes = 234
+        computed_file.is_smashable = True
+        computed_file.save()
+
+        # CROSS-SMASH BY SPECIES
+        ds = Dataset()
+        ds.data = {'GSM1487313': ['GSM1487313'], 'SRS332914': ['SRS332914']}
+        ds.aggregate_by = 'SPECIES'
+        ds.scale_by = 'STANDARD'
+        ds.email_address = "null@derp.com"
+        ds.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = pj
+        pjda.dataset = ds
+        pjda.save()
+
+        self.assertTrue(ds.is_cross_technology())
+
+        final_context = smasher.smash(pj.pk, upload=False)
+
+        # THEN BY EXPERIMENT
+        ds.aggregate_by = 'EXPERIMENT'
+        ds.save()
+
+        dsid = ds.id
+        ds = Dataset.objects.get(id=dsid)
+
+        final_context = smasher.smash(pj.pk, upload=False)
 
     @tag("smasher")
     def test_sanity_imports(self):
