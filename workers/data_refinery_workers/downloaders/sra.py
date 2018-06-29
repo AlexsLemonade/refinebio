@@ -191,6 +191,6 @@ def download_sra(job_id: int) -> None:
                          downloader_job=job_id)
 
     if success and _are_downloads_ready(downloaded_files[0]):
-        utils.create_processor_job_for_original_files(downloaded_files)
+        utils.create_processor_job_for_original_files(downloaded_files, job)
 
     utils.end_downloader_job(job, success)

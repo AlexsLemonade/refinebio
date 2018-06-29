@@ -131,13 +131,13 @@ resource "aws_lb_listener" "api-http" {
   port = 80
 
   default_action {
-    target_group_arn = "${aws_lb_target_group.api.arn}"
+    target_group_arn = "${aws_lb_target_group.api-http.arn}"
     type = "forward"
   }
 }
 
 resource "aws_lb_target_group_attachment" "api-http" {
-  target_group_arn = "${aws_lb_target_group.api.arn}"
+  target_group_arn = "${aws_lb_target_group.api-http.arn}"
   target_id = "${aws_instance.api_server_1.id}"
   port = 80
 }
@@ -156,13 +156,13 @@ resource "aws_lb_listener" "api-https" {
   port = 443
 
   default_action {
-    target_group_arn = "${aws_lb_target_group.api.arn}"
+    target_group_arn = "${aws_lb_target_group.api-https.arn}"
     type = "forward"
   }
 }
 
 resource "aws_lb_target_group_attachment" "api-https" {
-  target_group_arn = "${aws_lb_target_group.api.arn}"
+  target_group_arn = "${aws_lb_target_group.api-https.arn}"
   target_id = "${aws_instance.api_server_1.id}"
   port = 443
 }
