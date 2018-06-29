@@ -17,10 +17,8 @@ from django.db import models
 from django.utils import timezone
 
 from data_refinery_common.models.organism import Organism
-from data_refinery_common.utils import get_env_variable
 
 S3 = boto3.client('s3', config=Config(signature_version='s3v4'))
-ORGANISM_INDEX_BUCKET = get_env_variable("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", "NO_ENV_VARIABLE")
 
 """
 # First Order Classes
@@ -414,12 +412,15 @@ class OrganismIndex(models.Model):
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 
-    def upload_to_s3(self, absolute_file_path):
-        if ORGANISM_INDEX_BUCKET != "NO_ENV_VARIABLE":
+    def upload_to_s3(self, absolute_file_path, bucket_name, logger):
+        if bucket_name != "NO_BUCKET":
             s3_key = self.organism.name + '_' + self.index_type + '.tar.gz'
-            S3.upload_file(absolute_file_path, ORGANISM_INDEX_BUCKET, s3_key,
+            S3.upload_file(absolute_file_path, bucket_name, s3_key,
                            ExtraArgs={'ACL': 'public-read'})
             self.s3_key = s3_key
+            logger.info("Upload complete")
+        else:
+            logger.info("No S3 bucket in environment, not uploading")
 
     def save(self, *args, **kwargs):
         """ On save, update timestamps """
