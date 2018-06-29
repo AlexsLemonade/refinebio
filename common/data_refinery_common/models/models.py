@@ -62,6 +62,7 @@ class Sample(models.Model):
     organism = models.ForeignKey(Organism, blank=True, null=True, on_delete=models.SET_NULL)
     results = models.ManyToManyField('ComputationalResult', through='SampleResultAssociation')
     original_files = models.ManyToManyField('OriginalFile', through='OriginalFileSampleAssociation')
+    computed_files = models.ManyToManyField('ComputedFile', through='SampleComputedFileAssociation')
 
     # Historical Properties
     source_database = models.CharField(max_length=255, blank=False)
@@ -131,13 +132,12 @@ class Sample(models.Model):
 
     def get_result_files(self):
         """ Get all of the ComputedFile objects associated with this Sample """
-        return ComputedFile.objects.filter(result__in=self.results.all())
+        return self.computed_files
 
     def get_most_recent_smashable_result_file(self):
         """ Get all of the ComputedFile objects associated with this Sample """
-        return ComputedFile.objects.filter(
-                        result__in=self.results.all(),
-                        is_smashable=True,
+        return self.computed_files.filter(
+                        is_smashable=True
                     ).first()
 
     @property
@@ -800,3 +800,14 @@ class SampleResultAssociation(models.Model):
     class Meta:
         db_table = "sample_result_associations"
         unique_together = ('result', 'sample')
+
+
+class SampleComputedFileAssociation(models.Model):
+
+    sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
+    computed_file = models.ForeignKey(
+        ComputedFile, blank=False, null=False, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "sample_computed_file_associations"
+        unique_together = ('sample', 'computed_file')

@@ -1,7 +1,7 @@
 import json
 import datetime
 from unittest.mock import Mock, patch, call
-from django.test import TestCase
+from django.test import TransactionTestCase
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (
     DownloaderJob,
@@ -15,7 +15,7 @@ from data_refinery_foreman.surveyor.geo import (
 )
 
 
-class SurveyTestCase(TestCase):
+class SurveyTestCase(TransactionTestCase):
 
     def prep_test(self, experiment_accession):
         survey_job = SurveyJob(source_type="GEO")

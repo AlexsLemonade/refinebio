@@ -79,6 +79,9 @@ class TXTestCase(TestCase):
     def test_tx(self):
         """ """
         job = prepare_job()
-        transcriptome_index.build_transcriptome_index(job.pk)
+        job_context = transcriptome_index.build_transcriptome_index(job.pk)
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertTrue(job.success)
+
+        # Cleanup after ourselves so we don't leave 1.3G of data lying around.
+        shutil.rmtree(job_context["output_dir"])

@@ -58,7 +58,8 @@ def end_downloader_job(job: DownloaderJob, success: bool):
     job.save()
 
 
-def create_processor_jobs_for_original_files(original_files: List[OriginalFile]):
+def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
+                                             downloader_job: DownloaderJob=None):
     """
     Create a processor jobs and queue a processor task for samples related to an experiment.
     """
@@ -80,10 +81,21 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile])
             assoc.processor_job = processor_job
             assoc.save()
 
+            if downloader_job:
+                logger.info("Queuing processor job.",
+                            processor_job=processor_job.id,
+                            original_file=original_file.id,
+                            downloader_job=downloader_job.id)
+            else:
+                logger.info("Queuing processor job.",
+                            processor_job=processor_job.id,
+                            original_file=original_file.id)
+
             send_job(pipeline_to_apply, processor_job)
 
 
-def create_processor_job_for_original_files(original_files: List[OriginalFile]):
+def create_processor_job_for_original_files(original_files: List[OriginalFile],
+                                            downloader_job: DownloaderJob=None):
     """
     Create a processor job and queue a processor task for sample related to an experiment.
 
@@ -105,5 +117,13 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile]):
             assoc.original_file = original_file
             assoc.processor_job = processor_job
             assoc.save()
+
+        if downloader_job:
+            logger.info("Queuing processor job.",
+                        processor_job=processor_job.id,
+                        downloader_job=downloader_job.id)
+        else:
+            logger.info("Queuing processor job.",
+                        processor_job=processor_job.id)
 
         send_job(pipeline_to_apply, processor_job)

@@ -94,6 +94,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
             try:
 
                 # XXX: Remove prepended [$Organism] here?
+                # Related: https://github.com/AlexsLemonade/refinebio/issues/354
                 # If it's Affy we can get a readable name:
                 sample_object.platform_name = get_readable_affymetrix_names()[
                     platform_accession_code]
