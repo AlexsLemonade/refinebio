@@ -66,11 +66,14 @@ def _extract_files(file_path: str, accession_code: str, job: DownloaderJob) -> L
         zip_ref = zipfile.ZipFile(file_path, "r")
         abs_with_code_raw = LOCAL_ROOT_DIR + '/' + accession_code + '/raw/'
         zip_ref.extractall(abs_with_code_raw)
+        # Other zips for this same accession will go into this
+        # directory too, so look at what's in the zip file rather than
+        # what's in the directory it's being extracted to.
+        files_in_zip = zip_ref.namelist()
         zip_ref.close()
 
         # os.abspath doesn't do what I thought it does, hency this monstrocity.
-        files = [{'absolute_path': abs_with_code_raw + f, 'filename': f}
-                 for f in os.listdir(abs_with_code_raw)]
+        files = [{'absolute_path': abs_with_code_raw + f, 'filename': f} for f in files_in_zip]
 
     except Exception as e:
         reason = "Exception %s caught while extracting %s", str(e), str(file_path)
@@ -92,7 +95,9 @@ def download_array_express(job_id: int) -> None:
     success = True
 
     file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
-    # AE should never have more than one zip, but we can iterate here if we discover this is false.
+    # AE will have multiple files per DownloaderJob, but they are all
+    # pieces of the same zip file so they're all referencing the same
+    # URL.
     original_file = file_assocs[0].original_file
     url = original_file.source_url
     accession_code = job.accession_code
@@ -190,6 +195,6 @@ def download_array_express(job_id: int) -> None:
                      url,
                      downloader_job=job_id)
 
-        utils.create_processor_jobs_for_original_files(og_files)
+        utils.create_processor_jobs_for_original_files(og_files, job)
 
     utils.end_downloader_job(job, success)
