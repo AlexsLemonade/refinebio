@@ -186,7 +186,11 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         response = utils.requests_retry_session().get(
             ENA_METADATA_URL_TEMPLATE.format(run_accession))
-        run_xml = ET.fromstring(response.text)
+        try:
+            run_xml = ET.fromstring(response.text)
+        except Exception as e:
+            logger.exception("Unable to decode response", response=response.text)
+            return {}
 
         # Necessary because ERP000263 has only one ROOT element containing this error:
         # Entry: ERR15562 display type is either not supported or entry is not found.
