@@ -4,6 +4,8 @@ options(warn=2)
 
 options(repos=structure(c(CRAN="https://cloud.r-project.org")))
 
+options(options(Ncpus=parallel::detectCores()))
+
 # Install dev packages
 install.packages("devtools")
 
