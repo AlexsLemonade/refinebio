@@ -8,6 +8,7 @@ from data_refinery_common.models import (
     SampleAnnotation,
     Organism,
     OriginalFile,
+    Processor,
     ComputationalResult,
     ComputationalResultAnnotation,
     ComputedFile,
@@ -26,6 +27,21 @@ class OrganismSerializer(serializers.ModelSerializer):
                     'name',
                     'taxonomy_id',
                 )
+
+
+##
+# Processor
+##
+
+class ProcessorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Processor
+        fields = (
+            'name',
+            'docker_image',
+            'environment'
+        )
+
 
 ##
 # Results
@@ -66,9 +82,8 @@ class ComputationalResultSerializer(serializers.ModelSerializer):
         model = ComputationalResult
         fields = (
                     'id',
-                    'command_executed',
-                    'program_version',
-                    'system_version',
+                    'commands',
+                    'processor',
                     'is_ccdl',
                     'annotations',
                     'files',
@@ -77,6 +92,7 @@ class ComputationalResultSerializer(serializers.ModelSerializer):
                     'created_at',
                     'last_modified'
                 )
+
 
 ##
 # Samples
