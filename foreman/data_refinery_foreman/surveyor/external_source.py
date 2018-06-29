@@ -53,11 +53,17 @@ class ExternalSourceSurveyor:
         files_to_download = OriginalFile.objects.filter(
             samples__in=samples.values('pk'), is_downloaded=False)
 
-        downloaded_urls = []
+        download_urls_with_jobs = {}
         for original_file in files_to_download:
 
             # We don't need to create multiple downloaders for the same file.
-            if original_file.source_url in downloaded_urls:
+            # However, we do want to associate original_files with the
+            # DownloaderJobs that will download them.
+            if original_file.source_url in download_urls_with_jobs.keys():
+                asoc = DownloaderJobOriginalFileAssociation()
+                asoc.downloader_job = download_urls_with_jobs[original_file.source_url]
+                asoc.original_file = original_file
+                asoc.save()
                 continue
 
             # There is already a downloader job associated with this file.
@@ -87,7 +93,7 @@ class ExternalSourceSurveyor:
                     asoc.original_file = original_file
                     asoc.save()
 
-                downloaded_urls.append(original_file.source_url)
+                download_urls_with_jobs[original_file.source_url] = downloader_job
 
                 try:
                     logger.info("Queuing downloader job for URL: " + original_file.source_url,
@@ -170,7 +176,6 @@ class ExternalSourceSurveyor:
             return False
 
         try:
-
             # SRA can have samples with multiple related files,
             # so make sure we download those together.
             if source_type == "SRA":
