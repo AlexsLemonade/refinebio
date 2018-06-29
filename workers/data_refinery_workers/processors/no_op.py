@@ -81,7 +81,7 @@ def _convert_genes(job_context: Dict) -> Dict:
 
     gene_index_path = "/home/user/data_store/" + job_context["internal_accession"] + ".tsv.gz"
     if not os.path.exists(gene_index_path):
-        logger.error("Missing gene index file for platform!". ,
+        logger.error("Missing gene index file for platform!",
             platform=job_context["internal_accession"],
             job_id=job_context["job_id"])
         job_context["failure_reason"] = "Missing gene index for " + job_context['internal_accession']
