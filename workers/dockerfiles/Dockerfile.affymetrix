@@ -1,16 +1,20 @@
 FROM ubuntu:16.04
 
+RUN add-apt-repository ppa:apt-fast/stable
+RUN apt-get update
+RUN apt-get -y install apt-fast
+
 # Much of this dockerfile is based off of the rpy2 docker image found:
 # https://hub.docker.com/r/rpy2/rpy2/~/dockerfile/
 
 RUN \
-  apt-get update -qq && \
-  apt-get install -y lsb-release && \
+  apt-fast update -qq && \
+  apt-fast install -y lsb-release && \
   echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
   apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys E084DAB9 && \
-  apt-get update -qq && \
-  apt-get install -y \
+  apt-fast update -qq && \
+  apt-fast install -y \
   ed \
   git \
   mercurial \

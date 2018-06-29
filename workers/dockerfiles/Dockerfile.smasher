@@ -1,8 +1,12 @@
 FROM ubuntu:16.04
 
+RUN add-apt-repository ppa:apt-fast/stable
+RUN apt-get update
+RUN apt-get -y install apt-fast
+
 RUN \
-  apt-get update -qq && \
-  apt-get install -y \
+  apt-fast update -qq && \
+  apt-fast install -y \
   ed \
   git \
   python3 \
