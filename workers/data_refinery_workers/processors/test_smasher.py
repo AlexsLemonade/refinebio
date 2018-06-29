@@ -125,7 +125,7 @@ class SmasherTestCase(TestCase):
             dataset.save()
 
             # Cleanup
-            os.remove(final_context['output_file']) 
+            os.remove(final_context['output_file'])
 
         for scale_type in ['NONE', 'MINMAX', 'STANDARD', 'ROBUST']:
             dataset = Dataset.objects.get(id=dsid)
@@ -253,7 +253,7 @@ class SmasherTestCase(TestCase):
 
     @tag("smasher")
     def test_no_smash_all_diff_species(self):
-        """ Smashing together with 'ALL' with different species should 
+        """ Smashing together with 'ALL' with different species should
         cause a 0 length data frame after inner join. """
 
         job = ProcessorJob()
