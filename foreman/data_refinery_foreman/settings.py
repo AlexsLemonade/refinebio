@@ -141,3 +141,20 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+# Setting the RAVEN_CONFIG when RAVEN_DSN isn't set will cause the
+# following warning:
+# /usr/local/lib/python3.6/site-packages/raven/conf/remote.py:91:
+# UserWarning: Transport selection via DSN is deprecated. You should
+# explicitly pass the transport class to Client() instead.
+raven_dsn = get_env_variable('RAVEN_DSN', "not set")
+if raven_dsn != "not set":
+    RAVEN_CONFIG = {
+        'dsn': raven_dsn
+    }
+else:
+    # Preven raven from logging about how it's not configured...
+    import logging
+    raven_logger = logging.getLogger('raven.contrib.django.client.DjangoClient')
+    raven_logger.setLevel(logging.CRITICAL)

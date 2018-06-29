@@ -42,20 +42,22 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.postgres',
     'django.contrib.staticfiles',
-    
+
     # 3rd Party
     'rest_framework',
     'rest_framework_hstore',
     'coreapi',
     'django_filters',
     'corsheaders',
-    
+    'raven.contrib.django.raven_compat',
+
     # Local
     'data_refinery_common',
     'data_refinery_api'
 ]
 
 MIDDLEWARE = [
+    'data_refinery_api.middleware.SentryCatchBadRequestMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -159,6 +161,21 @@ REST_FRAMEWORK = {
     'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.AcceptHeaderVersioning'
 }
 
-# XXX: Add this in Production!
-# REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = 'rest_framework.renderers.JSONRenderer'
-
+# Setting the RAVEN_CONFIG when RAVEN_DSN isn't set will cause the
+# following warning:
+# /usr/local/lib/python3.6/site-packages/raven/conf/remote.py:91:
+# UserWarning: Transport selection via DSN is deprecated. You should
+# explicitly pass the transport class to Client() instead.
+raven_dsn = get_env_variable('RAVEN_DSN', "not set")
+if raven_dsn != "not set":
+    RAVEN_CONFIG = {
+        'dsn': raven_dsn,
+        # Only send 5% of errors for the API, since we aren't going to
+        # be interested in any single one.
+        'sampleRate': 0.05
+    }
+else:
+    # Preven raven from logging about how it's not configured...
+    import logging
+    raven_logger = logging.getLogger('raven.contrib.django.client.DjangoClient')
+    raven_logger.setLevel(logging.CRITICAL)
