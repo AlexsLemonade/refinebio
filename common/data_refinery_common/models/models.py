@@ -424,7 +424,7 @@ class OrganismIndex(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
     def upload_to_s3(self, absolute_file_path, bucket_name, logger):
-        if bucket_name != "NO_BUCKET":
+        if bucket_name is not None:
             s3_key = self.organism.name + '_' + self.index_type + '.tar.gz'
             S3.upload_file(absolute_file_path, bucket_name, s3_key,
                            ExtraArgs={'ACL': 'public-read'})

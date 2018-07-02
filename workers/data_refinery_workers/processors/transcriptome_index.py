@@ -19,7 +19,7 @@ from data_refinery_common.models import (
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable_gracefully
 
 logger = get_and_configure_logger(__name__)
 
@@ -30,7 +30,7 @@ GENE_TYPE_COLUMN = 2
 # Removes each occurrance of ; and "
 IDS_CLEANUP_TABLE = str.maketrans({";": None, "\"": None})
 
-ORGANISM_INDEX_BUCKET = get_env_variable("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", "NO_BUCKET")
+ORGANISM_INDEX_BUCKET = get_env_variable_gracefully("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME")
 
 
 def _compute_paths(job_context: Dict) -> str:
