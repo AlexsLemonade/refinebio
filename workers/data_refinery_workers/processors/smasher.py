@@ -84,8 +84,8 @@ def _smash(job_context: Dict) -> Dict:
 
                 # Detect if this data hasn't been log2 scaled yet.
                 # Ideally done in the NO-OPPER, but sanity check here.
-                if (data.max() > 100).any():
-                    logger.info("Detected non-log2 data.", file=computed_file)
+                if ("lengthScaledTPM" not in computed_file.absolute_file_path) and (data.max() > 100).any():
+                    logger.info("Detected non-log2 microarray data.", file=computed_file)
                     data = np.log2(data)
 
                 # Ensure that we don't have any dangling Brainarray-generated probe symbols.
