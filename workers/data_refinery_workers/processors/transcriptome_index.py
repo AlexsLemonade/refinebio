@@ -30,7 +30,7 @@ GENE_TYPE_COLUMN = 2
 # Removes each occurrance of ; and "
 IDS_CLEANUP_TABLE = str.maketrans({";": None, "\"": None})
 
-ORGANISM_INDEX_BUCKET = get_env_variable("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME")
+ORGANISM_INDEX_BUCKET = get_env_variable("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", "NO_BUCKET")
 
 
 def _compute_paths(job_context: Dict) -> str:
