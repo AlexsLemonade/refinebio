@@ -18,6 +18,8 @@ from django.utils import timezone
 
 from data_refinery_common.models.organism import Organism
 
+# We have to set the signature_version to v4 since us-east-1 buckets require
+# v4 authentication.
 S3 = boto3.client('s3', config=Config(signature_version='s3v4'))
 
 """
