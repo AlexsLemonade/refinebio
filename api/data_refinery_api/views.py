@@ -31,13 +31,13 @@ from data_refinery_common.models import (
     ProcessorJobDatasetAssociation,
     OrganismIndex
 )
-from data_refinery_common.utils import get_env_variable
 from data_refinery_api.serializers import (
     ExperimentSerializer,
     DetailedExperimentSerializer,
     SampleSerializer,
     DetailedSampleSerializer,
     OrganismSerializer,
+    OrganismIndexSerializer,
     PlatformSerializer,
     InstitutionSerializer,
     ComputationalResultSerializer,
@@ -52,8 +52,6 @@ from data_refinery_api.serializers import (
     DatasetSerializer,
     APITokenSerializer
 )
-
-ORGANISM_INDEX_BUCKET = get_env_variable("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", "NO_BUCKET")
 
 ##
 # Custom Views
@@ -497,30 +495,18 @@ class Stats(APIView):
 
 class TranscriptomeIndexDetail(APIView):
     """
-    Retrieve the S3 URL to an OrganismIndex.
+    Retrieve the S3 URL and index metadata associated with an OrganismIndex.
     """
-    def get_s3_url(self, organism_name, transcription_length):
-        """
-        Gets the S3 url associated with the organism and length.
-        Organism must be specified in underscore-delimited uppercase, i.e. "GALLUS_GALLUS".
-        Length must either be "long" or "short"
-        """
-
-        if ORGANISM_INDEX_BUCKET == "NO_BUCKET":
-            raise Http404
-
-        transcription_length = "TRANSCRIPTOME_" + transcription_length.upper()
-
-        try:
-            organism_index = (OrganismIndex.public_objects.exclude(s3_key__exact="")
-                              .distinct("organism__name", "index_type")
-                              .get(organism__name=organism_name, index_type=transcription_length))
-            return "%s.s3.amazonaws.com/%s" % (ORGANISM_INDEX_BUCKET, organism_index.s3_key)
-        except OrganismIndex.DoesNotExist:
-            raise Http404
 
     def get(self, request, format=None):
+        """
+        Gets the S3 url associated with the organism and length, along with other metadata about
+        the transcriptome index we have stored. Organism must be specified in underscore-delimited
+        uppercase, i.e. "GALLUS_GALLUS". Length must either be "long" or "short"
+        """
         params = request.query_params
+
+        # Verify that the required params are present
         errors = dict()
         if "organism" not in params:
             errors["organism"] = "You must specify the organism of the index you want"
@@ -530,5 +516,14 @@ class TranscriptomeIndexDetail(APIView):
         if len(errors) > 0:
             raise ValidationError(errors)
 
-        url = self.get_s3_url(params["organism"], params["length"])
-        return Response(url)
+        # Get the correct organism index object, serialize it, and return it
+        transcription_length = "TRANSCRIPTOME_" + params["length"].upper()
+        try:
+            organism_index = (OrganismIndex.public_objects.exclude(s3_url__exact="")
+                              .distinct("organism__name", "index_type")
+                              .get(organism__name=params["organism"],
+                                   index_type=transcription_length))
+            serializer = OrganismIndexSerializer(organism_index)
+            return Response(serializer.data)
+        except OrganismIndex.DoesNotExist:
+            raise Http404

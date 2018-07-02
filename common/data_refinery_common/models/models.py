@@ -17,6 +17,7 @@ from django.db import models
 from django.utils import timezone
 
 from data_refinery_common.models.organism import Organism
+from data_refinery_common.utils import get_s3_url
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.
@@ -414,8 +415,8 @@ class OrganismIndex(models.Model):
     # This matters, for instance salmon 0.9.0 indexes don't work with 0.10.0
     salmon_version = models.CharField(max_length=255)
 
-    # S3 Key
-    s3_key = models.CharField(max_length=255, default="")
+    # S3 Information
+    s3_url = models.CharField(max_length=255, default="")
 
     # Common Properties
     is_public = models.BooleanField(default=True)
@@ -427,7 +428,7 @@ class OrganismIndex(models.Model):
             s3_key = self.organism.name + '_' + self.index_type + '.tar.gz'
             S3.upload_file(absolute_file_path, bucket_name, s3_key,
                            ExtraArgs={'ACL': 'public-read'})
-            self.s3_key = s3_key
+            self.s3_url = get_s3_url(bucket_name, s3_key)
             logger.info("Upload complete")
         else:
             logger.info("No S3 bucket in environment, not uploading")
