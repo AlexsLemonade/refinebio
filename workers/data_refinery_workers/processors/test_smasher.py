@@ -107,7 +107,7 @@ def prepare_job():
     pjda = ProcessorJobDatasetAssociation()
     pjda.processor_job = pj
     pjda.dataset = ds
-    pjda.save()
+    pjda.save() 
 
     return pj
 
@@ -533,6 +533,11 @@ class SmasherTestCase(TestCase):
         computed_file.is_smashable = True
         computed_file.save()
 
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
         # RNASEQ TECH
         experiment = Experiment()
         experiment.accession_code = "SRS332914"
@@ -545,7 +550,7 @@ class SmasherTestCase(TestCase):
         sample.accession_code = 'SRS332914'
         sample.title = 'SRS332914'
         sample.organism = gallus_gallus
-        sample.technology="RNA-SEQ"
+        sample.technology = "RNA-SEQ"
         sample.save()
 
         sra = SampleResultAssociation()
@@ -566,6 +571,11 @@ class SmasherTestCase(TestCase):
         computed_file.is_smashable = True
         computed_file.save()
 
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
         # CROSS-SMASH BY SPECIES
         ds = Dataset()
         ds.data = {'GSM1487313': ['GSM1487313'], 'SRS332914': ['SRS332914']}
@@ -580,8 +590,9 @@ class SmasherTestCase(TestCase):
         pjda.save()
 
         self.assertTrue(ds.is_cross_technology())
-
         final_context = smasher.smash(pj.pk, upload=False)
+        self.assertTrue(os.path.exists(final_context['output_file']))
+        self.assertEqual(len(final_context['final_frame'].columns), 2)
 
         # THEN BY EXPERIMENT
         ds.aggregate_by = 'EXPERIMENT'
@@ -591,6 +602,19 @@ class SmasherTestCase(TestCase):
         ds = Dataset.objects.get(id=dsid)
 
         final_context = smasher.smash(pj.pk, upload=False)
+        self.assertTrue(os.path.exists(final_context['output_file']))
+        self.assertEqual(len(final_context['final_frame'].columns), 1)
+
+        # THEN BY ALL
+        ds.aggregate_by = 'ALL'
+        ds.save()
+
+        dsid = ds.id
+        ds = Dataset.objects.get(id=dsid)
+
+        final_context = smasher.smash(pj.pk, upload=False)
+        self.assertTrue(os.path.exists(final_context['output_file']))
+        self.assertEqual(len(final_context['final_frame'].columns), 2)
 
     @tag("smasher")
     def test_sanity_imports(self):

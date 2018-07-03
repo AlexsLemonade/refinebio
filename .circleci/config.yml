@@ -58,7 +58,7 @@ jobs:
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
 
-      # Run Smasher tests.
+     # Run Smasher tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
           command: .circleci/filter_tests.sh -t smasher
@@ -69,9 +69,6 @@ jobs:
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run: ./api/run_tests.sh
 
-      # Run Illumna tests.
-      - run: sudo chown -R circleci:circleci workers/test_volume/
-      - run: .circleci/filter_tests.sh -t illumina
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
   affymetrix_common_agilent_tests:
@@ -157,7 +154,7 @@ jobs:
       # from making sure all the files in workers/test_volume have read/write permissions.
       - run: sudo chown -R circleci:circleci workers/test_volume/
 
-      # Run Illumna tests.
+      # Run Illumina tests.
       - run: .circleci/filter_tests.sh -t illumina
 
 
