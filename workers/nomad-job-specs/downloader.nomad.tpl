@@ -31,8 +31,8 @@ job "DOWNLOADER" {
         DATABASE_PORT = "${{DATABASE_PORT}}"
         DATABASE_TIMEOUT = "${{DATABASE_TIMEOUT}}"
 
-        RAVEN_DSN=${{RAVEN_DSN}}
-        RAVEN_DSN_API=${{RAVEN_DSN_API}}
+        RAVEN_DSN="${{RAVEN_DSN}}"
+        RAVEN_DSN_API="${{RAVEN_DSN_API}}"
 
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
