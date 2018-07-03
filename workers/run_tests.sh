@@ -181,11 +181,18 @@ if [[ -z $tag || $tag == "no_op" ]]; then
              "$test_data_repo/$no_file"
     fi
     no_file2="GSM269747-tbl-1.txt"
-    if [ ! -e "$no_test_raw_dir/$no2_file" ]; then
+    if [ ! -e "$no_test_raw_dir/$no_file2" ]; then
         mkdir -p $no_test_raw_dir
         echo "Downloading NOOP file2."
         wget -q -O "$no_test_raw_dir/$no_file2" \
              "$test_data_repo/$no_file2"
+    fi
+    no_file3="GSM557500_sample_table.txt"
+    if [ ! -e "$no_test_raw_dir/$no_file3" ]; then
+        mkdir -p $no_test_raw_dir
+        echo "Downloading NOOP file3."
+        wget -q -O "$no_test_raw_dir/$no_file3" \
+             "$test_data_repo/$no_file3"
     fi
 fi
 
