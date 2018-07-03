@@ -251,7 +251,7 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
     individual_files = []
     frames = np.split(data, len(data.columns), axis=1)
     for frame in frames:
-        frame_path = os.path.join(experiment_dir, frame.columns.values[0]) + '.tsv'
+        frame_path = os.path.join(experiment_dir, frame.columns.values[0]) + '_gene_lengthScaledTPM.tsv'
         frame.to_csv(frame_path, sep='\t', encoding='utf-8')
 
         sample = Sample.objects.get(accession_code=frame.columns.values[0])
