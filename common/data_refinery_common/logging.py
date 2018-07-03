@@ -4,7 +4,7 @@ import logging
 import sys
 
 from data_refinery_common.utils import get_worker_id
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable_gracefully
 
 
 # Most of the formatting in this string is for the logging system. All
@@ -42,7 +42,7 @@ def get_and_configure_logger(name: str) -> logging.Logger:
     logger.logger.addHandler(handler)
 
     # This is the Sentry handler
-    raven_dsn = get_env_variable("RAVEN_DSN", False)
+    raven_dsn = get_env_variable_gracefully("RAVEN_DSN", False)
     if raven_dsn:
         from raven.contrib.django.handlers import SentryHandler
 
