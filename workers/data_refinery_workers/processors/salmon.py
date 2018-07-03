@@ -245,17 +245,6 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
         s_r = SampleResultAssociation(sample=sample, result=result)
         s_r.save()
 
-    rds_file = ComputedFile()
-    rds_file.absolute_file_path = experiment_dir + '/txi_out.RDS'
-    rds_file.filename = 'txi_out.RDS'
-    rds_file.result = result
-    rds_file.is_smashable = False
-    rds_file.is_qc = False
-    rds_file.is_public = True
-    rds_file.calculate_sha1()
-    rds_file.calculate_size()
-    rds_file.save()
-
     # Split the tximport result into smashable subfiles
     big_tsv = experiment_dir + '/gene_lengthScaledTPM.tsv'
     data = pd.read_csv(big_tsv, sep='\t', header=0, index_col=0)
