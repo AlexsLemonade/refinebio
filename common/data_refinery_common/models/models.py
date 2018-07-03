@@ -7,6 +7,7 @@ import uuid
 from datetime import datetime
 from functools import partial
 
+from django.conf import settings
 from django.contrib.postgres.fields import HStoreField, JSONField
 from django.db import transaction
 from django.db import models
@@ -61,6 +62,7 @@ class Sample(models.Model):
     organism = models.ForeignKey(Organism, blank=True, null=True, on_delete=models.SET_NULL)
     results = models.ManyToManyField('ComputationalResult', through='SampleResultAssociation')
     original_files = models.ManyToManyField('OriginalFile', through='OriginalFileSampleAssociation')
+    computed_files = models.ManyToManyField('ComputedFile', through='SampleComputedFileAssociation')
 
     # Historical Properties
     source_database = models.CharField(max_length=255, blank=False)
@@ -72,7 +74,7 @@ class Sample(models.Model):
     # Technological Properties
     platform_accession_code = models.CharField(max_length=256, blank=True)
     platform_name = models.CharField(max_length=256, blank=True)
-    technology = models.CharField(max_length=256, blank=True)
+    technology = models.CharField(max_length=256, blank=True) # MICROARRAY, RNA-SEQ
     manufacturer = models.CharField(max_length=256, blank=True)
 
     # Scientific Properties
@@ -90,6 +92,7 @@ class Sample(models.Model):
     time = models.CharField(max_length=255, blank=True)
 
     # Crunch Properties
+    # TODO: rm is_downloaded from sample, it is on original_file instead
     is_downloaded = models.BooleanField(default=False)
     is_processed = models.BooleanField(default=False)
 
@@ -129,13 +132,12 @@ class Sample(models.Model):
 
     def get_result_files(self):
         """ Get all of the ComputedFile objects associated with this Sample """
-        return ComputedFile.objects.filter(result__in=self.results.all())
+        return self.computed_files
 
     def get_most_recent_smashable_result_file(self):
         """ Get all of the ComputedFile objects associated with this Sample """
-        return ComputedFile.objects.filter(
-                        result__in=self.results.all(),
-                        is_smashable=True,
+        return self.computed_files.filter(
+                        is_smashable=True
                     ).first()
 
     @property
@@ -301,7 +303,7 @@ class ComputationalResult(models.Model):
         base_manager_name = 'public_objects'
 
     def __str__(self):
-        return "ComputationalResult: " + str(self.pk)
+        return "ComputationalResult " + str(self.pk) + ": " + str(self.command_executed)
 
     # Managers
     objects = models.Manager()
@@ -381,22 +383,29 @@ class OrganismIndex(models.Model):
         db_table = "organism_index"
         base_manager_name = 'public_objects'
 
+    def __str__(self):
+        return "OrganismIndex " + str(self.pk) + ": " + self.organism.name + ' [' + self.index_type + '] - ' + str(self.salmon_version) 
+
     # Managers
     objects = models.Manager()
     public_objects = PublicObjectsManager()
 
     # Relations
     organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
+    result = models.ForeignKey(
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
     # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
     index_type = models.CharField(max_length=255)
+
     # This corresponds to Ensembl's release number:
     # http://ensemblgenomes.org/info/about/release_cycle
     # Determined by hitting:
     # http://rest.ensembl.org/info/software?content-type=application/json
     source_version = models.CharField(max_length=255)
-    result = models.ForeignKey(
-        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+
+    # This matters, for instance salmon 0.9.0 indexes don't work with 0.10.0
+    salmon_version = models.CharField(max_length=255)
 
     # Common Properties
     is_public = models.BooleanField(default=True)
@@ -671,6 +680,40 @@ class Dataset(models.Model):
         else:
             return self.get_samples_by_species()
 
+    def is_cross_technology(self):
+        """ Determine if this involves both Microarray + RNASeq"""
+
+        if len(self.get_samples().values('technology').distinct()) > 1:
+            return True
+        else:
+            return False
+
+class APIToken(models.Model):
+    """ Required for starting a smash job """
+
+    # ID
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # Activation
+    is_activated = models.BooleanField(default=False)
+
+    # Common Properties
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(APIToken, self).save(*args, **kwargs)
+
+    @property
+    def terms_and_conditions(self):
+        """ """
+        return settings.TERMS_AND_CONDITIONS
+
 """
 # Associations
 
@@ -757,3 +800,14 @@ class SampleResultAssociation(models.Model):
     class Meta:
         db_table = "sample_result_associations"
         unique_together = ('result', 'sample')
+
+
+class SampleComputedFileAssociation(models.Model):
+
+    sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
+    computed_file = models.ForeignKey(
+        ComputedFile, blank=False, null=False, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "sample_computed_file_associations"
+        unique_together = ('sample', 'computed_file')

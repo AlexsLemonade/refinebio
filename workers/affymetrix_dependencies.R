@@ -1,8 +1,8 @@
 # Turn warnings into errors because biocLite throws warnings instead
 # of error if it fails to install something.
 options(warn=2)
-
 options(repos=structure(c(CRAN="https://cloud.r-project.org")))
+options(Ncpus=parallel::detectCores())
 
 # Install dev packages
 install.packages("devtools")
@@ -15,11 +15,6 @@ devtools::install_version('RSQLite', version='2.0')
 devtools::install_version('tibble', version='1.4.2')
 devtools::install_version('xtable', version='1.8-2')
 devtools::install_version('pkgconfig', version='2.0.1')
-
-# Illumina
-devtools::install_version('doParallel', version='1.0.11')
-devtools::install_version('data.table', version='1.11.0')
-devtools::install_version('optparse', version='1.4.4')
 
 # Bioconductor packages, installed by devtools::install_url()
 
@@ -44,32 +39,9 @@ bioc_pkgs <- c(
   'preprocessCore_1.40.0.tar.gz',
   'genefilter_1.60.0.tar.gz',
   'sva_3.26.0.tar.gz',
-  'tximport_1.6.0.tar.gz',
   'limma_3.34.9.tar.gz'
 )
 install_with_url(bioc_url, bioc_pkgs)
-
-release_url <- 'https://bioconductor.org/packages/release/data/annotation/src/contrib/'
-illumina_pkgs <- c(
-  'illuminaHumanv2.db_1.26.0.tar.gz',
-  'illuminaHumanv4.db_1.26.0.tar.gz'
-)
-install_with_url(release_url, illumina_pkgs)
-
-annotation_url <- 'https://bioconductor.org/packages/3.6/data/annotation/src/contrib/'
-annotation_pkgs <- c(
-  'org.Hs.eg.db_3.5.0.tar.gz',
-  'org.Mm.eg.db_3.5.0.tar.gz',
-  'org.Dm.eg.db_3.5.0.tar.gz',
-  'org.Ce.eg.db_3.5.0.tar.gz',
-  'org.Bt.eg.db_3.5.0.tar.gz',
-  'org.Cf.eg.db_3.5.0.tar.gz',
-  'org.Gg.eg.db_3.5.0.tar.gz',
-  'org.Rn.eg.db_3.5.0.tar.gz',
-  'org.Ss.eg.db_3.5.0.tar.gz',
-  'org.Dr.eg.db_3.5.0.tar.gz'
-)
-install_with_url(annotation_url, annotation_pkgs)
 
 # Invoke another R script to install BrainArray ensg packages
 source("install_ensg_pkgs.R")
@@ -81,6 +53,7 @@ pd_experiment_pkgs <- c(
 )
 install_with_url(experiment_url, pd_experiment_pkgs)
 
+annotation_url <- 'https://bioconductor.org/packages/3.6/data/annotation/src/contrib/'
 pd_annotation_pkgs <- c(
   'pd.081229.hg18.promoter.medip.hx1_0.99.4.tar.gz',
   'pd.2006.07.18.hg18.refseq.promoter_1.8.1.tar.gz',

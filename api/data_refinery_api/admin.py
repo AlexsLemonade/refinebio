@@ -6,7 +6,8 @@ from data_refinery_common.models import (
     Experiment,
     Sample,
     OriginalFile,
-    ComputationalResult
+    ComputationalResult,
+    OrganismIndex
 )
 
 admin.site.register(ProcessorJob)
@@ -17,3 +18,5 @@ admin.site.register(Experiment)
 admin.site.register(Sample)
 admin.site.register(OriginalFile)
 admin.site.register(ComputationalResult)
+admin.site.register(OrganismIndex)
+

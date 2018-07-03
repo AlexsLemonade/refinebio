@@ -42,7 +42,7 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob, force_
 
     if 'ftp.ncbi.nlm.nih.gov' in download_url:
         return _download_file_aspera(download_url=download_url, downloader_job=job, target_file_path=file_path)
-    else: 
+    else:
         try:
             logger.debug("Downloading file from %s to %s.",
                          download_url,
@@ -84,7 +84,7 @@ def _download_file_aspera(download_url: str,
         url = url.replace(ftp, "").replace('ftp.ncbi.nlm.nih.gov', '')
 
         # Resume level 1, use encryption, unlimited speed
-        command_str = "{} -i {} -k1 -T {}@{}:{} {}".format(ascp, key, user, ftp, url, target_file_path) 
+        command_str = "{} -i {} -k1 -T {}@{}:{} {}".format(ascp, key, user, ftp, url, target_file_path)
         formatted_command = command_str.format(src=download_url,
                                                dest=target_file_path)
         completed_command = subprocess.run(formatted_command.split(),
@@ -455,7 +455,7 @@ def download_geo(job_id: int) -> None:
         job.failure_reason = "Failed to extract any downloaded files."
 
     if success:
-        utils.create_processor_jobs_for_original_files(unpacked_sample_files)
+        utils.create_processor_jobs_for_original_files(unpacked_sample_files, job)
 
     utils.end_downloader_job(job, success)
 

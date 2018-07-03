@@ -22,7 +22,8 @@ from data_refinery_api.views import (
     ResultsList,
     Stats,
     CreateDatasetView,
-    DatasetView
+    DatasetView,
+    APITokenView
 )
 
 # This provides _public_ access to the /admin interface!
@@ -51,6 +52,7 @@ class APIRoot(APIView):
             'jobs': reverse('jobs', request=request),
             'stats': reverse('stats', request=request),
             'dataset': reverse('dataset_root', request=request),
+            'token': reverse('token', request=request),
             'search': reverse('search', request=request)
         })
 
@@ -98,6 +100,8 @@ urlpatterns = [
     url(r'^dataset/$', DatasetRoot.as_view(), name="dataset_root"),
     url(r'^dataset/create/$', CreateDatasetView.as_view(), name="create_dataset"),
     url(r'^dataset/(?P<id>[0-9a-f-]+)/$', DatasetView.as_view(), name="dataset"),
+    url(r'^token/$', APITokenView.as_view(), name="token"),
+    url(r'^token/(?P<id>[0-9a-f-]+)/$', APITokenView.as_view(), name="token_id"),
 
     # Jobs
     url(r'^jobs/$', JobsRoot.as_view(), name="jobs"),
@@ -109,10 +113,10 @@ urlpatterns = [
     url(r'^stats/$', Stats.as_view(), name="stats"),
 
     # Admin
-    url(r'^admin', admin.site.urls, name="admin"),
+    url(r'^admin/', admin.site.urls),
 
     # Core API schema docs
-    url(r'^docs', include_docs_urls(title='Refine.bio API'), name="docs_schema"),
+    url(r'^docs/', include_docs_urls(title='Refine.bio API'), name="docs_schema"),
 
     # Root
     url(r'^$', APIRoot.as_view(), name="api_root"),
