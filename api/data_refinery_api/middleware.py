@@ -14,7 +14,7 @@ class SentryCatchBadRequestMiddleware(MiddlewareMixin):
         data = client.get_data_from_request(request)
         data.update({
             "level": logging.WARN,
-            "logger": "BadRequestCatcher?",
+            "logger": "BadRequestMiddleware",
         })
         message_template = "{status_code} code returned for URL: {url} {content}"
 

@@ -148,8 +148,8 @@ STATIC_URL = '/static/'
 # /usr/local/lib/python3.6/site-packages/raven/conf/remote.py:91:
 # UserWarning: Transport selection via DSN is deprecated. You should
 # explicitly pass the transport class to Client() instead.
-raven_dsn = get_env_variable('RAVEN_DSN', "not set")
-if raven_dsn != "not set":
+raven_dsn = get_env_variable('RAVEN_DSN', False)
+if raven_dsn:
     RAVEN_CONFIG = {
         'dsn': raven_dsn
     }
