@@ -15,6 +15,7 @@ from typing import Dict
 
 import numpy as np
 import pandas as pd
+import numpy as np
 from sklearn import preprocessing
 
 from data_refinery_common.logging import get_and_configure_logger
@@ -76,15 +77,25 @@ def _smash(job_context: Dict) -> Dict:
             all_frames = []
             for computed_file in input_files:
 
+                computed_file_path = str(computed_file.absolute_file_path)
+
                 # Bail appropriately if this isn't a real file.
                 if not os.path.exists(computed_file.absolute_file_path):
                     raise ValueError("Smasher received non-existent file path.")
 
-                data = pd.read_csv(str(computed_file.absolute_file_path), sep='\t', header=0, index_col=0)
+                data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0)
+
+                # via https://github.com/AlexsLemonade/refinebio/issues/330:
+                #   aggregating by experiment -> return untransformed output from tximport
+                #   aggregating by species -> log2(x + 1) tximport output               
+                if job_context['dataset'].aggregate_by == 'SPECIES':
+                    if 'lengthScaledTPM' in computed_file_path:
+                        data = data + 1
+                        data = np.log2(data)
 
                 # Detect if this data hasn't been log2 scaled yet.
                 # Ideally done in the NO-OPPER, but sanity check here.
-                if ("lengthScaledTPM" not in computed_file.absolute_file_path) and (data.max() > 100).any():
+                if ("lengthScaledTPM" not in computed_file_path) and (data.max() > 100).any():
                     logger.info("Detected non-log2 microarray data.", file=computed_file)
                     data = np.log2(data)
 
@@ -114,6 +125,7 @@ def _smash(job_context: Dict) -> Dict:
 
                 all_frames.append(data)
                 num_samples = num_samples + 1
+
             job_context['all_frames'] = all_frames
 
             merged = all_frames[0]
@@ -202,6 +214,7 @@ def _smash(job_context: Dict) -> Dict:
         job_context['failure_reason'] = str(e)
         return job_context
 
+    job_context['metadata'] = metadata
     job_context['dataset'].success = True
     job_context['dataset'].save()
 
