@@ -42,7 +42,10 @@ def get_and_configure_logger(name: str) -> logging.Logger:
     logger.logger.addHandler(handler)
 
     # This is the Sentry handler
-    raven_dsn = get_env_variable_gracefully("RAVEN_DSN", False)
+    if "data_refinery_api" in name:
+        raven_dsn = get_env_variable_gracefully("RAVEN_DSN_API", False)
+    else:
+        raven_dsn = get_env_variable_gracefully("RAVEN_DSN", False)
     if raven_dsn:
         from raven.contrib.django.handlers import SentryHandler
 

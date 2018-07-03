@@ -31,6 +31,9 @@ job "SMASHER" {
         DATABASE_PORT = "${{DATABASE_PORT}}"
         DATABASE_TIMEOUT = "${{DATABASE_TIMEOUT}}"
 
+        RAVEN_DSN=${{RAVEN_DSN}}
+        RAVEN_DSN_API=${{RAVEN_DSN_API}}
+
         RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
 
         USE_S3 = "${{USE_S3}}"
