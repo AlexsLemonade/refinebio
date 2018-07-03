@@ -246,7 +246,7 @@ class SmasherTestCase(TestCase):
         assoc.save()
 
         computed_files = sample.get_result_files()
-        self.assertEqual(computed_files.count(), 1)
+        self.assertEqual(computed_files.count(), 2)
 
     @tag("smasher")
     def test_fail(self):
@@ -444,6 +444,11 @@ class SmasherTestCase(TestCase):
         computed_file.size_in_bytes = 123
         computed_file.save()
 
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
         sample = Sample()
         sample.accession_code = 'GSM1084807'
         sample.title = 'GSM1084807'
@@ -462,6 +467,11 @@ class SmasherTestCase(TestCase):
         computed_file.size_in_bytes = 123
         computed_file.save()
 
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
         ds = Dataset()
         ds.data = {'GSE44421': ['GSM1084806', 'GSM1084807']}
         ds.aggregate_by = 'EXPERIMENT'
@@ -476,6 +486,7 @@ class SmasherTestCase(TestCase):
 
         final_context = smasher.smash(pj.pk, upload=False)
         ds = Dataset.objects.get(id=ds.id)
+
         self.assertTrue(ds.success)
         self.assertEqual(ds.failure_reason, "")
     
