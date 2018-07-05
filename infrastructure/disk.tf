@@ -82,3 +82,30 @@ resource "aws_s3_bucket" "data-refinery-static" {
     index_document = "index.html"
   }
 }
+
+resource "aws_s3_bucket" "data-refinery-static-access-logs" {
+  bucket = "data-refinery-static-access-logs"
+
+  tags {
+    Name = "data-refinery-static-access-logs-${var.user}-${var.stage}"
+    Environment = "${var.stage}"
+  }
+
+
+
+  lifecycle_rule {
+    id = "auto-delete-after-1-days-${var.user}-${var.stage}"
+    prefix = ""
+    enabled = true
+    abort_incomplete_multipart_upload_days = 7
+
+    expiration {
+      days = 7
+      expired_object_delete_marker = true
+    }
+
+    noncurrent_version_expiration {
+      days = 7
+    }
+  }
+}
