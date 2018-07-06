@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.http import HttpResponseForbidden, HttpResponseServerError
 from rest_framework import status
 from rest_framework.test import APITestCase
 from unittest.mock import patch
@@ -24,6 +25,7 @@ from data_refinery_common.models import (
     SampleResultAssociation,
     Dataset
 )
+from data_refinery_api.views import ExperimentList
 from data_refinery_api.serializers import (
     ExperimentSerializer,
     DetailedExperimentSerializer,
@@ -357,3 +359,52 @@ class APITestCases(APITestCase):
         response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
         self.assertEqual(response.json()["is_processing"], True)
 
+    @patch('raven.contrib.django.models.client')
+    def test_sentry_middleware_ok(self, mock_client):
+        # We don't even import raven if it's a good response.
+        response = self.client.get(reverse('experiments'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_client.is_enabled.assert_not_called()
+
+    @patch('raven.contrib.django.models.client')
+    def test_sentry_middleware_404(self, mock_client):
+        # We don't send anything to raven if it's not enabled
+        mock_client.is_enabled.side_effect = lambda: False
+        response = self.client.get(reverse('experiments_detail', kwargs={'pk': '1000'}))
+        self.assertEqual(response.status_code, 404)
+        mock_client.captureMessage.assert_not_called()
+
+        # A 404 with raven enabled will send a message to sentry
+        mock_client.is_enabled.side_effect = lambda: True
+        response = self.client.get(reverse('experiments_detail', kwargs={'pk': '1000'}))
+        self.assertEqual(response.status_code, 404)
+        mock_client.captureMessage.assert_called()
+
+        # A 404 with raven enabled will send a message to sentry
+        mock_client.is_enabled.side_effect = lambda: True
+        response = self.client.get(reverse('experiments_detail', kwargs={'pk': '1000'})[:-1] + "aasdas/")
+        self.assertEqual(response.status_code, 404)
+        mock_client.captureMessage.assert_called()
+
+    @patch.object(ExperimentList, 'get')
+    @patch('raven.contrib.django.models.client')
+    def test_sentry_middleware_403(self, mock_client, mock_get_method):
+        mock_get_method.side_effect = lambda _: HttpResponseForbidden()
+        # A 403 with raven enabled will send a message to sentry
+        mock_client.is_enabled.side_effect = lambda: True
+        response = self.client.get(reverse('experiments'))
+        self.assertEqual(response.status_code, 403)
+        mock_client.captureMessage.assert_called()
+
+    @patch.object(ExperimentList, 'get')
+    @patch('raven.contrib.django.models.client')
+    def test_sentry_middleware_500(self, mock_client, mock_get_method):
+        def raise_error(_):
+            raise KeyError()
+
+        mock_get_method.side_effect = lambda _: HttpResponseServerError()
+        # A 500 with raven enabled will send a message to sentry
+        mock_client.is_enabled.side_effect = lambda: True
+        response = self.client.get(reverse('experiments'))
+        self.assertEqual(response.status_code, 500)
+        mock_client.captureMessage.assert_called()
