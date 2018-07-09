@@ -14,6 +14,7 @@ from django.utils import timezone
 from typing import Dict
 
 import pandas as pd
+import numpy as np
 from sklearn import preprocessing
 
 from data_refinery_common.logging import get_and_configure_logger
@@ -74,9 +75,26 @@ def _smash(job_context: Dict) -> Dict:
             # Merge all the frames into one
             all_frames = []
             for computed_file in input_files:
-                data = pd.DataFrame.from_csv(str(computed_file.absolute_file_path), sep='\t', header=0)
+                computed_file_path = str(computed_file.absolute_file_path)
+                data = pd.DataFrame.from_csv(computed_file_path, sep='\t', header=0)
+
+                # via https://github.com/AlexsLemonade/refinebio/issues/330:
+                #   aggregating by experiment -> return untransformed output from tximport
+                #   aggregating by species -> log2(x + 1) tximport output
+                if job_context['dataset'].aggregate_by == 'SPECIES':
+                    if 'lengthScaledTPM' in computed_file_path:
+                        data = data + 1
+                        data = np.log2(data)
+
+                # Ensure that we don't have any dangling Brainarray-generated probe symbols.
+                # BA likes to leave '_at', signifying probe identifiers,
+                # on their converted, non-probe identifiers. It makes no sense.
+                # So, we chop them off and don't worry about it.
+                data.index = data.index.str.replace('_at', '')
+
                 all_frames.append(data)
                 num_samples = num_samples + 1
+
             job_context['all_frames'] = all_frames
 
             merged = all_frames[0]
@@ -95,8 +113,8 @@ def _smash(job_context: Dict) -> Dict:
                 scale_funtion = scalers[job_context['dataset'].scale_by]
                 scaler = scale_funtion(copy=True)
                 scaler.fit(transposed)
-                scaled = pd.DataFrame(  scaler.transform(transposed), 
-                                        index=transposed.index, 
+                scaled = pd.DataFrame(  scaler.transform(transposed),
+                                        index=transposed.index,
                                         columns=transposed.columns
                                     )
                 # Untranspose
@@ -106,7 +124,7 @@ def _smash(job_context: Dict) -> Dict:
                 untransposed = transposed.transpose()
 
             job_context['final_frame'] = untransposed
-            
+
             # Write to temp file with dataset UUID in filename.
             outfile = smash_path + key + ".tsv"
             untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
@@ -146,15 +164,17 @@ def _smash(job_context: Dict) -> Dict:
         metadata['files'] = os.listdir(smash_path)
         # Metadata to JSON
         metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-        with open(smash_path + 'metadata.json', 'w') as metadata_file: 
+        with open(smash_path + 'metadata.json', 'w') as metadata_file:
             json.dump(metadata, metadata_file, indent=4, sort_keys=True)
 
         # Finally, compress all files into a zip
-        final_zip = smash_path + str(job_context['dataset'].id)
-        shutil.make_archive(final_zip, 'zip', smash_path)
-        job_context["output_file"] = final_zip + ".zip"
+        final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk)
+        shutil.make_archive(final_zip_base, 'zip', smash_path)
+        job_context["output_file"] = final_zip_base + ".zip"
+        # and clean up the unzipped directory.
+        shutil.rmtree(smash_path)
     except Exception as e:
-        logger.exception("Could not smash dataset.", 
+        logger.exception("Could not smash dataset.",
                         dataset_id=job_context['dataset'].id,
                         job_id=job_context['job_id'],
                         input_files=job_context['input_files'])
@@ -165,6 +185,7 @@ def _smash(job_context: Dict) -> Dict:
         job_context['failure_reason'] = str(e)
         return job_context
 
+    job_context['metadata'] = metadata
     job_context['dataset'].success = True
     job_context['dataset'].save()
 
@@ -183,8 +204,8 @@ def _upload_and_notify(job_context: Dict) -> Dict:
         # Note that file expiry is handled by the S3 object lifecycle,
         # managed by terraform.
         s3_client.upload_file(
-                job_context["output_file"], 
-                RESULTS_BUCKET, 
+                job_context["output_file"],
+                RESULTS_BUCKET,
                 job_context["output_file"].split('/')[-1],
                 ExtraArgs={'ACL':'public-read'}
             )
@@ -240,7 +261,7 @@ def _upload_and_notify(job_context: Dict) -> Dict:
                     },
                     Source=SENDER,
                 )
-            # Display an error if something goes wrong. 
+            # Display an error if something goes wrong.
             except ClientError as e:
                 logger.error(e.response['Error']['Message'])
             else:

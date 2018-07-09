@@ -4,7 +4,15 @@ jobs:
   # These are grouped together because in total they take less time than our other tests individually.
   main_tests:
     working_directory: ~/refinebio
-    machine: true
+    machine:
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
     steps:
       - checkout
 
@@ -37,7 +45,7 @@ jobs:
       # Running these in the same job as the common tests is good
       # because their dockerfiles are very similar so a lot of the
       # build time is saved by only building those layers once.
-      - run: 
+      - run:
           command: .circleci/filter_tests.sh -t downloaders
           no_output_timeout: 36000
 
@@ -58,7 +66,10 @@ jobs:
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run: .circleci/filter_tests.sh -t illumina
 
-        # Run Smasher tests.
+      # Run Smasher tests.
+      - run: sudo apt-get update && sudo apt-get install -qq -y python-pip libpython-dev
+      - run: curl -O https://bootstrap.pypa.io/get-pip.py && sudo python get-pip.py
+      - run: sudo pip install -q awscli --upgrade
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
           command: .circleci/filter_tests.sh -t smasher
@@ -72,7 +83,15 @@ jobs:
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
   affymetrix_common_agilent_tests:
     working_directory: ~/refinebio
-    machine: true
+    machine:
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
     steps:
       - checkout
 
@@ -105,7 +124,15 @@ jobs:
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
     working_directory: ~/refinebio
-    machine: true
+    machine:
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
     steps:
       - checkout
 
@@ -131,7 +158,15 @@ jobs:
   # These are grouped together because together they take less time than affy or salmon.
   transcriptome_and_illumina_tests:
     working_directory: ~/refinebio
-    machine: true
+    machine:
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
     steps:
       - checkout
 
@@ -158,7 +193,15 @@ jobs:
 
 
   deploy:
-    machine: true
+    machine:
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
     working_directory: ~/refinebio
     steps:
       - checkout

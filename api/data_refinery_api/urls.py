@@ -119,9 +119,8 @@ urlpatterns = [
     url(r'^docs/', include_docs_urls(title='Refine.bio API'), name="docs_schema"),
 
     # Root
-    url(r'^', APIRoot.as_view(), name="api_root"),
+    url(r'^$', APIRoot.as_view(), name="api_root"),
 ]
 
 # This adds support explicitly typed endpoints such that appending '.json' returns that application type.
 urlpatterns = format_suffix_patterns(urlpatterns)
-
