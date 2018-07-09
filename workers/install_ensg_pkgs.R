@@ -1,3 +1,4 @@
+options(Ncpus=parallel::detectCores())
 install.packages("xml2")
 library("xml2")
 ensg_url <- "http://brainarray.mbni.med.umich.edu/Brainarray/Database/CustomCDF/22.0.0/ensg.asp"

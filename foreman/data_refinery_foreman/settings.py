@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import os
 from django.core.exceptions import ImproperlyConfigured
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'data_refinery_common',
     'data_refinery_foreman.surveyor',
     'data_refinery_foreman.foreman',
+    'raven.contrib.django.raven_compat',
 ]
 
 MIDDLEWARE = [
@@ -140,3 +141,20 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+# Setting the RAVEN_CONFIG when RAVEN_DSN isn't set will cause the
+# following warning:
+# /usr/local/lib/python3.6/site-packages/raven/conf/remote.py:91:
+# UserWarning: Transport selection via DSN is deprecated. You should
+# explicitly pass the transport class to Client() instead.
+raven_dsn = get_env_variable_gracefully('RAVEN_DSN', False)
+if raven_dsn:
+    RAVEN_CONFIG = {
+        'dsn': raven_dsn
+    }
+else:
+    # Preven raven from logging about how it's not configured...
+    import logging
+    raven_logger = logging.getLogger('raven.contrib.django.client.DjangoClient')
+    raven_logger.setLevel(logging.CRITICAL)
