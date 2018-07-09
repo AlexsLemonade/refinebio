@@ -91,8 +91,6 @@ resource "aws_s3_bucket" "data-refinery-static-access-logs" {
     Environment = "${var.stage}"
   }
 
-
-
   lifecycle_rule {
     id = "auto-delete-after-1-days-${var.user}-${var.stage}"
     prefix = ""
