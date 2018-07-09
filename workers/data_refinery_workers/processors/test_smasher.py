@@ -109,7 +109,7 @@ def prepare_job():
     pjda = ProcessorJobDatasetAssociation()
     pjda.processor_job = pj
     pjda.dataset = ds
-    pjda.save() 
+    pjda.save()
 
     return pj
 
@@ -154,7 +154,7 @@ class SmasherTestCase(TestCase):
             dataset.save()
 
             # Cleanup
-            os.remove(final_context['output_file']) 
+            os.remove(final_context['output_file'])
 
         for scale_type in ['NONE', 'MINMAX', 'STANDARD', 'ROBUST']:
             dataset = Dataset.objects.get(id=dsid)
@@ -308,7 +308,7 @@ class SmasherTestCase(TestCase):
 
     @tag("smasher")
     def test_no_smash_all_diff_species(self):
-        """ Smashing together with 'ALL' with different species should 
+        """ Smashing together with 'ALL' with different species should
         cause a 0 length data frame after inner join. """
 
         job = ProcessorJob()
@@ -521,6 +521,7 @@ class SmasherTestCase(TestCase):
         self.assertTrue(ds.is_cross_technology())
         final_context = smasher.smash(pj.pk, upload=False)
         self.assertTrue(os.path.exists(final_context['output_file']))
+        os.remove(final_context['output_file'])
         self.assertEqual(len(final_context['final_frame'].columns), 2)
 
         # THEN BY EXPERIMENT
@@ -532,6 +533,7 @@ class SmasherTestCase(TestCase):
 
         final_context = smasher.smash(pj.pk, upload=False)
         self.assertTrue(os.path.exists(final_context['output_file']))
+        os.remove(final_context['output_file'])
         self.assertEqual(len(final_context['final_frame'].columns), 1)
 
         # THEN BY ALL
@@ -543,6 +545,7 @@ class SmasherTestCase(TestCase):
 
         final_context = smasher.smash(pj.pk, upload=False)
         self.assertTrue(os.path.exists(final_context['output_file']))
+        os.remove(final_context['output_file'])
         self.assertEqual(len(final_context['final_frame'].columns), 2)
 
     @tag("smasher")
