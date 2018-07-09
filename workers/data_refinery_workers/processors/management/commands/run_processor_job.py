@@ -33,10 +33,10 @@ class Command(BaseCommand):
             affy_to_pcl(options["job_id"])
         elif job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_SHORT:
             from data_refinery_workers.processors.transcriptome_index import build_transcriptome_index
-            build_transcriptome_index(options["job_id"], length="long")
+            build_transcriptome_index(options["job_id"], length="short")
         elif job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_LONG:
             from data_refinery_workers.processors.transcriptome_index import build_transcriptome_index
-            build_transcriptome_index(options["job_id"], length="short")
+            build_transcriptome_index(options["job_id"], length="long")
         elif job_type is ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL:
             from data_refinery_workers.processors.agilent_twocolor import agilent_twocolor_to_pcl
             agilent_twocolor_to_pcl(options["job_id"])

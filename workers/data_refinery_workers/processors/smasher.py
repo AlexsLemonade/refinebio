@@ -14,6 +14,7 @@ from django.utils import timezone
 from typing import Dict
 
 import pandas as pd
+import numpy as np
 from sklearn import preprocessing
 
 from data_refinery_common.logging import get_and_configure_logger
@@ -74,9 +75,26 @@ def _smash(job_context: Dict) -> Dict:
             # Merge all the frames into one
             all_frames = []
             for computed_file in input_files:
-                data = pd.DataFrame.from_csv(str(computed_file.absolute_file_path), sep='\t', header=0)
+                computed_file_path = str(computed_file.absolute_file_path)
+                data = pd.DataFrame.from_csv(computed_file_path, sep='\t', header=0)
+
+                # via https://github.com/AlexsLemonade/refinebio/issues/330:
+                #   aggregating by experiment -> return untransformed output from tximport
+                #   aggregating by species -> log2(x + 1) tximport output               
+                if job_context['dataset'].aggregate_by == 'SPECIES':
+                    if 'lengthScaledTPM' in computed_file_path:
+                        data = data + 1
+                        data = np.log2(data)
+
+                # Ensure that we don't have any dangling Brainarray-generated probe symbols.
+                # BA likes to leave '_at', signifying probe identifiers,
+                # on their converted, non-probe identifiers. It makes no sense.
+                # So, we chop them off and don't worry about it.
+                data.index = data.index.str.replace('_at', '')
+
                 all_frames.append(data)
                 num_samples = num_samples + 1
+
             job_context['all_frames'] = all_frames
 
             merged = all_frames[0]
@@ -165,6 +183,7 @@ def _smash(job_context: Dict) -> Dict:
         job_context['failure_reason'] = str(e)
         return job_context
 
+    job_context['metadata'] = metadata
     job_context['dataset'].success = True
     job_context['dataset'].save()
 
@@ -236,7 +255,7 @@ def _upload_and_notify(job_context: Dict) -> Dict:
                         'Subject': {
                             'Charset': CHARSET,
                             'Data': SUBJECT,
-                        },
+                        }
                     },
                     Source=SENDER,
                 )
