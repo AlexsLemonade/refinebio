@@ -123,6 +123,14 @@ variable "scale_down_threshold" {
   default = "10"
 }
 
+variable "raven_dsn" {
+  default = ""
+}
+
+variable "raven_dsn_api" {
+  default = ""
+}
+
 # API
 variable "api_docker_image" {
   default = "dr_api:latest"
@@ -165,6 +173,10 @@ output "environment_variables" {
       value = "${var.running_in_cloud}"},
     {name = "USE_S3"
       value = "${var.use_s3}"},
+    {name = "RAVEN_DSN"
+      value = "${var.raven_dsn}"},
+    {name = "RAVEN_DSN_API"
+      value = "${var.raven_dsn_api}"},
     {name = "S3_BUCKET_NAME"
       value = "${aws_s3_bucket.data_refinery_bucket.id}"},
     {name = "S3_RESULTS_BUCKET_NAME"
