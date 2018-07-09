@@ -167,6 +167,9 @@ resource "aws_lb_target_group_attachment" "api-https" {
   port = 443
 }
 
+# This is the SSL certificate for the site itself. We can use ACM for
+# this since we're using cloudfront. The cert for the API is created
+# an installed by certbot.
 resource "aws_acm_certificate" "ssl-cert" {
   domain_name = "staging.refine.bio"
   validation_method = "DNS"
@@ -222,11 +225,19 @@ resource "aws_cloudfront_distribution" "static-distribution" {
       }
     }
 
-    viewer_protocol_policy = "allow-all" # Change this to redirect-to-https
-    # XXX: This might make things pricey, but what should they actually be?
-    min_ttl                = 0
-    default_ttl            = 0
-    max_ttl                = 0
+    viewer_protocol_policy = "redirect-to-https"
+
+    # As per: https://aws.amazon.com/cloudfront/pricing/
+    #   "If you are using an AWS origin, effective December 1, 2014,
+    #   data transferred from origin to edge locations (Amazon
+    #   CloudFront "origin fetches") will be free of charge."
+    # Which means that having a TTL won't save us money, but might
+    # make the site load faster for certain users. However it can also
+    # cause users to get an outdated site for the duration of the
+    # TTL. Accuracy trumps speed for us so TTL's aren't worth it.
+    min_ttl = 0
+    default_ttl = 0
+    max_ttl = 0
   }
 
   restrictions {

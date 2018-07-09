@@ -22,8 +22,9 @@ cp nginx.conf /etc/nginx/nginx.conf
 service nginx restart
 
 if [[ ${stage} == "staging" || ${stage} == "prod" ]]; then
-    # Create and install SSL Certificate
-    # Only necessary on staging and prod
+    # Create and install SSL Certificate for the API.
+    # Only necessary on staging and prod.
+    # We cannot use ACM for this because *.bio is not a Top Level Domain that Route53 supports.
     apt-get install -y software-properties-common
     add-apt-repository ppa:certbot/certbot
     apt-get update
