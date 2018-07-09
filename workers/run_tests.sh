@@ -203,12 +203,16 @@ if [[ -z $tag || $tag == "smasher" ]]; then
     pcl_name3="GSM1238108-tbl-1.txt"
     pcl_name4="GSM1487313_liver.PCL"
     pcl_name5="SRP149598_gene_lengthScaledTPM.tsv"
+    pcl_name6="GSM1084806-tbl-1.txt"
+    pcl_name7="GSM1084807-tbl-1.txt"
     pcl_test_raw_dir="$volume_directory/PCL"
     pcl_test_data_1="$pcl_test_raw_dir/$pcl_name"
     pcl_test_data_2="$pcl_test_raw_dir/$pcl_name2"
     pcl_test_data_3="$pcl_test_raw_dir/$pcl_name3"
     pcl_test_data_4="$pcl_test_raw_dir/$pcl_name4"
     pcl_test_data_5="$pcl_test_raw_dir/$pcl_name5"
+    pcl_test_data_6="$pcl_test_raw_dir/$pcl_name6"
+    pcl_test_data_7="$pcl_test_raw_dir/$pcl_name7"
     if [ ! -e "$pcl_test_data_1" ]; then
         mkdir -p $pcl_test_raw_dir
         echo "Downloading PCL for tests."
@@ -234,6 +238,16 @@ if [[ -z $tag || $tag == "smasher" ]]; then
         echo "Downloading PCL5 for tests."
         wget -q -O $pcl_test_data_5 \
              "$test_data_repo/$pcl_name5"
+    fi
+    if [ ! -e "$pcl_test_data_6" ]; then
+        echo "Downloading PCL6 for tests."
+        wget -q -O $pcl_test_data_6 \
+             "$test_data_repo/$pcl_name6"
+    fi
+    if [ ! -e "$pcl_test_data_7" ]; then
+        echo "Downloading PCL7 for tests."
+        wget -q -O $pcl_test_data_7 \
+             "$test_data_repo/$pcl_name7"
     fi
 
     export AWS_ACCESS_KEY_ID=`aws configure get default.aws_access_key_id`
