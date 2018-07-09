@@ -80,7 +80,7 @@ def _smash(job_context: Dict) -> Dict:
 
                 # via https://github.com/AlexsLemonade/refinebio/issues/330:
                 #   aggregating by experiment -> return untransformed output from tximport
-                #   aggregating by species -> log2(x + 1) tximport output               
+                #   aggregating by species -> log2(x + 1) tximport output
                 if job_context['dataset'].aggregate_by == 'SPECIES':
                     if 'lengthScaledTPM' in computed_file_path:
                         data = data + 1
@@ -113,8 +113,8 @@ def _smash(job_context: Dict) -> Dict:
                 scale_funtion = scalers[job_context['dataset'].scale_by]
                 scaler = scale_funtion(copy=True)
                 scaler.fit(transposed)
-                scaled = pd.DataFrame(  scaler.transform(transposed), 
-                                        index=transposed.index, 
+                scaled = pd.DataFrame(  scaler.transform(transposed),
+                                        index=transposed.index,
                                         columns=transposed.columns
                                     )
                 # Untranspose
@@ -124,7 +124,7 @@ def _smash(job_context: Dict) -> Dict:
                 untransposed = transposed.transpose()
 
             job_context['final_frame'] = untransposed
-            
+
             # Write to temp file with dataset UUID in filename.
             outfile = smash_path + key + ".tsv"
             untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
@@ -164,15 +164,16 @@ def _smash(job_context: Dict) -> Dict:
         metadata['files'] = os.listdir(smash_path)
         # Metadata to JSON
         metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-        with open(smash_path + 'metadata.json', 'w') as metadata_file: 
+        with open(smash_path + 'metadata.json', 'w') as metadata_file:
             json.dump(metadata, metadata_file, indent=4, sort_keys=True)
 
         # Finally, compress all files into a zip
-        final_zip = smash_path + str(job_context['dataset'].id)
-        shutil.make_archive(final_zip, 'zip', smash_path)
-        job_context["output_file"] = final_zip + ".zip"
+        shutil.make_archive(smash_path, 'zip', smash_path)
+        job_context["output_file"] = smash_path + ".zip"
+        # and clean up the unzipped directory.
+        shutil.rmtree(smash_path)
     except Exception as e:
-        logger.exception("Could not smash dataset.", 
+        logger.exception("Could not smash dataset.",
                         dataset_id=job_context['dataset'].id,
                         job_id=job_context['job_id'],
                         input_files=job_context['input_files'])
@@ -202,8 +203,8 @@ def _upload_and_notify(job_context: Dict) -> Dict:
         # Note that file expiry is handled by the S3 object lifecycle,
         # managed by terraform.
         s3_client.upload_file(
-                job_context["output_file"], 
-                RESULTS_BUCKET, 
+                job_context["output_file"],
+                RESULTS_BUCKET,
                 job_context["output_file"].split('/')[-1],
                 ExtraArgs={'ACL':'public-read'}
             )
@@ -259,7 +260,7 @@ def _upload_and_notify(job_context: Dict) -> Dict:
                     },
                     Source=SENDER,
                 )
-            # Display an error if something goes wrong. 
+            # Display an error if something goes wrong.
             except ClientError as e:
                 logger.error(e.response['Error']['Message'])
             else:
