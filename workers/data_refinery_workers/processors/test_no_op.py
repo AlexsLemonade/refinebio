@@ -118,5 +118,5 @@ class NOOPTestCase(TestCase):
         assoc1.save()
 
         final_context = no_op.no_op_processor(job.pk)
-        import pdb
-        pdb.set_trace()
+        self.assertTrue(final_context['success'])
+        self.assertTrue(os.path.exists(final_context['output_file_path']))
