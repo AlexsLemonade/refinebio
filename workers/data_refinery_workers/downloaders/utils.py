@@ -65,7 +65,18 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
     """
     for original_file in original_files:
         sample_object = original_file.samples.first()
-        pipeline_to_apply = determine_processor_pipeline(sample_object)
+
+        if original_file.filename[-4:] == ".xml":
+            logger.info("Skipping useless file",
+                file=original_file.id,
+                filename=original_file.filename)
+            continue
+
+        # We NO_OP processed data. It's what we do.
+        if '.processed' in original_file.source_url:
+            pipeline_to_apply = ProcessorPipeline.NO_OP
+        else:
+            pipeline_to_apply = determine_processor_pipeline(sample_object)
 
         if pipeline_to_apply == ProcessorPipeline.NONE:
             logger.info("No valid processor pipeline found to apply to sample.",
