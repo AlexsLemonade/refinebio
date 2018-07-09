@@ -168,8 +168,9 @@ def _smash(job_context: Dict) -> Dict:
             json.dump(metadata, metadata_file, indent=4, sort_keys=True)
 
         # Finally, compress all files into a zip
-        shutil.make_archive(smash_path, 'zip', smash_path)
-        job_context["output_file"] = smash_path + ".zip"
+        final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk)
+        shutil.make_archive(final_zip_base, 'zip', smash_path)
+        job_context["output_file"] = final_zip_base + ".zip"
         # and clean up the unzipped directory.
         shutil.rmtree(smash_path)
     except Exception as e:
