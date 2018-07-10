@@ -353,6 +353,9 @@ def validate_dataset(data):
             if type(value) != list:
                 raise serializers.ValidationError("`data` must be a dict of lists. Problem with `" + str(key) + "`")
 
+            if len(value) != len(set(value)):
+                raise serializers.ValidationError("Duplicate values detected in " + str(value))
+
     else:
         raise serializers.ValidationError("`data` must be a dict of lists.")
 
