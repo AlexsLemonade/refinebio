@@ -128,7 +128,7 @@ class Sample(models.Model):
         metadata['subject'] = self.subject
         metadata['compound'] = self.compound
         metadata['time'] = self.time
-        metadata['platform'] = self.get_pretty_platform()
+        metadata['platform'] = self.pretty_platform
         return metadata
 
     def get_result_files(self):
