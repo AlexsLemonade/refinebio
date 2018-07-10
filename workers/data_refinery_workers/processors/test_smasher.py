@@ -56,7 +56,6 @@ def prepare_job():
     computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
     computed_file.result = result
     computed_file.size_in_bytes = 123
-    computed_file.is_smashable = True
     computed_file.save()
 
     assoc = SampleComputedFileAssociation()
@@ -90,7 +89,6 @@ def prepare_job():
     computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
     computed_file.result = result
     computed_file.size_in_bytes = 123
-    computed_file.is_smashable = True
     computed_file.save()
 
     assoc = SampleComputedFileAssociation()
@@ -133,23 +131,22 @@ class SmasherTestCase(TestCase):
         dataset.get_samples_by_experiment()
         dataset.get_samples_by_species()
         dataset.get_aggregated_samples()
-        dsid = dataset.id
 
         # XXX: agg_type 'SPECIES' hangs on Linux, not OSX.
         # Don't know why yet.
         # for ag_type in ['ALL', 'EXPERIMENT', 'SPECIES']:
         for ag_type in ['ALL', 'EXPERIMENT']:
-            dataset = Dataset.objects.get(id=dsid)
+            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
             dataset.aggregate_by = ag_type
             dataset.save()
 
+            print ("Smashing " + ag_type)
             final_context = smasher.smash(job.pk, upload=False)
-
             # Make sure the file exists and is a valid size
             self.assertNotEqual(os.path.getsize(final_context['output_file']), 0)
             self.assertEqual(final_context['dataset'].is_processed, True)
 
-            dataset = Dataset.objects.get(id=dsid)
+            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
             dataset.is_processed = False
             dataset.save()
 
@@ -157,31 +154,34 @@ class SmasherTestCase(TestCase):
             os.remove(final_context['output_file'])
 
         for scale_type in ['NONE', 'MINMAX', 'STANDARD', 'ROBUST']:
-            dataset = Dataset.objects.get(id=dsid)
+            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
             dataset.aggregate_by = 'EXPERIMENT'
             dataset.scale_by = scale_type
             dataset.save()
 
             print ("Smashing " + scale_type)
             final_context = smasher.smash(job.pk, upload=False)
-
             # Make sure the file exists and is a valid size
             self.assertNotEqual(os.path.getsize(final_context['output_file']), 0)
             self.assertEqual(final_context['dataset'].is_processed, True)
 
-            dataset = Dataset.objects.get(id=dsid)
+            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
             dataset.is_processed = False
             dataset.save()
 
             # Cleanup
             os.remove(final_context['output_file'])
 
-        # Make sure we can use our outputs mathematically
+        # Stats
         for scale_type in ['MINMAX', 'STANDARD']:
-            dataset = Dataset.objects.get(id=dsid)
+            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
             dataset.aggregate_by = 'EXPERIMENT'
             dataset.scale_by = scale_type
             dataset.save()
+
+            print("###")
+            print("# " + scale_type)
+            print('###')
 
             final_context = smasher.smash(job.pk, upload=False)
             final_frame = final_context['final_frame']
@@ -248,9 +248,6 @@ class SmasherTestCase(TestCase):
         computed_files = sample.get_result_files()
         self.assertEqual(computed_files.count(), 2)
 
-        smashable_file = sample.get_most_recent_smashable_result_file()
-        self.assertTrue(smashable_file.is_smashable)
-
     @tag("smasher")
     def test_fail(self):
         """ Test our ability to fail """
@@ -274,7 +271,6 @@ class SmasherTestCase(TestCase):
         computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
-        computed_file.is_smashable = True
         computed_file.save()
 
         assoc = SampleComputedFileAssociation()
@@ -345,7 +341,6 @@ class SmasherTestCase(TestCase):
         computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
-        computed_file.is_smashable = True
         computed_file.save()
 
         result = ComputationalResult()
@@ -383,7 +378,6 @@ class SmasherTestCase(TestCase):
         computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
-        computed_file.is_smashable = True
         computed_file.save()
 
         assoc = SampleComputedFileAssociation()
@@ -407,8 +401,6 @@ class SmasherTestCase(TestCase):
 
         dsid = ds.id
         ds = Dataset.objects.get(id=dsid)
-
-        print("This is supposed to fail!:")
         print(ds.failure_reason)
         print(final_context['dataset'].failure_reason)
 
@@ -416,9 +408,87 @@ class SmasherTestCase(TestCase):
         self.assertNotEqual(ds.failure_reason, "")
         self.assertEqual(len(final_context['merged']), 0)
 
-        ds.delete()
-        job.delete()
+    @tag("smasher")
+    def test_log2(self):
+        pj = ProcessorJob()
+        pj.pipeline_applied = "SMASHER"
+        pj.save()
 
+        # Has non-log2 data:
+        # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE44421
+        # ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE44nnn/GSE44421/miniml/GSE44421_family.xml.tgz
+        experiment = Experiment()
+        experiment.accession_code = "GSE44421"
+        experiment.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+
+        sample = Sample()
+        sample.accession_code = 'GSM1084806'
+        sample.title = 'GSM1084806'
+        sample.organism = homo_sapiens
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "GSM1084806-tbl-1.txt"
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
+        computed_file.result = result
+        computed_file.size_in_bytes = 123
+        computed_file.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
+        sample = Sample()
+        sample.accession_code = 'GSM1084807'
+        sample.title = 'GSM1084807'
+        sample.organism = homo_sapiens
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "GSM1084807-tbl-1.txt"
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
+        computed_file.result = result
+        computed_file.size_in_bytes = 123
+        computed_file.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
+        ds = Dataset()
+        ds.data = {'GSE44421': ['GSM1084806', 'GSM1084807']}
+        ds.aggregate_by = 'EXPERIMENT'
+        ds.scale_by = 'MINMAX'
+        ds.email_address = "null@derp.com"
+        ds.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = pj
+        pjda.dataset = ds
+        pjda.save()
+
+        final_context = smasher.smash(pj.pk, upload=False)
+        ds = Dataset.objects.get(id=ds.id)
+
+        self.assertTrue(final_context['success'])
+    
     @tag("smasher")
     def test_dualtech_smash(self):
         """ """
@@ -558,3 +628,4 @@ class SmasherTestCase(TestCase):
         import pandas
         import sklearn
         import sympy
+

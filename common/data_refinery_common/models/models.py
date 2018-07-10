@@ -140,7 +140,7 @@ class Sample(models.Model):
 
     def get_result_files(self):
         """ Get all of the ComputedFile objects associated with this Sample """
-        return self.computed_files
+        return self.computed_files.all()
 
     def get_most_recent_smashable_result_file(self):
         """ Get all of the ComputedFile objects associated with this Sample """
