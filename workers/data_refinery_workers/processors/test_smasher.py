@@ -439,7 +439,7 @@ class SmasherTestCase(TestCase):
 
         computed_file = ComputedFile()
         computed_file.filename = "GSM1084806-tbl-1.txt"
-        computed_file.absolute_file_path = "/home/user/data_store/raw/TEST/NO_OP/" + computed_file.filename
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.save()
@@ -462,7 +462,7 @@ class SmasherTestCase(TestCase):
 
         computed_file = ComputedFile()
         computed_file.filename = "GSM1084807-tbl-1.txt"
-        computed_file.absolute_file_path = "/home/user/data_store/raw/TEST/NO_OP/" + computed_file.filename
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.save()
