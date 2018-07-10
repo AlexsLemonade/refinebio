@@ -309,6 +309,8 @@ def _update_result_objects(job_context: Dict) -> Dict:
     dataset.expires_on = timezone.now() + timedelta(days=1)
     dataset.save()
 
+    job_context['success'] = True
+
     return job_context
 
 def smash(job_id: int, upload=True) -> None:
