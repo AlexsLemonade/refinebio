@@ -144,7 +144,11 @@ def determine_processor_pipeline(sample_object: Sample) -> ProcessorPipeline:
             elif sample_object.manufacturer == "UNKNOWN":
                 logger.error("Found a Sample on a supported platform with an unknown manufacturer.",
                              sample=sample_object.id,
-                             platform_accession=sample_object.platform_accession_code)
+                             platform_accession=sample_object.platform_accession_code,
+                             accession=sample_object.accession_code,
+                             manufacturer=sample_object.manufacturer,
+                             platform_name=sample_object.platform_name
+                            )
                 return ProcessorPipeline.NONE
 
     elif sample_object.has_raw:
