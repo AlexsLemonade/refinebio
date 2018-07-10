@@ -23,7 +23,8 @@ from data_refinery_api.views import (
     Stats,
     CreateDatasetView,
     DatasetView,
-    APITokenView
+    APITokenView,
+    TranscriptomeIndexDetail
 )
 
 # This provides _public_ access to the /admin interface!
@@ -112,6 +113,10 @@ urlpatterns = [
     # Dashboard Driver
     url(r'^stats/$', Stats.as_view(), name="stats"),
 
+    # Transcriptome Indices
+    url(r'^transcriptome_indices', TranscriptomeIndexDetail.as_view(),
+        name="transcriptome-indices"),
+
     # Admin
     url(r'^admin/', admin.site.urls),
 
@@ -119,9 +124,8 @@ urlpatterns = [
     url(r'^docs/', include_docs_urls(title='Refine.bio API'), name="docs_schema"),
 
     # Root
-    url(r'^', APIRoot.as_view(), name="api_root"),
+    url(r'^$', APIRoot.as_view(), name="api_root"),
 ]
 
 # This adds support explicitly typed endpoints such that appending '.json' returns that application type.
 urlpatterns = format_suffix_patterns(urlpatterns)
-

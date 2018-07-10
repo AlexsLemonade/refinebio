@@ -4,7 +4,7 @@ import logging
 import sys
 
 from data_refinery_common.utils import get_worker_id
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable_gracefully
 
 
 # Most of the formatting in this string is for the logging system. All
@@ -40,5 +40,19 @@ def get_and_configure_logger(name: str) -> logging.Logger:
     handler.setFormatter(daiquiri.formatter.ColorExtrasFormatter(
         fmt=FORMAT_STRING, keywords=[]))
     logger.logger.addHandler(handler)
+
+    # This is the Sentry handler
+    if "data_refinery_api" in name:
+        raven_dsn = get_env_variable_gracefully("RAVEN_DSN_API", False)
+    else:
+        raven_dsn = get_env_variable_gracefully("RAVEN_DSN", False)
+    if raven_dsn:
+        from raven.contrib.django.handlers import SentryHandler
+
+        handler = SentryHandler()
+        handler.setFormatter(daiquiri.formatter.ColorExtrasFormatter(
+            fmt=FORMAT_STRING, keywords=[]))
+        handler.setLevel(logging.WARNING)
+        logger.logger.addHandler(handler)
 
     return logger

@@ -156,7 +156,9 @@ class ExternalSourceSurveyor:
                 # downloader_job to be left floating
                 logger.exception("Failed to enqueue downloader job.",
                                  survey_job=self.survey_job.id,
-                                 downloader_job=downloader_job.id)
+                                 downloader_job=downloader_job.id,
+                                 error=str(e)
+                                )
                 downloader_job.success = False
                 downloader_job.failure_reason = str(e)
                 downloader_job.save()

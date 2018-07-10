@@ -31,6 +31,9 @@ job "TRANSCRIPTOME_INDEX" {
         DATABASE_PORT = "${{DATABASE_PORT}}"
         DATABASE_TIMEOUT = "${{DATABASE_TIMEOUT}}"
 
+        RAVEN_DSN="${{RAVEN_DSN}}"
+        RAVEN_DSN_API="${{RAVEN_DSN_API}}"
+
         RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
 
         USE_S3 = "${{USE_S3}}"
@@ -43,6 +46,8 @@ job "TRANSCRIPTOME_INDEX" {
 
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
+
+        S3_TRANSCRIPTOME_INDEX_BUCKET_NAME = "${{S3_TRANSCRIPTOME_INDEX_BUCKET_NAME}}"
       }
 
       # The resources the job will require.
