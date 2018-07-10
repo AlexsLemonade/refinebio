@@ -487,8 +487,7 @@ class SmasherTestCase(TestCase):
         final_context = smasher.smash(pj.pk, upload=False)
         ds = Dataset.objects.get(id=ds.id)
 
-        self.assertTrue(ds.success)
-        self.assertEqual(ds.failure_reason, "")
+        self.assertTrue(final_context['success'])
     
     @tag("smasher")
     def test_dualtech_smash(self):
