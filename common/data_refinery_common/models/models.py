@@ -3,6 +3,9 @@ import io
 import os
 import pytz
 import uuid
+import boto3
+
+from botocore.client import Config
 
 from datetime import datetime
 from functools import partial
@@ -14,6 +17,11 @@ from django.db import models
 from django.utils import timezone
 
 from data_refinery_common.models.organism import Organism
+from data_refinery_common.utils import get_s3_url
+
+# We have to set the signature_version to v4 since us-east-1 buckets require
+# v4 authentication.
+S3 = boto3.client('s3', config=Config(signature_version='s3v4'))
 
 """
 # First Order Classes
@@ -384,7 +392,7 @@ class OrganismIndex(models.Model):
         base_manager_name = 'public_objects'
 
     def __str__(self):
-        return "OrganismIndex " + str(self.pk) + ": " + self.organism.name + ' [' + self.index_type + '] - ' + str(self.salmon_version) 
+        return "OrganismIndex " + str(self.pk) + ": " + self.organism.name + ' [' + self.index_type + '] - ' + str(self.salmon_version)
 
     # Managers
     objects = models.Manager()
@@ -402,15 +410,28 @@ class OrganismIndex(models.Model):
     # http://ensemblgenomes.org/info/about/release_cycle
     # Determined by hitting:
     # http://rest.ensembl.org/info/software?content-type=application/json
-    source_version = models.CharField(max_length=255)
+    source_version = models.CharField(max_length=255, default="92")
 
     # This matters, for instance salmon 0.9.0 indexes don't work with 0.10.0
-    salmon_version = models.CharField(max_length=255)
+    salmon_version = models.CharField(max_length=255, default="0.9.1")
+
+    # S3 Information
+    s3_url = models.CharField(max_length=255, default="")
 
     # Common Properties
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
+
+    def upload_to_s3(self, absolute_file_path, bucket_name, logger):
+        if bucket_name is not None:
+            s3_key = self.organism.name + '_' + self.index_type + '.tar.gz'
+            S3.upload_file(absolute_file_path, bucket_name, s3_key,
+                           ExtraArgs={'ACL': 'public-read'})
+            self.s3_url = get_s3_url(bucket_name, s3_key)
+            logger.info("Upload complete")
+        else:
+            logger.info("No S3 bucket in environment, not uploading")
 
     def save(self, *args, **kwargs):
         """ On save, update timestamps """
