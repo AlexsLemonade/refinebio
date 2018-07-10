@@ -151,6 +151,7 @@ def download_array_express(job_id: int) -> None:
         # source of truth about the sample's platform.
         sample_object = sample_objects[0]
         if og_file["filename"].upper()[-4:] == ".CEL" and sample_object.has_raw:
+            cel_file_platform = None
             platform_accession_code = "UNSUPPORTED"
             try:
                 cel_file_platform = microarray.get_platform_from_CEL(
@@ -159,7 +160,7 @@ def download_array_express(job_id: int) -> None:
                 for platform in get_supported_microarray_platforms():
                     if platform["platform_accession"] == cel_file_platform:
                         platform_accession_code = platform["platform_accession"]
-            except Exception:
+            except Exception as e:
                 platform_accession_code = "UNDETERMINABLE"
                 logger.warn("Unable to determine platform from CEL file: "
                             + original_file.absolute_file_path,
@@ -169,9 +170,11 @@ def download_array_express(job_id: int) -> None:
                 logger.error("Found a raw .CEL file with an unsupported platform!",
                              file_name=original_file.absolute_file_path,
                              sample=sample_object.id,
-                             downloader_job=job_id)
+                             downloader_job=job_id,
+                             cel_file_platform=cel_file_platform)
                 job.failure_reason = ("Found a raw .CEL file with an unsupported platform: "
-                                      + original_file.absolute_file_path)
+                                      + original_file.absolute_file_path + " ("
+                                      + str(cel_file_platform) + ")")
                 success = False
             elif platform_accession_code == "UNDETERMINABLE":
                 # If we cannot determine the platform from the
