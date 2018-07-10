@@ -128,6 +128,7 @@ class Sample(models.Model):
         metadata['subject'] = self.subject
         metadata['compound'] = self.compound
         metadata['time'] = self.time
+        metadata['platform'] = self.get_pretty_platform()
         return metadata
 
     def get_result_files(self):
@@ -144,6 +145,23 @@ class Sample(models.Model):
     def pipelines(self):
         """ Returns a list of related pipelines """
         return [p for p in self.results.values_list('pipeline', flat=True).distinct()]
+
+    @property
+    def pretty_platform(self):
+        """ Turns 
+        
+        [HT_HG-U133_Plus_PM] Affymetrix HT HG-U133+ PM Array Plate
+
+        into
+
+        Affymetrix HT HG-U133+ PM Array Plate (hthgu133pluspm)
+        
+        """
+        if ']' in self.platform_name:
+            platform_base = self.platform_name.split(']')[1].strip()
+        else:
+            platform_base = self.platform_name
+        return platform_base + ' (' + self.platform_accession_code + ')'
 
 class SampleAnnotation(models.Model):
     """ Semi-standard information associated with a Sample """
