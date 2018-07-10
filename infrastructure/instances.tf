@@ -427,7 +427,11 @@ resource "aws_instance" "api_server_1" {
   vpc_security_group_ids = ["${aws_security_group.data_refinery_api.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
-  depends_on = ["aws_db_instance.postgres_db"]
+  depends_on = [
+    "aws_db_instance.postgres_db",
+    "aws_security_group_rule.data_refinery_api_http",
+    "aws_security_group_rule.data_refinery_api_outbound"
+  ]
   user_data = "${data.template_file.api_server_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"
 

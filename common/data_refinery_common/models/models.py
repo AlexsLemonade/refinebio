@@ -392,7 +392,7 @@ class OrganismIndex(models.Model):
         base_manager_name = 'public_objects'
 
     def __str__(self):
-        return "OrganismIndex " + str(self.pk) + ": " + self.organism.name + ' [' + self.index_type + '] - ' + str(self.salmon_version) 
+        return "OrganismIndex " + str(self.pk) + ": " + self.organism.name + ' [' + self.index_type + '] - ' + str(self.salmon_version)
 
     # Managers
     objects = models.Manager()
@@ -410,10 +410,10 @@ class OrganismIndex(models.Model):
     # http://ensemblgenomes.org/info/about/release_cycle
     # Determined by hitting:
     # http://rest.ensembl.org/info/software?content-type=application/json
-    source_version = models.CharField(max_length=255)
+    source_version = models.CharField(max_length=255, default="92")
 
     # This matters, for instance salmon 0.9.0 indexes don't work with 0.10.0
-    salmon_version = models.CharField(max_length=255)
+    salmon_version = models.CharField(max_length=255, default="0.9.1")
 
     # S3 Information
     s3_url = models.CharField(max_length=255, default="")
