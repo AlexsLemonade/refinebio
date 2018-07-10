@@ -25,7 +25,7 @@ WORKDIR /home/user
 RUN pip3 install --upgrade pip
 
 # Smasher-specific requirements
-RUN pip3 install numpy scipy matplotlib pandas scikit-learn sympy nose
+RUN pip3 install numpy scipy matplotlib pandas==0.23.1 scikit-learn sympy nose
 # End smasher-specific
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
