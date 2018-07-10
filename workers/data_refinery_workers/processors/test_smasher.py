@@ -107,7 +107,7 @@ def prepare_job():
     pjda = ProcessorJobDatasetAssociation()
     pjda.processor_job = pj
     pjda.dataset = ds
-    pjda.save() 
+    pjda.save()
 
     return pj
 
@@ -151,7 +151,7 @@ class SmasherTestCase(TestCase):
             dataset.save()
 
             # Cleanup
-            os.remove(final_context['output_file']) 
+            os.remove(final_context['output_file'])
 
         for scale_type in ['NONE', 'MINMAX', 'STANDARD', 'ROBUST']:
             dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
@@ -304,7 +304,7 @@ class SmasherTestCase(TestCase):
 
     @tag("smasher")
     def test_no_smash_all_diff_species(self):
-        """ Smashing together with 'ALL' with different species should 
+        """ Smashing together with 'ALL' with different species should
         cause a 0 length data frame after inner join. """
 
         job = ProcessorJob()
@@ -439,7 +439,7 @@ class SmasherTestCase(TestCase):
 
         computed_file = ComputedFile()
         computed_file.filename = "GSM1084806-tbl-1.txt"
-        computed_file.absolute_file_path = "/home/user/data_store/raw/TEST/PCL/" + computed_file.filename
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.save()
@@ -462,7 +462,7 @@ class SmasherTestCase(TestCase):
 
         computed_file = ComputedFile()
         computed_file.filename = "GSM1084807-tbl-1.txt"
-        computed_file.absolute_file_path = "/home/user/data_store/raw/TEST/PCL/" + computed_file.filename
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
         computed_file.save()
@@ -487,8 +487,7 @@ class SmasherTestCase(TestCase):
         final_context = smasher.smash(pj.pk, upload=False)
         ds = Dataset.objects.get(id=ds.id)
 
-        self.assertTrue(ds.success)
-        self.assertEqual(ds.failure_reason, "")
+        self.assertTrue(final_context['success'])
     
     @tag("smasher")
     def test_dualtech_smash(self):
@@ -592,6 +591,7 @@ class SmasherTestCase(TestCase):
         self.assertTrue(ds.is_cross_technology())
         final_context = smasher.smash(pj.pk, upload=False)
         self.assertTrue(os.path.exists(final_context['output_file']))
+        os.remove(final_context['output_file'])
         self.assertEqual(len(final_context['final_frame'].columns), 2)
 
         # THEN BY EXPERIMENT
@@ -603,6 +603,7 @@ class SmasherTestCase(TestCase):
 
         final_context = smasher.smash(pj.pk, upload=False)
         self.assertTrue(os.path.exists(final_context['output_file']))
+        os.remove(final_context['output_file'])
         self.assertEqual(len(final_context['final_frame'].columns), 1)
 
         # THEN BY ALL
@@ -614,6 +615,7 @@ class SmasherTestCase(TestCase):
 
         final_context = smasher.smash(pj.pk, upload=False)
         self.assertTrue(os.path.exists(final_context['output_file']))
+        os.remove(final_context['output_file'])
         self.assertEqual(len(final_context['final_frame'].columns), 2)
 
     @tag("smasher")
