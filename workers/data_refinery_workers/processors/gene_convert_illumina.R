@@ -56,16 +56,18 @@ db_name <- paste(platform, ".db", sep="")
 message(db_name)
 library(db_name, character.only=TRUE)
 
-# Replace the probe IDs with Ensembles
-exprs[, 1] <- mapIds(get(db_name), keys=exprs[, 1], column="ENSEMBL", keytype="PROBEID")# , multiVals="first")
-res <- exprs
-message(head(res))
-
-# Remove all of the unmapped (NA) values (likely control probes?)
-res <- res[complete.cases(res), ]
-
-# Data here can have duplicate rows that need to be squished together (via mean/max/etc),
-# but this should be done at smash-time so that we can provide options on the squish method.
+# need what the first column is called
+exprs_id_name <- colnames(exprs)[1]
+# don't replace the identifiers in exprs yet
+mapped_list <- mapIds(get(db_name), keys=exprs[, 1], column="ENSEMBL", keytype="PROBEID", multiVals="list")
+# get into data.frame form, should capture one to multiple mapping
+mapped_df <- reshape2::melt(mapped_list)
+# not 100% sure this bit is correct -- might be the other way around
+colnames(mapped_df) <- c("ENSEMBL", "PROBEID")
+annot_exprs_df <- mapped_df %>%
+  dplyr::filter(!is.na(ENSEMBL)) %>%   # dropping unmapped -- mapIds might do this by default!
+  dplyr::inner_join(y = exprs, by = c("PROBEID" = exprs_id_name)) %>%  # annotation heavy lifting
+  dplyr::select(-PROBEID)  # drop the probe ids
 
 # Save to output file
-write.table(res, outFilePath, row.names=FALSE, col.names=TRUE, quote=FALSE, sep="\t")
+write.table(annot_exprs_df, outFilePath, row.names=FALSE, col.names=TRUE, quote=FALSE, sep="\t")
