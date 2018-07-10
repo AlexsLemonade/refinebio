@@ -7,6 +7,7 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
     Organism,
+    OrganismIndex,
     OriginalFile,
     ComputationalResult,
     ComputationalResultAnnotation,
@@ -25,6 +26,20 @@ class OrganismSerializer(serializers.ModelSerializer):
         fields = (
                     'name',
                     'taxonomy_id',
+                )
+
+##
+# Transcriptome Index
+##
+
+class OrganismIndexSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrganismIndex
+        fields = (
+                    's3_url',
+                    'source_version',
+                    'salmon_version',
+                    'last_modified',
                 )
 
 ##
