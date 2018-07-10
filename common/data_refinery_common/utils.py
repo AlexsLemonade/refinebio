@@ -132,6 +132,17 @@ def get_readable_affymetrix_names(mapping_csv: str="config/readable_affymetrix_n
     return READABLE_PLATFORM_NAMES
 
 
+def get_internal_microarray_accession(accession_code):
+    platforms = get_supported_microarray_platforms()
+
+    all_c = []
+    for platform in platforms:
+        if platform['external_accession'] == accession_code:
+            return platform['platform_accession']
+
+    return None
+
+
 def parse_s3_url(url):
     """
     Parses S3 URL.
