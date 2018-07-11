@@ -40,10 +40,6 @@ job "SALMON" {
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
 
-        RAW_PREFIX = "${{RAW_PREFIX}}"
-        TEMP_PREFIX = "${{RAW_PREFIX}}"
-        PROCESSED_PREFIX = "${{PROCESSED_PREFIX}}"
-
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
       }

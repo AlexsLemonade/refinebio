@@ -17,7 +17,3 @@ SERVICE=worker
 USE_S3=False
 S3_BUCKET_NAME=data-refinery
 LOCAL_ROOT_DIR=/home/user/data_store
-
-RAW_PREFIX=raw
-TEMP_PREFIX=temp
-PROCESSED_PREFIX=processed

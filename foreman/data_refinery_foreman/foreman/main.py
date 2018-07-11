@@ -27,15 +27,13 @@ logger = get_and_configure_logger(__name__)
 # greater than this because of the first attempt
 MAX_NUM_RETRIES = 2
 
-# For now it seems like no jobs should take longer than a day to be
-# either picked up or run.
-MAX_DOWNLOADER_RUN_TIME = timedelta(days=1)
-MAX_PROCESSOR_RUN_TIME = timedelta(days=1)
-MAX_QUEUE_TIME = timedelta(days=1)
+# The fastest each thread will repeat its checks.
+# Could be slower if the thread takes longer than this to check its jobs.
+MIN_LOOP_TIME = timedelta(minutes=2)
 
-# To prevent excessive spinning loop no more than once every 30 minutes.
-MIN_LOOP_TIME = timedelta(minutes=30)
-THREAD_WAIT_TIME = 10.0
+# The amount of time the main loop will wait in between checking if
+# threads are still alive and then heart beating.
+THREAD_WAIT_TIME = timedelta(minutes=10)
 
 
 @retry(stop_max_attempt_number=3)
@@ -129,12 +127,11 @@ def retry_failed_downloader_jobs() -> None:
 @do_forever(MIN_LOOP_TIME)
 def retry_hung_downloader_jobs() -> None:
     """Retry downloader jobs that were started but never finished."""
-    minimum_start_time = timezone.now() - MAX_DOWNLOADER_RUN_TIME
     potentially_hung_jobs = DownloaderJob.objects.filter(
         success=None,
         retried=False,
         end_time=None,
-        start_time__lt=minimum_start_time
+        start_time__isnull=False
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -166,13 +163,11 @@ def retry_lost_downloader_jobs() -> None:
     during which the price of spot instance is higher than our bid
     price.
     """
-    minimum_creation_time = timezone.now() - MAX_QUEUE_TIME
     potentially_lost_jobs = DownloaderJob.objects.filter(
         success=None,
         retried=False,
         start_time=None,
-        end_time=None,
-        created_at__lt=minimum_creation_time
+        end_time=None
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -248,12 +243,11 @@ def retry_failed_processor_jobs() -> None:
 @do_forever(MIN_LOOP_TIME)
 def retry_hung_processor_jobs() -> None:
     """Retry processor jobs that were started but never finished."""
-    minimum_start_time = timezone.now() - MAX_PROCESSOR_RUN_TIME
     potentially_hung_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
         end_time=None,
-        start_time__lt=minimum_start_time
+        start_time__isnull=False
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -277,13 +271,11 @@ def retry_hung_processor_jobs() -> None:
 @do_forever(MIN_LOOP_TIME)
 def retry_lost_processor_jobs() -> None:
     """Retry processor jobs which never even got started for too long."""
-    minimum_creation_time = timezone.now() - MAX_QUEUE_TIME
     potentially_lost_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
         start_time=None,
-        end_time=None,
-        created_at__lt=minimum_creation_time
+        end_time=None
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -325,9 +317,14 @@ def monitor_jobs():
 
     # Make sure that no threads die quietly.
     while(True):
-        # This doesn't need to spin faster than this.
-        time.sleep(remaining_time.seconds)
+        start_time = timezone.now()
         for thread in threads:
-            thread.join(THREAD_WAIT_TIME)
             if not thread.is_alive():
                 logger.error("Foreman Thread for the function %s has died!!!!", thread.name)
+
+        loop_time = timezone.now() - start_time
+        if loop_time < THREAD_WAIT_TIME:
+            remaining_time = THREAD_WAIT_TIME - loop_time
+            time.sleep(remaining_time.seconds)
+
+        logger.info("The Foreman's heart is beating, but he does not feel.")

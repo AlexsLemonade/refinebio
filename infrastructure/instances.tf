@@ -61,10 +61,10 @@ data "template_file" "nomad_lead_server_script_smusher" {
 resource "aws_instance" "nomad_server_1" {
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "${var.nomad_server_instance_type}"
-  availability_zone = "${var.region}a"
+  availability_zone = "${var.region}b"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
-  subnet_id = "${aws_subnet.data_refinery_1a.id}"
+  subnet_id = "${aws_subnet.data_refinery_1b.id}"
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
@@ -128,10 +128,10 @@ data "template_file" "nomad_server_script_smusher" {
 resource "aws_instance" "nomad_server_2" {
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "${var.nomad_server_instance_type}"
-  availability_zone = "${var.region}b"
+  availability_zone = "${var.region}a"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
-  subnet_id = "${aws_subnet.data_refinery_1b.id}"
+  subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
@@ -241,10 +241,10 @@ data "template_file" "nomad_client_script_smusher" {
 resource "aws_instance" "nomad_client_1" {
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "${var.client_instance_type}"
-  availability_zone = "${var.region}a"
+  availability_zone = "${var.region}b"
   vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
-  subnet_id = "${aws_subnet.data_refinery_1a.id}"
+  subnet_id = "${aws_subnet.data_refinery_1b.id}"
   depends_on = ["aws_internet_gateway.data_refinery", "aws_instance.nomad_server_1"]
   user_data = "${data.template_file.nomad_client_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"

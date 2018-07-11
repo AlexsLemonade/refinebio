@@ -56,6 +56,15 @@ resource "aws_security_group_rule" "data_refinery_worker_nomad" {
   security_group_id = "${aws_security_group.data_refinery_worker.id}"
 }
 
+resource "aws_security_group_rule" "data_refinery_nomad_from_foreman" {
+  type = "ingress"
+  from_port = 4646
+  to_port = 4646
+  protocol = "tcp"
+  security_group_id = "${aws_security_group.data_refinery_worker.id}"
+  source_security_group_id = "${aws_security_group.data_refinery_foreman.id}"
+}
+
 # Allow Nomad RPC calls to go through to each other. See:
 # https://www.nomadproject.io/guides/cluster/requirements.html#ports-used
 resource "aws_security_group_rule" "data_refinery_worker_nomad_rpc" {
@@ -256,6 +265,17 @@ resource "aws_security_group" "data_refinery_foreman" {
   tags {
     Name = "data-refinery-foreman-${var.user}-${var.stage}"
   }
+}
+
+# Allow the Nomad HTTP API to be accessible by this security group. See:
+# https://www.nomadproject.io/guides/cluster/requirements.html#ports-used
+resource "aws_security_group_rule" "data_refinery_worker_foreman" {
+  type = "ingress"
+  from_port = 4646
+  to_port = 4646
+  protocol = "tcp"
+  self = true
+  security_group_id = "${aws_security_group.data_refinery_foreman.id}"
 }
 
 # XXX: THIS DEFINITELY NEEDS TO BE REMOVED LONG TERM!!!!!!!!!!
