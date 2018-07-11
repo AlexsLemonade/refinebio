@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  # This runs api, common, foreman, end-to-end, and illumina tests.
+  # This runs foreman, end-to-end, and illumina tests.
   # These are grouped together because in total they take less time than our other tests individually.
   main_tests:
     working_directory: ~/refinebio
@@ -34,9 +34,6 @@ jobs:
       - run:
           command: sudo -E ./run_nomad.sh -e test
 
-      # Run API Tests.
-      - run: ./api/run_tests.sh
-
       - run: ./prepare_image.sh -i no_op -s workers -d localhost:5000
       - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
       - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
@@ -44,7 +41,7 @@ jobs:
       - run: ./prepare_image.sh -i no_op -s workers
       - run: ./prepare_image.sh -i downloaders -s workers
       - run: ./prepare_image.sh -i smasher -s workers
-      
+
       # Run Downloader Tests
       # Running these in the same job as the common tests is good
       # because their dockerfiles are very similar so a lot of the
@@ -59,9 +56,6 @@ jobs:
       - run: docker push localhost:5000/dr_no_op
       - run: docker push localhost:5000/dr_smasher
 
-      # Run Common Tests.
-      - run: ./common/run_tests.sh
-
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
@@ -72,10 +66,6 @@ jobs:
           command: .circleci/filter_tests.sh -t smasher
           # Smashing can apparently take a long time on CI
           no_output_timeout: 36000
-      
-      # Run API Tests.
-      - run: sudo chown -R circleci:circleci workers/test_volume/
-      - run: ./api/run_tests.sh
 
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
