@@ -3,18 +3,20 @@
 # Load docker_img_exists function
 source ~/refinebio/common.sh
 
-# Circle doesn't provide $CIRCLE_BRANCH on tag commits. These
-# commands will determine what branch the commit belongs to if it
-# belongs to a single branch.
-num_branches=$(git branch --contains $(git rev-parse HEAD) | wc -l)
-if [[ $num_branches == 2 ]]; then
-    BRANCH_NAME=$(git branch --contains $(git rev-parse HEAD) | tail -n 1 | cut -d' ' -f3)
-fi
+# Circle won't set the branch name for us, so do it ourselves.
+
+# A single tag could potentially be on more than one branch (or even
+# something like: (HEAD detached at v0.8.0))
+# However it cannot be on both master and dev because merges create new commits.
+# Therefore check to see if either master or dev show up in the list
+# of branches containing that tag.
+master_check=$(git branch --contains tags/$CIRCLE_TAG | grep '^  master$')
+dev_check=$(git branch --contains tags/$CIRCLE_TAG | grep '^  dev$')
 
 
-if [ $BRANCH_NAME == "master" ]; then
+if [[ ! -z $master_check ]]; then
     DOCKERHUB_REPO=ccdl
-elif [[ $BRANCH_NAME == "dev" ]]; then
+elif [[ ! -z $dev_check ]]; then
     DOCKERHUB_REPO=ccdlstaging
 else
     echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"

@@ -42,6 +42,8 @@ job "TRANSCRIPTOME_INDEX" {
 
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
+
+        S3_TRANSCRIPTOME_INDEX_BUCKET_NAME = "${{S3_TRANSCRIPTOME_INDEX_BUCKET_NAME}}"
       }
 
       # The resources the job will require.

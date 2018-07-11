@@ -13,6 +13,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.settings import api_settings
+from rest_framework.exceptions import ValidationError
 from rest_framework import status, filters, generics
 
 from data_refinery_common.job_lookup import ProcessorPipeline
@@ -27,7 +28,8 @@ from data_refinery_common.models import (
     ProcessorJob,
     Dataset,
     APIToken,
-    ProcessorJobDatasetAssociation
+    ProcessorJobDatasetAssociation,
+    OrganismIndex
 )
 from data_refinery_api.serializers import (
     ExperimentSerializer,
@@ -35,6 +37,7 @@ from data_refinery_api.serializers import (
     SampleSerializer,
     DetailedSampleSerializer,
     OrganismSerializer,
+    OrganismIndexSerializer,
     PlatformSerializer,
     InstitutionSerializer,
     ComputationalResultSerializer,
@@ -485,3 +488,42 @@ class Stats(APIView):
         data['processor_jobs']['average_time'] = ProcessorJob.objects.filter(start_time__isnull=False, end_time__isnull=False).aggregate(average_time=Avg(F('end_time') - F('start_time')))['average_time']
 
         return Response(data)
+
+###
+# Transcriptome Indices
+###
+
+class TranscriptomeIndexDetail(APIView):
+    """
+    Retrieve the S3 URL and index metadata associated with an OrganismIndex.
+    """
+
+    def get(self, request, format=None):
+        """
+        Gets the S3 url associated with the organism and length, along with other metadata about
+        the transcriptome index we have stored. Organism must be specified in underscore-delimited
+        uppercase, i.e. "GALLUS_GALLUS". Length must either be "long" or "short"
+        """
+        params = request.query_params
+
+        # Verify that the required params are present
+        errors = dict()
+        if "organism" not in params:
+            errors["organism"] = "You must specify the organism of the index you want"
+        if "length" not in params:
+            errors["length"] = "You must specify the length of the transcriptome index"
+
+        if len(errors) > 0:
+            raise ValidationError(errors)
+
+        # Get the correct organism index object, serialize it, and return it
+        transcription_length = "TRANSCRIPTOME_" + params["length"].upper()
+        try:
+            organism_index = (OrganismIndex.public_objects.exclude(s3_url__exact="")
+                              .distinct("organism__name", "index_type")
+                              .get(organism__name=params["organism"],
+                                   index_type=transcription_length))
+            serializer = OrganismIndexSerializer(organism_index)
+            return Response(serializer.data)
+        except OrganismIndex.DoesNotExist:
+            raise Http404
