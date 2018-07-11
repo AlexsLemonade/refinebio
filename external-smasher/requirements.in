@@ -1,0 +1,8 @@
+django
+psycopg2-binary
+requests
+retrying
+python-nomad
+coverage
+GEOparse
+python-dateutil
