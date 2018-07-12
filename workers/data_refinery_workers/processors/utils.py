@@ -275,5 +275,5 @@ def createTestProcessors():
     (This function should be called ONLY by test modules).
     """
 
-    for label in _names.ProcessorEnum:
+    for label in ProcessorEnum:
         Processor.objects.create(name=label.value, version=__version__)
