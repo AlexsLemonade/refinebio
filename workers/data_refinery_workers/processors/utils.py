@@ -231,7 +231,8 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
 
 def createTestProcessors():
     """This function creates dummy processors for all unit test cases.
-    It should be called ONLY by test modules."""
+    It should be called ONLY by test modules.
+    """
 
     for label in _names.ProcessorEnum:
         Processor.objects.create(name=label.value, version=__version__)
