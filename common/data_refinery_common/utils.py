@@ -28,6 +28,17 @@ def get_env_variable(var_name: str, default: str=None) -> str:
         raise ImproperlyConfigured(error_msg)
 
 
+def get_env_variable_gracefully(var_name: str, default: str=None) -> str:
+    """
+    Get an environment variable, or return a default value, but always fail gracefully and return
+    something rather than raising an ImproperlyConfigured error.
+    """
+    try:
+        return os.environ[var_name]
+    except KeyError:
+        return default
+
+
 def get_instance_id() -> str:
     """Returns the AWS instance id where this is running or "local"."""
     global INSTANCE_ID
@@ -121,6 +132,17 @@ def get_readable_affymetrix_names(mapping_csv: str="config/readable_affymetrix_n
     return READABLE_PLATFORM_NAMES
 
 
+def get_internal_microarray_accession(accession_code):
+    platforms = get_supported_microarray_platforms()
+
+    all_c = []
+    for platform in platforms:
+        if platform['external_accession'] == accession_code:
+            return platform['platform_accession']
+
+    return None
+
+
 def parse_s3_url(url):
     """
     Parses S3 URL.
@@ -133,3 +155,9 @@ def parse_s3_url(url):
         bucket = result.netloc
         path = result.path.strip('/')
     return bucket, path
+
+def get_s3_url(s3_bucket: str, s3_key: str) -> str:
+        """
+        Calculates the s3 URL for a file from the bucket name and the file key.
+        """
+        return "%s.s3.amazonaws.com/%s" % (s3_bucket, s3_key)

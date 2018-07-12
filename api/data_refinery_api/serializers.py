@@ -7,6 +7,7 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
     Organism,
+    OrganismIndex,
     OriginalFile,
     Processor,
     ComputationalResult,
@@ -42,6 +43,20 @@ class ProcessorSerializer(serializers.ModelSerializer):
             'environment'
         )
 
+
+##
+# Transcriptome Index
+##
+
+class OrganismIndexSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrganismIndex
+        fields = (
+                    's3_url',
+                    'source_version',
+                    'salmon_version',
+                    'last_modified',
+                )
 
 ##
 # Results
@@ -111,6 +126,7 @@ class SampleSerializer(serializers.ModelSerializer):
                     'organism',
                     'platform_accession_code',
                     'platform_name',
+                    'pretty_platform',
                     'technology',
                     'manufacturer',
                     'is_downloaded',
@@ -146,6 +162,7 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
                     'organism',
                     'platform_accession_code',
                     'platform_name',
+                    'pretty_platform',
                     'technology',
                     'manufacturer',
                     'annotations',
@@ -353,6 +370,9 @@ def validate_dataset(data):
         for key, value in data['data'].items():
             if type(value) != list:
                 raise serializers.ValidationError("`data` must be a dict of lists. Problem with `" + str(key) + "`")
+
+            if len(value) != len(set(value)):
+                raise serializers.ValidationError("Duplicate values detected in " + str(value))
 
     else:
         raise serializers.ValidationError("`data` must be a dict of lists.")
