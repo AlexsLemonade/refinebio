@@ -176,7 +176,7 @@ def determine_ram_amount(sample: Sample, job):
         if 'hta20' in platform:
             return 12288
         # Not sure what the ram usage of this platform is! Investigate!
-        logger.info("Unsure of RAM usage for platform! Using default.", platform=platform)
+        logger.info("Unsure of RAM usage for platform! Using default.", platform=platform, job=job)
         return 2048
     elif job.pipeline_applied == ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL.value:
         return 2048
