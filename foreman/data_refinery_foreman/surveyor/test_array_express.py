@@ -52,6 +52,9 @@ class SurveyTestCase(TestCase):
         # And for one DownloaderJob to be created for all of them.
         self.assertEqual(downloader_jobs.count(), 1)
 
+        sample = Sample.objects.first()
+        self.assertTrue(' (hgu95av2)' in sample.pretty_platform)
+
     def test_determine_accession(self):
         """Test of the `determine_sample_accession` function
         """
