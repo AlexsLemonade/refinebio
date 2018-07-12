@@ -14,7 +14,11 @@ from data_refinery_common.models import (
     Organism,
     Processor
 )
-from data_refinery_workers.processors import utils, add_dummy_processors
+from data_refinery_workers.processors import utils
+
+
+def setUpModule():
+    utils.createTestProcessors()
 
 
 def prepare_illumina_job(species="Homo sapiens"):
