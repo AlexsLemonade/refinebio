@@ -53,6 +53,8 @@ fi
 unzip nomad_${NOMAD_VERSION}_linux_amd64.zip
 sudo mv nomad /usr/local/bin/
 
+cd ~/refinebio/infrastructure
+
 # Circle won't set the branch name for us, so do it ourselves.
 
 # A single tag could potentially be on more than one branch (or even
@@ -75,7 +77,6 @@ else
     exit 1
 fi
 
-cd ~/refinebio/infrastructure
 terraform init
 
 state_files=$(aws s3 ls s3://$BUCKET_NAME)
