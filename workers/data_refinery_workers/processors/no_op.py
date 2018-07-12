@@ -67,6 +67,9 @@ def _prepare_files(job_context: Dict) -> Dict:
                 f.seek(0, 0)
                 f.write('ID_REF\tVALUE' + '\n' + ("\n".join(all_content[1:])))
             job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
+    else:
+        if job_context["is_illumina"]:
+            job_context['column_name'] = row[0]
 
     # Platform
     job_context["platform"] = job_context["samples"][0].platform_accession_code
@@ -100,11 +103,12 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
         job_context["success"] = False
         return job_context
 
+    job_context['script_name'] = "gene_convert.R"
     try:
         result = subprocess.check_output([
                 "/usr/bin/Rscript", 
                 "--vanilla", 
-                "/home/user/data_refinery_workers/processors/gene_convert.R",
+                "/home/user/data_refinery_workers/processors/" + job_context['script_name'],
                 "--platform", job_context["internal_accession"],
                 "--inputFile", job_context['input_file_path'],
                 "--outputFile", job_context['output_file_path']
@@ -157,7 +161,7 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
                     "/home/user/data_refinery_workers/processors/detect_database.R",
                     "--platform", platform,
                     "--inputFile", job_context['input_file_path'],
-                    "--column", str("Reporter Identifier"), # XXX: Detect 0 col name
+                    "--column", job_context.get('column_name', "Reporter Identifier")
                 ])
 
             results = result.decode().split('\n')
@@ -169,14 +173,30 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
                 high_mapped_percent = float(results[1].strip())
 
         except Exception as e:
-            logger.exception(e)
+            logger.error("Could not detect database for file!", 
+                file=job_context['input_file_path'], 
+                platform=platform
+            )
+            logger.exception(e, context=job_context)
             continue
 
+    # Record our sample detection outputs for every sample.
+    for sample in job_context['samples']:
+        sa = SampleAnnotation()
+        sa.sample = sample
+        sa.data = {
+            "detected_platform": high_db, 
+            "detection_percentage": highest,
+            "mapped_percentage": high_mapped_percent
+        }
+        sa.save()
+
+    job_context['script_name'] = "gene_convert.R"
     try:
         result = subprocess.check_output([
                 "/usr/bin/Rscript", 
                 "--vanilla", 
-                "/home/user/data_refinery_workers/processors/gene_convert_illumina.R",
+                "/home/user/data_refinery_workers/processors/" + job_context['script_name'],
                 "--platform", high_db,
                 "--inputFile", job_context['input_file_path'],
                 "--outputFile", job_context['output_file_path']
@@ -199,7 +219,7 @@ def _create_result(job_context: Dict) -> Dict:
 
     # This is a NO-OP, but we make a ComputationalResult regardless.
     result = ComputationalResult()
-    result.command_executed = "gene_convert.R"
+    result.command_executed = job_context['script_name']
     result.is_ccdl = True
     result.system_version = __version__
     result.pipeline = "Submitter-processed"
