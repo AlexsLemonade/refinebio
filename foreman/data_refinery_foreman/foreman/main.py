@@ -1,5 +1,5 @@
 import time
-import nomad
+from nomad import Nomad
 from nomad.api.exceptions import URLNotFoundNomadException
 from typing import Callable, List
 from threading import Thread
@@ -136,7 +136,7 @@ def retry_hung_downloader_jobs() -> None:
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
     hung_jobs = []
     for job in potentially_hung_jobs:
         try:
@@ -172,7 +172,7 @@ def retry_lost_downloader_jobs() -> None:
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
     lost_jobs = []
     for job in potentially_lost_jobs:
         try:
@@ -252,7 +252,7 @@ def retry_hung_processor_jobs() -> None:
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
     hung_jobs = []
     for job in potentially_hung_jobs:
         try:
@@ -280,7 +280,7 @@ def retry_lost_processor_jobs() -> None:
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
     lost_jobs = []
     for job in potentially_lost_jobs:
         try:
