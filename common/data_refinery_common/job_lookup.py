@@ -167,7 +167,7 @@ def determine_ram_amount(sample: Sample, job):
     elif job.pipeline_applied == ProcessorPipeline.ILLUMINA_TO_PCL.value:
         return 2048
     elif job.pipeline_applied == ProcessorPipeline.AFFY_TO_PCL.value:
-        platform = sample_object.platform_accession_code
+        platform = sample.platform_accession_code
         # Values via https://github.com/AlexsLemonade/refinebio/issues/54#issuecomment-373836510
         if 'u133' in platform:
             return 2048
