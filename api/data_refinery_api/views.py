@@ -178,6 +178,7 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 # Create and dispatch the new job.
                 processor_job = ProcessorJob()
                 processor_job.pipeline_applied = "SMASHER"
+                processor_job_long.ram_amount = 4048
                 processor_job.save()
 
                 pjda = ProcessorJobDatasetAssociation()
