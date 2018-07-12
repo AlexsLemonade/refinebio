@@ -58,7 +58,7 @@ class SurveyTestCase(TestCase):
         job = self.create_downloader_job()
 
         main.requeue_downloader_job(job)
-        mock_send_job.assert_called_once()
+        self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = DownloaderJob.objects.order_by('id')
         original_job = jobs[0]
@@ -107,7 +107,7 @@ class SurveyTestCase(TestCase):
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
         main.retry_failed_downloader_jobs.__wrapped__()
-        mock_send_job.assert_called_once()
+        self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = DownloaderJob.objects.order_by('id')
         original_job = jobs[0]
@@ -204,7 +204,7 @@ class SurveyTestCase(TestCase):
         job = self.create_processor_job()
 
         main.requeue_processor_job(job)
-        mock_send_job.assert_called_once()
+        self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = ProcessorJob.objects.order_by('id')
         original_job = jobs[0]
@@ -251,7 +251,7 @@ class SurveyTestCase(TestCase):
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
         main.retry_failed_processor_jobs.__wrapped__()
-        mock_send_job.assert_called_once()
+        self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = ProcessorJob.objects.order_by('id')
         original_job = jobs[0]
