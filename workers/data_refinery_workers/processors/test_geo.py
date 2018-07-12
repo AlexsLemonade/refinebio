@@ -14,15 +14,7 @@ from data_refinery_common.models import (
     Organism,
     Processor
 )
-from data_refinery_workers.processors import utils
-from data_refinery_workers._version import __version__
-
-
-def setUpModule():
-    programs = ['Illumina SCAN', 'Agilent SCAN TwoColor']
-    for program in programs:
-        processor_name = program + " " + __version__
-        Processor.objects.create(name=processor_name)
+from data_refinery_workers.processors import utils, add_dummy_processors
 
 
 def prepare_illumina_job(species="Homo sapiens"):

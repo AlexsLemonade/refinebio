@@ -22,14 +22,7 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     OriginalFileSampleAssociation
 )
-from data_refinery_workers.processors import salmon, utils
-from data_refinery_workers._version import __version__
-
-
-def setUpModule():
-    for program in ["Salmon Quant", "Tximport", "MultiQC", "Salmontools"]:
-        processor_name = program + " " + __version__
-        Processor.objects.create(name=processor_name)
+from data_refinery_workers.processors import salmon, utils, add_dummy_processors
 
 
 def prepare_job():

@@ -29,7 +29,7 @@ from data_refinery_common.models import (
     Pipeline
 )
 from data_refinery_workers._version import __version__
-from data_refinery_workers.processors import utils
+from data_refinery_workers.processors import utils, _names
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.utils import get_env_variable
@@ -319,8 +319,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
     result.pipeline = "Illumina SCAN"  # TODO: should be removed
-    processor_name = "Illumina SCAN " + __version__
-    result.processor = Processor.objects.get(name=processor_name)
+    result.processor = Processor.objects.get(name=_names.ProcessorEnum.ILLUMINA_SCAN.value,
+                                             version=__version)
     result.save()
     job_context['pipeline'].steps.append(result.id)
 
@@ -376,7 +376,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 def illumina_to_pcl(job_id: int) -> None:
-    pipeline = Pipeline(name='Illumina')
+    pipeline = Pipeline(name=_names.PipelineEnum.ILLUMINA.value)
     return utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                               [utils.start_job,
                                _prepare_files,
