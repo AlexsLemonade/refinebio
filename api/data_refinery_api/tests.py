@@ -318,6 +318,14 @@ class APITestCases(APITestCase):
         self.assertEqual(response.json()['data'], json.loads(jdata)['data'])
         self.assertEqual(response.json()['data']["A"], ["B"])
 
+        # Bad (Duplicates)
+        jdata = json.dumps({'data': {"A": ["B", "B", "B"]}})
+        response = self.client.post(reverse('create_dataset'),
+                                    jdata,
+                                    content_type="application/json")
+
+        self.assertEqual(response.status_code, 400)
+
         # Update
         jdata = json.dumps({'data': {"A": ["C"]}})
         response = self.client.put(reverse('dataset', kwargs={'id': good_id}),
