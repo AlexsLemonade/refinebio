@@ -1,3 +1,4 @@
+from enum import Enum, unique
 from typing import List, Dict, Callable
 from django.utils import timezone
 from data_refinery_common.models import (
@@ -14,7 +15,6 @@ from data_refinery_common.models import (
 from data_refinery_common.utils import get_worker_id
 from data_refinery_workers._version import __version__
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_workers.processors import _names
 
 logger = get_and_configure_logger(__name__)
 
@@ -229,9 +229,50 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
     return last_result
 
 
+@unique
+class PipelineEnum(Enum):
+    """Hardcoded pipeline names."""
+
+    AGILENT_TWOCOLOR = "Agilent Two Color"
+    ARRAY_EXPRESS = "Array Express"
+    ILLUMINA = "Illumina"
+    NO_OP = "No Op"
+    SALMON = "Salmon"
+    SMASHER = "Smasher"
+    TX_INDEX = "Transcriptome Index"
+
+
+@unique
+class ProcessorEnum(Enum):
+    """Hardcoded processor names in each pipeline."""
+
+    # One processor in "Agilent Two Color" pipeline
+    AGILENT_TWOCOLOR = "Agilent SCAN TwoColor"
+
+    # One processor in "Array Express" pipeline
+    AFFYMETRIX_SCAN = "Affymetrix SCAN"
+
+    # One processor in "Illumina" pipeline
+    ILLUMINA_SCAN = "Illumina SCAN"
+
+    # One processor in "No Op" pipeline
+    SUBMITTER_PROCESSED = "Submitter-processed"
+
+    # Four processors in "Salmon" pipeline
+    TXIMPORT = "Tximport"
+    SALMON_QUANT = "Salmon Quant"
+    MULTIQC = "MultiQC"
+    SALMONTOOLS = "Salmontools"
+
+    # No processors in "Smasher" pipeline (yet)
+
+    # One processor in "Transcriptome Index" pipeline
+    TX_INDEX = "Transcriptome Index"
+
+
 def createTestProcessors():
-    """This function creates dummy processors for all unit test cases.
-    It should be called ONLY by test modules.
+    """Creates dummy processors for all unit test cases.
+    (This function should be called ONLY by test modules).
     """
 
     for label in _names.ProcessorEnum:

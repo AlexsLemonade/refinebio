@@ -32,7 +32,7 @@ from data_refinery_common.models import (
     )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
-from data_refinery_workers.processors import utils, _names
+from data_refinery_workers.processors import utils
 
 logger = get_and_configure_logger(__name__)
 JOB_DIR_PREFIX = "processor_job_"
@@ -249,7 +249,7 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
     result.commands.append(" ".join(cmd_tokens))
     result.is_ccdl = True
     result.pipeline = "tximport"  # TODO: should be removed
-    result.processor = Processor.objects.get(name=_names.ProcessorEnum.TXIMPORT.value,
+    result.processor = Processor.objects.get(name=utils.ProcessorEnum.TXIMPORT.value,
                                              version=__version__)
     result.save()
     job_context['pipeline'].steps.append(result.id)
@@ -363,7 +363,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         result.time_start = job_context['time_start']
         result.time_end = job_context['time_end']
         result.pipeline = "Salmon"  # TODO: should be removed
-        result.processor = Processor.objects.get(name=_names.ProcessorEnum.SALMON_QUANT.value,
+        result.processor = Processor.objects.get(name=utils.ProcessorEnum.SALMON_QUANT.value,
                                                  version=__version__)
         result.is_ccdl = True
 
@@ -450,7 +450,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
     result.time_end = time_end
     result.is_ccdl = True
     result.pipeline = "MultiQC"  # TODO: should be removed
-    result.processor = Processor.objects.get(name=_names.ProcessorEnum.MULTIQC.value,
+    result.processor = Processor.objects.get(name=utils.ProcessorEnum.MULTIQC.value,
                                              version=__version__)
     result.save()
     job_context['pipeline'].steps.append(result.id)
@@ -580,7 +580,7 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         result.time_end = end_time
         result.is_ccdl = True
         result.pipeline = "Salmontools"  # TODO: should be removed
-        result.processor = Processor.objects.get(name=_names.ProcessorEnum.SALMONTOOLS.value,
+        result.processor = Processor.objects.get(name=utils.ProcessorEnum.SALMONTOOLS.value,
                                                  version=__version__)
         result.save()
         job_context['pipeline'].steps.append(result.id)
@@ -647,7 +647,7 @@ def salmon(job_id: int) -> None:
     Runs salmon quant command line tool, specifying either a long or
     short read length.
     """
-    pipeline = Pipeline(name=_names.PipelineEnum.SALMON.value)
+    pipeline = Pipeline(name=utils.PipelineEnum.SALMON.value)
     utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _set_job_prefix,

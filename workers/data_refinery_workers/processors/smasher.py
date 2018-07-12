@@ -25,7 +25,7 @@ from data_refinery_common.models import (
     SampleResultAssociation
 )
 from data_refinery_workers._version import __version__
-from data_refinery_workers.processors import utils, _names
+from data_refinery_workers.processors import utils
 from data_refinery_common.utils import get_env_variable
 
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
@@ -272,7 +272,7 @@ def _update_result_objects(job_context: Dict) -> Dict:
 def smash(job_id: int, upload=True) -> None:
     """ Main Smasher interface """
 
-    pipeline = Pipeline(name=_names.PipelineEnum.SMASHER.value)
+    pipeline = Pipeline(name=utils.PipelineEnum.SMASHER.value)
     return utils.run_pipeline({"job_id": job_id, "upload": upload, "pipeline": pipeline},
                        [utils.start_job,
                         _prepare_files,

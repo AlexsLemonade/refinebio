@@ -19,7 +19,7 @@ from data_refinery_common.models import (
     SampleComputedFileAssociation
 )
 from data_refinery_workers.processors import smasher
-from data_refinery_workers.processors import utils
+
 
 def prepare_job():
     pj = ProcessorJob()
