@@ -163,3 +163,4 @@ class DownloadGeoTestCase(TestCase):
         self.assertTrue(original_file.is_downloaded)
         self.assertTrue(len(ProcessorJob.objects.all()) > 0)
         self.assertEqual(ProcessorJob.objects.all()[0].pipeline_applied, "AGILENT_TWOCOLOR_TO_PCL")
+        self.assertEqual(ProcessorJob.objects.all()[0].ram_amount, 2048)
