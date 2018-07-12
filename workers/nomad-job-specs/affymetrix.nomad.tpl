@@ -15,7 +15,7 @@ job "AFFY_TO_PCL" {
       # delay    = "30s"
     }
 
-    task "affy_to_pcl" {
+    task "affy_to_pcl_${{RAM}}" {
       driver = "docker"
 
       # This env will be passed into the container for the job.
@@ -53,7 +53,7 @@ job "AFFY_TO_PCL" {
         # CPU is in AWS's CPU units.
         cpu = 1024
         # Memory is in MB of RAM.
-        memory = 4048
+        memory = ${{RAM}}
       }
 
       config {
