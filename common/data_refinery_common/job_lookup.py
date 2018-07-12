@@ -156,3 +156,36 @@ def determine_processor_pipeline(sample_object: Sample) -> ProcessorPipeline:
 
     # Shouldn't get here, but just in case
     return ProcessorPipeline.NONE
+
+def determine_ram_amount(sample: Sample, job):
+    """
+    Determines the amount of RAM required for a given ProcessorJob
+    """
+
+    if job.pipeline_applied == ProcessorPipeline.NO_OP.value:
+        return 2048
+    elif job.pipeline_applied == ProcessorPipeline.ILLUMINA_TO_PCL.value:
+        return 2048
+    elif job.pipeline_applied == ProcessorPipeline.AFFY_TO_PCL.value:
+        platform = sample_object.platform_accession_code
+        # Values via https://github.com/AlexsLemonade/refinebio/issues/54#issuecomment-373836510
+        if 'u133' in platform:
+            return 2048
+        if 'gene' in platform:
+            return 3072
+        if 'hta20' in platform:
+            return 12288
+        # Not sure what the ram usage of this platform is! Investigate!
+        logger.info("Unsure of RAM usage for platform! Using default.", platform=platform)
+        return 2048
+    elif job.pipeline_applied == ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL.value:
+        return 2048
+    elif job.pipeline_applied == ProcessorPipeline.AGILENT_ONECOLOR_TO_PCL.value:
+        return 2048
+    elif job.pipeline_applied == ProcessorPipeline.SALMON.value:
+        return 8192
+    elif job.pipeline_applied == ProcessorPipeline.NONE.value:
+        return 1024
+    else:
+        logger.error("Found a job without an expected pipeline!", job=job, pipeline=job.pipeline_applied)
+        return 1024
