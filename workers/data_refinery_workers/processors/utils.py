@@ -234,4 +234,4 @@ def createTestProcessors():
     It should be called ONLY by test modules."""
 
     for label in _names.ProcessorEnum:
-        Processor.objects.get_or_create(name=label.value, version=__version__)
+        Processor.objects.create(name=label.value, version=__version__)
