@@ -308,15 +308,16 @@ class Processor(models.Model):
     """Processor associated with a certain ComputationalResult."""
 
     name = models.CharField(max_length=255)
+    version = models.CharField(max_length=64)
     docker_image = models.CharField(max_length=255)
     environment = JSONField(default={})
 
     class Meta:
         db_table = "processors"
-        unique_together = ('name', 'docker_image')
+        unique_together = ('name', 'version')
 
     def __str__(self):
-        return "Processor: %s (docker_image: %s" % (name, docker_image)
+        return "Processor: %s (version: %s, docker_image: %s)" % (name, version, docker_image)
 
 
 class ComputationalResult(models.Model):
@@ -409,7 +410,7 @@ class OrganismIndex(models.Model):
         base_manager_name = 'public_objects'
 
     def __str__(self):
-        return "OrganismIndex " + str(self.pk) + ": " + self.organism.name + ' [' + self.index_type + '] - ' + str(self.salmon_version) 
+        return "OrganismIndex " + str(self.pk) + ": " + self.organism.name + ' [' + self.index_type + '] - ' + str(self.salmon_version)
 
     # Managers
     objects = models.Manager()

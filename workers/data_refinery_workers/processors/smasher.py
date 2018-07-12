@@ -25,13 +25,15 @@ from data_refinery_common.models import (
     SampleResultAssociation
 )
 from data_refinery_workers._version import __version__
-from data_refinery_workers.processors import utils
+from data_refinery_workers.processors import utils, _names
 from data_refinery_common.utils import get_env_variable
 
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
 logger = get_and_configure_logger(__name__)
+
+PIPELINE_NAME = "Smasher"
 
 
 def _prepare_files(job_context: Dict) -> Dict:
@@ -160,7 +162,7 @@ def _smash(job_context: Dict) -> Dict:
         shutil.make_archive(final_zip, 'zip', smash_path)
         job_context["output_file"] = final_zip + ".zip"
     except Exception as e:
-        logger.exception("Could not smash dataset.", 
+        logger.exception("Could not smash dataset.",
                         dataset_id=job_context['dataset'].id,
                         job_id=job_context['job_id'],
                         input_files=job_context['input_files'])
@@ -270,7 +272,7 @@ def _update_result_objects(job_context: Dict) -> Dict:
 def smash(job_id: int, upload=True) -> None:
     """ Main Smasher interface """
 
-    pipeline = Pipeline(name='Smasher')
+    pipeline = Pipeline(name=_names.PipelineEnum.SMASHER.value)
     return utils.run_pipeline({"job_id": job_id, "upload": upload, "pipeline": pipeline},
                        [utils.start_job,
                         _prepare_files,

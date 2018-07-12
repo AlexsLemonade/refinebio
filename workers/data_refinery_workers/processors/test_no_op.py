@@ -9,13 +9,7 @@ from data_refinery_common.models import (
     OriginalFile,
     ProcessorJobOriginalFileAssociation
 )
-from data_refinery_workers.processors import no_op, utils
-from data_refinery_workers._version import __version__
-
-
-def setUpModule():
-    processor_name = "Submitter-processed " + __version__
-    Processor.objects.create(name=processor_name)
+from data_refinery_workers.processors import no_op, utils, add_dummy_processors
 
 
 def prepare_job():
