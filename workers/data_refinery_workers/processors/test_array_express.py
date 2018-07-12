@@ -7,7 +7,7 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile
 )
-from data_refinery_workers.processors import array_express
+from data_refinery_workers.processors import array_express, utils
 
 
 def setUpModule():

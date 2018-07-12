@@ -15,7 +15,7 @@ from data_refinery_common.models import (
 
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
-from data_refinery_workers.processors import utils, _names
+from data_refinery_workers.processors import utils
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
@@ -45,7 +45,7 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
     result.commands.append("NO_OP") # No op!
     result.is_ccdl = True
     result.pipeline = "Submitter-processed"  # TODO: should be removed
-    result.processor = Processor.objects.get(name=_names.ProcessorEnum.SUBMITTER_PROCESSED.value,
+    result.processor = Processor.objects.get(name=utils.ProcessorEnum.SUBMITTER_PROCESSED.value,
                                              version=__version__)
     result.save()
     job_context['pipeline'].steps.append(result.id)
@@ -91,7 +91,7 @@ def _no_op_processor_fn(job_context: Dict) -> Dict:
 
 
 def no_op_processor(job_id: int) -> None:
-    pipeline = Pipeline(name=_names.PipelineEnum.NO_OP.value)
+    pipeline = Pipeline(name=utils.PipelineEnum.NO_OP.value)
     utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _no_op_processor_fn,
