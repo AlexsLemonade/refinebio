@@ -13,7 +13,9 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from typing import Dict
 
+import numpy as np
 import pandas as pd
+import numpy as np
 from sklearn import preprocessing
 
 from data_refinery_common.logging import get_and_configure_logger
@@ -33,8 +35,6 @@ S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
 logger = get_and_configure_logger(__name__)
 
-PIPELINE_NAME = "Smasher"
-
 
 def _prepare_files(job_context: Dict) -> Dict:
     """
@@ -45,7 +45,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     for key, samples in job_context["samples"].items():
         all_sample_files = []
         for sample in samples:
-            all_sample_files = all_sample_files + [sample.get_most_recent_smashable_result_file()]
+            all_sample_files = all_sample_files + list(sample.get_result_files())
         all_sample_files = list(set(all_sample_files))
         job_context['input_files'][key] = all_sample_files
 
@@ -82,9 +82,56 @@ def _smash(job_context: Dict) -> Dict:
             # Merge all the frames into one
             all_frames = []
             for computed_file in input_files:
-                data = pd.DataFrame.from_csv(str(computed_file.absolute_file_path), sep='\t', header=0)
+
+                computed_file_path = str(computed_file.absolute_file_path)
+
+                # Bail appropriately if this isn't a real file.
+                if not os.path.exists(computed_file.absolute_file_path):
+                    raise ValueError("Smasher received non-existent file path.")
+
+                data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0)
+
+                # via https://github.com/AlexsLemonade/refinebio/issues/330:
+                #   aggregating by experiment -> return untransformed output from tximport
+                #   aggregating by species -> log2(x + 1) tximport output
+                if job_context['dataset'].aggregate_by == 'SPECIES':
+                    if 'lengthScaledTPM' in computed_file_path:
+                        data = data + 1
+                        data = np.log2(data)
+
+                # Detect if this data hasn't been log2 scaled yet.
+                # Ideally done in the NO-OPPER, but sanity check here.
+                if ("lengthScaledTPM" not in computed_file_path) and (data.max() > 100).any():
+                    logger.info("Detected non-log2 microarray data.", file=computed_file)
+                    data = np.log2(data)
+
+                # Ensure that we don't have any dangling Brainarray-generated probe symbols.
+                # BA likes to leave '_at', signifying probe identifiers,
+                # on their converted, non-probe identifiers. It makes no sense.
+                # So, we chop them off and don't worry about it.
+                data.index = data.index.str.replace('_at', '')
+
+                # If there are any _versioned_ gene identifiers, remove that
+                # version information. We're using the latest brainarray for everything anyway.
+                # Jackie says this is okay.
+                # She also says that in the future, we may only want to do this
+                # for cross-technology smashes.
+
+                # This regex needs to be able to handle EGIDs in the form:
+                #       ENSGXXXXYYYZZZZ.6
+                # and
+                #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg.7__3016__AT5G35080.1;db=core)
+                data.index = data.index.str.replace(r"(\.[^.]*)$", '')
+
+                # Squish duplicated rows together.
+                # XXX/TODO: Is mean the appropriate method here?
+                #           We can make this an option in future.
+                # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
+                data = data.groupby(data.index, sort=False).mean()
+
                 all_frames.append(data)
                 num_samples = num_samples + 1
+
             job_context['all_frames'] = all_frames
 
             merged = all_frames[0]
@@ -158,9 +205,11 @@ def _smash(job_context: Dict) -> Dict:
             json.dump(metadata, metadata_file, indent=4, sort_keys=True)
 
         # Finally, compress all files into a zip
-        final_zip = smash_path + str(job_context['dataset'].id)
-        shutil.make_archive(final_zip, 'zip', smash_path)
-        job_context["output_file"] = final_zip + ".zip"
+        final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk)
+        shutil.make_archive(final_zip_base, 'zip', smash_path)
+        job_context["output_file"] = final_zip_base + ".zip"
+        # and clean up the unzipped directory.
+        shutil.rmtree(smash_path)
     except Exception as e:
         logger.exception("Could not smash dataset.",
                         dataset_id=job_context['dataset'].id,
@@ -173,6 +222,7 @@ def _smash(job_context: Dict) -> Dict:
         job_context['failure_reason'] = str(e)
         return job_context
 
+    job_context['metadata'] = metadata
     job_context['dataset'].success = True
     job_context['dataset'].save()
 
@@ -258,7 +308,7 @@ def _upload_and_notify(job_context: Dict) -> Dict:
     return job_context
 
 def _update_result_objects(job_context: Dict) -> Dict:
-    """ Update the final Dataset object with expiry time. """
+    """ Create the ComputationalResult objects after a run is complete """
 
     dataset = job_context["dataset"]
     dataset.is_processing = False
@@ -266,6 +316,8 @@ def _update_result_objects(job_context: Dict) -> Dict:
     dataset.is_available = True
     dataset.expires_on = timezone.now() + timedelta(days=1)
     dataset.save()
+
+    job_context['success'] = True
 
     return job_context
 

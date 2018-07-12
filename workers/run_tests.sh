@@ -109,7 +109,7 @@ if [[ -z $tag || $tag == "salmon" ]]; then
     fi
 fi
 
-if [[ -z $tag || $tag == "affymetrix" || $tag == "no_op" ]]; then
+if [[ -z $tag || $tag == "affymetrix" ]]; then
     # Make sure CEL for test is downloaded from S3
     cel_name="GSM1426071_CD_colon_active_1.CEL"
     cel_name2="GSM45588.CEL"
@@ -171,6 +171,23 @@ if [[ -z $tag || $tag == "agilent" ]]; then
              "$test_data_repo/$at_file"
     fi
 fi
+if [[ -z $tag || $tag == "no_op" ]]; then
+    no_file="GSM269747-tbl-1.txt"
+    no_test_raw_dir="$volume_directory/raw/TEST/NO_OP"
+    if [ ! -e "$no_test_raw_dir/$no_file" ]; then
+        mkdir -p $no_test_raw_dir
+        echo "Downloading NOOP file1."
+        wget -q -O "$no_test_raw_dir/$no_file" \
+             "$test_data_repo/$no_file"
+    fi
+    no_file2="GSM269747-tbl-1.txt"
+    if [ ! -e "$no_test_raw_dir/$no2_file" ]; then
+        mkdir -p $no_test_raw_dir
+        echo "Downloading NOOP file2."
+        wget -q -O "$no_test_raw_dir/$no_file2" \
+             "$test_data_repo/$no_file2"
+    fi
+fi
 
 if [[ -z $tag || $tag == "smasher" ]]; then
     # Make sure PCL for test is downloaded from S3
@@ -179,12 +196,16 @@ if [[ -z $tag || $tag == "smasher" ]]; then
     pcl_name3="GSM1238108-tbl-1.txt"
     pcl_name4="GSM1487313_liver.PCL"
     pcl_name5="SRP149598_gene_lengthScaledTPM.tsv"
+    pcl_name_gs1="GSM1084806-tbl-1.txt"
+    pcl_name_gs2="GSM1084807-tbl-1.txt"
     pcl_test_raw_dir="$volume_directory/PCL"
     pcl_test_data_1="$pcl_test_raw_dir/$pcl_name"
     pcl_test_data_2="$pcl_test_raw_dir/$pcl_name2"
     pcl_test_data_3="$pcl_test_raw_dir/$pcl_name3"
     pcl_test_data_4="$pcl_test_raw_dir/$pcl_name4"
     pcl_test_data_5="$pcl_test_raw_dir/$pcl_name5"
+    pcl_test_data_gs1="$pcl_test_raw_dir/$pcl_name_gs1"
+    pcl_test_data_gs2="$pcl_test_raw_dir/$pcl_name_gs2"
     if [ ! -e "$pcl_test_data_1" ]; then
         mkdir -p $pcl_test_raw_dir
         echo "Downloading PCL for tests."
@@ -211,9 +232,19 @@ if [[ -z $tag || $tag == "smasher" ]]; then
         wget -q -O $pcl_test_data_5 \
              "$test_data_repo/$pcl_name5"
     fi
+    if [ ! -e "$pcl_test_data_gs1" ]; then
+        echo "Downloading PCLGS1 for tests."
+        wget -q -O $pcl_test_data_gs1 \
+             "$test_data_repo/$pcl_name_gs1"
+    fi
+    if [ ! -e "$pcl_test_data_gs2" ]; then
+        echo "Downloading PCLGS2 for tests."
+        wget -q -O $pcl_test_data_gs2 \
+             "$test_data_repo/$pcl_name_gs2"
+    fi
 
-    export AWS_ACCESS_KEY_ID=`~/bin/aws configure get default.aws_access_key_id`
-    export AWS_SECRET_ACCESS_KEY=`~/bin/aws configure get default.aws_secret_access_key`
+    export AWS_ACCESS_KEY_ID=`aws configure get default.aws_access_key_id`
+    export AWS_SECRET_ACCESS_KEY=`aws configure get default.aws_secret_access_key`
 fi
 
 source common.sh

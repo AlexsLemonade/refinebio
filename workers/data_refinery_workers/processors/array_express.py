@@ -180,11 +180,11 @@ def _create_result_objects(job_context: Dict) -> Dict:
         # TODO here: delete local file after S3 sync
         computed_file.save()
     except Exception:
-        logger.exception("Exception caught while moving file %s to S3",
+        logger.exception("Exception caught while saving file %s to S3",
                          computed_file.filename,
                          processor_job=job_context["job_id"],
                          )
-        failure_reason = "Exception caught while moving file to S3"
+        failure_reason = "Exception caught while saving file to S3"
         job_context["job"].failure_reason = failure_reason
         job_context["success"] = False
         return job_context

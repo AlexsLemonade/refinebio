@@ -120,7 +120,8 @@ def _detect_columns(job_context: Dict) -> Dict:
 
         # First the probe ID column
         if headers[predicted_header].upper() not in ['ID_REF', 'PROBE_ID', "IDREF", "PROBEID"]:
-            job_context["job"].failure_reason = "Could not find ID reference column"
+            job_context["job"].failure_reason = ("Could not find any ID column in headers " 
+                                + str(headers) + " for file " + job_context["input_file_path"])
             job_context["success"] = False
             return job_context
         else:

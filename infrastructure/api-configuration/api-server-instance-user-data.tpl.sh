@@ -22,12 +22,13 @@ cp nginx.conf /etc/nginx/nginx.conf
 service nginx restart
 
 if [[ ${stage} == "staging" || ${stage} == "prod" ]]; then
-    # Create and install SSL Certificate
-    # Only necessary on staging and prod
-    apt-get install software-properties-common
+    # Create and install SSL Certificate for the API.
+    # Only necessary on staging and prod.
+    # We cannot use ACM for this because *.bio is not a Top Level Domain that Route53 supports.
+    apt-get install -y software-properties-common
     add-apt-repository ppa:certbot/certbot
     apt-get update
-    apt-get install python-certbot-nginx
+    apt-get install -y python-certbot-nginx
 
     # g3w4k4t5n3s7p7v8@alexslemonade.slack.com is the email address we
     # have configured to forward mail to the #teamcontact channel in

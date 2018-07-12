@@ -3,6 +3,9 @@ import io
 import os
 import pytz
 import uuid
+import boto3
+
+from botocore.client import Config
 
 from datetime import datetime
 from functools import partial
@@ -14,6 +17,11 @@ from django.db import models
 from django.utils import timezone
 
 from data_refinery_common.models.organism import Organism
+from data_refinery_common.utils import get_s3_url
+
+# We have to set the signature_version to v4 since us-east-1 buckets require
+# v4 authentication.
+S3 = boto3.client('s3', config=Config(signature_version='s3v4'))
 
 """
 # First Order Classes
@@ -128,11 +136,12 @@ class Sample(models.Model):
         metadata['subject'] = self.subject
         metadata['compound'] = self.compound
         metadata['time'] = self.time
+        metadata['platform'] = self.pretty_platform
         return metadata
 
     def get_result_files(self):
         """ Get all of the ComputedFile objects associated with this Sample """
-        return self.computed_files
+        return self.computed_files.all()
 
     def get_most_recent_smashable_result_file(self):
         """ Get all of the ComputedFile objects associated with this Sample """
@@ -144,6 +153,23 @@ class Sample(models.Model):
     def pipelines(self):
         """ Returns a list of related pipelines """
         return [p for p in self.results.values_list('pipeline', flat=True).distinct()]
+
+    @property
+    def pretty_platform(self):
+        """ Turns 
+        
+        [HT_HG-U133_Plus_PM] Affymetrix HT HG-U133+ PM Array Plate
+
+        into
+
+        Affymetrix HT HG-U133+ PM Array Plate (hthgu133pluspm)
+        
+        """
+        if ']' in self.platform_name:
+            platform_base = self.platform_name.split(']')[1].strip()
+        else:
+            platform_base = self.platform_name
+        return platform_base + ' (' + self.platform_accession_code + ')'
 
 class SampleAnnotation(models.Model):
     """ Semi-standard information associated with a Sample """
@@ -428,15 +454,28 @@ class OrganismIndex(models.Model):
     # http://ensemblgenomes.org/info/about/release_cycle
     # Determined by hitting:
     # http://rest.ensembl.org/info/software?content-type=application/json
-    source_version = models.CharField(max_length=255)
+    source_version = models.CharField(max_length=255, default="92")
 
     # This matters, for instance salmon 0.9.0 indexes don't work with 0.10.0
-    salmon_version = models.CharField(max_length=255)
+    salmon_version = models.CharField(max_length=255, default="0.9.1")
+
+    # S3 Information
+    s3_url = models.CharField(max_length=255, default="")
 
     # Common Properties
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
+
+    def upload_to_s3(self, absolute_file_path, bucket_name, logger):
+        if bucket_name is not None:
+            s3_key = self.organism.name + '_' + self.index_type + '.tar.gz'
+            S3.upload_file(absolute_file_path, bucket_name, s3_key,
+                           ExtraArgs={'ACL': 'public-read'})
+            self.s3_url = get_s3_url(bucket_name, s3_key)
+            logger.info("Upload complete")
+        else:
+            logger.info("No S3 bucket in environment, not uploading")
 
     def save(self, *args, **kwargs):
         """ On save, update timestamps """
