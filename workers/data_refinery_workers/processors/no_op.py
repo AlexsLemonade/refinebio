@@ -7,7 +7,7 @@ import subprocess
 from typing import Dict
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import ComputationalResult, ComputedFile, SampleResultAssociation, SampleComputedFileAssociation
+from data_refinery_common.models import ComputationalResult, ComputedFile, SampleResultAssociation, SampleComputedFileAssociation, SampleAnnotation
 from data_refinery_common.utils import get_env_variable, get_internal_microarray_accession
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
