@@ -12,7 +12,11 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     ProcessorJob
 )
-from data_refinery_workers.processors import transcriptome_index, utils, add_dummy_processors
+from data_refinery_workers.processors import transcriptome_index, utils
+
+
+def setUpModule():
+    utils.createTestProcessors()
 
 
 def prepare_job():

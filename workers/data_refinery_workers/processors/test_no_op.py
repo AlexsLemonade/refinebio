@@ -9,7 +9,11 @@ from data_refinery_common.models import (
     OriginalFile,
     ProcessorJobOriginalFileAssociation
 )
-from data_refinery_workers.processors import no_op, utils, add_dummy_processors
+from data_refinery_workers.processors import no_op, utils
+
+
+def setUpModule():
+    utils.createTestProcessors()
 
 
 def prepare_job():

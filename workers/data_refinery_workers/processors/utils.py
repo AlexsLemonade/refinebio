@@ -3,6 +3,7 @@ from django.utils import timezone
 from data_refinery_common.models import (
     ProcessorJob,
     Pipeline,
+    Processor,
     Sample,
     OriginalFile,
     Dataset,
@@ -13,6 +14,7 @@ from data_refinery_common.models import (
 from data_refinery_common.utils import get_worker_id
 from data_refinery_workers._version import __version__
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_workers.processors import _names
 
 logger = get_and_configure_logger(__name__)
 
@@ -225,3 +227,11 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
             return end_job(last_result, abort=True)
 
     return last_result
+
+
+def createTestProcessors():
+    """This function creates dummy processors for all unit test cases.
+    It should be called ONLY by test modules."""
+
+    for label in _names.ProcessorEnum:
+        Processor.objects.get_or_create(name=label.value, version=__version__)
