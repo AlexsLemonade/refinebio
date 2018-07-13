@@ -329,7 +329,7 @@ def _delete_local_files(job_context: Dict) -> Dict:
     """ Removes all of the ComputedFiles that have been synced from S3 """
     for key, input_files in job_context['input_files'].items():
         for computed_file in input_files:
-            computed_file.detele_local_file()
+            computed_file.delete_local_file()
 
     job_context['success'] = True
     return job_context
