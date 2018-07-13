@@ -352,6 +352,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
         computed_file.calculate_sha1()
         computed_file.calculate_size()
         computed_file.save()
+        job_context['computed_files'].append(computed_file)
 
         SampleResultAssociation.objects.get_or_create(
             sample=sample,
