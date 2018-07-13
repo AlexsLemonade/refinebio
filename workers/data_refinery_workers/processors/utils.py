@@ -68,6 +68,7 @@ def start_job(job_context: Dict):
 
         # Just in case
         job_context["original_files"] = []
+        job_context["computed_files"] = []
 
     return job_context
 
