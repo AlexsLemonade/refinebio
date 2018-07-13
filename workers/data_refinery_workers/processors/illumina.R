@@ -395,7 +395,7 @@ rownames(pValueData) <- probeIDs
 # https://github.com/AlexsLemonade/refinebio/pull/212#discussion_r184864928
 probeSequenceRef <- lazy_eval(paste0(platform, ".db::", platform, "PROBESEQUENCE"))
 probeQualityRef <- lazy_eval(paste0(platform, ".db::", platform, "PROBEQUALITY"))
-probeGeneRef <-  lazy_eval(paste0(platform, ".db::", platform, "ENSEMBLREANNOTATED"))
+probeGeneRef <-  lazy_eval(paste0(platform, ".db::", platform, "ENSEMBL"))
 
 # Parse probe sequence info
 probeSequences <- as.data.frame(probeSequenceRef[mappedkeys(probeSequenceRef)])
