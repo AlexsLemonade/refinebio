@@ -15,7 +15,7 @@ job "SALMON" {
       # delay    = "30s"
     }
 
-    task "salmon" {
+    task "salmon_${{RAM}}" {
       driver = "docker"
 
       # This env will be passed into the container for the job.
@@ -53,7 +53,7 @@ job "SALMON" {
         # CPU is in AWS's CPU units.
         cpu = 1024
         # Memory is in MB of RAM.
-        memory = 4048
+        memory = ${{RAM}}
       }
 
       config {
