@@ -153,7 +153,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     """ Create the ComputationalResult objects after a Scan run is complete """
 
     result = ComputationalResult()
-    result.commands.append('SCAN.UPC::SCANfast') # Need a better way to represent this R code.
+    result.commands.append('SCAN.UPC::SCANfast')
     result.is_ccdl = True
     result.is_public = True
 
