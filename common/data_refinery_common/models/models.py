@@ -570,6 +570,29 @@ class OriginalFile(models.Model):
         else:
             return self.filename
 
+    def sync_from_s3(self):
+        """ Downloads a file from S3 to the local file system.
+        Returns the absolute file path.
+        """
+        try:
+            S3.download_file(
+                        self.s3_bucket, 
+                        self.s3_key,
+                        self.absolute_file_path
+                    )
+            return self.absolute_file_path
+        except Exception as e:
+            logger.exception(e)
+            return None
+
+    def get_synced_file_path(self):
+        """ Fetches the absolute file path to this ComputedFile, fetching from S3 if it
+        isn't already available locally. """
+        if os.path.exists(self.absolute_file_path):
+            return self.absolute_file_path
+        else:
+            return self.sync_from_s3()
+
     def delete_local_file(self):
         """ Deletes a file from the path and actually removes it from the file system,
         resetting the is_downloaded flag to false. Can be refetched from source if needed. """
