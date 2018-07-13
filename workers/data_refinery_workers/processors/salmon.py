@@ -55,9 +55,9 @@ def _prepare_files(job_context: Dict) -> Dict:
     logger.debug("Preparing files..")
 
     original_files = job_context["original_files"]
-    job_context["input_file_path"] = original_files[0].absolute_file_path
+    job_context["input_file_path"] = original_files[0].get_synced_file_path()
     if len(original_files) == 2:
-        job_context["input_file_path_2"] = original_files[1].absolute_file_path
+        job_context["input_file_path_2"] = original_files[1].get_synced_file_path()
 
     # There should only ever be one per Salmon run
     job_context['sample'] = job_context['original_files'][0].samples.first()
@@ -497,7 +497,7 @@ def _run_fastqc(job_context: Dict) -> Dict:
 
     # We could use --noextract here, but MultiQC wants extracted files.
     command_str = ("./FastQC/fastqc --outdir={qc_directory} {files}")
-    files = ' '.join(file.absolute_file_path for file in job_context['original_files'])
+    files = ' '.join(file.get_synced_file_path() for file in job_context['original_files'])
     formatted_command = command_str.format(qc_directory=job_context["qc_directory"],
                 files=files)
 
