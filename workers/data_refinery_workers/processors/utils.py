@@ -12,11 +12,12 @@ from data_refinery_common.models import (
     ProcessorJobDatasetAssociation,
     OriginalFileSampleAssociation
 )
-from data_refinery_common.utils import get_worker_id
 from data_refinery_workers._version import __version__
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.utils import get_worker_id, get_env_variable
 
 logger = get_and_configure_logger(__name__)
+S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
 
 def start_job(job_context: Dict):
