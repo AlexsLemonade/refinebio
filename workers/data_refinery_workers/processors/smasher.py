@@ -77,10 +77,10 @@ def _smash(job_context: Dict) -> Dict:
             all_frames = []
             for computed_file in input_files:
 
-                computed_file_path = str(computed_file.absolute_file_path)
+                computed_file_path = str(computed_file.get_synced_file_path())
 
                 # Bail appropriately if this isn't a real file.
-                if not os.path.exists(computed_file.absolute_file_path):
+                if not os.path.exists(computed_file.get_synced_file_path()):
                     raise ValueError("Smasher received non-existent file path.")
 
                 data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0)
@@ -247,6 +247,12 @@ def _upload_and_notify(job_context: Dict) -> Dict:
         job_context["dataset"].s3_key = job_context["output_file"].split('/')[-1]
         job_context["dataset"].save()
 
+        # File is uploaded, we can delete the local.
+        try:
+            os.remove(job_context["output_file"])
+        except OSError:
+            pass
+
         ##
         # SES
         ##
@@ -315,6 +321,15 @@ def _update_result_objects(job_context: Dict) -> Dict:
 
     return job_context
 
+def _delete_local_files(job_context: Dict) -> Dict:
+    """ Removes all of the ComputedFiles that have been synced from S3 """
+    for key, input_files in job_context['input_files'].items():
+        for computed_file in input_files:
+            computed_file.detele_local_file()
+
+    job_context['success'] = True
+    return job_context
+
 def smash(job_id: int, upload=True) -> None:
     """ Main Smasher interface """
 
@@ -324,5 +339,5 @@ def smash(job_id: int, upload=True) -> None:
                         _smash,
                         _upload_and_notify,
                         _update_result_objects,
+                        _delete_local_files,
                         utils.end_job])
-

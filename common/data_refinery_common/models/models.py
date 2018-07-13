@@ -689,8 +689,6 @@ class ComputedFile(models.Model):
             os.remove(self.absolute_file_path)
         except OSError:
             pass
-        self.is_downloaded = False
-        self.save()
 
     def get_synced_file_path(self):
         """ Fetches the absolute file path to this ComputedFile, fetching from S3 if it
