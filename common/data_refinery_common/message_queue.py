@@ -63,13 +63,10 @@ def send_job(job_type: Enum, job) -> None:
                 job.id)
 
     if isinstance(job, ProcessorJob):
-        job_name = job_type.value + "_" + str(job.ram_amount)
-        nomad_job = job_name
-    else:
-        job_name = job_type.value
+        nomad_job = nomad_job + "_" + str(job.ram_amount)
 
     try:
-        nomad_response = nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_name,
+        nomad_response = nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,
                                                                         "JOB_ID": str(job.id)})
         job.nomad_job_id = nomad_response["DispatchedJobID"]
         job.save()
