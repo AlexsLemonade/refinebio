@@ -30,7 +30,7 @@ GENE_TYPE_COLUMN = 2
 # Removes each occurrance of ; and "
 IDS_CLEANUP_TABLE = str.maketrans({";": None, "\"": None})
 
-ORGANISM_INDEX_BUCKET = get_env_variable_gracefully("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME")
+ORGANISM_INDEX_BUCKET = get_env_variable_gracefully("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", False)
 
 
 def _compute_paths(job_context: Dict) -> str:
@@ -328,9 +328,10 @@ def _populate_index_object(job_context: Dict) -> Dict:
     index_object.salmon_version = job_context["salmon_version"]
     index_object.index_type = "TRANSCRIPTOME_" + job_context['length'].upper()
     index_object.result = result
-    logger.info("Uploading %s %s to s3" % (job_context['organism_name'], job_context['length']))
-    index_object.upload_to_s3(computed_file.absolute_file_path, ORGANISM_INDEX_BUCKET, logger)
-    index_object.save()
+    if ORGANISM_INDEX_BUCKET:
+        logger.info("Uploading %s %s to s3" % (job_context['organism_name'], job_context['length']))
+        index_object.upload_to_s3(computed_file.absolute_file_path, ORGANISM_INDEX_BUCKET, logger)
+        index_object.save()
 
     job_context['result'] = result
     job_context['computed_file'] = computed_file
