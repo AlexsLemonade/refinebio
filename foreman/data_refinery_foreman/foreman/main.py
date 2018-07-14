@@ -207,7 +207,8 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     num_retries = last_job.num_retries + 1
 
     new_job = ProcessorJob(num_retries=num_retries,
-                            pipeline_applied=last_job.pipeline_applied)
+                           pipeline_applied=last_job.pipeline_applied,
+                           ram_amount=last_job.ram_amount)
     new_job.save()
 
     for original_file in last_job.original_files.all():
