@@ -1,4 +1,4 @@
-job "AFFY_TO_PCL" {
+job "AFFY_TO_PCL_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -15,7 +15,7 @@ job "AFFY_TO_PCL" {
       # delay    = "30s"
     }
 
-    task "affy_to_pcl_${{RAM}}" {
+    task "affy_to_pcl" {
       driver = "docker"
 
       # This env will be passed into the container for the job.

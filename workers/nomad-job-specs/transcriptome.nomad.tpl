@@ -1,4 +1,4 @@
-job "TRANSCRIPTOME_INDEX" {
+job "TRANSCRIPTOME_INDEX_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -15,7 +15,7 @@ job "TRANSCRIPTOME_INDEX" {
       # delay    = "30s"
     }
 
-    task "transcriptome_index_${{RAM}}" {
+    task "transcriptome_index" {
       driver = "docker"
 
       # This env will be passed into the container for the job.

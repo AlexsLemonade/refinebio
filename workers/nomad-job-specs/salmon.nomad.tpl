@@ -1,4 +1,4 @@
-job "SALMON" {
+job "SALMON_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -15,7 +15,7 @@ job "SALMON" {
       # delay    = "30s"
     }
 
-    task "salmon_${{RAM}}" {
+    task "salmon" {
       driver = "docker"
 
       # This env will be passed into the container for the job.

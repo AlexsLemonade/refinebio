@@ -1,4 +1,4 @@
-job "SMASHER" {
+job "SMASHER_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -15,7 +15,7 @@ job "SMASHER" {
       # delay    = "30s"
     }
 
-    task "smasher_${{RAM}}" {
+    task "smasher" {
       driver = "docker"
 
       # This env will be passed into the container for the job.

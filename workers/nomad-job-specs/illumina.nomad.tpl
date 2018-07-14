@@ -1,4 +1,4 @@
-job "ILLUMINA_TO_PCL" {
+job "ILLUMINA_TO_PCL_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -15,7 +15,7 @@ job "ILLUMINA_TO_PCL" {
       # delay    = "30s"
     }
 
-    task "illumina_to_pcl_${{RAM}}" {
+    task "illumina_to_pcl" {
       driver = "docker"
 
       # This env will be passed into the container for the job.
