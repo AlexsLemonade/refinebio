@@ -123,6 +123,12 @@ def _smash(job_context: Dict) -> Dict:
                 #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg.7__3016__AT5G35080.1;db=core)
                 data.index = data.index.str.replace(r"(\.[^.]*)$", '')
 
+                # I'm not sure where these are sneaking in from, but we don't want them.
+                # Related: #issuecomment-405351519
+                data.columns.str.replace('.CEL_x', '.CEL')
+                data.columns.str.replace('.CEL_y', '.CEL')
+                data.columns.str.replace('.CEL_z', '.CEL')
+
                 # Squish duplicated rows together.
                 # XXX/TODO: Is mean the appropriate method here?
                 #           We can make this an option in future.
