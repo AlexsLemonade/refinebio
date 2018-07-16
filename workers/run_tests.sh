@@ -181,11 +181,18 @@ if [[ -z $tag || $tag == "no_op" ]]; then
              "$test_data_repo/$no_file"
     fi
     no_file2="GSM269747-tbl-1.txt"
-    if [ ! -e "$no_test_raw_dir/$no2_file" ]; then
+    if [ ! -e "$no_test_raw_dir/$no_file2" ]; then
         mkdir -p $no_test_raw_dir
         echo "Downloading NOOP file2."
         wget -q -O "$no_test_raw_dir/$no_file2" \
              "$test_data_repo/$no_file2"
+    fi
+    no_file3="GSM557500_sample_table.txt"
+    if [ ! -e "$no_test_raw_dir/$no_file3" ]; then
+        mkdir -p $no_test_raw_dir
+        echo "Downloading NOOP file3."
+        wget -q -O "$no_test_raw_dir/$no_file3" \
+             "$test_data_repo/$no_file3"
     fi
 fi
 
@@ -196,6 +203,8 @@ if [[ -z $tag || $tag == "smasher" ]]; then
     pcl_name3="GSM1238108-tbl-1.txt"
     pcl_name4="GSM1487313_liver.PCL"
     pcl_name5="SRP149598_gene_lengthScaledTPM.tsv"
+    pcl_name6="GSM1084806-tbl-1.txt"
+    pcl_name7="GSM1084807-tbl-1.txt"
     pcl_name_gs1="GSM1084806-tbl-1.txt"
     pcl_name_gs2="GSM1084807-tbl-1.txt"
     pcl_test_raw_dir="$volume_directory/PCL"
@@ -204,6 +213,8 @@ if [[ -z $tag || $tag == "smasher" ]]; then
     pcl_test_data_3="$pcl_test_raw_dir/$pcl_name3"
     pcl_test_data_4="$pcl_test_raw_dir/$pcl_name4"
     pcl_test_data_5="$pcl_test_raw_dir/$pcl_name5"
+    pcl_test_data_6="$pcl_test_raw_dir/$pcl_name6"
+    pcl_test_data_7="$pcl_test_raw_dir/$pcl_name7"
     pcl_test_data_gs1="$pcl_test_raw_dir/$pcl_name_gs1"
     pcl_test_data_gs2="$pcl_test_raw_dir/$pcl_name_gs2"
     if [ ! -e "$pcl_test_data_1" ]; then
@@ -231,6 +242,16 @@ if [[ -z $tag || $tag == "smasher" ]]; then
         echo "Downloading PCL5 for tests."
         wget -q -O $pcl_test_data_5 \
              "$test_data_repo/$pcl_name5"
+    fi
+    if [ ! -e "$pcl_test_data_6" ]; then
+        echo "Downloading PCL6 for tests."
+        wget -q -O $pcl_test_data_6 \
+             "$test_data_repo/$pcl_name6"
+    fi
+    if [ ! -e "$pcl_test_data_7" ]; then
+        echo "Downloading PCL7 for tests."
+        wget -q -O $pcl_test_data_7 \
+             "$test_data_repo/$pcl_name7"
     fi
     if [ ! -e "$pcl_test_data_gs1" ]; then
         echo "Downloading PCLGS1 for tests."

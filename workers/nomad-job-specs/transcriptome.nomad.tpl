@@ -15,7 +15,7 @@ job "TRANSCRIPTOME_INDEX" {
       # delay    = "30s"
     }
 
-    task "transcriptome_index" {
+    task "transcriptome_index_${{RAM}}" {
       driver = "docker"
 
       # This env will be passed into the container for the job.
@@ -55,7 +55,7 @@ job "TRANSCRIPTOME_INDEX" {
         # CPU is in AWS's CPU units.
         cpu = 1024
         # Memory is in MB of RAM.
-        memory = 4048
+        memory = ${{RAM}}
       }
 
       config {

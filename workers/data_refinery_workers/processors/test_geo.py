@@ -11,9 +11,15 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
     OriginalFileSampleAssociation,
-    Organism
+    Organism,
+    Processor
 )
 from data_refinery_workers.processors import utils
+
+
+def setUpModule():
+    utils.createTestProcessors()
+
 
 def prepare_illumina_job(species="Homo sapiens"):
     pj = ProcessorJob()

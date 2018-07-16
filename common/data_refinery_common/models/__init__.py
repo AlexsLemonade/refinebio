@@ -11,6 +11,8 @@ from data_refinery_common.models.models import (
     SampleAnnotation,
     Experiment,
     ExperimentAnnotation,
+    Processor,
+    Pipeline,
     ComputationalResult,
     ComputationalResultAnnotation,
     OrganismIndex,
@@ -27,4 +29,3 @@ from data_refinery_common.models.models import (
     SampleComputedFileAssociation,
     APIToken
 )
-

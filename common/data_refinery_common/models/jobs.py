@@ -78,6 +78,9 @@ class ProcessorJob(models.Model):
     original_files = models.ManyToManyField('OriginalFile', through='ProcessorJobOriginalFileAssociation')
     data_sets = models.ManyToManyField('DataSet', through='ProcessorJobDataSetAssociation')
 
+    # Resources
+    ram_amount = models.IntegerField(default=2048)
+
     # Tracking
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)

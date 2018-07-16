@@ -14,6 +14,8 @@ from data_refinery_common.models import (
     OrganismIndex,
     ComputedFile,
     ComputationalResult,
+    Processor,
+    Pipeline,
     Sample,
     Experiment,
     ExperimentSampleAssociation,
@@ -21,6 +23,11 @@ from data_refinery_common.models import (
     OriginalFileSampleAssociation
 )
 from data_refinery_workers.processors import salmon, utils
+
+
+def setUpModule():
+    utils.createTestProcessors()
+
 
 def prepare_job():
     pj = ProcessorJob()
@@ -34,7 +41,7 @@ def prepare_job():
     samp.organism = c_elegans
     samp.save()
 
-    computational_result = ComputationalResult()
+    computational_result = ComputationalResult(processor=Processor.objects.first())
     computational_result.save()
 
     organism_index = OrganismIndex()
@@ -163,6 +170,7 @@ class SalmonTestCase(TestCase):
         job_context = {
             'job_id': 1,
             'job': ProcessorJob(),
+            'pipeline': Pipeline(name="Salmon"),
             'sample': test_sample,
             'input_file_path': os.path.join(experiment_dir, 'raw/reads_1.fastq'),
             'input_file_path_2': os.path.join(experiment_dir, 'raw/reads_2.fastq'),
@@ -209,6 +217,7 @@ class SalmonTestCase(TestCase):
         job1_context = {
             'job_id': 1,
             'job': ProcessorJob(),
+            'pipeline': Pipeline(name="Salmon"),
             'sample': sample1,
             'input_file_path': os.path.join(experiment_dir, 'raw/SRR1206053.fastq.gz'),
             'index_directory': os.path.join(experiment_dir, 'index'),
@@ -230,6 +239,7 @@ class SalmonTestCase(TestCase):
         job2_context = {
             'job_id': 2,
             'job': ProcessorJob(),
+            'pipeline': Pipeline(name="Salmon"),
             'sample': sample2,
             'input_file_path': os.path.join(experiment_dir, 'raw/SRR1206054.fastq.gz'),
             'index_directory': os.path.join(experiment_dir, 'index'),
@@ -259,6 +269,7 @@ class SalmonTestCase(TestCase):
         win_context = {
             'job': job,
             'job_id': 789,
+            'pipeline': Pipeline(name="Salmon"),
             'qc_directory': "/home/user/data_store/raw/TEST/SALMON/qc",
             'original_files': og_files,
             'success': True
@@ -280,6 +291,7 @@ class SalmonTestCase(TestCase):
         fail_context = {
             'job': job,
             'job_id': 'hippityhoppity',
+            'pipeline': Pipeline(name="Salmon"),
             'qc_directory': "/home/user/data_store/raw/TEST/SALMON/derp",
             'original_files': [],
             'success': True,
@@ -300,11 +312,12 @@ class SalmonToolsTestCase(TestCase):
         """Test outputs when the sample has both left and right reads."""
         job_context = {
             'job_id': 123,
+            'job': ProcessorJob(),
+            'pipeline': Pipeline(name="Salmon"),
             'input_file_path': self.test_dir + 'double_input/reads_1.fastq',
             'input_file_path_2': self.test_dir + 'double_input/reads_2.fastq',
             'output_directory': self.test_dir + 'double_output/'
         }
-        job_context["job"] = ProcessorJob()
 
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
         sample = Sample()
@@ -331,11 +344,12 @@ class SalmonToolsTestCase(TestCase):
         """Test outputs when the sample has one read only."""
         job_context = {
             'job_id': 456,
+            'job': ProcessorJob(),
+            'pipeline': Pipeline(name="Salmon"),
             'input_file_path': self.test_dir + 'single_input/single_read.fastq',
             'output_directory': self.test_dir + 'single_output/',
             'computed_files': []
         }
-        job_context["job"] = ProcessorJob()
 
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
         sample = Sample()
@@ -360,6 +374,7 @@ class TximportTestCase(TestCase):
     def setUp(self):
         experiment = Experiment(accession_code='PRJNA408323')
         experiment.save()
+
         for id in ['07', '08', '09', '12', '13', '14']:
             sample = Sample(accession_code=('SRR60800' + id))
             sample.save()
@@ -371,9 +386,10 @@ class TximportTestCase(TestCase):
         job_context = {
             'job_id': 456,
             'genes_to_transcripts_path': '/home/user/data_store/tximport_test/np_gene2txmap.txt',
-            'computed_files': []
+            'computed_files': [],
+            'job': ProcessorJob(),
+            'pipeline': Pipeline(name="Salmon"),
         }
-        job_context["job"] = ProcessorJob()
 
         experiment_dir = '/home/user/data_store/tximport_test/PRJNA408323'
         final_context = salmon._tximport(job_context, experiment_dir)
