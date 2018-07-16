@@ -124,7 +124,7 @@ def _smash(job_context: Dict) -> Dict:
                 data.index = data.index.str.replace(r"(\.[^.]*)$", '')
 
                 # I'm not sure where these are sneaking in from, but we don't want them.
-                # Related: #issuecomment-405351519
+                # Related: https://github.com/AlexsLemonade/refinebio/issues/390
                 data.columns.str.replace('.CEL_x', '.CEL')
                 data.columns.str.replace('.CEL_y', '.CEL')
                 data.columns.str.replace('.CEL_z', '.CEL')
