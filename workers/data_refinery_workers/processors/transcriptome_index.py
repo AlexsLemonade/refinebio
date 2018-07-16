@@ -72,7 +72,8 @@ def _prepare_files(job_context: Dict) -> Dict:
         if "fa.gz" in og_file.source_filename:
             gzipped_fasta_file_path = og_file.absolute_file_path
             job_context["fasta_file"] = og_file
-            job_context["fasta_file_path"] = gzipped_fasta_file_path.replace(".gz", "")
+            new_fasta_filename = gzipped_fasta_file_path.split('/')[-1].replace(".gz", "")
+            job_context["fasta_file_path"] = job_context["work_dir"] + "/" + new_fasta_filename
             with gzip.open(gzipped_fasta_file_path, "rb") as gzipped_file, \
                     open(job_context["fasta_file_path"], "wb") as gunzipped_file:
                 shutil.copyfileobj(gzipped_file, gunzipped_file)
@@ -328,10 +329,13 @@ def _populate_index_object(job_context: Dict) -> Dict:
     index_object.salmon_version = job_context["salmon_version"]
     index_object.index_type = "TRANSCRIPTOME_" + job_context['length'].upper()
     index_object.result = result
+
     if ORGANISM_INDEX_BUCKET:
         logger.info("Uploading %s %s to s3" % (job_context['organism_name'], job_context['length']))
         index_object.upload_to_s3(computed_file.absolute_file_path, ORGANISM_INDEX_BUCKET, logger)
-        index_object.save()
+
+    index_object.save()
+
 
     job_context['result'] = result
     job_context['computed_file'] = computed_file
