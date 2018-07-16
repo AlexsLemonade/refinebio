@@ -602,6 +602,8 @@ class OriginalFile(models.Model):
     def delete_local_file(self):
         """ Deletes a file from the path and actually removes it from the file system,
         resetting the is_downloaded flag to false. Can be refetched from source if needed. """
+        if settings.TESTING:
+            return
 
         try:
             os.remove(self.absolute_file_path)
@@ -719,6 +721,8 @@ class ComputedFile(models.Model):
     def delete_local_file(self):
         """ Deletes a file from the path and actually removes it from the file system,
         resetting the is_downloaded flag to false. Can be refetched from source if needed. """
+        if settings.TESTING:
+            return
 
         try:
             os.remove(self.absolute_file_path)

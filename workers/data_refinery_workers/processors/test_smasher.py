@@ -657,6 +657,3 @@ class SmasherTestCase(TestCase):
         afp = computed_file.get_synced_file_path()
         self.assertTrue(os.path.exists(afp))
 
-        computed_file.delete_local_file()
-        self.assertFalse(os.path.exists(afp))
-
