@@ -331,8 +331,13 @@ def _populate_index_object(job_context: Dict) -> Dict:
     index_object.result = result
 
     if ORGANISM_INDEX_BUCKET:
-        logger.info("Uploading %s %s to s3" % (job_context['organism_name'], job_context['length']))
+        logger.info("Uploading %s %s to s3", job_context['organism_name'], job_context['length'], processor_job=job_context["job_id"])
         index_object.upload_to_s3(computed_file.absolute_file_path, ORGANISM_INDEX_BUCKET, logger)
+    else:
+        logger.warn("ORGANISM_INDEX_BUCKET not configured, therefore %s %s will not be uploaded.",
+                    job_context['organism_name'],
+                    job_context['length'],
+                    processor_job=job_context["job_id"])
 
     index_object.save()
 
