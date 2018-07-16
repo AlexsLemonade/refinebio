@@ -525,6 +525,9 @@ class OriginalFile(models.Model):
     def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
         """ Syncs this OriginalFile to AWS S3.
         """
+        if settings.TESTING:
+            return True
+
         self.s3_bucket = s3_bucket
         self.s3_key = s3_key
 
@@ -574,6 +577,9 @@ class OriginalFile(models.Model):
         """ Downloads a file from S3 to the local file system.
         Returns the absolute file path.
         """
+        if settings.TESTING:
+            return self.absolute_file_path
+
         try:
             S3.download_file(
                         self.s3_bucket, 
@@ -652,6 +658,9 @@ class ComputedFile(models.Model):
     def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
         """ Syncs a file to AWS S3.
         """
+        if settings.TESTING:
+            return True
+
         self.s3_bucket = s3_bucket
         self.s3_key = s3_key
 
@@ -676,6 +685,9 @@ class ComputedFile(models.Model):
         """ Downloads a file from S3 to the local file system.
         Returns the absolute file path.
         """
+        if settings.TESTING:
+            return self.absolute_file_path
+
         try:
             S3.download_file(
                         self.s3_bucket, 
