@@ -15,8 +15,8 @@ from typing import Dict
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
-    OriginalFile, 
-    ComputationalResult, 
+    OriginalFile,
+    ComputationalResult,
     ComputedFile,
     Sample,
     SampleAnnotation,
@@ -24,7 +24,9 @@ from data_refinery_common.models import (
     SampleResultAssociation,
     SampleComputedFileAssociation,
     ProcessorJob,
-    ProcessorJobOriginalFileAssociation
+    ProcessorJobOriginalFileAssociation,
+    Processor,
+    Pipeline
 )
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
@@ -65,7 +67,7 @@ def _prepare_files(job_context: Dict) -> Dict:
                 line != '\n' and \
                 '\t' in line and \
                 line[0] != '\t':
-                    file_output.write(line)    
+                    file_output.write(line)
     job_context['input_file_path'] = job_context["input_file_path"] + ".sanitized"
 
     return job_context
@@ -81,7 +83,7 @@ def _detect_columns(job_context: Dict) -> Dict:
         Detection Pval column
         Expression column (contains sample title and NOT 'BEAD')
 
-        Header examples:     
+        Header examples:
             ['ID_REF', 'LV-C&si-Control-1', 'Detection Pval',
             'LV-C&si-Control-2', 'Detection Pval', 'LV-C&si-Control-3', 'Detection
             Pval', 'LV-C&si-EZH2-1', 'Detection Pval', 'LV-C&si-EZH2-2', 'Detection
@@ -147,21 +149,21 @@ def _detect_columns(job_context: Dict) -> Dict:
             for offset, header in enumerate(headers, start=1):
 
                 if sample.title == header:
-                    column_ids = column_ids + str(offset) + "," 
+                    column_ids = column_ids + str(offset) + ","
                     continue
                 if header.upper().replace(' ', '_') == "RAW_VALUE":
-                    column_ids = column_ids + str(offset) + "," 
+                    column_ids = column_ids + str(offset) + ","
                     continue
                 if sample.title in header and \
                 'BEAD' not in header.upper() and \
                 'NARRAYS' not in header.upper() and \
                 'ARRAY_STDEV' not in header.upper() and \
                 'PVAL' not in header.upper().replace(' ', '').replace('_', ''):
-                    column_ids = column_ids + str(offset) + "," 
+                    column_ids = column_ids + str(offset) + ","
                     continue
         for offset, header in enumerate(headers, start=1):
             if 'AVG_Signal' in header:
-                column_ids = column_ids + str(offset) + "," 
+                column_ids = column_ids + str(offset) + ","
                 continue
 
         column_ids = column_ids[:-1]
@@ -209,8 +211,8 @@ def _detect_platform(job_context: Dict) -> Dict:
     for platform in databases:
         try:
             result = subprocess.check_output([
-                    "/usr/bin/Rscript", 
-                    "--vanilla", 
+                    "/usr/bin/Rscript",
+                    "--vanilla",
                     "/home/user/data_refinery_workers/processors/detect_database.R",
                     "--platform", platform,
                     "--inputFile", job_context['input_file_path'],
@@ -234,7 +236,7 @@ def _detect_platform(job_context: Dict) -> Dict:
         sa = SampleAnnotation()
         sa.sample = sample
         sa.data = {
-            "detected_platform": high_db, 
+            "detected_platform": high_db,
             "detection_percentage": highest,
             "mapped_percentage": high_mapped_percent
         }
@@ -284,8 +286,8 @@ def _run_illumina(job_context: Dict) -> Dict:
         job_context['time_start'] = timezone.now()
 
         result = subprocess.check_output([
-                "/usr/bin/Rscript", 
-                "--vanilla", 
+                "/usr/bin/Rscript",
+                "--vanilla",
                 "/home/user/data_refinery_workers/processors/illumina.R",
                 "--probeId", job_context['probeId'],
                 "--expression", job_context['columnIds'],
@@ -312,15 +314,16 @@ def _create_result_objects(job_context: Dict) -> Dict:
     """ Create the ComputationalResult objects after a Scan run is complete """
 
     result = ComputationalResult()
-    result.command_executed = "illumina.R" # Need a better way to represent this R code.
+    result.commands.append("illumina.R") # Need a better way to represent this R code.
     result.is_ccdl = True
     result.is_public = True
-    result.system_version = __version__
-    result.program_version = "XXX"
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
-    result.pipeline = "Illumina SCAN"
+    result.pipeline = "Illumina SCAN"  # TODO: should be removed
+    result.processor = Processor.objects.get(name=utils.ProcessorEnum.ILLUMINA_SCAN.value,
+                                             version=__version__)
     result.save()
+    job_context['pipeline'].steps.append(result.id)
 
     # Split the result into smashable subfiles
     big_tsv = job_context["output_file_path"]
@@ -374,11 +377,12 @@ def _create_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 def illumina_to_pcl(job_id: int) -> None:
-    return utils.run_pipeline({"job_id": job_id},
-                       [utils.start_job,
-                        _prepare_files,
-                        _detect_columns,
-                        _detect_platform,
-                        _run_illumina,
-                        _create_result_objects,
-                        utils.end_job])
+    pipeline = Pipeline(name=utils.PipelineEnum.ILLUMINA.value)
+    return utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
+                              [utils.start_job,
+                               _prepare_files,
+                               _detect_columns,
+                               _detect_platform,
+                               _run_illumina,
+                               _create_result_objects,
+                               utils.end_job])

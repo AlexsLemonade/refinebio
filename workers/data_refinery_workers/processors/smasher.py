@@ -19,7 +19,13 @@ import numpy as np
 from sklearn import preprocessing
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import OriginalFile, ComputationalResult, ComputedFile, SampleResultAssociation
+from data_refinery_common.models import (
+    OriginalFile,
+    Pipeline,
+    ComputationalResult,
+    ComputedFile,
+    SampleResultAssociation
+)
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 from data_refinery_common.utils import get_env_variable
@@ -106,7 +112,7 @@ def _smash(job_context: Dict) -> Dict:
                 data.index = data.index.str.replace('_at', '')
 
                 # If there are any _versioned_ gene identifiers, remove that
-                # version information. We're using the latest brainarray for everything anyway. 
+                # version information. We're using the latest brainarray for everything anyway.
                 # Jackie says this is okay.
                 # She also says that in the future, we may only want to do this
                 # for cross-technology smashes.
@@ -118,7 +124,7 @@ def _smash(job_context: Dict) -> Dict:
                 data.index = data.index.str.replace(r"(\.[^.]*)$", '')
 
                 # Squish duplicated rows together.
-                # XXX/TODO: Is mean the appropriate method here? 
+                # XXX/TODO: Is mean the appropriate method here?
                 #           We can make this an option in future.
                 # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
                 data = data.groupby(data.index, sort=False).mean()
@@ -318,11 +324,11 @@ def _update_result_objects(job_context: Dict) -> Dict:
 def smash(job_id: int, upload=True) -> None:
     """ Main Smasher interface """
 
-    return utils.run_pipeline({"job_id": job_id, "upload": upload},
+    pipeline = Pipeline(name=utils.PipelineEnum.SMASHER.value)
+    return utils.run_pipeline({"job_id": job_id, "upload": upload, "pipeline": pipeline},
                        [utils.start_job,
                         _prepare_files,
                         _smash,
                         _upload_and_notify,
                         _update_result_objects,
                         utils.end_job])
-

@@ -6,6 +6,7 @@ from data_refinery_common.models import (
     SurveyJob,
     Organism,
     Sample,
+    Processor,
     OriginalFile,
     OriginalFileSampleAssociation,
     ProcessorJobOriginalFileAssociation,
@@ -13,6 +14,11 @@ from data_refinery_common.models import (
 )
 from unittest.mock import patch
 from data_refinery_workers.processors import transcriptome_index, utils
+
+
+def setUpModule():
+    utils.createTestProcessors()
+
 
 def prepare_job():
     pj = ProcessorJob()
