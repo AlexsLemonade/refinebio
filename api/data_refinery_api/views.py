@@ -22,6 +22,7 @@ from data_refinery_common.models import (
     Experiment,
     Sample,
     Organism,
+    Processor,
     ComputationalResult,
     DownloaderJob,
     SurveyJob,
@@ -41,6 +42,7 @@ from data_refinery_api.serializers import (
     PlatformSerializer,
     InstitutionSerializer,
     ComputationalResultSerializer,
+    ProcessorSerializer,
 
     # Job
     SurveyJobSerializer,
@@ -148,7 +150,7 @@ class CreateDatasetView(generics.CreateAPIView):
     serializer_class = CreateDatasetSerializer
 
 class DatasetView(generics.RetrieveUpdateAPIView):
-    """ View and modify a single Dataset. Set `start` to `true` along with a valid 
+    """ View and modify a single Dataset. Set `start` to `true` along with a valid
     activated API token (from /token/) to begin smashing and delivery.
     """
 
@@ -171,13 +173,14 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             try:
                 token = APIToken.objects.get(id=token_id, is_activated=True)
             except Exception: # Generall APIToken.DoesNotExist or django.core.exceptions.ValidationError
-                raise APIException("You must provide an active API token ID") 
+                raise APIException("You must provide an active API token ID")
 
             if not already_processing:
 
                 # Create and dispatch the new job.
                 processor_job = ProcessorJob()
                 processor_job.pipeline_applied = "SMASHER"
+                processor_job.ram_amount = 4048
                 processor_job.save()
 
                 pjda = ProcessorJobDatasetAssociation()
@@ -325,6 +328,18 @@ class SampleDetail(APIView):
         sample = self.get_object(pk)
         serializer = DetailedSampleSerializer(sample)
         return Response(serializer.data)
+
+##
+# Processor
+##
+
+class ProcessorList(APIView):
+    """List all processors."""
+    def get(self, request, format=None):
+        processors = Processor.objects.all()
+        serializer = ProcessorSerializer(processors, many=True)
+        return Response(serializer.data)
+
 
 ##
 # Results

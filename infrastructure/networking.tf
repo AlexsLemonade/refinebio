@@ -225,7 +225,6 @@ resource "aws_cloudfront_distribution" "static-distribution" {
       }
     }
 
-    price_class = "PriceClass_100"
     viewer_protocol_policy = "redirect-to-https"
 
     # As per: https://aws.amazon.com/cloudfront/pricing/
@@ -247,6 +246,7 @@ resource "aws_cloudfront_distribution" "static-distribution" {
     }
   }
 
+  price_class = "PriceClass_100"
 
   tags {
     Environment = "data-refinery-${var.user}-${var.stage}"

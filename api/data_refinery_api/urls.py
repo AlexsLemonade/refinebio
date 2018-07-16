@@ -20,6 +20,7 @@ from data_refinery_api.views import (
     DownloaderJobList,
     ProcessorJobList,
     ResultsList,
+    ProcessorList,
     Stats,
     CreateDatasetView,
     DatasetView,
@@ -96,6 +97,7 @@ urlpatterns = [
     url(r'^platforms/$', PlatformList.as_view(), name="platforms"),
     url(r'^institutions/$', InstitutionList.as_view(), name="institutions"),
     url(r'^results/$', ResultsList.as_view(), name="results"),
+    url(r'^processors/$', ProcessorList.as_view(), name="processors"),
 
     # Deliverables
     url(r'^dataset/$', DatasetRoot.as_view(), name="dataset_root"),
