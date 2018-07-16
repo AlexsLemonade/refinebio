@@ -137,6 +137,8 @@ class Sample(models.Model):
         metadata['compound'] = self.compound
         metadata['time'] = self.time
         metadata['platform'] = self.pretty_platform
+        metadata['annotations'] = [data for data in self.sampleannotation_set.all().values_list('data', flat=True)]
+
         return metadata
 
     def get_result_files(self):

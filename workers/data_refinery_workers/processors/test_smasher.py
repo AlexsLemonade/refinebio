@@ -12,6 +12,7 @@ from data_refinery_common.models import (
     Experiment,
     Organism,
     Sample,
+    SampleAnnotation,
     SampleResultAssociation,
     ExperimentSampleAssociation,
     Dataset,
@@ -40,6 +41,11 @@ def prepare_job():
     sample.title = 'GSM1237810'
     sample.organism = homo_sapiens
     sample.save()
+
+    sample_annotation = SampleAnnotation()
+    sample_annotation.data = {'hi': 'friend'}
+    sample_annotation.sample = sample
+    sample_annotation.save()
 
     sra = SampleResultAssociation()
     sra.sample = sample
@@ -117,6 +123,9 @@ class SmasherTestCase(TestCase):
     def test_smasher(self):
         """ Main tester. """
         job = prepare_job()
+
+        anno_samp = Sample.objects.get(accession_code='GSM1237810')
+        self.assertTrue('hi' in anno_samp.to_metadata_dict()['annotations'][0].keys())
 
         relations = ProcessorJobDatasetAssociation.objects.filter(processor_job=job)
         dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
