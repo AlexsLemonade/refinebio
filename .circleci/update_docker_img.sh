@@ -32,7 +32,7 @@ for IMG in $CCDL_WORKER_IMGS; do
     image_name="$DOCKERHUB_REPO/dr_$IMG"
     if docker_img_exists $image_name $CIRCLE_TAG; then
         echo "Docker image exists, building process terminated: $image_name:$CIRCLE_TAG"
-        exit
+        exit 1
     fi
 done
 
@@ -42,7 +42,7 @@ CCDL_OTHER_IMGS="$DOCKERHUB_REPO/dr_foreman $DOCKERHUB_REPO/dr_api"
 for IMG in $CCDL_OTHER_IMGS; do
     if docker_img_exists $IMG $CIRCLE_TAG; then
         echo "Docker image exists, building process terminated: $IMG:$CIRCLE_TAG"
-        exit
+        exit 1
     fi
 done
 
