@@ -15,7 +15,7 @@ job "NO_OP" {
       # delay    = "30s"
     }
 
-    task "no_op" {
+    task "no_op_${{RAM}}" {
       driver = "docker"
 
       # This env will be passed into the container for the job.
@@ -53,7 +53,7 @@ job "NO_OP" {
         # CPU is in AWS's CPU units.
         cpu = 256
         # Memory is in MB of RAM.
-        memory = 1024
+        memory = ${{RAM}}
       }
 
       config {
