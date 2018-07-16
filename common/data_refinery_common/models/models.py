@@ -11,7 +11,7 @@ from datetime import datetime
 from functools import partial
 
 from django.conf import settings
-from django.contrib.postgres.fields import HStoreField, JSONField
+from django.contrib.postgres.fields import ArrayField, HStoreField, JSONField
 from django.db import transaction
 from django.db import models
 from django.utils import timezone
@@ -320,6 +320,31 @@ class ExperimentAnnotation(models.Model):
         self.last_modified = current_time
         return super(ExperimentAnnotation, self).save(*args, **kwargs)
 
+class Pipeline(models.Model):
+    "Pipeline that is associated with a series of ComputationalResult records."""
+
+    name = models.CharField(max_length=255)
+    steps = ArrayField(models.IntegerField(), default=[])
+
+    class Meta:
+        db_table = "pipelines"
+
+
+class Processor(models.Model):
+    """Processor associated with a certain ComputationalResult."""
+
+    name = models.CharField(max_length=255)
+    version = models.CharField(max_length=64)
+    docker_image = models.CharField(max_length=255)
+    environment = JSONField(default={})
+
+    class Meta:
+        db_table = "processors"
+        unique_together = ('name', 'version')
+
+    def __str__(self):
+        return "Processor: %s (version: %s, docker_image: %s)" % (name, version, docker_image)
+
 
 class ComputationalResult(models.Model):
     """ Meta-information about the output of a computer process. (Ex Salmon) """
@@ -335,14 +360,14 @@ class ComputationalResult(models.Model):
     objects = models.Manager()
     public_objects = PublicObjectsManager()
 
-    command_executed = models.TextField(blank=True)
-    program_version = models.TextField(blank=True)
-    system_version = models.CharField(
-        max_length=255)  # Generally defined in from data_refinery_workers._version import __version__
+    commands = ArrayField(models.TextField(), default=[])
+    processor = models.ForeignKey(Processor, blank=True, null=True, on_delete=models.CASCADE)
     is_ccdl = models.BooleanField(default=True)
-
+    # TODO: "pipeline" field is now redundant due to "processor". Should be removed later.
     # Human-readable nickname for this computation
     pipeline = models.CharField(max_length=255)
+
+
 
     # Stats
     time_start = models.DateTimeField(blank=True, null=True)
@@ -393,6 +418,7 @@ class ComputationalResultAnnotation(models.Model):
             self.created_at = current_time
         self.last_modified = current_time
         return super(ComputationalResultAnnotation, self).save(*args, **kwargs)
+
 
 # TODO
 # class Gene(models.Model):
@@ -770,7 +796,6 @@ class ExperimentSampleAssociation(models.Model):
         unique_together = ('experiment', 'sample')
 
 
-
 class ExperimentOrganismAssociation(models.Model):
 
     experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
@@ -779,7 +804,6 @@ class ExperimentOrganismAssociation(models.Model):
     class Meta:
         db_table = "experiment_organism_associations"
         unique_together = ('experiment', 'organism')
-
 
 
 class DownloaderJobOriginalFileAssociation(models.Model):
@@ -794,7 +818,6 @@ class DownloaderJobOriginalFileAssociation(models.Model):
         unique_together = ('downloader_job', 'original_file')
 
 
-
 class ProcessorJobOriginalFileAssociation(models.Model):
 
     processor_job = models.ForeignKey(
@@ -805,7 +828,6 @@ class ProcessorJobOriginalFileAssociation(models.Model):
     class Meta:
         db_table = "processorjob_originalfile_associations"
         unique_together = ('processor_job', 'original_file')
-
 
 
 class ProcessorJobDatasetAssociation(models.Model):
@@ -827,7 +849,6 @@ class OriginalFileSampleAssociation(models.Model):
     class Meta:
         db_table = "original_file_sample_associations"
         unique_together = ('original_file', 'sample')
-
 
 
 class SampleResultAssociation(models.Model):

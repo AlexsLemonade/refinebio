@@ -14,6 +14,8 @@ from data_refinery_common.models import (
     OriginalFile,
     ComputationalResult,
     ComputedFile,
+    Processor,
+    Pipeline,
     OrganismIndex
 )
 from data_refinery_workers._version import __version__
@@ -22,7 +24,6 @@ from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable_gracefully
 
 logger = get_and_configure_logger(__name__)
-
 
 JOB_DIR_PREFIX = "processor_job_"
 GENE_TO_TRANSCRIPT_TEMPLATE = "{gene_id}\t{transcript_id}\n"
@@ -302,12 +303,14 @@ def _populate_index_object(job_context: Dict) -> Dict:
     """ """
 
     result = ComputationalResult()
-    result.command_executed = job_context["salmon_formatted_command"]
+    result.commands.append(job_context["salmon_formatted_command"])
+    result.processor = Processor.objects.get(name=utils.ProcessorEnum.TX_INDEX.value,
+                                             version=__version__)
     result.is_ccdl = True
-    result.system_version = __version__
     result.time_start = job_context["time_start"]
     result.time_end = job_context["time_end"]
     result.save()
+    job_context['pipeline'].steps.append(result.id)
 
     computed_file = ComputedFile()
     computed_file.absolute_file_path = job_context["computed_archive"]
@@ -349,7 +352,8 @@ def build_transcriptome_index(job_id: int, length="long") -> None:
     The output of salmon index is a directory which is pushed in full
     to Permanent Storage.
     """
-    return utils.run_pipeline({"job_id": job_id, "length": length},
+    pipeline = Pipeline(name=utils.PipelineEnum.TX_INDEX.value)
+    return utils.run_pipeline({"job_id": job_id, "length": length, "pipeline": pipeline},
                               [utils.start_job,
                                _compute_paths,
                                _prepare_files,

@@ -21,6 +21,7 @@ from data_refinery_common.models import (
     DownloaderJobOriginalFileAssociation,
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
+    Processor,
     ComputationalResult,
     SampleResultAssociation,
     Dataset
@@ -38,7 +39,8 @@ from data_refinery_api.serializers import (
     # Jobs
     SurveyJobSerializer,
     DownloaderJobSerializer,
-    ProcessorJobSerializer
+    ProcessorJobSerializer,
+    ProcessorSerializer
 )
 
 class APITestCases(APITestCase):
@@ -352,7 +354,7 @@ class APITestCases(APITestCase):
                                     jdata,
                                     content_type="application/json")
         self.assertEqual(response.status_code, 400)
-        
+
         # This will actually kick off a job if we don't patch send_job or supply no_send_job
         dataset = Dataset.objects.get(id=good_id)
         dataset.is_processing = False
@@ -416,3 +418,51 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('experiments'))
         self.assertEqual(response.status_code, 500)
         mock_client.captureMessage.assert_called()
+
+
+class ProcessorTestCases(APITestCase):
+    def setUp(self):
+        salmon_quant_env = {
+            'os': 'Ubuntu 16.04',
+            'programs': {
+                'salmon': {
+                    'version': '0.9.1',
+                    'command': 'salmon quant -i <index_dir> -r <input_file> -o <output_dir>'
+                }
+            }
+        }
+        Processor.objects.create(
+            name="Salmon Quant",
+            docker_image="ccdl/salmon_img:v1.23",
+            environment=salmon_quant_env
+        )
+
+        salmontools_env = {
+            'os': 'Ubuntu 16.04',
+            'programs': {
+                'salmontools': {
+                    'version': '0.1.0',
+                    'command': 'salmontools extract-unmapped -u <file> -o <output> -r <data_file>',
+                },
+                'g++': {
+                    'version': '5.4.0',
+                    'command': 'cmake && make install'
+                }
+            }
+        }
+        Processor.objects.create(
+            name="Salmontools",
+            docker_image="ccdl/salmontools_img:v0.45",
+            environment=salmontools_env
+        )
+
+    def test_endpoint(self):
+        response = self.client.get(reverse('processors'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        processors = response.json()
+        self.assertEqual(processors[0]['name'], 'Salmon Quant')
+        self.assertEqual(processors[0]['environment']['programs']['salmon']['version'], '0.9.1')
+
+        self.assertEqual(processors[1]['name'], 'Salmontools')
+        self.assertEqual(processors[1]['environment']['programs']['salmontools']['version'], '0.1.0')

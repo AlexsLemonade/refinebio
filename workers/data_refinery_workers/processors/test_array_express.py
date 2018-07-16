@@ -7,7 +7,12 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile
 )
-from data_refinery_workers.processors import array_express
+from data_refinery_workers.processors import array_express, utils
+
+
+def setUpModule():
+    utils.createTestProcessors()
+
 
 def prepare_ba_job():
     pj = ProcessorJob()

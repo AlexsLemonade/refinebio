@@ -7,9 +7,16 @@ import subprocess
 from typing import Dict
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import ComputationalResult, ComputedFile, SampleResultAssociation, SampleComputedFileAssociation, SampleAnnotation
+from data_refinery_common.models import (
+    ComputationalResult,
+    ComputedFile,
+    SampleResultAssociation,
+    SampleComputedFileAssociation,
+    SampleAnnotation,
+    Processor,
+    Pipeline
+)
 from data_refinery_common.utils import get_env_variable, get_internal_microarray_accession
-from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 
@@ -19,7 +26,7 @@ logger = get_and_configure_logger(__name__)
 
 
 def _prepare_files(job_context: Dict) -> Dict:
-    """A processor which takes externally-processed sample data and makes it smashable. 
+    """A processor which takes externally-processed sample data and makes it smashable.
     """
     original_file = job_context["original_files"][0]
     sample0 = job_context['samples'][0]
@@ -43,7 +50,7 @@ def _prepare_files(job_context: Dict) -> Dict:
             break
 
     # We want to make sure that all of our columns for conversion and smashing
-    # use the same column name for gene identifiers for later lookup. ID_REF 
+    # use the same column name for gene identifiers for later lookup. ID_REF
     # is the most common, so we use that.
     if 'ID_REF' not in joined and not job_context["is_illumina"]:
         try:
@@ -106,8 +113,8 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
     job_context['script_name'] = "gene_convert.R"
     try:
         result = subprocess.check_output([
-                "/usr/bin/Rscript", 
-                "--vanilla", 
+                "/usr/bin/Rscript",
+                "--vanilla",
                 "/home/user/data_refinery_workers/processors/" + job_context['script_name'],
                 "--platform", job_context["internal_accession"],
                 "--inputFile", job_context['input_file_path'],
@@ -156,8 +163,8 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
     for platform in databases:
         try:
             result = subprocess.check_output([
-                    "/usr/bin/Rscript", 
-                    "--vanilla", 
+                    "/usr/bin/Rscript",
+                    "--vanilla",
                     "/home/user/data_refinery_workers/processors/detect_database.R",
                     "--platform", platform,
                     "--inputFile", job_context['input_file_path'],
@@ -173,8 +180,8 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
                 high_mapped_percent = float(results[1].strip())
 
         except Exception as e:
-            logger.error("Could not detect database for file!", 
-                file=job_context['input_file_path'], 
+            logger.error("Could not detect database for file!",
+                file=job_context['input_file_path'],
                 platform=platform
             )
             logger.exception(e, context=job_context)
@@ -185,7 +192,7 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
         sa = SampleAnnotation()
         sa.sample = sample
         sa.data = {
-            "detected_platform": high_db, 
+            "detected_platform": high_db,
             "detection_percentage": highest,
             "mapped_percentage": high_mapped_percent
         }
@@ -194,8 +201,8 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
     job_context['script_name'] = "gene_convert.R"
     try:
         result = subprocess.check_output([
-                "/usr/bin/Rscript", 
-                "--vanilla", 
+                "/usr/bin/Rscript",
+                "--vanilla",
                 "/home/user/data_refinery_workers/processors/" + job_context['script_name'],
                 "--platform", high_db,
                 "--inputFile", job_context['input_file_path'],
@@ -219,11 +226,13 @@ def _create_result(job_context: Dict) -> Dict:
 
     # This is a NO-OP, but we make a ComputationalResult regardless.
     result = ComputationalResult()
-    result.command_executed = job_context['script_name']
+    result.commands.append(job_context['script_name'])
     result.is_ccdl = True
-    result.system_version = __version__
-    result.pipeline = "Submitter-processed"
+    result.pipeline = "Submitter-processed"  # TODO: should be removed
+    result.processor = Processor.objects.get(name=utils.ProcessorEnum.SUBMITTER_PROCESSED.value,
+                                             version=__version__)
     result.save()
+    job_context['pipeline'].steps.append(result.id)
 
     # Create a ComputedFile for the original file,
     # sync it S3 and save it.
@@ -247,7 +256,7 @@ def _create_result(job_context: Dict) -> Dict:
         failure_reason = "Exception caught while moving file {}".format(file.name)
         job_context["job"].failure_reason = failure_reason
         job_context["success"] = False
-        return job_context        
+        return job_context
 
     for sample in job_context['samples']:
         assoc = SampleResultAssociation()
@@ -264,9 +273,10 @@ def _create_result(job_context: Dict) -> Dict:
     return job_context
 
 def no_op_processor(job_id: int) -> None:
-    return utils.run_pipeline({"job_id": job_id},
-                       [utils.start_job,
-                        _prepare_files,
-                        _convert_genes,
-                        _create_result,
-                        utils.end_job])
+    pipeline = Pipeline(name=utils.PipelineEnum.NO_OP.value)
+    return utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
+                              [utils.start_job,
+                               _prepare_files,
+                               _convert_genes,
+                               _create_result,
+                               utils.end_job])
