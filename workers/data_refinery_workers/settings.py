@@ -157,4 +157,5 @@ else:
     raven_logger = logging.getLogger('raven.contrib.django.client.DjangoClient')
     raven_logger.setLevel(logging.CRITICAL)
 
+import sys
 TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
