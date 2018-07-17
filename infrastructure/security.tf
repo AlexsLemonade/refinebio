@@ -56,6 +56,16 @@ resource "aws_security_group_rule" "data_refinery_worker_nomad" {
   security_group_id = "${aws_security_group.data_refinery_worker.id}"
 }
 
+# Allow the Nomad HTTP API to be accessible by the API security group. See:
+resource "aws_security_group_rule" "data_refinery_worker_nomad" {
+  type = "ingress"
+  from_port = 4646
+  to_port = 4646
+  protocol = "tcp"
+  self = true
+  security_group_id = "${aws_security_group.data_refinery_api.id}"
+}
+
 # Allow Nomad RPC calls to go through to each other. See:
 # https://www.nomadproject.io/guides/cluster/requirements.html#ports-used
 resource "aws_security_group_rule" "data_refinery_worker_nomad_rpc" {
