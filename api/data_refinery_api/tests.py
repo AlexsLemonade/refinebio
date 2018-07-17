@@ -14,6 +14,7 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
     ExperimentSampleAssociation,
+    ExperimentOrganismAssociation,
     Organism,
     OriginalFile,
     OriginalFileSampleAssociation,
@@ -230,6 +231,8 @@ class APITestCases(APITestCase):
             ex.submitter_institution = random.choice(["Funkytown", "Monkeytown"])
             experiments.append(ex)
 
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+
         ex = Experiment()
         ex.accession_code = "FINDME_TEMPURA"
         ex.title = "THISWILLBEINASEARCHRESULT"
@@ -256,9 +259,20 @@ class APITestCases(APITestCase):
         sample2.title = "3345"
         sample2.accession_code = "3345"
         sample2.platform_name = "ILLUMINA"
+        sample2.organism = homo_sapiens
         sample2.save()
 
         Experiment.objects.bulk_create(experiments)
+
+        xoa = ExperimentOrganismAssociation()
+        xoa.experiment=ex
+        xoa.organism=homo_sapiens
+        xoa.save()
+
+        xoa = ExperimentOrganismAssociation()
+        xoa.experiment=ex2
+        xoa.organism=homo_sapiens
+        xoa.save()
 
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample1
@@ -290,7 +304,10 @@ class APITestCases(APITestCase):
         self.assertEqual(len(response.json()['results'][0]['platforms']), 2)
         self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(ex.platforms))
         self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(['AFFY', 'ILLUMINA']))
-
+        self.assertEqual(response.json()['filters']['technology'], {'MICROARRAY': 1})
+        self.assertEqual(response.json()['filters']['publication'], {'has_publication': 0})
+        self.assertEqual(response.json()['filters']['organism'], {'HOMO_SAPIENS': 1})
+    
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
 
