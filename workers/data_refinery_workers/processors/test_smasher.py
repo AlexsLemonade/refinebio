@@ -418,6 +418,99 @@ class SmasherTestCase(TestCase):
         self.assertEqual(len(final_context['merged']), 0)
 
     @tag("smasher")
+    def test_no_smash_dupe(self):
+        """ """
+
+        job = ProcessorJob()
+        job.pipeline_applied = "SMASHER"
+        job.save()
+
+        experiment = Experiment()
+        experiment.accession_code = "GSE51081"
+        experiment.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+
+        sample = Sample()
+        sample.accession_code = 'GSM1237810'
+        sample.title = 'GSM1237810'
+        sample.organism = homo_sapiens
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "GSM1237810_T09-1084.PCL"
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
+        computed_file.result = result
+        computed_file.size_in_bytes = 123
+        computed_file.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
+        sample = Sample()
+        sample.accession_code = 'GSM1237811'
+        sample.title = 'GSM1237811'
+        sample.organism = homo_sapiens
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
+        ds = Dataset()
+        ds.data = {'GSE51081': ['GSM1237810', 'GSM1237811']}
+        ds.aggregate_by = 'ALL'
+        ds.scale_by = 'STANDARD'
+        ds.email_address = "null@derp.com"
+        ds.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = job
+        pjda.dataset = ds
+        pjda.save()
+
+        final_context = smasher.smash(job.pk, upload=False)
+
+        dsid = ds.id
+        ds = Dataset.objects.get(id=dsid)
+
+        self.assertTrue(ds.success)
+        for column in final_context['merged'].columns:
+            self.assertTrue('_x' not in column)
+
+    @tag("smasher")
     def test_log2(self):
         pj = ProcessorJob()
         pj.pipeline_applied = "SMASHER"

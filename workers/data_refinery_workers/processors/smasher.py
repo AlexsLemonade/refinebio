@@ -123,12 +123,6 @@ def _smash(job_context: Dict) -> Dict:
                 #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg.7__3016__AT5G35080.1;db=core)
                 data.index = data.index.str.replace(r"(\.[^.]*)$", '')
 
-                # I'm not sure where these are sneaking in from, but we don't want them.
-                # Related: https://github.com/AlexsLemonade/refinebio/issues/390
-                data.columns.str.replace('.CEL_x', '.CEL')
-                data.columns.str.replace('.CEL_y', '.CEL')
-                data.columns.str.replace('.CEL_z', '.CEL')
-
                 # Squish duplicated rows together.
                 # XXX/TODO: Is mean the appropriate method here?
                 #           We can make this an option in future.
@@ -140,11 +134,23 @@ def _smash(job_context: Dict) -> Dict:
 
             job_context['all_frames'] = all_frames
 
+            # Merge all of the frames we've gathered into a single big frame, skipping duplicates.
             merged = all_frames[0]
             i = 1
             while i < len(all_frames):
-                merged = merged.merge(all_frames[i], left_index=True, right_index=True)
+                frame = all_frames[i]
                 i = i + 1
+
+                # I'm not sure where these are sneaking in from, but we don't want them.
+                # Related: https://github.com/AlexsLemonade/refinebio/issues/390
+                breaker = False
+                for column in frame.columns:
+                    if column in merged.columns:
+                        breaker = True
+                if breaker:
+                    continue
+
+                merged = merged.merge(frame, left_index=True, right_index=True)
 
             job_context['merged'] = merged
 
