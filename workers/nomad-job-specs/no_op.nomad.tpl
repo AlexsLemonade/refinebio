@@ -1,4 +1,4 @@
-job "NO_OP" {
+job "NO_OP_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -15,7 +15,7 @@ job "NO_OP" {
       # delay    = "30s"
     }
 
-    task "no_op_${{RAM}}" {
+    task "no_op" {
       driver = "docker"
 
       # This env will be passed into the container for the job.
