@@ -231,7 +231,7 @@ class APITestCases(APITestCase):
             experiments.append(ex)
 
         ex = Experiment()
-        ex.accession_code = "FINDME"
+        ex.accession_code = "FINDME_TEMPURA"
         ex.title = "THISWILLBEINASEARCHRESULT"
         ex.description = "SOWILLTHIS"
         ex.technology = "MICROARRAY"
@@ -278,12 +278,15 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('search'), {'search': 'THISWILLBEINASEARCHRESULT'})
         self.assertEqual(response.json()['count'], 2)
 
+        response = self.client.get(reverse('search'), {'search': 'TEMPURA'})
+        self.assertEqual(response.json()['count'], 1)
+
         # Test search and filter
         response = self.client.get(reverse('search'),
                                    {'search': 'THISWILLBEINASEARCHRESULT',
                                     'technology': 'MICROARRAY'})
         self.assertEqual(response.json()['count'], 1)
-        self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME')
+        self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME_TEMPURA')
         self.assertEqual(len(response.json()['results'][0]['platforms']), 2)
         self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(ex.platforms))
         self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(['AFFY', 'ILLUMINA']))

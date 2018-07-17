@@ -107,7 +107,14 @@ class SearchAndFilter(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
-    search_fields = ('title', '@description')
+    search_fields = (   'title', 
+                        '@description', 
+                        '@accession_code', 
+                        '@protocol_description', 
+                        '@publication_title',
+                        'publication_doi',
+                        'pubmed_id'
+                    )
     filter_fields = ('has_publication', 'submitter_institution', 'technology', 'source_first_published')
 
 
