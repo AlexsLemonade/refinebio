@@ -31,7 +31,7 @@ class SurveyTestCase(TestCase):
         surveyor.survey(source_type="TRANSCRIPTOME_INDEX")
 
         downloader_jobs = DownloaderJob.objects.order_by("id").all()
-        self.assertEqual(downloader_jobs.count(), 53)
+        self.assertGreater(downloader_jobs.count(), 50)
         send_job_calls = []
         for downloader_job in downloader_jobs:
             send_job_calls.append(
