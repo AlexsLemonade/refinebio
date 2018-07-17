@@ -16,7 +16,8 @@ from data_refinery_common.models import (
     ComputedFile,
     SampleResultAssociation,
     SampleComputedFileAssociation,
-    Pipeline)
+    Pipeline,
+    Processor)
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 from data_refinery_common.utils import get_env_variable
