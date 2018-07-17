@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import boto3
 import csv
-import json
+import simplejson as json
 import os
 import shutil
 import string
