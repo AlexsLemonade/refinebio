@@ -255,6 +255,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
                     'submitter_institution',
                     'last_modified',
                     'created_at',
+                    'organisms',
                 )
 
 class PlatformSerializer(serializers.ModelSerializer):
