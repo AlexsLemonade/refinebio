@@ -198,6 +198,9 @@ for nomad_job_spec in $nomad_job_specs; do
     nomad run $nomad_job_spec
 done
 
+# Ensure the latest image version is being used for the API and the Foreman
+terraform taint aws_instance.api_server_1
+
 # Remove the ingress config so the next `terraform apply` will remove
 # access for Circle.
 echo "Removing ingress.."
