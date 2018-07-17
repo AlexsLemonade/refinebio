@@ -142,6 +142,12 @@ class SearchAndFilter(generics.ListAPIView):
 
         organisms = qs.values('organisms__name').annotate(Count('organisms__name', unique=True))
         for organism in organisms:
+
+            # This experiment has no ExperimentOrganism-association, which is bad.
+            # This information may still live on the samples though.
+            if not organism['organisms__name']:
+                continue
+
             response.data['filters']['organism'][organism['organisms__name']] = organism['organisms__name__count']
 
         return response
