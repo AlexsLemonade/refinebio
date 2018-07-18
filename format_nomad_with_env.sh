@@ -14,7 +14,7 @@ print_options() {
     echo "Options:"
     echo "    -h               Prints the help message"
     echo "    -p PROJECT       The project to format."
-    echo "                     Valid values are 'api', 'workers' or 'foreman'."
+    echo "                     Valid values are 'api', 'workers', 'surveyor', or 'foreman'."
     echo "    -e ENVIRONMENT   The environemnt to run. 'local' is the default."
     echo "                     Other valid values are 'prod' or 'testing'."
     echo "    -o OUTPUT_DIR    The output directory. The default directory is the"
@@ -52,7 +52,7 @@ while getopts ":p:e:o:h" opt; do
     esac
 done
 
-if [[ $project != "workers" && $project != "foreman" && $project != "api" ]]; then
+if [[ $project != "workers" && $project != "surveyor" && $project != "foreman" && $project != "api" ]]; then
     echo 'Error: must specify project as either "api", "workers", or "foreman" with -p.'
     exit 1
 fi
@@ -104,7 +104,13 @@ fi
 script_directory=`perl -e 'use File::Basename;
  use Cwd "abs_path";
  print dirname(abs_path(@ARGV[0]));' -- "$0"`
-cd $script_directory/$project
+
+# Correct for foreman and surveyor being in same directory:
+if [ $project == "surveyor" ]; then
+    cd $script_directory/foreman
+else
+    cd $script_directory/$project
+fi
 
 # It's important that these are run first so they will be overwritten
 # by environment variables.
@@ -221,14 +227,14 @@ if [[ $project == "workers" ]]; then
         fi
 
     done
-elif [[ $project == "foreman" ]]; then
+elif [[ $project == "surveyor" ]]; then
     # surveyor sub-project
     export_log_conf "surveyor"
     cat nomad-job-specs/surveyor.nomad.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                > "$output_dir"/surveyor.nomad"$TEST_POSTFIX" \
                2> /dev/null
-
+elif [[ $project == "foreman" ]]; then
     # foreman sub-project
     export_log_conf "foreman"
     cat environment.tpl \

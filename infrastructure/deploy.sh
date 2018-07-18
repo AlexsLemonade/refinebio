@@ -176,7 +176,10 @@ docker run \
 # specs and API confs.
 mkdir -p nomad-job-specs
 ../format_nomad_with_env.sh -p workers -e $env -o $(pwd)/nomad-job-specs
-../format_nomad_with_env.sh -p foreman -e $env -o $(pwd)/nomad-job-specs
+../format_nomad_with_env.sh -p surveyor -e $env -o $(pwd)/nomad-job-specs
+
+# API and foreman aren't run as nomad jobs, but the templater still works.
+../format_nomad_with_env.sh -p foreman -e $env -o $(pwd)/foreman-configuration
 ../format_nomad_with_env.sh -p api -e $env -o $(pwd)/api-configuration/
 
 
