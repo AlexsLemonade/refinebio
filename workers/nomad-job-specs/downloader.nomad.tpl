@@ -2,6 +2,7 @@ job "DOWNLOADER" {
   datacenters = ["dc1"]
 
   type = "batch"
+  priority = 50
 
   parameterized {
     payload       = "forbidden"
