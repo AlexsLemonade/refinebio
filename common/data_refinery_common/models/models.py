@@ -265,6 +265,7 @@ class Experiment(models.Model):
         metadata = {}
         metadata['title'] = self.title
         metadata['accession_code'] = self.accession_code
+        metadata['organisms'] = self.organisms
         metadata['description'] = self.description
         metadata['protocol_description'] = self.protocol_description
         metadata['technology'] = self.technology
