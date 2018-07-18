@@ -1,4 +1,4 @@
-job "SMASHER" {
+job "SMASHER_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -15,7 +15,7 @@ job "SMASHER" {
       # delay    = "30s"
     }
 
-    task "smasher_${{RAM}}" {
+    task "smasher" {
       driver = "docker"
 
       # This env will be passed into the container for the job.
@@ -40,10 +40,6 @@ job "SMASHER" {
         S3_RESULTS_BUCKET_NAME = "${{S3_RESULTS_BUCKET_NAME}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
-
-        RAW_PREFIX = "${{RAW_PREFIX}}"
-        TEMP_PREFIX = "${{RAW_PREFIX}}"
-        PROCESSED_PREFIX = "${{PROCESSED_PREFIX}}"
 
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"

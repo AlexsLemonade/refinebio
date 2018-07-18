@@ -1,4 +1,4 @@
-job "TRANSCRIPTOME_INDEX" {
+job "TRANSCRIPTOME_INDEX_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -15,7 +15,7 @@ job "TRANSCRIPTOME_INDEX" {
       # delay    = "30s"
     }
 
-    task "transcriptome_index_${{RAM}}" {
+    task "transcriptome_index" {
       driver = "docker"
 
       # This env will be passed into the container for the job.
@@ -39,10 +39,6 @@ job "TRANSCRIPTOME_INDEX" {
         USE_S3 = "${{USE_S3}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
-
-        RAW_PREFIX = "${{RAW_PREFIX}}"
-        TEMP_PREFIX = "${{RAW_PREFIX}}"
-        PROCESSED_PREFIX = "${{PROCESSED_PREFIX}}"
 
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"

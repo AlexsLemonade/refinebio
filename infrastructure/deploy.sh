@@ -73,17 +73,6 @@ format_environment_variables () {
 source ../common.sh
 export TF_VAR_host_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
 
-# If the Dockerhub repo isn't already set, then assume ccdlstaging is
-# desired, unless the env is prod, in which case use the prod repo.
-# This setting will be used by format_nomad_with_env.sh.
-if [[ -z $TF_VAR_dockerhub_repo ]]; then
-    if [[ $env == "prod" ]]; then
-        export TF_VAR_dockerhub_repo="ccdl"
-    else
-        export TF_VAR_dockerhub_repo="ccdlstaging"
-    fi
-fi
-
 # Copy ingress config to top level so it can be applied.
 cp deploy/ci_ingress.tf .
 
@@ -92,13 +81,15 @@ if [[ ! -f terraform.tfstate ]]; then
     echo "No terraform state file found, initializing and applying initial terraform deployment."
     terraform init
 
-    # This file is an input but is created by format_nomad_with_env.sh
+    # These files are inputs but are created by format_nomad_with_env.sh
     # based on outputs from terraform. Kinda a Catch 22, but we can
-    # get around it by providing a dummy file to get bootstrapped.
+    # get around it by providing dummy files to get bootstrapped.
     touch api-configuration/environment
+    touch foreman-configuration/environment
 
     # Output the plan for debugging deployments later.
-    terraform plan
+    # Until terraform plan supports -var-file the plan is wrong.
+    # terraform plan
 
     terraform apply -var-file=environments/$env.tfvars -auto-approve
 fi
@@ -108,13 +99,15 @@ rm -f prod_env
 format_environment_variables
 
 ../format_nomad_with_env.sh -p api -e $env -o $(pwd)/api-configuration/
+../format_nomad_with_env.sh -p foreman -e $env -o $(pwd)/foreman-configuration/
 
 if [[ -z $ran_init_build ]]; then
     # Open up ingress to AWS for Circle, stop jobs, migrate DB.
     echo "Deploying with ingress.."
 
     # Output the plan for debugging deployments later.
-    terraform plan
+    # Until terraform plan supports -var-file the plan is wrong.
+    # terraform plan
 
     terraform apply -var-file=environments/$env.tfvars -auto-approve
 fi
@@ -141,7 +134,9 @@ echo "Killing base jobs.."
 if [[ $(nomad status) != "No running jobs" ]]; then
     for job in $(nomad status | grep running | awk {'print $1'} || grep --invert-match /)
     do
-        nomad stop -purge -detach $job > /dev/null
+        # '|| true' so that if a job is garbage collected before we can remove it the error
+        # doesn't interrupt our deploy.
+        nomad stop -purge -detach $job > /dev/null || true
     done
 fi
 
@@ -153,7 +148,9 @@ if [[ $(nomad status) != "No running jobs" ]]; then
     do
         # Skip the header row for jobs.
         if [ $job != "ID" ]; then
-            nomad stop -purge -detach $job > /dev/null
+            # '|| true' so that if a job is garbage collected before we can remove it the error
+            # doesn't interrupt our deploy.
+            nomad stop -purge -detach $job > /dev/null || true
         fi
     done
 fi
@@ -167,23 +164,26 @@ rm -f prod_env
 format_environment_variables
 
 # Get an image to run the migrations with.
-docker pull $TF_VAR_dockerhub_repo/$FOREMAN_DOCKER_IMAGE
+docker pull $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE
 
 # Migrate auth.
 docker run \
        --env-file prod_env \
-       $TF_VAR_dockerhub_repo/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate auth
+       $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate auth
 
 # Apply general migrations.
 docker run \
        --env-file prod_env \
-       $TF_VAR_dockerhub_repo/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate
+       $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate
 
 # Template the environment variables for production into the Nomad Job
 # specs and API confs.
 mkdir -p nomad-job-specs
 ../format_nomad_with_env.sh -p workers -e $env -o $(pwd)/nomad-job-specs
-../format_nomad_with_env.sh -p foreman -e $env -o $(pwd)/nomad-job-specs
+../format_nomad_with_env.sh -p surveyor -e $env -o $(pwd)/nomad-job-specs
+
+# API and foreman aren't run as nomad jobs, but the templater still works.
+../format_nomad_with_env.sh -p foreman -e $env -o $(pwd)/foreman-configuration
 ../format_nomad_with_env.sh -p api -e $env -o $(pwd)/api-configuration/
 
 
@@ -197,6 +197,9 @@ for nomad_job_spec in $nomad_job_specs; do
     echo "Registering $nomad_job_spec"
     nomad run $nomad_job_spec
 done
+
+# Ensure the latest image version is being used for the API and the Foreman
+terraform taint aws_instance.api_server_1
 
 # Remove the ingress config so the next `terraform apply` will remove
 # access for Circle.

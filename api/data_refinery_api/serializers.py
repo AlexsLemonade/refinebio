@@ -233,6 +233,7 @@ class ExperimentAnnotationSerializer(serializers.ModelSerializer):
 class DetailedExperimentSerializer(serializers.ModelSerializer):
     annotations = ExperimentAnnotationSerializer(many=True, source='experimentannotation_set')
     samples = SampleSerializer(many=True)
+    organisms = OrganismSerializer(many=True)
 
     class Meta:
         model = Experiment
@@ -255,6 +256,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
                     'submitter_institution',
                     'last_modified',
                     'created_at',
+                    'organisms',
                 )
 
 class PlatformSerializer(serializers.ModelSerializer):

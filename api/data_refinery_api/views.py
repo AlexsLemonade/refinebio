@@ -107,7 +107,14 @@ class SearchAndFilter(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
-    search_fields = ('title', '@description')
+    search_fields = (   'title', 
+                        '@description', 
+                        '@accession_code', 
+                        '@protocol_description', 
+                        '@publication_title',
+                        'publication_doi',
+                        'pubmed_id'
+                    )
     filter_fields = ('has_publication', 'submitter_institution', 'technology', 'source_first_published')
 
 
@@ -135,6 +142,12 @@ class SearchAndFilter(generics.ListAPIView):
 
         organisms = qs.values('organisms__name').annotate(Count('organisms__name', unique=True))
         for organism in organisms:
+
+            # This experiment has no ExperimentOrganism-association, which is bad.
+            # This information may still live on the samples though.
+            if not organism['organisms__name']:
+                continue
+
             response.data['filters']['organism'][organism['organisms__name']] = organism['organisms__name__count']
 
         return response

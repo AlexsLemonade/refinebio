@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Load docker_img_exists function
 source ~/refinebio/common.sh
@@ -66,7 +67,7 @@ done
 
 # Build and push foreman image
 FOREMAN_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_foreman"
-docker build -t "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG" -f foreman/dockerfiles.foreman .
+docker build -t "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG" -f foreman/dockerfiles/Dockerfile.foreman .
 docker push "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG"
 # Update latest version
 docker tag "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG" "$FOREMAN_DOCKER_IMAGE:latest"

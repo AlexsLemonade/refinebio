@@ -1,4 +1,4 @@
-job "NO_OP" {
+job "NO_OP_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -15,7 +15,7 @@ job "NO_OP" {
       # delay    = "30s"
     }
 
-    task "no_op_${{RAM}}" {
+    task "no_op" {
       driver = "docker"
 
       # This env will be passed into the container for the job.
@@ -42,10 +42,6 @@ job "NO_OP" {
         USE_S3 = "${{USE_S3}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
-
-        RAW_PREFIX = "${{RAW_PREFIX}}"
-        TEMP_PREFIX = "${{RAW_PREFIX}}"
-        PROCESSED_PREFIX = "${{PROCESSED_PREFIX}}"
       }
 
       # The resources the job will require.

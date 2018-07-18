@@ -127,7 +127,7 @@ done
 echo "Nomad is online. Registering jobs."
 
 ./format_nomad_with_env.sh -p workers -e $env
-./format_nomad_with_env.sh -p foreman -e $env
+./format_nomad_with_env.sh -p surveyor -e $env
 
 # Register the jobs for dispatching.
 for job_spec in $(ls -1 workers/nomad-job-specs | grep "\.nomad$TEST_POSTFIX$"); do
