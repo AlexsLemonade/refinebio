@@ -57,7 +57,8 @@ resource "aws_security_group_rule" "data_refinery_worker_nomad" {
 }
 
 # Allow the Nomad HTTP API to be accessible by the API security group. See:
-resource "aws_security_group_rule" "data_refinery_worker_nomad" {
+# https://www.nomadproject.io/guides/cluster/requirements.html#ports-used
+resource "aws_security_group_rule" "data_refinery_api_nomad" {
   type = "ingress"
   from_port = 4646
   to_port = 4646
