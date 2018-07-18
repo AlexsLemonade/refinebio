@@ -65,6 +65,13 @@ class UtilsTestCase(TestCase):
         self.assertTrue(has_A_AFFY_59)
         self.assertTrue(has_GPL23026)
 
+    def test_get_internal_microarray_accession(self):
+        """Test that supported microarray platforms setting is set correctly."""
+
+        self.assertEqual(utils.get_internal_microarray_accession("hgu133a"), "hgu133a")
+        self.assertEqual(utils.get_internal_microarray_accession("A-AFFY-59"), "soybean")
+        self.assertEqual(utils.get_internal_microarray_accession("GPL23026"), "Illumina_HumanHT-12_V4.0")
+
     def test_supported_rnaseq_platforms(self):
         """Test that supported RNASeq platforms setting is set correctly."""
         self.assertTrue("Illumina HiSeq 1000" in utils.get_supported_rnaseq_platforms())
