@@ -249,6 +249,14 @@ class APITestCases(APITestCase):
         ex2.submitter_institution = "Funkytown"
         experiments.append(ex2)
 
+        ex3 = Experiment()
+        ex3.accession_code = "FINDME3"
+        ex3.title = "THISWILLBEINASEARCHRESULT"
+        ex3.description = "SOWILLTHIS"
+        ex2.technology = "FAKE-TECH"
+        ex2.submitter_institution = "Utopia"
+        experiments.append(ex3)
+
         sample1 = Sample()
         sample1.title = "1123"
         sample1.accession_code = "1123"
@@ -274,6 +282,11 @@ class APITestCases(APITestCase):
         xoa.organism=homo_sapiens
         xoa.save()
 
+        xoa = ExperimentOrganismAssociation()
+        xoa.experiment=ex3
+        xoa.organism=Organism.objects.create(name="Extra-Terrestrial-1982", taxonomy_id=9999)
+        xoa.save()
+
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample1
         experiment_sample_association.experiment = ex
@@ -286,11 +299,11 @@ class APITestCases(APITestCase):
 
         # Test all
         response = self.client.get(reverse('search'))
-        self.assertEqual(response.json()['count'], LOTS + 2)
+        self.assertEqual(response.json()['count'], LOTS + 3)
 
         # Test search
         response = self.client.get(reverse('search'), {'search': 'THISWILLBEINASEARCHRESULT'})
-        self.assertEqual(response.json()['count'], 2)
+        self.assertEqual(response.json()['count'], 3)
 
         response = self.client.get(reverse('search'), {'search': 'TEMPURA'})
         self.assertEqual(response.json()['count'], 1)
@@ -307,7 +320,13 @@ class APITestCases(APITestCase):
         self.assertEqual(response.json()['filters']['technology'], {'MICROARRAY': 1})
         self.assertEqual(response.json()['filters']['publication'], {'has_publication': 0})
         self.assertEqual(response.json()['filters']['organism'], {'HOMO_SAPIENS': 1})
-    
+
+        response = self.client.get(reverse('search'),
+                                   {'search': 'THISWILLBEINASEARCHRESULT',
+                                    'organisms__name': 'Extra-Terrestrial-1982'})
+        self.assertEqual(response.json()['count'], 1)
+
+
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
 
