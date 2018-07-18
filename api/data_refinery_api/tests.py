@@ -24,7 +24,8 @@ from data_refinery_common.models import (
     Processor,
     ComputationalResult,
     SampleResultAssociation,
-    Dataset
+    Dataset,
+    ExperimentOrganismAssociation
 )
 from data_refinery_api.views import ExperimentList
 from data_refinery_api.serializers import (
@@ -52,6 +53,11 @@ class APITestCases(APITestCase):
 
         experiment = Experiment()
         experiment.save()
+
+        xoa = ExperimentOrganismAssociation()
+        xoa.experiment=experiment
+        xoa.organism=Organism.objects.create(name="Extra-Terrestrial-1982", taxonomy_id=9999)
+        xoa.save()
 
         experiment_annotation = ExperimentAnnotation()
         experiment_annotation.data = {"hello": "world", "123": 456}
@@ -132,6 +138,7 @@ class APITestCases(APITestCase):
 
         response = self.client.get(reverse('experiments_detail', kwargs={'pk': '1'}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(type(response.data["organisms"][0]), str)
 
         response = self.client.get(reverse('samples'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
