@@ -253,8 +253,8 @@ class APITestCases(APITestCase):
         ex3.accession_code = "FINDME3"
         ex3.title = "THISWILLBEINASEARCHRESULT"
         ex3.description = "SOWILLTHIS"
-        ex2.technology = "FAKE-TECH"
-        ex2.submitter_institution = "Utopia"
+        ex3.technology = "FAKE-TECH"
+        ex3.submitter_institution = "Utopia"
         experiments.append(ex3)
 
         sample1 = Sample()
