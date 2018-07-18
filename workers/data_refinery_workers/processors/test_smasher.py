@@ -753,9 +753,10 @@ class SmasherTestCase(TestCase):
         except OSError:
             pass
 
-        afp = computed_file.get_synced_file_path()
+        # We do this twice, once to get from S3 and once to get from local disk.
+        afp = computed_file.get_synced_file_path(force=True)
         self.assertTrue(os.path.exists(afp))
 
-        afp = computed_file.get_synced_file_path()
+        afp = computed_file.get_synced_file_path(force=True)
         self.assertTrue(os.path.exists(afp))
 

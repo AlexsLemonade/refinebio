@@ -711,11 +711,11 @@ class ComputedFile(models.Model):
 
         return True
 
-    def sync_from_s3(self):
+    def sync_from_s3(self, force=False):
         """ Downloads a file from S3 to the local file system.
         Returns the absolute file path.
         """
-        if settings.TESTING:
+        if settings.TESTING and not force:
             return self.absolute_file_path
 
         try:
@@ -757,13 +757,13 @@ class ComputedFile(models.Model):
         except OSError:
             pass
 
-    def get_synced_file_path(self):
+    def get_synced_file_path(self, force=False):
         """ Fetches the absolute file path to this ComputedFile, fetching from S3 if it
         isn't already available locally. """
         if os.path.exists(self.absolute_file_path):
             return self.absolute_file_path
         else:
-            return self.sync_from_s3()
+            return self.sync_from_s3(force)
 
 class Dataset(models.Model):
     """ A Dataset is a desired set of experiments/samples to smash and download """
