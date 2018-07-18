@@ -1,4 +1,4 @@
-job "NO_OP" {
+job "NO_OP_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -53,7 +53,7 @@ job "NO_OP" {
         # CPU is in AWS's CPU units.
         cpu = 256
         # Memory is in MB of RAM.
-        memory = 1024
+        memory = ${{RAM}}
       }
 
       config {

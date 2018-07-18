@@ -14,20 +14,24 @@ from data_refinery_common.models import (
     OriginalFile,
     ComputationalResult,
     ComputedFile,
+    Processor,
+    Pipeline,
     OrganismIndex
 )
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.utils import get_env_variable_gracefully
 
 logger = get_and_configure_logger(__name__)
-
 
 JOB_DIR_PREFIX = "processor_job_"
 GENE_TO_TRANSCRIPT_TEMPLATE = "{gene_id}\t{transcript_id}\n"
 GENE_TYPE_COLUMN = 2
 # Removes each occurrance of ; and "
 IDS_CLEANUP_TABLE = str.maketrans({";": None, "\"": None})
+
+ORGANISM_INDEX_BUCKET = get_env_variable_gracefully("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", False)
 
 
 def _compute_paths(job_context: Dict) -> str:
@@ -69,7 +73,8 @@ def _prepare_files(job_context: Dict) -> Dict:
         if "fa.gz" in og_file.source_filename:
             gzipped_fasta_file_path = og_file.absolute_file_path
             job_context["fasta_file"] = og_file
-            job_context["fasta_file_path"] = gzipped_fasta_file_path.replace(".gz", "")
+            new_fasta_filename = gzipped_fasta_file_path.split('/')[-1].replace(".gz", "")
+            job_context["fasta_file_path"] = job_context["work_dir"] + "/" + new_fasta_filename
             with gzip.open(gzipped_fasta_file_path, "rb") as gzipped_file, \
                     open(job_context["fasta_file_path"], "wb") as gunzipped_file:
                 shutil.copyfileobj(gzipped_file, gunzipped_file)
@@ -299,12 +304,14 @@ def _populate_index_object(job_context: Dict) -> Dict:
     """ """
 
     result = ComputationalResult()
-    result.command_executed = job_context["salmon_formatted_command"]
+    result.commands.append(job_context["salmon_formatted_command"])
+    result.processor = Processor.objects.get(name=utils.ProcessorEnum.TX_INDEX.value,
+                                             version=__version__)
     result.is_ccdl = True
-    result.system_version = __version__
     result.time_start = job_context["time_start"]
     result.time_end = job_context["time_end"]
     result.save()
+    job_context['pipeline'].steps.append(result.id)
 
     computed_file = ComputedFile()
     computed_file.absolute_file_path = job_context["computed_archive"]
@@ -325,7 +332,18 @@ def _populate_index_object(job_context: Dict) -> Dict:
     index_object.salmon_version = job_context["salmon_version"]
     index_object.index_type = "TRANSCRIPTOME_" + job_context['length'].upper()
     index_object.result = result
+
+    if ORGANISM_INDEX_BUCKET:
+        logger.info("Uploading %s %s to s3", job_context['organism_name'], job_context['length'], processor_job=job_context["job_id"])
+        index_object.upload_to_s3(computed_file.absolute_file_path, ORGANISM_INDEX_BUCKET, logger)
+    else:
+        logger.warn("ORGANISM_INDEX_BUCKET not configured, therefore %s %s will not be uploaded.",
+                    job_context['organism_name'],
+                    job_context['length'],
+                    processor_job=job_context["job_id"])
+
     index_object.save()
+
 
     job_context['result'] = result
     job_context['computed_file'] = computed_file
@@ -344,7 +362,8 @@ def build_transcriptome_index(job_id: int, length="long") -> None:
     The output of salmon index is a directory which is pushed in full
     to Permanent Storage.
     """
-    return utils.run_pipeline({"job_id": job_id, "length": length},
+    pipeline = Pipeline(name=utils.PipelineEnum.TX_INDEX.value)
+    return utils.run_pipeline({"job_id": job_id, "length": length, "pipeline": pipeline},
                               [utils.start_job,
                                _compute_paths,
                                _prepare_files,

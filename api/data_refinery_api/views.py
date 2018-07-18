@@ -13,6 +13,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.settings import api_settings
+from rest_framework.exceptions import ValidationError
 from rest_framework import status, filters, generics
 
 from data_refinery_common.job_lookup import ProcessorPipeline
@@ -21,13 +22,15 @@ from data_refinery_common.models import (
     Experiment,
     Sample,
     Organism,
+    Processor,
     ComputationalResult,
     DownloaderJob,
     SurveyJob,
     ProcessorJob,
     Dataset,
     APIToken,
-    ProcessorJobDatasetAssociation
+    ProcessorJobDatasetAssociation,
+    OrganismIndex
 )
 from data_refinery_api.serializers import (
     ExperimentSerializer,
@@ -35,9 +38,11 @@ from data_refinery_api.serializers import (
     SampleSerializer,
     DetailedSampleSerializer,
     OrganismSerializer,
+    OrganismIndexSerializer,
     PlatformSerializer,
     InstitutionSerializer,
     ComputationalResultSerializer,
+    ProcessorSerializer,
 
     # Job
     SurveyJobSerializer,
@@ -102,7 +107,14 @@ class SearchAndFilter(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
-    search_fields = ('title', '@description')
+    search_fields = (   'title', 
+                        '@description', 
+                        '@accession_code', 
+                        '@protocol_description', 
+                        '@publication_title',
+                        'publication_doi',
+                        'pubmed_id'
+                    )
     filter_fields = ('has_publication', 'submitter_institution', 'technology', 'source_first_published')
 
 
@@ -130,6 +142,12 @@ class SearchAndFilter(generics.ListAPIView):
 
         organisms = qs.values('organisms__name').annotate(Count('organisms__name', unique=True))
         for organism in organisms:
+
+            # This experiment has no ExperimentOrganism-association, which is bad.
+            # This information may still live on the samples though.
+            if not organism['organisms__name']:
+                continue
+
             response.data['filters']['organism'][organism['organisms__name']] = organism['organisms__name__count']
 
         return response
@@ -145,7 +163,7 @@ class CreateDatasetView(generics.CreateAPIView):
     serializer_class = CreateDatasetSerializer
 
 class DatasetView(generics.RetrieveUpdateAPIView):
-    """ View and modify a single Dataset. Set `start` to `true` along with a valid 
+    """ View and modify a single Dataset. Set `start` to `true` along with a valid
     activated API token (from /token/) to begin smashing and delivery.
     """
 
@@ -168,13 +186,14 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             try:
                 token = APIToken.objects.get(id=token_id, is_activated=True)
             except Exception: # Generall APIToken.DoesNotExist or django.core.exceptions.ValidationError
-                raise APIException("You must provide an active API token ID") 
+                raise APIException("You must provide an active API token ID")
 
             if not already_processing:
 
                 # Create and dispatch the new job.
                 processor_job = ProcessorJob()
                 processor_job.pipeline_applied = "SMASHER"
+                processor_job.ram_amount = 4048
                 processor_job.save()
 
                 pjda = ProcessorJobDatasetAssociation()
@@ -322,6 +341,18 @@ class SampleDetail(APIView):
         sample = self.get_object(pk)
         serializer = DetailedSampleSerializer(sample)
         return Response(serializer.data)
+
+##
+# Processor
+##
+
+class ProcessorList(APIView):
+    """List all processors."""
+    def get(self, request, format=None):
+        processors = Processor.objects.all()
+        serializer = ProcessorSerializer(processors, many=True)
+        return Response(serializer.data)
+
 
 ##
 # Results
@@ -485,3 +516,42 @@ class Stats(APIView):
         data['processor_jobs']['average_time'] = ProcessorJob.objects.filter(start_time__isnull=False, end_time__isnull=False).aggregate(average_time=Avg(F('end_time') - F('start_time')))['average_time']
 
         return Response(data)
+
+###
+# Transcriptome Indices
+###
+
+class TranscriptomeIndexDetail(APIView):
+    """
+    Retrieve the S3 URL and index metadata associated with an OrganismIndex.
+    """
+
+    def get(self, request, format=None):
+        """
+        Gets the S3 url associated with the organism and length, along with other metadata about
+        the transcriptome index we have stored. Organism must be specified in underscore-delimited
+        uppercase, i.e. "GALLUS_GALLUS". Length must either be "long" or "short"
+        """
+        params = request.query_params
+
+        # Verify that the required params are present
+        errors = dict()
+        if "organism" not in params:
+            errors["organism"] = "You must specify the organism of the index you want"
+        if "length" not in params:
+            errors["length"] = "You must specify the length of the transcriptome index"
+
+        if len(errors) > 0:
+            raise ValidationError(errors)
+
+        # Get the correct organism index object, serialize it, and return it
+        transcription_length = "TRANSCRIPTOME_" + params["length"].upper()
+        try:
+            organism_index = (OrganismIndex.public_objects.exclude(s3_url__exact="")
+                              .distinct("organism__name", "index_type")
+                              .get(organism__name=params["organism"],
+                                   index_type=transcription_length))
+            serializer = OrganismIndexSerializer(organism_index)
+            return Response(serializer.data)
+        except OrganismIndex.DoesNotExist:
+            raise Http404

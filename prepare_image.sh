@@ -78,5 +78,15 @@ elif [[ ! -z $pull ]]; then
 else
     echo ""
     echo "Rebuilding the $image_name image."
-    docker build -t "$image_name" -f $service/dockerfiles/Dockerfile.$image .
+    finished=1
+    attempts=0
+    while (( finished != 0 && attempts < 3 )); do
+        if (( attempts > 0 )); then
+            echo "Failed to build $image_name, trying again."
+        fi
+
+        docker build -t "$image_name" -f $service/dockerfiles/Dockerfile.$image .
+        finished=$?
+        attempts=$[$attempts+1]
+    done
 fi

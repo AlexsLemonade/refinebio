@@ -1,4 +1,4 @@
-job "TRANSCRIPTOME_INDEX" {
+job "TRANSCRIPTOME_INDEX_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -46,6 +46,8 @@ job "TRANSCRIPTOME_INDEX" {
 
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
+
+        S3_TRANSCRIPTOME_INDEX_BUCKET_NAME = "${{S3_TRANSCRIPTOME_INDEX_BUCKET_NAME}}"
       }
 
       # The resources the job will require.
@@ -53,7 +55,7 @@ job "TRANSCRIPTOME_INDEX" {
         # CPU is in AWS's CPU units.
         cpu = 1024
         # Memory is in MB of RAM.
-        memory = 4048
+        memory = ${{RAM}}
       }
 
       config {

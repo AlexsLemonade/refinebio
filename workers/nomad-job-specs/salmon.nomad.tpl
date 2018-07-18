@@ -1,4 +1,4 @@
-job "SALMON" {
+job "SALMON_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -53,7 +53,7 @@ job "SALMON" {
         # CPU is in AWS's CPU units.
         cpu = 1024
         # Memory is in MB of RAM.
-        memory = 4048
+        memory = ${{RAM}}
       }
 
       config {

@@ -5,6 +5,7 @@ from enum import Enum
 import nomad
 from nomad.api.exceptions import URLNotFoundNomadException
 from data_refinery_common.utils import get_env_variable
+from data_refinery_common.models import ProcessorJob
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 
@@ -60,12 +61,16 @@ def send_job(job_type: Enum, job) -> None:
                 nomad_job,
                 job_type.value,
                 job.id)
+
+    if isinstance(job, ProcessorJob):
+        nomad_job = nomad_job + "_" + str(job.ram_amount)
+
     try:
         nomad_response = nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,
                                                                         "JOB_ID": str(job.id)})
         job.nomad_job_id = nomad_response["DispatchedJobID"]
         job.save()
     except URLNotFoundNomadException:
-        logger.error("Dispatching Nomad job of type %s to host %s and port %s failed.",
-                     job_type, nomad_host, nomad_port, job=str(job.id))
+        logger.error("Dispatching Nomad job of type %s for job spec %s to host %s and port %s failed.",
+                     job_type, nomad_job, nomad_host, nomad_port, job=str(job.id))
         raise

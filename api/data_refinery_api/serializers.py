@@ -7,7 +7,9 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
     Organism,
+    OrganismIndex,
     OriginalFile,
+    Processor,
     ComputationalResult,
     ComputationalResultAnnotation,
     ComputedFile,
@@ -25,6 +27,35 @@ class OrganismSerializer(serializers.ModelSerializer):
         fields = (
                     'name',
                     'taxonomy_id',
+                )
+
+
+##
+# Processor
+##
+
+class ProcessorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Processor
+        fields = (
+            'name',
+            'docker_image',
+            'environment'
+        )
+
+
+##
+# Transcriptome Index
+##
+
+class OrganismIndexSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrganismIndex
+        fields = (
+                    's3_url',
+                    'source_version',
+                    'salmon_version',
+                    'last_modified',
                 )
 
 ##
@@ -66,9 +97,8 @@ class ComputationalResultSerializer(serializers.ModelSerializer):
         model = ComputationalResult
         fields = (
                     'id',
-                    'command_executed',
-                    'program_version',
-                    'system_version',
+                    'commands',
+                    'processor',
                     'is_ccdl',
                     'annotations',
                     'files',
@@ -77,6 +107,7 @@ class ComputationalResultSerializer(serializers.ModelSerializer):
                     'created_at',
                     'last_modified'
                 )
+
 
 ##
 # Samples
@@ -95,6 +126,7 @@ class SampleSerializer(serializers.ModelSerializer):
                     'organism',
                     'platform_accession_code',
                     'platform_name',
+                    'pretty_platform',
                     'technology',
                     'manufacturer',
                     'is_downloaded',
@@ -130,6 +162,7 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
                     'organism',
                     'platform_accession_code',
                     'platform_name',
+                    'pretty_platform',
                     'technology',
                     'manufacturer',
                     'annotations',
@@ -200,6 +233,7 @@ class ExperimentAnnotationSerializer(serializers.ModelSerializer):
 class DetailedExperimentSerializer(serializers.ModelSerializer):
     annotations = ExperimentAnnotationSerializer(many=True, source='experimentannotation_set')
     samples = SampleSerializer(many=True)
+    organisms = OrganismSerializer(many=True)
 
     class Meta:
         model = Experiment
@@ -222,6 +256,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
                     'submitter_institution',
                     'last_modified',
                     'created_at',
+                    'organisms',
                 )
 
 class PlatformSerializer(serializers.ModelSerializer):
@@ -337,6 +372,9 @@ def validate_dataset(data):
         for key, value in data['data'].items():
             if type(value) != list:
                 raise serializers.ValidationError("`data` must be a dict of lists. Problem with `" + str(key) + "`")
+
+            if len(value) != len(set(value)):
+                raise serializers.ValidationError("Duplicate values detected in " + str(value))
 
     else:
         raise serializers.ValidationError("`data` must be a dict of lists.")

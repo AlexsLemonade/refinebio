@@ -3,17 +3,25 @@ import io
 import os
 import pytz
 import uuid
+import boto3
+
+from botocore.client import Config
 
 from datetime import datetime
 from functools import partial
 
 from django.conf import settings
-from django.contrib.postgres.fields import HStoreField, JSONField
+from django.contrib.postgres.fields import ArrayField, HStoreField, JSONField
 from django.db import transaction
 from django.db import models
 from django.utils import timezone
 
 from data_refinery_common.models.organism import Organism
+from data_refinery_common.utils import get_s3_url
+
+# We have to set the signature_version to v4 since us-east-1 buckets require
+# v4 authentication.
+S3 = boto3.client('s3', config=Config(signature_version='s3v4'))
 
 """
 # First Order Classes
@@ -128,11 +136,14 @@ class Sample(models.Model):
         metadata['subject'] = self.subject
         metadata['compound'] = self.compound
         metadata['time'] = self.time
+        metadata['platform'] = self.pretty_platform
+        metadata['annotations'] = [data for data in self.sampleannotation_set.all().values_list('data', flat=True)]
+
         return metadata
 
     def get_result_files(self):
         """ Get all of the ComputedFile objects associated with this Sample """
-        return self.computed_files
+        return self.computed_files.all()
 
     def get_most_recent_smashable_result_file(self):
         """ Get all of the ComputedFile objects associated with this Sample """
@@ -144,6 +155,23 @@ class Sample(models.Model):
     def pipelines(self):
         """ Returns a list of related pipelines """
         return [p for p in self.results.values_list('pipeline', flat=True).distinct()]
+
+    @property
+    def pretty_platform(self):
+        """ Turns 
+        
+        [HT_HG-U133_Plus_PM] Affymetrix HT HG-U133+ PM Array Plate
+
+        into
+
+        Affymetrix HT HG-U133+ PM Array Plate (hthgu133pluspm)
+        
+        """
+        if ']' in self.platform_name:
+            platform_base = self.platform_name.split(']')[1].strip()
+        else:
+            platform_base = self.platform_name
+        return platform_base + ' (' + self.platform_accession_code + ')'
 
 class SampleAnnotation(models.Model):
     """ Semi-standard information associated with a Sample """
@@ -237,6 +265,7 @@ class Experiment(models.Model):
         metadata = {}
         metadata['title'] = self.title
         metadata['accession_code'] = self.accession_code
+        metadata['organisms'] = self.organisms
         metadata['description'] = self.description
         metadata['protocol_description'] = self.protocol_description
         metadata['technology'] = self.technology
@@ -294,6 +323,31 @@ class ExperimentAnnotation(models.Model):
         self.last_modified = current_time
         return super(ExperimentAnnotation, self).save(*args, **kwargs)
 
+class Pipeline(models.Model):
+    "Pipeline that is associated with a series of ComputationalResult records."""
+
+    name = models.CharField(max_length=255)
+    steps = ArrayField(models.IntegerField(), default=[])
+
+    class Meta:
+        db_table = "pipelines"
+
+
+class Processor(models.Model):
+    """Processor associated with a certain ComputationalResult."""
+
+    name = models.CharField(max_length=255)
+    version = models.CharField(max_length=64)
+    docker_image = models.CharField(max_length=255)
+    environment = JSONField(default={})
+
+    class Meta:
+        db_table = "processors"
+        unique_together = ('name', 'version')
+
+    def __str__(self):
+        return "Processor: %s (version: %s, docker_image: %s)" % (name, version, docker_image)
+
 
 class ComputationalResult(models.Model):
     """ Meta-information about the output of a computer process. (Ex Salmon) """
@@ -309,14 +363,14 @@ class ComputationalResult(models.Model):
     objects = models.Manager()
     public_objects = PublicObjectsManager()
 
-    command_executed = models.TextField(blank=True)
-    program_version = models.TextField(blank=True)
-    system_version = models.CharField(
-        max_length=255)  # Generally defined in from data_refinery_workers._version import __version__
+    commands = ArrayField(models.TextField(), default=[])
+    processor = models.ForeignKey(Processor, blank=True, null=True, on_delete=models.CASCADE)
     is_ccdl = models.BooleanField(default=True)
-
+    # TODO: "pipeline" field is now redundant due to "processor". Should be removed later.
     # Human-readable nickname for this computation
     pipeline = models.CharField(max_length=255)
+
+
 
     # Stats
     time_start = models.DateTimeField(blank=True, null=True)
@@ -368,6 +422,7 @@ class ComputationalResultAnnotation(models.Model):
         self.last_modified = current_time
         return super(ComputationalResultAnnotation, self).save(*args, **kwargs)
 
+
 # TODO
 # class Gene(models.Model):
     """ A representation of a Gene """
@@ -384,7 +439,7 @@ class OrganismIndex(models.Model):
         base_manager_name = 'public_objects'
 
     def __str__(self):
-        return "OrganismIndex " + str(self.pk) + ": " + self.organism.name + ' [' + self.index_type + '] - ' + str(self.salmon_version) 
+        return "OrganismIndex " + str(self.pk) + ": " + self.organism.name + ' [' + self.index_type + '] - ' + str(self.salmon_version)
 
     # Managers
     objects = models.Manager()
@@ -402,15 +457,28 @@ class OrganismIndex(models.Model):
     # http://ensemblgenomes.org/info/about/release_cycle
     # Determined by hitting:
     # http://rest.ensembl.org/info/software?content-type=application/json
-    source_version = models.CharField(max_length=255)
+    source_version = models.CharField(max_length=255, default="92")
 
     # This matters, for instance salmon 0.9.0 indexes don't work with 0.10.0
-    salmon_version = models.CharField(max_length=255)
+    salmon_version = models.CharField(max_length=255, default="0.9.1")
+
+    # S3 Information
+    s3_url = models.CharField(max_length=255, default="")
 
     # Common Properties
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
+
+    def upload_to_s3(self, absolute_file_path, bucket_name, logger):
+        if bucket_name is not None:
+            s3_key = self.organism.name + '_' + self.index_type + '.tar.gz'
+            S3.upload_file(absolute_file_path, bucket_name, s3_key,
+                           ExtraArgs={'ACL': 'public-read'})
+            self.s3_url = get_s3_url(bucket_name, s3_key)
+            logger.info("Upload complete")
+        else:
+            logger.info("No S3 bucket in environment, not uploading")
 
     def save(self, *args, **kwargs):
         """ On save, update timestamps """
@@ -731,7 +799,6 @@ class ExperimentSampleAssociation(models.Model):
         unique_together = ('experiment', 'sample')
 
 
-
 class ExperimentOrganismAssociation(models.Model):
 
     experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
@@ -740,7 +807,6 @@ class ExperimentOrganismAssociation(models.Model):
     class Meta:
         db_table = "experiment_organism_associations"
         unique_together = ('experiment', 'organism')
-
 
 
 class DownloaderJobOriginalFileAssociation(models.Model):
@@ -755,7 +821,6 @@ class DownloaderJobOriginalFileAssociation(models.Model):
         unique_together = ('downloader_job', 'original_file')
 
 
-
 class ProcessorJobOriginalFileAssociation(models.Model):
 
     processor_job = models.ForeignKey(
@@ -766,7 +831,6 @@ class ProcessorJobOriginalFileAssociation(models.Model):
     class Meta:
         db_table = "processorjob_originalfile_associations"
         unique_together = ('processor_job', 'original_file')
-
 
 
 class ProcessorJobDatasetAssociation(models.Model):
@@ -788,7 +852,6 @@ class OriginalFileSampleAssociation(models.Model):
     class Meta:
         db_table = "original_file_sample_associations"
         unique_together = ('original_file', 'sample')
-
 
 
 class SampleResultAssociation(models.Model):

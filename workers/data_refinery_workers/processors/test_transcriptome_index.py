@@ -6,12 +6,19 @@ from data_refinery_common.models import (
     SurveyJob,
     Organism,
     Sample,
+    Processor,
     OriginalFile,
     OriginalFileSampleAssociation,
     ProcessorJobOriginalFileAssociation,
     ProcessorJob
 )
+from unittest.mock import patch
 from data_refinery_workers.processors import transcriptome_index, utils
+
+
+def setUpModule():
+    utils.createTestProcessors()
+
 
 def prepare_job():
     pj = ProcessorJob()
@@ -76,7 +83,8 @@ class TXTestCase(TestCase):
 
 
     @tag('transcriptome')
-    def test_tx(self):
+    @patch('data_refinery_common.models.OrganismIndex.upload_to_s3')
+    def test_tx(self, upload_to_s3):
         """ """
         job = prepare_job()
         job_context = transcriptome_index.build_transcriptome_index(job.pk)

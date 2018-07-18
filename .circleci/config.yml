@@ -1,10 +1,18 @@
 version: 2
 jobs:
-  # This runs api, common, foreman, end-to-end, and illumina tests.
+  # This runs foreman, end-to-end, and illumina tests.
   # These are grouped together because in total they take less time than our other tests individually.
   main_tests:
     working_directory: ~/refinebio
-    machine: true
+    machine:
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
     steps:
       - checkout
 
@@ -26,18 +34,19 @@ jobs:
       - run:
           command: sudo -E ./run_nomad.sh -e test
 
-      # Run API Tests.
-      - run: ./api/run_tests.sh
-
       - run: ./prepare_image.sh -i no_op -s workers -d localhost:5000
       - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
       - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
+
+      - run: ./prepare_image.sh -i no_op -s workers
+      - run: ./prepare_image.sh -i downloaders -s workers
+      - run: ./prepare_image.sh -i smasher -s workers
 
       # Run Downloader Tests
       # Running these in the same job as the common tests is good
       # because their dockerfiles are very similar so a lot of the
       # build time is saved by only building those layers once.
-      - run: 
+      - run:
           command: .circleci/filter_tests.sh -t downloaders
           no_output_timeout: 36000
 
@@ -47,35 +56,30 @@ jobs:
       - run: docker push localhost:5000/dr_no_op
       - run: docker push localhost:5000/dr_smasher
 
-      # Run Common Tests.
-      - run: ./common/run_tests.sh
-
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
 
-      # Run Illumna tests.
-      - run: sudo chown -R circleci:circleci workers/test_volume/
-      - run: .circleci/filter_tests.sh -t illumina
-
-      # Run Smasher tests.
-      - run: sudo apt-get update && sudo apt-get install -qq -y python-pip libpython-dev
-      - run: curl -O https://bootstrap.pypa.io/get-pip.py && sudo python get-pip.py
-      - run: sudo pip install -q awscli --upgrade
+     # Run Smasher tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
           command: .circleci/filter_tests.sh -t smasher
           # Smashing can apparently take a long time on CI
           no_output_timeout: 36000
 
-        # Run API Tests.
-      - run: sudo chown -R circleci:circleci workers/test_volume/
-      - run: ./api/run_tests.sh
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
   affymetrix_common_agilent_tests:
     working_directory: ~/refinebio
-    machine: true
+    machine:
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
     steps:
       - checkout
 
@@ -108,7 +112,15 @@ jobs:
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
     working_directory: ~/refinebio
-    machine: true
+    machine:
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
     steps:
       - checkout
 
@@ -134,7 +146,15 @@ jobs:
   # These are grouped together because together they take less time than affy or salmon.
   transcriptome_and_illumina_tests:
     working_directory: ~/refinebio
-    machine: true
+    machine:
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
     steps:
       - checkout
 
@@ -156,18 +176,27 @@ jobs:
       # from making sure all the files in workers/test_volume have read/write permissions.
       - run: sudo chown -R circleci:circleci workers/test_volume/
 
-      # Run Illumna tests.
+      # Run Illumina tests.
       - run: .circleci/filter_tests.sh -t illumina
 
 
   deploy:
-    machine: true
+    machine:
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
     working_directory: ~/refinebio
     steps:
       - checkout
       - run: bash .circleci/git_decrypt.sh
       - run: bash .circleci/update_docker_img.sh
       - run: bash .circleci/run_terraform.sh
+      - run: bash .circleci/slackpost.sh robots deploybot
 
 workflows:
   version: 2

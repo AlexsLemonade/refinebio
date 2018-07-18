@@ -7,15 +7,15 @@
 
 ##
 # get & read in non-normalized supplementary data
-# IDs = identifiers used by submitter 
-# 
+# IDs = identifiers used by submitter
+#
 # for each version of db package for organism (e.g., v1-v4 in human)
 #   calculate the % of IDs in the probes for current package
 #   calculate the % of probes in the IDs for current package
-# 
+#
 # save the calculated overlaps as SampleAnnotation (will be number of versions x 2)
 # highest_overlap = which version has the highest % of IDs in the probes
-# 
+#
 # if highest_overlap > some high threshold
 #   supply as platform/package to Illumina SCAN Rscript
 # else
@@ -32,11 +32,11 @@ suppressPackageStartupMessages(library(lazyeval))
 suppressPackageStartupMessages(library(AnnotationDbi))
 
 option_list = list(
-  make_option(c("-p", "--platform"), type="character", default="", 
+  make_option(c("-p", "--platform"), type="character", default="",
               help="Platform", metavar="character"),
-  make_option(c("-i", "--inputFile"), type="character", default="", 
+  make_option(c("-i", "--inputFile"), type="character", default="",
               help="inputFile", metavar="character"),
-  make_option(c("-c", "--column"), type="character", default="", 
+  make_option(c("-c", "--column"), type="character", default="",
               help="column", metavar="character")
 )
 

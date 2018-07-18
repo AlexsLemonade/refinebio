@@ -10,7 +10,16 @@ import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import OriginalFile, ComputationalResult, ComputedFile, SampleResultAssociation, SampleComputedFileAssociation
+from data_refinery_common.models import (
+    OriginalFile,
+    ComputationalResult,
+    ComputedFile,
+    SampleResultAssociation,
+    SampleComputedFileAssociation,
+    Processor,
+    Pipeline
+)
+
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 from data_refinery_common.utils import get_env_variable
@@ -127,7 +136,7 @@ def _run_scan_upc(job_context: Dict) -> Dict:
                          probeSummaryPackage=job_context["brainarray_package"])
             else:
                 scan_upc(input_file,
-                         job_context["output_file_path"])      
+                         job_context["output_file_path"])
             job_context['time_end'] = timezone.now()
 
     except RRuntimeError as e:
@@ -144,19 +153,17 @@ def _create_result_objects(job_context: Dict) -> Dict:
     """ Create the ComputationalResult objects after a Scan run is complete """
 
     result = ComputationalResult()
-    result.command_executed = "'SCAN.UPC', 'SCANfast'" # Need a better way to represent this R code.
+    result.commands.append('SCAN.UPC::SCANfast')
     result.is_ccdl = True
     result.is_public = True
-    result.system_version = __version__
-    scan_version_parts = []
-    for version_part in ro.r("packageVersion('SCAN.UPC')")[0]:
-        scan_version_parts.append(str(version_part))
-    scan_version = ".".join(scan_version_parts)
-    result.program_version = scan_version
+
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
-    result.pipeline = "Affymetrix SCAN"
+    result.pipeline = "Affymetrix SCAN"  # TODO: should be removed
+    result.processor = Processor.objects.get(name=utils.ProcessorEnum.AFFYMETRIX_SCAN.value,
+                                             version=__version__)
     result.save()
+    job_context['pipeline'].steps.append(result.id)
 
     # Create a ComputedFile for the sample,
     # sync it S3 and save it.
@@ -173,11 +180,11 @@ def _create_result_objects(job_context: Dict) -> Dict:
         # TODO here: delete local file after S3 sync
         computed_file.save()
     except Exception:
-        logger.exception("Exception caught while moving file %s to S3",
+        logger.exception("Exception caught while saving file %s to S3",
                          computed_file.filename,
                          processor_job=job_context["job_id"],
                          )
-        failure_reason = "Exception caught while moving file to S3"
+        failure_reason = "Exception caught while saving file to S3"
         job_context["job"].failure_reason = failure_reason
         job_context["success"] = False
         return job_context
@@ -199,7 +206,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 def affy_to_pcl(job_id: int) -> None:
-    utils.run_pipeline({"job_id": job_id},
+    pipeline = Pipeline(name=utils.PipelineEnum.ARRAY_EXPRESS.value)
+    utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _prepare_files,
                         _determine_brainarray_package,

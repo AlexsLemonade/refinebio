@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import boto3
 import csv
-import json
+import simplejson as json
 import os
 import shutil
 import string
@@ -13,12 +13,19 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from typing import Dict
 
+import numpy as np
 import pandas as pd
 import numpy as np
 from sklearn import preprocessing
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import OriginalFile, ComputationalResult, ComputedFile, SampleResultAssociation
+from data_refinery_common.models import (
+    OriginalFile,
+    Pipeline,
+    ComputationalResult,
+    ComputedFile,
+    SampleResultAssociation
+)
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 from data_refinery_common.utils import get_env_variable
@@ -38,7 +45,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     for key, samples in job_context["samples"].items():
         all_sample_files = []
         for sample in samples:
-            all_sample_files = all_sample_files + [sample.get_most_recent_smashable_result_file()]
+            all_sample_files = all_sample_files + list(sample.get_result_files())
         all_sample_files = list(set(all_sample_files))
         job_context['input_files'][key] = all_sample_files
 
@@ -75,16 +82,28 @@ def _smash(job_context: Dict) -> Dict:
             # Merge all the frames into one
             all_frames = []
             for computed_file in input_files:
+
                 computed_file_path = str(computed_file.absolute_file_path)
-                data = pd.DataFrame.from_csv(computed_file_path, sep='\t', header=0)
+
+                # Bail appropriately if this isn't a real file.
+                if not os.path.exists(computed_file.absolute_file_path):
+                    raise ValueError("Smasher received non-existent file path.")
+
+                data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0)
 
                 # via https://github.com/AlexsLemonade/refinebio/issues/330:
                 #   aggregating by experiment -> return untransformed output from tximport
-                #   aggregating by species -> log2(x + 1) tximport output               
+                #   aggregating by species -> log2(x + 1) tximport output
                 if job_context['dataset'].aggregate_by == 'SPECIES':
                     if 'lengthScaledTPM' in computed_file_path:
                         data = data + 1
                         data = np.log2(data)
+
+                # Detect if this data hasn't been log2 scaled yet.
+                # Ideally done in the NO-OPPER, but sanity check here.
+                if ("lengthScaledTPM" not in computed_file_path) and (data.max() > 100).any():
+                    logger.info("Detected non-log2 microarray data.", file=computed_file)
+                    data = np.log2(data)
 
                 # Ensure that we don't have any dangling Brainarray-generated probe symbols.
                 # BA likes to leave '_at', signifying probe identifiers,
@@ -92,16 +111,46 @@ def _smash(job_context: Dict) -> Dict:
                 # So, we chop them off and don't worry about it.
                 data.index = data.index.str.replace('_at', '')
 
+                # If there are any _versioned_ gene identifiers, remove that
+                # version information. We're using the latest brainarray for everything anyway.
+                # Jackie says this is okay.
+                # She also says that in the future, we may only want to do this
+                # for cross-technology smashes.
+
+                # This regex needs to be able to handle EGIDs in the form:
+                #       ENSGXXXXYYYZZZZ.6
+                # and
+                #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg.7__3016__AT5G35080.1;db=core)
+                data.index = data.index.str.replace(r"(\.[^.]*)$", '')
+
+                # Squish duplicated rows together.
+                # XXX/TODO: Is mean the appropriate method here?
+                #           We can make this an option in future.
+                # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
+                data = data.groupby(data.index, sort=False).mean()
+
                 all_frames.append(data)
                 num_samples = num_samples + 1
 
             job_context['all_frames'] = all_frames
 
+            # Merge all of the frames we've gathered into a single big frame, skipping duplicates.
             merged = all_frames[0]
             i = 1
             while i < len(all_frames):
-                merged = merged.merge(all_frames[i], left_index=True, right_index=True)
+                frame = all_frames[i]
                 i = i + 1
+
+                # I'm not sure where these are sneaking in from, but we don't want them.
+                # Related: https://github.com/AlexsLemonade/refinebio/issues/390
+                breaker = False
+                for column in frame.columns:
+                    if column in merged.columns:
+                        breaker = True
+                if breaker:
+                    continue
+
+                merged = merged.merge(frame, left_index=True, right_index=True)
 
             job_context['merged'] = merged
 
@@ -113,8 +162,8 @@ def _smash(job_context: Dict) -> Dict:
                 scale_funtion = scalers[job_context['dataset'].scale_by]
                 scaler = scale_funtion(copy=True)
                 scaler.fit(transposed)
-                scaled = pd.DataFrame(  scaler.transform(transposed), 
-                                        index=transposed.index, 
+                scaled = pd.DataFrame(  scaler.transform(transposed),
+                                        index=transposed.index,
                                         columns=transposed.columns
                                     )
                 # Untranspose
@@ -124,7 +173,7 @@ def _smash(job_context: Dict) -> Dict:
                 untransposed = transposed.transpose()
 
             job_context['final_frame'] = untransposed
-            
+
             # Write to temp file with dataset UUID in filename.
             outfile = smash_path + key + ".tsv"
             untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
@@ -164,15 +213,17 @@ def _smash(job_context: Dict) -> Dict:
         metadata['files'] = os.listdir(smash_path)
         # Metadata to JSON
         metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-        with open(smash_path + 'metadata.json', 'w') as metadata_file: 
+        with open(smash_path + 'metadata.json', 'w') as metadata_file:
             json.dump(metadata, metadata_file, indent=4, sort_keys=True)
 
         # Finally, compress all files into a zip
-        final_zip = smash_path + str(job_context['dataset'].id)
-        shutil.make_archive(final_zip, 'zip', smash_path)
-        job_context["output_file"] = final_zip + ".zip"
+        final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk)
+        shutil.make_archive(final_zip_base, 'zip', smash_path)
+        job_context["output_file"] = final_zip_base + ".zip"
+        # and clean up the unzipped directory.
+        shutil.rmtree(smash_path)
     except Exception as e:
-        logger.exception("Could not smash dataset.", 
+        logger.exception("Could not smash dataset.",
                         dataset_id=job_context['dataset'].id,
                         job_id=job_context['job_id'],
                         input_files=job_context['input_files'])
@@ -202,8 +253,8 @@ def _upload_and_notify(job_context: Dict) -> Dict:
         # Note that file expiry is handled by the S3 object lifecycle,
         # managed by terraform.
         s3_client.upload_file(
-                job_context["output_file"], 
-                RESULTS_BUCKET, 
+                job_context["output_file"],
+                RESULTS_BUCKET,
                 job_context["output_file"].split('/')[-1],
                 ExtraArgs={'ACL':'public-read'}
             )
@@ -259,7 +310,7 @@ def _upload_and_notify(job_context: Dict) -> Dict:
                     },
                     Source=SENDER,
                 )
-            # Display an error if something goes wrong. 
+            # Display an error if something goes wrong.
             except ClientError as e:
                 logger.error(e.response['Error']['Message'])
             else:
@@ -269,7 +320,7 @@ def _upload_and_notify(job_context: Dict) -> Dict:
     return job_context
 
 def _update_result_objects(job_context: Dict) -> Dict:
-    """ Update the final Dataset object with expiry time. """
+    """ Create the ComputationalResult objects after a run is complete """
 
     dataset = job_context["dataset"]
     dataset.is_processing = False
@@ -278,12 +329,15 @@ def _update_result_objects(job_context: Dict) -> Dict:
     dataset.expires_on = timezone.now() + timedelta(days=1)
     dataset.save()
 
+    job_context['success'] = True
+
     return job_context
 
 def smash(job_id: int, upload=True) -> None:
     """ Main Smasher interface """
 
-    return utils.run_pipeline({"job_id": job_id, "upload": upload},
+    pipeline = Pipeline(name=utils.PipelineEnum.SMASHER.value)
+    return utils.run_pipeline({"job_id": job_id, "upload": upload, "pipeline": pipeline},
                        [utils.start_job,
                         _prepare_files,
                         _smash,

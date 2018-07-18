@@ -1,7 +1,10 @@
+from enum import Enum, unique
 from typing import List, Dict, Callable
 from django.utils import timezone
 from data_refinery_common.models import (
-    ProcessorJob, 
+    ProcessorJob,
+    Pipeline,
+    Processor,
     Sample,
     OriginalFile,
     Dataset,
@@ -63,6 +66,7 @@ def start_job(job_context: Dict):
 
         # Just in case
         job_context["original_files"] = []
+        job_context["computed_files"] = []
 
     return job_context
 
@@ -92,6 +96,11 @@ def end_job(job_context: Dict, abort=False):
                 sample = job_context['sample']
                 sample.is_processed = True
                 sample.save()
+
+        # If the sample-level pipeline includes any steps, save it.
+        pipeline = job_context['pipeline']
+        if len(pipeline.steps):
+            pipeline.save()
 
     job.success = success
     job.end_time = timezone.now()
@@ -219,3 +228,53 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
             return end_job(last_result, abort=True)
 
     return last_result
+
+
+@unique
+class PipelineEnum(Enum):
+    """Hardcoded pipeline names."""
+
+    AGILENT_TWOCOLOR = "Agilent Two Color"
+    ARRAY_EXPRESS = "Array Express"
+    ILLUMINA = "Illumina"
+    NO_OP = "No Op"
+    SALMON = "Salmon"
+    SMASHER = "Smasher"
+    TX_INDEX = "Transcriptome Index"
+
+
+@unique
+class ProcessorEnum(Enum):
+    """Hardcoded processor names in each pipeline."""
+
+    # One processor in "Agilent Two Color" pipeline
+    AGILENT_TWOCOLOR = "Agilent SCAN TwoColor"
+
+    # One processor in "Array Express" pipeline
+    AFFYMETRIX_SCAN = "Affymetrix SCAN"
+
+    # One processor in "Illumina" pipeline
+    ILLUMINA_SCAN = "Illumina SCAN"
+
+    # One processor in "No Op" pipeline
+    SUBMITTER_PROCESSED = "Submitter-processed"
+
+    # Four processors in "Salmon" pipeline
+    TXIMPORT = "Tximport"
+    SALMON_QUANT = "Salmon Quant"
+    MULTIQC = "MultiQC"
+    SALMONTOOLS = "Salmontools"
+
+    # No processors in "Smasher" pipeline (yet)
+
+    # One processor in "Transcriptome Index" pipeline
+    TX_INDEX = "Transcriptome Index"
+
+
+def createTestProcessors():
+    """Creates dummy processors for all unit test cases.
+    (This function should be called ONLY by test modules).
+    """
+
+    for label in ProcessorEnum:
+        Processor.objects.create(name=label.value, version=__version__)

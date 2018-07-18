@@ -1,4 +1,4 @@
-job "AFFY_TO_PCL" {
+job "AFFY_TO_PCL_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -53,7 +53,7 @@ job "AFFY_TO_PCL" {
         # CPU is in AWS's CPU units.
         cpu = 1024
         # Memory is in MB of RAM.
-        memory = 4048
+        memory = ${{RAM}}
       }
 
       config {

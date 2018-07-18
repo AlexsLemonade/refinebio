@@ -1,4 +1,4 @@
-job "SMASHER" {
+job "SMASHER_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -54,7 +54,7 @@ job "SMASHER" {
         # CPU is in AWS's CPU units.
         cpu = 1024
         # Memory is in MB of RAM.
-        memory = 4048
+        memory = ${{RAM}}
       }
 
       config {

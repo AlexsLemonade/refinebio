@@ -14,6 +14,7 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
     ExperimentSampleAssociation,
+    ExperimentOrganismAssociation,
     Organism,
     OriginalFile,
     OriginalFileSampleAssociation,
@@ -21,6 +22,7 @@ from data_refinery_common.models import (
     DownloaderJobOriginalFileAssociation,
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
+    Processor,
     ComputationalResult,
     SampleResultAssociation,
     Dataset
@@ -38,7 +40,8 @@ from data_refinery_api.serializers import (
     # Jobs
     SurveyJobSerializer,
     DownloaderJobSerializer,
-    ProcessorJobSerializer
+    ProcessorJobSerializer,
+    ProcessorSerializer
 )
 
 class APITestCases(APITestCase):
@@ -228,8 +231,10 @@ class APITestCases(APITestCase):
             ex.submitter_institution = random.choice(["Funkytown", "Monkeytown"])
             experiments.append(ex)
 
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+
         ex = Experiment()
-        ex.accession_code = "FINDME"
+        ex.accession_code = "FINDME_TEMPURA"
         ex.title = "THISWILLBEINASEARCHRESULT"
         ex.description = "SOWILLTHIS"
         ex.technology = "MICROARRAY"
@@ -254,9 +259,20 @@ class APITestCases(APITestCase):
         sample2.title = "3345"
         sample2.accession_code = "3345"
         sample2.platform_name = "ILLUMINA"
+        sample2.organism = homo_sapiens
         sample2.save()
 
         Experiment.objects.bulk_create(experiments)
+
+        xoa = ExperimentOrganismAssociation()
+        xoa.experiment=ex
+        xoa.organism=homo_sapiens
+        xoa.save()
+
+        xoa = ExperimentOrganismAssociation()
+        xoa.experiment=ex2
+        xoa.organism=homo_sapiens
+        xoa.save()
 
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample1
@@ -276,16 +292,22 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('search'), {'search': 'THISWILLBEINASEARCHRESULT'})
         self.assertEqual(response.json()['count'], 2)
 
+        response = self.client.get(reverse('search'), {'search': 'TEMPURA'})
+        self.assertEqual(response.json()['count'], 1)
+
         # Test search and filter
         response = self.client.get(reverse('search'),
                                    {'search': 'THISWILLBEINASEARCHRESULT',
                                     'technology': 'MICROARRAY'})
         self.assertEqual(response.json()['count'], 1)
-        self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME')
+        self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME_TEMPURA')
         self.assertEqual(len(response.json()['results'][0]['platforms']), 2)
         self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(ex.platforms))
         self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(['AFFY', 'ILLUMINA']))
-
+        self.assertEqual(response.json()['filters']['technology'], {'MICROARRAY': 1})
+        self.assertEqual(response.json()['filters']['publication'], {'has_publication': 0})
+        self.assertEqual(response.json()['filters']['organism'], {'HOMO_SAPIENS': 1})
+    
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
 
@@ -317,6 +339,14 @@ class APITestCases(APITestCase):
         self.assertEqual(response.json()['id'], good_id)
         self.assertEqual(response.json()['data'], json.loads(jdata)['data'])
         self.assertEqual(response.json()['data']["A"], ["B"])
+
+        # Bad (Duplicates)
+        jdata = json.dumps({'data': {"A": ["B", "B", "B"]}})
+        response = self.client.post(reverse('create_dataset'),
+                                    jdata,
+                                    content_type="application/json")
+
+        self.assertEqual(response.status_code, 400)
 
         # Update
         jdata = json.dumps({'data': {"A": ["C"]}})
@@ -408,3 +438,51 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('experiments'))
         self.assertEqual(response.status_code, 500)
         mock_client.captureMessage.assert_called()
+
+
+class ProcessorTestCases(APITestCase):
+    def setUp(self):
+        salmon_quant_env = {
+            'os': 'Ubuntu 16.04',
+            'programs': {
+                'salmon': {
+                    'version': '0.9.1',
+                    'command': 'salmon quant -i <index_dir> -r <input_file> -o <output_dir>'
+                }
+            }
+        }
+        Processor.objects.create(
+            name="Salmon Quant",
+            docker_image="ccdl/salmon_img:v1.23",
+            environment=salmon_quant_env
+        )
+
+        salmontools_env = {
+            'os': 'Ubuntu 16.04',
+            'programs': {
+                'salmontools': {
+                    'version': '0.1.0',
+                    'command': 'salmontools extract-unmapped -u <file> -o <output> -r <data_file>',
+                },
+                'g++': {
+                    'version': '5.4.0',
+                    'command': 'cmake && make install'
+                }
+            }
+        }
+        Processor.objects.create(
+            name="Salmontools",
+            docker_image="ccdl/salmontools_img:v0.45",
+            environment=salmontools_env
+        )
+
+    def test_endpoint(self):
+        response = self.client.get(reverse('processors'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        processors = response.json()
+        self.assertEqual(processors[0]['name'], 'Salmon Quant')
+        self.assertEqual(processors[0]['environment']['programs']['salmon']['version'], '0.9.1')
+
+        self.assertEqual(processors[1]['name'], 'Salmontools')
+        self.assertEqual(processors[1]['environment']['programs']['salmontools']['version'], '0.1.0')

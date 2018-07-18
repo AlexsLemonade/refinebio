@@ -10,7 +10,14 @@ import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import OriginalFile, ComputationalResult, ComputedFile, SampleResultAssociation, SampleComputedFileAssociation
+from data_refinery_common.models import (
+    OriginalFile,
+    ComputationalResult,
+    ComputedFile,
+    SampleResultAssociation,
+    SampleComputedFileAssociation,
+    Pipeline,
+    Processor)
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 from data_refinery_common.utils import get_env_variable
@@ -70,7 +77,7 @@ def _run_scan_twocolor(job_context: Dict) -> Dict:
 
     except RRuntimeError as e:
 
-        # There is a bug in Bioconductor that causes this, but it happens 
+        # There is a bug in Bioconductor that causes this, but it happens
         # _after_ our output file is made and written to disk so..
         # we can ignore it!
         # See it for yourself here: https://github.com/Miserlou/SCAN.UPC/blob/master/R/TwoColor.R#L122
@@ -93,19 +100,16 @@ def _create_result_objects(job_context: Dict) -> Dict:
     """ Create the ComputationalResult objects after a Scan run is complete """
 
     result = ComputationalResult()
-    result.command_executed = "SCAN.UPC::SCAN_TwoColor"
+    result.commands.append("SCAN.UPC::SCAN_TwoColor")
     result.is_ccdl = True
     result.is_public = True
-    result.system_version = __version__
-    scan_version_parts = []
-    for version_part in ro.r("packageVersion('SCAN.UPC')")[0]:
-        scan_version_parts.append(str(version_part))
-    scan_version = ".".join(scan_version_parts)
-    result.program_version = scan_version
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
-    result.pipeline = "Agilent SCAN TwoColor"
+    result.pipeline = "Agilent SCAN TwoColor"  # TODO: should be removed
+    result.processor = Processor.objects.get(name=utils.ProcessorEnum.AGILENT_TWOCOLOR.value,
+                                             version = __version__)
     result.save()
+    job_context['pipeline'].steps.append(result.id)
 
     # Create a ComputedFile for the sample,
     # sync it S3 and save it.
@@ -147,7 +151,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 def agilent_twocolor_to_pcl(job_id: int) -> None:
-    utils.run_pipeline({"job_id": job_id},
+    pipeline = Pipeline(name=utils.PipelineEnum.AGILENT_TWOCOLOR.value)
+    utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _prepare_files,
                         _run_scan_twocolor,

@@ -110,6 +110,7 @@ def create_long_and_short_processor_jobs(files_to_process):
 
     processor_job_long = ProcessorJob()
     processor_job_long.pipeline_applied = "TRANSCRIPTOME_INDEX_LONG"
+    processor_job_long.ram_amount = 4096
     processor_job_long.save()
 
     for original_file in files_to_process:
@@ -123,6 +124,7 @@ def create_long_and_short_processor_jobs(files_to_process):
 
     processor_job_short = ProcessorJob()
     processor_job_short.pipeline_applied = "TRANSCRIPTOME_INDEX_SHORT"
+    processor_job_long.ram_amount = 4096
     processor_job_short.save()
 
     for original_file in files_to_process:

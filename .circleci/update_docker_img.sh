@@ -1,20 +1,23 @@
 #!/bin/bash
+set -e
 
 # Load docker_img_exists function
 source ~/refinebio/common.sh
 
-# Circle doesn't provide $CIRCLE_BRANCH on tag commits. These
-# commands will determine what branch the commit belongs to if it
-# belongs to a single branch.
-num_branches=$(git branch --contains $(git rev-parse HEAD) | wc -l)
-if [[ $num_branches == 2 ]]; then
-    BRANCH_NAME=$(git branch --contains $(git rev-parse HEAD) | tail -n 1 | cut -d' ' -f3)
-fi
+# Circle won't set the branch name for us, so do it ourselves.
+
+# A single tag could potentially be on more than one branch (or even
+# something like: (HEAD detached at v0.8.0))
+# However it cannot be on both master and dev because merges create new commits.
+# Therefore check to see if either master or dev show up in the list
+# of branches containing that tag.
+master_check=$(git branch --contains tags/$CIRCLE_TAG | grep '^  master$')
+dev_check=$(git branch --contains tags/$CIRCLE_TAG | grep '^  dev$')
 
 
-if [ $BRANCH_NAME == "master" ]; then
+if [[ ! -z $master_check ]]; then
     DOCKERHUB_REPO=ccdl
-elif [[ $BRANCH_NAME == "dev" ]]; then
+elif [[ ! -z $dev_check ]]; then
     DOCKERHUB_REPO=ccdlstaging
 else
     echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"
@@ -30,7 +33,7 @@ for IMG in $CCDL_WORKER_IMGS; do
     image_name="$DOCKERHUB_REPO/dr_$IMG"
     if docker_img_exists $image_name $CIRCLE_TAG; then
         echo "Docker image exists, building process terminated: $image_name:$CIRCLE_TAG"
-        exit
+        exit 1
     fi
 done
 
@@ -40,7 +43,7 @@ CCDL_OTHER_IMGS="$DOCKERHUB_REPO/dr_foreman $DOCKERHUB_REPO/dr_api"
 for IMG in $CCDL_OTHER_IMGS; do
     if docker_img_exists $IMG $CIRCLE_TAG; then
         echo "Docker image exists, building process terminated: $IMG:$CIRCLE_TAG"
-        exit
+        exit 1
     fi
 done
 
@@ -64,7 +67,7 @@ done
 
 # Build and push foreman image
 FOREMAN_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_foreman"
-docker build -t "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG" -f foreman/dockerfiles.foreman .
+docker build -t "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG" -f foreman/dockerfiles/Dockerfile.foreman .
 docker push "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG"
 # Update latest version
 docker tag "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG" "$FOREMAN_DOCKER_IMAGE:latest"

@@ -14,7 +14,7 @@ from data_refinery_common.models import (
     OriginalFile,
     ProcessorJobOriginalFileAssociation
 )
-from data_refinery_common.job_lookup import ProcessorPipeline, determine_processor_pipeline
+from data_refinery_common.job_lookup import ProcessorPipeline, determine_processor_pipeline, determine_ram_amount
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_workers._version import __version__
@@ -65,7 +65,18 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
     """
     for original_file in original_files:
         sample_object = original_file.samples.first()
-        pipeline_to_apply = determine_processor_pipeline(sample_object)
+
+        if original_file.filename[-4:] == ".xml":
+            logger.info("Skipping useless file",
+                file=original_file.id,
+                filename=original_file.filename)
+            continue
+
+        # We NO_OP processed data. It's what we do.
+        if '.processed' in original_file.source_url:
+            pipeline_to_apply = ProcessorPipeline.NO_OP
+        else:
+            pipeline_to_apply = determine_processor_pipeline(sample_object)
 
         if pipeline_to_apply == ProcessorPipeline.NONE:
             logger.info("No valid processor pipeline found to apply to sample.",
@@ -74,6 +85,7 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
         else:
             processor_job = ProcessorJob()
             processor_job.pipeline_applied = pipeline_to_apply.value
+            processor_job.ram_amount = determine_ram_amount(sample_object, processor_job)
             processor_job.save()
 
             assoc = ProcessorJobOriginalFileAssociation()
@@ -111,6 +123,7 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
     else:
         processor_job = ProcessorJob()
         processor_job.pipeline_applied = pipeline_to_apply.value
+        processor_job.ram_amount = determine_ram_amount(sample_object, processor_job)
         processor_job.save()
         for original_file in original_files:
             assoc = ProcessorJobOriginalFileAssociation()
