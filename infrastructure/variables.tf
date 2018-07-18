@@ -140,6 +140,10 @@ variable "api_instance_type" {
   default = "t2.large"
 }
 
+variable "foreman_instance_type" {
+  default = "t2.micro"
+}
+
 # Output our production environment variables.
 output "environment_variables" {
   value = [

@@ -31,7 +31,7 @@ GENE_TYPE_COLUMN = 2
 # Removes each occurrance of ; and "
 IDS_CLEANUP_TABLE = str.maketrans({";": None, "\"": None})
 
-ORGANISM_INDEX_BUCKET = get_env_variable_gracefully("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME")
+ORGANISM_INDEX_BUCKET = get_env_variable_gracefully("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", False)
 
 
 def _compute_paths(job_context: Dict) -> str:
@@ -73,7 +73,8 @@ def _prepare_files(job_context: Dict) -> Dict:
         if "fa.gz" in og_file.source_filename:
             gzipped_fasta_file_path = og_file.absolute_file_path
             job_context["fasta_file"] = og_file
-            job_context["fasta_file_path"] = gzipped_fasta_file_path.replace(".gz", "")
+            new_fasta_filename = gzipped_fasta_file_path.split('/')[-1].replace(".gz", "")
+            job_context["fasta_file_path"] = job_context["work_dir"] + "/" + new_fasta_filename
             with gzip.open(gzipped_fasta_file_path, "rb") as gzipped_file, \
                     open(job_context["fasta_file_path"], "wb") as gunzipped_file:
                 shutil.copyfileobj(gzipped_file, gunzipped_file)
@@ -330,9 +331,18 @@ def _populate_index_object(job_context: Dict) -> Dict:
     index_object.salmon_version = job_context["salmon_version"]
     index_object.index_type = "TRANSCRIPTOME_" + job_context['length'].upper()
     index_object.result = result
-    logger.info("Uploading %s %s to s3" % (job_context['organism_name'], job_context['length']))
-    index_object.upload_to_s3(computed_file.absolute_file_path, ORGANISM_INDEX_BUCKET, logger)
+
+    if ORGANISM_INDEX_BUCKET:
+        logger.info("Uploading %s %s to s3", job_context['organism_name'], job_context['length'], processor_job=job_context["job_id"])
+        index_object.upload_to_s3(computed_file.absolute_file_path, ORGANISM_INDEX_BUCKET, logger)
+    else:
+        logger.warn("ORGANISM_INDEX_BUCKET not configured, therefore %s %s will not be uploaded.",
+                    job_context['organism_name'],
+                    job_context['length'],
+                    processor_job=job_context["job_id"])
+
     index_object.save()
+
 
     job_context['result'] = result
     job_context['computed_file'] = computed_file

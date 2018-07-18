@@ -196,6 +196,7 @@ jobs:
       - run: bash .circleci/git_decrypt.sh
       - run: bash .circleci/update_docker_img.sh
       - run: bash .circleci/run_terraform.sh
+      - run: bash .circleci/slackpost.sh robots deploybot
 
 workflows:
   version: 2

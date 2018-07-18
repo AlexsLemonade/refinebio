@@ -142,6 +142,8 @@ class Sample(models.Model):
         metadata['compound'] = self.compound
         metadata['time'] = self.time
         metadata['platform'] = self.pretty_platform
+        metadata['annotations'] = [data for data in self.sampleannotation_set.all().values_list('data', flat=True)]
+
         return metadata
 
     def get_result_files(self):
@@ -161,14 +163,14 @@ class Sample(models.Model):
 
     @property
     def pretty_platform(self):
-        """ Turns 
-        
+        """ Turns
+
         [HT_HG-U133_Plus_PM] Affymetrix HT HG-U133+ PM Array Plate
 
         into
 
         Affymetrix HT HG-U133+ PM Array Plate (hthgu133pluspm)
-        
+
         """
         if ']' in self.platform_name:
             platform_base = self.platform_name.split(']')[1].strip()
@@ -268,6 +270,7 @@ class Experiment(models.Model):
         metadata = {}
         metadata['title'] = self.title
         metadata['accession_code'] = self.accession_code
+        metadata['organisms'] = [organism.name for organism in self.organisms.all()]
         metadata['description'] = self.description
         metadata['protocol_description'] = self.protocol_description
         metadata['technology'] = self.technology

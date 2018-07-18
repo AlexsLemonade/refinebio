@@ -61,7 +61,6 @@ resource "aws_route_table" "data_refinery" {
   }
 }
 
-
 resource "aws_route_table_association" "data_refinery_1a" {
   subnet_id      = "${aws_subnet.data_refinery_1a.id}"
   route_table_id = "${aws_route_table.data_refinery.id}"
@@ -178,7 +177,6 @@ resource "aws_acm_certificate" "ssl-cert" {
     Environment = "data-refinery-circleci-staging"
   }
 }
-
 
 resource "aws_cloudfront_distribution" "static-distribution" {
   aliases = ["${var.static_bucket_prefix == "dev" ? var.user : var.static_bucket_prefix}${var.static_bucket_root}"]
