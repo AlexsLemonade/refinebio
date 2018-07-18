@@ -5,6 +5,8 @@ WORKDIR /home/user
 
 RUN pip install --upgrade pip
 
+COPY config/ config/
+
 COPY api/requirements.txt .
 
 RUN pip install -r requirements.txt
