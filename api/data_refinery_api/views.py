@@ -107,15 +107,16 @@ class SearchAndFilter(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
-    search_fields = (   'title', 
-                        '@description', 
-                        '@accession_code', 
-                        '@protocol_description', 
+    search_fields = (   'title',
+                        '@description',
+                        '@accession_code',
+                        '@protocol_description',
                         '@publication_title',
                         'publication_doi',
                         'pubmed_id'
                     )
-    filter_fields = ('has_publication', 'submitter_institution', 'technology', 'source_first_published')
+    filter_fields = ('has_publication', 'submitter_institution', 'technology',
+                     'source_first_published', 'organisms__name')
 
 
     def list(self, request, *args, **kwargs):
@@ -131,6 +132,8 @@ class SearchAndFilter(generics.ListAPIView):
 
         techs = qs.values('technology').annotate(Count('technology', unique=True))
         for tech in techs:
+            if not tech['technology'] or not tech['technology'].strip():
+                continue
             response.data['filters']['technology'][tech['technology']] = tech['technology__count']
 
         pubs = qs.values('has_publication').annotate(Count('has_publication', unique=True))
