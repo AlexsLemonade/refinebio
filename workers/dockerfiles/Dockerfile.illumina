@@ -43,6 +43,8 @@ RUN Rscript illumina_dependencies.R
 
 RUN pip3 install --upgrade pip
 
+COPY config/ config/
+
 COPY workers/data_refinery_workers/processors/requirements.txt .
 
 RUN  pip3 --no-cache-dir install -r requirements.txt
@@ -61,4 +63,3 @@ COPY workers/data_refinery_workers/processors/detect_database.R .
 COPY workers/ .
 
 ENTRYPOINT []
-
