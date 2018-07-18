@@ -134,11 +134,23 @@ def _smash(job_context: Dict) -> Dict:
 
             job_context['all_frames'] = all_frames
 
+            # Merge all of the frames we've gathered into a single big frame, skipping duplicates.
             merged = all_frames[0]
             i = 1
             while i < len(all_frames):
-                merged = merged.merge(all_frames[i], left_index=True, right_index=True)
+                frame = all_frames[i]
                 i = i + 1
+
+                # I'm not sure where these are sneaking in from, but we don't want them.
+                # Related: https://github.com/AlexsLemonade/refinebio/issues/390
+                breaker = False
+                for column in frame.columns:
+                    if column in merged.columns:
+                        breaker = True
+                if breaker:
+                    continue
+
+                merged = merged.merge(frame, left_index=True, right_index=True)
 
             job_context['merged'] = merged
 
