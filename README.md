@@ -337,7 +337,7 @@ Example (paired read):
 The GEO surveyor expects an exession code or a file:
 
 ```bash
-./foreman/run_surveyor.sh survey_geo --accession <ARRAY_EXPRESS_ACCESSION_CODE> --file <FILEPATH.txt>
+./foreman/run_surveyor.sh survey_geo --accession <GEO_ACCESSION_CODE> --file <FILEPATH.txt>
 ```
 
 Example:
