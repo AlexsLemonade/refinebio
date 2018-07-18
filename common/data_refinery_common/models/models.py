@@ -158,14 +158,14 @@ class Sample(models.Model):
 
     @property
     def pretty_platform(self):
-        """ Turns 
-        
+        """ Turns
+
         [HT_HG-U133_Plus_PM] Affymetrix HT HG-U133+ PM Array Plate
 
         into
 
         Affymetrix HT HG-U133+ PM Array Plate (hthgu133pluspm)
-        
+
         """
         if ']' in self.platform_name:
             platform_base = self.platform_name.split(']')[1].strip()
