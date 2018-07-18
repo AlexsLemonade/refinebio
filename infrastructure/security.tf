@@ -56,6 +56,17 @@ resource "aws_security_group_rule" "data_refinery_worker_nomad" {
   security_group_id = "${aws_security_group.data_refinery_worker.id}"
 }
 
+# Allow the Nomad HTTP API to be accessible by the Foreman security group. See:
+# https://www.nomadproject.io/guides/cluster/requirements.html#ports-used
+resource "aws_security_group_rule" "data_refinery_nomad_from_foreman" {
+  type = "ingress"
+  from_port = 4646
+  to_port = 4646
+  protocol = "tcp"
+  security_group_id = "${aws_security_group.data_refinery_worker.id}"
+  source_security_group_id = "${aws_security_group.data_refinery_foreman.id}"
+}
+
 # Allow the Nomad HTTP API to be accessible by the API security group. See:
 # https://www.nomadproject.io/guides/cluster/requirements.html#ports-used
 resource "aws_security_group_rule" "data_refinery_api_nomad" {
@@ -63,8 +74,8 @@ resource "aws_security_group_rule" "data_refinery_api_nomad" {
   from_port = 4646
   to_port = 4646
   protocol = "tcp"
-  self = true
-  security_group_id = "${aws_security_group.data_refinery_api.id}"
+  security_group_id = "${aws_security_group.data_refinery_worker.id}"
+  source_security_group_id = "${aws_security_group.data_refinery_api.id}"
 }
 
 # Allow Nomad RPC calls to go through to each other. See:
@@ -149,22 +160,21 @@ resource "aws_security_group" "data_refinery_db" {
     Name = "data-refinery-db-${var.user}-${var.stage}"
   }
 }
-
-resource "aws_security_group_rule" "data_refinery_db_postgres_lab" {
-  type = "ingress"
-  from_port = 5432
-  to_port = 5432
-  protocol = "tcp"
-  cidr_blocks = ["165.123.67.153/32", "165.123.67.173/32"] # Lab machines
-  security_group_id = "${aws_security_group.data_refinery_db.id}"
-}
-
 resource "aws_security_group_rule" "data_refinery_db_workers_tcp" {
   type = "ingress"
   from_port = 0
   to_port = 65535
   protocol = "tcp"
   source_security_group_id = "${aws_security_group.data_refinery_worker.id}"
+  security_group_id = "${aws_security_group.data_refinery_db.id}"
+}
+
+resource "aws_security_group_rule" "data_refinery_db_foreman_tcp" {
+  type = "ingress"
+  from_port = 0
+  to_port = 65535
+  protocol = "tcp"
+  source_security_group_id = "${aws_security_group.data_refinery_foreman.id}"
   security_group_id = "${aws_security_group.data_refinery_db.id}"
 }
 
@@ -256,3 +266,49 @@ resource "aws_security_group_rule" "data_refinery_api_outbound" {
   security_group_id = "${aws_security_group.data_refinery_api.id}"
 }
 
+##
+# Foreman
+##
+
+resource "aws_security_group" "data_refinery_foreman" {
+  name = "data-refinery-foreman-${var.user}-${var.stage}"
+  description = "data-refinery-foreman-${var.user}-${var.stage}"
+  vpc_id = "${aws_vpc.data_refinery_vpc.id}"
+
+  tags {
+    Name = "data-refinery-foreman-${var.user}-${var.stage}"
+  }
+}
+
+# Allow the Nomad HTTP API to be accessible by this security group. See:
+# https://www.nomadproject.io/guides/cluster/requirements.html#ports-used
+resource "aws_security_group_rule" "data_refinery_worker_foreman" {
+  type = "ingress"
+  from_port = 4646
+  to_port = 4646
+  protocol = "tcp"
+  self = true
+  security_group_id = "${aws_security_group.data_refinery_foreman.id}"
+}
+
+# XXX: THIS DEFINITELY NEEDS TO BE REMOVED LONG TERM!!!!!!!!!!
+resource "aws_security_group_rule" "data_refinery_foreman_ssh" {
+  type = "ingress"
+  from_port = 22
+  to_port = 22
+  protocol = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = "${aws_security_group.data_refinery_foreman.id}"
+}
+
+# Necessary to retrieve
+# https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py
+resource "aws_security_group_rule" "data_refinery_foreman_outbound" {
+  type = "egress"
+  from_port = 0
+  to_port = 0
+  protocol = "all"
+  cidr_blocks = ["0.0.0.0/0"]
+  ipv6_cidr_blocks = ["::/0"]
+  security_group_id = "${aws_security_group.data_refinery_foreman.id}"
+}
