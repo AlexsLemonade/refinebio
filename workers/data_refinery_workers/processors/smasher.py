@@ -49,7 +49,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         all_sample_files = list(set(all_sample_files))
         job_context['input_files'][key] = all_sample_files
 
-    # So these get delted from disk after..
+    # So these get deleted from disk after..
     for computed_file in all_sample_files:
         job_context['computed_files'].append(computed_file)
 

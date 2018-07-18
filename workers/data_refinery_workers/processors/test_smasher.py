@@ -743,7 +743,7 @@ class SmasherTestCase(TestCase):
         computed_file.filename = "all_the_things.jpg"
         computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
-        computed_file.size_in_bytes = 9000
+        computed_file.size_in_bytes = 9001
         computed_file.is_smashable = False
         computed_file.save()
 
