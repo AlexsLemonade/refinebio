@@ -572,7 +572,7 @@ class OriginalFile(models.Model):
                     )
             self.save()
         except Exception as e:
-            logger.exception(e)
+            logger.exception(e, original_file_id=self.pk)
             return False
 
         return True
@@ -617,7 +617,7 @@ class OriginalFile(models.Model):
                     )
             return self.absolute_file_path
         except Exception as e:
-            logger.exception(e)
+            logger.exception(e, original_file_id=self.pk)
             return None
 
     def get_synced_file_path(self):
@@ -629,8 +629,7 @@ class OriginalFile(models.Model):
             return self.sync_from_s3()
 
     def delete_local_file(self):
-        """ Deletes a file from the path and actually removes it from the file system,
-        resetting the is_downloaded flag to false. Can be refetched from source if needed. """
+        """ Deletes this file from the local file system."""
         if settings.TESTING:
             return
 
@@ -707,7 +706,7 @@ class ComputedFile(models.Model):
                     )
             self.save()
         except Exception as e:
-            logger.exception(e)
+            logger.exception(e, computed_file_id=self.pk)
             return False
 
         return True
@@ -727,7 +726,7 @@ class ComputedFile(models.Model):
                     )
             return self.absolute_file_path
         except Exception as e:
-            logger.exception(e)
+            logger.exception(e, computed_file_id=self.pk)
             return None
 
     def calculate_sha1(self) -> None:
