@@ -141,6 +141,8 @@ echo "Killing base jobs.."
 if [[ $(nomad status) != "No running jobs" ]]; then
     for job in $(nomad status | grep running | awk {'print $1'} || grep --invert-match /)
     do
+        # '|| true' so that if a job is garbage collected before we can remove it the error
+        # doesn't interrupt our deploy.
         nomad stop -purge -detach $job > /dev/null || true
     done
 fi
@@ -153,6 +155,8 @@ if [[ $(nomad status) != "No running jobs" ]]; then
     do
         # Skip the header row for jobs.
         if [ $job != "ID" ]; then
+            # '|| true' so that if a job is garbage collected before we can remove it the error
+            # doesn't interrupt our deploy.
             nomad stop -purge -detach $job > /dev/null || true
         fi
     done
