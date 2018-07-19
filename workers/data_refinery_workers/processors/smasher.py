@@ -75,6 +75,7 @@ def _smash(job_context: Dict) -> Dict:
             'ROBUST': preprocessing.RobustScaler,
         }
 
+        unsmashable_files = []
         num_samples = 0
         # Smash all of the sample sets
         for key, input_files in job_context['input_files'].items():
@@ -89,7 +90,11 @@ def _smash(job_context: Dict) -> Dict:
                 if not os.path.exists(computed_file.absolute_file_path):
                     raise ValueError("Smasher received non-existent file path.")
 
-                data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0)
+                try:
+                    data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0, error_bad_lines=False)
+                except Exception:
+                    unsmashable_files.append(computed_file_path)
+                    continue
 
                 # via https://github.com/AlexsLemonade/refinebio/issues/330:
                 #   aggregating by experiment -> return untransformed output from tximport
@@ -189,6 +194,8 @@ def _smash(job_context: Dict) -> Dict:
         metadata['num_experiments'] = job_context["experiments"].count()
         metadata['aggregate_by'] = job_context["dataset"].aggregate_by
         metadata['scale_by'] = job_context["dataset"].scale_by
+        # https://github.com/AlexsLemonade/refinebio/pull/421#discussion_r203799646
+        metadata['non_aggregated_files'] = unsmashable_files
 
         samples = {}
         for sample in job_context["dataset"].get_samples():
@@ -228,6 +235,7 @@ def _smash(job_context: Dict) -> Dict:
                         job_id=job_context['job_id'],
                         input_files=job_context['input_files'])
         job_context['dataset'].success = False
+        job_context['job'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].save()
         job_context['success'] = False
@@ -240,34 +248,42 @@ def _smash(job_context: Dict) -> Dict:
 
     return job_context
 
-def _upload_and_notify(job_context: Dict) -> Dict:
+def _upload(job_context: Dict) -> Dict:
     """ Uploads the result file to S3 and notifies user. """
 
+    try:
+        if job_context.get("upload", True):
+            s3_client = boto3.client('s3')
+
+            # Note that file expiry is handled by the S3 object lifecycle,
+            # managed by terraform.
+            s3_client.upload_file(
+                    job_context["output_file"],
+                    RESULTS_BUCKET,
+                    job_context["output_file"].split('/')[-1],
+                    ExtraArgs={'ACL':'public-read'}
+                )
+            result_url = "https://s3.amazonaws.com/" + RESULTS_BUCKET + "/" + job_context["output_file"].split('/')[-1]
+            job_context["result_url"] = result_url
+
+            job_context["dataset"].s3_bucket = RESULTS_BUCKET
+            job_context["dataset"].s3_key = job_context["output_file"].split('/')[-1]
+            job_context["dataset"].save()
+    except Exception as e:
+        logger.exception("Failed to upload smash result file.", file=job_context["output_file"])
+        job_context['job'].success = False
+        job_context['job'].failure_reason = str(e)
+        job_context['success'] = False
+
+    return job_context
+
+def _notify(job_context: Dict) -> Dict:
+    """ Use AWS SES to notify a user of a smash result.. """
+
+    ##
+    # SES
+    ##
     if job_context.get("upload", True):
-
-        ##
-        # S3
-        ##
-        s3_client = boto3.client('s3')
-
-        # Note that file expiry is handled by the S3 object lifecycle,
-        # managed by terraform.
-        s3_client.upload_file(
-                job_context["output_file"],
-                RESULTS_BUCKET,
-                job_context["output_file"].split('/')[-1],
-                ExtraArgs={'ACL':'public-read'}
-            )
-        result_url = "https://s3.amazonaws.com/" + RESULTS_BUCKET + "/" + job_context["output_file"].split('/')[-1]
-        job_context["result_url"] = result_url
-
-        job_context["dataset"].s3_bucket = RESULTS_BUCKET
-        job_context["dataset"].s3_key = job_context["output_file"].split('/')[-1]
-        job_context["dataset"].save()
-
-        ##
-        # SES
-        ##
 
         # Don't send an email if we don't have address.
         if job_context["dataset"].email_address:
@@ -276,15 +292,16 @@ def _upload_and_notify(job_context: Dict) -> Dict:
             RECIPIENT = job_context["dataset"].email_address
             AWS_REGION = "us-east-1"
             SUBJECT = "Your refine.bio Dataset is Ready!"
-            BODY_TEXT = "Hot off the presses:\n\n" + result_url + "\n\nLove!,\nThe refine.bio Team"
-            BODY_HTML = "Hot off the presses:<br /><br />" + result_url + "<br /><br />Love!,<br />The refine.bio Team"
+            BODY_TEXT = "Hot off the presses:\n\n" + job_context["result_url"] + "\n\nLove!,\nThe refine.bio Team"
+            BODY_HTML = "Hot off the presses:<br /><br />" + job_context["result_url"] + "<br /><br />Love!,<br />The refine.bio Team"
             CHARSET = "UTF-8"
-
-            # Create a new SES resource and specify a region.
-            client = boto3.client('ses', region_name=AWS_REGION)
 
             # Try to send the email.
             try:
+
+                # Create a new SES resource and specify a region.
+                client = boto3.client('ses', region_name=AWS_REGION)
+
                 #Provide the contents of the email.
                 response = client.send_email(
                     Destination={
@@ -312,10 +329,20 @@ def _upload_and_notify(job_context: Dict) -> Dict:
                 )
             # Display an error if something goes wrong.
             except ClientError as e:
-                logger.error(e.response['Error']['Message'])
-            else:
-                job_context["dataset"].email_sent = True
-                job_context["dataset"].save()
+                logger.exception("ClientError while notifying.", message=e.response['Error']['Message'])
+                job_context['job'].success = False
+                job_context['job'].failure_reason = e.response['Error']['Message']
+                job_context['success'] = False
+                return job_context
+            except Exception as e:
+                logger.exception("General failure when trying to send email.", result_url=job_context["result_url"])
+                job_context['job'].success = False
+                job_context['job'].failure_reason = str(e)
+                job_context['success'] = False
+                return job_context
+
+            job_context["dataset"].email_sent = True
+            job_context["dataset"].save()
 
     return job_context
 
@@ -341,6 +368,7 @@ def smash(job_id: int, upload=True) -> None:
                        [utils.start_job,
                         _prepare_files,
                         _smash,
-                        _upload_and_notify,
+                        _upload,
+                        _notify,
                         _update_result_objects,
                         utils.end_job])

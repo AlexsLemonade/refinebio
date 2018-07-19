@@ -198,7 +198,7 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
         }
         sa.save()
 
-    job_context['script_name'] = "gene_convert.R"
+    job_context['script_name'] = "gene_convert_illumina.R"
     try:
         result = subprocess.check_output([
                 "/usr/bin/Rscript",
