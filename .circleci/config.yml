@@ -51,7 +51,7 @@ jobs:
           no_output_timeout: 36000
 
       # Run NO_OP tests
-      -run: .circleci/filter_tests.sh -t no_op
+      - run: .circleci/filter_tests.sh -t no_op
 
       # Push the no_op and downloader images to the local docker repo so Nomad
       # can pull from there when running end-to-end tests.
