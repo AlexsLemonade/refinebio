@@ -72,34 +72,6 @@ resource "aws_iam_role_policy_attachment" "s3" {
   policy_arn = "${aws_iam_policy.s3_access_policy.arn}"
 }
 
-resource "aws_iam_policy" "ses_access_policy" {
-  name = "data-refinery-ses-access-policy-${var.user}-${var.stage}"
-  description = "Allows SES Permissions."
-
-  # Policy text based off of:
-  # https://docs.aws.amazon.com/ses/latest/DeveloperGuide/sending-authorization-policy-examples.html
-  policy = <<EOF
-{
-   "Version":"2012-10-17",
-   "Statement":[
-      {
-        "Effect":"Allow",
-        "Action":[
-          "SES:SendEmail",
-          "SES:SendRawEmail"
-        ],
-         "Resource":"arn:aws:ses:::*"
-      }
-   ]
-}
-EOF
-}
-
-resource "aws_iam_role_policy_attachment" "ses" {
-  role = "${aws_iam_role.data_refinery_instance.name}"
-  policy_arn = "${aws_iam_policy.ses_access_policy.arn}"
-}
-
 resource "aws_iam_policy" "cloudwatch_policy" {
   name = "data-refinery-cloudwatch-policy-${var.user}-${var.stage}"
   description = "Allows Cloudwatch Permissions."
