@@ -75,7 +75,7 @@ if (any(overlap >= 0.5)) {
 }
 
 message("Merging..")
-converted_exprs <- identifier_df %>%  
+converted_exprs <- index_exprs %>%
     dplyr::select(c("ENSEMBL", detected_id)) %>%
     dplyr::inner_join(exprs, by = detected_id) %>%
     dplyr::select(-rlang::UQ(rlang::sym(detected_id)))
