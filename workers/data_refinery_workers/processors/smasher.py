@@ -329,7 +329,7 @@ def _notify(job_context: Dict) -> Dict:
                 )
             # Display an error if something goes wrong.
             except ClientError as e:
-                logger.exception("ClientError while notifying.", message=e.response['Error']['Message'])
+                logger.exception("ClientError while notifying.", client_error_message=e.response['Error']['Message'])
                 job_context['job'].success = False
                 job_context['job'].failure_reason = e.response['Error']['Message']
                 job_context['success'] = False
