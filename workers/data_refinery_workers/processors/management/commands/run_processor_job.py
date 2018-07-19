@@ -1,3 +1,5 @@
+import sys
+
 from django.core.management.base import BaseCommand
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
@@ -20,13 +22,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options["job_id"] is None:
             logger.error("You must specify a job ID.")
-            return 1
+            sys.exit(1) 
 
         try:
             job_type = ProcessorPipeline[options["job_name"]]
         except KeyError:
             logger.error("You must specify a valid job name.")
-            return 1
+            sys.exit(1) 
 
         if job_type is ProcessorPipeline.AFFY_TO_PCL:
             from data_refinery_workers.processors.array_express import affy_to_pcl
@@ -57,6 +59,6 @@ class Command(BaseCommand):
                           "no processor function is known to run it."),
                          options["job_name"],
                          options["job_id"])
-            return 1
+            sys.exit(1) 
 
-        return 0
+        sys.exit(0) 
