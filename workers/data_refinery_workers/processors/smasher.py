@@ -194,7 +194,8 @@ def _smash(job_context: Dict) -> Dict:
         metadata['num_experiments'] = job_context["experiments"].count()
         metadata['aggregate_by'] = job_context["dataset"].aggregate_by
         metadata['scale_by'] = job_context["dataset"].scale_by
-        metadata['unsmashable_files'] = unsmashable_files
+        # https://github.com/AlexsLemonade/refinebio/pull/421#discussion_r203799646
+        metadata['non_aggregated_files'] = unsmashable_files
 
         samples = {}
         for sample in job_context["dataset"].get_samples():
