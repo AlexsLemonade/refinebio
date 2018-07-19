@@ -25,7 +25,7 @@ else
 fi
 
 # Docker images that we want to protect from accidental overwriting in "ccdl" account.
-CCDL_WORKER_IMGS="illumina affymetrix salmon transcriptome no_op downloaders"
+CCDL_WORKER_IMGS="smasher illumina affymetrix salmon transcriptome no_op downloaders"
 
 # If any of the three images could be overwritten by the building process,
 # print out a message and terminate immediately.
