@@ -152,7 +152,7 @@ def get_normalized_platform(external_accession):
 
     matches = re.findall(r"stv\d$", external_accession)
     for match in matches:
-        external_accession.replace(match, 'st')
+        external_accession = external_accession.replace(match, 'st')
 
     return external_accession
 
