@@ -25,7 +25,8 @@ from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import (
     get_supported_microarray_platforms,
     get_supported_rnaseq_platforms,
-    get_readable_affymetrix_names
+    get_readable_affymetrix_names,
+    get_normalized_platform
 )
 
 logger = get_and_configure_logger(__name__)
@@ -61,7 +62,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
         """
 
         # Determine platform information
-        external_accession = gse.metadata.get('platform_id', [UNKNOWN])[0]
+        external_accession = get_normalized_platform(gse.metadata.get('platform_id', [UNKNOWN])[0])
 
         if external_accession == UNKNOWN:
             sample_object.platform_accession_code = UNKNOWN
