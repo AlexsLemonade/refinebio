@@ -427,13 +427,13 @@ class APITestCases(APITestCase):
         mock_client.is_enabled.side_effect = lambda: True
         response = self.client.get(reverse('experiments_detail', kwargs={'pk': '1000'}))
         self.assertEqual(response.status_code, 404)
-        mock_client.captureMessage.assert_called()
+        mock_client.captureMessage.assert_not_called()
 
         # A 404 with raven enabled will send a message to sentry
         mock_client.is_enabled.side_effect = lambda: True
         response = self.client.get(reverse('experiments_detail', kwargs={'pk': '1000'})[:-1] + "aasdas/")
         self.assertEqual(response.status_code, 404)
-        mock_client.captureMessage.assert_called()
+        mock_client.captureMessage.assert_not_called()
 
     @patch.object(ExperimentList, 'get')
     @patch('raven.contrib.django.models.client')
