@@ -3,7 +3,7 @@ from django.utils.deprecation import MiddlewareMixin
 
 class SentryCatchBadRequestMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
-        if response.status_code < 400:
+        if response.status_code < 400 or response.status_code == 404:
             return response
 
         from raven.contrib.django.models import client
