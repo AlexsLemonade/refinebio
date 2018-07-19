@@ -1,5 +1,6 @@
 import csv
 import os
+import re
 import requests
 from urllib.parse import urlparse
 from typing import Dict
@@ -143,6 +144,17 @@ def get_internal_microarray_accession(accession_code):
 
     return None
 
+def get_normalized_platform(external_accession):
+    """
+    Handles a weirdo cases, where external_accessions in the format
+        hugene10stv1 -> hugene10st
+    """
+
+    matches = re.findall(r"stv\d$", external_accession)
+    for match in matches:
+        external_accession.replace(match, 'st')
+
+    return external_accession
 
 def parse_s3_url(url):
     """
