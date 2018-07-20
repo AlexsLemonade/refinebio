@@ -139,6 +139,13 @@ def _smash(job_context: Dict) -> Dict:
 
             job_context['all_frames'] = all_frames
 
+            if len(all_frames) < 1:
+                logger.warning("Was told to smash a frame with no frames!", 
+                    key=key, 
+                    input_files=str(input_files)
+                )
+                continue
+
             # Merge all of the frames we've gathered into a single big frame, skipping duplicates.
             merged = all_frames[0]
             i = 1
@@ -177,6 +184,7 @@ def _smash(job_context: Dict) -> Dict:
                 # Wheeeeeeeeeee
                 untransposed = transposed.transpose()
 
+            # This is just for quality assurance in tests.
             job_context['final_frame'] = untransposed
 
             # Write to temp file with dataset UUID in filename.
