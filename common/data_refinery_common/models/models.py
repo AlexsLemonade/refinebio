@@ -205,6 +205,17 @@ class SampleAnnotation(models.Model):
         return super(SampleAnnotation, self).save(*args, **kwargs)
 
 
+class ProcessedPublicObjectsManager(models.Manager):
+    """
+    Only returns Experiments that are is_public and have related is_processed Samples.
+    """
+    def get_queryset(self):
+        return super().get_queryset().filter(
+            is_public=True, 
+            samples__is_processed=True, 
+            samples__is_public=True).distinct()
+
+
 class Experiment(models.Model):
     """ An Experiment or Study """
 
@@ -218,6 +229,7 @@ class Experiment(models.Model):
     # Managers
     objects = models.Manager()
     public_objects = PublicObjectsManager()
+    processed_public_objects = ProcessedPublicObjectsManager()
 
     # Relations
     samples = models.ManyToManyField('Sample', through='ExperimentSampleAssociation')
@@ -291,6 +303,9 @@ class Experiment(models.Model):
     def platforms(self):
         """ Returns a list of related pipelines """
         return [p for p in self.samples.values_list('platform_name', flat=True).distinct()]
+
+    def get_processed_samples(self):
+        return self.samples.filter(is_processed=True)
 
 class ExperimentAnnotation(models.Model):
     """ Semi-standard information associated with an Experiment """
