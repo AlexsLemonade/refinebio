@@ -1,6 +1,7 @@
 """
 This command will create and run survey jobs for the specified ensembl division.
 """
+import sys
 
 from django.core.management.base import BaseCommand
 from data_refinery_foreman.surveyor import surveyor
@@ -33,11 +34,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options["ensembl_division"] is None:
             logger.error("You must specify an ensembl_division.")
-            return 1
+            sys.exit(1) 
         else:
             surveyor.survey_transcriptome_index(
                 organism_name=options['organism_name'],
                 ensembl_division=options['ensembl_division'],
                 number_of_organisms=options['number_of_organisms'],
             )
-            return 0
+            sys.exit(0) 
