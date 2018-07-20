@@ -102,7 +102,8 @@ class SearchAndFilter(generics.ListAPIView):
 
     """
 
-    queryset = Experiment.public_objects.all()
+    queryset = Experiment.processed_public_objects.all()
+
     serializer_class = ExperimentSerializer
     pagination_class = LimitOffsetPagination
 
@@ -129,7 +130,6 @@ class SearchAndFilter(generics.ListAPIView):
         response.data['filters']['organism'] = {}
 
         qs = self.filter_queryset(self.get_queryset())
-
         techs = qs.values('technology').annotate(Count('technology', unique=True))
         for tech in techs:
             if not tech['technology'] or not tech['technology'].strip():
