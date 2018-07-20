@@ -303,7 +303,11 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     def _generate_experiment_and_samples(self, run_accession: str) -> (Experiment, List[Sample]):
         """Generates Experiments and Samples for the provided run_accession."""
-        metadata = SraSurveyor.gather_all_metadata(run_accession)
+        try:
+            metadata = SraSurveyor.gather_all_metadata(run_accession)
+        except:
+            logger.exception("Caught exception while surveying run_accession %s", run_accession)
+            return (None, None)  # This will cascade properly
 
         if metadata == {}:
             logger.error("Could not discover any metadata for run.",

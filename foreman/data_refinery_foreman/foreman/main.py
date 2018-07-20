@@ -211,7 +211,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
                                                           original_file=original_file)
 
     for data_set in last_job.data_sets.all():
-        ProcessorJobDataSetAssociation.objects.get_or_create(processor_job=new_job,
+        ProcessorJobDatasetAssociation.objects.get_or_create(processor_job=new_job,
                                                      data_set=data_set)
 
     logger.info("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",
