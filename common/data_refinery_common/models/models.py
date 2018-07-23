@@ -346,7 +346,7 @@ class Processor(models.Model):
         unique_together = ('name', 'version')
 
     def __str__(self):
-        return "Processor: %s (version: %s, docker_image: %s)" % (name, version, docker_image)
+        return "Processor: %s (version: %s, docker_image: %s)" % (self.name, self.version, self.docker_image)
 
 
 class ComputationalResult(models.Model):
