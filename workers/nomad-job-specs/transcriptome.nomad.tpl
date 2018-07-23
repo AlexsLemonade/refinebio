@@ -2,6 +2,7 @@ job "TRANSCRIPTOME_INDEX_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
+  priority = 65
 
   parameterized {
     payload       = "forbidden"

@@ -63,6 +63,8 @@ RUN unzip fastqc_v0.11.7.zip
 RUN chmod +x ./FastQC/fastqc
 RUN rm -f fastqc_v0.11.7.zip
 
+COPY config/ config/
+
 COPY workers/data_refinery_workers/processors/requirements.txt .
 
 RUN pip3 install -r requirements.txt

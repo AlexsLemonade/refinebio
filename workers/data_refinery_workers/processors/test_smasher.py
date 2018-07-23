@@ -760,3 +760,31 @@ class SmasherTestCase(TestCase):
         afp = computed_file.get_synced_file_path(force=True)
         self.assertTrue(os.path.exists(afp))
 
+    @tag("smasher")
+    def test_notify(self):
+
+        ds = Dataset()
+        ds.data = {'GSM1487313': ['GSM1487313'], 'SRS332914': ['SRS332914']}
+        ds.aggregate_by = 'SPECIES'
+        ds.scale_by = 'STANDARD'
+        ds.email_address = "shoopdawoop@mailinator.com"
+        ds.save()
+
+        pj = ProcessorJob()
+        pj.pipeline_applied = "SMASHER"
+        pj.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = pj
+        pjda.dataset = ds
+        pjda.save()
+
+        job_context = {}
+        job_context['job'] = pj
+        job_context['dataset'] = ds
+        job_context['upload'] = True
+        job_context['result_url'] = 'https://s3.amazonaws.com/data-refinery-test-assets/all_the_things.jpg'
+
+        final_context = smasher._notify(job_context)
+        self.assertTrue(final_context.get('success', True))
+

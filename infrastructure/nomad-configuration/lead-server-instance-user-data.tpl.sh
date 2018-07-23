@@ -70,9 +70,21 @@ chmod +x install_nomad.sh
 
 # Install our graphite/statsd container
 # Based on: https://github.com/graphite-project/docker-graphite-statsd
+
+# Graphite has no auto-deletion, see: https://stackoverflow.com/a/19899267/1135467
+# Overwrites defeault set here: https://github.com/graphite-project/docker-graphite-statsd/blob/master/conf/opt/graphite/conf/storage-schemas.conf
+mkdir graphite_configs
+cat <<"EOF" > graphite_configs/storage-schemas.conf
+[everything_max_1d]
+pattern = .*
+retentions = 60s:1d
+EOF
+
+# Actually run Graphite with our new config
 docker run -d\
  --name graphite\
  --restart=always\
+ -v /home/ubuntu/graphite_configs:/opt/graphite/conf\
  -p 80:80\
  -p 2003-2004:2003-2004\
  -p 2023-2024:2023-2024\

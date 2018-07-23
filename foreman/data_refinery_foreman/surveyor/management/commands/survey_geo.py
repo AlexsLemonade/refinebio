@@ -6,7 +6,7 @@ or for each accession in a file containing one experiment accession code per lin
 import boto3
 import botocore
 import uuid
-
+import sys
 
 from django.core.management.base import BaseCommand
 from data_refinery_foreman.surveyor import surveyor
@@ -29,7 +29,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options["accession"] is None and options['file'] is None:
             logger.error("You must specify an experiment accession or file.")
-            return 1
+            sys.exit(1) 
         if options["file"]:
             if 's3://' in options["file"]:
                 bucket, key = parse_s3_url(options["file"])
@@ -54,4 +54,4 @@ class Command(BaseCommand):
                         logger.exception(e)
         else:
             surveyor.survey_geo_experiment(options['accession'])
-            return 0
+            sys.exit(0) 

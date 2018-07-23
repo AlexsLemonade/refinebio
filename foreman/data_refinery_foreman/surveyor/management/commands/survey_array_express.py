@@ -7,6 +7,7 @@ experiment accession code per line.
 import boto3
 import botocore
 import uuid
+import sys
 
 from django.core.management.base import BaseCommand
 from data_refinery_foreman.surveyor import surveyor
@@ -31,7 +32,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options["accession"] is None and options['file'] is None:
             logger.error("You must specify an experiment accession or file.")
-            return 1
+            sys.exit(1) 
         if options["file"]:
 
             if 's3://' in options["file"]:
@@ -57,7 +58,7 @@ class Command(BaseCommand):
                         print(e)        
         else:
             surveyor.survey_ae_experiment(self.get_ae_accession(options['accession']))
-            return 0
+            sys.exit(0) 
 
     def get_ae_accession(self, accession):
         """This allows us to support ascession codes in both

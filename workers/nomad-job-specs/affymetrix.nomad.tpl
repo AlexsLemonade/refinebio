@@ -2,6 +2,7 @@ job "AFFY_TO_PCL_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
+  priority = 50
 
   parameterized {
     payload       = "forbidden"

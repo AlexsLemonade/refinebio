@@ -28,61 +28,66 @@ logger = get_and_configure_logger(__name__)
 def _prepare_files(job_context: Dict) -> Dict:
     """A processor which takes externally-processed sample data and makes it smashable.
     """
-    original_file = job_context["original_files"][0]
-    sample0 = job_context['samples'][0]
-    if sample0.manufacturer == 'ILLUMINA':
-        job_context["is_illumina"] = True
-    else:
-        job_context["is_illumina"] = False
+    try:
+        original_file = job_context["original_files"][0]
+        sample0 = job_context['samples'][0]
+        if sample0.manufacturer == 'ILLUMINA':
+            job_context["is_illumina"] = True
+        else:
+            job_context["is_illumina"] = False
 
-    # Create the output directory and path
-    job_context["input_file_path"] = original_file.absolute_file_path
-    base_directory, file_name = original_file.absolute_file_path.rsplit('/', 1)
-    os.makedirs(base_directory + '/processed/', exist_ok=True)
-    job_context["output_file_path"] = base_directory + '/processed/' + file_name
+        # Create the output directory and path
+        job_context["input_file_path"] = original_file.absolute_file_path
+        base_directory, file_name = original_file.absolute_file_path.rsplit('/', 1)
+        os.makedirs(base_directory + '/processed/', exist_ok=True)
+        job_context["output_file_path"] = base_directory + '/processed/' + file_name
 
-    # Make sure header column is correct
-    with open(job_context["input_file_path"], 'r') as tsv_in:
-        tsv_in = csv.reader(tsv_in, delimiter='\t')
-        for line in tsv_in:
-            row = line
-            joined = ''.join(row)
-            break
+        # Make sure header column is correct
+        with open(job_context["input_file_path"], 'r', encoding='utf-8') as tsv_in:
+            tsv_in = csv.reader(tsv_in, delimiter='\t')
+            for line in tsv_in:
+                row = line
+                joined = ''.join(row)
+                break
 
-    # We want to make sure that all of our columns for conversion and smashing
-    # use the same column name for gene identifiers for later lookup. ID_REF
-    # is the most common, so we use that.
-    if 'ID_REF' not in joined and not job_context["is_illumina"]:
-        try:
-            float(row[1])
-            # Okay, there's no header so can just prepend to the file.
-            with open(job_context["input_file_path"], 'r') as f:
-                all_content = f.read()
+        # We want to make sure that all of our columns for conversion and smashing
+        # use the same column name for gene identifiers for later lookup. ID_REF
+        # is the most common, so we use that.
+        if 'ID_REF' not in joined and not job_context["is_illumina"]:
+            try:
+                float(row[1])
+                # Okay, there's no header so can just prepend to the file.
+                with open(job_context["input_file_path"], 'r', encoding='utf-8') as f:
+                    all_content = f.read()
 
-            job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
-            with open(job_context["input_file_path"], 'w+') as f:
-                f.seek(0, 0)
-                f.write('ID_REF\tVALUE' + '\n' + all_content)
+                job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
+                with open(job_context["input_file_path"], 'w+', encoding='utf-8') as f:
+                    f.seek(0, 0)
+                    f.write('ID_REF\tVALUE' + '\n' + all_content)
 
-        except ValueError:
-            # There is already a header row. Let's replace it with ID_Ref
-            with open(job_context["input_file_path"], 'r') as f:
-                all_content = f.read()
+            except ValueError:
+                # There is already a header row. Let's replace it with ID_Ref
+                with open(job_context["input_file_path"], 'r', encoding='utf-8') as f:
+                    all_content = f.read()
 
-            job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
-            with open(job_context["input_file_path"], 'w+') as f:
-                f.seek(0, 0)
-                f.write('ID_REF\tVALUE' + '\n' + ("\n".join(all_content[1:])))
-            job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
-    else:
-        if job_context["is_illumina"]:
-            job_context['column_name'] = row[0]
+                job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
+                with open(job_context["input_file_path"], 'w+', encoding='utf-8') as f:
+                    f.seek(0, 0)
+                    f.write('ID_REF\tVALUE' + '\n' + ("\n".join(all_content[1:])))
+                job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
+        else:
+            if job_context["is_illumina"]:
+                job_context['column_name'] = row[0]
 
-    # Platform
-    job_context["platform"] = job_context["samples"][0].platform_accession_code
-    job_context["internal_accession"] = get_internal_microarray_accession(job_context["platform"])
-    if not job_context["internal_accession"]:
-        logger.error("Failed to find internal accession for code", code=job_context["platform"])
+        # Platform
+        job_context["platform"] = job_context["samples"][0].platform_accession_code
+        job_context["internal_accession"] = get_internal_microarray_accession(job_context["platform"])
+        if not job_context["internal_accession"]:
+            logger.error("Failed to find internal accession for code", code=job_context["platform"])
+            job_context['success'] = False
+    except Exception as e:
+        logger.exception("Failed to prepare for NO_OP job.", job_id=job_context['job'].id)
+        job_context["job"].failure_reason = str(e)
         job_context['success'] = False
 
     return job_context
@@ -101,7 +106,7 @@ def _convert_genes(job_context: Dict) -> Dict:
 def _convert_affy_genes(job_context: Dict) -> Dict:
     """ Convert to Ensembl genes if we can"""
 
-    gene_index_path = "/home/user/data_store/" + job_context["internal_accession"] + ".tsv.gz"
+    gene_index_path = "/home/user/gene_indexes/" + job_context["internal_accession"] + ".tsv.gz"
     if not os.path.exists(gene_index_path):
         logger.error("Missing gene index file for platform!",
             platform=job_context["internal_accession"],
@@ -198,7 +203,7 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
         }
         sa.save()
 
-    job_context['script_name'] = "gene_convert.R"
+    job_context['script_name'] = "gene_convert_illumina.R"
     try:
         result = subprocess.check_output([
                 "/usr/bin/Rscript",

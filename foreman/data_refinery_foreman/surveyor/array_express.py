@@ -22,7 +22,9 @@ from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import (
     get_supported_microarray_platforms,
-    get_readable_affymetrix_names)
+    get_readable_affymetrix_names,
+    get_normalized_platform
+)
 
 logger = get_and_configure_logger(__name__)
 
@@ -87,7 +89,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment["platform_accession_name"] = UNKNOWN
             experiment["manufacturer"] = UNKNOWN
         else:
-            external_accession = parsed_json["arraydesign"][0]["accession"]
+            external_accession = get_normalized_platform(parsed_json["arraydesign"][0]["accession"])
             for platform in get_supported_microarray_platforms():
                 if platform["external_accession"] == external_accession:
                     experiment["platform_accession_code"] = platform["platform_accession"]
