@@ -65,6 +65,13 @@ class UtilsTestCase(TestCase):
         self.assertTrue(has_A_AFFY_59)
         self.assertTrue(has_GPL23026)
 
+    def test_get_internal_microarray_accession(self):
+        """Test that supported microarray platforms setting is set correctly."""
+
+        self.assertEqual(utils.get_internal_microarray_accession("hgu133a"), "hgu133a")
+        self.assertEqual(utils.get_internal_microarray_accession("A-AFFY-59"), "soybean")
+        self.assertEqual(utils.get_internal_microarray_accession("GPL23026"), "Illumina_HumanHT-12_V4.0")
+
     def test_supported_rnaseq_platforms(self):
         """Test that supported RNASeq platforms setting is set correctly."""
         self.assertTrue("Illumina HiSeq 1000" in utils.get_supported_rnaseq_platforms())
@@ -77,3 +84,10 @@ class UtilsTestCase(TestCase):
         self.assertTrue(readable_platform_names["chigene10st"] == expected_readable_name)
         expected_readable_name = "[Xenopus_laevis] Affymetrix Xenopus laevis Genome Array"
         self.assertTrue(readable_platform_names["xenopuslaevis"] == expected_readable_name)
+
+    def test_get_normalized_platform(self):
+        """ Test a particular normaization we need to perform """
+
+        self.assertEqual(utils.get_normalized_platform("hugene10stv1"), "hugene10st")
+        self.assertEqual(utils.get_normalized_platform("hugene10stv2"), "hugene10st")
+        self.assertEqual(utils.get_normalized_platform("stv1hugene10"), "stv1hugene10")

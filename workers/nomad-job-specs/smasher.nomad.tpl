@@ -2,6 +2,7 @@ job "SMASHER_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
+  priority = 75 
 
   parameterized {
     payload       = "forbidden"

@@ -35,7 +35,7 @@ if [[ ${stage} == "staging" || ${stage} == "prod" ]]; then
     # slack. Certbot will use it for "important account
     # notifications".
     if [[ ${stage} == "staging" ]]; then
-        certbot --nginx -d api.staging.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
+        certbot --nginx -d api.staging.refine.bio -d api2.staging.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
     elif [[ ${stage} == "prod" ]]; then
         certbot --nginx -d api.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
     fi

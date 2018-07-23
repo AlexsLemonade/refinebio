@@ -30,7 +30,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options["accession"] is None and options["file"] is None:
             logger.error("You must specify accession or input file.")
-            return 1
+            sys.exit(1) 
         if options["file"]:
             if 's3://' in options["file"]:
                 bucket, key = parse_s3_url(options["file"])
@@ -53,4 +53,4 @@ class Command(BaseCommand):
                         print(e)
         else:
             surveyor.survey_sra_experiment(options["accession"])
-            return 0
+            sys.exit(0) 

@@ -362,7 +362,7 @@ class ComputationalResult(models.Model):
         base_manager_name = 'public_objects'
 
     def __str__(self):
-        return "ComputationalResult " + str(self.pk) + ": " + str(self.command_executed)
+        return "ComputationalResult " + str(self.pk) + ": " + str(self.pipeline)
 
     # Managers
     objects = models.Manager()
@@ -374,8 +374,6 @@ class ComputationalResult(models.Model):
     # TODO: "pipeline" field is now redundant due to "processor". Should be removed later.
     # Human-readable nickname for this computation
     pipeline = models.CharField(max_length=255)
-
-
 
     # Stats
     time_start = models.DateTimeField(blank=True, null=True)
