@@ -64,7 +64,6 @@ def _prepare_files(job_context: Dict) -> Dict:
                 with open(job_context["input_file_path"], 'w+', encoding='utf-8') as f:
                     f.seek(0, 0)
                     f.write('ID_REF\tVALUE' + '\n' + all_content)
-
             except ValueError:
                 # There is already a header row. Let's replace it with ID_Ref
                 with open(job_context["input_file_path"], 'r', encoding='utf-8') as f:
@@ -75,6 +74,12 @@ def _prepare_files(job_context: Dict) -> Dict:
                     f.seek(0, 0)
                     f.write('ID_REF\tVALUE' + '\n' + ("\n".join(all_content[1:])))
                 job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
+            except Exception as e:
+                logger.exception("Unable to read input file or header row.",
+                    input_file_path=job_context["input_file_path"])
+                job_context['job'].faiure_reason = str(e)
+                job_context['success'] = False
+                return job_context
         else:
             if job_context["is_illumina"]:
                 job_context['column_name'] = row[0]
