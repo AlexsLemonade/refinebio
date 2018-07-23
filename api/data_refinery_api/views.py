@@ -113,10 +113,16 @@ class SearchAndFilter(generics.ListAPIView):
                         '@protocol_description',
                         '@publication_title',
                         'publication_doi',
-                        'pubmed_id'
+                        'pubmed_id',
+                        '@submitter_institution'
                     )
-    filter_fields = ('has_publication', 'submitter_institution', 'technology',
-                     'source_first_published', 'organisms__name')
+    filter_fields = (   'has_publication', 
+                        'submitter_institution', 
+                        'technology',
+                        'source_first_published', 
+                        'organisms__name',
+                        'samples__platform_accession_code'
+                    )
 
 
     def list(self, request, *args, **kwargs):
