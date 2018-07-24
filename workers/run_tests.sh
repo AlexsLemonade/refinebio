@@ -265,8 +265,6 @@ if [[ -z $tag || $tag == "smasher" ]]; then
              "$test_data_repo/$pcl_name_gs2"
     fi
 
-    export AWS_ACCESS_KEY_ID=`aws configure get default.aws_access_key_id`
-    export AWS_SECRET_ACCESS_KEY=`aws configure get default.aws_secret_access_key`
 fi
 
 source common.sh
