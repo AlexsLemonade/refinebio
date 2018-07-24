@@ -50,9 +50,6 @@ jobs:
           command: .circleci/filter_tests.sh -t downloaders
           no_output_timeout: 36000
 
-      # Run NO_OP tests
-      - run: .circleci/filter_tests.sh -t no_op
-
       # Push the no_op and downloader images to the local docker repo so Nomad
       # can pull from there when running end-to-end tests.
       - run: docker push localhost:5000/dr_downloaders
@@ -63,12 +60,16 @@ jobs:
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
 
-     # Run Smasher tests.
+      # Run Smasher tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
           command: .circleci/filter_tests.sh -t smasher
           # Smashing can apparently take a long time on CI
           no_output_timeout: 36000
+      
+      # Run NO_OP tests
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run: .circleci/filter_tests.sh -t no_op
 
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
