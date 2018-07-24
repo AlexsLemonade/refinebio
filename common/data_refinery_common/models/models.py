@@ -324,7 +324,7 @@ class ExperimentAnnotation(models.Model):
         return super(ExperimentAnnotation, self).save(*args, **kwargs)
 
 class Pipeline(models.Model):
-    "Pipeline that is associated with a series of ComputationalResult records."""
+    """Pipeline that is associated with a series of ComputationalResult records."""
 
     name = models.CharField(max_length=255)
     steps = ArrayField(models.IntegerField(), default=[])

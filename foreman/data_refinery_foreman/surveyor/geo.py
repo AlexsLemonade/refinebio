@@ -315,16 +315,12 @@ class GeoSurveyor(ExternalSourceSurveyor):
                         sample_object.has_raw = True
                         sample_object.save()
 
-                    try:
-                        original_file = OriginalFile.objects.get(source_url=supplementary_file_url)
-                    except OriginalFile.DoesNotExist:
-                        original_file = OriginalFile.objects.get_or_create(
-                                source_url = supplementary_file_url,
-                                source_filename = supplementary_file_url.split('/')[-1],
-                                has_raw = sample_object.has_raw,
-                                is_archive = True
-                            )
-                        logger.info("Created OriginalFile: " + str(original_file))
+                    original_file = OriginalFile.objects.get_or_create(
+                            source_url = supplementary_file_url,
+                            source_filename = supplementary_file_url.split('/')[-1],
+                            has_raw = sample_object.has_raw,
+                            is_archive = True
+                        )[0]
 
                     original_file_sample_association = OriginalFileSampleAssociation.objects.get_or_create(
                             original_file = original_file,
@@ -337,19 +333,14 @@ class GeoSurveyor(ExternalSourceSurveyor):
         # These supplementary files _may-or-may-not_ contain the type of raw data we can process.
         for experiment_supplement_url in gse.metadata.get('supplementary_file', []):
 
-            try:
-                original_file = OriginalFile.objects.get(source_url=experiment_supplement_url)
-            except OriginalFile.DoesNotExist:
-                # So - source_filename is _usually_ where we expect it to be,
-                # but not always. I think it's submitter supplied.
-                original_file = OriginalFile.objects.get_or_create(
-                        source_url = experiment_supplement_url,
-                        source_filename = experiment_supplement_url.split('/')[-1],
-                        has_raw = sample_object.has_raw,
-                        is_archive = True
-                    )
+            original_file = OriginalFile.objects.get_or_create(
+                    source_url = experiment_supplement_url,
+                    source_filename = experiment_supplement_url.split('/')[-1],
+                    has_raw = sample_object.has_raw,
+                    is_archive = True
+                )[0]
 
-                logger.info("Created OriginalFile: " + str(original_file))
+            logger.info("Created OriginalFile: " + str(original_file))
 
             for sample_object in all_samples:
                 OriginalFileSampleAssociation.objects.get_or_create(
@@ -359,15 +350,12 @@ class GeoSurveyor(ExternalSourceSurveyor):
         # GEO describes different types of data formatting as "families"
         for family_url in [self.get_miniml_url(experiment_accession_code)]:
 
-            try:
-                original_file = OriginalFile.objects.get(source_url=family_url)
-            except OriginalFile.DoesNotExist:
-                original_file = OriginalFile.objects.get_or_create(
-                        source_url = family_url,
-                        source_filename = family_url.split('/')[-1],
-                        has_raw = sample_object.has_raw,
-                        is_archive = True
-                    )
+            original_file = OriginalFile.objects.get_or_create(
+                    source_url = family_url,
+                    source_filename = family_url.split('/')[-1],
+                    has_raw = sample_object.has_raw,
+                    is_archive = True
+                )[0]
 
             for sample_object in all_samples:
                 OriginalFileSampleAssociation.objects.get_or_create(
