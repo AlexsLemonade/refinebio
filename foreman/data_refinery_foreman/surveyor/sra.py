@@ -420,17 +420,15 @@ class SraSurveyor(ExternalSourceSurveyor):
             sample_object.save()
 
             for file_url in files_urls:
-                original_file = OriginalFile()
-                original_file.source_url = file_url
-                original_file.source_filename = file_url.split('/')[-1]
-                original_file.is_downloaded = False
-                original_file.has_raw = True
-                original_file.save()
-
-                original_file_sample_association = OriginalFileSampleAssociation()
-                original_file_sample_association.original_file = original_file
-                original_file_sample_association.sample = sample_object
-                original_file_sample_association.save()
+                original_file = OriginalFile.objects.get_or_create(
+                        source_url = file_url,
+                        source_filename = file_url.split('/')[-1],
+                        has_raw = True
+                    )
+                original_file_sample_association = OriginalFileSampleAssociation.objects.get_or_create(
+                        original_file = original_file,
+                        sample = sample_object
+                    )
 
         # Create associations if they don't already exist
         ExperimentSampleAssociation.objects.get_or_create(

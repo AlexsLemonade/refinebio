@@ -162,7 +162,7 @@ def download_sra(job_id: int) -> None:
         original_file = assoc.original_file
 
         if original_file.is_downloaded:
-            logger.error("File already downloaded!",
+            logger.info("File already downloaded!",
                          original_file_id=original_file.id,
                          downloader_job=job_id)
             continue
