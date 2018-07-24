@@ -13,6 +13,9 @@ from data_refinery_common.models import (
 from data_refinery_foreman.surveyor.geo import (
     GeoSurveyor
 )
+from data_refinery_foreman.surveyor.utils import (
+    get_title_for_pubmed_id
+)
 
 
 class SurveyTestCase(TransactionTestCase):
@@ -121,3 +124,8 @@ class SurveyTestCase(TransactionTestCase):
 
         downloader_jobs = DownloaderJob.objects.all()
         self.assertEqual(2, downloader_jobs.count())
+        
+    def test_get_pubmed_id_title(self):
+        """ We scrape PMIDs now. """
+        title = get_title_for_pubmed_id("22367537")
+        self.assertEqual('Sequencing of neuroblastoma identifies chromothripsis and defects in neuritogenesis genes.', title)
