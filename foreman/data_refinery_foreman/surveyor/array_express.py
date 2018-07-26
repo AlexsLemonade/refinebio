@@ -213,7 +213,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 experiment_object.has_publication = True
 
             # Scrape publication title from Pubmed
-            if experiment_object.pubmed_id and not experiment.publication_title:
+            if experiment_object.pubmed_id and not experiment_object.publication_title:
                 experiment_object.publication_title = utils.get_title_for_pubmed_id(experiment_object.pubmed_id)
 
             experiment_object.save()
