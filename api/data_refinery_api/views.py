@@ -224,11 +224,11 @@ class DatasetStatsView(APIView):
 
     {
         "HOMO_SAPIENS": {
-            "experiments": 5,
-            "samples": 55 },
+            "num_experiments": 5,
+            "num_samples": 55 },
         "GALLUS_GALLUS": {
-            "experiments": 5,
-            "samples": 55 },
+            "num_experiments": 5,
+            "num_samples": 55 },
     }
 
     """
@@ -250,15 +250,15 @@ class DatasetStatsView(APIView):
 
         # Count the samples
         all_sample_accessions = [value[0] for value in dataset.data.values()]
-        delete_me = []
+        empty_species = []
         for species in stats.keys():
             samples = Sample.objects.filter(accession_code__in=all_sample_accessions, organism__name=species)
-            stats[species]['num_samples'] = stats[species]['num_samples'] + len(samples)
+            stats[species]['num_samples'] = len(samples)
             if stats[species]['num_samples'] == 0:
-                delete_me.append(species)
+                empty_species.append(species)
 
         # Delete empty associations
-        for species in delete_me:
+        for species in empty_species:
             del stats[species]
 
         return Response(stats)
