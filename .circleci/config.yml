@@ -71,7 +71,6 @@ jobs:
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run: .circleci/filter_tests.sh -t no_op
 
-
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
   affymetrix_common_agilent_tests:
     working_directory: ~/refinebio
