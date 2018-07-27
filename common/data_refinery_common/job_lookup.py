@@ -127,7 +127,7 @@ def determine_processor_pipeline(sample_object: Sample, original_file=None) -> P
         if original_file.filename[-3].upper() == "CEL":
             return ProcessorPipeline.AFFY_TO_PCL 
         if original_file.filename[-3].upper() == "TXT":
-            return ProcessorPipeline.NO_COP 
+            return ProcessorPipeline.NO_OP 
 
     if sample_object.technology == "MICROARRAY":
         if not sample_object.has_raw:
