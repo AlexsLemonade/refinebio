@@ -39,8 +39,8 @@ WORKDIR /home/user
 # Noop-specific requirements
 ENV R_LIBS "/usr/local/lib/R/site-library"
 RUN mkdir -p workers/gene_indexes
-RUN cd workers.gene_indexes
-RUN curl -O XXXZENODO.COM/ZIPPY.ZIP
+RUN cd workers/gene_indexes
+RUN curl -O https://zenodo.org/record/1322711/files/all_1532646318.zip
 RUN unzip *.zip
 RUN rm *.zip
 RUN cd ..
