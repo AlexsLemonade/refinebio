@@ -60,7 +60,7 @@ jobs:
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
 
-     # Run Smasher tests.
+      # Run Smasher tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
           command: .circleci/filter_tests.sh -t smasher
