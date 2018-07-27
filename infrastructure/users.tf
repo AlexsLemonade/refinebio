@@ -58,6 +58,14 @@ resource "aws_iam_user_policy" "data_refinery_user_worker_policy" {
             ],
             "Resource":
                 "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action":[
+              "SES:SendEmail",
+              "SES:SendRawEmail"
+            ],
+            "Resource": "*"
         }
     ]
 }
