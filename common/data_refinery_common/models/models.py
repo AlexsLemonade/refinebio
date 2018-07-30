@@ -455,7 +455,11 @@ class OrganismIndex(models.Model):
     # http://ensemblgenomes.org/info/about/release_cycle
     # Determined by hitting:
     # http://rest.ensembl.org/info/software?content-type=application/json
-    source_version = models.CharField(max_length=255, default="92")
+    source_version = models.CharField(max_length=255, default="93")
+
+    # The name of the genome assembly used which corresponds to 'GRCh38' in:
+    # ftp://ftp.ensembl.org/pub/release-93/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+    assembly_name = models.CharField(max_length=255, default="UNKNOWN")
 
     # This matters, for instance salmon 0.9.0 indexes don't work with 0.10.0
     salmon_version = models.CharField(max_length=255, default="0.9.1")
