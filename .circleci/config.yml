@@ -34,7 +34,6 @@ jobs:
       - run:
           command: sudo -E ./run_nomad.sh -e test
 
-      - run: ./prepare_image.sh -i no_op -s workers -d localhost:5000
       - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
       - run: ./prepare_image.sh -i downloaders -s workers
 
@@ -215,7 +214,7 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
-      - run: ./prepare_image.sh -i smasher -s workers
+      - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
       - run: docker push localhost:5000/dr_smasher
 
       - run:
@@ -248,7 +247,7 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
-      - run: ./prepare_image.sh -i no_op -s workers
+      - run: ./prepare_image.sh -i no_op -s workers -d localhost:5000
       - run: docker push localhost:5000/dr_no_op
 
       - run:
@@ -292,7 +291,19 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      - salmon_and_api_tests:
+      - salmon_tests:
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+      - api_tests:
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+      - no_op_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
