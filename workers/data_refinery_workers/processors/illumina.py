@@ -320,8 +320,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
     result.pipeline = "Illumina SCAN"  # TODO: should be removed
-    result.processor = Processor.objects.get(name=utils.ProcessorEnum.ILLUMINA_SCAN.value,
-                                             version=__version__)
+    # result.processor = Processor.objects.get(name=utils.ProcessorEnum.ILLUMINA_SCAN.value,
+    #                                          version=__version__)
     result.save()
     job_context['pipeline'].steps.append(result.id)
 
