@@ -326,7 +326,6 @@ class APITestCases(APITestCase):
                                     'organisms__name': 'Extra-Terrestrial-1982'})
         self.assertEqual(response.json()['count'], 1)
 
-
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
 
@@ -407,6 +406,96 @@ class APITestCases(APITestCase):
         jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True, 'token_id': token_id } )
         response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
         self.assertEqual(response.json()["is_processing"], True)
+
+    def test_dataset_stats(self):
+        """ Test the dataset stats endpoint """
+
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS")
+        equus_ferus = Organism.get_object_for_name("EQUUS_FERUS")
+
+        ex = Experiment()
+        ex.accession_code = "XYZ123"
+        ex.title = "XYZ123"
+        ex.description = "XYZ123"
+        ex.technology = "MICROARRAY"
+        ex.submitter_institution = "XYZ123"
+        ex.save()
+
+        ex2 = Experiment()
+        ex2.accession_code = "ABC789"
+        ex2.title = "ABC789"
+        ex2.description = "ABC789"
+        ex2.technology = "RNA-SEQ"
+        ex2.submitter_institution = "Funkytown"
+        ex2.save()
+
+        sample1 = Sample()
+        sample1.title = "1"
+        sample1.accession_code = "1"
+        sample1.platform_name = "AFFY"
+        sample1.organism = homo_sapiens
+        sample1.save()
+
+        sample2 = Sample()
+        sample2.title = "2"
+        sample2.accession_code = "2"
+        sample2.platform_name = "ILLUMINA"
+        sample2.organism = gallus_gallus
+        sample2.save()
+
+        sample3 = Sample()
+        sample3.title = "3"
+        sample3.accession_code = "3"
+        sample3.platform_name = "ILLUMINA"
+        sample3.organism = gallus_gallus
+        sample3.save()
+
+        xoa = ExperimentOrganismAssociation()
+        xoa.experiment=ex
+        xoa.organism=homo_sapiens
+        xoa.save()
+
+        xoa = ExperimentOrganismAssociation()
+        xoa.experiment=ex2
+        xoa.organism=gallus_gallus
+        xoa.save()
+
+        xoa = ExperimentOrganismAssociation()
+        xoa.experiment=ex2
+        xoa.organism=equus_ferus
+        xoa.save()
+
+        experiment_sample_association = ExperimentSampleAssociation()
+        experiment_sample_association.sample = sample1
+        experiment_sample_association.experiment = ex
+        experiment_sample_association.save()
+
+        experiment_sample_association = ExperimentSampleAssociation()
+        experiment_sample_association.sample = sample2
+        experiment_sample_association.experiment = ex2
+        experiment_sample_association.save()
+
+        experiment_sample_association = ExperimentSampleAssociation()
+        experiment_sample_association.sample = sample3
+        experiment_sample_association.experiment = ex2
+        experiment_sample_association.save()
+
+        jdata = json.dumps({'data': {"XYZ123": ["1"], "ABC789": ["2"]}})
+        response = self.client.post(reverse('create_dataset'),
+                                    jdata,
+                                    content_type="application/json")
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['data'], json.loads(jdata)['data'])
+        good_id = response.json()['id']
+
+        response = self.client.get(reverse('dataset_stats', kwargs={'id': good_id}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()['GALLUS_GALLUS'], {'num_experiments': 1, 'num_samples': 1})
+        self.assertEqual(response.json()['HOMO_SAPIENS'], {'num_experiments': 1, 'num_samples': 1})
+        self.assertEqual(len(response.json().keys()), 2)        
+
 
     @patch('raven.contrib.django.models.client')
     def test_sentry_middleware_ok(self, mock_client):
