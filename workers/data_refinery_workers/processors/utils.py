@@ -1,3 +1,6 @@
+import random
+import string
+
 from enum import Enum, unique
 from typing import List, Dict, Callable
 from django.utils import timezone
@@ -12,11 +15,12 @@ from data_refinery_common.models import (
     ProcessorJobDatasetAssociation,
     OriginalFileSampleAssociation
 )
-from data_refinery_common.utils import get_worker_id
 from data_refinery_workers._version import __version__
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.utils import get_worker_id, get_env_variable
 
 logger = get_and_configure_logger(__name__)
+S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
 
 def start_job(job_context: Dict):
@@ -50,6 +54,7 @@ def start_job(job_context: Dict):
         assocs = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
         samples = Sample.objects.filter(id__in=assocs.values('sample_id')).distinct()
         job_context['samples'] = samples
+        job_context["computed_files"] = []
 
     else:
         relations = ProcessorJobDatasetAssociation.objects.filter(processor_job=job)
@@ -96,6 +101,22 @@ def end_job(job_context: Dict, abort=False):
                 sample = job_context['sample']
                 sample.is_processed = True
                 sample.save()
+
+    # S3-sync Original Files
+    for original_files in job_context['original_files']:
+        # Ensure even distribution across S3 servers
+        nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8)) 
+        result = original_files.sync_to_s3(S3_BUCKET_NAME, nonce + "_" + original_files.filename)
+        if result:
+            original_files.delete_local_file()
+
+    # S3-sync Computed Files
+    for computed_file in job_context['computed_files']:
+        # Ensure even distribution across S3 servers
+        nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8)) 
+        result = computed_file.sync_to_s3(S3_BUCKET_NAME, nonce + "_" + computed_file.filename)
+        if result:
+            computed_file.delete_local_file()
 
         # If the sample-level pipeline includes any steps, save it.
         pipeline = job_context['pipeline']
