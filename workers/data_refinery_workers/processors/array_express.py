@@ -35,7 +35,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context so everything is prepared for processing.
     """
     original_file = job_context["original_files"][0]
-    job_context["input_file_path"] = original_file.absolute_file_path
+    job_context["input_file_path"] = original_file.get_synced_file_path()
     # This is ugly, I'm sorry.
     # Turns /home/user/data_store/E-GEOD-8607/raw/foo.cel into /home/user/data_store/E-GEOD-8607/processed/foo.cel
     pre_part = original_file.absolute_file_path.split('/')[:-2]
@@ -160,8 +160,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
     result.pipeline = "Affymetrix SCAN"  # TODO: should be removed
-    result.processor = Processor.objects.get(name=utils.ProcessorEnum.AFFYMETRIX_SCAN.value,
-                                             version=__version__)
+    # result.processor = Processor.objects.get(name=utils.ProcessorEnum.AFFYMETRIX_SCAN.value,
+    #                                          version=__version__)
     result.save()
     job_context['pipeline'].steps.append(result.id)
 
@@ -176,9 +176,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
         computed_file.result = result
         computed_file.is_smashable = True
         computed_file.is_qc = False
-        # computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
-        # TODO here: delete local file after S3 sync
         computed_file.save()
+        job_context['computed_files'].append(computed_file)
     except Exception:
         logger.exception("Exception caught while saving file %s to S3",
                          computed_file.filename,

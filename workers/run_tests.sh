@@ -195,6 +195,13 @@ if [[ -z $tag || $tag == "no_op" ]]; then
         wget -q -O "$no_test_raw_dir/$no_file3" \
              "$test_data_repo/$no_file3"
     fi
+    no_file4="GSM1234847_sample_table.txt"
+    if [ ! -e "$no_test_raw_dir/$no_file4" ]; then
+        mkdir -p $no_test_raw_dir
+        echo "Downloading NOOP file4."
+        wget -q -O "$no_test_raw_dir/$no_file4" \
+             "$test_data_repo/$no_file4"
+    fi
 fi
 
 if [[ -z $tag || $tag == "smasher" ]]; then
@@ -265,8 +272,10 @@ if [[ -z $tag || $tag == "smasher" ]]; then
              "$test_data_repo/$pcl_name_gs2"
     fi
 
-    export AWS_ACCESS_KEY_ID=`aws configure get default.aws_access_key_id`
-    export AWS_SECRET_ACCESS_KEY=`aws configure get default.aws_secret_access_key`
+    if [[ -z $AWS_ACCESS_KEY_ID ]]; then
+        export AWS_ACCESS_KEY_ID=`~/bin/aws configure get default.aws_access_key_id`
+        export AWS_SECRET_ACCESS_KEY=`~/bin/aws configure get default.aws_secret_access_key`
+    fi
 fi
 
 source common.sh
