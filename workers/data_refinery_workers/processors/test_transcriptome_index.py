@@ -77,7 +77,7 @@ class TXTestCase(TestCase):
         og_file2.source_url = "ftp://ftp.ensemblgenomes.org/pub/release-39/plants/gtf/aegilops_tauschii/Aegilops_tauschii.ASM34733v1.39.gtf.gz"
         og_file2.source_filename = "aegilops_tauschii_short.gtf.gz"
 
-        job_context = {"original_files": [og_file, og_file2]}
+        job_context = {"original_files": [og_file, og_file2], "computed_files": []}
         job_context = transcriptome_index._extract_assembly_version(job_context)
         self.assertEqual("39", job_context["assembly_version"])
 

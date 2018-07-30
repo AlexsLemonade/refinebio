@@ -176,7 +176,8 @@ class SalmonTestCase(TestCase):
             'input_file_path_2': os.path.join(experiment_dir, 'raw/reads_2.fastq'),
             'index_directory': os.path.join(experiment_dir, 'index'),
             'output_directory': os.path.join(sample_dir, 'processed'),
-            'success': True
+            'success': True,
+            'computed_files': []
         }
         # Check quant.sf in `salmon quant` output dir
         self.chk_salmon_quant(job_context, sample_dir)
@@ -245,7 +246,8 @@ class SalmonTestCase(TestCase):
             'genes_to_transcripts_path': os.path.join(experiment_dir, 'index',
                                                       'genes_to_transcripts.txt'),
             'output_directory': os.path.join(sample2_dir, 'processed'),
-            'success': True
+            'success': True,
+            'computed_files': []
         }
 
         # Check quant.sf in `salmon quant` output dir of sample2
@@ -292,7 +294,8 @@ class SalmonTestCase(TestCase):
             'pipeline': Pipeline(name="Salmon"),
             'qc_directory': "/home/user/data_store/raw/TEST/SALMON/derp",
             'original_files': [],
-            'success': True
+            'success': True,
+            'computed_files': []
         }
         fail = salmon._run_fastqc(fail_context)
         self.assertFalse(fail['success'])
@@ -344,7 +347,8 @@ class SalmonToolsTestCase(TestCase):
             'job': ProcessorJob(),
             'pipeline': Pipeline(name="Salmon"),
             'input_file_path': self.test_dir + 'single_input/single_read.fastq',
-            'output_directory': self.test_dir + 'single_output/'
+            'output_directory': self.test_dir + 'single_output/',
+            'computed_files': []
         }
 
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
@@ -381,9 +385,10 @@ class TximportTestCase(TestCase):
     def test_tximport_experiment(self):
         job_context = {
             'job_id': 456,
+            'genes_to_transcripts_path': '/home/user/data_store/tximport_test/np_gene2txmap.txt',
+            'computed_files': [],
             'job': ProcessorJob(),
             'pipeline': Pipeline(name="Salmon"),
-            'genes_to_transcripts_path': '/home/user/data_store/tximport_test/np_gene2txmap.txt'
         }
 
         experiment_dir = '/home/user/data_store/tximport_test/PRJNA408323'
