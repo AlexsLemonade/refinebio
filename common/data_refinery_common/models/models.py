@@ -292,6 +292,11 @@ class Experiment(models.Model):
         """ Returns a list of related pipelines """
         return [p for p in self.samples.values_list('platform_name', flat=True).distinct()]
 
+    @property
+    def pretty_platforms(self):
+        """ Returns a prettified list of related pipelines """
+        return list(set([p.pretty_platform for p in Sample.objects.all() if p.platform_name != '']))
+
 class ExperimentAnnotation(models.Model):
     """ Semi-standard information associated with an Experiment """
 

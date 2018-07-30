@@ -196,6 +196,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
     organisms = serializers.StringRelatedField(many=True)
     platforms = serializers.ReadOnlyField()
     samples = serializers.StringRelatedField(many=True)
+    pretty_platforms = serializers.ReadOnlyField()
 
     class Meta:
         model = Experiment
@@ -207,6 +208,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'source_database',
                     'source_url',
                     'platforms',
+                    'pretty_platforms',
                     'has_publication',
                     'publication_title',
                     'publication_doi',
