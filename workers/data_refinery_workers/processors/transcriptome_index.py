@@ -42,7 +42,7 @@ def _compute_paths(job_context: Dict) -> str:
     # All files for the job are in the same directory.
     first_file_path = job_context["original_files"][0].absolute_file_path
     job_context["base_file_path"] = '/'.join(first_file_path.split('/')[:-1])
-    job_context["work_dir"] = job_context["base_file_path"] + '/' + \
+    job_context["work_dir"] = job_context["base_file_path"] + '/' + job_context['length'] + '/' + \
                               JOB_DIR_PREFIX + str(job_context["job_id"])
     os.makedirs(job_context["work_dir"], exist_ok=True)
 

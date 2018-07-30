@@ -36,11 +36,7 @@ jobs:
 
       - run: ./prepare_image.sh -i no_op -s workers -d localhost:5000
       - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
-      - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
-
-      - run: ./prepare_image.sh -i no_op -s workers
       - run: ./prepare_image.sh -i downloaders -s workers
-      - run: ./prepare_image.sh -i smasher -s workers
 
       # Run Downloader Tests
       # Running these in the same job as the common tests is good
@@ -53,23 +49,10 @@ jobs:
       # Push the no_op and downloader images to the local docker repo so Nomad
       # can pull from there when running end-to-end tests.
       - run: docker push localhost:5000/dr_downloaders
-      - run: docker push localhost:5000/dr_no_op
-      - run: docker push localhost:5000/dr_smasher
 
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
-
-      # Run Smasher tests.
-      - run: sudo chown -R circleci:circleci workers/test_volume/
-      - run:
-          command: .circleci/filter_tests.sh -t smasher
-          # Smashing can apparently take a long time on CI
-          no_output_timeout: 36000
-      
-      # Run NO_OP tests
-      - run: sudo chown -R circleci:circleci workers/test_volume/
-      - run: .circleci/filter_tests.sh -t no_op
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
   affymetrix_common_agilent_tests:
@@ -113,7 +96,36 @@ jobs:
       - run: .circleci/filter_tests.sh -t agilent
 
   # This tests workers tests tagged as 'salmon'
-  salmon_and_api_tests:
+  salmon_tests:
+    working_directory: ~/refinebio
+    machine:
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
+    steps:
+      - checkout
+
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      # Let Postgres start up.
+      - run: sleep 30
+      # Finish setting up Postgres now that it's running.
+      - run: ./common/install_db_docker.sh
+
+      # Install our application. Provides the data_refinery_common package for the other images.
+      - run: chmod -R a+wr common
+      - run: ./update_models.sh
+
+      - run:
+          command: .circleci/filter_tests.sh -t salmon
+          no_output_timeout: 1h
+
+  api_tests:
     working_directory: ~/refinebio
     machine:
       pre:
@@ -140,10 +152,6 @@ jobs:
 
       # Run API Tests.
       - run: ./api/run_tests.sh
-
-      - run:
-          command: .circleci/filter_tests.sh -t salmon
-          no_output_timeout: 1h
 
   # This tests workers tests tagged as 'transcriptome' and 'downloaders'
   # These are grouped together because together they take less time than affy or salmon.
@@ -182,6 +190,70 @@ jobs:
       # Run Illumina tests.
       - run: .circleci/filter_tests.sh -t illumina
 
+  smasher_tests:
+    working_directory: ~/refinebio
+    machine:
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
+    steps:
+      - checkout
+
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      # Let Postgres start up.
+      - run: sleep 30
+      # Finish setting up Postgres now that it's running.
+      - run: ./common/install_db_docker.sh
+
+      # Install our application. Provides the data_refinery_common package for the other images.
+      - run: chmod -R a+wr common
+      - run: ./update_models.sh
+
+      - run: ./prepare_image.sh -i smasher -s workers
+      - run: docker push localhost:5000/dr_smasher
+
+      - run:
+          command: .circleci/filter_tests.sh -t smasher
+          # Smashing can apparently take a long time on CI
+          no_output_timeout: 36000
+
+  no_op_tests:
+    working_directory: ~/refinebio
+    machine:
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
+    steps:
+      - checkout
+
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      # Let Postgres start up.
+      - run: sleep 30
+      # Finish setting up Postgres now that it's running.
+      - run: ./common/install_db_docker.sh
+
+      # Install our application. Provides the data_refinery_common package for the other images.
+      - run: chmod -R a+wr common
+      - run: ./update_models.sh
+
+      - run: ./prepare_image.sh -i no_op -s workers
+      - run: docker push localhost:5000/dr_no_op
+
+      - run:
+          command: .circleci/filter_tests.sh -t no_op
+          no_output_timeout: 36000
 
   deploy:
     machine:
