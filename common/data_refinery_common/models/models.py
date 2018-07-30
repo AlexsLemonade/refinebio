@@ -295,7 +295,7 @@ class Experiment(models.Model):
     @property
     def pretty_platforms(self):
         """ Returns a prettified list of related pipelines """
-        return list(set([p.pretty_platform for p in Sample.objects.all() if p.platform_name != '']))
+        return list(set([p.pretty_platform for p in self.samples.all() if p.platform_name != '']))
 
 class ExperimentAnnotation(models.Model):
     """ Semi-standard information associated with an Experiment """
