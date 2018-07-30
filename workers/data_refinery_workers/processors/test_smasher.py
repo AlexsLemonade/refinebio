@@ -732,6 +732,35 @@ class SmasherTestCase(TestCase):
         import sympy
 
     @tag("smasher")
+    def test_get_synced_files(self):
+        """ """
+        result = ComputationalResult()
+        result.save()
+
+        computed_file = ComputedFile()
+        computed_file.s3_key = "all_the_things.jpg"
+        computed_file.s3_bucket = "data-refinery-test-assets"
+        computed_file.filename = "all_the_things.jpg"
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
+        computed_file.result = result
+        computed_file.size_in_bytes = 9001
+        computed_file.is_smashable = False
+        computed_file.save()
+
+        # Make sure it's not there
+        try:
+            os.remove("/home/user/data_store/PCL/" + computed_file.filename)
+        except OSError:
+            pass
+
+        # We do this twice, once to get from S3 and once to get from local disk.
+        afp = computed_file.get_synced_file_path(force=True)
+        self.assertTrue(os.path.exists(afp))
+
+        afp = computed_file.get_synced_file_path(force=True)
+        self.assertTrue(os.path.exists(afp))
+
+    @tag("smasher")
     def test_notify(self):
 
         ds = Dataset()
