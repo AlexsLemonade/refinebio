@@ -1,6 +1,9 @@
 import os
+import sys
 import zipfile
+from io import StringIO
 
+from django.core.management import call_command
 from django.test import TestCase, tag
 from data_refinery_common.models import (
     SurveyJob,
@@ -759,3 +762,21 @@ class SmasherTestCase(TestCase):
         final_context = smasher._notify(job_context)
         self.assertTrue(final_context.get('success', True))
 
+
+class CompendiaTestCase(TestCase):
+
+    @tag("smasher")
+    def test_call_create(self):
+        old_stderr = sys.stderr
+        old_stdout = sys.stdout
+        sys.stderr = StringIO()
+        sys.stdout = StringIO()
+        self.assertRaises(BaseException, call_command, 'create_compendia')
+
+    @tag("smasher")
+    def test_fetch_create(self):
+        old_stderr = sys.stderr
+        old_stdout = sys.stdout
+        sys.stderr = StringIO()
+        sys.stdout = StringIO()
+        self.assertRaises(BaseException, call_command, 'fetch_compendia')

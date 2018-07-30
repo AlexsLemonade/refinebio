@@ -1,6 +1,8 @@
 import copy
 import os
+from io import StringIO
 from unittest.mock import MagicMock
+from django.core.management import call_command
 from django.test import TestCase
 from data_refinery_common.models import (
     OriginalFile,
@@ -12,6 +14,7 @@ from data_refinery_common.models import (
     Organism
 )
 from data_refinery_workers.processors import utils
+
 
 def prepare_job():
     pj = ProcessorJob()
