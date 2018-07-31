@@ -341,6 +341,7 @@ class SampleList(PaginatedAPIView):
     List all Samples.
 
     Pass in a list of pk to an ids query parameter to filter by id.
+    Can also accept a `dataset_id` field instead of a list of accession codes.
 
     Append the pk or accession_code to the end of this URL to see a detail view.
 
@@ -361,6 +362,12 @@ class SampleList(PaginatedAPIView):
         if accession_codes is not None:
             accession_codes = accession_codes.split(',')
             filter_dict['accession_code__in'] = accession_codes
+
+        dataset_id = filter_dict.pop('dataset_id', None)
+        if dataset_id:
+            dataset = get_object_or_404(Dataset, id=dataset_id)
+            # Python doesn't provide a prettier way of doing this that I know about.
+            filter_dict['accession_code__in'] = [item for sublist in dataset.data.values() for item in sublist]
 
         samples = Sample.public_objects.filter(**filter_dict)
         if order_by:
