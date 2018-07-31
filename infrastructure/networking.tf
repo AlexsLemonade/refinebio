@@ -183,7 +183,7 @@ resource "aws_cloudfront_distribution" "static-distribution" {
 
   origin {
     domain_name = "${aws_s3_bucket.data-refinery-static.website_endpoint}"
-    origin_id = "data-refinery-circleci-staging"
+    origin_id = "data-refinery-${var.user}-${var.stage}"
 
     custom_origin_config {
       origin_protocol_policy = "http-only"

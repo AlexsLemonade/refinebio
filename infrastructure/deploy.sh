@@ -76,10 +76,12 @@ export TF_VAR_host_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
 # Copy ingress config to top level so it can be applied.
 cp deploy/ci_ingress.tf .
 
+# Always init terraform first, especially since we're using a remote backend.
+./init_terraform.sh
+
 if [[ ! -f terraform.tfstate ]]; then
     ran_init_build=true
-    echo "No terraform state file found, initializing and applying initial terraform deployment."
-    terraform init
+    echo "No terraform state file found, applying initial terraform deployment."
 
     # These files are inputs but are created by format_nomad_with_env.sh
     # based on outputs from terraform. Kinda a Catch 22, but we can
