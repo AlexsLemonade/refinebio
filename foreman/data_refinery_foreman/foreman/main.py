@@ -238,7 +238,12 @@ def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
 def retry_failed_processor_jobs() -> None:
     """Handle processor jobs that were marked as a failure."""
     failed_jobs = ProcessorJob.objects.filter(success=False, retried=False)
-    handle_processor_jobs(failed_jobs)
+    if failed_jobs:
+        logger.info(
+            "Handling failed (explicitly-marked-as-failure) jobs!",
+            jobs=failed_jobs
+        )
+        handle_processor_jobs(failed_jobs)
 
 
 @do_forever(MIN_LOOP_TIME)
@@ -266,7 +271,12 @@ def retry_hung_processor_jobs() -> None:
         except URLNotFoundNomadException:
             hung_jobs.append(job)
 
-    handle_processor_jobs(hung_jobs)
+    if hung_jobs:
+        logger.info(
+            "Handling hung (started-but-never-finished) jobs!",
+            jobs=hung_jobs
+        )
+        handle_processor_jobs(hung_jobs)
 
 
 @do_forever(MIN_LOOP_TIME)
@@ -297,7 +307,12 @@ def retry_lost_processor_jobs() -> None:
         except URLNotFoundNomadException:
             lost_jobs.append(job)
 
-    handle_processor_jobs(lost_jobs)
+    if lost_jobs:
+        logger.info(
+            "Handling lost (never-started) jobs!",
+            jobs=lost_jobs
+        )
+        handle_processor_jobs(lost_jobs)
 
 
 def monitor_jobs():

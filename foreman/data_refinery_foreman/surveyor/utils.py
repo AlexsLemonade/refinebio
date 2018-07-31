@@ -42,3 +42,16 @@ def flatten(d, parent_key='', sep='_'):
         else:
             items.append((new_key, v))
     return dict(items)
+
+def get_title_for_pubmed_id(pmid):
+    """ Given a PMID, return that PMID's title. """
+
+    title = ""
+    try:
+        resp = requests.get("http://www.ncbi.nlm.nih.gov/pubmed/" + str(pmid), timeout=20)
+        title = resp.text.split('<h1>')[1].split('</h1>')[0].strip()
+    except:
+        # This is fine for a timeout
+        return ""
+
+    return title

@@ -210,6 +210,17 @@ class SampleAnnotation(models.Model):
         return super(SampleAnnotation, self).save(*args, **kwargs)
 
 
+class ProcessedPublicObjectsManager(models.Manager):
+    """
+    Only returns Experiments that are is_public and have related is_processed Samples.
+    """
+    def get_queryset(self):
+        return super().get_queryset().filter(
+            is_public=True, 
+            samples__is_processed=True, 
+            samples__is_public=True).distinct()
+
+
 class Experiment(models.Model):
     """ An Experiment or Study """
 
@@ -223,6 +234,7 @@ class Experiment(models.Model):
     # Managers
     objects = models.Manager()
     public_objects = PublicObjectsManager()
+    processed_public_objects = ProcessedPublicObjectsManager()
 
     # Relations
     samples = models.ManyToManyField('Sample', through='ExperimentSampleAssociation')
@@ -302,6 +314,9 @@ class Experiment(models.Model):
         """ Returns a prettified list of related pipelines """
         return list(set([p.pretty_platform for p in self.samples.exclude(platform_name__exact='')]))
 
+    def get_processed_samples(self):
+        return self.samples.filter(is_processed=True)
+
 class ExperimentAnnotation(models.Model):
     """ Semi-standard information associated with an Experiment """
 
@@ -334,7 +349,7 @@ class ExperimentAnnotation(models.Model):
         return super(ExperimentAnnotation, self).save(*args, **kwargs)
 
 class Pipeline(models.Model):
-    "Pipeline that is associated with a series of ComputationalResult records."""
+    """Pipeline that is associated with a series of ComputationalResult records."""
 
     name = models.CharField(max_length=255)
     steps = ArrayField(models.IntegerField(), default=[])
@@ -356,7 +371,7 @@ class Processor(models.Model):
         unique_together = ('name', 'version')
 
     def __str__(self):
-        return "Processor: %s (version: %s, docker_image: %s)" % (name, version, docker_image)
+        return "Processor: %s (version: %s, docker_image: %s)" % (self.name, self.version, self.docker_image)
 
 
 class ComputationalResult(models.Model):

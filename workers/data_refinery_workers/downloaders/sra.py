@@ -115,7 +115,7 @@ def _download_file_aspera(download_url: str,
         return False
 
     # If Aspera has given a zero-byte file for some reason, let's back off and retry.
-    if os.path.getsize(target_file_path) < 1:
+    if (not os.path.exists(target_file_path)) or (os.path.getsize(target_file_path) < 1):
         logger.error("Got zero byte ascp download for target, retrying.",
                      target_url=download_url,
                      downloader_job=downloader_job.id)
@@ -162,7 +162,7 @@ def download_sra(job_id: int) -> None:
         original_file = assoc.original_file
 
         if original_file.is_downloaded:
-            logger.error("File already downloaded!",
+            logger.info("File already downloaded!",
                          original_file_id=original_file.id,
                          downloader_job=job_id)
             continue
