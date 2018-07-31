@@ -2,6 +2,21 @@
 
 # Script for executing Django management commands within a Docker container.
 
+while getopts "hi:" opt; do
+    case $opt in
+        i)
+            image=$OPTARG
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+    esac
+done
+
+if [[ -z $image ]]; then
+    image="smasher"
+fi
 
 # This script should always run as if it were being called from
 # the directory it lives in.
@@ -33,8 +48,8 @@ DB_HOST_IP=$(get_docker_db_ip_address)
 
 chmod -R a+rwX $volume_directory
 
-./prepare_image.sh -i smasher -s workers
-image_name=ccdlstaging/dr_smasher
+./prepare_image.sh -i $image -s workers
+image_name=ccdlstaging/dr_$image
 
 docker run \
        --add-host=database:$DB_HOST_IP \

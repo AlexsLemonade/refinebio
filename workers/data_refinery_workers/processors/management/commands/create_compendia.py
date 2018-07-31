@@ -62,7 +62,7 @@ class Command(BaseCommand):
                 print(str(e))
                 continue
 
-            print("Created compendia smasher job for " + organism.name + " with " + str(len(data.keys())) + " samples!")
+            print("Created compendia smasher job for " + organism.name + " with " + str(len(data.keys())) + " experiments!")
 
         print("Smashers dispatched, to retrieve:")
         print("python manage.py fetch_compendia --dataset-ids " + ','.join(dataset_ids))
