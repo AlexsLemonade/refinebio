@@ -136,5 +136,4 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-import sys
-TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
+RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD')
