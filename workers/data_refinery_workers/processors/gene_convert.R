@@ -55,7 +55,7 @@ suppressWarnings(data <- fread(filePath,
 
 # Read the data file
 message("Reading master index...")
-index_path = paste0('zcat /home/user/gene_indexes/', platform, '.tsv.gz')
+index_path = paste0('zcat /home/user/gene_indexes/', platform, '.tar.gz')
 suppressWarnings(index_data <- fread(index_path, 
 					stringsAsFactors=FALSE, 
 					sep="\t", 
