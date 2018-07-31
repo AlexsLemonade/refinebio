@@ -96,52 +96,63 @@ def _smash(job_context: Dict) -> Dict:
 
                 try:
                     data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0, error_bad_lines=False)
-                except Exception:
-                    unsmashable_files.append(computed_file_path)
-                    continue
 
-                # via https://github.com/AlexsLemonade/refinebio/issues/330:
-                #   aggregating by experiment -> return untransformed output from tximport
-                #   aggregating by species -> log2(x + 1) tximport output
-                if job_context['dataset'].aggregate_by == 'SPECIES':
-                    if 'lengthScaledTPM' in computed_file_path:
-                        data = data + 1
+                    # via https://github.com/AlexsLemonade/refinebio/issues/330:
+                    #   aggregating by experiment -> return untransformed output from tximport
+                    #   aggregating by species -> log2(x + 1) tximport output
+                    if job_context['dataset'].aggregate_by == 'SPECIES':
+                        if 'lengthScaledTPM' in computed_file_path:
+                            data = data + 1
+                            data = np.log2(data)
+
+                    # Detect if this data hasn't been log2 scaled yet.
+                    # Ideally done in the NO-OPPER, but sanity check here.
+                    if ("lengthScaledTPM" not in computed_file_path) and (data.max() > 100).any():
+                        logger.info("Detected non-log2 microarray data.", file=computed_file)
                         data = np.log2(data)
 
-                # Detect if this data hasn't been log2 scaled yet.
-                # Ideally done in the NO-OPPER, but sanity check here.
-                if ("lengthScaledTPM" not in computed_file_path) and (data.max() > 100).any():
-                    logger.info("Detected non-log2 microarray data.", file=computed_file)
-                    data = np.log2(data)
+                    # Ensure that we don't have any dangling Brainarray-generated probe symbols.
+                    # BA likes to leave '_at', signifying probe identifiers,
+                    # on their converted, non-probe identifiers. It makes no sense.
+                    # So, we chop them off and don't worry about it.
+                    data.index = data.index.str.replace('_at', '')
 
-                # Ensure that we don't have any dangling Brainarray-generated probe symbols.
-                # BA likes to leave '_at', signifying probe identifiers,
-                # on their converted, non-probe identifiers. It makes no sense.
-                # So, we chop them off and don't worry about it.
-                data.index = data.index.str.replace('_at', '')
+                    # If there are any _versioned_ gene identifiers, remove that
+                    # version information. We're using the latest brainarray for everything anyway.
+                    # Jackie says this is okay.
+                    # She also says that in the future, we may only want to do this
+                    # for cross-technology smashes.
 
-                # If there are any _versioned_ gene identifiers, remove that
-                # version information. We're using the latest brainarray for everything anyway.
-                # Jackie says this is okay.
-                # She also says that in the future, we may only want to do this
-                # for cross-technology smashes.
+                    # This regex needs to be able to handle EGIDs in the form:
+                    #       ENSGXXXXYYYZZZZ.6
+                    # and
+                    #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg.7__3016__AT5G35080.1;db=core)
+                    data.index = data.index.str.replace(r"(\.[^.]*)$", '')
 
-                # This regex needs to be able to handle EGIDs in the form:
-                #       ENSGXXXXYYYZZZZ.6
-                # and
-                #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg.7__3016__AT5G35080.1;db=core)
-                data.index = data.index.str.replace(r"(\.[^.]*)$", '')
+                    # Squish duplicated rows together.
+                    # XXX/TODO: Is mean the appropriate method here?
+                    #           We can make this an option in future.
+                    # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
+                    data = data.groupby(data.index, sort=False).mean()
 
-                # Squish duplicated rows together.
-                # XXX/TODO: Is mean the appropriate method here?
-                #           We can make this an option in future.
-                # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
-                data = data.groupby(data.index, sort=False).mean()
-
-                all_frames.append(data)
-                num_samples = num_samples + 1
+                    all_frames.append(data)
+                    num_samples = num_samples + 1
+                except Exception as e:
+                    unsmashable_files.append(computed_file_path)
+                    logger.exception("Unable to smash file", 
+                        file=computed_file_path,
+                        dataset_id=job_context['dataset'].id,
+                        )
+                    continue
 
             job_context['all_frames'] = all_frames
+
+            if len(all_frames) < 1:
+                logger.warning("Was told to smash a frame with no frames!", 
+                    key=key, 
+                    input_files=str(input_files)
+                )
+                continue
 
             # Merge all of the frames we've gathered into a single big frame, skipping duplicates.
             merged = all_frames[0]
@@ -181,6 +192,7 @@ def _smash(job_context: Dict) -> Dict:
                 # Wheeeeeeeeeee
                 untransposed = transposed.transpose()
 
+            # This is just for quality assurance in tests.
             job_context['final_frame'] = untransposed
 
             # Write to temp file with dataset UUID in filename.

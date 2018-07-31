@@ -108,7 +108,7 @@ def determine_downloader_task(sample_object: Sample) -> Downloaders:
     return Downloaders.NONE
 
 
-def determine_processor_pipeline(sample_object: Sample) -> ProcessorPipeline:
+def determine_processor_pipeline(sample_object: Sample, original_file=None) -> ProcessorPipeline:
     """Determines the appropriate processor pipeline for the sample.
 
     This is mostly a giant set of nested if statements, so describing
@@ -121,6 +121,13 @@ def determine_processor_pipeline(sample_object: Sample) -> ProcessorPipeline:
     """
     if not _is_platform_supported(sample_object.platform_accession_code):
         return ProcessorPipeline.NONE
+
+    # Optional explicit filetype checks
+    if original_file:
+        if original_file.filename[-3].upper() == "CEL":
+            return ProcessorPipeline.AFFY_TO_PCL 
+        if original_file.filename[-3].upper() == "TXT":
+            return ProcessorPipeline.NO_OP 
 
     if sample_object.technology == "MICROARRAY":
         if not sample_object.has_raw:
