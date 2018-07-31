@@ -108,17 +108,29 @@ class SearchAndFilter(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
+
+    # via http://www.django-rest-framework.org/api-guide/filtering/#searchfilter
+    # '^' Starts-with search.
+    # '=' Exact matches.
+    # '@' Full-text search.
+    # '$' Regex search.
     search_fields = (   'title',
                         '@description',
                         '@accession_code',
                         '@protocol_description',
                         '@publication_title',
                         'publication_doi',
-                        'pubmed_id'
+                        'pubmed_id',
+                        '@submitter_institution',
+                        'experimentannotation__data'
                     )
-    filter_fields = ('has_publication', 'submitter_institution', 'technology',
-                     'source_first_published', 'organisms__name')
-
+    filter_fields = (   'has_publication', 
+                        'submitter_institution', 
+                        'technology',
+                        'source_first_published', 
+                        'organisms__name',
+                        'samples__platform_accession_code'
+                    )
 
     def list(self, request, *args, **kwargs):
         """ Adds counts on certain filter fields to result JSON."""
