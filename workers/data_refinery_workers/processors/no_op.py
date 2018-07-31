@@ -239,8 +239,8 @@ def _create_result(job_context: Dict) -> Dict:
     result.commands.append(job_context['script_name'])
     result.is_ccdl = True
     result.pipeline = "Submitter-processed"  # TODO: should be removed
-    result.processor = Processor.objects.get(name=utils.ProcessorEnum.SUBMITTER_PROCESSED.value,
-                                             version=__version__)
+    # result.processor = Processor.objects.get(name=utils.ProcessorEnum.SUBMITTER_PROCESSED.value,
+    #                                          version=__version__)
     result.save()
     job_context['pipeline'].steps.append(result.id)
 
