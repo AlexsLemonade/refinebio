@@ -29,9 +29,7 @@ class Command(BaseCommand):
             help=("Comma-separated Dataset IDs."))
 
     def handle(self, *args, **options):
-        """ For every organism, fetch all of the experiments and compile large but normally formated Dataset.
-
-        Send all of them to the Smasher. Smash them. Retrieve manually as desired.
+        """ Given a dataset ID, fetch the resulting smashed object. 
         """
 
         if options["dataset_ids"] is None:
@@ -43,8 +41,7 @@ class Command(BaseCommand):
         datasets = Dataset.objects.filter(id__in=dataset_ids)
         for dataset in datasets:
             try:
-                organism = dataset.email_address.split('@')[0].split('compendia_')[1]
-                organism_name = organism
+                organism_name = dataset.email_address.split('@')[0].split('compendia_')[1]
             except:
                 organism_name = str(dataset.pk)
 
