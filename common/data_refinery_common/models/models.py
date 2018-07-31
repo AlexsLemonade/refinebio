@@ -475,7 +475,11 @@ class OrganismIndex(models.Model):
     # http://ensemblgenomes.org/info/about/release_cycle
     # Determined by hitting:
     # http://rest.ensembl.org/info/software?content-type=application/json
-    source_version = models.CharField(max_length=255, default="92")
+    source_version = models.CharField(max_length=255, default="93")
+
+    # The name of the genome assembly used which corresponds to 'GRCh38' in:
+    # ftp://ftp.ensembl.org/pub/release-93/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+    assembly_name = models.CharField(max_length=255, default="UNKNOWN")
 
     # This matters, for instance salmon 0.9.0 indexes don't work with 0.10.0
     salmon_version = models.CharField(max_length=255, default="0.9.1")
@@ -567,7 +571,7 @@ class OriginalFile(models.Model):
     def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
         """ Syncs this OriginalFile to AWS S3.
         """
-        if settings.TESTING:
+        if settings.RUNNING_IN_CLOUD:
             return True
 
         self.s3_bucket = s3_bucket
@@ -575,8 +579,8 @@ class OriginalFile(models.Model):
 
         try:
             S3.upload_file(
-                        self.absolute_file_path, 
-                        s3_bucket, 
+                        self.absolute_file_path,
+                        s3_bucket,
                         s3_key,
                         ExtraArgs={
                             'ACL': 'public-read',
@@ -619,12 +623,12 @@ class OriginalFile(models.Model):
         """ Downloads a file from S3 to the local file system.
         Returns the absolute file path.
         """
-        if settings.TESTING:
+        if settings.RUNNING_IN_CLOUD:
             return self.absolute_file_path
 
         try:
             S3.download_file(
-                        self.s3_bucket, 
+                        self.s3_bucket,
                         self.s3_key,
                         self.absolute_file_path
                     )
@@ -643,7 +647,7 @@ class OriginalFile(models.Model):
 
     def delete_local_file(self):
         """ Deletes this file from the local file system."""
-        if settings.TESTING:
+        if settings.RUNNING_IN_CLOUD:
             return
 
         try:
@@ -701,7 +705,7 @@ class ComputedFile(models.Model):
     def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
         """ Syncs a file to AWS S3.
         """
-        if settings.TESTING:
+        if settings.RUNNING_IN_CLOUD:
             return True
 
         self.s3_bucket = s3_bucket
@@ -709,8 +713,8 @@ class ComputedFile(models.Model):
 
         try:
             S3.upload_file(
-                        self.absolute_file_path, 
-                        s3_bucket, 
+                        self.absolute_file_path,
+                        s3_bucket,
                         s3_key,
                         ExtraArgs={
                             'ACL': 'public-read',
@@ -728,12 +732,12 @@ class ComputedFile(models.Model):
         """ Downloads a file from S3 to the local file system.
         Returns the absolute file path.
         """
-        if settings.TESTING and not force:
+        if settings.RUNNING_IN_CLOUD and not force:
             return self.absolute_file_path
 
         try:
             S3.download_file(
-                        self.s3_bucket, 
+                        self.s3_bucket,
                         self.s3_key,
                         self.absolute_file_path
                     )
@@ -762,7 +766,7 @@ class ComputedFile(models.Model):
     def delete_local_file(self):
         """ Deletes a file from the path and actually removes it from the file system,
         resetting the is_downloaded flag to false. Can be refetched from source if needed. """
-        if settings.TESTING:
+        if settings.RUNNING_IN_CLOUD:
             return
 
         try:
