@@ -556,7 +556,7 @@ class OriginalFile(models.Model):
     def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
         """ Syncs this OriginalFile to AWS S3.
         """
-        if settings.TESTING:
+        if settings.RUNNING_IN_CLOUD:
             return True
 
         self.s3_bucket = s3_bucket
@@ -564,8 +564,8 @@ class OriginalFile(models.Model):
 
         try:
             S3.upload_file(
-                        self.absolute_file_path, 
-                        s3_bucket, 
+                        self.absolute_file_path,
+                        s3_bucket,
                         s3_key,
                         ExtraArgs={
                             'ACL': 'public-read',
@@ -608,12 +608,12 @@ class OriginalFile(models.Model):
         """ Downloads a file from S3 to the local file system.
         Returns the absolute file path.
         """
-        if settings.TESTING:
+        if settings.RUNNING_IN_CLOUD:
             return self.absolute_file_path
 
         try:
             S3.download_file(
-                        self.s3_bucket, 
+                        self.s3_bucket,
                         self.s3_key,
                         self.absolute_file_path
                     )
@@ -632,7 +632,7 @@ class OriginalFile(models.Model):
 
     def delete_local_file(self):
         """ Deletes this file from the local file system."""
-        if settings.TESTING:
+        if settings.RUNNING_IN_CLOUD:
             return
 
         try:
@@ -690,7 +690,7 @@ class ComputedFile(models.Model):
     def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
         """ Syncs a file to AWS S3.
         """
-        if settings.TESTING:
+        if settings.RUNNING_IN_CLOUD:
             return True
 
         self.s3_bucket = s3_bucket
@@ -698,8 +698,8 @@ class ComputedFile(models.Model):
 
         try:
             S3.upload_file(
-                        self.absolute_file_path, 
-                        s3_bucket, 
+                        self.absolute_file_path,
+                        s3_bucket,
                         s3_key,
                         ExtraArgs={
                             'ACL': 'public-read',
@@ -717,12 +717,12 @@ class ComputedFile(models.Model):
         """ Downloads a file from S3 to the local file system.
         Returns the absolute file path.
         """
-        if settings.TESTING and not force:
+        if settings.RUNNING_IN_CLOUD and not force:
             return self.absolute_file_path
 
         try:
             S3.download_file(
-                        self.s3_bucket, 
+                        self.s3_bucket,
                         self.s3_key,
                         self.absolute_file_path
                     )
@@ -751,7 +751,7 @@ class ComputedFile(models.Model):
     def delete_local_file(self):
         """ Deletes a file from the path and actually removes it from the file system,
         resetting the is_downloaded flag to false. Can be refetched from source if needed. """
-        if settings.TESTING:
+        if settings.RUNNING_IN_CLOUD:
             return
 
         try:
