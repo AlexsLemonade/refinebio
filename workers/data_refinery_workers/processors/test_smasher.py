@@ -1,6 +1,9 @@
 import os
+import sys
 import zipfile
+from io import StringIO
 
+from django.core.management import call_command
 from django.test import TestCase, tag
 from data_refinery_common.models import (
     SurveyJob,
@@ -788,3 +791,31 @@ class SmasherTestCase(TestCase):
         final_context = smasher._notify(job_context)
         self.assertTrue(final_context.get('success', True))
 
+
+class CompendiaTestCase(TestCase):
+    """ Testing management commands are hard. Since there is always an explicit sys.exit (which is really an Exception),
+    we have to do weird stdio rerouting to capture the result. Really, these are just sanity tests."""
+
+    @tag("smasher")
+    def test_call_create(self):
+        old_stderr = sys.stderr
+        old_stdout = sys.stdout
+        csio_err = StringIO()
+        csio_out = StringIO()
+        sys.stderr = csio_err
+        sys.stdout = csio_out
+        self.assertRaises(BaseException, call_command, 'create_compendia')
+        sys.stderr = old_stderr
+        sys.stdout = old_stdout
+
+    @tag("smasher")
+    def test_fetch_create(self):
+        old_stderr = sys.stderr
+        old_stdout = sys.stdout
+        csio_err = StringIO()
+        csio_out = StringIO()
+        sys.stderr = csio_err
+        sys.stdout = csio_out
+        self.assertRaises(BaseException, call_command, 'fetch_compendia')
+        sys.stderr = old_stderr
+        sys.stdout = old_stdout
