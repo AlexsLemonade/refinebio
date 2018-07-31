@@ -298,6 +298,11 @@ class APITestCases(APITestCase):
         experiment_sample_association.experiment = ex3
         experiment_sample_association.save()
 
+        xa = ExperimentAnnotation()
+        xa.data = {'name': 'Clark Kent'}
+        xa.experiment = ex
+        xa.save()
+
         xoa = ExperimentOrganismAssociation()
         xoa.experiment=ex
         xoa.organism=homo_sapiens
@@ -351,6 +356,10 @@ class APITestCases(APITestCase):
                                    {'search': 'THISWILLBEINASEARCHRESULT',
                                     'organisms__name': 'Extra-Terrestrial-1982'})
         self.assertEqual(response.json()['count'], 1)
+
+        response = self.client.get(reverse('search'), {'search': 'Clark Kent'})
+        self.assertEqual(response.json()['count'], 1)
+        self.assertEqual(response.json()['results'][0]['accession_code'], "FINDME_TEMPURA")
 
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):

@@ -59,6 +59,10 @@ jobs:
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
+      
+     # Run NO_OP tests
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run: .circleci/filter_tests.sh -t no_op
 
       # Run Smasher tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/

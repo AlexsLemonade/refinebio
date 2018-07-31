@@ -344,7 +344,7 @@ class ExperimentAnnotation(models.Model):
         return super(ExperimentAnnotation, self).save(*args, **kwargs)
 
 class Pipeline(models.Model):
-    "Pipeline that is associated with a series of ComputationalResult records."""
+    """Pipeline that is associated with a series of ComputationalResult records."""
 
     name = models.CharField(max_length=255)
     steps = ArrayField(models.IntegerField(), default=[])
@@ -366,7 +366,7 @@ class Processor(models.Model):
         unique_together = ('name', 'version')
 
     def __str__(self):
-        return "Processor: %s (version: %s, docker_image: %s)" % (name, version, docker_image)
+        return "Processor: %s (version: %s, docker_image: %s)" % (self.name, self.version, self.docker_image)
 
 
 class ComputationalResult(models.Model):
