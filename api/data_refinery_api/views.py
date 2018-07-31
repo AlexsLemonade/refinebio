@@ -188,7 +188,7 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             token_id = self.request.data.get('token_id')
             try:
                 token = APIToken.objects.get(id=token_id, is_activated=True)
-            except Exception: # Generall APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
                 raise APIException("You must provide an active API token ID")
 
             if not already_processing:
@@ -218,6 +218,50 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             serializer.validated_data['data'] = old_data
             serializer.validated_data['aggregate_by'] = old_aggregate
         serializer.save()
+
+class DatasetStatsView(APIView):
+    """ Get stats for a given dataset. Ex:
+
+    {
+        "HOMO_SAPIENS": {
+            "num_experiments": 5,
+            "num_samples": 55 },
+        "GALLUS_GALLUS": {
+            "num_experiments": 5,
+            "num_samples": 55 },
+    }
+
+    """
+
+    def get(self, request, id):
+        
+        dataset = get_object_or_404(Dataset, id=id)
+        stats = {}
+
+        experiments = Experiment.objects.filter(accession_code__in=dataset.data.keys())
+        
+        # Find all the species for these experiments
+        for experiment in experiments:
+            species_names = experiment.organisms.values_list('name')
+            for species_name in species_names:
+                species = stats.get(species_name[0], {"num_experiments": 0, "num_samples": 0})
+                species['num_experiments'] = species['num_experiments'] + 1
+                stats[species_name[0]] = species
+
+        # Count the samples
+        all_sample_accessions = [value[0] for value in dataset.data.values()]
+        empty_species = []
+        for species in stats.keys():
+            samples = Sample.objects.filter(accession_code__in=all_sample_accessions, organism__name=species)
+            stats[species]['num_samples'] = len(samples)
+            if stats[species]['num_samples'] == 0:
+                empty_species.append(species)
+
+        # Delete empty associations
+        for species in empty_species:
+            del stats[species]
+
+        return Response(stats)
 
 class APITokenView(APIView):
     """
