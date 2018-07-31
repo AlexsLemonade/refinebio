@@ -305,8 +305,8 @@ def _populate_index_object(job_context: Dict) -> Dict:
 
     result = ComputationalResult()
     result.commands.append(job_context["salmon_formatted_command"])
-    result.processor = Processor.objects.get(name=utils.ProcessorEnum.TX_INDEX.value,
-                                             version=__version__)
+    # result.processor = Processor.objects.get(name=utils.ProcessorEnum.TX_INDEX.value,
+    #                                          version=__version__)
     result.is_ccdl = True
     result.time_start = job_context["time_start"]
     result.time_end = job_context["time_end"]
@@ -321,9 +321,8 @@ def _populate_index_object(job_context: Dict) -> Dict:
     computed_file.result = result
     computed_file.is_smashable = False
     computed_file.is_qc = False
-    #computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
-    # TODO here: delete local file after S3 sync
     computed_file.save()
+    job_context['computed_files'].append(computed_file)
 
     organism_object = Organism.get_object_for_name(job_context['organism_name'])
     index_object = OrganismIndex()

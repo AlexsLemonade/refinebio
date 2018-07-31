@@ -45,7 +45,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context so everything is prepared for processing.
     """
     original_file = job_context["original_files"][0]
-    job_context["input_file_path"] = original_file.absolute_file_path
+    job_context["input_file_path"] = original_file.get_synced_file_path()
     # Turns /home/user/data_store/E-GEOD-8607/raw/foo.txt into /home/user/data_store/E-GEOD-8607/processed/foo.cel
     pre_part = original_file.absolute_file_path.split('/')[:-2] # Cut off '/raw'
     end_part = original_file.absolute_file_path.split('/')[-1] # Get the filename
@@ -320,8 +320,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
     result.pipeline = "Illumina SCAN"  # TODO: should be removed
-    result.processor = Processor.objects.get(name=utils.ProcessorEnum.ILLUMINA_SCAN.value,
-                                             version=__version__)
+    # result.processor = Processor.objects.get(name=utils.ProcessorEnum.ILLUMINA_SCAN.value,
+    #                                          version=__version__)
     result.save()
     job_context['pipeline'].steps.append(result.id)
 
@@ -355,6 +355,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
         computed_file.calculate_sha1()
         computed_file.calculate_size()
         computed_file.save()
+        job_context['computed_files'].append(computed_file)
 
         SampleResultAssociation.objects.get_or_create(
             sample=sample,
