@@ -369,9 +369,11 @@ class SraSurveyor(ExternalSourceSurveyor):
             if not experiment_object.protocol_description:
                 experiment_object.protocol_description = metadata.get("library_construction_protocol",
                                                                       "Protocol was never provided.")
-            # Scrape publication title from Pubmed
-            if experiment_object.pubmed_id and not experiment_object.publication_title:
-                experiment_object.publication_title = utils.get_title_for_pubmed_id(experiment_object.pubmed_id)
+            # Scrape publication title and authorship from Pubmed
+            if experiment_object.pubmed_id:
+                pubmed_metadata = utils.get_title_and_authors_for_pubmed_id(experiment_object.pubmed_id)
+                experiment_object.publication_title = pubmed_metadata[0]
+                experiment_object.publication_authors = pubmed_metadata[1]
 
             experiment_object.save()
 
