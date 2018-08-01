@@ -153,8 +153,6 @@ class SearchAndFilter(generics.ListAPIView):
         for pub in pubs:
             if pub['has_publication']:
                 response.data['filters']['publication']['has_publication'] = pub['has_publication__count']
-        if 'has_publication' not in response.data['filters']['publication']:
-            response.data['filters']['publication']['has_publication'] = 0
 
         organisms = qs.values('organisms__name').annotate(Count('organisms__name', unique=True))
         for organism in organisms:

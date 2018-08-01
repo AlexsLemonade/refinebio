@@ -77,8 +77,6 @@ else
     exit 1
 fi
 
-terraform init
-
 state_files=$(aws s3 ls s3://$BUCKET_NAME)
 if [[ ! -z $state_files ]]; then
    # Download encrypted tfstate files from S3, if they exist
