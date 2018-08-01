@@ -20,7 +20,7 @@ if ! [[ $(docker ps --filter name=drdb -q) ]]; then
     exit 1
 fi
 
-docker build -t common_tests -f common/Dockerfile.tests .
+./prepare_image.sh -i common_tests -s common
 
 source common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
@@ -31,4 +31,4 @@ docker run \
        --add-host=nomad:$HOST_IP \
        --env-file common/environments/test \
        --link drdb:postgres \
-       -it common_tests bash -c "$(run_tests_with_coverage $@)"
+       -it ccdlstaging/dr_common_tests bash -c "$(run_tests_with_coverage $@)"
