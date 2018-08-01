@@ -57,9 +57,9 @@ def _prepare_files(job_context: Dict) -> Dict:
     logger.debug("Preparing files..")
 
     original_files = job_context["original_files"]
-    job_context["input_file_path"] = original_files[0].absolute_file_path
+    job_context["input_file_path"] = original_files[0].get_synced_file_path()
     if len(original_files) == 2:
-        job_context["input_file_path_2"] = original_files[1].absolute_file_path
+        job_context["input_file_path_2"] = original_files[1].get_synced_file_path()
 
     # There should only ever be one per Salmon run
     job_context['sample'] = job_context['original_files'][0].samples.first()
@@ -124,6 +124,16 @@ def _determine_index_length(job_context: Dict) -> Dict:
                     total_base_pairs += len(line.replace("\n", ""))
                     number_of_reads += 1
                 counter += 1
+
+    if number_of_reads == 0:
+        logger.error("Unable to determine number_of_reads for job.",
+            input_file_1=job_context["input_file_path"],
+            input_file_2=job_context["input_file_path_2"],
+            job_id=job_context['job'].id
+        )
+        job_context['job'].failure_reason = "Unable to determine number_of_reads."
+        job_context['success'] = False
+        return job_context
 
     index_length_raw = total_base_pairs / number_of_reads
 
@@ -249,8 +259,8 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
     result.commands.append(" ".join(cmd_tokens))
     result.is_ccdl = True
     result.pipeline = "tximport"  # TODO: should be removed
-    result.processor = Processor.objects.get(name=utils.ProcessorEnum.TXIMPORT.value,
-                                             version=__version__)
+    # result.processor = Processor.objects.get(name=utils.ProcessorEnum.TXIMPORT.value,
+    #                                          version=__version__)
     result.save()
     job_context['pipeline'].steps.append(result.id)
 
@@ -273,6 +283,7 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
     rds_file.calculate_sha1()
     rds_file.calculate_size()
     rds_file.save()
+    job_context['computed_files'].append(rds_file)
 
     # Split the tximport result into smashable subfiles
     big_tsv = experiment_dir + '/gene_lengthScaledTPM.tsv'
@@ -295,6 +306,7 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
         computed_file.calculate_sha1()
         computed_file.calculate_size()
         computed_file.save()
+        job_context['computed_files'].append(computed_file)
 
         SampleResultAssociation.objects.get_or_create(
             sample=sample,
@@ -374,8 +386,8 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         result.time_start = job_context['time_start']
         result.time_end = job_context['time_end']
         result.pipeline = "Salmon"  # TODO: should be removed
-        result.processor = Processor.objects.get(name=utils.ProcessorEnum.SALMON_QUANT.value,
-                                                 version=__version__)
+        # result.processor = Processor.objects.get(name=utils.ProcessorEnum.SALMON_QUANT.value,
+        #                                          version=__version__)
         result.is_ccdl = True
 
         # Here select_for_update() is used as a mutex that forces multiple
@@ -461,8 +473,8 @@ def _run_multiqc(job_context: Dict) -> Dict:
     result.time_end = time_end
     result.is_ccdl = True
     result.pipeline = "MultiQC"  # TODO: should be removed
-    result.processor = Processor.objects.get(name=utils.ProcessorEnum.MULTIQC.value,
-                                             version=__version__)
+    # result.processor = Processor.objects.get(name=utils.ProcessorEnum.MULTIQC.value,
+    #                                          version=__version__)
     result.save()
     job_context['pipeline'].steps.append(result.id)
 
@@ -483,6 +495,8 @@ def _run_multiqc(job_context: Dict) -> Dict:
     data_file.is_smashable = False
     data_file.is_qc = True
     data_file.save()
+    job_context['computed_files'].append(data_file)
+
 
     report_file = ComputedFile()
     report_file.filename = "multiqc_report.html" # This is deterministic
@@ -494,6 +508,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
     report_file.is_qc = True
     report_file.result = job_context['qc_result']
     report_file.save()
+    job_context['computed_files'].append(report_file)
 
     job_context['qc_files'] = [data_file, report_file]
 
@@ -507,7 +522,7 @@ def _run_fastqc(job_context: Dict) -> Dict:
 
     # We could use --noextract here, but MultiQC wants extracted files.
     command_str = ("./FastQC/fastqc --outdir={qc_directory} {files}")
-    files = ' '.join(file.absolute_file_path for file in job_context['original_files'])
+    files = ' '.join(file.get_synced_file_path() for file in job_context['original_files'])
     formatted_command = command_str.format(qc_directory=job_context["qc_directory"],
                 files=files)
 
@@ -591,8 +606,8 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         result.time_end = end_time
         result.is_ccdl = True
         result.pipeline = "Salmontools"  # TODO: should be removed
-        result.processor = Processor.objects.get(name=utils.ProcessorEnum.SALMONTOOLS.value,
-                                                 version=__version__)
+        # result.processor = Processor.objects.get(name=utils.ProcessorEnum.SALMONTOOLS.value,
+        #                                          version=__version__)
         result.save()
         job_context['pipeline'].steps.append(result.id)
 
@@ -644,9 +659,8 @@ def _zip_and_upload(job_context: Dict) -> Dict:
     computed_file.result = job_context['result']
     computed_file.is_smashable = True
     computed_file.is_qc = False
-    computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
-    # TODO here: delete local file after S3 sync
     computed_file.save()
+    job_context['computed_files'].append(computed_file)
 
     job_context["success"] = True
     return job_context

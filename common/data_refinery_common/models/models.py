@@ -16,12 +16,17 @@ from django.db import transaction
 from django.db import models
 from django.utils import timezone
 
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.organism import Organism
-from data_refinery_common.utils import get_s3_url
+from data_refinery_common.utils import get_env_variable, get_s3_url
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.
 S3 = boto3.client('s3', config=Config(signature_version='s3v4'))
+
+logger = get_and_configure_logger(__name__)
+LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
+CHUNK_SIZE = 1024 * 256 # chunk_size is in bytes
 
 """
 # First Order Classes
@@ -205,6 +210,17 @@ class SampleAnnotation(models.Model):
         return super(SampleAnnotation, self).save(*args, **kwargs)
 
 
+class ProcessedPublicObjectsManager(models.Manager):
+    """
+    Only returns Experiments that are is_public and have related is_processed Samples.
+    """
+    def get_queryset(self):
+        return super().get_queryset().filter(
+            is_public=True, 
+            samples__is_processed=True, 
+            samples__is_public=True).distinct()
+
+
 class Experiment(models.Model):
     """ An Experiment or Study """
 
@@ -218,6 +234,7 @@ class Experiment(models.Model):
     # Managers
     objects = models.Manager()
     public_objects = PublicObjectsManager()
+    processed_public_objects = ProcessedPublicObjectsManager()
 
     # Relations
     samples = models.ManyToManyField('Sample', through='ExperimentSampleAssociation')
@@ -292,6 +309,9 @@ class Experiment(models.Model):
         """ Returns a list of related pipelines """
         return [p for p in self.samples.values_list('platform_name', flat=True).distinct()]
 
+    def get_processed_samples(self):
+        return self.samples.filter(is_processed=True)
+
 class ExperimentAnnotation(models.Model):
     """ Semi-standard information associated with an Experiment """
 
@@ -324,7 +344,7 @@ class ExperimentAnnotation(models.Model):
         return super(ExperimentAnnotation, self).save(*args, **kwargs)
 
 class Pipeline(models.Model):
-    "Pipeline that is associated with a series of ComputationalResult records."""
+    """Pipeline that is associated with a series of ComputationalResult records."""
 
     name = models.CharField(max_length=255)
     steps = ArrayField(models.IntegerField(), default=[])
@@ -346,7 +366,7 @@ class Processor(models.Model):
         unique_together = ('name', 'version')
 
     def __str__(self):
-        return "Processor: %s (version: %s, docker_image: %s)" % (name, version, docker_image)
+        return "Processor: %s (version: %s, docker_image: %s)" % (self.name, self.version, self.docker_image)
 
 
 class ComputationalResult(models.Model):
@@ -455,7 +475,11 @@ class OrganismIndex(models.Model):
     # http://ensemblgenomes.org/info/about/release_cycle
     # Determined by hitting:
     # http://rest.ensembl.org/info/software?content-type=application/json
-    source_version = models.CharField(max_length=255, default="92")
+    source_version = models.CharField(max_length=255, default="93")
+
+    # The name of the genome assembly used which corresponds to 'GRCh38' in:
+    # ftp://ftp.ensembl.org/pub/release-93/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+    assembly_name = models.CharField(max_length=255, default="UNKNOWN")
 
     # This matters, for instance salmon 0.9.0 indexes don't work with 0.10.0
     salmon_version = models.CharField(max_length=255, default="0.9.1")
@@ -507,10 +531,15 @@ class OriginalFile(models.Model):
     objects = models.Manager()
     public_objects = PublicObjectsManager()
 
+    # File Properties
     filename = models.CharField(max_length=255)
     absolute_file_path = models.CharField(max_length=255, blank=True, null=True)
     size_in_bytes = models.BigIntegerField(blank=True, null=True)
     sha1 = models.CharField(max_length=64)
+
+    # AWS
+    s3_bucket = models.CharField(max_length=255, blank=True, null=True)
+    s3_key = models.CharField(max_length=255, blank=True, null=True)
 
     # Relations
     samples = models.ManyToManyField('Sample', through='OriginalFileSampleAssociation')
@@ -539,6 +568,32 @@ class OriginalFile(models.Model):
         self.last_modified = current_time
         return super(OriginalFile, self).save(*args, **kwargs)
 
+    def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
+        """ Syncs this OriginalFile to AWS S3.
+        """
+        if settings.RUNNING_IN_CLOUD:
+            return True
+
+        self.s3_bucket = s3_bucket
+        self.s3_key = s3_key
+
+        try:
+            S3.upload_file(
+                        self.absolute_file_path,
+                        s3_bucket,
+                        s3_key,
+                        ExtraArgs={
+                            'ACL': 'public-read',
+                            'StorageClass': 'STANDARD_IA'
+                        }
+                    )
+            self.save()
+        except Exception as e:
+            logger.exception(e, original_file_id=self.pk)
+            return False
+
+        return True
+
     def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
@@ -563,6 +618,44 @@ class OriginalFile(models.Model):
             return self.source_filename
         else:
             return self.filename
+
+    def sync_from_s3(self):
+        """ Downloads a file from S3 to the local file system.
+        Returns the absolute file path.
+        """
+        if settings.RUNNING_IN_CLOUD:
+            return self.absolute_file_path
+
+        try:
+            S3.download_file(
+                        self.s3_bucket,
+                        self.s3_key,
+                        self.absolute_file_path
+                    )
+            return self.absolute_file_path
+        except Exception as e:
+            logger.exception(e, original_file_id=self.pk)
+            return None
+
+    def get_synced_file_path(self):
+        """ Fetches the absolute file path to this ComputedFile, fetching from S3 if it
+        isn't already available locally. """
+        if os.path.exists(self.absolute_file_path):
+            return self.absolute_file_path
+        else:
+            return self.sync_from_s3()
+
+    def delete_local_file(self):
+        """ Deletes this file from the local file system."""
+        if settings.RUNNING_IN_CLOUD:
+            return
+
+        try:
+            os.remove(self.absolute_file_path)
+        except OSError:
+            pass
+        self.is_downloaded = False
+        self.save()
 
 
 class ComputedFile(models.Model):
@@ -593,8 +686,8 @@ class ComputedFile(models.Model):
     is_qc = models.BooleanField(default=False)
 
     # AWS
-    s3_bucket = models.CharField(max_length=255)
-    s3_key = models.CharField(max_length=255)
+    s3_bucket = models.CharField(max_length=255, blank=True, null=True)
+    s3_key = models.CharField(max_length=255, blank=True, null=True)
 
     # Common Properties
     is_public = models.BooleanField(default=True)
@@ -611,12 +704,47 @@ class ComputedFile(models.Model):
 
     def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
         """ Syncs a file to AWS S3.
-
-        XXX: TODO!
         """
+        if settings.RUNNING_IN_CLOUD:
+            return True
+
         self.s3_bucket = s3_bucket
         self.s3_key = s3_key
+
+        try:
+            S3.upload_file(
+                        self.absolute_file_path,
+                        s3_bucket,
+                        s3_key,
+                        ExtraArgs={
+                            'ACL': 'public-read',
+                            'StorageClass': 'STANDARD_IA'
+                        }
+                    )
+            self.save()
+        except Exception as e:
+            logger.exception(e, computed_file_id=self.pk)
+            return False
+
         return True
+
+    def sync_from_s3(self, force=False):
+        """ Downloads a file from S3 to the local file system.
+        Returns the absolute file path.
+        """
+        if settings.RUNNING_IN_CLOUD and not force:
+            return self.absolute_file_path
+
+        try:
+            S3.download_file(
+                        self.s3_bucket,
+                        self.s3_key,
+                        self.absolute_file_path
+                    )
+            return self.absolute_file_path
+        except Exception as e:
+            logger.exception(e, computed_file_id=self.pk)
+            return None
 
     def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
@@ -635,6 +763,24 @@ class ComputedFile(models.Model):
         self.size_in_bytes = os.path.getsize(self.absolute_file_path)
         return self.size_in_bytes
 
+    def delete_local_file(self):
+        """ Deletes a file from the path and actually removes it from the file system,
+        resetting the is_downloaded flag to false. Can be refetched from source if needed. """
+        if settings.RUNNING_IN_CLOUD:
+            return
+
+        try:
+            os.remove(self.absolute_file_path)
+        except OSError:
+            pass
+
+    def get_synced_file_path(self, force=False):
+        """ Fetches the absolute file path to this ComputedFile, fetching from S3 if it
+        isn't already available locally. """
+        if os.path.exists(self.absolute_file_path):
+            return self.absolute_file_path
+        else:
+            return self.sync_from_s3(force)
 
 class Dataset(models.Model):
     """ A Dataset is a desired set of experiments/samples to smash and download """
@@ -753,6 +899,13 @@ class Dataset(models.Model):
             return True
         else:
             return False
+
+    def s3_url(self):
+        """ Render the resulting S3 URL """
+        if (self.s3_key) and (self.s3_bucket):
+            return "https://s3.amazonaws.com/" + self.s3_bucket + "/" + self.s3_key
+        else:
+            return None
 
 class APIToken(models.Model):
     """ Required for starting a smash job """

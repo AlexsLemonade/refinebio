@@ -49,6 +49,10 @@ def _prepare_files(job_context: Dict) -> Dict:
         all_sample_files = list(set(all_sample_files))
         job_context['input_files'][key] = all_sample_files
 
+    # So these get deleted from disk after..
+    for computed_file in all_sample_files:
+        job_context['computed_files'].append(computed_file)
+
     return job_context
 
 def _smash(job_context: Dict) -> Dict:
@@ -84,60 +88,71 @@ def _smash(job_context: Dict) -> Dict:
             all_frames = []
             for computed_file in input_files:
 
-                computed_file_path = str(computed_file.absolute_file_path)
+                computed_file_path = str(computed_file.get_synced_file_path())
 
                 # Bail appropriately if this isn't a real file.
-                if not os.path.exists(computed_file.absolute_file_path):
+                if not os.path.exists(computed_file.get_synced_file_path()):
                     raise ValueError("Smasher received non-existent file path.")
 
                 try:
                     data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0, error_bad_lines=False)
-                except Exception:
-                    unsmashable_files.append(computed_file_path)
-                    continue
 
-                # via https://github.com/AlexsLemonade/refinebio/issues/330:
-                #   aggregating by experiment -> return untransformed output from tximport
-                #   aggregating by species -> log2(x + 1) tximport output
-                if job_context['dataset'].aggregate_by == 'SPECIES':
-                    if 'lengthScaledTPM' in computed_file_path:
-                        data = data + 1
+                    # via https://github.com/AlexsLemonade/refinebio/issues/330:
+                    #   aggregating by experiment -> return untransformed output from tximport
+                    #   aggregating by species -> log2(x + 1) tximport output
+                    if job_context['dataset'].aggregate_by == 'SPECIES':
+                        if 'lengthScaledTPM' in computed_file_path:
+                            data = data + 1
+                            data = np.log2(data)
+
+                    # Detect if this data hasn't been log2 scaled yet.
+                    # Ideally done in the NO-OPPER, but sanity check here.
+                    if ("lengthScaledTPM" not in computed_file_path) and (data.max() > 100).any():
+                        logger.info("Detected non-log2 microarray data.", file=computed_file)
                         data = np.log2(data)
 
-                # Detect if this data hasn't been log2 scaled yet.
-                # Ideally done in the NO-OPPER, but sanity check here.
-                if ("lengthScaledTPM" not in computed_file_path) and (data.max() > 100).any():
-                    logger.info("Detected non-log2 microarray data.", file=computed_file)
-                    data = np.log2(data)
+                    # Ensure that we don't have any dangling Brainarray-generated probe symbols.
+                    # BA likes to leave '_at', signifying probe identifiers,
+                    # on their converted, non-probe identifiers. It makes no sense.
+                    # So, we chop them off and don't worry about it.
+                    data.index = data.index.str.replace('_at', '')
 
-                # Ensure that we don't have any dangling Brainarray-generated probe symbols.
-                # BA likes to leave '_at', signifying probe identifiers,
-                # on their converted, non-probe identifiers. It makes no sense.
-                # So, we chop them off and don't worry about it.
-                data.index = data.index.str.replace('_at', '')
+                    # If there are any _versioned_ gene identifiers, remove that
+                    # version information. We're using the latest brainarray for everything anyway.
+                    # Jackie says this is okay.
+                    # She also says that in the future, we may only want to do this
+                    # for cross-technology smashes.
 
-                # If there are any _versioned_ gene identifiers, remove that
-                # version information. We're using the latest brainarray for everything anyway.
-                # Jackie says this is okay.
-                # She also says that in the future, we may only want to do this
-                # for cross-technology smashes.
+                    # This regex needs to be able to handle EGIDs in the form:
+                    #       ENSGXXXXYYYZZZZ.6
+                    # and
+                    #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg.7__3016__AT5G35080.1;db=core)
+                    data.index = data.index.str.replace(r"(\.[^.]*)$", '')
 
-                # This regex needs to be able to handle EGIDs in the form:
-                #       ENSGXXXXYYYZZZZ.6
-                # and
-                #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg.7__3016__AT5G35080.1;db=core)
-                data.index = data.index.str.replace(r"(\.[^.]*)$", '')
+                    # Squish duplicated rows together.
+                    # XXX/TODO: Is mean the appropriate method here?
+                    #           We can make this an option in future.
+                    # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
+                    data = data.groupby(data.index, sort=False).mean()
 
-                # Squish duplicated rows together.
-                # XXX/TODO: Is mean the appropriate method here?
-                #           We can make this an option in future.
-                # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
-                data = data.groupby(data.index, sort=False).mean()
-
-                all_frames.append(data)
-                num_samples = num_samples + 1
+                    all_frames.append(data)
+                    num_samples = num_samples + 1
+                except Exception as e:
+                    unsmashable_files.append(computed_file_path)
+                    logger.exception("Unable to smash file", 
+                        file=computed_file_path,
+                        dataset_id=job_context['dataset'].id,
+                        )
+                    continue
 
             job_context['all_frames'] = all_frames
+
+            if len(all_frames) < 1:
+                logger.warning("Was told to smash a frame with no frames!", 
+                    key=key, 
+                    input_files=str(input_files)
+                )
+                continue
 
             # Merge all of the frames we've gathered into a single big frame, skipping duplicates.
             merged = all_frames[0]
@@ -177,6 +192,7 @@ def _smash(job_context: Dict) -> Dict:
                 # Wheeeeeeeeeee
                 untransposed = transposed.transpose()
 
+            # This is just for quality assurance in tests.
             job_context['final_frame'] = untransposed
 
             # Write to temp file with dataset UUID in filename.
@@ -269,6 +285,13 @@ def _upload(job_context: Dict) -> Dict:
             job_context["dataset"].s3_bucket = RESULTS_BUCKET
             job_context["dataset"].s3_key = job_context["output_file"].split('/')[-1]
             job_context["dataset"].save()
+
+            # File is uploaded, we can delete the local.
+            try:
+                os.remove(job_context["output_file"])
+            except OSError:
+                pass
+
     except Exception as e:
         logger.exception("Failed to upload smash result file.", file=job_context["output_file"])
         job_context['job'].success = False
@@ -360,6 +383,15 @@ def _update_result_objects(job_context: Dict) -> Dict:
 
     return job_context
 
+def _delete_local_files(job_context: Dict) -> Dict:
+    """ Removes all of the ComputedFiles that have been synced from S3 """
+    for key, input_files in job_context['input_files'].items():
+        for computed_file in input_files:
+            computed_file.delete_local_file()
+
+    job_context['success'] = True
+    return job_context
+
 def smash(job_id: int, upload=True) -> None:
     """ Main Smasher interface """
 
@@ -371,4 +403,5 @@ def smash(job_id: int, upload=True) -> None:
                         _upload,
                         _notify,
                         _update_result_objects,
+                        _delete_local_files,
                         utils.end_job])

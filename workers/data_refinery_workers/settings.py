@@ -156,3 +156,5 @@ else:
     import logging
     raven_logger = logging.getLogger('raven.contrib.django.client.DjangoClient')
     raven_logger.setLevel(logging.CRITICAL)
+
+RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD')

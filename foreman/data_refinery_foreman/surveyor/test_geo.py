@@ -13,6 +13,9 @@ from data_refinery_common.models import (
 from data_refinery_foreman.surveyor.geo import (
     GeoSurveyor
 )
+from data_refinery_foreman.surveyor.utils import (
+    get_title_for_pubmed_id
+)
 
 
 class SurveyTestCase(TransactionTestCase):
@@ -38,20 +41,20 @@ class SurveyTestCase(TransactionTestCase):
 
         For an Illumina Microarray platform.
         """
-        self.prep_test("GSE19274")
+        self.prep_test("GSE11915")
 
         geo_surveyor = GeoSurveyor(self.survey_job)
         geo_surveyor.survey()
 
-        self.assertEqual(138, Sample.objects.all().count())
+        self.assertEqual(34, Sample.objects.all().count())
 
         sample_object = Sample.objects.first()
-        self.assertEqual(sample_object.platform_name, "Illumina human-6 v2.0 expression beadchip")
-        self.assertEqual(sample_object.platform_accession_code, "Illumina_Human-6_V2.0")
+        self.assertEqual(sample_object.platform_name, "[HG-U133A] Affymetrix Human Genome U133A Array")
+        self.assertEqual(sample_object.platform_accession_code, "hgu133a")
         self.assertEqual(sample_object.technology, "MICROARRAY")
 
         downloader_jobs = DownloaderJob.objects.all()
-        self.assertEqual(4, downloader_jobs.count())
+        self.assertEqual(46, downloader_jobs.count())
 
     @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_geo_survey_agilent(self, mock_send_task):
@@ -121,3 +124,8 @@ class SurveyTestCase(TransactionTestCase):
 
         downloader_jobs = DownloaderJob.objects.all()
         self.assertEqual(2, downloader_jobs.count())
+        
+    def test_get_pubmed_id_title(self):
+        """ We scrape PMIDs now. """
+        title = get_title_for_pubmed_id("22367537")
+        self.assertEqual('Sequencing of neuroblastoma identifies chromothripsis and defects in neuritogenesis genes.', title)

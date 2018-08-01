@@ -102,22 +102,35 @@ class SearchAndFilter(generics.ListAPIView):
 
     """
 
-    queryset = Experiment.public_objects.all()
+    queryset = Experiment.processed_public_objects.all()
+
     serializer_class = ExperimentSerializer
     pagination_class = LimitOffsetPagination
 
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
+
+    # via http://www.django-rest-framework.org/api-guide/filtering/#searchfilter
+    # '^' Starts-with search.
+    # '=' Exact matches.
+    # '@' Full-text search.
+    # '$' Regex search.
     search_fields = (   'title',
                         '@description',
                         '@accession_code',
                         '@protocol_description',
                         '@publication_title',
                         'publication_doi',
-                        'pubmed_id'
+                        'pubmed_id',
+                        '@submitter_institution',
+                        'experimentannotation__data'
                     )
-    filter_fields = ('has_publication', 'submitter_institution', 'technology',
-                     'source_first_published', 'organisms__name')
-
+    filter_fields = (   'has_publication', 
+                        'submitter_institution', 
+                        'technology',
+                        'source_first_published', 
+                        'organisms__name',
+                        'samples__platform_accession_code'
+                    )
 
     def list(self, request, *args, **kwargs):
         """ Adds counts on certain filter fields to result JSON."""
@@ -129,7 +142,6 @@ class SearchAndFilter(generics.ListAPIView):
         response.data['filters']['organism'] = {}
 
         qs = self.filter_queryset(self.get_queryset())
-
         techs = qs.values('technology').annotate(Count('technology', unique=True))
         for tech in techs:
             if not tech['technology'] or not tech['technology'].strip():
@@ -188,7 +200,7 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             token_id = self.request.data.get('token_id')
             try:
                 token = APIToken.objects.get(id=token_id, is_activated=True)
-            except Exception: # Generall APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
                 raise APIException("You must provide an active API token ID")
 
             if not already_processing:
@@ -218,6 +230,50 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             serializer.validated_data['data'] = old_data
             serializer.validated_data['aggregate_by'] = old_aggregate
         serializer.save()
+
+class DatasetStatsView(APIView):
+    """ Get stats for a given dataset. Ex:
+
+    {
+        "HOMO_SAPIENS": {
+            "num_experiments": 5,
+            "num_samples": 55 },
+        "GALLUS_GALLUS": {
+            "num_experiments": 5,
+            "num_samples": 55 },
+    }
+
+    """
+
+    def get(self, request, id):
+        
+        dataset = get_object_or_404(Dataset, id=id)
+        stats = {}
+
+        experiments = Experiment.objects.filter(accession_code__in=dataset.data.keys())
+        
+        # Find all the species for these experiments
+        for experiment in experiments:
+            species_names = experiment.organisms.values_list('name')
+            for species_name in species_names:
+                species = stats.get(species_name[0], {"num_experiments": 0, "num_samples": 0})
+                species['num_experiments'] = species['num_experiments'] + 1
+                stats[species_name[0]] = species
+
+        # Count the samples
+        all_sample_accessions = [value[0] for value in dataset.data.values()]
+        empty_species = []
+        for species in stats.keys():
+            samples = Sample.objects.filter(accession_code__in=all_sample_accessions, organism__name=species)
+            stats[species]['num_samples'] = len(samples)
+            if stats[species]['num_samples'] == 0:
+                empty_species.append(species)
+
+        # Delete empty associations
+        for species in empty_species:
+            del stats[species]
+
+        return Response(stats)
 
 class APITokenView(APIView):
     """
@@ -297,6 +353,7 @@ class SampleList(PaginatedAPIView):
     List all Samples.
 
     Pass in a list of pk to an ids query parameter to filter by id.
+    Can also accept a `dataset_id` field instead of a list of accession codes.
 
     Append the pk or accession_code to the end of this URL to see a detail view.
 
@@ -317,6 +374,12 @@ class SampleList(PaginatedAPIView):
         if accession_codes is not None:
             accession_codes = accession_codes.split(',')
             filter_dict['accession_code__in'] = accession_codes
+
+        dataset_id = filter_dict.pop('dataset_id', None)
+        if dataset_id:
+            dataset = get_object_or_404(Dataset, id=dataset_id)
+            # Python doesn't provide a prettier way of doing this that I know about.
+            filter_dict['accession_code__in'] = [item for sublist in dataset.data.values() for item in sublist]
 
         samples = Sample.public_objects.filter(**filter_dict)
         if order_by:

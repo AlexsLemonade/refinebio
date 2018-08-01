@@ -64,7 +64,6 @@ def _prepare_files(job_context: Dict) -> Dict:
                 with open(job_context["input_file_path"], 'w+', encoding='utf-8') as f:
                     f.seek(0, 0)
                     f.write('ID_REF\tVALUE' + '\n' + all_content)
-
             except ValueError:
                 # There is already a header row. Let's replace it with ID_Ref
                 with open(job_context["input_file_path"], 'r', encoding='utf-8') as f:
@@ -75,6 +74,12 @@ def _prepare_files(job_context: Dict) -> Dict:
                     f.seek(0, 0)
                     f.write('ID_REF\tVALUE' + '\n' + ("\n".join(all_content[1:])))
                 job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
+            except Exception as e:
+                logger.exception("Unable to read input file or header row.",
+                    input_file_path=job_context["input_file_path"])
+                job_context['job'].faiure_reason = str(e)
+                job_context['success'] = False
+                return job_context
         else:
             if job_context["is_illumina"]:
                 job_context['column_name'] = row[0]
@@ -106,7 +111,7 @@ def _convert_genes(job_context: Dict) -> Dict:
 def _convert_affy_genes(job_context: Dict) -> Dict:
     """ Convert to Ensembl genes if we can"""
 
-    gene_index_path = "/home/user/gene_indexes/" + job_context["internal_accession"] + ".tsv.gz"
+    gene_index_path = "/home/user/gene_indexes/" + job_context["internal_accession"] + ".tar.gz"
     if not os.path.exists(gene_index_path):
         logger.error("Missing gene index file for platform!",
             platform=job_context["internal_accession"],
@@ -234,8 +239,8 @@ def _create_result(job_context: Dict) -> Dict:
     result.commands.append(job_context['script_name'])
     result.is_ccdl = True
     result.pipeline = "Submitter-processed"  # TODO: should be removed
-    result.processor = Processor.objects.get(name=utils.ProcessorEnum.SUBMITTER_PROCESSED.value,
-                                             version=__version__)
+    # result.processor = Processor.objects.get(name=utils.ProcessorEnum.SUBMITTER_PROCESSED.value,
+    #                                          version=__version__)
     result.save()
     job_context['pipeline'].steps.append(result.id)
 

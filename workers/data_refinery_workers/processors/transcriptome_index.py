@@ -92,8 +92,8 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["success"] = True
     return job_context
 
-def _extract_assembly_version(job_context: Dict) -> Dict:
-    """Determine the Ensembl assembly version used for this index.
+def _extract_assembly_information(job_context: Dict) -> Dict:
+    """Determine the Ensembl assembly version and name used for this index.
 
     Ensembl will periodically release updated versions of the
     assemblies which are where the input files for this processor
@@ -101,7 +101,7 @@ def _extract_assembly_version(job_context: Dict) -> Dict:
     release versions, but we don't know which division these files
     came from so we can't just hit thier API again. Therefore, look at
     the URL we used to get the files because it contains the assembly
-    version.
+    version and name.
 
     I'll admit this isn't the most elegant solution, but since the
     transcriptome index's only database model is the OriginalFiles
@@ -110,7 +110,7 @@ def _extract_assembly_version(job_context: Dict) -> Dict:
     OriginalFile model.
 
     The URL path we're attempting follows this pattern (defined in the surveyor)
-    ftp://ftp.{url_root}/gtf/{species_sub_dir}/{filename_species}.{assembly}.{assembly_version}.gtf.gz
+    ftp://ftp.{url_root}/gtf/{species_sub_dir}/{filename_species}.{assembly_name}.{assembly_version}.gtf.gz
     and we are attempting to extract {assembly_version}.
     """
     original_files = job_context["original_files"]
@@ -120,6 +120,12 @@ def _extract_assembly_version(job_context: Dict) -> Dict:
             extensionless_url = og_file.source_url[:-7]
             version_start_index = extensionless_url.rfind(".") + 1
             job_context["assembly_version"] = extensionless_url[version_start_index:]
+
+            # Decrement the index to skip the period.
+            versionless_url = extensionless_url[:version_start_index-1]
+
+            assembly_name_start_index = versionless_url.rfind(".") + 1
+            job_context["assembly_name"] = versionless_url[assembly_name_start_index:]
 
     return job_context
 
@@ -305,8 +311,8 @@ def _populate_index_object(job_context: Dict) -> Dict:
 
     result = ComputationalResult()
     result.commands.append(job_context["salmon_formatted_command"])
-    result.processor = Processor.objects.get(name=utils.ProcessorEnum.TX_INDEX.value,
-                                             version=__version__)
+    # result.processor = Processor.objects.get(name=utils.ProcessorEnum.TX_INDEX.value,
+    #                                          version=__version__)
     result.is_ccdl = True
     result.time_start = job_context["time_start"]
     result.time_end = job_context["time_end"]
@@ -321,14 +327,14 @@ def _populate_index_object(job_context: Dict) -> Dict:
     computed_file.result = result
     computed_file.is_smashable = False
     computed_file.is_qc = False
-    #computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
-    # TODO here: delete local file after S3 sync
     computed_file.save()
+    job_context['computed_files'].append(computed_file)
 
     organism_object = Organism.get_object_for_name(job_context['organism_name'])
     index_object = OrganismIndex()
     index_object.organism = organism_object
     index_object.source_version = job_context["assembly_version"]
+    index_object.assembly_name = job_context["assembly_name"]
     index_object.salmon_version = job_context["salmon_version"]
     index_object.index_type = "TRANSCRIPTOME_" + job_context['length'].upper()
     index_object.result = result
@@ -367,7 +373,7 @@ def build_transcriptome_index(job_id: int, length="long") -> None:
                               [utils.start_job,
                                _compute_paths,
                                _prepare_files,
-                               _extract_assembly_version,
+                               _extract_assembly_information,
                                _process_gtf,
                                _create_index,
                                _zip_index,
