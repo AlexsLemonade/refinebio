@@ -273,11 +273,11 @@ class HarmonyTestCase(TestCase):
         """
 
         # Weird ones caused bugs
-        gse = GEOparse.get_GEO("GSE94532", destdir='/tmp')
+        gse = GEOparse.get_GEO("GSE94532", destdir='/tmp', silent=True)
         preprocessed_samples = preprocess_geo(gse.gsms.items())
 
         # Illumina
-        gse = GEOparse.get_GEO("GSE32628", destdir='/tmp')
+        gse = GEOparse.get_GEO("GSE32628", destdir='/tmp', silent=True)
 
         # GEO requires a small amount of preprocessing
         preprocessed_samples = preprocess_geo(gse.gsms.items())
@@ -291,18 +291,18 @@ class HarmonyTestCase(TestCase):
         self.assertTrue('subject' in harmonized[title].keys())
 
         # Agilent Two Color
-        gse = GEOparse.get_GEO("GSE93857", destdir='/tmp')
+        gse = GEOparse.get_GEO("GSE93857", destdir='/tmp', silent=True)
         preprocessed_samples = preprocess_geo(gse.gsms.items())
         harmonized = harmonize(preprocessed_samples)
 
-        gse = GEOparse.get_GEO("GSE103060", destdir='/tmp')
+        gse = GEOparse.get_GEO("GSE103060", destdir='/tmp', silent=True)
         preprocessed_samples = preprocess_geo(gse.gsms.items())
         harmonized = harmonize(preprocessed_samples)
 
     def test_geo_leg_cancer(self):
         """ Related: https://github.com/AlexsLemonade/refinebio/issues/165#issuecomment-383969447 """
 
-        gse = GEOparse.get_GEO("GSE32628", destdir='/tmp')
+        gse = GEOparse.get_GEO("GSE32628", destdir='/tmp', silent=True)
 
         # GEO requires a small amount of preprocessing
         preprocessed_samples = preprocess_geo(gse.gsms.items())
