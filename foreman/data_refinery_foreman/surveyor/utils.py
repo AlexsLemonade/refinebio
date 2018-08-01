@@ -47,7 +47,6 @@ def get_title_and_authors_for_pubmed_id(pmid):
     """ Given a PMID, return that PMID's (title, [authors]). """
 
     try:
-        # resp = requests.get("http://www.ncbi.nlm.nih.gov/pubmed/" + str(pmid), timeout=20)
         j_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=" + str(pmid) + "&retmode=json&tool=refinebio&email=hello@refine.bio"
         resp = requests.get(j_url, timeout=20)
         title = resp.json()['result'][str(pmid)]['title']
