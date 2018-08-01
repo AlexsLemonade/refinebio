@@ -111,7 +111,7 @@ def _convert_genes(job_context: Dict) -> Dict:
 def _convert_affy_genes(job_context: Dict) -> Dict:
     """ Convert to Ensembl genes if we can"""
 
-    gene_index_path = "/home/user/gene_indexes/" + job_context["internal_accession"] + ".tsv.gz"
+    gene_index_path = "/home/user/gene_indexes/" + job_context["internal_accession"] + ".tar.gz"
     if not os.path.exists(gene_index_path):
         logger.error("Missing gene index file for platform!",
             platform=job_context["internal_accession"],
