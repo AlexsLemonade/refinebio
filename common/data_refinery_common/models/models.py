@@ -309,6 +309,11 @@ class Experiment(models.Model):
         """ Returns a list of related pipelines """
         return [p for p in self.samples.values_list('platform_name', flat=True).distinct()]
 
+    @property
+    def pretty_platforms(self):
+        """ Returns a prettified list of related pipelines """
+        return list(set([p.pretty_platform for p in self.samples.exclude(platform_name__exact='')]))
+
     def get_processed_samples(self):
         return self.samples.filter(is_processed=True)
 
