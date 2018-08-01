@@ -107,8 +107,6 @@ resource "aws_lb" "data_refinery_api_load_balancer" {
   internal = false
   load_balancer_type = "network"
 
-  enable_deletion_protection = true
-
   # Only one subnet is allowed and the API lives in 1a.
   subnet_mapping {
     subnet_id = "${aws_subnet.data_refinery_1a.id}"
@@ -183,7 +181,7 @@ resource "aws_cloudfront_distribution" "static-distribution" {
 
   origin {
     domain_name = "${aws_s3_bucket.data-refinery-static.website_endpoint}"
-    origin_id = "data-refinery-circleci-staging"
+    origin_id = "data-refinery-${var.user}-${var.stage}"
 
     custom_origin_config {
       origin_protocol_policy = "http-only"
