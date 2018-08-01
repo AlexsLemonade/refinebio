@@ -200,13 +200,46 @@ for nomad_job_spec in $nomad_job_specs; do
     nomad run $nomad_job_spec
 done
 
-# Ensure the latest image version is being used for the API and the Foreman
-terraform taint aws_instance.api_server_1
+# Ensure the latest image version is being used for the Foreman
+terraform taint aws_instance.foreman_server_1
 
 # Remove the ingress config so the next `terraform apply` will remove
 # access for Circle.
 echo "Removing ingress.."
 rm ci_ingress.tf
 terraform apply -var-file=environments/$env.tfvars -auto-approve
+
+# We try to avoid rebuilding the API server because we can only run certbot
+# 5 times a week. Therefore we pull the newest image and restart the API
+# this way rather than by tainting the server like we do for foreman.
+chmod 600 data-refinery-key.pem
+API_IP_ADDRESS=$(terraform output -json api_server_1_ip | jq -c '.value' | tr -d '"')
+echo "Restarting API with latest image."
+
+ssh -o StrictHostKeyChecking=no \
+    -i data-refinery-key.pem \
+    ubuntu@$API_IP_ADDRESS  "docker pull $DOCKERHUB_REPO/$API_DOCKER_IMAGE"
+
+ssh -o StrictHostKeyChecking=no \
+    -i data-refinery-key.pem \
+    ubuntu@$API_IP_ADDRESS "docker rm -f dr_api"
+
+ssh -o StrictHostKeyChecking=no \
+    -i data-refinery-key.pem \
+    ubuntu@$API_IP_ADDRESS "docker run \
+       --env-file environment \
+       -e DATABASE_HOST \
+       -e DATABASE_NAME \
+       -e DATABASE_USER \
+       -e DATABASE_PASSWORD \
+       -v /tmp/volumes_static:/tmp/www/static \
+       --log-driver=awslogs \
+       --log-opt awslogs-region=$REGION \
+       --log-opt awslogs-group=data-refinery-log-group-$USER-$STAGE \
+       --log-opt awslogs-stream=log-stream-api-$USER-$STAGE \
+       -p 8081:8081 \
+       --name=dr_api \
+       -it -d $DOCKERHUB_REPO/$API_DOCKER_IMAGE /bin/sh -c /home/user/collect_and_run_uwsgi.sh"
+
 
 echo "Deploy completed successfully."

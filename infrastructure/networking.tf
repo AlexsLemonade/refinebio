@@ -107,8 +107,6 @@ resource "aws_lb" "data_refinery_api_load_balancer" {
   internal = false
   load_balancer_type = "network"
 
-  enable_deletion_protection = true
-
   # Only one subnet is allowed and the API lives in 1a.
   subnet_mapping {
     subnet_id = "${aws_subnet.data_refinery_1a.id}"
