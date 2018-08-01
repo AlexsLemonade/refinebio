@@ -11,6 +11,7 @@ import warnings
 from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
 from django.utils import timezone
+from django.conf import settings
 from typing import Dict
 
 import numpy as np
@@ -139,7 +140,7 @@ def _smash(job_context: Dict) -> Dict:
                     num_samples = num_samples + 1
                 except Exception as e:
                     unsmashable_files.append(computed_file_path)
-                    logger.exception("Unable to smash file", 
+                    logger.exception("Unable to smash file",
                         file=computed_file_path,
                         dataset_id=job_context['dataset'].id,
                         )
@@ -148,8 +149,8 @@ def _smash(job_context: Dict) -> Dict:
             job_context['all_frames'] = all_frames
 
             if len(all_frames) < 1:
-                logger.warning("Was told to smash a frame with no frames!", 
-                    key=key, 
+                logger.warning("Was told to smash a frame with no frames!",
+                    key=key,
                     input_files=str(input_files)
                 )
                 continue
@@ -306,7 +307,7 @@ def _notify(job_context: Dict) -> Dict:
     ##
     # SES
     ##
-    if job_context.get("upload", True):
+    if job_context.get("upload", True) and settings.RUNNING_IN_CLOUD:
 
         # Don't send an email if we don't have address.
         if job_context["dataset"].email_address:
