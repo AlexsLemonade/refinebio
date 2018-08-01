@@ -304,7 +304,7 @@ resource "aws_launch_configuration" "auto_client_configuration" {
 resource "aws_autoscaling_group" "clients" {
     name = "asg-clients-${var.user}-${var.stage}"
     max_size = "${var.max_clients}"
-    min_size = "1"
+    min_size = "0"
     health_check_grace_period = 300
     health_check_type = "EC2"
     desired_capacity = 1
