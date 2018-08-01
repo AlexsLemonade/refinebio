@@ -14,7 +14,7 @@ from data_refinery_foreman.surveyor.geo import (
     GeoSurveyor
 )
 from data_refinery_foreman.surveyor.utils import (
-    get_title_for_pubmed_id
+    get_title_and_authors_for_pubmed_id
 )
 
 
@@ -127,5 +127,6 @@ class SurveyTestCase(TransactionTestCase):
         
     def test_get_pubmed_id_title(self):
         """ We scrape PMIDs now. """
-        title = get_title_for_pubmed_id("22367537")
-        self.assertEqual('Sequencing of neuroblastoma identifies chromothripsis and defects in neuritogenesis genes.', title)
+        resp = get_title_and_authors_for_pubmed_id("22367537")
+        self.assertEqual(resp[0], 'Sequencing of neuroblastoma identifies chromothripsis and defects in neuritogenesis genes.')
+        self.assertEqual(resp[1], ['Molenaar JJ', 'Koster J', 'Zwijnenburg DA', 'van Sluis P', 'Valentijn LJ', 'van der Ploeg I', 'Hamdi M', 'van Nes J', 'Westerman BA', 'van Arkel J', 'Ebus ME', 'Haneveld F', 'Lakeman A', 'Schild L', 'Molenaar P', 'Stroeken P', 'van Noesel MM', 'Ora I', 'Santo EE', 'Caron HN', 'Westerhout EM', 'Versteeg R'])

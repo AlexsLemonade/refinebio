@@ -120,6 +120,7 @@ class SearchAndFilter(generics.ListAPIView):
                         '@protocol_description',
                         '@publication_title',
                         'publication_doi',
+                        'publication_authors',
                         'pubmed_id',
                         '@submitter_institution',
                         'experimentannotation__data'

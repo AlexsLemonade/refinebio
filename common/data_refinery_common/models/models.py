@@ -259,6 +259,7 @@ class Experiment(models.Model):
     has_publication = models.BooleanField(default=False)
     publication_title = models.TextField(default="")
     publication_doi = models.CharField(max_length=64, blank=True)
+    publication_authors = ArrayField(models.TextField(), default=[])
     pubmed_id = models.CharField(max_length=32, blank=True)
     source_first_published = models.DateTimeField(null=True)
     source_last_modified = models.DateTimeField(null=True)
