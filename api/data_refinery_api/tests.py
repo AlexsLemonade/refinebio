@@ -344,7 +344,7 @@ class APITestCases(APITestCase):
         self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(ex.platforms))
         self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(['AFFY', 'ILLUMINA']))
         self.assertEqual(response.json()['filters']['technology'], {'MICROARRAY': 2})
-        self.assertEqual(response.json()['filters']['publication'], {'has_publication': 0})
+        self.assertEqual(response.json()['filters']['publication'], {})
         self.assertEqual(response.json()['filters']['organism'], {'HOMO_SAPIENS': 2})
 
         response = self.client.get(reverse('search'),
