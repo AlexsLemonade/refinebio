@@ -212,9 +212,11 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     experiment_object.pubmed_id = idf_dict['PubMed ID']
                 experiment_object.has_publication = True
 
-            # Scrape publication title from Pubmed
-            if experiment_object.pubmed_id and not experiment_object.publication_title:
-                experiment_object.publication_title = utils.get_title_for_pubmed_id(experiment_object.pubmed_id)
+            # Scrape publication title and authorship from Pubmed
+            if experiment_object.pubmed_id:
+                pubmed_metadata = utils.get_title_and_authors_for_pubmed_id(experiment_object.pubmed_id)
+                experiment_object.publication_title = pubmed_metadata[0]
+                experiment_object.publication_authors = pubmed_metadata[1]
 
             experiment_object.save()
 

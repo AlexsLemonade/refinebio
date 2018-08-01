@@ -43,15 +43,19 @@ def flatten(d, parent_key='', sep='_'):
             items.append((new_key, v))
     return dict(items)
 
-def get_title_for_pubmed_id(pmid):
-    """ Given a PMID, return that PMID's title. """
+def get_title_and_authors_for_pubmed_id(pmid):
+    """ Given a PMID, return that PMID's (title, [authors]). """
 
-    title = ""
     try:
-        resp = requests.get("http://www.ncbi.nlm.nih.gov/pubmed/" + str(pmid), timeout=20)
-        title = resp.text.split('<h1>')[1].split('</h1>')[0].strip()
+        # resp = requests.get("http://www.ncbi.nlm.nih.gov/pubmed/" + str(pmid), timeout=20)
+        j_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=" + str(pmid) + "&retmode=json&tool=refinebio&email=hello@refine.bio"
+        resp = requests.get(j_url, timeout=20)
+        title = resp.json()['result'][str(pmid)]['title']
+        author_names = []
+        for author in resp.json()['result'][str(pmid)]['authors']:
+            author_names.append(author['name'])
+
+        return (title, author_names)
     except:
         # This is fine for a timeout
-        return ""
-
-    return title
+        return ("", [])
