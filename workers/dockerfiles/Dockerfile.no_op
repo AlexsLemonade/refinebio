@@ -29,6 +29,7 @@ RUN \
   libssl-dev \
   libcurl4-openssl-dev \
   curl \
+  unzip \
   wget && \
   rm -rf /var/lib/apt/lists/*
 
@@ -37,7 +38,12 @@ WORKDIR /home/user
 
 # Noop-specific requirements
 ENV R_LIBS "/usr/local/lib/R/site-library"
-COPY workers/gene_indexes gene_indexes/
+RUN mkdir -p gene_indexes
+WORKDIR /home/user/gene_indexes
+RUN curl -O https://zenodo.org/record/1322711/files/all_1532646318.zip
+RUN unzip *.zip
+RUN rm *.zip
+WORKDIR /home/user
 COPY workers/install_gene_convert.R .
 RUN Rscript install_gene_convert.R
 # End Noop-specific

@@ -573,6 +573,10 @@ class APITestCases(APITestCase):
         self.assertEqual(response.json()['HOMO_SAPIENS'], {'num_experiments': 1, 'num_samples': 1})
         self.assertEqual(len(response.json().keys()), 2)        
 
+        # Check that we can fetch these sample details via samples API
+        response = self.client.get(reverse('samples'), {'dataset_id': good_id})
+        self.assertEqual(response.json()['count'], 2)   
+
     @patch('raven.contrib.django.models.client')
     def test_sentry_middleware_ok(self, mock_client):
         # We don't even import raven if it's a good response.
