@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework_hstore.fields import HStoreField
 from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
 from data_refinery_common.models import (
     Experiment,
@@ -63,7 +62,6 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
 ##
 
 class ComputationalResultAnnotationSerializer(serializers.ModelSerializer):
-    data = HStoreField()
 
     class Meta:
         model = ComputationalResultAnnotation
@@ -136,7 +134,6 @@ class SampleSerializer(serializers.ModelSerializer):
                 )
 
 class SampleAnnotationSerializer(serializers.ModelSerializer):
-    data = HStoreField()
 
     class Meta:
         model = SampleAnnotation
@@ -222,7 +219,6 @@ class ExperimentSerializer(serializers.ModelSerializer):
                 )
 
 class ExperimentAnnotationSerializer(serializers.ModelSerializer):
-    data = HStoreField()
 
     class Meta:
         model = ExperimentAnnotation
