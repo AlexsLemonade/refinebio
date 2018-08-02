@@ -171,7 +171,7 @@ def _download_index(job_context: Dict) -> Dict:
             organism=job_context['organism'],
             processor_job=job_context["job_id"]
         )
-        job_context["failure_reason"] = "Missing transcriptome index."
+        job_context["job"].failure_reason = "Missing transcriptome index."
         job_context["success"] = False
         return job_context
 
