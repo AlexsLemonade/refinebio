@@ -1,0 +1,25 @@
+---  # "Tximport" processor
+
+# Operating system distribution (such as Ubuntu 16.04, CentOS 7.2, etc)
+os_distribution:   # DO NOT EDIT this line
+
+# OS-level packages (installed by OS package manager)
+os_pkg:
+  - python3
+  - python3-pip
+  - r-base
+
+# Python pip packages
+python:
+  - Django
+  - data-refinery-common
+  - numpy
+  - pandas
+
+# User-installed R packages
+R:
+  - BioConductor
+  - optparse
+  - readr
+  - rjson
+  - tximport
