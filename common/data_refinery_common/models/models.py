@@ -11,7 +11,7 @@ from datetime import datetime
 from functools import partial
 
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField, HStoreField, JSONField
+from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import transaction
 from django.db import models
 from django.utils import timezone
@@ -193,7 +193,7 @@ class SampleAnnotation(models.Model):
     sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
 
     # Properties
-    data = HStoreField(default={})
+    data = JSONField(default={})
     is_ccdl = models.BooleanField(default=False)
 
     # Common Properties
@@ -333,7 +333,7 @@ class ExperimentAnnotation(models.Model):
     experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
 
     # Properties
-    data = HStoreField(default={})
+    data = JSONField(default={})
     is_ccdl = models.BooleanField(default=False)
 
     # Common Properties
@@ -430,7 +430,7 @@ class ComputationalResultAnnotation(models.Model):
         ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
     # Properties
-    data = HStoreField(default={})
+    data = JSONField(default={})
     is_ccdl = models.BooleanField(default=True)
 
     # Common Properties
