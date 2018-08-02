@@ -105,7 +105,7 @@ def end_job(job_context: Dict, abort=False):
     # S3-sync Original Files
     for original_files in job_context['original_files']:
         # Ensure even distribution across S3 servers
-        nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8)) 
+        nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
         result = original_files.sync_to_s3(S3_BUCKET_NAME, nonce + "_" + original_files.filename)
         if result:
             original_files.delete_local_file()
@@ -113,7 +113,7 @@ def end_job(job_context: Dict, abort=False):
     # S3-sync Computed Files
     for computed_file in job_context['computed_files']:
         # Ensure even distribution across S3 servers
-        nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8)) 
+        nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
         result = computed_file.sync_to_s3(S3_BUCKET_NAME, nonce + "_" + computed_file.filename)
         if result:
             computed_file.delete_local_file()
@@ -290,6 +290,16 @@ class ProcessorEnum(Enum):
 
     # One processor in "Transcriptome Index" pipeline
     TX_INDEX = "Transcriptome Index"
+
+    @classmethod
+    def has_key(cls, key):
+        """Class method that tells whether a certain key exists."""
+        return key in cls.__members__
+
+    @classmethod
+    def has_value(cls, value):
+        """Class method that tells whether a certain value exists."""
+        return any(value == item.value for item in cls)
 
 
 def createTestProcessors():
