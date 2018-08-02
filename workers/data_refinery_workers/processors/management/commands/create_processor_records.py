@@ -19,6 +19,7 @@ def get_os_distro():
     "sw_vers" command to find its OS information.
     A more cross-platform solution is using "platform" module.
     """
+
     with open('/etc/issue') as distro_fh:
       return distro_fh.readline().strip('\l\n\\n ')
 
@@ -29,6 +30,7 @@ def get_os_pkgs(pkg_list):
     manager is Debian-based (dpkg/apt). It can be a nightmaire to support
     all different package managers on Linux.
     """
+
     pkg_info = dict()
     for pkg in pkg_list:
         process_done = subprocess.run(['dpkg-query', '--show', pkg],
@@ -92,6 +94,7 @@ def get_pip_pkgs(pkg_list):
     This approach launches the subprocess only once and (hopefully) saves some
     computational resource.
     """
+
     process_done = subprocess.run(['pip', 'freeze'],
                                   stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE)
@@ -118,9 +121,10 @@ def get_pip_pkgs(pkg_list):
 
 def get_bioc_version():
     """This function returns a string that is the version of "BioConductor"
-    package in R.  "BioConductor" package is special in R. It is NOT included
-    in the data frame returned by installed.packages().
+    package in R.  Note that "BioConductor" is special in that its package
+    info is NOT included in the data frame returned by installed.packages().
     """
+
     r_command = "tools:::.BioC_version_associated_with_R_version()"
     process_done = subprocess.run(['Rscript', '-e', r_command],
                                   stdout=subprocess.PIPE,
