@@ -6,6 +6,7 @@ in the range from start_accession to end_accession.
 import boto3
 import botocore
 import uuid
+import sys
 
 from django.core.management.base import BaseCommand
 from data_refinery_foreman.surveyor import surveyor
@@ -30,7 +31,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options["accession"] is None and options["file"] is None:
             logger.error("You must specify accession or input file.")
-            sys.exit(1) 
+            sys.exit(1)
         if options["file"]:
             if 's3://' in options["file"]:
                 bucket, key = parse_s3_url(options["file"])
@@ -53,4 +54,4 @@ class Command(BaseCommand):
                         print(e)
         else:
             surveyor.survey_sra_experiment(options["accession"])
-            sys.exit(0) 
+            sys.exit(0)

@@ -178,7 +178,7 @@ def retry_lost_downloader_jobs() -> None:
         try:
             job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
             # If the job is still pending, then it makes sense that it hasn't started.
-            if job_status is not "pending":
+            if job_status != "pending":
                 # However if it's not pending, then it may have
                 # started since our original query.
                 job.refresh_from_db()
@@ -297,7 +297,7 @@ def retry_lost_processor_jobs() -> None:
         try:
             job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
             # If the job is still pending, then it makes sense that it hasn't started.
-            if job_status is not "pending":
+            if job_status != "pending":
                 # However if it's not pending, then it may have
                 # started since our original query.
                 job.refresh_from_db()
