@@ -416,6 +416,7 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'id',
                     'data',
                     'aggregate_by',
+                    'scale_by',
                     'is_processing',
                     'is_processed',
                     'is_available',
