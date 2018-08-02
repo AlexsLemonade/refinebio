@@ -171,11 +171,13 @@ docker pull $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE
 # Migrate auth.
 docker run \
        --env-file prod_env \
+       --env RUNNING_IN_CLOUD=False \
        $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate auth
 
 # Apply general migrations.
 docker run \
        --env-file prod_env \
+       --env RUNNING_IN_CLOUD=False \
        $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate
 
 # Template the environment variables for production into the Nomad Job
