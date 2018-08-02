@@ -354,18 +354,23 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         # These are the Miniml/Soft/Matrix URLs that are always(?) provided.
         # GEO describes different types of data formatting as "families"
-        for family_url in [self.get_miniml_url(experiment_accession_code)]:
+        family_url = self.get_miniml_url(experiment_accession_code):
+        miniml_original_file = OriginalFile.objects.get_or_create(
+                source_url = family_url,
+                source_filename = family_url.split('/')[-1],
+                has_raw = sample_object.has_raw,
+                is_archive = True
+            )[0]
+        for sample_object in all_samples:
+            # We don't need a .txt if we have a .CEL
+            if sample_object.has_raw:
+                continue
+            OriginalFileSampleAssociation.objects.get_or_create(
+                sample=sample_object, original_file=miniml_original_file)
 
-            original_file = OriginalFile.objects.get_or_create(
-                    source_url = family_url,
-                    source_filename = family_url.split('/')[-1],
-                    has_raw = sample_object.has_raw,
-                    is_archive = True
-                )[0]
-
-            for sample_object in all_samples:
-                OriginalFileSampleAssociation.objects.get_or_create(
-                    sample=sample_object, original_file=original_file)
+        # Delete this Original file if it isn't being used.
+        if OriginalFileSampleAssociation.objects.filter(original_file=miniml_original_file).count() == 0:
+            miniml_original_file.delete()
 
         return experiment_object, all_samples
 
