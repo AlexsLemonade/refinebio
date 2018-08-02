@@ -364,6 +364,11 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 )[0]
 
             for sample_object in all_samples:
+
+                # We don't need a .txt if we have a .CEL
+                if sample_object.has_raw:
+                    continue
+
                 OriginalFileSampleAssociation.objects.get_or_create(
                     sample=sample_object, original_file=original_file)
 
