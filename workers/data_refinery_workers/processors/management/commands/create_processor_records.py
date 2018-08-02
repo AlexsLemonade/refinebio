@@ -1,3 +1,15 @@
+"""This management command requires three arguments:
+  * --processor: the ProcessorEnum key defined in processors/utils.py
+  * --yml-file: input YAML filename
+  * --docker-img: name of docker image that hosts the processor
+For example, the following command will create or update a Processor
+record for "Salmon Quant" processor:
+  python3 manage.py create_processor_records \
+    --processor SALMON_QUANT \
+    --yml-file ~/data_refinery_workers/processors/salmon_quant.yml \
+    --docker-img ccdlstaging/dr_salmon:latest
+"""
+
 import subprocess
 import sys
 import yaml
