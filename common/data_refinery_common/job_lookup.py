@@ -122,13 +122,6 @@ def determine_processor_pipeline(sample_object: Sample, original_file=None) -> P
     if not _is_platform_supported(sample_object.platform_accession_code):
         return ProcessorPipeline.NONE
 
-    # Optional explicit filetype checks
-    if original_file:
-        if original_file.filename[-3:].upper() == "CEL":
-            return ProcessorPipeline.AFFY_TO_PCL 
-        if original_file.filename[-3:].upper() == "TXT":
-            return ProcessorPipeline.NO_OP 
-
     if sample_object.technology == "MICROARRAY":
         if not sample_object.has_raw:
             return ProcessorPipeline.NO_OP
@@ -136,6 +129,12 @@ def determine_processor_pipeline(sample_object: Sample, original_file=None) -> P
             if sample_object.manufacturer == "ILLUMINA":
                 return ProcessorPipeline.ILLUMINA_TO_PCL
             elif sample_object.manufacturer == "AFFYMETRIX":
+                # Optional explicit filetype checks
+                if original_file:
+                    if original_file.filename[-3:].upper() == "CEL":
+                        return ProcessorPipeline.AFFY_TO_PCL 
+                    if original_file.filename[-3:].upper() == "TXT":
+                        return ProcessorPipeline.NO_OP
                 return ProcessorPipeline.AFFY_TO_PCL
             elif sample_object.manufacturer == "AGILENT":
                 # We currently aren't prepared to process Agilent because we don't have
