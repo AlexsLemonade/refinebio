@@ -351,7 +351,6 @@ def download_geo(job_id: int) -> None:
                 actual_file.filename = og_file['filename']
                 actual_file.calculate_size()
                 actual_file.calculate_sha1()
-
                 actual_file.has_raw = has_raw
                 actual_file.save()
 
