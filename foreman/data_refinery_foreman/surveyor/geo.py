@@ -354,7 +354,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         # These are the Miniml/Soft/Matrix URLs that are always(?) provided.
         # GEO describes different types of data formatting as "families"
-        family_url = self.get_miniml_url(experiment_accession_code):
+        family_url = self.get_miniml_url(experiment_accession_code)
         miniml_original_file = OriginalFile.objects.get_or_create(
                 source_url = family_url,
                 source_filename = family_url.split('/')[-1],
