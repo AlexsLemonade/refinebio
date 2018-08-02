@@ -1,0 +1,30 @@
+---  # "Submitter-processed" processor
+
+# Operating system distribution (such as Ubuntu 16.04, CentOS 7.2, etc)
+os_distribution:   # DO NOT EDIT this line
+
+# OS-level packages (installed by OS package manager)
+os_pkg:
+  - python3
+  - python3-pip
+  - r-base
+
+# Python pip packages
+python:
+  - Django
+  - data-refinery-common
+
+# User-installed R packages
+R:
+  - AnnotationDbi
+  - BioConductor
+  - tidyverse
+  - rlang
+  - illuminaHumanv1.db
+  - illuminaHumanv2.db
+  - illuminaHumanv3.db
+  - illuminaHumanv4.db
+  - illuminaMousev1.db
+  - illuminaMousev1p1.db
+  - illuminaMousev2.db
+  - illuminaRatv1.db
