@@ -180,7 +180,7 @@ else:
     raven_logger = logging.getLogger('raven.contrib.django.client.DjangoClient')
     raven_logger.setLevel(logging.CRITICAL)
 
-RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD')
+RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD') == "True"
 
 # XXX: Add this in Production!
 # REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = 'rest_framework.renderers.JSONRenderer'

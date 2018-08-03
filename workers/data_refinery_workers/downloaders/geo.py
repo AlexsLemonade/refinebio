@@ -448,9 +448,9 @@ def download_geo(job_id: int) -> None:
                      downloader_job=job_id)
     else:
         success = False
-        logger.debug("Unable to extract any files.",
-                     url,
-                     downloader_job=job_id)
+        logger.info("Unable to extract any files.",
+                    url,
+                    downloader_job=job_id)
         job.failure_reason = "Failed to extract any downloaded files."
 
     if success:

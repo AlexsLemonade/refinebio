@@ -136,4 +136,4 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD')
+RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD') == "True"
