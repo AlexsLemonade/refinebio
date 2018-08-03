@@ -73,7 +73,6 @@ def _prepare_files(job_context: Dict) -> Dict:
                 with open(job_context["input_file_path"], 'w+', encoding='utf-8') as f:
                     f.seek(0, 0)
                     f.write('ID_REF\tVALUE' + '\n' + ("\n".join(all_content[1:])))
-                job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
             except Exception as e:
                 logger.exception("Unable to read input file or header row.",
                     input_file_path=job_context["input_file_path"])
@@ -82,7 +81,35 @@ def _prepare_files(job_context: Dict) -> Dict:
                 return job_context
         else:
             if job_context["is_illumina"]:
-                job_context['column_name'] = row[0]
+                try:
+                    float(row[1])
+                    # If we're here, there's no header. We're gonna have to fudge it a little bit.
+
+                    # These exist, but they're too hard for us to handle right now.
+                    if len(row) > 3:
+                        e_msg = "We found an Illumina file to NO_OP that we're not set up to process yet. Tell Rich!"
+                        logger.error(e_msg,
+                            job_id = job_context["job"].pk,
+                            file=job_context["input_file_path"]
+                        )
+                        job_context['success'] = False
+                        job_context["job"].failure_reason = str(e)
+                        return job_context
+
+                    # Okay, there's no header so can just prepend to the file.
+                    with open(job_context["input_file_path"], 'r', encoding='utf-8') as f:
+                        all_content = f.read()
+                    job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
+                    with open(job_context["input_file_path"], 'w+', encoding='utf-8') as f:
+                        f.seek(0, 0)
+                        if len(row) == 2:
+                            f.write('Reporter Identifier\tVALUE' + '\n' + all_content)
+                        elif len(row) == 3:
+                            f.write('Reporter Identifier\tVALUE\tDetection Pval' + '\n' + all_content)
+
+                except ValueError:
+                    # Okay, there's a header column, we're good.
+                    job_context['column_name'] = row[0]
 
         # Platform
         job_context["platform"] = job_context["samples"][0].platform_accession_code
