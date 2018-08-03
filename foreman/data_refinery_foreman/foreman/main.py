@@ -106,7 +106,10 @@ def do_forever(min_loop_time: timedelta) -> Callable:
             while(True):
                 start_time = timezone.now()
 
-                function(*args, **kwargs)
+                try:
+                    function(*args, **kwargs)
+                except:
+                    logger.exception("Exception caught by Foreman while running " + function.__name__)
 
                 loop_time = timezone.now() - start_time
                 if loop_time < min_loop_time:
@@ -148,6 +151,8 @@ def retry_hung_downloader_jobs() -> None:
                     hung_jobs.append(job)
         except URLNotFoundNomadException:
             hung_jobs.append(job)
+        except Exception:
+            logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
 
     handle_downloader_jobs(hung_jobs)
 
@@ -187,6 +192,8 @@ def retry_lost_downloader_jobs() -> None:
                     lost_jobs.append(job)
         except URLNotFoundNomadException:
             lost_jobs.append(job)
+        except Exception:
+            logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
 
     handle_downloader_jobs(lost_jobs)
 
@@ -270,6 +277,8 @@ def retry_hung_processor_jobs() -> None:
                     hung_jobs.append(job)
         except URLNotFoundNomadException:
             hung_jobs.append(job)
+        except Exception:
+            logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
 
     if hung_jobs:
         logger.info(
@@ -306,6 +315,8 @@ def retry_lost_processor_jobs() -> None:
                     lost_jobs.append(job)
         except URLNotFoundNomadException:
             lost_jobs.append(job)
+        except Exception:
+            logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
 
     if lost_jobs:
         logger.info(

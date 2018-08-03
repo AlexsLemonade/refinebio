@@ -216,8 +216,8 @@ class ProcessedPublicObjectsManager(models.Manager):
     """
     def get_queryset(self):
         return super().get_queryset().filter(
-            is_public=True, 
-            samples__is_processed=True, 
+            is_public=True,
+            samples__is_processed=True,
             samples__is_public=True).distinct()
 
 
@@ -577,7 +577,7 @@ class OriginalFile(models.Model):
     def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
         """ Syncs this OriginalFile to AWS S3.
         """
-        if settings.RUNNING_IN_CLOUD:
+        if not settings.RUNNING_IN_CLOUD:
             return True
 
         self.s3_bucket = s3_bucket
@@ -629,7 +629,7 @@ class OriginalFile(models.Model):
         """ Downloads a file from S3 to the local file system.
         Returns the absolute file path.
         """
-        if settings.RUNNING_IN_CLOUD:
+        if not settings.RUNNING_IN_CLOUD:
             return self.absolute_file_path
 
         try:
@@ -653,7 +653,7 @@ class OriginalFile(models.Model):
 
     def delete_local_file(self):
         """ Deletes this file from the local file system."""
-        if settings.RUNNING_IN_CLOUD:
+        if not settings.RUNNING_IN_CLOUD:
             return
 
         try:
@@ -711,7 +711,7 @@ class ComputedFile(models.Model):
     def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
         """ Syncs a file to AWS S3.
         """
-        if settings.RUNNING_IN_CLOUD:
+        if not settings.RUNNING_IN_CLOUD:
             return True
 
         self.s3_bucket = s3_bucket
@@ -738,7 +738,7 @@ class ComputedFile(models.Model):
         """ Downloads a file from S3 to the local file system.
         Returns the absolute file path.
         """
-        if settings.RUNNING_IN_CLOUD and not force:
+        if not settings.RUNNING_IN_CLOUD and not force:
             return self.absolute_file_path
 
         try:
@@ -772,7 +772,7 @@ class ComputedFile(models.Model):
     def delete_local_file(self):
         """ Deletes a file from the path and actually removes it from the file system,
         resetting the is_downloaded flag to false. Can be refetched from source if needed. """
-        if settings.RUNNING_IN_CLOUD:
+        if not settings.RUNNING_IN_CLOUD:
             return
 
         try:
