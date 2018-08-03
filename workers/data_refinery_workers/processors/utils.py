@@ -135,66 +135,6 @@ def end_job(job_context: Dict, abort=False):
     return job_context
 
 
-def upload_processed_files(job_context: Dict) -> Dict:
-    """Uploads the processed files and removes the temp dir for the job.
-
-    If job_context contains a "files_to_upload" key then only those
-    files will be uploaded. Otherwise all files will be uploaded.
-    If job_context contains a "job_dir_prefix" key then that will be
-    passed through to the file methods as the `dir_name` parameter.
-    """
-    if "files_to_upload" in job_context:
-        files = job_context["files_to_upload"]
-    else:
-        files = File.objects.filter(batch__in=job_context["batches"])
-
-    if "job_dir_prefix" in job_context:
-        job_dir_prefix = job_context["job_dir_prefix"]
-    else:
-        job_dir_prefix = None
-
-    try:
-        for file in files:
-            file.upload_processed_file(job_dir_prefix)
-    except Exception:
-        logger.exception("Exception caught while uploading processed file %s",
-                         batch=files[0].batch.id,
-                         processor_job=job_context["job_id"])
-        job_context["job"].failure_reason = "Exception caught while uploading processed file."
-        job_context["success"] = False
-        return job_context
-    finally:
-        # Whether or not uploading was successful, the job is over so
-        # clean up the temp directory.
-        files[0].remove_temp_directory(job_dir_prefix)
-
-    return job_context
-
-
-def cleanup_raw_files(job_context: Dict) -> Dict:
-    """Tries to clean up raw files for the job.
-
-    If we fail to remove the raw files, the job is still done enough
-    to call a success, therefore we don't mark it as a failure.
-    However logging will be important so the problem can be
-    identified and the raw files cleaned up.
-    """
-    files = File.objects.filter(batch__in=job_context["batches"])
-    for file in files:
-        try:
-            file.remove_raw_files()
-        except:
-            # If we fail to remove the raw files, the job is still done
-            # enough to call a success. However logging will be important
-            # so the problem can be identified and the raw files cleaned up.
-            logger.exception("Exception caught while removing raw files %s",
-                             file.get_temp_pre_path(),
-                             batch=file.batch.id,
-                             processor_job=job_context["job_id"])
-
-    return job_context
-
-
 def run_pipeline(start_value: Dict, pipeline: List[Callable]):
     """Runs a pipeline of processor functions.
 

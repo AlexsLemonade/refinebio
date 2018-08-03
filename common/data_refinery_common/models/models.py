@@ -712,7 +712,7 @@ class ComputedFile(models.Model):
         """ Syncs a file to AWS S3.
         """
         if not settings.RUNNING_IN_CLOUD:
-            return True
+            return False
 
         self.s3_bucket = s3_bucket
         self.s3_key = s3_key
