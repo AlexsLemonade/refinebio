@@ -310,9 +310,15 @@ class Experiment(models.Model):
         See https://github.com/AlexsLemonade/refinebio-frontend/issues/211 for why this is needed.
         """
         fields = []
-        for sample in self.samples.all():
-            metadata = sample.to_metadata_dict()
-            fields += [k for k, v in metadata.items() if v and k not in fields]
+
+        possible_fields = ['title', 'accession_code', 'sex', 'age', 'specimen_part', 'genotype',
+                           'disease', 'disease_stage', 'cell_line', 'treatment', 'race', 'subject',
+                           'compound', 'time']
+
+        for field in possible_fields:
+            filter = {"age__isnull": True} if field == 'age' else {'%s__exact' % field: ''}
+            if len(self.samples.exclude(**filter)) > 0:
+                fields.append(field)
         return fields
 
     @property
