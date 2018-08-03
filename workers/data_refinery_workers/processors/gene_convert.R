@@ -119,5 +119,8 @@ message(head(converted_exprs))
 # Data here can have duplicate rows that need to be squished together (via mean/max/etc),
 # but this should be done at smash-time so that we can provide options on the squish method.
 
+# Except if the values themselves are the same
+converted_exprs <- converted_exprs[!duplicated(converted_exprs), ]
+
 # Save to output file
 write.table(converted_exprs, outFilePath, row.names=FALSE, col.names=TRUE, quote=FALSE, sep="\t")
