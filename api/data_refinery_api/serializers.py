@@ -194,6 +194,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
     platforms = serializers.ReadOnlyField()
     samples = serializers.StringRelatedField(many=True)
     pretty_platforms = serializers.ReadOnlyField()
+    sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
 
     class Meta:
         model = Experiment
@@ -215,7 +216,8 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'organisms',
                     'submitter_institution',
                     'created_at',
-                    'last_modified'
+                    'last_modified',
+                    'sample_metadata',
                 )
 
 class ExperimentAnnotationSerializer(serializers.ModelSerializer):
@@ -233,6 +235,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
     annotations = ExperimentAnnotationSerializer(many=True, source='experimentannotation_set')
     samples = SampleSerializer(many=True)
     organisms = OrganismSerializer(many=True)
+    sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
 
     class Meta:
         model = Experiment
@@ -257,6 +260,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
                     'last_modified',
                     'created_at',
                     'organisms',
+                    'sample_metadata',
                 )
 
 class PlatformSerializer(serializers.ModelSerializer):

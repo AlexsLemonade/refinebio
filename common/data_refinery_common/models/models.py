@@ -305,6 +305,16 @@ class Experiment(models.Model):
 
         return metadata
 
+    def get_sample_metadata_fields(self):
+        """ Get all metadata fields that are non-empty for at least one sample in the experiment.
+        See https://github.com/AlexsLemonade/refinebio-frontend/issues/211 for why this is needed.
+        """
+        fields = []
+        for sample in self.samples.all():
+            metadata = sample.to_metadata_dict()
+            fields += [k for k, v in metadata.items() if v and k not in fields]
+        return fields
+
     @property
     def platforms(self):
         """ Returns a list of related pipelines """
