@@ -82,7 +82,8 @@ message("Merging..")
 colnames(data)[1] <- detected_id
 
 converted_exprs <- index_data %>%  
-  dplyr::select(c("ENSEMBL", detected_id)) %>%  # sub "ENSEMBL" for "GENEID"
+  dplyr::select(c("ENSEMBL", detected_id)) %>%
+  dplyr::distinct() %>% 
   dplyr::inner_join(data, by = detected_id)
 
 converted_exprs <- converted_exprs %>%
@@ -92,9 +93,6 @@ message(head(converted_exprs))
 
 # Data here can have duplicate rows that need to be squished together (via mean/max/etc),
 # but this should be done at smash-time so that we can provide options on the squish method.
-
-# Except if the values themselves are the same
-converted_exprs <- converted_exprs[!duplicated(converted_exprs), ]
 
 # Save to output file
 write.table(converted_exprs, outFilePath, row.names=FALSE, col.names=TRUE, quote=FALSE, sep="\t")
