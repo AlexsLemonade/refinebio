@@ -104,7 +104,7 @@ class NOOPTestCase(TestCase):
         final_context = no_op.no_op_processor(job.pk)
         self.assertTrue(final_context['success'])
         self.assertTrue(os.path.exists(final_context['output_file_path']))
-        self.assertEqual(os.path.getsize(final_context['output_file_path']), 346325)
+        self.assertEqual(os.path.getsize(final_context['output_file_path']), 346535)
 
     @tag('no_op')
     def test_convert_processed_illumina(self):
