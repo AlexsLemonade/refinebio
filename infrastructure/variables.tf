@@ -116,11 +116,11 @@ variable "max_clients" {
 }
 
 variable "scale_up_threshold" {
-  default = "40"
+  default = "1"
 }
 
 variable "scale_down_threshold" {
-  default = "10"
+  default = "0"
 }
 
 variable "raven_dsn" {
