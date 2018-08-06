@@ -176,6 +176,10 @@ resource "aws_acm_certificate" "ssl-cert" {
   }
 }
 
+resource "aws_acm_certificate_validation" "ssl-cert" {
+  certificate_arn = "${aws_acm_certificate.ssl-cert.arn}"
+}
+
 resource "aws_cloudfront_distribution" "static-distribution" {
   aliases = ["${var.static_bucket_prefix == "dev" ? var.user : var.static_bucket_prefix}${var.static_bucket_root}"]
 
@@ -250,7 +254,7 @@ resource "aws_cloudfront_distribution" "static-distribution" {
 
   viewer_certificate {
     cloudfront_default_certificate = true
-    acm_certificate_arn = "${aws_acm_certificate.ssl-cert.arn}"
+    acm_certificate_arn = "${aws_acm_certificate_validation.ssl-cert.certificate_arn}"
     ssl_support_method = "sni-only"
   }
 }

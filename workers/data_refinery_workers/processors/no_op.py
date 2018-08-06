@@ -282,9 +282,10 @@ def _create_result(job_context: Dict) -> Dict:
         computed_file.result = result
         computed_file.is_smashable = True
         computed_file.is_qc = False
-        # computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
-        # TODO here: delete local file after S3 sync
         computed_file.save()
+
+        # utils.end_job will sync this to S3 for us.
+        job_context["computed_files"] = [computed_file]
     except Exception:
         logger.error("Exception caught while moving file %s",
                          raw_path,
