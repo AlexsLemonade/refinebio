@@ -348,7 +348,7 @@ class Processor(models.Model):
 
     class Meta:
         db_table = "processors"
-        unique_together = ('name', 'version')
+        unique_together = ('name', 'version', 'docker_image', environment)
 
     def __str__(self):
         return "Processor: %s (version: %s, docker_image: %s)" % (name, version, docker_image)
@@ -560,8 +560,8 @@ class OriginalFile(models.Model):
 
         try:
             S3.upload_file(
-                        self.absolute_file_path, 
-                        s3_bucket, 
+                        self.absolute_file_path,
+                        s3_bucket,
                         s3_key,
                         ExtraArgs={
                             'ACL': 'public-read',
@@ -609,7 +609,7 @@ class OriginalFile(models.Model):
 
         try:
             S3.download_file(
-                        self.s3_bucket, 
+                        self.s3_bucket,
                         self.s3_key,
                         self.absolute_file_path
                     )
@@ -694,8 +694,8 @@ class ComputedFile(models.Model):
 
         try:
             S3.upload_file(
-                        self.absolute_file_path, 
-                        s3_bucket, 
+                        self.absolute_file_path,
+                        s3_bucket,
                         s3_key,
                         ExtraArgs={
                             'ACL': 'public-read',
@@ -718,7 +718,7 @@ class ComputedFile(models.Model):
 
         try:
             S3.download_file(
-                        self.s3_bucket, 
+                        self.s3_bucket,
                         self.s3_key,
                         self.absolute_file_path
                     )

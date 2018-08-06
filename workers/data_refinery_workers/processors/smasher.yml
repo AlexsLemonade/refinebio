@@ -1,4 +1,4 @@
----  # "Illumina SCAN" processor
+---  # "Smasher" processor
 
 # Operating system distribution (such as Ubuntu 16.04, CentOS 7.2, etc)
 os_distribution:   # DO NOT EDIT this line
@@ -12,7 +12,6 @@ os_pkg:
 python:
   - Django
   - data-refinery-common
-  - matplotlib
   - numpy
   - pandas
   - sklearn

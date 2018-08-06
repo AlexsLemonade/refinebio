@@ -19,7 +19,7 @@ python:
 # User-installed R packages
 R:
   - AnnotationDbi
-  - BioConductor
+  - Bioconductor
   - limma
   - oligo
   - illuminaHumanv1.db
@@ -30,3 +30,9 @@ R:
   - illuminaMousev1p1.db
   - illuminaMousev2.db
   - illuminaRatv1.db
+
+# Fingerprints of selected files.
+# Filenames should be specified relative to the current directory, so
+# "illumina.R" refers to: workers/data_refinery_workers/processors/illumina.R
+checksum:
+  - illumina.R

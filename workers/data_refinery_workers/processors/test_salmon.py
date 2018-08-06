@@ -25,10 +25,6 @@ from data_refinery_common.models import (
 from data_refinery_workers.processors import salmon, utils
 
 
-def setUpModule():
-    utils.createTestProcessors()
-
-
 def prepare_job():
     pj = ProcessorJob()
     pj.pipeline_applied = "SALMON"
@@ -41,7 +37,8 @@ def prepare_job():
     samp.organism = c_elegans
     samp.save()
 
-    computational_result = ComputationalResult(processor=Processor.objects.first())
+    #computational_result = ComputationalResult(processor=Processor.objects.first())
+    computational_result = ComputationalResult(processor=utils.find_processor('SALMON_QUANT'))
     computational_result.save()
 
     organism_index = OrganismIndex()
