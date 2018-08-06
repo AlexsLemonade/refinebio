@@ -38,14 +38,14 @@ WORKDIR /home/user
 
 # Noop-specific requirements
 ENV R_LIBS "/usr/local/lib/R/site-library"
+COPY workers/install_gene_convert.R .
+RUN Rscript install_gene_convert.R
 RUN mkdir -p gene_indexes
 WORKDIR /home/user/gene_indexes
 RUN curl -O https://zenodo.org/record/1327563/files/all_1533307773.zip
 RUN unzip *.zip
 RUN rm *.zip
 WORKDIR /home/user
-COPY workers/install_gene_convert.R .
-RUN Rscript install_gene_convert.R
 # End Noop-specific
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
