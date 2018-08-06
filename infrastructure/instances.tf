@@ -235,42 +235,6 @@ data "template_file" "nomad_client_script_smusher" {
   }
 }
 
-# This instance will run the Nomad Client. We will eventually want
-# these to be spot instances, but it is much simpler operationally to
-# do it using a normal ec2 instance.
-resource "aws_instance" "nomad_client_1" {
-  ami = "${data.aws_ami.ubuntu.id}"
-  instance_type = "${var.client_instance_type}"
-  availability_zone = "${var.region}b"
-  vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
-  subnet_id = "${aws_subnet.data_refinery_1b.id}"
-  depends_on = ["aws_internet_gateway.data_refinery", "aws_instance.nomad_server_1"]
-  user_data = "${data.template_file.nomad_client_script_smusher.rendered}"
-  key_name = "${aws_key_pair.data_refinery.key_name}"
-
-  tags = {
-    Name = "nomad-client-1-${var.user}-${var.stage}"
-  }
-
-  # I think these are the defaults provided in terraform examples.
-  # They should be removed or revisited.
-  root_block_device = {
-    volume_type = "gp2"
-    volume_size = 100
-  }
-
-  ebs_block_device = {
-    device_name = "/dev/xvdcz"
-    volume_type = "gp2"
-    volume_size = 40
-  }
-}
-
-output "nomad_client_ip" {
-  value = "${aws_instance.nomad_client_1.public_ip}"
-}
-
 ##
 # Autoscaling
 ##
