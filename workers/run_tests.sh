@@ -216,6 +216,13 @@ if [[ -z $tag || $tag == "no_op" ]]; then
         wget -q -O "$no_test_raw_dir/$no_file6" \
              "$test_data_repo/$no_file6"
     fi
+    no_file7="GSM1089291-tbl-1-modified.txt"
+    if [ ! -e "$no_test_raw_dir/$no_file7" ]; then
+        mkdir -p $no_test_raw_dir
+        echo "Downloading NOOP file7."
+        wget -q -O "$no_test_raw_dir/$no_file7" \
+             "$test_data_repo/$no_file7"
+    fi
 fi
 
 if [[ -z $tag || $tag == "smasher" ]]; then

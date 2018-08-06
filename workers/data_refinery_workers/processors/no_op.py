@@ -93,7 +93,7 @@ def _prepare_files(job_context: Dict) -> Dict:
                             file=job_context["input_file_path"]
                         )
                         job_context['success'] = False
-                        job_context["job"].failure_reason = str(e)
+                        job_context["job"].failure_reason = str(e_msg)
                         return job_context
 
                     # Okay, there's no header so can just prepend to the file.
@@ -107,6 +107,7 @@ def _prepare_files(job_context: Dict) -> Dict:
                         elif len(row) == 3:
                             f.write('Reporter Identifier\tVALUE\tDetection Pval' + '\n' + all_content)
 
+                    job_context['column_name'] = 'Reporter Identifier'
                 except ValueError:
                     # Okay, there's a header column, we're good.
                     job_context['column_name'] = row[0]
