@@ -23,8 +23,8 @@ then
 fi
 
 # ------------
-master_check=$(git branch --contains tags/$CIRCLE_TAG | grep '^  master$')
-dev_check=$(git branch --contains tags/$CIRCLE_TAG | grep '^  dev$')
+master_check=$(git branch --contains tags/$CIRCLE_TAG | grep '^  master$' || true)
+dev_check=$(git branch --contains tags/$CIRCLE_TAG | grep '^  dev$' || true)
 
 if [[ ! -z $master_check ]]; then
     CIRCLE_BRANCH=master
