@@ -121,9 +121,14 @@ class SurveyTestCase(TestCase):
     @patch('data_refinery_foreman.foreman.main.send_job')
     @patch('data_refinery_foreman.foreman.main.Nomad')
     def test_retrying_hung_downloader_jobs(self, mock_nomad, mock_send_job):
-        mock_nomad.job = MagicMock()
-        mock_nomad.job.get_job = MagicMock()
-        mock_nomad.job.get_job.side_effect = lambda _: {"Status:" "dead"}
+        def mock_init_nomad(host, port=0, timeout=0):
+            ret_value = MagicMock()
+            ret_value.job = MagicMock()
+            ret_value.job.get_job = MagicMock()
+            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
+            return ret_value
+
+        mock_nomad.side_effect = mock_init_nomad
 
         job = self.create_downloader_job()
         job.start_time = timezone.now()
@@ -145,10 +150,45 @@ class SurveyTestCase(TestCase):
 
     @patch('data_refinery_foreman.foreman.main.send_job')
     @patch('data_refinery_foreman.foreman.main.Nomad')
+    def test_not_retrying_hung_downloader_jobs(self, mock_nomad, mock_send_job):
+        """Tests that we don't restart downloader jobs that are still running."""
+        def mock_init_nomad(host, port=0, timeout=0):
+            ret_value = MagicMock()
+            ret_value.job = MagicMock()
+            ret_value.job.get_job = MagicMock()
+            ret_value.job.get_job.side_effect = lambda _: {"Status": "running"}
+            return ret_value
+
+        mock_nomad.side_effect = mock_init_nomad
+
+        job = self.create_downloader_job()
+        job.start_time = timezone.now()
+        job.save()
+
+        # Just run it once, not forever so get the function that is
+        # decorated with @do_forever
+        main.retry_hung_downloader_jobs.__wrapped__()
+        self.assertEqual(len(mock_send_job.mock_calls), 0)
+
+        jobs = DownloaderJob.objects.order_by('id')
+        original_job = jobs[0]
+        self.assertFalse(original_job.retried)
+        self.assertEqual(original_job.num_retries, 0)
+        self.assertEqual(original_job.success, None)
+
+        self.assertEqual(jobs.count(), 1)
+
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    @patch('data_refinery_foreman.foreman.main.Nomad')
     def test_retrying_lost_downloader_jobs(self, mock_nomad, mock_send_job):
-        mock_nomad.job = MagicMock()
-        mock_nomad.job.get_job = MagicMock()
-        mock_nomad.job.get_job.side_effect = lambda _: {"Status:" "dead"}
+        def mock_init_nomad(host, port=0, timeout=0):
+            ret_value = MagicMock()
+            ret_value.job = MagicMock()
+            ret_value.job.get_job = MagicMock()
+            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
+            return ret_value
+
+        mock_nomad.side_effect = mock_init_nomad
 
         job = self.create_downloader_job()
         job.created_at = timezone.now()
@@ -167,6 +207,37 @@ class SurveyTestCase(TestCase):
 
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
+
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    @patch('data_refinery_foreman.foreman.main.Nomad')
+    def test_not_retrying_lost_downloader_jobs(self, mock_nomad, mock_send_job):
+        """Make sure that we don't retry downloader jobs we shouldn't."""
+        def mock_init_nomad(host, port=0, timeout=0):
+            ret_value = MagicMock()
+            ret_value.job = MagicMock()
+            ret_value.job.get_job = MagicMock()
+            ret_value.job.get_job.side_effect = lambda _: {"Status": "pending"}
+            return ret_value
+
+        mock_nomad.side_effect=mock_init_nomad
+
+        job = self.create_downloader_job()
+        job.created_at = timezone.now()
+        job.save()
+
+        # Just run it once, not forever so get the function that is
+        # decorated with @do_forever
+        main.retry_lost_downloader_jobs.__wrapped__()
+        self.assertEqual(len(mock_send_job.mock_calls), 0)
+
+        jobs = DownloaderJob.objects.order_by('id')
+        original_job = jobs[0]
+        self.assertFalse(original_job.retried)
+        self.assertEqual(original_job.num_retries, 0)
+        self.assertEqual(original_job.success, None)
+
+        # Make sure no additional job was created.
+        self.assertEqual(jobs.count(), 1)
 
     def create_processor_job(self):
         job = ProcessorJob(pipeline_applied="AFFY_TO_PCL",
@@ -265,9 +336,14 @@ class SurveyTestCase(TestCase):
     @patch('data_refinery_foreman.foreman.main.send_job')
     @patch('data_refinery_foreman.foreman.main.Nomad')
     def test_retrying_hung_processor_jobs(self, mock_nomad, mock_send_job):
-        mock_nomad.job = MagicMock()
-        mock_nomad.job.get_job = MagicMock()
-        mock_nomad.job.get_job.side_effect = lambda _: {"Status:" "dead"}
+        def mock_init_nomad(host, port=0, timeout=0):
+            ret_value = MagicMock()
+            ret_value.job = MagicMock()
+            ret_value.job.get_job = MagicMock()
+            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
+            return ret_value
+
+        mock_nomad.side_effect = mock_init_nomad
 
         job = self.create_processor_job()
         job.start_time = timezone.now()
@@ -289,10 +365,45 @@ class SurveyTestCase(TestCase):
 
     @patch('data_refinery_foreman.foreman.main.send_job')
     @patch('data_refinery_foreman.foreman.main.Nomad')
+    def test_not_retrying_hung_processor_jobs(self, mock_nomad, mock_send_job):
+        """Tests that we don't restart processor jobs that are still running."""
+        def mock_init_nomad(host, port=0, timeout=0):
+            ret_value = MagicMock()
+            ret_value.job = MagicMock()
+            ret_value.job.get_job = MagicMock()
+            ret_value.job.get_job.side_effect = lambda _: {"Status": "running"}
+            return ret_value
+
+        mock_nomad.side_effect = mock_init_nomad
+
+        job = self.create_processor_job()
+        job.start_time = timezone.now()
+        job.save()
+
+        # Just run it once, not forever so get the function that is
+        # decorated with @do_forever
+        main.retry_hung_processor_jobs.__wrapped__()
+        self.assertEqual(len(mock_send_job.mock_calls), 0)
+
+        jobs = ProcessorJob.objects.order_by('id')
+        original_job = jobs[0]
+        self.assertFalse(original_job.retried)
+        self.assertEqual(original_job.num_retries, 0)
+        self.assertEqual(original_job.success, None)
+
+        self.assertEqual(jobs.count(), 1)
+
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    @patch('data_refinery_foreman.foreman.main.Nomad')
     def test_retrying_lost_processor_jobs(self, mock_nomad, mock_send_job):
-        mock_nomad.job = MagicMock()
-        mock_nomad.job.get_job = MagicMock()
-        mock_nomad.job.get_job.side_effect = lambda _: {"Status:" "dead"}
+        def mock_init_nomad(host, port=0, timeout=0):
+            ret_value = MagicMock()
+            ret_value.job = MagicMock()
+            ret_value.job.get_job = MagicMock()
+            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
+            return ret_value
+
+        mock_nomad.side_effect = mock_init_nomad
 
         job = self.create_processor_job()
         job.created_at = timezone.now()
@@ -312,3 +423,34 @@ class SurveyTestCase(TestCase):
 
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
+
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    @patch('data_refinery_foreman.foreman.main.Nomad')
+    def test_not_retrying_lost_processor_jobs(self, mock_nomad, mock_send_job):
+        """Make sure that we don't retry processor jobs we shouldn't."""
+        def mock_init_nomad(host, port=0, timeout=0):
+            ret_value = MagicMock()
+            ret_value.job = MagicMock()
+            ret_value.job.get_job = MagicMock()
+            ret_value.job.get_job.side_effect = lambda _: {"Status": "pending"}
+            return ret_value
+
+        mock_nomad.side_effect = mock_init_nomad
+
+        job = self.create_processor_job()
+        job.created_at = timezone.now()
+        job.save()
+
+        # Just run it once, not forever so get the function that is
+        # decorated with @do_forever
+        main.retry_lost_processor_jobs.__wrapped__()
+        self.assertEqual(len(mock_send_job.mock_calls), 0)
+
+        jobs = ProcessorJob.objects.order_by('id')
+        original_job = jobs[0]
+        self.assertFalse(original_job.retried)
+        self.assertEqual(original_job.num_retries, 0)
+        self.assertEqual(original_job.success, None)
+
+        # Make sure no additional job was created.
+        self.assertEqual(jobs.count(), 1)

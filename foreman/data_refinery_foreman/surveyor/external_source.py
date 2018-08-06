@@ -60,10 +60,11 @@ class ExternalSourceSurveyor:
             # However, we do want to associate original_files with the
             # DownloaderJobs that will download them.
             if original_file.source_url in download_urls_with_jobs.keys():
-                asoc = DownloaderJobOriginalFileAssociation()
-                asoc.downloader_job = download_urls_with_jobs[original_file.source_url]
-                asoc.original_file = original_file
-                asoc.save()
+
+                asoc = DownloaderJobOriginalFileAssociation.objects.get_or_create(
+                    downloader_job = download_urls_with_jobs[original_file.source_url],
+                    original_file = original_file
+                )[0]
                 continue
 
             # There is already a downloader job associated with this file.
@@ -88,10 +89,10 @@ class ExternalSourceSurveyor:
                     downloader_job.accession_code = experiment.accession_code
                     downloader_job.save()
 
-                    asoc = DownloaderJobOriginalFileAssociation()
-                    asoc.downloader_job = downloader_job
-                    asoc.original_file = original_file
-                    asoc.save()
+                    asoc = DownloaderJobOriginalFileAssociation.objects.get_or_create(
+                        downloader_job = downloader_job,
+                        original_file = original_file
+                    )[0]
 
                 download_urls_with_jobs[original_file.source_url] = downloader_job
 
@@ -138,10 +139,10 @@ class ExternalSourceSurveyor:
 
             downloaded_urls = []
             for original_file in original_files:
-                asoc = DownloaderJobOriginalFileAssociation()
-                asoc.downloader_job = downloader_job
-                asoc.original_file = original_file
-                asoc.save()
+                asoc = DownloaderJobOriginalFileAssociation.objects.get_or_create(
+                    downloader_job = downloader_job,
+                    original_file = original_file
+                )[0]
 
                 downloaded_urls.append(original_file.source_url)
 

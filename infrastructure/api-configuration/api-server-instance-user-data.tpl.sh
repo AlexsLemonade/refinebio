@@ -34,8 +34,12 @@ if [[ ${stage} == "staging" || ${stage} == "prod" ]]; then
     # have configured to forward mail to the #teamcontact channel in
     # slack. Certbot will use it for "important account
     # notifications".
+    # In the future, if we ever hit the 5-deploy-a-week limit, changing one of these lines to:
+    # certbot --nginx -d api.staging.refine.bio -d api2.staging.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
+    # will circumvent certbot's limit because the 5-a-week limit only applies to the
+    # "same set of domains", so by changing that set we get to use the 20-a-week limit.
     if [[ ${stage} == "staging" ]]; then
-        certbot --nginx -d api.staging.refine.bio -d api2.staging.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
+        certbot --nginx -d api.staging.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
     elif [[ ${stage} == "prod" ]]; then
         certbot --nginx -d api.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
     fi
@@ -104,6 +108,7 @@ docker run \
        --log-opt awslogs-group=${log_group} \
        --log-opt awslogs-stream=${log_stream} \
        -p 8081:8081 \
+       --name=dr_api \
        -it -d ${dockerhub_repo}/${api_docker_image} /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
 
 

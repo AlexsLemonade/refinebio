@@ -108,7 +108,7 @@ def determine_downloader_task(sample_object: Sample) -> Downloaders:
     return Downloaders.NONE
 
 
-def determine_processor_pipeline(sample_object: Sample) -> ProcessorPipeline:
+def determine_processor_pipeline(sample_object: Sample, original_file=None) -> ProcessorPipeline:
     """Determines the appropriate processor pipeline for the sample.
 
     This is mostly a giant set of nested if statements, so describing
@@ -129,6 +129,12 @@ def determine_processor_pipeline(sample_object: Sample) -> ProcessorPipeline:
             if sample_object.manufacturer == "ILLUMINA":
                 return ProcessorPipeline.ILLUMINA_TO_PCL
             elif sample_object.manufacturer == "AFFYMETRIX":
+                # Optional explicit filetype checks
+                if original_file:
+                    if original_file.filename[-3:].upper() == "CEL":
+                        return ProcessorPipeline.AFFY_TO_PCL 
+                    if original_file.filename[-3:].upper() == "TXT":
+                        return ProcessorPipeline.NO_OP
                 return ProcessorPipeline.AFFY_TO_PCL
             elif sample_object.manufacturer == "AGILENT":
                 # We currently aren't prepared to process Agilent because we don't have

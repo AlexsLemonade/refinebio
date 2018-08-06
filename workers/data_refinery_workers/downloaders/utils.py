@@ -76,7 +76,7 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
         if '.processed' in original_file.source_url:
             pipeline_to_apply = ProcessorPipeline.NO_OP
         else:
-            pipeline_to_apply = determine_processor_pipeline(sample_object)
+            pipeline_to_apply = determine_processor_pipeline(sample_object, original_file)
 
         if pipeline_to_apply == ProcessorPipeline.NONE:
             logger.info("No valid processor pipeline found to apply to sample.",
@@ -112,9 +112,10 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
     Create a processor job and queue a processor task for sample related to an experiment.
 
     """
+
     # For anything that has raw data there should only be one Sample per OriginalFile
     sample_object = original_files[0].samples.first()
-    pipeline_to_apply = determine_processor_pipeline(sample_object)
+    pipeline_to_apply = determine_processor_pipeline(sample_object, original_files[0])
 
     if pipeline_to_apply == ProcessorPipeline.NONE:
         logger.info("No valid processor pipeline found to apply to sample.",

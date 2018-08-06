@@ -107,8 +107,6 @@ resource "aws_lb" "data_refinery_api_load_balancer" {
   internal = false
   load_balancer_type = "network"
 
-  enable_deletion_protection = true
-
   # Only one subnet is allowed and the API lives in 1a.
   subnet_mapping {
     subnet_id = "${aws_subnet.data_refinery_1a.id}"
@@ -178,12 +176,16 @@ resource "aws_acm_certificate" "ssl-cert" {
   }
 }
 
+resource "aws_acm_certificate_validation" "ssl-cert" {
+  certificate_arn = "${aws_acm_certificate.ssl-cert.arn}"
+}
+
 resource "aws_cloudfront_distribution" "static-distribution" {
   aliases = ["${var.static_bucket_prefix == "dev" ? var.user : var.static_bucket_prefix}${var.static_bucket_root}"]
 
   origin {
     domain_name = "${aws_s3_bucket.data-refinery-static.website_endpoint}"
-    origin_id = "data-refinery-circleci-staging"
+    origin_id = "data-refinery-${var.user}-${var.stage}"
 
     custom_origin_config {
       origin_protocol_policy = "http-only"
@@ -252,7 +254,7 @@ resource "aws_cloudfront_distribution" "static-distribution" {
 
   viewer_certificate {
     cloudfront_default_certificate = true
-    acm_certificate_arn = "${aws_acm_certificate.ssl-cert.arn}"
+    acm_certificate_arn = "${aws_acm_certificate_validation.ssl-cert.certificate_arn}"
     ssl_support_method = "sni-only"
   }
 }

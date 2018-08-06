@@ -94,7 +94,7 @@ resource "aws_s3_bucket" "data_refinery_transcriptome_index_bucket" {
 }
 
 resource "aws_s3_bucket" "data-refinery-static-access-logs" {
-  bucket = "data-refinery-static-access-logs"
+  bucket = "data-refinery-static-access-logs-${var.user}-${var.stage}"
 
   tags {
     Name = "data-refinery-static-access-logs-${var.user}-${var.stage}"

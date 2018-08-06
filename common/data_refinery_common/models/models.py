@@ -11,7 +11,7 @@ from datetime import datetime
 from functools import partial
 
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField, HStoreField, JSONField
+from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import transaction
 from django.db import models
 from django.utils import timezone
@@ -127,7 +127,7 @@ class Sample(models.Model):
         metadata = {}
         metadata['title'] = self.title
         metadata['accession_code'] = self.accession_code
-        metadata['organism'] = self.organism.name
+        metadata['organism'] = self.organism.name if self.organism else None
         metadata['source_archive_url'] = self.source_archive_url
         metadata['sex'] = self.sex
         metadata['age'] = self.age or ''
@@ -193,7 +193,7 @@ class SampleAnnotation(models.Model):
     sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
 
     # Properties
-    data = HStoreField(default={})
+    data = JSONField(default={})
     is_ccdl = models.BooleanField(default=False)
 
     # Common Properties
@@ -210,6 +210,17 @@ class SampleAnnotation(models.Model):
         return super(SampleAnnotation, self).save(*args, **kwargs)
 
 
+class ProcessedPublicObjectsManager(models.Manager):
+    """
+    Only returns Experiments that are is_public and have related is_processed Samples.
+    """
+    def get_queryset(self):
+        return super().get_queryset().filter(
+            is_public=True,
+            samples__is_processed=True,
+            samples__is_public=True).distinct()
+
+
 class Experiment(models.Model):
     """ An Experiment or Study """
 
@@ -223,6 +234,7 @@ class Experiment(models.Model):
     # Managers
     objects = models.Manager()
     public_objects = PublicObjectsManager()
+    processed_public_objects = ProcessedPublicObjectsManager()
 
     # Relations
     samples = models.ManyToManyField('Sample', through='ExperimentSampleAssociation')
@@ -247,6 +259,7 @@ class Experiment(models.Model):
     has_publication = models.BooleanField(default=False)
     publication_title = models.TextField(default="")
     publication_doi = models.CharField(max_length=64, blank=True)
+    publication_authors = ArrayField(models.TextField(), default=[])
     pubmed_id = models.CharField(max_length=32, blank=True)
     source_first_published = models.DateTimeField(null=True)
     source_last_modified = models.DateTimeField(null=True)
@@ -292,10 +305,33 @@ class Experiment(models.Model):
 
         return metadata
 
+    def get_sample_metadata_fields(self):
+        """ Get all metadata fields that are non-empty for at least one sample in the experiment.
+        See https://github.com/AlexsLemonade/refinebio-frontend/issues/211 for why this is needed.
+        """
+        fields = []
+
+        possible_fields = ['sex', 'age', 'specimen_part', 'genotype', 'disease', 'disease_stage',
+                           'cell_line', 'treatment', 'race', 'subject', 'compound', 'time']
+
+        for field in possible_fields:
+            filter = {"age__isnull": True} if field == 'age' else {'%s__exact' % field: ''}
+            if len(self.samples.exclude(**filter)) > 0:
+                fields.append(field)
+        return fields
+
     @property
     def platforms(self):
         """ Returns a list of related pipelines """
         return [p for p in self.samples.values_list('platform_name', flat=True).distinct()]
+
+    @property
+    def pretty_platforms(self):
+        """ Returns a prettified list of related pipelines """
+        return list(set([p.pretty_platform for p in self.samples.exclude(platform_name__exact='')]))
+
+    def get_processed_samples(self):
+        return self.samples.filter(is_processed=True)
 
 class ExperimentAnnotation(models.Model):
     """ Semi-standard information associated with an Experiment """
@@ -312,7 +348,7 @@ class ExperimentAnnotation(models.Model):
     experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
 
     # Properties
-    data = HStoreField(default={})
+    data = JSONField(default={})
     is_ccdl = models.BooleanField(default=False)
 
     # Common Properties
@@ -329,7 +365,7 @@ class ExperimentAnnotation(models.Model):
         return super(ExperimentAnnotation, self).save(*args, **kwargs)
 
 class Pipeline(models.Model):
-    "Pipeline that is associated with a series of ComputationalResult records."""
+    """Pipeline that is associated with a series of ComputationalResult records."""
 
     name = models.CharField(max_length=255)
     steps = ArrayField(models.IntegerField(), default=[])
@@ -351,7 +387,7 @@ class Processor(models.Model):
         unique_together = ('name', 'version', 'docker_image', environment)
 
     def __str__(self):
-        return "Processor: %s (version: %s, docker_image: %s)" % (name, version, docker_image)
+        return "Processor: %s (version: %s, docker_image: %s)" % (self.name, self.version, self.docker_image)
 
 
 class ComputationalResult(models.Model):
@@ -409,7 +445,7 @@ class ComputationalResultAnnotation(models.Model):
         ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
     # Properties
-    data = HStoreField(default={})
+    data = JSONField(default={})
     is_ccdl = models.BooleanField(default=True)
 
     # Common Properties
@@ -460,7 +496,11 @@ class OrganismIndex(models.Model):
     # http://ensemblgenomes.org/info/about/release_cycle
     # Determined by hitting:
     # http://rest.ensembl.org/info/software?content-type=application/json
-    source_version = models.CharField(max_length=255, default="92")
+    source_version = models.CharField(max_length=255, default="93")
+
+    # The name of the genome assembly used which corresponds to 'GRCh38' in:
+    # ftp://ftp.ensembl.org/pub/release-93/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+    assembly_name = models.CharField(max_length=255, default="UNKNOWN")
 
     # This matters, for instance salmon 0.9.0 indexes don't work with 0.10.0
     salmon_version = models.CharField(max_length=255, default="0.9.1")
@@ -552,7 +592,7 @@ class OriginalFile(models.Model):
     def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
         """ Syncs this OriginalFile to AWS S3.
         """
-        if settings.TESTING:
+        if not settings.RUNNING_IN_CLOUD:
             return True
 
         self.s3_bucket = s3_bucket
@@ -604,7 +644,7 @@ class OriginalFile(models.Model):
         """ Downloads a file from S3 to the local file system.
         Returns the absolute file path.
         """
-        if settings.TESTING:
+        if not settings.RUNNING_IN_CLOUD:
             return self.absolute_file_path
 
         try:
@@ -628,7 +668,7 @@ class OriginalFile(models.Model):
 
     def delete_local_file(self):
         """ Deletes this file from the local file system."""
-        if settings.TESTING:
+        if not settings.RUNNING_IN_CLOUD:
             return
 
         try:
@@ -686,8 +726,8 @@ class ComputedFile(models.Model):
     def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
         """ Syncs a file to AWS S3.
         """
-        if settings.TESTING:
-            return True
+        if not settings.RUNNING_IN_CLOUD:
+            return False
 
         self.s3_bucket = s3_bucket
         self.s3_key = s3_key
@@ -713,7 +753,7 @@ class ComputedFile(models.Model):
         """ Downloads a file from S3 to the local file system.
         Returns the absolute file path.
         """
-        if settings.TESTING and not force:
+        if not settings.RUNNING_IN_CLOUD and not force:
             return self.absolute_file_path
 
         try:
@@ -747,7 +787,7 @@ class ComputedFile(models.Model):
     def delete_local_file(self):
         """ Deletes a file from the path and actually removes it from the file system,
         resetting the is_downloaded flag to false. Can be refetched from source if needed. """
-        if settings.TESTING:
+        if not settings.RUNNING_IN_CLOUD:
             return
 
         try:
@@ -880,6 +920,13 @@ class Dataset(models.Model):
             return True
         else:
             return False
+
+    def s3_url(self):
+        """ Render the resulting S3 URL """
+        if (self.s3_key) and (self.s3_bucket):
+            return "https://s3.amazonaws.com/" + self.s3_bucket + "/" + self.s3_key
+        else:
+            return None
 
 class APIToken(models.Model):
     """ Required for starting a smash job """

@@ -112,7 +112,7 @@ resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm_up" {
 
 resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm_down" {
     alarm_name = "nomad-queue-length-alarm-down-${var.user}-${var.stage}"
-    comparison_operator = "LessThanThreshold"
+    comparison_operator = "LessThanOrEqualToThreshold"
     evaluation_periods = "2"
     metric_name = "NomadQueueLength"
     namespace = "${var.user}-${var.stage}"
