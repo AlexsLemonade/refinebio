@@ -11,8 +11,8 @@ source ~/refinebio/common.sh
 # However it cannot be on both master and dev because merges create new commits.
 # Therefore check to see if either master or dev show up in the list
 # of branches containing that tag.
-master_check=$(git branch --contains tags/$CIRCLE_TAG | grep '^  master$')
-dev_check=$(git branch --contains tags/$CIRCLE_TAG | grep '^  dev$')
+master_check=$(git branch --contains tags/$CIRCLE_TAG | grep '^  master$' || true)
+dev_check=$(git branch --contains tags/$CIRCLE_TAG | grep '^  dev$' || true)
 
 
 if [[ ! -z $master_check ]]; then
