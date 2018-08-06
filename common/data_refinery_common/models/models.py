@@ -311,9 +311,8 @@ class Experiment(models.Model):
         """
         fields = []
 
-        possible_fields = ['title', 'accession_code', 'sex', 'age', 'specimen_part', 'genotype',
-                           'disease', 'disease_stage', 'cell_line', 'treatment', 'race', 'subject',
-                           'compound', 'time']
+        possible_fields = ['sex', 'age', 'specimen_part', 'genotype', 'disease', 'disease_stage',
+                           'cell_line', 'treatment', 'race', 'subject', 'compound', 'time']
 
         for field in possible_fields:
             filter = {"age__isnull": True} if field == 'age' else {'%s__exact' % field: ''}
