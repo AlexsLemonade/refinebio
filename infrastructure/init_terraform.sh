@@ -11,6 +11,9 @@ else
     STAGE=$TF_VAR_stage
 fi
 
+# Force copy will allow us to get past the prompt asking if we want to
+# switch to the remote backend.
 terraform init \
+    -force-copy \
     -backend-config="bucket=refinebio-tfstate-deploy-$STAGE" \
     -backend-config="key=terraform-${TF_VAR_user}.tfstate"
