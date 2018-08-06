@@ -120,7 +120,7 @@ def _detect_columns(job_context: Dict) -> Dict:
 
         # First the probe ID column
         if headers[predicted_header].upper() not in ['ID_REF', 'PROBE_ID', "IDREF", "PROBEID"]:
-            job_context["job"].failure_reason = ("Could not find any ID column in headers " 
+            job_context["job"].failure_reason = ("Could not find any ID column in headers "
                                 + str(headers) + " for file " + job_context["input_file_path"])
             job_context["success"] = False
             return job_context
@@ -320,8 +320,15 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
     result.pipeline = "Illumina SCAN"  # TODO: should be removed
-    # result.processor = Processor.objects.get(name=utils.ProcessorEnum.ILLUMINA_SCAN.value,
-    #                                          version=__version__)
+    try:
+        result.processor = utils.find_processor("ILLUMINA_SCAN")
+    except Exception as e:
+        err_str = "Failed to set processor: %s" % e
+        logger.error(err_str)
+        job_context["job"].failure_reason = err_str
+        job_context["success"] = False
+        return job_context
+
     result.save()
     job_context['pipeline'].steps.append(result.id)
 

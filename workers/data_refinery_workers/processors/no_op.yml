@@ -17,7 +17,7 @@ python:
 # User-installed R packages
 R:
   - AnnotationDbi
-  - BioConductor
+  - Bioconductor
   - tidyverse
   - rlang
   - illuminaHumanv1.db
@@ -28,3 +28,7 @@ R:
   - illuminaMousev1p1.db
   - illuminaMousev2.db
   - illuminaRatv1.db
+
+# Any other stuff
+other:
+  - zenodo_url

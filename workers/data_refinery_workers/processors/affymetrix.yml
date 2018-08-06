@@ -20,8 +20,7 @@ R:
   - affy
   - affyio
   - AnnotationDbi
-  - Biobase
-  - BioConductor
+  - Bioconductor
   - Brainarray
   - limma
   - oligo

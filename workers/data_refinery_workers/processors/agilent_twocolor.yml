@@ -18,5 +18,5 @@ python:
 
 # User-installed R packages
 R:
-  - BioConductor
+  - Bioconductor
   - SCAN.UPC

@@ -160,8 +160,15 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
     result.pipeline = "Affymetrix SCAN"  # TODO: should be removed
-    # result.processor = Processor.objects.get(name=utils.ProcessorEnum.AFFYMETRIX_SCAN.value,
-    #                                          version=__version__)
+    try:
+        result.processor = utils.find_processor("AFFYMETRIX_SCAN")
+    except Exception as e:
+        err_str = "Failed to set processor: %s" % e
+        logger.error(err_str)
+        job_context["job"].failure_reason = err_str
+        job_context["success"] = False
+        return job_context
+
     result.save()
     job_context['pipeline'].steps.append(result.id)
 
