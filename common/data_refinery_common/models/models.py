@@ -127,7 +127,7 @@ class Sample(models.Model):
         metadata = {}
         metadata['title'] = self.title
         metadata['accession_code'] = self.accession_code
-        metadata['organism'] = self.organism.name
+        metadata['organism'] = self.organism.name if self.organism else None
         metadata['source_archive_url'] = self.source_archive_url
         metadata['sex'] = self.sex
         metadata['age'] = self.age or ''
@@ -304,6 +304,21 @@ class Experiment(models.Model):
             metadata['source_last_modified'] = ''
 
         return metadata
+
+    def get_sample_metadata_fields(self):
+        """ Get all metadata fields that are non-empty for at least one sample in the experiment.
+        See https://github.com/AlexsLemonade/refinebio-frontend/issues/211 for why this is needed.
+        """
+        fields = []
+
+        possible_fields = ['sex', 'age', 'specimen_part', 'genotype', 'disease', 'disease_stage',
+                           'cell_line', 'treatment', 'race', 'subject', 'compound', 'time']
+
+        for field in possible_fields:
+            filter = {"age__isnull": True} if field == 'age' else {'%s__exact' % field: ''}
+            if len(self.samples.exclude(**filter)) > 0:
+                fields.append(field)
+        return fields
 
     @property
     def platforms(self):
