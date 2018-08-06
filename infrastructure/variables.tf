@@ -116,11 +116,11 @@ variable "max_clients" {
 }
 
 variable "scale_up_threshold" {
-  default = "40"
+  default = "1"
 }
 
 variable "scale_down_threshold" {
-  default = "10"
+  default = "0"
 }
 
 variable "raven_dsn" {
@@ -207,6 +207,8 @@ output "environment_variables" {
       value = "${var.foreman_docker_image}"},
     {name = "SMASHER_DOCKER_IMAGE"
       value = "${var.smasher_docker_image}"},
+    {name = "API_DOCKER_IMAGE"
+      value = "${var.api_docker_image}"},
     {name = "NOMAD_HOST"
       value = "${aws_instance.nomad_server_1.private_ip}"},
     {name = "NOMAD_PUBLIC_HOST"

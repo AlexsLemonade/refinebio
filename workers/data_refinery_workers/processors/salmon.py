@@ -125,6 +125,16 @@ def _determine_index_length(job_context: Dict) -> Dict:
                     number_of_reads += 1
                 counter += 1
 
+    if number_of_reads == 0:
+        logger.error("Unable to determine number_of_reads for job.",
+            input_file_1=job_context["input_file_path"],
+            input_file_2=job_context["input_file_path_2"],
+            job_id=job_context['job'].id
+        )
+        job_context['job'].failure_reason = "Unable to determine number_of_reads."
+        job_context['success'] = False
+        return job_context
+
     index_length_raw = total_base_pairs / number_of_reads
 
     # Put the raw index length into the job context in a new field for regression testing purposes
@@ -161,7 +171,7 @@ def _download_index(job_context: Dict) -> Dict:
             organism=job_context['organism'],
             processor_job=job_context["job_id"]
         )
-        job_context["failure_reason"] = "Missing transcriptome index."
+        job_context["job"].failure_reason = "Missing transcriptome index."
         job_context["success"] = False
         return job_context
 

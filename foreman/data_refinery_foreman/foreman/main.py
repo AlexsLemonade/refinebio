@@ -106,7 +106,10 @@ def do_forever(min_loop_time: timedelta) -> Callable:
             while(True):
                 start_time = timezone.now()
 
-                function(*args, **kwargs)
+                try:
+                    function(*args, **kwargs)
+                except:
+                    logger.exception("Exception caught by Foreman while running " + function.__name__)
 
                 loop_time = timezone.now() - start_time
                 if loop_time < min_loop_time:
@@ -148,6 +151,8 @@ def retry_hung_downloader_jobs() -> None:
                     hung_jobs.append(job)
         except URLNotFoundNomadException:
             hung_jobs.append(job)
+        except Exception:
+            logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
 
     handle_downloader_jobs(hung_jobs)
 
@@ -178,7 +183,7 @@ def retry_lost_downloader_jobs() -> None:
         try:
             job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
             # If the job is still pending, then it makes sense that it hasn't started.
-            if job_status is not "pending":
+            if job_status != "pending":
                 # However if it's not pending, then it may have
                 # started since our original query.
                 job.refresh_from_db()
@@ -187,6 +192,8 @@ def retry_lost_downloader_jobs() -> None:
                     lost_jobs.append(job)
         except URLNotFoundNomadException:
             lost_jobs.append(job)
+        except Exception:
+            logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
 
     handle_downloader_jobs(lost_jobs)
 
@@ -238,7 +245,12 @@ def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
 def retry_failed_processor_jobs() -> None:
     """Handle processor jobs that were marked as a failure."""
     failed_jobs = ProcessorJob.objects.filter(success=False, retried=False)
-    handle_processor_jobs(failed_jobs)
+    if failed_jobs:
+        logger.info(
+            "Handling failed (explicitly-marked-as-failure) jobs!",
+            jobs=failed_jobs
+        )
+        handle_processor_jobs(failed_jobs)
 
 
 @do_forever(MIN_LOOP_TIME)
@@ -265,8 +277,15 @@ def retry_hung_processor_jobs() -> None:
                     hung_jobs.append(job)
         except URLNotFoundNomadException:
             hung_jobs.append(job)
+        except Exception:
+            logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
 
-    handle_processor_jobs(hung_jobs)
+    if hung_jobs:
+        logger.info(
+            "Handling hung (started-but-never-finished) jobs!",
+            jobs=hung_jobs
+        )
+        handle_processor_jobs(hung_jobs)
 
 
 @do_forever(MIN_LOOP_TIME)
@@ -287,7 +306,7 @@ def retry_lost_processor_jobs() -> None:
         try:
             job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
             # If the job is still pending, then it makes sense that it hasn't started.
-            if job_status is not "pending":
+            if job_status != "pending":
                 # However if it's not pending, then it may have
                 # started since our original query.
                 job.refresh_from_db()
@@ -296,8 +315,15 @@ def retry_lost_processor_jobs() -> None:
                     lost_jobs.append(job)
         except URLNotFoundNomadException:
             lost_jobs.append(job)
+        except Exception:
+            logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
 
-    handle_processor_jobs(lost_jobs)
+    if lost_jobs:
+        logger.info(
+            "Handling lost (never-started) jobs!",
+            jobs=lost_jobs
+        )
+        handle_processor_jobs(lost_jobs)
 
 
 def monitor_jobs():

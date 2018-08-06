@@ -14,7 +14,7 @@ cd $script_directory
 # move up a level
 cd ..
 
-docker build -t dr_models -f common/Dockerfile.migrations .
+./prepare_image.sh -i migrations -s common
 
 source common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
@@ -27,7 +27,7 @@ docker run \
        --env-file common/environments/local \
        --interactive \
        --link drdb:postgres\
-       dr_models python3.6 manage.py makemigrations data_refinery_common
+       ccdlstaging/dr_migrations python3.6 manage.py makemigrations data_refinery_common
 
 docker run \
        --volume $script_directory/data_refinery_common:/home/user/data_refinery_common \
@@ -35,4 +35,4 @@ docker run \
        --add-host=nomad:$HOST_IP \
        --env-file common/environments/local \
        --link drdb:postgres \
-       dr_models python3.6 manage.py migrate
+       ccdlstaging/dr_migrations python3.6 manage.py migrate

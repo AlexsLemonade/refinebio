@@ -77,7 +77,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         platform_accession_code = UNKNOWN
 
-        gpl = GEOparse.get_GEO(external_accession, destdir='/tmp', how="brief")
+        gpl = GEOparse.get_GEO(external_accession, destdir='/tmp', how="brief", silent=True)
         platform_title = gpl.metadata.get("title", [UNKNOWN])[0]
 
         # Check if this is a supported microarray platform.
@@ -203,7 +203,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
         """
         # XXX: Maybe we should have an EFS tmp? This could potentially fill up if not tracked.
         # Cleaning up is tracked here: https://github.com/guma44/GEOparse/issues/41
-        gse = GEOparse.get_GEO(experiment_accession_code, destdir='/tmp', how="brief")
+        gse = GEOparse.get_GEO(experiment_accession_code, destdir='/tmp', how="brief", silent=True)
         preprocessed_samples = harmony.preprocess_geo(gse.gsms.items())
         harmonized_samples = harmony.harmonize(preprocessed_samples)
 
@@ -232,6 +232,12 @@ class GeoSurveyor(ExternalSourceSurveyor):
             experiment_object.submitter_institution = ", ".join(unique_institutions)
             experiment_object.pubmed_id = gse.metadata.get("pubmed_id", [""])[0]
 
+            # Scrape publication title and authorship from Pubmed
+            if experiment_object.pubmed_id:
+                pubmed_metadata = utils.get_title_and_authors_for_pubmed_id(experiment_object.pubmed_id)
+                experiment_object.publication_title = pubmed_metadata[0]
+                experiment_object.publication_authors = pubmed_metadata[1]
+                
             experiment_object.save()
 
             experiment_annotation = ExperimentAnnotation()
@@ -315,25 +321,17 @@ class GeoSurveyor(ExternalSourceSurveyor):
                         sample_object.has_raw = True
                         sample_object.save()
 
-                    try:
-                        original_file = OriginalFile.objects.get(source_url=supplementary_file_url)
-                    except OriginalFile.DoesNotExist:
-                        original_file = OriginalFile()
-                        # So - this is _usually_ true, but not always. I think it's submitter
-                        # supplied.
-                        original_file.source_filename = supplementary_file_url.split('/')[-1]
-                        original_file.source_url = supplementary_file_url
-                        original_file.is_downloaded = False
-                        original_file.is_archive = True
-                        original_file.has_raw = sample_object.has_raw
-                        original_file.save()
+                    original_file = OriginalFile.objects.get_or_create(
+                            source_url = supplementary_file_url,
+                            source_filename = supplementary_file_url.split('/')[-1],
+                            has_raw = sample_object.has_raw,
+                            is_archive = True
+                        )[0]
 
-                        logger.debug("Created OriginalFile: " + str(original_file))
-
-                    original_file_sample_association = OriginalFileSampleAssociation()
-                    original_file_sample_association.sample = sample_object
-                    original_file_sample_association.original_file = original_file
-                    original_file_sample_association.save()
+                    original_file_sample_association = OriginalFileSampleAssociation.objects.get_or_create(
+                            original_file = original_file,
+                            sample = sample_object
+                        )
 
                 ExperimentSampleAssociation.objects.get_or_create(
                     experiment=experiment_object, sample=sample_object)
@@ -341,20 +339,14 @@ class GeoSurveyor(ExternalSourceSurveyor):
         # These supplementary files _may-or-may-not_ contain the type of raw data we can process.
         for experiment_supplement_url in gse.metadata.get('supplementary_file', []):
 
-            try:
-                original_file = OriginalFile.objects.get(source_url=experiment_supplement_url)
-            except OriginalFile.DoesNotExist:
-                original_file = OriginalFile()
+            original_file = OriginalFile.objects.get_or_create(
+                    source_url = experiment_supplement_url,
+                    source_filename = experiment_supplement_url.split('/')[-1],
+                    has_raw = sample_object.has_raw,
+                    is_archive = True
+                )[0]
 
-                # So - source_filename is _usually_ where we expect it to be,
-                # but not always. I think it's submitter supplied.
-                original_file.source_filename = experiment_supplement_url.split('/')[-1]
-                original_file.source_url = experiment_supplement_url
-                original_file.is_downloaded = False
-                original_file.is_archive = True
-                original_file.save()
-
-                logger.info("Created OriginalFile: " + str(original_file))
+            logger.info("Created OriginalFile: " + str(original_file))
 
             for sample_object in all_samples:
                 OriginalFileSampleAssociation.objects.get_or_create(
@@ -362,22 +354,23 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         # These are the Miniml/Soft/Matrix URLs that are always(?) provided.
         # GEO describes different types of data formatting as "families"
-        for family_url in [self.get_miniml_url(experiment_accession_code)]:
+        family_url = self.get_miniml_url(experiment_accession_code)
+        miniml_original_file = OriginalFile.objects.get_or_create(
+                source_url = family_url,
+                source_filename = family_url.split('/')[-1],
+                has_raw = sample_object.has_raw,
+                is_archive = True
+            )[0]
+        for sample_object in all_samples:
+            # We don't need a .txt if we have a .CEL
+            if sample_object.has_raw:
+                continue
+            OriginalFileSampleAssociation.objects.get_or_create(
+                sample=sample_object, original_file=miniml_original_file)
 
-            try:
-                original_file = OriginalFile.objects.get(source_url=family_url)
-            except OriginalFile.DoesNotExist:
-                original_file = OriginalFile()
-                original_file.source_filename = family_url.split('/')[-1]
-                original_file.source_url = family_url
-                original_file.is_downloaded = False
-                original_file.is_archive = True
-                original_file.save()
-                logger.info("Created OriginalFile: " + str(original_file))
-
-            for sample_object in all_samples:
-                OriginalFileSampleAssociation.objects.get_or_create(
-                    sample=sample_object, original_file=original_file)
+        # Delete this Original file if it isn't being used.
+        if OriginalFileSampleAssociation.objects.filter(original_file=miniml_original_file).count() == 0:
+            miniml_original_file.delete()
 
         return experiment_object, all_samples
 

@@ -64,7 +64,6 @@ def _prepare_files(job_context: Dict) -> Dict:
                 with open(job_context["input_file_path"], 'w+', encoding='utf-8') as f:
                     f.seek(0, 0)
                     f.write('ID_REF\tVALUE' + '\n' + all_content)
-
             except ValueError:
                 # There is already a header row. Let's replace it with ID_Ref
                 with open(job_context["input_file_path"], 'r', encoding='utf-8') as f:
@@ -74,10 +73,44 @@ def _prepare_files(job_context: Dict) -> Dict:
                 with open(job_context["input_file_path"], 'w+', encoding='utf-8') as f:
                     f.seek(0, 0)
                     f.write('ID_REF\tVALUE' + '\n' + ("\n".join(all_content[1:])))
-                job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
+            except Exception as e:
+                logger.exception("Unable to read input file or header row.",
+                    input_file_path=job_context["input_file_path"])
+                job_context['job'].faiure_reason = str(e)
+                job_context['success'] = False
+                return job_context
         else:
             if job_context["is_illumina"]:
-                job_context['column_name'] = row[0]
+                try:
+                    float(row[1])
+                    # If we're here, there's no header. We're gonna have to fudge it a little bit.
+
+                    # These exist, but they're too hard for us to handle right now.
+                    if len(row) > 3:
+                        e_msg = "We found an Illumina file to NO_OP that we're not set up to process yet. Tell Rich!"
+                        logger.error(e_msg,
+                            job_id = job_context["job"].pk,
+                            file=job_context["input_file_path"]
+                        )
+                        job_context['success'] = False
+                        job_context["job"].failure_reason = str(e_msg)
+                        return job_context
+
+                    # Okay, there's no header so can just prepend to the file.
+                    with open(job_context["input_file_path"], 'r', encoding='utf-8') as f:
+                        all_content = f.read()
+                    job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
+                    with open(job_context["input_file_path"], 'w+', encoding='utf-8') as f:
+                        f.seek(0, 0)
+                        if len(row) == 2:
+                            f.write('Reporter Identifier\tVALUE' + '\n' + all_content)
+                        elif len(row) == 3:
+                            f.write('Reporter Identifier\tVALUE\tDetection Pval' + '\n' + all_content)
+
+                    job_context['column_name'] = 'Reporter Identifier'
+                except ValueError:
+                    # Okay, there's a header column, we're good.
+                    job_context['column_name'] = row[0]
 
         # Platform
         job_context["platform"] = job_context["samples"][0].platform_accession_code
@@ -106,7 +139,7 @@ def _convert_genes(job_context: Dict) -> Dict:
 def _convert_affy_genes(job_context: Dict) -> Dict:
     """ Convert to Ensembl genes if we can"""
 
-    gene_index_path = "/home/user/gene_indexes/" + job_context["internal_accession"] + ".tsv.gz"
+    gene_index_path = "/home/user/gene_indexes/" + job_context["internal_accession"] + ".tar.gz"
     if not os.path.exists(gene_index_path):
         logger.error("Missing gene index file for platform!",
             platform=job_context["internal_accession"],
@@ -257,9 +290,10 @@ def _create_result(job_context: Dict) -> Dict:
         computed_file.result = result
         computed_file.is_smashable = True
         computed_file.is_qc = False
-        # computed_file.sync_to_s3(S3_BUCKET_NAME, computed_file.sha1 + "_" + computed_file.filename)
-        # TODO here: delete local file after S3 sync
         computed_file.save()
+
+        # utils.end_job will sync this to S3 for us.
+        job_context["computed_files"] = [computed_file]
     except Exception:
         logger.error("Exception caught while moving file %s",
                          raw_path,

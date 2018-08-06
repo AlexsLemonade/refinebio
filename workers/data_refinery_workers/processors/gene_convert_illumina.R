@@ -69,5 +69,12 @@ annot_exprs_df <- mapped_df %>%
   dplyr::inner_join(y = exprs, by = c("PROBEID" = exprs_id_name)) %>%  # annotation heavy lifting
   dplyr::select(-PROBEID)  # drop the probe ids
 
+# Remove named P Value columns:
+if("Detection Pval" %in% colnames(annot_exprs_df))
+{
+	annot_exprs_df <- dplyr::select(annot_exprs_df, -c("Detection Pval"))
+}
+message(head(annot_exprs_df))
+
 # Save to output file
-write.table(annot_exprs_df, outFilePath, row.names=FALSE, col.names=TRUE, quote=FALSE, sep="\t")
+write.table(annot_exprs_df, outFilePath, row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")

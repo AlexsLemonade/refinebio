@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework_hstore.fields import HStoreField
 from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
 from data_refinery_common.models import (
     Experiment,
@@ -63,7 +62,6 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
 ##
 
 class ComputationalResultAnnotationSerializer(serializers.ModelSerializer):
-    data = HStoreField()
 
     class Meta:
         model = ComputationalResultAnnotation
@@ -136,7 +134,6 @@ class SampleSerializer(serializers.ModelSerializer):
                 )
 
 class SampleAnnotationSerializer(serializers.ModelSerializer):
-    data = HStoreField()
 
     class Meta:
         model = SampleAnnotation
@@ -196,6 +193,8 @@ class ExperimentSerializer(serializers.ModelSerializer):
     organisms = serializers.StringRelatedField(many=True)
     platforms = serializers.ReadOnlyField()
     samples = serializers.StringRelatedField(many=True)
+    pretty_platforms = serializers.ReadOnlyField()
+    sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
 
     class Meta:
         model = Experiment
@@ -207,19 +206,21 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'source_database',
                     'source_url',
                     'platforms',
+                    'pretty_platforms',
                     'has_publication',
                     'publication_title',
                     'publication_doi',
+                    'publication_authors',
                     'pubmed_id',
                     'samples',
                     'organisms',
                     'submitter_institution',
                     'created_at',
-                    'last_modified'
+                    'last_modified',
+                    'sample_metadata',
                 )
 
 class ExperimentAnnotationSerializer(serializers.ModelSerializer):
-    data = HStoreField()
 
     class Meta:
         model = ExperimentAnnotation
@@ -234,6 +235,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
     annotations = ExperimentAnnotationSerializer(many=True, source='experimentannotation_set')
     samples = SampleSerializer(many=True)
     organisms = OrganismSerializer(many=True)
+    sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
 
     class Meta:
         model = Experiment
@@ -250,6 +252,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
                     'has_publication',
                     'publication_title',
                     'publication_doi',
+                    'publication_authors',
                     'pubmed_id',
                     'source_first_published',
                     'source_last_modified',
@@ -257,6 +260,7 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
                     'last_modified',
                     'created_at',
                     'organisms',
+                    'sample_metadata',
                 )
 
 class PlatformSerializer(serializers.ModelSerializer):
@@ -373,8 +377,11 @@ def validate_dataset(data):
             if type(value) != list:
                 raise serializers.ValidationError("`data` must be a dict of lists. Problem with `" + str(key) + "`")
 
-            if len(value) != len(set(value)):
-                raise serializers.ValidationError("Duplicate values detected in " + str(value))
+            try:
+                if len(value) != len(set(value)):
+                    raise serializers.ValidationError("Duplicate values detected in " + str(value))
+            except Exception as e:
+                raise serializers.ValidationError("Received bad dataset data: " + str(e))
 
     else:
         raise serializers.ValidationError("`data` must be a dict of lists.")
@@ -409,6 +416,7 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'id',
                     'data',
                     'aggregate_by',
+                    'scale_by',
                     'is_processing',
                     'is_processed',
                     'is_available',

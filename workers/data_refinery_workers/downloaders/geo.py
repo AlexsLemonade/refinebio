@@ -351,7 +351,6 @@ def download_geo(job_id: int) -> None:
                 actual_file.filename = og_file['filename']
                 actual_file.calculate_size()
                 actual_file.calculate_sha1()
-
                 actual_file.has_raw = has_raw
                 actual_file.save()
 
@@ -449,9 +448,9 @@ def download_geo(job_id: int) -> None:
                      downloader_job=job_id)
     else:
         success = False
-        logger.debug("Unable to extract any files.",
-                     url,
-                     downloader_job=job_id)
+        logger.info("Unable to extract any files.",
+                    url,
+                    downloader_job=job_id)
         job.failure_reason = "Failed to extract any downloaded files."
 
     if success:
