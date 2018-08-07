@@ -525,7 +525,7 @@ def get_runtime_env(yml_filename):
             elif pkg_type == 'R':
                 value = get_r_pkgs(pkg_list)
             elif pkg_type == 'checksum':
-                values = get_checksums(pkg_list)
+                value = get_checksums(pkg_list)
             elif pkg_type == 'other':
                 value = get_others(pkg_list)
             else:
@@ -545,10 +545,10 @@ def find_processor(enum_key):
     docker_image = ProcessorEnum[enum_key].value['docker_img']
 
     # In current implementation, ALWAYS get the runtime environment.
-    yml_path = os.path.join(DIRNAME, ProcessorEnum[enum_key].value['yml_file']
+    yml_path = os.path.join(DIRNAME, ProcessorEnum[enum_key].value['yml_file'])
     environment = get_runtime_env(yml_path)
-
-    return Processor.objects.get_or_create(name=name,
-                                           version=__version__,
-                                           docker_image=docker_image,
-                                           environment=environment)
+    obj, status = Processor.objects.get_or_create(name=name,
+                                                  version=__version__,
+                                                  docker_image=docker_image,
+                                                  environment=environment)
+    return obj
