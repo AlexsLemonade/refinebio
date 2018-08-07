@@ -60,13 +60,20 @@ def prepare_illumina_job(species="Homo sapiens"):
 
         sa = SampleAnnotation()
         sa.sample = sample
-        sa.data = {}
+        sa.data = {'description': 'heyo'}
         sa.save()
 
         sample_assoc = OriginalFileSampleAssociation()
         sample_assoc.original_file = og_file
         sample_assoc.sample = sample
         sample_assoc.save()
+
+    sample.title = "ignoreme_for_description"
+    sample.save()
+    sa = SampleAnnotation()
+    sa.sample = sample
+    sa.data = {'description': 'LV-T350A&si-EZH2-3'}
+    sa.save()   
 
     return pj
 
