@@ -151,9 +151,13 @@ def _detect_columns(job_context: Dict) -> Dict:
                 if sample.title == header:
                     column_ids = column_ids + str(offset) + ","
                     continue
-                if sample.description == header:
-                    column_ids = column_ids + str(offset) + ","
-                    continue
+
+                # Related: https://github.com/AlexsLemonade/refinebio/issues/499
+                for annotation in sample.sampleannotation_set.all():
+                    if annotation.data.get('description', '') == header:
+                        column_ids = column_ids + str(offset) + ","
+                        continue
+
                 if header.upper().replace(' ', '_') == "RAW_VALUE":
                     column_ids = column_ids + str(offset) + ","
                     continue
