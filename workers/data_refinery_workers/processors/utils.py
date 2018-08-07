@@ -281,15 +281,6 @@ class ProcessorEnum(Enum):
         return key in cls.__members__
 
 
-def createTestProcessors():
-    """Creates dummy processors for all unit test cases.
-    (This function should be called ONLY by test modules).
-    """
-
-    for label in ProcessorEnum:
-        Processor.objects.create(name=label.value, version=__version__)
-
-
 def get_os_distro():
     """Returns a string of OS distribution.
     Since we are using Docker, this function only considers Linux distribution.
