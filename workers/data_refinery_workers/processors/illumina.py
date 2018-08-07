@@ -152,15 +152,18 @@ def _detect_columns(job_context: Dict) -> Dict:
                     column_ids = column_ids + str(offset) + ","
                     continue
 
+                # Sometimes the title might actually be in the description field.
+                # To find this, look in all the related SampleAnnotations.
+                # Since there are multiple annotations, we need to break early before continuing.
                 # Related: https://github.com/AlexsLemonade/refinebio/issues/499
-                breakme = False
+                continue_me = False
                 for annotation in sample.sampleannotation_set.all():
                     if annotation.data.get('description', '') == header:
                         column_ids = column_ids + str(offset) + ","
-                        breakme = True
+                        continue_me = True
                         break
-                if breakme:
-                    # Treat the header as the real title
+                if continue_me:
+                    # Treat the header as the real title, as we will need it later.
                     sample.title = header
                     sample.save()
                     continue
