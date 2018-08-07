@@ -304,10 +304,10 @@ def get_os_distro():
 
 
 def get_os_pkgs(pkg_list):
-    """Returns a dictionary whose key is the name of a os-lvel package
-    and value is the package's version. This function assumes the package
-    manager is Debian-based (dpkg/apt). It can be a nightmaire to support
-    all different package managers on Linux.
+    """Returns an array of objects whose key is the name of a os-lvel
+    package and value is the package's version. This function assumes the
+    package manager is Debian-based (dpkg/apt). It can be a nightmaire to
+    support all different package managers on Linux.
     """
 
     pkg_info = []  # Use "list" to keep the order in YAML file.
@@ -327,9 +327,9 @@ def get_os_pkgs(pkg_list):
 
 
 def get_cmd_lines(cmd_list):
-    """Returns a dictionary whose key is the name of a command line and
-    value is the command's version.  The version is always retrieved by
-    "<cmd --version" command.
+    """Returns an arrray of objects whose key is the name of a command
+    line and value is the command's version.  The version info is always
+    retrieved by "<cmd> --version" command.
     """
 
     cmd_info = []  # Use "list" to keep the order in YAML file.
@@ -363,8 +363,8 @@ def get_cmd_lines(cmd_list):
 
 
 def get_pip_pkgs(pkg_list):
-    """Returns a dictionary whose key is the name of a pip-installed package
-    and value is the package's version.  Instead of using a command like:
+    """Returns an array of objects whose key is the name of a pip-installed
+    package and value is the package's version.  Instead of using:
       `pip show pkg | grep Version | awk '{print $2}'`
     to get version for each package, we save the output of `pip freeze` as a
     dictionary first, then check the version of packages in pkg_list.
@@ -420,7 +420,7 @@ def get_bioc_version():
 
 
 def get_r_pkgs(pkg_list):
-    """Returns a dictionary whose key is the name of a R package
+    """Returns aan array of objects whose key is the name of a R package
     and value is the package's version.
     """
 
