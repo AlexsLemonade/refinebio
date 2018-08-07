@@ -60,7 +60,7 @@ def prepare_illumina_job(species="Homo sapiens"):
 
         sa = SampleAnnotation()
         sa.sample = sample
-        sa.data = {'description': 'heyo'}
+        sa.data = {'description': name}
         sa.save()
 
         sample_assoc = OriginalFileSampleAssociation()
@@ -68,12 +68,10 @@ def prepare_illumina_job(species="Homo sapiens"):
         sample_assoc.sample = sample
         sample_assoc.save()
 
+    sample = Sample.objects.get(title="LV-T350A&si-EZH2-3")
     sample.title = "ignoreme_for_description"
-    sample.save()
-    sa = SampleAnnotation()
-    sa.sample = sample
-    sa.data = {'description': 'LV-T350A&si-EZH2-3'}
-    sa.save()   
+    sample.accession_code = "ignoreme_for_description"
+    sample.save() 
 
     return pj
 
@@ -99,7 +97,7 @@ class IlluminaToPCLTestCase(TestCase):
 
     @tag("illumina")
     def test_illumina_to_pcl(self):
-        """ """
+        """ Most basic Illumina to PCL test """
         from data_refinery_workers.processors import illumina
         job = prepare_illumina_job()
         final_context = illumina.illumina_to_pcl(job.pk)

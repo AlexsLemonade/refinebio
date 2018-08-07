@@ -153,14 +153,22 @@ def _detect_columns(job_context: Dict) -> Dict:
                     continue
 
                 # Related: https://github.com/AlexsLemonade/refinebio/issues/499
+                breakme = False
                 for annotation in sample.sampleannotation_set.all():
                     if annotation.data.get('description', '') == header:
                         column_ids = column_ids + str(offset) + ","
-                        continue
+                        breakme = True
+                        break
+                if breakme:
+                    # Treat the header as the real title
+                    sample.title = header
+                    sample.save()
+                    continue
 
                 if header.upper().replace(' ', '_') == "RAW_VALUE":
                     column_ids = column_ids + str(offset) + ","
                     continue
+
                 if sample.title in header and \
                 'BEAD' not in header.upper() and \
                 'NARRAYS' not in header.upper() and \
@@ -168,6 +176,7 @@ def _detect_columns(job_context: Dict) -> Dict:
                 'PVAL' not in header.upper().replace(' ', '').replace('_', ''):
                     column_ids = column_ids + str(offset) + ","
                     continue
+
         for offset, header in enumerate(headers, start=1):
             if 'AVG_Signal' in header:
                 column_ids = column_ids + str(offset) + ","
