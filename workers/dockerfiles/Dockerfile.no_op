@@ -44,7 +44,7 @@ RUN mkdir -p gene_indexes
 WORKDIR /home/user/gene_indexes
 ENV ID_REFINERY_URL https://zenodo.org/record/1322711/files/all_1532646318.zip
 RUN curl -O $ID_REFINERY_URL
-RUN echo $ID_REFINERY_URL > /etc/id_refinery_url.txt
+RUN echo $ID_REFINERY_URL > /etc/identifier_refinery_url
 RUN unzip *.zip
 RUN rm *.zip
 WORKDIR /home/user

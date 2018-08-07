@@ -9,6 +9,10 @@ os_pkg:
   - python3-pip
   - r-base
 
+# Command lines (commands whose outputs will be kept track of)
+cmd_line:
+  - cat /etc/identifier_refinery_url
+
 # Python pip packages
 python:
   - Django
@@ -28,7 +32,3 @@ R:
   - illuminaMousev1p1.db
   - illuminaMousev2.db
   - illuminaRatv1.db
-
-# Any other stuff
-other:
-  - zenodo_url

@@ -10,9 +10,9 @@ os_pkg:
   - g++           # required to compile salmontools
   - cmake         # required to compile salmontools
 
-# Command lines (assuming that "<cmd> --version" is supported)
+# Command lines (commands whose outputs will be kept track of)
 cmd_line:
-  - salmontools
+  - salmontools --version
 
 # Python pip packages
 python:

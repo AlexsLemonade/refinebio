@@ -9,10 +9,11 @@ os_pkg:
   - python3-pip
   - g++          # Required to compile RSEM
 
-# Command lines (assuming that "<cmd> --version" is supported)
+# Command lines (commands whose outputs will be kept track of)
 cmd_line:
-  - salmon
-  - rsem-prepare-reference
+  - salmon --version
+  # Version of all RSEM commands, including "rsem-prepare-reference"
+  - rsem-calculate-expression --version
 
 # Python pip packages
 python:
