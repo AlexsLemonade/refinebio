@@ -151,6 +151,9 @@ def _detect_columns(job_context: Dict) -> Dict:
                 if sample.title == header:
                     column_ids = column_ids + str(offset) + ","
                     continue
+                if sample.description == header:
+                    column_ids = column_ids + str(offset) + ","
+                    continue
                 if header.upper().replace(' ', '_') == "RAW_VALUE":
                     column_ids = column_ids + str(offset) + ","
                     continue
