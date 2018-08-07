@@ -30,6 +30,7 @@ if [[ ! -z $master_check ]]; then
     CIRCLE_BRANCH=master
 elif [[ ! -z $dev_check ]]; then
     CIRCLE_BRANCH=dev
+fi
 
 text="New deployment! Woo! $CIRCLE_PROJECT_USERNAME: $CIRCLE_PULL_REQUEST $CIRCLE_BRANCH $CIRCLE_TAG"
 
