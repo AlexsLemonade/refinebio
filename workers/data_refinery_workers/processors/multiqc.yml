@@ -10,10 +10,10 @@ os_pkg:
   - default-jre   # required by fastqc
 
 
-# Command lines (assuming "<cmd> --version" is supported)
+# Command lines (commands whose outputs will be kept track of)
 cmd_line:
-  - salmon
-  - /home/user/FastQC/fastqc
+  - salmon --version
+  - /home/user/FastQC/fastqc --version
 
 # Python pip packages
 python:
