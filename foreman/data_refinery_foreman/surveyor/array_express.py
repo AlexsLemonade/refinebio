@@ -89,10 +89,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             experiment["platform_accession_name"] = UNKNOWN
             experiment["manufacturer"] = UNKNOWN
         else:
-            external_accession = get_normalized_platform(parsed_json["arraydesign"][0]["accession"])
+            external_accession = parsed_json["arraydesign"][0]["accession"]
             for platform in get_supported_microarray_platforms():
                 if platform["external_accession"] == external_accession:
-                    experiment["platform_accession_code"] = platform["platform_accession"]
+                    experiment["platform_accession_code"] = get_normalized_platform(platform["platform_accession"])
 
                     # Illumina appears in the accession codes for
                     # platforms manufactured by Illumina

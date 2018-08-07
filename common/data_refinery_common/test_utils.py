@@ -51,6 +51,7 @@ class UtilsTestCase(TestCase):
         has_equgene11st = False
         has_A_AFFY_59 = False
         has_GPL23026 = False
+        has_AGEOD23026 = False
         for platform in supported_microarray_platforms:
             if platform["platform_accession"] == "equgene11st" and platform["is_brainarray"]:
                 has_equgene11st = True
@@ -61,9 +62,13 @@ class UtilsTestCase(TestCase):
             if platform["external_accession"] == "GPL23026" and not platform["is_brainarray"]:
                 has_GPL23026 = True
 
+            if platform["external_accession"] == "A-GEOD-23026" and not platform["is_brainarray"]:
+                has_AGEOD23026 = True
+
         self.assertTrue(has_equgene11st)
         self.assertTrue(has_A_AFFY_59)
         self.assertTrue(has_GPL23026)
+        self.assertTrue(has_AGEOD23026)
 
     def test_get_internal_microarray_accession(self):
         """Test that supported microarray platforms setting is set correctly."""
