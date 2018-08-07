@@ -541,11 +541,11 @@ def find_processor(enum_key):
     database that matches the current processor name, version and environment.
     """
 
-    name = ProcessorEnum[enum_key].value.name
-    docker_image = ProcessorEnum[enum_key].value.docker_img
+    name = ProcessorEnum[enum_key].value['name']
+    docker_image = ProcessorEnum[enum_key].value['docker_img']
 
-    yml_path = os.path.join(DIRNAME, ProcessorEnum[enum_key].value.yml_file)
     # In current implementation, ALWAYS get the runtime environment.
+    yml_path = os.path.join(DIRNAME, ProcessorEnum[enum_key].value['yml_file']
     environment = get_runtime_env(yml_path)
 
     return Processor.objects.get_or_create(name=name,
