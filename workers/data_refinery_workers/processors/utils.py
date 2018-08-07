@@ -101,13 +101,10 @@ def end_job(job_context: Dict, abort=False):
                 sample = job_context['sample']
                 sample.is_processed = True
                 sample.save()
+
     # S3-sync Original Files
     for original_files in job_context['original_files']:
-        # Ensure even distribution across S3 servers
-        nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
-        result = original_files.sync_to_s3(S3_BUCKET_NAME, nonce + "_" + original_files.filename)
-        if result:
-            original_files.delete_local_file()
+        original_files.delete_local_file()
 
     # S3-sync Computed Files
     for computed_file in job_context['computed_files']:

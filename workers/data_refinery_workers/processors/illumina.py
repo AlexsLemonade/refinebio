@@ -151,9 +151,27 @@ def _detect_columns(job_context: Dict) -> Dict:
                 if sample.title == header:
                     column_ids = column_ids + str(offset) + ","
                     continue
+
+                # Sometimes the title might actually be in the description field.
+                # To find this, look in all the related SampleAnnotations.
+                # Since there are multiple annotations, we need to break early before continuing.
+                # Related: https://github.com/AlexsLemonade/refinebio/issues/499
+                continue_me = False
+                for annotation in sample.sampleannotation_set.all():
+                    if annotation.data.get('description', '') == header:
+                        column_ids = column_ids + str(offset) + ","
+                        continue_me = True
+                        break
+                if continue_me:
+                    # Treat the header as the real title, as we will need it later.
+                    sample.title = header
+                    sample.save()
+                    continue
+
                 if header.upper().replace(' ', '_') == "RAW_VALUE":
                     column_ids = column_ids + str(offset) + ","
                     continue
+
                 if sample.title in header and \
                 'BEAD' not in header.upper() and \
                 'NARRAYS' not in header.upper() and \
@@ -161,6 +179,7 @@ def _detect_columns(job_context: Dict) -> Dict:
                 'PVAL' not in header.upper().replace(' ', '').replace('_', ''):
                     column_ids = column_ids + str(offset) + ","
                     continue
+
         for offset, header in enumerate(headers, start=1):
             if 'AVG_Signal' in header:
                 column_ids = column_ids + str(offset) + ","
