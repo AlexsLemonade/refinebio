@@ -230,10 +230,10 @@ ssh -o StrictHostKeyChecking=no \
     -i data-refinery-key.pem \
     ubuntu@$API_IP_ADDRESS "docker run \
        --env-file environment \
-       -e DATABASE_HOST \
-       -e DATABASE_NAME \
-       -e DATABASE_USER \
-       -e DATABASE_PASSWORD \
+       -e DATABASE_HOST=$DATABASE_HOST \
+       -e DATABASE_NAME=$DATABASE_NAME \
+       -e DATABASE_USER=$DATABASE_USER \
+       -e DATABASE_PASSWORD=$DATABASE_PASSWORD \
        -v /tmp/volumes_static:/tmp/www/static \
        --log-driver=awslogs \
        --log-opt awslogs-region=$REGION \
