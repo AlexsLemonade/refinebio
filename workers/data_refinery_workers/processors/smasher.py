@@ -98,6 +98,13 @@ def _smash(job_context: Dict) -> Dict:
                 try:
                     data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0, error_bad_lines=False)
 
+                    # Strip any funky whitespace
+                    data.columns = data.columns.str.strip()
+                    data = data.dropna(axis='columns', how='all')
+
+                    # Make sure the index type is correct
+                    data.index = data.index.map(str)
+
                     # via https://github.com/AlexsLemonade/refinebio/issues/330:
                     #   aggregating by experiment -> return untransformed output from tximport
                     #   aggregating by species -> log2(x + 1) tximport output
@@ -397,7 +404,10 @@ def smash(job_id: int, upload=True) -> None:
     """ Main Smasher interface """
 
     pipeline = Pipeline(name=utils.PipelineEnum.SMASHER.value)
-    return utils.run_pipeline({"job_id": job_id, "upload": upload, "pipeline": pipeline},
+    return utils.run_pipeline({ "job_id": job_id, 
+                                "upload": upload, 
+                                "pipeline": pipeline
+                            },
                        [utils.start_job,
                         _prepare_files,
                         _smash,

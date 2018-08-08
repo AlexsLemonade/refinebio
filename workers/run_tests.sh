@@ -299,6 +299,19 @@ if [[ -z $tag || $tag == "smasher" ]]; then
     fi
 fi
 
+if [[ -z $tag || $tag == "qn" ]]; then
+    # Make sure PCL for test is downloaded from S3
+    qn_name="GSM1237810_T09-1084.PCL"
+    qn_test_raw_dir="$volume_directory/QN"
+    qn_test_data_1="$qn_test_raw_dir/$qn_name"
+    if [ ! -e "$qn_test_data_1" ]; then
+        mkdir -p $qn_test_raw_dir
+        echo "Downloading QN for tests."
+        wget -q -O $qn_test_data_1 \
+             "$test_data_repo/$qn_name"
+    fi
+fi
+
 source common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
@@ -306,7 +319,7 @@ DB_HOST_IP=$(get_docker_db_ip_address)
 # Ensure permissions are set for everything within the test data directory.
 chmod -R a+rwX $volume_directory
 
-worker_images=(affymetrix illumina salmon transcriptome no_op downloaders agilent smasher)
+worker_images=(affymetrix illumina salmon transcriptome no_op downloaders agilent smasher qn)
 
 for image in ${worker_images[*]}; do
     if [[ -z $tag || $tag == $image ]]; then

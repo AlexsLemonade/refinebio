@@ -38,9 +38,8 @@ def start_job(job_context: Dict):
 
     logger.info("Starting processor Job.", processor_job=job.id, pipeline=job.pipeline_applied)
 
-    # The Smasher is the only job type which doesn't take OriginalFiles,
-    # so we make an exception here.
-    if job.pipeline_applied != "SMASHER":
+    # Some jobs take OriginalFiles, other take Datasets
+    if job.pipeline_applied not in ["SMASHER", "QN_REFERENCE"]:
         relations = ProcessorJobOriginalFileAssociation.objects.filter(processor_job=job)
         original_files = OriginalFile.objects.filter(id__in=relations.values('original_file_id'))
 
@@ -90,7 +89,7 @@ def end_job(job_context: Dict, abort=False):
         success = True
 
     if not abort:
-        if job_context.get("success", False) and job_context["job"].pipeline_applied != "SMASHER":
+        if job_context.get("success", False) and not (job_context["job"].pipeline_applied in ["SMASHER", "QN_REFERENCE"]):
             # This handles most of our cases
             for sample in job_context["samples"]:
                 sample.is_processed = True
@@ -101,6 +100,7 @@ def end_job(job_context: Dict, abort=False):
                 sample = job_context['sample']
                 sample.is_processed = True
                 sample.save()
+
     # S3-sync Original Files
     for original_files in job_context['original_files']:
         # Ensure even distribution across S3 servers
@@ -201,6 +201,7 @@ class PipelineEnum(Enum):
     SALMON = "Salmon"
     SMASHER = "Smasher"
     TX_INDEX = "Transcriptome Index"
+    QN_REFERENCE = "Quantile Normalization Reference"
 
 
 @unique
@@ -229,6 +230,8 @@ class ProcessorEnum(Enum):
 
     # One processor in "Transcriptome Index" pipeline
     TX_INDEX = "Transcriptome Index"
+
+    QN_REFERENCE = "Quantile Normalization Reference"
 
 
 def createTestProcessors():

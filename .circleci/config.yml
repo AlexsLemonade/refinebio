@@ -37,6 +37,7 @@ jobs:
       - run: ./prepare_image.sh -i no_op -s workers -d localhost:5000
       - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
       - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
+      - run: ./prepare_image.sh -i qn -s workers -d localhost:5000
 
       # Run Downloader Tests
       # Running these in the same job as the common tests is good
@@ -59,6 +60,12 @@ jobs:
       - run:
           command: .circleci/filter_tests.sh -t smasher
           # Smashing can apparently take a long time on CI
+          no_output_timeout: 36000
+      
+      # Run QN tests.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run:
+          command: .circleci/filter_tests.sh -t qn 
           no_output_timeout: 36000
 
       # Run NO_OP tests
