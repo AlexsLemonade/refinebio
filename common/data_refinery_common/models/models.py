@@ -829,7 +829,7 @@ class Dataset(models.Model):
 
     # Processing properties
     aggregate_by = models.CharField(max_length=255, choices=AGGREGATE_CHOICES, default="EXPERIMENT")
-    scale_by = models.CharField(max_length=255, choices=SCALE_CHOICES, default="MINMAX")
+    scale_by = models.CharField(max_length=255, choices=SCALE_CHOICES, default="NONE")
 
     # State properties
     is_processing = models.BooleanField(default=False)  # Data is still editable when False
