@@ -669,7 +669,7 @@ class ProcessorTestCases(APITestCase):
         }
         Processor.objects.create(
             name="Salmontools",
-            version="1.83"
+            version="1.83",
             docker_image="ccdl/salmontools_img:v0.45",
             environment=salmontools_env
         )
@@ -683,5 +683,5 @@ class ProcessorTestCases(APITestCase):
         self.assertEqual(processors[0]['environment']['os_pkg']['python3'], '3.5.1-3')
 
         self.assertEqual(processors[1]['name'], 'Salmontools')
-        self.assertEqual(processors[1]['environment']['cmd_line']['salmontools --version']['version'],
+        self.assertEqual(processors[1]['environment']['cmd_line']['salmontools --version'],
                          'Salmon Tools 0.1.0')
