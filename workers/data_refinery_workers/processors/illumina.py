@@ -321,13 +321,10 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.time_end = job_context['time_end']
     result.pipeline = "Illumina SCAN"  # TODO: should be removed
     try:
-        result.processor = utils.find_processor("ILLUMINA_SCAN")
+        processor_key = "ILLUMINA_SCAN"
+        result.processor = utils.find_processor(processor_key)
     except Exception as e:
-        err_str = "Failed to set processor: %s" % e
-        logger.error(err_str)
-        job_context["job"].failure_reason = err_str
-        job_context["success"] = False
-        return job_context
+        return handle_processor_exception(job_context, processor_key, e)
 
     result.save()
     job_context['pipeline'].steps.append(result.id)

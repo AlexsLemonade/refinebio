@@ -284,10 +284,10 @@ class ProcessorEnum(Enum):
 def get_os_distro():
     """Returns a string of OS distribution.
     Since we are using Docker, this function only considers Linux distribution.
-    Other alternatives on Linux: /etc/os-release, /etc/lsb-release
+    Alternative files on Linux: /etc/os-release, /etc/lsb-release
     As a matter of fact, "/etc/issue" doesn't exist on Mac OS X.  We can use
     "sw_vers" command to find its OS information.
-    A more cross-platform solution is using "platform" module.
+    A more cross-platform solution is using "platform" module in Python.
     """
 
     with open('/etc/issue') as distro_fh:
@@ -295,13 +295,12 @@ def get_os_distro():
 
 
 def get_os_pkgs(pkg_list):
-    """Returns an array of objects whose key is the name of a os-lvel
-    package and value is the package's version. This function assumes the
-    package manager is Debian-based (dpkg/apt). It can be a nightmaire to
-    support all different package managers on Linux.
+    """Returns a dictionay in which each key is the name of an os-lvel
+    package and the corresponding value is the package's version.
+    This function assumes the package manager is Debian-based (dpkg/apt).
     """
 
-    pkg_info = []  # Use "list" to keep the order in YAML file.
+    pkg_info = dict()
     for pkg in pkg_list:
         process_done = subprocess.run(['dpkg-query', '--show', pkg],
                                       stdout=subprocess.PIPE,
@@ -312,17 +311,17 @@ def get_os_pkgs(pkg_list):
             )
 
         version = process_done.stdout.decode().strip().split('\t')[-1]
-        pkg_info.append({pkg: version})
+        pkg_info[pkg] = version
 
     return pkg_info
 
 
 def get_cmd_lines(cmd_list):
-    """Returns an arrray of objects whose key is the command string
-    and value is the command's output.
+    """Returns a dictionary in which each key is the command string
+    and its value is the command's stripped output.
     """
 
-    cmd_info = []  # Use "list" to keep the order in YAML file.
+    cmd_info = dict()
     for cmd in cmd_list:
         process_done = subprocess.run(cmd.split(),
                                       stdout=subprocess.PIPE,
@@ -343,19 +342,19 @@ def get_cmd_lines(cmd_list):
             output_bytes = process_done.stderr
 
         cmd_output = output_bytes.decode().strip()
-        cmd_info.append({cmd: cmd_output})
+        cmd_info[cmd] = cmd_output
 
     return cmd_info
 
 
 def get_pip_pkgs(pkg_list):
-    """Returns an array of objects whose key is the name of a pip-installed
-    package and value is the package's version.  Instead of using:
-      `pip show pkg | grep Version | awk '{print $2}'`
-    to get version for each package, we save the output of `pip freeze` as a
-    dictionary first, then check the version of packages in pkg_list.
-    This approach launches the subprocess only once and (hopefully) saves some
-    computational resource.
+    """Returns a dictionary in which each key is the name of a pip-installed
+    package and the corresponding value is the package's version.
+    Instead of using: `pip show pkg | grep Version | awk '{print $2}'` to get
+    each package's version, we save the output of `pip freeze` first, then
+    check the version of each input package in pkg_list.  This approach
+    launches the subprocess only once and (hopefully) saves some computational
+    resource.
     """
 
     process_done = subprocess.run(['pip', 'freeze'],
@@ -369,22 +368,23 @@ def get_pip_pkgs(pkg_list):
         name, version = item.split("==")
         frozen_pkgs[name] = version
 
-    pkg_info = []  # Use "list" to keep the order in YAML file.
+    pkg_info = dict()
     for pkg in pkg_list:
         try:
             version = frozen_pkgs[pkg]
         except KeyError:
             raise Exception("Pip package not found: %s" % pkg)
 
-        pkg_info.append({pkg: version})
+        pkg_info[pkg] = version
 
     return pkg_info
 
 
 def get_bioc_version():
-    """This function returns a string that is the version of "Bioconductor"
-    package in R.  Note that "Bioconductor" is special in that its package
-    info is NOT included in the data frame returned by installed.packages().
+    """Returns a string that is the version of "Bioconductor" package in R.
+    Note that the data frame returned by installed.packages() does NOT include
+    a package named "Bioconductor", so we have to launch another R command to
+    find "Bioconductor" version.
     """
 
     r_command = "tools:::.BioC_version_associated_with_R_version()"
@@ -406,8 +406,8 @@ def get_bioc_version():
 
 
 def get_r_pkgs(pkg_list):
-    """Returns aan array of objects whose key is the name of a R package
-    and value is the package's version.
+    """Returns a dictionary in which each key is the name of a R package
+    and the corresponding value is the package's version.
     """
 
     # Use "Rscript -e <R_commands>" command to get all user-installed R packages.
@@ -434,7 +434,7 @@ def get_r_pkgs(pkg_list):
     # package to report this uniform version.
     ba_proxy_pkg = 'hgu133plus2hsensgprobe'
 
-    pkg_info = []  # Use "list" to keep the order in YAML file.
+    pkg_info = dict()
     for pkg in pkg_list:
         if pkg == 'Bioconductor':
             version = get_bioc_version()
@@ -444,39 +444,39 @@ def get_r_pkgs(pkg_list):
             except KeyError:
                 raise Exception("R package not found: %s" % pkg)
 
-        pkg_info.append({pkg: version})
+        pkg_info[pkg] = version
 
     return pkg_info
 
 
-def get_checksums(pkg_list):
-    """Returns checksums of files in file_list."""
+def get_checksums(filenames_list):
+    """Returns a dictionary in which each key is a file's name and the
+    corresponding value is the file's md5 checksum.
+    """
 
-    checksums = []
-    for pkg in pkg_list:
-        abs_filepath = os.path.join(DIRNAME, pkg)
+    checksums = dict()
+    for filename in filenames_list:
+        abs_filepath = os.path.join(DIRNAME, filename)
         process_done = subprocess.run(['md5sum', abs_filepath],
                                       stdout=subprocess.PIPE,
                                       stderr=subprocess.PIPE)
         if process_done.returncode:
             raise Exception("md5sum command error:",
                             process_done.stderr.decode().strip())
-        version = process_done.stdout.decode().strip().split()[0]
-        checksums.append({pkg: version})
+        checksum_str = process_done.stdout.decode().strip().split()[0]
+        checksums[filename] = checksum_str
 
     return checksums
 
 
 def get_runtime_env(yml_filename):
-    """Reads input YAML file and returns a dictionary that includes
-    package version information.
+    """Reads input YAML filename and returns a dictionary in which each key
+    is a category name of runtime environment and the corresponding value
+    is an object that includes version information of packages listed in
+    that category.
     """
 
-    # To keep the order of categories in YAML file, we are using "list"
-    # instead of "dict" because insertion order in "dict" type is not
-    # official until Python 3.6, and JSONField in Django does not support
-    # collections.OrderedDict.
-    version_info = []
+    runtime_env = dict()
     with open(yml_filename) as yml_fh:
         pkgs = yaml.load(yml_fh)
         for pkg_type, pkg_list in pkgs.items():
@@ -495,9 +495,9 @@ def get_runtime_env(yml_filename):
             else:
                 raise Exception("Unknown category in %s: %s" % (yml_filename, pkg_type))
 
-            version_info.append({pkg_type: value})
+            runtime_env[pkg_type] = value
 
-    return version_info
+    return runtime_env
 
 
 def find_processor(enum_key):
@@ -516,3 +516,11 @@ def find_processor(enum_key):
                                                   docker_image=docker_image,
                                                   environment=environment)
     return obj
+
+
+def handle_processor_exception(job_context, processor_key, ex):
+    err_str = "Failed to set processor: %s" % ex
+    logger.error(err_str, job_id=job_context["job"].id, processor=processor_key)
+    job_context["job"].failure_reason = err_str
+    job_context["success"] = False
+    return job_context

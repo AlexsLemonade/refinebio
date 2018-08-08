@@ -260,13 +260,10 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
     result.is_ccdl = True
     result.pipeline = "tximport"  # TODO: should be removed
     try:
-        result.processor = utils.find_processor("TXIMPORT")
+        processor_key = "TXIMPORT"
+        result.processor = utils.find_processor(processor_key)
     except Exception as e:
-        err_str = "Failed to set processor: %s" % e
-        logger.error(err_str)
-        job_context["job"].failure_reason = err_str
-        job_context["success"] = False
-        return job_context
+        return handle_processor_exception(job_context, processor_key, e)
 
     result.save()
     job_context['pipeline'].steps.append(result.id)
@@ -393,14 +390,12 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         result.time_start = job_context['time_start']
         result.time_end = job_context['time_end']
         result.pipeline = "Salmon"  # TODO: should be removed
+
         try:
-            result.processor = utils.find_processor("SALMON_QUANT")
+            processor_key = "SALMON_QUANT"
+            result.processor = utils.find_processor(processor_key)
         except Exception as e:
-            err_str = "Failed to set processor: %s" % e
-            logger.error(err_str)
-            job_context["job"].failure_reason = err_str
-            job_context["success"] = False
-            return job_context
+            return handle_processor_exception(job_context, processor_key, e)
 
         result.is_ccdl = True
 
@@ -487,14 +482,12 @@ def _run_multiqc(job_context: Dict) -> Dict:
     result.time_end = time_end
     result.is_ccdl = True
     result.pipeline = "MultiQC"  # TODO: should be removed
+
     try:
-        result.processor = utils.find_processor("MULTIQC")
+        processor_key = "MULTIQC"
+        result.processor = utils.find_processor(processor_key)
     except Exception as e:
-        err_str = "Failed to set processor: %s" % e
-        logger.error(err_str)
-        job_context["job"].failure_reason = err_str
-        job_context["success"] = False
-        return job_context
+        return handle_processor_exception(job_context, processor_key, e)
 
     result.save()
     job_context['pipeline'].steps.append(result.id)
@@ -627,14 +620,12 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         result.time_end = end_time
         result.is_ccdl = True
         result.pipeline = "Salmontools"  # TODO: should be removed
+
         try:
-            result.processor = utils.find_processor("SALMONTOOLS")
+            processor_key = "SALMONTOOLS"
+            result.processor = utils.find_processor(processor_key)
         except Exception as e:
-            err_str = "Failed to set processor: %s" % e
-            logger.error(err_str)
-            job_context["job"].failure_reason = err_str
-            job_context["success"] = False
-            return job_context
+            return handle_processor_exception(job_context, processor_key, e)
 
         result.save()
         job_context['pipeline'].steps.append(result.id)
