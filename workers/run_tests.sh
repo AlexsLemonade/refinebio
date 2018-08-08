@@ -301,13 +301,49 @@ fi
 
 if [[ -z $tag || $tag == "qn" ]]; then
     # Make sure PCL for test is downloaded from S3
-    qn_name="GSM1237810_T09-1084.PCL"
+    qn_name="1.tsv"
     qn_test_raw_dir="$volume_directory/QN"
     qn_test_data_1="$qn_test_raw_dir/$qn_name"
     if [ ! -e "$qn_test_data_1" ]; then
         mkdir -p $qn_test_raw_dir
         echo "Downloading QN for tests."
         wget -q -O $qn_test_data_1 \
+             "$test_data_repo/$qn_name"
+    fi
+    qn_name="2.tsv"
+    qn_test_raw_dir="$volume_directory/QN"
+    qn_test_data_2="$qn_test_raw_dir/$qn_name"
+    if [ ! -e "$qn_test_data_2" ]; then
+        mkdir -p $qn_test_raw_dir
+        echo "Downloading QN for tests."
+        wget -q -O $qn_test_data_2 \
+             "$test_data_repo/$qn_name"
+    fi
+    qn_name="3.tsv"
+    qn_test_raw_dir="$volume_directory/QN"
+    qn_test_data_3="$qn_test_raw_dir/$qn_name"
+    if [ ! -e "$qn_test_data_3" ]; then
+        mkdir -p $qn_test_raw_dir
+        echo "Downloading QN for tests."
+        wget -q -O $qn_test_data_3 \
+             "$test_data_repo/$qn_name"
+    fi
+    qn_name="4.tsv"
+    qn_test_raw_dir="$volume_directory/QN"
+    qn_test_data_4="$qn_test_raw_dir/$qn_name"
+    if [ ! -e "$qn_test_data_4" ]; then
+        mkdir -p $qn_test_raw_dir
+        echo "Downloading QN for tests."
+        wget -q -O $qn_test_data_4 \
+             "$test_data_repo/$qn_name"
+    fi
+    qn_name="5.tsv"
+    qn_test_raw_dir="$volume_directory/QN"
+    qn_test_data_5="$qn_test_raw_dir/$qn_name"
+    if [ ! -e "$qn_test_data_5" ]; then
+        mkdir -p $qn_test_raw_dir
+        echo "Downloading QN for tests."
+        wget -q -O $qn_test_data_5 \
              "$test_data_repo/$qn_name"
     fi
 fi
