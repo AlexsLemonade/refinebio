@@ -654,14 +654,14 @@ class ProcessorTestCases(APITestCase):
         salmontools_env = {
             'os_distribution': 'Ubuntu 16.04.4 LTS',
             'os_pkg': {
+                'python3': '3.5.1-3',
                 'python3-pip': '8.1.1-2ubuntu0.4',
                 'g++': '4:5.3.1-1ubuntu1',
-                'cmake': '3.5.1-1ubuntu3',
-                'python3': '3.5.1-3'
+                'cmake': '3.5.1-1ubuntu3'
             },
             'cmd_line': {
                 'salmontools --version': 'Salmon Tools 0.1.0'
-            }
+            },
             'python': {
                 'Django': '2.0.6',
                 'data-refinery-common': '0.5.0'
