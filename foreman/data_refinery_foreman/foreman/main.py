@@ -182,15 +182,21 @@ def retry_lost_downloader_jobs() -> None:
     for job in potentially_lost_jobs:
         try:
             job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
-            # If the job is still pending, then it makes sense that it hasn't started.
-            if job_status != "pending":
-                # However if it's not pending, then it may have
-                # started since our original query.
-                job.refresh_from_db()
-                if job.start_time is None:
-                    # Nope, this job is lost.
-                    lost_jobs.append(job)
+            # If the job is still pending, then it makes sense that it
+            # hasn't started and if it's running then it may not have
+            # been able to mark the job record as started yet.
+            if job_status != "pending" and job_status != "running":
+                logger.info(("Determined that a downloader job needs to be requeued because its"
+                             " Nomad Job's status is: %s."),
+                            job_status,
+                            job_id=job.id
+                )
+                lost_jobs.append(job)
         except URLNotFoundNomadException:
+            logger.exception(("Determined that a downloader job needs to be requeued because "
+                              "querying for its Nomad job failed: "),
+                             job_id=job.id
+            )
             lost_jobs.append(job)
         except Exception:
             logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
@@ -305,15 +311,21 @@ def retry_lost_processor_jobs() -> None:
     for job in potentially_lost_jobs:
         try:
             job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
-            # If the job is still pending, then it makes sense that it hasn't started.
-            if job_status != "pending":
-                # However if it's not pending, then it may have
-                # started since our original query.
-                job.refresh_from_db()
-                if job.start_time is None:
-                    # Nope, this job is lost.
-                    lost_jobs.append(job)
+            # If the job is still pending, then it makes sense that it
+            # hasn't started and if it's running then it may not have
+            # been able to mark the job record as started yet.
+            if job_status != "pending" and job_status != "running":
+                logger.info(("Determined that a processor job needs to be requeued because its"
+                             " Nomad Job's status is: %s."),
+                            job_status,
+                            job_id=job.id
+                )
+                lost_jobs.append(job)
         except URLNotFoundNomadException:
+            logger.exception(("Determined that a processor job needs to be requeued because "
+                              "querying for its Nomad job failed: "),
+                             job_id=job.id
+            )
             lost_jobs.append(job)
         except Exception:
             logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
