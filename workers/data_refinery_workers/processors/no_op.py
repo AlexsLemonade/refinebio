@@ -268,13 +268,10 @@ def _create_result(job_context: Dict) -> Dict:
     result.is_ccdl = True
     result.pipeline = "Submitter-processed"  # TODO: should be removed
     try:
-        result.processor = utils.find_processor("SUBMITTER_PROCESSED")
+        processor_key = "SUBMITTER_PROCESSED"
+        result.processor = utils.find_processor(processor_key)
     except Exception as e:
-        err_str = "Failed to set processor: %s" % e
-        logger.error(err_str)
-        job_context["job"].failure_reason = err_str
-        job_context["success"] = False
-        return job_context
+        return handle_processor_exception(job_context, processor_key, e)
 
     result.save()
     job_context['pipeline'].steps.append(result.id)
