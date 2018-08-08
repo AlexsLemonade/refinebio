@@ -31,6 +31,7 @@ class ProcessorPipeline(PipelineEnums):
     TRANSCRIPTOME_INDEX_SHORT = "TRANSCRIPTOME_INDEX_SHORT"
     SMASHER = "SMASHER"
     NO_OP = "NO_OP"
+    QN_REFERENCE = "QN_REFERENCE"
     NONE = "NONE"
 
 
