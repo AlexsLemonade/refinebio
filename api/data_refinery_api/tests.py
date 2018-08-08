@@ -348,9 +348,9 @@ class APITestCases(APITestCase):
         self.assertEqual(len(response.json()['results'][0]['platforms']), 2)
         self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(ex.platforms))
         self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(['AFFY', 'ILLUMINA']))
-        self.assertEqual(response.json()['filters']['technology'], {'MICROARRAY': 2})
+        self.assertEqual(response.json()['filters']['technology'], {'FAKE-TECH': 1, 'MICROARRAY': 2, 'RNA-SEQ': 1})
         self.assertEqual(response.json()['filters']['publication'], {})
-        self.assertEqual(response.json()['filters']['organism'], {'HOMO_SAPIENS': 2})
+        self.assertEqual(response.json()['filters']['organism'], {'Extra-Terrestrial-1982': 1, 'HOMO_SAPIENS': 3})
 
         response = self.client.get(reverse('search'),
                                    {'search': 'THISWILLBEINASEARCHRESULT',
@@ -360,6 +360,11 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('search'), {'search': 'Clark Kent'})
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['results'][0]['accession_code'], "FINDME_TEMPURA")
+
+        # Test multiple filters
+        # This has to be done manually due to dicts requring distinct keys
+        response = self.client.get(reverse('search') + "?search=THISWILLBEINASEARCHRESULT&technology=MICROARRAY&technology=FAKE-TECH")
+        self.assertEqual(response.json()['count'], 2)
 
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
