@@ -47,6 +47,10 @@ message(data)
 
 # Create the target result
 data_matrix <- data.matrix(data, rownames.force = NA)
+data_matrix<-data_matrix[,-1] # We don't want the index column
+message("Datamatrix!")
+message(data_matrix)
+
 target <- normalize.quantiles.determine.target(data_matrix)
 
 # Save to output file
