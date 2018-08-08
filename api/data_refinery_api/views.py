@@ -6,6 +6,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 
 from django_filters.rest_framework import DjangoFilterBackend
+import django_filters
 
 from rest_framework.exceptions import APIException
 from rest_framework.pagination import LimitOffsetPagination
@@ -93,6 +94,38 @@ class PaginatedAPIView(APIView):
 # Search and Filter
 ##
 
+class ExperimentFilter(django_filters.FilterSet):
+    queryset = Experiment.processed_public_objects.all()
+    has_publication = django_filters.BooleanFilter(field_name="has_publication")
+    submitter_institution = \
+        django_filters.ModelMultipleChoiceFilter(field_name="submitter_institution",
+                                                 to_field_name="submitter_institution",
+                                                 queryset=queryset)
+    submitter_institution.always_filter = False
+    technology = django_filters.ModelMultipleChoiceFilter(field_name="technology",
+                                                          to_field_name="technology",
+                                                          queryset=queryset)
+    technology.always_filter = False
+    source_first_published = django_filters.DateTimeFilter(field_name="source_first_published")
+    organisms__name = django_filters.ModelMultipleChoiceFilter(field_name="organisms__name",
+                                                               to_field_name="name",
+                                                               queryset=Organism.objects.all())
+    organisms__name.always_filter = False
+    samples__platform_accession_code = \
+        django_filters.ModelMultipleChoiceFilter(field_name="smaples__platform_accession_code",
+                                                 to_field_name="platform_accession_code",
+                                                 queryset=Sample.objects.all())
+    samples__platform_accession_code.always_filter = False
+
+    class Meta:
+        model = Experiment
+        fields = ['has_publication', 
+                        'submitter_institution', 
+                        'technology',
+                        'source_first_published', 
+                        'organisms__name',
+                        'samples__platform_accession_code']
+
 # ListAPIView is read-only!
 class SearchAndFilter(generics.ListAPIView):
     """
@@ -108,6 +141,7 @@ class SearchAndFilter(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
+    filter_class = ExperimentFilter
 
     # via http://www.django-rest-framework.org/api-guide/filtering/#searchfilter
     # '^' Starts-with search.
@@ -142,7 +176,7 @@ class SearchAndFilter(generics.ListAPIView):
         response.data['filters']['publication'] = {}
         response.data['filters']['organism'] = {}
 
-        qs = self.filter_queryset(self.get_queryset())
+        qs = self.search_queryset(self.get_queryset())
         techs = qs.values('technology').annotate(Count('technology', unique=True))
         for tech in techs:
             if not tech['technology'] or not tech['technology'].strip():
@@ -165,6 +199,12 @@ class SearchAndFilter(generics.ListAPIView):
             response.data['filters']['organism'][organism['organisms__name']] = organism['organisms__name__count']
 
         return response
+
+    # We want to determine filters based off of the search term but not the filters to allow for
+    # multiple filters of the same type.
+    def search_queryset(self, queryset):
+        """ Filters the queryset based off of the search term (but not the filters) """
+        return filters.SearchFilter().filter_queryset(self.request, queryset, view=self)
 
 ##
 # Dataset
