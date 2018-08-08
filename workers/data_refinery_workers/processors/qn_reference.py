@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import os
 import subprocess
 import string
+import time
 import warnings
 from django.utils import timezone
 from typing import Dict
@@ -28,9 +29,6 @@ logger = get_and_configure_logger(__name__)
 
 def _prepare_input(job_context: Dict) -> Dict:
     
-    # We're not fancy.
-    #job_context['samples'] = job_context['samples']['ALL']
-
     # We're going to use the smasher outside of the smasher.
     # I'm not crazy about this yet. Maybe refactor later,
     # but I need the data now.
@@ -38,8 +36,14 @@ def _prepare_input(job_context: Dict) -> Dict:
     job_context = smasher._prepare_files(job_context)
     job_context = smasher._smash(job_context)
 
+    if not 'final_frame' in job_context.keys():
+        logger.error("Unable to prepare files for creating QN target.", 
+            job_id=job_context['job'].id)
+        job_context['success'] = False
+        return job_context
+
     # We only need the resulting frame, not the entire archive
-    outfile = '/tmp/derp.tsv'
+    outfile = '/tmp/' + str(time.time()).split('.')[0] + '.tsv'
     job_context['final_frame'].to_csv(outfile, sep='\t', encoding='utf-8')
     job_context['smashed_file'] = outfile
     job_context['target_file'] = outfile + '.target.tsv'
@@ -81,6 +85,27 @@ def _quantile_normalize(job_context: Dict) -> Dict:
     return job_context
 
 def _create_result_objects(job_context: Dict) -> Dict:
+
+    result = ComputationalResult()
+    result.commands.append("qn_reference.R") # Need a better way to represent this R code.
+    result.is_ccdl = True
+    result.is_public = True
+    result.time_start = job_context['time_start']
+    result.time_end = job_context['time_end']
+    result.pipeline = "Quantile Normalize Reference"
+    result.save()
+
+    computed_file = ComputedFile()
+    computed_file.absolute_file_path = job_context['target_file']
+    computed_file.file_name = job_context['target_file'].split('/')[-1]
+    computed_file.calculate_sha1()
+    computed_file.is_smashable = False
+    computed_file.is_qn_target = True
+    computed_file.result = result
+    computed_file.save()
+
+    job_context['result'] = result
+    job_context['computed_file'] = computed_file
     job_context['success'] = True
     return job_context
 
