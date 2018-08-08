@@ -37,7 +37,6 @@ def prepare_job():
     samp.organism = c_elegans
     samp.save()
 
-    #computational_result = ComputationalResult(processor=Processor.objects.first())
     computational_result = ComputationalResult(processor=utils.find_processor('SALMON_QUANT'))
     computational_result.save()
 
