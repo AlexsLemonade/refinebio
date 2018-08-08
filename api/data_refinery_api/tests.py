@@ -631,10 +631,10 @@ class APITestCases(APITestCase):
 class ProcessorTestCases(APITestCase):
     def setUp(self):
         salmon_quant_env = {
-            'os_distribution': 'Ubuntu 16.04.4 LTS'
+            'os_distribution': 'Ubuntu 16.04.4 LTS',
             'os_pkg': {
-                'python3-pip': '8.1.1-2ubuntu0.4',
-                'python3': '3.5.1-3'
+                'python3': '3.5.1-3',
+                'python3-pip': '8.1.1-2ubuntu0.4'
             },
             'cmd_line': {
                 'salmon --version': 'salmon 0.9.1'
