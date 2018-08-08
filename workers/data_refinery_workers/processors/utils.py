@@ -317,8 +317,8 @@ def get_os_pkgs(pkg_list):
 
 
 def get_cmd_lines(cmd_list):
-    """Returns a dictionary in which each key is the command string
-    and its value is the command's stripped output.
+    """Returns a dictionary in which each key is a command string
+    and the corresponding value is the command's stripped output.
     """
 
     cmd_info = dict()
