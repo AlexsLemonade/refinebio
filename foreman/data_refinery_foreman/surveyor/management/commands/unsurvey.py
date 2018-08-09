@@ -23,18 +23,20 @@ def purge_experiment(accession: str) -> None:
         if assoc_query.count() == 1:
             uniquely_assoced_sample_ids.append(sample.id)
             SampleAnnotation.objects.filter(sample=sample).delete()
-            deletable_experiment_sample_assocs.append(assoc_query[0].id)
+            deletable_experiment_sample_assocs.append(assoc_query[0])
 
     comp_result_sample_assocs = SampleResultAssociation.objects.filter(sample_id__in=uniquely_assoced_sample_ids)
-    comp_results = ComputationalResult.objects.filter(id__in=comp_result_sample_assocs.values('computational_result_id'))
+    comp_results = ComputationalResult.objects.filter(id__in=comp_result_sample_assocs.values('result_id'))
 
     uniquely_assoced_comp_result_ids = []
     deletable_sample_result_assocs = []
     for comp_result in comp_results:
         extra_assocs = SampleResultAssociation.objects.filter(
-            computational_result=comp_result,
-            sample_id__not_in=uniquely_assoced_sample_ids)
-        if extra_assocs.count == 0:
+            result=comp_result
+        ).exclude(
+            sample_id__in=uniquely_assoced_sample_ids
+        )
+        if extra_assocs.count() == 0:
             uniquely_assoced_comp_result_ids.append(comp_result.id)
 
             unique_associations = SampleResultAssociation.objects.filter(result=comp_result)
@@ -44,7 +46,8 @@ def purge_experiment(accession: str) -> None:
             ComputationalResultAnnotation.objects.filter(result=comp_result).delete()
             computed_files = ComputedFile.objects.filter(result=comp_result)
             for computed_file in computed_files:
-                computed_file.delete_local_file()
+                computed_file.delete_local_file(force=True)
+                computed_file.delete_s3_file()
                 computed_file.delete()
 
     og_file_sample_assocs = OriginalFileSampleAssociation.objects.filter(sample_id__in=uniquely_assoced_sample_ids)
@@ -54,12 +57,18 @@ def purge_experiment(accession: str) -> None:
     deletable_og_file_assocs = []
     for original_file in original_files:
         extra_assocs = OriginalFileSampleAssociation.objects.filter(
-            original_file=original_file,
-            sample_id__not_in=uniquely_assoced_sample_ids)
-        if extra_assocs.count == 0:
+            original_file=original_file
+        ).exclude(
+            sample_id__in=uniquely_assoced_sample_ids
+        )
+        if extra_assocs.count() == 0:
+            # Build a list of original_files so we can delete them all at once.
             uniquely_assoced_og_file_ids.append(original_file.id)
 
-            unique_associations = OriginalFilesampleAssociation.objects.filter(original_file=original_file)
+            # However we have to delete their local files one at a time:
+            original_file.delete_local_file()
+
+            unique_associations = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
             for assoc in unique_associations:
                 deletable_og_file_assocs.append(assoc)
 
@@ -70,15 +79,18 @@ def purge_experiment(accession: str) -> None:
         extra_assocs = DownloaderJobOriginalFileAssociation.objects.filter(
             downloader_job=downloader_job,
             original_file_id__not_in=uniquely_assoced_og_file_ids)
-        if extra_assocs.count == 0:
+        if extra_assocs.count() == 0:
             DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=downloader_job).delete()
             downloader_job.delete()
+
+    og_file_pj_assocs = ProcessorJobOriginalFileAssociation.objects.filter(original_file_id__in=uniquely_assoced_og_file_ids)
+    processor_jobs = ProcessorJob.objects.filter(id__in=og_file_pj_assocs.values('processor_job_id'))
 
     for processor_job in processor_jobs:
         extra_assocs = ProcessorJobOriginalFileAssociation.objects.filter(
             processor_job=processor_job,
             original_file_id__not_in=uniquely_assoced_og_file_ids)
-        if extra_assocs.count == 0:
+        if extra_assocs.count() == 0:
             ProcessorJobOriginalFileAssociation.objects.filter(processor_job=processor_job).delete()
             processor_job.delete()
 
@@ -91,12 +103,12 @@ def purge_experiment(accession: str) -> None:
     for sample_assoc in deletable_experiment_sample_assocs:
         sample_assoc.delete()
 
-    OriginalFiles.objects.filter(id__in=uniquely_assoced_og_file_ids).delete()
+    OriginalFile.objects.filter(id__in=uniquely_assoced_og_file_ids).delete()
     ComputationalResult.objects.filter(id__in=uniquely_assoced_comp_result_ids).delete()
-    Samples.objects.filter(id__in=uniquely_assoced_sample_ids).delete()
+    Sample.objects.filter(id__in=uniquely_assoced_sample_ids).delete()
     experiment.delete()
 
-
+    logger.info("Purged experiments: %s", accession)
 
 
 class Command(BaseCommand):
@@ -144,5 +156,3 @@ class Command(BaseCommand):
                 purge_experiment(accession)
             except Exception as e:
                 logger.exception("Exception caught while purging experiment with accession: %s", accession)
-
-        logger.info("Purged %s experiments.", str(len(accessions)))

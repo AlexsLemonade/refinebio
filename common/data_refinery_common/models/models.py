@@ -784,16 +784,29 @@ class ComputedFile(models.Model):
         self.size_in_bytes = os.path.getsize(self.absolute_file_path)
         return self.size_in_bytes
 
-    def delete_local_file(self):
+    def delete_local_file(self, force=False):
         """ Deletes a file from the path and actually removes it from the file system,
         resetting the is_downloaded flag to false. Can be refetched from source if needed. """
-        if not settings.RUNNING_IN_CLOUD:
+        if not settings.RUNNING_IN_CLOUD and not force:
             return
 
         try:
             os.remove(self.absolute_file_path)
         except OSError:
             pass
+
+    def delete_s3_file(self, force=False):
+        if not settings.RUNNING_IN_CLOUD and not force:
+            return False
+
+        try:
+            S3.delete_object(self.s3_bucket, self.s3_key)
+            return True
+        except:
+            logger.exception("Failed to delete S3 object for Computed File.",
+                             "computed_file"=self.id,
+                             "s3_object"=self.s3_key)
+            return False
 
     def get_synced_file_path(self, force=False):
         """ Fetches the absolute file path to this ComputedFile, fetching from S3 if it
