@@ -83,9 +83,29 @@ def get_supported_microarray_platforms(platforms_csv: str="config/supported_micr
             if reader.line_num is 1:
                 continue
 
+            external_accession = line[1]
+            is_brainarray = True if line[2] == 'y' else False
             SUPPORTED_MICROARRAY_PLATFORMS.append({"platform_accession": line[0],
-                                                   "external_accession": line[1],
-                                                   "is_brainarray": True if line[2] == 'y' else False})
+                                                   "external_accession": external_accession,
+                                                   "is_brainarray": is_brainarray})
+
+            # A-GEOD-13158 is the same platform as GPL13158 and this
+            # pattern is generalizable. Since we don't want to have to
+            # list a lot of platforms twice just with different prefixes,
+            # we just convert them and add them to the list.
+            if external_accession[:6] == "A-GEOD":
+                converted_accession = external_accession.replace("A-GEOD-", "GPL")
+                SUPPORTED_MICROARRAY_PLATFORMS.append({"platform_accession": line[0],
+                                                       "external_accession": converted_accession,
+                                                       "is_brainarray": is_brainarray})
+
+            # Our list of supported platforms contains both A-GEOD-*
+            # and GPL*, so convert both ways.
+            if external_accession[:3] == "GPL":
+                converted_accession = external_accession.replace("GPL", "A-GEOD-")
+                SUPPORTED_MICROARRAY_PLATFORMS.append({"platform_accession": line[0],
+                                                       "external_accession": converted_accession,
+                                                       "is_brainarray": is_brainarray})
 
     return SUPPORTED_MICROARRAY_PLATFORMS
 
