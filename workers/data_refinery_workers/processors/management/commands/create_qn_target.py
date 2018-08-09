@@ -18,6 +18,10 @@ from data_refinery_common.models import (
     ProcessorJobDatasetAssociation,
     ExperimentOrganismAssociation,
     OrganismIndex,
+    ExperimentSampleAssociation,
+    ComputationalResult,
+    ComputedFile,
+    SampleComputedFileAssociation,
     ExperimentSampleAssociation
 )
 
@@ -39,14 +43,16 @@ class Command(BaseCommand):
             logger.error("You must specify an organism")
             sys.exit(1) 
 
-        organism = Organism.get_object_for_name(options["organism"].upper())
-        # samples = Sample.processed_objects.filter(organism=organism)
-        # if samples.count() == 0:
-        #     logger.error("No processed samples for that organism.")
-        #     sys.exit(1) 
+        # self.create_test_data()
 
-        # platform_counts = Sample.processed_objects.objects.values('platform_name').annotate(dcount=Count('platform_name'))
-        platform_counts = Sample.objects.values('platform_accession_code').annotate(dcount=Count('platform_accession_code')).order_by('-dcount')
+        organism = Organism.get_object_for_name(options["organism"].upper())
+        samples = Sample.processed_objects.filter(organism=organism)
+        if samples.count() == 0:
+            logger.error("No processed samples for that organism.")
+            sys.exit(1) 
+
+        platform_counts = samples.values('platform_accession_code').annotate(dcount=Count('platform_accession_code')).order_by('-dcount')
+
         biggest_platform = platform_counts[0]['platform_accession_code']
         sample_codes_results = Sample.objects.filter(platform_accession_code=biggest_platform).values('accession_code')
         sample_codes = [res['accession_code'] for res in sample_codes_results]
@@ -70,7 +76,45 @@ class Command(BaseCommand):
         final_context = qn_reference.create_qn_reference(job.pk)
 
         if final_context['success']:
+            print(":D")
             sys.exit(0)
         else:
             print(":(")
             sys.exit(-1)
+
+    def create_test_data(self):
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+
+        experiment = Experiment()
+        experiment.accession_code = "123456"
+        experiment.save()
+
+        for code in ['1', '2', '3', '4', '5']:
+            sample = Sample()
+            sample.accession_code = code + '_derp'
+            sample.title = code
+            sample.platform_accession_code = 'A-MEXP-1171'
+            sample.manufacturer = "ILLUMINA"
+            sample.organism = homo_sapiens
+            sample.is_processed = True
+            sample.save()
+
+            cr = ComputationalResult()
+            cr.save()
+
+            file = ComputedFile()
+            file.filename = code + ".tsv"
+            file.absolute_file_path = "/home/user/data_store/QN/" + code + ".tsv"
+            file.size_in_bytes = int(code)
+            file.result = cr
+            file.save()
+
+            scfa = SampleComputedFileAssociation()
+            scfa.sample = sample
+            scfa.computed_file = file
+            scfa.save()
+
+            exsa = ExperimentSampleAssociation()
+            exsa.experiment = experiment
+            exsa.sample = sample
+            exsa.save()

@@ -13,7 +13,9 @@ from data_refinery_common.models import (
     Dataset,
     ProcessorJobOriginalFileAssociation,
     ProcessorJobDatasetAssociation,
-    OriginalFileSampleAssociation
+    OriginalFileSampleAssociation,
+    ComputationalResultAnnotation,
+    ComputationalResult
 )
 from data_refinery_workers._version import __version__
 from data_refinery_common.logging import get_and_configure_logger
@@ -241,3 +243,10 @@ def createTestProcessors():
 
     for label in ProcessorEnum:
         Processor.objects.create(name=label.value, version=__version__)
+
+def get_most_recent_qn_target_for_organism(organism):
+    """ Returns a ComputedFile for QN run for an Organism """
+
+    annotation = ComputationalResultAnnotation.objects.filter(data__organism_id=organism.id).order_by('-created_at')[0]
+    file = annotation.result.computedfile_set.first()
+    return file

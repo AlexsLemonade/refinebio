@@ -49,6 +49,7 @@ class QNRefTestCase(TestCase):
             sample.platform_accession_code = 'A-MEXP-1171'
             sample.manufacturer = "ILLUMINA"
             sample.organism = homo_sapiens
+            sample.is_processed = True
             sample.save()
 
             cr = ComputationalResult()
@@ -89,3 +90,6 @@ class QNRefTestCase(TestCase):
 
         self.assertTrue(os.path.exists(final_context['target_file']))
         self.assertEqual(os.path.getsize(final_context['target_file']), 519)
+
+        target = utils.get_most_recent_qn_target_for_organism(homo_sapiens)
+        self.assertEqual(target.sha1, 'a38ae13de860e47e0251dd02d1a8e88f576d83ad')

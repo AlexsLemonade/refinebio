@@ -416,3 +416,4 @@ def smash(job_id: int, upload=True) -> None:
                         _update_result_objects,
                         _delete_local_files,
                         utils.end_job])
+

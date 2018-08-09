@@ -15,6 +15,7 @@ from data_refinery_common.models import (
     ComputedFile,
     SampleResultAssociation,
     SampleComputedFileAssociation,
+    ComputationalResultAnnotation,
     Processor,
     Pipeline
 )
@@ -97,7 +98,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
     computed_file = ComputedFile()
     computed_file.absolute_file_path = job_context['target_file']
-    computed_file.file_name = job_context['target_file'].split('/')[-1]
+    computed_file.filename = job_context['target_file'].split('/')[-1]
     computed_file.calculate_sha1()
     computed_file.calculate_size()
     computed_file.is_smashable = False
@@ -108,7 +109,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
     annotation = ComputationalResultAnnotation()
     annotation.result = result
     annotation.data = {
-        "organism_id": job_context['samples'][0].organism.id
+        "organism_id": job_context['samples']['ALL'][0].organism_id,
+        "platform_accession_code": job_context['samples']['ALL'][0].platform_accession_code
     }
     annotation.save()
 
