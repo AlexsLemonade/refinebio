@@ -42,13 +42,20 @@ def _prepare_files(job_context: Dict) -> Dict:
     Fetches and prepares the files to smash.
     """
 
+    all_sample_files = []
     job_context['input_files'] = {}
     for key, samples in job_context["samples"].items():
-        all_sample_files = []
         for sample in samples:
             all_sample_files = all_sample_files + list(sample.get_result_files())
         all_sample_files = list(set(all_sample_files))
         job_context['input_files'][key] = all_sample_files
+
+    if all_sample_files == []:
+        logger.error("Couldn't get any files to smash for Smash job!!",
+            dataset_id=job_context['dataset'].id,
+            samples=job_context["samples"])
+        job_context['success'] = False
+        return job_context
 
     # So these get deleted from disk after..
     for computed_file in all_sample_files:
@@ -178,9 +185,17 @@ def _smash(job_context: Dict) -> Dict:
                 if breaker:
                     continue
 
+                # This is the innter join, the real "Smash"d
                 merged = merged.merge(frame, left_index=True, right_index=True)
-
             job_context['merged'] = merged
+
+            # Quantile Normalization
+            if job_context['dataset'].quantile_normalize:
+                organism = computed_file.samples.first().organism
+                qn_target = utils.get_most_recent_qn_target_for_organism(organism)
+                qn_target_path = qn_target.sync_from_s3()
+                # import pdb
+                # pdb.set_trace()
 
             # Transpose before scaling
             transposed = merged.transpose()

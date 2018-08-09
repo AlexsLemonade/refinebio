@@ -18,7 +18,7 @@ from data_refinery_common.models import (
     ExperimentSampleAssociation,
     ProcessorJobDatasetAssociation
 )
-from data_refinery_workers.processors import qn_reference, utils
+from data_refinery_workers.processors import qn_reference, smasher, utils
 
 
 def setUpModule():
@@ -93,3 +93,27 @@ class QNRefTestCase(TestCase):
 
         target = utils.get_most_recent_qn_target_for_organism(homo_sapiens)
         self.assertEqual(target.sha1, 'a38ae13de860e47e0251dd02d1a8e88f576d83ad')
+
+        ###
+        # Smasher with QN
+        ###
+
+        pj = ProcessorJob()
+        pj.pipeline_applied = "SMASHER"
+        pj.save()
+
+        ds = Dataset()
+        ds.data = {"12345": ["1", "2", "3", "4", "5"]}
+        ds.aggregate_by = 'SPECIES'
+        ds.scale_by = 'STANDARD'
+        ds.email_address = "null@derp.com"
+        ds.quantile_normalize = True
+        ds.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = pj
+        pjda.dataset = ds
+        pjda.save()
+
+        final_context = smasher.smash(pj.pk, upload=False)
+        self.assertTrue(final_context['success'])
