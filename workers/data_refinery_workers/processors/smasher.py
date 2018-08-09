@@ -194,8 +194,20 @@ def _smash(job_context: Dict) -> Dict:
                 organism = computed_file.samples.first().organism
                 qn_target = utils.get_most_recent_qn_target_for_organism(organism)
                 qn_target_path = qn_target.sync_from_s3()
-                # import pdb
-                # pdb.set_trace()
+
+                qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=0, index_col=0, error_bad_lines=False)
+
+                import rpy2
+                from rpy2.robjects import pandas2ri
+                pandas2ri.activate()
+
+                from rpy2.robjects.packages import importr
+                preprocessCore = importr('preprocessCore')
+                preprocessCore.normalize_quantiles(m)
+
+
+                import pdb
+                pdb.set_trace()
 
             # Transpose before scaling
             transposed = merged.transpose()

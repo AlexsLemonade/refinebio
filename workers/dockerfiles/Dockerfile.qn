@@ -37,7 +37,7 @@ RUN Rscript qn_dependencies.R
 # End QN-specific
 
 # Smasher-specific requirements
-RUN pip3 install numpy scipy matplotlib pandas==0.23.1 scikit-learn sympy nose
+RUN pip3 install numpy scipy matplotlib pandas==0.23.1 scikit-learn sympy nose rpy2
 # End smasher-specific
 
 COPY config/ config/
