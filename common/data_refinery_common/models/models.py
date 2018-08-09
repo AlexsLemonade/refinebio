@@ -804,8 +804,8 @@ class ComputedFile(models.Model):
             return True
         except:
             logger.exception("Failed to delete S3 object for Computed File.",
-                             "computed_file"=self.id,
-                             "s3_object"=self.s3_key)
+                             computed_file=self.id,
+                             s3_object=self.s3_key)
             return False
 
     def get_synced_file_path(self, force=False):

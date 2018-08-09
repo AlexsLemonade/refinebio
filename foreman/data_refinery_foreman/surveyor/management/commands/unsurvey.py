@@ -77,8 +77,10 @@ def purge_experiment(accession: str) -> None:
 
     for downloader_job in downloader_jobs:
         extra_assocs = DownloaderJobOriginalFileAssociation.objects.filter(
-            downloader_job=downloader_job,
-            original_file_id__not_in=uniquely_assoced_og_file_ids)
+            downloader_job=downloader_job
+        ).exclude(
+            original_file_id__in=uniquely_assoced_og_file_ids
+        )
         if extra_assocs.count() == 0:
             DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=downloader_job).delete()
             downloader_job.delete()
@@ -88,8 +90,10 @@ def purge_experiment(accession: str) -> None:
 
     for processor_job in processor_jobs:
         extra_assocs = ProcessorJobOriginalFileAssociation.objects.filter(
-            processor_job=processor_job,
-            original_file_id__not_in=uniquely_assoced_og_file_ids)
+            processor_job=processor_job
+        ).exclude(
+            original_file_id__in=uniquely_assoced_og_file_ids
+        )
         if extra_assocs.count() == 0:
             ProcessorJobOriginalFileAssociation.objects.filter(processor_job=processor_job).delete()
             processor_job.delete()
