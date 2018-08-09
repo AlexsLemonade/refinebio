@@ -159,13 +159,6 @@ class SearchAndFilter(generics.ListAPIView):
                         '@submitter_institution',
                         'experimentannotation__data'
                     )
-    filter_fields = (   'has_publication', 
-                        'submitter_institution', 
-                        'technology',
-                        'source_first_published', 
-                        'organisms__name',
-                        'samples__platform_accession_code'
-                    )
 
     def list(self, request, *args, **kwargs):
         """ Adds counts on certain filter fields to result JSON."""
