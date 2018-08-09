@@ -38,6 +38,7 @@ class ProcessorSerializer(serializers.ModelSerializer):
         model = Processor
         fields = (
             'name',
+            'version',
             'docker_image',
             'environment'
         )

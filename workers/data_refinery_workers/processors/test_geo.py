@@ -17,10 +17,6 @@ from data_refinery_common.models import (
 from data_refinery_workers.processors import utils
 
 
-def setUpModule():
-    utils.createTestProcessors()
-
-
 def prepare_illumina_job(species="Homo sapiens"):
     pj = ProcessorJob()
     pj.pipeline_applied = "ILLUMINA_TO_PCL"

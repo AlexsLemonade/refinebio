@@ -259,8 +259,12 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
     result.commands.append(" ".join(cmd_tokens))
     result.is_ccdl = True
     result.pipeline = "tximport"  # TODO: should be removed
-    # result.processor = Processor.objects.get(name=utils.ProcessorEnum.TXIMPORT.value,
-    #                                          version=__version__)
+    try:
+        processor_key = "TXIMPORT"
+        result.processor = utils.find_processor(processor_key)
+    except Exception as e:
+        return handle_processor_exception(job_context, processor_key, e)
+
     result.save()
     job_context['pipeline'].steps.append(result.id)
 
@@ -386,8 +390,13 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         result.time_start = job_context['time_start']
         result.time_end = job_context['time_end']
         result.pipeline = "Salmon"  # TODO: should be removed
-        # result.processor = Processor.objects.get(name=utils.ProcessorEnum.SALMON_QUANT.value,
-        #                                          version=__version__)
+
+        try:
+            processor_key = "SALMON_QUANT"
+            result.processor = utils.find_processor(processor_key)
+        except Exception as e:
+            return handle_processor_exception(job_context, processor_key, e)
+
         result.is_ccdl = True
 
         # Here select_for_update() is used as a mutex that forces multiple
@@ -473,8 +482,13 @@ def _run_multiqc(job_context: Dict) -> Dict:
     result.time_end = time_end
     result.is_ccdl = True
     result.pipeline = "MultiQC"  # TODO: should be removed
-    # result.processor = Processor.objects.get(name=utils.ProcessorEnum.MULTIQC.value,
-    #                                          version=__version__)
+
+    try:
+        processor_key = "MULTIQC"
+        result.processor = utils.find_processor(processor_key)
+    except Exception as e:
+        return handle_processor_exception(job_context, processor_key, e)
+
     result.save()
     job_context['pipeline'].steps.append(result.id)
 
@@ -606,8 +620,13 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         result.time_end = end_time
         result.is_ccdl = True
         result.pipeline = "Salmontools"  # TODO: should be removed
-        # result.processor = Processor.objects.get(name=utils.ProcessorEnum.SALMONTOOLS.value,
-        #                                          version=__version__)
+
+        try:
+            processor_key = "SALMONTOOLS"
+            result.processor = utils.find_processor(processor_key)
+        except Exception as e:
+            return handle_processor_exception(job_context, processor_key, e)
+
         result.save()
         job_context['pipeline'].steps.append(result.id)
 
