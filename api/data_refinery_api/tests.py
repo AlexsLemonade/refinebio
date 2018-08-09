@@ -571,11 +571,11 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['GALLUS_GALLUS'], {'num_experiments': 1, 'num_samples': 1})
         self.assertEqual(response.json()['HOMO_SAPIENS'], {'num_experiments': 1, 'num_samples': 1})
-        self.assertEqual(len(response.json().keys()), 2)        
+        self.assertEqual(len(response.json().keys()), 2)
 
         # Check that we can fetch these sample details via samples API
         response = self.client.get(reverse('samples'), {'dataset_id': good_id})
-        self.assertEqual(response.json()['count'], 2)   
+        self.assertEqual(response.json()['count'], 2)
 
     @patch('raven.contrib.django.models.client')
     def test_sentry_middleware_ok(self, mock_client):
@@ -631,35 +631,45 @@ class APITestCases(APITestCase):
 class ProcessorTestCases(APITestCase):
     def setUp(self):
         salmon_quant_env = {
-            'os': 'Ubuntu 16.04',
-            'programs': {
-                'salmon': {
-                    'version': '0.9.1',
-                    'command': 'salmon quant -i <index_dir> -r <input_file> -o <output_dir>'
-                }
+            'os_distribution': 'Ubuntu 16.04.4 LTS',
+            'os_pkg': {
+                'python3': '3.5.1-3',
+                'python3-pip': '8.1.1-2ubuntu0.4'
+            },
+            'cmd_line': {
+                'salmon --version': 'salmon 0.9.1'
+            },
+            'python': {
+                'Django': '2.0.6',
+                'data-refinery-common': '0.5.0'
             }
         }
         Processor.objects.create(
             name="Salmon Quant",
+            version="0.45",
             docker_image="ccdl/salmon_img:v1.23",
             environment=salmon_quant_env
         )
 
         salmontools_env = {
-            'os': 'Ubuntu 16.04',
-            'programs': {
-                'salmontools': {
-                    'version': '0.1.0',
-                    'command': 'salmontools extract-unmapped -u <file> -o <output> -r <data_file>',
-                },
-                'g++': {
-                    'version': '5.4.0',
-                    'command': 'cmake && make install'
-                }
+            'os_distribution': 'Ubuntu 16.04.4 LTS',
+            'os_pkg': {
+                'python3': '3.5.1-3',
+                'python3-pip': '8.1.1-2ubuntu0.4',
+                'g++': '4:5.3.1-1ubuntu1',
+                'cmake': '3.5.1-1ubuntu3'
+            },
+            'cmd_line': {
+                'salmontools --version': 'Salmon Tools 0.1.0'
+            },
+            'python': {
+                'Django': '2.0.6',
+                'data-refinery-common': '0.5.0'
             }
         }
         Processor.objects.create(
             name="Salmontools",
+            version="1.83",
             docker_image="ccdl/salmontools_img:v0.45",
             environment=salmontools_env
         )
@@ -670,7 +680,8 @@ class ProcessorTestCases(APITestCase):
 
         processors = response.json()
         self.assertEqual(processors[0]['name'], 'Salmon Quant')
-        self.assertEqual(processors[0]['environment']['programs']['salmon']['version'], '0.9.1')
+        self.assertEqual(processors[0]['environment']['os_pkg']['python3'], '3.5.1-3')
 
         self.assertEqual(processors[1]['name'], 'Salmontools')
-        self.assertEqual(processors[1]['environment']['programs']['salmontools']['version'], '0.1.0')
+        self.assertEqual(processors[1]['environment']['cmd_line']['salmontools --version'],
+                         'Salmon Tools 0.1.0')

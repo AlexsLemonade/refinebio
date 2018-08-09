@@ -311,8 +311,12 @@ def _populate_index_object(job_context: Dict) -> Dict:
 
     result = ComputationalResult()
     result.commands.append(job_context["salmon_formatted_command"])
-    # result.processor = Processor.objects.get(name=utils.ProcessorEnum.TX_INDEX.value,
-    #                                          version=__version__)
+    try:
+        processor_key = "TX_INDEX"
+        result.processor = utils.find_processor(processor_key)
+    except Exception as e:
+        return handle_processor_exception(job_context, processor_key, e)
+
     result.is_ccdl = True
     result.time_start = job_context["time_start"]
     result.time_end = job_context["time_end"]

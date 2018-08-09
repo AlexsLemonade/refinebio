@@ -16,10 +16,6 @@ from unittest.mock import patch
 from data_refinery_workers.processors import transcriptome_index, utils
 
 
-def setUpModule():
-    utils.createTestProcessors()
-
-
 def prepare_job():
     pj = ProcessorJob()
     pj.pipeline_applied = "TRANSCRIPTOME_INDEX_SHORT"
