@@ -42,6 +42,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     """
 
     job_context['input_files'] = {}
+
     for key, samples in job_context["samples"].items():
         all_sample_files = []
         for sample in samples:
@@ -81,7 +82,12 @@ def _smash(job_context: Dict) -> Dict:
 
         unsmashable_files = []
         num_samples = 0
+
         # Smash all of the sample sets
+        logger.info("About to smash!",
+                input_files=job_context['input_files'],
+                dataset_data=job_context['dataset'].data,
+            )
         for key, input_files in job_context['input_files'].items():
 
             # Merge all the frames into one
@@ -135,8 +141,20 @@ def _smash(job_context: Dict) -> Dict:
                     # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
                     data = data.groupby(data.index, sort=False).mean()
 
+                    # Explicitly title this dataframe
+                    try:
+                        data.columns = [computed_file.samples.all()[0].title]
+                    except ValueError:
+                        # This sample have have multiple channels, or something else.
+                        # Don't mess with it.
+                        pass
+                    except Exception as e:
+                        # Okay, somebody probably forgot to create a SampleComputedFileAssociation
+                        data.columns = [computed_file.filename]
+
                     all_frames.append(data)
                     num_samples = num_samples + 1
+
                 except Exception as e:
                     unsmashable_files.append(computed_file_path)
                     logger.exception("Unable to smash file",
@@ -262,6 +280,9 @@ def _smash(job_context: Dict) -> Dict:
     job_context['dataset'].success = True
     job_context['dataset'].save()
 
+    logger.info("Created smash output!",
+        archive_location=job_context["output_file"])
+
     return job_context
 
 def _upload(job_context: Dict) -> Dict:
@@ -281,6 +302,10 @@ def _upload(job_context: Dict) -> Dict:
                 )
             result_url = "https://s3.amazonaws.com/" + RESULTS_BUCKET + "/" + job_context["output_file"].split('/')[-1]
             job_context["result_url"] = result_url
+
+            logger.info("Result uploaded!",
+                    result_url=job_context["result_url"]
+                )
 
             job_context["dataset"].s3_bucket = RESULTS_BUCKET
             job_context["dataset"].s3_key = job_context["output_file"].split('/')[-1]
