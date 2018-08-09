@@ -384,7 +384,7 @@ class Processor(models.Model):
 
     class Meta:
         db_table = "processors"
-        unique_together = ('name', 'version')
+        unique_together = ('name', 'version', 'docker_image', 'environment')
 
     def __str__(self):
         return "Processor: %s (version: %s, docker_image: %s)" % (self.name, self.version, self.docker_image)

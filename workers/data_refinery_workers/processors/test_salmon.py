@@ -25,10 +25,6 @@ from data_refinery_common.models import (
 from data_refinery_workers.processors import salmon, utils
 
 
-def setUpModule():
-    utils.createTestProcessors()
-
-
 def prepare_job():
     pj = ProcessorJob()
     pj.pipeline_applied = "SALMON"
@@ -41,7 +37,7 @@ def prepare_job():
     samp.organism = c_elegans
     samp.save()
 
-    computational_result = ComputationalResult(processor=Processor.objects.first())
+    computational_result = ComputationalResult(processor=utils.find_processor('SALMON_QUANT'))
     computational_result.save()
 
     organism_index = OrganismIndex()
@@ -432,3 +428,93 @@ class DetermineIndexLengthTestCase(TestCase):
 
         self.assertEqual(results['index_length_raw'], 41)
         self.assertEqual(results['index_length'], 'short')
+
+
+class RuntimeProcessorTest(TestCase):
+    """Test the four processors hosted inside "Salmon" docker container."""
+
+    @tag('salmon')
+    def test_tximport(self):
+        self.assertEqual(Processor.objects.count(), 0)  # No processor yet
+
+        proc_key = "TXIMPORT"
+        tximport_processor = utils.find_processor(proc_key)
+        self.assertEqual(Processor.objects.count(), 1)  # New processor created
+
+        # Validate some information of the new processor
+        self.assertEqual(tximport_processor.name,
+                         utils.ProcessorEnum[proc_key].value['name'])
+        self.assertEqual(tximport_processor.version,
+                         utils.__version__)
+        self.assertEqual(tximport_processor.docker_image,
+                         utils.ProcessorEnum[proc_key].value['docker_img'])
+        self.assertEqual(tximport_processor.environment['os_distribution'],
+                         utils.get_os_distro())
+
+        os_pkg_name = 'r-base'
+        self.assertEqual(tximport_processor.environment['os_pkg'][os_pkg_name],
+                         utils.get_os_pkgs([os_pkg_name])[os_pkg_name])
+
+        pip_pkg_name = 'data-refinery-common'
+        self.assertEqual(tximport_processor.environment['python'][pip_pkg_name],
+                         utils.get_pip_pkgs([pip_pkg_name])[pip_pkg_name])
+
+        r_pkg_names = ['Bioconductor', 'tximport']
+        r_pkg_info = utils.get_r_pkgs(r_pkg_names)
+        for r_pkg in  r_pkg_names:
+            self.assertEqual(tximport_processor.environment['R'][r_pkg],
+                             r_pkg_info[r_pkg])
+
+        # Confirm that there is only one processor in one runtime environment
+        for i in range(3):
+            proc2 = utils.find_processor(proc_key)
+            self.assertEqual(Processor.objects.count(), 1)  # No new processor
+            self.assertEqual(tximport_processor, proc2)     # Same processor instance
+
+    @tag('salmon')
+    def test_salmon_quant(self):
+        self.assertEqual(Processor.objects.count(), 0)  # No processor yet
+        proc_key = "SALMON_QUANT"
+        sq_processor = utils.find_processor(proc_key)
+        self.assertEqual(Processor.objects.count(), 1)  # New processor created
+
+        # Validate some information of the new processor
+        self.assertEqual(sq_processor.name,
+                         utils.ProcessorEnum[proc_key].value['name'])
+
+        cmd_str = "salmon --version"
+        cmd_output = utils.get_cmd_lines([cmd_str])[cmd_str]
+        self.assertEqual(sq_processor.environment['cmd_line'][cmd_str],
+                         cmd_output)
+
+    @tag('salmon')
+    def test_multiqc(self):
+        self.assertEqual(Processor.objects.count(), 0)  # No processor yet
+        proc_key = "MULTIQC"
+        multiqc_processor = utils.find_processor(proc_key)
+        self.assertEqual(Processor.objects.count(), 1)  # New processor created
+
+        # Validate some information of the new processor
+        self.assertEqual(multiqc_processor.name,
+                         utils.ProcessorEnum[proc_key].value['name'])
+
+        cmd_str = "/home/user/FastQC/fastqc --version"
+        cmd_output = utils.get_cmd_lines([cmd_str])[cmd_str]
+        self.assertEqual(multiqc_processor.environment['cmd_line'][cmd_str],
+                         cmd_output)
+
+    @tag('salmon')
+    def test_salmontools(self):
+        self.assertEqual(Processor.objects.count(), 0)  # No processor yet
+        proc_key = "SALMONTOOLS"
+        st_processor = utils.find_processor(proc_key)
+        self.assertEqual(Processor.objects.count(), 1)  # New processor created
+
+        # Validate some information of the new processor
+        self.assertEqual(st_processor.name,
+                         utils.ProcessorEnum[proc_key].value['name'])
+
+        cmd_str = "salmontools --version"
+        cmd_output = utils.get_cmd_lines([cmd_str])[cmd_str]
+        self.assertEqual(st_processor.environment['cmd_line'][cmd_str],
+                         cmd_output)
