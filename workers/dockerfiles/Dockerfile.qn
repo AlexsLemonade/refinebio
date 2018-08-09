@@ -8,6 +8,11 @@ RUN apt-get -y install apt-fast
 
 RUN \
   apt-fast update -qq && \
+  apt-fast install -y lsb-release && \
+  echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
+      >> /etc/apt/sources.list.d/added_repos.list && \
+  apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys E084DAB9 && \
+  apt-fast update -qq && \
   apt-fast install -y \
   ed \
   git \
@@ -37,7 +42,7 @@ RUN Rscript qn_dependencies.R
 # End QN-specific
 
 # Smasher-specific requirements
-RUN pip3 install numpy scipy matplotlib pandas==0.23.1 scikit-learn sympy nose rpy2
+RUN pip3 install numpy scipy matplotlib pandas==0.23.1 scikit-learn sympy nose rpy2 tzlocal
 # End smasher-specific
 
 COPY config/ config/
