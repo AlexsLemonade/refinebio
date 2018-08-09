@@ -15,8 +15,6 @@ RUN \
   python3-pip \
   libcurl4-openssl-dev \
   libpq-dev \
-  curl \
-  wget \
   r-base \
   r-base-dev \
   libpq-dev \
@@ -32,15 +30,15 @@ WORKDIR /home/user
 
 RUN pip3 install --upgrade pip
 
-# Smasher-specific requirements
-RUN pip3 install numpy scipy matplotlib pandas==0.23.1 scikit-learn sympy nose
-# End smasher-specific
-
 # We need a few special packages for QN
 ENV R_LIBS "/usr/local/lib/R/site-library"
 COPY workers/qn_dependencies.R .
 RUN Rscript qn_dependencies.R
 # End QN-specific
+
+# Smasher-specific requirements
+RUN pip3 install numpy scipy matplotlib pandas==0.23.1 scikit-learn sympy nose
+# End smasher-specific
 
 COPY config/ config/
 
