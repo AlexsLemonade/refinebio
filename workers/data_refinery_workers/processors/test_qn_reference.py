@@ -76,6 +76,7 @@ class QNRefTestCase(TestCase):
         dataset.data = {"12345": ["1", "2", "3", "4", "5"]}
         dataset.aggregate_by = "ALL"
         dataset.scale_by = "NONE"
+        dataset.quantile_normalize = False # We don't QN because we're creating the target now
         dataset.save()
 
         pjda = ProcessorJobDatasetAssociation()

@@ -99,10 +99,18 @@ def _create_result_objects(job_context: Dict) -> Dict:
     computed_file.absolute_file_path = job_context['target_file']
     computed_file.file_name = job_context['target_file'].split('/')[-1]
     computed_file.calculate_sha1()
+    computed_file.calculate_size()
     computed_file.is_smashable = False
     computed_file.is_qn_target = True
     computed_file.result = result
     computed_file.save()
+
+    annotation = ComputationalResultAnnotation()
+    annotation.result = result
+    annotation.data = {
+        "organism_id": job_context['samples'][0].organism.id
+    }
+    annotation.save()
 
     job_context['result'] = result
     job_context['computed_file'] = computed_file
