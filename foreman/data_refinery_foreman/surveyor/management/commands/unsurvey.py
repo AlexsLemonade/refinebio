@@ -11,51 +11,74 @@ from data_refinery_common.logging import get_and_configure_logger
 logger = get_and_configure_logger(__name__)
 
 def purge_experiment(accession: str) -> None:
+    """Removes an experiment and all data that is only associated with it.
+
+    I.e. if a sample is part of two experiments, it won't be removed
+    but it will be disassociated from the one being purged.
+    """
     experiment = Experiment.objects.filter(accession_code=accession)[0]
     ExperimentAnnotation.objects.filter(experiment=experiment).delete()
+
+
+    ## Samples
     experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(experiment=experiment)
     samples = Sample.objects.filter(id__in=experiment_sample_assocs.values('sample_id'))
 
     uniquely_assoced_sample_ids = []
-    deletable_experiment_sample_assocs = []
     for sample in samples:
         assoc_query = ExperimentSampleAssociation.objects.filter(sample=sample)
         if assoc_query.count() == 1:
+            # The sample is only associated with this experiment, mark it for deletion.
             uniquely_assoced_sample_ids.append(sample.id)
             SampleAnnotation.objects.filter(sample=sample).delete()
-            deletable_experiment_sample_assocs.append(assoc_query[0])
+            assoc_query[0].delete()
+        else:
+            # The association isn't unique, but we still should delete
+            # the association with the experiment since it will be deleted.
+            ExperimentSampleAssociation.objects.filter(sample=sample, experiment=experiment)[0].delete()
 
+    ## ComputationalResults/ComputedFiles
     comp_result_sample_assocs = SampleResultAssociation.objects.filter(sample_id__in=uniquely_assoced_sample_ids)
     comp_results = ComputationalResult.objects.filter(id__in=comp_result_sample_assocs.values('result_id'))
 
     uniquely_assoced_comp_result_ids = []
-    deletable_sample_result_assocs = []
     for comp_result in comp_results:
+        # We know this result is associated with samples we can
+        # delete, but is it associated with any we cannot?
         extra_assocs = SampleResultAssociation.objects.filter(
             result=comp_result
         ).exclude(
             sample_id__in=uniquely_assoced_sample_ids
         )
         if extra_assocs.count() == 0:
+            # It's not assoced with anything else, delete it, its
+            # associations, and its ComputedFile.
             uniquely_assoced_comp_result_ids.append(comp_result.id)
-
-            unique_associations = SampleResultAssociation.objects.filter(result=comp_result)
-            for assoc in unique_associations:
-                deletable_sample_result_assocs.append(assoc)
 
             ComputationalResultAnnotation.objects.filter(result=comp_result).delete()
             computed_files = ComputedFile.objects.filter(result=comp_result)
+
+            # Delete all the actual files, both locally and in S3.
             for computed_file in computed_files:
                 computed_file.delete_local_file(force=True)
                 computed_file.delete_s3_file()
-                computed_file.delete()
 
+            # Delete the database records for the ComputedFile
+            SampleComputedFileAssociation.objects.filter(comptued_file__in=computed_files).delete()
+            computed_files.delete()
+
+    # Whether or not we can delete all of these results, we know the
+    # associations need to go.
+    comp_result_sample_assocs.delete()
+
+    # OriginalFiles
     og_file_sample_assocs = OriginalFileSampleAssociation.objects.filter(sample_id__in=uniquely_assoced_sample_ids)
     original_files = OriginalFile.objects.filter(id__in=og_file_sample_assocs.values('original_file_id'))
 
     uniquely_assoced_og_file_ids = []
-    deletable_og_file_assocs = []
     for original_file in original_files:
+        # We know this file is associated with samples we can
+        # delete, but is it associated with any we cannot?
         extra_assocs = OriginalFileSampleAssociation.objects.filter(
             original_file=original_file
         ).exclude(
@@ -68,48 +91,55 @@ def purge_experiment(accession: str) -> None:
             # However we have to delete their local files one at a time:
             original_file.delete_local_file()
 
-            unique_associations = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
-            for assoc in unique_associations:
-                deletable_og_file_assocs.append(assoc)
+    # Whether or not we can delete all of these original files, we
+    # know the associations need to go.
+    og_file_sample_assocs.delete()
 
+    ## DownloaderJobs
     og_file_dj_assocs = DownloaderJobOriginalFileAssociation.objects.filter(original_file_id__in=uniquely_assoced_og_file_ids)
     downloader_jobs = DownloaderJob.objects.filter(id__in=og_file_dj_assocs.values('downloader_job_id'))
 
     for downloader_job in downloader_jobs:
+        # We know this job is associated with files we can
+        # delete, but is it associated with any we cannot?
         extra_assocs = DownloaderJobOriginalFileAssociation.objects.filter(
             downloader_job=downloader_job
         ).exclude(
             original_file_id__in=uniquely_assoced_og_file_ids
         )
         if extra_assocs.count() == 0:
-            DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=downloader_job).delete()
             downloader_job.delete()
 
+    # Whether or not we can delete all of these jobs, we
+    # know the associations need to go.
+    og_file_dj_assocs.delete()
+
+
+    ## ProcessorJobs
     og_file_pj_assocs = ProcessorJobOriginalFileAssociation.objects.filter(original_file_id__in=uniquely_assoced_og_file_ids)
     processor_jobs = ProcessorJob.objects.filter(id__in=og_file_pj_assocs.values('processor_job_id'))
 
     for processor_job in processor_jobs:
+        # We know this job is associated with files we can
+        # delete, but is it associated with any we cannot?
         extra_assocs = ProcessorJobOriginalFileAssociation.objects.filter(
             processor_job=processor_job
         ).exclude(
             original_file_id__in=uniquely_assoced_og_file_ids
         )
         if extra_assocs.count() == 0:
-            ProcessorJobOriginalFileAssociation.objects.filter(processor_job=processor_job).delete()
             processor_job.delete()
 
-    for og_file_assoc in deletable_og_file_assocs:
-        og_file_assoc.delete()
+    # Whether or not we can delete all of these jobs, we
+    # know the associations need to go.
+    og_file_pj_assocs.delete()
 
-    for comp_result_assoc in deletable_sample_result_assocs:
-        comp_result_assoc.delete()
-
-    for sample_assoc in deletable_experiment_sample_assocs:
-        sample_assoc.delete()
-
+    # Delete the lists of objects we built.
     OriginalFile.objects.filter(id__in=uniquely_assoced_og_file_ids).delete()
     ComputationalResult.objects.filter(id__in=uniquely_assoced_comp_result_ids).delete()
     Sample.objects.filter(id__in=uniquely_assoced_sample_ids).delete()
+
+    # Finally delete the experiment itself last.
     experiment.delete()
 
     logger.info("Purged experiments: %s", accession)
