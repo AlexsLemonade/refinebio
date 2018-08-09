@@ -55,6 +55,7 @@ class Command(BaseCommand):
         dataset.data = {organism.name + '_(' + biggest_platform + ')': sample_codes}
         dataset.aggregate_by = "ALL"
         dataset.scale_by = "NONE"
+        dataset.quantile_normalize = False
         dataset.save()
 
         job = ProcessorJob()
