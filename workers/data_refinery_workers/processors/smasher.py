@@ -142,7 +142,15 @@ def _smash(job_context: Dict) -> Dict:
                     data = data.groupby(data.index, sort=False).mean()
 
                     # Explicitly title this dataframe
-                    data.columns = [computed_file.samples.all()[0].title]
+                    try:
+                        data.columns = [computed_file.samples.all()[0].title]
+                    except ValueError:
+                        # This sample have have multiple channels, or something else.
+                        # Don't mess with it.
+                        pass
+                    except Exception as e:
+                        # Okay, somebody probably forgot to create a SampleComputedFileAssociation
+                        data.columns = [computed_file.filename]
 
                     all_frames.append(data)
                     num_samples = num_samples + 1
@@ -295,6 +303,10 @@ def _upload(job_context: Dict) -> Dict:
             result_url = "https://s3.amazonaws.com/" + RESULTS_BUCKET + "/" + job_context["output_file"].split('/')[-1]
             job_context["result_url"] = result_url
 
+            logger.info("Result uploaded!",
+                    result_url=job_context["result_url"]
+                )
+
             job_context["dataset"].s3_bucket = RESULTS_BUCKET
             job_context["dataset"].s3_key = job_context["output_file"].split('/')[-1]
             job_context["dataset"].save()
@@ -304,10 +316,6 @@ def _upload(job_context: Dict) -> Dict:
                 os.remove(job_context["output_file"])
             except OSError:
                 pass
-
-        logger.info("Result uploaded!",
-                result_url=job_context["result_url"]
-            )
 
     except Exception as e:
         logger.exception("Failed to upload smash result file.", file=job_context["output_file"])
