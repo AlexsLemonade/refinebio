@@ -164,7 +164,7 @@ def _detect_columns(job_context: Dict) -> Dict:
                             continue_me = True
                             break
                     except Exception:
-                        continue
+                        pass
                 if continue_me:
                     # Treat the header as the real title, as we will need it later.
                     sample.title = header
