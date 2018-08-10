@@ -468,6 +468,65 @@ class DatasetSerializer(serializers.ModelSerializer):
             raise
         return data
 
+class DatasetDetailsSampleSerializer(serializers.ModelSerializer):
+    """ This serializer contains all of the information about a sample needed for the download page
+    """
+    organism = OrganismSerializer(many=False)
+
+    class Meta:
+        model = Sample
+        fields = (
+                    'accession_code',
+                    'organism',
+                )
+
+class DatasetDetailsExperimentSerializer(serializers.ModelSerializer):
+    """ This serializer contains all of the information about an experiment needed for the download
+    page
+    """
+    organisms = serializers.StringRelatedField(many=True)
+    samples = serializers.StringRelatedField(many=True)
+    sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
+    pretty_platforms = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Experiment
+        fields = (
+                    'id',
+                    'title',
+                    'accession_code',
+                    'pretty_platforms',
+                    'samples',
+                    'organisms',
+                    'sample_metadata',
+                )
+
+class DatasetDetailsSerializer(serializers.ModelSerializer):
+    """ This serializer contains all of the information about a dataset needed for the download page
+    """
+    samples = DatasetDetailsSampleSerializer(read_only=True, many=True, source='get_samples')
+    experiments = DatasetDetailsExperimentSerializer(read_only=True, many=True, source='get_experiments')
+
+    class Meta:
+        model = Dataset
+        fields = (
+                    'data',
+                    'aggregate_by',
+                    'scale_by',
+                    'is_processing',
+                    'is_processed',
+                    'experiments',
+                    'samples'
+            )
+        extra_kwargs = {
+                        'is_processing': {
+                            'read_only': True,
+                        },
+                        'is_processed': {
+                            'read_only': True,
+                        },
+                    }
+
 class APITokenSerializer(serializers.ModelSerializer):
 
     class Meta:
