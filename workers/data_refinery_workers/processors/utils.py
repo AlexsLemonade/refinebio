@@ -1,5 +1,8 @@
+import os
 import random
 import string
+import subprocess
+import yaml
 
 from enum import Enum, unique
 from typing import List, Dict, Callable
@@ -23,6 +26,7 @@ from data_refinery_common.utils import get_worker_id, get_env_variable
 
 logger = get_and_configure_logger(__name__)
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
+DIRNAME = os.path.dirname(os.path.abspath(__file__))
 
 
 def start_job(job_context: Dict):
@@ -105,11 +109,7 @@ def end_job(job_context: Dict, abort=False):
 
     # S3-sync Original Files
     for original_files in job_context['original_files']:
-        # Ensure even distribution across S3 servers
-        nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
-        result = original_files.sync_to_s3(S3_BUCKET_NAME, nonce + "_" + original_files.filename)
-        if result:
-            original_files.delete_local_file()
+        original_files.delete_local_file()
 
     # S3-sync Computed Files
     for computed_file in job_context['computed_files']:
@@ -208,41 +208,207 @@ class PipelineEnum(Enum):
 
 @unique
 class ProcessorEnum(Enum):
-    """Hardcoded processor names in each pipeline."""
+    """Hardcoded processor info in each pipeline."""
 
     # One processor in "Agilent Two Color" pipeline
-    AGILENT_TWOCOLOR = "Agilent SCAN TwoColor"
+    AGILENT_TWOCOLOR = {
+        "name": "Agilent SCAN TwoColor",
+        "docker_img": "not_available_yet",
+        "yml_file": "agilent_twocolor.yml"
+    }
 
     # One processor in "Array Express" pipeline
-    AFFYMETRIX_SCAN = "Affymetrix SCAN"
+    AFFYMETRIX_SCAN = {
+        "name": "Affymetrix SCAN",
+        "docker_img": "dr_affymetrix",
+        "yml_file": "affymetrix.yml"
+    }
 
     # One processor in "Illumina" pipeline
-    ILLUMINA_SCAN = "Illumina SCAN"
+    ILLUMINA_SCAN = {
+        "name": "Illumina SCAN",
+        "docker_img": "dr_illumina",
+        "yml_file": "illumina.yml"
+    }
 
     # One processor in "No Op" pipeline
-    SUBMITTER_PROCESSED = "Submitter-processed"
+    SUBMITTER_PROCESSED = {
+        "name": "Submitter-processed",
+        "docker_img": "dr_no_op",
+        "yml_file": "no_op.yml"
+    }
 
     # Four processors in "Salmon" pipeline
-    TXIMPORT = "Tximport"
-    SALMON_QUANT = "Salmon Quant"
-    MULTIQC = "MultiQC"
-    SALMONTOOLS = "Salmontools"
+    MULTIQC = {
+        "name": "MultiQC",
+        "docker_img": "dr_salmon",
+        "yml_file": "multiqc.yml"
+    }
+    SALMON_QUANT = {
+        "name": "Salmon Quant",
+        "docker_img": "dr_salmon",
+        "yml_file": "salmon_quant.yml"
+    }
+    SALMONTOOLS = {
+        "name": "Salmontools",
+        "docker_img": "dr_salmon",
+        "yml_file": "salmontools.yml"
+    }
+    TXIMPORT = {
+        "name": "Tximport",
+        "docker_img": "dr_salmon",
+        "yml_file": "tximport.yml"
+    }
 
-    # No processors in "Smasher" pipeline (yet)
+    # One processor in "Smasher" pipeline
+    SMASHER = {
+        "name": "Smasher",
+        "docker_img": "dr_smasher",
+        "yml_file": "smasher.yml"
+    }
 
     # One processor in "Transcriptome Index" pipeline
-    TX_INDEX = "Transcriptome Index"
+    TX_INDEX = {
+        "name": "Transcriptome Index",
+        "docker_img": "dr_transcriptome",
+        "yml_file": "transcriptome_index.yml"
+    }
 
-    QN_REFERENCE = "Quantile Normalization Reference"
+    QN_REFERENCE = {
+        "name": "Quantile Normalization Reference",
+        "docker_img": "dr_qn",
+        "yml_file": "qn.yml"
+    }
+
+    @classmethod
+    def has_key(cls, key):
+        """Class method that tells whether a certain key exists."""
+        return key in cls.__members__
 
 
-def createTestProcessors():
-    """Creates dummy processors for all unit test cases.
-    (This function should be called ONLY by test modules).
+def get_os_distro():
+    """Returns a string of OS distribution.
+    Since we are using Docker, this function only considers Linux distribution.
+    Alternative files on Linux: /etc/os-release, /etc/lsb-release
+    As a matter of fact, "/etc/issue" doesn't exist on Mac OS X.  We can use
+    "sw_vers" command to find its OS information.
+    A more cross-platform solution is using "platform" module in Python.
     """
 
-    for label in ProcessorEnum:
-        Processor.objects.create(name=label.value, version=__version__)
+    with open('/etc/issue') as distro_fh:
+      return distro_fh.readline().strip('\l\n\\n ')
+
+
+def get_os_pkgs(pkg_list):
+    """Returns a dictionay in which each key is the name of an os-lvel
+    package and the corresponding value is the package's version.
+    This function assumes the package manager is Debian-based (dpkg/apt).
+    """
+
+    pkg_info = dict()
+    for pkg in pkg_list:
+        process_done = subprocess.run(['dpkg-query', '--show', pkg],
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE)
+        if process_done.returncode:
+            raise Exception("OS-level package %s not found: %s" %
+                            (pkg, process_done.stderr.decode().strip())
+            )
+
+        version = process_done.stdout.decode().strip().split('\t')[-1]
+        pkg_info[pkg] = version
+
+    return pkg_info
+
+
+def get_cmd_lines(cmd_list):
+    """Returns a dictionary in which each key is a command string and
+    the corresponding value is the command's stripped output.
+    """
+
+    cmd_info = dict()
+    for cmd in cmd_list:
+        process_done = subprocess.run(cmd.split(),
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE)
+        if process_done.returncode:
+            raise Exception("Failed to run command line '%s': %s" %
+                            (cmd, process_done.stderr.decode().strip())
+            )
+
+        output_bytes = process_done.stdout
+        # Workaround for "salmon --version" and "salmontools --version"
+        # commands, whose outputs are both sent to stderr instead of stdout.
+        # Alternatively, we could have used "stderr=subprocess.STDOUT" when
+        # initializing process_done, but it is probably a better idea to
+        # keep stdout and stderr separate.
+        base_cmd = cmd.strip().split()[0]
+        if base_cmd == 'salmon' or base_cmd == "salmontools":
+            output_bytes = process_done.stderr
+
+        cmd_output = output_bytes.decode().strip()
+        cmd_info[cmd] = cmd_output
+
+    return cmd_info
+
+
+def get_pip_pkgs(pkg_list):
+    """Returns a dictionary in which each key is the name of a pip-installed
+    package and the corresponding value is the package's version.
+    Instead of using: `pip show pkg | grep Version | awk '{print $2}'` to get
+    each package's version, we save the output of `pip freeze` first, then
+    check the version of each input package in pkg_list.  This approach
+    launches the subprocess only once and (hopefully) saves some computational
+    resource.
+    """
+
+    process_done = subprocess.run(['pip', 'freeze'],
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
+    if process_done.returncode:
+        raise Exception("'pip freeze' failed: %s" % process_done.stderr.decode().strip())
+
+    frozen_pkgs = dict()
+    for item in process_done.stdout.decode().split():
+        name, version = item.split("==")
+        frozen_pkgs[name] = version
+
+    pkg_info = dict()
+    for pkg in pkg_list:
+        try:
+            version = frozen_pkgs[pkg]
+        except KeyError:
+            raise Exception("Pip package not found: %s" % pkg)
+
+        pkg_info[pkg] = version
+
+    return pkg_info
+
+
+def get_bioc_version():
+    """Returns a string that is the version of "Bioconductor" package in R.
+    Note that the data frame returned by installed.packages() does NOT include
+    a package named "Bioconductor", so we have to launch another R command to
+    find "Bioconductor" version.
+    """
+
+    r_command = "tools:::.BioC_version_associated_with_R_version()"
+    process_done = subprocess.run(['Rscript', '-e', r_command],
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
+    if process_done.returncode:
+        raise Exception('R command failed to retrieve Bioconductor version: %s' %
+                        process_done.stderr.decode().strip()
+        )
+
+    version = process_done.stdout.decode().strip().split()[-1]
+    version = version[1:-1]  # Remove the leading and trailing non-ascii characters.
+
+    if len(version) == 0:
+        raise Exception('Bioconductor not found')
+
+    return version
+
 
 def get_most_recent_qn_target_for_organism(organism):
     """ Returns a ComputedFile for QN run for an Organism """
@@ -250,3 +416,128 @@ def get_most_recent_qn_target_for_organism(organism):
     annotation = ComputationalResultAnnotation.objects.filter(data__organism_id=organism.id).order_by('-created_at')[0]
     file = annotation.result.computedfile_set.first()
     return file
+
+
+def get_r_pkgs(pkg_list):
+    """Returns a dictionary in which each key is the name of a R package
+    and the corresponding value is the package's version.
+    """
+
+    for label in ProcessorEnum:
+        Processor.objects.create(name=label.value, version=__version__)
+
+    # Use "Rscript -e <R_commands>" command to get all user-installed R packages.
+    r_commands = "packages.df <- as.data.frame(installed.packages()[, c(1, 3:4)]); \
+    packages.df <- packages.df[is.na(packages.df$Priority), 1:2, drop=FALSE]; \
+    colnames(packages.df) <- NULL; \
+    print(packages.df, row.names=FALSE);"
+
+    process_done = subprocess.run(['Rscript', '-e', r_commands],
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
+    if process_done.returncode:
+        raise Exception('R command failed to retrieves installed packages: %s' %
+                        process_done.stderr.decode().strip()
+        )
+
+    r_pkgs = dict()
+    for item in process_done.stdout.decode().strip().split('\n'):
+        name, version = item.strip().split()
+        r_pkgs[name] = version
+
+    # "Brainarray" is a collection that consists of 121 ".*ensgprobe" packages.
+    # They share the same version number, so we use 'hgu133plus2hsensgprobe'
+    # package to report this uniform version.
+    ba_proxy_pkg = 'hgu133plus2hsensgprobe'
+
+    pkg_info = dict()
+    for pkg in pkg_list:
+        if pkg == 'Bioconductor':
+            version = get_bioc_version()
+        else:
+            try:
+                version = r_pkgs[pkg] if pkg != "Brainarray" else r_pkgs[ba_proxy_pkg]
+            except KeyError:
+                raise Exception("R package not found: %s" % pkg)
+
+        pkg_info[pkg] = version
+
+    return pkg_info
+
+
+def get_checksums(filenames_list):
+    """Returns a dictionary in which each key is a file's name and the
+    corresponding value is the file's md5 checksum.
+    """
+
+    checksums = dict()
+    for filename in filenames_list:
+        abs_filepath = os.path.join(DIRNAME, filename)
+        process_done = subprocess.run(['md5sum', abs_filepath],
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE)
+        if process_done.returncode:
+            raise Exception("md5sum command error:",
+                            process_done.stderr.decode().strip())
+        checksum_str = process_done.stdout.decode().strip().split()[0]
+        checksums[filename] = checksum_str
+
+    return checksums
+
+
+def get_runtime_env(yml_filename):
+    """Reads input YAML filename and returns a dictionary in which each key
+    is a category name of runtime environment and the corresponding value
+    is an object that includes version information of packages listed in
+    that category.
+    """
+
+    runtime_env = dict()
+    with open(yml_filename) as yml_fh:
+        pkgs = yaml.load(yml_fh)
+        for pkg_type, pkg_list in pkgs.items():
+            if pkg_type == 'os_distribution':
+                value = get_os_distro()
+            elif pkg_type == 'os_pkg':
+                value = get_os_pkgs(pkg_list)
+            elif pkg_type == 'cmd_line':
+                value = get_cmd_lines(pkg_list)
+            elif pkg_type == 'python':
+                value = get_pip_pkgs(pkg_list)
+            elif pkg_type == 'R':
+                value = get_r_pkgs(pkg_list)
+            elif pkg_type == 'checksum':
+                value = get_checksums(pkg_list)
+            else:
+                raise Exception("Unknown category in %s: %s" % (yml_filename, pkg_type))
+
+            runtime_env[pkg_type] = value
+
+    return runtime_env
+
+
+def find_processor(enum_key):
+    """Retursn either a newly created Processor record, or the one in
+    database that matches the current processor name, version and environment.
+    """
+
+    name = ProcessorEnum[enum_key].value['name']
+    docker_image = ProcessorEnum[enum_key].value['docker_img']
+
+    # In current implementation, ALWAYS get the runtime environment.
+    yml_path = os.path.join(DIRNAME, ProcessorEnum[enum_key].value['yml_file'])
+    environment = get_runtime_env(yml_path)
+    obj, status = Processor.objects.get_or_create(name=name,
+                                                  version=__version__,
+                                                  docker_image=docker_image,
+                                                  environment=environment)
+    return obj
+
+
+def handle_processor_exception(job_context, processor_key, ex):
+    err_str = "Failed to set processor: %s" % ex
+    logger.error(err_str, job_id=job_context["job"].id, processor=processor_key)
+    job_context["job"].failure_reason = err_str
+    job_context["success"] = False
+    return job_context
+

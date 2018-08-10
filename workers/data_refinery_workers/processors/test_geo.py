@@ -17,10 +17,6 @@ from data_refinery_common.models import (
 from data_refinery_workers.processors import utils
 
 
-def setUpModule():
-    utils.createTestProcessors()
-
-
 def prepare_illumina_job(species="Homo sapiens"):
     pj = ProcessorJob()
     pj.pipeline_applied = "ILLUMINA_TO_PCL"
@@ -60,13 +56,19 @@ def prepare_illumina_job(species="Homo sapiens"):
 
         sa = SampleAnnotation()
         sa.sample = sample
-        sa.data = {}
+        sa.data = {'description': [name]}
+        sa.is_ccdl = False
         sa.save()
 
         sample_assoc = OriginalFileSampleAssociation()
         sample_assoc.original_file = og_file
         sample_assoc.sample = sample
         sample_assoc.save()
+
+    sample = Sample.objects.get(title="LV-T350A&si-EZH2-3")
+    sample.title = "ignoreme_for_description"
+    sample.accession_code = "ignoreme_for_description"
+    sample.save() 
 
     return pj
 
@@ -92,7 +94,7 @@ class IlluminaToPCLTestCase(TestCase):
 
     @tag("illumina")
     def test_illumina_to_pcl(self):
-        """ """
+        """ Most basic Illumina to PCL test """
         from data_refinery_workers.processors import illumina
         job = prepare_illumina_job()
         final_context = illumina.illumina_to_pcl(job.pk)

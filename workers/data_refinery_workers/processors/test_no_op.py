@@ -15,10 +15,6 @@ from data_refinery_common.models import (
 from data_refinery_workers.processors import no_op, utils
 
 
-def setUpModule():
-    utils.createTestProcessors()
-
-
 def prepare_job():
     pj = ProcessorJob()
     pj.pipeline_applied = "NO_OP"

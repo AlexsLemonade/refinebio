@@ -5,6 +5,7 @@ jobs:
   main_tests:
     working_directory: ~/refinebio
     machine:
+      docker_layer_caching: true
       pre:
         - sudo rm -rf /usr/local/android-sdk-linux
         - sudo rm -rf /usr/local/go
@@ -50,7 +51,7 @@ jobs:
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
-      
+
      # Run NO_OP tests
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run: .circleci/filter_tests.sh -t no_op
@@ -76,6 +77,7 @@ jobs:
   affymetrix_common_agilent_tests:
     working_directory: ~/refinebio
     machine:
+      docker_layer_caching: true
       pre:
         - sudo rm -rf /usr/local/android-sdk-linux
         - sudo rm -rf /usr/local/go
@@ -117,6 +119,7 @@ jobs:
   salmon_and_api_tests:
     working_directory: ~/refinebio
     machine:
+      docker_layer_caching: true
       pre:
         - sudo rm -rf /usr/local/android-sdk-linux
         - sudo rm -rf /usr/local/go
@@ -151,6 +154,7 @@ jobs:
   transcriptome_and_illumina_tests:
     working_directory: ~/refinebio
     machine:
+      docker_layer_caching: true
       pre:
         - sudo rm -rf /usr/local/android-sdk-linux
         - sudo rm -rf /usr/local/go
@@ -186,6 +190,7 @@ jobs:
 
   deploy:
     machine:
+      docker_layer_caching: true
       pre:
         - sudo rm -rf /usr/local/android-sdk-linux
         - sudo rm -rf /usr/local/go

@@ -120,7 +120,7 @@ def _detect_columns(job_context: Dict) -> Dict:
 
         # First the probe ID column
         if headers[predicted_header].upper() not in ['ID_REF', 'PROBE_ID', "IDREF", "PROBEID"]:
-            job_context["job"].failure_reason = ("Could not find any ID column in headers " 
+            job_context["job"].failure_reason = ("Could not find any ID column in headers "
                                 + str(headers) + " for file " + job_context["input_file_path"])
             job_context["success"] = False
             return job_context
@@ -151,9 +151,30 @@ def _detect_columns(job_context: Dict) -> Dict:
                 if sample.title == header:
                     column_ids = column_ids + str(offset) + ","
                     continue
+
+                # Sometimes the title might actually be in the description field.
+                # To find this, look in all the related SampleAnnotations.
+                # Since there are multiple annotations, we need to break early before continuing.
+                # Related: https://github.com/AlexsLemonade/refinebio/issues/499
+                continue_me = False
+                for annotation in sample.sampleannotation_set.filter(is_ccdl=False):
+                    try:
+                        if annotation.data.get('description', '')[0] == header:
+                            column_ids = column_ids + str(offset) + ","
+                            continue_me = True
+                            break
+                    except Exception:
+                        pass
+                if continue_me:
+                    # Treat the header as the real title, as we will need it later.
+                    sample.title = header
+                    sample.save()
+                    continue
+
                 if header.upper().replace(' ', '_') == "RAW_VALUE":
                     column_ids = column_ids + str(offset) + ","
                     continue
+
                 if sample.title in header and \
                 'BEAD' not in header.upper() and \
                 'NARRAYS' not in header.upper() and \
@@ -161,6 +182,7 @@ def _detect_columns(job_context: Dict) -> Dict:
                 'PVAL' not in header.upper().replace(' ', '').replace('_', ''):
                     column_ids = column_ids + str(offset) + ","
                     continue
+
         for offset, header in enumerate(headers, start=1):
             if 'AVG_Signal' in header:
                 column_ids = column_ids + str(offset) + ","
@@ -235,6 +257,7 @@ def _detect_platform(job_context: Dict) -> Dict:
     for sample in job_context['samples']:
         sa = SampleAnnotation()
         sa.sample = sample
+        sa.is_ccdl = True
         sa.data = {
             "detected_platform": high_db,
             "detection_percentage": highest,
@@ -320,8 +343,12 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
     result.pipeline = "Illumina SCAN"  # TODO: should be removed
-    # result.processor = Processor.objects.get(name=utils.ProcessorEnum.ILLUMINA_SCAN.value,
-    #                                          version=__version__)
+    try:
+        processor_key = "ILLUMINA_SCAN"
+        result.processor = utils.find_processor(processor_key)
+    except Exception as e:
+        return handle_processor_exception(job_context, processor_key, e)
+
     result.save()
     job_context['pipeline'].steps.append(result.id)
 
