@@ -19,6 +19,11 @@ import pandas as pd
 import numpy as np
 from sklearn import preprocessing
 
+import rpy2
+from rpy2.robjects import pandas2ri
+from rpy2.robjects import r as rlang
+from rpy2.robjects.packages import importr
+
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     OriginalFile,
@@ -191,43 +196,40 @@ def _smash(job_context: Dict) -> Dict:
 
             # Quantile Normalization
             if job_context['dataset'].quantile_normalize:
-                organism = computed_file.samples.first().organism
-                qn_target = utils.get_most_recent_qn_target_for_organism(organism)
-                qn_target_path = qn_target.sync_from_s3()
+                try:
+                    # Prepare our QN target file
+                    organism = computed_file.samples.first().organism
+                    qn_target = utils.get_most_recent_qn_target_for_organism(organism)
+                    qn_target_path = qn_target.sync_from_s3()
+                    qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None, index_col=None, error_bad_lines=False)
 
-                qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None, index_col=None, error_bad_lines=False)
+                    # Prepare our RPy2 bridge
+                    pandas2ri.activate()
+                    preprocessCore = importr('preprocessCore')
+                    as_numeric = rlang("as.numeric")
+                    data_matrix = rlang('data.matrix')
 
-                import rpy2
-                from rpy2.robjects import pandas2ri
-                pandas2ri.activate()
+                    # Convert the smashed frames to an R numeric Matrix
+                    # and the target Dataframe into an R numeric Vector
+                    target_vector = as_numeric(qn_target_frame[0])
+                    merged_matrix = data_matrix(merged)
 
-                from rpy2.robjects.packages import importr
-                preprocessCore = importr('preprocessCore')
+                    # Perform the Actual QN
+                    reso = preprocessCore.normalize_quantiles_use_target(
+                                                        x=merged_matrix,
+                                                        target=target_vector,
+                                                        copy=True
+                                                    )
 
-                from rpy2.robjects import r as rlang
-                is_matrix = rlang("is.matrix")
-                is_numeric = rlang("is.numeric")
-                as_numeric = rlang("as.numeric")
-                data_matrix = rlang('data.matrix')
-
-                # Convert the smashed frames to an R numeric Matrix
-                # and the target Dataframe into an R numeric Vector
-                target_matrix = data_matrix(qn_target_frame)
-                target_vector = as_numeric(qn_target_frame[0])
-                r_dataframe = pandas2ri.py2ri(merged)
-                merged_matrix = data_matrix(merged)
-
-                # Perform the Actual QN
-                reso = preprocessCore.normalize_quantiles_use_target(
-                                                    x=merged_matrix,
-                                                    target=target_vector,
-                                                    copy=True
-                                                )
-
-                # And Back to Pandas
-                ar = np.array(reso)
-                new_merged = pd.DataFrame(ar, columns=merged.columns, index=merged.index)
-                merged = new_merged
+                    # And finally convert back to Pandas
+                    ar = np.array(reso)
+                    new_merged = pd.DataFrame(ar, columns=merged.columns, index=merged.index)
+                    merged = new_merged
+                except Exception as e:
+                    logger.exception("Problem occured during quantile normalization",
+                        dataset_id=job_context['dataset'].id,
+                        dataset_data=job_context['dataset'].data,
+                    )
 
             # Transpose before scaling
             transposed = merged.transpose()
