@@ -19,5 +19,4 @@ python:
 # User-installed R packages
 R:
   - preprocessCore
-  - rlang
 
