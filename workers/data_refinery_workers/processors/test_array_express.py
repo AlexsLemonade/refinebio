@@ -10,10 +10,6 @@ from data_refinery_common.models import (
 from data_refinery_workers.processors import array_express, utils
 
 
-def setUpModule():
-    utils.createTestProcessors()
-
-
 def prepare_ba_job():
     pj = ProcessorJob()
     pj.pipeline_applied = "AFFY_TO_PCL"
