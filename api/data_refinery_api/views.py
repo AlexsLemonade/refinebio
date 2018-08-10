@@ -53,6 +53,7 @@ from data_refinery_api.serializers import (
     # Dataset
     CreateDatasetSerializer,
     DatasetSerializer,
+    DatasetDetailsSerializer,
     APITokenSerializer
 )
 
@@ -217,6 +218,11 @@ class DatasetView(generics.RetrieveUpdateAPIView):
     queryset = Dataset.objects.all()
     serializer_class = DatasetSerializer
     lookup_field = 'id'
+
+    def get_serializer_class(self):
+        if 'details' in self.request.query_params:
+            return DatasetDetailsSerializer
+        return self.serializer_class
 
     def perform_update(self, serializer):
         """ If `start` is set, fire off the job. Disables dataset data updates after that. """

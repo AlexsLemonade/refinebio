@@ -315,7 +315,7 @@ def _populate_index_object(job_context: Dict) -> Dict:
         processor_key = "TX_INDEX"
         result.processor = utils.find_processor(processor_key)
     except Exception as e:
-        return handle_processor_exception(job_context, processor_key, e)
+        return utils.handle_processor_exception(job_context, processor_key, e)
 
     result.is_ccdl = True
     result.time_start = job_context["time_start"]
