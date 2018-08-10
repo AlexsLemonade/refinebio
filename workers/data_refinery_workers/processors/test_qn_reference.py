@@ -117,3 +117,5 @@ class QNRefTestCase(TestCase):
 
         final_context = smasher.smash(pj.pk, upload=False)
         self.assertTrue(final_context['success'])
+        self.assertEqual(final_context['merged_no_qn']['V1'][0], -0.437948852881293)
+        self.assertEqual(final_context['merged']['V1'][0], -0.576210936113982)
