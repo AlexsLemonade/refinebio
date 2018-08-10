@@ -93,7 +93,11 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.is_public = True
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
-    result.pipeline = "Quantile Normalize Reference"
+    try:
+        processor_key = "QN_REFERENCE"
+        result.processor = utils.find_processor(processor_key)
+    except Exception as e:
+        return utils.handle_processor_exception(job_context, processor_key, e)
     result.save()
 
     computed_file = ComputedFile()
