@@ -423,9 +423,6 @@ def get_r_pkgs(pkg_list):
     and the corresponding value is the package's version.
     """
 
-    for label in ProcessorEnum:
-        Processor.objects.create(name=label.value, version=__version__)
-
     # Use "Rscript -e <R_commands>" command to get all user-installed R packages.
     r_commands = "packages.df <- as.data.frame(installed.packages()[, c(1, 3:4)]); \
     packages.df <- packages.df[is.na(packages.df$Priority), 1:2, drop=FALSE]; \
