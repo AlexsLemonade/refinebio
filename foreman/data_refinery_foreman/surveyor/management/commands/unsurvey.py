@@ -3,6 +3,7 @@ This command will remove experiments and all data that is uniquely associated wi
 (i.e. it's only associated with these experiment and not others.)
 This can be used so that a surveyor job that went wrong can be rerun.
 """
+import sys
 
 from django.core.management.base import BaseCommand
 from data_refinery_common.models import *
@@ -155,11 +156,23 @@ class Command(BaseCommand):
             type=str,
             help=("An optional file listing accession codes. s3:// URLs are also accepted.")
         )
+        parser.add_argument('--force',
+                            help='Do not ask for confirmation.',
+                            action='store_true')
 
     def handle(self, *args, **options):
         if options["accession"] is None and options['file'] is None:
             logger.error("You must specify an experiment accession or file.")
             sys.exit(1)
+
+        if not options["force"]:
+            print('-------------------------------------------------------------------------------')
+            print('This will delete all objects in the database. Are you sure you want to do this?')
+            answer = input('You must type "yes", all other input will be ignored: ')
+
+            if answer != "yes":
+                print('Not unsurveying because confirmation was denied.')
+                sys.exit(1)
 
         accessions = []
         if options["file"]:
