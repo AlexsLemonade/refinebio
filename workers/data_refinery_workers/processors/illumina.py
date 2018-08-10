@@ -157,11 +157,14 @@ def _detect_columns(job_context: Dict) -> Dict:
                 # Since there are multiple annotations, we need to break early before continuing.
                 # Related: https://github.com/AlexsLemonade/refinebio/issues/499
                 continue_me = False
-                for annotation in sample.sampleannotation_set.all():
-                    if annotation.data.get('description', '') == header:
-                        column_ids = column_ids + str(offset) + ","
-                        continue_me = True
-                        break
+                for annotation in sample.sampleannotation_set.filter(is_ccdl=False):
+                    try:
+                        if annotation.data.get('description', '')[0] == header:
+                            column_ids = column_ids + str(offset) + ","
+                            continue_me = True
+                            break
+                    except Exception:
+                        pass
                 if continue_me:
                     # Treat the header as the real title, as we will need it later.
                     sample.title = header
@@ -254,6 +257,7 @@ def _detect_platform(job_context: Dict) -> Dict:
     for sample in job_context['samples']:
         sa = SampleAnnotation()
         sa.sample = sample
+        sa.is_ccdl = True
         sa.data = {
             "detected_platform": high_db,
             "detection_percentage": highest,

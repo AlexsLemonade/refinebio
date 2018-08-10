@@ -692,6 +692,9 @@ class ComputedFile(models.Model):
     objects = models.Manager()
     public_objects = PublicObjectsManager()
 
+    # Object relations
+    samples = models.ManyToManyField('Sample', through='SampleComputedFileAssociation')
+
     # File related
     filename = models.CharField(max_length=255)
     absolute_file_path = models.CharField(max_length=255, blank=True, null=True)

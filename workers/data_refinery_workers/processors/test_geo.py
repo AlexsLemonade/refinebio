@@ -56,7 +56,8 @@ def prepare_illumina_job(species="Homo sapiens"):
 
         sa = SampleAnnotation()
         sa.sample = sample
-        sa.data = {'description': name}
+        sa.data = {'description': [name]}
+        sa.is_ccdl = False
         sa.save()
 
         sample_assoc = OriginalFileSampleAssociation()
