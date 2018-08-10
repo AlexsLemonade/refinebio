@@ -263,7 +263,7 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
         processor_key = "TXIMPORT"
         result.processor = utils.find_processor(processor_key)
     except Exception as e:
-        return handle_processor_exception(job_context, processor_key, e)
+        return utils.handle_processor_exception(job_context, processor_key, e)
 
     result.save()
     job_context['pipeline'].steps.append(result.id)
@@ -395,7 +395,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
             processor_key = "SALMON_QUANT"
             result.processor = utils.find_processor(processor_key)
         except Exception as e:
-            return handle_processor_exception(job_context, processor_key, e)
+            return utils.handle_processor_exception(job_context, processor_key, e)
 
         result.is_ccdl = True
 
@@ -487,7 +487,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
         processor_key = "MULTIQC"
         result.processor = utils.find_processor(processor_key)
     except Exception as e:
-        return handle_processor_exception(job_context, processor_key, e)
+        return utils.handle_processor_exception(job_context, processor_key, e)
 
     result.save()
     job_context['pipeline'].steps.append(result.id)
@@ -625,7 +625,7 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
             processor_key = "SALMONTOOLS"
             result.processor = utils.find_processor(processor_key)
         except Exception as e:
-            return handle_processor_exception(job_context, processor_key, e)
+            return utils.handle_processor_exception(job_context, processor_key, e)
 
         result.save()
         job_context['pipeline'].steps.append(result.id)

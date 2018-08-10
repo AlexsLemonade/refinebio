@@ -271,7 +271,7 @@ def _create_result(job_context: Dict) -> Dict:
         processor_key = "SUBMITTER_PROCESSED"
         result.processor = utils.find_processor(processor_key)
     except Exception as e:
-        return handle_processor_exception(job_context, processor_key, e)
+        return utils.handle_processor_exception(job_context, processor_key, e)
 
     result.save()
     job_context['pipeline'].steps.append(result.id)

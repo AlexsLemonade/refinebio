@@ -347,7 +347,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
         processor_key = "ILLUMINA_SCAN"
         result.processor = utils.find_processor(processor_key)
     except Exception as e:
-        return handle_processor_exception(job_context, processor_key, e)
+        return utils.handle_processor_exception(job_context, processor_key, e)
 
     result.save()
     job_context['pipeline'].steps.append(result.id)
