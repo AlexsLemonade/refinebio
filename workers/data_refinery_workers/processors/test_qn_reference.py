@@ -21,9 +21,6 @@ from data_refinery_common.models import (
 from data_refinery_workers.processors import qn_reference, smasher, utils
 
 
-def setUpModule():
-    utils.createTestProcessors()
-
 class QNRefTestCase(TestCase):
 
     @tag('qn')
@@ -117,5 +114,6 @@ class QNRefTestCase(TestCase):
 
         final_context = smasher.smash(pj.pk, upload=False)
         self.assertTrue(final_context['success'])
-        self.assertEqual(final_context['merged_no_qn']['V1'][0], -0.437948852881293)
-        self.assertEqual(final_context['merged']['V1'][0], -0.576210936113982)
+
+        self.assertEqual(final_context['merged_no_qn']['1'][0], -0.437948852881293)
+        self.assertEqual(final_context['merged']['1'][0], -0.576210936113982)
