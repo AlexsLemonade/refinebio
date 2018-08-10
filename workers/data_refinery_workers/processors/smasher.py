@@ -204,16 +204,30 @@ def _smash(job_context: Dict) -> Dict:
                 from rpy2.robjects.packages import importr
                 preprocessCore = importr('preprocessCore')
 
-                import pdb
-                pdb.set_trace()
+                from rpy2.robjects import r as rlang
+                is_matrix = rlang("is.matrix")
+                is_numeric = rlang("is.numeric")
+                as_numeric = rlang("as.numeric")
+                data_matrix = rlang('data.matrix')
 
-                r_target_matrix = rpy2.robjects.r.matrix(qn_target_frame)
-                r_merged_matrix = rpy2.robjects.r.matrix(merged)
+                # Convert the smashed frames to an R numeric Matrix
+                # and the target Dataframe into an R numeric Vector
+                target_matrix = data_matrix(qn_target_frame)
+                target_vector = as_numeric(qn_target_frame[0])
+                r_dataframe = pandas2ri.py2ri(merged)
+                merged_matrix = data_matrix(merged)
 
-                reso = preprocessCore.normalize_quantiles_use_target(r_merged_matrix, r_target_matrix)
+                # Perform the Actual QN
+                reso = preprocessCore.normalize_quantiles_use_target(
+                                                    x=merged_matrix,
+                                                    target=target_vector,
+                                                    copy=True
+                                                )
 
-                import pdb
-                pdb.set_trace()
+                # And Back to Pandas
+                ar = np.array(reso)
+                new_merged = pd.DataFrame(ar, columns=merged.columns, index=merged.index)
+                merged = new_merged
 
             # Transpose before scaling
             transposed = merged.transpose()
