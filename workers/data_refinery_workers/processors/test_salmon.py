@@ -518,3 +518,51 @@ class RuntimeProcessorTest(TestCase):
         cmd_output = utils.get_cmd_lines([cmd_str])[cmd_str]
         self.assertEqual(st_processor.environment['cmd_line'][cmd_str],
                          cmd_output)
+
+    @tag('salmon')
+    def test_exception_handler(self):
+        """Test utils.handle_processor_expcetion to confirm that the
+        exception is handled correctly.
+        """
+        proc_key = "foobar"   # This processor key does NOT exist!
+        job_context = dict()
+        job_context['job'] = ProcessorJob.objects.create()
+        job_context["success"] = True
+        try:
+            proc1 = utils.find_processor(proc_key)
+        except Exception as e:
+            utils.handle_processor_exception(job_context, proc_key, e)
+
+        # Failed job because "foobar" is an invalid processor key
+        self.assertEqual(job_context["success"], False)
+        self.assertEqual(job_context["job"].failure_reason,
+                         "Failed to set processor: 'foobar'")
+
+    @tag('salmon')
+    def test_salmontools_with_bad_processor(self):
+        """Test salmontools with a bad processor key."""
+        test_dir = '/home/user/data_store/salmontools/'
+        job_context = {
+            'job_id': 123,
+            'job': ProcessorJob.objects.create(),
+            'pipeline': Pipeline(name="Salmon"),
+            'input_file_path': test_dir + 'double_input/reads_1.fastq',
+            'input_file_path_2': test_dir + 'double_input/reads_2.fastq',
+            'output_directory': test_dir + 'double_output/'
+        }
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        sample = Sample()
+        sample.organism = homo_sapiens
+        sample.save()
+        job_context["sample"] = sample
+
+        # Set the wrong yml filename on purpose to mess up Salmontools processor
+        original_yml_file = utils.ProcessorEnum['SALMONTOOLS'].value['yml_file']
+        utils.ProcessorEnum['SALMONTOOLS'].value['yml_file'] = 'foobar.yml'
+
+        salmon._run_salmontools(job_context, False)
+        self.assertEqual(job_context["success"], False)
+        self.assertTrue(job_context["job"].failure_reason.startswith('Failed to set processor:'))
+
+        # Change yml filename back
+        utils.ProcessorEnum['SALMONTOOLS'].value['yml_file'] = original_yml_file
