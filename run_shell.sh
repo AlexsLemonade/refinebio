@@ -38,5 +38,4 @@ docker run -it \
        --env-file foreman/environments/local \
        --volume /tmp:/tmp \
        --volume $volume_directory:/home/user/data_store \
-       --entrypoint ./manage.py \
-       --interactive dr_shell shell
+       --interactive dr_shell python3 manage.py shell
