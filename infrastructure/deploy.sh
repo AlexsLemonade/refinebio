@@ -226,6 +226,10 @@ ssh -o StrictHostKeyChecking=no \
     -i data-refinery-key.pem \
     ubuntu@$API_IP_ADDRESS "docker rm -f dr_api"
 
+scp -o StrictHostKeyChecking=no \
+    -i data-refinery-key.pem \
+    api-configuration/environment ubuntu@$API_IP_ADDRESS:/home/ubuntu/environment
+
 ssh -o StrictHostKeyChecking=no \
     -i data-refinery-key.pem \
     ubuntu@$API_IP_ADDRESS "docker run \
