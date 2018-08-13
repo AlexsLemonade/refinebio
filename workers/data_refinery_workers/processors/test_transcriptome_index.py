@@ -106,3 +106,4 @@ class TXTestCase(TestCase):
 
         # Cleanup after ourselves so we don't leave 1.3G of data lying around.
         shutil.rmtree(job_context1["output_dir"])
+        shutil.rmtree(job_context2["output_dir"])
