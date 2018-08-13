@@ -31,7 +31,7 @@ GENE_TYPE_COLUMN = 2
 # Removes each occurrance of ; and "
 IDS_CLEANUP_TABLE = str.maketrans({";": None, "\"": None})
 
-ORGANISM_INDEX_BUCKET = get_env_variable_gracefully("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", False)
+S3_TRANSCRIPTOME_INDEX_BUCKET_NAME = get_env_variable_gracefully("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", False)
 
 
 def _compute_paths(job_context: Dict) -> str:
@@ -42,7 +42,7 @@ def _compute_paths(job_context: Dict) -> str:
     # All files for the job are in the same directory.
     first_file_path = job_context["original_files"][0].absolute_file_path
     job_context["base_file_path"] = '/'.join(first_file_path.split('/')[:-1])
-    job_context["work_dir"] = job_context["base_file_path"] + '/' + \
+    job_context["work_dir"] = job_context["base_file_path"] + '/' + job_context["length"] + '/' + \
                               JOB_DIR_PREFIX + str(job_context["job_id"])
     os.makedirs(job_context["work_dir"], exist_ok=True)
 
@@ -51,9 +51,8 @@ def _compute_paths(job_context: Dict) -> str:
     job_context["rsem_index_dir"] = job_context["work_dir"] + "/" + "rsem_index"
     os.makedirs(job_context["rsem_index_dir"], exist_ok=True)
 
-
+    # I think this is a bit sketchy.
     job_context["organism_name"] = job_context["base_file_path"].split('/')[-1]
-    job_context["organism_with_size"] = job_context["organism_name"] + "_" + job_context['length']
 
     stamp = str(timezone.now().timestamp()).split('.')[0]
     archive_file_name = job_context["organism_name"] + "_" + \
@@ -343,11 +342,11 @@ def _populate_index_object(job_context: Dict) -> Dict:
     index_object.index_type = "TRANSCRIPTOME_" + job_context['length'].upper()
     index_object.result = result
 
-    if ORGANISM_INDEX_BUCKET:
+    if S3_TRANSCRIPTOME_INDEX_BUCKET_NAME:
         logger.info("Uploading %s %s to s3", job_context['organism_name'], job_context['length'], processor_job=job_context["job_id"])
-        index_object.upload_to_s3(computed_file.absolute_file_path, ORGANISM_INDEX_BUCKET, logger)
+        index_object.upload_to_s3(computed_file.absolute_file_path, S3_TRANSCRIPTOME_INDEX_BUCKET_NAME, logger)
     else:
-        logger.warn("ORGANISM_INDEX_BUCKET not configured, therefore %s %s will not be uploaded.",
+        logger.warn("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME not configured, therefore %s %s will not be uploaded.",
                     job_context['organism_name'],
                     job_context['length'],
                     processor_job=job_context["job_id"])

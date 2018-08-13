@@ -176,8 +176,8 @@ def _download_index(job_context: Dict) -> Dict:
         return job_context
 
     result = index_object.result
-    files = ComputedFile.objects.filter(result=result)
-    job_context["index_unpacked"] = '/'.join(files[0].absolute_file_path.split('/')[:-1])
+    file = ComputedFile.objects.get(result=result)
+    job_context["index_unpacked"] = '/'.join(file.get_synced_file_path().split('/')[:-1])
     job_context["index_directory"] = job_context["index_unpacked"] + "/index"
     job_context["genes_to_transcripts_path"] = os.path.join(
         job_context["index_directory"], "genes_to_transcripts.txt")
@@ -338,6 +338,8 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
 
     # Salmon needs to be run differently for different sample types.
     # XXX: TODO: We need to tune the -p/--numThreads to the machines this process will run on.
+    # It's possible we want to remove -p entirely and have Salmon figure out for itself.
+    # Related: https://github.com/COMBINE-lab/salmon/commit/95866337bde0feb57a0c3231efdfa26c847ba141
     if "input_file_path_2" in job_context:
         second_read_str = " -2 {}".format(job_context["input_file_path_2"])
         command_str = ("salmon --no-version-check quant -l A --biasSpeedSamp 5 -i {index}"
