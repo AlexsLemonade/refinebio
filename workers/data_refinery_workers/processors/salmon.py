@@ -183,7 +183,7 @@ def _download_index(job_context: Dict) -> Dict:
         job_context["index_directory"], "genes_to_transcripts.txt")
 
     if not os.path.exists(job_context["index_directory"] + '/versionInfo.json'):
-        with tarfile.open(files[0].absolute_file_path, "r:gz") as tarball:
+        with tarfile.open(file.get_synced_file_path(), "r:gz") as tarball:
             tarball.extractall(job_context["index_unpacked"])
     else:
         logger.info("Index already installed", processor_job=job_context["job_id"])
