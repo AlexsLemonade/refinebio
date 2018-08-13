@@ -42,7 +42,7 @@ def _compute_paths(job_context: Dict) -> str:
     # All files for the job are in the same directory.
     first_file_path = job_context["original_files"][0].absolute_file_path
     job_context["base_file_path"] = '/'.join(first_file_path.split('/')[:-1])
-    job_context["work_dir"] = job_context["base_file_path"] + '/' + job_context["length"] + '/' + \
+    job_context["work_dir"] = job_context["base_file_path"] + '/' + job_context["length"].upper() + '/' + \
                               JOB_DIR_PREFIX + str(job_context["job_id"])
     os.makedirs(job_context["work_dir"], exist_ok=True)
 
@@ -56,8 +56,11 @@ def _compute_paths(job_context: Dict) -> str:
 
     stamp = str(timezone.now().timestamp()).split('.')[0]
     archive_file_name = job_context["organism_name"] + "_" + \
-                        job_context['length'] + "_" + stamp + '.tar.gz'
-    job_context["computed_archive"] = job_context['base_file_path'] + '/' + job_context["length"].upper() + '/' + archive_file_name
+                        job_context['length'].upper() + "_" + stamp + '.tar.gz'
+
+    job_context["computed_dir"] = job_context['base_file_path'] + '/' + 'COMPUTED' + '/' + job_context["length"].upper()
+    os.makedirs(job_context["computed_dir"], exist_ok=True)
+    job_context["computed_archive"] = job_context["computed_dir"] + '/' + archive_file_name
 
     return job_context
 
