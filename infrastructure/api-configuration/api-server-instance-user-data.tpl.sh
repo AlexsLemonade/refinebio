@@ -90,6 +90,8 @@ cat <<"EOF" > environment
 ${api_environment}
 EOF
 
+chown -R ubuntu /home/ubuntu
+
 STATIC_VOLUMES=/tmp/volumes_static
 mkdir -p /tmp/volumes_static
 chmod a+rwx /tmp/volumes_static
