@@ -16,27 +16,29 @@ from unittest.mock import patch
 from data_refinery_workers.processors import transcriptome_index, utils
 
 
-def prepare_job():
+def prepare_job(length):
+
     pj = ProcessorJob()
-    pj.pipeline_applied = "TRANSCRIPTOME_INDEX_SHORT"
+    pj.pipeline_applied = "TRANSCRIPTOME_INDEX_" + length.upper()
     pj.save()
 
     homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
 
     samp = Sample()
     samp.organism = homo_sapiens
+    samp.accession_code = "derp" + length
     samp.save()
 
     og_file = OriginalFile()
-    og_file.source_filename = "aegilops_tauschii_short.fa.gz"
-    og_file.filename = "aegilops_tauschii_short.fa.gz"
-    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/aegilops_tauschii_short.fa.gz"
+    og_file.source_filename = "aegilops_tauschii_" + length + ".fa.gz"
+    og_file.filename = "aegilops_tauschii_" + length + ".fa.gz"
+    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/AEGILOPS_TAUSCHII/aegilops_tauschii_short.fa.gz"
     og_file.save()
 
     og_file2 = OriginalFile()
-    og_file2.source_filename = "aegilops_tauschii_short.gtf.gz"
-    og_file2.filename = "aegilops_tauschii_short.gtf.gz"
-    og_file2.absolute_file_path = "/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/aegilops_tauschii_short.gtf.gz"
+    og_file2.source_filename = "aegilops_tauschii_" + length + ".gtf.gz"
+    og_file2.filename = "aegilops_tauschii_" + length + ".gtf.gz"
+    og_file2.absolute_file_path = "/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/AEGILOPS_TAUSCHII/aegilops_tauschii_short.gtf.gz"
     og_file2.save()
 
     og_file_samp_assoc = OriginalFileSampleAssociation()
@@ -58,7 +60,6 @@ def prepare_job():
     assoc2.original_file = og_file2
     assoc2.processor_job = pj
     assoc2.save()
-
 
     return pj
 
@@ -83,10 +84,25 @@ class TXTestCase(TestCase):
     @patch('data_refinery_common.models.OrganismIndex.upload_to_s3')
     def test_tx(self, upload_to_s3):
         """ """
-        job = prepare_job()
-        job_context = transcriptome_index.build_transcriptome_index(job.pk)
-        job = ProcessorJob.objects.get(id=job.pk)
-        self.assertTrue(job.success)
+        job1 = prepare_job("short")
+        job_context1 = transcriptome_index.build_transcriptome_index(job1.pk, length="short")
+        job1 = ProcessorJob.objects.get(id=job1.pk)
+        self.assertTrue(job1.success)
+        self.assertEqual(job_context1['length'], "short")
+
+        job2 = prepare_job("long")
+        job_context2 = transcriptome_index.build_transcriptome_index(job2.pk, length="long")
+        job2 = ProcessorJob.objects.get(id=job2.pk)
+        self.assertTrue(job2.success)
+        self.assertEqual(job_context2['length'], "long")
+
+        self.assertTrue(os.path.exists(job_context1["output_dir"]))
+        self.assertTrue(os.path.exists(job_context1["output_dir"]))
+        self.assertNotEqual(job_context1["output_dir"], job_context2["output_dir"])
+
+        self.assertTrue(os.path.exists(job_context1['computed_file'].get_synced_file_path()))
+        self.assertTrue(os.path.exists(job_context2['computed_file'].get_synced_file_path()))
+        self.assertNotEqual(job_context1['computed_file'].get_synced_file_path(), job_context2['computed_file'].get_synced_file_path())
 
         # Cleanup after ourselves so we don't leave 1.3G of data lying around.
-        shutil.rmtree(job_context["output_dir"])
+        shutil.rmtree(job_context1["output_dir"])
