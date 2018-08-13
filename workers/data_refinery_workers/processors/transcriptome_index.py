@@ -57,7 +57,7 @@ def _compute_paths(job_context: Dict) -> str:
     stamp = str(timezone.now().timestamp()).split('.')[0]
     archive_file_name = job_context["organism_name"] + "_" + \
                         job_context['length'] + "_" + stamp + '.tar.gz'
-    job_context["computed_archive"] = job_context['base_file_path'] + '/' + archive_file_name
+    job_context["computed_archive"] = job_context['base_file_path'] + '/' + job_context["length"].upper() + '/' + archive_file_name
 
     return job_context
 
