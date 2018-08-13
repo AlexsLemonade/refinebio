@@ -444,12 +444,14 @@ def download_geo(job_id: int) -> None:
     if len(unpacked_sample_files) > 0:
         success = True
         logger.debug("File downloaded and extracted successfully.",
-                     url,
+                     url=url,
+                     dl_file_path=dl_file_path,
                      downloader_job=job_id)
     else:
         success = False
         logger.info("Unable to extract any files.",
-                    url,
+                    url=url,
+                    dl_file_path=dl_file_path,
                     downloader_job=job_id)
         job.failure_reason = "Failed to extract any downloaded files."
 
