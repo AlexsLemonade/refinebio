@@ -104,6 +104,14 @@ class TXTestCase(TestCase):
         self.assertTrue(os.path.exists(job_context2['computed_file'].get_synced_file_path()))
         self.assertNotEqual(job_context1['computed_file'].get_synced_file_path(), job_context2['computed_file'].get_synced_file_path())
 
+        # This is the same logic as in `salmon._download_index`
+        file = job_context1["computed_file"]
+        unpacked = '/'.join(file.get_synced_file_path().split('/')[:-1])
+        self.assertTrue('SHORT' in unpacked)
+        file2 = job_context2["computed_file"]
+        unpacked2 = '/'.join(file2.get_synced_file_path().split('/')[:-1])
+        self.assertTrue('LONG' in unpacked2)
+
         # Cleanup after ourselves so we don't leave 1.3G of data lying around.
         shutil.rmtree(job_context1["output_dir"])
         shutil.rmtree(job_context2["output_dir"])
