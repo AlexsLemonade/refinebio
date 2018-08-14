@@ -8,11 +8,25 @@ from data_refinery_common.models import (
     Organism,
     SurveyJob,
     SurveyJobKeyValue,
+    Experiment,
+    ExperimentAnnotation,
+    ExperimentSampleAssociation,
+    Sample,
+    SampleAnnotation,
+    OriginalFile,
+    OriginalFileSampleAssociation,
+    SampleResultAssociation,
+    ComputationalResult,
+    ComputationalResultAnnotation,
+    SampleComputedFileAssociation,
+    ComputedFile,
     DownloaderJob,
+    DownloaderJobOriginalFileAssociation,
     ProcessorJob,
-    Sample
+    ProcessorJobOriginalFileAssociation
 )
 from data_refinery_foreman.surveyor import surveyor
+from data_refinery_foreman.surveyor.management.commands.unsurvey import purge_experiment
 
 # Import and set logger
 import logging
@@ -87,7 +101,8 @@ class NoOpEndToEndTestCase(TransactionTestCase):
         organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
         organism.save()
 
-        survey_job = surveyor.survey_ae_experiment("E-GEOD-45547")
+        accession_code = "E-GEOD-45547"
+        survey_job = surveyor.survey_ae_experiment(accession_code)
 
         self.assertTrue(survey_job.success)
 
@@ -104,3 +119,23 @@ class NoOpEndToEndTestCase(TransactionTestCase):
         for processor_job in processor_jobs:
             processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
             self.assertTrue(processor_job.success)
+
+        # Test that the unsurveyor deletes all objects related to the experiment
+        purge_experiment(accession_code)
+
+        self.assertEqual(Experiment.objects.all().count(), 0)
+        self.assertEqual(ExperimentAnnotation.objects.all().count(), 0)
+        self.assertEqual(ExperimentSampleAssociation.objects.all().count(), 0)
+        self.assertEqual(Sample.objects.all().count(), 0)
+        self.assertEqual(SampleAnnotation.objects.all().count(), 0)
+        self.assertEqual(OriginalFile.objects.all().count(), 0)
+        self.assertEqual(OriginalFileSampleAssociation.objects.all().count(), 0)
+        self.assertEqual(SampleResultAssociation.objects.all().count(), 0)
+        self.assertEqual(ComputationalResult.objects.all().count(), 0)
+        self.assertEqual(ComputationalResultAnnotation.objects.all().count(), 0)
+        self.assertEqual(SampleComputedFileAssociation.objects.all().count(), 0)
+        self.assertEqual(ComputedFile.objects.all().count(), 0)
+        self.assertEqual(DownloaderJob.objects.all().count(), 0)
+        self.assertEqual(DownloaderJobOriginalFileAssociation.objects.all().count(), 0)
+        self.assertEqual(ProcessorJob.objects.all().count(), 0)
+        self.assertEqual(ProcessorJobOriginalFileAssociation.objects.all().count(), 0)
