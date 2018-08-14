@@ -363,6 +363,9 @@ for image in ${worker_images[*]}; do
             # Agilent uses the same docker image as Affymetrix
             ./prepare_image.sh -p -i affymetrix -s workers
             image_name=ccdlstaging/dr_affymetrix
+        elif [[ $tag == "qn" ]]; then
+            ./prepare_image.sh -i smasher -s workers
+            image_name=ccdlstaging/dr_smasher
         else
             ./prepare_image.sh -i $image -s workers
             image_name=ccdlstaging/dr_$image
