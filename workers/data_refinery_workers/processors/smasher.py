@@ -238,20 +238,37 @@ def _smash(job_context: Dict) -> Dict:
 
         experiments = {}
         for experiment in job_context["dataset"].get_experiments():
-            experiments[experiment.accession_code] = experiment.to_metadata_dict()
+            exp_dict = experiment.to_metadata_dict()
+            exp_dict['sample_titles'] = [v for v in experiment.samples.all().values_list('title', flat=True)]
+            experiments[experiment.accession_code] = exp_dict
         metadata['experiments'] = experiments
 
         # Metadata to TSV
-        with open(smash_path + 'metadata.tsv', 'w') as output_file:
-            sample_ids = list(metadata['samples'].keys())
-            keys = list(metadata['samples'][sample_ids[0]].keys()) + ['sample_id']
-            dw = csv.DictWriter(output_file, keys, delimiter='\t')
-            dw.writeheader()
-            for key, value in metadata['samples'].items():
-                value['sample_id'] = key
-                dw.writerow(value)
+        if job_context["dataset"].aggregate_by == "EXPERIMENT":
+            for title, keys in metadata['experiments'].items():
+                with open(smash_path + title + '_metadata.tsv', 'w') as output_file:
+                    sample_titles = keys['sample_titles']
+                    keys = list(metadata['samples'][sample_titles[0]].keys()) + ['sample_id']
+                    dw = csv.DictWriter(output_file, keys, delimiter='\t')
+                    dw.writeheader()
+                    for key, value in metadata['samples'].items():
+                        if key not in sample_titles:
+                            continue
+                        else:
+                            value['sample_id'] = key
+                            dw.writerow(value)
+        else:
+            with open(smash_path + 'metadata.tsv', 'w') as output_file:
+                sample_ids = list(metadata['samples'].keys())
+                keys = list(metadata['samples'][sample_ids[0]].keys()) + ['sample_id']
+                dw = csv.DictWriter(output_file, keys, delimiter='\t')
+                dw.writeheader()
+                for key, value in metadata['samples'].items():
+                    value['sample_id'] = key
+                    dw.writerow(value)
 
         metadata['files'] = os.listdir(smash_path)
+
         # Metadata to JSON
         metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
         with open(smash_path + 'metadata.json', 'w') as metadata_file:

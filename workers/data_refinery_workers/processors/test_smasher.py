@@ -208,7 +208,7 @@ class SmasherTestCase(TestCase):
             zf = zipfile.ZipFile(final_context['output_file'])
             namelist = zf.namelist()
 
-            self.assertTrue('metadata.tsv' in namelist)
+            self.assertTrue('GSE51081_metadata.tsv' in namelist)
             self.assertTrue('metadata.json' in namelist)
             self.assertTrue('README.md' in namelist)
             self.assertTrue('LICENSE.TXT' in namelist)
@@ -542,6 +542,11 @@ class SmasherTestCase(TestCase):
         sra.result = result
         sra.save()
 
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
         computed_file = ComputedFile()
         computed_file.filename = "GSM1084806-tbl-1.txt"
         computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
@@ -564,6 +569,11 @@ class SmasherTestCase(TestCase):
         sra.sample = sample
         sra.result = result
         sra.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
 
         computed_file = ComputedFile()
         computed_file.filename = "GSM1084807-tbl-1.txt"
@@ -604,7 +614,7 @@ class SmasherTestCase(TestCase):
 
         # MICROARRAY TECH
         experiment = Experiment()
-        experiment.accession_code = "GSM1487313"
+        experiment.accession_code = "GSE1487313"
         experiment.save()
 
         result = ComputationalResult()
@@ -644,7 +654,7 @@ class SmasherTestCase(TestCase):
 
         # RNASEQ TECH
         experiment = Experiment()
-        experiment.accession_code = "SRS332914"
+        experiment.accession_code = "SRX332914"
         experiment.save()
 
         result2 = ComputationalResult()
@@ -682,7 +692,7 @@ class SmasherTestCase(TestCase):
 
         # CROSS-SMASH BY SPECIES
         ds = Dataset()
-        ds.data = {'GSM1487313': ['GSM1487313'], 'SRS332914': ['SRS332914']}
+        ds.data = {'GSE1487313': ['GSM1487313'], 'SRX332914': ['SRS332914']}
         ds.aggregate_by = 'SPECIES'
         ds.scale_by = 'STANDARD'
         ds.email_address = "null@derp.com"
