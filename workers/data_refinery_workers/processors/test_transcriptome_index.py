@@ -59,7 +59,6 @@ def prepare_job():
     assoc2.processor_job = pj
     assoc2.save()
 
-
     return pj
 
 class TXTestCase(TestCase):

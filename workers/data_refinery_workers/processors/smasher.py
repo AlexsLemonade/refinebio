@@ -50,10 +50,12 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context['input_files'] = {}
 
     for key, samples in job_context["samples"].items():
+        samples_for_key = []
         for sample in samples:
-            all_sample_files = all_sample_files + list(sample.get_result_files())
-        all_sample_files = list(set(all_sample_files))
-        job_context['input_files'][key] = all_sample_files
+            samples_for_key = samples_for_key + list(sample.get_result_files())
+        samples_for_key = list(set(samples_for_key))
+        job_context['input_files'][key] = samples_for_key
+        all_sample_files = all_sample_files + samples_for_key
 
     if all_sample_files == []:
         logger.error("Couldn't get any files to smash for Smash job!!",
@@ -104,6 +106,7 @@ def _smash(job_context: Dict) -> Dict:
 
             # Merge all the frames into one
             all_frames = []
+
             for computed_file in input_files:
 
                 computed_file_path = str(computed_file.get_synced_file_path())
@@ -209,6 +212,7 @@ def _smash(job_context: Dict) -> Dict:
 
                 # This is the innter join, the real "Smash"d
                 merged = merged.merge(frame, left_index=True, right_index=True)
+
             job_context['merged'] = merged
 
             # Quantile Normalization
@@ -217,32 +221,40 @@ def _smash(job_context: Dict) -> Dict:
                     # Prepare our QN target file
                     organism = computed_file.samples.first().organism
                     qn_target = utils.get_most_recent_qn_target_for_organism(organism)
-                    qn_target_path = qn_target.sync_from_s3()
-                    qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None, index_col=None, error_bad_lines=False)
 
-                    # Prepare our RPy2 bridge
-                    pandas2ri.activate()
-                    preprocessCore = importr('preprocessCore')
-                    as_numeric = rlang("as.numeric")
-                    data_matrix = rlang('data.matrix')
+                    if not qn_target:
+                        logger.error("Could not find QN target for Organism!",
+                            organism=organism,
+                            dataset_id=job_context['dataset'].id,
+                            dataset_data=job_context['dataset'].data,
+                        )
+                    else:
+                        qn_target_path = qn_target.sync_from_s3()
+                        qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None, index_col=None, error_bad_lines=False)
 
-                    # Convert the smashed frames to an R numeric Matrix
-                    # and the target Dataframe into an R numeric Vector
-                    target_vector = as_numeric(qn_target_frame[0])
-                    merged_matrix = data_matrix(merged)
+                        # Prepare our RPy2 bridge
+                        pandas2ri.activate()
+                        preprocessCore = importr('preprocessCore')
+                        as_numeric = rlang("as.numeric")
+                        data_matrix = rlang('data.matrix')
 
-                    # Perform the Actual QN
-                    reso = preprocessCore.normalize_quantiles_use_target(
-                                                        x=merged_matrix,
-                                                        target=target_vector,
-                                                        copy=True
-                                                    )
+                        # Convert the smashed frames to an R numeric Matrix
+                        # and the target Dataframe into an R numeric Vector
+                        target_vector = as_numeric(qn_target_frame[0])
+                        merged_matrix = data_matrix(merged)
 
-                    # And finally convert back to Pandas
-                    ar = np.array(reso)
-                    new_merged = pd.DataFrame(ar, columns=merged.columns, index=merged.index)
-                    job_context['merged_no_qn'] = new_merged
-                    merged = new_merged
+                        # Perform the Actual QN
+                        reso = preprocessCore.normalize_quantiles_use_target(
+                                                            x=merged_matrix,
+                                                            target=target_vector,
+                                                            copy=True
+                                                        )
+
+                        # And finally convert back to Pandas
+                        ar = np.array(reso)
+                        new_merged = pd.DataFrame(ar, columns=merged.columns, index=merged.index)
+                        job_context['merged_no_qn'] = new_merged
+                        merged = new_merged
                 except Exception as e:
                     logger.exception("Problem occured during quantile normalization",
                         dataset_id=job_context['dataset'].id,

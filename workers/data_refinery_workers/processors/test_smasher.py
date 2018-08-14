@@ -643,42 +643,42 @@ class SmasherTestCase(TestCase):
         assoc.save()
 
         # RNASEQ TECH
-        experiment = Experiment()
-        experiment.accession_code = "SRS332914"
-        experiment.save()
+        experiment2 = Experiment()
+        experiment2.accession_code = "SRS332914"
+        experiment2.save()
 
         result2 = ComputationalResult()
         result2.save()
 
-        sample = Sample()
-        sample.accession_code = 'SRS332914'
-        sample.title = 'SRS332914'
-        sample.organism = gallus_gallus
-        sample.technology = "RNA-SEQ"
-        sample.save()
+        sample2 = Sample()
+        sample2.accession_code = 'SRS332914'
+        sample2.title = 'SRS332914'
+        sample2.organism = gallus_gallus
+        sample2.technology = "RNA-SEQ"
+        sample2.save()
 
-        sra = SampleResultAssociation()
-        sra.sample = sample
-        sra.result = result2
-        sra.save()
+        sra2 = SampleResultAssociation()
+        sra2.sample = sample2
+        sra2.result = result2
+        sra2.save()
 
-        esa = ExperimentSampleAssociation()
-        esa.experiment = experiment
-        esa.sample = sample
-        esa.save()
+        esa2 = ExperimentSampleAssociation()
+        esa2.experiment = experiment2
+        esa2.sample = sample2
+        esa2.save()
 
-        computed_file = ComputedFile()
-        computed_file.filename = "SRP149598_gene_lengthScaledTPM.tsv"
-        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
-        computed_file.result = result2
-        computed_file.size_in_bytes = 234
-        computed_file.is_smashable = True
-        computed_file.save()
+        computed_file2 = ComputedFile()
+        computed_file2.filename = "SRP149598_gene_lengthScaledTPM.tsv"
+        computed_file2.absolute_file_path = "/home/user/data_store/PCL/" + computed_file2.filename
+        computed_file2.result = result2
+        computed_file2.size_in_bytes = 234
+        computed_file2.is_smashable = True
+        computed_file2.save()
 
-        assoc = SampleComputedFileAssociation()
-        assoc.sample = sample
-        assoc.computed_file = computed_file
-        assoc.save()
+        assoc2 = SampleComputedFileAssociation()
+        assoc2.sample = sample2
+        assoc2.computed_file = computed_file2
+        assoc2.save()
 
         # CROSS-SMASH BY SPECIES
         ds = Dataset()
