@@ -132,13 +132,20 @@ fi
 
 if [[ -z $tag || $tag == "transcriptome" ]]; then
     # Make sure data for Transcriptome Index tests is downloaded.
-    tx_index_test_raw_dir="$volume_directory/raw/TEST/TRANSCRIPTOME_INDEX"
+    tx_index_test_raw_dir="$volume_directory/raw/TEST/TRANSCRIPTOME_INDEX/AEGILOPS_TAUSCHII/"
     fasta_file="aegilops_tauschii_short.fa.gz"
     if [ ! -e "$tx_index_test_raw_dir/$fasta_file" ]; then
         mkdir -p $tx_index_test_raw_dir
         echo "Downloading fasta file for Transcriptome Index tests."
         wget -q -O "$tx_index_test_raw_dir/$fasta_file" \
              "$test_data_repo/$fasta_file"
+    fi
+    gtf_file="aegilops_tauschii_short.gtf.gz"
+    if [ ! -e "$tx_index_test_raw_dir/$gtf_file" ]; then
+        mkdir -p $tx_index_test_raw_dir
+        echo "Downloading gtf file for Transcriptome Index tests."
+        wget -q -O "$tx_index_test_raw_dir/$gtf_file" \
+             "$test_data_repo/$gtf_file"
     fi
 fi
 
