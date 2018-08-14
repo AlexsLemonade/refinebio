@@ -128,9 +128,17 @@ def end_job(job_context: Dict, abort=False):
     job.save()
 
     if success:
-        logger.info("Processor job completed successfully.", processor_job=job.id)
+        logger.info("Processor job completed successfully.",
+                    processor_job=job.id,
+                    pipeline_applied=job.pipeline_applied)
     else:
-        logger.info("Processor job failed!", processor_job=job.id)
+        logger.info("Processor job failed!",
+                    processor_job=job.id,
+                    pipeline_applied=job.pipeline_applied)
+        if not job.failure_reason:
+            logger.error("Processor job failed without having failure_reason set. FIX ME!!!!!!!!",
+                         processor_job=job.id,
+                         pipeline_applied=job.pipeline_applied)
 
     # Return Final Job context so testers can check it
     return job_context
