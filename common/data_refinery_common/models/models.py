@@ -796,6 +796,8 @@ class ComputedFile(models.Model):
             pass
 
     def delete_s3_file(self, force=False):
+        # If we're not running in the cloud then we shouldn't try to
+        # delete something from S3 unless force is set.
         if not settings.RUNNING_IN_CLOUD and not force:
             return False
 
