@@ -209,6 +209,26 @@ class SurveyTestCase(TestCase):
         self.assertEqual(retried_job.num_retries, 1)
 
     @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_retrying_lost_downloader_jobs_time(self, mock_send_job):
+        job = self.create_downloader_job()
+        job.created_at = timezone.now() - (main.MIN_LOOP_TIME + timedelta(minutes=1))
+        job.save()
+
+        # Just run it once, not forever so get the function that is
+        # decorated with @do_forever
+        main.retry_lost_downloader_jobs.__wrapped__()
+        self.assertEqual(len(mock_send_job.mock_calls), 1)
+
+        jobs = DownloaderJob.objects.order_by('id')
+        original_job = jobs[0]
+        self.assertTrue(original_job.retried)
+        self.assertEqual(original_job.num_retries, 0)
+        self.assertFalse(original_job.success)
+
+        retried_job = jobs[1]
+        self.assertEqual(retried_job.num_retries, 1)
+
+    @patch('data_refinery_foreman.foreman.main.send_job')
     @patch('data_refinery_foreman.foreman.main.Nomad')
     def test_not_retrying_lost_downloader_jobs(self, mock_nomad, mock_send_job):
         """Make sure that we don't retry downloader jobs we shouldn't."""
@@ -454,3 +474,23 @@ class SurveyTestCase(TestCase):
 
         # Make sure no additional job was created.
         self.assertEqual(jobs.count(), 1)
+
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_retrying_lost_processor_jobs_time(self, mock_send_job):
+        job = self.create_processor_job()
+        job.created_at = timezone.now() - (main.MIN_LOOP_TIME + timedelta(minutes=1))
+        job.save()
+
+        # Just run it once, not forever so get the function that is
+        # decorated with @do_forever
+        main.retry_lost_processor_jobs.__wrapped__()
+        self.assertEqual(len(mock_send_job.mock_calls), 1)
+
+        jobs = ProcessorJob.objects.order_by('id')
+        original_job = jobs[0]
+        self.assertTrue(original_job.retried)
+        self.assertEqual(original_job.num_retries, 0)
+        self.assertFalse(original_job.success)
+
+        retried_job = jobs[1]
+        self.assertEqual(retried_job.num_retries, 1)

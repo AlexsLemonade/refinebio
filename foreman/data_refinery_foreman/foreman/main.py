@@ -58,12 +58,19 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
     logger.info("Requeuing Downloader Job which had ID %d with a new Downloader Job with ID %d.",
                 last_job.id,
                 new_job.id)
-    send_job(Downloaders[last_job.downloader_task], new_job)
+    try:
+        send_job(Downloaders[last_job.downloader_task], new_job)
 
-    last_job.retried = True
-    last_job.success = False
-    last_job.retried_job = new_job
-    last_job.save()
+        last_job.retried = True
+        last_job.success = False
+        last_job.retried_job = new_job
+        last_job.save()
+    except:
+        logger.error("Failed to requeue Downloader Job which had ID %d with a new Downloader Job with ID %d.",
+                     last_job.id,
+                     new_job.id)
+        # Can't communicate with nomad just now, leave the job for a later loop.
+        new_job.delete()
 
 
 def handle_repeated_failure(job) -> None:
@@ -181,17 +188,25 @@ def retry_lost_downloader_jobs() -> None:
     lost_jobs = []
     for job in potentially_lost_jobs:
         try:
-            job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
-            # If the job is still pending, then it makes sense that it
-            # hasn't started and if it's running then it may not have
-            # been able to mark the job record as started yet.
-            if job_status != "pending" and job_status != "running":
-                logger.info(("Determined that a downloader job needs to be requeued because its"
-                             " Nomad Job's status is: %s."),
-                            job_status,
-                            job_id=job.id
-                )
-                lost_jobs.append(job)
+            if job.nomad_job_id:
+                job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+                # If the job is still pending, then it makes sense that it
+                # hasn't started and if it's running then it may not have
+                # been able to mark the job record as started yet.
+                if job_status != "pending" and job_status != "running":
+                    logger.info(("Determined that a downloader job needs to be requeued because its"
+                                 " Nomad Job's status is: %s."),
+                                job_status,
+                                job_id=job.id
+                    )
+                    lost_jobs.append(job)
+            else:
+                # If there is no nomad_job_id field set, we could be
+                # in the small window where the job was created but
+                # hasn't yet gotten a chance to be queued.
+                # If this job really should be restarted we'll get it in the next loop.
+                if timezone.now() - job.created_at > MIN_LOOP_TIME:
+                    lost_jobs.append(job)
         except URLNotFoundNomadException:
             logger.exception(("Determined that a downloader job needs to be requeued because "
                               "querying for its Nomad job failed: "),
@@ -227,15 +242,22 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
         ProcessorJobDatasetAssociation.objects.get_or_create(processor_job=new_job,
                                                      data_set=data_set)
 
-    logger.info("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",
-                last_job.id,
-                new_job.id)
-    send_job(ProcessorPipeline[last_job.pipeline_applied], new_job)
+    try:
+        logger.info("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",
+                    last_job.id,
+                    new_job.id)
+        send_job(ProcessorPipeline[last_job.pipeline_applied], new_job)
 
-    last_job.retried = True
-    last_job.success = False
-    last_job.retried_job = new_job
-    last_job.save()
+        last_job.retried = True
+        last_job.success = False
+        last_job.retried_job = new_job
+        last_job.save()
+    except:
+        logger.error("Failed to requeue Processor Job which had ID %d with a new Processor Job with ID %d.",
+                     last_job.id,
+                     new_job.id)
+        # Can't communicate with nomad just now, leave the job for a later loop.
+        new_job.delete()
 
 
 def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
@@ -310,17 +332,25 @@ def retry_lost_processor_jobs() -> None:
     lost_jobs = []
     for job in potentially_lost_jobs:
         try:
-            job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
-            # If the job is still pending, then it makes sense that it
-            # hasn't started and if it's running then it may not have
-            # been able to mark the job record as started yet.
-            if job_status != "pending" and job_status != "running":
-                logger.info(("Determined that a processor job needs to be requeued because its"
-                             " Nomad Job's status is: %s."),
-                            job_status,
-                            job_id=job.id
-                )
-                lost_jobs.append(job)
+            if job.nomad_job_id:
+                job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+                # If the job is still pending, then it makes sense that it
+                # hasn't started and if it's running then it may not have
+                # been able to mark the job record as started yet.
+                if job_status != "pending" and job_status != "running":
+                    logger.info(("Determined that a processor job needs to be requeued because its"
+                                 " Nomad Job's status is: %s."),
+                                job_status,
+                                job_id=job.id
+                    )
+                    lost_jobs.append(job)
+            else:
+                # If there is no nomad_job_id field set, we could be
+                # in the small window where the job was created but
+                # hasn't yet gotten a chance to be queued.
+                # If this job really should be restarted we'll get it in the next loop.
+                if timezone.now() - job.created_at > MIN_LOOP_TIME:
+                    lost_jobs.append(job)
         except URLNotFoundNomadException:
             logger.exception(("Determined that a processor job needs to be requeued because "
                               "querying for its Nomad job failed: "),
