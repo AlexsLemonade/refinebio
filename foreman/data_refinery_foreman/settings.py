@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
+import raven
 from django.core.exceptions import ImproperlyConfigured
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 
@@ -151,7 +152,8 @@ STATIC_URL = '/static/'
 raven_dsn = get_env_variable_gracefully('RAVEN_DSN', False)
 if raven_dsn:
     RAVEN_CONFIG = {
-        'dsn': raven_dsn
+        'dsn': raven_dsn,
+        'release': raven.fetch_git_sha(os.path.abspath(os.pardir)),
     }
 else:
     # Preven raven from logging about how it's not configured...

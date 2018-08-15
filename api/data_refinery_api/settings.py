@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
+import raven
 from django.core.exceptions import ImproperlyConfigured
 
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
@@ -167,12 +168,13 @@ REST_FRAMEWORK = {
 # UserWarning: Transport selection via DSN is deprecated. You should
 # explicitly pass the transport class to Client() instead.
 raven_dsn = get_env_variable_gracefully('RAVEN_DSN_API', False)
-if raven_dsn != "not set":
+if raven_dsn:
     RAVEN_CONFIG = {
         'dsn': raven_dsn,
         # Only send 5% of errors for the API, since we aren't going to
         # be interested in any single one.
-        'sampleRate': 0.25
+        'sampleRate': 0.25,
+        'release': raven.fetch_git_sha(os.path.abspath(os.pardir)),
     }
 else:
     # Preven raven from logging about how it's not configured...
