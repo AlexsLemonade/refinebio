@@ -102,6 +102,9 @@ class NOOPTestCase(TestCase):
         self.assertTrue(os.path.exists(final_context['output_file_path']))
         self.assertEqual(os.path.getsize(final_context['output_file_path']), 346535)
 
+        # https://sentry.io/greenelab/staging-refinebio/issues/647763404/
+        self.assertEqual(final_context['result'].processor.environment['R']['tidyverse'], '1.2.1')
+
     @tag('no_op')
     def test_convert_processed_illumina(self):
         job = ProcessorJob()
@@ -146,6 +149,8 @@ class NOOPTestCase(TestCase):
         self.assertTrue(os.path.exists(final_context['output_file_path']))
         self.assertEqual(os.path.getsize(final_context['output_file_path']), 920374)
 
+        # https://sentry.io/greenelab/staging-refinebio/issues/647763404/
+        self.assertEqual(final_context['result'].processor.environment['R']['tidyverse'], '1.2.1')
 
     @tag('no_op')
     def test_convert_illumina_no_header(self):
@@ -191,6 +196,9 @@ class NOOPTestCase(TestCase):
         self.assertTrue(final_context['success'])
         self.assertTrue(os.path.exists(final_context['output_file_path']))
         self.assertEqual(os.path.getsize(final_context['output_file_path']), 786207)
+
+        # https://sentry.io/greenelab/staging-refinebio/issues/647763404/
+        self.assertEqual(final_context['result'].processor.environment['R']['tidyverse'], '1.2.1')
 
     @tag('no_op')
     def test_convert_illumina_bad_cols(self):
