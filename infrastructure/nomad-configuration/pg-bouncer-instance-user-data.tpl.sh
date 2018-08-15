@@ -17,12 +17,11 @@
 # Change to home directory of the default user
 cd /home/ubuntu
 
-apt-get update
-apt-get install wget
+apt-get -y update
 sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-apt-get update
-apt-get install pgbouncer
+apt-get -y update
+apt-get -y install pgbouncer
 
 # Set up PG Bouncer
 cat <<"EOF" > /etc/pgbouncer/pgbouncer.ini
