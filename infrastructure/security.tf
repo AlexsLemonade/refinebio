@@ -285,10 +285,11 @@ resource "aws_security_group_rule" "data_refinery_pg_api_icmp" {
 
 resource "aws_security_group_rule" "data_refinery_pg_outbound" {
   type = "egress"
-  from_port = -1
-  to_port = -1
-  protocol = "tcp"
+  from_port = 0
+  to_port = 0
+  protocol = "all"
   cidr_blocks = ["0.0.0.0/0"]
+  ipv6_cidr_blocks = ["::/0"]
   security_group_id = "${aws_security_group.data_refinery_pg.id}"
 }
 
