@@ -356,10 +356,10 @@ resource "aws_instance" "pg_bouncer" {
   ami = "${data.aws_ami.ubuntu.id}"
   instance_type = "${var.nomad_server_instance_type}"
   availability_zone = "${var.region}a"
-  vpc_security_group_ids = ["${aws_security_group.data_refinery_db.id}"]
+  vpc_security_group_ids = ["${aws_security_group.data_refinery_pg.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
-  depends_on = ["aws_internet_gateway.data_refinery", "aws_db_instance.postgres_db"]
+  depends_on = ["aws_db_instance.postgres_db"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
   # Our instance-user-data.sh script is built by Terraform at
@@ -395,6 +395,9 @@ data "template_file" "pg_bouncer_script_smusher" {
     database_user = "${var.database_user}"
     database_password = "${var.database_password}"
     database_name = "${aws_db_instance.postgres_db.name}"
+    user = "${var.user}"
+    stage = "${var.stage}"
+    region = "${var.region}"
   }
 }
 
