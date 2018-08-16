@@ -17,35 +17,44 @@
 # Change to home directory of the default user
 cd /home/ubuntu
 
+service postgresql stop
+
 apt-get -y update
-sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key -y add -
-apt-get -y update
+# sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+# wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key -y add -
+# apt-get -y update
 apt-get -y install pgbouncer postgresql-client --allow-unauthenticated
 
 # Set up PG Bouncer
-cat <<"EOF" > /etc/pgbouncer/pgbouncer.ini
+cat << FOE >> /etc/pgbouncer/pgbouncer.ini
 [databases]
 ${database_name} = host=${database_host} port=5430 dbname=${database_name}
 
 [pgbouncer]
 listen_addr = *
+max_client_conn = 500
+default_pool_size = 20
 listen_port = 5432
 auth_type = md5
 auth_file = /etc/pgbouncer/userlist.txt
 pool_mode = transaction
-server_reset_query =
-pidfile=/tmp/pgbouncer.pidfile
-EOF
+server_reset_query = DISCARD ALL
+logfile = /tmp/pgbouncer.log
+logfile = /var/log/postgresql/pgbouncer.log
+pidfile = /var/run/postgresql/pgbouncer.pid
+unix_socket_dir = /var/run/postgresql
+FOE
 
 # Set up PG Bouncer
-cat <<"EOF" > /etc/pgbouncer/userlist.txt
+cat << FOE >> /etc/pgbouncer/userlist.txt
 "${database_user}" "${database_password}"
-EOF
+FOE
 
 echo "ulimit -n 16384" >> /etc/default/pgbouncer
 
-sudo service pgbouncer start
+
+service pgbouncer stop
+service pgbouncer start
 
 # Delete the cloudinit and syslog in production.
 export STAGE=${stage}
