@@ -215,6 +215,84 @@ resource "aws_security_group_rule" "data_refinery_db_outbound" {
 }
 
 ##
+# PGBouncer
+##
+
+resource "aws_security_group" "data_refinery_pg" {
+  name = "data-refinery_pg-${var.user}-${var.stage}"
+  description = "data_refinery_pg-${var.user}-${var.stage}"
+  vpc_id = "${aws_vpc.data_refinery_vpc.id}"
+
+  tags {
+    Name = "data-refinery-pg-${var.user}-${var.stage}"
+  }
+}
+
+resource "aws_security_group_rule" "data_refinery_pg_ssh" {
+  type = "ingress"
+  from_port = 22
+  to_port = 22
+  protocol = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = "${aws_security_group.data_refinery_pg.id}"
+}
+
+
+resource "aws_security_group_rule" "data_refinery_pg_workers_tcp" {
+  type = "ingress"
+  from_port = 0
+  to_port = 65535
+  protocol = "tcp"
+  source_security_group_id = "${aws_security_group.data_refinery_worker.id}"
+  security_group_id = "${aws_security_group.data_refinery_pg.id}"
+}
+
+resource "aws_security_group_rule" "data_refinery_pg_foreman_tcp" {
+  type = "ingress"
+  from_port = 0
+  to_port = 65535
+  protocol = "tcp"
+  source_security_group_id = "${aws_security_group.data_refinery_foreman.id}"
+  security_group_id = "${aws_security_group.data_refinery_pg.id}"
+}
+
+resource "aws_security_group_rule" "data_refinery_pg_api_tcp" {
+  type = "ingress"
+  from_port = 0
+  to_port = 65535
+  protocol = "tcp"
+  source_security_group_id = "${aws_security_group.data_refinery_api.id}"
+  security_group_id = "${aws_security_group.data_refinery_pg.id}"
+}
+
+resource "aws_security_group_rule" "data_refinery_pg_workers_icmp" {
+  type = "ingress"
+  from_port = -1
+  to_port = -1
+  protocol = "icmp"
+  source_security_group_id = "${aws_security_group.data_refinery_worker.id}"
+  security_group_id = "${aws_security_group.data_refinery_pg.id}"
+}
+
+resource "aws_security_group_rule" "data_refinery_pg_api_icmp" {
+  type = "ingress"
+  from_port = -1
+  to_port = -1
+  protocol = "icmp"
+  source_security_group_id = "${aws_security_group.data_refinery_api.id}"
+  security_group_id = "${aws_security_group.data_refinery_pg.id}"
+}
+
+resource "aws_security_group_rule" "data_refinery_pg_outbound" {
+  type = "egress"
+  from_port = -1
+  to_port = -1
+  protocol = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = "${aws_security_group.data_refinery_pg.id}"
+}
+
+##
 # API
 ##
 

@@ -21,7 +21,7 @@ apt-get -y update
 sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key -y add -
 apt-get -y update
-apt-get -y install pgbouncer
+apt-get -y install pgbouncer postgresql-client --allow-unauthenticated
 
 # Set up PG Bouncer
 cat <<"EOF" > /etc/pgbouncer/pgbouncer.ini
@@ -35,6 +35,7 @@ auth_type = md5
 auth_file = /etc/pgbouncer/userlist.txt
 pool_mode = transaction
 server_reset_query =
+pidfile=/tmp/pgbouncer.pidfile
 EOF
 
 # Set up PG Bouncer
