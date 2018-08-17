@@ -228,7 +228,7 @@ data "template_file" "nomad_client_script_smusher" {
     stage = "${var.stage}"
     region = "${var.region}"
     file_system_id = "${aws_efs_file_system.data_refinery_efs.id}"
-    database_host = "${aws_instance.pg_bouncer.private_ip}"
+    database_host = "${aws_db_instance.postgres_db.address}"
     database_user = "${var.database_user}"
     database_password = "${var.database_password}"
     database_name = "${aws_db_instance.postgres_db.name}"
@@ -248,7 +248,7 @@ resource "aws_launch_configuration" "auto_client_configuration" {
     instance_type = "${var.client_instance_type}"
     security_groups = ["${aws_security_group.data_refinery_worker.id}"]
     iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
-    depends_on = ["aws_internet_gateway.data_refinery", "aws_instance.nomad_server_1", "aws_instance.pg_bouncer"]
+    depends_on = ["aws_internet_gateway.data_refinery", "aws_instance.nomad_server_1"]
     user_data = "${data.template_file.nomad_client_script_smusher.rendered}"
     key_name = "${aws_key_pair.data_refinery.key_name}"
     spot_price = "${var.spot_price}"
@@ -337,9 +337,6 @@ resource "aws_db_instance" "postgres_db" {
   username = "${var.database_user}"
   password = "${var.database_password}"
 
-  # We run PgBouncer on the the default 5432.
-  port = "5430"
-
   db_subnet_group_name = "${aws_db_subnet_group.data_refinery.name}"
   parameter_group_name = "${aws_db_parameter_group.postgres_parameters.name}"
 
@@ -350,52 +347,6 @@ resource "aws_db_instance" "postgres_db" {
   multi_az = true
   publicly_accessible = true
 
-}
-
-resource "aws_instance" "pg_bouncer" {
-  ami = "${data.aws_ami.ubuntu.id}"
-  instance_type = "${var.nomad_server_instance_type}"
-  availability_zone = "${var.region}a"
-  vpc_security_group_ids = ["${aws_security_group.data_refinery_db.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
-  subnet_id = "${aws_subnet.data_refinery_1a.id}"
-  depends_on = ["aws_internet_gateway.data_refinery", "aws_db_instance.postgres_db"]
-  key_name = "${aws_key_pair.data_refinery.key_name}"
-
-  # Our instance-user-data.sh script is built by Terraform at
-  # apply-time so that it can put additional files onto the
-  # instance. For more information see the definition of this resource.
-  user_data = "${data.template_file.pg_bouncer_script_smusher.rendered}"
-
-  tags = {
-    Name = "pg-bouncer-${var.user}-${var.stage}"
-  }
-
-  # Nomad server requirements can be found here:
-  # https://www.nomadproject.io/guides/cluster/requirements.html
-  # However I do not think that these accurately reflect those requirements.
-  # I think these are the defaults provided in terraform examples.
-  root_block_device = {
-    volume_type = "gp2"
-    volume_size = 100
-  }
-
-  ebs_block_device = {
-    device_name = "/dev/xvdcz"
-    volume_type = "gp2"
-    volume_size = 40
-  }
-}
-
-data "template_file" "pg_bouncer_script_smusher" {
-  template = "${file("nomad-configuration/pg-bouncer-instance-user-data.tpl.sh")}"
-
-  vars {
-    database_host = "${aws_db_instance.postgres_db.address}"
-    database_user = "${var.database_user}"
-    database_password = "${var.database_password}"
-    database_name = "${aws_db_instance.postgres_db.name}"
-  }
 }
 
 ##
@@ -424,7 +375,7 @@ data "template_file" "api_server_script_smusher" {
     user = "${var.user}"
     stage = "${var.stage}"
     region = "${var.region}"
-    database_host = "${aws_instance.pg_bouncer.private_ip}"
+    database_host = "${aws_db_instance.postgres_db.address}"
     database_user = "${var.database_user}"
     database_password = "${var.database_password}"
     database_name = "${aws_db_instance.postgres_db.name}"
@@ -442,7 +393,6 @@ resource "aws_instance" "api_server_1" {
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = [
     "aws_db_instance.postgres_db",
-    "aws_instance.pg_bouncer",
     "aws_security_group_rule.data_refinery_api_http",
     "aws_security_group_rule.data_refinery_api_outbound"
   ]
@@ -492,7 +442,7 @@ data "template_file" "foreman_server_script_smusher" {
     stage = "${var.stage}"
     region = "${var.region}"
     nomad_lead_server_ip = "${aws_instance.nomad_server_1.private_ip}"
-    database_host = "${aws_instance.pg_bouncer.private_ip}"
+    database_host = "${aws_db_instance.postgres_db.address}"
     database_user = "${var.database_user}"
     database_password = "${var.database_password}"
     database_name = "${aws_db_instance.postgres_db.name}"
@@ -507,7 +457,7 @@ resource "aws_instance" "foreman_server_1" {
   vpc_security_group_ids = ["${aws_security_group.data_refinery_foreman.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
-  depends_on = ["aws_db_instance.postgres_db", "aws_instance.pg_bouncer"]
+  depends_on = ["aws_db_instance.postgres_db"]
   user_data = "${data.template_file.foreman_server_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
