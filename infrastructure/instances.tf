@@ -349,6 +349,55 @@ resource "aws_db_instance" "postgres_db" {
 
 }
 
+resource "aws_instance" "pg_bouncer" {
+  ami = "${data.aws_ami.ubuntu.id}"
+  instance_type = "${var.nomad_server_instance_type}"
+  availability_zone = "${var.region}a"
+  vpc_security_group_ids = ["${aws_security_group.data_refinery_pg.id}"]
+  iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
+  subnet_id = "${aws_subnet.data_refinery_1a.id}"
+  depends_on = ["aws_db_instance.postgres_db"]
+  key_name = "${aws_key_pair.data_refinery.key_name}"
+
+  # Our instance-user-data.sh script is built by Terraform at
+  # apply-time so that it can put additional files onto the
+  # instance. For more information see the definition of this resource.
+  user_data = "${data.template_file.pg_bouncer_script_smusher.rendered}"
+
+  tags = {
+    Name = "pg-bouncer-${var.user}-${var.stage}"
+  }
+
+  # Nomad server requirements can be found here:
+  # https://www.nomadproject.io/guides/cluster/requirements.html
+  # However I do not think that these accurately reflect those requirements.
+  # I think these are the defaults provided in terraform examples.
+  root_block_device = {
+    volume_type = "gp2"
+    volume_size = 100
+  }
+
+  ebs_block_device = {
+    device_name = "/dev/xvdcz"
+    volume_type = "gp2"
+    volume_size = 40
+  }
+}
+
+data "template_file" "pg_bouncer_script_smusher" {
+  template = "${file("nomad-configuration/pg-bouncer-instance-user-data.tpl.sh")}"
+
+  vars {
+    database_host = "${aws_db_instance.postgres_db.address}"
+    database_user = "${var.database_user}"
+    database_password = "${var.database_password}"
+    database_name = "${aws_db_instance.postgres_db.name}"
+    user = "${var.user}"
+    stage = "${var.stage}"
+    region = "${var.region}"
+  }
+}
+
 ##
 # API Webserver
 ##

@@ -84,7 +84,7 @@ EOF
 docker run -d\
  --name graphite\
  --restart=always\
- -v /home/ubuntu/graphite_configs:/opt/graphite/conf\
+ -v /home/ubuntu/graphite_configs/storage-schemas.conf:/opt/graphite/conf/storage-schemas.conf \
  -p 80:80\
  -p 2003-2004:2003-2004\
  -p 2023-2024:2023-2024\
