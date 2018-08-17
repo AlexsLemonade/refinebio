@@ -321,7 +321,10 @@ class GeoSurveyor(ExternalSourceSurveyor):
                         sample_object.has_raw = True
                         sample_object.save()
 
-                    if '_non_normalized.txt' in supplementary_file_url:
+                    if ('_non_normalized.txt' in supplementary_file_url) \
+                    or ('_non-normalized.txt' in supplementary_file_url) \
+                    or ('-non-normalized.txt' in supplementary_file_url) \
+                    or ('-non_normalized.txt' in supplementary_file_url):
                         sample_object.has_raw = True
                         sample_object.save()
 
@@ -354,7 +357,10 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
             for sample_object in all_samples:
 
-                if '_non_normalized.txt' in experiment_supplement_url:
+                if ('_non_normalized.txt' in experiment_supplement_url) \
+                or ('_non-normalized.txt' in experiment_supplement_url) \
+                or ('-non-normalized.txt' in experiment_supplement_url) \
+                or ('-non_normalized.txt' in experiment_supplement_url):
                     sample_object.has_raw = True
                     sample_object.save()
 
