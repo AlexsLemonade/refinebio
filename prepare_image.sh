@@ -89,4 +89,9 @@ else
         finished=$?
         attempts=$[$attempts+1]
     done
+
+    if (( attempts >= 3 )); then
+        echo "Could not build $image_name after three attempts."
+        exit 1
+    fi
 fi
