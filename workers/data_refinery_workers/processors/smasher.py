@@ -253,7 +253,8 @@ def _smash(job_context: Dict) -> Dict:
                         # And finally convert back to Pandas
                         ar = np.array(reso)
                         new_merged = pd.DataFrame(ar, columns=merged.columns, index=merged.index)
-                        job_context['merged_no_qn'] = new_merged
+                        job_context['merged_no_qn'] = merged
+                        job_context['merged_qn'] = new_merged
                         merged = new_merged
                 except Exception as e:
                     logger.exception("Problem occured during quantile normalization",
