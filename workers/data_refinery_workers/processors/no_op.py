@@ -168,7 +168,8 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
     except Exception as e:
         error_template = ("Encountered error in R code while running {0}"
                           " pipeline during processing of {1}: {2}")
-        error_message = error_template.format(job_context['script_name'], job_context['input_file_path'], str(e))
+        error_message = error_template.format(job_context['script_name'],
+            job_context['input_file_path'], str(e))
         logger.error(error_message, context=job_context)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
@@ -263,7 +264,8 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
     except Exception as e:
         error_template = ("Encountered error in R code while running {0}"
                           " pipeline during processing of {1}: {2}")
-        error_message = error_template.format(job_context['script_name'], job_context['input_file_path'], str(e))
+        error_message = error_template.format(job_context['script_name'],
+            job_context['input_file_path'], str(e))
         logger.error(error_message, context=job_context)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
