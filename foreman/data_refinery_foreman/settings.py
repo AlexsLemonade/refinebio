@@ -153,7 +153,8 @@ raven_dsn = get_env_variable_gracefully('RAVEN_DSN', False)
 if raven_dsn:
     RAVEN_CONFIG = {
         'dsn': raven_dsn,
-        'release': raven.fetch_git_sha(os.path.abspath(os.pardir)),
+        # If this isn't configured we should blow up.
+        'release': get_env_variable('SYSTEM_VERSION'),
     }
 else:
     # Preven raven from logging about how it's not configured...

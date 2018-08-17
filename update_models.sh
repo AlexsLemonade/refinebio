@@ -7,4 +7,8 @@ if ! docker ps | tail -n +2 | awk '{ print $NF }' | grep drdb > /dev/null; then
     exit 1
 fi
 
+if [[ -z $SYSTEM_VERSION ]]; then
+    export SYSTEM_VERSION=local
+fi
+
 ./common/make_migrations.sh && cd common && python setup.py sdist
