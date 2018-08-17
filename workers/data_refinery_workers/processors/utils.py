@@ -120,18 +120,29 @@ def end_job(job_context: Dict, abort=False):
                 computed_file.delete_local_file()
 
     # If the pipeline includes any steps, save it.
-    pipeline = job_context['pipeline']
-    if len(pipeline.steps):
-        pipeline.save()
+    if 'pipeline' in job_context:
+        pipeline = job_context['pipeline']
+        if len(pipeline.steps):
+            pipeline.save()
 
     job.success = success
     job.end_time = timezone.now()
     job.save()
 
     if success:
-        logger.info("Processor job completed successfully.", processor_job=job.id)
+        logger.info("Processor job completed successfully.",
+                    processor_job=job.id,
+                    pipeline_applied=job.pipeline_applied)
     else:
-        logger.info("Processor job failed!", processor_job=job.id)
+        if not job.failure_reason:
+            logger.error("Processor job failed without having failure_reason set. FIX ME!!!!!!!!",
+                         processor_job=job.id,
+                         pipeline_applied=job.pipeline_applied)
+        else:
+            logger.info("Processor job failed!",
+                        processor_job=job.id,
+                        pipeline_applied=job.pipeline_applied,
+                        failure_reason=job.failure_reason)
 
     # Return Final Job context so testers can check it
     return job_context
