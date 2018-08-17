@@ -128,25 +128,6 @@ def _download_file_aspera(download_url: str,
     return True
 
 
-def _are_downloads_ready(original_file: OriginalFile) -> bool:
-    """RNASeq reads can be paired. Makes sure both files are downloaded if applicable.
-    """
-    # This is a paired read. Make sure the other one is downloaded, this start the job
-    if '_' in original_file.filename:
-        split = original_file.filename.split('_')
-        if '1' in split[1]:
-            other_file = OriginalFile.objects.get(
-                source_filename='_'.join([split[0], split[1].replace('1', '2')]))
-        else:
-            other_file = OriginalFile.objects.get(
-                source_filename='_'.join([split[0], split[1].replace('2', '1')]))
-        if not other_file.is_downloaded:
-            logger.info("Need other file to download before starting paired read Salmon.")
-            return False
-
-    return True
-
-
 def download_sra(job_id: int) -> None:
     """The main function for the SRA Downloader.
 
@@ -190,7 +171,7 @@ def download_sra(job_id: int) -> None:
                          original_file_id=original_file.id,
                          downloader_job=job_id)
 
-    if success and _are_downloads_ready(downloaded_files[0]):
+    if success:
         utils.create_processor_job_for_original_files(downloaded_files, job)
 
     utils.end_downloader_job(job, success)
