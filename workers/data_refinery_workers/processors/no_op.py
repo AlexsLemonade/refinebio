@@ -312,7 +312,6 @@ def _create_result(job_context: Dict) -> Dict:
             computed_file=computed_file)
 
     logger.info("Created %s", result)
-    job_context['result'] = result
     job_context["success"] = True
     return job_context
 
