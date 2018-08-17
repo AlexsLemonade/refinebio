@@ -86,11 +86,15 @@ if [[ -z $tag || $tag == "salmon" ]]; then
     index_dir="$volume_directory/processed/TEST/TRANSCRIPTOME_INDEX"
     index_tarball="Caenorhabditis_elegans_short_1527089586.tar.gz"
     gz_index_path="$index_dir/$index_tarball"
-    if [ ! -e "$gz_index_path" ]; then
+
+    # The tarball gets extracted to a directory named 'index', so
+    # check to see if it's there already.
+    if [ ! -e "$index_dir/index" ]; then
         mkdir -p $index_dir
         echo "Downloading Salmon index for Salmon tests."
         wget -q -O $gz_index_path \
              "$test_data_repo/$index_tarball"
+        tar -xzf $gz_index_path -C "$index_dir"
     fi
 
     # Make sure data for Salmon test is downloaded from S3.

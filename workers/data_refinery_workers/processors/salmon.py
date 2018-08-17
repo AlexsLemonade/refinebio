@@ -35,6 +35,8 @@ from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 
 logger = get_and_configure_logger(__name__)
+
+LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 JOB_DIR_PREFIX = "processor_job_"
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 SKIP_PROCESSED = get_env_variable("SKIP_PROCESSED", True)
@@ -66,24 +68,24 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context['organism'] = job_context['sample'].organism
     job_context["success"] = True
 
-    # The paths of original_files are in this format:
-    #   <experiment_accession_code>/raw/<filename>
-    # Salmon outputs an entire directory of files, so create a temp
-    # directory to output it to until we can zip it to.
-    # The path of temp directory is in this format:
-    #   <experiment_accession_code>/<sample_accession_code>/processed/
-    pre_part = '/'.join(original_files[0].absolute_file_path.split('/')[:-2])
+    # Create a directory specific to this processor job/sample combo.
+    # (A single sample could belong to multiple experiments, meaning
+    # that it could be run more than once, potentially even at the
+    # same time.)
     sample_accession = job_context['sample'].accession_code
-    job_context["output_directory"] = pre_part + "/" + sample_accession + '/processed/'
+    sample_directory = os.path.join(LOCAL_ROOT_DIR,
+                                    job_context["job_dir_prefix"],
+                                    sample_accession)
+    job_context["output_directory"] = sample_directory + "/processed/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
-    job_context["qc_input_directory"] = pre_part + '/'
-    job_context["qc_directory"] = pre_part + '/qc/'
+    # The sample's directory is what should be used for MultiQC input
+    job_context["qc_input_directory"] = sample_directory
+    job_context["qc_directory"] = sample_directory + "/qc/"
     os.makedirs(job_context["qc_directory"], exist_ok=True)
 
     timestamp = str(timezone.now().timestamp()).split('.')[0]
-    job_context["output_archive"] = pre_part + '/result-' + timestamp +  '.tar.gz'
-    os.makedirs(job_context["output_directory"], exist_ok=True)
+    job_context["output_archive"] = sample_directory + '/result-' + timestamp +  '.tar.gz'
 
     return job_context
 
@@ -365,7 +367,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
     ## Possibly related: https://github.com/COMBINE-lab/salmon/issues/55
     if not skip and completed_command.returncode == 1:
         stderr = completed_command.stderr.decode().strip()
-        error_start = stderr.find("Error:")
+        error_start = stderr.upper().find("ERROR:")
         error_start = error_start if error_start != -1 else 0
         logger.error("Shell call to salmon failed with error message: %s",
                      stderr[error_start:],
@@ -462,7 +464,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
     if completed_command.returncode != 0:
 
         stderr = str(completed_command.stderr)
-        error_start = stderr.find("Error:")
+        error_start = stderr.upper().find("ERROR:")
         error_start = error_start if error_start != -1 else 0
         logger.error("Shell call to MultiQC failed with error message: %s",
                      stderr[error_start:],

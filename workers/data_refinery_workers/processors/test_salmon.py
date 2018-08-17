@@ -44,6 +44,7 @@ def prepare_job():
     organism_index.index_type = "TRANSCRIPTOME_SHORT"
     organism_index.organism = c_elegans
     organism_index.result = computational_result
+    organism_index.absolute_directory_path = "/home/user/data_store/processed/TEST/TRANSCRIPTOME_INDEX/index"
     organism_index.save()
 
     comp_file = ComputedFile()

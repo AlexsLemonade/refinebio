@@ -239,7 +239,7 @@ def _create_index(job_context: Dict) -> Dict:
 
     if rsem_completed_command.returncode != 0:
         stderr = str(rsem_completed_command.stderr)
-        error_start = stderr.find("Error:")
+        error_start = stderr.upper().find("ERROR:")
         error_start = error_start if error_start != -1 else 0
         stderr = stderr[error_start:]
         _handle_shell_error(job_context, stderr, "rsem-prepare-reference")
