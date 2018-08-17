@@ -292,6 +292,15 @@ resource "aws_security_group_rule" "data_refinery_pg_api_icmp" {
   security_group_id = "${aws_security_group.data_refinery_pg.id}"
 }
 
+resource "aws_security_group_rule" "data_refinery_pg_foreman_icmp" {
+  type = "ingress"
+  from_port = -1
+  to_port = -1
+  protocol = "icmp"
+  source_security_group_id = "${aws_security_group.data_refinery_foreman.id}"
+  security_group_id = "${aws_security_group.data_refinery_pg.id}"
+}
+
 resource "aws_security_group_rule" "data_refinery_pg_outbound" {
   type = "egress"
   from_port = 0

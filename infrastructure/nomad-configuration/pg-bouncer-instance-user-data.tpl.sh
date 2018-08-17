@@ -20,27 +20,30 @@ cd /home/ubuntu
 service postgresql stop
 
 apt-get -y update
-# sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-# wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key -y add -
-# apt-get -y update
-apt-get -y install pgbouncer postgresql-client --allow-unauthenticated
+apt-get -y install pgbouncer postgresql-client
 
 # Set up PG Bouncer
+# The values of max_client_conn and default_pool_size.
+# This should be a function of the RDS instance max_connections,
+# which is determined by instance type. 
+# Ex., m4.xlarge: 1320 - (.2 * 1320) = 1056
+# So, for a pool of 10, 1056 * 10 = 10560
+# However, this is basically a dark art and we'll probably want to tweak in the future.
+
 cat << FOE >> /etc/pgbouncer/pgbouncer.ini
 [databases]
 * = host=${database_host} port=5430 user=${database_user} password=${database_password} dbname=${database_name} client_encoding=UNICODE
 
 [pgbouncer]
 listen_addr = *
-max_client_conn = 500
-default_pool_size = 20
+max_client_conn = 10560
+default_pool_size = 10
 listen_port = 5432
 auth_type = trust
 auth_file = /etc/pgbouncer/userlist.txt
 pool_mode = transaction
 server_reset_query = DISCARD ALL
-logfile = /tmp/pgbouncer.log
-logfile = /var/log/postgresql/pgbouncer.log
+syslog = 1
 pidfile = /var/run/postgresql/pgbouncer.pid
 unix_socket_dir = /var/run/postgresql
 FOE
