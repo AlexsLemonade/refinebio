@@ -53,13 +53,15 @@ def end_downloader_job(job: DownloaderJob, success: bool):
         logger.info("Downloader Job completed successfully.",
                     downloader_job=job.id)
     else:
-        logger.info("Downloader job failed!",
-                    downloader_job=job.id,
-                    downloader_task=job.downloader_task)
         if not job.failure_reason:
             logger.error("Downloader job failed without having failure_reason set. FIX ME!!!!!!!!",
                          downloader_job=job.id,
                          downloader_task=job.downloader_task)
+        else:
+            logger.info("Downloader job failed!",
+                        downloader_job=job.id,
+                        downloader_task=job.downloader_task,
+                        failure_reason=job.failure_reason)
 
     job.success = success
     job.end_time = timezone.now()
