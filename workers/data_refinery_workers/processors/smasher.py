@@ -210,7 +210,7 @@ def _smash(job_context: Dict) -> Dict:
                 if breaker:
                     continue
 
-                # This is the innter join, the real "Smash"d
+                # This is the inner join, the main "Smash" operation
                 merged = merged.merge(frame, left_index=True, right_index=True)
 
             job_context['merged'] = merged

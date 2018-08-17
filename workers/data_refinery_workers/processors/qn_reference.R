@@ -26,10 +26,6 @@ opt = parse_args(opt_parser);
 filePath <- opt$inputFile
 outFilePath <- opt$outputFile
 
-# Get and use this DB
-message("Loading...")
-source("http://bioconductor.org/biocLite.R")
-
 # Read the data file
 message("Reading data file...")
 suppressWarnings(data <- fread(filePath, 
@@ -43,17 +39,12 @@ suppressWarnings(data <- fread(filePath,
 					showProgress=FALSE)
 				)
 
-message(data)
-
 # Create the target result
 data_matrix <- data.matrix(data, rownames.force = NA)
 data_matrix<-data_matrix[,-1] # We don't want the index column
-message("Datamatrix!")
-message(data_matrix)
 
 target <- normalize.quantiles.determine.target(data_matrix)
 
 # Save to output file
 message("Writing target!")
-message(target)
 write.table(target, outFilePath, row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")

@@ -43,8 +43,6 @@ class Command(BaseCommand):
             logger.error("You must specify an organism")
             sys.exit(1) 
 
-        # self.create_test_data()
-
         organism = Organism.get_object_for_name(options["organism"].upper())
         samples = Sample.processed_objects.filter(organism=organism)
         if samples.count() == 0:
@@ -81,40 +79,3 @@ class Command(BaseCommand):
         else:
             print(":(")
             sys.exit(-1)
-
-    def create_test_data(self):
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
-
-        experiment = Experiment()
-        experiment.accession_code = "123456"
-        experiment.save()
-
-        for code in ['1', '2', '3', '4', '5']:
-            sample = Sample()
-            sample.accession_code = code + '_derp'
-            sample.title = code
-            sample.platform_accession_code = 'A-MEXP-1171'
-            sample.manufacturer = "ILLUMINA"
-            sample.organism = homo_sapiens
-            sample.is_processed = True
-            sample.save()
-
-            cr = ComputationalResult()
-            cr.save()
-
-            file = ComputedFile()
-            file.filename = code + ".tsv"
-            file.absolute_file_path = "/home/user/data_store/QN/" + code + ".tsv"
-            file.size_in_bytes = int(code)
-            file.result = cr
-            file.save()
-
-            scfa = SampleComputedFileAssociation()
-            scfa.sample = sample
-            scfa.computed_file = file
-            scfa.save()
-
-            exsa = ExperimentSampleAssociation()
-            exsa.experiment = experiment
-            exsa.sample = sample
-            exsa.save()

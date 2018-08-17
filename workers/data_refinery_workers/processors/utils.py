@@ -276,7 +276,7 @@ class ProcessorEnum(Enum):
 
     QN_REFERENCE = {
         "name": "Quantile Normalization Reference",
-        "docker_img": "dr_qn",
+        "docker_img": "dr_smasher",
         "yml_file": "qn.yml"
     }
 
