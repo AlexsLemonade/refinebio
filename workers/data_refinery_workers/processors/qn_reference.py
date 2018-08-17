@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 import subprocess
+import random
 import string
 import time
 import warnings
@@ -117,6 +118,12 @@ def _create_result_objects(job_context: Dict) -> Dict:
         "platform_accession_code": job_context['samples']['ALL'][0].platform_accession_code
     }
     annotation.save()
+
+    # Ensure even distribution across S3 servers
+    nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
+    result = computed_file.sync_to_s3(S3_BUCKET_NAME, nonce + "_" + computed_file.filename)
+    if result:
+        computed_file.delete_local_file()
 
     job_context['result'] = result
     job_context['computed_file'] = computed_file
