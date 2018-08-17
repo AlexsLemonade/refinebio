@@ -32,6 +32,7 @@ GENE_TYPE_COLUMN = 2
 IDS_CLEANUP_TABLE = str.maketrans({";": None, "\"": None})
 
 S3_TRANSCRIPTOME_INDEX_BUCKET_NAME = get_env_variable_gracefully("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", False)
+RUNNING_IN_CLOUD = get_env_variable_gracefully("RUNNING_IN_CLOUD", False)
 
 
 def _compute_paths(job_context: Dict) -> str:
@@ -286,6 +287,11 @@ def _zip_index(job_context: Dict) -> Dict:
     only be a single file along with compressing the size of the file
     during storage.
     """
+    # The zip file is only for storing in the cloud, so if we aren't
+    # in the cloud don't build it.
+    if not RUNNING_IN_CLOUD:
+        return job_context
+
     try:
         with tarfile.open(job_context["computed_archive"], "w:gz") as tar:
             tar.add(job_context["output_dir"],
@@ -325,16 +331,17 @@ def _populate_index_object(job_context: Dict) -> Dict:
     result.save()
     job_context['pipeline'].steps.append(result.id)
 
-    computed_file = ComputedFile()
-    computed_file.absolute_file_path = job_context["computed_archive"]
-    computed_file.filename = os.path.split(job_context["computed_archive"])[-1]
-    computed_file.calculate_sha1()
-    computed_file.calculate_size()
-    computed_file.result = result
-    computed_file.is_smashable = False
-    computed_file.is_qc = False
-    computed_file.save()
-    job_context['computed_files'].append(computed_file)
+    if RUNNING_IN_CLOUD:
+        computed_file = ComputedFile()
+        computed_file.absolute_file_path = job_context["computed_archive"]
+        computed_file.filename = os.path.split(job_context["computed_archive"])[-1]
+        computed_file.calculate_sha1()
+        computed_file.calculate_size()
+        computed_file.result = result
+        computed_file.is_smashable = False
+        computed_file.is_qc = False
+        computed_file.save()
+        job_context['computed_files'].append(computed_file)
 
     organism_object = Organism.get_object_for_name(job_context['organism_name'])
     index_object = OrganismIndex()
@@ -343,6 +350,7 @@ def _populate_index_object(job_context: Dict) -> Dict:
     index_object.assembly_name = job_context["assembly_name"]
     index_object.salmon_version = job_context["salmon_version"]
     index_object.index_type = "TRANSCRIPTOME_" + job_context['length'].upper()
+    index_object.absolute_directory_path = job_context["output_dir"]
     index_object.result = result
 
     if S3_TRANSCRIPTOME_INDEX_BUCKET_NAME:
@@ -384,6 +392,4 @@ def build_transcriptome_index(job_id: int, length="long") -> None:
                                _create_index,
                                _zip_index,
                                _populate_index_object,
-                               #utils.upload_processed_files,
-                               #utils.cleanup_raw_files,
                                utils.end_job])

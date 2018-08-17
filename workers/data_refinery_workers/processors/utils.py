@@ -106,17 +106,18 @@ def end_job(job_context: Dict, abort=False):
                 sample.is_processed = True
                 sample.save()
 
-    # S3-sync Original Files
-    for original_files in job_context['original_files']:
-        original_files.delete_local_file()
+    if success:
+        # S3-sync Original Files
+        for original_file in job_context['original_files']:
+            original_file.delete_local_file()
 
-    # S3-sync Computed Files
-    for computed_file in job_context['computed_files']:
-        # Ensure even distribution across S3 servers
-        nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
-        result = computed_file.sync_to_s3(S3_BUCKET_NAME, nonce + "_" + computed_file.filename)
-        if result:
-            computed_file.delete_local_file()
+        # S3-sync Computed Files
+        for computed_file in job_context['computed_files']:
+            # Ensure even distribution across S3 servers
+            nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
+            result = computed_file.sync_to_s3(S3_BUCKET_NAME, nonce + "_" + computed_file.filename)
+            if result:
+                computed_file.delete_local_file()
 
     # If the pipeline includes any steps, save it.
     pipeline = job_context['pipeline']

@@ -505,6 +505,10 @@ class OrganismIndex(models.Model):
     # This matters, for instance salmon 0.9.0 indexes don't work with 0.10.0
     salmon_version = models.CharField(max_length=255, default="0.9.1")
 
+    # We keep the director unextracted on the shared filesystem so all
+    # Salmon jobs can access it.
+    absolute_directory_path = models.CharField(max_length=255, blank=True, null=True)
+
     # S3 Information
     s3_url = models.CharField(max_length=255, default="")
 
@@ -520,6 +524,9 @@ class OrganismIndex(models.Model):
                            ExtraArgs={'ACL': 'public-read'})
             self.s3_url = get_s3_url(bucket_name, s3_key)
             logger.info("Upload complete")
+
+            # Cleanup the tarball
+            os.remove(absolute_file_path)
         else:
             logger.info("No S3 bucket in environment, not uploading")
 

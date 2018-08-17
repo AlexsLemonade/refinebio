@@ -148,8 +148,8 @@ def _determine_index_length(job_context: Dict) -> Dict:
     return job_context
 
 
-def _download_index(job_context: Dict) -> Dict:
-    """Downloads the appropriate Salmon Index for this experiment.
+def _find_index(job_context: Dict) -> Dict:
+    """Finds the appropriate Salmon Index for this experiment.
 
     Salmon documentation states:
 
@@ -157,8 +157,8 @@ def _download_index(job_context: Dict) -> Dict:
     first have to build an Salmon index for your transcriptome."
 
     We have used the Data Refinery to build these indices already,
-    this function retrieves the correct index for the organism and
-    read length from Permanent Storage.
+    this function retrieves the location of the correct index for the
+    organism and read length and adds it to the job context.
     """
     logger.debug("Fetching and installing index..")
 
@@ -175,20 +175,10 @@ def _download_index(job_context: Dict) -> Dict:
         job_context["success"] = False
         return job_context
 
-    result = index_object.result
-    file = ComputedFile.objects.get(result=result)
-    job_context["index_unpacked"] = '/'.join(file.get_synced_file_path().split('/')[:-1])
-    job_context["index_directory"] = job_context["index_unpacked"] + "/index"
+    job_context["index_directory"] = index_object.absolute_directory_path
     job_context["genes_to_transcripts_path"] = os.path.join(
         job_context["index_directory"], "genes_to_transcripts.txt")
 
-    if not os.path.exists(job_context["index_directory"] + '/versionInfo.json'):
-        with tarfile.open(file.get_synced_file_path(), "r:gz") as tarball:
-            tarball.extractall(job_context["index_unpacked"])
-    else:
-        logger.info("Index already installed", processor_job=job_context["job_id"])
-
-    job_context["success"] = True
     return job_context
 
 
@@ -421,6 +411,12 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
             # If `tximport` on any related experiment fails, exit immediately.
             if not job_context["success"]:
                 return job_context
+
+        kv = ComputationalResultAnnotation()
+        kv.data = {"index_length": job_context["index_length"]}
+        kv.result = result
+        kv.is_public = True
+        kv.save()
 
         with open(os.path.join(job_context['output_directory'], 'lib_format_counts.json')) as lfc_file:
             format_count_data = json.load(lfc_file)
@@ -700,7 +696,7 @@ def salmon(job_id: int) -> None:
                         _prepare_files,
 
                         _determine_index_length,
-                        _download_index,
+                        _find_index,
 
                         _run_fastqc,
                         _run_salmon,
