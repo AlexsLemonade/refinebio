@@ -190,7 +190,7 @@ def parse_s3_url(url):
     return bucket, path
 
 def get_s3_url(s3_bucket: str, s3_key: str) -> str:
-        """
-        Calculates the s3 URL for a file from the bucket name and the file key.
-        """
-        return "%s.s3.amazonaws.com/%s" % (s3_bucket, s3_key)
+    """
+    Calculates the s3 URL for a file from the bucket name and the file key.
+    """
+    return "%s.s3.amazonaws.com/%s" % (s3_bucket, s3_key)

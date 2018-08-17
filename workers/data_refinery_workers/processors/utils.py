@@ -107,30 +107,43 @@ def end_job(job_context: Dict, abort=False):
                 sample.save()
 
     # S3-sync Original Files
-    for original_files in job_context['original_files']:
-        original_files.delete_local_file()
+    if 'original_files' in job_context:
+        for original_files in job_context['original_files']:
+            original_files.delete_local_file()
 
     # S3-sync Computed Files
-    for computed_file in job_context['computed_files']:
-        # Ensure even distribution across S3 servers
-        nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
-        result = computed_file.sync_to_s3(S3_BUCKET_NAME, nonce + "_" + computed_file.filename)
-        if result:
-            computed_file.delete_local_file()
+    if 'computed_files' in job_context:
+        for computed_file in job_context['computed_files']:
+            # Ensure even distribution across S3 servers
+            nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
+            result = computed_file.sync_to_s3(S3_BUCKET_NAME, nonce + "_" + computed_file.filename)
+            if result:
+                computed_file.delete_local_file()
 
     # If the pipeline includes any steps, save it.
-    pipeline = job_context['pipeline']
-    if len(pipeline.steps):
-        pipeline.save()
+    if 'pipeline' in job_context:
+        pipeline = job_context['pipeline']
+        if len(pipeline.steps):
+            pipeline.save()
 
     job.success = success
     job.end_time = timezone.now()
     job.save()
 
     if success:
-        logger.info("Processor job completed successfully.", processor_job=job.id)
+        logger.info("Processor job completed successfully.",
+                    processor_job=job.id,
+                    pipeline_applied=job.pipeline_applied)
     else:
-        logger.info("Processor job failed!", processor_job=job.id)
+        if not job.failure_reason:
+            logger.error("Processor job failed without having failure_reason set. FIX ME!!!!!!!!",
+                         processor_job=job.id,
+                         pipeline_applied=job.pipeline_applied)
+        else:
+            logger.info("Processor job failed!",
+                        processor_job=job.id,
+                        pipeline_applied=job.pipeline_applied,
+                        failure_reason=job.failure_reason)
 
     # Return Final Job context so testers can check it
     return job_context
