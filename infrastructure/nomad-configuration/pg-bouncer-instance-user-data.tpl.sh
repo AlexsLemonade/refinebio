@@ -28,14 +28,14 @@ apt-get -y install pgbouncer postgresql-client --allow-unauthenticated
 # Set up PG Bouncer
 cat << FOE >> /etc/pgbouncer/pgbouncer.ini
 [databases]
-${database_name} = host=${database_host} port=5430 dbname=${database_name}
+* = host=${database_host} port=5430 user=${database_user} password=${database_password} dbname=${database_name} client_encoding=UNICODE
 
 [pgbouncer]
 listen_addr = *
 max_client_conn = 500
 default_pool_size = 20
 listen_port = 5432
-auth_type = md5
+auth_type = trust
 auth_file = /etc/pgbouncer/userlist.txt
 pool_mode = transaction
 server_reset_query = DISCARD ALL
