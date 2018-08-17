@@ -245,12 +245,19 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
                 "--platform", high_db,
                 "--inputFile", job_context['input_file_path'],
                 "--outputFile", job_context['output_file_path']
-            ])
+            ], stderr=subprocess.PIPE)
+    except subprocess.CalledProcessError as e:
+        error_template = "Status code {0} from gene_convert_illumina.R: {1}"
+        error_message = error_template.format(e.returncode, e.stderr)
+        logger.error(error_message, context=job_context)
+        job_context["job"].failure_reason = error_message
+        job_context["success"] = False
+        return job_context
     except Exception as e:
         error_template = ("Encountered error in R code while running gene_convert_illumina.R"
                           " pipeline during processing of {0}: {1}")
         error_message = error_template.format(job_context['input_file_path'], str(e))
-        logger.error(error_message, processor_job=job_context["job_id"])
+        logger.error(error_message, context=job_context)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
         return job_context
