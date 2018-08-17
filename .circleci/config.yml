@@ -38,7 +38,6 @@ jobs:
       - run: ./prepare_image.sh -i no_op -s workers -d localhost:5000
       - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
       - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
-      - run: ./prepare_image.sh -i qn -s workers -d localhost:5000
 
       # Run Downloader Tests
       # Running these in the same job as the common tests is good
