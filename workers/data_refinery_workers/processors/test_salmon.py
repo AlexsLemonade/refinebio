@@ -418,6 +418,7 @@ class DetermineIndexLengthTestCase(TestCase):
 
         job_context = salmon._set_job_prefix({'original_files': [files[0]],
                                               'job_id': job})
+        job_context = salmon._prepare_files(job_context)
         results = salmon._determine_index_length(job_context)
 
         self.assertEqual(results['index_length_raw'], 41)
