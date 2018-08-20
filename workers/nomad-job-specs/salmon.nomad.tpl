@@ -1,4 +1,4 @@
-job "SALMON_${{RAM}}" {
+job "SALMON_${{INDEX}}_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -40,6 +40,7 @@ job "SALMON_${{RAM}}" {
         USE_S3 = "${{USE_S3}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
+        EBS_INDEX = "${{INDEX}}"
 
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
