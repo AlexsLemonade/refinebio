@@ -27,6 +27,7 @@ apt-get install --yes nfs-common
 
 # Find a free EBS volume
 # XXX: TODO: Loop me // make sure this is correct
+mkdir -p /var/efs/
 EBS_VOLUME_ID=`aws ec2 describe-volumes --filters Name=status,Values=available Name=availability-zone,Values=us-east-1a | jq '.Volumes[0].VolumeId' | tr -d '"'`
 EBS_VOLUME_INDEX=`aws ec2 describe-volumes --filters "Name=tag:Index,Values=*" "Name=volume-id,Values=$EBS_VOLUME_ID" --query "Volumes[*].{ID:VolumeId,Tag:Tags}" | jq '.[0].Tag[0].Value' | tr -d '"'`
 INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)

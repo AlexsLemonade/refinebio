@@ -63,7 +63,7 @@ def send_job(job_type: Enum, job) -> None:
                 job.id)
 
     if isinstance(job, ProcessorJob):
-        nomad_job = nomad_job + "_" + str(job.ram_amount)
+        nomad_job = nomad_job + "_" + get_env_variable("EBS_INDEX", "1") + "_" + str(job.ram_amount)
 
     try:
         nomad_response = nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,

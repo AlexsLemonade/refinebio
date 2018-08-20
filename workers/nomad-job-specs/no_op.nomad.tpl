@@ -1,4 +1,4 @@
-job "NO_OP_${{RAM}}" {
+job "NO_OP_${{INDEX}}_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -43,6 +43,8 @@ job "NO_OP_${{RAM}}" {
         USE_S3 = "${{USE_S3}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
+        EBS_INDEX = "${{INDEX}}"
+        
       }
 
       # The resources the job will require.
