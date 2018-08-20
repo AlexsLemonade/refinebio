@@ -169,6 +169,7 @@ class SalmonTestCase(TestCase):
             'job': ProcessorJob(),
             'pipeline': Pipeline(name="Salmon"),
             'sample': test_sample,
+            'index_length': 'short',
             'input_file_path': os.path.join(experiment_dir, 'raw/reads_1.fastq'),
             'input_file_path_2': os.path.join(experiment_dir, 'raw/reads_2.fastq'),
             'index_directory': os.path.join(experiment_dir, 'index'),
@@ -216,6 +217,7 @@ class SalmonTestCase(TestCase):
             'job': ProcessorJob(),
             'pipeline': Pipeline(name="Salmon"),
             'sample': sample1,
+            'index_length': 'short',
             'input_file_path': os.path.join(experiment_dir, 'raw/SRR1206053.fastq.gz'),
             'index_directory': os.path.join(experiment_dir, 'index'),
             'genes_to_transcripts_path': os.path.join(experiment_dir, 'index',
@@ -238,6 +240,7 @@ class SalmonTestCase(TestCase):
             'job': ProcessorJob(),
             'pipeline': Pipeline(name="Salmon"),
             'sample': sample2,
+            'index_length': 'short',
             'input_file_path': os.path.join(experiment_dir, 'raw/SRR1206054.fastq.gz'),
             'index_directory': os.path.join(experiment_dir, 'index'),
             'genes_to_transcripts_path': os.path.join(experiment_dir, 'index',
@@ -413,7 +416,8 @@ class DetermineIndexLengthTestCase(TestCase):
         """Test that the right length is calculated when the sample has one read."""
         job, files = prepare_job()
 
-        job_context = salmon._prepare_files({'original_files': [files[0]]})
+        job_context = salmon._set_job_prefix({'original_files': [files[0]],
+                                              'job_id': job})
         results = salmon._determine_index_length(job_context)
 
         self.assertEqual(results['index_length_raw'], 41)
@@ -424,7 +428,9 @@ class DetermineIndexLengthTestCase(TestCase):
         """Test that the right length is calculated when the sample has two reads."""
         job, files = prepare_job()
 
-        job_context = salmon._prepare_files({'original_files': files})
+        job_context = salmon._set_job_prefix({'original_files': files,
+                                              'job_id': job})
+        job_context = salmon._prepare_files(job_context)
         results = salmon._determine_index_length(job_context)
 
         self.assertEqual(results['index_length_raw'], 41)

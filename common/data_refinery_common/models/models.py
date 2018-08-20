@@ -507,7 +507,7 @@ class OrganismIndex(models.Model):
 
     # We keep the director unextracted on the shared filesystem so all
     # Salmon jobs can access it.
-    absolute_directory_path = models.CharField(max_length=255, blank=True, null=True)
+    absolute_directory_path = models.CharField(max_length=255, blank=True, null=True, default="")
 
     # S3 Information
     s3_url = models.CharField(max_length=255, default="")
