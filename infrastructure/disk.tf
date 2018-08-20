@@ -36,7 +36,7 @@ resource "aws_ebs_volume" "data_refinery_ebs" {
   tags {
     Name        = "data-refinery-ebs-${count.index}-${var.user}-${var.stage}"
     Environment = "${var.stage}"
-    Index       = "${count.index"}
+    Index       = "${count.index"}"
   }
 }
 
