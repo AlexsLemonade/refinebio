@@ -217,10 +217,10 @@ if [[ $project == "workers" ]]; then
             for r in "${rams[@]}"  
             do
                 indexes=(1 2 3 4 5 6 7 8 9 10)
-                for i in "${indexes[@]}"
+                for j in "${indexes[@]}"
                 do  
-                    export INDEX_POSTFIX="_$i_"
-                    export INDEX="$i"
+                    export INDEX_POSTFIX="_$j"
+                    export INDEX="$j"
                     export RAM_POSTFIX="_$r.nomad"
                     export RAM="$r"
                     cat nomad-job-specs/$template \
