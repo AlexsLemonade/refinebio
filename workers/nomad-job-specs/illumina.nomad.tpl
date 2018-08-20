@@ -53,6 +53,12 @@ job "ILLUMINA_TO_PCL_${{RAM}}" {
         memory = ${{RAM}}
       }
 
+      constraint {
+        attribute = "${meta.volume_index}"
+        operator  = "="
+        value     = "${{INDEX}}"
+      }
+
       config {
         image = "${{DOCKERHUB_REPO}}/${{ILLUMINA_DOCKER_IMAGE}}"
         force_pull = false

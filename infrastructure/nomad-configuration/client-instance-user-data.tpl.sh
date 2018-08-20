@@ -18,10 +18,19 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get upgrade -y
 apt-get install --yes nfs-common
-mkdir -p /var/efs/
-echo "${file_system_id}.efs.${region}.amazonaws.com:/ /var/efs/ nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0" >> /etc/fstab
-mount -a -t nfs4
-chown ubuntu:ubuntu /var/efs/
+
+# EFS
+# mkdir -p /var/efs/
+# echo "${file_system_id}.efs.${region}.amazonaws.com:/ /var/efs/ nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0" >> /etc/fstab
+# mount -a -t nfs4
+# chown ubuntu:ubuntu /var/efs/
+
+# Find a free EBS volume
+# XXX: TODO: Loop me // make sure this is correct
+EBS_VOLUME_ID=`aws ec2 describe-volumes --filters Name=status,Values=available Name=availability-zone,Values=us-east-1a | jq '.Volumes[0].VolumeId' | tr -d '"'`
+EBS_VOLUME_INDEX=`aws ec2 describe-volumes --filters "Name=tag:Index,Values=*" "Name=volume-id,Values=$EBS_VOLUME_ID" --query "Volumes[*].{ID:VolumeId,Tag:Tags}" | jq '.[0].Tag[0].Value' | tr -d '"'`
+INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device /var/efs/ # <_<
 
 # Set up the required database extensions.
 # HStore allows us to treat object annotations as pseudo-NoSQL data tables.
@@ -68,6 +77,8 @@ EOF
 cat <<"EOF" > client.hcl
 ${nomad_client_config}
 EOF
+# Make the client.meta.volume_id is set to waht we just mounted
+sed -i "s/REPLACE_ME/$EBS_VOLUME_INDEX" client.hcl
 
 # Create a directory for docker to use as a volume.
 mkdir /home/ubuntu/docker_volume
