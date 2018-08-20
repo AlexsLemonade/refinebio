@@ -53,6 +53,12 @@ job "SALMON_${{RAM}}" {
         memory = ${{RAM}}
       }
 
+      constraint {
+        attribute = "${meta.volume_index}"
+        operator  = "="
+        value     = "${{INDEX}}"
+      }
+
       config {
         image = "${{DOCKERHUB_REPO}}/${{SALMON_DOCKER_IMAGE}}"
         force_pull = false
