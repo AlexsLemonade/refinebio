@@ -11,8 +11,8 @@ client {
     enabled = true
     servers = ["${nomad_lead_server_ip}:4647"]
 
-    meta{
-      "volume_index": "REPLACE_ME"
+    meta {
+      volume_index = "REPLACE_ME"
     }
 }
 

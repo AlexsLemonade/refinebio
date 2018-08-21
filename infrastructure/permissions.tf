@@ -72,6 +72,33 @@ resource "aws_iam_role_policy_attachment" "s3" {
   policy_arn = "${aws_iam_policy.s3_access_policy.arn}"
 }
 
+resource "aws_iam_policy" "ec2_access_policy" {
+  name = "data-refinery-ec2-access-policy-${var.user}-${var.stage}"
+  description = "Allows EC2 Permissions."
+
+  # Policy text based off of:
+  # http://docs.aws.amazon.com/AmazonS3/latest/dev/example-bucket-policies.html
+  policy = <<EOF
+{
+   "Version":"2012-10-17",
+   "Statement":[
+      {
+         "Effect":"Allow",
+         "Action":[
+            "ec2:*"
+         ],
+         "Resource": "*"
+      }
+   ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "ec2" {
+  role = "${aws_iam_role.data_refinery_instance.name}"
+  policy_arn = "${aws_iam_policy.ec2_access_policy.arn}"
+}
+
 resource "aws_iam_policy" "cloudwatch_policy" {
   name = "data-refinery-cloudwatch-policy-${var.user}-${var.stage}"
   description = "Allows Cloudwatch Permissions."
