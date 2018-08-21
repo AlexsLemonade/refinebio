@@ -76,6 +76,8 @@ def _prepare_files(job_context: Dict) -> Dict:
     sample_directory = os.path.join(LOCAL_ROOT_DIR,
                                     job_context["job_dir_prefix"],
                                     sample_accession)
+    job_context["sample_directory"] = sample_directory
+
     job_context["output_directory"] = sample_directory + "/processed/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
@@ -184,56 +186,77 @@ def _find_index(job_context: Dict) -> Dict:
     return job_context
 
 
-def _count_samples_processed_by_salmon(experiment):
-    """Count the number of salmon-quant-processed samples in an experiment."""
-    counter = 0
-    salmon_cmd_str = 'salmon --no-version-check quant'
+def _find_salmon_quant_results(experiment):
+    """Returns a list of salmon quant results from `experiment`."""
+    results = []
     for sample in experiment.samples.all():
-        cmd_found = False
         for result in sample.results.all():
-            for command in result.commands:
-                if command.startswith(salmon_cmd_str):
-                    counter += 1
-                    cmd_found = True
-                    break
-            if cmd_found:
+            if result.processor.name == utils.ProcessorEnum.SALMON_QUANT.value['name']:
+                results.append(result)
                 break
 
-    return counter
+    return results
 
 
-def _get_salmon_completed_exp_dirs(job_context: Dict) -> List[str]:
-    """Return a list of directory names of experiments whose samples
-    have all been processed by `salmon quant` command.
+def _get_tximport_inputs(job_context: Dict) -> List[str]:
+    """Return a mapping from experiments to a list of their quant files.
+
+    Checks all the experiments which contain a sample from the current
+    experiment. If any of them are fully processed (at least with
+    salmon-quant) then the return dict will include the experiment
+    mapping to a list of paths to the quant.sf file for each sample in
+    that experiment.
     """
     experiments_set = ExperimentSampleAssociation.objects.filter(
         sample=job_context['sample']).values_list('experiment')
     experiments = Experiment.objects.filter(pk__in=experiments_set)
-    salmon_completed_exp_dirs = []
+
+    quantified_experiments = {}
     for experiment in experiments:
-        if _count_samples_processed_by_salmon(experiment) == experiment.samples.count():
-            # Remove the last two parts from the path of job_context['input_file_path']
-            # (which is "<experiment_accession_code>/raw/<filename>")
-            # to get the experiment directory name.
-            tokens = job_context["input_file_path"].split('/')[:-2]
-            experiment_dir = '/'.join(tokens)
-            salmon_completed_exp_dirs.append(experiment_dir)
+        salmon_quant_results = _find_salmon_quant_results(experiment)
+        if len(salmon_quant_results) == experiment.samples.count():
+            quant_paths = []
+            for result in salmon_quant_results:
+                result_path = ComputedFile.objects.filter(result=result.id)[0].absolute_file_path
 
-    return salmon_completed_exp_dirs
+                # The absolute file path references where the tarball
+                # is. The tarball is put in the same directory as the
+                # processed output it contains. Therefore we can find
+                # the quant.sf file tximport needs here:
+                tokens = result_path.split('/')[:-1] + ["processed", "quant.sf"]
+                quant_paths.append('/'.join(tokens))
+
+            quantified_experiments[experiment] = quant_paths
+
+    return quantified_experiments
 
 
-def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
-    """Run tximport R script based on input experiment_dir and the path
+def _tximport(job_context: Dict, experiment: Experiment, quant_paths: str) -> Dict:
+    """Run tximport R script based on input quant files and the path
     of genes_to_transcripts.txt."""
 
-    logger.info("Running tximport!", processor_job=job_context['job_id'], ex_dir=experiment_dir)
+    logger.info("Running tximport!", processor_job=job_context['job_id'], experiment=experiment.id)
 
+    # Write all the paths of the quant.sf files for this experiment to
+    # a file so we can pass a path to that to tximport.R rather than
+    # having to pass in one argument per sample.
+    tximport_path_list_file = job_context["sample_directory"] + "/tximport_inputs.txt"
+    with open(tximport_path_list_file, "w") as input_list:
+        for quant_file in quant_paths:
+            input_list.write()
+
+    rds_filename = "txi_out.RDS"
+    rds_file_path = job_context["sample_directory"] + "/" + rds_filename
+    tpm_filename = "gene_lengthScaledTPM.tsv"
+    tpm_file_path = job_context["sample_directory"] + "/" + tpm_filename
     result = ComputationalResult()
     cmd_tokens = [
         "/usr/bin/Rscript", "--vanilla",
         "/home/user/data_refinery_workers/processors/tximport.R",
-        "--exp_dir", experiment_dir,
-        "--gene2txmap", job_context["genes_to_transcripts_path"]
+        "--file_list", tximport_path_list_file,
+        "--gene2txmap", job_context["genes_to_transcripts_path"],
+        "--rds_file", rds_file_path,
+        "--tpm_file", tpm_file_path
     ]
     result.time_start = timezone.now()
 
@@ -243,9 +266,12 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
         error_template = ("Encountered error in R code while running tximport.R"
                           " pipeline during processing of {0}: {1}")
         error_message = error_template.format(exp_dir, str(e))
-        logger.error(error_message, processor_job=job_context["job_id"])
+        logger.error(error_message, processor_job=job_context["job_id"], experiment=experiment.id)
+        job_context["job"].failure_reason = error_message
         job_context["success"] = False
         return job_context
+    finally:
+        os.remove(tximport_path_list_file)
 
     result.time_end = timezone.now()
     result.commands.append(" ".join(cmd_tokens))
@@ -270,8 +296,8 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
         s_r.save()
 
     rds_file = ComputedFile()
-    rds_file.absolute_file_path = experiment_dir + '/txi_out.RDS'
-    rds_file.filename = 'txi_out.RDS'
+    rds_file.absolute_file_path = rds_file_path
+    rds_file.filename = rds_filename
     rds_file.result = result
     rds_file.is_smashable = False
     rds_file.is_qc = False
@@ -282,19 +308,19 @@ def _tximport(job_context: Dict, experiment_dir: str) -> Dict:
     job_context['computed_files'].append(rds_file)
 
     # Split the tximport result into smashable subfiles
-    big_tsv = experiment_dir + '/gene_lengthScaledTPM.tsv'
-    data = pd.read_csv(big_tsv, sep='\t', header=0, index_col=0)
+    data = pd.read_csv(tpm_file_path, sep='\t', header=0, index_col=0)
     individual_files = []
     frames = np.split(data, len(data.columns), axis=1)
     for frame in frames:
-        frame_path = os.path.join(experiment_dir, frame.columns.values[0]) + '_gene_lengthScaledTPM.tsv'
+        sample_file_name = frame.columns.values[0] + '_' + tpm_filename
+        frame_path = os.path.join(job_context["sample_directory"], sample_file_name)
         frame.to_csv(frame_path, sep='\t', encoding='utf-8')
 
         sample = Sample.objects.get(accession_code=frame.columns.values[0])
 
         computed_file = ComputedFile()
         computed_file.absolute_file_path = frame_path
-        computed_file.filename = frame_path.split('/')[-1]
+        computed_file.filename = sample_file_name
         computed_file.result = result
         computed_file.is_smashable = True
         computed_file.is_qc = False
@@ -404,12 +430,12 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
             job_context['pipeline'].steps.append(result.id)
             SampleResultAssociation.objects.get_or_create(sample=job_context['sample'],
                                                           result=result)
-            salmon_completed_exp_dirs = _get_salmon_completed_exp_dirs(job_context)
+            tximport_inputs = _get_tximport_inputs(job_context)
 
         # tximport analysis is done outside of the transaction so that
         # the mutex wouldn't hold the other jobs too long.
-        for experiment_dir in salmon_completed_exp_dirs:
-            _tximport(job_context, experiment_dir)
+        for experiment, quant_paths in tximport_inputs.items():
+            _tximport(job_context, experiment, quant_paths)
             # If `tximport` on any related experiment fails, exit immediately.
             if not job_context["success"]:
                 return job_context

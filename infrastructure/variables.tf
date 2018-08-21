@@ -44,11 +44,17 @@ variable "django_secret_key" {
   # TODO: generate a new one of these and store it in terraform.tfvars as well.
   default = "NtG1bxZU115GThwrLuAJe0PhTVN9hJ4P"
 }
+
 variable "django_debug" {
   default = "False"
 }
+
 variable "database_port" {
   default = "5432"
+}
+
+variable "database_hidden_port" {
+  default = "5430"
 }
 
 variable "database_timeout" {

@@ -334,6 +334,7 @@ resource "aws_db_instance" "postgres_db" {
   engine_version = "9.6.6"
   instance_class = "db.${var.database_instance_type}"
   name = "data_refinery"
+  port = "${var.database_hidden_port}"
   username = "${var.database_user}"
   password = "${var.database_password}"
 
@@ -390,8 +391,10 @@ data "template_file" "pg_bouncer_script_smusher" {
   vars {
     database_host = "${aws_db_instance.postgres_db.address}"
     database_user = "${var.database_user}"
+    database_port = "${var.database_hidden_port}"
     database_password = "${var.database_password}"
     database_name = "${aws_db_instance.postgres_db.name}"
+    listen_port = "${var.database_port}"
     user = "${var.user}"
     stage = "${var.stage}"
     region = "${var.region}"
