@@ -25,8 +25,7 @@ apt-get install --yes nfs-common jq
 # mount -a -t nfs4
 # chown ubuntu:ubuntu /var/efs/
 
-# Find a free EBS volume
-# XXX: TODO: Loop me // make sure this is correct
+# Find, configure and mount a free EBS volume
 mkdir -p /var/efs/
 EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=${user}" "Name=tag:Stage,Values=${stage}" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
 EBS_VOLUME_INDEX=`aws ec2 describe-volumes --filters "Name=tag:Index,Values=*" "Name=volume-id,Values=$EBS_VOLUME_ID" --query "Volumes[*].{ID:VolumeId,Tag:Tags}" --region us-east-1 | jq '.[0].Tag[4].Value' | tr -d '"'`
@@ -35,13 +34,11 @@ aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --de
 ATTACHED_AS=`lsblk -n | grep T | cut -d' ' -f1`
 FILE_RESULT=`file -s /dev/$ATTACHED_AS`
 
-if (file -s /dev/$ATTACHED_AS | grep data)
+if file -s /dev/$ATTACHED_AS | grep data; then
 	mkfs -t ext4 /dev/$ATTACHED_AS # This is slow
 fi
-
 mount /dev/$ATTACHED_AS /var/efs/
-
-chown ubuntu:ubuntu /dev/efs/
+chown ubuntu:ubuntu /var/efs/
 
 # Set up the required database extensions.
 # HStore allows us to treat object annotations as pseudo-NoSQL data tables.
