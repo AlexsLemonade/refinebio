@@ -31,6 +31,7 @@ resource "aws_efs_mount_target" "data_refinery_efs_1b" {
 resource "aws_s3_bucket" "data_refinery_bucket" {
   bucket = "data-refinery-s3-${var.user}-${var.stage}"
   acl    = "private"
+  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
 
   tags {
     Name        = "data-refinery-s3-${var.user}-${var.stage}"
@@ -41,6 +42,7 @@ resource "aws_s3_bucket" "data_refinery_bucket" {
 resource "aws_s3_bucket" "data_refinery_results_bucket" {
   bucket = "data-refinery-s3-results-${var.user}-${var.stage}"
   acl    = "public-read"
+  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
 
   tags {
     Name        = "data-refinery-s3-results-${var.user}-${var.stage}"
@@ -66,6 +68,7 @@ resource "aws_s3_bucket" "data_refinery_results_bucket" {
 
 resource "aws_s3_bucket" "data-refinery-static" {
   bucket = "${var.static_bucket_prefix == "dev" ? var.user : var.static_bucket_prefix}${var.static_bucket_root}"
+  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
 
   cors_rule {
     allowed_origins = ["*"]

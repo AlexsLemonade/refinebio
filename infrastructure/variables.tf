@@ -170,7 +170,7 @@ output "environment_variables" {
     {name = "DATABASE_NAME"
       value = "${aws_db_instance.postgres_db.name}"},
     {name = "DATABASE_HOST"
-      value = "${aws_db_instance.postgres_db.address}"},
+      value = "${aws_instance.pg_bouncer.public_ip}"},
     {name = "DATABASE_USER"
       value = "${var.database_user}"},
     {name = "DATABASE_PASSWORD"

@@ -13,5 +13,5 @@ resource "aws_security_group_rule" "data_refinery_ci_postgres" {
   to_port = 5432
   protocol = "tcp"
   cidr_blocks = ["${var.host_ip}/32"]
-  security_group_id = "${aws_security_group.data_refinery_db.id}"
+  security_group_id = "${aws_security_group.data_refinery_pg.id}"
 }
