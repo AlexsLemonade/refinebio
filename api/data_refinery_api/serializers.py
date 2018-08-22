@@ -424,7 +424,6 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'is_processing',
                     'is_processed',
                     'is_available',
-                    'email_address',
                     'expires_on',
                     's3_bucket',
                     's3_key',
