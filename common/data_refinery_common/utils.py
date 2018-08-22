@@ -61,6 +61,22 @@ def get_worker_id() -> str:
     return get_instance_id() + "/" + current_process().name
 
 
+def get_volume_index(default="0", path='/home/user/data_store/VOLUME_INDEX') -> str:
+    """ Reads the contents of the VOLUME_INDEX file, else returns default """
+
+    try:
+        with open(path, 'r') as f:
+            v_id = f.read().strip()
+            return v_id
+    except Exception as e:
+        # Logger needs util, so we do this at runtime
+        from data_refinery_common.logging import get_and_configure_logger
+        logger = get_and_configure_logger(__name__)
+        logger.info("Could not read volume index file, using default")
+
+    return default
+
+
 def get_supported_microarray_platforms(platforms_csv: str="config/supported_microarray_platforms.csv"
                                        ) -> list:
     """

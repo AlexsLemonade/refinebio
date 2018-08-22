@@ -4,7 +4,7 @@ from __future__ import absolute_import, unicode_literals
 from enum import Enum
 import nomad
 from nomad.api.exceptions import URLNotFoundNomadException
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable, get_volume_index
 from data_refinery_common.models import ProcessorJob
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -63,7 +63,7 @@ def send_job(job_type: Enum, job) -> None:
                 job.id)
 
     if isinstance(job, ProcessorJob):
-        nomad_job = nomad_job + "_" + get_env_variable("EBS_INDEX", "1") + "_" + str(job.ram_amount)
+        nomad_job = nomad_job + "_" + get_volume_index() + "_" + str(job.ram_amount)
 
     try:
         nomad_response = nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,

@@ -17,7 +17,7 @@
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get upgrade -y
-apt-get install --yes nfs-common jq
+apt-get install --yes nfs-common jq iotop dstat
 
 # EFS
 # mkdir -p /var/efs/
@@ -52,6 +52,8 @@ if file -s /dev/$ATTACHED_AS | grep data; then
 fi
 mount /dev/$ATTACHED_AS /var/efs/
 chown ubuntu:ubuntu /var/efs/
+echo $EBS_VOLUME_INDEX >  /var/efs/VOLUME_INDEX
+chown ubuntu:ubuntu /var/efs/VOLUME_INDEX
 
 # Set up the required database extensions.
 # HStore allows us to treat object annotations as pseudo-NoSQL data tables.
