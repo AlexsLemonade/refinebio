@@ -169,6 +169,7 @@ format_environment_variables
 docker pull $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE
 
 # Migrate auth.
+# Override database settings so we connect directly to the RDS instance.
 docker run \
        --env-file prod_env \
        --env DATABASE_HOST=$RDS_HOST \
