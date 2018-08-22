@@ -171,12 +171,16 @@ docker pull $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE
 # Migrate auth.
 docker run \
        --env-file prod_env \
+       --env DATABASE_HOST=$RDS_HOST \
+       --env DATABASE_PORT=$DATABASE_HIDDEN_PORT \
        --env RUNNING_IN_CLOUD=False \
        $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate auth
 
 # Apply general migrations.
 docker run \
        --env-file prod_env \
+       --env DATABASE_HOST=$RDS_HOST \
+       --env DATABASE_PORT=$DATABASE_HIDDEN_PORT \
        --env RUNNING_IN_CLOUD=False \
        $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate
 

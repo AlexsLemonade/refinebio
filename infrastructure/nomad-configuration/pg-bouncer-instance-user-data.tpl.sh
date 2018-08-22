@@ -49,6 +49,7 @@ unix_socket_dir = /var/run/postgresql
 FOE
 
 # Set up PG Bouncer
+# TODO: Actually make the password required to connect through PGBouncer.
 cat << FOE >> /etc/pgbouncer/userlist.txt
 "${database_user}" "${database_password}"
 FOE
