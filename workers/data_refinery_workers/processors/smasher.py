@@ -213,7 +213,7 @@ def _smash(job_context: Dict) -> Dict:
                 # This is the inner join, the main "Smash" operation
                 merged = merged.merge(frame, left_index=True, right_index=True)
 
-            job_context['merged'] = merged
+            job_context['original_merged'] = merged
 
             # Quantile Normalization
             if job_context['dataset'].quantile_normalize:
