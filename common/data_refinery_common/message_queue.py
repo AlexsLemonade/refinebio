@@ -63,7 +63,15 @@ def send_job(job_type: Enum, job) -> None:
                 job.id)
 
     if isinstance(job, ProcessorJob):
-        nomad_job = nomad_job + "_" + get_volume_index() + "_" + str(job.ram_amount)
+        # Make sure this job goes to the correct EBS resource.
+        # If this is being dispatched for the first time, make sure that
+        # we store the currently attached index.
+        # If this is being dispatched by the Foreman, it should already
+        # have an attached volume index, so use that.
+        if job.volume_index is None:
+            job.volume_index = get_volume_index()
+            job.save()
+        nomad_job = nomad_job + "_" + job.volume_index + "_" + str(job.ram_amount)
 
     try:
         nomad_response = nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,
