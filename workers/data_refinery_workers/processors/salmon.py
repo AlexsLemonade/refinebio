@@ -7,6 +7,9 @@ import re
 import shutil
 import subprocess
 import tarfile
+import boto3
+
+from botocore.client import Config
 
 import pandas as pd
 import numpy as np
@@ -34,6 +37,10 @@ from data_refinery_common.models import (
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
+
+# We have to set the signature_version to v4 since us-east-1 buckets require
+# v4 authentication.
+S3 = boto3.client('s3', config=Config(signature_version='s3v4'))
 
 logger = get_and_configure_logger(__name__)
 
@@ -181,13 +188,30 @@ def _find_or_download_index(job_context: Dict) -> Dict:
         return job_context
 
     job_context["index_directory"] = index_object.absolute_directory_path
+
+    try:
+        os.makedirs(job_context["index_directory"])
+        index_tarball = ComputedFile.objects.filter(result=index_object.result)[0].sync_from_s3()
+        with index_tarball.open(file.get_synced_file_path(), "r:gz") as index_archive:
+            index_archive.extractall(job_context["index_directory"])
+    except FileExistsError:
+        # Someone already installed the index or is doing so now.
+        pass
+    except e:
+        error_template = "Failed to download or extract transcriptome index for organism {0}: {1}"
+        error_message = error_template.format(str(job_context['organism']), str(e))
+        logger.error(error_message, processor_job=job_context["job_id"])
+        job_context["job"].failure_reason = error_message
+        job_context["success"] = False
+        return job_context
+
     job_context["genes_to_transcripts_path"] = os.path.join(
         job_context["index_directory"], "genes_to_transcripts.txt")
 
     return job_context
 
 
-def _find_salmon_quant_results(experiment):
+def _find_salmon_quant_results(experiment: Experiment):
     """Returns a list of salmon quant results from `experiment`."""
     results = []
     for sample in experiment.samples.all():
@@ -199,7 +223,7 @@ def _find_salmon_quant_results(experiment):
     return results
 
 
-def _get_tximport_inputs(job_context: Dict) -> List[str]:
+def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile]]:
     """Return a mapping from experiments to a list of their quant files.
 
     Checks all the experiments which contain a sample from the current
