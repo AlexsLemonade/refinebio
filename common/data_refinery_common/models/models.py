@@ -654,6 +654,9 @@ class OriginalFile(models.Model):
         if not settings.RUNNING_IN_CLOUD:
             return self.absolute_file_path
 
+        target_directory = os.path.dirname(self.absolute_file_path)
+        os.makedirs(target_directory, exist_ok=True)
+
         try:
             S3.download_file(
                         self.s3_bucket,
@@ -765,6 +768,9 @@ class ComputedFile(models.Model):
         """
         if not settings.RUNNING_IN_CLOUD and not force:
             return self.absolute_file_path
+
+        target_directory = os.path.dirname(self.absolute_file_path)
+        os.makedirs(target_directory, exist_ok=True)
 
         try:
             S3.download_file(

@@ -15,6 +15,7 @@ from django.db import transaction
 from django.utils import timezone
 from typing import Dict, List
 
+from django.conf import settings
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
@@ -152,7 +153,7 @@ def _determine_index_length(job_context: Dict) -> Dict:
     return job_context
 
 
-def _find_index(job_context: Dict) -> Dict:
+def _find_or_download_index(job_context: Dict) -> Dict:
     """Finds the appropriate Salmon Index for this experiment.
 
     Salmon documentation states:
@@ -190,7 +191,7 @@ def _find_salmon_quant_results(experiment):
     """Returns a list of salmon quant results from `experiment`."""
     results = []
     for sample in experiment.samples.all():
-        for result in sample.results.all():
+        for result in sample.results.order_by('-created_at').all():
             if result.processor.name == utils.ProcessorEnum.SALMON_QUANT.value['name']:
                 results.append(result)
                 break
@@ -215,33 +216,27 @@ def _get_tximport_inputs(job_context: Dict) -> List[str]:
     for experiment in experiments:
         salmon_quant_results = _find_salmon_quant_results(experiment)
         if len(salmon_quant_results) == experiment.samples.count():
-            quant_paths = []
+            quant_files = []
             for result in salmon_quant_results:
-                result_path = ComputedFile.objects.filter(result=result.id)[0].absolute_file_path
+                quant_files.append(ComputedFile.objects.filter(result=result.id, filename="quant.sf")[0])
 
-                # The absolute file path references where the tarball
-                # is. The tarball is put in the same directory as the
-                # processed output it contains. Therefore we can find
-                # the quant.sf file tximport needs here:
-                tokens = result_path.split('/')[:-1] + ["processed", "quant.sf"]
-                quant_paths.append('/'.join(tokens))
-
-            quantified_experiments[experiment] = quant_paths
+            quantified_experiments[experiment] = quant_files
 
     return quantified_experiments
 
 
-def _tximport(job_context: Dict, experiment: Experiment, quant_paths: str) -> Dict:
+def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[ComputedFile]) -> Dict:
     """Run tximport R script based on input quant files and the path
     of genes_to_transcripts.txt.
     """
-    # Write all the paths of the quant.sf files for this experiment to
-    # a file so we can pass a path to that to tximport.R rather than
-    # having to pass in one argument per sample.
+    # Download all the quant.sf fles for this experiment. Write all
+    # their paths to a file so we can pass a path to that to
+    # tximport.R rather than having to pass in one argument per
+    # sample.
     tximport_path_list_file = job_context["sample_directory"] + "/tximport_inputs.txt"
     with open(tximport_path_list_file, "w") as input_list:
-        for quant_file in quant_paths:
-            input_list.write(quant_file + "\n")
+        for quant_file in quant_files:
+            input_list.write(quant_file.get_synced_file_path() + "\n")
 
     rds_filename = "txi_out.RDS"
     rds_file_path = job_context["sample_directory"] + "/" + rds_filename
@@ -263,7 +258,7 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_paths: str) -> Di
     try:
         tximport_result = subprocess.run(cmd_tokens, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except Exception as e:
-        error_template = ("Encountered error in R code while running tximport.R: {1}")
+        error_template = ("Encountered error in R code while running tximport.R: {}")
         error_message = error_template.format(str(e))
         logger.error(error_message, processor_job=job_context["job_id"], experiment=experiment.id)
         job_context["job"].failure_reason = error_message
@@ -273,7 +268,7 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_paths: str) -> Di
         os.remove(tximport_path_list_file)
 
     if tximport_result.returncode != 0:
-        error_template = ("Encountered error in R code while running tximport.R: {1}")
+        error_template = ("Encountered error in R code while running tximport.R: {}")
         error_message = error_template.format(tximport_result.stderr.decode())
         logger.error(error_message, processor_job=job_context["job_id"], experiment=experiment.id)
         job_context["job"].failure_reason = error_message
@@ -344,6 +339,12 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_paths: str) -> Di
             computed_file=computed_file)
 
         individual_files.append(computed_file)
+
+    # Clean up quant.sf files that were created just for this.
+    for quant_file in quant_files:
+        quant_file.delete_s3_file()
+        quant_file.delete_local_file()
+        quant_file.delete()
 
     job_context['tximported'] = True
     job_context['individual_files'] = individual_files
@@ -438,6 +439,49 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
             job_context["success"] = False
             return job_context
 
+        salmon_quant_archive = ComputedFile()
+        salmon_quant_archive.absolute_file_path = job_context["output_archive"]
+        salmon_quant_archive.filename = os.path.split(job_context["output_archive"])[-1]
+        salmon_quant_archive.calculate_sha1()
+        salmon_quant_archive.calculate_size()
+        salmon_quant_archive.is_public = True
+        salmon_quant_archive.is_smashable = False
+        salmon_quant_archive.is_qc = False
+
+        quant_file = ComputedFile()
+        quant_file.s3_bucket = S3_BUCKET_NAME
+        quant_file.s3_key = "quant_files/sample_" + str(job_context["sample"].id) + "_quant.sf"
+        quant_file.filename = "quant.sf"
+        quant_file.absolute_file_path = job_context["output_directory"] + "quant.sf"
+        quant_file.is_public = False
+        quant_file.is_smashable = False
+        quant_file.is_qc = False
+        quant_file.calculate_sha1()
+        quant_file.calculate_size()
+
+        # If we're running in the cloud we need to upload the quant.sf
+        # file so that it can be used by a job running on any machine
+        # to run tximport. We can't use sync_to_s3 though because we
+        # have to sync it before we can save the file so it cannot be
+        # discovered by other jobs before it is uploaded.
+        if settings.RUNNING_IN_CLOUD:
+            try:
+                S3.upload_file(
+                    quant_file.absolute_file_path,
+                    quant_file.s3_bucket,
+                    quant_file.s3_key,
+                    ExtraArgs={
+                        'ACL': 'public-read',
+                        'StorageClass': 'STANDARD_IA'
+                    }
+                )
+            except Exception as e:
+                logger.exception(e, processor_job=job_context["job_id"], sample=job_context["sample"].id)
+                failure_template = "Exception caught while uploading quantfile to S3: {}"
+                job_context["job"].failure_reason = failure_template.format(quant_file.absolute_file_path)
+                job_context["success"] = False
+                return job_context
+
         # Here select_for_update() is used as a mutex that forces multiple
         # jobs to execute this block of code in serial manner. See:
         # https://docs.djangoproject.com/en/1.11/ref/models/querysets/#select-for-update
@@ -446,29 +490,26 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         with transaction.atomic():
             ComputationalResult.objects.select_for_update()
             result.save()
+            quant_file.result = result
+            quant_file.save()
+
+            job_context["result"] = result
+
 
             job_context['pipeline'].steps.append(result.id)
             SampleResultAssociation.objects.get_or_create(sample=job_context['sample'],
                                                           result=result)
 
-            computed_file = ComputedFile()
-            computed_file.absolute_file_path = job_context["output_archive"]
-            computed_file.filename = os.path.split(job_context["output_archive"])[-1]
-            computed_file.calculate_sha1()
-            computed_file.calculate_size()
-            computed_file.is_public = True
-            computed_file.result = result
-            computed_file.is_smashable = True
-            computed_file.is_qc = False
-            computed_file.save()
-            job_context['computed_files'].append(computed_file)
+            salmon_quant_archive.result = result
+            salmon_quant_archive.save()
+            job_context['computed_files'].append(salmon_quant_archive)
 
             tximport_inputs = _get_tximport_inputs(job_context)
 
         # tximport analysis is done outside of the transaction so that
         # the mutex wouldn't hold the other jobs too long.
-        for experiment, quant_paths in tximport_inputs.items():
-            _tximport(job_context, experiment, quant_paths)
+        for experiment, quant_files in tximport_inputs.items():
+            _tximport(job_context, experiment, quant_files)
             # If `tximport` on any related experiment fails, exit immediately.
             if not job_context["success"]:
                 return job_context
@@ -494,7 +535,6 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
             kv.is_public = True
             kv.save()
 
-        job_context["result"] = result
         job_context["success"] = True
 
     return job_context
@@ -720,7 +760,7 @@ def salmon(job_id: int) -> None:
                         _prepare_files,
 
                         _determine_index_length,
-                        _find_index,
+                        _find_or_download_index,
 
                         _run_fastqc,
                         _run_salmon,
