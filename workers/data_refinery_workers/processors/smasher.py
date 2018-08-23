@@ -46,7 +46,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     for key, samples in job_context["samples"].items():
         all_sample_files = []
         for sample in samples:
-            all_sample_files = all_sample_files + list(sample.get_result_files())
+            all_sample_files = all_sample_files + list(sample.get_smashable_result_files())
         all_sample_files = list(set(all_sample_files))
         job_context['input_files'][key] = all_sample_files
 
