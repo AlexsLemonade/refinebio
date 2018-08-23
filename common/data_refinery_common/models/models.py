@@ -333,6 +333,10 @@ class Experiment(models.Model):
     def get_processed_samples(self):
         return self.samples.filter(is_processed=True)
 
+    @property
+    def processed_samples(self):
+        return self.samples.filter(is_processed=True)
+
 class ExperimentAnnotation(models.Model):
     """ Semi-standard information associated with an Experiment """
 
