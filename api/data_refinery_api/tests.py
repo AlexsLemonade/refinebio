@@ -365,7 +365,7 @@ class APITestCases(APITestCase):
         # This has to be done manually due to dicts requring distinct keys
         response = self.client.get(reverse('search') + "?search=THISWILLBEINASEARCHRESULT&technology=MICROARRAY&technology=FAKE-TECH")
         self.assertEqual(response.json()['count'], 2)
-        self.assertEqual(response.json()['results']['processed_samples'], ['1123', '3345'])
+        self.assertEqual(response.json()['results'][0]['processed_samples'], ['1123', '3345'])
 
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
