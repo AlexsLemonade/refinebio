@@ -51,6 +51,7 @@ if file -s /dev/$ATTACHED_AS | grep data; then
 	mkfs -t ext4 /dev/$ATTACHED_AS # This is slow
 fi
 mount /dev/$ATTACHED_AS /var/efs/
+
 chown ubuntu:ubuntu /var/efs/
 echo $EBS_VOLUME_INDEX >  /var/efs/VOLUME_INDEX
 chown ubuntu:ubuntu /var/efs/VOLUME_INDEX

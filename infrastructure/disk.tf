@@ -50,6 +50,7 @@ resource "aws_ebs_volume" "data_refinery_ebs" {
 resource "aws_s3_bucket" "data_refinery_bucket" {
   bucket = "data-refinery-s3-${var.user}-${var.stage}"
   acl    = "private"
+  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
 
   tags {
     Name        = "data-refinery-s3-${var.user}-${var.stage}"
@@ -60,6 +61,7 @@ resource "aws_s3_bucket" "data_refinery_bucket" {
 resource "aws_s3_bucket" "data_refinery_results_bucket" {
   bucket = "data-refinery-s3-results-${var.user}-${var.stage}"
   acl    = "public-read"
+  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
 
   tags {
     Name        = "data-refinery-s3-results-${var.user}-${var.stage}"
@@ -85,6 +87,7 @@ resource "aws_s3_bucket" "data_refinery_results_bucket" {
 
 resource "aws_s3_bucket" "data-refinery-static" {
   bucket = "${var.static_bucket_prefix == "dev" ? var.user : var.static_bucket_prefix}${var.static_bucket_root}"
+  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
 
   cors_rule {
     allowed_origins = ["*"]
@@ -104,7 +107,7 @@ resource "aws_s3_bucket" "data-refinery-static" {
 
 resource "aws_s3_bucket" "data_refinery_transcriptome_index_bucket" {
   bucket = "data-refinery-s3-transcriptome-index-${var.user}-${var.stage}"
-  acl    = "private"
+  acl    = "public-read"
 
   tags {
     Name        = "data-refinery-s3-transcriptome-index-${var.user}-${var.stage}"
