@@ -233,17 +233,15 @@ def _get_tximport_inputs(job_context: Dict) -> List[str]:
 
 def _tximport(job_context: Dict, experiment: Experiment, quant_paths: str) -> Dict:
     """Run tximport R script based on input quant files and the path
-    of genes_to_transcripts.txt."""
-
-    logger.info("Running tximport!", processor_job=job_context['job_id'], experiment=experiment.id)
-
+    of genes_to_transcripts.txt.
+    """
     # Write all the paths of the quant.sf files for this experiment to
     # a file so we can pass a path to that to tximport.R rather than
     # having to pass in one argument per sample.
     tximport_path_list_file = job_context["sample_directory"] + "/tximport_inputs.txt"
     with open(tximport_path_list_file, "w") as input_list:
         for quant_file in quant_paths:
-            input_list.write()
+            input_list.write(quant_file + "\n")
 
     rds_filename = "txi_out.RDS"
     rds_file_path = job_context["sample_directory"] + "/" + rds_filename
@@ -260,18 +258,27 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_paths: str) -> Di
     ]
     result.time_start = timezone.now()
 
+    logger.info("Running tximport with: %s", str(cmd_tokens), processor_job=job_context['job_id'], experiment=experiment.id)
+
     try:
-        subprocess.run(cmd_tokens, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        tximport_result = subprocess.run(cmd_tokens, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except Exception as e:
-        error_template = ("Encountered error in R code while running tximport.R"
-                          " pipeline during processing of {0}: {1}")
-        error_message = error_template.format(exp_dir, str(e))
+        error_template = ("Encountered error in R code while running tximport.R: {1}")
+        error_message = error_template.format(str(e))
         logger.error(error_message, processor_job=job_context["job_id"], experiment=experiment.id)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
         return job_context
     finally:
         os.remove(tximport_path_list_file)
+
+    if tximport_result.returncode != 0:
+        error_template = ("Encountered error in R code while running tximport.R: {1}")
+        error_message = error_template.format(tximport_result.stderr.decode())
+        logger.error(error_message, processor_job=job_context["job_id"], experiment=experiment.id)
+        job_context["job"].failure_reason = error_message
+        job_context["success"] = False
+        return job_context
 
     result.time_end = timezone.now()
     result.commands.append(" ".join(cmd_tokens))
@@ -289,9 +296,7 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_paths: str) -> Di
     # Associate this result with all samples in this experiment.
     # TODO: This may not be completely sensible, because `tximport` is
     # done at experiment level, not at sample level.
-    experiment_accession = experiment_dir.split('/')[-1]
-    current_experiment = Experiment.objects.get(accession_code=experiment_accession)
-    for sample in current_experiment.samples.all():
+    for sample in experiment.samples.all():
         s_r = SampleResultAssociation(sample=sample, result=result)
         s_r.save()
 
@@ -419,6 +424,20 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
 
         result.is_ccdl = True
 
+        # Zip up the output of Salmon Quant
+        try:
+            with tarfile.open(job_context['output_archive'], "w:gz") as tar:
+                tar.add(job_context["output_directory"], arcname=os.sep)
+        except Exception:
+            logger.exception("Exception caught while zipping processed directory %s",
+                             job_context["output_directory"],
+                             processor_job=job_context["job_id"]
+            )
+            failure_template = "Exception caught while zipping processed directory {}"
+            job_context["job"].failure_reason = failure_template.format(job_context['output_archive'])
+            job_context["success"] = False
+            return job_context
+
         # Here select_for_update() is used as a mutex that forces multiple
         # jobs to execute this block of code in serial manner. See:
         # https://docs.djangoproject.com/en/1.11/ref/models/querysets/#select-for-update
@@ -427,9 +446,23 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         with transaction.atomic():
             ComputationalResult.objects.select_for_update()
             result.save()
+
             job_context['pipeline'].steps.append(result.id)
             SampleResultAssociation.objects.get_or_create(sample=job_context['sample'],
                                                           result=result)
+
+            computed_file = ComputedFile()
+            computed_file.absolute_file_path = job_context["output_archive"]
+            computed_file.filename = os.path.split(job_context["output_archive"])[-1]
+            computed_file.calculate_sha1()
+            computed_file.calculate_size()
+            computed_file.is_public = True
+            computed_file.result = result
+            computed_file.is_smashable = True
+            computed_file.is_qc = False
+            computed_file.save()
+            job_context['computed_files'].append(computed_file)
+
             tximport_inputs = _get_tximport_inputs(job_context)
 
         # tximport analysis is done outside of the transaction so that
@@ -674,43 +707,6 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
     return job_context
 
 
-def _zip_and_upload(job_context: Dict) -> Dict:
-    """Zips the directory output by Salmon into a single file and uploads it.
-
-    Adds the 'success' key to job_context because this function is the
-    last in the job.
-
-    """
-
-    try:
-        with tarfile.open(job_context['output_archive'], "w:gz") as tar:
-            tar.add(job_context["output_directory"], arcname=os.sep)
-    except Exception:
-        logger.exception("Exception caught while zipping processed directory %s",
-                         job_context["output_directory"],
-                         processor_job=job_context["job_id"]
-                        )
-        failure_template = "Exception caught while zipping processed directory {}"
-        job_context["job"].failure_reason = failure_template.format(job_context['output_archive'])
-        job_context["success"] = False
-        return job_context
-
-    computed_file = ComputedFile()
-    computed_file.absolute_file_path = job_context["output_archive"]
-    computed_file.filename = os.path.split(job_context["output_archive"])[-1]
-    computed_file.calculate_sha1()
-    computed_file.calculate_size()
-    computed_file.is_public = True
-    computed_file.result = job_context['result']
-    computed_file.is_smashable = True
-    computed_file.is_qc = False
-    computed_file.save()
-    job_context['computed_files'].append(computed_file)
-
-    job_context["success"] = True
-    return job_context
-
-
 def salmon(job_id: int) -> None:
     """Main processor function for the Salmon Processor.
 
@@ -730,5 +726,4 @@ def salmon(job_id: int) -> None:
                         _run_salmon,
                         _run_salmontools,
                         _run_multiqc,
-                        _zip_and_upload,
                         utils.end_job])

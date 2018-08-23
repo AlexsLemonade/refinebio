@@ -49,7 +49,7 @@ txi <- tximport::tximport(files = sf_files,
                           txOut = FALSE,
                           tx2gene = tx2gene,
                           countsFromAbundance = "no")
-rds_filename <- opt$rds_filename
+rds_filename <- opt$rds_file
 saveRDS(txi, file = rds_filename)
 
 # Run tximport::summarizeToGene() and save length-scaled
@@ -58,8 +58,9 @@ txi_length_scaled <- tximport::tximport(files = sf_files,
                                         type = "salmon",
                                         tx2gene = tx2gene,
                                         countsFromAbundance = "lengthScaledTPM")
+
 # As data.frame, write to file
 lstpm_df <- as.data.frame(txi_length_scaled$counts)
 lstpm_df <- tibble::rownames_to_column(lstpm_df, var = "Gene")
-tpm_filename <- opt$tpm_filename
+tpm_filename <- opt$tpm_file
 readr::write_tsv(lstpm_df, path = tpm_filename)
