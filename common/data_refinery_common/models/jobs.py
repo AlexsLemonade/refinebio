@@ -15,6 +15,7 @@ class SurveyJob(models.Model):
 
     source_type = models.CharField(max_length=256)
     success = models.NullBooleanField(null=True)
+    no_retry = models.BooleanField(default=False)
 
     # The start time of the query used to replicate
     replication_started_at = models.DateTimeField(null=True)
@@ -77,6 +78,7 @@ class ProcessorJob(models.Model):
 
     original_files = models.ManyToManyField('OriginalFile', through='ProcessorJobOriginalFileAssociation')
     datasets = models.ManyToManyField('DataSet', through='ProcessorJobDataSetAssociation')
+    no_retry = models.BooleanField(default=False)
 
     # Resources
     ram_amount = models.IntegerField(default=2048)
@@ -136,6 +138,7 @@ class DownloaderJob(models.Model):
     # data_refinery_common.job_lookup.Downloaders
     downloader_task = models.CharField(max_length=256)
     accession_code = models.CharField(max_length=256, blank=True, null=True)
+    no_retry = models.BooleanField(default=False)
 
     original_files = models.ManyToManyField('OriginalFile', through='DownloaderJobOriginalFileAssociation')
 
