@@ -418,7 +418,7 @@ class SmasherTestCase(TestCase):
 
         self.assertFalse(ds.success)
         self.assertNotEqual(ds.failure_reason, "")
-        self.assertEqual(len(final_context['merged']), 0)
+        self.assertEqual(len(final_context['original_merged']), 0)
 
     @tag("smasher")
     def test_no_smash_dupe(self):
@@ -510,7 +510,7 @@ class SmasherTestCase(TestCase):
         ds = Dataset.objects.get(id=dsid)
 
         self.assertTrue(ds.success)
-        for column in final_context['merged'].columns:
+        for column in final_context['original_merged'].columns:
             self.assertTrue('_x' not in column)
 
     @tag("smasher")
