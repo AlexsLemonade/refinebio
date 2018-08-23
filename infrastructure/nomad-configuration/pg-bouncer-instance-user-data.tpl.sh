@@ -25,20 +25,20 @@ apt-get -y install pgbouncer postgresql-client
 # Set up PG Bouncer
 # The values of max_client_conn and default_pool_size.
 # This should be a function of the RDS instance max_connections,
-# which is determined by instance type. 
+# which is determined by instance type.
 # Ex., m4.xlarge: 1320 - (.2 * 1320) = 1056
 # So, for a pool of 10, 1056 * 10 = 10560
 # However, this is basically a dark art and we'll probably want to tweak in the future.
 
 cat << FOE >> /etc/pgbouncer/pgbouncer.ini
 [databases]
-* = host=${database_host} port=5430 user=${database_user} password=${database_password} dbname=${database_name} client_encoding=UNICODE
+* = host=${database_host} port=${database_port} user=${database_user} password=${database_password} dbname=${database_name} client_encoding=UNICODE
 
 [pgbouncer]
 listen_addr = *
 max_client_conn = 10560
 default_pool_size = 10
-listen_port = 5432
+listen_port = ${listen_port}
 auth_type = trust
 auth_file = /etc/pgbouncer/userlist.txt
 pool_mode = transaction
@@ -49,6 +49,7 @@ unix_socket_dir = /var/run/postgresql
 FOE
 
 # Set up PG Bouncer
+# TODO: Actually make the password required to connect through PGBouncer.
 cat << FOE >> /etc/pgbouncer/userlist.txt
 "${database_user}" "${database_password}"
 FOE

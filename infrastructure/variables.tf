@@ -44,11 +44,19 @@ variable "django_secret_key" {
   # TODO: generate a new one of these and store it in terraform.tfvars as well.
   default = "NtG1bxZU115GThwrLuAJe0PhTVN9hJ4P"
 }
+
 variable "django_debug" {
   default = "False"
 }
+
 variable "database_port" {
   default = "5432"
+}
+
+# This is the port the RDS instance uses, but it is hidden from most
+# of the application by PGBouncer.
+variable "database_hidden_port" {
+  default = "5430"
 }
 
 variable "database_timeout" {
@@ -108,7 +116,7 @@ variable "client_instance_type" {
 }
 
 variable "spot_price" {
-  default = "0.31"
+  default = "0.310"
 }
 
 variable "max_clients" {
@@ -164,6 +172,8 @@ output "environment_variables" {
     {name = "DATABASE_NAME"
       value = "${aws_db_instance.postgres_db.name}"},
     {name = "DATABASE_HOST"
+      value = "${aws_instance.pg_bouncer.private_ip}"},
+    {name = "RDS_HOST"
       value = "${aws_db_instance.postgres_db.address}"},
     {name = "DATABASE_USER"
       value = "${var.database_user}"},
@@ -171,6 +181,8 @@ output "environment_variables" {
       value = "${var.database_password}"},
     {name = "DATABASE_PORT"
       value = "${var.database_port}"},
+    {name = "DATABASE_HIDDEN_PORT"
+      value = "${var.database_hidden_port}"},
     {name = "DATABASE_TIMEOUT"
       value = "${var.database_timeout}"},
     {name = "RUNNING_IN_CLOUD"
