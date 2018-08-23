@@ -63,6 +63,9 @@ for IMG in $CCDL_WORKER_IMGS; do
     # Update latest version
     docker tag $image_name:$CIRCLE_TAG $image_name:latest
     docker push $image_name:latest
+
+    # Save some space when we're through
+    docker rmi $image_name:$CIRCLE_TAG 
 done
 
 # Build and push foreman image
