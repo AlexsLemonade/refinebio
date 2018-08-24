@@ -82,6 +82,7 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
         logger.error(error_message, processor_job=job_context["job"].id)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
+        job_context["job"].no_retry = True
         return job_context
 
     # header is a list of vectors. [0][0] contains the package name.
@@ -146,6 +147,7 @@ def _run_scan_upc(job_context: Dict) -> Dict:
         logger.error(error_message, processor_job=job_context["job_id"])
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
+        job_context["job"].no_retry = True
 
     return job_context
 
