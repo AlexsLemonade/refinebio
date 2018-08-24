@@ -367,6 +367,9 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
     # Clean up quant.sf files that were created just for this.
     for quant_file in quant_files:
         quant_file.delete_s3_file()
+
+        # It's only okay to delete the local file because the full
+        # output directory has already been zipped up.
         quant_file.delete_local_file()
         quant_file.delete()
 
