@@ -62,6 +62,7 @@ def _prepare_files(job_context: Dict) -> Dict:
             dataset_id=job_context['dataset'].id,
             samples=job_context["samples"])
         job_context['success'] = False
+        job_context["job"].failure_reason = "Couldn't get any files to smash for Smash job - empty all_sample_files"
         return job_context
 
     return job_context
