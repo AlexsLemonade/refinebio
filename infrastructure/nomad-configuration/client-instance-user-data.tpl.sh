@@ -17,11 +17,38 @@
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get upgrade -y
-apt-get install --yes nfs-common
-mkdir -p /var/efs/
-echo "${file_system_id}.efs.${region}.amazonaws.com:/ /var/efs/ nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,noresvport,timeo=600,retrans=2 0 0" >> /etc/fstab
-mount -a -t nfs4
-chown ubuntu:ubuntu /var/efs/
+apt-get install --yes nfs-common jq iotop dstat
+
+# Find, configure and mount a free EBS volume
+mkdir -p /var/ebs/
+EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=${user}" "Name=tag:Stage,Values=${stage}" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
+
+COUNTER=0
+while [  $COUNTER -lt 5 ]; do
+        EBS_VOLUME_INDEX=`aws ec2 describe-volumes --filters "Name=tag:Index,Values=*" "Name=volume-id,Values=$EBS_VOLUME_ID" --query "Volumes[*].{ID:VolumeId,Tag:Tags}" --region us-east-1 | jq ".[0].Tag[$COUNTER].Value" | tr -d '"'`
+        if echo "$EBS_VOLUME_INDEX" | egrep -q '^\-?[0-9]+$'; then
+            echo "$EBS_VOLUME_INDEX is an integer!"
+            break # This is a Volume Index
+        else
+            echo "$EBS_VOLUME_INDEX is not an integer"
+        fi
+        let COUNTER=COUNTER+1
+done
+
+INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device "/dev/sdf" --region us-east-1 # <_<
+sleep 15
+ATTACHED_AS=`lsblk -n | grep T | cut -d' ' -f1`
+FILE_RESULT=`file -s /dev/$ATTACHED_AS`
+
+if file -s /dev/$ATTACHED_AS | grep data; then
+	mkfs -t ext4 /dev/$ATTACHED_AS # This is slow
+fi
+mount /dev/$ATTACHED_AS /var/ebs/
+
+chown ubuntu:ubuntu /var/ebs/
+echo $EBS_VOLUME_INDEX >  /var/ebs/VOLUME_INDEX
+chown ubuntu:ubuntu /var/ebs/VOLUME_INDEX
 
 # Set up the required database extensions.
 # HStore allows us to treat object annotations as pseudo-NoSQL data tables.
@@ -68,6 +95,8 @@ EOF
 cat <<"EOF" > client.hcl
 ${nomad_client_config}
 EOF
+# Make the client.meta.volume_id is set to waht we just mounted
+sed -i "s/REPLACE_ME/$EBS_VOLUME_INDEX/" client.hcl
 
 # Create a directory for docker to use as a volume.
 mkdir /home/ubuntu/docker_volume

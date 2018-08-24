@@ -649,7 +649,7 @@ class ProcessorTestCases(APITestCase):
                 'data-refinery-common': '0.5.0'
             }
         }
-        Processor.objects.create(
+        self.salmon_quant_proc = Processor.objects.create(
             name="Salmon Quant",
             version="0.45",
             docker_image="ccdl/salmon_img:v1.23",
@@ -690,3 +690,16 @@ class ProcessorTestCases(APITestCase):
         self.assertEqual(processors[1]['name'], 'Salmontools')
         self.assertEqual(processors[1]['environment']['cmd_line']['salmontools --version'],
                          'Salmon Tools 0.1.0')
+
+    def test_processor_in_sample(self):
+        sample = Sample.objects.create(title="fake sample")
+        result = ComputationalResult.objects.create(processor=self.salmon_quant_proc)
+        sra = SampleResultAssociation.objects.create(sample=sample, result=result)
+
+        response = self.client.get(reverse('samples_detail',
+                                           kwargs={'pk': sample.id}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        processor = response.json()['results'][0]['processor']
+        self.assertEqual(processor['name'], self.salmon_quant_proc.name)
+        self.assertEqual(processor['environment']['os_pkg']['python3'],
+                         self.salmon_quant_proc.environment['os_pkg']['python3'])

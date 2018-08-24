@@ -511,6 +511,9 @@ class SraSurveyor(ExternalSourceSurveyor):
                 if samples:
                     all_samples += samples
 
+            # So we prevent duplicate downloads, ex for SRP111553
+            all_samples = list(set(all_samples))
+
             # Experiment will always be the same
             return experiment, all_samples
 

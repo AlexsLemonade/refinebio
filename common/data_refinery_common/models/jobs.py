@@ -82,6 +82,7 @@ class ProcessorJob(models.Model):
 
     # Resources
     ram_amount = models.IntegerField(default=2048)
+    volume_index = models.CharField(max_length=3, null=True)
 
     # Tracking
     start_time = models.DateTimeField(null=True)
