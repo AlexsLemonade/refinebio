@@ -139,6 +139,7 @@ def _detect_columns(job_context: Dict) -> Dict:
         else:
             job_context["job"].failure_reason = "Could not detect PValue column!"
             job_context["success"] = False
+            job_context["job"].no_retry = True
             return job_context
 
         # Then, finally, create an absolutely bonkers regular expression
@@ -194,6 +195,7 @@ def _detect_columns(job_context: Dict) -> Dict:
         job_context["job"].failure_reason = str(e)
         job_context["success"] = False
         logger.exception("Failed to extract columns in " + job_context["input_file_path"], exception=str(e))
+        job_context["job"].no_retry = True
         return job_context
 
     return job_context
