@@ -126,7 +126,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
         computed_file.delete_local_file()
 
     job_context['result'] = result
-    job_context['computed_file'] = computed_file
+    job_context['computed_files'] = computed_file
     job_context['success'] = True
     return job_context
 
