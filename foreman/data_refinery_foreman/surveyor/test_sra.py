@@ -103,6 +103,18 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(experiment.accession_code, "SRP068364")
         self.assertEqual(len(samples), 4)
 
+        survey_job = SurveyJob(source_type="SRA")
+        survey_job.save()
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                           key="accession",
+                                           value="SRP111553")
+        key_value_pair.save()
+
+        sra_surveyor = SraSurveyor(survey_job)
+        experiment, samples = sra_surveyor.discover_experiment_and_samples()
+        self.assertEqual(experiment.accession_code, "SRP111553")
+        self.assertEqual(len(samples), 8) # Not 16!
+
     @patch('data_refinery_foreman.surveyor.sra.requests.get')
     def test_metadata_is_gathered_correctly(self, mock_get):
         mock_get.side_effect = mocked_requests_get

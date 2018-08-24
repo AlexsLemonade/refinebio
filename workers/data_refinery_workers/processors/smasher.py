@@ -64,10 +64,6 @@ def _prepare_files(job_context: Dict) -> Dict:
         job_context['success'] = False
         return job_context
 
-    # So these get deleted from disk after..
-    for computed_file in all_sample_files:
-        job_context['computed_files'].append(computed_file)
-
     return job_context
 
 def _smash(job_context: Dict) -> Dict:
