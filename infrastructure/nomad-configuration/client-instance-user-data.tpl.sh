@@ -24,7 +24,7 @@ mkdir -p /var/ebs/
 EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=${user}" "Name=tag:Stage,Values=${stage}" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
 
 COUNTER=0
-while [  $COUNTER -lt 5 ]; do
+while [  $COUNTER -lt 99 ]; do
         EBS_VOLUME_INDEX=`aws ec2 describe-volumes --filters "Name=tag:Index,Values=*" "Name=volume-id,Values=$EBS_VOLUME_ID" --query "Volumes[*].{ID:VolumeId,Tag:Tags}" --region us-east-1 | jq ".[0].Tag[$COUNTER].Value" | tr -d '"'`
         if echo "$EBS_VOLUME_INDEX" | egrep -q '^\-?[0-9]+$'; then
             echo "$EBS_VOLUME_INDEX is an integer!"
@@ -38,7 +38,7 @@ done
 INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
 aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device "/dev/sdf" --region us-east-1 # <_<
 sleep 15
-ATTACHED_AS=`lsblk -n | grep T | cut -d' ' -f1`
+ATTACHED_AS=`lsblk -n | grep 1.6T | cut -d' ' -f1`
 FILE_RESULT=`file -s /dev/$ATTACHED_AS`
 
 if file -s /dev/$ATTACHED_AS | grep data; then
