@@ -4,7 +4,7 @@ from __future__ import absolute_import, unicode_literals
 from enum import Enum
 import nomad
 from nomad.api.exceptions import URLNotFoundNomadException
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable, get_volume_index
 from data_refinery_common.models import ProcessorJob
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
@@ -73,7 +73,15 @@ def send_job(job_type: Enum, job) -> None:
                 job.id)
 
     if isinstance(job, ProcessorJob):
-        nomad_job = nomad_job + "_" + str(job.ram_amount)
+        # Make sure this job goes to the correct EBS resource.
+        # If this is being dispatched for the first time, make sure that
+        # we store the currently attached index.
+        # If this is being dispatched by the Foreman, it should already
+        # have an attached volume index, so use that.
+        if job.volume_index is None:
+            job.volume_index = get_volume_index()
+            job.save()
+        nomad_job = nomad_job + "_" + job.volume_index + "_" + str(job.ram_amount)
 
     try:
         nomad_response = nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,

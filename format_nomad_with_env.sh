@@ -125,7 +125,7 @@ if [ $env == "test" ]; then
     export TEST_POSTFIX="_test"
 elif [[ $env == "prod" || $env == "staging" || $env == "dev" ]]; then
     # In production we use EFS as the mount.
-    export VOLUME_DIR=/var/efs
+    export VOLUME_DIR=/var/ebs
 else
     export VOLUME_DIR=$script_directory/volume
 fi
@@ -216,13 +216,19 @@ if [[ $project == "workers" ]]; then
             rams=(1024 2048 3072 4096 5120 6144 7168 8192 9216 10240 11264 12288 13312)  
             for r in "${rams[@]}"  
             do
-                export RAM_POSTFIX="_$r.nomad"
-                export RAM="$r"
-                cat nomad-job-specs/$template \
-                    | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-                           > "$output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX" \
-                           2> /dev/null
-                echo "Made $output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX"
+                indexes=(1 2 3 4 5 6 7 8 9 10)
+                for j in "${indexes[@]}"
+                do  
+                    export INDEX_POSTFIX="_$j"
+                    export INDEX="$j"
+                    export RAM_POSTFIX="_$r.nomad"
+                    export RAM="$r"
+                    cat nomad-job-specs/$template \
+                        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                               > "$output_dir/$output_file$INDEX_POSTFIX$RAM_POSTFIX$TEST_POSTFIX" \
+                               2> /dev/null
+                    echo "Made $output_dir/$output_file$INDEX_POSTFIX$RAM_POSTFIX$TEST_POSTFIX"
+                done
             done
         fi
 
