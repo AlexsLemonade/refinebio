@@ -19,6 +19,11 @@ import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 
+import rpy2
+from rpy2.robjects import pandas2ri
+from rpy2.robjects import r as rlang
+from rpy2.robjects.packages import importr
+
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     OriginalFile,
@@ -43,14 +48,23 @@ def _prepare_files(job_context: Dict) -> Dict:
     Fetches and prepares the files to smash.
     """
 
+    all_sample_files = []
     job_context['input_files'] = {}
 
     for key, samples in job_context["samples"].items():
-        all_sample_files = []
+        samples_for_key = []
         for sample in samples:
-            all_sample_files = all_sample_files + list(sample.get_result_files())
-        all_sample_files = list(set(all_sample_files))
-        job_context['input_files'][key] = all_sample_files
+            samples_for_key = samples_for_key + list(sample.get_result_files())
+        samples_for_key = list(set(samples_for_key))
+        job_context['input_files'][key] = samples_for_key
+        all_sample_files = all_sample_files + samples_for_key
+
+    if all_sample_files == []:
+        logger.error("Couldn't get any files to smash for Smash job!!",
+            dataset_id=job_context['dataset'].id,
+            samples=job_context["samples"])
+        job_context['success'] = False
+        return job_context
 
     # So these get deleted from disk after..
     for computed_file in all_sample_files:
@@ -94,6 +108,7 @@ def _smash(job_context: Dict) -> Dict:
 
             # Merge all the frames into one
             all_frames = []
+
             for computed_file in input_files:
 
                 computed_file_path = str(computed_file.get_synced_file_path())
@@ -104,6 +119,13 @@ def _smash(job_context: Dict) -> Dict:
 
                 try:
                     data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0, error_bad_lines=False)
+
+                    # Strip any funky whitespace
+                    data.columns = data.columns.str.strip()
+                    data = data.dropna(axis='columns', how='all')
+
+                    # Make sure the index type is correct
+                    data.index = data.index.map(str)
 
                     # via https://github.com/AlexsLemonade/refinebio/issues/330:
                     #   aggregating by experiment -> return untransformed output from tximport
@@ -190,9 +212,57 @@ def _smash(job_context: Dict) -> Dict:
                 if breaker:
                     continue
 
+                # This is the inner join, the main "Smash" operation
                 merged = merged.merge(frame, left_index=True, right_index=True)
 
-            job_context['merged'] = merged
+            job_context['original_merged'] = merged
+
+            # Quantile Normalization
+            if job_context['dataset'].quantile_normalize:
+                try:
+                    # Prepare our QN target file
+                    organism = computed_file.samples.first().organism
+                    qn_target = utils.get_most_recent_qn_target_for_organism(organism)
+
+                    if not qn_target:
+                        logger.error("Could not find QN target for Organism!",
+                            organism=organism,
+                            dataset_id=job_context['dataset'].id,
+                            dataset_data=job_context['dataset'].data,
+                        )
+                    else:
+                        qn_target_path = qn_target.sync_from_s3()
+                        qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None, index_col=None, error_bad_lines=False)
+
+                        # Prepare our RPy2 bridge
+                        pandas2ri.activate()
+                        preprocessCore = importr('preprocessCore')
+                        as_numeric = rlang("as.numeric")
+                        data_matrix = rlang('data.matrix')
+
+                        # Convert the smashed frames to an R numeric Matrix
+                        # and the target Dataframe into an R numeric Vector
+                        target_vector = as_numeric(qn_target_frame[0])
+                        merged_matrix = data_matrix(merged)
+
+                        # Perform the Actual QN
+                        reso = preprocessCore.normalize_quantiles_use_target(
+                                                            x=merged_matrix,
+                                                            target=target_vector,
+                                                            copy=True
+                                                        )
+
+                        # And finally convert back to Pandas
+                        ar = np.array(reso)
+                        new_merged = pd.DataFrame(ar, columns=merged.columns, index=merged.index)
+                        job_context['merged_no_qn'] = merged
+                        job_context['merged_qn'] = new_merged
+                        merged = new_merged
+                except Exception as e:
+                    logger.exception("Problem occured during quantile normalization",
+                        dataset_id=job_context['dataset'].id,
+                        dataset_data=job_context['dataset'].data,
+                    )
 
             # Transpose before scaling
             transposed = merged.transpose()
@@ -291,7 +361,8 @@ def _smash(job_context: Dict) -> Dict:
         job_context['job'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].save()
-        job_context['success'] = False
+        # Delay failing this pipeline until the failure notify has been sent
+        # job_context['success'] = False
         job_context['failure_reason'] = str(e)
         return job_context
 
@@ -340,7 +411,8 @@ def _upload(job_context: Dict) -> Dict:
         logger.exception("Failed to upload smash result file.", file=job_context["output_file"])
         job_context['job'].success = False
         job_context['job'].failure_reason = str(e)
-        job_context['success'] = False
+        # Delay failing this pipeline until the failure notify has been sent
+        # job_context['success'] = False
 
     return job_context
 
@@ -362,6 +434,16 @@ def _notify(job_context: Dict) -> Dict:
             BODY_TEXT = "Hot off the presses:\n\n" + job_context["result_url"] + "\n\nLove!,\nThe refine.bio Team"
             FORMATTED_HTML = BODY_HTML.replace('REPLACEME', job_context["result_url"])
             CHARSET = "UTF-8"
+
+            if job_context['job'].failure_reason not in ['', None]:
+                SUBJECT = "Your refine.bio Dataset is Ready!"
+                BODY_TEXT = "Hot off the presses:\n\n" + job_context["result_url"] + "\n\nLove!,\nThe refine.bio Team"
+                BODY_HTML = "Hot off the presses:<br /><br />" + job_context["result_url"] + "<br /><br />Love!,<br />The refine.bio Team"
+            else:
+                SUBJECT = "There was a problem processing your refine.bio dataset :("
+                BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(dataset.id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
+                BODY_HTML = BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: <br /><br />" + job_context['job'].failure_reason + "<br />Dataset: " + str(dataset.id) + "<br /> We have been notified and are looking into the problem. <br /><br />Sorry!"
+                job_context['success'] = False
 
             # Try to send the email.
             try:
@@ -411,6 +493,10 @@ def _notify(job_context: Dict) -> Dict:
             job_context["dataset"].email_sent = True
             job_context["dataset"].save()
 
+    # Handle non-cloud too
+    if job_context['job'].failure_reason:
+        job_context['success'] = False
+
     return job_context
 
 def _update_result_objects(job_context: Dict) -> Dict:
@@ -440,7 +526,10 @@ def smash(job_id: int, upload=True) -> None:
     """ Main Smasher interface """
 
     pipeline = Pipeline(name=utils.PipelineEnum.SMASHER.value)
-    return utils.run_pipeline({"job_id": job_id, "upload": upload, "pipeline": pipeline},
+    return utils.run_pipeline({ "job_id": job_id, 
+                                "upload": upload, 
+                                "pipeline": pipeline
+                            },
                        [utils.start_job,
                         _prepare_files,
                         _smash,
@@ -449,3 +538,4 @@ def smash(job_id: int, upload=True) -> None:
                         _update_result_objects,
                         _delete_local_files,
                         utils.end_job])
+

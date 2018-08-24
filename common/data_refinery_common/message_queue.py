@@ -43,6 +43,16 @@ def send_job(job_type: Enum, job) -> None:
         nomad_job = ProcessorPipeline.ILLUMINA_TO_PCL.value
     elif job_type is ProcessorPipeline.SMASHER:
         nomad_job = ProcessorPipeline.SMASHER.value
+
+    # QN_REFERENCE commands never get sent this way (yet)
+    # If we want to be able to dispatch QN Reference jobs via Nomad,
+    # we'll need to define two new management commands (one to stage, one to invoke)
+    # and a new Nomad job spec which invokes the second management command.
+    # For now, they should be run manually on the smasher image with the `create_qn_target`
+    # command with an Organism supplied.
+
+    # elif job_type is ProcessorPipeline.QN_REFERENCE:
+    #     nomad_job = ProcessorPipeline.QN_REFERENCE.value
     elif job_type is ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL:
         # Agilent twocolor uses the same job specification as Affy.
         nomad_job = ProcessorPipeline.AFFY_TO_PCL.value
