@@ -19,14 +19,8 @@ apt-get update -y
 apt-get upgrade -y
 apt-get install --yes nfs-common jq iotop dstat
 
-# EFS
-# mkdir -p /var/efs/
-# echo "${file_system_id}.efs.${region}.amazonaws.com:/ /var/efs/ nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0" >> /etc/fstab
-# mount -a -t nfs4
-# chown ubuntu:ubuntu /var/efs/
-
 # Find, configure and mount a free EBS volume
-mkdir -p /var/efs/
+mkdir -p /var/ebs/
 EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=${user}" "Name=tag:Stage,Values=${stage}" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
 
 COUNTER=0
@@ -50,11 +44,11 @@ FILE_RESULT=`file -s /dev/$ATTACHED_AS`
 if file -s /dev/$ATTACHED_AS | grep data; then
 	mkfs -t ext4 /dev/$ATTACHED_AS # This is slow
 fi
-mount /dev/$ATTACHED_AS /var/efs/
+mount /dev/$ATTACHED_AS /var/ebs/
 
-chown ubuntu:ubuntu /var/efs/
-echo $EBS_VOLUME_INDEX >  /var/efs/VOLUME_INDEX
-chown ubuntu:ubuntu /var/efs/VOLUME_INDEX
+chown ubuntu:ubuntu /var/ebs/
+echo $EBS_VOLUME_INDEX >  /var/ebs/VOLUME_INDEX
+chown ubuntu:ubuntu /var/ebs/VOLUME_INDEX
 
 # Set up the required database extensions.
 # HStore allows us to treat object annotations as pseudo-NoSQL data tables.
