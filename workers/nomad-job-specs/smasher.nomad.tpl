@@ -1,4 +1,4 @@
-job "SMASHER_${{RAM}}" {
+job "SMASHER_${{INDEX}}_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -41,6 +41,7 @@ job "SMASHER_${{RAM}}" {
         S3_RESULTS_BUCKET_NAME = "${{S3_RESULTS_BUCKET_NAME}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
+        EBS_INDEX = "${{INDEX}}"
 
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
@@ -52,6 +53,12 @@ job "SMASHER_${{RAM}}" {
         cpu = 1024
         # Memory is in MB of RAM.
         memory = ${{RAM}}
+      }
+
+      constraint {
+        attribute = "${meta.volume_index}"
+        operator  = "="
+        value     = "${{INDEX}}"
       }
 
       config {

@@ -25,6 +25,25 @@ resource "aws_efs_mount_target" "data_refinery_efs_1b" {
 }
 
 ##
+# EBS
+## 
+
+resource "aws_ebs_volume" "data_refinery_ebs" {
+  count = "${var.max_clients}"
+  availability_zone = "${var.region}a"
+  size = 1600 # 16TB
+  type = "st1" # Throughput Optimized HDD
+  tags {
+    Name        = "data-refinery-ebs-${count.index}-${var.user}-${var.stage}"
+    Environment = "${var.stage}"
+    Index       = "${count.index}"
+    User        = "${var.user}"
+    Stage       = "${var.stage}"
+    IsBig       = "True"
+  }
+}
+
+##
 # S3
 ##
 

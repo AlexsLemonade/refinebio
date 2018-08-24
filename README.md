@@ -405,6 +405,20 @@ Or for more information run:
 ./workers/tester.sh -h
 ```
 
+### Creating Quantile Normalization Reference Targets
+
+If you want to quantile normalize combined outputs, you'll first need to create a reference target for a given organism. This can be done in a production environment with the following:
+
+```bash
+docker run --env-file prod_env --volume /var/ebs/:/home/user/data_store -t ccdl/dr_smasher:latest python3 manage.py create_qn_target --organism DANIO_RERIO
+```
+
+Where the prod_env file has been temporarily copied to the host with:
+
+```bash
+scp -i data-refinery-key.pem prod_env ubuntu@<host_address>:/home/ubuntu/prod_env
+```
+
 ### Checking on Local Jobs
 
 _Note:_ The following instructions assume you have set the environment
