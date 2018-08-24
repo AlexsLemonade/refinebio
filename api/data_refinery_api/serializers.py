@@ -37,6 +37,7 @@ class ProcessorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Processor
         fields = (
+            'id',
             'name',
             'version',
             'docker_image',
@@ -91,6 +92,7 @@ class ComputedFileSerializer(serializers.ModelSerializer):
 class ComputationalResultSerializer(serializers.ModelSerializer):
     annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
     files = ComputedFileSerializer(many=True, source='computedfile_set')
+    processor = ProcessorSerializer(many=False)
 
     class Meta:
         model = ComputationalResult
