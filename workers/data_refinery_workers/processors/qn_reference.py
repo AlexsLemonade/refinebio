@@ -120,7 +120,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     annotation.save()
 
     job_context['result'] = result
-    job_context['computed_files'] = computed_file
+    job_context['computed_files'] = [computed_file]
     job_context['success'] = True
     return job_context
 
