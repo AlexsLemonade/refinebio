@@ -84,7 +84,7 @@ resource "aws_iam_policy" "ec2_access_policy" {
          "Effect":"Allow",
          "Action": [
             "ec2:DescribeVolumes",
-            "ec2:AttachVolume",
+            "ec2:AttachVolume"
           ],
          "Resource": "*"
       }
