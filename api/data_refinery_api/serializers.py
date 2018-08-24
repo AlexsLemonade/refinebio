@@ -37,6 +37,7 @@ class ProcessorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Processor
         fields = (
+            'id',
             'name',
             'version',
             'docker_image',
@@ -91,6 +92,7 @@ class ComputedFileSerializer(serializers.ModelSerializer):
 class ComputationalResultSerializer(serializers.ModelSerializer):
     annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
     files = ComputedFileSerializer(many=True, source='computedfile_set')
+    processor = ProcessorSerializer(many=False)
 
     class Meta:
         model = ComputationalResult
@@ -354,10 +356,13 @@ class ProcessorJobSerializer(serializers.ModelSerializer):
                     'num_retries',
                     'retried',
                     'worker_id',
+                    'ram_amount',
+                    'volume_index',
                     'worker_version',
                     'failure_reason',
                     'success',
                     'original_files',
+                    'datasets',
                     'start_time',
                     'end_time',
                     'created_at',
@@ -421,7 +426,6 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'is_processing',
                     'is_processed',
                     'is_available',
-                    'email_address',
                     'expires_on',
                     's3_bucket',
                     's3_key',

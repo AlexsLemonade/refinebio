@@ -16,6 +16,9 @@ done
 
 if [[ -z $image ]]; then
     image="smasher"
+else
+    shift
+    shift
 fi
 
 # This script should always run as if it were being called from
