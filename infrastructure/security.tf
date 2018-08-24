@@ -228,7 +228,7 @@ resource "aws_security_group_rule" "data_refinery_db_outbound" {
 ##
 
 resource "aws_security_group" "data_refinery_pg" {
-  name = "data-refinery_pg-${var.user}-${var.stage}"
+  name = "data-refinery-pg-${var.user}-${var.stage}"
   description = "data_refinery_pg-${var.user}-${var.stage}"
   vpc_id = "${aws_vpc.data_refinery_vpc.id}"
 
