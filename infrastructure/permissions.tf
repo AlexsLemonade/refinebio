@@ -76,17 +76,16 @@ resource "aws_iam_policy" "ec2_access_policy" {
   name = "data-refinery-ec2-access-policy-${var.user}-${var.stage}"
   description = "Allows EC2 Permissions."
 
-  # Policy text based off of:
-  # http://docs.aws.amazon.com/AmazonS3/latest/dev/example-bucket-policies.html
   policy = <<EOF
 {
    "Version":"2012-10-17",
    "Statement":[
       {
          "Effect":"Allow",
-         "Action":[
-            "ec2:*"
-         ],
+         "Action": [
+            "ec2:DescribeVolumes",
+            "ec2:AttachVolume",
+          ],
          "Resource": "*"
       }
    ]

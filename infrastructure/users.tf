@@ -70,7 +70,8 @@ resource "aws_iam_user_policy" "data_refinery_user_worker_policy" {
         {
             "Effect": "Allow",
             "Action":[
-              "ec2:*"
+              "ec2:DescribeVolumes",
+              "ec2:AttachVolume",
             ],
             "Resource": "*"
         }

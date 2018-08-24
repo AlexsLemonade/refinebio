@@ -125,7 +125,7 @@ if [ $env == "test" ]; then
     export TEST_POSTFIX="_test"
 elif [[ $env == "prod" || $env == "staging" || $env == "dev" ]]; then
     # In production we use EFS as the mount.
-    export VOLUME_DIR=/var/efs
+    export VOLUME_DIR=/var/ebs
 else
     export VOLUME_DIR=$script_directory/volume
 fi
