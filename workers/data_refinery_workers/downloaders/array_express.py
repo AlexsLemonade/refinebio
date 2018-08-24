@@ -165,7 +165,7 @@ def download_array_express(job_id: int) -> None:
                 logger.warn("Unable to determine platform from CEL file: "
                             + original_file.absolute_file_path,
                             downloader_job=job_id)
-
+                job.no_retry = True
             if platform_accession_code == "UNSUPPORTED":
                 logger.error("Found a raw .CEL file with an unsupported platform!",
                              file_name=original_file.absolute_file_path,
@@ -175,6 +175,7 @@ def download_array_express(job_id: int) -> None:
                 job.failure_reason = ("Found a raw .CEL file with an unsupported platform: "
                                       + original_file.absolute_file_path + " ("
                                       + str(cel_file_platform) + ")")
+                job.no_retry = True
                 success = False
             elif platform_accession_code == "UNDETERMINABLE":
                 # If we cannot determine the platform from the
