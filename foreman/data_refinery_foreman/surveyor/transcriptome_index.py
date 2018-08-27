@@ -265,19 +265,6 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             .value
         )
 
-        # If number_of_organisms isn't specified, default to surveying
-        # all organisms in the division.
-        try:
-            number_of_organisms = int(
-                SurveyJobKeyValue
-                .objects
-                .get(survey_job_id=self.survey_job.id,
-                     key__exact="number_of_organisms")
-                .value
-            )
-        except SurveyJobKeyValue.DoesNotExist:
-            number_of_organisms = -1
-
         logger.info("Surveying %s division of ensembl.",
                     ensembl_division,
                     survey_job=self.survey_job.id)
@@ -294,26 +281,25 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             specieses = r.json()
 
         try:
-            organism_name = SurveyJobKeyValue.objects.get(survey_job_id=self.survey_job.id, key__exact="organism_name").value
+            organism_name = SurveyJobKeyValue.objects.get(survey_job_id=self.survey_job.id,
+                                                          key__exact="organism_name").value
             organism_name = organism_name.lower().replace(' ', "_")
         except SurveyJobKeyValue.DoesNotExist:
             organism_name = None
 
-        # Survey jobs are on a per-organism basis.
-        for species in specieses:
-            if species['name'] == organism_name:
-                specieses = [species]
-                logger.info("Found species " + organism_name + " on Ensembl.",
-                            survey_job=self.survey_job.id)
-                break
-
-        species_surveyed = 0
         all_new_species = []
-        for species in specieses:
-            if number_of_organisms != -1 and species_surveyed >= number_of_organisms:
-                break
+        if organism_name:
+            for species in specieses:
+                if species['name'] == organism_name:
+                    all_new_species.append(self._generate_files(species))
+                    break
+        else:
+            for species in specieses:
+                all_new_species.append(self._generate_files(species))
 
-            all_new_species.append(self._generate_files(species))
-            species_surveyed += 1
+        if len(all_new_species) == 0:
+            logger.error("Unable to find any species!",
+                         ensembl_division=ensembl_division,
+                         organism_name=organism_name)
 
         return all_new_species

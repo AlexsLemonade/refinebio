@@ -1,26 +1,26 @@
 import requests
 from typing import List, Dict
 
-import xml.etree.ElementTree as ET
 from django.utils.dateparse import parse_datetime
+import xml.etree.ElementTree as ET
 
+from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
-    SurveyJob,
+    Experiment,
+    ExperimentAnnotation,
+    ExperimentOrganismAssociation,
+    ExperimentSampleAssociation,
     Organism,
     OriginalFile,
     OriginalFileSampleAssociation,
-    Experiment,
-    ExperimentAnnotation,
+    OriginalFileSampleAssociation,
     Sample,
     SampleAnnotation,
-    ExperimentSampleAssociation,
-    OriginalFileSampleAssociation,
-    ExperimentOrganismAssociation
+    SurveyJob,
 )
 from data_refinery_foreman.surveyor import utils, harmony
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
-from data_refinery_common.logging import get_and_configure_logger
 
 
 logger = get_and_configure_logger(__name__)
@@ -461,10 +461,10 @@ class SraSurveyor(ExternalSourceSurveyor):
         return (prefix + "{0:0" + str(len(digits)) + "d}").format(number)
 
     def discover_experiment_and_samples(self):
-        """ Returns an experiment and a list of samples for an SRA accession """
+        """Returns an experiment and a list of samples for an SRA accession"""
         survey_job = SurveyJob.objects.get(id=self.survey_job.id)
         survey_job_properties = survey_job.get_properties()
-        accession = survey_job_properties["accession"]
+        accession = survey_job_properties["experiment_accession_code"]
 
         # SRA Surveyor is mainly designed for SRRs, this handles SRPs
         if 'SRP' in accession or 'ERP' in accession or 'DRP' in accession:
