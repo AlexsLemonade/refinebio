@@ -96,7 +96,7 @@ def survey_experiment(experiment_accession: str, source_type: str):
     return survey_job
 
 
- def survey_transcriptome_index(ensembl_division='Ensembl', organism_name=None):
+def survey_transcriptome_index(ensembl_division='Ensembl', organism_name=None):
     """Special one-off surveyor to build transcriptome indices.
 
     The external source this uses is ensembl.org which is divided into
