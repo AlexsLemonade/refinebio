@@ -51,7 +51,7 @@ class SraSurveyorTestCase(TestCase):
         self.survey_job = survey_job
 
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="accession",
+                                           key="experiment_accession_code",
                                            value="DRR002116")
         key_value_pair.save()
 
@@ -94,7 +94,7 @@ class SraSurveyorTestCase(TestCase):
         survey_job = SurveyJob(source_type="SRA")
         survey_job.save()
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="accession",
+                                           key="experiment_accession_code",
                                            value="SRP068364")
         key_value_pair.save()
 
@@ -106,7 +106,7 @@ class SraSurveyorTestCase(TestCase):
         survey_job = SurveyJob(source_type="SRA")
         survey_job.save()
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="accession",
+                                           key="experiment_accession_code",
                                            value="SRP111553")
         key_value_pair.save()
 
