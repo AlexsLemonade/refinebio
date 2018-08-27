@@ -1,11 +1,11 @@
-job "SURVEYOR" {
+job "SURVEYOR_DISPATCHER" {
   datacenters = ["dc1"]
 
   type = "batch"
 
   parameterized {
     payload       = "forbidden"
-    meta_required = [ "ACCESSION"]
+    meta_required = ["FILE"]
   }
 
   group "jobs" {
@@ -48,7 +48,7 @@ job "SURVEYOR" {
         # CPU is in AWS's CPU units.
         cpu = 500
         # Memory is in MB of RAM.
-        memory = 512
+        memory = 2048
       }
 
       config {
@@ -59,8 +59,8 @@ job "SURVEYOR" {
         args = [
           "python3",
           "manage.py",
-          "survey_all",
-          "--accession", "${NOMAD_META_ACCESSION}",
+          "survey_dispatcher",
+          "--file", "${NOMAD_META_FILE}",
         ]
         ${{EXTRA_HOSTS}}
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]
