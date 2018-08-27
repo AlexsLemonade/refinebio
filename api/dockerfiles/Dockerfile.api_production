@@ -24,6 +24,10 @@ RUN chmod +x /home/user/collect_and_run_uwsgi.sh
 RUN mkdir -p /tmp/www/static
 RUN chown user /tmp/www/static
 
+ARG SYSTEM_VERSION
+
+ENV SYSTEM_VERSION $SYSTEM_VERSION
+
 USER user
 
 # We collect Django's static files and expose them
@@ -33,4 +37,3 @@ VOLUME /tmp/www/static
 EXPOSE 8081
 
 CMD ["/home/user/collect_and_run_uwsgi.sh"]
-

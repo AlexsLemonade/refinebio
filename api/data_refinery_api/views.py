@@ -120,10 +120,10 @@ class ExperimentFilter(django_filters.FilterSet):
 
     class Meta:
         model = Experiment
-        fields = ['has_publication', 
-                        'submitter_institution', 
+        fields = ['has_publication',
+                        'submitter_institution',
                         'technology',
-                        'source_first_published', 
+                        'source_first_published',
                         'organisms__name',
                         'samples__platform_accession_code']
 
@@ -653,7 +653,7 @@ class TranscriptomeIndexDetail(APIView):
         try:
             organism_index = (OrganismIndex.public_objects.exclude(s3_url__exact="")
                               .distinct("organism__name", "index_type")
-                              .get(organism__name=params["organism"],
+                              .get(organism__name=params["organism"].upper(),
                                    index_type=transcription_length))
             serializer = OrganismIndexSerializer(organism_index)
             return Response(serializer.data)

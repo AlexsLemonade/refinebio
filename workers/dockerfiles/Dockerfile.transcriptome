@@ -72,6 +72,10 @@ RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
 # Clear our the pip3 cache
 RUN rm -rf /root/.cache
 
+ARG SYSTEM_VERSION
+
+ENV SYSTEM_VERSION $SYSTEM_VERSION
+
 USER user
 
 COPY workers/ .
