@@ -136,7 +136,10 @@ class SalmonTestCase(TestCase):
         strong correlation.
         """
 
-        shutil.rmtree(job_context['output_directory'], ignore_errors=True)  # clean up
+        # Clean up if there were previous tests, but we still need that directory.
+        shutil.rmtree(job_context['output_directory'], ignore_errors=True)
+        os.makedirs(job_context["output_directory"], exist_ok=True)
+
         salmon._run_salmon(job_context, skip_processed=False)
         output_quant_filename = os.path.join(job_context['output_directory'], 'quant.sf')
         self.assertTrue(os.path.exists(output_quant_filename))
