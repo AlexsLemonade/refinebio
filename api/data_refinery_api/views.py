@@ -232,6 +232,9 @@ class DatasetView(generics.RetrieveUpdateAPIView):
         already_processing = old_object.is_processing
         new_data = serializer.validated_data
 
+        if old_object.is_processed:
+            raise APIException("You may not update Datasets which have already been processed")
+
         if new_data.get('start'):
 
             # Make sure we have a valid activated token.
