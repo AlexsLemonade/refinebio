@@ -369,6 +369,16 @@ def _populate_index_object(job_context: Dict) -> Dict:
     job_context['computed_file'] = computed_file
     job_context['index'] = index_object
 
+    # If there's not a long and a short index for this organism yet,
+    # don't delete the input.
+    short_indices = OrganismIndex.objects.filter(organism=organism_object,
+                                                 index_type="TRANSCRIPTOME_SHORT")
+    long_indices = OrganismIndex.objects.filter(organism=organism_object,
+                                                 index_type="TRANSCRIPTOME_LONG")
+    if short_indices.count() < 1 or long_indices.count() < 1:
+        # utils.end_job deletes these, so remove them so it doesn't.
+        job_context.pop("original_files")
+
     return job_context
 
 def build_transcriptome_index(job_id: int, length="long") -> None:
