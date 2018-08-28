@@ -12,6 +12,7 @@ from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.conf import settings
+from pathlib import Path
 from typing import Dict
 
 import numpy as np
@@ -37,6 +38,7 @@ from data_refinery_common.utils import get_env_variable
 
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
+BODY_HTML = Path('data_refinery_workers/processors/smasher_email.min.html').read_text().replace('\n', '')
 
 logger = get_and_configure_logger(__name__)
 
@@ -425,6 +427,9 @@ def _notify(job_context: Dict) -> Dict:
             SENDER = "Refine.bio Mail Robot <noreply@refine.bio>"
             RECIPIENT = job_context["dataset"].email_address
             AWS_REGION = "us-east-1"
+            SUBJECT = "Your refine.bio Dataset is Ready!"
+            BODY_TEXT = "Hot off the presses:\n\n" + job_context["result_url"] + "\n\nLove!,\nThe refine.bio Team"
+            FORMATTED_HTML = BODY_HTML.replace('REPLACEME', job_context["result_url"])
             CHARSET = "UTF-8"
 
             if job_context['job'].failure_reason not in ['', None]:
@@ -454,7 +459,7 @@ def _notify(job_context: Dict) -> Dict:
                         'Body': {
                             'Html': {
                                 'Charset': CHARSET,
-                                'Data': BODY_HTML,
+                                'Data': FORMATTED_HTML,
                             },
                             'Text': {
                                 'Charset': CHARSET,
