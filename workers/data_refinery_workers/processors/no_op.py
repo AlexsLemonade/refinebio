@@ -78,6 +78,7 @@ def _prepare_files(job_context: Dict) -> Dict:
                     input_file_path=job_context["input_file_path"])
                 job_context['job'].faiure_reason = str(e)
                 job_context['success'] = False
+                job_context["job"].no_retry = True
                 return job_context
         else:
             if job_context["is_illumina"]:
@@ -118,10 +119,12 @@ def _prepare_files(job_context: Dict) -> Dict:
         if not job_context["internal_accession"]:
             logger.error("Failed to find internal accession for code", code=job_context["platform"])
             job_context['success'] = False
+            job_context["job"].no_retry = True
     except Exception as e:
         logger.exception("Failed to prepare for NO_OP job.", job_id=job_context['job'].id)
         job_context["job"].failure_reason = str(e)
         job_context['success'] = False
+        job_context["job"].no_retry = True
 
     return job_context
 
@@ -164,6 +167,7 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
         logger.error(error_message, context=job_context)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
+        job_context["job"].no_retry = True
         return job_context
     except Exception as e:
         error_template = ("Encountered error in R code while running {0}"
@@ -173,6 +177,7 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
         logger.error(error_message, context=job_context)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
+        job_context["job"].no_retry = True
         return job_context
 
     job_context["success"] = True
@@ -260,6 +265,7 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
         logger.error(error_message, context=job_context)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
+        job_context["job"].no_retry = True
         return job_context
     except Exception as e:
         error_template = ("Encountered error in R code while running {0}"
@@ -269,6 +275,7 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
         logger.error(error_message, context=job_context)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
+        job_context["job"].no_retry = True
         return job_context
 
     job_context["success"] = True

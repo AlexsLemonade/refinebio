@@ -1,12 +1,11 @@
-job "SALMON_${{INDEX}}_${{RAM}}" {
+job "SURVEYOR_DISPATCHER" {
   datacenters = ["dc1"]
 
   type = "batch"
-  priority = 50
 
   parameterized {
     payload       = "forbidden"
-    meta_required = [ "JOB_NAME", "JOB_ID"]
+    meta_required = ["FILE"]
   }
 
   group "jobs" {
@@ -16,7 +15,7 @@ job "SALMON_${{INDEX}}_${{RAM}}" {
       # delay    = "30s"
     }
 
-    task "salmon" {
+    task "surveyor" {
       driver = "docker"
 
       # This env will be passed into the container for the job.
@@ -35,13 +34,11 @@ job "SALMON_${{INDEX}}_${{RAM}}" {
         RAVEN_DSN="${{RAVEN_DSN}}"
         RAVEN_DSN_API="${{RAVEN_DSN_API}}"
 
-        RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
+        RUNNING_IN_CLOUD = "False"
 
         USE_S3 = "${{USE_S3}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
-        EBS_INDEX = "${{INDEX}}"
-
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
       }
@@ -49,28 +46,21 @@ job "SALMON_${{INDEX}}_${{RAM}}" {
       # The resources the job will require.
       resources {
         # CPU is in AWS's CPU units.
-        cpu = 1024
+        cpu = 500
         # Memory is in MB of RAM.
-        memory = ${{RAM}}
-      }
-
-      constraint {
-        attribute = "${meta.volume_index}"
-        operator  = "="
-        value     = "${{INDEX}}"
+        memory = 2048
       }
 
       config {
-        image = "${{DOCKERHUB_REPO}}/${{SALMON_DOCKER_IMAGE}}"
+        image = "${{DOCKERHUB_REPO}}/${{FOREMAN_DOCKER_IMAGE}}"
         force_pull = false
 
         # The args to pass to the Docker container's entrypoint.
         args = [
           "python3",
           "manage.py",
-          "run_processor_job",
-          "--job-name", "${NOMAD_META_JOB_NAME}",
-          "--job-id", "${NOMAD_META_JOB_ID}"
+          "surveyor_dispatcher",
+          "--file", "${NOMAD_META_FILE}",
         ]
         ${{EXTRA_HOSTS}}
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]

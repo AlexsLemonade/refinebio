@@ -41,6 +41,7 @@ def _prepare_input(job_context: Dict) -> Dict:
     if not 'final_frame' in job_context.keys():
         logger.error("Unable to prepare files for creating QN target.", 
             job_id=job_context['job'].id)
+        job_context["job"].failure_reason = "Couldn't prepare files creating QN target (no final_frame)."
         job_context['success'] = False
         return job_context
 
@@ -119,14 +120,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
     }
     annotation.save()
 
-    # Ensure even distribution across S3 servers
-    nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
-    result = computed_file.sync_to_s3(S3_BUCKET_NAME, nonce + "_" + computed_file.filename)
-    if result:
-        computed_file.delete_local_file()
-
     job_context['result'] = result
-    job_context['computed_file'] = computed_file
+    job_context['computed_files'] = [computed_file]
     job_context['success'] = True
     return job_context
 

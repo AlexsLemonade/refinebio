@@ -57,6 +57,7 @@ class QNRefTestCase(TestCase):
             file.absolute_file_path = "/home/user/data_store/QN/" + code + ".tsv"
             file.size_in_bytes = int(code)
             file.result = cr
+            file.is_smashable = True
             file.save()
 
             scfa = SampleComputedFileAssociation()

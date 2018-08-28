@@ -65,6 +65,7 @@ def prepare_job():
     computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
     computed_file.result = result
     computed_file.size_in_bytes = 123
+    computed_file.is_smashable = True
     computed_file.save()
 
     assoc = SampleComputedFileAssociation()
@@ -98,6 +99,15 @@ def prepare_job():
     computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
     computed_file.result = result
     computed_file.size_in_bytes = 123
+    computed_file.is_smashable = True
+    computed_file.save()
+
+    computed_file = ComputedFile()
+    computed_file.filename = "GSM1237812_S97-PURE.DAT"
+    computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
+    computed_file.result = result
+    computed_file.size_in_bytes = 123
+    computed_file.is_smashable = False
     computed_file.save()
 
     assoc = SampleComputedFileAssociation()
@@ -283,6 +293,7 @@ class SmasherTestCase(TestCase):
         computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
         computed_file.save()
 
         assoc = SampleComputedFileAssociation()
@@ -353,6 +364,7 @@ class SmasherTestCase(TestCase):
         computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
         computed_file.save()
 
         result = ComputationalResult()
@@ -390,6 +402,7 @@ class SmasherTestCase(TestCase):
         computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
         computed_file.save()
 
         assoc = SampleComputedFileAssociation()
@@ -458,6 +471,7 @@ class SmasherTestCase(TestCase):
         computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
         computed_file.save()
 
         result = ComputationalResult()
@@ -552,6 +566,7 @@ class SmasherTestCase(TestCase):
         computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
         computed_file.save()
 
         assoc = SampleComputedFileAssociation()
@@ -580,6 +595,7 @@ class SmasherTestCase(TestCase):
         computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
         computed_file.save()
 
         assoc = SampleComputedFileAssociation()

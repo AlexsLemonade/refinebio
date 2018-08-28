@@ -250,9 +250,10 @@ resource "aws_launch_configuration" "auto_client_configuration" {
     security_groups = ["${aws_security_group.data_refinery_worker.id}"]
     iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
     depends_on = [
-        "aws_internet_gateway.data_refinery",
-        "aws_instance.nomad_server_1",
-        "aws_instance.pg_bouncer"
+              "aws_internet_gateway.data_refinery", 
+              "aws_instance.nomad_server_1", 
+              "aws_ebs_volume.data_refinery_ebs",
+              "aws_instance.pg_bouncer"
     ]
     user_data = "${data.template_file.nomad_client_script_smusher.rendered}"
     key_name = "${aws_key_pair.data_refinery.key_name}"
@@ -284,7 +285,7 @@ resource "aws_autoscaling_group" "clients" {
     wait_for_capacity_timeout = "0"
     force_delete = true
     launch_configuration = "${aws_launch_configuration.auto_client_configuration.name}"
-    vpc_zone_identifier = ["${aws_subnet.data_refinery_1b.id}"]
+    vpc_zone_identifier = ["${aws_subnet.data_refinery_1a.id}"]
 
     tag {
         key = "Name"
