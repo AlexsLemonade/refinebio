@@ -5,25 +5,25 @@ from abc import ABC
 from django.utils import timezone
 from typing import List, Dict
 
+from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
+    OriginalFile,
     SurveyJobKeyValue,
-    OriginalFile
 )
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
-from data_refinery_common.logging import get_and_configure_logger
 
 logger = get_and_configure_logger(__name__)
 
 
-DIVISION_URL_TEMPLATE = ("http://rest.ensemblgenomes.org/info/genomes/division/{division}"
+DIVISION_URL_TEMPLATE = ("https://rest.ensemblgenomes.org/info/genomes/division/{division}"
                          "?content-type=application/json")
 TRANSCRIPTOME_URL_TEMPLATE = ("ftp://ftp.{url_root}/fasta/{species_sub_dir}/dna/"
                               "{filename_species}.{assembly}.dna.{schema_type}.fa.gz")
 GTF_URL_TEMPLATE = ("ftp://ftp.{url_root}/gtf/{species_sub_dir}/"
                     "{filename_species}.{assembly}.{assembly_version}.gtf.gz")
-MAIN_DIVISION_URL_TEMPLATE = "http://rest.ensembl.org/info/species?content-type=application/json"
+MAIN_DIVISION_URL_TEMPLATE = "https://rest.ensembl.org/info/species?content-type=application/json"
 
 
 # For whatever reason the division in the download URL is shortened in
@@ -40,8 +40,8 @@ DIVISION_LOOKUP = {"EnsemblPlants": "plants",
 # assemblies.  All divisions other than the main one have identical
 # release versions. These urls will return what the most recent
 # release version is.
-MAIN_RELEASE_URL = "http://rest.ensembl.org/info/software?content-type=application/json"
-DIVISION_RELEASE_URL = "http://rest.ensemblgenomes.org/info/software?content-type=application/json"
+MAIN_RELEASE_URL = "https://rest.ensembl.org/info/software?content-type=application/json"
+DIVISION_RELEASE_URL = "https://rest.ensemblgenomes.org/info/software?content-type=application/json"
 
 
 class EnsemblUrlBuilder(ABC):
