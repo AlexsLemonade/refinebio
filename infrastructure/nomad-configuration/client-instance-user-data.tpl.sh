@@ -21,7 +21,16 @@ apt-get install --yes nfs-common jq iotop dstat
 
 # Find, configure and mount a free EBS volume
 mkdir -p /var/ebs/
-EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=${user}" "Name=tag:Stage,Values=${stage}" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
+
+fetch_and_mount_volume () {
+    INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+    EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=${user}" "Name=tag:Stage,Values=${stage}" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
+    aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device "/dev/sdf" --region ${region}
+}
+
+until fetch_and_mount_volume; do
+    sleep 10
+done
 
 COUNTER=0
 while [  $COUNTER -lt 99 ]; do
@@ -35,8 +44,6 @@ while [  $COUNTER -lt 99 ]; do
         let COUNTER=COUNTER+1
 done
 
-INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
-aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device "/dev/sdf" --region us-east-1 # <_<
 sleep 15
 ATTACHED_AS=`lsblk -n | grep 1.6T | cut -d' ' -f1`
 FILE_RESULT=`file -s /dev/$ATTACHED_AS`
