@@ -196,6 +196,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
     organisms = serializers.StringRelatedField(many=True)
     platforms = serializers.ReadOnlyField()
     samples = serializers.StringRelatedField(many=True)
+    processed_samples = serializers.StringRelatedField(many=True)
     pretty_platforms = serializers.ReadOnlyField()
     sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
 
@@ -210,6 +211,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'source_url',
                     'platforms',
                     'pretty_platforms',
+                    'processed_samples',
                     'has_publication',
                     'publication_title',
                     'publication_doi',
