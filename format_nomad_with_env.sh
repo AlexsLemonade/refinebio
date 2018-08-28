@@ -240,6 +240,11 @@ elif [[ $project == "surveyor" ]]; then
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                > "$output_dir"/surveyor.nomad"$TEST_POSTFIX" \
                2> /dev/null
+
+    cat nomad-job-specs/surveyor_dispatcher.nomad.tpl \
+        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+               > "$output_dir"/surveyor_dispatcher.nomad"$TEST_POSTFIX" \
+               2> /dev/null
 elif [[ $project == "foreman" ]]; then
     # foreman sub-project
     export_log_conf "foreman"
