@@ -59,7 +59,7 @@ job "SURVEYOR_DISPATCHER" {
         args = [
           "python3",
           "manage.py",
-          "survey_dispatcher",
+          "surveyor_dispatcher",
           "--file", "${NOMAD_META_FILE}",
         ]
         ${{EXTRA_HOSTS}}
