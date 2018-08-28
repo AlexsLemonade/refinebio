@@ -54,7 +54,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     for key, samples in job_context["samples"].items():
         samples_for_key = []
         for sample in samples:
-            samples_for_key = samples_for_key + list(sample.get_result_files())
+            samples_for_key = samples_for_key + list(sample.get_smashable_result_files())
         samples_for_key = list(set(samples_for_key))
         job_context['input_files'][key] = samples_for_key
         all_sample_files = all_sample_files + samples_for_key
@@ -64,11 +64,8 @@ def _prepare_files(job_context: Dict) -> Dict:
             dataset_id=job_context['dataset'].id,
             samples=job_context["samples"])
         job_context['success'] = False
+        job_context["job"].failure_reason = "Couldn't get any files to smash for Smash job - empty all_sample_files"
         return job_context
-
-    # So these get deleted from disk after..
-    for computed_file in all_sample_files:
-        job_context['computed_files'].append(computed_file)
 
     return job_context
 

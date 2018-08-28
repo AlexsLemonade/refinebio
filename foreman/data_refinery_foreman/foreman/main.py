@@ -141,7 +141,8 @@ def retry_hung_downloader_jobs() -> None:
         success=None,
         retried=False,
         end_time=None,
-        start_time__isnull=False
+        start_time__isnull=False,
+        no_retry=False
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -179,7 +180,8 @@ def retry_lost_downloader_jobs() -> None:
         success=None,
         retried=False,
         start_time=None,
-        end_time=None
+        end_time=None,
+        no_retry=False
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -288,7 +290,8 @@ def retry_hung_processor_jobs() -> None:
         success=None,
         retried=False,
         end_time=None,
-        start_time__isnull=False
+        start_time__isnull=False,
+        no_retry=False
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -323,7 +326,8 @@ def retry_lost_processor_jobs() -> None:
         success=None,
         retried=False,
         start_time=None,
-        end_time=None
+        end_time=None,
+        no_retry=False
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
