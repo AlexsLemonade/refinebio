@@ -19,6 +19,8 @@ apt-get update -y
 apt-get upgrade -y
 apt-get install --yes nfs-common jq iotop dstat
 
+ulimit -n 65536
+
 # Find, configure and mount a free EBS volume
 mkdir -p /var/ebs/
 
@@ -69,11 +71,6 @@ cd /home/ubuntu
 cat <<EOF >awslogs.conf
 [general]
 state_file = /var/lib/awslogs/agent-state
-
-[/var/log/nomad_client.log]
-file = /var/log/nomad_client.log
-log_group_name = data-refinery-log-group-${user}-${stage}
-log_stream_name = log-stream-nomad-client-${user}-${stage}
 EOF
 
 mkdir /var/lib/awslogs
@@ -88,6 +85,13 @@ echo "
     daily
     maxage 3
 }" >> /etc/logrotate.conf
+
+# Docker runs out of IPv4
+cat <<"EOF" > /etc/docker/daemon.json
+{
+  "bip": "172.17.77.1/22"
+}
+EOF
 
 # Output the files we need to start up Nomad and register jobs:
 # (Note that the lines starting with "$" are where
