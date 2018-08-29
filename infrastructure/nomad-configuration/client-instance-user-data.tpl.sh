@@ -69,11 +69,6 @@ cd /home/ubuntu
 cat <<EOF >awslogs.conf
 [general]
 state_file = /var/lib/awslogs/agent-state
-
-[/var/log/nomad_client.log]
-file = /var/log/nomad_client.log
-log_group_name = data-refinery-log-group-${user}-${stage}
-log_stream_name = log-stream-nomad-client-${user}-${stage}
 EOF
 
 mkdir /var/lib/awslogs
