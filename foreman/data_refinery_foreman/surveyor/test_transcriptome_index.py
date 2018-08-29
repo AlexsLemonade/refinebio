@@ -53,10 +53,6 @@ class SurveyTestCase(TestCase):
                                            key="ensembl_division",
                                            value="Ensembl")
         key_value_pair.save()
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                                key="number_of_organisms",
-                                                value=1)
-        key_value_pair.save()
 
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
                                                 key="organism_name",

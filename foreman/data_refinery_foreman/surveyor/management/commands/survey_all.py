@@ -17,13 +17,13 @@ logger = get_and_configure_logger(__name__)
 def run_surveyor_for_accession(accession: str) -> None:
     """Chooses the correct surveyor based on the pattern of the accession"""
     if 'GSE' in accession[:3]:
-        surveyor.survey_geo_experiment(accession)
+        surveyor.survey_experiment(accession, "GEO")
     elif 'E-' in accession[:2]:
-        surveyor.survey_ae_experiment(accession)
+        surveyor.survey_experiment(accession, "ARRAY_EXPRESS")
     elif " " in accession:
         surveyor.survey_transcriptome_index(accession)
     else:
-        surveyor.survey_sra_experiment(accession)
+        surveyor.survey_experiment(accession, "SRA")
 
 class Command(BaseCommand):
     def add_arguments(self, parser):

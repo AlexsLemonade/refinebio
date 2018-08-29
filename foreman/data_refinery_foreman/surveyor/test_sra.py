@@ -51,7 +51,7 @@ class SraSurveyorTestCase(TestCase):
         self.survey_job = survey_job
 
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="accession",
+                                           key="experiment_accession_code",
                                            value="DRR002116")
         key_value_pair.save()
 
@@ -66,12 +66,6 @@ class SraSurveyorTestCase(TestCase):
         DownloaderJob.objects.all().delete()
         SurveyJobKeyValue.objects.all().delete()
         SurveyJob.objects.all().delete()
-
-    def test_get_next_accession(self):
-        self.assertEqual(SraSurveyor.get_next_accession("DRR123456"), "DRR123457")
-        self.assertEqual(SraSurveyor.get_next_accession("DRR1234567"), "DRR1234568")
-        self.assertEqual(SraSurveyor.get_next_accession("DRR12345678"), "DRR12345679")
-        self.assertEqual(SraSurveyor.get_next_accession("DRR123456789"), "DRR123456790")
 
     @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_survey(self, mock_send_task):
@@ -94,7 +88,7 @@ class SraSurveyorTestCase(TestCase):
         survey_job = SurveyJob(source_type="SRA")
         survey_job.save()
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="accession",
+                                           key="experiment_accession_code",
                                            value="SRP068364")
         key_value_pair.save()
 
@@ -106,7 +100,7 @@ class SraSurveyorTestCase(TestCase):
         survey_job = SurveyJob(source_type="SRA")
         survey_job.save()
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="accession",
+                                           key="experiment_accession_code",
                                            value="SRP111553")
         key_value_pair.save()
 

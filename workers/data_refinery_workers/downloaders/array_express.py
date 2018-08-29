@@ -1,35 +1,33 @@
-from __future__ import absolute_import, unicode_literals
-import urllib.request
 import os
 import shutil
-import zipfile
 import time
-from typing import List
-from contextlib import closing
+import urllib.request
+import zipfile
 
+from contextlib import closing
+from typing import List
+
+from data_refinery_common import microarray
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     DownloaderJob,
+    DownloaderJobOriginalFileAssociation,
     Experiment,
-    Sample,
     ExperimentAnnotation,
     ExperimentSampleAssociation,
     OriginalFile,
-    DownloaderJobOriginalFileAssociation
+    Sample,
 )
-from data_refinery_workers.downloaders import utils
-from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import (
     get_env_variable,
     get_readable_affymetrix_names,
-    get_supported_microarray_platforms
+    get_supported_microarray_platforms,
 )
-from data_refinery_common import microarray
+from data_refinery_workers.downloaders import utils
 
 
 logger = get_and_configure_logger(__name__)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
-
-
 # chunk_size is in bytes
 CHUNK_SIZE = 1024 * 256
 
@@ -57,7 +55,6 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
 def _extract_files(file_path: str, accession_code: str, job: DownloaderJob) -> List[str]:
     """Extract zip and return a list of the raw files.
     """
-
     logger.debug("Extracting %s!", file_path, file_path=file_path, downloader_job=job.id)
 
     try:
@@ -80,6 +77,8 @@ def _extract_files(file_path: str, accession_code: str, job: DownloaderJob) -> L
         logger.exception(reason, downloader_job=job.id)
         job.failure_reason = reason
         raise
+
+    os.remove(file_path)
 
     return files
 
@@ -121,11 +120,9 @@ def download_array_express(job_id: int) -> None:
     extracted_files = _extract_files(dl_file_path, accession_code, job)
 
     for og_file in extracted_files:
-        # TODO: We _should_ be able to use GET here - anything more than 1 sample per
-        # filename is a problem. However, I need to know more about the naming convention.
         try:
-            original_file = OriginalFile.objects.filter(
-                source_filename=og_file['filename']).order_by('created_at')[0]
+            original_file = OriginalFile.objects.get(
+                source_filename=og_file['filename'], source_url=original_file.source_url)
             original_file.is_downloaded = True
             original_file.is_archive = False
             original_file.absolute_file_path = og_file['absolute_path']
@@ -135,10 +132,13 @@ def download_array_express(job_id: int) -> None:
             original_file.calculate_sha1()
             og_files.append(original_file)
         except Exception:
-            # TODO - is this worth failing a job for?
-            logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: "
+            # The suspicion is that there are extra files related to
+            # another experiment, that we don't want associated with
+            # this one.
+            logger.debug("Found a file we didn't have an OriginalFile for! Why did this happen?: "
                         + og_file['filename'],
                         downloader_job=job_id)
+            os.remove(og_file["absolute_path"])
             continue
 
         sample_objects = Sample.objects.filter(originalfile=original_file).order_by('created_at')
@@ -165,7 +165,6 @@ def download_array_express(job_id: int) -> None:
                 logger.warn("Unable to determine platform from CEL file: "
                             + original_file.absolute_file_path,
                             downloader_job=job_id)
-                job.no_retry = True
             if platform_accession_code == "UNSUPPORTED":
                 logger.error("Found a raw .CEL file with an unsupported platform!",
                              file_name=original_file.absolute_file_path,
@@ -177,6 +176,10 @@ def download_array_express(job_id: int) -> None:
                                       + str(cel_file_platform) + ")")
                 job.no_retry = True
                 success = False
+
+                # The file is unsupported, delete it!
+                original_file.delete_local_file()
+                original_file.delete()
             elif platform_accession_code == "UNDETERMINABLE":
                 # If we cannot determine the platform from the
                 # .CEL file, the platform discovered via metadata

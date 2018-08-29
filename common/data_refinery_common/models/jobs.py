@@ -17,12 +17,6 @@ class SurveyJob(models.Model):
     success = models.NullBooleanField(null=True)
     no_retry = models.BooleanField(default=False)
 
-    # The start time of the query used to replicate
-    replication_started_at = models.DateTimeField(null=True)
-
-    # The end time of the query used to replicate
-    replication_ended_at = models.DateTimeField(null=True)
-
     # The start time of the job
     start_time = models.DateTimeField(null=True)
 
