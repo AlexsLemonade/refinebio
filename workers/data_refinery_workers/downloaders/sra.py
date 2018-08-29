@@ -88,8 +88,10 @@ def _download_file_aspera(download_url: str,
         # Something went wrong! Else, just fall through to returning True.
         if completed_command.returncode != 0:
 
+            # Most likely, this is the "cannot authenticate" message,
+            # which is because we've nuked ENA.
             stderr = str(completed_command.stderr).strip()
-            logger.error("Shell call to ascp failed with error message: %s\nCommand was: %s",
+            logger.debug("Shell call to ascp failed with error message: %s\nCommand was: %s",
                          stderr,
                          formatted_command,
                          downloader_job=downloader_job.id)
@@ -100,7 +102,7 @@ def _download_file_aspera(download_url: str,
                 downloader_job.failure_reason = stderr
                 return False
             else:
-                time.sleep(300)
+                time.sleep(30)
                 return _download_file_aspera(download_url,
                                              downloader_job,
                                              target_file_path,
