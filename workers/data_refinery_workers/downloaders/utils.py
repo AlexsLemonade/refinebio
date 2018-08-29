@@ -53,6 +53,12 @@ def end_downloader_job(job: DownloaderJob, success: bool):
         logger.info("Downloader Job completed successfully.",
                     downloader_job=job.id)
     else:
+        file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
+        for file_assoc in file_assocs:
+            file_assoc.original_file.delete_local_file()
+            file_assoc.original_file.is_downloaded = False
+            file_assoc.original_file.save()
+
         if not job.failure_reason:
             logger.error("Downloader job failed without having failure_reason set. FIX ME!!!!!!!!",
                          downloader_job=job.id,

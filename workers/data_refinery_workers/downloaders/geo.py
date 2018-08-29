@@ -1,46 +1,43 @@
-from __future__ import absolute_import, unicode_literals
-import urllib.request
+import gzip
 import os
 import shutil
 import subprocess
-import gzip
 import tarfile
 import time
-from typing import List
-from contextlib import closing
+import urllib.request
 
+from contextlib import closing
+from typing import List
+
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     DownloaderJob,
+    DownloaderJobOriginalFileAssociation,
     Experiment,
-    Sample,
     ExperimentAnnotation,
     ExperimentSampleAssociation,
     OriginalFile,
-    DownloaderJobOriginalFileAssociation,
-    OriginalFileSampleAssociation
+    OriginalFileSampleAssociation,
+    Sample,
 )
-from data_refinery_workers.downloaders import utils
-from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable
+from data_refinery_workers.downloaders import utils
 
 
 logger = get_and_configure_logger(__name__)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
-
 # chunk_size is in bytes
 CHUNK_SIZE = 1024 * 256
 
 
 def _download_file(download_url: str, file_path: str, job: DownloaderJob, force_ftp=False) -> None:
-    """ Download a file from GEO via FTP. There is no Aspera endpoint
-    which I can find, although I know it exists. I think we have to ask GEO for it.
-    In future, this function may become a dispatcher to FTP via aria2 or FASP via ascp.
+    """ Download a file from GEO via Aspera unless `force_ftp` is True
     """
 
     # Ensure directory exists
     os.makedirs(file_path.rsplit('/', 1)[0], exist_ok=True)
 
-    if 'ftp.ncbi.nlm.nih.gov' in download_url:
+    if not force_ftp:
         return _download_file_aspera(download_url=download_url, downloader_job=job, target_file_path=file_path)
     else:
         try:
@@ -48,9 +45,15 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob, force_
                          download_url,
                          file_path,
                          downloader_job=job.id)
+
+            # Ancient unresolved bug. WTF python: https://bugs.python.org/issue27973
+            urllib.request.urlcleanup()
+
             target_file = open(file_path, "wb")
             with closing(urllib.request.urlopen(download_url)) as request:
                 shutil.copyfileobj(request, target_file, CHUNK_SIZE)
+
+            urllib.request.urlcleanup()
         except Exception:
             logger.exception("Exception caught while downloading file.",
                              downloader_job=job.id)
@@ -94,10 +97,10 @@ def _download_file_aspera(download_url: str,
         # Something went wrong! Else, just fall through to returning True.
         if completed_command.returncode != 0:
 
-            stderr = str(completed_command.stderr).strip()
-            logger.warning("Shell call to ascp failed with error message: %s\nCommand was: %s",
-                         stderr,
+            stderr = completed_command.stderr.decode().strip()
+            logger.debug("Shell call of `%s` to ascp failed with error message: %s",
                          formatted_command,
+                         stderr,
                          downloader_job=downloader_job.id)
 
             # Sometimes, GEO fails mysteriously.
@@ -110,7 +113,7 @@ def _download_file_aspera(download_url: str,
                              downloader_job=downloader_job.id)
                 return False
             else:
-                time.sleep(300)
+                time.sleep(30)
                 return _download_file_aspera(download_url,
                                              downloader_job,
                                              target_file_path,
@@ -126,10 +129,15 @@ def _download_file_aspera(download_url: str,
 
     # If Aspera has given a zero-byte file for some reason, let's back off and retry.
     if os.path.getsize(target_file_path) < 1:
+        os.remove(target_file_path)
+        if attempt > 5:
+            downloader_job.failure_reason = "Got zero byte file from aspera after 5 attempts."
+            return False
+
         logger.error("Got zero byte ascp download for target, retrying.",
                      target_url=download_url,
                      downloader_job=downloader_job.id)
-        time.sleep(300)
+        time.sleep(10)
         return _download_file_aspera(download_url,
                                      downloader_job,
                                      target_file_path,
@@ -157,8 +165,11 @@ def _extract_tar(file_path: str, accession_code: str) -> List[str]:
                  for f in os.listdir(abs_with_code_raw)]
 
     except Exception as e:
-        reason = "Exception %s caught while extracting %s", str(e), file_path
-        logger.exception(reason, accession_code=accession_code, file_path=file_path)
+        logger.exception("While extracting %s caught exception %s",
+                         file_path,
+                         str(e),
+                         accession_code=accession_code,
+                         file_path=file_path)
         raise
 
     return files
@@ -210,8 +221,11 @@ def _extract_gz(file_path: str, accession_code: str) -> List[str]:
                   }]
 
     except Exception as e:
-        reason = "Exception %s caught while extracting %s", str(e), file_path
-        logger.exception(reason, accession_code=accession_code, file_path=file_path)
+        logger.exception("While extracting %s caught exception %s",
+                         file_path,
+                         str(e),
+                         accession_code=accession_code,
+                         file_path=file_path)
         raise
 
     return files
@@ -235,8 +249,7 @@ def download_geo(job_id: int) -> None:
     sample_assocs = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
     related_samples = Sample.objects.filter(id__in=sample_assocs.values('sample_id'))
 
-    # First, get all the unique sample archive URLs.
-    # There may be more than one!
+    # First, download the sample archive URL.
     # Then, unpack all the ones downloaded.
     # Then create processor jobs!
 
@@ -246,7 +259,7 @@ def download_geo(job_id: int) -> None:
     os.makedirs(LOCAL_ROOT_DIR + '/' + accession_code, exist_ok=True)
     dl_file_path = LOCAL_ROOT_DIR + '/' + accession_code + '/' + url.split('/')[-1]
 
-    logger.info("Starting to download: " + url, job_id=job_id, accession_code=accession_code)
+    logger.debug("Starting to download: " + url, job_id=job_id, accession_code=accession_code)
     _download_file(url, dl_file_path, job)
     original_file.absolute_file_path = dl_file_path
     original_file.is_downloaded = True
@@ -261,9 +274,9 @@ def download_geo(job_id: int) -> None:
             extracted_files = _extract_tar(dl_file_path, accession_code)
         except Exception as e:
             job.failure_reason = e
-            utils.end_downloader_job(job, success=False)
             logger.exception(
                 "Error occured while extracting tar file.", path=dl_file_path, exception=str(e))
+            utils.end_downloader_job(job, success=False)
             return
 
         for og_file in extracted_files:
@@ -310,18 +323,21 @@ def download_geo(job_id: int) -> None:
                 original_file_sample_association.original_file = actual_file
                 original_file_sample_association.save()
 
-                # Question - do we want to delete this extracted archive file?
-                # archive_file.delete()
+                archive_file.delete_local_file()
+                archive_file.is_downloaded = False
+                archive_file.save()
 
                 unpacked_sample_files.append(actual_file)
             except Exception as e:
                 # TODO - is this worth failing a job for?
-                logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: "
-                            + og_file['filename'],
-                            exc_info=1,
-                            file=og_file['filename'],
-                            sample_id=sample_id,
-                            accession_code=accession_code)
+                logger.debug("Found a file we didn't have an OriginalFile for! Why did this happen?: "
+                             + og_file['filename'],
+                             exc_info=1,
+                             file=og_file['filename'],
+                             sample_id=sample_id,
+                             accession_code=accession_code)
+                # If we don't know why we have it, get rid of it.
+                os.remove(og_file["absolute_path"])
 
     # This is a .tgz file.
     elif '.tgz' in dl_file_path:
@@ -333,10 +349,10 @@ def download_geo(job_id: int) -> None:
             extracted_files = _extract_tgz(dl_file_path, accession_code)
         except Exception as e:
             job.failure_reason = e
-            utils.end_downloader_job(job, success=False)
             logger.exception("Error occured while extracting tgz file.",
                              path=dl_file_path,
                              exception=str(e))
+            utils.end_downloader_job(job, success=False)
             return
 
         for og_file in extracted_files:
@@ -346,6 +362,7 @@ def download_geo(job_id: int) -> None:
                     gsm_id = og_file['filename'].split('-')[0]
                     sample = Sample.objects.get(accession_code=gsm_id)
                 except Exception as e:
+                    os.remove(og_file["absolute_path"])
                     continue
 
                 actual_file = OriginalFile()
@@ -372,10 +389,10 @@ def download_geo(job_id: int) -> None:
             extracted_files = _extract_gz(dl_file_path, accession_code)
         except Exception as e:
             job.failure_reason = e
-            utils.end_downloader_job(job, success=False)
             logger.exception("Error occured while extracting gz file.",
                              path=dl_file_path,
                              exception=str(e))
+            utils.end_downloader_job(job, success=False)
             return
 
         for og_file in extracted_files:
@@ -409,18 +426,19 @@ def download_geo(job_id: int) -> None:
                     new_association.sample = sample
                     new_association.save()
 
-                # Question - do we want to delete this extracted archive file?
-                # archive_file.delete()
+                archive_file.delete_local_file()
+                archive_file.is_downloaded = False
+                archive_file.save()
 
                 unpacked_sample_files.append(actual_file)
             except Exception as e:
-
-                logger.warn("Found a file we didn't have an OriginalFile for! Why did this happen?: "
+                logger.debug("Found a file we didn't have an OriginalFile for! Why did this happen?: "
                             + og_file['filename'],
                             exc_info=1,
                             file=og_file['filename'],
                             sample_id=sample_id,
                             accession_code=accession_code)
+                os.remove(og_file["absolute_path"])
 
     # This is probably just a .txt file
     else:
