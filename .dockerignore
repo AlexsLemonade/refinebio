@@ -13,3 +13,4 @@ nomad.logs
 env/
 infrastructure/
 terraform/
+*/nomad-job-specs
