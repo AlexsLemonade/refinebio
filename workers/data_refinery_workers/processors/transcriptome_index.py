@@ -377,7 +377,7 @@ def _populate_index_object(job_context: Dict) -> Dict:
                                                  index_type="TRANSCRIPTOME_LONG")
     if short_indices.count() < 1 or long_indices.count() < 1:
         # utils.end_job deletes these, so remove them so it doesn't.
-        job_context.pop("original_files")
+        job_context["original_files"] = []
 
     return job_context
 
