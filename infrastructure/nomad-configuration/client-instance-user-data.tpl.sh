@@ -19,6 +19,8 @@ apt-get update -y
 apt-get upgrade -y
 apt-get install --yes nfs-common jq iotop dstat
 
+ulimit -n 65536
+
 # Find, configure and mount a free EBS volume
 mkdir -p /var/ebs/
 
