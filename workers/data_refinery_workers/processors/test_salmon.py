@@ -156,31 +156,46 @@ class SalmonTestCase(TestCase):
         # (The first sample has test data available, but the second does not.)
         experiment_accession = 'test_experiment'
         experiment = Experiment.objects.create(accession_code=experiment_accession)
+
+        c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+
         # test_sample record
         sample_accession = 'test_sample'
-        test_sample = Sample.objects.create(accession_code=sample_accession)
+        test_sample = Sample.objects.create(accession_code=sample_accession,
+                                            organism=c_elegans)
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=test_sample)
         # fake_sample record (created to prevent tximport step in this experiment)
         fake_sample = Sample.objects.create(accession_code='fake_sample')
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=fake_sample)
 
+        og_read_1 = OriginalFile()
+        og_read_1.absolute_file_path = os.path.join(self.test_dir, experiment_accession, "raw/reads_1.fastq")
+        og_read_1.filename = "reads_1.fastq"
+        og_read_1.save()
+
+        OriginalFileSampleAssociation.objects.create(original_file=og_read_1, sample=test_sample).save()
+
+        og_read_2 = OriginalFile()
+        og_read_2.absolute_file_path = os.path.join(self.test_dir, experiment_accession, "raw/reads_2.fastq")
+        og_read_2.filename = "reads_1.fastq"
+        og_read_2.save()
+
+        OriginalFileSampleAssociation.objects.create(original_file=og_read_2, sample=test_sample).save()
+
         experiment_dir = os.path.join(self.test_dir, experiment_accession)
         sample_dir = os.path.join(experiment_dir, 'test_sample')
 
-        job_context = {
-            'job_id': 1,
-            'job': ProcessorJob(),
-            'pipeline': Pipeline(name="Salmon"),
-            'sample': test_sample,
-            'index_length': 'short',
-            'input_file_path': os.path.join(experiment_dir, 'raw/reads_1.fastq'),
-            'input_file_path_2': os.path.join(experiment_dir, 'raw/reads_2.fastq'),
-            'index_directory': os.path.join(experiment_dir, 'index'),
-            'output_directory': os.path.join(sample_dir, 'processed'),
-            'success': True,
-            'computed_files': []
-        }
-        # Check quant.sf in `salmon quant` output dir
+        job_context = salmon._prepare_files({"job_dir_prefix": "TEST",
+                                             "job_id": "TEST",
+                                             'pipeline': Pipeline(name="Salmon"),
+                                             'computed_files': [],
+                                             'index_length': 'short',
+                                             # Hard coded to be where we install before running tests.
+                                             "index_directory": "/home/user/data_store/processed/TEST/TRANSCRIPTOME_INDEX/index",
+                                             "original_files": [og_read_1, og_read_2]})
+
+        from pprint import pprint
+        pprint(job_context)
         self.chk_salmon_quant(job_context, sample_dir)
 
         # Confirm that this experiment is not ready for tximport yet,
