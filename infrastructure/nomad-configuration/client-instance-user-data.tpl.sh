@@ -86,6 +86,13 @@ echo "
     maxage 3
 }" >> /etc/logrotate.conf
 
+# Docker runs out of IPv4
+cat <<"EOF" > /etc/docker/daemon.json
+{
+  "bip": "172.17.77.1/22"
+}
+EOF
+
 # Output the files we need to start up Nomad and register jobs:
 # (Note that the lines starting with "$" are where
 #  Terraform will template in the contents of those files.)
