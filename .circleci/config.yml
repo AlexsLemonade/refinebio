@@ -76,7 +76,6 @@ jobs:
   affymetrix_common_agilent_tests:
     working_directory: ~/refinebio
     machine:
-      docker_layer_caching: true
       pre:
         - sudo rm -rf /usr/local/android-sdk-linux
         - sudo rm -rf /usr/local/go
