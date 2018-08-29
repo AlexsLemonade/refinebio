@@ -19,6 +19,8 @@ apt-get update -y
 apt-get upgrade -y
 apt-get install --yes nfs-common jq iotop dstat
 
+ulimit -n 65536
+
 # Find, configure and mount a free EBS volume
 mkdir -p /var/ebs/
 EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=${user}" "Name=tag:Stage,Values=${stage}" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
