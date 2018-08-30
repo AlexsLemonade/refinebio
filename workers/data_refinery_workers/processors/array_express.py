@@ -1,30 +1,30 @@
-from __future__ import absolute_import, unicode_literals
-
+from django.utils import timezone
+from typing import Dict
 import os
 import string
 import warnings
-from django.utils import timezone
-from typing import Dict
 
-import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
+import rpy2.robjects as ro
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
-    OriginalFile,
     ComputationalResult,
     ComputedFile,
-    SampleResultAssociation,
-    SampleComputedFileAssociation,
+    OriginalFile,
+    Pipeline,
     Processor,
-    Pipeline
+    SampleComputedFileAssociation,
+    SampleResultAssociation,
 )
 
+from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
-from data_refinery_common.utils import get_env_variable
-S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
+
+S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
+LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 logger = get_and_configure_logger(__name__)
 
 
@@ -36,13 +36,20 @@ def _prepare_files(job_context: Dict) -> Dict:
     """
     original_file = job_context["original_files"][0]
     job_context["input_file_path"] = original_file.get_synced_file_path()
-    # This is ugly, I'm sorry.
-    # Turns /home/user/data_store/E-GEOD-8607/raw/foo.cel into /home/user/data_store/E-GEOD-8607/processed/foo.cel
-    pre_part = original_file.absolute_file_path.split('/')[:-2]
-    end_part = original_file.absolute_file_path.split('/')[-1]
-    job_context["output_file_path"] = '/'.join(pre_part) + '/processed/' + end_part
-    job_context["output_file_path"] = job_context["output_file_path"].replace('.CEL', '.PCL')
-    job_context["output_file_path"] = job_context["output_file_path"].replace('.cel', '.PCL')
+
+    # All files for the job are in the same directory.
+    job_context["work_dir"] = LOCAL_ROOT_DIR + "/" + "processor_job_" + str(job_context["job_id"])
+    try:
+        os.makedirs(job_context["work_dir"])
+    except Exception as e:
+        logger.exception("Could not create work directory for processor job.",
+                         job_context=job_context)
+        job_context["job"].failure_reason = str(e)
+        job_context["success"] = False
+        return job_context
+
+    new_filename = original_file.filename.upper().replace(".CEL", ".PCL")
+    job_context["output_file_path"] = job_context["work_dir"] + "/" + new_filename
 
     return job_context
 
@@ -69,8 +76,8 @@ def _create_ensg_pkg_map() -> Dict:
 def _determine_brainarray_package(job_context: Dict) -> Dict:
     """Determines the right brainarray package to use for the file.
 
-    Expects job_context to contain the key 'input_file'. Adds the key
-    'brainarray_package' to job_context.
+    Expects job_context to contain the key 'input_file_path'. Adds the
+    key 'brainarray_package' to job_context.
     """
     input_file = job_context["input_file_path"]
     try:
@@ -79,7 +86,7 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
         error_template = ("Unable to read Affy header in input file {0}"
                           " while running AFFY_TO_PCL due to error: {1}")
         error_message = error_template.format(input_file, str(e))
-        logger.error(error_message, processor_job=job_context["job"].id)
+        logger.info(error_message, processor_job=job_context["job"].id)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
         job_context["job"].no_retry = True
@@ -171,28 +178,17 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.save()
     job_context['pipeline'].steps.append(result.id)
 
-    # Create a ComputedFile for the sample,
-    # sync it S3 and save it.
-    try:
-        computed_file = ComputedFile()
-        computed_file.absolute_file_path = job_context["output_file_path"]
-        computed_file.filename = os.path.split(job_context["output_file_path"])[-1]
-        computed_file.calculate_sha1()
-        computed_file.calculate_size()
-        computed_file.result = result
-        computed_file.is_smashable = True
-        computed_file.is_qc = False
-        computed_file.save()
-        job_context['computed_files'].append(computed_file)
-    except Exception:
-        logger.exception("Exception caught while saving file %s to S3",
-                         computed_file.filename,
-                         processor_job=job_context["job_id"],
-                         )
-        failure_reason = "Exception caught while saving file to S3"
-        job_context["job"].failure_reason = failure_reason
-        job_context["success"] = False
-        return job_context
+    # Create a ComputedFile for the sample
+    computed_file = ComputedFile()
+    computed_file.absolute_file_path = job_context["output_file_path"]
+    computed_file.filename = os.path.split(job_context["output_file_path"])[-1]
+    computed_file.calculate_sha1()
+    computed_file.calculate_size()
+    computed_file.result = result
+    computed_file.is_smashable = True
+    computed_file.is_qc = False
+    computed_file.save()
+    job_context['computed_files'].append(computed_file)
 
     for sample in job_context['samples']:
         assoc = SampleResultAssociation()
@@ -204,7 +200,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
             sample=sample,
             computed_file=computed_file)
 
-    logger.info("Created %s", result,
+    logger.debug("Created %s", result,
                 processor_job=job_context["job_id"])
     job_context["success"] = True
 
@@ -218,6 +214,4 @@ def affy_to_pcl(job_id: int) -> None:
                         _determine_brainarray_package,
                         _run_scan_upc,
                         _create_result_objects,
-                        # utils.upload_processed_files,
-                        # utils.cleanup_raw_files,
                         utils.end_job])
