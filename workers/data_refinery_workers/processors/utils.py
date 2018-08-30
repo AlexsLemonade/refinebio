@@ -22,7 +22,7 @@ from data_refinery_common.models import (
 )
 from data_refinery_workers._version import __version__
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.utils import get_worker_id, get_env_variable
+from data_refinery_common.utils import get_instance_id, get_env_variable
 
 logger = get_and_configure_logger(__name__)
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
@@ -37,7 +37,13 @@ def start_job(job_context: Dict):
     dictionary passed in with the key 'batches'.
     """
     job = job_context["job"]
-    job.worker_id = get_worker_id()
+
+    # This job should not have been started.
+    if job.start_time is not None:
+        logger.error("This processor job has already been started!!!", processor_job=job.id)
+        raise Exception("processors.start_job called on a job that has already been started!")
+
+    job.worker_id = get_instance_id()
     job.worker_version = __version__
     job.start_time = timezone.now()
     job.save()
@@ -553,4 +559,3 @@ def handle_processor_exception(job_context, processor_key, ex):
     job_context["job"].failure_reason = err_str
     job_context["success"] = False
     return job_context
-

@@ -105,8 +105,6 @@ class Sample(models.Model):
     time = models.CharField(max_length=255, blank=True)
 
     # Crunch Properties
-    # TODO: rm is_downloaded from sample, it is on original_file instead
-    is_downloaded = models.BooleanField(default=False)
     is_processed = models.BooleanField(default=False)
 
     # Common Properties
@@ -599,32 +597,6 @@ class OriginalFile(models.Model):
         self.last_modified = current_time
         return super(OriginalFile, self).save(*args, **kwargs)
 
-    def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
-        """ Syncs this OriginalFile to AWS S3.
-        """
-        if not settings.RUNNING_IN_CLOUD:
-            return True
-
-        self.s3_bucket = s3_bucket
-        self.s3_key = s3_key
-
-        try:
-            S3.upload_file(
-                        self.absolute_file_path,
-                        s3_bucket,
-                        s3_key,
-                        ExtraArgs={
-                            'ACL': 'public-read',
-                            'StorageClass': 'STANDARD_IA'
-                        }
-                    )
-            self.save()
-        except Exception as e:
-            logger.exception(e, original_file_id=self.pk)
-            return False
-
-        return True
-
     def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
@@ -649,32 +621,6 @@ class OriginalFile(models.Model):
             return self.source_filename
         else:
             return self.filename
-
-    def sync_from_s3(self):
-        """ Downloads a file from S3 to the local file system.
-        Returns the absolute file path.
-        """
-        if not settings.RUNNING_IN_CLOUD:
-            return self.absolute_file_path
-
-        try:
-            S3.download_file(
-                        self.s3_bucket,
-                        self.s3_key,
-                        self.absolute_file_path
-                    )
-            return self.absolute_file_path
-        except Exception as e:
-            logger.exception(e, original_file_id=self.pk)
-            return None
-
-    def get_synced_file_path(self):
-        """ Fetches the absolute file path to this ComputedFile, fetching from S3 if it
-        isn't already available locally. """
-        if os.path.exists(self.absolute_file_path):
-            return self.absolute_file_path
-        else:
-            return self.sync_from_s3()
 
     def delete_local_file(self):
         """ Deletes this file from the local file system."""

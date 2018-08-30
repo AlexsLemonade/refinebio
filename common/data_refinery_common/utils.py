@@ -5,7 +5,6 @@ import requests
 from urllib.parse import urlparse
 from typing import Dict
 
-from billiard import current_process
 from django.core.exceptions import ImproperlyConfigured
 from retrying import retry
 
@@ -54,11 +53,6 @@ def get_instance_id() -> str:
             INSTANCE_ID = "local"
 
     return INSTANCE_ID
-
-
-def get_worker_id() -> str:
-    """Returns <instance_id>/<thread_id>."""
-    return get_instance_id() + "/" + current_process().name
 
 
 def get_volume_index(default="0", path='/home/user/data_store/VOLUME_INDEX') -> str:
