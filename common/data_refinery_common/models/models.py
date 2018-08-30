@@ -533,7 +533,6 @@ class OrganismIndex(models.Model):
             S3.upload_file(absolute_file_path, bucket_name, s3_key,
                            ExtraArgs={'ACL': 'public-read'})
             self.s3_url = get_s3_url(bucket_name, s3_key)
-            logger.info("Upload complete")
 
             # Cleanup the tarball
             os.remove(absolute_file_path)

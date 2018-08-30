@@ -108,7 +108,7 @@ def end_job(job_context: Dict, abort=False):
                 sample.save()
 
     if success:
-        # S3-sync Original Files
+        # Cleanup Original Files
         for original_file in job_context['original_files']:
             original_file.delete_local_file()
 
@@ -552,4 +552,3 @@ def handle_processor_exception(job_context, processor_key, ex):
     job_context["job"].failure_reason = err_str
     job_context["success"] = False
     return job_context
-
