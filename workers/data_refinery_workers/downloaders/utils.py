@@ -22,7 +22,7 @@ from data_refinery_workers._version import __version__
 
 logger = get_and_configure_logger(__name__)
 # TODO: extend this list.
-BLACKLISTED_EXTENSIONS = ["xml"]
+BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
 
 
 def start_job(job_id: int) -> DownloaderJob:

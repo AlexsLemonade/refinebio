@@ -124,9 +124,9 @@ def determine_processor_pipeline(sample_object: Sample, original_file=None) -> P
     if original_file:
         if original_file.filename[-4:].upper() == ".CEL":
             return ProcessorPipeline.AFFY_TO_PCL
-        if original_file.filename[-5:].upper() == "FASTQ"
-        or original_file.filename[-8:].upper() == "FASTQ.GZ"
-        or original_file.filename[-2:].upper() == "FQ"
+        if original_file.filename[-5:].upper() == "FASTQ" \
+        or original_file.filename[-8:].upper() == "FASTQ.GZ" \
+        or original_file.filename[-2:].upper() == "FQ" \
         or original_file.filename[-5:].upper() == "FQ.GZ":
             return ProcessorPipeline.SALMON
 
