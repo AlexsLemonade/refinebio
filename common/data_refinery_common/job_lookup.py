@@ -2,8 +2,8 @@ from enum import Enum
 from typing import List
 
 from data_refinery_common import utils
-from data_refinery_common.models import Sample, OriginalFile, OriginalFileSampleAssociation
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.models import Sample, OriginalFile, OriginalFileSampleAssociation
 
 
 logger = get_and_configure_logger(__name__)
@@ -114,49 +114,58 @@ def determine_processor_pipeline(sample_object: Sample, original_file=None) -> P
 
     This is mostly a giant set of nested if statements, so describing
     the logic wouldn't add very much. However, the general flow is:
-      - Is the platform supported? If not return NONE cause we don't want it.
+      - Is its file extension .CEL or FQ*/FASTQ*? Send it to the correct processor.
       - Does it have raw data? If not NO_OP the data.
         (With one exception explained in comments.)
+      - Is the platform supported? If not return NONE cause we don't want it.
       - Is it Microarray data? If so determine which processor based on its
         manufacturer Otherwise it's SALMON-time.
     """
+    if original_file:
+        if original_file.filename[-4:].upper() == ".CEL":
+            return ProcessorPipeline.AFFY_TO_PCL
+        if original_file.filename[-5:].upper() == "FASTQ"
+        or original_file.filename[-8:].upper() == "FASTQ.GZ"
+        or original_file.filename[-2:].upper() == "FQ"
+        or original_file.filename[-5:].upper() == "FQ.GZ":
+            return ProcessorPipeline.SALMON
+
+    # We NO_OP processed data. It's what we do.
+    if not sample_object.has_raw or (original_file and '.processed' in original_file.source_url):
+        return ProcessorPipeline.NO_OP
+
     if not _is_platform_supported(sample_object.platform_accession_code):
         return ProcessorPipeline.NONE
 
     if sample_object.technology == "MICROARRAY":
-        if not sample_object.has_raw:
-            return ProcessorPipeline.NO_OP
-        else:
-            if sample_object.manufacturer == "ILLUMINA":
-                return ProcessorPipeline.ILLUMINA_TO_PCL
-            elif sample_object.manufacturer == "AFFYMETRIX":
-                # Optional explicit filetype checks
-                if original_file:
-                    if original_file.filename[-3:].upper() == "CEL":
-                        return ProcessorPipeline.AFFY_TO_PCL 
-                    if original_file.filename[-3:].upper() == "TXT":
-                        return ProcessorPipeline.NO_OP
+        if sample_object.manufacturer == "ILLUMINA":
+            return ProcessorPipeline.ILLUMINA_TO_PCL
+        elif sample_object.manufacturer == "AFFYMETRIX":
+            # Optional explicit filetype checks
+            if original_file and original_file.filename[-3:].upper() == "TXT":
+                return ProcessorPipeline.NO_OP
+            else:
                 return ProcessorPipeline.AFFY_TO_PCL
-            elif sample_object.manufacturer == "AGILENT":
-                # We currently aren't prepared to process Agilent because we don't have
-                # whitelist of supported platforms for it. However this code works so
-                # let's keep it around until we're ready for Agilent.
-                annotations = sample_object.sampleannotation_set.all()[0]
-                channel1_protocol = annotations.data.get('label_protocol_ch1', "").upper()
-                channel2_protocol = annotations.data.get('label_protocol_ch2', "").upper()
-                if ('AGILENT' in channel1_protocol) and ('AGILENT' in channel2_protocol):
-                    return ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL
-                else:
-                    return ProcessorPipeline.AGILENT_ONECOLOR_TO_PCL
-            elif sample_object.manufacturer == "UNKNOWN":
-                logger.error("Found a Sample on a supported platform with an unknown manufacturer.",
-                             sample=sample_object.id,
-                             platform_accession=sample_object.platform_accession_code,
-                             accession=sample_object.accession_code,
-                             manufacturer=sample_object.manufacturer,
-                             platform_name=sample_object.platform_name
-                            )
-                return ProcessorPipeline.NONE
+        elif sample_object.manufacturer == "AGILENT":
+            # We currently aren't prepared to process Agilent because we don't have
+            # whitelist of supported platforms for it. However this code works so
+            # let's keep it around until we're ready for Agilent.
+            annotations = sample_object.sampleannotation_set.all()[0]
+            channel1_protocol = annotations.data.get('label_protocol_ch1', "").upper()
+            channel2_protocol = annotations.data.get('label_protocol_ch2', "").upper()
+            if ('AGILENT' in channel1_protocol) and ('AGILENT' in channel2_protocol):
+                return ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL
+            else:
+                return ProcessorPipeline.AGILENT_ONECOLOR_TO_PCL
+        elif sample_object.manufacturer == "UNKNOWN":
+            logger.error("Found a Sample on a supported platform with an unknown manufacturer.",
+                         sample=sample_object.id,
+                         platform_accession=sample_object.platform_accession_code,
+                         accession=sample_object.accession_code,
+                         manufacturer=sample_object.manufacturer,
+                         platform_name=sample_object.platform_name
+                        )
+            return ProcessorPipeline.NONE
 
     elif sample_object.has_raw:
         return ProcessorPipeline.SALMON
@@ -164,9 +173,9 @@ def determine_processor_pipeline(sample_object: Sample, original_file=None) -> P
     # Shouldn't get here, but just in case
     return ProcessorPipeline.NONE
 
-def determine_ram_amount(sample: Sample, job):
+def determine_ram_amount(sample: Sample, job) -> int:
     """
-    Determines the amount of RAM required for a given ProcessorJob
+    Determines the amount of RAM in MB required for a given ProcessorJob
     """
 
     if job.pipeline_applied == ProcessorPipeline.NO_OP.value:
@@ -183,7 +192,7 @@ def determine_ram_amount(sample: Sample, job):
         if 'hta20' in platform:
             return 12288
         # Not sure what the ram usage of this platform is! Investigate!
-        logger.info("Unsure of RAM usage for platform! Using default.", platform=platform, job=job)
+        logger.debug("Unsure of RAM usage for platform! Using default.", platform=platform, job=job)
         return 2048
     elif job.pipeline_applied == ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL.value:
         return 2048

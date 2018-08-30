@@ -1,27 +1,28 @@
-from django.utils import timezone
 from django.db import transaction
+from django.utils import timezone
 from retrying import retry
 from typing import List, Dict
 
-from data_refinery_common.utils import get_worker_id
-from data_refinery_common.models import (
-    DownloaderJob,
-    ProcessorJob,
-    Experiment,
-    Sample,
-    ExperimentAnnotation,
-    ExperimentSampleAssociation,
-    OriginalFile,
-    ProcessorJobOriginalFileAssociation
-)
 from data_refinery_common.job_lookup import ProcessorPipeline, determine_processor_pipeline, determine_ram_amount
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
+from data_refinery_common.models import (
+    DownloaderJob,
+    Experiment,
+    ExperimentAnnotation,
+    ExperimentSampleAssociation,
+    OriginalFile,
+    ProcessorJob,
+    ProcessorJobOriginalFileAssociation,
+    Sample,
+)
+from data_refinery_common.utils import get_instance_id
 from data_refinery_workers._version import __version__
 
 
 logger = get_and_configure_logger(__name__)
-JOB_DIR_PREFIX = "downloader_job_"
+# TODO: extend this list.
+BLACKLISTED_EXTENSIONS = ["xml"]
 
 
 def start_job(job_id: int) -> DownloaderJob:
@@ -30,14 +31,19 @@ def start_job(job_id: int) -> DownloaderJob:
     Retrieves the job from the database and returns it after marking
     it as started.
     """
-    logger.info("Starting Downloader Job.", downloader_job=job_id)
+    logger.debug("Starting Downloader Job.", downloader_job=job_id)
     try:
         job = DownloaderJob.objects.get(id=job_id)
     except DownloaderJob.DoesNotExist:
         logger.error("Cannot find downloader job record.", downloader_job=job_id)
         raise
 
-    job.worker_id = get_worker_id()
+    # This job should not have been started.
+    if job.start_time is not None:
+        logger.error("This downloader job has already been started!!!", downloader_job=job.id)
+        raise Exception("downloaders.start_job called on a job that has already been started!")
+
+    job.worker_id = get_instance_id()
     job.worker_version = __version__
     job.start_time = timezone.now()
     job.save()
@@ -50,7 +56,7 @@ def end_downloader_job(job: DownloaderJob, success: bool):
     Record in the database that this job has completed.
     """
     if success:
-        logger.info("Downloader Job completed successfully.",
+        logger.debug("Downloader Job completed successfully.",
                     downloader_job=job.id)
     else:
         file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
@@ -74,6 +80,21 @@ def end_downloader_job(job: DownloaderJob, success: bool):
     job.save()
 
 
+def delete_if_blacklisted(original_file: OriginalFile) -> OriginalFile:
+    extension = original_file.file_name.split(".")[-1]
+    if extension.lower() in BLACKLISTED_EXTENSIONS:
+        logger.debug("Original file had a blacklisted extension of %s, skipping",
+                     extension,
+                     original_file=original_file.id)
+
+        original_file.delete_local_file()
+        original_file.is_downloaded = False
+        original_file.save()
+        return None
+
+    return OriginalFile
+
+
 def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
                                              downloader_job: DownloaderJob=None):
     """
@@ -82,22 +103,18 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
     for original_file in original_files:
         sample_object = original_file.samples.first()
 
-        if original_file.filename[-4:] == ".xml":
-            logger.info("Skipping useless file",
-                file=original_file.id,
-                filename=original_file.filename)
+        if not delete_if_blacklisted(original_file):
             continue
 
-        # We NO_OP processed data. It's what we do.
-        if '.processed' in original_file.source_url:
-            pipeline_to_apply = ProcessorPipeline.NO_OP
-        else:
-            pipeline_to_apply = determine_processor_pipeline(sample_object, original_file)
+        pipeline_to_apply = determine_processor_pipeline(sample_object, original_file)
 
         if pipeline_to_apply == ProcessorPipeline.NONE:
             logger.info("No valid processor pipeline found to apply to sample.",
                         sample=sample_object.id,
                         original_file=original_files[0].id)
+            original_file.delete_local_file()
+            original_file.is_downloaded = False
+            original_file.save()
         else:
             processor_job = ProcessorJob()
             processor_job.pipeline_applied = pipeline_to_apply.value
@@ -110,14 +127,14 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
             assoc.save()
 
             if downloader_job:
-                logger.info("Queuing processor job.",
-                            processor_job=processor_job.id,
-                            original_file=original_file.id,
-                            downloader_job=downloader_job.id)
+                logger.debug("Queuing processor job.",
+                             processor_job=processor_job.id,
+                             original_file=original_file.id,
+                             downloader_job=downloader_job.id)
             else:
-                logger.info("Queuing processor job.",
-                            processor_job=processor_job.id,
-                            original_file=original_file.id)
+                logger.debug("Queuing processor job.",
+                             processor_job=processor_job.id,
+                             original_file=original_file.id)
 
             send_job(pipeline_to_apply, processor_job)
 
@@ -137,6 +154,9 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
         logger.info("No valid processor pipeline found to apply to sample.",
                     sample=sample_object.id,
                     original_file=original_files[0].id)
+            original_file.delete_local_file()
+            original_file.is_downloaded = False
+            original_file.save()
     else:
         processor_job = ProcessorJob()
         processor_job.pipeline_applied = pipeline_to_apply.value
@@ -148,12 +168,7 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
             assoc.processor_job = processor_job
             assoc.save()
 
-        if downloader_job:
-            logger.info("Queuing processor job.",
-                        processor_job=processor_job.id,
-                        downloader_job=downloader_job.id)
-        else:
-            logger.info("Queuing processor job.",
-                        processor_job=processor_job.id)
+        logger.debug("Queuing processor job.",
+                     processor_job=processor_job.id)
 
         send_job(pipeline_to_apply, processor_job)
