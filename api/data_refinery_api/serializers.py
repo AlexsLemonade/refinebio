@@ -55,6 +55,7 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
         fields = (
                     's3_url',
                     'source_version',
+                    'assembly_name',
                     'salmon_version',
                     'last_modified',
                 )
