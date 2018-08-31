@@ -1,5 +1,4 @@
-from __future__ import absolute_import, unicode_literals
-
+import boto3
 import io
 import json
 import os
@@ -7,33 +6,30 @@ import re
 import shutil
 import subprocess
 import tarfile
-import boto3
 
 from botocore.client import Config
-
-import pandas as pd
-import numpy as np
-
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from typing import Dict, List
+import numpy as np
+import pandas as pd
 
-from django.conf import settings
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
-    OrganismIndex,
     ComputationalResult,
     ComputationalResultAnnotation,
     ComputedFile,
-    Processor,
-    Pipeline,
     Experiment,
     ExperimentSampleAssociation,
-    SampleResultAssociation,
+    OrganismIndex,
+    Pipeline,
+    Processor,
     Sample,
-    SampleComputedFileAssociation
-    )
+    SampleComputedFileAssociation,
+    SampleResultAssociation,
+)
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
@@ -41,13 +37,10 @@ from data_refinery_workers.processors import utils
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.
 S3 = boto3.client('s3', config=Config(signature_version='s3v4'))
-
 logger = get_and_configure_logger(__name__)
-
-LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 JOB_DIR_PREFIX = "processor_job_"
+LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
-SKIP_PROCESSED = get_env_variable("SKIP_PROCESSED", True)
 
 
 def _set_job_prefix(job_context: Dict) -> Dict:
@@ -76,26 +69,27 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context['organism'] = job_context['sample'].organism
     job_context["success"] = True
 
-    # Create a directory specific to this processor job/sample combo.
+    # Create a directory specific to this processor job combo.
     # (A single sample could belong to multiple experiments, meaning
     # that it could be run more than once, potentially even at the
     # same time.)
-    sample_accession = job_context['sample'].accession_code
-    sample_directory = os.path.join(LOCAL_ROOT_DIR,
-                                    job_context["job_dir_prefix"],
-                                    sample_accession)
-    job_context["sample_directory"] = sample_directory
+    job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR,
+                                           job_context["job_dir_prefix"])
 
-    job_context["output_directory"] = sample_directory + "/processed/"
+    job_context["output_directory"] = job_context["work_dir"] + "/processed/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
     # The sample's directory is what should be used for MultiQC input
-    job_context["qc_input_directory"] = sample_directory
-    job_context["qc_directory"] = sample_directory + "/qc/"
+    job_context["qc_input_directory"] = job_context["work_dir"]
+    job_context["qc_directory"] = job_context["work_dir"] + "/qc/"
     os.makedirs(job_context["qc_directory"], exist_ok=True)
 
+    job_context["salmontools_directory"] = job_context["work_dir"] + "/salmontools/"
+    os.makedirs(job_context["salmontools_directory"], exist_ok=True)
+    job_context["salmontools_archive"] = job_context["work_dir"] + "salmontools-result.tar.gz"
+
     timestamp = str(timezone.now().timestamp()).split('.')[0]
-    job_context["output_archive"] = sample_directory + '/result-' + timestamp +  '.tar.gz'
+    job_context["output_archive"] = job_context["work_dir"] + '/result-' + timestamp +  '.tar.gz'
 
     return job_context
 
@@ -103,9 +97,9 @@ def _prepare_files(job_context: Dict) -> Dict:
 def _determine_index_length(job_context: Dict) -> Dict:
     """Determines whether to use the long or short salmon index.
 
-    Adds the key 'kmer_size' to the job_context with a value of '23'
-    if the short index is appropriate or '31' if the long index is
-    appropriate. For more information on index length see the
+    Adds the key 'index_length' to the job_context with a value of
+    'short' if the short index is appropriate or 'long' if the long
+    index is appropriate. For more information on index length see the
     _create_index function of the transcriptome_index processor.
     """
     logger.debug("Determining index length..")
@@ -144,6 +138,7 @@ def _determine_index_length(job_context: Dict) -> Dict:
             job_id=job_context['job'].id
         )
         job_context['job'].failure_reason = "Unable to determine number_of_reads."
+        job_context['job'].no_retry = True
         job_context['success'] = False
         return job_context
 
@@ -211,11 +206,48 @@ def _find_or_download_index(job_context: Dict) -> Dict:
     return job_context
 
 
+def _run_fastqc(job_context: Dict) -> Dict:
+    """ Runs the `FastQC` package to generate the QC report.
+
+    TODO: same TODO as _run_multiqc."""
+
+    # We could use --noextract here, but MultiQC wants extracted files.
+    command_str = ("./FastQC/fastqc --outdir={qc_directory} {files}")
+    files = ' '.join(file.get_synced_file_path() for file in job_context['original_files'])
+    formatted_command = command_str.format(qc_directory=job_context["qc_directory"],
+                files=files)
+
+    logger.debug("Running FastQC using the following shell command: %s",
+                 formatted_command,
+                 processor_job=job_context["job_id"])
+    completed_command = subprocess.run(formatted_command.split(),
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+
+    # Java returns a 0 error code for runtime-related errors and FastQC puts progress
+    # information in stderr rather than stdout, so handle both.
+    stderr = completed_command.stderr.decode().strip()
+    if completed_command.returncode != 0 or "complete for" not in stderr:
+
+        logger.error("Shell call to FastQC failed with error message: %s",
+                     stderr,
+                     processor_job=job_context["job_id"])
+
+        job_context["job"].failure_reason = stderr
+        job_context["success"] = False
+
+    # We don't need to make a ComputationalResult here because
+    # MultiQC will read these files in as well.
+
+    return job_context
+
+
 def _find_salmon_quant_results(experiment: Experiment):
     """Returns a list of salmon quant results from `experiment`."""
     results = []
     for sample in experiment.samples.all():
         for result in sample.results.order_by('-created_at').all():
+            # TODO: this will break when we want to run for a new version.
             if result.processor.name == utils.ProcessorEnum.SALMON_QUANT.value['name']:
                 results.append(result)
                 break
@@ -257,15 +289,15 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
     # their paths to a file so we can pass a path to that to
     # tximport.R rather than having to pass in one argument per
     # sample.
-    tximport_path_list_file = job_context["sample_directory"] + "/tximport_inputs.txt"
+    tximport_path_list_file = job_context["work_dir"] + "/tximport_inputs.txt"
     with open(tximport_path_list_file, "w") as input_list:
         for quant_file in quant_files:
             input_list.write(quant_file.get_synced_file_path() + "\n")
 
     rds_filename = "txi_out.RDS"
-    rds_file_path = job_context["sample_directory"] + "/" + rds_filename
+    rds_file_path = job_context["work_dir"] + "/" + rds_filename
     tpm_filename = "gene_lengthScaledTPM.tsv"
-    tpm_file_path = job_context["sample_directory"] + "/" + tpm_filename
+    tpm_file_path = job_context["work_dir"] + "/" + tpm_filename
     result = ComputationalResult()
     cmd_tokens = [
         "/usr/bin/Rscript", "--vanilla",
@@ -277,7 +309,10 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
     ]
     result.time_start = timezone.now()
 
-    logger.info("Running tximport with: %s", str(cmd_tokens), processor_job=job_context['job_id'], experiment=experiment.id)
+    logger.debug("Running tximport with: %s",
+                 str(cmd_tokens),
+                 processor_job=job_context['job_id'],
+                 experiment=experiment.id)
 
     try:
         tximport_result = subprocess.run(cmd_tokens, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -288,12 +323,10 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
         return job_context
-    finally:
-        os.remove(tximport_path_list_file)
 
     if tximport_result.returncode != 0:
-        error_template = ("Encountered error in R code while running tximport.R: {}")
-        error_message = error_template.format(tximport_result.stderr.decode())
+        error_template = ("Found non-zero exit code from R code while running tximport.R: {}")
+        error_message = error_template.format(tximport_result.stderr.decode().strip())
         logger.error(error_message, processor_job=job_context["job_id"], experiment=experiment.id)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
@@ -315,6 +348,9 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
     # Associate this result with all samples in this experiment.
     # TODO: This may not be completely sensible, because `tximport` is
     # done at experiment level, not at sample level.
+    # Could be very problematic if SRA's data model allows many
+    # Experiments to one Run.
+    # https://github.com/AlexsLemonade/refinebio/issues/297
     for sample in experiment.samples.all():
         s_r = SampleResultAssociation(sample=sample, result=result)
         s_r.save()
@@ -336,8 +372,9 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
     individual_files = []
     frames = np.split(data, len(data.columns), axis=1)
     for frame in frames:
+        # Create sample-specific TPM file.
         sample_file_name = frame.columns.values[0] + '_' + tpm_filename
-        frame_path = os.path.join(job_context["sample_directory"], sample_file_name)
+        frame_path = os.path.join(job_context["work_dir"], sample_file_name)
         frame.to_csv(frame_path, sep='\t', encoding='utf-8')
 
         sample = Sample.objects.get(accession_code=frame.columns.values[0])
@@ -358,6 +395,12 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
             sample=sample,
             result=result)
 
+        # Create association with the RDS file.
+        SampleComputedFileAssociation.objects.get_or_create(
+            sample=sample,
+            computed_file=rds_file)
+
+        # Create association with TPM file.
         SampleComputedFileAssociation.objects.get_or_create(
             sample=sample,
             computed_file=computed_file)
@@ -378,14 +421,9 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
     return job_context
 
 
-def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
-    """ """
+def _run_salmon(job_context: Dict) -> Dict:
+    """Runs Salmon Quant."""
     logger.debug("Running Salmon..")
-
-    skip = False
-    if skip_processed and os.path.exists(os.path.join(job_context['output_directory'] + 'quant.sf')):
-        logger.info("Skipping pre-processed Salmon run!")
-        skip = True
 
     # Salmon needs to be run differently for different sample types.
     # XXX: TODO: We need to tune the -p/--numThreads to the machines this process will run on.
@@ -394,37 +432,36 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
     if "input_file_path_2" in job_context:
         second_read_str = " -2 {}".format(job_context["input_file_path_2"])
         command_str = ("salmon --no-version-check quant -l A --biasSpeedSamp 5 -i {index}"
-                       " -1 {input_one}{second_read_str}"
-                       " -p 20 -o {output_directory} --seqBias --gcBias --dumpEq --writeUnmappedNames")
+                       " -1 {input_one}{second_read_str} -p 20 -o {output_directory}"
+                       " --seqBias --gcBias --dumpEq --writeUnmappedNames")
         formatted_command = command_str.format(index=job_context["index_directory"],
-            input_one=job_context["input_file_path"],
-            second_read_str=second_read_str,
-            output_directory=job_context["output_directory"])
+                                               input_one=job_context["input_file_path"],
+                                               second_read_str=second_read_str,
+                                               output_directory=job_context["output_directory"])
     else:
         # Related: https://github.com/COMBINE-lab/salmon/issues/83
         command_str = ("salmon --no-version-check quant -l A -i {index}"
-               " -r {input_one}"
-               " -p 20 -o {output_directory} --seqBias --dumpEq --writeUnmappedNames")
+                       " -r {input_one} -p 20 -o {output_directory}"
+                       " --seqBias --dumpEq --writeUnmappedNames")
         formatted_command = command_str.format(index=job_context["index_directory"],
-                    input_one=job_context["input_file_path"],
-                    output_directory=job_context["output_directory"])
+                                               input_one=job_context["input_file_path"],
+                                               output_directory=job_context["output_directory"])
 
-    logger.info("Running Salmon Quant using the following shell command: %s",
-                formatted_command,
-                processor_job=job_context["job_id"])
+    logger.debug("Running Salmon Quant using the following shell command: %s",
+                 formatted_command,
+                 processor_job=job_context["job_id"])
 
     job_context['time_start'] = timezone.now()
-    if not skip:
-        completed_command = subprocess.run(formatted_command.split(),
-                                           stdout=subprocess.PIPE,
-                                           stderr=subprocess.PIPE)
+    completed_command = subprocess.run(formatted_command.split(),
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
     job_context['time_end'] = timezone.now()
 
     ## To me, this looks broken: error codes are anything non-zero.
     ## However, Salmon (seems) to output with negative status codes
     ## even with successful executions.
     ## Possibly related: https://github.com/COMBINE-lab/salmon/issues/55
-    if not skip and completed_command.returncode == 1:
+    if completed_command.returncode == 1:
         stderr = completed_command.stderr.decode().strip()
         error_start = stderr.upper().find("ERROR:")
         error_start = error_start if error_start != -1 else 0
@@ -432,10 +469,8 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
                      stderr[error_start:],
                      processor_job=job_context["job_id"])
 
-        # The failure_reason column is only 256 characters wide.
-        error_end = error_start + 200
         job_context["job"].failure_reason = ("Shell call to salmon failed because: "
-                                             + stderr[error_start:error_end])
+                                             + stderr[error_start:])
         job_context["success"] = False
     else:
         result = ComputationalResult()
@@ -443,14 +478,13 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         result.time_start = job_context['time_start']
         result.time_end = job_context['time_end']
         result.pipeline = "Salmon"  # TODO: should be removed
+        result.is_ccdl = True
 
         try:
             processor_key = "SALMON_QUANT"
             result.processor = utils.find_processor(processor_key)
         except Exception as e:
             return utils.handle_processor_exception(job_context, processor_key, e)
-
-        result.is_ccdl = True
 
         # Zip up the output of Salmon Quant
         try:
@@ -522,7 +556,6 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
 
             job_context["result"] = result
 
-
             job_context['pipeline'].steps.append(result.id)
             SampleResultAssociation.objects.get_or_create(sample=job_context['sample'],
                                                           result=result)
@@ -567,7 +600,12 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
     return job_context
 
 def _run_multiqc(job_context: Dict) -> Dict:
-    """Runs the `MultiQC` package to generate the QC report."""
+    """Runs the `MultiQC` package to generate the QC report.
+
+    TODO: These seem to consume a lot of RAM, even for small files.
+    We should consider tuning these or breaking them out into their
+    own processors. JVM settings may reduce RAM footprint.
+    """
     command_str = ("multiqc {input_directory} --outdir {qc_directory} --zip-data-dir")
     formatted_command = command_str.format(input_directory=job_context["qc_input_directory"],
                                            qc_directory=job_context["qc_directory"])
@@ -589,17 +627,15 @@ def _run_multiqc(job_context: Dict) -> Dict:
 
     if completed_command.returncode != 0:
 
-        stderr = str(completed_command.stderr)
+        stderr = completed_command.stderr.decode().strip()
         error_start = stderr.upper().find("ERROR:")
         error_start = error_start if error_start != -1 else 0
         logger.error("Shell call to MultiQC failed with error message: %s",
                      stderr[error_start:],
                      processor_job=job_context["job_id"])
 
-        # The failure_reason column is only 256 characters wide.
-        error_end = error_start + 200
         job_context["job"].failure_reason = ("Shell call to MultiQC failed because: "
-                                             + stderr[error_start:error_end])
+                                             + stderr[error_start:])
         job_context["success"] = False
 
     result = ComputationalResult()
@@ -637,6 +673,9 @@ def _run_multiqc(job_context: Dict) -> Dict:
     data_file.save()
     job_context['computed_files'].append(data_file)
 
+    SampleComputedFileAssociation.objects.get_or_create(
+        sample=sample,
+        computed_file=data_file)
 
     report_file = ComputedFile()
     report_file.filename = "multiqc_report.html" # This is deterministic
@@ -650,63 +689,23 @@ def _run_multiqc(job_context: Dict) -> Dict:
     report_file.save()
     job_context['computed_files'].append(report_file)
 
+    SampleComputedFileAssociation.objects.get_or_create(
+        sample=sample,
+        computed_file=data_file)
+
     job_context['qc_files'] = [data_file, report_file]
 
     return job_context
 
 
-def _run_fastqc(job_context: Dict) -> Dict:
-    """ Runs the `FastQC` package to generate the QC report.
-
-    """
-
-    # We could use --noextract here, but MultiQC wants extracted files.
-    command_str = ("./FastQC/fastqc --outdir={qc_directory} {files}")
-    files = ' '.join(file.get_synced_file_path() for file in job_context['original_files'])
-    formatted_command = command_str.format(qc_directory=job_context["qc_directory"],
-                files=files)
-
-    logger.info("Running FastQC using the following shell command: %s",
-                formatted_command,
-                processor_job=job_context["job_id"])
-    completed_command = subprocess.run(formatted_command.split(),
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
-
-    # Java returns a 0 error code for runtime-related errors and FastQC puts progress
-    # information in stderr rather than stdout, so handle both.
-    if completed_command.returncode != 0 or b"complete for" not in completed_command.stderr:
-
-        stderr = str(completed_command.stderr)
-        logger.error("Shell call to FastQC failed with error message: %s",
-                     stderr,
-                     processor_job=job_context["job_id"])
-
-        # The failure_reason column is only 256 characters wide.
-        job_context["job"].failure_reason = stderr[0:255]
-        job_context["success"] = False
-
-    # We don't need to make a ComputationalResult here because
-    # MultiQC will read these files in as well.
-
-    return job_context
-
-
-def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
+def _run_salmontools(job_context: Dict) -> Dict:
     """ Run Salmontools to extract unmapped genes. """
 
     logger.debug("Running SalmonTools ...")
-    skip = False
     unmapped_filename = job_context['output_directory'] + 'aux_info/unmapped_names.txt'
-    if skip_processed and os.path.exists(unmapped_filename):
-        logger.info("Skipping pre-processed SalmonTools run!")
-        skip = True
-
-    if skip:  # If this procedure should be skipped, return immediately
-        return job_context
 
     command_str = "salmontools extract-unmapped -u {unmapped_file} -o {output} "
-    output_prefix = job_context["output_directory"] + "unmapped_by_salmon"
+    output_prefix = job_context["salmontools_directory"] + "unmapped_by_salmon"
     command_str = command_str.format(unmapped_file=unmapped_filename,
                                      output=output_prefix)
     if "input_file_path_2" in job_context:
@@ -718,9 +717,9 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         command_str= command_str.format(input_1=job_context["input_file_path"])
 
     start_time = timezone.now()
-    logger.info("Running the following SalmonTools command: %s",
-                command_str,
-                processor_job=job_context["job_id"])
+    logger.debug("Running the following SalmonTools command: %s",
+                 command_str,
+                 processor_job=job_context["job_id"])
 
     completed_command = subprocess.run(command_str.split(),
                                        stdout=subprocess.PIPE,
@@ -740,6 +739,20 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
     status_str = completed_command.stderr.decode().strip()
     success_pattern = r'^There were \d+ unmapped reads$'
     if re.match(success_pattern, status_str):
+        # Zip up the output of salmontools
+        try:
+            with tarfile.open(job_context['salmontools_archive'], "w:gz") as tar:
+                tar.add(job_context["salmontools_directory"], arcname=os.sep)
+        except Exception:
+            logger.exception("Exception caught while zipping processed directory %s",
+                             job_context["salmontools_directory"],
+                             processor_job=job_context["job_id"]
+            )
+            failure_template = "Exception caught while zipping salmontools directory {}"
+            job_context["job"].failure_reason = failure_template.format(job_context['salmontools_archive'])
+            job_context["success"] = False
+            return job_context
+
         result = ComputationalResult()
         result.commands.append(command_str)
         result.time_start = start_time
@@ -761,6 +774,18 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         assoc.result = result
         assoc.save()
 
+        computed_file = ComputedFile()
+        computed_file.filename = job_context["salmontools_archive"].split("/")[-1]
+        computed_file.absolute_file_path = job_context["salmontools_archive"]
+        computed_file.calculate_sha1()
+        computed_file.calculate_size()
+        computed_file.is_public = True
+        computed_file.is_smashable = False
+        computed_file.is_qc = True
+        computed_file.result = result
+        computed_file.save()
+        job_context['computed_files'].append(computed_file)
+
         job_context["result"] = result
         job_context["success"] = True
     else:   # error in salmontools
@@ -768,7 +793,7 @@ def _run_salmontools(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
                      status_str,
                      processor_job=job_context["job_id"])
         job_context["job"].failure_reason = ("Shell call to salmontools failed because: "
-                                             + status_str[0:256])
+                                             + status_str)
         job_context["success"] = False
 
     return job_context
@@ -778,7 +803,7 @@ def salmon(job_id: int) -> None:
     """Main processor function for the Salmon Processor.
 
     Runs salmon quant command line tool, specifying either a long or
-    short read length.
+    short read length. Also runs FastQC, MultiQC, and Salmontools.
     """
     pipeline = Pipeline(name=utils.PipelineEnum.SALMON.value)
     utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},

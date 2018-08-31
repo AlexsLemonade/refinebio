@@ -140,7 +140,7 @@ class SalmonTestCase(TestCase):
         shutil.rmtree(job_context['output_directory'], ignore_errors=True)
         os.makedirs(job_context["output_directory"], exist_ok=True)
 
-        salmon._run_salmon(job_context, skip_processed=False)
+        salmon._run_salmon(job_context)
         output_quant_filename = os.path.join(job_context['output_directory'], 'quant.sf')
         self.assertTrue(os.path.exists(output_quant_filename))
 
