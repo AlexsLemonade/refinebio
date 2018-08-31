@@ -17,7 +17,7 @@
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get upgrade -y
-apt-get install --yes nfs-common jq iotop dstat
+apt-get install --yes nfs-common jq iotop dstat speedometer
 
 ulimit -n 65536
 
@@ -26,7 +26,7 @@ mkdir -p /var/ebs/
 
 fetch_and_mount_volume () {
     INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
-    EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=${user}" "Name=tag:Stage,Values=${stage}" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
+    EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=${user}" "Name=tag:Stage,Values=${stage}" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=${region}" --region ${region} | jq '.Volumes[0].VolumeId' | tr -d '"'`
     aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device "/dev/sdf" --region ${region}
 }
 
