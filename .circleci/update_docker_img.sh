@@ -36,10 +36,11 @@ docker login -u $DOCKER_ID -p $DOCKER_PASSWD
 
 cd ~/refinebio
 for IMG in $CCDL_WORKER_IMGS; do
+    image_name="$DOCKERHUB_REPO/dr_$IMG"
     if docker_img_exists $image_name $CIRCLE_TAG; then
         echo "Docker image exists, skipping: $image_name:$CIRCLE_TAG"
     else
-        image_name="$DOCKERHUB_REPO/dr_$IMG"
+        echo "Building docker image: $image_name:$CIRCLE_TAG"
         # Build and push image
         docker build -t $image_name:$CIRCLE_TAG -f workers/dockerfiles/Dockerfile.$IMG .
         docker push $image_name:$CIRCLE_TAG
@@ -55,7 +56,7 @@ done
 # Build and push foreman image
 FOREMAN_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_foreman"
 if docker_img_exists $FOREMAN_DOCKER_IMAGE $CIRCLE_TAG; then
-    echo "Docker image exists, skipping: $:$CIRCLE_TAG"
+    echo "Docker image exists, skipping: $FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG"
 else
     docker build -t "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG" -f foreman/dockerfiles/Dockerfile.foreman .
     docker push "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG"
@@ -66,8 +67,8 @@ fi
 
 # Build and push API image
 API_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_api"
-if docker_img_exists $FOREMAN_DOCKER_IMAGE $CIRCLE_TAG; then
-    echo "Docker image exists, skipping: $:$CIRCLE_TAG"
+if docker_img_exists $API_DOCKER_IMAGE $CIRCLE_TAG; then
+    echo "Docker image exists, skipping: $API_DOCKER_IMAGE:$CIRCLE_TAG"
 else
     docker build -t "$API_DOCKER_IMAGE:$CIRCLE_TAG" -f api/dockerfiles/Dockerfile.api_production .
     docker push "$API_DOCKER_IMAGE:$CIRCLE_TAG"
