@@ -36,7 +36,7 @@ done
 
 COUNTER=0
 while [  $COUNTER -lt 99 ]; do
-        EBS_VOLUME_INDEX=`aws ec2 describe-volumes --filters "Name=tag:Index,Values=*" "Name=volume-id,Values=$EBS_VOLUME_ID" --query "Volumes[*].{ID:VolumeId,Tag:Tags}" --region us-east-1 | jq ".[0].Tag[$COUNTER].Value" | tr -d '"'`
+        EBS_VOLUME_INDEX=`aws ec2 describe-volumes --filters "Name=tag:Index,Values=*" "Name=volume-id,Values=$EBS_VOLUME_ID" --query "Volumes[*].{ID:VolumeId,Tag:Tags}" --region ${region} | jq ".[0].Tag[$COUNTER].Value" | tr -d '"'`
         if echo "$EBS_VOLUME_INDEX" | egrep -q '^\-?[0-9]+$'; then
             echo "$EBS_VOLUME_INDEX is an integer!"
             break # This is a Volume Index

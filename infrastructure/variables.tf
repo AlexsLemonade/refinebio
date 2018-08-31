@@ -152,6 +152,10 @@ variable "foreman_instance_type" {
   default = "t2.micro"
 }
 
+variable "volume_size_in_gb" {
+  default = "500"
+}
+
 # Output our production environment variables.
 output "environment_variables" {
   value = [
