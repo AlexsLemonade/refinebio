@@ -270,7 +270,7 @@ The Surveyor can be run with the `./foreman/run_surveyor.sh`
 script. The first argument to this script is the type of Surveyor Job
 to run, which will always be `survey_all`.
 
-Details on these expected arguments can be viewed by 
+Details on these expected arguments can be viewed by
 running:
 
 ```bash
@@ -300,8 +300,8 @@ dispatch survey jobs based on accession codes like so:
 
 #### Sequence Read Archive
 
-When surveying SRA, you can supply _either_ run accession codes (e.g., 
-codes beginning in `SRR`, `DRR`, or `ERR`) or study accession codes 
+When surveying SRA, you can supply _either_ run accession codes (e.g.,
+codes beginning in `SRR`, `DRR`, or `ERR`) or study accession codes
 (`SRP`, `DRP`, `ERP`).
 
 Run example (single read):
@@ -324,16 +324,16 @@ Study example:
 
 #### Ensembl Transcriptome Indices
 
-Building transcriptome indices used for quantifying RNA-seq data requires 
-us to retrieve genome information from 
-[Ensembl](http://ensemblgenomes.org/). The Surveyor expects a species' 
+Building transcriptome indices used for quantifying RNA-seq data requires
+us to retrieve genome information from
+[Ensembl](http://ensemblgenomes.org/). The Surveyor expects a species'
 scientific name in the main Ensembl division as the accession:
 
 ```bash
 ./foreman/run_surveyor.sh survey_all --accession "Homo Sapiens"
 ```
 
-TODO: Update once this supports organisms from multiple Ensembl divisions 
+TODO: Update once this supports organisms from multiple Ensembl divisions
 
 ### Downloader Jobs
 
@@ -589,16 +589,22 @@ tweak these as much.
 
 Jobs can be submitted via Nomad, either from a server/client or a local machine if you supply a server address and have an open network ingress.
 
-To start the Neuroblastoma job:
+To start a job with a file located on the foreman docker image:
 
 ```
-nomad job dispatch -meta COMMAND=survey_array_express -meta FILE=NEUROBLASTOMA.txt SURVEYOR
+nomad job dispatch -meta FILE=NEUROBLASTOMA.txt SURVEYOR_DISPATCHER
 ```
 
-or the Zebrafish job:
+or to start a job with a file located in S3:
 
 ```
-nomad job dispatch -meta COMMAND=survey_all -meta FILE=s3://data-refinery-test-assets/ZEBRAFISH.txt SURVEYOR
+nomad job dispatch -meta FILE=s3://data-refinery-test-assets/NEUROBLASTOMA.txt SURVEYOR_DISPATCHER
+```
+
+or just by a single accession:
+
+```
+nomad job dispatch -meta ACCESSION=E-MTAB-3050 SURVEYOR
 ```
 
 ### Log Consumption
@@ -636,6 +642,7 @@ awslogs get <your-log-group> ALL --start='1 days' --watch --filter-pattern="DEBU
 ```
 
 Or, look at a named log stream (with or without a wildcard.) For instance:
+(Unfortunately this feature seems to be broken at the moment: https://github.com/jorgebastida/awslogs/issues/158)
 
 ```bash
 awslogs get data-refinery-log-group-myusername-dev log-stream-api-nginx-access-* --watch
