@@ -18,7 +18,7 @@ from data_refinery_common.models import (
     Processor,
     ProcessorJob,
 )
-from data_refinery_common.utils import get_env_variable_gracefully
+from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 
@@ -29,6 +29,7 @@ GENE_TO_TRANSCRIPT_TEMPLATE = "{gene_id}\t{transcript_id}\n"
 GENE_TYPE_COLUMN = 2
 S3_TRANSCRIPTOME_INDEX_BUCKET_NAME = get_env_variable_gracefully("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", False)
 RUNNING_IN_CLOUD = get_env_variable_gracefully("RUNNING_IN_CLOUD", False)
+LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 # Removes each occurrance of ; and "
 IDS_CLEANUP_TABLE = str.maketrans({";": None, "\"": None})
 
@@ -43,7 +44,14 @@ def _compute_paths(job_context: Dict) -> str:
     job_context["base_file_path"] = '/'.join(first_file_path.split('/')[:-1])
     job_context["work_dir"] = job_context["base_file_path"] + '/' + job_context["length"].upper() + '/' + \
                               JOB_DIR_PREFIX + str(job_context["job_id"])
-    os.makedirs(job_context["work_dir"], exist_ok=True)
+    try:
+        os.makedirs(job_context["work_dir"])
+    except Exception as e:
+        logger.exception("Could not create work directory for processor job.",
+                         job_context=job_context)
+        job_context["job"].failure_reason = str(e)
+        job_context["success"] = False
+        return job_context
 
     job_context["output_dir"] = job_context["work_dir"] + "/" + "index"
     os.makedirs(job_context["output_dir"], exist_ok=True)
@@ -343,24 +351,28 @@ def _populate_index_object(job_context: Dict) -> Dict:
     index_object.assembly_name = job_context["assembly_name"]
     index_object.salmon_version = job_context["salmon_version"]
     index_object.index_type = "TRANSCRIPTOME_" + job_context['length'].upper()
-    index_object.absolute_directory_path = job_context["output_dir"]
+    # This is where the index will be extracted to.
+    index_object.absolute_directory_path = LOCAL_ROOT_DIR + "/TRANSCRIPTOME_INDEX/" \
+                                           + organism_object.name + "/" + job_context['length']
     index_object.result = result
 
     if S3_TRANSCRIPTOME_INDEX_BUCKET_NAME:
         logger.info("Uploading %s %s to s3", job_context['organism_name'], job_context['length'], processor_job=job_context["job_id"])
-        index_object.upload_to_s3(computed_file.absolute_file_path, S3_TRANSCRIPTOME_INDEX_BUCKET_NAME, logger)
+        s3_key = organism_object.name + '_' + index_object.index_type + '.tar.gz'
+        sync_result = computed_file.sync_to_s3(S3_TRANSCRIPTOME_INDEX_BUCKET_NAME, s3_key)
+        if sync_result:
+            computed_file.delete_local_file()
     else:
         logger.warn("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME not configured, therefore %s %s will not be uploaded.",
                     job_context['organism_name'],
                     job_context['length'],
                     processor_job=job_context["job_id"])
-        # Cleanup
-        os.rmtree(job_context["work_dir"])
 
     index_object.save()
 
-    # Make sure _end_job doesn't try to upload this since we've
-    # already done so and deleted the local copy.
+    # We uploaded the file ourselves since we wanted it to go to a
+    # different bucket than end_job would put it in, therefore empty
+    # this list so end_job doesn't try to upload it again.
     job_context['computed_files'] = []
 
     job_context['result'] = result

@@ -527,18 +527,6 @@ class OrganismIndex(models.Model):
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 
-    def upload_to_s3(self, absolute_file_path, bucket_name, logger):
-        if bucket_name is not None:
-            s3_key = self.organism.name + '_' + self.index_type + '.tar.gz'
-            S3.upload_file(absolute_file_path, bucket_name, s3_key,
-                           ExtraArgs={'ACL': 'public-read'})
-            self.s3_url = get_s3_url(bucket_name, s3_key)
-
-            # Cleanup the tarball
-            os.remove(absolute_file_path)
-        else:
-            logger.info("No S3 bucket in environment, not uploading")
-
     def save(self, *args, **kwargs):
         """ On save, update timestamps """
         current_time = timezone.now()
