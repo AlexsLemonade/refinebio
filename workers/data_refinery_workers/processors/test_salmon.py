@@ -243,11 +243,6 @@ class SalmonTestCase(TestCase):
 
         experiment_dir = os.path.join(self.test_dir, experiment_accession)
 
-        # Clean up tximport output:
-        rds_filename = os.path.join(experiment_dir, 'txi_out.RDS')
-        if (os.path.isfile(rds_filename)):
-            os.remove(rds_filename)
-
         # Test `salmon quant` on sample1 (SRR1206053)
         sample1_dir = os.path.join(experiment_dir, sample1_accession)
 
@@ -267,7 +262,9 @@ class SalmonTestCase(TestCase):
         # Confirm that this experiment is not ready for tximport yet.
         experiments_ready = salmon._get_tximport_inputs(job1_context)
         self.assertEqual(len(experiments_ready), 0)
-        self.assertFalse(os.path.exists(rds_filename))
+        # This job should not have produced any tximport output
+        # because the other sample isn't ready yet.
+        self.assertFalse(os.path.exists(os.path.join(job1_context["work_dir"], 'txi_out.RDS')))
 
          # Now run `salmon quant` on sample2 (SRR1206054) too
         sample2_dir = os.path.join(experiment_dir, sample2_accession)
@@ -280,6 +277,11 @@ class SalmonTestCase(TestCase):
                                               "index_directory": experiment_dir + "/index",
                                               "genes_to_transcripts_path": genes_to_transcripts_path,
                                               "original_files": [og_file_2]})
+
+        # Clean up tximport output:
+        rds_filename = os.path.join(job2_context["work_dir"], 'txi_out.RDS')
+        if (os.path.isfile(rds_filename)):
+            os.remove(rds_filename)
 
         # Check quant.sf in `salmon quant` output dir of sample2
         self.chk_salmon_quant(job2_context, sample2_dir)
