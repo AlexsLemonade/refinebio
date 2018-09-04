@@ -17,7 +17,7 @@
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get upgrade -y
-apt-get install --yes nfs-common jq iotop dstat speedometer
+apt-get install --yes nfs-common jq iotop dstat speedometer awscli docker.io
 
 ulimit -n 65536
 
