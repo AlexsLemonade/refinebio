@@ -46,6 +46,7 @@ RUN pip3 install numpy scipy matplotlib pandas==0.23.1 scikit-learn sympy nose r
 # End smasher-specific
 
 COPY config/ config/
+COPY .boto .boto
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
 
