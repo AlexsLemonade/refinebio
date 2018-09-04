@@ -107,7 +107,7 @@ class SraSurveyorTestCase(TestCase):
         sra_surveyor = SraSurveyor(survey_job)
         experiment, samples = sra_surveyor.discover_experiment_and_samples()
         self.assertEqual(experiment.accession_code, "SRP111553")
-        self.assertEqual(len(samples), 8) # Not 16!
+        self.assertEqual(len(samples), 16)
 
     @patch('data_refinery_foreman.surveyor.sra.requests.get')
     def test_metadata_is_gathered_correctly(self, mock_get):

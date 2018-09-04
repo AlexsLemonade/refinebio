@@ -292,6 +292,11 @@ class SalmonTestCase(TestCase):
         # a few seconds before testing the existence of rds_filename.
         self.assertTrue(os.path.exists(rds_filename))
 
+        # Check the individual files
+        self.assertTrue(len(job2_context['individual_files']), 2)
+        for file in job2_context['individual_files']:
+            self.assertTrue(os.path.isfile(file.absolute_file_path))
+
     @tag("salmon")
     def test_fastqc(self):
 
@@ -299,6 +304,7 @@ class SalmonTestCase(TestCase):
         win_context = {
             'job': job,
             'job_id': 789,
+            'job_dir_prefix': "processor_job_789",
             'pipeline': Pipeline(name="Salmon"),
             'qc_directory': "/home/user/data_store/raw/TEST/SALMON/qc",
             'original_files': og_files,
@@ -355,7 +361,7 @@ class SalmonToolsTestCase(TestCase):
         sample.save()
         job_context["sample"] = sample
 
-        salmon._run_salmontools(job_context, False)
+        salmon._run_salmontools(job_context)
 
         # Confirm job status
         self.assertTrue(job_context["success"])
@@ -387,7 +393,7 @@ class SalmonToolsTestCase(TestCase):
         sample.save()
         job_context["sample"] = sample
 
-        salmon._run_salmontools(job_context, False)
+        salmon._run_salmontools(job_context)
 
         # Confirm job status
         self.assertTrue(job_context["success"])
@@ -396,44 +402,6 @@ class SalmonToolsTestCase(TestCase):
         output_file = self.test_dir + 'single_output/unmapped_by_salmon.fa'
         expected_output_file = self.test_dir + 'expected_single_output/unmapped_by_salmon.fa'
         self.assertTrue(identical_checksum(output_file, expected_output_file))
-
-
-class TximportTestCase(TestCase):
-    """Test salmon._tximport function, which launches tximport.R script."""
-
-    def setUp(self):
-        experiment = Experiment(accession_code='PRJNA408323')
-        experiment.save()
-
-        for id in ['07', '08', '09', '12', '13', '14']:
-            sample = Sample(accession_code=('SRR60800' + id))
-            sample.save()
-            e_s = ExperimentSampleAssociation(experiment=experiment, sample=sample)
-            e_s.save()
-
-    @tag('salmon')
-    def test_tximport_experiment(self):
-        job_context = {
-            'job_id': 456,
-            'genes_to_transcripts_path': '/home/user/data_store/tximport_test/np_gene2txmap.txt',
-            'computed_files': [],
-            'job': ProcessorJob(),
-            'pipeline': Pipeline(name="Salmon"),
-        }
-
-        experiment_dir = '/home/user/data_store/tximport_test/PRJNA408323'
-        final_context = salmon._tximport(job_context, experiment_dir)
-
-        expected_output_dir = '/home/user/data_store/tximport_test/expected_output'
-        for filename in ['txi_out.RDS', 'gene_lengthScaledTPM.tsv']:
-            output_path = experiment_dir + '/' + filename
-            expected_output = expected_output_dir + '/' + filename
-            self.assertTrue(identical_checksum(output_path, expected_output))
-
-        # Check the individual files
-        self.assertTrue(len(final_context['individual_files']), 6)
-        for file in final_context['individual_files']:
-            self.assertTrue(os.path.isfile(file.absolute_file_path))
 
 
 class DetermineIndexLengthTestCase(TestCase):
@@ -598,7 +566,7 @@ class RuntimeProcessorTest(TestCase):
         original_yml_file = utils.ProcessorEnum['SALMONTOOLS'].value['yml_file']
         utils.ProcessorEnum['SALMONTOOLS'].value['yml_file'] = 'foobar.yml'
 
-        salmon._run_salmontools(job_context, False)
+        salmon._run_salmontools(job_context)
         self.assertEqual(job_context["success"], False)
         self.assertTrue(job_context["job"].failure_reason.startswith('Failed to set processor:'))
 
