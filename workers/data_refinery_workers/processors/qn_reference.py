@@ -30,7 +30,7 @@ S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 logger = get_and_configure_logger(__name__)
 
 def _prepare_input(job_context: Dict) -> Dict:
-    
+
     # We're going to use the smasher outside of the smasher.
     # I'm not crazy about this yet. Maybe refactor later,
     # but I need the data now.
@@ -39,7 +39,7 @@ def _prepare_input(job_context: Dict) -> Dict:
     job_context = smasher._smash(job_context)
 
     if not 'final_frame' in job_context.keys():
-        logger.error("Unable to prepare files for creating QN target.", 
+        logger.error("Unable to prepare files for creating QN target.",
             job_id=job_context['job'].id)
         job_context["job"].failure_reason = "Couldn't prepare files creating QN target (no final_frame)."
         job_context['success'] = False
@@ -116,6 +116,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     annotation.result = result
     annotation.data = {
         "organism_id": job_context['samples']['ALL'][0].organism_id,
+        "is_qn": True,
         "platform_accession_code": job_context['samples']['ALL'][0].platform_accession_code
     }
     annotation.save()

@@ -1,43 +1,39 @@
-from __future__ import absolute_import, unicode_literals
-
 import boto3
 import csv
-import simplejson as json
 import os
+import rpy2
 import shutil
+import simplejson as json
 import string
 import warnings
 
 from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
-from django.utils import timezone
 from django.conf import settings
-from typing import Dict
-
-import numpy as np
-import pandas as pd
-from sklearn import preprocessing
-
-import rpy2
+from django.utils import timezone
 from rpy2.robjects import pandas2ri
 from rpy2.robjects import r as rlang
 from rpy2.robjects.packages import importr
+from sklearn import preprocessing
+from typing import Dict
+import numpy as np
+import pandas as pd
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
-    OriginalFile,
-    Pipeline,
     ComputationalResult,
     ComputedFile,
-    SampleResultAssociation
+    OriginalFile,
+    Pipeline,
+    SampleResultAssociation,
 )
+from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
-from data_refinery_common.utils import get_env_variable
+
 
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
-
 logger = get_and_configure_logger(__name__)
 
 
@@ -49,6 +45,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     all_sample_files = []
     job_context['input_files'] = {}
 
+    # `key` can either be the species name or experiment accession.
     for key, samples in job_context["samples"].items():
         samples_for_key = []
         for sample in samples:
@@ -58,12 +55,20 @@ def _prepare_files(job_context: Dict) -> Dict:
         all_sample_files = all_sample_files + samples_for_key
 
     if all_sample_files == []:
-        logger.error("Couldn't get any files to smash for Smash job!!",
-            dataset_id=job_context['dataset'].id,
-            samples=job_context["samples"])
-        job_context['success'] = False
+        error_message = "Couldn't get any files to smash for Smash job!!"
+        logger.error(error_message,
+                     dataset_id=job_context['dataset'].id,
+                     samples=job_context["samples"])
+
+        # Delay failing this pipeline until the failure notify has been sent
+        job_context['dataset'].failure_reason = error_message
+        job_context['dataset'].success = False
+        job_context['dataset'].save()
+        job_context['job'].success = False
         job_context["job"].failure_reason = "Couldn't get any files to smash for Smash job - empty all_sample_files"
         return job_context
+
+    job_context["work_dir"] = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk) + "/"
 
     return job_context
 
@@ -80,7 +85,7 @@ def _smash(job_context: Dict) -> Dict:
 
     try:
         # Prepare the output directory
-        smash_path = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk) + "/"
+        smash_path = job_context["work_dir"]
         # Ensure we have a fresh smash directory
         shutil.rmtree(smash_path, ignore_errors=True)
         os.makedirs(smash_path, exist_ok=True)
@@ -95,10 +100,12 @@ def _smash(job_context: Dict) -> Dict:
         num_samples = 0
 
         # Smash all of the sample sets
-        logger.info("About to smash!",
-                input_files=job_context['input_files'],
-                dataset_data=job_context['dataset'].data,
-            )
+        logger.debug("About to smash!",
+                     input_files=job_context['input_files'],
+                     dataset_data=job_context['dataset'].data,
+        )
+
+        # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context['input_files'].items():
 
             # Merge all the frames into one
@@ -106,10 +113,13 @@ def _smash(job_context: Dict) -> Dict:
 
             for computed_file in input_files:
 
-                computed_file_path = str(computed_file.get_synced_file_path())
+                # Download the file to a job-specific location so it
+                # won't disappear while we're using it.
+                computed_file_path = job_context["work_dir"] + computed_file.filename
+                computed_file_path = computed_file.get_synced_file_path(path=computed_file_path)
 
                 # Bail appropriately if this isn't a real file.
-                if not os.path.exists(computed_file.get_synced_file_path()):
+                if not computed_file_path or not os.path.exists(computed_file_path):
                     raise ValueError("Smasher received non-existent file path.")
 
                 try:
@@ -125,14 +135,14 @@ def _smash(job_context: Dict) -> Dict:
                     # via https://github.com/AlexsLemonade/refinebio/issues/330:
                     #   aggregating by experiment -> return untransformed output from tximport
                     #   aggregating by species -> log2(x + 1) tximport output
-                    if job_context['dataset'].aggregate_by == 'SPECIES':
-                        if 'lengthScaledTPM' in computed_file_path:
-                            data = data + 1
-                            data = np.log2(data)
+                    if job_context['dataset'].aggregate_by == 'SPECIES' \
+                    and computed_file_path.endswith("lengthScaledTPM.tsv"):
+                        data = data + 1
+                        data = np.log2(data)
 
                     # Detect if this data hasn't been log2 scaled yet.
                     # Ideally done in the NO-OPPER, but sanity check here.
-                    if ("lengthScaledTPM" not in computed_file_path) and (data.max() > 100).any():
+                    if (not computed_file_path.endswith("lengthScaledTPM.tsv")) and (data.max() > 100).any():
                         logger.info("Detected non-log2 microarray data.", file=computed_file)
                         data = np.log2(data)
 
@@ -164,7 +174,7 @@ def _smash(job_context: Dict) -> Dict:
                     try:
                         data.columns = [computed_file.samples.all()[0].title]
                     except ValueError:
-                        # This sample have have multiple channels, or something else.
+                        # This sample might have multiple channels, or something else.
                         # Don't mess with it.
                         pass
                     except Exception as e:
@@ -205,6 +215,11 @@ def _smash(job_context: Dict) -> Dict:
                     if column in merged.columns:
                         breaker = True
                 if breaker:
+                    logger.warning("Column repeated for smash job!",
+                                   input_files=str(input_files),
+                                   dataset_id=job_context["dataset"].id,
+                                   processor_job_id=job_context["job"].id
+                    )
                     continue
 
                 # This is the inner join, the main "Smash" operation
@@ -224,6 +239,7 @@ def _smash(job_context: Dict) -> Dict:
                             organism=organism,
                             dataset_id=job_context['dataset'].id,
                             dataset_data=job_context['dataset'].data,
+                            processor_job_id=job_context["job"].id,
                         )
                     else:
                         qn_target_path = qn_target.sync_from_s3()
@@ -257,9 +273,13 @@ def _smash(job_context: Dict) -> Dict:
                     logger.exception("Problem occured during quantile normalization",
                         dataset_id=job_context['dataset'].id,
                         dataset_data=job_context['dataset'].data,
+                        processor_job_id=job_context["job"].id,
                     )
 
             # Transpose before scaling
+            # Do this even if we don't want to scale in case transpose
+            # modifies the data in any way. (Which it shouldn't but
+            # we're paranoid.)
             transposed = merged.transpose()
 
             # Scaler
@@ -350,14 +370,14 @@ def _smash(job_context: Dict) -> Dict:
     except Exception as e:
         logger.exception("Could not smash dataset.",
                         dataset_id=job_context['dataset'].id,
-                        job_id=job_context['job_id'],
+                        processor_job_id=job_context['job_id'],
                         input_files=job_context['input_files'])
         job_context['dataset'].success = False
         job_context['job'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].save()
         # Delay failing this pipeline until the failure notify has been sent
-        # job_context['success'] = False
+        job_context['job'].success = False
         job_context['failure_reason'] = str(e)
         return job_context
 
@@ -365,7 +385,7 @@ def _smash(job_context: Dict) -> Dict:
     job_context['dataset'].success = True
     job_context['dataset'].save()
 
-    logger.info("Created smash output!",
+    logger.debug("Created smash output!",
         archive_location=job_context["output_file"])
 
     return job_context
@@ -388,7 +408,7 @@ def _upload(job_context: Dict) -> Dict:
             result_url = "https://s3.amazonaws.com/" + RESULTS_BUCKET + "/" + job_context["output_file"].split('/')[-1]
             job_context["result_url"] = result_url
 
-            logger.info("Result uploaded!",
+            logger.debug("Result uploaded!",
                     result_url=job_context["result_url"]
                 )
 
@@ -421,7 +441,6 @@ def _notify(job_context: Dict) -> Dict:
 
         # Don't send an email if we don't have address.
         if job_context["dataset"].email_address:
-            # XXX: This address must be verified with Amazon SES.
             SENDER = "Refine.bio Mail Robot <noreply@refine.bio>"
             RECIPIENT = job_context["dataset"].email_address
             AWS_REGION = "us-east-1"
@@ -492,7 +511,7 @@ def _notify(job_context: Dict) -> Dict:
     return job_context
 
 def _update_result_objects(job_context: Dict) -> Dict:
-    """ Create the ComputationalResult objects after a run is complete """
+    """Closes out the dataset object."""
 
     dataset = job_context["dataset"]
     dataset.is_processing = False
@@ -505,21 +524,12 @@ def _update_result_objects(job_context: Dict) -> Dict:
 
     return job_context
 
-def _delete_local_files(job_context: Dict) -> Dict:
-    """ Removes all of the ComputedFiles that have been synced from S3 """
-    for key, input_files in job_context['input_files'].items():
-        for computed_file in input_files:
-            computed_file.delete_local_file()
-
-    job_context['success'] = True
-    return job_context
-
 def smash(job_id: int, upload=True) -> None:
     """ Main Smasher interface """
 
     pipeline = Pipeline(name=utils.PipelineEnum.SMASHER.value)
-    return utils.run_pipeline({ "job_id": job_id, 
-                                "upload": upload, 
+    return utils.run_pipeline({ "job_id": job_id,
+                                "upload": upload,
                                 "pipeline": pipeline
                             },
                        [utils.start_job,
@@ -528,6 +538,4 @@ def smash(job_id: int, upload=True) -> None:
                         _upload,
                         _notify,
                         _update_result_objects,
-                        _delete_local_files,
                         utils.end_job])
-
