@@ -65,7 +65,8 @@ def _prepare_files(job_context: Dict) -> Dict:
         job_context["input_file_path_2"] = original_files[1].get_synced_file_path()
 
     # There should only ever be one per Salmon run
-    job_context['sample'] = job_context['original_files'][0].samples.first()
+    sample = job_context['original_files'][0].samples.first()
+    job_context['sample'] = sample
     job_context['organism'] = job_context['sample'].organism
     job_context["success"] = True
 
@@ -76,7 +77,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR,
                                            job_context["job_dir_prefix"])
 
-    job_context["output_directory"] = job_context["work_dir"] + "/processed/"
+    job_context["output_directory"] = job_context["work_dir"] + "/" + sample.accession_code +"/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
     # The sample's directory is what should be used for MultiQC input
@@ -271,10 +272,11 @@ def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFil
     quantified_experiments = {}
     for experiment in experiments:
         salmon_quant_results = _find_salmon_quant_results(experiment)
+
         if len(salmon_quant_results) == experiment.samples.count():
             quant_files = []
             for result in salmon_quant_results:
-                quant_files.append(ComputedFile.objects.filter(result=result.id, filename="quant.sf")[0])
+                quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])
 
             quantified_experiments[experiment] = quant_files
 
@@ -785,6 +787,11 @@ def _run_salmontools(job_context: Dict) -> Dict:
         computed_file.result = result
         computed_file.save()
         job_context['computed_files'].append(computed_file)
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = job_context["sample"]
+        assoc.computed_file = computed_file
+        assoc.save()
 
         job_context["result"] = result
         job_context["success"] = True

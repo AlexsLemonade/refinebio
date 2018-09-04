@@ -29,7 +29,7 @@ sf_files <- scan(file_list, character())
 # We make the assumption that the quant paths are of a structure like:
 # .../<SAMPLE_ACCESSION>/processed/quant.sf
 samples <- lapply(sf_files, function(filename) {
-    tokens <- unlist(strsplit(filename, "/")); tokens[length(tokens) - 2]
+    tokens <- unlist(strsplit(filename, "/")); tokens[length(tokens) - 1]
 })
 samples <- unlist(samples)
 

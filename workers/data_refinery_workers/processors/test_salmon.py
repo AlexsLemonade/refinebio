@@ -191,16 +191,15 @@ class SalmonTestCase(TestCase):
                                              'computed_files': [],
                                              'index_length': 'short',
                                              # Hard coded to be where we install before running tests.
-                                             "index_directory": "/home/user/data_store/processed/TEST/TRANSCRIPTOME_INDEX/index",
+                                             "index_directory": experiment_dir + "/index",
                                              "original_files": [og_read_1, og_read_2]})
 
-        from pprint import pprint
-        pprint(job_context)
+        # Run salmon.
         self.chk_salmon_quant(job_context, sample_dir)
 
         # Confirm that this experiment is not ready for tximport yet,
         # because `salmon quant` is not run on 'fake_sample'.
-        experiments_ready = salmon._get_salmon_completed_exp_dirs(job_context)
+        experiments_ready = salmon._get_tximport_inputs(job_context)
         self.assertEqual(len(experiments_ready), 0)
 
     @tag('salmon')
@@ -214,15 +213,36 @@ class SalmonTestCase(TestCase):
         experiment_accession = 'PRJNA242809'
         experiment = Experiment.objects.create(accession_code=experiment_accession)
 
+        c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+
+        ## Sample 1
         sample1_accession = 'SRR1206053'
-        sample1 = Sample.objects.create(accession_code=sample1_accession)
+        sample1 = Sample.objects.create(accession_code=sample1_accession,
+                                        organism=c_elegans)
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample1)
 
+        og_file_1 = OriginalFile()
+        og_file_1.absolute_file_path = os.path.join(self.test_dir, experiment_accession, "raw/SRR1206053.fastq.gz")
+        og_file_1.filename = "SRR1206053.fastq.gz"
+        og_file_1.save()
+
+        OriginalFileSampleAssociation.objects.create(original_file=og_file_1, sample=sample1).save()
+
+        ## Sample 2
         sample2_accession = 'SRR1206054'
-        sample2 = Sample.objects.create(accession_code=sample2_accession)
+        sample2 = Sample.objects.create(accession_code=sample2_accession,
+                                        organism=c_elegans)
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample2)
 
+        og_file_2 = OriginalFile()
+        og_file_2.absolute_file_path = os.path.join(self.test_dir, experiment_accession, "raw/SRR1206054.fastq.gz")
+        og_file_2.filename = "SRR1206054.fastq.gz"
+        og_file_2.save()
+
+        OriginalFileSampleAssociation.objects.create(original_file=og_file_2, sample=sample2).save()
+
         experiment_dir = os.path.join(self.test_dir, experiment_accession)
+
         # Clean up tximport output:
         rds_filename = os.path.join(experiment_dir, 'txi_out.RDS')
         if (os.path.isfile(rds_filename)):
@@ -230,50 +250,39 @@ class SalmonTestCase(TestCase):
 
         # Test `salmon quant` on sample1 (SRR1206053)
         sample1_dir = os.path.join(experiment_dir, sample1_accession)
-        job1_context = {
-            'job_id': 1,
-            'job': ProcessorJob(),
-            'pipeline': Pipeline(name="Salmon"),
-            'sample': sample1,
-            'index_length': 'short',
-            'input_file_path': os.path.join(experiment_dir, 'raw/SRR1206053.fastq.gz'),
-            'index_directory': os.path.join(experiment_dir, 'index'),
-            'genes_to_transcripts_path': os.path.join(experiment_dir, 'index',
-                                                      'genes_to_transcripts.txt'),
-            'output_directory': os.path.join(sample1_dir, 'processed'),
-            'success': True
-        }
+
+        genes_to_transcripts_path = os.path.join(experiment_dir, 'index', 'genes_to_transcripts.txt')
+        job1_context = salmon._prepare_files({"job_dir_prefix": "TEST",
+                                              "job_id": "TEST",
+                                              'pipeline': Pipeline(name="Salmon"),
+                                              'computed_files': [],
+                                              'index_length': 'short',
+                                              # Hard coded to be where we install before running tests.
+                                              "index_directory": experiment_dir + "/index",
+                                              "genes_to_transcripts_path": genes_to_transcripts_path,
+                                              "original_files": [og_file_1]})
 
         # Check quant.sf in `salmon quant` output dir of sample1
         self.chk_salmon_quant(job1_context, sample1_dir)
         # Confirm that this experiment is not ready for tximport yet.
-        experiments_ready = salmon._get_salmon_completed_exp_dirs(job1_context)
+        experiments_ready = salmon._get_tximport_inputs(job1_context)
         self.assertEqual(len(experiments_ready), 0)
         self.assertFalse(os.path.exists(rds_filename))
 
-        # Now run `salmon quant` on sample2 (SRR1206054) too
+         # Now run `salmon quant` on sample2 (SRR1206054) too
         sample2_dir = os.path.join(experiment_dir, sample2_accession)
-        job2_context = {
-            'job_id': 2,
-            'job': ProcessorJob(),
-            'pipeline': Pipeline(name="Salmon"),
-            'sample': sample2,
-            'index_length': 'short',
-            'input_file_path': os.path.join(experiment_dir, 'raw/SRR1206054.fastq.gz'),
-            'index_directory': os.path.join(experiment_dir, 'index'),
-            'genes_to_transcripts_path': os.path.join(experiment_dir, 'index',
-                                                      'genes_to_transcripts.txt'),
-            'output_directory': os.path.join(sample2_dir, 'processed'),
-            'success': True,
-            'computed_files': []
-        }
+        job2_context = salmon._prepare_files({"job_dir_prefix": "TEST2",
+                                              "job_id": "TEST2",
+                                              'pipeline': Pipeline(name="Salmon"),
+                                              'computed_files': [],
+                                              'index_length': 'short',
+                                              # Hard coded to be where we install before running tests.
+                                              "index_directory": experiment_dir + "/index",
+                                              "genes_to_transcripts_path": genes_to_transcripts_path,
+                                              "original_files": [og_file_2]})
 
         # Check quant.sf in `salmon quant` output dir of sample2
         self.chk_salmon_quant(job2_context, sample2_dir)
-        # Confirm that this experiment is ready for tximport now:
-        experiments_ready = salmon._get_salmon_completed_exp_dirs(job2_context)
-        self.assertEqual(len(experiments_ready), 1)
-        self.assertEqual(experiments_ready[0], experiment_dir)
 
         # rds_filename should have been generated bytximport at this point.
         # Note: `tximport` step is launched by subprocess module in Python.
@@ -281,6 +290,7 @@ class SalmonTestCase(TestCase):
         # a few seconds before testing the existence of rds_filename.
         self.assertTrue(os.path.exists(rds_filename))
 
+    @tag("salmon")
     def test_fastqc(self):
 
         job, og_files = prepare_job()
