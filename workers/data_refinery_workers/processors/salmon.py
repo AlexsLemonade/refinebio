@@ -341,7 +341,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         second_read_str = " -2 {}".format(job_context["input_file_path_2"])
 
         # Rob recommends 16 threads/process, which fits snugly on an x1 at 8GB RAM per Salmon container:
-        # (2 threads/core * 16 cores/socket * 64 vCPU) / (1TB/18GB) = ~17
+        # (2 threads/core * 16 cores/socket * 64 vCPU) / (1TB/8GB) = ~17
         command_str = ("salmon --no-version-check quant -l A --biasSpeedSamp 5 -i {index}"
                        " -1 {input_one}{second_read_str}"
                        " -p 16 -o {output_directory} --seqBias --gcBias --dumpEq --writeUnmappedNames")
