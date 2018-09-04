@@ -55,6 +55,7 @@ RUN pip3 install --upgrade pip
 RUN  pip3 --no-cache-dir install -r requirements.txt
 
 COPY config/ config/
+COPY .boto .boto
 COPY common/dist/data-refinery-common-* common/
 
 # Get the latest version from the dist directory.
