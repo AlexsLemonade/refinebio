@@ -17,6 +17,7 @@ WORKDIR /home/user
 RUN pip3 install --upgrade pip
 
 COPY config config
+COPY .boto .boto
 
 COPY foreman/requirements.txt .
 

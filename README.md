@@ -30,12 +30,11 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Gotchas](#gotchas)
 - [Running Locally](#running-locally)
   - [Surveyor Jobs](#surveyor-jobs)
-    - [ArrayExpress](#arrayexpress)
-    - [Sequence Read Archive (SRA)](#sequence-read-archive-sra)
-    - [Gene Expression Omnibus (GEO)](#gene-expression-omnibus-geo)
-    - [Ensembl Indexes](#ensembl-indexes)
+    - [Sequence Read Archive](#sequence-read-archive)
+    - [Ensembl Transcriptome Indices](#ensembl-transcriptome-indices)
   - [Downloader Jobs](#downloader-jobs)
   - [Processor Jobs](#processor-jobs)
+  - [Creating Quantile Normalization Reference Targets](#creating-quantile-normalization-reference-targets)
   - [Checking on Local Jobs](#checking-on-local-jobs)
   - [Testing](#testing-1)
     - [API](#api)
@@ -269,101 +268,72 @@ recording metadata about the samples. A Surveyor Job should queue
 
 The Surveyor can be run with the `./foreman/run_surveyor.sh`
 script. The first argument to this script is the type of Surveyor Job
-to run. The valid options are:
-- `survey_all`
-- `survey_array_express`
-- `survey_sra`
-- `survey_geo`
-- `survey_transcriptome`
+to run, which will always be `survey_all`.
 
-Each Surveyor Job type expects unique arguments. Details on these
-arguments can be viewed by running:
+Details on these expected arguments can be viewed by
+running:
 
 ```bash
-./foreman/run_surveyor.sh <JOB_TYPE> -h
+./foreman/run_surveyor.sh survey_all -h
+```
+
+The Surveyor can accept a single accession code from any of the source
+data repositories (e.g., Sequencing Read Archive,
+ ArrayExpress, Gene Expression Omnibus):
+
+```bash
+./foreman/run_surveyor.sh survey_all --accession <ACCESSION_CODE>
+```
+
+Example for an ArrayExpress experiment:
+
+```bash
+./foreman/run_surveyor.sh survey_all --accession E-MTAB-3050
 ```
 
 You can also supply a newline-deliminated file to `survey_all` which will
-dispatch survey jobs based on acession codes like so:
+dispatch survey jobs based on accession codes like so:
 
-Example:
 ```bash
 ./foreman/run_surveyor.sh survey_all --file MY_BIG_LIST_OF_CODES.txt
 ```
 
-Templates and examples of valid commands to run the different types of
-Surveyor Jobs are:
+#### Sequence Read Archive
 
-#### ArrayExpress
+When surveying SRA, you can supply _either_ run accession codes (e.g.,
+codes beginning in `SRR`, `DRR`, or `ERR`) or study accession codes
+(`SRP`, `DRP`, `ERP`).
 
-The [ArrayExpress](https://www.ebi.ac.uk/arrayexpress/) Surveyor
-expects a single accession code:
-
-```bash
-./foreman/run_surveyor.sh survey_array_express --accession <ARRAY_EXPRESS_ACCESSION_CODE>
-```
-
-Example:
-```bash
-./foreman/run_surveyor.sh survey_array_express --accession E-MTAB-3050
-```
-
-You can also supply a list in a file:
-```bash
-./foreman/run_surveyor.sh survey_array_express --file my_neuroblastoma_list.txt
-```
-
-#### Sequence Read Archive (SRA)
-
-The [Sequence Read Archive](https://www.ncbi.nlm.nih.gov/sra) Surveyor expects a
-range of SRA accession codes:
+Run example (single read):
 
 ```bash
-./foreman/run_surveyor.sh survey_sra --accession <ACCESSION>
+./foreman/run_surveyor.sh survey_all --accession DRR002116
 ```
 
-Example (single read):
-```bash
-./foreman/run_surveyor.sh survey_sra --accession DRR002116
-```
-
-Example (paired read):
-```bash
-./foreman/run_surveyor.sh survey_sra --accession SRR6718414
-```
-
-#### Gene Expression Omnibus (GEO)
-
-The GEO surveyor expects an exession code or a file:
+Run example (paired read):
 
 ```bash
-./foreman/run_surveyor.sh survey_geo --accession <GEO_ACCESSION_CODE> --file <FILEPATH.txt>
+./foreman/run_surveyor.sh survey_all --accession SRR6718414
 ```
 
-Example:
-```bash
-./foreman/run_surveyor.sh survey_geo --file NEUROBLASTOMA.txt
-```
-
-#### Ensembl Indexes
-
-The Index Refinery Surveyor expects an [Ensembl](http://ensemblgenomes.org/) divsion and a number of
-organisms to survey:
+Study example:
 
 ```bash
-./foreman/run_surveyor.sh survey_transcriptome <DIVISION> <NUMBER_OF_ORGANISMS>
+./foreman/run_surveyor.sh survey_all --accession ERP006872
 ```
 
-Example:
+#### Ensembl Transcriptome Indices
+
+Building transcriptome indices used for quantifying RNA-seq data requires
+us to retrieve genome information from
+[Ensembl](http://ensemblgenomes.org/). The Surveyor expects a species'
+scientific name in the main Ensembl division as the accession:
+
 ```bash
-./foreman/run_surveyor.sh survey_transcriptome Ensembl 1
+./foreman/run_surveyor.sh survey_all --accession "Homo Sapiens"
 ```
 
-A specific organism can also be specified:
-
-```bash
-./foreman/run_surveyor.sh survey_transcriptome Ensembl 2 "Homo Sapiens"
-```
+TODO: Update once this supports organisms from multiple Ensembl divisions
 
 ### Downloader Jobs
 
@@ -619,16 +589,22 @@ tweak these as much.
 
 Jobs can be submitted via Nomad, either from a server/client or a local machine if you supply a server address and have an open network ingress.
 
-To start the Neuroblastoma job:
+To start a job with a file located on the foreman docker image:
 
 ```
-nomad job dispatch -meta COMMAND=survey_array_express -meta FILE=NEUROBLASTOMA.txt SURVEYOR
+nomad job dispatch -meta FILE=NEUROBLASTOMA.txt SURVEYOR_DISPATCHER
 ```
 
-or the Zebrafish job:
+or to start a job with a file located in S3:
 
 ```
-nomad job dispatch -meta COMMAND=survey_all -meta FILE=s3://data-refinery-test-assets/ZEBRAFISH.txt SURVEYOR
+nomad job dispatch -meta FILE=s3://data-refinery-test-assets/NEUROBLASTOMA.txt SURVEYOR_DISPATCHER
+```
+
+or just by a single accession:
+
+```
+nomad job dispatch -meta ACCESSION=E-MTAB-3050 SURVEYOR
 ```
 
 ### Log Consumption
@@ -666,6 +642,7 @@ awslogs get <your-log-group> ALL --start='1 days' --watch --filter-pattern="DEBU
 ```
 
 Or, look at a named log stream (with or without a wildcard.) For instance:
+(Unfortunately this feature seems to be broken at the moment: https://github.com/jorgebastida/awslogs/issues/158)
 
 ```bash
 awslogs get data-refinery-log-group-myusername-dev log-stream-api-nginx-access-* --watch
