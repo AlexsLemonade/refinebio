@@ -709,20 +709,22 @@ class ComputedFile(models.Model):
 
         return True
 
-    def sync_from_s3(self, force=False):
+    def sync_from_s3(self, force=False, path=None):
         """ Downloads a file from S3 to the local file system.
         Returns the absolute file path.
         """
+        path = path if path not None else self.absolute_file_path
+
         if not settings.RUNNING_IN_CLOUD and not force:
-            return self.absolute_file_path
+            return path
 
         try:
             S3.download_file(
                         self.s3_bucket,
                         self.s3_key,
-                        self.absolute_file_path
+                        path
                     )
-            return self.absolute_file_path
+            return path
         except Exception as e:
             logger.exception(e, computed_file_id=self.pk)
             return None
@@ -745,8 +747,7 @@ class ComputedFile(models.Model):
         return self.size_in_bytes
 
     def delete_local_file(self, force=False):
-        """ Deletes a file from the path and actually removes it from the file system,
-        resetting the is_downloaded flag to false. Can be refetched from source if needed. """
+        """ Deletes a file from the path and actually removes it from the file system."""
         if not settings.RUNNING_IN_CLOUD and not force:
             return
 
@@ -880,7 +881,7 @@ class Dataset(models.Model):
         return by_species
 
     def get_aggregated_samples(self):
-        """ Uses aggregate_by to return smasher-ready a sample dict. """
+        """ Uses aggregate_by to return a smasher-ready sample dict. """
 
         if self.aggregate_by == "ALL":
             return {'ALL': self.get_samples()}
