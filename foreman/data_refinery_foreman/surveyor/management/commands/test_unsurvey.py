@@ -58,6 +58,25 @@ class SurveyTestCase(TransactionTestCase):
         geo_surveyor = GeoSurveyor(survey_job)
         geo_surveyor.survey()
 
+        # Establish baselines before purge
+        experiment = Experiment.objects.filter(accession_code=sub_experiment_accession)[0]
+        experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(experiment=experiment)
+        samples = Sample.objects.filter(id__in=experiment_sample_assocs.values('sample_id'))
+        self.assertEqual(samples.count(), 4)
+
+        og_file_sample_assocs = OriginalFileSampleAssociation.objects.filter(sample_id__in=samples.values('id'))
+        original_files = OriginalFile.objects.filter(id__in=og_file_sample_assocs.values('original_file_id'))
+        self.assertEqual(original_files.count(), 4)
+
+        experiment = Experiment.objects.filter(accession_code=superseries_accession)[0]
+        experiment_sample_assocs = ExperimentSampleAssociation.objects.filter(experiment=experiment)
+        samples = Sample.objects.filter(id__in=experiment_sample_assocs.values('sample_id'))
+        self.assertEqual(samples.count(), 20)
+
+        og_file_sample_assocs = OriginalFileSampleAssociation.objects.filter(sample_id__in=samples.values('id'))
+        original_files = OriginalFile.objects.filter(id__in=og_file_sample_assocs.values('original_file_id'))
+        self.assertEqual(original_files.count(), 20)
+
         # Purge the superseries
         purge_experiment(superseries_accession)
 
@@ -70,8 +89,8 @@ class SurveyTestCase(TransactionTestCase):
         # Make sure sub-experiment original files weren't affected.
         og_file_sample_assocs = OriginalFileSampleAssociation.objects.filter(sample_id__in=samples.values('id'))
         original_files = OriginalFile.objects.filter(id__in=og_file_sample_assocs.values('original_file_id'))
-        self.assertEqual(original_files.count(), 6)
+        self.assertEqual(original_files.count(), 4)
 
-        # Make sure the superseries samples are gone.
+        # And that samples and files that remain are from the subseries.
         self.assertEqual(Sample.objects.count(), 4)
-        self.assertEqual(OriginalFile.objects.count(), 6)
+        self.assertEqual(OriginalFile.objects.count(), 4)

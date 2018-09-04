@@ -676,7 +676,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
     job_context['computed_files'].append(data_file)
 
     SampleComputedFileAssociation.objects.get_or_create(
-        sample=sample,
+        sample=job_context["sample"],
         computed_file=data_file)
 
     report_file = ComputedFile()
@@ -692,7 +692,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
     job_context['computed_files'].append(report_file)
 
     SampleComputedFileAssociation.objects.get_or_create(
-        sample=sample,
+        sample=job_context["sample"],
         computed_file=data_file)
 
     job_context['qc_files'] = [data_file, report_file]
