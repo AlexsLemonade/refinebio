@@ -492,7 +492,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         if experiment_protocol == "Protocol was never provided.":
             return (existing_protocols, False)
 
-        existing_descriptions = [protocol.Description for protocol in existing_protocols]
+        existing_descriptions = [protocol['Description'] for protocol in existing_protocols]
         if experiment_protocol in existing_descriptions:
             return (existing_protocols, False)
 
