@@ -19,12 +19,14 @@ NOMAD_DOWNLOADER_JOB = "DOWNLOADER"
 NONE_JOB_ERROR_TEMPLATE = "send_job was called with NONE job_type: {} for {} job {}"
 
 
-def send_job(job_type: Enum, job) -> None:
+def send_job(job_type: Enum, job) -> bool:
     """Queues a worker job by sending a Nomad Job dispatch message.
 
     job_type must be a valid Enum for ProcessorPipelines or
     Downloaders as defined in data_refinery_common.job_lookup.
     job must be an existing ProcessorJob or DownloaderJob record.
+
+    Returns True if the job was successfully dispatch, return False otherwise.
     """
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
@@ -90,9 +92,11 @@ def send_job(job_type: Enum, job) -> None:
                                                                         "JOB_ID": str(job.id)})
         job.nomad_job_id = nomad_response["DispatchedJobID"]
         job.save()
+        return True
     except URLNotFoundNomadException:
         logger.error("Dispatching Nomad job of type %s for job spec %s to host %s and port %s failed.",
                      job_type, nomad_job, nomad_host, nomad_port, job=str(job.id))
+        return False
     except Exception as e:
         logger.exception('Unable to Dispatch Nomad Job.',
             job_name=job_type.value,
