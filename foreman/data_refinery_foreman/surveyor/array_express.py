@@ -303,16 +303,16 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         for new_protocol in experiment_protocol['protocol']:
             new_protocol_is_found = False
             for existing_protocol in existing_protocols:
-                if (new_protocol.accession == existing_protocol.Accession and
-                    new_protocol.text == existing_protocol.Text and
-                    new_protocol.type == existing_protocol.Type):
+                if (new_protocol['accession'] == existing_protocol['Accession'] and
+                    new_protocol['text'] == existing_protocol['Text'] and
+                    new_protocol['type'] == existing_protocol['Type']):
                     new_protocol_is_found = True
                     break
             if not new_protocol_is_found:
                existing_protocols.append({
-                   'Accession': new_protocol.accession,
-                   'Text': new_protocol.text,
-                   'Type': new_protocol.type,
+                   'Accession': new_protocol['accession'],
+                   'Text': new_protocol['text'],
+                   'Type': new_protocol['type'],
                    'Reference': protocol_url
                })
                is_updated = True
