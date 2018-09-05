@@ -395,7 +395,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         try:
             sample_object = Sample.objects.get(accession_code=sample_accession_code)
             # If current experiment includes new protocol information,
-            # merge it into the sample's protocol_info.
+            # merge it into the sample's existing protocol_info.
             protocol_info, is_updated = self.update_sample_protocol_info(
                 sample_object.protocol_info,
                 experiment_object.protocol_description,
