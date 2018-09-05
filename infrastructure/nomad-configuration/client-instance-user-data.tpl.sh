@@ -17,15 +17,26 @@
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get upgrade -y
-apt-get install --yes nfs-common jq iotop dstat
+apt-get install --yes nfs-common jq iotop dstat speedometer awscli docker.io
+
+ulimit -n 65536
 
 # Find, configure and mount a free EBS volume
 mkdir -p /var/ebs/
-EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=${user}" "Name=tag:Stage,Values=${stage}" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
+
+fetch_and_mount_volume () {
+    INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+    EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=${user}" "Name=tag:Stage,Values=${stage}" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=${region}a" --region ${region} | jq '.Volumes[0].VolumeId' | tr -d '"'`
+    aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device "/dev/sdf" --region ${region}
+}
+
+until fetch_and_mount_volume; do
+    sleep 10
+done
 
 COUNTER=0
 while [  $COUNTER -lt 99 ]; do
-        EBS_VOLUME_INDEX=`aws ec2 describe-volumes --filters "Name=tag:Index,Values=*" "Name=volume-id,Values=$EBS_VOLUME_ID" --query "Volumes[*].{ID:VolumeId,Tag:Tags}" --region us-east-1 | jq ".[0].Tag[$COUNTER].Value" | tr -d '"'`
+        EBS_VOLUME_INDEX=`aws ec2 describe-volumes --filters "Name=tag:Index,Values=*" "Name=volume-id,Values=$EBS_VOLUME_ID" --query "Volumes[*].{ID:VolumeId,Tag:Tags}" --region ${region} | jq ".[0].Tag[$COUNTER].Value" | tr -d '"'`
         if echo "$EBS_VOLUME_INDEX" | egrep -q '^\-?[0-9]+$'; then
             echo "$EBS_VOLUME_INDEX is an integer!"
             break # This is a Volume Index
@@ -35,8 +46,6 @@ while [  $COUNTER -lt 99 ]; do
         let COUNTER=COUNTER+1
 done
 
-INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
-aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device "/dev/sdf" --region us-east-1 # <_<
 sleep 15
 ATTACHED_AS=`lsblk -n | grep 1.6T | cut -d' ' -f1`
 FILE_RESULT=`file -s /dev/$ATTACHED_AS`
@@ -62,11 +71,6 @@ cd /home/ubuntu
 cat <<EOF >awslogs.conf
 [general]
 state_file = /var/lib/awslogs/agent-state
-
-[/var/log/nomad_client.log]
-file = /var/log/nomad_client.log
-log_group_name = data-refinery-log-group-${user}-${stage}
-log_stream_name = log-stream-nomad-client-${user}-${stage}
 EOF
 
 mkdir /var/lib/awslogs
@@ -81,6 +85,13 @@ echo "
     daily
     maxage 3
 }" >> /etc/logrotate.conf
+
+# Docker runs out of IPv4
+cat <<"EOF" > /etc/docker/daemon.json
+{
+  "bip": "172.17.77.1/22"
+}
+EOF
 
 # Output the files we need to start up Nomad and register jobs:
 # (Note that the lines starting with "$" are where

@@ -39,17 +39,14 @@ if [[ ${stage} == "staging" || ${stage} == "prod" ]]; then
     # will circumvent certbot's limit because the 5-a-week limit only applies to the
     # "same set of domains", so by changing that set we get to use the 20-a-week limit.
     if [[ ${stage} == "staging" ]]; then
-        URL=api.staging.refine.bio
+        # The certbot challenge cannot be completed until the aws_lb_target_group_attachment resources are created.
+        sleep 180
+        certbot --nginx -d api.staging.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
     elif [[ ${stage} == "prod" ]]; then
-        URL=api.refine.bio
+        # The certbot challenge cannot be completed until the aws_lb_target_group_attachment resources are created.
+        sleep 180
+        certbot --nginx -d api.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
     fi
-    certbot_request () {
-        certbot --nginx -d $URL -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
-    }
-
-    until certbot_request; do
-        sleep 30
-    done
 fi
 
 # Install, configure and launch our CloudWatch Logs agent

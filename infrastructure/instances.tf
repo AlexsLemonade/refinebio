@@ -292,6 +292,19 @@ resource "aws_autoscaling_group" "clients" {
         value = "Nomad Client Instance ${var.user}-${var.stage}"
         propagate_at_launch = true
     }
+
+    tag {
+        key = "User"
+        value = "${var.user}"
+        propagate_at_launch = true
+    }
+
+    tag {
+        key = "Stage"
+        value = "${var.stage}"
+        propagate_at_launch = true
+    }
+
 }
 
 resource "aws_autoscaling_policy" "clients_scale_up" {

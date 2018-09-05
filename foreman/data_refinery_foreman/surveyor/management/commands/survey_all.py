@@ -1,7 +1,6 @@
-"""
-This command will create and run survey jobs for each experiment in the
-experiment_list. experiment list should be a file containing one
-experiment accession code per line.
+"""This command will create and run survey jobs for an experiment
+specified by an accession. The type of survey job to run will be
+determined by the pattern of the accession.
 """
 
 import boto3
@@ -16,7 +15,7 @@ from data_refinery_common.utils import parse_s3_url
 logger = get_and_configure_logger(__name__)
 
 def run_surveyor_for_accession(accession: str) -> None:
-    """Chooses the correct surveyor based on the patter of the accession"""
+    """Chooses the correct surveyor based on the pattern of the accession"""
     if 'GSE' in accession[:3]:
         surveyor.survey_experiment(accession, "GEO")
     elif 'E-' in accession[:2]:
@@ -35,63 +34,19 @@ def run_surveyor_for_accession(accession: str) -> None:
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        parser.add_argument(
-            "--file",
-            type=str,
-            help=("""An optional file listing accession codes. s3:// URLs are also accepted."
-
-Note: One entry per line, GSE* entries survey GEO, E-GEO-* entries survey ArrayExpress.
-""")
-        )
 
         parser.add_argument(
             "--accession",
             type=str,
-            help=("An optional accession code to survey.")
-        )
-
-        parser.add_argument(
-            "--offset",
-            type=int,
-            help=("Skip a number of lines at the beginning"),
-            default=0
+            help=("An accession code to survey.")
         )
 
     def handle(self, *args, **options):
-        if options['file'] is None and options['accession'] is None:
-            logger.error("You must specify a file or an accession.")
+        if options['accession'] is None:
+            logger.error("You must specify an accession.")
             return "1"
 
-        if options["file"]:
-
-            if 's3://' in options["file"]:
-                bucket, key = parse_s3_url(options["file"])
-                s3 = boto3.resource('s3')
-                try:
-                    filepath = "/tmp/input_" + str(uuid.uuid4()) + ".txt"
-                    s3.Bucket(bucket).download_file(key, filepath)
-                except botocore.exceptions.ClientError as e:
-                    if e.response['Error']['Code'] == "404":
-                        logger.error("The remote file does not exist.")
-                        raise
-                    else:
-                        raise
-            else:
-                filepath = options["file"]
-
-            with open(filepath) as accession_file:
-                for i, accession in enumerate(accession_file):
-                    if i < options["offset"]:
-                        continue
-                    accession = accession.strip()
-                    try:
-                        run_surveyor_for_accession(accession)
-                    except Exception as e:
-                        logger.exception(e)
-
-        if options["accession"]:
-            accession = options["accession"]
-            try:
-                run_surveyor_for_accession(accession)
-            except Exception as e:
-                logger.exception(e)
+        try:
+            run_surveyor_for_accession(options["accession"])
+        except Exception as e:
+            logger.exception(e)

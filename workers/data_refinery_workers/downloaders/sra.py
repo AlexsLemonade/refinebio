@@ -104,7 +104,7 @@ def _download_file_aspera(download_url: str,
                 downloader_job.failure_reason = stderr
                 return False
             else:
-                time.sleep(300)
+                time.sleep(30)
                 return _download_file_aspera(download_url,
                                              downloader_job,
                                              target_file_path,
