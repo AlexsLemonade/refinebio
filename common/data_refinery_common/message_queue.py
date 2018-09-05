@@ -72,7 +72,9 @@ def send_job(job_type: Enum, job) -> None:
                 job_type.value,
                 job.id)
 
-    if isinstance(job, ProcessorJob):
+    # Smasher doesn't need to be on a specific instance since it will
+    # download all the data to its instance anyway.
+    if isinstance(job, ProcessorJob) and job_type is not ProcessorPipeline.SMASHER:
         # Make sure this job goes to the correct EBS resource.
         # If this is being dispatched for the first time, make sure that
         # we store the currently attached index.
