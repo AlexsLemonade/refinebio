@@ -59,6 +59,7 @@ RUN rm -r Salmon*
 RUN pip3 install --upgrade pip
 
 COPY config/ config/
+COPY .boto .boto
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
 

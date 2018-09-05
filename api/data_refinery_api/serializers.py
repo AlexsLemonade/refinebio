@@ -37,6 +37,7 @@ class ProcessorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Processor
         fields = (
+            'id',
             'name',
             'version',
             'docker_image',
@@ -54,6 +55,7 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
         fields = (
                     's3_url',
                     'source_version',
+                    'assembly_name',
                     'salmon_version',
                     'last_modified',
                 )
@@ -91,6 +93,7 @@ class ComputedFileSerializer(serializers.ModelSerializer):
 class ComputationalResultSerializer(serializers.ModelSerializer):
     annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
     files = ComputedFileSerializer(many=True, source='computedfile_set')
+    processor = ProcessorSerializer(many=False)
 
     class Meta:
         model = ComputationalResult
@@ -194,6 +197,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
     organisms = serializers.StringRelatedField(many=True)
     platforms = serializers.ReadOnlyField()
     samples = serializers.StringRelatedField(many=True)
+    processed_samples = serializers.StringRelatedField(many=True)
     pretty_platforms = serializers.ReadOnlyField()
     sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
 
@@ -208,6 +212,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'source_url',
                     'platforms',
                     'pretty_platforms',
+                    'processed_samples',
                     'has_publication',
                     'publication_title',
                     'publication_doi',
@@ -354,10 +359,13 @@ class ProcessorJobSerializer(serializers.ModelSerializer):
                     'num_retries',
                     'retried',
                     'worker_id',
+                    'ram_amount',
+                    'volume_index',
                     'worker_version',
                     'failure_reason',
                     'success',
                     'original_files',
+                    'datasets',
                     'start_time',
                     'end_time',
                     'created_at',
@@ -421,7 +429,7 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'is_processing',
                     'is_processed',
                     'is_available',
-                    'email_address',
+                    'has_email',
                     'expires_on',
                     's3_bucket',
                     's3_key',

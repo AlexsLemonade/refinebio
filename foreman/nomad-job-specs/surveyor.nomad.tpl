@@ -5,7 +5,7 @@ job "SURVEYOR" {
 
   parameterized {
     payload       = "forbidden"
-    meta_required = [ "COMMAND", "FILE"]
+    meta_required = [ "ACCESSION"]
   }
 
   group "jobs" {
@@ -48,7 +48,7 @@ job "SURVEYOR" {
         # CPU is in AWS's CPU units.
         cpu = 500
         # Memory is in MB of RAM.
-        memory = 2048
+        memory = 512
       }
 
       config {
@@ -59,8 +59,8 @@ job "SURVEYOR" {
         args = [
           "python3",
           "manage.py",
-          "${NOMAD_META_COMMAND}",
-          "--file", "${NOMAD_META_FILE}",
+          "survey_all",
+          "--accession", "${NOMAD_META_ACCESSION}",
         ]
         ${{EXTRA_HOSTS}}
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]

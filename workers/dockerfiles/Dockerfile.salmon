@@ -64,6 +64,7 @@ RUN chmod +x ./FastQC/fastqc
 RUN rm -f fastqc_v0.11.7.zip
 
 COPY config/ config/
+COPY .boto .boto
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
 

@@ -95,7 +95,7 @@ def _download_file_aspera(download_url: str,
         if completed_command.returncode != 0:
 
             stderr = str(completed_command.stderr).strip()
-            logger.warning("Shell call to ascp failed with error message: %s\nCommand was: %s",
+            logger.debug("Shell call to ascp failed with error message: %s\nCommand was: %s",
                          stderr,
                          formatted_command,
                          downloader_job=downloader_job.id)

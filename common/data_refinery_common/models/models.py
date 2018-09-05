@@ -150,6 +150,12 @@ class Sample(models.Model):
         """ Get all of the ComputedFile objects associated with this Sample """
         return self.computed_files.all()
 
+    def get_smashable_result_files(self):
+        """ Get all of the ComputedFile objects associated with this Sample """
+        return self.computed_files.filter(
+                        is_smashable=True
+                    )
+
     def get_most_recent_smashable_result_file(self):
         """ Get all of the ComputedFile objects associated with this Sample """
         return self.computed_files.filter(
@@ -331,6 +337,10 @@ class Experiment(models.Model):
         return list(set([p.pretty_platform for p in self.samples.exclude(platform_name__exact='')]))
 
     def get_processed_samples(self):
+        return self.samples.filter(is_processed=True)
+
+    @property
+    def processed_samples(self):
         return self.samples.filter(is_processed=True)
 
 class ExperimentAnnotation(models.Model):
@@ -708,6 +718,7 @@ class ComputedFile(models.Model):
     # Scientific
     is_smashable = models.BooleanField(default=False)
     is_qc = models.BooleanField(default=False)
+    is_qn_target = models.BooleanField(default=False)
 
     # AWS
     s3_bucket = models.CharField(max_length=255, blank=True, null=True)
@@ -848,6 +859,7 @@ class Dataset(models.Model):
     # Processing properties
     aggregate_by = models.CharField(max_length=255, choices=AGGREGATE_CHOICES, default="EXPERIMENT")
     scale_by = models.CharField(max_length=255, choices=SCALE_CHOICES, default="NONE")
+    quantile_normalize = models.BooleanField(default=True)
 
     # State properties
     is_processing = models.BooleanField(default=False)  # Data is still editable when False
@@ -945,6 +957,11 @@ class Dataset(models.Model):
             return "https://s3.amazonaws.com/" + self.s3_bucket + "/" + self.s3_key
         else:
             return None
+
+    @property
+    def has_email(self):
+        """ Returns if the email is set or not """
+        return bool(self.email_address)
 
 class APIToken(models.Model):
     """ Required for starting a smash job """

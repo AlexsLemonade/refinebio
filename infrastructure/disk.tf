@@ -25,12 +25,32 @@ resource "aws_efs_mount_target" "data_refinery_efs_1b" {
 }
 
 ##
+# EBS
+## 
+
+resource "aws_ebs_volume" "data_refinery_ebs" {
+  count = "${var.max_clients}"
+  availability_zone = "${var.region}a"
+  size = "${var.volume_size_in_gb}" # 1600 = 1.6TB
+  type = "st1" # Throughput Optimized HDD
+  tags {
+    Name        = "data-refinery-ebs-${count.index}-${var.user}-${var.stage}"
+    Environment = "${var.stage}"
+    Index       = "${count.index}"
+    User        = "${var.user}"
+    Stage       = "${var.stage}"
+    IsBig       = "True"
+  }
+}
+
+##
 # S3
 ##
 
 resource "aws_s3_bucket" "data_refinery_bucket" {
   bucket = "data-refinery-s3-${var.user}-${var.stage}"
   acl    = "private"
+  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
 
   tags {
     Name        = "data-refinery-s3-${var.user}-${var.stage}"
@@ -41,6 +61,7 @@ resource "aws_s3_bucket" "data_refinery_bucket" {
 resource "aws_s3_bucket" "data_refinery_results_bucket" {
   bucket = "data-refinery-s3-results-${var.user}-${var.stage}"
   acl    = "public-read"
+  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
 
   tags {
     Name        = "data-refinery-s3-results-${var.user}-${var.stage}"
@@ -66,6 +87,7 @@ resource "aws_s3_bucket" "data_refinery_results_bucket" {
 
 resource "aws_s3_bucket" "data-refinery-static" {
   bucket = "${var.static_bucket_prefix == "dev" ? var.user : var.static_bucket_prefix}${var.static_bucket_root}"
+  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
 
   cors_rule {
     allowed_origins = ["*"]
@@ -85,7 +107,7 @@ resource "aws_s3_bucket" "data-refinery-static" {
 
 resource "aws_s3_bucket" "data_refinery_transcriptome_index_bucket" {
   bucket = "data-refinery-s3-transcriptome-index-${var.user}-${var.stage}"
-  acl    = "private"
+  acl    = "public-read"
 
   tags {
     Name        = "data-refinery-s3-transcriptome-index-${var.user}-${var.stage}"

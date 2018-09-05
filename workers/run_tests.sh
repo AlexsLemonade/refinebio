@@ -306,6 +306,55 @@ if [[ -z $tag || $tag == "smasher" ]]; then
     fi
 fi
 
+if [[ -z $tag || $tag == "qn" ]]; then
+    # Make sure PCL for test is downloaded from S3
+    qn_name="1.tsv"
+    qn_test_raw_dir="$volume_directory/QN"
+    qn_test_data_1="$qn_test_raw_dir/$qn_name"
+    if [ ! -e "$qn_test_data_1" ]; then
+        mkdir -p $qn_test_raw_dir
+        echo "Downloading QN for tests."
+        wget -q -O $qn_test_data_1 \
+             "$test_data_repo/$qn_name"
+    fi
+    qn_name="2.tsv"
+    qn_test_raw_dir="$volume_directory/QN"
+    qn_test_data_2="$qn_test_raw_dir/$qn_name"
+    if [ ! -e "$qn_test_data_2" ]; then
+        mkdir -p $qn_test_raw_dir
+        echo "Downloading QN for tests."
+        wget -q -O $qn_test_data_2 \
+             "$test_data_repo/$qn_name"
+    fi
+    qn_name="3.tsv"
+    qn_test_raw_dir="$volume_directory/QN"
+    qn_test_data_3="$qn_test_raw_dir/$qn_name"
+    if [ ! -e "$qn_test_data_3" ]; then
+        mkdir -p $qn_test_raw_dir
+        echo "Downloading QN for tests."
+        wget -q -O $qn_test_data_3 \
+             "$test_data_repo/$qn_name"
+    fi
+    qn_name="4.tsv"
+    qn_test_raw_dir="$volume_directory/QN"
+    qn_test_data_4="$qn_test_raw_dir/$qn_name"
+    if [ ! -e "$qn_test_data_4" ]; then
+        mkdir -p $qn_test_raw_dir
+        echo "Downloading QN for tests."
+        wget -q -O $qn_test_data_4 \
+             "$test_data_repo/$qn_name"
+    fi
+    qn_name="5.tsv"
+    qn_test_raw_dir="$volume_directory/QN"
+    qn_test_data_5="$qn_test_raw_dir/$qn_name"
+    if [ ! -e "$qn_test_data_5" ]; then
+        mkdir -p $qn_test_raw_dir
+        echo "Downloading QN for tests."
+        wget -q -O $qn_test_data_5 \
+             "$test_data_repo/$qn_name"
+    fi
+fi
+
 source common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
@@ -313,7 +362,7 @@ DB_HOST_IP=$(get_docker_db_ip_address)
 # Ensure permissions are set for everything within the test data directory.
 chmod -R a+rwX $volume_directory
 
-worker_images=(affymetrix illumina salmon transcriptome no_op downloaders agilent smasher)
+worker_images=(affymetrix illumina salmon transcriptome no_op downloaders agilent smasher qn)
 
 for image in ${worker_images[*]}; do
     if [[ -z $tag || $tag == $image ]]; then
@@ -321,6 +370,9 @@ for image in ${worker_images[*]}; do
             # Agilent uses the same docker image as Affymetrix
             ./prepare_image.sh -p -i affymetrix -s workers
             image_name=ccdlstaging/dr_affymetrix
+        elif [[ $tag == "qn" ]]; then
+            ./prepare_image.sh -i smasher -s workers
+            image_name=ccdlstaging/dr_smasher
         else
             ./prepare_image.sh -i $image -s workers
             image_name=ccdlstaging/dr_$image

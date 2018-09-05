@@ -52,6 +52,7 @@ RUN sh aspera-cli-3.7.7.608.927cce8-linux-64-release.sh
 USER root
 
 COPY config config
+COPY .boto .boto
 
 COPY workers/data_refinery_workers/downloaders/requirements.txt .
 
