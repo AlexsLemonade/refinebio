@@ -92,6 +92,8 @@ def _prepare_files(job_context: Dict) -> Dict:
     timestamp = str(timezone.now().timestamp()).split('.')[0]
     job_context["output_archive"] = job_context["work_dir"] + '/result-' + timestamp +  '.tar.gz'
 
+    job_context["computed_files"] = []
+
     return job_context
 
 

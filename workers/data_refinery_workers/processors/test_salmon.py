@@ -308,6 +308,7 @@ class SalmonTestCase(TestCase):
             'pipeline': Pipeline(name="Salmon"),
             'qc_directory': "/home/user/data_store/raw/TEST/SALMON/qc",
             'original_files': og_files,
+            "computed_files": [],
             'success': True
         }
 
@@ -352,8 +353,12 @@ class SalmonToolsTestCase(TestCase):
             'pipeline': Pipeline(name="Salmon"),
             'input_file_path': self.test_dir + 'double_input/reads_1.fastq',
             'input_file_path_2': self.test_dir + 'double_input/reads_2.fastq',
-            'output_directory': self.test_dir + 'double_output/'
+            'salmontools_directory': self.test_dir + 'double_salmontools/',
+            'salmontools_archive': self.test_dir + 'salmontools-result.tar.gz',
+            'output_directory': self.test_dir + 'double_output/',
+            'computed_files': []
         }
+        os.makedirs(job_context["salmontools_directory"], exist_ok=True)
 
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
         sample = Sample()
@@ -367,11 +372,11 @@ class SalmonToolsTestCase(TestCase):
         self.assertTrue(job_context["success"])
 
         # Check two output files
-        output_file1 = self.test_dir + 'double_output/unmapped_by_salmon_1.fa'
+        output_file1 = job_context['salmontools_directory'] + 'unmapped_by_salmon_1.fa'
         expected_output_file1 = self.test_dir + 'expected_double_output/unmapped_by_salmon_1.fa'
         self.assertTrue(identical_checksum(output_file1, expected_output_file1))
 
-        output_file2 = self.test_dir + 'double_output/unmapped_by_salmon_2.fa'
+        output_file2 = job_context['salmontools_directory'] + 'unmapped_by_salmon_2.fa'
         expected_output_file2 = self.test_dir + 'expected_double_output/unmapped_by_salmon_2.fa'
         self.assertTrue(identical_checksum(output_file2, expected_output_file2))
 
@@ -384,8 +389,11 @@ class SalmonToolsTestCase(TestCase):
             'pipeline': Pipeline(name="Salmon"),
             'input_file_path': self.test_dir + 'single_input/single_read.fastq',
             'output_directory': self.test_dir + 'single_output/',
+            'salmontools_directory': self.test_dir + 'single_salmontools/',
+            'salmontools_archive': self.test_dir + 'salmontools-result.tar.gz',
             'computed_files': []
         }
+        os.makedirs(job_context["salmontools_directory"], exist_ok=True)
 
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
         sample = Sample()
@@ -399,7 +407,7 @@ class SalmonToolsTestCase(TestCase):
         self.assertTrue(job_context["success"])
 
         # Check output file
-        output_file = self.test_dir + 'single_output/unmapped_by_salmon.fa'
+        output_file = job_context['salmontools_directory'] + 'unmapped_by_salmon.fa'
         expected_output_file = self.test_dir + 'expected_single_output/unmapped_by_salmon.fa'
         self.assertTrue(identical_checksum(output_file, expected_output_file))
 
@@ -554,8 +562,11 @@ class RuntimeProcessorTest(TestCase):
             'pipeline': Pipeline(name="Salmon"),
             'input_file_path': test_dir + 'double_input/reads_1.fastq',
             'input_file_path_2': test_dir + 'double_input/reads_2.fastq',
+            'salmontools_directory': test_dir + 'double_salmontools/',
+            'salmontools_archive': test_dir + 'salmontools-result.tar.gz',
             'output_directory': test_dir + 'double_output/'
         }
+        os.makedirs(job_context["salmontools_directory"], exist_ok=True)
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
         sample = Sample()
         sample.organism = homo_sapiens

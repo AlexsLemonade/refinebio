@@ -5,10 +5,11 @@ from django.test import TransactionTestCase
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (
     DownloaderJob,
+    OriginalFile,
+    Organism,
+    Sample,
     SurveyJob,
     SurveyJobKeyValue,
-    Organism,
-    Sample
 )
 from data_refinery_foreman.surveyor.geo import (
     GeoSurveyor
@@ -54,7 +55,11 @@ class SurveyTestCase(TransactionTestCase):
         self.assertEqual(sample_object.technology, "MICROARRAY")
 
         downloader_jobs = DownloaderJob.objects.all()
-        self.assertEqual(46, downloader_jobs.count())
+        self.assertEqual(45, downloader_jobs.count())
+
+        # Make sure there aren't extra OriginalFiles
+        original_files = OriginalFile.objects.all()
+        self.assertEqual(45, original_files.count())
 
     @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_geo_survey_agilent(self, mock_send_task):
@@ -102,7 +107,11 @@ class SurveyTestCase(TransactionTestCase):
         self.assertEqual(sample_object.technology, "RNA-SEQ")
 
         downloader_jobs = DownloaderJob.objects.all()
-        self.assertEqual(2, downloader_jobs.count())
+        self.assertEqual(1, downloader_jobs.count())
+
+        # Make sure there aren't extra OriginalFiles
+        original_files = OriginalFile.objects.all()
+        self.assertEqual(1, original_files.count())
 
     @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_geo_survey_superseries(self, mock_send_task):
@@ -123,8 +132,12 @@ class SurveyTestCase(TransactionTestCase):
         self.assertEqual(sample_object.technology, "RNA-SEQ")
 
         downloader_jobs = DownloaderJob.objects.all()
-        self.assertEqual(2, downloader_jobs.count())
-        
+        self.assertEqual(1, downloader_jobs.count())
+
+        # Make sure there aren't extra OriginalFiles
+        original_files = OriginalFile.objects.all()
+        self.assertEqual(1, original_files.count())
+
     def test_get_pubmed_id_title(self):
         """ We scrape PMIDs now. """
         resp = get_title_and_authors_for_pubmed_id("22367537")
