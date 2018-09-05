@@ -55,6 +55,7 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
         fields = (
                     's3_url',
                     'source_version',
+                    'assembly_name',
                     'salmon_version',
                     'last_modified',
                 )
@@ -428,6 +429,7 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'is_processing',
                     'is_processed',
                     'is_available',
+                    'has_email',
                     'expires_on',
                     's3_bucket',
                     's3_key',

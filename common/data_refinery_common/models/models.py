@@ -905,6 +905,11 @@ class Dataset(models.Model):
         else:
             return None
 
+    @property
+    def has_email(self):
+        """ Returns if the email is set or not """
+        return bool(self.email_address)
+
 class APIToken(models.Model):
     """ Required for starting a smash job """
 
