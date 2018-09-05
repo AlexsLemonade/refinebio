@@ -653,7 +653,9 @@ class ComputedFile(models.Model):
 
     # File related
     filename = models.CharField(max_length=255)
-    absolute_file_path = models.CharField(max_length=255)
+    absolute_file_path = models.CharField(max_length=255, blank=True, null=True)
+    # TODO: make this work w/ migrations:
+    # absolute_file_path = models.CharField(max_length=255)
     size_in_bytes = models.BigIntegerField()
     sha1 = models.CharField(max_length=64)
 
