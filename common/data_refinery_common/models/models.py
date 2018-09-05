@@ -713,7 +713,7 @@ class ComputedFile(models.Model):
         """ Downloads a file from S3 to the local file system.
         Returns the absolute file path.
         """
-        path = path if path not None else self.absolute_file_path
+        path = path if path is not None else self.absolute_file_path
 
         if not settings.RUNNING_IN_CLOUD and not force:
             return path
