@@ -396,7 +396,7 @@ class SraSurveyor(ExternalSourceSurveyor):
             sample_object = Sample.objects.get(accession_code=sample_accession_code)
             # If current experiment includes new protocol information,
             # merge it into the sample's protocol_info.
-            protocol_info, is_updated = update_sample_protocol_info(
+            protocol_info, is_updated = self.update_sample_protocol_info(
                 sample_object.protocol_info,
                 experiment_object.protocol_description,
                 experiment_object.source_url
@@ -433,7 +433,7 @@ class SraSurveyor(ExternalSourceSurveyor):
             for key, value in harmonized_sample.items():
                 setattr(sample_object, key, value)
 
-            protocol_info, is_updated = update_sample_protocol_info(
+            protocol_info, is_updated = self.update_sample_protocol_info(
                 [],
                 experiment_object.protocol_description,
                 experiment_object.source_url
