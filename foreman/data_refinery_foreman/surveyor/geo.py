@@ -195,6 +195,24 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         return min_url
 
+    @staticmethod
+    def get_sample_protocol_info(sample_metadata, sample_accession_code):
+        protocol_info = dict()
+        if 'extract_protocol_ch1' in sample_metadata:
+            protocol_info['Extraction protocol'] = sample_metadata['extract_protocol_ch1']
+        if 'label_protocol_ch1' in sample_metadata:
+            protocol_info['Label protocol'] = sample_metadata['label_protocol_ch1']
+        if 'hyb_protocol' in sample_metadata:
+            protocol_info['Hybridization protocol'] = sample_metadata['hyb_protocol']
+        if 'scan_protocol' in sample_metadata:
+            protocol_info['Scan protocol'] = sample_metadata['scan_protocol']
+        if 'data_processing' in sample_metadata:
+            protocol_info['Scan protocol'] = sample_metadata['data_processing']
+
+        protocol_info['Reference'] = ('https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc='
+                                              + sample_accession_code)
+        return protocol_info
+
     def create_experiment_and_samples_from_api(self, experiment_accession_code) -> (Experiment, List[Sample]):
         """ The main surveyor - find the Experiment and Samples from NCBI GEO.
 
@@ -237,7 +255,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 pubmed_metadata = utils.get_title_and_authors_for_pubmed_id(experiment_object.pubmed_id)
                 experiment_object.publication_title = pubmed_metadata[0]
                 experiment_object.publication_authors = pubmed_metadata[1]
-                
+
             experiment_object.save()
 
             experiment_annotation = ExperimentAnnotation()
@@ -287,6 +305,10 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 harmonized_sample = harmonized_samples[sample_object.title]
                 for key, value in harmonized_sample.items():
                     setattr(sample_object, key, value)
+
+                # Sample-level protocol_info
+                sample_object.protocol_info = self.get_sample_protocol_info(sample.metadata,
+                                                                            sample_accession_code)
 
                 sample_object.save()
                 all_samples.append(sample_object)
