@@ -484,7 +484,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 sample_object = Sample.objects.get(accession_code=sample_accession_code)
                 # If input experiment includes new protocol information,
                 # update sample's protocol_info.
-                protocol_info, is_upadted = self.update_sample_protocol_info(
+                protocol_info, is_updated = self.update_sample_protocol_info(
                     sample_object.protocol_info,
                     experiment.protocol_description,
                     experiment.source_url + '/protocols'
@@ -512,7 +512,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 sample_object.manufacturer = platform_dict["manufacturer"]
                 sample_object.technology = "MICROARRAY"
 
-                protocol_info, is_upadted = self.update_sample_protocol_info(
+                protocol_info, is_updated = self.update_sample_protocol_info(
                     [],
                     experiment.protocol_description,
                     experiment.source_url + '/protocols'
