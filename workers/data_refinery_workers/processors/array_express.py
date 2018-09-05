@@ -34,11 +34,12 @@ def _prepare_files(job_context: Dict) -> Dict:
     Also adds the keys "input_file_path" and "output_file_path" to
     job_context so everything is prepared for processing.
     """
-    original_file = job_context["original_files"][0]
-    job_context["input_file_path"] = original_file.get_synced_file_path()
-
     # All files for the job are in the same directory.
     job_context["work_dir"] = LOCAL_ROOT_DIR + "/" + "processor_job_" + str(job_context["job_id"])
+
+    original_file = job_context["original_files"][0]
+    job_context["input_file_path"] = original_file.absolute_file_path
+
     try:
         os.makedirs(job_context["work_dir"])
     except Exception as e:

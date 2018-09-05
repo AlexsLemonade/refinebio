@@ -4,25 +4,27 @@ import string
 import subprocess
 import yaml
 
+from django.utils import timezone
 from enum import Enum, unique
 from typing import List, Dict, Callable
-from django.utils import timezone
+
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
-    ProcessorJob,
+    ComputationalResult,
+    ComputationalResultAnnotation,
+    Dataset,
+    OriginalFile,
+    OriginalFileSampleAssociation,
     Pipeline,
     Processor,
-    Sample,
-    OriginalFile,
-    Dataset,
-    ProcessorJobOriginalFileAssociation,
+    ProcessorJob,
     ProcessorJobDatasetAssociation,
-    OriginalFileSampleAssociation,
-    ComputationalResultAnnotation,
-    ComputationalResult
+    ProcessorJobOriginalFileAssociation,
+    Sample,
 )
 from data_refinery_workers._version import __version__
-from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_instance_id, get_env_variable
+
 
 logger = get_and_configure_logger(__name__)
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
@@ -48,7 +50,7 @@ def start_job(job_context: Dict):
     job.start_time = timezone.now()
     job.save()
 
-    logger.info("Starting processor Job.", processor_job=job.id, pipeline=job.pipeline_applied)
+    logger.debug("Starting processor Job.", processor_job=job.id, pipeline=job.pipeline_applied)
 
     # Some jobs take OriginalFiles, other take Datasets
     if job.pipeline_applied not in ["SMASHER", "QN_REFERENCE"]:
@@ -58,6 +60,7 @@ def start_job(job_context: Dict):
         if len(original_files) == 0:
             logger.error("No files found.", processor_job=job.id)
             job_context["success"] = False
+            job.failure_reason = "No files were found for the job."
             return job_context
 
         job_context["original_files"] = original_files
@@ -71,7 +74,20 @@ def start_job(job_context: Dict):
         relations = ProcessorJobDatasetAssociation.objects.filter(processor_job=job)
 
         # This should never be more than one!
-        dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+        if relations.count() > 1:
+            failure_reason = "More than one dataset for processor job!"
+            logger.error(failure_reason, processor_job=job.id)
+            job_context["success"] = False
+            job.failure_reason = failure_reason
+            return job_context
+        elif relations.count() == 0:
+            failure_reason = "No datasets found for processor job!"
+            logger.error(failure_reason, processor_job=job.id)
+            job_context["success"] = False
+            job.failure_reason = failure_reason
+            return job_context
+
+        dataset = Dataset.objects.get(id=relations[0].dataset_id)
         dataset.is_processing = True
         dataset.save()
 
@@ -113,19 +129,27 @@ def end_job(job_context: Dict, abort=False):
                 sample.is_processed = True
                 sample.save()
 
-    # S3-sync Original Files
-    if 'original_files' in job_context:
-        for original_files in job_context['original_files']:
-            original_files.delete_local_file()
+    # If we are aborting, it's because we want to do something
+    # different, so leave the original files so that "something
+    # different" can use them.
+    if (success or job.no_retry) and not abort:
+        # Cleanup Original Files
+        if 'original_files' in job_context:
+            for original_files in job_context['original_files']:
+                original_files.delete_local_file()
 
-    # S3-sync Computed Files
-    if 'computed_files' in job_context:
-        for computed_file in job_context['computed_files']:
+    if success:
+        # S3-sync Computed Files
+        for computed_file in job_context.get('computed_files', []):
             # Ensure even distribution across S3 servers
             nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
             result = computed_file.sync_to_s3(S3_BUCKET_NAME, nonce + "_" + computed_file.filename)
             if result:
                 computed_file.delete_local_file()
+    else:
+        for computed_file in job_context.get('computed_files', []):
+            computed_file.delete_local_file()
+            computed_file.delete()
 
     # If the pipeline includes any steps, save it.
     if 'pipeline' in job_context:
@@ -141,19 +165,21 @@ def end_job(job_context: Dict, abort=False):
     job.save()
 
     if success:
-        logger.info("Processor job completed successfully.",
+        logger.debug("Processor job completed successfully.",
                     processor_job=job.id,
                     pipeline_applied=job.pipeline_applied)
     else:
         if not job.failure_reason:
             logger.error("Processor job failed without having failure_reason set. FIX ME!!!!!!!!",
                          processor_job=job.id,
-                         pipeline_applied=job.pipeline_applied)
+                         pipeline_applied=job.pipeline_applied,
+                         no_retry=job.no_retry)
         else:
-            logger.info("Processor job failed!",
-                        processor_job=job.id,
-                        pipeline_applied=job.pipeline_applied,
-                        failure_reason=job.failure_reason)
+            logger.error("Processor job failed!",
+                         processor_job=job.id,
+                         pipeline_applied=job.pipeline_applied,
+                         no_retry=job.no_retry,
+                         failure_reason=job.failure_reason)
 
     # Return Final Job context so testers can check it
     return job_context
@@ -173,10 +199,9 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
     terminate with a call to utils.end_job.
 
     The key 'job' is reserved for the ProcessorJob currently being
-    run.  The key 'batches' is reserved for the Batches that are
-    currently being processed.  It is required that the dictionary
-    returned by each processor function preserve the mappings for
-    'job' and 'batches' that were passed into it.
+    run.  It is required that the dictionary returned by each
+    processor function preserve the mapping for 'job' that was passed
+    into it.
     """
     job_id = start_value["job_id"]
     try:
@@ -194,11 +219,15 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
     for processor in pipeline:
         try:
             last_result = processor(last_result)
-        except Exception:
-            logger.exception("Unhandled exception caught while running processor function %s in pipeline",
-                             processor.__name__,
-                             processor_job=job_id)
+        except Exception as e:
+            failure_reason = ("Unhandled exception caught while running processor"
+                              " function {} in pipeline: ").format(processor.__name__)
+            logger.exception(failure_reason,
+                             no_retry=job.no_retry,
+                             processor_job=job_id,
+                             job_context=last_result)
             last_result["success"] = False
+            last_result["job"].failure_reason = failure_reason + str(e)
             return end_job(last_result)
 
         if "success" in last_result and last_result["success"] is False:
