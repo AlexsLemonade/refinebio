@@ -394,6 +394,17 @@ class SraSurveyor(ExternalSourceSurveyor):
         # Create the sample object
         try:
             sample_object = Sample.objects.get(accession_code=sample_accession_code)
+            # If current experiment includes new protocol information,
+            # merge it into the sample's protocol_info.
+            protocol_info, is_updated = update_sample_protocol_info(
+                sample_object.protocol_info,
+                experiment_object.protocol_description,
+                experiment_object.source_url
+            )
+            if is_updated:
+                sample_object.protocol_info = protocol_info
+                sample_object.save()
+
             logger.debug("Sample %s already exists, skipping object creation.",
                          sample_accession_code,
                          experiment_accession_code=experiment_object.accession_code,
@@ -421,6 +432,14 @@ class SraSurveyor(ExternalSourceSurveyor):
             harmonized_sample = harmony.harmonize([metadata])
             for key, value in harmonized_sample.items():
                 setattr(sample_object, key, value)
+
+            protocol_info, is_updated = update_sample_protocol_info(
+                [],
+                experiment_object.protocol_description,
+                experiment_object.source_url
+            )
+            if is_updated:
+                sample_object.protocol_info = protocol_info
 
             sample_object.save()
 
@@ -459,6 +478,29 @@ class SraSurveyor(ExternalSourceSurveyor):
         # digits can be variable we need to determine the amount of
         # padding to have the formatter add.
         return (prefix + "{0:0" + str(len(digits)) + "d}").format(number)
+
+    @staticmethod
+    def update_sample_protocol_info(existing_protocols, experiment_protocol, experiment_url):
+        """Compares experiment_protocol with a sample's 
+        existing_protocols and update the latter if the former is new.
+        
+        Returns a tuple whose first element is existing_protocols (which
+        may or may not have been updated) and the second is a boolean
+        indicating whether exisiting_protocols has been updated.
+        """
+        
+        if experiment_protocol == "Protocol was never provided.":
+            return (existing_protocols, False)
+
+        existing_descriptions = [protocol.Description for protocol in existing_protocols]
+        if experiment_protocol in existing_descriptions:
+            return (existing_protocols, False)
+
+        existing_protocols.append({
+            'Descritpion': experiment_protocol,
+            'Reference': experiment_url
+        })
+        return (existing_protocols, True)
 
     def discover_experiment_and_samples(self):
         """ Returns an experiment and a list of samples for an SRA accession """

@@ -188,8 +188,19 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     experiment_object.submitter_institution = ", ".join(unique_people)[:255]
                 else:
                     experiment_object.submitter_institution = idf_dict['Person Affiliation']
-            if 'Protocol Description' in idf_dict:
-                experiment_object.protocol_description = ", ".join(idf_dict['Protocol Description'])
+
+            # Get protocol_description from "<experiment_url>/protocols"
+            # instead of from idf_dict, because the former provides more
+            # details.
+            protocol_url = request_url + '/protocols'
+            protocol_request = utils.requests_retry_session().get(protocol_url, timeout=60)
+            try:
+                experiment_object.protocol_description = protocol_request.json()['protocols']
+            except KeyError:
+                logger.warning("Remote experiment has no protocol data!",
+                               experiment_accession_code=experiment_accession_code,
+                               survey_job=self.survey_job.id)
+            
             if 'Publication Title' in idf_dict:
                 # This will happen for some superseries.
                 # Ex: E-GEOD-29536
@@ -274,6 +285,40 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         else:
             return experiment_accession + "-" + sample_assay_name
 
+    @staticmethod
+    def update_sample_protocol_info(existing_protocols, experiment_protocol, protocol_url):
+        """Compares experiment_protocol with a sample's 
+        existing_protocols and updates the latter if the former includes
+        any new entry.
+
+        Returns a tuple whose first element is existing_protocols (which
+        may or may not have been updated) and the second is a boolean
+        indicating whether exisiting_protocols has been updated.
+        """
+        
+        if not 'protocol' in experiment_protocol:
+            return (existing_protocols, False)
+
+        is_updated = False        
+        for new_protocol in experiment_protocol['protocol']:
+            new_protocol_is_found = False
+            for existing_protocol in existing_protocols:
+                if (new_protocol.accession == existing_protocol.Accession and
+                    new_protocol.text == existing_protocol.Text and
+                    new_protocol.type == existing_protocol.Type):
+                    new_protocol_is_found = True
+                    break
+            if not new_protocol_is_found:
+               existing_protocols.append({
+                   'Accession': new_protocol.accession,
+                   'Text': new_protocol.text,
+                   'Type': new_protocol.type,
+                   'Reference': protocol_url
+               })
+               is_updated = True
+               
+        return (existing_protocols, is_updated)
+                                   
     def create_samples_from_api(self,
                                 experiment: Experiment,
                                 platform_dict: Dict
@@ -437,6 +482,17 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             # Create the sample object
             try:
                 sample_object = Sample.objects.get(accession_code=sample_accession_code)
+                # If input experiment includes new protocol information,
+                # update sample's protocol_info.
+                protocol_info, is_upadted = self.update_sample_protocol_info(
+                    sample_object.protocol_info,
+                    experiment.protocol_description,
+                    experiment.source_url + '/protocols'
+                )
+                if is_updated:
+                    sample_object.protocol_info = protocol_info
+                    sample_obejct.save()
+                    
                 logger.debug("Sample %s already exists, skipping object creation.",
                              sample_accession_code,
                              experiment_accession_code=experiment.accession_code,
@@ -455,6 +511,15 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 sample_object.platform_accession_code = platform_dict["platform_accession_code"]
                 sample_object.manufacturer = platform_dict["manufacturer"]
                 sample_object.technology = "MICROARRAY"
+
+                protocol_info, is_upadted = self.update_sample_protocol_info(
+                    [],
+                    experiment.protocol_description,
+                    experiment.source_url + '/protocols'
+                )
+                if is_updated:
+                    sample_object.protocol_info = protocol_info
+
                 sample_object.save()
 
                 # Directly assign the harmonized properties
