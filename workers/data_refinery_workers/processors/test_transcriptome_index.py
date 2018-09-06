@@ -113,7 +113,3 @@ class TXTestCase(TestCase):
         file2 = job_context2["computed_file"]
         unpacked2 = '/'.join(file2.get_synced_file_path().split('/')[:-1])
         self.assertTrue('LONG' in unpacked2)
-
-        # Cleanup after ourselves so we don't leave 1.3G of data lying around.
-        shutil.rmtree(job_context1["output_dir"])
-        shutil.rmtree(job_context2["output_dir"])
