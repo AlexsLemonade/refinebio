@@ -1,22 +1,20 @@
-import json
 import datetime
-from unittest.mock import Mock, patch, call
+import json
+
 from django.test import TransactionTestCase
+from unittest.mock import Mock, patch, call
+
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (
     DownloaderJob,
-    OriginalFile,
     Organism,
+    OriginalFile,
     Sample,
     SurveyJob,
     SurveyJobKeyValue,
 )
-from data_refinery_foreman.surveyor.geo import (
-    GeoSurveyor
-)
-from data_refinery_foreman.surveyor.utils import (
-    get_title_and_authors_for_pubmed_id
-)
+from data_refinery_foreman.surveyor.geo import GeoSurveyor
+from data_refinery_foreman.surveyor.utils import get_title_and_authors_for_pubmed_id
 
 
 class SurveyTestCase(TransactionTestCase):

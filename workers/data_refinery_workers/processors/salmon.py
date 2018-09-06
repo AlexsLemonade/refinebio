@@ -60,9 +60,9 @@ def _prepare_files(job_context: Dict) -> Dict:
     logger.debug("Preparing files..")
 
     original_files = job_context["original_files"]
-    job_context["input_file_path"] = original_files[0].get_synced_file_path()
+    job_context["input_file_path"] = original_files[0].absolute_file_path
     if len(original_files) == 2:
-        job_context["input_file_path_2"] = original_files[1].get_synced_file_path()
+        job_context["input_file_path_2"] = original_files[1].absolute_file_path
 
     # There should only ever be one per Salmon run
     sample = job_context['original_files'][0].samples.first()
@@ -694,10 +694,6 @@ def _run_multiqc(job_context: Dict) -> Dict:
     report_file.result = job_context['qc_result']
     report_file.save()
     job_context['computed_files'].append(report_file)
-
-    SampleComputedFileAssociation.objects.get_or_create(
-        sample=job_context["sample"],
-        computed_file=data_file)
 
     job_context['qc_files'] = [data_file, report_file]
 

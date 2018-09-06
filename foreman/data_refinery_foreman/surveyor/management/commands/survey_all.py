@@ -21,7 +21,14 @@ def run_surveyor_for_accession(accession: str) -> None:
     elif 'E-' in accession[:2]:
         surveyor.survey_experiment(accession, "ARRAY_EXPRESS")
     elif " " in accession:
-        surveyor.survey_transcriptome_index(accession)
+        args = accession.split(",")
+        # Allow organism to be unspecified so we survey the entire division.
+        organism = args[0] if len(args[0]) > 0 else None
+        if len(args) > 1:
+            division = args[1].strip()
+        else:
+            division = "Ensembl"
+        surveyor.survey_transcriptome_index(organism, division)
     else:
         surveyor.survey_experiment(accession, "SRA")
 

@@ -1,36 +1,35 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
-import subprocess
 import random
 import string
+import subprocess
 import time
 import warnings
+
 from django.utils import timezone
 from typing import Dict
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
-    OriginalFile,
     ComputationalResult,
-    ComputedFile,
-    SampleResultAssociation,
-    SampleComputedFileAssociation,
     ComputationalResultAnnotation,
+    ComputedFile,
+    OriginalFile,
+    Pipeline,
     Processor,
-    Pipeline
+    SampleComputedFileAssociation,
+    SampleResultAssociation,
 )
-
+from data_refinery_common.utils import get_env_variable
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils, smasher
 
-from data_refinery_common.utils import get_env_variable
-S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
+S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 logger = get_and_configure_logger(__name__)
 
+
 def _prepare_input(job_context: Dict) -> Dict:
-    
+
     # We're going to use the smasher outside of the smasher.
     # I'm not crazy about this yet. Maybe refactor later,
     # but I need the data now.
@@ -39,32 +38,37 @@ def _prepare_input(job_context: Dict) -> Dict:
     job_context = smasher._smash(job_context)
 
     if not 'final_frame' in job_context.keys():
-        logger.error("Unable to prepare files for creating QN target.", 
+        logger.error("Unable to prepare files for creating QN target.",
             job_id=job_context['job'].id)
         job_context["job"].failure_reason = "Couldn't prepare files creating QN target (no final_frame)."
         job_context['success'] = False
         return job_context
 
     # We only need the resulting frame, not the entire archive
-    outfile = '/tmp/' + str(time.time()).split('.')[0] + '.tsv'
+    os.makedirs(job_context["work_dir"])
+    outfile_base = job_context['work_dir'] + str(time.time()).split('.')[0]
+    outfile = outfile_base + '.tsv'
     job_context['final_frame'].to_csv(outfile, sep='\t', encoding='utf-8')
     job_context['smashed_file'] = outfile
-    job_context['target_file'] = outfile + '.target.tsv'
+    job_context['target_file'] = outfile_base + '_target.tsv'
 
     return job_context
 
 def _quantile_normalize(job_context: Dict) -> Dict:
-
+    """Run the R script we have to create the reference for QN.
+    """
     try:
         job_context['time_start'] = timezone.now()
 
-        result = subprocess.check_output([
-                "/usr/bin/Rscript",
-                "--vanilla",
-                "/home/user/data_refinery_workers/processors/qn_reference.R",
-                "--inputFile", job_context['smashed_file'],
-                "--outputFile", job_context['target_file']
-            ])
+        job_context['formatted_command'] = [
+            "/usr/bin/Rscript",
+            "--vanilla",
+            "/home/user/data_refinery_workers/processors/qn_reference.R",
+            "--inputFile", job_context['smashed_file'],
+            "--outputFile", job_context['target_file']
+        ]
+
+        subprocess.check_output(job_context['formatted_command'])
 
         job_context['time_end'] = timezone.now()
 
@@ -76,21 +80,13 @@ def _quantile_normalize(job_context: Dict) -> Dict:
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
 
-    except RRuntimeError as e:
-        error_template = ("Encountered error in R code while running qn_reference"
-                          " pipeline during processing of {0}: {1}")
-        error_message = error_template.format(input_file, str(e))
-        logger.error(error_message, processor_job=job_context["job_id"])
-        job_context["job"].failure_reason = error_message
-        job_context["success"] = False
-
-
     return job_context
+
 
 def _create_result_objects(job_context: Dict) -> Dict:
 
     result = ComputationalResult()
-    result.commands.append("qn_reference.R") # Need a better way to represent this R code.
+    result.commands.append(" ".join(job_context['formatted_command']))
     result.is_ccdl = True
     result.is_public = True
     result.time_start = job_context['time_start']
@@ -116,10 +112,14 @@ def _create_result_objects(job_context: Dict) -> Dict:
     annotation.result = result
     annotation.data = {
         "organism_id": job_context['samples']['ALL'][0].organism_id,
-        "platform_accession_code": job_context['samples']['ALL'][0].platform_accession_code
+        "is_qn": True,
+        "platform_accession_code": job_context['samples']['ALL'][0].platform_accession_code,
+        "samples": [sample.accession_code for sample in job_context["samples"]["ALL"]]
     }
     annotation.save()
 
+    # TODO: upload this to a public read bucket.
+    # https://github.com/AlexsLemonade/refinebio/issues/586
     job_context['result'] = result
     job_context['computed_files'] = [computed_file]
     job_context['success'] = True
