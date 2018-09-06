@@ -70,8 +70,8 @@ class SurveyTestCase(TransactionTestCase):
         # Make sure sub-experiment original files weren't affected.
         og_file_sample_assocs = OriginalFileSampleAssociation.objects.filter(sample_id__in=samples.values('id'))
         original_files = OriginalFile.objects.filter(id__in=og_file_sample_assocs.values('original_file_id'))
-        self.assertEqual(original_files.count(), 6)
+        self.assertEqual(original_files.count(), 4)
 
         # Make sure the superseries samples are gone.
         self.assertEqual(Sample.objects.count(), 4)
-        self.assertEqual(OriginalFile.objects.count(), 6)
+        self.assertEqual(OriginalFile.objects.count(), 4)
