@@ -434,9 +434,9 @@ class SraSurveyor(ExternalSourceSurveyor):
                 setattr(sample_object, key, value)
 
             protocol_info, is_updated = self.update_sample_protocol_info(
-                [],
-                experiment_object.protocol_description,
-                experiment_object.source_url
+                existing_protocols=[],
+                experiment_protocol=experiment_object.protocol_description,
+                experiment_url=experiment_object.source_url
             )
             if is_updated:
                 sample_object.protocol_info = protocol_info
