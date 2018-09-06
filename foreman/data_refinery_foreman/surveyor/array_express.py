@@ -200,7 +200,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 logger.warning("Remote experiment has no protocol data!",
                                experiment_accession_code=experiment_accession_code,
                                survey_job=self.survey_job.id)
-            
+
             if 'Publication Title' in idf_dict:
                 # This will happen for some superseries.
                 # Ex: E-GEOD-29536
@@ -287,38 +287,49 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def update_sample_protocol_info(existing_protocols, experiment_protocol, protocol_url):
-        """Compares experiment_protocol with a sample's 
+        """Compares experiment_protocol with a sample's
         existing_protocols and updates the latter if the former includes
         any new entry.
 
         Returns a tuple whose first element is existing_protocols (which
         may or may not have been updated) and the second is a boolean
         indicating whether exisiting_protocols has been updated.
+
+        Note that the ArrayExpress experiment-level protocol includes
+        multiple entries.
         """
-        
+
         if not 'protocol' in experiment_protocol:
             return (existing_protocols, False)
 
-        is_updated = False        
+        is_updated = False
+        # Compare each entry in experiment protocol with the existing
+        # protocols; if the entry is new, add it to exising_protocols.
         for new_protocol in experiment_protocol['protocol']:
+            # Ignore experiment level protocols whose accession or text
+            # field is unavailable or empty
+            if (not new_protocol.get('accession', '').strip() or
+                not new_protocol.get('text', '').strip():
+                continue
+
             new_protocol_is_found = False
             for existing_protocol in existing_protocols:
-                if (new_protocol['accession'] == existing_protocol['Accession'] and
-                    new_protocol['text'] == existing_protocol['Text'] and
-                    new_protocol['type'] == existing_protocol['Type']):
+                if (new_protocol.get('accession', '') == existing_protocol['Accession']
+                    and new_protocol.get('text', '') == existing_protocol['Text']
+                    and new_protocol.get('type', '') == existing_protocol['Type']):
                     new_protocol_is_found = True
                     break
             if not new_protocol_is_found:
                existing_protocols.append({
-                   'Accession': new_protocol['accession'],
-                   'Text': new_protocol['text'],
-                   'Type': new_protocol['type'],
+                   'Accession': new_protocol.get('accession',''),
+                   'Text': new_protocol.get('text',''),
+                   'Type': new_protocol('type', ''),
                    'Reference': protocol_url
                })
                is_updated = True
-               
+
         return (existing_protocols, is_updated)
-                                   
+
     def create_samples_from_api(self,
                                 experiment: Experiment,
                                 platform_dict: Dict
@@ -492,7 +503,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 if is_updated:
                     sample_object.protocol_info = protocol_info
                     sample_obejct.save()
-                    
+
                 logger.debug("Sample %s already exists, skipping object creation.",
                              sample_accession_code,
                              experiment_accession_code=experiment.accession_code,
