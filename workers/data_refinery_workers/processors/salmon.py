@@ -337,14 +337,14 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         skip = True
 
     # Salmon needs to be run differently for different sample types.
-    # XXX: TODO: We need to tune the -p/--numThreads to the machines this process will run on.
-    # It's possible we want to remove -p entirely and have Salmon figure out for itself.
-    # Related: https://github.com/COMBINE-lab/salmon/commit/95866337bde0feb57a0c3231efdfa26c847ba141
     if "input_file_path_2" in job_context:
         second_read_str = " -2 {}".format(job_context["input_file_path_2"])
+
+        # Rob recommends 16 threads/process, which fits snugly on an x1 at 8GB RAM per Salmon container:
+        # (2 threads/core * 16 cores/socket * 64 vCPU) / (1TB/8GB) = ~17
         command_str = ("salmon --no-version-check quant -l A --biasSpeedSamp 5 -i {index}"
                        " -1 {input_one}{second_read_str}"
-                       " -p 20 -o {output_directory} --seqBias --gcBias --dumpEq --writeUnmappedNames")
+                       " -p 16 -o {output_directory} --seqBias --gcBias --dumpEq --writeUnmappedNames")
         formatted_command = command_str.format(index=job_context["index_directory"],
             input_one=job_context["input_file_path"],
             second_read_str=second_read_str,
@@ -353,7 +353,7 @@ def _run_salmon(job_context: Dict, skip_processed=SKIP_PROCESSED) -> Dict:
         # Related: https://github.com/COMBINE-lab/salmon/issues/83
         command_str = ("salmon --no-version-check quant -l A -i {index}"
                " -r {input_one}"
-               " -p 20 -o {output_directory} --seqBias --dumpEq --writeUnmappedNames")
+               " -p 16 -o {output_directory} --seqBias --dumpEq --writeUnmappedNames")
         formatted_command = command_str.format(index=job_context["index_directory"],
                     input_one=job_context["input_file_path"],
                     output_directory=job_context["output_directory"])
