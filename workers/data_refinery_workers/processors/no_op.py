@@ -61,7 +61,7 @@ def _prepare_files(job_context: Dict) -> Dict:
                     joined = ''.join(row)
                     break
         except Exception as e:
-            logger.exception("Expected text file, was this in fact a binary file?"
+            logger.exception("Expected text file, was this in fact a binary file?",
                              job_context=job_context,
                              file=job_context["input_file_path"])
 
