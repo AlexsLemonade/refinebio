@@ -1,8 +1,8 @@
-job "SMASHER_${{INDEX}}_${{RAM}}" {
+job "SMASHER" {
   datacenters = ["dc1"]
 
   type = "batch"
-  priority = 75 
+  priority = 75
 
   parameterized {
     payload       = "forbidden"
@@ -52,13 +52,7 @@ job "SMASHER_${{INDEX}}_${{RAM}}" {
         # CPU is in AWS's CPU units.
         cpu = 1024
         # Memory is in MB of RAM.
-        memory = ${{RAM}}
-      }
-
-      constraint {
-        attribute = "${meta.volume_index}"
-        operator  = "="
-        value     = "${{INDEX}}"
+        memory = 4096
       }
 
       config {
