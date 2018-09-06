@@ -1,5 +1,5 @@
-import sys
 import requests
+import sys
 
 from django.core.management.base import BaseCommand
 from django.db.models import Count
@@ -7,23 +7,23 @@ from django.db.models import Count
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
-from data_refinery_workers.processors import qn_reference, utils
-
 from data_refinery_common.models import (
-    Experiment,
-    Sample,
-    Organism,
-    ProcessorJob,
-    Dataset,
-    ProcessorJobDatasetAssociation,
-    ExperimentOrganismAssociation,
-    OrganismIndex,
-    ExperimentSampleAssociation,
     ComputationalResult,
     ComputedFile,
+    Dataset,
+    Experiment,
+    ExperimentOrganismAssociation,
+    ExperimentSampleAssociation,
+    ExperimentSampleAssociation,
+    Organism,
+    OrganismIndex,
+    ProcessorJob,
+    ProcessorJobDatasetAssociation,
+    Sample,
     SampleComputedFileAssociation,
-    ExperimentSampleAssociation
 )
+from data_refinery_workers.processors import qn_reference, utils
+
 
 logger = get_and_configure_logger(__name__)
 
@@ -36,18 +36,18 @@ class Command(BaseCommand):
             help=("Name of organism"))
 
     def handle(self, *args, **options):
-        """ 
+        """
         """
 
         if options["organism"] is None:
             logger.error("You must specify an organism")
-            sys.exit(1) 
+            sys.exit(1)
 
         organism = Organism.get_object_for_name(options["organism"].upper())
         samples = Sample.processed_objects.filter(organism=organism)
         if samples.count() == 0:
             logger.error("No processed samples for that organism.")
-            sys.exit(1) 
+            sys.exit(1)
 
         platform_counts = samples.values('platform_accession_code').annotate(dcount=Count('platform_accession_code')).order_by('-dcount')
 

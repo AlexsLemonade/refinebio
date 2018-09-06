@@ -3,8 +3,8 @@ import daiquiri
 import logging
 import sys
 
-from data_refinery_common.utils import get_worker_id
 from data_refinery_common.utils import get_env_variable_gracefully
+from data_refinery_common.utils import get_instance_id
 
 
 # Most of the formatting in this string is for the logging system. All
@@ -13,7 +13,7 @@ from data_refinery_common.utils import get_env_variable_gracefully
 FORMAT_STRING = (
     "%(asctime)s {0} %(name)s %(color)s%(levelname)s%(extras)s"
     ": %(message)s%(color_stop)s"
-).format(get_worker_id())
+).format(get_instance_id())
 
 
 def unconfigure_root_logger():

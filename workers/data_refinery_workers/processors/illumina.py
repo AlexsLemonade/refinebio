@@ -1,42 +1,39 @@
-from __future__ import absolute_import, unicode_literals
-
 import csv
+import multiprocessing
 import os
 import string
 import subprocess
-import multiprocessing
 import warnings
-
-import pandas as pd
-import numpy as np
 
 from django.utils import timezone
 from typing import Dict
+import numpy as np
+import pandas as pd
 
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import (
-    OriginalFile,
-    ComputationalResult,
-    ComputedFile,
-    Sample,
-    SampleAnnotation,
-    OriginalFileSampleAssociation,
-    SampleResultAssociation,
-    SampleComputedFileAssociation,
-    ProcessorJob,
-    ProcessorJobOriginalFileAssociation,
-    Processor,
-    Pipeline
-)
-from data_refinery_workers._version import __version__
-from data_refinery_workers.processors import utils
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.message_queue import send_job
+from data_refinery_common.models import (
+    ComputationalResult,
+    ComputedFile,
+    OriginalFile,
+    OriginalFileSampleAssociation,
+    Pipeline,
+    Processor,
+    ProcessorJob,
+    ProcessorJobOriginalFileAssociation,
+    Sample,
+    SampleAnnotation,
+    SampleComputedFileAssociation,
+    SampleResultAssociation,
+)
 from data_refinery_common.utils import get_env_variable
+from data_refinery_workers._version import __version__
+from data_refinery_workers.processors import utils
 
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
-
+LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 logger = get_and_configure_logger(__name__)
 
 
@@ -44,23 +41,21 @@ def _prepare_files(job_context: Dict) -> Dict:
     """Adds the keys "input_file_path" and "output_file_path" to
     job_context so everything is prepared for processing.
     """
-    original_file = job_context["original_files"][0]
-    job_context["input_file_path"] = original_file.get_synced_file_path()
-    # Turns /home/user/data_store/E-GEOD-8607/raw/foo.txt into /home/user/data_store/E-GEOD-8607/processed/foo.cel
-    pre_part = original_file.absolute_file_path.split('/')[:-2] # Cut off '/raw'
-    end_part = original_file.absolute_file_path.split('/')[-1] # Get the filename
-    job_context["output_file_path"] = '/'.join(pre_part) + '/processed/' + end_part
-    output_directory = '/'.join(pre_part) + '/processed/'
-    os.makedirs(output_directory, exist_ok=True)
+    # All files for the job are in the same directory.
+    job_context["work_dir"] = LOCAL_ROOT_DIR + "/" + "processor_job_" + str(job_context["job_id"])
+    os.makedirs(job_context["work_dir"], exist_ok=True)
 
-    job_context["output_file_path"] = output_directory + end_part.replace('.txt', '.PCL')
-    job_context["input_directory"] = '/'.join(pre_part) + '/'
+    original_file = job_context["original_files"][0]
+    sanitized_filename = original_file.absolute_file_path.split('/')[-1]  + ".sanitized"
+    job_context['input_file_path'] = job_context['work_dir'] + sanitized_filename
+
+    new_filename= original_file.absolute_file_path.split('/')[-1].replace('.txt', '.PCL')
+    job_context["output_file_path"] = job_context["work_dir"] +  new_filename
 
     # Sanitize this file so R doesn't choke.
     # Some have comments, some have non-comment-comments.
-    file_input = open(job_context["input_file_path"], "r")
-    with open(job_context["input_file_path"], "r") as file_input:
-        with open(job_context["input_file_path"] + ".sanitized", "w") as file_output:
+    with open(original_file.absolute_file_path, "r") as file_input:
+        with open(job_context["input_file_path"], "w") as file_output:
             for line in file_input:
                 if '#' not in line and \
                 line.strip() != '' and \
@@ -68,7 +63,6 @@ def _prepare_files(job_context: Dict) -> Dict:
                 '\t' in line and \
                 line[0] != '\t':
                     file_output.write(line)
-    job_context['input_file_path'] = job_context["input_file_path"] + ".sanitized"
 
     return job_context
 
@@ -93,6 +87,10 @@ def _detect_columns(job_context: Dict) -> Dict:
             T350A&si-EZH2-2', 'Detection Pval', 'LV-T350A&si-EZH2-3', 'Detection
             Pval']
 
+    Adds the following keys to job_context:
+        columnIds: the identifiers of columns which contain expression data
+        probeId: which is the value of the column containing the probe identifiers.
+        detectionPval: a string which identifies Pvalue columns
     """
     try:
         input_file = job_context["input_file_path"]
@@ -100,16 +98,6 @@ def _detect_columns(job_context: Dict) -> Dict:
         with open(input_file, 'r') as tsv_in:
             tsv_in = csv.reader(tsv_in, delimiter='\t')
             for row in tsv_in:
-
-                # Skip sparse header row
-                if row[0] == "":
-                    continue
-
-                # Skip comment rows
-                joined = ''.join(row)
-                if '#' in joined or '' == joined:
-                    continue
-
                 headers = row
                 break
 
@@ -143,7 +131,7 @@ def _detect_columns(job_context: Dict) -> Dict:
             return job_context
 
         # Then, finally, create an absolutely bonkers regular expression
-        # which will explictly hit on any sample which contains a sample
+        # which will explicitly hit on any sample which contains a sample
         # ID _and_ ignores the magical word 'BEAD', etc. Great!
         column_ids = ""
         for sample in job_context['samples']:
@@ -176,7 +164,7 @@ def _detect_columns(job_context: Dict) -> Dict:
                     column_ids = column_ids + str(offset) + ","
                     continue
 
-                if sample.title in header and \
+                if sample.title.upper() in header.upper() and \
                 'BEAD' not in header.upper() and \
                 'NARRAYS' not in header.upper() and \
                 'ARRAY_STDEV' not in header.upper() and \
@@ -189,6 +177,7 @@ def _detect_columns(job_context: Dict) -> Dict:
                 column_ids = column_ids + str(offset) + ","
                 continue
 
+        # Remove the trailing comma
         column_ids = column_ids[:-1]
         job_context['columnIds'] = column_ids
     except Exception as e:
@@ -252,7 +241,7 @@ def _detect_platform(job_context: Dict) -> Dict:
                 high_mapped_percent = float(results[1].strip())
 
         except Exception as e:
-            logger.exception(e)
+            logger.exception(e, processor_job_id=job_context["job"].id)
             continue
 
     # Record our sample detection outputs for every sample.
@@ -278,6 +267,8 @@ def _detect_platform(job_context: Dict) -> Dict:
 
         processor_job = ProcessorJob()
         processor_job.pipeline_applied = "NO_OP"
+        processor_job.volume_index = job_context["job"].volume_index
+        processor_job.ram_amount = job_context["job"].ram_amount
         processor_job.save()
 
         assoc = ProcessorJobOriginalFileAssociation()
@@ -297,31 +288,31 @@ def _detect_platform(job_context: Dict) -> Dict:
 
 def _run_illumina(job_context: Dict) -> Dict:
     """Processes an input TXT file to an output PCL file using a custom R script.
+
     Expects a job_context which has been pre-populated with inputs, outputs
     and the column identifiers which the R script needs for processing.
     """
     input_file_path = job_context["input_file_path"]
 
-    # We need to detect the sub-platform. Looking for the chip version
-    # in the metadata is the best we can do for right now.
-    annotation = job_context['samples'][0].sampleannotation_set.all()[0]
-    annotation_data = str(annotation.data).encode('utf-8').upper()
-
     try:
         job_context['time_start'] = timezone.now()
 
-        result = subprocess.check_output([
-                "/usr/bin/Rscript",
-                "--vanilla",
-                "/home/user/data_refinery_workers/processors/illumina.R",
-                "--probeId", job_context['probeId'],
-                "--expression", job_context['columnIds'],
-                "--detection", job_context['detectionPval'],
-                "--platform", job_context['platform'],
-                "--inputFile", job_context['input_file_path'],
-                "--outputFile", job_context['output_file_path'],
-                "--cores", str(multiprocessing.cpu_count())
-            ])
+        formatted_command = [
+            "/usr/bin/Rscript",
+            "--vanilla",
+            "/home/user/data_refinery_workers/processors/illumina.R",
+            "--probeId", job_context['probeId'],
+            "--expression", job_context['columnIds'],
+            "--detection", job_context['detectionPval'],
+            "--platform", job_context['platform'],
+            "--inputFile", job_context['input_file_path'],
+            "--outputFile", job_context['output_file_path'],
+            "--cores", str(multiprocessing.cpu_count())
+        ]
+
+        subprocess.check_output(formatted_command)
+
+        job_context['formatted_command'] = " ".join(formatted_command)
 
         job_context['time_end'] = timezone.now()
 
@@ -339,7 +330,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     """ Create the ComputationalResult objects after a Scan run is complete """
 
     result = ComputationalResult()
-    result.commands.append("illumina.R") # Need a better way to represent this R code.
+    result.commands.append(job_context['formatted_command'])
     result.is_ccdl = True
     result.is_public = True
     result.time_start = job_context['time_start']
@@ -360,7 +351,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
     individual_files = []
     frames = np.split(data, len(data.columns), axis=1)
     for frame in frames:
-        frame_path = job_context["output_file_path"] + '.' + frame.columns.values[0].replace('&', '') + '.tsv'
+        filename = frame.columns.values[0].replace('&', '').replace("*", '').replace(";", '') + '.tsv'
+        frame_path = job_context["work_dir"] + filename
         frame.to_csv(frame_path, sep='\t', encoding='utf-8')
 
         # This needs to be the same as the ones in the job context!
@@ -396,10 +388,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
         individual_files.append(computed_file)
 
-    # Don't need the big one after it's split.
-    os.remove(job_context["output_file_path"])
-
-    logger.info("Created %s", result)
+    logger.debug("Created %s", result)
     job_context["success"] = True
     job_context["individual_files"] = individual_files
     job_context["result"] = result

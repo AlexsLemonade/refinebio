@@ -1,26 +1,25 @@
 import requests
 from typing import List, Dict
 
-import xml.etree.ElementTree as ET
 from django.utils.dateparse import parse_datetime
+import xml.etree.ElementTree as ET
 
+from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
-    SurveyJob,
+    Experiment,
+    ExperimentAnnotation,
+    ExperimentOrganismAssociation,
+    ExperimentSampleAssociation,
     Organism,
     OriginalFile,
     OriginalFileSampleAssociation,
-    Experiment,
-    ExperimentAnnotation,
     Sample,
     SampleAnnotation,
-    ExperimentSampleAssociation,
-    OriginalFileSampleAssociation,
-    ExperimentOrganismAssociation
+    SurveyJob,
 )
 from data_refinery_foreman.surveyor import utils, harmony
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
-from data_refinery_common.logging import get_and_configure_logger
 
 
 logger = get_and_configure_logger(__name__)
@@ -390,7 +389,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         # Samples
         ##
 
-        sample_accession_code = metadata.pop('sample_accession')
+        sample_accession_code = metadata.pop('run_accession')
         # Create the sample object
         try:
             sample_object = Sample.objects.get(accession_code=sample_accession_code)
@@ -444,27 +443,11 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         return experiment_object, [sample_object]
 
-    @staticmethod
-    def get_next_accession(last_accession: str) -> str:
-        """Increments a SRA accession number by one.
-
-        E.g. if last_accession is "DRR002116" then "DRR002117" will be
-        returned.
-        """
-        prefix = last_accession[0:3]
-        digits = last_accession[3:]
-        number = int(digits) + 1
-
-        # This format string is pretty hairy, but since the number of
-        # digits can be variable we need to determine the amount of
-        # padding to have the formatter add.
-        return (prefix + "{0:0" + str(len(digits)) + "d}").format(number)
-
     def discover_experiment_and_samples(self):
-        """ Returns an experiment and a list of samples for an SRA accession """
+        """Returns an experiment and a list of samples for an SRA accession"""
         survey_job = SurveyJob.objects.get(id=self.survey_job.id)
         survey_job_properties = survey_job.get_properties()
-        accession = survey_job_properties["accession"]
+        accession = survey_job_properties["experiment_accession_code"]
 
         # SRA Surveyor is mainly designed for SRRs, this handles SRPs
         if 'SRP' in accession or 'ERP' in accession or 'DRP' in accession:

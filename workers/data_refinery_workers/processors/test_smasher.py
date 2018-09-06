@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 import zipfile
 from io import StringIO
@@ -121,6 +122,7 @@ def prepare_job():
     ds.scale_by = 'STANDARD' # [NONE or MINMAX or STANDARD or ROBUST]
     ds.email_address = "null@derp.com"
     #ds.email_address = "miserlou+heyo@gmail.com"
+    ds.quantile_normalize = False
     ds.save()
 
     pjda = ProcessorJobDatasetAssociation()
@@ -174,6 +176,9 @@ class SmasherTestCase(TestCase):
 
             # Cleanup
             os.remove(final_context['output_file'])
+            job.start_time = None
+            job.end_time = None
+            job.save()
 
         for scale_type in ['NONE', 'MINMAX', 'STANDARD', 'ROBUST']:
             dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
@@ -193,6 +198,9 @@ class SmasherTestCase(TestCase):
 
             # Cleanup
             os.remove(final_context['output_file'])
+            job.start_time = None
+            job.end_time = None
+            job.save()
 
         # Stats
         for scale_type in ['MINMAX', 'STANDARD']:
@@ -225,6 +233,9 @@ class SmasherTestCase(TestCase):
             self.assertTrue('GSE51081.tsv' in namelist)
 
             os.remove(final_context['output_file'])
+            job.start_time = None
+            job.end_time = None
+            job.save()
 
 
     @tag("smasher")
@@ -306,6 +317,7 @@ class SmasherTestCase(TestCase):
         ds.aggregate_by = 'EXPERIMENT'
         ds.scale_by = 'MINMAX'
         ds.email_address = "null@derp.com"
+        ds.quantile_normalize = False
         ds.save()
         dsid = ds.id
 
@@ -415,6 +427,7 @@ class SmasherTestCase(TestCase):
         ds.aggregate_by = 'ALL'
         ds.scale_by = 'STANDARD'
         ds.email_address = "null@derp.com"
+        ds.quantile_normalize = False
         ds.save()
 
         pjda = ProcessorJobDatasetAssociation()
@@ -511,6 +524,7 @@ class SmasherTestCase(TestCase):
         ds.aggregate_by = 'ALL'
         ds.scale_by = 'STANDARD'
         ds.email_address = "null@derp.com"
+        ds.quantile_normalize = False
         ds.save()
 
         pjda = ProcessorJobDatasetAssociation()
@@ -608,6 +622,7 @@ class SmasherTestCase(TestCase):
         ds.aggregate_by = 'EXPERIMENT'
         ds.scale_by = 'MINMAX'
         ds.email_address = "null@derp.com"
+        ds.quantile_normalize = False
         ds.save()
 
         pjda = ProcessorJobDatasetAssociation()
@@ -619,7 +634,7 @@ class SmasherTestCase(TestCase):
         ds = Dataset.objects.get(id=ds.id)
 
         self.assertTrue(final_context['success'])
-    
+
     @tag("smasher")
     def test_dualtech_smash(self):
         """ """
@@ -712,6 +727,7 @@ class SmasherTestCase(TestCase):
         ds.aggregate_by = 'SPECIES'
         ds.scale_by = 'STANDARD'
         ds.email_address = "null@derp.com"
+        ds.quantile_normalize = False
         ds.save()
 
         pjda = ProcessorJobDatasetAssociation()
@@ -732,6 +748,10 @@ class SmasherTestCase(TestCase):
         dsid = ds.id
         ds = Dataset.objects.get(id=dsid)
 
+        pj.start_time = None
+        pj.end_time = None
+        pj.save()
+
         final_context = smasher.smash(pj.pk, upload=False)
         self.assertTrue(os.path.exists(final_context['output_file']))
         os.remove(final_context['output_file'])
@@ -744,9 +764,11 @@ class SmasherTestCase(TestCase):
         dsid = ds.id
         ds = Dataset.objects.get(id=dsid)
 
+        pj.start_time = None
+        pj.end_time = None
+        pj.save()
         final_context = smasher.smash(pj.pk, upload=False)
         self.assertTrue(os.path.exists(final_context['output_file']))
-        os.remove(final_context['output_file'])
         self.assertEqual(len(final_context['final_frame'].columns), 2)
 
     @tag("smasher")
@@ -797,6 +819,7 @@ class SmasherTestCase(TestCase):
         ds.aggregate_by = 'SPECIES'
         ds.scale_by = 'STANDARD'
         ds.email_address = "shoopdawoop@mailinator.com"
+        ds.quantile_normalize = False
         ds.save()
 
         pj = ProcessorJob()

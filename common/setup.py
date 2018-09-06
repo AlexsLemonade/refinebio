@@ -27,7 +27,6 @@ setup(
     install_requires=["django>=1.10.6",
                       "boto3>=1.4.4",
                       "daiquiri>=1.3.0",
-                      "billiard>=3.5.0.3",
                       "requests>=2.18.4",
                       "retrying>=1.3.3",
                       "psycopg2-binary>=2.7.4",

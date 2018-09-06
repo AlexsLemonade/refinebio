@@ -23,7 +23,7 @@ def get_platform_from_CEL(cel_file_path: str) -> str:
     except RRuntimeError as e:
         error_template = ("Unable to read Affy header in input file {0}"
                           " while running AFFY_TO_PCL due to error: {1}")
-        logger.error(error_template.format(cel_file_path, str(e)))
+        logger.info(error_template.format(cel_file_path, str(e)))
         raise
 
     # header is a list of vectors. [0][0] contains the package name.
