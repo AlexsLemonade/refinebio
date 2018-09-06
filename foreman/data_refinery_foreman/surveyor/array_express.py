@@ -291,12 +291,12 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         existing_protocols and updates the latter if the former includes
         any new entry.
 
-        Returns a tuple whose first element is existing_protocols (which
-        may or may not have been updated) and the second is a boolean
-        indicating whether exisiting_protocols has been updated.
+        Returns a two-element tuple, the first is existing_protocols
+        (which may or may not have been updated) and the second is a
+        bool indicating whether exisiting_protocols has been updated.
 
-        Note that the ArrayExpress experiment-level protocol includes
-        multiple entries.
+        Note that the ArrayExpress experiment-level protocol may include
+        multiple protocol entries.
         """
 
         if not 'protocol' in experiment_protocol:
@@ -306,8 +306,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         # Compare each entry in experiment protocol with the existing
         # protocols; if the entry is new, add it to exising_protocols.
         for new_protocol in experiment_protocol['protocol']:
-            # Ignore experiment level protocols whose accession or text
-            # field is unavailable or empty
+            # Ignore experiment-level protocols whose accession or text
+            # field is unavailable or empty.
             if (not new_protocol.get('accession', '').strip() or
                 not new_protocol.get('text', '').strip()):
                 continue
