@@ -5,23 +5,19 @@ from django.db import transaction
 from retrying import retry
 from typing import List, Dict
 
+from data_refinery_common import message_queue, job_lookup, logging
 from data_refinery_common.models import (
     DownloaderJob,
-    SurveyJob,
-    Sample,
+    DownloaderJobOriginalFileAssociation,
     Experiment,
     ExperimentSampleAssociation,
     OriginalFile,
-    DownloaderJobOriginalFileAssociation
+    Sample,
+    SurveyJob,
 )
-from data_refinery_common import message_queue, job_lookup, logging
 
 
 logger = logging.get_and_configure_logger(__name__)
-
-
-class InvalidProcessedFormatError(Exception):
-    pass
 
 
 class ExternalSourceSurveyor:
@@ -36,20 +32,17 @@ class ExternalSourceSurveyor:
 
     @abc.abstractmethod
     def discover_experiments_and_samples(self):
-        """Abstract method to survey a source.
-        """
+        """Abstract method to survey a source."""
         return
 
-    @retry(stop_max_attempt_number=3)
     def queue_downloader_jobs(self, experiment: Experiment):
-        """ This enqueues DownloaderJobs on a per-file basis.
+        """This enqueues DownloaderJobs on a per-file basis.
+
         There is a complementary function below for enqueueing multi-file
         DownloaderJobs.
         """
-
         # Get all of the undownloaded original files related to this Experiment.
-        relations = ExperimentSampleAssociation.objects.filter(experiment=experiment)
-        samples = Sample.objects.filter(id__in=relations.values('sample_id'))
+        samples = experiment.samples.all()
         files_to_download = OriginalFile.objects.filter(
             samples__in=samples.values('pk'), is_downloaded=False)
 
@@ -60,11 +53,10 @@ class ExternalSourceSurveyor:
             # However, we do want to associate original_files with the
             # DownloaderJobs that will download them.
             if original_file.source_url in download_urls_with_jobs.keys():
-
-                asoc = DownloaderJobOriginalFileAssociation.objects.get_or_create(
+                DownloaderJobOriginalFileAssociation.objects.get_or_create(
                     downloader_job = download_urls_with_jobs[original_file.source_url],
                     original_file = original_file
-                )[0]
+                )
                 continue
 
             # There is already a downloader job associated with this file.
@@ -83,23 +75,22 @@ class ExternalSourceSurveyor:
                             sample=sample_object.id,
                             original_file=original_file.id)
             else:
-                with transaction.atomic():
-                    downloader_job = DownloaderJob()
-                    downloader_job.downloader_task = downloader_task.value
-                    downloader_job.accession_code = experiment.accession_code
-                    downloader_job.save()
+                downloader_job = DownloaderJob()
+                downloader_job.downloader_task = downloader_task.value
+                downloader_job.accession_code = experiment.accession_code
+                downloader_job.save()
 
-                    asoc = DownloaderJobOriginalFileAssociation.objects.get_or_create(
-                        downloader_job = downloader_job,
-                        original_file = original_file
-                    )[0]
+                DownloaderJobOriginalFileAssociation.objects.get_or_create(
+                    downloader_job = downloader_job,
+                    original_file = original_file
+                )
 
                 download_urls_with_jobs[original_file.source_url] = downloader_job
 
                 try:
-                    logger.info("Queuing downloader job for URL: " + original_file.source_url,
-                                survey_job=self.survey_job.id,
-                                downloader_job=downloader_job.id)
+                    logger.debug("Queuing downloader job for URL: " + original_file.source_url,
+                                 survey_job=self.survey_job.id,
+                                 downloader_job=downloader_job.id)
                     message_queue.send_job(downloader_task, downloader_job)
                 except Exception as e:
                     # If the task doesn't get sent we don't want the
@@ -112,13 +103,12 @@ class ExternalSourceSurveyor:
                     downloader_job.failure_reason = str(e)
                     downloader_job.save()
 
-    @retry(stop_max_attempt_number=3)
     def queue_downloader_job_for_original_files(self,
                                                 original_files: List[OriginalFile],
                                                 experiment_accession_code: str=None,
                                                 is_transcriptome: bool=False
                                                 ):
-        """ Creates a single DownloaderJob with multiple files to download.
+        """Creates a single DownloaderJob with multiple files to download.
         """
         # Transcriptome is a special case because there's no sample_object.
         if is_transcriptome:
@@ -139,18 +129,18 @@ class ExternalSourceSurveyor:
 
             downloaded_urls = []
             for original_file in original_files:
-                asoc = DownloaderJobOriginalFileAssociation.objects.get_or_create(
+                DownloaderJobOriginalFileAssociation.objects.get_or_create(
                     downloader_job = downloader_job,
                     original_file = original_file
-                )[0]
+                )
 
                 downloaded_urls.append(original_file.source_url)
 
             try:
-                logger.info("Queuing downloader job.",
-                            survey_job=self.survey_job.id,
-                            downloader_job=downloader_job.id,
-                            downloaded_urls=downloaded_urls)
+                logger.debug("Queuing downloader job.",
+                             survey_job=self.survey_job.id,
+                             downloader_job=downloader_job.id,
+                             downloaded_urls=downloaded_urls)
                 message_queue.send_job(downloader_task, downloader_job)
             except Exception as e:
                 # If the task doesn't get sent we don't want the
@@ -165,6 +155,13 @@ class ExternalSourceSurveyor:
                 downloader_job.save()
 
     def survey(self, source_type=None) -> bool:
+        """Retrieves metadata from external source to queue jobs.
+
+        Queries the external source's API to discover an experiment
+        and its samples, creates database records for them, and queues
+        nomad jobs for them.
+        Returns True if successful, False otherwise.
+        """
         try:
             experiment, samples = self.discover_experiment_and_samples()
         except Exception:
@@ -194,5 +191,5 @@ class ExternalSourceSurveyor:
                              survey_job=self.survey_job.id)
             return False
 
-        logger.info("Survey job completed successfully.", survey_job=self.survey_job.id)
+        logger.debug("Survey job completed successfully.", survey_job=self.survey_job.id)
         return True
