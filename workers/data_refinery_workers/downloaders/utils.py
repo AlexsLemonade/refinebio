@@ -81,7 +81,7 @@ def end_downloader_job(job: DownloaderJob, success: bool):
 
 
 def delete_if_blacklisted(original_file: OriginalFile) -> OriginalFile:
-    extension = original_file.file_name.split(".")[-1]
+    extension = original_file.filename.split(".")[-1]
     if extension.lower() in BLACKLISTED_EXTENSIONS:
         logger.debug("Original file had a blacklisted extension of %s, skipping",
                      extension,
