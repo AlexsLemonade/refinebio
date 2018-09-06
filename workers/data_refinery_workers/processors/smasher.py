@@ -35,6 +35,7 @@ from data_refinery_workers.processors import utils
 
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
+RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD", "False")
 BODY_HTML = Path('data_refinery_workers/processors/smasher_email.min.html').read_text().replace('\n', '')
 logger = get_and_configure_logger(__name__)
 
@@ -396,7 +397,7 @@ def _upload(job_context: Dict) -> Dict:
     """ Uploads the result file to S3 and notifies user. """
 
     try:
-        if job_context.get("upload", True):
+        if job_context.get("upload", True) and RUNNING_IN_CLOUD:
             s3_client = boto3.client('s3')
 
             # Note that file expiry is handled by the S3 object lifecycle,
