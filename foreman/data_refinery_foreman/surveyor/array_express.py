@@ -526,9 +526,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 sample_object.technology = "MICROARRAY"
 
                 protocol_info, is_updated = self.update_sample_protocol_info(
-                    [],
-                    experiment.protocol_description,
-                    experiment.source_url + '/protocols'
+                    existing_protocols=[],
+                    experiment_protocol=experiment.protocol_description,
+                    protocol_url=experiment.source_url + '/protocols'
                 )
                 if is_updated:
                     sample_object.protocol_info = protocol_info
