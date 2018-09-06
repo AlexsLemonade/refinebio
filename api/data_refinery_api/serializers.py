@@ -131,7 +131,6 @@ class SampleSerializer(serializers.ModelSerializer):
                     'pretty_platform',
                     'technology',
                     'manufacturer',
-                    'is_downloaded',
                     'is_processed',
                     'created_at',
                     'last_modified',
@@ -183,7 +182,6 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
                     'subject',
                     'compound',
                     'time',
-                    'is_downloaded',
                     'is_processed',
                     'created_at',
                     'last_modified',
@@ -304,7 +302,6 @@ class OriginalFileSerializer(serializers.ModelSerializer):
                     'is_downloaded',
                     'is_archive',
                     'has_raw',
-                    'is_downloaded',
                     'created_at',
                     'last_modified'
                 )
