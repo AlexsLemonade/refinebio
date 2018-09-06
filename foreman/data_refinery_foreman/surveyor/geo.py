@@ -363,6 +363,10 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     OriginalFileSampleAssociation.objects.get_or_create(
                         sample=sample_object, original_file=original_file)
 
+            # Delete this Original file if it isn't being used.
+            if OriginalFileSampleAssociation.objects.filter(original_file=original_file).count() == 0:
+                original_file.delete()
+
         # These are the Miniml/Soft/Matrix URLs that are always(?) provided.
         # GEO describes different types of data formatting as "families"
         family_url = self.get_miniml_url(experiment_accession_code)
