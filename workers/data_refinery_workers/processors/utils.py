@@ -1,5 +1,6 @@
 import os
 import random
+import shutil
 import string
 import subprocess
 import yaml
@@ -158,7 +159,7 @@ def end_job(job_context: Dict, abort=False):
             pipeline.save()
 
     if "work_dir" in job_context:
-        os.rmtree(job_context["work_dir"])
+        shutil.rmtree(job_context["work_dir"])
 
     job.success = success
     job.end_time = timezone.now()
