@@ -218,6 +218,7 @@ class APITestCases(APITestCase):
         sample = Sample()
         sample.accession_code = "XXXXXXXXXXXXXXX"
         sample.is_processed = True
+        sample.technology = "RNA-SEQ"
         sample.save()
 
         # Our Docker image doesn't have the standard dict. >=[
@@ -278,6 +279,7 @@ class APITestCases(APITestCase):
         sample1.accession_code = "1123"
         sample1.platform_name = "AFFY"
         sample1.is_processed = True
+        sample1.technology = "RNA-SEQ"
         sample1.save()
 
         sample2 = Sample()
@@ -286,6 +288,7 @@ class APITestCases(APITestCase):
         sample2.platform_name = "ILLUMINA"
         sample2.organism = homo_sapiens
         sample2.is_processed = True
+        sample1.technology = "MICROARRAY"
         sample2.save()
 
         Experiment.objects.bulk_create(experiments)
@@ -366,6 +369,7 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('search') + "?search=THISWILLBEINASEARCHRESULT&technology=MICROARRAY&technology=FAKE-TECH")
         self.assertEqual(response.json()['count'], 2)
         self.assertEqual(response.json()['results'][0]['processed_samples'], ['1123', '3345'])
+        self.assertEqual(response.json()['results'][0]['technologies'], ['RNA-SEQ'])
 
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
