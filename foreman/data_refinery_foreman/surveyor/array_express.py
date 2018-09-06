@@ -237,7 +237,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         return experiment_object, platform_dict
 
-    def determine_sample_accession(self, experiment_accession: str, sample_source_name: str, sample_assay_name: str, filename: str) -> str:
+    def determine_sample_accession(self, experiment_accession: str, sample_source_name: str,
+                                   sample_assay_name: str, filename: str) -> str:
         """Determine what to use as the sample's accession code.
 
         This is a complicated heuristic to determine the sample
@@ -496,8 +497,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
                 # If input experiment includes new protocol information,
                 # update sample's protocol_info.
-                print("foobar experiment:", experiment.accession_code)
-                print("foobar sample:", sample_accession_code)
                 existing_protocols = sample_object.protocol_info
                 protocol_info, is_updated = self.update_sample_protocol_info(
                     existing_protocols,
