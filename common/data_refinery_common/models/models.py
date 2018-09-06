@@ -1,6 +1,7 @@
 import hashlib
 import io
 import os
+import shutil
 import pytz
 import uuid
 import boto3
@@ -718,7 +719,18 @@ class ComputedFile(models.Model):
         path = path if path is not None else self.absolute_file_path
 
         if not settings.RUNNING_IN_CLOUD and not force:
-            return path
+            if os.path.exists(path):
+                return path
+            else:
+                # If the file doesn't exist at path and we're not
+                # running in the cloud, then the file is almost
+                # certainly at its absolute_file_path because it never got deleted.
+                if os.path.exists(self.absolute_file_path):
+                    shutil.copyfile(self.absolute_file_path, path)
+                    return path
+                else:
+                    # We don't have the file :(
+                    return None
 
         try:
             S3.download_file(

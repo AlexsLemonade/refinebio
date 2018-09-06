@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 import zipfile
 from io import StringIO
@@ -619,7 +620,7 @@ class SmasherTestCase(TestCase):
         ds = Dataset.objects.get(id=ds.id)
 
         self.assertTrue(final_context['success'])
-    
+
     @tag("smasher")
     def test_dualtech_smash(self):
         """ """
@@ -732,6 +733,7 @@ class SmasherTestCase(TestCase):
         dsid = ds.id
         ds = Dataset.objects.get(id=dsid)
 
+        pj.start_time = None
         final_context = smasher.smash(pj.pk, upload=False)
         self.assertTrue(os.path.exists(final_context['output_file']))
         os.remove(final_context['output_file'])
@@ -746,7 +748,7 @@ class SmasherTestCase(TestCase):
 
         final_context = smasher.smash(pj.pk, upload=False)
         self.assertTrue(os.path.exists(final_context['output_file']))
-        os.remove(final_context['output_file'])
+        shutil.rmtree(final_context['work_dir'])
         self.assertEqual(len(final_context['final_frame'].columns), 2)
 
     @tag("smasher")
