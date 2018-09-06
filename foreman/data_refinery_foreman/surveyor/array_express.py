@@ -496,7 +496,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
                 # If input experiment includes new protocol information,
                 # update sample's protocol_info.
-                print("foobar:", sample_accession_code)
+                print("foobar experiment:", experiment.accession_code)
+                print("foobar sample:", sample_accession_code)
                 existing_protocols = sample_object.protocol_info
                 protocol_info, is_updated = self.update_sample_protocol_info(
                     existing_protocols,
