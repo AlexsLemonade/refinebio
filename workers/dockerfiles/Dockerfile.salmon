@@ -11,7 +11,7 @@ RUN \
   apt-fast install -y apt-utils lsb-release && \
   echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
-  apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys 0x51716619e084dab9 && \
+  apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 && \
   apt-fast update -qq && \
   apt-fast install -y \
   ed \
