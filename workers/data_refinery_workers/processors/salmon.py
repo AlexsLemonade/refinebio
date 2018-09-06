@@ -66,7 +66,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     # There should only ever be one per Salmon run
     sample = job_context['original_files'][0].samples.first()
-    job_context['sample'] = sample
+    job_context['samples'] = [sample]
     job_context['organism'] = job_context['sample'].organism
     job_context["success"] = True
 
