@@ -481,14 +481,14 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def update_sample_protocol_info(existing_protocols, experiment_protocol, experiment_url):
-        """Compares experiment_protocol with a sample's 
+        """Compares experiment_protocol with a sample's
         existing_protocols and update the latter if the former is new.
-        
+
         Returns a tuple whose first element is existing_protocols (which
         may or may not have been updated) and the second is a boolean
         indicating whether exisiting_protocols has been updated.
         """
-        
+
         if experiment_protocol == "Protocol was never provided.":
             return (existing_protocols, False)
 
@@ -497,7 +497,7 @@ class SraSurveyor(ExternalSourceSurveyor):
             return (existing_protocols, False)
 
         existing_protocols.append({
-            'Descritpion': experiment_protocol,
+            'Description': experiment_protocol,
             'Reference': experiment_url
         })
         return (existing_protocols, True)
