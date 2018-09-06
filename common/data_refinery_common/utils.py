@@ -54,7 +54,12 @@ def get_instance_id() -> str:
     return INSTANCE_ID
 
 
-def get_volume_index(default="0", path='/home/user/data_store/VOLUME_INDEX') -> str:
+def get_worker_id() -> str:
+    """Returns <instance_id>/<thread_id>."""
+    return get_instance_id() + "/" + current_process().name
+
+
+def get_volume_index(default="1", path='/home/user/data_store/VOLUME_INDEX') -> str:
     """ Reads the contents of the VOLUME_INDEX file, else returns default """
 
     try:
