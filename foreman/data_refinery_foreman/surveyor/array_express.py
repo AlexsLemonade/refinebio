@@ -493,10 +493,12 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             # Create the sample object
             try:
                 sample_object = Sample.objects.get(accession_code=sample_accession_code)
+
                 # If input experiment includes new protocol information,
                 # update sample's protocol_info.
+                existing_protocols = sample_object.protocol_info
                 protocol_info, is_updated = self.update_sample_protocol_info(
-                    sample_object.protocol_info,
+                    existing_protocols,
                     experiment.protocol_description,
                     experiment.source_url + '/protocols'
                 )
