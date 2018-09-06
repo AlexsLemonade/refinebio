@@ -156,7 +156,7 @@ class DownloadGeoTestCase(TestCase):
         download_result = geo.download_geo(dlj.id)
 
         file_assocs = OriginalFileSampleAssociation.objects.filter(sample=sample)
-        assertEqual(file_assocs.count(), 2)
+        self.assertEqual(file_assocs.count(), 2)
 
         for file_assoc in file_assocs:
             original_file = file_assoc.original_file
