@@ -124,7 +124,7 @@ if [ $env == "test" ]; then
     # existing Nomad job specifications.
     export TEST_POSTFIX="_test"
 elif [[ $env == "prod" || $env == "staging" || $env == "dev" ]]; then
-    # In production we use EFS as the mount.
+    # In production we use EBS as the mount.
     export VOLUME_DIR=/var/ebs
 else
     export VOLUME_DIR=$script_directory/volume
