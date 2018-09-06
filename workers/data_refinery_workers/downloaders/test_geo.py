@@ -123,6 +123,7 @@ class DownloadGeoTestCase(TestCase):
         dlj.save()
 
         original_file = OriginalFile()
+        original_file.filename = "GSE22427_non-normalized.txt.gz"
         original_file.source_url = "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427_non-normalized.txt.gz"
         original_file.source_filename = "GSE22427_non-normalized.txt.gz"
         original_file.save()
@@ -154,7 +155,8 @@ class DownloadGeoTestCase(TestCase):
 
         download_result = geo.download_geo(dlj.id)
 
-        file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=dlj)
+        file_assocs = OriginalFileSampleAssociation.objects.filter(sample=sample)
+        assertEqual(file_assocs.count(), 2)
 
         for file_assoc in file_assocs:
             original_file = file_assoc.original_file
