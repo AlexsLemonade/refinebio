@@ -200,6 +200,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
     processed_samples = serializers.StringRelatedField(many=True)
     pretty_platforms = serializers.ReadOnlyField()
     sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
+    technologies = serializers.ReadOnlyField(source='get_sample_technologies')
 
     class Meta:
         model = Experiment
@@ -224,6 +225,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'created_at',
                     'last_modified',
                     'sample_metadata',
+                    'technologies'
                 )
 
 class ExperimentAnnotationSerializer(serializers.ModelSerializer):
