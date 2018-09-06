@@ -309,7 +309,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             # Ignore experiment level protocols whose accession or text
             # field is unavailable or empty
             if (not new_protocol.get('accession', '').strip() or
-                not new_protocol.get('text', '').strip():
+                not new_protocol.get('text', '').strip()):
                 continue
 
             new_protocol_is_found = False
@@ -321,9 +321,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     break
             if not new_protocol_is_found:
                existing_protocols.append({
-                   'Accession': new_protocol.get('accession',''),
-                   'Text': new_protocol.get('text',''),
-                   'Type': new_protocol('type', ''),
+                   'Accession': new_protocol['accession'],
+                   'Text': new_protocol['text'],
+                   'Type': new_protocol.get('type', ''),  # in case 'type' field is unavailable
                    'Reference': protocol_url
                })
                is_updated = True
