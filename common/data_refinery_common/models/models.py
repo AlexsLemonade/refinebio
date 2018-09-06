@@ -326,13 +326,6 @@ class Experiment(models.Model):
                 fields.append(field)
         return fields
 
-    def get_sample_technologies(self):
-        """ Get all metadata fields that are non-empty for at least one sample in the experiment.
-        See https://github.com/AlexsLemonade/refinebio-frontend/issues/211 for why this is needed.
-        """
-        technologies = list(filter(None, list(set([t['technology'] for t in self.samples.all().values('technology')]))))
-        return technologies
-
     @property
     def platforms(self):
         """ Returns a list of related pipelines """
