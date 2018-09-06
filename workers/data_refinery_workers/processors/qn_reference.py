@@ -45,8 +45,9 @@ def _prepare_input(job_context: Dict) -> Dict:
         return job_context
 
     # We only need the resulting frame, not the entire archive
+    os.makedirs(job_context["work_dir"])
     outfile_base = job_context['work_dir'] + str(time.time()).split('.')[0]
-    outfile = job_context['work_dir'] + str(time.time()).split('.')[0] + '.tsv'
+    outfile = outfile_base + '.tsv'
     job_context['final_frame'].to_csv(outfile, sep='\t', encoding='utf-8')
     job_context['smashed_file'] = outfile
     job_context['target_file'] = outfile_base + '_target.tsv'
