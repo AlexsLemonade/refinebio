@@ -420,12 +420,15 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
             # Create the sample object
             try:
+                # Associate it with the experiment, but since it
+                # already exists it already has original files
+                # associated with it and it's already been downloaded,
+                # so don't add it to created_samples.
                 sample_object = Sample.objects.get(accession_code=sample_accession_code)
                 logger.debug("Sample %s already exists, skipping object creation.",
                              sample_accession_code,
                              experiment_accession_code=experiment.accession_code,
                              survey_job=self.survey_job.id)
-                continue
             except Sample.DoesNotExist:
                 sample_object = Sample()
 
@@ -466,19 +469,19 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 original_file_sample_association.sample = sample_object
                 original_file_sample_association.save()
 
+                created_samples.append(sample_object)
+
+                logger.debug("Created " + str(sample_object),
+                             experiment_accession_code=experiment.accession_code,
+                             survey_job=self.survey_job.id,
+                             sample=sample_object.id)
+
             # Create associations if they don't already exist
             ExperimentSampleAssociation.objects.get_or_create(
                 experiment=experiment, sample=sample_object)
 
             ExperimentOrganismAssociation.objects.get_or_create(
                 experiment=experiment, organism=organism)
-
-            logger.debug("Created " + str(sample_object),
-                         experiment_accession_code=experiment.accession_code,
-                         survey_job=self.survey_job.id,
-                         sample=sample_object.id)
-
-            created_samples.append(sample_object)
 
         return created_samples
 
