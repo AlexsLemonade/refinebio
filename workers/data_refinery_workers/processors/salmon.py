@@ -190,12 +190,15 @@ def _find_or_download_index(job_context: Dict) -> Dict:
     try:
         os.makedirs(job_context["index_directory"])
         index_tarball = ComputedFile.objects.filter(result=index_object.result)[0].sync_from_s3()
-        with index_tarball.open(file.get_synced_file_path(), "r:gz") as index_archive:
+        with open(index_tarball, "r:gz") as index_archive:
             index_archive.extractall(job_context["index_directory"])
     except FileExistsError:
         # Someone already installed the index or is doing so now.
         pass
     except Exception as e:
+        # Make sure we don't leave an empty index directory lying around.
+        shutil.rmtree(job_context["index_directory"], ignore_errors=True)
+
         error_template = "Failed to download or extract transcriptome index for organism {0}: {1}"
         error_message = error_template.format(str(job_context['organism']), str(e))
         logger.error(error_message, processor_job=job_context["job_id"])
