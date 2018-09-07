@@ -1,4 +1,4 @@
-job "TRANSCRIPTOME_INDEX_${{RAM}}" {
+job "TRANSCRIPTOME_INDEX_${{INDEX}}_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"

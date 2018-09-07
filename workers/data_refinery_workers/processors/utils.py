@@ -137,12 +137,13 @@ def end_job(job_context: Dict, abort=False):
     if (success or job.no_retry) and not abort:
         # Cleanup Original Files
         if 'original_files' in job_context:
-            for original_files in job_context['original_files']:
-                original_files.delete_local_file()
+            for original_file in job_context['original_files']:
+                original_file.delete_local_file()
 
     if success:
         # S3-sync Computed Files
         for computed_file in job_context.get('computed_files', []):
+>>>>>>> 5f8bbb316d766c2340b14c043cec8aea5eb17acd
             # Ensure even distribution across S3 servers
             nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
             result = computed_file.sync_to_s3(S3_BUCKET_NAME, nonce + "_" + computed_file.filename)

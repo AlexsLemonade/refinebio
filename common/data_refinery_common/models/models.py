@@ -514,6 +514,10 @@ class OrganismIndex(models.Model):
     # This matters, for instance salmon 0.9.0 indexes don't work with 0.10.0
     salmon_version = models.CharField(max_length=255, default="0.9.1")
 
+    # We keep the director unextracted on the shared filesystem so all
+    # Salmon jobs can access it.
+    absolute_directory_path = models.CharField(max_length=255, blank=True, null=True, default="")
+
     # S3 Information
     s3_url = models.CharField(max_length=255, default="")
 
@@ -521,16 +525,6 @@ class OrganismIndex(models.Model):
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
-
-    def upload_to_s3(self, absolute_file_path, bucket_name, logger):
-        if bucket_name is not None:
-            s3_key = self.organism.name + '_' + self.index_type + '.tar.gz'
-            S3.upload_file(absolute_file_path, bucket_name, s3_key,
-                           ExtraArgs={'ACL': 'public-read'})
-            self.s3_url = get_s3_url(bucket_name, s3_key)
-            logger.info("Upload complete")
-        else:
-            logger.info("No S3 bucket in environment, not uploading")
 
     def save(self, *args, **kwargs):
         """ On save, update timestamps """
@@ -731,6 +725,9 @@ class ComputedFile(models.Model):
                 else:
                     # We don't have the file :(
                     return None
+
+        target_directory = os.path.dirname(self.absolute_file_path)
+        os.makedirs(target_directory, exist_ok=True)
 
         try:
             S3.download_file(
