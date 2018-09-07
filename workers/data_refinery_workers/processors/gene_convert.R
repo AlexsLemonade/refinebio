@@ -52,7 +52,8 @@ suppressWarnings(data <- fread(filePath,
 
 # Read the data file
 message("Reading master index...")
-suppressWarnings(index_data <- fread(geneIndexPath,
+index_path <- paste('zcat', geneIndexPath)
+suppressWarnings(index_data <- fread(index_path,
 					stringsAsFactors=FALSE,
 					sep="\t",
 					header=TRUE,
