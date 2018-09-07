@@ -81,8 +81,7 @@ class TXTestCase(TestCase):
 
 
     @tag('transcriptome')
-    @patch('data_refinery_common.models.OrganismIndex.upload_to_s3')
-    def test_tx(self, upload_to_s3):
+    def test_tx(self):
         """ """
         # Make sure the work dirs don't exist cause this will fail the job.
         shutil.rmtree("/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/AEGILOPS_TAUSCHII/SHORT/processor_job_1", ignore_errors=True)
@@ -106,7 +105,7 @@ class TXTestCase(TestCase):
         self.assertTrue(os.path.exists(job_context2['computed_file'].get_synced_file_path()))
         self.assertNotEqual(job_context1['computed_file'].get_synced_file_path(), job_context2['computed_file'].get_synced_file_path())
 
-        # This is the same logic as in `salmon._download_index`
+        # This is the same logic as in `salmon._find_index`
         file = job_context1["computed_file"]
         unpacked = '/'.join(file.get_synced_file_path().split('/')[:-1])
         self.assertTrue('SHORT' in unpacked)

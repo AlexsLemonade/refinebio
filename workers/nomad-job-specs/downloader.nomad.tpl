@@ -2,7 +2,13 @@ job "DOWNLOADER" {
   datacenters = ["dc1"]
 
   type = "batch"
-  priority = 50
+
+  # Downloader jobs run at a lower priority than processor jobs so
+  # that we don't download all the data and only then start processing
+  # it. (Especially since downloader jobs get queued before processor
+  # jobs, the default ordering can cause us to only be downloading
+  # even with plenty of processing jobs queued.)
+  priority = 40
 
   parameterized {
     payload       = "forbidden"
@@ -50,7 +56,7 @@ job "DOWNLOADER" {
         # CPU is in AWS's CPU units.
         cpu = 256
         # Memory is in MB of RAM.
-        memory = 512
+        memory = 256
       }
 
       config {

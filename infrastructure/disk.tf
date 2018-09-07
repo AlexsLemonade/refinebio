@@ -84,6 +84,7 @@ resource "aws_s3_bucket" "data-refinery-static" {
 resource "aws_s3_bucket" "data_refinery_transcriptome_index_bucket" {
   bucket = "data-refinery-s3-transcriptome-index-${var.user}-${var.stage}"
   acl    = "public-read"
+  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
 
   tags {
     Name        = "data-refinery-s3-transcriptome-index-${var.user}-${var.stage}"
