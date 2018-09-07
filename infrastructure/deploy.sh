@@ -132,7 +132,7 @@ while [[ $diff < 300 && $nomad_status != "200" ]]; do
 done
 
 # Kill Base Nomad Jobs so no new jobs can be queued.
-echo "Killing base jobs.."
+echo "Killing base jobs.. (this takes a while..)"
 if [[ $(nomad status) != "No running jobs" ]]; then
     for job in $(nomad status | grep running | awk {'print $1'} || grep --invert-match /)
     do
@@ -144,7 +144,7 @@ fi
 
 # Kill parameterized Nomad Jobs so no jobs will be running when we
 # apply migrations.
-echo "Killing dispatch jobs... (This may take a while.)"
+echo "Killing dispatch jobs.. (this also takes a while..)"
 if [[ $(nomad status) != "No running jobs" ]]; then
     for job in $(nomad status | awk {'print $1'} || grep /)
     do
@@ -223,7 +223,10 @@ chmod 600 data-refinery-key.pem
 API_IP_ADDRESS=$(terraform output -json api_server_1_ip | jq -c '.value' | tr -d '"')
 echo "Restarting API with latest image."
 
-container_running=$(ssh -o StrictHostKeyChecking=no \
+container_running=$(ssh -q -o StrictHostKeyChecking=no \
+                        -i data-refinery-key.pem \
+                        ubuntu@$API_IP_ADDRESS exit && \
+                        ssh -o StrictHostKeyChecking=no \
                         -i data-refinery-key.pem \
                         ubuntu@$API_IP_ADDRESS  "docker ps" | grep dr_api)
 

@@ -6,14 +6,16 @@ data "aws_ami" "ubuntu" {
 
   filter {
     name   = "name"
-    # This is a HVM, EBS backed SSD Ubuntu LTS AMI with Docker version 17.12.0 on it.
-    values = ["ubuntu-16.04-docker-17.12.0-ce-*"]
+    # This is a HVM, EBS backed SSD Ubuntu LTS AMI with Docker version 17.12.0 on it in the US,
+    # the stock Ubuntu cloud image in the EU.
+    values = ["${var.region == "us-east-1" ? "ubuntu-16.04-docker-17.12.0-ce-*" : "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*" }"]
   }
 
   filter {
     name   = "virtualization-type"
     values = ["hvm"]
   }
+
 }
 
 ##
@@ -227,7 +229,6 @@ data "template_file" "nomad_client_script_smusher" {
     user = "${var.user}"
     stage = "${var.stage}"
     region = "${var.region}"
-    file_system_id = "${aws_efs_file_system.data_refinery_efs.id}"
     database_host = "${aws_db_instance.postgres_db.address}"
     database_port = "${var.database_hidden_port}"
     database_user = "${var.database_user}"
@@ -292,6 +293,19 @@ resource "aws_autoscaling_group" "clients" {
         value = "Nomad Client Instance ${var.user}-${var.stage}"
         propagate_at_launch = true
     }
+
+    tag {
+        key = "User"
+        value = "${var.user}"
+        propagate_at_launch = true
+    }
+
+    tag {
+        key = "Stage"
+        value = "${var.stage}"
+        propagate_at_launch = true
+    }
+
 }
 
 resource "aws_autoscaling_policy" "clients_scale_up" {

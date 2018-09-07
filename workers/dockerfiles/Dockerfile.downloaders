@@ -11,7 +11,7 @@ RUN \
   apt-fast install -y lsb-release && \
   echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
-  apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys E084DAB9 && \
+  apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 && \
   apt-fast update -qq && \
   apt-fast install -y \
   ed \
@@ -52,6 +52,7 @@ RUN sh aspera-cli-3.7.7.608.927cce8-linux-64-release.sh
 USER root
 
 COPY config config
+COPY .boto .boto
 
 COPY workers/data_refinery_workers/downloaders/requirements.txt .
 

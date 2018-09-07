@@ -123,6 +123,7 @@ class DownloadGeoTestCase(TestCase):
         dlj.save()
 
         original_file = OriginalFile()
+        original_file.filename = "GSE22427_non-normalized.txt.gz"
         original_file.source_url = "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427_non-normalized.txt.gz"
         original_file.source_filename = "GSE22427_non-normalized.txt.gz"
         original_file.save()
@@ -154,13 +155,20 @@ class DownloadGeoTestCase(TestCase):
 
         download_result = geo.download_geo(dlj.id)
 
-        file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=dlj)
-        original_file = file_assocs[0].original_file
+        file_assocs = OriginalFileSampleAssociation.objects.filter(sample=sample)
+        self.assertEqual(file_assocs.count(), 2)
+
+        for file_assoc in file_assocs:
+            original_file = file_assoc.original_file
+            if original_file.filename.endswith(".gz"):
+                # We delete the archive after we extract from it
+                self.assertFalse(original_file.is_downloaded)
+            else:
+                self.assertTrue(original_file.is_downloaded)
 
         # Make sure it worked
         self.assertTrue(download_result)
         self.assertTrue(dlj.failure_reason is None)
-        self.assertTrue(original_file.is_downloaded)
         self.assertTrue(len(ProcessorJob.objects.all()) > 0)
         self.assertEqual(ProcessorJob.objects.all()[0].pipeline_applied, "AGILENT_TWOCOLOR_TO_PCL")
         self.assertEqual(ProcessorJob.objects.all()[0].ram_amount, 2048)

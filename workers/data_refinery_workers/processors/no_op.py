@@ -1,29 +1,29 @@
+import boto3
 import csv
 import os
 import shutil
-import boto3
-
 import subprocess
+
 from typing import Dict
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
-    SampleResultAssociation,
-    SampleComputedFileAssociation,
-    SampleAnnotation,
+    Pipeline,
     Processor,
-    Pipeline
+    SampleAnnotation,
+    SampleComputedFileAssociation,
+    SampleResultAssociation,
 )
 from data_refinery_common.utils import get_env_variable, get_internal_microarray_accession
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 
-S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
 logger = get_and_configure_logger(__name__)
-
+LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
+S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
 def _prepare_files(job_context: Dict) -> Dict:
     """A processor which takes externally-processed sample data and makes it smashable.
@@ -36,19 +36,39 @@ def _prepare_files(job_context: Dict) -> Dict:
         else:
             job_context["is_illumina"] = False
 
+        # All files for the job are in the same directory.
+        job_context["work_dir"] = LOCAL_ROOT_DIR + "/" + "processor_job_" + str(job_context["job_id"])
+        try:
+            os.makedirs(job_context["work_dir"])
+        except Exception as e:
+            logger.exception("Could not create work directory for processor job.",
+                             job_context=job_context)
+            job_context["job"].failure_reason = str(e)
+            job_context["success"] = False
+            return job_context
+
         # Create the output directory and path
         job_context["input_file_path"] = original_file.absolute_file_path
-        base_directory, file_name = original_file.absolute_file_path.rsplit('/', 1)
-        os.makedirs(base_directory + '/processed/', exist_ok=True)
-        job_context["output_file_path"] = base_directory + '/processed/' + file_name
+        new_filename = "gene_converted_" + original_file.filename
+        job_context["output_file_path"] = job_context["work_dir"] + "/" + new_filename
 
-        # Make sure header column is correct
-        with open(job_context["input_file_path"], 'r', encoding='utf-8') as tsv_in:
-            tsv_in = csv.reader(tsv_in, delimiter='\t')
-            for line in tsv_in:
-                row = line
-                joined = ''.join(row)
-                break
+        try:
+            # Make sure header row is correct
+            with open(job_context["input_file_path"], 'r', encoding='utf-8') as tsv_in:
+                tsv_in = csv.reader(tsv_in, delimiter='\t')
+                for line in tsv_in:
+                    row = line
+                    joined = ''.join(row)
+                    break
+        except Exception as e:
+            logger.exception("Expected text file, was this in fact a binary file?",
+                             job_context=job_context,
+                             file=job_context["input_file_path"])
+
+            job_context["job"].failure_reason = str(e)
+            job_context["job"].no_retry = True
+            job_context["success"] = True
+            return job_context
 
         # We want to make sure that all of our columns for conversion and smashing
         # use the same column name for gene identifiers for later lookup. ID_REF
@@ -76,7 +96,7 @@ def _prepare_files(job_context: Dict) -> Dict:
             except Exception as e:
                 logger.exception("Unable to read input file or header row.",
                     input_file_path=job_context["input_file_path"])
-                job_context['job'].faiure_reason = str(e)
+                job_context['job'].failure_reason = str(e)
                 job_context['success'] = False
                 job_context["job"].no_retry = True
                 return job_context
@@ -95,6 +115,7 @@ def _prepare_files(job_context: Dict) -> Dict:
                         )
                         job_context['success'] = False
                         job_context["job"].failure_reason = str(e_msg)
+                        job_context["job"].no_retry = True
                         return job_context
 
                     # Okay, there's no header so can just prepend to the file.
@@ -131,8 +152,6 @@ def _prepare_files(job_context: Dict) -> Dict:
 def _convert_genes(job_context: Dict) -> Dict:
     """ Dispatches to the appropriate gene converter"""
 
-    job_context["success"] = True
-
     sample0 = job_context['samples'][0]
     if sample0.manufacturer == 'ILLUMINA':
         return _convert_illumina_genes(job_context)
@@ -142,29 +161,30 @@ def _convert_genes(job_context: Dict) -> Dict:
 def _convert_affy_genes(job_context: Dict) -> Dict:
     """ Convert to Ensembl genes if we can"""
 
-    gene_index_path = "/home/user/gene_indexes/" + job_context["internal_accession"] + ".tar.gz"
+    gene_index_path = "/home/user/gene_indexes/" + job_context["internal_accession"] + ".tsv.gz"
     if not os.path.exists(gene_index_path):
         logger.error("Missing gene index file for platform!",
             platform=job_context["internal_accession"],
             job_id=job_context["job_id"])
-        job_context["failure_reason"] = "Missing gene index for " + job_context['internal_accession']
+        job_context["job"].failure_reason = "Missing gene index for " + job_context['internal_accession']
+        job_context["job"].no_retry = True
         job_context["success"] = False
         return job_context
 
     job_context['script_name'] = "gene_convert.R"
     try:
         result = subprocess.check_output([
-                "/usr/bin/Rscript",
-                "--vanilla",
-                "/home/user/data_refinery_workers/processors/" + job_context['script_name'],
-                "--platform", job_context["internal_accession"],
-                "--inputFile", job_context['input_file_path'],
-                "--outputFile", job_context['output_file_path']
-            ], stderr=subprocess.PIPE)
+            "/usr/bin/Rscript",
+            "--vanilla", # Shut up Rscript
+            "/home/user/data_refinery_workers/processors/" + job_context['script_name'],
+            "--geneIndexPath", gene_index_path,
+            "--inputFile", job_context['input_file_path'],
+            "--outputFile", job_context['output_file_path']
+        ], stderr=subprocess.PIPE)
     except subprocess.CalledProcessError as e:
         error_template = "Status code {0} from {1}: {2}"
         error_message = error_template.format(e.returncode, job_context['script_name'], e.stderr)
-        logger.error(error_message, context=job_context)
+        logger.error(error_message, job_context=job_context)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
         job_context["job"].no_retry = True
@@ -174,7 +194,7 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
                           " pipeline during processing of {1}: {2}")
         error_message = error_template.format(job_context['script_name'],
             job_context['input_file_path'], str(e))
-        logger.error(error_message, context=job_context)
+        logger.error(error_message, job_context=job_context)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
         job_context["job"].no_retry = True
@@ -231,11 +251,9 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
                 high_mapped_percent = float(results[1].strip())
 
         except Exception as e:
-            logger.error("Could not detect database for file!",
-                file=job_context['input_file_path'],
-                platform=platform
-            )
-            logger.exception(e, context=job_context)
+            logger.exception("Could not detect database for file!",
+                             platform=platform,
+                             job_context=job_context)
             continue
 
     # Record our sample detection outputs for every sample.
@@ -262,7 +280,7 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
     except subprocess.CalledProcessError as e:
         error_template = "Status code {0} from {1}: {2}"
         error_message = error_template.format(e.returncode, job_context['script_name'], e.stderr)
-        logger.error(error_message, context=job_context)
+        logger.error(error_message, job_context=job_context)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
         job_context["job"].no_retry = True
@@ -272,7 +290,7 @@ def _convert_illumina_genes(job_context: Dict) -> Dict:
                           " pipeline during processing of {1}: {2}")
         error_message = error_template.format(job_context['script_name'],
             job_context['input_file_path'], str(e))
-        logger.error(error_message, context=job_context)
+        logger.error(error_message, job_context=job_context)
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
         job_context["job"].no_retry = True
@@ -299,30 +317,20 @@ def _create_result(job_context: Dict) -> Dict:
     result.save()
     job_context['pipeline'].steps.append(result.id)
 
-    # Create a ComputedFile for the original file,
+    # Create a ComputedFile for the computed file,
     # sync it S3 and save it.
-    try:
-        computed_file = ComputedFile()
-        computed_file.absolute_file_path = job_context["output_file_path"]
-        computed_file.filename = job_context['output_file_path'].split('/')[-1]
-        computed_file.calculate_sha1()
-        computed_file.calculate_size()
-        computed_file.result = result
-        computed_file.is_smashable = True
-        computed_file.is_qc = False
-        computed_file.save()
+    computed_file = ComputedFile()
+    computed_file.absolute_file_path = job_context["output_file_path"]
+    computed_file.filename = job_context['output_file_path'].split('/')[-1]
+    computed_file.calculate_sha1()
+    computed_file.calculate_size()
+    computed_file.result = result
+    computed_file.is_smashable = True
+    computed_file.is_qc = False
+    computed_file.save()
 
-        # utils.end_job will sync this to S3 for us.
-        job_context["computed_files"] = [computed_file]
-    except Exception:
-        logger.error("Exception caught while moving file %s",
-                         raw_path,
-                         processor_job=job_context["job_id"])
-
-        failure_reason = "Exception caught while moving file {}".format(file.name)
-        job_context["job"].failure_reason = failure_reason
-        job_context["success"] = False
-        return job_context
+    # utils.end_job will sync this to S3 for us.
+    job_context["computed_files"] = [computed_file]
 
     for sample in job_context['samples']:
         assoc = SampleResultAssociation()
@@ -334,7 +342,7 @@ def _create_result(job_context: Dict) -> Dict:
             sample=sample,
             computed_file=computed_file)
 
-    logger.info("Created %s", result)
+    logger.debug("Created %s", result)
     job_context["success"] = True
     return job_context
 

@@ -1,6 +1,7 @@
 import hashlib
 import io
 import os
+import shutil
 import pytz
 import uuid
 import boto3
@@ -106,8 +107,6 @@ class Sample(models.Model):
     time = models.CharField(max_length=255, blank=True)
 
     # Crunch Properties
-    # TODO: rm is_downloaded from sample, it is on original_file instead
-    is_downloaded = models.BooleanField(default=False)
     is_processed = models.BooleanField(default=False)
 
     # Common Properties
@@ -516,6 +515,10 @@ class OrganismIndex(models.Model):
     # This matters, for instance salmon 0.9.0 indexes don't work with 0.10.0
     salmon_version = models.CharField(max_length=255, default="0.9.1")
 
+    # We keep the director unextracted on the shared filesystem so all
+    # Salmon jobs can access it.
+    absolute_directory_path = models.CharField(max_length=255, blank=True, null=True, default="")
+
     # S3 Information
     s3_url = models.CharField(max_length=255, default="")
 
@@ -523,16 +526,6 @@ class OrganismIndex(models.Model):
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
-
-    def upload_to_s3(self, absolute_file_path, bucket_name, logger):
-        if bucket_name is not None:
-            s3_key = self.organism.name + '_' + self.index_type + '.tar.gz'
-            S3.upload_file(absolute_file_path, bucket_name, s3_key,
-                           ExtraArgs={'ACL': 'public-read'})
-            self.s3_url = get_s3_url(bucket_name, s3_key)
-            logger.info("Upload complete")
-        else:
-            logger.info("No S3 bucket in environment, not uploading")
 
     def save(self, *args, **kwargs):
         """ On save, update timestamps """
@@ -600,32 +593,6 @@ class OriginalFile(models.Model):
         self.last_modified = current_time
         return super(OriginalFile, self).save(*args, **kwargs)
 
-    def sync_to_s3(self, s3_bucket=None, s3_key=None) -> bool:
-        """ Syncs this OriginalFile to AWS S3.
-        """
-        if not settings.RUNNING_IN_CLOUD:
-            return True
-
-        self.s3_bucket = s3_bucket
-        self.s3_key = s3_key
-
-        try:
-            S3.upload_file(
-                        self.absolute_file_path,
-                        s3_bucket,
-                        s3_key,
-                        ExtraArgs={
-                            'ACL': 'public-read',
-                            'StorageClass': 'STANDARD_IA'
-                        }
-                    )
-            self.save()
-        except Exception as e:
-            logger.exception(e, original_file_id=self.pk)
-            return False
-
-        return True
-
     def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
@@ -650,32 +617,6 @@ class OriginalFile(models.Model):
             return self.source_filename
         else:
             return self.filename
-
-    def sync_from_s3(self):
-        """ Downloads a file from S3 to the local file system.
-        Returns the absolute file path.
-        """
-        if not settings.RUNNING_IN_CLOUD:
-            return self.absolute_file_path
-
-        try:
-            S3.download_file(
-                        self.s3_bucket,
-                        self.s3_key,
-                        self.absolute_file_path
-                    )
-            return self.absolute_file_path
-        except Exception as e:
-            logger.exception(e, original_file_id=self.pk)
-            return None
-
-    def get_synced_file_path(self):
-        """ Fetches the absolute file path to this ComputedFile, fetching from S3 if it
-        isn't already available locally. """
-        if os.path.exists(self.absolute_file_path):
-            return self.absolute_file_path
-        else:
-            return self.sync_from_s3()
 
     def delete_local_file(self):
         """ Deletes this file from the local file system."""
@@ -709,6 +650,8 @@ class ComputedFile(models.Model):
     # File related
     filename = models.CharField(max_length=255)
     absolute_file_path = models.CharField(max_length=255, blank=True, null=True)
+    # TODO: make this work w/ migrations:
+    # absolute_file_path = models.CharField(max_length=255)
     size_in_bytes = models.BigIntegerField()
     sha1 = models.CharField(max_length=64)
 
@@ -764,20 +707,36 @@ class ComputedFile(models.Model):
 
         return True
 
-    def sync_from_s3(self, force=False):
+    def sync_from_s3(self, force=False, path=None):
         """ Downloads a file from S3 to the local file system.
         Returns the absolute file path.
         """
+        path = path if path is not None else self.absolute_file_path
+
         if not settings.RUNNING_IN_CLOUD and not force:
-            return self.absolute_file_path
+            if os.path.exists(path):
+                return path
+            else:
+                # If the file doesn't exist at path and we're not
+                # running in the cloud, then the file is almost
+                # certainly at its absolute_file_path because it never got deleted.
+                if os.path.exists(self.absolute_file_path):
+                    shutil.copyfile(self.absolute_file_path, path)
+                    return path
+                else:
+                    # We don't have the file :(
+                    return None
+
+        target_directory = os.path.dirname(self.absolute_file_path)
+        os.makedirs(target_directory, exist_ok=True)
 
         try:
             S3.download_file(
                         self.s3_bucket,
                         self.s3_key,
-                        self.absolute_file_path
+                        path
                     )
-            return self.absolute_file_path
+            return path
         except Exception as e:
             logger.exception(e, computed_file_id=self.pk)
             return None
@@ -800,8 +759,7 @@ class ComputedFile(models.Model):
         return self.size_in_bytes
 
     def delete_local_file(self, force=False):
-        """ Deletes a file from the path and actually removes it from the file system,
-        resetting the is_downloaded flag to false. Can be refetched from source if needed. """
+        """ Deletes a file from the path and actually removes it from the file system."""
         if not settings.RUNNING_IN_CLOUD and not force:
             return
 
@@ -825,13 +783,19 @@ class ComputedFile(models.Model):
                              s3_object=self.s3_key)
             return False
 
-    def get_synced_file_path(self, force=False):
+    def get_synced_file_path(self, force=False, path=None):
         """ Fetches the absolute file path to this ComputedFile, fetching from S3 if it
         isn't already available locally. """
-        if os.path.exists(self.absolute_file_path):
-            return self.absolute_file_path
+        if path:
+            if os.path.exists(path):
+                return path
+            else:
+                return self.sync_from_s3(force, path)
         else:
-            return self.sync_from_s3(force)
+            if os.path.exists(self.absolute_file_path):
+                return self.absolute_file_path
+            else:
+                return self.sync_from_s3(force)
 
 class Dataset(models.Model):
     """ A Dataset is a desired set of experiments/samples to smash and download """
@@ -935,7 +899,7 @@ class Dataset(models.Model):
         return by_species
 
     def get_aggregated_samples(self):
-        """ Uses aggregate_by to return smasher-ready a sample dict. """
+        """ Uses aggregate_by to return a smasher-ready sample dict. """
 
         if self.aggregate_by == "ALL":
             return {'ALL': self.get_samples()}

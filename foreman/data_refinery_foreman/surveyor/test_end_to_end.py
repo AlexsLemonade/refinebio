@@ -101,7 +101,7 @@ class NoOpEndToEndTestCase(TransactionTestCase):
         organism.save()
 
         accession_code = "E-GEOD-45547"
-        survey_job = surveyor.survey_ae_experiment(accession_code)
+        survey_job = surveyor.survey_experiment(accession_code, "ARRAY_EXPRESS")
 
         self.assertTrue(survey_job.success)
 

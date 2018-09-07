@@ -1,12 +1,13 @@
 import requests
+
 from typing import Dict, List
 
-from data_refinery_common.models import (
-    Sample)
 from data_refinery_common.logging import get_and_configure_logger
-from .utils import requests_retry_session
+from data_refinery_common.models import Sample
+from data_refinery_foreman.surveyor.utils import requests_retry_session
 
 logger = get_and_configure_logger(__name__)
+
 
 def extract_title(sample: Dict) -> str:
     """ Given a flat sample dictionary, find the title """
@@ -280,25 +281,27 @@ def harmonize(metadata: List) -> Dict:
              'taxid_ch1': ['9606'],
              'title': ['SCC_P-39'],
              'type': ['RNA']}
-
     """
 
     # Prepare the harmonized samples
-    original_samples = metadata.copy()
+    original_samples = []
     harmonized_samples = {}
 
     ##
     # Title!
     # We also use the title as the key in the returned dictionary
     ##
-    for sample in original_samples:
+    for sample in metadata:
         title = extract_title(sample)
         # If we can't even find a unique title for this sample
         # something has gone horribly wrong.
-        if not title:
-            return {}
-        sample['title'] = title
-        harmonized_samples[title] = {}
+        if title:
+            new_sample = sample.copy()
+            new_sample['title'] = title
+            original_samples.append(new_sample)
+            harmonized_samples[title] = {}
+        else:
+            logger.warn("Cannot determine sample title!", sample=sample)
 
     ##
     # Sex!
@@ -323,7 +326,7 @@ def harmonize(metadata: List) -> Dict:
                 if value.lower() in ['f', 'female', 'woman']:
                     harmonized_samples[title]['sex'] = "female"
                     break
-                if value.lower() in ['m', 'male', 'man']:
+                elif value.lower() in ['m', 'male', 'man']:
                     harmonized_samples[title]['sex'] = "male"
                     break
                 else:
@@ -338,8 +341,14 @@ def harmonize(metadata: List) -> Dict:
                     'patient age',
                     'age of patient',
                     'age (years)',
+                    'age (months)',
+                    'age (days)',
+                    'age (hours)',
                     'age at diagnosis',
                     'age at diagnosis years',
+                    'age at diagnosis months',
+                    'age at diagnosis days',
+                    'age at diagnosis hours',
                     'characteristic [age]',
                     'characteristics [age]',
                 ]
@@ -455,7 +464,7 @@ def harmonize(metadata: List) -> Dict:
     # Disease Stage!
     ##
     disease_stage_fields = [
-    	              'disease state',
+                    'disease state',
                     'disease staging',
                     'disease stage',
                     'grade',
@@ -654,7 +663,7 @@ def parse_sdrf(sdrf_url: str) -> List:
         sdrf_text = requests_retry_session().get(sdrf_url, timeout=60).text
     except Exception as e:
         logger.exception("Unable to fetch URL: " + sdrf_url, exception=str(e))
-        return None
+        return []
 
     samples = []
 
@@ -666,6 +675,7 @@ def parse_sdrf(sdrf_url: str) -> List:
             keys = line.split('\t')
             continue
 
+        line = line.strip()
         # Skip blank lines
         if line == "":
             continue
@@ -699,10 +709,12 @@ def preprocess_geo(items: List) -> List:
                     # This will almost always happen, except if we get
                     # a malformed response from the server.
                     if ':' in pair:
-                        split = pair.split(':')
+                        split = pair.split(':', 1)
                         new_sample[split[0].strip()] = split[1].strip()
                 continue
 
-            new_sample[key] = value[0]
+            # Probably won't be a list with length greater than one,
+            # but maybe?
+            new_sample[key] = " ".join(value)
         preprocessed_samples.append(new_sample)
     return preprocessed_samples
