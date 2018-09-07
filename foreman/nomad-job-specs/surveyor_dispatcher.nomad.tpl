@@ -48,7 +48,7 @@ job "SURVEYOR_DISPATCHER" {
         # CPU is in AWS's CPU units.
         cpu = 500
         # Memory is in MB of RAM.
-        memory = 2048
+        memory = 256
       }
 
       config {

@@ -1,21 +1,19 @@
-from __future__ import absolute_import, unicode_literals
-
-import urllib.request
+from contextlib import closing
+from typing import List
 import os
 import shutil
 import subprocess
 import time
-from contextlib import closing
-from typing import List
+import urllib.request
 
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
-    OriginalFile
+    OriginalFile,
 )
-from data_refinery_workers.downloaders import utils
-from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable
+from data_refinery_workers.downloaders import utils
 
 logger = get_and_configure_logger(__name__)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
@@ -23,7 +21,10 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 CHUNK_SIZE = 1024 * 256
 
 
-def _download_file(download_url: str, downloader_job: DownloaderJob, target_file_path: str, force_ftp: bool=False) -> bool:
+def _download_file(download_url: str,
+                   downloader_job: DownloaderJob,
+                   target_file_path: str,
+                   force_ftp: bool=False) -> bool:
     """ Download file dispatcher. Dispatches to the FTP or Aspera downloader """
 
     # SRA files have Apsera downloads.
@@ -46,11 +47,14 @@ def _download_file_ftp(download_url: str, downloader_job: DownloaderJob, target_
                      download_url,
                      target_file_path,
                      downloader_job=downloader_job.id)
+
+        # Ancient unresolved bug. WTF python: https://bugs.python.org/issue27973
+        urllib.request.urlcleanup()
+
         with closing(urllib.request.urlopen(download_url)) as request:
             with open(target_file_path, "wb") as target_file:
                 shutil.copyfileobj(request, target_file, CHUNK_SIZE)
 
-        # Ancient unresolved bug. WTF python: https://bugs.python.org/issue27973
         urllib.request.urlcleanup()
     except Exception:
         logger.exception("Exception caught while downloading batch from the URL via FTP: %s",
@@ -66,7 +70,7 @@ def _download_file_ftp(download_url: str, downloader_job: DownloaderJob, target_
 def _download_file_aspera(download_url: str,
                           downloader_job: DownloaderJob,
                           target_file_path: str,
-                          attempt=0) -> bool:
+                          attempt: int=0) -> bool:
     """ Download a file to a location using Aspera by shelling out to the `ascp` client. """
 
     try:
@@ -88,12 +92,10 @@ def _download_file_aspera(download_url: str,
         # Something went wrong! Else, just fall through to returning True.
         if completed_command.returncode != 0:
 
-            # Most likely, this is the "cannot authenticate" message,
-            # which is because we've nuked ENA.
-            stderr = str(completed_command.stderr).strip()
-            logger.debug("Shell call to ascp failed with error message: %s\nCommand was: %s",
-                         stderr,
+            stderr = completed_command.stderr.decode().strip()
+            logger.debug("Shell call of `%s` to ascp failed with error message: %s",
                          formatted_command,
+                         stderr,
                          downloader_job=downloader_job.id)
 
             # Sometimes, SRA fails mysteriously.
@@ -118,10 +120,15 @@ def _download_file_aspera(download_url: str,
 
     # If Aspera has given a zero-byte file for some reason, let's back off and retry.
     if (not os.path.exists(target_file_path)) or (os.path.getsize(target_file_path) < 1):
+        os.remove(target_file_path)
+        if attempt > 5:
+            downloader_job.failure_reason = "Got zero byte file from aspera after 5 attempts."
+            return False
+
         logger.error("Got zero byte ascp download for target, retrying.",
                      target_url=download_url,
                      downloader_job=downloader_job.id)
-        time.sleep(300)
+        time.sleep(10)
         return _download_file_aspera(download_url,
                                      downloader_job,
                                      target_file_path,
@@ -130,36 +137,15 @@ def _download_file_aspera(download_url: str,
     return True
 
 
-def _are_downloads_ready(original_file: OriginalFile) -> bool:
-    """RNASeq reads can be paired. Makes sure both files are downloaded if applicable.
-    """
-    # This is a paired read. Make sure the other one is downloaded, this start the job
-    if '_' in original_file.filename:
-        split = original_file.filename.split('_')
-        if '1' in split[1]:
-            other_file = OriginalFile.objects.get(
-                source_filename='_'.join([split[0], split[1].replace('1', '2')]))
-        else:
-            other_file = OriginalFile.objects.get(
-                source_filename='_'.join([split[0], split[1].replace('2', '1')]))
-        if not other_file.is_downloaded:
-            logger.info("Need other file to download before starting paired read Salmon.")
-            return False
-
-    return True
-
-
 def download_sra(job_id: int) -> None:
     """The main function for the SRA Downloader.
 
-    Fairly straightforward, just downloads the Batch's file from SRA
-    and pushes it into Temporary Storage.
+    Fairly straightforward, just downloads the file from SRA.
     """
     job = utils.start_job(job_id)
     file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
 
     downloaded_files = []
-    success = False
     for assoc in file_assocs:
         original_file = assoc.original_file
 
@@ -188,11 +174,9 @@ def download_sra(job_id: int) -> None:
 
             downloaded_files.append(original_file)
         else:
-            logger.error("A problem occured while downloading!",
-                         original_file_id=original_file.id,
-                         downloader_job=job_id)
+            break
 
-    if success and _are_downloads_ready(downloaded_files[0]):
+    if success:
         utils.create_processor_job_for_original_files(downloaded_files, job)
 
     utils.end_downloader_job(job, success)

@@ -81,9 +81,12 @@ class TXTestCase(TestCase):
 
 
     @tag('transcriptome')
-    @patch('data_refinery_common.models.OrganismIndex.upload_to_s3')
-    def test_tx(self, upload_to_s3):
+    def test_tx(self):
         """ """
+        # Make sure the work dirs don't exist cause this will fail the job.
+        shutil.rmtree("/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/AEGILOPS_TAUSCHII/SHORT/processor_job_1", ignore_errors=True)
+        shutil.rmtree("/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/AEGILOPS_TAUSCHII/LONG/processor_job_2", ignore_errors=True)
+
         job1 = prepare_job("short")
         job_context1 = transcriptome_index.build_transcriptome_index(job1.pk, length="short")
         job1 = ProcessorJob.objects.get(id=job1.pk)
@@ -96,22 +99,16 @@ class TXTestCase(TestCase):
         self.assertTrue(job2.success)
         self.assertEqual(job_context2['length'], "long")
 
-        self.assertTrue(os.path.exists(job_context1["output_dir"]))
-        self.assertTrue(os.path.exists(job_context1["output_dir"]))
         self.assertNotEqual(job_context1["output_dir"], job_context2["output_dir"])
 
         self.assertTrue(os.path.exists(job_context1['computed_file'].get_synced_file_path()))
         self.assertTrue(os.path.exists(job_context2['computed_file'].get_synced_file_path()))
         self.assertNotEqual(job_context1['computed_file'].get_synced_file_path(), job_context2['computed_file'].get_synced_file_path())
 
-        # This is the same logic as in `salmon._download_index`
+        # This is the same logic as in `salmon._find_index`
         file = job_context1["computed_file"]
         unpacked = '/'.join(file.get_synced_file_path().split('/')[:-1])
         self.assertTrue('SHORT' in unpacked)
         file2 = job_context2["computed_file"]
         unpacked2 = '/'.join(file2.get_synced_file_path().split('/')[:-1])
         self.assertTrue('LONG' in unpacked2)
-
-        # Cleanup after ourselves so we don't leave 1.3G of data lying around.
-        shutil.rmtree(job_context1["output_dir"])
-        shutil.rmtree(job_context2["output_dir"])

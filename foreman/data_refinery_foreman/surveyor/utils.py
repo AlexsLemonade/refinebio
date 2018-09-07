@@ -8,7 +8,7 @@ def requests_retry_session(
     retries=3,
     backoff_factor=0.3,
     status_forcelist=(500, 502, 504),
-    session=None,
+    session=None
 ):
     """
     Exponential back off for requests.
@@ -48,7 +48,7 @@ def get_title_and_authors_for_pubmed_id(pmid):
 
     try:
         j_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=" + str(pmid) + "&retmode=json&tool=refinebio&email=hello@refine.bio"
-        resp = requests.get(j_url, timeout=20)
+        resp = requests_retry_session().get(j_url, timeout=60)
         title = resp.json()['result'][str(pmid)]['title']
         author_names = []
         for author in resp.json()['result'][str(pmid)]['authors']:

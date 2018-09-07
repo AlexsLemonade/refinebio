@@ -5,25 +5,25 @@ from abc import ABC
 from django.utils import timezone
 from typing import List, Dict
 
+from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
+    OriginalFile,
     SurveyJobKeyValue,
-    OriginalFile
 )
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
-from data_refinery_common.logging import get_and_configure_logger
 
 logger = get_and_configure_logger(__name__)
 
 
-DIVISION_URL_TEMPLATE = ("http://rest.ensemblgenomes.org/info/genomes/division/{division}"
+DIVISION_URL_TEMPLATE = ("https://rest.ensemblgenomes.org/info/genomes/division/{division}"
                          "?content-type=application/json")
 TRANSCRIPTOME_URL_TEMPLATE = ("ftp://ftp.{url_root}/fasta/{species_sub_dir}/dna/"
                               "{filename_species}.{assembly}.dna.{schema_type}.fa.gz")
 GTF_URL_TEMPLATE = ("ftp://ftp.{url_root}/gtf/{species_sub_dir}/"
                     "{filename_species}.{assembly}.{assembly_version}.gtf.gz")
-MAIN_DIVISION_URL_TEMPLATE = "http://rest.ensembl.org/info/species?content-type=application/json"
+MAIN_DIVISION_URL_TEMPLATE = "https://rest.ensembl.org/info/species?content-type=application/json"
 
 
 # For whatever reason the division in the download URL is shortened in
@@ -40,8 +40,8 @@ DIVISION_LOOKUP = {"EnsemblPlants": "plants",
 # assemblies.  All divisions other than the main one have identical
 # release versions. These urls will return what the most recent
 # release version is.
-MAIN_RELEASE_URL = "http://rest.ensembl.org/info/software?content-type=application/json"
-DIVISION_RELEASE_URL = "http://rest.ensemblgenomes.org/info/software?content-type=application/json"
+MAIN_RELEASE_URL = "https://rest.ensembl.org/info/software?content-type=application/json"
+DIVISION_RELEASE_URL = "https://rest.ensemblgenomes.org/info/software?content-type=application/json"
 
 
 class EnsemblUrlBuilder(ABC):
@@ -265,19 +265,6 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             .value
         )
 
-        # If number_of_organisms isn't specified, default to surveying
-        # all organisms in the division.
-        try:
-            number_of_organisms = int(
-                SurveyJobKeyValue
-                .objects
-                .get(survey_job_id=self.survey_job.id,
-                     key__exact="number_of_organisms")
-                .value
-            )
-        except SurveyJobKeyValue.DoesNotExist:
-            number_of_organisms = -1
-
         logger.info("Surveying %s division of ensembl.",
                     ensembl_division,
                     survey_job=self.survey_job.id)
@@ -294,26 +281,25 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
             specieses = r.json()
 
         try:
-            organism_name = SurveyJobKeyValue.objects.get(survey_job_id=self.survey_job.id, key__exact="organism_name").value
+            organism_name = SurveyJobKeyValue.objects.get(survey_job_id=self.survey_job.id,
+                                                          key__exact="organism_name").value
             organism_name = organism_name.lower().replace(' ', "_")
         except SurveyJobKeyValue.DoesNotExist:
             organism_name = None
 
-        # Survey jobs are on a per-organism basis.
-        for species in specieses:
-            if species['name'] == organism_name:
-                specieses = [species]
-                logger.info("Found species " + organism_name + " on Ensembl.",
-                            survey_job=self.survey_job.id)
-                break
-
-        species_surveyed = 0
         all_new_species = []
-        for species in specieses:
-            if number_of_organisms != -1 and species_surveyed >= number_of_organisms:
-                break
+        if organism_name:
+            for species in specieses:
+                if species['name'] == organism_name:
+                    all_new_species.append(self._generate_files(species))
+                    break
+        else:
+            for species in specieses:
+                all_new_species.append(self._generate_files(species))
 
-            all_new_species.append(self._generate_files(species))
-            species_surveyed += 1
+        if len(all_new_species) == 0:
+            logger.error("Unable to find any species!",
+                         ensembl_division=ensembl_division,
+                         organism_name=organism_name)
 
         return all_new_species

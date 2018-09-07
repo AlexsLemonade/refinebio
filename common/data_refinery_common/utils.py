@@ -1,18 +1,16 @@
+from typing import Dict
+from urllib.parse import urlparse
 import csv
 import os
 import re
 import requests
-from urllib.parse import urlparse
-from typing import Dict
 
-from billiard import current_process
 from django.core.exceptions import ImproperlyConfigured
 from retrying import retry
 
 # Found: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html
 METADATA_URL = "http://169.254.169.254/latest/meta-data"
 INSTANCE_ID = None
-
 SUPPORTED_MICROARRAY_PLATFORMS = None
 SUPPORTED_RNASEQ_PLATFORMS = None
 READABLE_PLATFORM_NAMES = None
