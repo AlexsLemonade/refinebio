@@ -18,18 +18,18 @@ library("dplyr")
 library("rlang")
 
 option_list = list(
-  make_option(c("-p", "--platform"), type="character", default="", 
-              help="Platform", metavar="character"),
-  make_option(c("-i", "--inputFile"), type="character", default="", 
+  make_option(c("-g", "--geneIndexPath"), type="character", default="",
+              help="Gene Index File", metavar="character"),
+  make_option(c("-i", "--inputFile"), type="character", default="",
               help="inputFile", metavar="character"),
-  make_option(c("-o", "--outputFile"), type="character", default="", 
+  make_option(c("-o", "--outputFile"), type="character", default="",
               help="outputFile", metavar="character")
-); 
+);
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-platform <- opt$platform
+geneIndexPath <- opt$geneIndexPath
 filePath <- opt$inputFile
 outFilePath <- opt$outputFile
 
@@ -39,29 +39,28 @@ source("http://bioconductor.org/biocLite.R")
 
 # Read the data file
 message("Reading data file...")
-suppressWarnings(data <- fread(filePath, 
-					stringsAsFactors=FALSE, 
-					sep="\t", header=TRUE, 
-					autostart=10, 
-					data.table=FALSE, 
-					check.names=FALSE, 
-					fill=TRUE, 
-					na.strings="", 
+suppressWarnings(data <- fread(filePath,
+					stringsAsFactors=FALSE,
+					sep="\t", header=TRUE,
+					autostart=10,
+					data.table=FALSE,
+					check.names=FALSE,
+					fill=TRUE,
+					na.strings="",
 					showProgress=FALSE)
 				)
 
 # Read the data file
 message("Reading master index...")
-index_path = paste0('zcat /home/user/gene_indexes/', platform, '.tar.gz')
-suppressWarnings(index_data <- fread(index_path, 
-					stringsAsFactors=FALSE, 
-					sep="\t", 
-					header=TRUE, 
-					autostart=10, 
-					data.table=FALSE, 
-					check.names=FALSE, 
-					fill=TRUE, 
-					na.strings="", 
+suppressWarnings(index_data <- fread(geneIndexPath,
+					stringsAsFactors=FALSE,
+					sep="\t",
+					header=TRUE,
+					autostart=10,
+					data.table=FALSE,
+					check.names=FALSE,
+					fill=TRUE,
+					na.strings="",
 					showProgress=FALSE)
 				)
 
@@ -70,7 +69,7 @@ overlap <- apply(index_data, 2, function(x) length(intersect(data$ID_REF, x)) / 
 
 # threshold here can be adjusted
 if (any(overlap >= 0.5)) {
-	# take column name with highest overlap value 
+	# take column name with highest overlap value
   	# overlap is a named numeric vector
   	detected_id <- names(which.max(overlap))
 } else {
@@ -81,9 +80,9 @@ if (any(overlap >= 0.5)) {
 message("Merging..")
 colnames(data)[1] <- detected_id
 
-converted_exprs <- index_data %>%  
+converted_exprs <- index_data %>%
   dplyr::select(c("ENSEMBL", detected_id)) %>%
-  dplyr::distinct() %>% 
+  dplyr::distinct() %>%
   dplyr::inner_join(data, by = detected_id)
 
 converted_exprs <- converted_exprs %>%

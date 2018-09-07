@@ -174,13 +174,13 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
     job_context['script_name'] = "gene_convert.R"
     try:
         result = subprocess.check_output([
-                "/usr/bin/Rscript",
-                "--vanilla", # Shut up Rscript
-                "/home/user/data_refinery_workers/processors/" + job_context['script_name'],
-                "--platform", job_context["internal_accession"],
-                "--inputFile", job_context['input_file_path'],
-                "--outputFile", job_context['output_file_path']
-            ], stderr=subprocess.PIPE)
+            "/usr/bin/Rscript",
+            "--vanilla", # Shut up Rscript
+            "/home/user/data_refinery_workers/processors/" + job_context['script_name'],
+            "--geneIndexPath", gene_index_path,
+            "--inputFile", job_context['input_file_path'],
+            "--outputFile", job_context['output_file_path']
+        ], stderr=subprocess.PIPE)
     except subprocess.CalledProcessError as e:
         error_template = "Status code {0} from {1}: {2}"
         error_message = error_template.format(e.returncode, job_context['script_name'], e.stderr)
