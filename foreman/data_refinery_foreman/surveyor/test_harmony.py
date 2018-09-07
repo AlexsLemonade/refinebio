@@ -276,6 +276,10 @@ class HarmonyTestCase(TestCase):
         gse = GEOparse.get_GEO("GSE94532", destdir='/tmp', silent=True)
         preprocessed_samples = preprocess_geo(gse.gsms.items())
 
+        gse = GEOparse.get_GEO("GSE69775", destdir='/tmp', silent=True)
+        preprocessed_samples = preprocess_geo(gse.gsms.items())
+        harmonized = harmonize(preprocessed_samples)
+
         # Illumina
         gse = GEOparse.get_GEO("GSE32628", destdir='/tmp', silent=True)
 
