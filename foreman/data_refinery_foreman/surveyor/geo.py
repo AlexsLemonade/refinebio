@@ -245,7 +245,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
         # Sometimes, samples have a direct single representation for themselves.
         # Othertimes, there is a single file with references to every sample in it.
 
-        all_samples = []
+        created_samples = []
         for sample_accession_code, sample in gse.gsms.items():
 
             try:
@@ -256,11 +256,12 @@ class GeoSurveyor(ExternalSourceSurveyor):
                          experiment_object.accession_code,
                          survey_job=self.survey_job.id)
 
-                all_samples.append(sample_object)
-
+                # Associate it with the experiment, but since it
+                # already exists it already has original files
+                # associated with it and it's already been downloaded,
+                # so don't add it to created_samples.
                 ExperimentSampleAssociation.objects.get_or_create(
                     experiment=experiment_object, sample=sample_object)
-                continue
             except Sample.DoesNotExist:
                 organism = Organism.get_object_for_name(sample.metadata['organism_ch1'][0].upper())
 
@@ -284,7 +285,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     setattr(sample_object, key, value)
 
                 sample_object.save()
-                all_samples.append(sample_object)
+                created_samples.append(sample_object)
                 logger.debug("Created Sample: " + str(sample_object))
 
                 # Now that we've determined the technology at the
@@ -356,7 +357,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
             or ('_non-normalized.txt' in lower_supplement_url) \
             or ('-non-normalized.txt' in lower_supplement_url) \
             or ('-non_normalized.txt' in lower_supplement_url):
-                for sample_object in all_samples:
+                for sample_object in created_samples:
                     sample_object.has_raw = True
                     sample_object.save()
 
@@ -376,7 +377,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 has_raw = sample_object.has_raw,
                 is_archive = True
             )[0]
-        for sample_object in all_samples:
+        for sample_object in created_samples:
             # We don't need a .txt if we have a .CEL
             if sample_object.has_raw:
                 continue
@@ -387,7 +388,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
         if OriginalFileSampleAssociation.objects.filter(original_file=miniml_original_file).count() == 0:
             miniml_original_file.delete()
 
-        return experiment_object, all_samples
+        return experiment_object, created_samples
 
     def discover_experiment_and_samples(self) -> (Experiment, List[Sample]):
         """ Dispatches the surveyor, returns the results """
