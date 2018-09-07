@@ -87,15 +87,12 @@ def mock_logger_info(message: str, *args, **kwargs):
 
 # TransactionTestCase makes database calls complete before the test
 # ends.  Otherwise the workers wouldn't actually be able to find the
-# job in the database cause it'd be stuck in a transaction.
+# job in the database because it'd be stuck in a transaction.
 class NoOpEndToEndTestCase(TransactionTestCase):
     @tag("slow")
     @patch('data_refinery_foreman.surveyor.array_express.logger')
-    #@patch('data_refinery_common.models.Sample.objects.get')
-    #def test_no_op(self, mocked_get_query, mocked_logger):
     def test_no_op(self, mocked_logger):
         """Survey, download, then process an experiment we know is NO_OP."""
-        #mocked_get_query.side_effect = mock_get_sample
         mocked_logger.side_effect = mock_logger_info
 
         # Prevent a call being made to NCBI's API to determine
