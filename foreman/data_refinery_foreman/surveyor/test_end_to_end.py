@@ -69,6 +69,7 @@ def mock_get_sample(accession_code: str):
     # existence of the Sample.
     return None
 
+
 def mock_logger_info(message: str, *args, **kwargs):
     """Silence the log messages we're forcing on purpose.
 
@@ -90,10 +91,11 @@ def mock_logger_info(message: str, *args, **kwargs):
 class NoOpEndToEndTestCase(TransactionTestCase):
     @tag("slow")
     @patch('data_refinery_foreman.surveyor.array_express.logger')
-    @patch('data_refinery_common.models.Sample.objects.get')
-    def test_no_op(self, mocked_get_query, mocked_logger):
+    #@patch('data_refinery_common.models.Sample.objects.get')
+    #def test_no_op(self, mocked_get_query, mocked_logger):
+    def test_no_op(self, mocked_logger):
         """Survey, download, then process an experiment we know is NO_OP."""
-        mocked_get_query.side_effect = mock_get_sample
+        #mocked_get_query.side_effect = mock_get_sample
         mocked_logger.side_effect = mock_logger_info
 
         # Prevent a call being made to NCBI's API to determine
