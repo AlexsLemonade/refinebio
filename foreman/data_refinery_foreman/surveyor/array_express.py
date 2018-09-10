@@ -424,7 +424,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 # already exists it already has original files
                 # associated with it and it's already been downloaded,
                 # so don't add it to created_samples.
-                sample_object = Sample.objects.get(accession_code=sample_accession_code)
+                sample_object = Sample.all_objects.get(accession_code=sample_accession_code)
                 logger.debug("Sample %s already exists, skipping object creation.",
                              sample_accession_code,
                              experiment_accession_code=experiment.accession_code,
