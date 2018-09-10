@@ -60,6 +60,8 @@ def mock_get_sample(accession_code: str):
     do one from each zip file. To accomplish this we make every other
     Sample in the experiment appear to already exist so it is not
     created and processed.
+
+    Not being used as of 09/07/2018.
     """
     if accession_code == "GSM1109016" or accession_code == "GSM1108516":
         raise Sample.DoesNotExist
