@@ -139,3 +139,31 @@ class NoOpEndToEndTestCase(TransactionTestCase):
         self.assertEqual(DownloaderJobOriginalFileAssociation.objects.all().count(), 0)
         self.assertEqual(ProcessorJob.objects.all().count(), 0)
         self.assertEqual(ProcessorJobOriginalFileAssociation.objects.all().count(), 0)
+
+class SalmonEndToEndTestCase(TransactionTestCase):
+    @tag("slow")
+    def test_e_salmon(self):
+
+        # Prevent a call being made to NCBI's API to determine
+        # organism name/id.
+        organism = Organism(name="GALLUS_GALLUS", taxonomy_id=9606, is_scientific_name=True)
+        organism.save()
+
+        accession_code = "DRR002116"
+        survey_job = surveyor.survey_experiment(accession_code, "SRA")
+
+        self.assertTrue(survey_job.success)
+
+        downloader_jobs = DownloaderJob.objects.all()
+        logger.info("Survey Job finished, waiting for Downloader Jobs to complete.")
+        start_time = timezone.now()
+        for downloader_job in downloader_jobs:
+            downloader_job = wait_for_job(downloader_job, DownloaderJob, start_time)
+            self.assertTrue(downloader_job.success)
+
+        processor_jobs = ProcessorJob.objects.all()
+        logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
+        start_time = timezone.now()
+        for processor_job in processor_jobs:
+            processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
+            self.assertTrue(processor_job.success)
