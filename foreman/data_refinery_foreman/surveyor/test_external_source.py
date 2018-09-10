@@ -101,6 +101,6 @@ class SraSurveyorTestCase(TestCase):
         survey_job = SurveyJob(source_type="SRA")
         survey_job.save()
         surveyor = SraSurveyor(survey_job)
-        surveyor.queue_downloader_jobs(experiment_object, samples=[])
+        surveyor.queue_downloader_jobs(experiment_object, samples=[sample_object_1, sample_object_2])
 
         self.assertEqual(DownloaderJob.objects.all().count(), 4)
