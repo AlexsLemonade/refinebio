@@ -96,6 +96,41 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     return job_context
 
+def _extract_sra(job_context: Dict) -> Dict:
+    """
+    If this is a .sra file, run `fasterq-dump` to get our desired fastq files.
+
+    """
+    if ".sra" not in job_context["input_file_path"]:
+        return job_context
+
+    command_str = "fasterq-dump " + job_context["input_file_path"] + " -O " + job_context['work_dir']
+    logger.debug("Running fasterq-dump using the following shell command: %s",
+                 formatted_command,
+                 processor_job=job_context["job_id"])
+    completed_command = subprocess.run(formatted_command.split(),
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+
+    if completed_command.returncode != 0:
+        stderr = completed_command.stderr.decode().strip()
+        logger.error("Shell call to fasterq-dump failed with error message: %s",
+                     stderr,
+                     processor_job=job_context["job_id"],
+                     file=job_context["input_file_path"].absolute_file_path )
+
+        job_context["job"].failure_reason = stderr
+        job_context["success"] = False
+
+    # Overwrite our current input_file_path with our newly extracted files
+    for new_file in os.listdir(job_context['work_dir']):
+        # We only care about '_1' and '_2', unmated reads can skeddadle
+        if '_1' in new_file:
+            job_context['input_file_path'] = job_context['work_dir'] + new_file
+        if '_2' in new_file:
+            job_context['input_file_path_2'] = job_context['work_dir'] + new_file
+
+    return job_context
 
 def _determine_index_length(job_context: Dict) -> Dict:
     """Determines whether to use the long or short salmon index.
@@ -820,6 +855,7 @@ def salmon(job_id: int) -> None:
                        [utils.start_job,
                         _set_job_prefix,
                         _prepare_files,
+                        _extract_sra,
 
                         _determine_index_length,
                         _find_or_download_index,
