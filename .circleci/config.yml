@@ -140,7 +140,7 @@ jobs:
       - run: ./api/run_tests.sh
 
       - run:
-          command: .circleci/filter_tests.sh -t salmon --parallel
+          command: .circleci/filter_tests.sh -t salmon
           no_output_timeout: 1h
 
   # This tests workers tests tagged as 'transcriptome' and 'downloaders'
