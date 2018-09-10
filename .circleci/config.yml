@@ -44,7 +44,7 @@ jobs:
       # because their dockerfiles are very similar so a lot of the
       # build time is saved by only building those layers once.
       - run:
-          command: .circleci/filter_tests.sh -t downloaders
+          command: .circleci/filter_tests.sh -t downloaders --parallel
           no_output_timeout: 36000
 
       # Run Foreman Tests
@@ -53,19 +53,19 @@ jobs:
 
      # Run NO_OP tests
       - run: sudo chown -R circleci:circleci workers/test_volume/
-      - run: .circleci/filter_tests.sh -t no_op
+      - run: .circleci/filter_tests.sh -t no_op --parallel
 
       # Run Smasher tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
-          command: .circleci/filter_tests.sh -t smasher
+          command: .circleci/filter_tests.sh -t smasher --parallel
           # Smashing can apparently take a long time on CI
           no_output_timeout: 36000
 
       # Run QN tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
-          command: .circleci/filter_tests.sh -t qn
+          command: .circleci/filter_tests.sh -t qn --parallel
           no_output_timeout: 36000
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
@@ -98,7 +98,7 @@ jobs:
       - run: ./common/run_tests.sh
 
       - run:
-          command: .circleci/filter_tests.sh -t affymetrix
+          command: .circleci/filter_tests.sh -t affymetrix --parallel
           # This takes a while because the affymetrix image is huge
           no_output_timeout: 36000
 
@@ -107,7 +107,7 @@ jobs:
       - run: sudo chown -R circleci:circleci workers/test_volume/
 
       # This doesn't take as long because the image has already been pulled.
-      - run: .circleci/filter_tests.sh -t agilent
+      - run: .circleci/filter_tests.sh -t agilent --parallel
 
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
@@ -140,7 +140,7 @@ jobs:
       - run: ./api/run_tests.sh
 
       - run:
-          command: .circleci/filter_tests.sh -t salmon
+          command: .circleci/filter_tests.sh -t salmon --parallel
           no_output_timeout: 1h
 
   # This tests workers tests tagged as 'transcriptome' and 'downloaders'
@@ -172,14 +172,14 @@ jobs:
       - run: ./update_models.sh
 
       - run: ./prepare_image.sh -i transcriptome -s workers
-      - run: .circleci/filter_tests.sh -t transcriptome
+      - run: .circleci/filter_tests.sh -t transcriptome --parallel
 
       # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
       # from making sure all the files in workers/test_volume have read/write permissions.
       - run: sudo chown -R circleci:circleci workers/test_volume/
 
       # Run Illumina tests.
-      - run: .circleci/filter_tests.sh -t illumina
+      - run: .circleci/filter_tests.sh -t illumina --parallel
 
 
   deploy:
