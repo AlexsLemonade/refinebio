@@ -140,12 +140,17 @@ def _extract_sra(job_context: Dict) -> Dict:
     job_context['pipeline'].steps.append(result.id)
 
     # Overwrite our current input_file_path with our newly extracted files
-    for new_file in os.listdir(job_context['work_dir']):
-        # We only care about '_1' and '_2', unmated reads can skeddadle
-        if '_1' in new_file:
-            job_context['input_file_path'] = job_context['work_dir'] + new_file
-        if '_2' in new_file:
-            job_context['input_file_path_2'] = job_context['work_dir'] + new_file
+    # We either want the one created file or _just_ _1 
+    new_files = os.listdir(job_context['work_dir'])
+    if len(new_files) == 1:
+        job_context['input_file_path'] = job_context['work_dir'] + new_files[0]
+    else:
+        for new_file in os.listdir(job_context['work_dir']):
+            # We only care about '_1' and '_2', unmated reads can skeddadle
+            if '_1' in new_file:
+                job_context['input_file_path'] = job_context['work_dir'] + new_file
+            if '_2' in new_file:
+                job_context['input_file_path_2'] = job_context['work_dir'] + new_file
 
     return job_context
 
