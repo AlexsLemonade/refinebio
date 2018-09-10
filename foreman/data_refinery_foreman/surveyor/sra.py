@@ -315,6 +315,8 @@ class SraSurveyor(ExternalSourceSurveyor):
             accession=accession
         )
 
+        return download_url
+
     def _generate_experiment_and_samples(self, run_accession: str) -> (Experiment, List[Sample]):
         """Generates Experiments and Samples for the provided run_accession."""
         metadata = SraSurveyor.gather_all_metadata(run_accession)
