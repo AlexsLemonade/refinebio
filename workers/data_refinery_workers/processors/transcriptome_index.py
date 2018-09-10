@@ -1,37 +1,37 @@
-from __future__ import absolute_import, unicode_literals
+import gzip
 import os
+import shutil
 import subprocess
 import tarfile
-import gzip
-import shutil
 
-from typing import Dict
 from django.utils import timezone
+from typing import Dict
 
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
-    Organism,
-    ProcessorJob,
-    OriginalFile,
     ComputationalResult,
     ComputedFile,
-    Processor,
+    Organism,
+    OrganismIndex,
+    OriginalFile,
     Pipeline,
-    OrganismIndex
+    Processor,
+    ProcessorJob,
 )
+from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
-from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.utils import get_env_variable_gracefully
+
 
 logger = get_and_configure_logger(__name__)
-
 JOB_DIR_PREFIX = "processor_job_"
 GENE_TO_TRANSCRIPT_TEMPLATE = "{gene_id}\t{transcript_id}\n"
 GENE_TYPE_COLUMN = 2
+S3_TRANSCRIPTOME_INDEX_BUCKET_NAME = get_env_variable_gracefully("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", False)
+RUNNING_IN_CLOUD = get_env_variable_gracefully("RUNNING_IN_CLOUD", False)
+LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 # Removes each occurrance of ; and "
 IDS_CLEANUP_TABLE = str.maketrans({";": None, "\"": None})
-
-S3_TRANSCRIPTOME_INDEX_BUCKET_NAME = get_env_variable_gracefully("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", False)
 
 
 def _compute_paths(job_context: Dict) -> str:
@@ -44,7 +44,14 @@ def _compute_paths(job_context: Dict) -> str:
     job_context["base_file_path"] = '/'.join(first_file_path.split('/')[:-1])
     job_context["work_dir"] = job_context["base_file_path"] + '/' + job_context["length"].upper() + '/' + \
                               JOB_DIR_PREFIX + str(job_context["job_id"])
-    os.makedirs(job_context["work_dir"], exist_ok=True)
+    try:
+        os.makedirs(job_context["work_dir"])
+    except Exception as e:
+        logger.exception("Could not create work directory for processor job.",
+                         job_context=job_context)
+        job_context["job"].failure_reason = str(e)
+        job_context["success"] = False
+        return job_context
 
     job_context["output_dir"] = job_context["work_dir"] + "/" + "index"
     os.makedirs(job_context["output_dir"], exist_ok=True)
@@ -58,16 +65,14 @@ def _compute_paths(job_context: Dict) -> str:
     archive_file_name = job_context["organism_name"] + "_" + \
                         job_context['length'].upper() + "_" + stamp + '.tar.gz'
 
-    job_context["computed_dir"] = job_context['base_file_path'] + '/' + 'COMPUTED' + '/' + job_context["length"].upper()
-    os.makedirs(job_context["computed_dir"], exist_ok=True)
-    job_context["computed_archive"] = job_context["computed_dir"] + '/' + archive_file_name
+    job_context["computed_archive"] = job_context["work_dir"] + '/' + archive_file_name
 
     return job_context
 
 
 def _prepare_files(job_context: Dict) -> Dict:
-    """Adds the keys "fasta_file_path" and "gtf_file_path" to
-    job_context.
+    """Adds the keys "fasta_file", "fasta_file_path", "gtf_file", and
+    "gtf_file_path" to job_context.
     """
     original_files = job_context["original_files"]
 
@@ -113,7 +118,7 @@ def _extract_assembly_information(job_context: Dict) -> Dict:
 
     The URL path we're attempting follows this pattern (defined in the surveyor)
     ftp://ftp.{url_root}/gtf/{species_sub_dir}/{filename_species}.{assembly_name}.{assembly_version}.gtf.gz
-    and we are attempting to extract {assembly_version}.
+    and we are attempting to extract {assembly_version} and {assembly_name}.
     """
     original_files = job_context["original_files"]
 
@@ -137,12 +142,12 @@ def _process_gtf(job_context: Dict) -> Dict:
 
     The first is a new .gtf file which has all of the pseudogenes
     filtered out of it. The other is a tsv mapping between gene_ids
-    and transcript_ids.  Adds the keys "gtf_file_path" and
+    and transcript_ids. Adds the keys "gtf_file_path" and
     "genes_to_transcripts_path" to job_context.
     """
     filtered_gtf_path = os.path.join(job_context["work_dir"], "no_pseudogenes.gtf")
     # Generate "genes_to_transcripts.txt" in job_context["output_dir"]
-    # so that it will be saved later.
+    # so that it will be included in the computed tarball.
     genes_to_transcripts_path = os.path.join(job_context["output_dir"], "genes_to_transcripts.txt")
 
     with open(job_context["gtf_file_path"], 'r') as input_gtf, \
@@ -186,10 +191,8 @@ def _handle_shell_error(job_context: Dict, stderr: str, command: str) -> None:
                  stderr,
                  processor_job=job_context["job_id"])
 
-    # The failure_reason column is only 256 characters wide.
-    error_end = 200
     job_context["job"].failure_reason = ("Shell call to {} failed because: ".format(command)
-                                         + stderr[:error_end])
+                                         + stderr)
     job_context["success"] = False
 
 
@@ -198,7 +201,7 @@ def _create_index(job_context: Dict) -> Dict:
 
     This index will only be appropriate for use in running salmon on
     transcripts collected from an organism from the same species as
-    the Batch. Additionally it will either be a "long" index or a
+    the file. Additionally it will either be a "long" index or a
     "short" index, which means that it will be appropriate for reads
     with a certain range of base pair lengths. The creator of Salmon,
     the esteemed Dr. Rob Patro, has said (via personal communication):
@@ -210,10 +213,13 @@ def _create_index(job_context: Dict) -> Dict:
     # RSEM takes a prefix path and then all files generated by it will
     # start with that
 
+    # Version goes to stderr up until the version where it doesn't:
+    # https://github.com/COMBINE-lab/salmon/issues/148
     job_context["salmon_version"] = subprocess.run(['salmon', '--version'],
                                                 stderr=subprocess.PIPE,
                                                 stdout=subprocess.PIPE).stderr.decode().strip()
 
+    # TODO: is this providing a filename prefix or a directory or both?
     rsem_prefix = os.path.join(job_context["rsem_index_dir"],
                                job_context['base_file_path'].split('/')[-1])
 
@@ -229,6 +235,7 @@ def _create_index(job_context: Dict) -> Dict:
         rsem_prefix=rsem_prefix
     )
 
+    job_context['time_start'] = timezone.now()
     rsem_completed_command = subprocess.run(rsem_formatted_command.split(),
                                             stdout=subprocess.PIPE,
                                             stderr=subprocess.PIPE)
@@ -237,8 +244,8 @@ def _create_index(job_context: Dict) -> Dict:
     os.remove(job_context["fasta_file_path"])
 
     if rsem_completed_command.returncode != 0:
-        stderr = str(rsem_completed_command.stderr)
-        error_start = stderr.find("Error:")
+        stderr = rsem_completed_command.stderr.decode().strip()
+        error_start = stderr.upper().find("ERROR:")
         error_start = error_start if error_start != -1 else 0
         stderr = stderr[error_start:]
         _handle_shell_error(job_context, stderr, "rsem-prepare-reference")
@@ -248,8 +255,7 @@ def _create_index(job_context: Dict) -> Dict:
     salmon_command_string = ("salmon --no-version-check index -t {rsem_transcripts}"
                              " -i {index_dir} --type quasi -k {kmer_size}")
 
-    # To me, this looks quite ugly! However, I was told we got these values from
-    # Rob Patro, the author of Salmon.
+    # See this function's docstring for more info.
     if job_context['length'] is "long":
         job_context['kmer_size'] = "31"
     else:
@@ -263,14 +269,13 @@ def _create_index(job_context: Dict) -> Dict:
         index_dir=job_context["output_dir"],
         kmer_size=job_context['kmer_size'])
 
-    job_context['time_start'] = timezone.now()
     salmon_completed_command = subprocess.run(job_context["salmon_formatted_command"].split(),
                                               stdout=subprocess.PIPE,
                                               stderr=subprocess.PIPE)
     job_context['time_end'] = timezone.now()
 
     if salmon_completed_command.returncode != 0:
-        stderr = str(salmon_completed_command.stderr)
+        stderr = salmon_completed_command.stderr.decode().strip()
         _handle_shell_error(job_context, stderr, "salmon")
         job_context["success"] = False
         return job_context
@@ -286,6 +291,11 @@ def _zip_index(job_context: Dict) -> Dict:
     only be a single file along with compressing the size of the file
     during storage.
     """
+    # The zip file is only for storing in the cloud, so if we aren't
+    # in the cloud don't build it.
+    if not RUNNING_IN_CLOUD:
+        return job_context
+
     try:
         with tarfile.open(job_context["computed_archive"], "w:gz") as tar:
             tar.add(job_context["output_dir"],
@@ -304,7 +314,6 @@ def _zip_index(job_context: Dict) -> Dict:
             pass
         return job_context
 
-    job_context["files_to_upload"] = [job_context["computed_archive"]]
     job_context["success"] = True
     return job_context
 
@@ -334,7 +343,6 @@ def _populate_index_object(job_context: Dict) -> Dict:
     computed_file.is_smashable = False
     computed_file.is_qc = False
     computed_file.save()
-    job_context['computed_files'].append(computed_file)
 
     organism_object = Organism.get_object_for_name(job_context['organism_name'])
     index_object = OrganismIndex()
@@ -343,11 +351,17 @@ def _populate_index_object(job_context: Dict) -> Dict:
     index_object.assembly_name = job_context["assembly_name"]
     index_object.salmon_version = job_context["salmon_version"]
     index_object.index_type = "TRANSCRIPTOME_" + job_context['length'].upper()
+    # This is where the index will be extracted to.
+    index_object.absolute_directory_path = LOCAL_ROOT_DIR + "/TRANSCRIPTOME_INDEX/" \
+                                           + organism_object.name + "/" + job_context['length']
     index_object.result = result
 
     if S3_TRANSCRIPTOME_INDEX_BUCKET_NAME:
         logger.info("Uploading %s %s to s3", job_context['organism_name'], job_context['length'], processor_job=job_context["job_id"])
-        index_object.upload_to_s3(computed_file.absolute_file_path, S3_TRANSCRIPTOME_INDEX_BUCKET_NAME, logger)
+        s3_key = organism_object.name + '_' + index_object.index_type + '.tar.gz'
+        sync_result = computed_file.sync_to_s3(S3_TRANSCRIPTOME_INDEX_BUCKET_NAME, s3_key)
+        if sync_result:
+            computed_file.delete_local_file()
     else:
         logger.warn("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME not configured, therefore %s %s will not be uploaded.",
                     job_context['organism_name'],
@@ -356,10 +370,27 @@ def _populate_index_object(job_context: Dict) -> Dict:
 
     index_object.save()
 
+    # We uploaded the file ourselves since we wanted it to go to a
+    # different bucket than end_job would put it in, therefore empty
+    # this list so end_job doesn't try to upload it again.
+    job_context['computed_files'] = []
 
     job_context['result'] = result
     job_context['computed_file'] = computed_file
     job_context['index'] = index_object
+
+    # If there's not a long and a short index for this organism yet,
+    # don't delete the input.
+    # XXX: This will break once we introduce additional versions of these.
+    short_indices = OrganismIndex.objects.filter(organism=organism_object,
+                                                 index_type="TRANSCRIPTOME_SHORT",
+                                                 source_version=job_context["assembly_version"])
+    long_indices = OrganismIndex.objects.filter(organism=organism_object,
+                                                 index_type="TRANSCRIPTOME_LONG",
+                                                 source_version=job_context["assembly_version"])
+    if short_indices.count() < 1 or long_indices.count() < 1:
+        # utils.end_job deletes these, so remove them so it doesn't.
+        job_context["original_files"] = []
 
     return job_context
 
@@ -384,6 +415,4 @@ def build_transcriptome_index(job_id: int, length="long") -> None:
                                _create_index,
                                _zip_index,
                                _populate_index_object,
-                               #utils.upload_processed_files,
-                               #utils.cleanup_raw_files,
                                utils.end_job])

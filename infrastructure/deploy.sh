@@ -223,7 +223,10 @@ chmod 600 data-refinery-key.pem
 API_IP_ADDRESS=$(terraform output -json api_server_1_ip | jq -c '.value' | tr -d '"')
 echo "Restarting API with latest image."
 
-container_running=$(ssh -o StrictHostKeyChecking=no \
+container_running=$(ssh -q -o StrictHostKeyChecking=no \
+                        -i data-refinery-key.pem \
+                        ubuntu@$API_IP_ADDRESS exit && \
+                        ssh -o StrictHostKeyChecking=no \
                         -i data-refinery-key.pem \
                         ubuntu@$API_IP_ADDRESS  "docker ps" | grep dr_api)
 

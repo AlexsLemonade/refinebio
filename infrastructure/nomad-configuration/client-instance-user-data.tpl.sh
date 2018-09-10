@@ -86,11 +86,10 @@ echo "
 }" >> /etc/logrotate.conf
 
 # Docker runs out of IPv4
-cat <<"EOF" > /etc/docker/daemon.json
-{
-  "bip": "172.17.77.1/22"
-}
-EOF
+# Cannot specify bip option in config file because it is hardcoded in
+# the startup command because docker is run by clowns.
+service docker stop
+nohup /usr/bin/dockerd -s overlay2 --bip=172.17.77.1/22 --log-driver=json-file --log-opt max-size=100m --log-opt max-file=3 > /dev/null &
 
 # Output the files we need to start up Nomad and register jobs:
 # (Note that the lines starting with "$" are where
