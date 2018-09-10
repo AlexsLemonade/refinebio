@@ -272,7 +272,7 @@ resource "aws_instance" "client_instance_1" {
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
   # instance. For more information see the definition of this resource.
-  user_data = "${data.template_file.nomad_client_server_script_smusher.rendered}"
+  user_data = "${data.template_file.nomad_client_script_smasher_smusher.rendered}"
 
   tags = {
     Name = "nomad-client-1-${var.user}-${var.stage}"
