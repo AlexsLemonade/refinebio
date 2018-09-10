@@ -2,6 +2,7 @@ import GEOparse
 import dateutil.parser
 import logging
 import requests
+import shutil
 
 from re import sub, split, match
 from typing import List, Dict
@@ -48,6 +49,9 @@ class GeoSurveyor(ExternalSourceSurveyor):
     def source_type(self):
         return Downloaders.GEO.value
 
+    def get_temp_path(self):
+        return '/tmp/' + str(self.survey_job.id) + '/'
+
     def set_platform_properties(self,
                                 sample_object: Sample,
                                 sample_metadata: Dict,
@@ -74,7 +78,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         platform_accession_code = UNKNOWN
 
-        gpl = GEOparse.get_GEO(external_accession, destdir='/tmp', how="brief", silent=True)
+        gpl = GEOparse.get_GEO(external_accession, destdir=self.get_temp_path(), how="brief", silent=True)
         platform_title = gpl.metadata.get("title", [UNKNOWN])[0]
 
         # Check if this is a supported microarray platform.
@@ -198,7 +202,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         """
         # Cleaning up is tracked here: https://github.com/guma44/GEOparse/issues/41
-        gse = GEOparse.get_GEO(experiment_accession_code, destdir='/tmp', how="brief", silent=True)
+        gse = GEOparse.get_GEO(experiment_accession_code, self.get_temp_path(), how="brief", silent=True)
         preprocessed_samples = harmony.preprocess_geo(gse.gsms.items())
         harmonized_samples = harmony.harmonize(preprocessed_samples)
 
@@ -386,6 +390,14 @@ class GeoSurveyor(ExternalSourceSurveyor):
         # Delete this Original file if it isn't being used.
         if OriginalFileSampleAssociation.objects.filter(original_file=miniml_original_file).count() == 0:
             miniml_original_file.delete()
+
+        # Trash the temp path
+        try:
+            shutil.rmtree(self.get_temp_path())
+        except Exception:
+            # There was a problem during surveying so this didn't get created.
+            # It's not a big deal.
+            pass
 
         return experiment_object, all_samples
 
