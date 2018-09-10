@@ -121,6 +121,23 @@ def _extract_sra(job_context: Dict) -> Dict:
 
         job_context["job"].failure_reason = stderr
         job_context["success"] = False
+        return job_context
+
+    result = ComputationalResult()
+    result.commands.append(formatted_command)
+    result.time_start = time_start
+    result.time_end = time_end
+    result.is_ccdl = True
+    result.pipeline = "FASTERQ_DUMP"  # TODO: should be removed
+
+    try:
+        processor_key = "FASTERQ_DUMP"
+        result.processor = utils.find_processor(processor_key)
+    except Exception as e:
+        return utils.handle_processor_exception(job_context, processor_key, e)
+
+    result.save()
+    job_context['pipeline'].steps.append(result.id)
 
     # Overwrite our current input_file_path with our newly extracted files
     for new_file in os.listdir(job_context['work_dir']):

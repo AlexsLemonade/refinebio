@@ -291,11 +291,16 @@ class ProcessorEnum(Enum):
         "yml_file": "no_op.yml"
     }
 
-    # Four processors in "Salmon" pipeline
+    # Five processors in "Salmon" pipeline
     MULTIQC = {
         "name": "MultiQC",
         "docker_img": "dr_salmon",
         "yml_file": "multiqc.yml"
+    }
+    FASTERQ_DUMP = {
+        "name": "fasterq-dump",
+        "docker_img": "dr_salmon",
+        "yml_file": "fasterq_dump.yml"
     }
     SALMON_QUANT = {
         "name": "Salmon Quant",
