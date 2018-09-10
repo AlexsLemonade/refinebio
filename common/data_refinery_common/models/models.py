@@ -44,6 +44,12 @@ class PublicObjectsManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(is_public=True)
 
+class AllObjectsManager(models.Manager):
+    """
+    """
+    def get_queryset(self):
+        return super().get_queryset()
+
 class ProcessedObjectsManager(models.Manager):
     """
     Only returns objects that have is_processed and is_public
@@ -65,6 +71,7 @@ class Sample(models.Model):
 
     # Managers
     objects = models.Manager()
+    all_objects = AllObjectsManager()
     public_objects = PublicObjectsManager()
     processed_objects = ProcessedObjectsManager()
 
