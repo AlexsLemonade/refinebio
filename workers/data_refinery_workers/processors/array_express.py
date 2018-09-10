@@ -49,7 +49,8 @@ def _prepare_files(job_context: Dict) -> Dict:
         job_context["success"] = False
         return job_context
 
-    new_filename = original_file.filename.upper().replace(".CEL", ".PCL")
+    file_extension_start = original_file.filename.upper().find(".CEL")
+    new_filename= original_file.filename[:file_extension_start] + ".PCL"
     job_context["output_file_path"] = job_context["work_dir"] + "/" + new_filename
 
     return job_context

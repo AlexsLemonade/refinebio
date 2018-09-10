@@ -137,8 +137,8 @@ def end_job(job_context: Dict, abort=False):
     if (success or job.no_retry) and not abort:
         # Cleanup Original Files
         if 'original_files' in job_context:
-            for original_files in job_context['original_files']:
-                original_files.delete_local_file()
+            for original_file in job_context['original_files']:
+                original_file.delete_local_file()
 
     if success:
         # S3-sync Computed Files

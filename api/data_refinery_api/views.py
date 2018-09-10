@@ -670,7 +670,7 @@ class TranscriptomeIndexDetail(APIView):
         try:
             organism_index = (OrganismIndex.public_objects.exclude(s3_url__exact="")
                               .distinct("organism__name", "index_type")
-                              .get(organism__name=params["organism"],
+                              .get(organism__name=params["organism"].upper(),
                                    index_type=transcription_length))
             serializer = OrganismIndexSerializer(organism_index)
             return Response(serializer.data)

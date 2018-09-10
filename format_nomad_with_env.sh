@@ -181,10 +181,6 @@ if [[ ! -d "$output_dir" ]]; then
     mkdir $output_dir
 fi
 
-# Clean up old files
-rm $output_dir/*.nomad
-rm $output_dir/*.nomad_test
-
 export_log_conf (){
     if [[ $env == 'prod' || $env == 'staging' || $env == 'dev' ]]; then
         export LOGGING_CONFIG="
@@ -229,7 +225,7 @@ if [[ $project == "workers" ]]; then
             rams=(1024 2048 3072 4096 5120 6144 7168 8192 9216 10240 11264 12288 13312)
             for r in "${rams[@]}"
             do
-                indexes=(1 2 3 4 5 6 7 8 9 10)
+                indexes=(0 1 2 3 4 5 6 7 8 9)
                 for j in "${indexes[@]}"
                 do
                     export INDEX_POSTFIX="_$j"
