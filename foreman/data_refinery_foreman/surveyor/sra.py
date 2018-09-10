@@ -305,10 +305,7 @@ class SraSurveyor(ExternalSourceSurveyor):
 
     @staticmethod
     def _build_ncbi_file_url(run_accession: str):
-        # ENA has a weird way of nesting data: if the run accession is
-        # greater than 9 characters long then there is an extra
-        # sub-directory in the path which is "00" + the last digit of
-        # the run accession.
+        """ Build the path to the hypothetical .sra file we want """
         accession = run_accession
         first_three = accession[:3]
         first_six = accession[:6]
