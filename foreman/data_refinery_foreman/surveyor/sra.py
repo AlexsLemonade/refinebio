@@ -25,10 +25,13 @@ from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyo
 logger = get_and_configure_logger(__name__)
 
 
+DOWNLOAD_SOURCE = "NCBI" # or "ENA". Change this to download from NCBI (US) or ENA (UK).
 ENA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/data/view/{}"
 ENA_METADATA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/data/view/{}&display=xml"
 ENA_DOWNLOAD_URL_TEMPLATE = ("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/{short_accession}{sub_dir}"
                              "/{long_accession}/{long_accession}{read_suffix}.fastq.gz")
+NCBI_DOWNLOAD_URL_TEMPLATE = ("anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/"
+                             "{first_three}/{first_six}/{accession}/{accession}.sra")
 ENA_SUB_DIR_PREFIX = "/00"
 
 
@@ -285,7 +288,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         return metadata
 
     @staticmethod
-    def _build_file_url(run_accession: str, read_suffix=""):
+    def _build_ena_file_url(run_accession: str, read_suffix=""):
         # ENA has a weird way of nesting data: if the run accession is
         # greater than 9 characters long then there is an extra
         # sub-directory in the path which is "00" + the last digit of
@@ -300,6 +303,21 @@ class SraSurveyor(ExternalSourceSurveyor):
             long_accession=run_accession,
             read_suffix=read_suffix)
 
+    @staticmethod
+    def _build_ncbi_file_url(run_accession: str):
+        # ENA has a weird way of nesting data: if the run accession is
+        # greater than 9 characters long then there is an extra
+        # sub-directory in the path which is "00" + the last digit of
+        # the run accession.
+        accession = run_accession
+        first_three = accession[:3]
+        first_six = accession[:6]
+        download_url = NCBI_DOWNLOAD_URL_TEMPLATE.format(
+            first_three=first_three,
+            first_six=first_six,
+            accession=accession
+        )
+
     def _generate_experiment_and_samples(self, run_accession: str) -> (Experiment, List[Sample]):
         """Generates Experiments and Samples for the provided run_accession."""
         metadata = SraSurveyor.gather_all_metadata(run_accession)
@@ -309,11 +327,14 @@ class SraSurveyor(ExternalSourceSurveyor):
                          accession=run_accession)
             return (None, None)  # This will cascade properly
 
-        if metadata["library_layout"] == "PAIRED":
-            files_urls = [SraSurveyor._build_file_url(run_accession, "_1"),
-                          SraSurveyor._build_file_url(run_accession, "_2")]
+        if DOWNLOAD_SOURCE == "ENA":
+            if metadata["library_layout"] == "PAIRED":
+                files_urls = [SraSurveyor._build_ena_file_url(run_accession, "_1"),
+                              SraSurveyor._build_ena_file_url(run_accession, "_2")]
+            else:
+                files_urls = [SraSurveyor._build_ena_file_url(run_accession)]
         else:
-            files_urls = [SraSurveyor._build_file_url(run_accession)]
+            files_urls = [SraSurveyor._build_ncbi_file_url(run_accession)]
 
         # Figure out the Organism for this sample
         organism_name = metadata.pop("organism_name", None)
