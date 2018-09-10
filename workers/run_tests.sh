@@ -25,11 +25,6 @@ while getopts ":t:h" opt; do
             print_options
             exit 0
             ;;
-        \?)
-            echo "Invalid option: -$OPTARG" >&2
-            print_options >&2
-            exit 1
-            ;;
         :)
             echo "Option -$OPTARG requires an argument." >&2
             print_options >&2
