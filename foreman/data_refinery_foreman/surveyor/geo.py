@@ -32,8 +32,7 @@ from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyo
 
 
 logger = get_and_configure_logger(__name__)
-# Taken from GEOparse source code cause the docs lie.
-GEOparse.logger.setLevel(logging.getLevelName("WARN"))
+GEOparse.logger.set_verbosity("WARN")
 
 
 UNKNOWN = "UNKNOWN"
@@ -202,7 +201,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
         """
         # Cleaning up is tracked here: https://github.com/guma44/GEOparse/issues/41
-        gse = GEOparse.get_GEO(experiment_accession_code, self.get_temp_path(), how="brief", silent=True)
+        gse = GEOparse.get_GEO(experiment_accession_code, destdir=self.get_temp_path(), how="brief", silent=True)
         preprocessed_samples = harmony.preprocess_geo(gse.gsms.items())
         harmonized_samples = harmony.harmonize(preprocessed_samples)
 

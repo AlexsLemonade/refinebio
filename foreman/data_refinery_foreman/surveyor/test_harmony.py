@@ -24,8 +24,7 @@ from data_refinery_foreman.surveyor.harmony import (
     extract_title
 )
 
-# Taken from GEOparse source code cause the docs lie.
-GEOparse.logger.setLevel(logging.getLevelName("WARN"))
+GEOparse.logger.set_verbosity("WARN")
 
 
 class HarmonyTestCase(TestCase):
