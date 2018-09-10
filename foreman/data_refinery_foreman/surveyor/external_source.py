@@ -35,16 +35,17 @@ class ExternalSourceSurveyor:
         """Abstract method to survey a source."""
         return
 
-    def queue_downloader_jobs(self, experiment: Experiment):
+    def queue_downloader_jobs(self, experiment: Experiment, samples: List[Sample]):
         """This enqueues DownloaderJobs on a per-file basis.
 
         There is a complementary function below for enqueueing multi-file
         DownloaderJobs.
         """
-        # Get all of the undownloaded original files related to this Experiment.
-        samples = experiment.samples.all()
-        files_to_download = OriginalFile.objects.filter(
-            samples__in=samples.values('pk'), is_downloaded=False)
+        files_to_download = []
+        for sample in samples:
+            files_for_sample = OriginalFile.objects.filter(sample=sample, is_downloaded=False)
+            for og_file in files_for_sample:
+                files_to_download.append(og_file)
 
         download_urls_with_jobs = {}
         for original_file in files_to_download:
@@ -184,7 +185,7 @@ class ExternalSourceSurveyor:
                     self.queue_downloader_job_for_original_files(sample_files,
                                                                  experiment_accession_code=experiment.accession_code)
             else:
-                self.queue_downloader_jobs(experiment)
+                self.queue_downloader_jobs(experiment, samples)
         except Exception:
             logger.exception(("Failed to queue downloader jobs. "
                               "Terminating survey job."),
