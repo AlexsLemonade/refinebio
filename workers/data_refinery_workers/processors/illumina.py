@@ -61,6 +61,7 @@ def _prepare_files(job_context: Dict) -> Dict:
                 line.strip() != '' and \
                 line != '\n' and \
                 '\t' in line and \
+                line[0:3].upper() != "GSM" and \
                 line[0] != "'" and \
                 line[0] != '"' and \
                 line[0] != '!' and \

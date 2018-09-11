@@ -99,7 +99,7 @@ if [[ -z $tag || $tag == "salmon" ]]; then
     dotsra_name="ERR1562482.sra"
     rna_seq_test_data_1="$rna_seq_test_raw_dir/$read_1_name"
     rna_seq_test_data_2="$rna_seq_test_raw_dir/$read_2_name"
-    dotsra="$rna_seq_test_raw_dir/$read_2_name"
+    dotsra="$rna_seq_test_raw_dir/$dotsra_name"
     if [ ! -e "$rna_seq_test_data_1" ]; then
         mkdir -p $rna_seq_test_raw_dir
         echo "Downloading $read_1_name for Salmon tests."

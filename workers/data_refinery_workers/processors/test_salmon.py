@@ -1,5 +1,6 @@
 import hashlib
 import os
+import random
 import shutil
 import numpy
 import scipy.stats
@@ -88,9 +89,10 @@ def prepare_job():
 
     return pj, [og_file, og_file2]
 
-def prepare_dotsra_job():
+def prepare_dotsra_job(filename = "ERR1562482.sra"):
     pj = ProcessorJob()
     pj.pipeline_applied = "SALMON"
+    pj.id = random.randint(111, 999999)
     pj.save()
 
     c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
@@ -118,9 +120,9 @@ def prepare_dotsra_job():
     comp_file.save()
 
     og_file = OriginalFile()
-    og_file.source_filename = "ERR1562482.sra"
-    og_file.filename = "ERR1562482.sra"
-    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR1562482.sra"
+    og_file.source_filename = filename
+    og_file.filename = filename
+    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/" + filename
     og_file.save()
 
     og_file_samp_assoc = OriginalFileSampleAssociation()
@@ -187,9 +189,21 @@ class SalmonTestCase(TestCase):
             pass
 
         job, files = prepare_dotsra_job()
-        salmon.salmon(job.pk)
+        job_context = salmon.salmon(job.pk)
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertTrue(job.success)
+        shutil.rmtree(job_context["work_dir"])
+
+        try:
+            os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
+        except FileNotFoundError:
+            pass
+
+        job, files = prepare_dotsra_job("i-dont-exist.sra")
+        result = salmon.salmon(job.pk)
+        job = ProcessorJob.objects.get(id=job.pk)
+        self.assertFalse(job.success)
+        shutil.rmtree(job_context["work_dir"])
 
     def chk_salmon_quant(self, job_context, sample_dir):
         """Helper function that calls salmon._run_salmon and confirms

@@ -1,4 +1,5 @@
 import boto3
+import glob
 import io
 import json
 import os
@@ -104,7 +105,8 @@ def _extract_sra(job_context: Dict) -> Dict:
     if ".sra" not in job_context["input_file_path"]:
         return job_context
 
-    command_str = "fasterq-dump " + job_context["input_file_path"] + " -O " + job_context['work_dir']
+    time_start = timezone.now()
+    formatted_command = "fasterq-dump " + job_context["input_file_path"] + " -O " + job_context['work_dir']
     logger.debug("Running fasterq-dump using the following shell command: %s",
                  formatted_command,
                  processor_job=job_context["job_id"])
@@ -112,13 +114,17 @@ def _extract_sra(job_context: Dict) -> Dict:
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
 
-    if completed_command.returncode != 0:
-        stderr = completed_command.stderr.decode().strip()
+    stderr = completed_command.stderr.decode().strip()
+    stdout = completed_command.stderr.decode().strip()
+
+    # fasterq-dump doesn't respect return codes
+    # Related: https://github.com/ncbi/sra-tools/issues/146
+    if (completed_command.returncode != 0) or "err:" in stdout:
         logger.error("Shell call to fasterq-dump failed with error message: %s",
                      stderr,
+                     stdout=stdout,
                      processor_job=job_context["job_id"],
-                     file=job_context["input_file_path"].absolute_file_path )
-
+                     file=job_context["input_file_path"])
         job_context["job"].failure_reason = stderr
         job_context["success"] = False
         return job_context
@@ -126,7 +132,7 @@ def _extract_sra(job_context: Dict) -> Dict:
     result = ComputationalResult()
     result.commands.append(formatted_command)
     result.time_start = time_start
-    result.time_end = time_end
+    result.time_end = timezone.now()
     result.is_ccdl = True
     result.pipeline = "FASTERQ_DUMP"  # TODO: should be removed
 
@@ -141,16 +147,16 @@ def _extract_sra(job_context: Dict) -> Dict:
 
     # Overwrite our current input_file_path with our newly extracted files
     # We either want the one created file or _just_ _1 
-    new_files = os.listdir(job_context['work_dir'])
+    new_files = glob.glob(job_context['work_dir'] + '*.fastq')
     if len(new_files) == 1:
-        job_context['input_file_path'] = job_context['work_dir'] + new_files[0]
+        job_context['input_file_path'] = new_files[0]
     else:
-        for new_file in os.listdir(job_context['work_dir']):
+        for new_file in glob.glob(job_context['work_dir'] + '*.fastq'):
             # We only care about '_1' and '_2', unmated reads can skeddadle
             if '_1' in new_file:
-                job_context['input_file_path'] = job_context['work_dir'] + new_file
+                job_context['input_file_path'] = new_file
             if '_2' in new_file:
-                job_context['input_file_path_2'] = job_context['work_dir'] + new_file
+                job_context['input_file_path_2'] = new_file
 
     return job_context
 
@@ -167,10 +173,14 @@ def _determine_index_length(job_context: Dict) -> Dict:
     number_of_reads = 0
     counter = 1
 
+    if ".gz" == job_context["input_file_path"][-3:]:
+        cat = "zcat"
+    else:
+        cat = "cat"
     # zcat unzips the file provided and dumps the output to STDOUT.
     # It is installed by default in Debian so it should be included
     # in every docker image already.
-    with subprocess.Popen(['zcat', job_context["input_file_path"]], stdout=subprocess.PIPE,
+    with subprocess.Popen([cat, job_context["input_file_path"]], stdout=subprocess.PIPE,
                           universal_newlines=True) as process:
         for line in process.stdout:
                 # In the FASTQ file format, there are 4 lines for each
@@ -182,8 +192,12 @@ def _determine_index_length(job_context: Dict) -> Dict:
                     number_of_reads += 1
                 counter += 1
 
+    if ".gz" == job_context["input_file_path_2"][-3:]:
+        cat = "zcat"
+    else:
+        cat = "cat"
     if "input_file_path_2" in job_context:
-        with subprocess.Popen(['zcat', job_context["input_file_path_2"]], stdout=subprocess.PIPE,
+        with subprocess.Popen([cat, job_context["input_file_path_2"]], stdout=subprocess.PIPE,
                               universal_newlines=True) as process:
             for line in process.stdout:
                 if counter % 4 == 2:
@@ -193,8 +207,8 @@ def _determine_index_length(job_context: Dict) -> Dict:
 
     if number_of_reads == 0:
         logger.error("Unable to determine number_of_reads for job.",
-            input_file_1=job_context["input_file_path"],
-            input_file_2=job_context["input_file_path_2"],
+            input_file_1=job_context.get("input_file_path"),
+            input_file_2=job_context.get("input_file_path_2"),
             job_id=job_context['job'].id
         )
         job_context['job'].failure_reason = "Unable to determine number_of_reads."
@@ -276,7 +290,7 @@ def _run_fastqc(job_context: Dict) -> Dict:
 
     # We could use --noextract here, but MultiQC wants extracted files.
     command_str = ("./FastQC/fastqc --outdir={qc_directory} {files}")
-    files = ' '.join(file.absolute_file_path for file in job_context['original_files'])
+    files = ' '.join([job_context['input_file_path'], job_context.get('input_file_path_2')])
     formatted_command = command_str.format(qc_directory=job_context["qc_directory"],
                 files=files)
 
@@ -873,7 +887,7 @@ def salmon(job_id: int) -> None:
     short read length. Also runs FastQC, MultiQC, and Salmontools.
     """
     pipeline = Pipeline(name=utils.PipelineEnum.SALMON.value)
-    utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
+    final_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _set_job_prefix,
                         _prepare_files,
@@ -887,3 +901,4 @@ def salmon(job_id: int) -> None:
                         _run_salmontools,
                         _run_multiqc,
                         utils.end_job])
+    return final_context
