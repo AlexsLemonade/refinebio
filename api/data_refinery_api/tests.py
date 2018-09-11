@@ -1,47 +1,47 @@
+import json
+import random
+
 from django.contrib.auth.models import User
-from django.urls import reverse
 from django.http import HttpResponseForbidden, HttpResponseServerError
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from unittest.mock import patch
 
-import json
-import random
+from data_refinery_api.serializers import (
+    DetailedExperimentSerializer,
+    DetailedSampleSerializer,
+    ExperimentSerializer,
+    InstitutionSerializer,
+    OrganismSerializer,
+    PlatformSerializer,
+    SampleSerializer,
 
+    # Jobs
+    DownloaderJobSerializer,
+    ProcessorJobSerializer,
+    ProcessorSerializer,
+    SurveyJobSerializer,
+)
+from data_refinery_api.views import ExperimentList
 from data_refinery_common.models import (
+    ComputationalResult,
+    Dataset,
+    DownloaderJob,
+    DownloaderJobOriginalFileAssociation,
     Experiment,
     ExperimentAnnotation,
-    Sample,
-    SampleAnnotation,
-    ExperimentSampleAssociation,
     ExperimentOrganismAssociation,
+    ExperimentSampleAssociation,
     Organism,
     OriginalFile,
     OriginalFileSampleAssociation,
-    DownloaderJob,
-    DownloaderJobOriginalFileAssociation,
+    Processor,
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
-    Processor,
-    ComputationalResult,
+    Sample,
+    SampleAnnotation,
     SampleResultAssociation,
-    Dataset
-)
-from data_refinery_api.views import ExperimentList
-from data_refinery_api.serializers import (
-    ExperimentSerializer,
-    DetailedExperimentSerializer,
-    SampleSerializer,
-    DetailedSampleSerializer,
-    OrganismSerializer,
-    PlatformSerializer,
-    InstitutionSerializer,
-
-    # Jobs
-    SurveyJobSerializer,
-    DownloaderJobSerializer,
-    ProcessorJobSerializer,
-    ProcessorSerializer
 )
 
 class APITestCases(APITestCase):

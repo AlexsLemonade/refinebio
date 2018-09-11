@@ -124,7 +124,7 @@ if [ $env == "test" ]; then
     # existing Nomad job specifications.
     export TEST_POSTFIX="_test"
 elif [[ $env == "prod" || $env == "staging" || $env == "dev" ]]; then
-    # In production we use EFS as the mount.
+    # In production we use EBS as the mount.
     export VOLUME_DIR=/var/ebs
 else
     export VOLUME_DIR=$script_directory/volume
@@ -175,7 +175,9 @@ done < $environment_file
 # getting the templates from.
 if [[ -z $output_dir ]]; then
     output_dir=nomad-job-specs
-elif [[ ! -d "$output_dir" ]]; then
+fi
+
+if [[ ! -d "$output_dir" ]]; then
     mkdir $output_dir
 fi
 
@@ -211,14 +213,21 @@ if [[ $project == "workers" ]]; then
                        > "$output_dir/$output_file$TEST_POSTFIX" \
                        2> /dev/null
             echo "Made $output_dir/$output_file$TEST_POSTFIX"
+        elif [ $output_file == "smasher.nomad" ]; then
+            export_log_conf "processor"
+            cat nomad-job-specs/$template \
+                | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                       > "$output_dir/$output_file$TEST_POSTFIX" \
+                       2> /dev/null
+            echo "Made $output_dir/$output_file$TEST_POSTFIX"
         else
             export_log_conf "processor"
-            rams=(1024 2048 3072 4096 5120 6144 7168 8192 9216 10240 11264 12288 13312)  
-            for r in "${rams[@]}"  
+            rams=(1024 2048 3072 4096 5120 6144 7168 8192 9216 10240 11264 12288 13312)
+            for r in "${rams[@]}"
             do
-                indexes=(1 2 3 4 5 6 7 8 9 10)
+                indexes=(0 1 2 3 4 5 6 7 8 9)
                 for j in "${indexes[@]}"
-                do  
+                do
                     export INDEX_POSTFIX="_$j"
                     export INDEX="$j"
                     export RAM_POSTFIX="_$r.nomad"

@@ -3,8 +3,8 @@ import daiquiri
 import logging
 import sys
 
-from data_refinery_common.utils import get_worker_id
 from data_refinery_common.utils import get_env_variable_gracefully
+from data_refinery_common.utils import get_instance_id
 
 
 # Most of the formatting in this string is for the logging system. All
@@ -13,7 +13,8 @@ from data_refinery_common.utils import get_env_variable_gracefully
 FORMAT_STRING = (
     "%(asctime)s {0} %(name)s %(color)s%(levelname)s%(extras)s"
     ": %(message)s%(color_stop)s"
-).format(get_worker_id())
+).format(get_instance_id())
+LOG_LEVEL = None
 
 
 def unconfigure_root_logger():
@@ -33,9 +34,13 @@ def unconfigure_root_logger():
 def get_and_configure_logger(name: str) -> logging.Logger:
     unconfigure_root_logger()
 
+    global LOG_LEVEL
+    if LOG_LEVEL is None:
+        LOG_LEVEL = get_env_variable_gracefully("LOG_LEVEL", "INFO")
+
     # Set level to a environment variable; I think at least
     logger = daiquiri.getLogger(name)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.getLevelName(LOG_LEVEL))
 
     # This is the local handler
     handler = logging.StreamHandler(sys.stdout)

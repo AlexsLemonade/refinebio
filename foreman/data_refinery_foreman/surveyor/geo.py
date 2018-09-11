@@ -1,33 +1,34 @@
-import dateutil.parser
 import GEOparse
-import requests
+import dateutil.parser
 import logging
+import requests
 
 from re import sub, split, match
 from typing import List, Dict
 
+from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
-    SurveyJobKeyValue,
-    Organism,
     Experiment,
     ExperimentAnnotation,
+    ExperimentOrganismAssociation,
+    ExperimentSampleAssociation,
+    Organism,
+    OriginalFile,
+    OriginalFileSampleAssociation,
     Sample,
     SampleAnnotation,
-    ExperimentSampleAssociation,
-    ExperimentOrganismAssociation,
-    OriginalFile,
-    OriginalFileSampleAssociation
+    SurveyJobKeyValue,
+)
+from data_refinery_common.utils import (
+    get_normalized_platform,
+    get_readable_affymetrix_names,
+    get_supported_microarray_platforms,
+    get_supported_rnaseq_platforms,
 )
 from data_refinery_foreman.surveyor import utils, harmony
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
-from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.utils import (
-    get_supported_microarray_platforms,
-    get_supported_rnaseq_platforms,
-    get_readable_affymetrix_names,
-    get_normalized_platform
-)
+
 
 logger = get_and_configure_logger(__name__)
 # Taken from GEOparse source code cause the docs lie.
@@ -37,15 +38,11 @@ GEOparse.logger.setLevel(logging.getLevelName("WARN"))
 UNKNOWN = "UNKNOWN"
 
 
-class GeoUnsupportedPlatformException(Exception):
-    pass
-
-
 class GeoSurveyor(ExternalSourceSurveyor):
 
     """Surveys NCBI GEO for data.
 
-    Implements the GEO interface.
+    Implements the ExternalSourceSurveyor interface.
     """
 
     def source_type(self):
@@ -94,7 +91,6 @@ class GeoSurveyor(ExternalSourceSurveyor):
             sample_object.technology = "MICROARRAY"
             try:
 
-                # XXX: Remove prepended [$Organism] here?
                 # Related: https://github.com/AlexsLemonade/refinebio/issues/354
                 # If it's Affy we can get a readable name:
                 sample_object.platform_name = get_readable_affymetrix_names()[
@@ -201,7 +197,6 @@ class GeoSurveyor(ExternalSourceSurveyor):
         Uses the GEOParse library, for which docs can be found here: https://geoparse.readthedocs.io/en/latest/usage.html#working-with-geo-objects
 
         """
-        # XXX: Maybe we should have an EFS tmp? This could potentially fill up if not tracked.
         # Cleaning up is tracked here: https://github.com/guma44/GEOparse/issues/41
         gse = GEOparse.get_GEO(experiment_accession_code, destdir='/tmp', how="brief", silent=True)
         preprocessed_samples = harmony.preprocess_geo(gse.gsms.items())
@@ -237,7 +232,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 pubmed_metadata = utils.get_title_and_authors_for_pubmed_id(experiment_object.pubmed_id)
                 experiment_object.publication_title = pubmed_metadata[0]
                 experiment_object.publication_authors = pubmed_metadata[1]
-                
+
             experiment_object.save()
 
             experiment_annotation = ExperimentAnnotation()
@@ -250,7 +245,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
         # Sometimes, samples have a direct single representation for themselves.
         # Othertimes, there is a single file with references to every sample in it.
 
-        all_samples = []
+        created_samples = []
         for sample_accession_code, sample in gse.gsms.items():
 
             try:
@@ -261,11 +256,12 @@ class GeoSurveyor(ExternalSourceSurveyor):
                          experiment_object.accession_code,
                          survey_job=self.survey_job.id)
 
-                all_samples.append(sample_object)
-
+                # Associate it with the experiment, but since it
+                # already exists it already has original files
+                # associated with it and it's already been downloaded,
+                # so don't add it to created_samples.
                 ExperimentSampleAssociation.objects.get_or_create(
                     experiment=experiment_object, sample=sample_object)
-                continue
             except Sample.DoesNotExist:
                 organism = Organism.get_object_for_name(sample.metadata['organism_ch1'][0].upper())
 
@@ -289,12 +285,15 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     setattr(sample_object, key, value)
 
                 sample_object.save()
-                all_samples.append(sample_object)
+                created_samples.append(sample_object)
                 logger.debug("Created Sample: " + str(sample_object))
 
                 # Now that we've determined the technology at the
                 # sample level, we can set it at the experiment level,
                 # just gotta make sure to only do it once.
+                # XXX: Do we want to remove this field? It's not going
+                # to be accurate in cases where an experiment has both
+                # technologies.
                 if not experiment_object.technology:
                     experiment_object.technology = sample_object.technology
                     experiment_object.save()
@@ -317,14 +316,12 @@ class GeoSurveyor(ExternalSourceSurveyor):
                         continue
 
                     # Sometimes, we are lied to about the data processing step.
-                    if '.CEL' in supplementary_file_url:
-                        sample_object.has_raw = True
-                        sample_object.save()
-
-                    if ('_non_normalized.txt' in supplementary_file_url) \
-                    or ('_non-normalized.txt' in supplementary_file_url) \
-                    or ('-non-normalized.txt' in supplementary_file_url) \
-                    or ('-non_normalized.txt' in supplementary_file_url):
+                    lower_file_url = supplementary_file_url.lower()
+                    if '.cel' in lower_file_url \
+                    or ('_non_normalized.txt' in lower_file_url) \
+                    or ('_non-normalized.txt' in lower_file_url) \
+                    or ('-non-normalized.txt' in lower_file_url) \
+                    or ('-non_normalized.txt' in lower_file_url):
                         sample_object.has_raw = True
                         sample_object.save()
 
@@ -353,19 +350,23 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     is_archive = True
                 )[0]
 
-            logger.info("Created OriginalFile: " + str(original_file))
+            logger.debug("Created OriginalFile: " + str(original_file))
 
-            for sample_object in all_samples:
-
-                if ('_non_normalized.txt' in experiment_supplement_url) \
-                or ('_non-normalized.txt' in experiment_supplement_url) \
-                or ('-non-normalized.txt' in experiment_supplement_url) \
-                or ('-non_normalized.txt' in experiment_supplement_url):
+            lower_supplement_url = experiment_supplement_url.lower()
+            if ('_non_normalized.txt' in lower_supplement_url) \
+            or ('_non-normalized.txt' in lower_supplement_url) \
+            or ('-non-normalized.txt' in lower_supplement_url) \
+            or ('-non_normalized.txt' in lower_supplement_url):
+                for sample_object in created_samples:
                     sample_object.has_raw = True
                     sample_object.save()
 
-                OriginalFileSampleAssociation.objects.get_or_create(
-                    sample=sample_object, original_file=original_file)
+                    OriginalFileSampleAssociation.objects.get_or_create(
+                        sample=sample_object, original_file=original_file)
+
+            # Delete this Original file if it isn't being used.
+            if OriginalFileSampleAssociation.objects.filter(original_file=original_file).count() == 0:
+                original_file.delete()
 
         # These are the Miniml/Soft/Matrix URLs that are always(?) provided.
         # GEO describes different types of data formatting as "families"
@@ -376,7 +377,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 has_raw = sample_object.has_raw,
                 is_archive = True
             )[0]
-        for sample_object in all_samples:
+        for sample_object in created_samples:
             # We don't need a .txt if we have a .CEL
             if sample_object.has_raw:
                 continue
@@ -387,7 +388,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
         if OriginalFileSampleAssociation.objects.filter(original_file=miniml_original_file).count() == 0:
             miniml_original_file.delete()
 
-        return experiment_object, all_samples
+        return experiment_object, created_samples
 
     def discover_experiment_and_samples(self) -> (Experiment, List[Sample]):
         """ Dispatches the surveyor, returns the results """
@@ -400,18 +401,11 @@ class GeoSurveyor(ExternalSourceSurveyor):
             .value
         )
 
-        logger.info("Surveying experiment with accession code: %s.",
+        logger.debug("Surveying experiment with accession code: %s.",
                     experiment_accession_code,
                     survey_job=self.survey_job.id)
 
-        try:
-            experiment, samples = self.create_experiment_and_samples_from_api(
-                experiment_accession_code)
-        except GeoUnsupportedPlatformException as e:
-            logger.info(
-                "Experiment with accession code: %s was not on a supported platform, skipping.",
-                experiment_accession_code,
-                survey_job=self.survey_job.id)
-            return None, []
+        experiment, samples = self.create_experiment_and_samples_from_api(
+            experiment_accession_code)
 
         return experiment, samples

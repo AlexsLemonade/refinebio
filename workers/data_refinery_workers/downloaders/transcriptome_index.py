@@ -1,29 +1,29 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
 import shutil
 import urllib.request
-from typing import List
-from contextlib import closing
 
-from data_refinery_common.models import (
-    DownloaderJob,
-    ProcessorJob,
-    DownloaderJobOriginalFileAssociation,
-    ProcessorJobOriginalFileAssociation,
-)
-from data_refinery_common.message_queue import send_job
+from contextlib import closing
+from typing import List
+
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.message_queue import send_job
+from data_refinery_common.models import (
+    DownloaderJob,
+    DownloaderJobOriginalFileAssociation,
+    ProcessorJob,
+    ProcessorJobOriginalFileAssociation,
+)
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.downloaders import utils
+
 
 logger = get_and_configure_logger(__name__)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 CHUNK_SIZE = 1024 * 256 # chunk_size is in bytes
 
 
-def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> None:
+def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> DownloaderJob:
     """Download the file via FTP.
 
     I spoke to Erin from Ensembl about ways to improve this. They're looking into it,
@@ -32,7 +32,6 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
     She suggested using `rsync`, we could try shelling out to that.
 
     """
-    failure_template = "Exception caught while downloading file from: %s"
     try:
         logger.debug("Downloading file from %s to %s.",
                      download_url,
@@ -46,14 +45,18 @@ def _download_file(download_url: str, file_path: str, job: DownloaderJob) -> Non
         # Ancient unresolved bug. WTF python: https://bugs.python.org/issue27973
         urllib.request.urlcleanup()
     except Exception:
+        failure_template = "Exception caught while downloading file from: %s"
         logger.exception(failure_template,
                          download_url,
                          downloader_job=job.id)
         job.failure_reason = failure_template % download_url
-        raise
+        job.success = False
+        return job
     finally:
         target_file.close()
-    return True
+
+    job.success = True
+    return job
 
 def download_transcriptome(job_id: int) -> None:
     """The main function for the Transcriptome Index Downloader.
@@ -63,12 +66,13 @@ def download_transcriptome(job_id: int) -> None:
     into two different sized indices. (See the
     processors.transcriptome_index._create_index function's docstring
     for more info.) Therefore we only download each set once, then
-    push it to Temporary Storage twice.
+    let each processor find it in the same location.
     """
     job = utils.start_job(job_id)
 
     file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
     files_to_process = []
+
     for assoc in file_assocs:
         original_file = assoc.original_file
 
@@ -80,30 +84,28 @@ def download_transcriptome(job_id: int) -> None:
 
         os.makedirs(LOCAL_ROOT_DIR + '/' + filename_species, exist_ok=True)
         dl_file_path = LOCAL_ROOT_DIR + '/' + filename_species + '/' + original_file.source_filename
-        success = _download_file(original_file.source_url, dl_file_path, job)
+        job = _download_file(original_file.source_url, dl_file_path, job)
 
-        if success:
-            original_file.is_downloaded = True
-            original_file.absolute_file_path = dl_file_path
-            original_file.filename = original_file.source_filename
-            original_file.is_archive = True
-            original_file.has_raw = True
-            original_file.calculate_size()
-            original_file.calculate_sha1()
-            original_file.save()
-            files_to_process.append(original_file)
-        else:
-            logger.error("Problem during download",
-                         url=original_file.source_url,
-                         original_file_id=original_file.id,
-                         downloader_job=job_id)
+        if not job.success:
+            break
 
-    if success:
+        original_file.is_downloaded = True
+        original_file.absolute_file_path = dl_file_path
+        original_file.filename = original_file.source_filename
+        original_file.is_archive = True
+        original_file.has_raw = True
+        original_file.calculate_size()
+        original_file.calculate_sha1()
+        original_file.save()
+        files_to_process.append(original_file)
+
+    if job.success:
         logger.debug("Files downloaded successfully.",
                      downloader_job=job_id)
 
-    utils.end_downloader_job(job, success)
-    create_long_and_short_processor_jobs(files_to_process)
+        create_long_and_short_processor_jobs(files_to_process)
+
+    utils.end_downloader_job(job, job.success)
 
 def create_long_and_short_processor_jobs(files_to_process):
     """ Creates two processor jobs for the files needed for this transcriptome"""

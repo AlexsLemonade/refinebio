@@ -3,28 +3,27 @@ import requests
 from django.utils.dateparse import parse_datetime
 from typing import List, Dict
 
-from data_refinery_common.models import (
-    SurveyJobKeyValue,
-    Organism,
-    Experiment,
-    ExperimentAnnotation,
-    Sample,
-    SampleAnnotation,
-    ExperimentSampleAssociation,
-    OriginalFile,
-    OriginalFileSampleAssociation,
-    ExperimentOrganismAssociation
-)
-
-from data_refinery_foreman.surveyor import harmony, utils
-from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.utils import (
-    get_supported_microarray_platforms,
-    get_readable_affymetrix_names,
-    get_normalized_platform
+from data_refinery_common.models import (
+    Experiment,
+    ExperimentAnnotation,
+    ExperimentOrganismAssociation,
+    ExperimentSampleAssociation,
+    Organism,
+    OriginalFile,
+    OriginalFileSampleAssociation,
+    Sample,
+    SampleAnnotation,
+    SurveyJobKeyValue,
 )
+from data_refinery_common.utils import (
+    get_normalized_platform,
+    get_readable_affymetrix_names,
+    get_supported_microarray_platforms,
+)
+from data_refinery_foreman.surveyor import harmony, utils
+from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 
 logger = get_and_configure_logger(__name__)
 
@@ -50,7 +49,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         platform discovered for the experiment.
 
         Will raise an UnsupportedPlatformException if this experiment was
-        conducting using a platform which we don't support.
+        conducted using a platform which we don't support.
 
         See an example at: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-3050/sample
         """
@@ -66,8 +65,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             raise
 
         experiment = {}
-        platform_warning = False
-
         experiment["name"] = parsed_json["name"]
         experiment["experiment_accession_code"] = experiment_accession_code
 
@@ -84,7 +81,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         # downloaded so we can just mark it as UNKNOWN and let the
         # downloader inspect the downloaded file to determine the
         # array then.
-        elif len(parsed_json["arraydesign"]) > 1:
+        elif len(parsed_json["arraydesign"]) != 1 or "accession" not in parsed_json["arraydesign"][0]:
             experiment["platform_accession_code"] = UNKNOWN
             experiment["platform_accession_name"] = UNKNOWN
             experiment["manufacturer"] = UNKNOWN
@@ -113,7 +110,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 experiment["platform_accession_code"] = external_accession
                 experiment["platform_accession_name"] = UNKNOWN
                 experiment["manufacturer"] = UNKNOWN
-                platform_warning = True
 
         experiment["release_date"] = parsed_json["releasedate"]
 
@@ -129,26 +125,29 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                          experiment_accession_code=experiment_accession_code,
                          survey_job=self.survey_job.id)
         except Experiment.DoesNotExist:
+            # We aren't sure these fields will be populated, or how many there will be.
+            # Try to join them all together, or set a sensible default.
+            experiment_descripton = ""
+            if "description" in parsed_json and len(parsed_json["description"]) > 0:
+                for description_item in parsed_json["description"]:
+                    if "text" in description_item:
+                        experiment_descripton = experiment_descripton + description_item["text"] + "\n"
+
+            if experiment_descripton == "":
+                experiment_descripton = "Description not available.\n"
 
             experiment_object = Experiment()
             experiment_object.accession_code = experiment_accession_code
             experiment_object.source_url = request_url
             experiment_object.source_database = "ARRAY_EXPRESS"
-            experiment_object.name = parsed_json["name"]
+            experiment_object.title = parsed_json["name"]
+            # This will need to be updated if we ever use Array
+            # Express to get other kinds of data.
             experiment_object.technology = "MICROARRAY"
-            experiment_object.description = parsed_json["description"][0]["text"]
+            experiment_object.description = experiment_descripton
             experiment_object.source_first_published = parse_datetime(experiment["release_date"])
             experiment_object.source_last_modified = parse_datetime(experiment["last_update_date"])
             experiment_object.save()
-
-            # We still create the Experiment and samples if there is processed
-            # data but we can't support the reprocessing of raw data.
-            if platform_warning:
-                warning_xa = ExperimentAnnotation()
-                warning_xa.experiment = experiment_object
-                warning_xa.data = {'has_unsupported_platform': True}
-                warning_xa.is_ccdl = False
-                warning_xa.save()
 
             json_xa = ExperimentAnnotation()
             json_xa.experiment = experiment_object
@@ -158,9 +157,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
             ## Fetch and parse the IDF/SDRF file for any other fields
             IDF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.idf.txt"
-            SDRF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.sdrf.txt"
             idf_url = IDF_URL_TEMPLATE.format(code=experiment_accession_code)
-            sdrf_url = SDRF_URL_TEMPLATE.format(code=experiment_accession_code)
             idf_text = utils.requests_retry_session().get(idf_url, timeout=60).text
 
             lines = idf_text.split('\n')
@@ -189,25 +186,25 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 else:
                     experiment_object.submitter_institution = idf_dict['Person Affiliation']
             if 'Protocol Description' in idf_dict:
-                experiment_object.protocol_description = ", ".join(idf_dict['Protocol Description'])
+                experiment_object.protocol_description = "\n".join(idf_dict['Protocol Description'])
             if 'Publication Title' in idf_dict:
                 # This will happen for some superseries.
                 # Ex: E-GEOD-29536
                 # Assume most recent is "best:, store the rest in experiment annotation.
                 if isinstance(idf_dict['Publication Title'], list):
-                    experiment_object.publication_title = idf_dict['Publication Title'][0]
+                    experiment_object.publication_title = "; ".join(idf_dict['Publication Title'])
                 else:
                     experiment_object.publication_title = idf_dict['Publication Title']
                 experiment_object.has_publication = True
             if 'Publication DOI' in idf_dict:
                 if isinstance(idf_dict['Publication DOI'], list):
-                    experiment_object.publication_doi = idf_dict['Publication DOI'][0]
+                    experiment_object.publication_doi = ", ".join(idf_dict['Publication DOI'])
                 else:
                     experiment_object.publication_doi = idf_dict['Publication DOI']
                 experiment_object.has_publication = True
             if 'PubMed ID' in idf_dict:
                 if isinstance(idf_dict['PubMed ID'], list):
-                    experiment_object.pubmed_id = idf_dict['PubMed ID'][0]
+                    experiment_object.pubmed_id = ", ".join(idf_dict['PubMed ID'])
                 else:
                     experiment_object.pubmed_id = idf_dict['PubMed ID']
                 experiment_object.has_publication = True
@@ -244,7 +241,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         The experiment accession must be prefixed since accessions
         are non-unique on AE, ex "Sample 1" is a valid assay name.
-
         """
 
         # It SEEMS like the filename often contains part or all of the
@@ -278,7 +274,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                                 experiment: Experiment,
                                 platform_dict: Dict
                                 ) -> List[Sample]:
-        """Generates a Sample item for each sample in an AE experiment..
+        """Generates a Sample item for each sample in an AE experiment.
 
         There are many possible data situations for a sample:
 
@@ -314,35 +310,21 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         harmonized_samples = harmony.harmonize(sdrf_samples)
 
         # An experiment can have many samples
-        for sample in samples:
+        for sample_data in samples:
 
             # For some reason, this sample has no files associated with it.
-            if "file" not in sample or len(sample['file']) == 0:
+            if "file" not in sample_data or len(sample_data['file']) == 0:
                 continue
 
             # Each sample is given an experimenatlly-unique title.
-            flat_sample = utils.flatten(sample)
+            flat_sample = utils.flatten(sample_data)
             title = harmony.extract_title(flat_sample)
-
-            # Figure out the Organism for this sample
-            organism_name = UNKNOWN
-            for characteristic in sample["characteristic"]:
-                if characteristic["category"].upper() == "ORGANISM":
-                    organism_name = characteristic["value"].upper()
-
-            if organism_name == UNKNOWN:
-                logger.warning("Sample from experiment %s did not specify the organism name.",
-                               experiment.accession_code,
-                               survey_job=self.survey_job.id)
-                organism = None
-            else:
-                organism = Organism.get_object_for_name(organism_name)
 
             # A sample may actually have many sub files.
             # If there is raw data, take that.
             # If not, take the derived.
             has_raw = False
-            for sub_file in sample['file']:
+            for sub_file in sample_data['file']:
 
                 # For ex: E-GEOD-15645
                 if isinstance(sub_file['comment'], list):
@@ -359,16 +341,15 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     has_raw = True
 
             skip_sample = False
-            for sub_file in sample['file']:
+            for sub_file in sample_data['file']:
+
+                # Don't get the raw data if it's only a 1-color sample.
+                if 'Cy3' in str(sample_data) and 'Cy5' not in str(sample_data):
+                    has_raw = False
 
                 # Skip derived data if we have it raw.
                 if has_raw and "derived data" in sub_file['type']:
                     continue
-
-                # XXX: This is a hack.
-                # Don't get the raw data if it's only a 1-color sample.
-                if 'Cy3' in str(sample) and 'Cy5' not in str(sample):
-                    has_raw = False
 
                 download_url = None
                 filename = sub_file["name"]
@@ -395,7 +376,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     logger.error("Sample %s did not specify a download url, skipping.",
                                  sample_accession_code,
                                  experiment_accession_code=experiment.accession_code,
-                                 survey_job=self.survey_job.id)
+                                 survey_job=self.survey_job.id,
+                                 sub_file=sub_file)
                     skip_sample = True
                     continue
 
@@ -403,7 +385,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     logger.error("Sample %s did not specify a filename, skipping.",
                                  sample_accession_code,
                                  experiment_accession_code=experiment.accession_code,
-                                 survey_job=self.survey_job.id)
+                                 survey_job=self.survey_job.id,
+                                 sub_file=sub_file)
                     skip_sample = True
                     continue
 
@@ -411,8 +394,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 continue
 
             # The accession code is not a simple matter to determine.
-            sample_source_name = sample["source"].get("name", "")
-            sample_assay_name = sample["assay"].get("name", "")
+            sample_source_name = sample_data["source"].get("name", "")
+            sample_assay_name = sample_data["assay"].get("name", "")
             sample_accession_code = self.determine_sample_accession(
                 experiment.accession_code,
                 sample_source_name,
@@ -421,27 +404,31 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
             # Figure out the Organism for this sample
             organism_name = UNKNOWN
-            for characteristic in sample["characteristic"]:
+            for characteristic in sample_data["characteristic"]:
                 if characteristic["category"].upper() == "ORGANISM":
                     organism_name = characteristic["value"].upper()
 
             if organism_name == UNKNOWN:
-                logger.warning("Sample %s did not specify the organism name.",
+                logger.error("Sample %s did not specify the organism name.",
                                sample_accession_code,
                                experiment_accession_code=experiment.accession_code,
                                survey_job=self.survey_job.id)
                 organism = None
+                continue
             else:
                 organism = Organism.get_object_for_name(organism_name)
 
             # Create the sample object
             try:
+                # Associate it with the experiment, but since it
+                # already exists it already has original files
+                # associated with it and it's already been downloaded,
+                # so don't add it to created_samples.
                 sample_object = Sample.objects.get(accession_code=sample_accession_code)
                 logger.debug("Sample %s already exists, skipping object creation.",
                              sample_accession_code,
                              experiment_accession_code=experiment.accession_code,
                              survey_job=self.survey_job.id)
-                continue
             except Sample.DoesNotExist:
                 sample_object = Sample()
 
@@ -464,7 +451,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 sample_object.save()
 
                 sample_annotation = SampleAnnotation()
-                sample_annotation.data = sample
+                sample_annotation.data = sample_data
                 sample_annotation.sample = sample_object
                 sample_annotation.is_ccdl = False
                 sample_annotation.save()
@@ -482,19 +469,19 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 original_file_sample_association.sample = sample_object
                 original_file_sample_association.save()
 
+                created_samples.append(sample_object)
+
+                logger.debug("Created " + str(sample_object),
+                             experiment_accession_code=experiment.accession_code,
+                             survey_job=self.survey_job.id,
+                             sample=sample_object.id)
+
             # Create associations if they don't already exist
             ExperimentSampleAssociation.objects.get_or_create(
                 experiment=experiment, sample=sample_object)
 
             ExperimentOrganismAssociation.objects.get_or_create(
                 experiment=experiment, organism=organism)
-
-            logger.info("Created " + str(sample_object),
-                        experiment_accession_code=experiment.accession_code,
-                        survey_job=self.survey_job.id,
-                        sample=sample_object.id)
-
-            created_samples.append(sample_object)
 
         return created_samples
 
@@ -518,6 +505,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             logger.info("Experiment was not on a supported platform, skipping.",
                         experiment_accession_code=experiment_accession_code,
                         survey_job=self.survey_job.id)
+            return None, []
+        except:
+            logger.exception("Error occurred while surveying experiment!",
+                             experiment_accession_code=experiment_accession_code)
             return None, []
 
         samples = self.create_samples_from_api(experiment, platform_dict)

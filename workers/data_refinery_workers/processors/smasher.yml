@@ -14,4 +14,9 @@ python:
   - data-refinery-common
   - numpy
   - pandas
+  - rpy2
   - scikit-learn
+
+# User-installed R packages
+R:
+  - preprocessCore

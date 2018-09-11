@@ -257,9 +257,23 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 pjda.dataset = old_object
                 pjda.save()
 
-                # Hidden method of non-dispatching for testing purposes.
-                if not self.request.data.get('no_send_job', False):
-                    send_job(ProcessorPipeline.SMASHER, processor_job)
+                job_sent = False
+                try:
+                    # Hidden method of non-dispatching for testing purposes.
+                    if not self.request.data.get('no_send_job', False):
+                        job_sent = send_job(ProcessorPipeline.SMASHER, processor_job)
+                    else:
+                        # We didn't actually send it, but we also didn't want to.
+                        job_sent = True
+                except Exception:
+                    # job_sent is already false and the exception has
+                    # already been logged by send_job, so nothing to
+                    # do other than catch the exception.
+                    pass
+
+                if not job_sent:
+                    raise APIException("Unable to queue download job. Something has gone"
+                                       " wrong and we have been notified about it.")
 
                 serializer.validated_data['is_processing'] = True
                 obj = serializer.save()

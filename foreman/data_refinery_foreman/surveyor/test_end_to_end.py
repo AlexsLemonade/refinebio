@@ -64,10 +64,12 @@ def mock_get_sample(accession_code: str):
     if accession_code == "GSM1109016" or accession_code == "GSM1108516":
         raise Sample.DoesNotExist
 
-    # This return value isn't actually used so it doesn't matter what
-    # it is. The call to this function is just checking for the
-    # existence of the Sample.
-    return None
+    # This sample isn't actually used, we just want to prevent it from
+    # being created and actually run.
+    fake_accession_code = "fake" + str(timezone.now().timestamp())
+    sample = Sample(accession_code=fake_accession_code)
+    sample.save()
+    return sample
 
 def mock_logger_info(message: str, *args, **kwargs):
     """Silence the log messages we're forcing on purpose.
@@ -102,7 +104,7 @@ class NoOpEndToEndTestCase(TransactionTestCase):
         organism.save()
 
         accession_code = "E-GEOD-45547"
-        survey_job = surveyor.survey_ae_experiment(accession_code)
+        survey_job = surveyor.survey_experiment(accession_code, "ARRAY_EXPRESS")
 
         self.assertTrue(survey_job.success)
 
