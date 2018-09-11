@@ -54,7 +54,7 @@ class DownloadSraTestCase(TestCase):
         assoc.original_file = og
         assoc.save()
 
-        sra.download_sra(dlj.pk)
+        success = sra.download_sra(dlj.pk)
 
     @tag('downloaders')
     @tag('downloaders_sra')
@@ -86,4 +86,4 @@ class DownloadSraTestCase(TestCase):
         assoc.original_file = og
         assoc.save()
 
-        sra.download_sra(dlj.pk)
+        result = sra.download_sra(dlj.pk)

@@ -140,6 +140,9 @@ class NoOpEndToEndTestCase(TransactionTestCase):
         self.assertEqual(ProcessorJob.objects.all().count(), 0)
         self.assertEqual(ProcessorJobOriginalFileAssociation.objects.all().count(), 0)
 
+        DownloaderJob.objects.all().delete()
+        ProcessorJob.objects.all().detele()
+
 class SalmonEndToEndTestCase(TransactionTestCase):
     @tag("slow")
     def test_e_salmon(self):
