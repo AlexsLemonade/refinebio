@@ -226,8 +226,7 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
                               " function {} in pipeline: ").format(processor.__name__)
             logger.exception(failure_reason,
                              no_retry=job.no_retry,
-                             processor_job=job_id,
-                             job_context=last_result)
+                             processor_job=job_id)
             last_result["success"] = False
             last_result["job"].failure_reason = failure_reason + str(e)
             return end_job(last_result)
