@@ -12,4 +12,4 @@ if [[ -z $SYSTEM_VERSION ]]; then
     export SYSTEM_VERSION="local"
 fi
 
-./common/make_migrations.sh && cd common && python3 setup.py sdist
+./common/make_migrations.sh && cd common && python setup.py sdist
