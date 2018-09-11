@@ -190,7 +190,7 @@ def _find_or_download_index(job_context: Dict) -> Dict:
     try:
         os.makedirs(job_context["index_directory"])
         index_tarball = ComputedFile.objects.filter(result=index_object.result)[0].sync_from_s3()
-        with open(index_tarball, "r:gz") as index_archive:
+        with tarfile.open(index_tarball, "r:gz") as index_archive:
             index_archive.extractall(job_context["index_directory"])
     except FileExistsError:
         # Someone already installed the index or is doing so now.
