@@ -89,7 +89,7 @@ def prepare_job():
 
     return pj, [og_file, og_file2]
 
-def prepare_dotsra_job(filename = "ERR1562482.sra"):
+def prepare_dotsra_job(filename="ERR1562482.sra"):
     pj = ProcessorJob()
     pj.pipeline_applied = "SALMON"
     pj.id = random.randint(111, 999999)
@@ -194,13 +194,15 @@ class SalmonTestCase(TestCase):
         self.assertTrue(job.success)
         shutil.rmtree(job_context["work_dir"])
 
+    @tag('salmon')
+    def test_salmon_dotsra_bad(self):
         try:
             os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
         except FileNotFoundError:
             pass
 
         job, files = prepare_dotsra_job("i-dont-exist.sra")
-        result = salmon.salmon(job.pk)
+        job_context = salmon.salmon(job.pk)
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertFalse(job.success)
         shutil.rmtree(job_context["work_dir"])
