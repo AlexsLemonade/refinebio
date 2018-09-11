@@ -53,7 +53,7 @@ jobs:
 
      # Run NO_OP tests
       - run: sudo chown -R circleci:circleci workers/test_volume/
-      - run: .circleci/filter_tests.sh -t no_op --parallel
+      - run: .circleci/filter_tests.sh -t no_op
 
       # Run Smasher tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
