@@ -61,6 +61,11 @@ def _prepare_files(job_context: Dict) -> Dict:
                 line.strip() != '' and \
                 line != '\n' and \
                 '\t' in line and \
+                line[0] != "'" and \
+                line[0] != '"' and \
+                line[0] != '!' and \
+                line[0] != '/' and \
+                line[0] != '<' and \
                 line[0] != '\t':
                     file_output.write(line)
 
