@@ -199,7 +199,7 @@ def download_array_express(job_id: int) -> None:
 
     if success:
         logger.debug("File downloaded and extracted successfully.",
-                     url,
+                     url=url,
                      downloader_job=job_id)
 
         utils.create_processor_jobs_for_original_files(og_files, job)
