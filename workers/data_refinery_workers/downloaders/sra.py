@@ -93,7 +93,7 @@ def _download_file_aspera(download_url: str,
                                                stderr=subprocess.PIPE)
         else:
             # NCBI requires encryption and recommends -k1 resume.
-            command_str = ".aspera/cli/bin/ascp -P33001 -T -k1 -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
+            command_str = ".aspera/cli/bin/ascp -T -k1 -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
             formatted_command = command_str.format(src=download_url,
                                                    dest=target_file_path)
             completed_command = subprocess.run(formatted_command.split(),
@@ -112,6 +112,10 @@ def _download_file_aspera(download_url: str,
             # Sometimes, Aspera fails mysteriously.
             # Wait a few minutes and try again.
             if attempt > 5:
+                logger.info("Final shell call of `%s` to ascp failed with error message: %s",
+                         formatted_command,
+                         stderr,
+                         downloader_job=downloader_job.id)
                 downloader_job.failure_reason = stderr
                 return False
             else:
@@ -157,6 +161,7 @@ def download_sra(job_id: int) -> None:
     file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
 
     downloaded_files = []
+    success = None
     for assoc in file_assocs:
         original_file = assoc.original_file
 
@@ -191,3 +196,5 @@ def download_sra(job_id: int) -> None:
         utils.create_processor_job_for_original_files(downloaded_files, job)
 
     utils.end_downloader_job(job, success)
+
+    return success
