@@ -44,7 +44,7 @@ jobs:
       # because their dockerfiles are very similar so a lot of the
       # build time is saved by only building those layers once.
       - run:
-          command: .circleci/filter_tests.sh -t downloaders --parallel
+          command: .circleci/filter_tests.sh -t downloaders
           no_output_timeout: 36000
 
       # Run Foreman Tests
@@ -58,14 +58,14 @@ jobs:
       # Run Smasher tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
-          command: .circleci/filter_tests.sh -t smasher --parallel
+          command: .circleci/filter_tests.sh -t smasher
           # Smashing can apparently take a long time on CI
           no_output_timeout: 36000
 
       # Run QN tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
-          command: .circleci/filter_tests.sh -t qn --parallel
+          command: .circleci/filter_tests.sh -t qn
           no_output_timeout: 36000
 
   # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
@@ -98,7 +98,7 @@ jobs:
       - run: ./common/run_tests.sh
 
       - run:
-          command: .circleci/filter_tests.sh -t affymetrix --parallel
+          command: .circleci/filter_tests.sh -t affymetrix
           # This takes a while because the affymetrix image is huge
           no_output_timeout: 36000
 
@@ -107,7 +107,7 @@ jobs:
       - run: sudo chown -R circleci:circleci workers/test_volume/
 
       # This doesn't take as long because the image has already been pulled.
-      - run: .circleci/filter_tests.sh -t agilent --parallel
+      - run: .circleci/filter_tests.sh -t agilent
 
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
@@ -172,14 +172,14 @@ jobs:
       - run: ./update_models.sh
 
       - run: ./prepare_image.sh -i transcriptome -s workers
-      - run: .circleci/filter_tests.sh -t transcriptome --parallel
+      - run: .circleci/filter_tests.sh -t transcriptome
 
       # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
       # from making sure all the files in workers/test_volume have read/write permissions.
       - run: sudo chown -R circleci:circleci workers/test_volume/
 
       # Run Illumina tests.
-      - run: .circleci/filter_tests.sh -t illumina --parallel
+      - run: .circleci/filter_tests.sh -t illumina
 
 
   deploy:
