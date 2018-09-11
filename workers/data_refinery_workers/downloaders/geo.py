@@ -316,6 +316,8 @@ def download_geo(job_id: int) -> None:
                 actual_file.calculate_size()
                 actual_file.calculate_sha1()
                 actual_file.has_raw = True
+                actual_file.source_url = original_file.source_url
+                actual_file.source_filename = original_file.source_filename
                 actual_file.save()
 
                 original_file_sample_association = OriginalFileSampleAssociation()
@@ -373,6 +375,8 @@ def download_geo(job_id: int) -> None:
                 actual_file.calculate_size()
                 actual_file.calculate_sha1()
                 actual_file.has_raw = has_raw
+                actual_file.source_url = original_file.source_url
+                actual_file.source_filename = original_file.source_filename
                 actual_file.save()
 
                 original_file_sample_association = OriginalFileSampleAssociation()
@@ -418,6 +422,8 @@ def download_geo(job_id: int) -> None:
                 actual_file.calculate_size()
                 actual_file.calculate_sha1()
                 actual_file.has_raw = True
+                actual_file.source_url = original_file.source_url
+                actual_file.source_filename = original_file.source_filename
                 actual_file.save()
 
                 for sample in related_samples:
@@ -453,6 +459,8 @@ def download_geo(job_id: int) -> None:
         actual_file.calculate_size()
         actual_file.calculate_sha1()
         actual_file.has_raw = True
+        actual_file.source_url = original_file.source_url
+        actual_file.source_filename = original_file.source_filename
         actual_file.save()
 
         for sample in related_samples:
