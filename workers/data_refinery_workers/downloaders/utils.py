@@ -76,6 +76,11 @@ def end_downloader_job(job: DownloaderJob, success: bool):
                         downloader_task=job.downloader_task,
                         failure_reason=job.failure_reason)
 
+    file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
+    for file_assoc in file_assocs:
+        file_assoc.original_file.is_downloaded = True
+        file_assoc.original_file.save()
+
     job.success = success
     job.end_time = timezone.now()
     job.save()

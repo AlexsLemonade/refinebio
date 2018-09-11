@@ -1,3 +1,4 @@
+import os
 from urllib.error import URLError
 from typing import List
 from unittest.mock import patch, call
@@ -11,7 +12,7 @@ from data_refinery_common.models import (
     Sample,
     OriginalFileSampleAssociation
 )
-from data_refinery_workers.downloaders import sra
+from data_refinery_workers.downloaders import sra, utils
 from data_refinery_common.job_lookup import ProcessorPipeline
 
 
@@ -86,4 +87,10 @@ class DownloadSraTestCase(TestCase):
         assoc.original_file = og
         assoc.save()
 
-        result = sra.download_sra(dlj.pk)
+        result, downloaded_files = sra.download_sra(dlj.pk)
+        utils.end_downloader_job(dlj, result)
+
+        self.assertTrue(result)
+        self.assertEqual(downloaded_files[0].sha1, 'd5374e7fe047d4f76b165c3f5148ab2df9d42cea')
+        self.assertTrue(os.path.exists(downloaded_files[0].absolute_file_path))
+        downloaded_files[0].absolute_file_path
