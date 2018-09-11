@@ -197,4 +197,4 @@ def download_sra(job_id: int) -> None:
 
     utils.end_downloader_job(job, success)
 
-    return success
+    return success, downloaded_files
