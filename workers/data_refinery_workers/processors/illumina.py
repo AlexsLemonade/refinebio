@@ -42,7 +42,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context so everything is prepared for processing.
     """
     # All files for the job are in the same directory.
-    job_context["work_dir"] = LOCAL_ROOT_DIR + "/" + "processor_job_" + str(job_context["job_id"])
+    job_context["work_dir"] = LOCAL_ROOT_DIR + "/" + "processor_job_" + str(job_context["job_id"]) + "/"
     os.makedirs(job_context["work_dir"], exist_ok=True)
 
     original_file = job_context["original_files"][0]

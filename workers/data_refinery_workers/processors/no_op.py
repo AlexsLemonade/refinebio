@@ -37,7 +37,7 @@ def _prepare_files(job_context: Dict) -> Dict:
             job_context["is_illumina"] = False
 
         # All files for the job are in the same directory.
-        job_context["work_dir"] = LOCAL_ROOT_DIR + "/" + "processor_job_" + str(job_context["job_id"])
+        job_context["work_dir"] = LOCAL_ROOT_DIR + "/" + "processor_job_" + str(job_context["job_id"]) + "/"
         try:
             os.makedirs(job_context["work_dir"])
         except Exception as e:
@@ -50,7 +50,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         # Create the output directory and path
         job_context["input_file_path"] = original_file.absolute_file_path
         new_filename = "gene_converted_" + original_file.filename
-        job_context["output_file_path"] = job_context["work_dir"] + "/" + new_filename
+        job_context["output_file_path"] = job_context["work_dir"] + new_filename
 
         try:
             # Make sure header row is correct
