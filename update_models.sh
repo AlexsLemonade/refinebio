@@ -13,6 +13,6 @@ if [[ -z $SYSTEM_VERSION ]]; then
 fi
 
 # Put this in place for common to read from.
-echo $SYSTEM_VERSION > common/version.config
+echo $SYSTEM_VERSION > common/version
 
 ./common/make_migrations.sh && cd common && python setup.py sdist

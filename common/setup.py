@@ -5,9 +5,14 @@ import re
 # allow setup.py to be run from any path
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
-VERSION_FILE = "version.config"
-with open(VERSION_FILE, "rt") as version_file:
-    version_string = version_file.read().strip()
+VERSION_FILE = "version"
+try:
+    with open(VERSION_FILE, "rt") as version_file:
+        version_string = version_file.read().strip()
+except:
+    print("Cannot read version.config to determine System Version."
+          " Please create a file common/version.config containing an up to date System Version.")
+    raise
 
 setup(
     name="data-refinery-common",
