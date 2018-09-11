@@ -488,6 +488,9 @@ def download_geo(job_id: int) -> None:
     if success:
         utils.create_processor_jobs_for_original_files(unpacked_sample_files, job)
 
+    if original_file.is_archive:
+        original_file.delete_local_file()
+
     utils.end_downloader_job(job, success)
 
     return success
