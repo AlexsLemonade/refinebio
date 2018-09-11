@@ -12,4 +12,7 @@ if [[ -z $SYSTEM_VERSION ]]; then
     export SYSTEM_VERSION="local"
 fi
 
+# Put this in place for common to read from.
+echo $SYSTEM_VERSION > common/version.config
+
 ./common/make_migrations.sh && cd common && python setup.py sdist
