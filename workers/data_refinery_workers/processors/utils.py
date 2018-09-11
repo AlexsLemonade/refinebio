@@ -160,7 +160,7 @@ def end_job(job_context: Dict, abort=False):
             pipeline.save()
 
     if "work_dir" in job_context and RUNNING_IN_CLOUD == "True":
-        shutil.rmtree(job_context["work_dir"])
+        shutil.rmtree(job_context["work_dir"], ignore_errors=True)
 
     job.success = success
     job.end_time = timezone.now()
