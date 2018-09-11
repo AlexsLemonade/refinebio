@@ -35,7 +35,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context so everything is prepared for processing.
     """
     # All files for the job are in the same directory.
-    job_context["work_dir"] = LOCAL_ROOT_DIR + "/" + "processor_job_" + str(job_context["job_id"])
+    job_context["work_dir"] = LOCAL_ROOT_DIR + "/" + "processor_job_" + str(job_context["job_id"]) + "/"
 
     original_file = job_context["original_files"][0]
     job_context["input_file_path"] = original_file.absolute_file_path
@@ -51,7 +51,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     file_extension_start = original_file.filename.upper().find(".CEL")
     new_filename= original_file.filename[:file_extension_start] + ".PCL"
-    job_context["output_file_path"] = job_context["work_dir"] + "/" + new_filename
+    job_context["output_file_path"] = job_context["work_dir"] + new_filename
 
     return job_context
 

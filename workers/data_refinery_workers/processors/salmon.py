@@ -75,22 +75,22 @@ def _prepare_files(job_context: Dict) -> Dict:
     # that it could be run more than once, potentially even at the
     # same time.)
     job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR,
-                                           job_context["job_dir_prefix"])
+                                           job_context["job_dir_prefix"]) + "/"
 
-    job_context["output_directory"] = job_context["work_dir"] + "/" + sample.accession_code +"/"
+    job_context["output_directory"] = job_context["work_dir"] + sample.accession_code + "/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
     # The sample's directory is what should be used for MultiQC input
     job_context["qc_input_directory"] = job_context["work_dir"]
-    job_context["qc_directory"] = job_context["work_dir"] + "/qc/"
+    job_context["qc_directory"] = job_context["work_dir"] + "qc/"
     os.makedirs(job_context["qc_directory"], exist_ok=True)
 
-    job_context["salmontools_directory"] = job_context["work_dir"] + "/salmontools/"
+    job_context["salmontools_directory"] = job_context["work_dir"] + "salmontools/"
     os.makedirs(job_context["salmontools_directory"], exist_ok=True)
     job_context["salmontools_archive"] = job_context["work_dir"] + "salmontools-result.tar.gz"
 
     timestamp = str(timezone.now().timestamp()).split('.')[0]
-    job_context["output_archive"] = job_context["work_dir"] + '/result-' + timestamp +  '.tar.gz'
+    job_context["output_archive"] = job_context["work_dir"] + 'result-' + timestamp +  '.tar.gz'
 
     job_context["computed_files"] = []
 
@@ -353,15 +353,15 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
     # their paths to a file so we can pass a path to that to
     # tximport.R rather than having to pass in one argument per
     # sample.
-    tximport_path_list_file = job_context["work_dir"] + "/tximport_inputs.txt"
+    tximport_path_list_file = job_context["work_dir"] + "tximport_inputs.txt"
     with open(tximport_path_list_file, "w") as input_list:
         for quant_file in quant_files:
             input_list.write(quant_file.get_synced_file_path() + "\n")
 
     rds_filename = "txi_out.RDS"
-    rds_file_path = job_context["work_dir"] + "/" + rds_filename
+    rds_file_path = job_context["work_dir"] + rds_filename
     tpm_filename = "gene_lengthScaledTPM.tsv"
-    tpm_file_path = job_context["work_dir"] + "/" + tpm_filename
+    tpm_file_path = job_context["work_dir"] + tpm_filename
     result = ComputationalResult()
     cmd_tokens = [
         "/usr/bin/Rscript", "--vanilla",
