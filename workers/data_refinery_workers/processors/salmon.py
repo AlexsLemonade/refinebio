@@ -192,11 +192,11 @@ def _determine_index_length(job_context: Dict) -> Dict:
                     number_of_reads += 1
                 counter += 1
 
-    if ".gz" == job_context["input_file_path_2"][-3:]:
-        cat = "zcat"
-    else:
-        cat = "cat"
     if "input_file_path_2" in job_context:
+        if ".gz" == job_context["input_file_path_2"][-3:]:
+            cat = "zcat"
+        else:
+            cat = "cat"
         with subprocess.Popen([cat, job_context["input_file_path_2"]], stdout=subprocess.PIPE,
                               universal_newlines=True) as process:
             for line in process.stdout:
@@ -290,7 +290,7 @@ def _run_fastqc(job_context: Dict) -> Dict:
 
     # We could use --noextract here, but MultiQC wants extracted files.
     command_str = ("./FastQC/fastqc --outdir={qc_directory} {files}")
-    files = ' '.join([job_context['input_file_path'], job_context.get('input_file_path_2')])
+    files = ' '.join([job_context.get('input_file_path_2', ''), job_context.get('input_file_path_2', '')])
     formatted_command = command_str.format(qc_directory=job_context["qc_directory"],
                 files=files)
 
