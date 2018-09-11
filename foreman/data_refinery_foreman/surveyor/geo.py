@@ -203,7 +203,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
         if 'scan_protocol' in sample_metadata:
             protocol_info['Scan protocol'] = sample_metadata['scan_protocol']
         if 'data_processing' in sample_metadata:
-            protocol_info['Scan protocol'] = sample_metadata['data_processing']
+            protocol_info['Data processing'] = sample_metadata['data_processing']
 
         protocol_info['Reference'] = ('https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc='
                                               + sample_accession_code)
