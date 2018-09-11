@@ -96,8 +96,10 @@ if [[ -z $tag || $tag == "salmon" ]]; then
     rna_seq_test_raw_dir="$volume_directory/raw/TEST/SALMON"
     read_1_name="ERR1562482_1.fastq.gz"
     read_2_name="ERR1562482_2.fastq.gz"
+    dotsra_name="ERR1562482.sra"
     rna_seq_test_data_1="$rna_seq_test_raw_dir/$read_1_name"
     rna_seq_test_data_2="$rna_seq_test_raw_dir/$read_2_name"
+    dotsra="$rna_seq_test_raw_dir/$read_2_name"
     if [ ! -e "$rna_seq_test_data_1" ]; then
         mkdir -p $rna_seq_test_raw_dir
         echo "Downloading $read_1_name for Salmon tests."
@@ -106,6 +108,12 @@ if [[ -z $tag || $tag == "salmon" ]]; then
         echo "Downloading $read_2_name for Salmon tests."
         wget -q -O $rna_seq_test_data_2 \
              "$test_data_repo/$read_2_name"
+    fi
+    if [ ! -e "$dotsra" ]; then
+        mkdir -p $rna_seq_test_raw_dir
+        echo "Downloading $dotsra_name for Salmon tests."
+        wget -q -O $dotsra \
+             "$test_data_repo/$dotsra_name"
     fi
 fi
 
