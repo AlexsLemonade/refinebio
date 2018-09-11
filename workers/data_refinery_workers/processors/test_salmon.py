@@ -384,8 +384,11 @@ class SalmonTestCase(TestCase):
             'pipeline': Pipeline(name="Salmon"),
             'qc_directory': "/home/user/data_store/raw/TEST/SALMON/qc",
             'original_files': og_files,
+            'input_file_path': og_files[0],
+            'input_file_path_2': og_files[1],
             "computed_files": [],
             'success': True
+
         }
 
         # Ensure clean testdir
