@@ -22,6 +22,7 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     OriginalFileSampleAssociation
 )
+from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import salmon, utils
 
 
@@ -459,7 +460,7 @@ class RuntimeProcessorTest(TestCase):
         self.assertEqual(tximport_processor.name,
                          utils.ProcessorEnum[proc_key].value['name'])
         self.assertEqual(tximport_processor.version,
-                         utils.__version__)
+                         get_env_variable("SYSTEM_VERSION"))
         self.assertEqual(tximport_processor.docker_image,
                          utils.ProcessorEnum[proc_key].value['docker_img'])
         self.assertEqual(tximport_processor.environment['os_distribution'],

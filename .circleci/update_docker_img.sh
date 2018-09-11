@@ -61,6 +61,7 @@ FOREMAN_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_foreman"
 if docker_img_exists $FOREMAN_DOCKER_IMAGE $CIRCLE_TAG; then
     echo "Docker image exists, skipping: $FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG"
 else
+    # Build and push image. We use the CIRCLE_TAG as the system version.
     docker build \
            -t "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG" \
            -f foreman/dockerfiles/Dockerfile.foreman \
@@ -76,6 +77,7 @@ API_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_api"
 if docker_img_exists $API_DOCKER_IMAGE $CIRCLE_TAG; then
     echo "Docker image exists, skipping: $API_DOCKER_IMAGE:$CIRCLE_TAG"
 else
+    # Build and push image. We use the CIRCLE_TAG as the system version.
     docker build \
            -t "$API_DOCKER_IMAGE:$CIRCLE_TAG" \
            -f api/dockerfiles/Dockerfile.api_production \
