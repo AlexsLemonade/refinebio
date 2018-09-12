@@ -490,7 +490,6 @@ class SalmonToolsTestCase(TestCase):
         expected_output_file = self.test_dir + 'expected_single_output/unmapped_by_salmon.fa'
         self.assertTrue(identical_checksum(output_file, expected_output_file))
 
-
 class DetermineIndexLengthTestCase(TestCase):
     """Test salmon._determine_index_length function, which gets the salmon index length of a sample.
     For now, these tests only ensure that the output of the new faster salmon index function match
