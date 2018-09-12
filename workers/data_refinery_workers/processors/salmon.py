@@ -153,10 +153,12 @@ def _extract_sra(job_context: Dict) -> Dict:
     else:
         for new_file in new_files:
             # We only care about '_1' and '_2', unmated reads can skeddadle
-            if '_1' in new_file:
+            if '_1.fast' in new_file:
                 job_context['input_file_path'] = new_file
-            if '_2' in new_file:
+                continue
+            if '_2.fast' in new_file:
                 job_context['input_file_path_2'] = new_file
+                continue
 
     return job_context
 
