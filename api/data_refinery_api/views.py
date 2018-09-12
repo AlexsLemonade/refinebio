@@ -213,6 +213,9 @@ class CreateDatasetView(generics.CreateAPIView):
 class DatasetView(generics.RetrieveUpdateAPIView):
     """ View and modify a single Dataset. Set `start` to `true` along with a valid
     activated API token (from /token/) to begin smashing and delivery.
+
+    You must also supply `email_address` with `start`, though this will never be serialized back to you.
+
     """
 
     queryset = Dataset.objects.all()
@@ -244,8 +247,11 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
                 raise APIException("You must provide an active API token ID")
 
-            if not already_processing:
+            # We could be more aggressive with requirements checking here, but
+            # there could be use cases where you don't want to supply an email.
+            supplied_email_address = self.request.data.get('email_address', None)
 
+            if not already_processing:
                 # Create and dispatch the new job.
                 processor_job = ProcessorJob()
                 processor_job.pipeline_applied = "SMASHER"
@@ -258,6 +264,12 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 pjda.save()
 
                 job_sent = False
+
+                obj = serializer.save()
+                if supplied_email_address is not None:
+                    if obj.email_address != supplied_email_address:
+                        obj.email_address = supplied_email_address
+                        obj.save()
                 try:
                     # Hidden method of non-dispatching for testing purposes.
                     if not self.request.data.get('no_send_job', False):
