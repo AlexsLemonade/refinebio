@@ -89,7 +89,7 @@ if [[ ! -z $state_files ]]; then
 fi
 
 # New deployment
-TF_VAR_user=circleci TF_VAR_stage=$ENVIRONMENT ./deploy.sh -e $ENVIRONMENT
+TF_VAR_user=circleci TF_VAR_stage=$ENVIRONMENT ./deploy.sh -e $ENVIRONMENT -v $CIRCLE_TAG
 exit_code=$?
 
 # Encrypt new tfstate files

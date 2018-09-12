@@ -5,19 +5,14 @@ import re
 # allow setup.py to be run from any path
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
-# code found at: https://stackoverflow.com/a/7071358/6095378
-VERSION_FILE = "data_refinery_common/_version.py"
-version_line = open(VERSION_FILE, "rt").read()
-
-# The line we're parsing looks something like:
-# __version__ = "1.0.1"
-# We want to extract the 1.0.1 part with this regex:
-VERSION_REGEX = r"^__version__ = ['\"]([^'\"]*)['\"]"
-match_object = re.search(VERSION_REGEX, version_line, re.M)
-if match_object:
-    version_string = match_object.group(1)
-else:
-    raise RuntimeError("Unable to find version string in %s." % (VERSION_FILE,))
+VERSION_FILE = "version"
+try:
+    with open(VERSION_FILE, "rt") as version_file:
+        version_string = version_file.read().strip()
+except:
+    print("Cannot read version to determine System Version."
+          " Please create a file common/version containing an up to date System Version.")
+    raise
 
 setup(
     name="data-refinery-common",

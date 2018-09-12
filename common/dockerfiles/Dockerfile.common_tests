@@ -52,6 +52,10 @@ RUN pip3 install rpy2
 
 COPY common/ .
 
+ARG SYSTEM_VERSION
+
+ENV SYSTEM_VERSION $SYSTEM_VERSION
+
 USER user
 
 ENTRYPOINT [""]

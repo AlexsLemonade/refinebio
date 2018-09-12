@@ -68,6 +68,11 @@ if [[ -z $dockerhub_repo ]]; then
     dockerhub_repo="ccdlstaging"
 fi
 
+# Default to "local" for system version if we're not running in the cloud.
+if [[ -z $SYSTEM_VERSION ]]; then
+    SYSTEM_VERSION="local$(date +%s)"
+fi
+
 # We want to check if a test image has been built for this branch. If
 # it has we should use that rather than building it slowly.
 image_name="$dockerhub_repo/dr_$image"
@@ -85,7 +90,10 @@ else
             echo "Failed to build $image_name, trying again."
         fi
 
-        docker build -t "$image_name" -f $service/dockerfiles/Dockerfile.$image .
+        docker build \
+               -t "$image_name" \
+               -f $service/dockerfiles/Dockerfile.$image \
+               --build-arg SYSTEM_VERSION=$SYSTEM_VERSION .
         finished=$?
         attempts=$[$attempts+1]
     done
