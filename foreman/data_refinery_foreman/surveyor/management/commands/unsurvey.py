@@ -116,7 +116,10 @@ def purge_experiment(accession: str) -> None:
 
     ## DownloaderJobs
     og_file_dj_assocs = DownloaderJobOriginalFileAssociation.objects.filter(original_file_id__in=uniquely_assoced_og_file_ids)
-    downloader_jobs = DownloaderJob.objects.filter(id__in=og_file_dj_assocs.values('downloader_job_id'))
+    # Important to order by id, so the jobs that didn't retry anything are deleted first.
+    downloader_jobs = DownloaderJob.objects.filter(
+        id__in=og_file_dj_assocs.values('downloader_job_id')
+    ).order_by(id)
 
     for downloader_job in downloader_jobs:
         # We know this job is associated with files we can
@@ -136,7 +139,10 @@ def purge_experiment(accession: str) -> None:
 
     ## ProcessorJobs
     og_file_pj_assocs = ProcessorJobOriginalFileAssociation.objects.filter(original_file_id__in=uniquely_assoced_og_file_ids)
-    processor_jobs = ProcessorJob.objects.filter(id__in=og_file_pj_assocs.values('processor_job_id'))
+    # Important to order by id, so the jobs that didn't retry anything are deleted first.
+    processor_jobs = ProcessorJob.objects.filter(
+        id__in=og_file_pj_assocs.values('processor_job_id')
+    ).order_by(id)
 
     for processor_job in processor_jobs:
         # We know this job is associated with files we can
