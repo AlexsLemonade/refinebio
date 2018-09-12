@@ -36,7 +36,7 @@ module_logger = logging.getLogger("data_refinery_foreman.surveyor.array_express"
 
 
 LOOP_TIME = 5  # seconds
-MAX_WAIT_TIME = timedelta(minutes=5)
+MAX_WAIT_TIME = timedelta(minutes=15)
 
 def wait_for_job(job, job_class: type, start_time: datetime):
     """Monitors the `job_class` table for when `job` is done."""
