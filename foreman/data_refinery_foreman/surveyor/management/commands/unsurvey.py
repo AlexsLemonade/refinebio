@@ -3,13 +3,27 @@ This command will remove experiments and all data that is uniquely associated wi
 (i.e. it's only associated with these experiment and not others.)
 This can be used so that a surveyor job that went wrong can be rerun.
 """
+import boto3
+import botocore
 import sys
+import uuid
 
 from django.core.management.base import BaseCommand
 from data_refinery_common.models import *
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.utils import parse_s3_url
 
 logger = get_and_configure_logger(__name__)
+
+def delete_job_and_retries(job) -> None:
+    """Deletes a job and any jobs that retried it."""
+    retried_job = job.retried_job
+
+    job.delete()
+
+    if retried_job:
+        delete_job_and_retries(retried_job)
+
 
 def purge_experiment(accession: str) -> None:
     """Removes an experiment and all data that is only associated with it.
@@ -90,7 +104,11 @@ def purge_experiment(accession: str) -> None:
             uniquely_assoced_og_file_ids.append(original_file.id)
 
             # However we have to delete their local files one at a time:
-            original_file.delete_local_file()
+            try:
+                # Not all original files have absolute_file_path set apparently
+                original_file.delete_local_file()
+            except:
+                pass
 
     # Whether or not we can delete all of these original files, we
     # know the associations need to go.
@@ -109,7 +127,7 @@ def purge_experiment(accession: str) -> None:
             original_file_id__in=uniquely_assoced_og_file_ids
         )
         if extra_assocs.count() == 0:
-            downloader_job.delete()
+            delete_job_and_retries(downloader_job)
 
     # Whether or not we can delete all of these jobs, we
     # know the associations need to go.
@@ -129,7 +147,7 @@ def purge_experiment(accession: str) -> None:
             original_file_id__in=uniquely_assoced_og_file_ids
         )
         if extra_assocs.count() == 0:
-            processor_job.delete()
+            delete_job_and_retries(processor_job)
 
     # Whether or not we can delete all of these jobs, we
     # know the associations need to go.
@@ -167,7 +185,8 @@ class Command(BaseCommand):
 
         if not options["force"]:
             print('-------------------------------------------------------------------------------')
-            print('This will delete all objects in the database. Are you sure you want to do this?')
+            print('This will delete all objects in the database related to these accessions.'
+                  ' Are you sure you want to do this?')
             answer = input('You must type "yes", all other input will be ignored: ')
 
             if answer != "yes":
@@ -193,7 +212,7 @@ class Command(BaseCommand):
 
             with open(filepath) as file:
                 for accession in file:
-                    accessions.append(accession)
+                    accessions.append(accession.strip())
         else:
             accessions.append(options['accession'])
 
