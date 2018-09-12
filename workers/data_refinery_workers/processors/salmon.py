@@ -151,7 +151,7 @@ def _extract_sra(job_context: Dict) -> Dict:
     if len(new_files) == 1:
         job_context['input_file_path'] = new_files[0]
     else:
-        for new_file in glob.glob(job_context['work_dir'] + '*.fastq'):
+        for new_file in new_files:
             # We only care about '_1' and '_2', unmated reads can skeddadle
             if '_1' in new_file:
                 job_context['input_file_path'] = new_file

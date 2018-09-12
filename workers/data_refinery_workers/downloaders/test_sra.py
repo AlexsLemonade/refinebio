@@ -93,4 +93,3 @@ class DownloadSraTestCase(TestCase):
         self.assertTrue(result)
         self.assertEqual(downloaded_files[0].sha1, 'd5374e7fe047d4f76b165c3f5148ab2df9d42cea')
         self.assertTrue(os.path.exists(downloaded_files[0].absolute_file_path))
-        downloaded_files[0].absolute_file_path
