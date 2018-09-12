@@ -7,4 +7,12 @@ if ! docker ps | tail -n +2 | awk '{ print $NF }' | grep drdb > /dev/null; then
     exit 1
 fi
 
+# Default to "local" for system version if we're not running in the cloud.
+if [[ -z $SYSTEM_VERSION ]]; then
+    export SYSTEM_VERSION="local$(date +%s)"
+fi
+
+# Put this in place for common to read from.
+echo $SYSTEM_VERSION > common/version
+
 ./common/make_migrations.sh && cd common && python setup.py sdist

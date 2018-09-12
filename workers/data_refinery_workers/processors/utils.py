@@ -23,11 +23,12 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
 )
-from data_refinery_workers._version import __version__
 from data_refinery_common.utils import get_instance_id, get_env_variable, get_env_variable_gracefully
 
 
 logger = get_and_configure_logger(__name__)
+# Let this fail if SYSTEM_VERSION is unset.
+SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 RUNNING_IN_CLOUD = get_env_variable_gracefully("RUNNING_IN_CLOUD", "False")
 DIRNAME = os.path.dirname(os.path.abspath(__file__))
@@ -48,7 +49,7 @@ def start_job(job_context: Dict):
         raise Exception("processors.start_job called on job %s that has already been started!" % str(job.id))
 
     job.worker_id = get_instance_id()
-    job.worker_version = __version__
+    job.worker_version = SYSTEM_VERSION
     job.start_time = timezone.now()
     job.save()
 
@@ -160,7 +161,7 @@ def end_job(job_context: Dict, abort=False):
             pipeline.save()
 
     if "work_dir" in job_context and RUNNING_IN_CLOUD == "True":
-        shutil.rmtree(job_context["work_dir"])
+        shutil.rmtree(job_context["work_dir"], ignore_errors=True)
 
     job.success = success
     job.end_time = timezone.now()
@@ -226,8 +227,7 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
                               " function {} in pipeline: ").format(processor.__name__)
             logger.exception(failure_reason,
                              no_retry=job.no_retry,
-                             processor_job=job_id,
-                             job_context=last_result)
+                             processor_job=job_id)
             last_result["success"] = False
             last_result["job"].failure_reason = failure_reason + str(e)
             return end_job(last_result)
@@ -586,7 +586,7 @@ def find_processor(enum_key):
     yml_path = os.path.join(DIRNAME, ProcessorEnum[enum_key].value['yml_file'])
     environment = get_runtime_env(yml_path)
     obj, status = Processor.objects.get_or_create(name=name,
-                                                  version=__version__,
+                                                  version=SYSTEM_VERSION,
                                                   docker_image=docker_image,
                                                   environment=environment)
     return obj
