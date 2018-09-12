@@ -254,46 +254,6 @@ data "template_file" "nomad_client_script_smasher_smusher" {
   }
 }
 
-resource "aws_instance" "client_instance_1" {
-  ami = "${data.aws_ami.ubuntu.id}"
-  instance_type = "${var.client_instance_type}"
-  availability_zone = "${var.region}b"
-  vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
-  subnet_id = "${aws_subnet.data_refinery_1b.id}"
-  depends_on = [
-              "aws_internet_gateway.data_refinery",
-              "aws_instance.nomad_server_1",
-              "aws_ebs_volume.data_refinery_ebs",
-              "aws_instance.pg_bouncer"
-  ]
-  key_name = "${aws_key_pair.data_refinery.key_name}"
-
-  # Our instance-user-data.sh script is built by Terraform at
-  # apply-time so that it can put additional files onto the
-  # instance. For more information see the definition of this resource.
-  user_data = "${data.template_file.nomad_client_script_smasher_smusher.rendered}"
-
-  tags = {
-    Name = "nomad-client-1-${var.user}-${var.stage}"
-  }
-
-  # Nomad server requirements can be found here:
-  # https://www.nomadproject.io/guides/cluster/requirements.html
-  # However I do not think that these accurately reflect those requirements.
-  # I think these are the defaults provided in terraform examples.
-  root_block_device = {
-    volume_type = "gp2"
-    volume_size = 100
-  }
-
-  ebs_block_device = {
-    device_name = "/dev/xvdcz"
-    volume_type = "gp2"
-    volume_size = 40
-  }
-}
-
 ##
 # Autoscaling
 ##
@@ -332,10 +292,10 @@ resource "aws_launch_configuration" "auto_client_configuration" {
 resource "aws_autoscaling_group" "clients" {
     name = "asg-clients-${var.user}-${var.stage}"
     max_size = "${var.max_clients}"
-    min_size = "0"
+    min_size = "1" # So the smasher always has an instance to run smasher jobs with.
     health_check_grace_period = 300
     health_check_type = "EC2"
-    desired_capacity = 0
+    default_cooldown = 0
 
     # Super important flag. Makes it so that terraform doesn't fail
     # every time because it can't acquire spot instances fast enough
