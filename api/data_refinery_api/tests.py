@@ -444,9 +444,12 @@ class APITestCases(APITestCase):
         response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
         self.assertEqual(response.status_code, 500)
 
-        jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True, 'token_id': token_id } )
+        jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True, 'token_id': token_id, 'email_address': 'trust@verify.com' } )
         response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
         self.assertEqual(response.json()["is_processing"], True)
+
+        ds = Dataset.objects.get(id=response.json()['id'])
+        self.assertEqual(ds.email_address, 'trust@verify.com')
 
     def test_processed_samples_only(self):
         """ Don't return unprocessed samples """
