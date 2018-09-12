@@ -70,7 +70,7 @@ fi
 
 # Default to "local" for system version if we're not running in the cloud.
 if [[ -z $SYSTEM_VERSION ]]; then
-    SYSTEM_VERSION="local" + `date +%s`
+    SYSTEM_VERSION="local$(date +%s)"
 fi
 
 # We want to check if a test image has been built for this branch. If

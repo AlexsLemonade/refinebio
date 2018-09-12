@@ -9,7 +9,7 @@ fi
 
 # Default to "local" for system version if we're not running in the cloud.
 if [[ -z $SYSTEM_VERSION ]]; then
-    export SYSTEM_VERSION="local" + `date +%s`
+    export SYSTEM_VERSION="local$(date +%s)"
 fi
 
 # Put this in place for common to read from.
