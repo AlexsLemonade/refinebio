@@ -19,7 +19,7 @@ print_options() {
     echo 'DO NOT DEPLOY without setting that $TF_VAR_username or modifying the value in variables.tf!'
 }
 
-while getopts ":e:h" opt; do
+while getopts ":e:v:h" opt; do
     case $opt in
     e)
         env=$OPTARG
