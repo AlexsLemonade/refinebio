@@ -290,7 +290,7 @@ def _run_fastqc(job_context: Dict) -> Dict:
 
     # We could use --noextract here, but MultiQC wants extracted files.
     command_str = ("./FastQC/fastqc --outdir={qc_directory} {files}")
-    files = ' '.join([job_context.get('input_file_path_2', ''), job_context.get('input_file_path_2', '')])
+    files = ' '.join([job_context.get('input_file_path', ''), job_context.get('input_file_path_2', '')])
     formatted_command = command_str.format(qc_directory=job_context["qc_directory"],
                 files=files)
 
