@@ -57,11 +57,11 @@ def _download_file_ftp(download_url: str, downloader_job: DownloaderJob, target_
 
         urllib.request.urlcleanup()
     except Exception:
-        logger.exception("Exception caught while downloading batch from the URL via FTP: %s",
+        logger.exception("Exception caught while downloading file from the URL via FTP: %s",
                          download_url,
                          downloader_job=downloader_job.id)
         downloader_job.failure_reason = ("Exception caught while downloading "
-                                         "batch from the URL via FTP: {}").format(download_url)
+                                         "file from the URL via FTP: {}").format(download_url)
         return False
 
     return True
