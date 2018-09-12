@@ -13,6 +13,7 @@ from data_refinery_foreman.surveyor.test_sra_xml import (
 )
 from data_refinery_common.models import (
     DownloaderJob,
+    Experiment,
     SurveyJob,
     SurveyJobKeyValue,
     Organism,
@@ -79,6 +80,12 @@ class SraSurveyorTestCase(TestCase):
 
         # We are expecting this to discover 1 sample.
         self.assertEqual(samples.count(), 1)
+        # Confirm the sample's protocol_info
+        experiment = Experiment.objects.all().first()
+        self.assertEqual(samples.first().protocol_info[0]['Description'],
+                         experiment.protocol_description
+        )
+
 
     @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_srp_survey(self, mock_send_task):
