@@ -222,7 +222,8 @@ if [[ $project == "workers" ]]; then
             echo "Made $output_dir/$output_file$TEST_POSTFIX"
         else
             export_log_conf "processor"
-            rams=(1024 2048 3072 4096 5120 6144 7168 8192 9216 10240 11264 12288 13312)
+            # rams=(1024 2048 3072 4096 5120 6144 7168 8192 9216 10240 11264 12288 13312)
+            rams=(2048 4096 8192)
             for r in "${rams[@]}"
             do
                 indexes=(0 1 2 3 4 5 6 7 8 9)

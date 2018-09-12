@@ -19,7 +19,11 @@ def delete_job_and_retries(job) -> None:
     """Deletes a job and any jobs that retried it."""
     retried_job = job.retried_job
 
-    job.delete()
+    try:
+        job.delete()
+    except:
+        # If the job already was deleted it's quite okay.
+        pass
 
     if retried_job:
         delete_job_and_retries(retried_job)
@@ -119,7 +123,7 @@ def purge_experiment(accession: str) -> None:
     # Important to order by id, so the jobs that didn't retry anything are deleted first.
     downloader_jobs = DownloaderJob.objects.filter(
         id__in=og_file_dj_assocs.values('downloader_job_id')
-    ).order_by(id)
+    ).order_by("id")
 
     for downloader_job in downloader_jobs:
         # We know this job is associated with files we can
@@ -142,7 +146,7 @@ def purge_experiment(accession: str) -> None:
     # Important to order by id, so the jobs that didn't retry anything are deleted first.
     processor_jobs = ProcessorJob.objects.filter(
         id__in=og_file_pj_assocs.values('processor_job_id')
-    ).order_by(id)
+    ).order_by("id")
 
     for processor_job in processor_jobs:
         # We know this job is associated with files we can
