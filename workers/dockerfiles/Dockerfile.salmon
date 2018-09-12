@@ -6,12 +6,13 @@ RUN add-apt-repository ppa:apt-fast/stable
 RUN apt-get update -qq
 RUN apt-get -y install apt-fast
 
+COPY workers/CRAN.gpg .
 RUN \
   apt-fast update -qq && \
   apt-fast install -y apt-utils lsb-release && \
-  echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
+  echo "deb https://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
-  apt-key adv --keyserver na.pool.sks-keyservers.net --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 && \
+  apt-key add CRAN.gpg && \
   apt-fast update -qq && \
   apt-fast install -y \
   ed \
@@ -30,6 +31,7 @@ RUN \
   curl \
   wget && \
   rm -rf /var/lib/apt/lists/*
+RUN rm CRAN.gpg
 
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
