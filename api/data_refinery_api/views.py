@@ -249,7 +249,7 @@ class DatasetView(generics.RetrieveUpdateAPIView):
 
             # We could be more aggressive with requirements checking here, but
             # there could be use cases where you don't want to supply an email.
-            supplied_email_address = self.request.data.get('email_address', '')
+            supplied_email_address = self.request.data.get('email_address', None)
 
             if not already_processing:
                 # Create and dispatch the new job.
@@ -266,9 +266,10 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 job_sent = False
 
                 obj = serializer.save()
-                if obj.email_address != supplied_email_address:
-                    obj.email_address = supplied_email_address
-                    obj.save()
+                if supplied_email_address is not None:
+                    if obj.email_address != supplied_email_address:
+                        obj.email_address = supplied_email_address
+                        obj.save()
                 try:
                     # Hidden method of non-dispatching for testing purposes.
                     if not self.request.data.get('no_send_job', False):
