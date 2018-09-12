@@ -251,8 +251,8 @@ resource "aws_launch_configuration" "auto_client_configuration" {
     security_groups = ["${aws_security_group.data_refinery_worker.id}"]
     iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
     depends_on = [
-              "aws_internet_gateway.data_refinery", 
-              "aws_instance.nomad_server_1", 
+              "aws_internet_gateway.data_refinery",
+              "aws_instance.nomad_server_1",
               "aws_ebs_volume.data_refinery_ebs",
               "aws_instance.pg_bouncer"
     ]
@@ -278,7 +278,7 @@ resource "aws_autoscaling_group" "clients" {
     min_size = "0"
     health_check_grace_period = 300
     health_check_type = "EC2"
-    desired_capacity = 1
+    default_cooldown = 0
 
     # Super important flag. Makes it so that terraform doesn't fail
     # every time because it can't acquire spot instances fast enough
