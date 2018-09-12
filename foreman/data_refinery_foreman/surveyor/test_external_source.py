@@ -14,13 +14,14 @@ from data_refinery_common.models import (
 
 class SraSurveyorTestCase(TestCase):
     @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
-    def test_queue_downloader_jobs(self, mock_send_task):
+    def test_queue_downloader_jobs_for_original_files(self, mock_send_task):
         """Make sure that queue_downloader_jobs queues all expected Downloader
         jobs for a given experiment.
         """
         # First, create an experiment with two samples associated with it
         # and create two original files for each of those samples.
         experiment_object = Experiment()
+        experiment_object.accession_code = "Experiment1"
         experiment_object.save()
 
         sample_object_1 = Sample()
@@ -50,12 +51,16 @@ class SraSurveyorTestCase(TestCase):
         association.sample = sample_object_2
         association.save()
 
+        sample_1_original_files = []
+        sample_2_original_files = []
+
         original_file = OriginalFile()
         original_file.source_url = "first_url"
         original_file.source_filename = "first_filename"
         original_file.is_downloaded = False
         original_file.has_raw = True
         original_file.save()
+        sample_1_original_files.append(original_file)
 
         original_file_sample_association = OriginalFileSampleAssociation()
         original_file_sample_association.original_file = original_file
@@ -68,6 +73,7 @@ class SraSurveyorTestCase(TestCase):
         original_file.is_downloaded = False
         original_file.has_raw = True
         original_file.save()
+        sample_2_original_files.append(original_file)
 
         original_file_sample_association = OriginalFileSampleAssociation()
         original_file_sample_association.original_file = original_file
@@ -80,6 +86,7 @@ class SraSurveyorTestCase(TestCase):
         original_file.is_downloaded = False
         original_file.has_raw = True
         original_file.save()
+        sample_2_original_files.append(original_file)
 
         original_file_sample_association = OriginalFileSampleAssociation()
         original_file_sample_association.original_file = original_file
@@ -92,6 +99,7 @@ class SraSurveyorTestCase(TestCase):
         original_file.is_downloaded = False
         original_file.has_raw = True
         original_file.save()
+        sample_2_original_files.append(original_file)
 
         original_file_sample_association = OriginalFileSampleAssociation()
         original_file_sample_association.original_file = original_file
@@ -101,6 +109,10 @@ class SraSurveyorTestCase(TestCase):
         survey_job = SurveyJob(source_type="SRA")
         survey_job.save()
         surveyor = SraSurveyor(survey_job)
-        surveyor.queue_downloader_jobs(experiment_object)
 
-        self.assertEqual(DownloaderJob.objects.all().count(), 4)
+        surveyor.queue_downloader_job_for_original_files(sample_1_original_files,
+                                                         experiment_object.accession_code)
+        surveyor.queue_downloader_job_for_original_files(sample_2_original_files,
+                                                         experiment_object.accession_code)
+
+        self.assertEqual(DownloaderJob.objects.all().count(), 2)
