@@ -29,7 +29,6 @@ from data_refinery_common.models import (
     SampleResultAssociation,
 )
 from data_refinery_common.utils import get_env_variable
-from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 
 

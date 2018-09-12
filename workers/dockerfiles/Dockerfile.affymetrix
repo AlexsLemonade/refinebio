@@ -66,6 +66,10 @@ RUN pip3 install -r requirements.txt
 # all processors need it.
 RUN pip3 install rpy2
 
+ARG SYSTEM_VERSION
+
+ENV SYSTEM_VERSION $SYSTEM_VERSION
+
 USER user
 
 COPY workers/ .
