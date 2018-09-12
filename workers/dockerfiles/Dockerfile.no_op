@@ -10,7 +10,7 @@ COPY workers/CRAN.gpg .
 RUN \
   apt-fast update -qq && \
   apt-fast install -y lsb-release && \
-  echo "deb https://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
+  echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
   apt-key add CRAN.gpg && \
   apt-fast update -qq && \
