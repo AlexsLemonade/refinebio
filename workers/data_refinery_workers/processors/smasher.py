@@ -77,7 +77,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     os.makedirs(job_context["work_dir"])
 
     job_context["output_dir"] = job_context["work_dir"] + "output/"
-    os.makedirs(job_context["work_dir"])
+    os.makedirs(job_context["output_dir"])
 
     return job_context
 
