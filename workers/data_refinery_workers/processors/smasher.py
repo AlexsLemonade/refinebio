@@ -489,13 +489,9 @@ def _notify(job_context: Dict) -> Dict:
             CHARSET = "UTF-8"
 
             if job_context['job'].failure_reason not in ['', None]:
-                SUBJECT = "Your refine.bio Dataset is Ready!"
-                BODY_TEXT = "Hot off the presses:\n\n" + job_context["result_url"] + "\n\nLove!,\nThe refine.bio Team"
-                FORMATTED_HTML = "Hot off the presses:<br /><br />" + job_context["result_url"] + "<br /><br />Love!,<br />The refine.bio Team"
-            else:
                 SUBJECT = "There was a problem processing your refine.bio dataset :("
                 BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(dataset.id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
-                FORMATTED_HTML = BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: <br /><br />" + job_context['job'].failure_reason + "<br />Dataset: " + str(dataset.id) + "<br /> We have been notified and are looking into the problem. <br /><br />Sorry!"
+                FORMATTED_HTML = "We tried but were unable to process your requested dataset. Error was: <br /><br />" + job_context['job'].failure_reason + "<br />Dataset: " + str(dataset.id) + "<br /> We have been notified and are looking into the problem. <br /><br />Sorry!"
                 job_context['success'] = False
 
             # Try to send the email.
