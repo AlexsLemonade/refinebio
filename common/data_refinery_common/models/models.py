@@ -150,17 +150,17 @@ class Sample(models.Model):
         """ Get all of the ComputedFile objects associated with this Sample """
         return self.computed_files.all()
 
-    def get_smashable_result_files(self):
+    def get_most_recent_smashable_result_file(self, only_raw=False):
         """ Get all of the ComputedFile objects associated with this Sample """
-        return self.computed_files.filter(
-                        is_smashable=True
-                    )
-
-    def get_most_recent_smashable_result_file(self):
-        """ Get all of the ComputedFile objects associated with this Sample """
-        return self.computed_files.filter(
-                        is_smashable=True
-                    ).first()
+        if only_raw:
+            return self.computed_files.filter(
+                            is_smashable=True,
+                            has_raw=True
+                        ).order_by('-created_at').first()
+        else:
+            return self.computed_files.filter(
+                            is_smashable=True
+                        ).order_by('-created_at').first()
 
     @property
     def pipelines(self):

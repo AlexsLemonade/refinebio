@@ -13,7 +13,6 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
     ComputedFile,
-    OriginalFile,
     Pipeline,
     Processor,
     SampleComputedFileAssociation,
@@ -32,7 +31,7 @@ def _prepare_input(job_context: Dict) -> Dict:
     # We're going to use the smasher outside of the smasher.
     # I'm not crazy about this yet. Maybe refactor later,
     # but I need the data now.
-
+    job_context['only_raw'] = True
     job_context = smasher._prepare_files(job_context)
     job_context = smasher._smash(job_context)
 
