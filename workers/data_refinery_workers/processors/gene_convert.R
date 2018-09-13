@@ -75,7 +75,7 @@ if (any(overlap >= 0.5)) {
   	detected_id <- names(which.max(overlap))
 } else {
 	# Less than 50%? Get outta here!
-  	stop("Not enough overlapping ids detected!")
+	stop(paste("Not enough overlapping ids detected!: ", which.max(overlap)))
 }
 
 message("Merging..")
@@ -95,4 +95,4 @@ message(head(converted_exprs))
 # but this should be done at smash-time so that we can provide options on the squish method.
 
 # Save to output file
-write.table(converted_exprs, outFilePath, row.names=FALSE, col.names=TRUE, quote=FALSE, sep="\t")
+write.table(converted_exprs[1:2], outFilePath, row.names=FALSE, col.names=TRUE, quote=FALSE, sep="\t")
