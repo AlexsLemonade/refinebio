@@ -24,6 +24,8 @@ else
     exit 1
 fi
 
+echo $CIRCLE_TAG > ~/refinebio/common/version
+
 # Docker images that we want to protect from accidental overwriting in "ccdl" account.
 CCDL_WORKER_IMGS="smasher illumina affymetrix salmon transcriptome no_op downloaders"
 
