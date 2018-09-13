@@ -43,8 +43,7 @@ def _prepare_input(job_context: Dict) -> Dict:
         job_context['success'] = False
         return job_context
 
-    # We only need the resulting frame, not the entire archive
-    os.makedirs(job_context["work_dir"])
+    # work_dir is already created by smasher._prepare_files
     outfile_base = job_context['work_dir'] + str(time.time()).split('.')[0]
     outfile = outfile_base + '.tsv'
     job_context['final_frame'].to_csv(outfile, sep='\t', encoding='utf-8')
