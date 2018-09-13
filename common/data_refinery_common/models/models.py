@@ -58,7 +58,8 @@ class Sample(models.Model):
 
     class Meta:
         db_table = "samples"
-        base_manager_name = 'public_objects'
+        base_manager_name = "public_objects"
+        get_latest_by = "created_at"
 
     def __str__(self):
         return self.accession_code
@@ -156,11 +157,11 @@ class Sample(models.Model):
             return self.computed_files.filter(
                             is_smashable=True,
                             has_raw=True
-                        ).order_by('-created_at').first()
+                        ).latest()
         else:
             return self.computed_files.filter(
                             is_smashable=True
-                        ).order_by('-created_at').first()
+                        ).latest()
 
     @property
     def pipelines(self):
@@ -636,6 +637,7 @@ class ComputedFile(models.Model):
 
     class Meta:
         db_table = "computed_files"
+        get_latest_by = "created_at"
 
     def __str__(self):
         return "ComputedFile: " + str(self.filename)
