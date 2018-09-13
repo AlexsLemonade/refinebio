@@ -901,14 +901,25 @@ class TsvTestCase(TestCase):
 
                             # Special field that will be taken out as separate columns
                             "characteristic": [
-                                {
-                                    "category": "cell population",
-                                    "value": "IFNa DC"
+                                { "category": "cell population",
+                                  "value": "IFNa DC"
                                 },
-                                {
-                                    "category": "donor id",
-                                    "value": "LB016"
+                                { "category": "dose",
+                                  "value": "1 mL"
                                 },
+                                { "category": "donor id",
+                                  "value": "LB016"
+                                }
+                            ],
+
+                            # Another special field in Array Express sample
+                            "variable": [
+                                { "name": "dose",
+                                  "value": "1 mL"
+                                },
+                                { "name": "stimulation",
+                                  "value": "IFNa"
+                                }
                             ],
 
                             "extract": { "name": "GSM1089311 extract 1" }
@@ -943,43 +954,56 @@ class TsvTestCase(TestCase):
             }  # end of "samples"
         }
 
+        self.smash_path = "/tmp/"
+
+
     @tag("smasher")
-    def test_writing(self):
+    def test_columns(self):
         columns = smasher._get_tsv_columns(self.metadata['samples'])
-        self.assertEqual(len(columns), 19)
+        self.assertEqual(len(columns), 21)
         self.assertTrue('accession_code' in columns)
         self.assertTrue('cell population' in columns)
+        self.assertTrue('dose' in columns)
+        self.assertTrue('stimulation' in columns)
         self.assertTrue('serum' in columns)
 
-        smash_path = "/tmp/"
-        # Check tsv file that is not aggregated by experiment
-        smasher._write_tsv(self.metadata, smash_path)
-        output_filename = smash_path + "metadata.tsv"
+    @tag("smasher")
+    def test_all_samples(self):
+        """Check tsv file that is not aggregated by experiment."""
+
+        smasher._write_tsv(self.metadata, self.smash_path)
+        output_filename = self.smash_path + "metadata.tsv"
         self.assertTrue(os.path.isfile(output_filename))
 
         with open(output_filename) as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
             for row_num, row in enumerate(reader):
                 if row['accession_code'] == 'E-GEOD-44719-GSM1089311':
-                    self.assertEqual(row['cell population'], 'IFNa DC')
+                    self.assertEqual(row['cell population'], 'IFNa DC') # ArrayExpress specific
+                    self.assertEqual(row['dose'], '1 mL')               # ArrayExpress specific
                     self.assertEqual(row['detection_percentage'], '98.44078')
+
                 elif row['accession_code'] == 'GSM1361050':
-                    self.assertEqual(row['tissue'], 'Bone Marrow')
+                    self.assertEqual(row['tissue'], 'Bone Marrow')      # GEO specific
                     self.assertEqual(row['organism'], 'HOMO_SAPIENS')
 
         self.assertEqual(row_num, 1)  # only two data rows in tsv file
         os.remove(output_filename)
 
-        # Check tsv file that is aggregated by experiment
-        smasher._write_tsv(self.metadata, smash_path, aggregation="EXPERIMENT")
-        output_filename = smash_path + "E-GEOD-44719_metadata.tsv"
+    @tag("smasher")
+    def test_experiment_tsv(self):
+        """Check tsv file that is aggregated by experiment."""
+
+        smasher._write_tsv(self.metadata, self.smash_path, aggregation="EXPERIMENT")
+        output_filename = self.smash_path + "E-GEOD-44719_metadata.tsv"
         self.assertTrue(os.path.isfile(output_filename))
 
         with open(output_filename) as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
             for row_num, row in enumerate(reader):
                 self.assertEqual(row['accession_code'], 'E-GEOD-44719-GSM1089311')
-                self.assertEqual(row['cell population'], 'IFNa DC')
+                self.assertEqual(row['cell population'], 'IFNa DC')  # ArrayExpress specific
+                self.assertEqual(row['dose'], '1 mL')                # ArrayExpress specific
                 self.assertEqual(row['detection_percentage'], '98.44078')
 
         self.assertEqual(row_num, 0) # only one data row in tsv file
