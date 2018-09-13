@@ -189,12 +189,18 @@ def _smash(job_context: Dict) -> Dict:
                     all_frames.append(data)
                     num_samples = num_samples + 1
 
+                    # Delete before archiving the work dir
+                    os.remove(computed_file_path)
+
                 except Exception as e:
                     unsmashable_files.append(computed_file_path)
                     logger.exception("Unable to smash file",
                         file=computed_file_path,
                         dataset_id=job_context['dataset'].id,
                         )
+
+                    # Delete before archiving the work dir
+                    os.remove(computed_file_path)
                     continue
 
             job_context['all_frames'] = all_frames
@@ -306,7 +312,17 @@ def _smash(job_context: Dict) -> Dict:
             job_context['final_frame'] = untransposed
 
             # Write to temp file with dataset UUID in filename.
-            outfile = smash_path + key + ".tsv"
+            subdir = ''
+            if job_context['dataset'].aggregate_by == "SPECIES":
+                subdir = key
+            elif job_context['dataset'].aggregate_by == "ALL":
+                subdir = "ALL"
+            elif job_context['dataset'].aggregate_by == "EXPERIMENT":
+                subdir = key
+
+            outfile_dir = smash_path + key + "/"
+            os.makedirs(outfile_dir, exist_ok=True)
+            outfile = outfile_dir + key + ".tsv"
             untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
 
         # Copy LICENSE.txt and README.md files
@@ -338,7 +354,7 @@ def _smash(job_context: Dict) -> Dict:
         # Metadata to TSV
         if job_context["dataset"].aggregate_by == "EXPERIMENT":
             for title, keys in metadata['experiments'].items():
-                with open(smash_path + title + '_metadata.tsv', 'w') as output_file:
+                with open(smash_path + title + '/' + title + '_metadata.tsv', 'w') as output_file:
                     sample_titles = keys['sample_titles']
                     keys = list(metadata['samples'][sample_titles[0]].keys()) + ['sample_id']
                     dw = csv.DictWriter(output_file, keys, delimiter='\t')
@@ -349,8 +365,28 @@ def _smash(job_context: Dict) -> Dict:
                         else:
                             value['sample_id'] = key
                             dw.writerow(value)
+        elif job_context["dataset"].aggregate_by == "SPECIES":
+            for species, input_files in job_context['input_files'].items():
+                species_samples = []
+                sample_titles = []
+                for sample_id, metadata in metadata['samples'].items():
+                    if metadata['organism'] == species:
+                        metadata['sample_id'] = sample_id
+                        species_samples.append(metadata)
+                        sample_titles.append(metadata['title'])
+
+                species_dir = smash_path + species + '/'
+                os.makedirs(species_dir, exist_ok=True)
+                with open(species_dir + species + '_metadata.tsv', 'w') as output_file:
+                    keys = list(species_samples[0].keys()) + ['sample_id']
+                    dw = csv.DictWriter(output_file, keys, delimiter='\t')
+                    dw.writeheader()
+                    for sample in species_samples:
+                        dw.writerow(sample)
         else:
-            with open(smash_path + 'metadata.tsv', 'w') as output_file:
+            all_dir = smash_path + "ALL/"
+            os.makedirs(all_dir, exist_ok=True)
+            with open(all_dir + 'ALL_metadata.tsv', 'w') as output_file:
                 sample_ids = list(metadata['samples'].keys())
                 keys = list(metadata['samples'][sample_ids[0]].keys()) + ['sample_id']
                 dw = csv.DictWriter(output_file, keys, delimiter='\t')
