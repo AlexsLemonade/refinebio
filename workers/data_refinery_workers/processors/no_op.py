@@ -199,6 +199,11 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
         job_context["job"].no_retry = True
         return job_context
 
+    # Quality control!
+    # Related: https://github.com/AlexsLemonade/refinebio/issues/614
+    # Related: GSM102671
+    is_good_quality = check_output_quality(job_context['output_file_path'])
+
     job_context["success"] = True
     return job_context
 
@@ -344,6 +349,28 @@ def _create_result(job_context: Dict) -> Dict:
     logger.debug("Created %s", result)
     job_context["success"] = True
     return job_context
+
+
+def check_output_quality(output_file_path: str):
+    """ Verify our output file meets spec """
+    try:
+        with open(output_file_path, 'r') as tsv_in:
+            tsv_in = csv.reader(tsv_in, delimiter='\t')
+                for i in enumerate(tsv_in):
+                    
+                    # We could change this to a header column checker
+                    if i == 0:
+                        continue
+
+                    # If there are more than 2 columns,
+                    # we consider this bad data. (Likely old machine/processing!) 
+                    if len(row.strip().split('\t')) > 2:
+                        return False
+    except Exception:
+        return False
+
+    return True
+
 
 def no_op_processor(job_id: int) -> None:
     pipeline = Pipeline(name=utils.PipelineEnum.NO_OP.value)
