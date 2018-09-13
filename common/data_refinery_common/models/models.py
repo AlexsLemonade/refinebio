@@ -128,6 +128,7 @@ class Sample(models.Model):
         metadata['title'] = self.title
         metadata['accession_code'] = self.accession_code
         metadata['organism'] = self.organism.name if self.organism else None
+        metadata['source_database'] = self.source_database
         metadata['source_archive_url'] = self.source_archive_url
         metadata['sex'] = self.sex
         metadata['age'] = self.age or ''
@@ -250,7 +251,7 @@ class Experiment(models.Model):
     accession_code = models.CharField(max_length=64, unique=True)
 
     # Historical Properties
-    source_database = models.CharField(max_length=32)  # "ArrayExpress, "SRA"
+    source_database = models.CharField(max_length=32)  # "ArrayExpress, "SRA", "GEO"
     source_url = models.CharField(max_length=256)
 
     # Properties

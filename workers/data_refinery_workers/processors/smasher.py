@@ -75,6 +75,89 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     return job_context
 
+def _get_tsv_columns(samples_metadata):
+    """Returns a set of strings that will be written as a TSV file's
+    header. The columns are based on fields found in samples_metadata.
+
+    Some annotation fields are taken out as separate columns because
+    they are more important than the others.
+    """
+
+    columns = set('sample_id')
+    for title, metadata in samples_metadata.items():
+        for meta_key, meta_value in metadata.items():
+            if meta_key != 'annotations':
+                columns.add(meta_key)
+            else:   # metadata["annotations"] is an array of annotations!
+                for annotation in meta_value:
+                    for annotation_key, annotation_value in annotation.items():
+                        # For ArrayExpress samples, "characteristic" in annotation is important.
+                        if (metadata.get('source_database', '') == "ArrayExpress"
+                            and annotation_key == "characteristic"):
+                            for pair_dict in annotation_value:
+                                if 'category' in pair_dict and 'value' in pair_dict:
+                                    columnms.add(pair_dict['category'])
+                        # "variable" is another important field in ArrayExpress sample annotation.
+                        elif (metadata.get('source_database', '') == "ArrayExpress"
+                              and annotation_key == "variable"):
+                            for pair_dict in annotation_value:
+                                if 'name' in pair_dict and 'value' in pair_dict:
+                                    columnms.add(pair_dict['name'])
+                        # For GEO samples, "characteristics_ch1" field in annotation is important.
+                        elif (metadata.get('source_database', '') == "GEO"
+                              and annotation_key == "characteristics_ch1"): # array of strings
+                            for pair_str in annotation_value:
+                                if ':' in pair_str:
+                                    tokens = pair_str.split(':', 1)
+                                    columns.add(tokens[0])
+                        # For any other annotation fields, simply grab them out.
+                        else:
+                            columns.add(annotation_key)
+    return columns
+
+
+def _get_tsv_row_data(sample_metadata):
+    """Revise field values for a certain sample's data row in TSV file.
+
+    Some annotation fields are treated specially because they are more
+    important.  See `_get_tsv_columns` function above for details.
+    """
+
+    row_data = dict()
+    for meta_key, meta_value in sample_metadata.items():
+        if meta_key != 'annotations':
+            row_data[meta_key] = meta_value
+            continue
+
+        # Handle sample_metadata["annotations"], which is an array of annotations!
+        for annotation in meta_value:
+            for annotation_key, annotation_value in annotation.items():
+                # For ArrayExpress samples, "characteristic" in annotation is important.
+                if (sample_metadata.get('source_database', '') == "ArrayExpress"
+                    and annotation_key == "characteristic"):
+                    for pair_dict in annotation_value:
+                        if 'category' in pair_dict and 'value' in pair_dict:
+                            value[pair_dict['category']] = pair_dict['value']
+                # "variable" is another important field in ArrayExpress sample annotation.
+                elif (sample_metadata.get('source_database', '') == "ArrayExpress"
+                      and annotation_key == "variable"):
+                    for pair_dict in annotation_value:
+                        if 'name' in pair_dict and 'value' in pair_dict:
+                            value[pair_dict['name']] = pair_dict['value']
+                # For GEO samples, "characteristics_ch1" field in annotation is important.
+                elif (sample_meta_data.get('source_database', '') == "GEO"
+                      and annotation_key == "characteristics_ch1"): # array of strings
+                    for pair_str in annotation_value:
+                        if ':' in pair_str:
+                            tokens = pair_str.split(':', 1)
+                            value[tokens[0]] = tokens[1]
+                # For any other annotation fields, simply copy them.
+                else:
+                    row_data[annotation_key] = annotation_value
+
+    return row_data
+
+
 def _smash(job_context: Dict) -> Dict:
     """
     Smash all of the samples together!
@@ -338,24 +421,28 @@ def _smash(job_context: Dict) -> Dict:
             for title, keys in metadata['experiments'].items():
                 with open(smash_path + title + '_metadata.tsv', 'w') as output_file:
                     sample_titles = keys['sample_titles']
-                    keys = list(metadata['samples'][sample_titles[0]].keys()) + ['sample_id']
-                    dw = csv.DictWriter(output_file, keys, delimiter='\t')
+                    # keys = list(metadata['samples'][sample_titles[0]].keys()) + ['sample_id']
+                    columns = _get_tsv_columns(metadata['samples'])
+                    dw = csv.DictWriter(output_file, columns, delimiter='\t')
                     dw.writeheader()
                     for key, value in metadata['samples'].items():
                         if key not in sample_titles:
                             continue
                         else:
                             value['sample_id'] = key
-                            dw.writerow(value)
+                            row_data = _get_tsv_row_data(value)
+                            dw.writerow(row_data)
         else:
             with open(smash_path + 'metadata.tsv', 'w') as output_file:
                 sample_ids = list(metadata['samples'].keys())
-                keys = list(metadata['samples'][sample_ids[0]].keys()) + ['sample_id']
-                dw = csv.DictWriter(output_file, keys, delimiter='\t')
+                # keys = list(metadata['samples'][sample_ids[0]].keys()) + ['sample_id']
+                columns = _get_tsv_columns(metadata['samples'])
+                dw = csv.DictWriter(output_file, columns, delimiter='\t')
                 dw.writeheader()
                 for key, value in metadata['samples'].items():
                     value['sample_id'] = key
-                    dw.writerow(value)
+                    row_data = _get_tsv_row_data(value)
+                    dw.writerow(row_data)
 
         metadata['files'] = os.listdir(smash_path)
 
