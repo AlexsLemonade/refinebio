@@ -77,4 +77,4 @@ if("Detection Pval" %in% colnames(annot_exprs_df))
 message(head(annot_exprs_df))
 
 # Save to output file
-write.table(annot_exprs_df[1:2], outFilePath, row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
+write.table(annot_exprs_df, outFilePath, row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
