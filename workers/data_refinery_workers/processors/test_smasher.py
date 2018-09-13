@@ -1,3 +1,4 @@
+import csv
 import os
 import shutil
 import sys
@@ -842,8 +843,10 @@ class SmasherTestCase(TestCase):
 
 
 class CompendiaTestCase(TestCase):
-    """ Testing management commands are hard. Since there is always an explicit sys.exit (which is really an Exception),
-    we have to do weird stdio rerouting to capture the result. Really, these are just sanity tests."""
+    """Testing management commands are hard.  Since there is always an explicit
+    sys.exit (which is really an Exception), we have to do weird stdio rerouting
+    to capture the result. Really, these are just sanity tests.
+    """
 
     @tag("smasher")
     def test_call_create(self):
@@ -868,3 +871,116 @@ class CompendiaTestCase(TestCase):
         self.assertRaises(BaseException, call_command, 'fetch_compendia')
         sys.stderr = old_stderr
         sys.stdout = old_stdout
+
+
+class TsvTestCase(TestCase):
+    """Test the tsv file generation."""
+    def setUp(self):
+        self.metadata = {
+            'experiments': {
+                "E-GEOD-44719": {
+                    "accession_code": "E-GEOD-44719",
+                    "sample_titles": [ "IFNa DC_LB016_IFNa" ]
+                }
+            },
+
+            'samples': {
+                "IFNa DC_LB016_IFNa": {  # Sample #1 is an ArrayExpress sample
+                    "accession_code": "E-GEOD-44719-GSM1089311",
+                    "source_database": "ARRAY_EXPRESS",
+                    "annotations": [
+                        # annotation #1
+                        {
+                            "detected_platform": "illuminaHumanv3",
+                            "detection_percentage": 98.44078,
+                            "mapped_percentage": 100.0
+                        },
+                        # annotation #2
+                        {
+                            "assay": { "name": "GSM1089311" },
+
+                            # Special field that will be taken out as separate columns
+                            "characteristic": [
+                                {
+                                    "category": "cell population",
+                                    "value": "IFNa DC"
+                                },
+                                {
+                                    "category": "donor id",
+                                    "value": "LB016"
+                                },
+                            ],
+
+                            "extract": { "name": "GSM1089311 extract 1" }
+                        }
+                    ]  # end of annotations
+                },  # end of sample #1
+
+                "Bone.Marrow_OA_No_ST03": {  # Sample #2 is a GEO sample
+                    "accession_code": "GSM1361050",
+                    "annotations": [
+                        {
+                            "channel_count": [ "1" ],
+
+                            # Special field that will be taken out as separate columns
+                            "characteristics_ch1": [
+                                "tissue: Bone Marrow",
+                                "disease: OA",
+                                "serum: Low Serum"
+                            ],
+
+                            "contact_address": [ "Crown Street" ],
+                            "contact_country": [ "United Kingdom" ],
+                            "data_processing": [ "Data was processed and normalized" ],
+                            "geo_accession": [ "GSM1361050" ],
+                        }
+                    ],  # end of annotations
+
+                    "organism": "HOMO_SAPIENS",
+                    "source_database": "GEO"
+                }  # end of sample #2
+
+            }  # end of "samples"
+        }
+
+    @tag("smasher")
+    def test_writing(self):
+        columns = smasher._get_tsv_columns(self.metadata['samples'])
+        self.assertEqual(len(columns), 19)
+        self.assertTrue('accession_code' in columns)
+        self.assertTrue('cell population' in columns)
+        self.assertTrue('serum' in columns)
+
+        smash_path = "/tmp/"
+        # Check tsv file that is not aggregated by experiment
+        smasher._write_tsv(self.metadata, smash_path)
+        output_filename = smash_path + "metadata.tsv"
+        self.assertTrue(os.path.isfile(output_filename))
+
+        with open(output_filename) as tsv_file:
+            reader = csv.DictReader(tsv_file, delimiter='\t')
+            for row_num, row in enumerate(reader):
+                if row['accession_code'] == 'E-GEOD-44719-GSM1089311':
+                    self.assertEqual(row['cell population'], 'IFNa DC')
+                    self.assertEqual(row['detection_percentage'], '98.44078')
+                elif row['accession_code'] == 'GSM1361050':
+                    self.assertEqual(row['tissue'], 'Bone Marrow')
+                    self.assertEqual(row['organism'], 'HOMO_SAPIENS')
+
+        self.assertEqual(row_num, 1)  # only two data rows in tsv file
+        os.remove(output_filename)
+
+        # Check tsv file that is aggregated by experiment
+        smasher._write_tsv(self.metadata, smash_path, aggregation="EXPERIMENT")
+        output_filename = smash_path + "E-GEOD-44719_metadata.tsv"
+        self.assertTrue(os.path.isfile(output_filename))
+
+        with open(output_filename) as tsv_file:
+            reader = csv.DictReader(tsv_file, delimiter='\t')
+            for row_num, row in enumerate(reader):
+                self.assertEqual(row['accession_code'], 'E-GEOD-44719-GSM1089311')
+                self.assertEqual(row['cell population'], 'IFNa DC')
+                self.assertEqual(row['detection_percentage'], '98.44078')
+
+        self.assertEqual(row_num, 0) # only one data row in tsv file
+        os.remove(output_filename)
