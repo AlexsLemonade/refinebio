@@ -230,6 +230,7 @@ nomad_job_specs=nomad-job-specs/*
 for nomad_job_spec in $nomad_job_specs; do
     nomad run $nomad_job_spec &
 done
+echo "Job registrations have been fired off."
 
 # Ensure the latest image version is being used for the Foreman
 terraform taint aws_instance.foreman_server_1
