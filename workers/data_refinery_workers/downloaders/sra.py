@@ -103,6 +103,7 @@ def _download_file_aspera(download_url: str,
         # Something went wrong! Else, just fall through to returning True.
         if completed_command.returncode != 0:
 
+            stdout = completed_command.stdout.decode().strip()
             stderr = completed_command.stderr.decode().strip()
             logger.debug("Shell call of `%s` to ascp failed with error message: %s",
                          formatted_command,
@@ -115,15 +116,17 @@ def _download_file_aspera(download_url: str,
                 logger.info("Final shell call of `%s` to ascp failed with error message: %s",
                          formatted_command,
                          stderr,
+                         stdout,
                          downloader_job=downloader_job.id)
-                downloader_job.failure_reason = stderr
+                downloader_job.failure_reason = "stderr:\n " + stderr + "\nstdout:\n " + stdout
                 return False
             else:
-                time.sleep(30)
+                time.sleep(5)
                 return _download_file_aspera(download_url,
                                              downloader_job,
                                              target_file_path,
-                                             attempt + 1
+                                             attempt + 1,
+                                             source
                                              )
     except Exception:
         logger.exception("Exception caught while downloading file from the URL via Aspera: %s",
@@ -147,7 +150,8 @@ def _download_file_aspera(download_url: str,
         return _download_file_aspera(download_url,
                                      downloader_job,
                                      target_file_path,
-                                     attempt + 1
+                                     attempt + 1,
+                                     source
                                      )
     return True
 
