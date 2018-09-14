@@ -6,12 +6,13 @@ RUN add-apt-repository ppa:apt-fast/stable
 RUN apt-get update -qq
 RUN apt-get -y install apt-fast
 
+COPY workers/CRAN.gpg .
 RUN \
   apt-fast update -qq && \
   apt-fast install -y lsb-release && \
   echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
-  apt-key adv --keyserver na.pool.sks-keyservers.net --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 && \
+  apt-key add CRAN.gpg && \
   apt-fast update -qq && \
   apt-fast install -y \
   ed \
@@ -28,17 +29,16 @@ RUN \
   curl \
   wget && \
   rm -rf /var/lib/apt/lists/*
+RUN rm CRAN.gpg
 
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
-ENV R_LIBS "/usr/local/lib/R/site-library"
-
-COPY workers/install_affy_only.R .
-
-RUN Rscript install_affy_only.R
-
 RUN pip3 install --upgrade pip
+
+ENV R_LIBS "/usr/local/lib/R/site-library"
+COPY workers/install_affy_only.R .
+RUN Rscript install_affy_only.R
 
 # Aspera will only install as the current user.
 # Even using `su - user &&` doesn't work...
