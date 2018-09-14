@@ -33,11 +33,17 @@ until fetch_and_mount_volume; do
     sleep 10
 done
 
-EBS_VOLUME_INDEX=`aws ec2 describe-volumes \
-                      --filters "Name=tag:Index,Values=*" "Name=volume-id,Values=$EBS_VOLUME_ID" \
-                      --query "Volumes[*].{ID:VolumeId,Tag:Tags}" --region ${region} \
-                      | jq '.[0].Tag[] | select(.Key | contains("Index")) | .Value' \
-                      | tr -d '"'`
+COUNTER=0
+while [  $COUNTER -lt 99 ]; do
+        EBS_VOLUME_INDEX=`aws ec2 describe-volumes --filters "Name=tag:Index,Values=*" "Name=volume-id,Values=$EBS_VOLUME_ID" --query "Volumes[*].{ID:VolumeId,Tag:Tags}" --region ${region} | jq ".[0].Tag[$COUNTER].Value" | tr -d '"'`
+        if echo "$EBS_VOLUME_INDEX" | egrep -q '^\-?[0-9]+$'; then
+            echo "$EBS_VOLUME_INDEX is an integer!"
+            break # This is a Volume Index
+        else
+            echo "$EBS_VOLUME_INDEX is not an integer"
+        fi
+        let COUNTER=COUNTER+1
+done
 
 sleep 15
 ATTACHED_AS=`lsblk -n | grep 500G | cut -d' ' -f1`

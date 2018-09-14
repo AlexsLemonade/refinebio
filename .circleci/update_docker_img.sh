@@ -31,6 +31,8 @@ CCDL_WORKER_IMGS="smasher illumina affymetrix salmon transcriptome no_op downloa
 
 # Create ~/refinebio/common/dist/data-refinery-common-*.tar.gz, which is
 # required by the workers and data_refinery_foreman images.
+## Remove old common distributions if they exist
+rm ~/refinebio/common/dist/*
 cd ~/refinebio/common && python setup.py sdist
 
 # Log into DockerHub
