@@ -29,7 +29,6 @@ from data_refinery_common.models import (
     SampleResultAssociation,
 )
 from data_refinery_common.utils import get_env_variable
-from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 
 
@@ -72,6 +71,12 @@ def _prepare_files(job_context: Dict) -> Dict:
         return job_context
 
     job_context["work_dir"] = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk) + "/"
+    # Ensure we have a fresh smash directory
+    shutil.rmtree(job_context["work_dir"], ignore_errors=True)
+    os.makedirs(job_context["work_dir"])
+
+    job_context["output_dir"] = job_context["work_dir"] + "output/"
+    os.makedirs(job_context["output_dir"])
 
     return job_context
 
@@ -88,10 +93,7 @@ def _smash(job_context: Dict) -> Dict:
 
     try:
         # Prepare the output directory
-        smash_path = job_context["work_dir"]
-        # Ensure we have a fresh smash directory
-        shutil.rmtree(smash_path, ignore_errors=True)
-        os.makedirs(smash_path, exist_ok=True)
+        smash_path = job_context["output_dir"]
 
         scalers = {
             'MINMAX': preprocessing.MinMaxScaler,
@@ -368,8 +370,6 @@ def _smash(job_context: Dict) -> Dict:
         final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk)
         shutil.make_archive(final_zip_base, 'zip', smash_path)
         job_context["output_file"] = final_zip_base + ".zip"
-        # and clean up the unzipped directory.
-        shutil.rmtree(smash_path)
     except Exception as e:
         logger.exception("Could not smash dataset.",
                         dataset_id=job_context['dataset'].id,

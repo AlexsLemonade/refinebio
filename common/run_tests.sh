@@ -31,4 +31,4 @@ docker run \
        --add-host=nomad:$HOST_IP \
        --env-file common/environments/test \
        --link drdb:postgres \
-       -it ccdlstaging/dr_common_tests bash -c "$(run_tests_with_coverage $@)"
+       -it ccdlstaging/dr_common_tests bash -c "$(run_tests_with_coverage $@)" --parallel

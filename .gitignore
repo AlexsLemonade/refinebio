@@ -123,6 +123,7 @@ dr_env/
 
 # OSX
 .DS_Store
+._.DS_Store
 
 # PyCharm
 .idea

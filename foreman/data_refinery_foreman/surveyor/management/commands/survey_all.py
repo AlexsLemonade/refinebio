@@ -34,17 +34,59 @@ def run_surveyor_for_accession(accession: str) -> None:
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-
+        parser.add_argument(
+            "--file",
+            type=str,
+            help=("""An optional file listing accession codes. s3:// URLs are also accepted.""")
+        )
         parser.add_argument(
             "--accession",
             type=str,
             help=("An accession code to survey.")
         )
+        parser.add_argument(
+            "--offset",
+            type=int,
+            help=("Skip a number of lines at the beginning"),
+            default=0
+        )
 
     def handle(self, *args, **options):
-        if options['accession'] is None:
-            logger.error("You must specify an accession.")
+        if options['file'] is None and options['accession'] is None:
+            logger.error("You must specify an accession or file.")
             return "1"
+
+        if options["file"]:
+            if 's3://' in options["file"]:
+                bucket, key = parse_s3_url(options["file"])
+                s3 = boto3.resource('s3')
+                try:
+                    filepath = "/tmp/input_" + str(uuid.uuid4()) + ".txt"
+                    s3.Bucket(bucket).download_file(key, filepath)
+                except botocore.exceptions.ClientError as e:
+                    if e.response['Error']['Code'] == "404":
+                        logger.error("The remote file does not exist.")
+                        raise
+                    else:
+                        raise
+            else:
+                filepath = options["file"]
+            with open(filepath) as accession_file:
+                for i, accession in enumerate(accession_file):
+                    if i < options["offset"]:
+                        continue
+                    accession = accession.strip()
+                    try:
+                        run_surveyor_for_accession(accession)
+                    except Exception as e:
+                        logger.exception(e)
+
+        if options["accession"]:
+            accession = options["accession"]
+            try:
+                run_surveyor_for_accession(accession)
+            except Exception as e:
+                logger.exception(e)
 
         try:
             run_surveyor_for_accession(options["accession"])

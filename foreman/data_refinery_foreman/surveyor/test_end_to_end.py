@@ -36,7 +36,7 @@ module_logger = logging.getLogger("data_refinery_foreman.surveyor.array_express"
 
 
 LOOP_TIME = 5  # seconds
-MAX_WAIT_TIME = timedelta(minutes=5)
+MAX_WAIT_TIME = timedelta(minutes=45)
 
 def wait_for_job(job, job_class: type, start_time: datetime):
     """Monitors the `job_class` table for when `job` is done."""
@@ -60,14 +60,19 @@ def mock_get_sample(accession_code: str):
     do one from each zip file. To accomplish this we make every other
     Sample in the experiment appear to already exist so it is not
     created and processed.
+
+    Not being used as of 09/07/2018.
     """
     if accession_code == "GSM1109016" or accession_code == "GSM1108516":
         raise Sample.DoesNotExist
 
-    # This return value isn't actually used so it doesn't matter what
-    # it is. The call to this function is just checking for the
-    # existence of the Sample.
-    return None
+    # This sample isn't actually used, we just want to prevent it from
+    # being created and actually run.
+    fake_accession_code = "fake" + str(timezone.now().timestamp())
+    sample = Sample(accession_code=fake_accession_code)
+    sample.save()
+    return sample
+
 
 def mock_logger_info(message: str, *args, **kwargs):
     """Silence the log messages we're forcing on purpose.
@@ -86,14 +91,12 @@ def mock_logger_info(message: str, *args, **kwargs):
 
 # TransactionTestCase makes database calls complete before the test
 # ends.  Otherwise the workers wouldn't actually be able to find the
-# job in the database cause it'd be stuck in a transaction.
+# job in the database because it'd be stuck in a transaction.
 class NoOpEndToEndTestCase(TransactionTestCase):
     @tag("slow")
     @patch('data_refinery_foreman.surveyor.array_express.logger')
-    @patch('data_refinery_common.models.Sample.objects.get')
-    def test_no_op(self, mocked_get_query, mocked_logger):
+    def test_no_op(self, mocked_logger):
         """Survey, download, then process an experiment we know is NO_OP."""
-        mocked_get_query.side_effect = mock_get_sample
         mocked_logger.side_effect = mock_logger_info
 
         # Prevent a call being made to NCBI's API to determine

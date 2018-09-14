@@ -23,31 +23,6 @@ ulimit -n 65536
 # Find, configure and mount a free EBS volume
 mkdir -p /var/ebs/
 
-fetch_and_mount_volume () {
-    INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
-    EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=${user}" "Name=tag:Stage,Values=${stage}" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=${region}a" --region ${region} | jq '.Volumes[0].VolumeId' | tr -d '"'`
-    aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device "/dev/sdf" --region ${region}
-}
-
-until fetch_and_mount_volume; do
-    sleep 10
-done
-
-EBS_VOLUME_INDEX=`aws ec2 describe-volumes \
-                      --filters "Name=tag:Index,Values=*" "Name=volume-id,Values=$EBS_VOLUME_ID" \
-                      --query "Volumes[*].{ID:VolumeId,Tag:Tags}" --region ${region} \
-                      | jq '.[0].Tag[] | select(.Key | contains("Index")) | .Value' \
-                      | tr -d '"'`
-
-sleep 15
-ATTACHED_AS=`lsblk -n | grep 500G | cut -d' ' -f1`
-FILE_RESULT=`file -s /dev/$ATTACHED_AS`
-
-if file -s /dev/$ATTACHED_AS | grep data; then
-	mkfs -t ext4 /dev/$ATTACHED_AS # This is slow
-fi
-mount /dev/$ATTACHED_AS /var/ebs/
-
 chown ubuntu:ubuntu /var/ebs/
 echo $EBS_VOLUME_INDEX >  /var/ebs/VOLUME_INDEX
 chown ubuntu:ubuntu /var/ebs/VOLUME_INDEX

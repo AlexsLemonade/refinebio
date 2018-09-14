@@ -39,8 +39,7 @@ class SurveyTestCase(TestCase):
 
     @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_survey(self, mock_send_task):
-        """A Simple test of the ArrayExpress surveyor.
-        """
+        """A Simple test of the ArrayExpress surveyor."""
         ae_surveyor = ArrayExpressSurveyor(self.survey_job)
         ae_surveyor.survey()
 
@@ -49,11 +48,17 @@ class SurveyTestCase(TestCase):
 
         # We are expecting this to discover 5 samples.
         self.assertEqual(samples.count(), 5)
+
         # And for one DownloaderJob to be created for all of them.
         self.assertEqual(downloader_jobs.count(), 1)
 
         sample = Sample.objects.first()
         self.assertTrue(' (hgu95av2)' in sample.pretty_platform)
+        # Confirm the sample's protocol_info
+        self.assertEqual(len(sample.protocol_info), 9)
+        self.assertEqual(sample.protocol_info[0]['Accession'], "P-MTAB-41854")
+        self.assertEqual(sample.protocol_info[0]['Text'], "Aliquoting of biomaterials.")
+        self.assertEqual(sample.protocol_info[0]['Type'], "split")
 
     def test_determine_accession(self):
         """Test of the `determine_sample_accession` function
