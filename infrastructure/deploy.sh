@@ -228,8 +228,7 @@ rm -f prod_env
 echo "Registering new job specifications.."
 nomad_job_specs=nomad-job-specs/*
 for nomad_job_spec in $nomad_job_specs; do
-    echo "Registering $nomad_job_spec"
-    nomad run $nomad_job_spec
+    nomad run $nomad_job_spec &
 done
 
 # Ensure the latest image version is being used for the Foreman
