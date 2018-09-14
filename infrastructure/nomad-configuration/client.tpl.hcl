@@ -22,8 +22,9 @@ consul {
   client_auto_join    = false
 }
 
-telemetry {
-  publish_allocation_metrics = true
-  publish_node_metrics       = true
-  statsd_address = "${nomad_lead_server_ip}:8125"
-}
+# Disabled because it slows Nomad down. We dream it will be fixed one day!
+# telemetry {
+#   publish_allocation_metrics = true
+#   publish_node_metrics       = true
+#   statsd_address = "${nomad_lead_server_ip}:8125"
+# }
