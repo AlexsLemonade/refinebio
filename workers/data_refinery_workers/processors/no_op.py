@@ -204,11 +204,13 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
     # Related: GSM102671
     is_good_quality = check_output_quality(job_context['output_file_path'])
     if not is_good_quality:
+        job_context["success"] = False
+        job_context["job"].failure_reason = "NO_OP output failed quality control check."
+        job_context["job"].no_retry = True
+        return job_context
+    else:
         job_context["success"] = True
-
-    job_context["success"] = True
-    return job_context
-
+        return job_context
 
 def _convert_illumina_genes(job_context: Dict) -> Dict:
     """ Convert to Ensembl genes if we can"""
