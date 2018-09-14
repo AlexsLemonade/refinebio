@@ -17,7 +17,7 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
 )
-from data_refinery_common.utils import get_instance_id
+from data_refinery_common.utils import get_instance_id, get_env_variable
 
 
 logger = get_and_configure_logger(__name__)
