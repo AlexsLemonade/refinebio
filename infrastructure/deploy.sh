@@ -19,10 +19,13 @@ print_options() {
     echo 'DO NOT DEPLOY without setting that $TF_VAR_username or modifying the value in variables.tf!'
 }
 
-while getopts ":e:h" opt; do
+while getopts ":e:v:h" opt; do
     case $opt in
     e)
         env=$OPTARG
+        ;;
+    v)
+        SYSTEM_VERSION=$OPTARG
         ;;
     h)
         print_description
@@ -45,6 +48,11 @@ done
 
 if [[ $env != "dev" && $env != "staging" && $env != "prod" ]]; then
     echo 'Error: must specify environment as either "dev", "staging", or "prod" with -e.'
+    exit 1
+fi
+
+if [[ -z $SYSTEM_VERSION ]]; then
+    echo 'Error: must specify the system version with -v.'
     exit 1
 fi
 
@@ -164,6 +172,16 @@ rm -f prod_env
 
 # (cont'd) ..and once again after the update when this is re-run.
 format_environment_variables
+
+CCDL_IMGS="smasher illumina affymetrix salmon transcriptome no_op downloaders foreman api"
+
+for IMG in $CCDL_IMGS; do
+    # For each image we need to set the env var that is used by our
+    # scripts and the env var that gets picked up by terraform because
+    # it is preceeded with TF_VAR.
+    export ${IMG^^}_DOCKER_IMAGE=dr_$IMG:$SYSTEM_VERSION
+    export TF_VAR_$IMG_docker_image=dr_$IMG:$SYSTEM_VERSION
+done
 
 # Get an image to run the migrations with.
 docker pull $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE

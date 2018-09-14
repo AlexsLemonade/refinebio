@@ -18,7 +18,6 @@ from data_refinery_common.models import (
     SampleComputedFileAssociation,
     Pipeline,
     Processor)
-from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 from data_refinery_common.utils import get_env_variable
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")

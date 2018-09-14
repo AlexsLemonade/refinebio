@@ -1,4 +1,5 @@
 import boto3
+import glob
 import io
 import json
 import os
@@ -31,7 +32,6 @@ from data_refinery_common.models import (
     SampleResultAssociation,
 )
 from data_refinery_common.utils import get_env_variable
-from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
@@ -75,27 +75,91 @@ def _prepare_files(job_context: Dict) -> Dict:
     # that it could be run more than once, potentially even at the
     # same time.)
     job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR,
-                                           job_context["job_dir_prefix"])
+                                           job_context["job_dir_prefix"]) + "/"
 
-    job_context["output_directory"] = job_context["work_dir"] + "/" + sample.accession_code +"/"
+    job_context["output_directory"] = job_context["work_dir"] + sample.accession_code + "/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
     # The sample's directory is what should be used for MultiQC input
     job_context["qc_input_directory"] = job_context["work_dir"]
-    job_context["qc_directory"] = job_context["work_dir"] + "/qc/"
+    job_context["qc_directory"] = job_context["work_dir"] + "qc/"
     os.makedirs(job_context["qc_directory"], exist_ok=True)
 
-    job_context["salmontools_directory"] = job_context["work_dir"] + "/salmontools/"
+    job_context["salmontools_directory"] = job_context["work_dir"] + "salmontools/"
     os.makedirs(job_context["salmontools_directory"], exist_ok=True)
     job_context["salmontools_archive"] = job_context["work_dir"] + "salmontools-result.tar.gz"
 
     timestamp = str(timezone.now().timestamp()).split('.')[0]
-    job_context["output_archive"] = job_context["work_dir"] + '/result-' + timestamp +  '.tar.gz'
+    job_context["output_archive"] = job_context["work_dir"] + 'result-' + timestamp +  '.tar.gz'
 
     job_context["computed_files"] = []
 
     return job_context
 
+def _extract_sra(job_context: Dict) -> Dict:
+    """
+    If this is a .sra file, run `fasterq-dump` to get our desired fastq files.
+
+    """
+    if ".sra" not in job_context["input_file_path"]:
+        return job_context
+
+    time_start = timezone.now()
+    formatted_command = "fasterq-dump " + job_context["input_file_path"] + " -O " + job_context['work_dir']
+    logger.debug("Running fasterq-dump using the following shell command: %s",
+                 formatted_command,
+                 processor_job=job_context["job_id"])
+    completed_command = subprocess.run(formatted_command.split(),
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+
+    stderr = completed_command.stderr.decode().strip()
+    stdout = completed_command.stderr.decode().strip()
+
+    # fasterq-dump doesn't respect return codes
+    # Related: https://github.com/ncbi/sra-tools/issues/146
+    if (completed_command.returncode != 0) or "err:" in stdout:
+        logger.error("Shell call to fasterq-dump failed with error message: %s",
+                     stderr,
+                     stdout=stdout,
+                     processor_job=job_context["job_id"],
+                     file=job_context["input_file_path"])
+        job_context["job"].failure_reason = stderr
+        job_context["success"] = False
+        return job_context
+
+    result = ComputationalResult()
+    result.commands.append(formatted_command)
+    result.time_start = time_start
+    result.time_end = timezone.now()
+    result.is_ccdl = True
+    result.pipeline = "FASTERQ_DUMP"  # TODO: should be removed
+
+    try:
+        processor_key = "FASTERQ_DUMP"
+        result.processor = utils.find_processor(processor_key)
+    except Exception as e:
+        return utils.handle_processor_exception(job_context, processor_key, e)
+
+    result.save()
+    job_context['pipeline'].steps.append(result.id)
+
+    # Overwrite our current input_file_path with our newly extracted files
+    # We either want the one created file or _just_ _1 
+    new_files = glob.glob(job_context['work_dir'] + '*.fastq')
+    if len(new_files) == 1:
+        job_context['input_file_path'] = new_files[0]
+    else:
+        for new_file in new_files:
+            # We only care about '_1' and '_2', unmated reads can skeddadle
+            if '_1.fast' in new_file:
+                job_context['input_file_path'] = new_file
+                continue
+            if '_2.fast' in new_file:
+                job_context['input_file_path_2'] = new_file
+                continue
+
+    return job_context
 
 def _determine_index_length(job_context: Dict) -> Dict:
     """Determines whether to use the long or short salmon index.
@@ -110,10 +174,14 @@ def _determine_index_length(job_context: Dict) -> Dict:
     number_of_reads = 0
     counter = 1
 
+    if ".gz" == job_context["input_file_path"][-3:]:
+        cat = "zcat"
+    else:
+        cat = "cat"
     # zcat unzips the file provided and dumps the output to STDOUT.
     # It is installed by default in Debian so it should be included
     # in every docker image already.
-    with subprocess.Popen(['zcat', job_context["input_file_path"]], stdout=subprocess.PIPE,
+    with subprocess.Popen([cat, job_context["input_file_path"]], stdout=subprocess.PIPE,
                           universal_newlines=True) as process:
         for line in process.stdout:
                 # In the FASTQ file format, there are 4 lines for each
@@ -126,7 +194,11 @@ def _determine_index_length(job_context: Dict) -> Dict:
                 counter += 1
 
     if "input_file_path_2" in job_context:
-        with subprocess.Popen(['zcat', job_context["input_file_path_2"]], stdout=subprocess.PIPE,
+        if ".gz" == job_context["input_file_path_2"][-3:]:
+            cat = "zcat"
+        else:
+            cat = "cat"
+        with subprocess.Popen([cat, job_context["input_file_path_2"]], stdout=subprocess.PIPE,
                               universal_newlines=True) as process:
             for line in process.stdout:
                 if counter % 4 == 2:
@@ -136,8 +208,8 @@ def _determine_index_length(job_context: Dict) -> Dict:
 
     if number_of_reads == 0:
         logger.error("Unable to determine number_of_reads for job.",
-            input_file_1=job_context["input_file_path"],
-            input_file_2=job_context["input_file_path_2"],
+            input_file_1=job_context.get("input_file_path"),
+            input_file_2=job_context.get("input_file_path_2"),
             job_id=job_context['job'].id
         )
         job_context['job'].failure_reason = "Unable to determine number_of_reads."
@@ -190,7 +262,7 @@ def _find_or_download_index(job_context: Dict) -> Dict:
     try:
         os.makedirs(job_context["index_directory"])
         index_tarball = ComputedFile.objects.filter(result=index_object.result)[0].sync_from_s3()
-        with open(index_tarball, "r:gz") as index_archive:
+        with tarfile.open(index_tarball, "r:gz") as index_archive:
             index_archive.extractall(job_context["index_directory"])
     except FileExistsError:
         # Someone already installed the index or is doing so now.
@@ -219,7 +291,7 @@ def _run_fastqc(job_context: Dict) -> Dict:
 
     # We could use --noextract here, but MultiQC wants extracted files.
     command_str = ("./FastQC/fastqc --outdir={qc_directory} {files}")
-    files = ' '.join(file.absolute_file_path for file in job_context['original_files'])
+    files = ' '.join([job_context.get('input_file_path', ''), job_context.get('input_file_path_2', '')])
     formatted_command = command_str.format(qc_directory=job_context["qc_directory"],
                 files=files)
 
@@ -296,15 +368,15 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
     # their paths to a file so we can pass a path to that to
     # tximport.R rather than having to pass in one argument per
     # sample.
-    tximport_path_list_file = job_context["work_dir"] + "/tximport_inputs.txt"
+    tximport_path_list_file = job_context["work_dir"] + "tximport_inputs.txt"
     with open(tximport_path_list_file, "w") as input_list:
         for quant_file in quant_files:
             input_list.write(quant_file.get_synced_file_path() + "\n")
 
     rds_filename = "txi_out.RDS"
-    rds_file_path = job_context["work_dir"] + "/" + rds_filename
+    rds_file_path = job_context["work_dir"] + rds_filename
     tpm_filename = "gene_lengthScaledTPM.tsv"
-    tpm_file_path = job_context["work_dir"] + "/" + tpm_filename
+    tpm_file_path = job_context["work_dir"] + tpm_filename
     result = ComputationalResult()
     cmd_tokens = [
         "/usr/bin/Rscript", "--vanilla",
@@ -816,10 +888,11 @@ def salmon(job_id: int) -> None:
     short read length. Also runs FastQC, MultiQC, and Salmontools.
     """
     pipeline = Pipeline(name=utils.PipelineEnum.SALMON.value)
-    utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
+    final_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _set_job_prefix,
                         _prepare_files,
+                        _extract_sra,
 
                         _determine_index_length,
                         _find_or_download_index,
@@ -829,3 +902,4 @@ def salmon(job_id: int) -> None:
                         _run_salmontools,
                         _run_multiqc,
                         utils.end_job])
+    return final_context

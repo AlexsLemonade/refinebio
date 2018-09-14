@@ -52,6 +52,15 @@ class SurveyTestCase(TransactionTestCase):
         self.assertEqual(sample_object.platform_accession_code, "hgu133a")
         self.assertEqual(sample_object.technology, "MICROARRAY")
 
+        # Confirm sample protocol_info
+        GSM299800 = Sample.objects.get(accession_code="GSM299800")
+        protocol_info = GSM299800.protocol_info
+        self.assertEqual(
+            protocol_info['Extraction protocol'],
+            ['Chromatin IP performed as described in Odom et al., Science 303, 1378 (Feb 27, 2004)']
+        )
+        self.assertEqual(protocol_info['Data processing'], ['Z-score normalization'])
+
         downloader_jobs = DownloaderJob.objects.all()
         self.assertEqual(45, downloader_jobs.count())
 

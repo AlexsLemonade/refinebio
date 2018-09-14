@@ -3,13 +3,31 @@ This command will remove experiments and all data that is uniquely associated wi
 (i.e. it's only associated with these experiment and not others.)
 This can be used so that a surveyor job that went wrong can be rerun.
 """
+import boto3
+import botocore
 import sys
+import uuid
 
 from django.core.management.base import BaseCommand
 from data_refinery_common.models import *
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.utils import parse_s3_url
 
 logger = get_and_configure_logger(__name__)
+
+def delete_job_and_retries(job) -> None:
+    """Deletes a job and any jobs that retried it."""
+    retried_job = job.retried_job
+
+    try:
+        job.delete()
+    except:
+        # If the job already was deleted it's quite okay.
+        pass
+
+    if retried_job:
+        delete_job_and_retries(retried_job)
+
 
 def purge_experiment(accession: str) -> None:
     """Removes an experiment and all data that is only associated with it.
@@ -90,7 +108,11 @@ def purge_experiment(accession: str) -> None:
             uniquely_assoced_og_file_ids.append(original_file.id)
 
             # However we have to delete their local files one at a time:
-            original_file.delete_local_file()
+            try:
+                # Not all original files have absolute_file_path set apparently
+                original_file.delete_local_file()
+            except:
+                pass
 
     # Whether or not we can delete all of these original files, we
     # know the associations need to go.
@@ -98,7 +120,10 @@ def purge_experiment(accession: str) -> None:
 
     ## DownloaderJobs
     og_file_dj_assocs = DownloaderJobOriginalFileAssociation.objects.filter(original_file_id__in=uniquely_assoced_og_file_ids)
-    downloader_jobs = DownloaderJob.objects.filter(id__in=og_file_dj_assocs.values('downloader_job_id'))
+    # Important to order by id, so the jobs that didn't retry anything are deleted first.
+    downloader_jobs = DownloaderJob.objects.filter(
+        id__in=og_file_dj_assocs.values('downloader_job_id')
+    ).order_by("id")
 
     for downloader_job in downloader_jobs:
         # We know this job is associated with files we can
@@ -109,7 +134,7 @@ def purge_experiment(accession: str) -> None:
             original_file_id__in=uniquely_assoced_og_file_ids
         )
         if extra_assocs.count() == 0:
-            downloader_job.delete()
+            delete_job_and_retries(downloader_job)
 
     # Whether or not we can delete all of these jobs, we
     # know the associations need to go.
@@ -118,7 +143,10 @@ def purge_experiment(accession: str) -> None:
 
     ## ProcessorJobs
     og_file_pj_assocs = ProcessorJobOriginalFileAssociation.objects.filter(original_file_id__in=uniquely_assoced_og_file_ids)
-    processor_jobs = ProcessorJob.objects.filter(id__in=og_file_pj_assocs.values('processor_job_id'))
+    # Important to order by id, so the jobs that didn't retry anything are deleted first.
+    processor_jobs = ProcessorJob.objects.filter(
+        id__in=og_file_pj_assocs.values('processor_job_id')
+    ).order_by("id")
 
     for processor_job in processor_jobs:
         # We know this job is associated with files we can
@@ -129,7 +157,7 @@ def purge_experiment(accession: str) -> None:
             original_file_id__in=uniquely_assoced_og_file_ids
         )
         if extra_assocs.count() == 0:
-            processor_job.delete()
+            delete_job_and_retries(processor_job)
 
     # Whether or not we can delete all of these jobs, we
     # know the associations need to go.
@@ -167,7 +195,8 @@ class Command(BaseCommand):
 
         if not options["force"]:
             print('-------------------------------------------------------------------------------')
-            print('This will delete all objects in the database. Are you sure you want to do this?')
+            print('This will delete all objects in the database related to these accessions.'
+                  ' Are you sure you want to do this?')
             answer = input('You must type "yes", all other input will be ignored: ')
 
             if answer != "yes":
@@ -193,7 +222,7 @@ class Command(BaseCommand):
 
             with open(filepath) as file:
                 for accession in file:
-                    accessions.append(accession)
+                    accessions.append(accession.strip())
         else:
             accessions.append(options['accession'])
 

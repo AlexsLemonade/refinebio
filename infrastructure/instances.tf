@@ -237,6 +237,23 @@ data "template_file" "nomad_client_script_smusher" {
   }
 }
 
+data "template_file" "nomad_client_script_smasher_smusher" {
+  template = "${file("nomad-configuration/client-smasher-instance-user-data.tpl.sh")}"
+
+  vars {
+    install_nomad_script = "${data.local_file.install_nomad_script.content}"
+    nomad_client_config = "${data.template_file.nomad_client_config.rendered}"
+    user = "${var.user}"
+    stage = "${var.stage}"
+    region = "${var.region}"
+    database_host = "${aws_db_instance.postgres_db.address}"
+    database_port = "${var.database_hidden_port}"
+    database_user = "${var.database_user}"
+    database_password = "${var.database_password}"
+    database_name = "${aws_db_instance.postgres_db.name}"
+  }
+}
+
 ##
 # Autoscaling
 ##
@@ -251,8 +268,8 @@ resource "aws_launch_configuration" "auto_client_configuration" {
     security_groups = ["${aws_security_group.data_refinery_worker.id}"]
     iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
     depends_on = [
-              "aws_internet_gateway.data_refinery", 
-              "aws_instance.nomad_server_1", 
+              "aws_internet_gateway.data_refinery",
+              "aws_instance.nomad_server_1",
               "aws_ebs_volume.data_refinery_ebs",
               "aws_instance.pg_bouncer"
     ]
@@ -275,10 +292,10 @@ resource "aws_launch_configuration" "auto_client_configuration" {
 resource "aws_autoscaling_group" "clients" {
     name = "asg-clients-${var.user}-${var.stage}"
     max_size = "${var.max_clients}"
-    min_size = "0"
+    min_size = "1" # So the smasher always has an instance to run smasher jobs with.
     health_check_grace_period = 300
     health_check_type = "EC2"
-    desired_capacity = 1
+    default_cooldown = 0
 
     # Super important flag. Makes it so that terraform doesn't fail
     # every time because it can't acquire spot instances fast enough

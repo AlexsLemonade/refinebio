@@ -6,12 +6,13 @@ RUN add-apt-repository ppa:apt-fast/stable
 RUN apt-get update -qq
 RUN apt-get -y install apt-fast
 
+COPY workers/CRAN.gpg .
 RUN \
   apt-fast update -qq && \
   apt-fast install -y lsb-release && \
   echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
-  apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 && \
+  apt-key add CRAN.gpg && \
   apt-fast update -qq && \
   apt-fast install -y \
   ed \
@@ -31,6 +32,7 @@ RUN \
   curl \
   wget && \
   rm -rf /var/lib/apt/lists/*
+RUN rm CRAN.gpg
 
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
@@ -57,6 +59,10 @@ RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
 
 # Clear our the pip3 cache
 RUN rm -rf /root/.cache
+
+ARG SYSTEM_VERSION
+
+ENV SYSTEM_VERSION $SYSTEM_VERSION
 
 USER user
 

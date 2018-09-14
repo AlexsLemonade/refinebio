@@ -86,6 +86,9 @@ def download_transcriptome(job_id: int) -> None:
         dl_file_path = LOCAL_ROOT_DIR + '/' + filename_species + '/' + original_file.source_filename
         job = _download_file(original_file.source_url, dl_file_path, job)
 
+        if not job.success:
+            break
+
         original_file.is_downloaded = True
         original_file.absolute_file_path = dl_file_path
         original_file.filename = original_file.source_filename
@@ -100,7 +103,8 @@ def download_transcriptome(job_id: int) -> None:
         logger.debug("Files downloaded successfully.",
                      downloader_job=job_id)
 
-    create_long_and_short_processor_jobs(files_to_process)
+        create_long_and_short_processor_jobs(files_to_process)
+
     utils.end_downloader_job(job, job.success)
 
 def create_long_and_short_processor_jobs(files_to_process):
