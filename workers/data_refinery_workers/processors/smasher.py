@@ -49,13 +49,13 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     # `key` can either be the species name or experiment accession.
     for key, samples in job_context["samples"].items():
-        samples_for_key = []
+        smashable_files = []
         for sample in samples:
-            samples_for_key = samples_for_key + \
+            smashable_files = smashable_files + \
                 [sample.get_most_recent_smashable_result_file(only_raw=job_context.get('only_raw', False))]
-        samples_for_key = list(set(samples_for_key))
-        job_context['input_files'][key] = samples_for_key
-        all_sample_files = all_sample_files + samples_for_key
+        smashable_files = list(set(smashable_files))
+        job_context['input_files'][key] = smashable_files
+        all_sample_files = all_sample_files + smashable_files
 
     if all_sample_files == []:
         error_message = "Couldn't get any files to smash for Smash job!!"
@@ -190,19 +190,15 @@ def _smash(job_context: Dict) -> Dict:
                     all_frames.append(data)
                     num_samples = num_samples + 1
 
-                    # Delete before archiving the work dir
-                    os.remove(computed_file_path)
-
                 except Exception as e:
                     unsmashable_files.append(computed_file_path)
                     logger.exception("Unable to smash file",
                         file=computed_file_path,
                         dataset_id=job_context['dataset'].id,
                         )
-
+                finally:
                     # Delete before archiving the work dir
                     os.remove(computed_file_path)
-                    continue
 
             job_context['all_frames'] = all_frames
 
