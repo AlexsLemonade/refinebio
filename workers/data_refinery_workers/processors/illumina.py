@@ -41,7 +41,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context so everything is prepared for processing.
     """
     # All files for the job are in the same directory.
-    job_context["work_dir"] = LOCAL_ROOT_DIR + "/" + "processor_job_" + str(job_context["job_id"])
+    job_context["work_dir"] = LOCAL_ROOT_DIR + "/" + "processor_job_" + str(job_context["job_id"]) + "/"
     os.makedirs(job_context["work_dir"], exist_ok=True)
 
     original_file = job_context["original_files"][0]
@@ -60,6 +60,12 @@ def _prepare_files(job_context: Dict) -> Dict:
                 line.strip() != '' and \
                 line != '\n' and \
                 '\t' in line and \
+                line[0:3].upper() != "GSM" and \
+                line[0] != "'" and \
+                line[0] != '"' and \
+                line[0] != '!' and \
+                line[0] != '/' and \
+                line[0] != '<' and \
                 line[0] != '\t':
                     file_output.write(line)
 
@@ -106,7 +112,7 @@ def _detect_columns(job_context: Dict) -> Dict:
             predicted_header = 1
 
         # First the probe ID column
-        if headers[predicted_header].upper() not in ['ID_REF', 'PROBE_ID', "IDREF", "PROBEID"]:
+        if headers[predicted_header].upper() not in ["ID_REF", "PROBE_ID", "IDREF", "PROBEID", "REF_ID", "REFID", "IDPROBE", "ID_PROBE"]:
             job_context["job"].failure_reason = ("Could not find any ID column in headers "
                                 + str(headers) + " for file " + job_context["input_file_path"])
             job_context["success"] = False
