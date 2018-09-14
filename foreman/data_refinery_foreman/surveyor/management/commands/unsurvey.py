@@ -88,7 +88,7 @@ def purge_experiment(accession: str) -> None:
                 computed_file.delete_s3_file()
 
             # Delete the database records for the ComputedFile
-            SampleComputedFileAssociation.objects.filter(comptued_file__in=computed_files).delete()
+            SampleComputedFileAssociation.objects.filter(computed_file__in=computed_files).delete()
             computed_files.delete()
 
     # Whether or not we can delete all of these results, we know the
