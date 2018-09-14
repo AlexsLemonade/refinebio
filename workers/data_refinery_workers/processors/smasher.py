@@ -314,12 +314,10 @@ def _smash(job_context: Dict) -> Dict:
 
             # Write to temp file with dataset UUID in filename.
             subdir = ''
-            if job_context['dataset'].aggregate_by == "SPECIES":
+            if job_context['dataset'].aggregate_by in ["SPECIES", "EXPERIMENT"]:
                 subdir = key
             elif job_context['dataset'].aggregate_by == "ALL":
                 subdir = "ALL"
-            elif job_context['dataset'].aggregate_by == "EXPERIMENT":
-                subdir = key
 
             outfile_dir = smash_path + key + "/"
             os.makedirs(outfile_dir, exist_ok=True)
