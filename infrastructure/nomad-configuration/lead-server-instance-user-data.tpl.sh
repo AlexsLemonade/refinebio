@@ -63,6 +63,32 @@ EOF
 chmod +x install_nomad.sh
 ./install_nomad.sh
 
+# Don't install our graphite/statsd container because it bogs down the
+# instance a lot.  After killing graphite on a long-running Nomad
+# instance, Nomad HTTP responses went from ~5 seconds to <1 second.
+# Based on: https://github.com/graphite-project/docker-graphite-statsd
+
+# Graphite has no auto-deletion, see: https://stackoverflow.com/a/19899267/1135467
+# Overwrites defeault set here: https://github.com/graphite-project/docker-graphite-statsd/blob/master/conf/opt/graphite/conf/storage-schemas.conf
+# mkdir graphite_configs
+# cat <<"EOF" > graphite_configs/storage-schemas.conf
+# [everything_max_1d]
+# pattern = .*
+# retentions = 60s:1d
+# EOF
+
+# # Actually run Graphite with our new config
+# docker run -d\
+#  --name graphite\
+#  --restart=always\
+#  -v /home/ubuntu/graphite_configs/storage-schemas.conf:/opt/graphite/conf/storage-schemas.conf \
+#  -p 80:80\
+#  -p 2003-2004:2003-2004\
+#  -p 2023-2024:2023-2024\
+#  -p 8125:8125/udp\
+#  -p 8126:8126\
+#  graphiteapp/graphite-statsd
+
 # Start the Nomad agent in server mode.
 nohup nomad agent -config server.hcl > /tmp/nomad_server.log &
 
