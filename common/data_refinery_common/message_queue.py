@@ -30,7 +30,7 @@ def send_job(job_type: Enum, job) -> bool:
     """
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
 
     if job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_LONG \
        or job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_SHORT:
