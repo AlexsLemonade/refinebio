@@ -8,7 +8,7 @@ certifi==2017.11.5        # via requests
 chardet==3.0.4            # via requests
 coverage==4.5.1
 django==2.0
-geoparse==1.0.5
+geoparse==1.1.0
 idna==2.6                 # via requests
 numpy==1.14.2             # via geoparse, pandas
 pandas==0.22.0            # via geoparse
