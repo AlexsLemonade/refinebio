@@ -151,7 +151,7 @@ class Sample(models.Model):
         """ Get all of the ComputedFile objects associated with this Sample """
         return self.computed_files.all()
 
-    def get_most_recent_smashable_result_file(self, only_raw=False) -> ComputedFile:
+    def get_most_recent_smashable_result_file(self, only_raw=False):
         """ Get the most recent of the ComputedFile objects associated with this Sample """
         if only_raw:
             return self.computed_files.filter(
