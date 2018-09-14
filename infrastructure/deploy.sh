@@ -146,9 +146,13 @@ if [[ $(nomad status) != "No running jobs" ]]; then
     do
         # '|| true' so that if a job is garbage collected before we can remove it the error
         # doesn't interrupt our deploy.
-        nomad stop -purge -detach $job > /dev/null || true
+        nomad stop -purge -detach $job > /dev/null || true &
     done
 fi
+
+# Wait to make sure that all base jobs are killed so no new jobs can
+# be queued while we kill the parameterized Nomad jobs.
+wait $(jobs -p)
 
 # Kill parameterized Nomad Jobs so no jobs will be running when we
 # apply migrations.
@@ -160,10 +164,13 @@ if [[ $(nomad status) != "No running jobs" ]]; then
         if [ $job != "ID" ]; then
             # '|| true' so that if a job is garbage collected before we can remove it the error
             # doesn't interrupt our deploy.
-            nomad stop -purge -detach $job > /dev/null || true
+            nomad stop -purge -detach $job > /dev/null || true &
         fi
     done
 fi
+
+# Wait for these jobs to all die.
+wait $(jobs -p)
 
 # Make sure that prod_env is empty since we are only appending to it.
 # prod_env is a temporary file we use to pass environment variables to

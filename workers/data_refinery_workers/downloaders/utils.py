@@ -18,10 +18,11 @@ from data_refinery_common.models import (
     Sample,
 )
 from data_refinery_common.utils import get_instance_id
-from data_refinery_workers._version import __version__
 
 
 logger = get_and_configure_logger(__name__)
+# Let this fail if SYSTEM_VERSION is unset.
+SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
 # TODO: extend this list.
 BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
 
@@ -45,7 +46,7 @@ def start_job(job_id: int) -> DownloaderJob:
         raise Exception("downloaders.start_job called on a job that has already been started!")
 
     job.worker_id = get_instance_id()
-    job.worker_version = __version__
+    job.worker_version = SYSTEM_VERSION
     job.start_time = timezone.now()
     job.save()
 
