@@ -1,5 +1,6 @@
 import hashlib
 import os
+import random
 import shutil
 import numpy
 import scipy.stats
@@ -89,6 +90,53 @@ def prepare_job():
 
     return pj, [og_file, og_file2]
 
+def prepare_dotsra_job(filename="ERR1562482.sra"):
+    pj = ProcessorJob()
+    pj.pipeline_applied = "SALMON"
+    pj.id = random.randint(111, 999999)
+    pj.save()
+
+    c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+
+    samp = Sample()
+    samp.accession_code = "SALMON" # So the test files go to the right place
+    samp.organism = c_elegans
+    samp.save()
+
+    computational_result = ComputationalResult(processor=utils.find_processor('SALMON_QUANT'))
+    computational_result.save()
+
+    organism_index = OrganismIndex()
+    organism_index.index_type = "TRANSCRIPTOME_SHORT"
+    organism_index.organism = c_elegans
+    organism_index.result = computational_result
+    organism_index.absolute_directory_path = "/home/user/data_store/processed/TEST/TRANSCRIPTOME_INDEX/index"
+    organism_index.save()
+
+    comp_file = ComputedFile()
+    comp_file.absolute_file_path = "/home/user/data_store/processed/TEST/TRANSCRIPTOME_INDEX/Caenorhabditis_elegans_short_1527089586.tar.gz"
+    comp_file.result = computational_result
+    comp_file.calculate_size()
+    comp_file.calculate_sha1()
+    comp_file.save()
+
+    og_file = OriginalFile()
+    og_file.source_filename = filename
+    og_file.filename = filename
+    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/" + filename
+    og_file.save()
+
+    og_file_samp_assoc = OriginalFileSampleAssociation()
+    og_file_samp_assoc.original_file = og_file
+    og_file_samp_assoc.sample = samp
+    og_file_samp_assoc.save()
+
+    assoc1 = ProcessorJobOriginalFileAssociation()
+    assoc1.original_file = og_file
+    assoc1.processor_job = pj
+    assoc1.save()
+
+    return pj, [og_file]
 
 def identical_checksum(filename1, filename2):
     """Confirm that the two files have identical checksum."""
@@ -131,6 +179,34 @@ class SalmonTestCase(TestCase):
         salmon.salmon(job.pk)
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertTrue(job.success)
+
+    @tag('salmon')
+    def test_salmon_dotsra(self):
+        """Test the whole pipeline."""
+        # Ensure any computed files from previous tests are removed.
+        try:
+            os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
+        except FileNotFoundError:
+            pass
+
+        job, files = prepare_dotsra_job()
+        job_context = salmon.salmon(job.pk)
+        job = ProcessorJob.objects.get(id=job.pk)
+        self.assertTrue(job.success)
+        shutil.rmtree(job_context["work_dir"])
+
+    @tag('salmon')
+    def test_salmon_dotsra_bad(self):
+        try:
+            os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
+        except FileNotFoundError:
+            pass
+
+        job, files = prepare_dotsra_job("i-dont-exist.sra")
+        job_context = salmon.salmon(job.pk)
+        job = ProcessorJob.objects.get(id=job.pk)
+        self.assertFalse(job.success)
+        shutil.rmtree(job_context["work_dir"])
 
     def chk_salmon_quant(self, job_context, sample_dir):
         """Helper function that calls salmon._run_salmon and confirms
@@ -309,8 +385,11 @@ class SalmonTestCase(TestCase):
             'pipeline': Pipeline(name="Salmon"),
             'qc_directory': "/home/user/data_store/raw/TEST/SALMON/qc",
             'original_files': og_files,
+            'input_file_path': og_files[0],
+            'input_file_path_2': og_files[1],
             "computed_files": [],
             'success': True
+
         }
 
         # Ensure clean testdir
@@ -411,7 +490,6 @@ class SalmonToolsTestCase(TestCase):
         output_file = job_context['salmontools_directory'] + 'unmapped_by_salmon.fa'
         expected_output_file = self.test_dir + 'expected_single_output/unmapped_by_salmon.fa'
         self.assertTrue(identical_checksum(output_file, expected_output_file))
-
 
 class DetermineIndexLengthTestCase(TestCase):
     """Test salmon._determine_index_length function, which gets the salmon index length of a sample.
