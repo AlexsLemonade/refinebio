@@ -58,7 +58,8 @@ class Sample(models.Model):
 
     class Meta:
         db_table = "samples"
-        base_manager_name = 'public_objects'
+        base_manager_name = "public_objects"
+        get_latest_by = "created_at"
 
     def __str__(self):
         return self.accession_code
@@ -150,17 +151,17 @@ class Sample(models.Model):
         """ Get all of the ComputedFile objects associated with this Sample """
         return self.computed_files.all()
 
-    def get_smashable_result_files(self):
-        """ Get all of the ComputedFile objects associated with this Sample """
-        return self.computed_files.filter(
-                        is_smashable=True
-                    )
-
-    def get_most_recent_smashable_result_file(self):
-        """ Get all of the ComputedFile objects associated with this Sample """
-        return self.computed_files.filter(
-                        is_smashable=True
-                    ).first()
+    def get_most_recent_smashable_result_file(self, only_raw=False) -> ComputedFile:
+        """ Get the most recent of the ComputedFile objects associated with this Sample """
+        if only_raw:
+            return self.computed_files.filter(
+                            is_smashable=True,
+                            has_raw=True
+                        ).latest()
+        else:
+            return self.computed_files.filter(
+                            is_smashable=True
+                        ).latest()
 
     @property
     def pipelines(self):
@@ -636,6 +637,7 @@ class ComputedFile(models.Model):
 
     class Meta:
         db_table = "computed_files"
+        get_latest_by = "created_at"
 
     def __str__(self):
         return "ComputedFile: " + str(self.filename)

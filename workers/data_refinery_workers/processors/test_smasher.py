@@ -226,11 +226,79 @@ class SmasherTestCase(TestCase):
             zf = zipfile.ZipFile(final_context['output_file'])
             namelist = zf.namelist()
 
-            self.assertTrue('GSE51081_metadata.tsv' in namelist)
+            self.assertTrue('GSE51081/GSE51081_metadata.tsv' in namelist)
             self.assertTrue('metadata.json' in namelist)
             self.assertTrue('README.md' in namelist)
             self.assertTrue('LICENSE.TXT' in namelist)
-            self.assertTrue('GSE51081.tsv' in namelist)
+            self.assertTrue('GSE51081/GSE51081.tsv' in namelist)
+
+            os.remove(final_context['output_file'])
+            job.start_time = None
+            job.end_time = None
+            job.save()
+
+        for scale_type in ['MINMAX', 'STANDARD']:
+            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+            dataset.aggregate_by = 'SPECIES'
+            dataset.scale_by = scale_type
+            dataset.save()
+
+            print("###")
+            print("# " + scale_type)
+            print('###')
+
+            final_context = smasher.smash(job.pk, upload=False)
+            final_frame = final_context['final_frame']
+
+            # Sanity test that these frames can be computed upon
+            final_frame.mean(axis=1)
+            final_frame.min(axis=1)
+            final_frame.max(axis=1)
+            final_frame.std(axis=1)
+            final_frame.median(axis=1)
+
+            zf = zipfile.ZipFile(final_context['output_file'])
+            namelist = zf.namelist()
+
+            self.assertTrue('HOMO_SAPIENS/HOMO_SAPIENS_metadata.tsv' in namelist)
+            self.assertTrue('metadata.json' in namelist)
+            self.assertTrue('README.md' in namelist)
+            self.assertTrue('LICENSE.TXT' in namelist)
+            self.assertTrue('HOMO_SAPIENS/HOMO_SAPIENS.tsv' in namelist)
+
+            os.remove(final_context['output_file'])
+            job.start_time = None
+            job.end_time = None
+            job.save()
+
+        for scale_type in ['MINMAX', 'STANDARD']:
+            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+            dataset.aggregate_by = 'ALL'
+            dataset.scale_by = scale_type
+            dataset.save()
+
+            print("###")
+            print("# " + scale_type)
+            print('###')
+
+            final_context = smasher.smash(job.pk, upload=False)
+            final_frame = final_context['final_frame']
+
+            # Sanity test that these frames can be computed upon
+            final_frame.mean(axis=1)
+            final_frame.min(axis=1)
+            final_frame.max(axis=1)
+            final_frame.std(axis=1)
+            final_frame.median(axis=1)
+
+            zf = zipfile.ZipFile(final_context['output_file'])
+            namelist = zf.namelist()
+
+            self.assertTrue('ALL/ALL_metadata.tsv' in namelist)
+            self.assertTrue('metadata.json' in namelist)
+            self.assertTrue('README.md' in namelist)
+            self.assertTrue('LICENSE.TXT' in namelist)
+            self.assertTrue('ALL/ALL.tsv' in namelist)
 
             os.remove(final_context['output_file'])
             job.start_time = None

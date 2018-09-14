@@ -49,12 +49,13 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     # `key` can either be the species name or experiment accession.
     for key, samples in job_context["samples"].items():
-        samples_for_key = []
+        smashable_files = []
         for sample in samples:
-            samples_for_key = samples_for_key + list(sample.get_smashable_result_files())
-        samples_for_key = list(set(samples_for_key))
-        job_context['input_files'][key] = samples_for_key
-        all_sample_files = all_sample_files + samples_for_key
+            smashable_files = smashable_files + \
+                [sample.get_most_recent_smashable_result_file(only_raw=job_context.get('only_raw', False))]
+        smashable_files = list(set(smashable_files))
+        job_context['input_files'][key] = smashable_files
+        all_sample_files = all_sample_files + smashable_files
 
     if all_sample_files == []:
         error_message = "Couldn't get any files to smash for Smash job!!"
@@ -195,7 +196,9 @@ def _smash(job_context: Dict) -> Dict:
                         file=computed_file_path,
                         dataset_id=job_context['dataset'].id,
                         )
-                    continue
+                finally:
+                    # Delete before archiving the work dir
+                    os.remove(computed_file_path)
 
             job_context['all_frames'] = all_frames
 
@@ -306,7 +309,15 @@ def _smash(job_context: Dict) -> Dict:
             job_context['final_frame'] = untransposed
 
             # Write to temp file with dataset UUID in filename.
-            outfile = smash_path + key + ".tsv"
+            subdir = ''
+            if job_context['dataset'].aggregate_by in ["SPECIES", "EXPERIMENT"]:
+                subdir = key
+            elif job_context['dataset'].aggregate_by == "ALL":
+                subdir = "ALL"
+
+            outfile_dir = smash_path + key + "/"
+            os.makedirs(outfile_dir, exist_ok=True)
+            outfile = outfile_dir + key + ".tsv"
             untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
 
         # Copy LICENSE.txt and README.md files
@@ -338,7 +349,7 @@ def _smash(job_context: Dict) -> Dict:
         # Metadata to TSV
         if job_context["dataset"].aggregate_by == "EXPERIMENT":
             for title, keys in metadata['experiments'].items():
-                with open(smash_path + title + '_metadata.tsv', 'w') as output_file:
+                with open(smash_path + title + '/' + title + '_metadata.tsv', 'w') as output_file:
                     sample_titles = keys['sample_titles']
                     keys = list(metadata['samples'][sample_titles[0]].keys()) + ['sample_id']
                     dw = csv.DictWriter(output_file, keys, delimiter='\t')
@@ -349,8 +360,28 @@ def _smash(job_context: Dict) -> Dict:
                         else:
                             value['sample_id'] = key
                             dw.writerow(value)
+        elif job_context["dataset"].aggregate_by == "SPECIES":
+            for species, input_files in job_context['input_files'].items():
+                species_samples = []
+                sample_titles = []
+                for sample_id, metadata in metadata['samples'].items():
+                    if metadata['organism'] == species:
+                        metadata['sample_id'] = sample_id
+                        species_samples.append(metadata)
+                        sample_titles.append(metadata['title'])
+
+                species_dir = smash_path + species + '/'
+                os.makedirs(species_dir, exist_ok=True)
+                with open(species_dir + species + '_metadata.tsv', 'w') as output_file:
+                    keys = list(species_samples[0].keys()) + ['sample_id']
+                    dw = csv.DictWriter(output_file, keys, delimiter='\t')
+                    dw.writeheader()
+                    for sample in species_samples:
+                        dw.writerow(sample)
         else:
-            with open(smash_path + 'metadata.tsv', 'w') as output_file:
+            all_dir = smash_path + "ALL/"
+            os.makedirs(all_dir, exist_ok=True)
+            with open(all_dir + 'ALL_metadata.tsv', 'w') as output_file:
                 sample_ids = list(metadata['samples'].keys())
                 keys = list(metadata['samples'][sample_ids[0]].keys()) + ['sample_id']
                 dw = csv.DictWriter(output_file, keys, delimiter='\t')
@@ -453,13 +484,9 @@ def _notify(job_context: Dict) -> Dict:
             CHARSET = "UTF-8"
 
             if job_context['job'].failure_reason not in ['', None]:
-                SUBJECT = "Your refine.bio Dataset is Ready!"
-                BODY_TEXT = "Hot off the presses:\n\n" + job_context["result_url"] + "\n\nLove!,\nThe refine.bio Team"
-                BODY_HTML = "Hot off the presses:<br /><br />" + job_context["result_url"] + "<br /><br />Love!,<br />The refine.bio Team"
-            else:
                 SUBJECT = "There was a problem processing your refine.bio dataset :("
                 BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(dataset.id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
-                BODY_HTML = BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: <br /><br />" + job_context['job'].failure_reason + "<br />Dataset: " + str(dataset.id) + "<br /> We have been notified and are looking into the problem. <br /><br />Sorry!"
+                FORMATTED_HTML = "We tried but were unable to process your requested dataset. Error was: <br /><br />" + job_context['job'].failure_reason + "<br />Dataset: " + str(dataset.id) + "<br /> We have been notified and are looking into the problem. <br /><br />Sorry!"
                 job_context['success'] = False
 
             # Try to send the email.
