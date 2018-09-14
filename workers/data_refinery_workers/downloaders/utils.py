@@ -81,7 +81,6 @@ def end_downloader_job(job: DownloaderJob, success: bool):
     job.end_time = timezone.now()
     job.save()
 
-
 def delete_if_blacklisted(original_file: OriginalFile) -> OriginalFile:
     extension = original_file.filename.split(".")[-1]
     if extension.lower() in BLACKLISTED_EXTENSIONS:
@@ -156,9 +155,10 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
         logger.info("No valid processor pipeline found to apply to sample.",
                     sample=sample_object.id,
                     original_file=original_files[0].id)
-        original_file.delete_local_file()
-        original_file.is_downloaded = False
-        original_file.save()
+        for original_file in original_files:
+            original_file.delete_local_file()
+            original_file.is_downloaded = False
+            original_file.save()
     else:
         processor_job = ProcessorJob()
         processor_job.pipeline_applied = pipeline_to_apply.value
