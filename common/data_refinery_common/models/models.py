@@ -628,6 +628,12 @@ class OriginalFile(models.Model):
             os.remove(self.absolute_file_path)
         except OSError:
             pass
+        except TypeError:
+            pass
+        except Exception as e:
+            logger.exception("Unexpected delete file exception.",
+                absolute_file_path=self.absolute_file_path
+            )
         self.is_downloaded = False
         self.save()
 
@@ -769,6 +775,12 @@ class ComputedFile(models.Model):
             os.remove(self.absolute_file_path)
         except OSError:
             pass
+        except TypeError:
+            pass
+        except Exception as e:
+            logger.exception("Unexpected delete file exception.",
+                absolute_file_path=self.absolute_file_path
+            )
 
     def delete_s3_file(self, force=False):
         # If we're not running in the cloud then we shouldn't try to
