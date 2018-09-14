@@ -17,7 +17,12 @@ logger = get_and_configure_logger(__name__)
 
 def delete_job_and_retries(job) -> None:
     """Deletes a job and any jobs that retried it."""
-    retried_job = job.retried_job
+    try:
+        retried_job = job.retried_job
+    except:
+        # I'm not sure why this isn't safe. It might be that we're
+        # somehow able to delete the job this is referencing.
+        retried_job = None
 
     try:
         job.delete()
