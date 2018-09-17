@@ -77,22 +77,6 @@ if [[ -z $tag || $tag == "salmon" ]]; then
     rm -rf $volume_directory/tximport_test/
     git clone https://github.com/dongbohu/tximport_test.git $volume_directory/tximport_test
 
-    # Make sure test Transcriptome Index is downloaded from S3 for salmon tests.
-    index_dir="$volume_directory/processed/TEST/TRANSCRIPTOME_INDEX"
-    index_tarball="Caenorhabditis_elegans_short_1527089586.tar.gz"
-    gz_index_path="$index_dir/$index_tarball"
-
-    # The tarball gets extracted to a directory named 'index', so
-    # check to see if it's there already.
-    if [ ! -e "$index_dir/index" ]; then
-        mkdir -p $index_dir
-        echo "Downloading Salmon index for Salmon tests."
-        wget -q -O $gz_index_path \
-             "$test_data_repo/$index_tarball"
-        tar -xzf $gz_index_path -C "$index_dir"
-        rm $gz_index_path
-    fi
-
     # Make sure data for Salmon test is downloaded from S3.
     rna_seq_test_raw_dir="$volume_directory/raw/TEST/SALMON"
     read_1_name="ERR1562482_1.fastq.gz"
