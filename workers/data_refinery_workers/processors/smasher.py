@@ -51,11 +51,15 @@ def _prepare_files(job_context: Dict) -> Dict:
     for key, samples in job_context["samples"].items():
         smashable_files = []
         for sample in samples:
-            smashable_files = smashable_files + \
-                [sample.get_most_recent_smashable_result_file()]
+            smashable_file = sample.get_most_recent_smashable_result_file()
+            if smashable_file is not None:
+                smashable_files = smashable_files + [smashable_file]
         smashable_files = list(set(smashable_files))
         job_context['input_files'][key] = smashable_files
         all_sample_files = all_sample_files + smashable_files
+
+    # Filter empty results. This shouldn't get here, but it's possible, so we filter just in case it does.
+    all_sample_files = [sf for sf in all_sample_files if sf is not None]
 
     if all_sample_files == []:
         error_message = "Couldn't get any files to smash for Smash job!!"
@@ -137,6 +141,13 @@ def _smash(job_context: Dict) -> Dict:
 
                     # Make sure the index type is correct
                     data.index = data.index.map(str)
+
+                    if len(data.columns) > 1:
+                        logger.info("Found a frame with more than 1 columns - this shouldn't happen!",
+                            computed_file_path=computed_file_path,
+                            computed_file_id=computed_file.id
+                            )
+                        continue
 
                     # via https://github.com/AlexsLemonade/refinebio/issues/330:
                     #   aggregating by experiment -> return untransformed output from tximport
@@ -226,7 +237,8 @@ def _smash(job_context: Dict) -> Dict:
                     logger.warning("Column repeated for smash job!",
                                    input_files=str(input_files),
                                    dataset_id=job_context["dataset"].id,
-                                   processor_job_id=job_context["job"].id
+                                   processor_job_id=job_context["job"].id,
+                                   column=column
                     )
                     continue
 

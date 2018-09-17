@@ -153,9 +153,13 @@ class Sample(models.Model):
 
     def get_most_recent_smashable_result_file(self):
         """ Get the most recent of the ComputedFile objects associated with this Sample """
-        return self.computed_files.filter(
-                        is_smashable=True
-                    ).latest()
+        try:
+            return self.computed_files.filter(
+                            is_smashable=True
+                        ).latest()
+        except Exception as e:
+            # This sample has no smashable files yet.
+            return None
 
     @property
     def pipelines(self):
