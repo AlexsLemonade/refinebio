@@ -283,6 +283,35 @@ def _smash(job_context: Dict) -> Dict:
                                                             copy=True
                                                         )
 
+                        # Verify this QN, related: https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
+                        set_seed = rlang("set.seed")
+                        combn = rlang("combn")
+                        ncol = rlang("ncol")
+                        sample = rlang("sample")
+                        ks_test = rlang("ks.test")
+
+                        set_seed(123)
+                        combos = combn(ncol(reso), 2)
+
+                        # adapted from
+                        # https://stackoverflow.com/questions/9661469/r-t-test-over-all-columns
+                        # apply KS test to randomly selected pairs of columns (samples)
+
+                        # TODO: Improve this
+                        for i in range(1,3):
+                            value1 = combos.rx(1, i)[0]
+                            value2 = combos.rx(2, i)[0]
+
+                            test_a = reso.rx(True, value1)
+                            test_b = reso.rx(True, value2)
+
+                            ks_res = ks_test(test_a, test_b)
+                            statistic = ks_res.rx('statistic')[0][0]
+                            pvalue = ks_res.rx('p.value')[0][0]
+
+                            if statistic > 0.001 or pvalue != 1.0:
+                                raise Exception("Failed Kolmogorov–Smirnov test!")
+
                         # And finally convert back to Pandas
                         ar = np.array(reso)
                         new_merged = pd.DataFrame(ar, columns=merged.columns, index=merged.index)
