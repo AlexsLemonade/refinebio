@@ -52,7 +52,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         smashable_files = []
         for sample in samples:
             smashable_files = smashable_files + \
-                [sample.get_most_recent_smashable_result_file(only_raw=job_context.get('only_raw', False))]
+                [sample.get_most_recent_smashable_result_file()]
         smashable_files = list(set(smashable_files))
         job_context['input_files'][key] = smashable_files
         all_sample_files = all_sample_files + smashable_files

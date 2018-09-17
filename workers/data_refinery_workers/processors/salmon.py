@@ -104,6 +104,15 @@ def _extract_sra(job_context: Dict) -> Dict:
     if ".sra" not in job_context["input_file_path"]:
         return job_context
 
+    if not os.path.exists(job_context["input_file_path"]):
+        logger.error("Was told to SRA-extract a non-existent file - why did this happen?",
+            organism=job_context["input_file_path"],
+            processor_job=job_context["job_id"]
+        )
+        job_context["job"].failure_reason = "Missing SRA file: " + str(job_context["input_file_path"])
+        job_context["success"] = False
+        return job_context
+
     time_start = timezone.now()
     formatted_command = "fasterq-dump " + job_context["input_file_path"] + " -O " + job_context['work_dir']
     logger.debug("Running fasterq-dump using the following shell command: %s",
