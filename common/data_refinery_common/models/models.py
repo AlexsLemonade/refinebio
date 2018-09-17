@@ -91,7 +91,7 @@ class Sample(models.Model):
     platform_name = models.CharField(max_length=256, blank=True)
     technology = models.CharField(max_length=256, blank=True) # MICROARRAY, RNA-SEQ
     manufacturer = models.CharField(max_length=256, blank=True)
-    protocol_info = JSONField(default={})
+    protocol_info = JSONField(default=[])
 
     # Scientific Properties
     sex = models.CharField(max_length=255, blank=True)
