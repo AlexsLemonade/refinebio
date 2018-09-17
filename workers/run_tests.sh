@@ -62,7 +62,7 @@ test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 
 if [[ -z $tag || $tag == "salmon" ]]; then
     # Download "salmon quant" test data
-    if [ ! -e $volume_directory/salmon_tests ]; then
+    if [[ ! -e $volume_directory/salmon_tests || ! -e $volume_directory/salmon_tests/new ]]; then
         echo "Downloading 'salmon quant' test data..."
         wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests.tar.gz
         tar xzf $volume_directory/salmon_tests.tar.gz -C $volume_directory
@@ -90,6 +90,7 @@ if [[ -z $tag || $tag == "salmon" ]]; then
         wget -q -O $gz_index_path \
              "$test_data_repo/$index_tarball"
         tar -xzf $gz_index_path -C "$index_dir"
+        rm $gz_index_path
     fi
 
     # Make sure data for Salmon test is downloaded from S3.
