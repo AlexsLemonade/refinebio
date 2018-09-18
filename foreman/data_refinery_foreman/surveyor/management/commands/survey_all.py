@@ -87,8 +87,3 @@ class Command(BaseCommand):
                 run_surveyor_for_accession(accession)
             except Exception as e:
                 logger.exception(e)
-
-        try:
-            run_surveyor_for_accession(options["accession"])
-        except Exception as e:
-            logger.exception(e)

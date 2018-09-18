@@ -85,6 +85,7 @@ class QNRefTestCase(TestCase):
 
         final_context = qn_reference.create_qn_reference(job.pk)
         self.assertTrue(final_context['success'])
+        self.assertTrue(final_context['result_verified'])
 
         self.assertTrue(os.path.exists(final_context['target_file']))
         self.assertEqual(os.path.getsize(final_context['target_file']), 519)

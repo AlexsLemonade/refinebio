@@ -37,8 +37,8 @@ WORKDIR /home/user
 RUN pip3 install --upgrade pip
 
 ENV R_LIBS "/usr/local/lib/R/site-library"
-COPY workers/install_affy_only.R .
-RUN Rscript install_affy_only.R
+COPY workers/install_downloader_R_only.R .
+RUN Rscript install_downloader_R_only.R
 
 # Aspera will only install as the current user.
 # Even using `su - user &&` doesn't work...
