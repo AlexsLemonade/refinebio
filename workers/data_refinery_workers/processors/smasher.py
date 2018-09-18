@@ -140,15 +140,10 @@ def _get_tsv_columns(samples_metadata):
                     else:
                         _add_annotation_column(annotation_columns, annotation_key)
 
-    # Return sorted columns. "refinebio_title" is always the first one,
-    # followed by the other refinebio columns, and annotation columns.
-    if 'refinebio_title' in refinebio_columns:
-        refinebio_columns = refinebio_columns - {'refinebio_title'}
-        sorted_refinebio_columns = ['refinebio_title'] + sorted(refinebio_columns)
-    else:
-        sorted_refinebio_columns = sorted(refinebio_columns)
-    return sorted_refinebio_columns + sorted(annotation_columns)
-
+    # Return sorted columns, in which "refinebio_title" is always the first,
+    # followed by the other refinebio columns, and annotation columns at the end.
+    refinebio_columns = refinebio_columns - {'refinebio_title'}
+    return ['refinebio_title'] + sorted(refinebio_columns) + sorted(annotation_columns)
 
 def _add_annotation_value(row_data, col_name, col_value, sample_accession_code):
     """Adds a new `col_name` key whose value is `col_value` to row_data.

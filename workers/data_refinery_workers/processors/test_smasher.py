@@ -948,7 +948,7 @@ class TsvTestCase(TestCase):
             'experiments': {
                 "E-GEOD-44719": {
                     "accession_code": "E-GEOD-44719",
-                    "sample_titles": [ "IFNa DC_LB016_IFNa" ]
+                    "sample_titles": [ "IFNa DC_LB016_IFNa", "undefined_sample" ]
                 }
             },
 
@@ -997,6 +997,7 @@ class TsvTestCase(TestCase):
                 },  # end of sample #1
 
                 "Bone.Marrow_OA_No_ST03": {  # Sample #2 is a GEO sample
+                    "refinebio_title": "Bone.Marrow_OA_No_ST03",
                     "refinebio_accession_code": "GSM1361050",
                     "refinebio_source_database": "GEO",
                     "refinebio_organism": "homo_sapiens",
@@ -1029,6 +1030,7 @@ class TsvTestCase(TestCase):
     def test_columns(self):
         columns = smasher._get_tsv_columns(self.metadata['samples'])
         self.assertEqual(len(columns), 21)
+        self.assertEqual(columns[0], 'refinebio_title')
         self.assertTrue('refinebio_accession_code' in columns)
         self.assertTrue('cell population' in columns)
         self.assertTrue('dose' in columns)
@@ -1091,8 +1093,8 @@ class TsvTestCase(TestCase):
         job_context = {
             'dataset': Dataset.objects.create(aggregate_by='SPECIES'),
             'input_files': {
-                'homo_sapiens': [],
-                'fake_species': []
+                'homo_sapiens': [], # only the key matters in this test
+                'fake_species': []  # only the key matters in this test
             }
         }
         # Generate two TSV files, one should include only "GSM1361050",
