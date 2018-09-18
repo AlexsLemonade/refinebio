@@ -76,6 +76,8 @@ def _prepare_files(job_context: Dict) -> Dict:
     # same time.)
     job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR,
                                            job_context["job_dir_prefix"]) + "/"
+    job_context["temp_dir"] = job_context["work_dir"] + "temp/"
+    os.makedirs(job_context["temp_dir"], exist_ok=True)
 
     job_context["output_directory"] = job_context["work_dir"] + sample.accession_code + "/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
@@ -114,7 +116,7 @@ def _extract_sra(job_context: Dict) -> Dict:
         return job_context
 
     time_start = timezone.now()
-    formatted_command = "fasterq-dump " + job_context["input_file_path"] + " -O " + job_context['work_dir']
+    formatted_command = "fasterq-dump " + job_context["input_file_path"] + " -O " + job_context['work_dir'] + " --temp " + job_context["temp_dir"]
     logger.debug("Running fasterq-dump using the following shell command: %s",
                  formatted_command,
                  processor_job=job_context["job_id"])
@@ -703,7 +705,7 @@ def _run_multiqc(job_context: Dict) -> Dict:
     formatted_command = command_str.format(input_directory=job_context["qc_input_directory"],
                                            qc_directory=job_context["qc_directory"])
 
-    logger.info("Running MultiQC using the following shell command: %s",
+    logger.debug("Running MultiQC using the following shell command: %s",
                 formatted_command,
                 processor_job=job_context["job_id"])
 
