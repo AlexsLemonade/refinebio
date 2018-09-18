@@ -17,11 +17,12 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
 )
-from data_refinery_common.utils import get_instance_id
-from data_refinery_workers._version import __version__
+from data_refinery_common.utils import get_instance_id, get_env_variable
 
 
 logger = get_and_configure_logger(__name__)
+# Let this fail if SYSTEM_VERSION is unset.
+SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
 # TODO: extend this list.
 BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
 
@@ -45,7 +46,7 @@ def start_job(job_id: int) -> DownloaderJob:
         raise Exception("downloaders.start_job called on a job that has already been started!")
 
     job.worker_id = get_instance_id()
-    job.worker_version = __version__
+    job.worker_version = SYSTEM_VERSION
     job.start_time = timezone.now()
     job.save()
 
@@ -79,7 +80,6 @@ def end_downloader_job(job: DownloaderJob, success: bool):
     job.success = success
     job.end_time = timezone.now()
     job.save()
-
 
 def delete_if_blacklisted(original_file: OriginalFile) -> OriginalFile:
     extension = original_file.filename.split(".")[-1]
@@ -155,9 +155,10 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
         logger.info("No valid processor pipeline found to apply to sample.",
                     sample=sample_object.id,
                     original_file=original_files[0].id)
-        original_file.delete_local_file()
-        original_file.is_downloaded = False
-        original_file.save()
+        for original_file in original_files:
+            original_file.delete_local_file()
+            original_file.is_downloaded = False
+            original_file.save()
     else:
         processor_job = ProcessorJob()
         processor_job.pipeline_applied = pipeline_to_apply.value

@@ -1,5 +1,6 @@
 import hashlib
 import os
+import random
 import shutil
 import numpy
 import scipy.stats
@@ -22,7 +23,50 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     OriginalFileSampleAssociation
 )
+from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import salmon, utils
+
+
+def prepare_organism_indices():
+    c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+
+    # This is a lie, but this image doesn't have the dependencies for TX_IMPORT
+    computational_result_short = ComputationalResult(processor=utils.find_processor('SALMON_QUANT'))
+    computational_result_short.save()
+
+    organism_index = OrganismIndex()
+    organism_index.index_type = "TRANSCRIPTOME_SHORT"
+    organism_index.organism = c_elegans
+    organism_index.result = computational_result_short
+    organism_index.absolute_directory_path = "/home/user/data_store/salmon_tests/TRANSCRIPTOME_INDEX/SHORT"
+    organism_index.save()
+
+    comp_file = ComputedFile()
+    # This path will not be used because we already have the files extracted.
+    comp_file.absolute_file_path = "/home/user/data_store/salmon_tests/TRANSCRIPTOME_INDEX/SHORT/celgans_short.tar.gz"
+    comp_file.result = computational_result_short
+    comp_file.size_in_bytes=1337
+    comp_file.sha1="ABC"
+    comp_file.save()
+
+    # This is a lie, but this image doesn't have the dependencies for TX_IMPORT
+    computational_result_long = ComputationalResult(processor=utils.find_processor('SALMON_QUANT'))
+    computational_result_long.save()
+
+    organism_index = OrganismIndex()
+    organism_index.index_type = "TRANSCRIPTOME_LONG"
+    organism_index.organism = c_elegans
+    organism_index.result = computational_result_long
+    organism_index.absolute_directory_path = "/home/user/data_store/salmon_tests/TRANSCRIPTOME_INDEX/LONG"
+    organism_index.save()
+
+    comp_file = ComputedFile()
+    # This path will not be used because we already have the files extracted.
+    comp_file.absolute_file_path = "/home/user/data_store/salmon_tests/TRANSCRIPTOME_INDEX/LONG/celgans_long.tar.gz"
+    comp_file.result = computational_result_long
+    comp_file.size_in_bytes=1337
+    comp_file.sha1="ABC"
+    comp_file.save()
 
 
 def prepare_job():
@@ -37,22 +81,7 @@ def prepare_job():
     samp.organism = c_elegans
     samp.save()
 
-    computational_result = ComputationalResult(processor=utils.find_processor('SALMON_QUANT'))
-    computational_result.save()
-
-    organism_index = OrganismIndex()
-    organism_index.index_type = "TRANSCRIPTOME_SHORT"
-    organism_index.organism = c_elegans
-    organism_index.result = computational_result
-    organism_index.absolute_directory_path = "/home/user/data_store/processed/TEST/TRANSCRIPTOME_INDEX/index"
-    organism_index.save()
-
-    comp_file = ComputedFile()
-    comp_file.absolute_file_path = "/home/user/data_store/processed/TEST/TRANSCRIPTOME_INDEX/Caenorhabditis_elegans_short_1527089586.tar.gz"
-    comp_file.result = computational_result
-    comp_file.calculate_size()
-    comp_file.calculate_sha1()
-    comp_file.save()
+    prepare_organism_indices()
 
     og_file = OriginalFile()
     og_file.source_filename = "ERR1562482_1.fastq.gz"
@@ -88,6 +117,38 @@ def prepare_job():
 
     return pj, [og_file, og_file2]
 
+def prepare_dotsra_job(filename="ERR1562482.sra"):
+    pj = ProcessorJob()
+    pj.pipeline_applied = "SALMON"
+    pj.id = random.randint(111, 999999)
+    pj.save()
+
+    c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+
+    samp = Sample()
+    samp.accession_code = "SALMON" # So the test files go to the right place
+    samp.organism = c_elegans
+    samp.save()
+
+    prepare_organism_indices()
+
+    og_file = OriginalFile()
+    og_file.source_filename = filename
+    og_file.filename = filename
+    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/" + filename
+    og_file.save()
+
+    og_file_samp_assoc = OriginalFileSampleAssociation()
+    og_file_samp_assoc.original_file = og_file
+    og_file_samp_assoc.sample = samp
+    og_file_samp_assoc.save()
+
+    assoc1 = ProcessorJobOriginalFileAssociation()
+    assoc1.original_file = og_file
+    assoc1.processor_job = pj
+    assoc1.save()
+
+    return pj, [og_file]
 
 def identical_checksum(filename1, filename2):
     """Confirm that the two files have identical checksum."""
@@ -114,9 +175,6 @@ def strong_quant_correlation(ref_filename, output_filename):
 
 
 class SalmonTestCase(TestCase):
-    def setUp(self):
-        self.test_dir = '/home/user/data_store/salmon_tests'
-
     @tag('salmon')
     def test_salmon(self):
         """Test the whole pipeline."""
@@ -131,14 +189,50 @@ class SalmonTestCase(TestCase):
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertTrue(job.success)
 
-    def chk_salmon_quant(self, job_context, sample_dir):
+    @tag('salmon')
+    def test_salmon_dotsra(self):
+        """Test the whole pipeline."""
+        # Ensure any computed files from previous tests are removed.
+        try:
+            os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
+        except FileNotFoundError:
+            pass
+
+        job, files = prepare_dotsra_job()
+        job_context = salmon.salmon(job.pk)
+        job = ProcessorJob.objects.get(id=job.pk)
+        self.assertTrue(job.success)
+        shutil.rmtree(job_context["work_dir"])
+
+    @tag('salmon')
+    def test_salmon_dotsra_bad(self):
+        try:
+            os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
+        except FileNotFoundError:
+            pass
+
+        job, files = prepare_dotsra_job("i-dont-exist.sra")
+        job_context = salmon.salmon(job.pk)
+        job = ProcessorJob.objects.get(id=job.pk)
+        self.assertFalse(job.success)
+        shutil.rmtree(job_context["work_dir"])
+
+    def check_salmon_quant(self, job_context, sample_dir):
         """Helper function that calls salmon._run_salmon and confirms
         strong correlation.
         """
-
         # Clean up if there were previous tests, but we still need that directory.
         shutil.rmtree(job_context['output_directory'], ignore_errors=True)
         os.makedirs(job_context["output_directory"], exist_ok=True)
+        job_context = salmon._determine_index_length(job_context)
+        job_context = salmon._find_or_download_index(job_context)
+
+        # This is a brittle/hacky patch.
+        # However I am unsure why the double_reads reads are
+        # determined to be short but require a long index to be
+        # processed successfully.
+        if "test_experiment" in sample_dir:
+            job_context["index_directory"] = job_context["index_directory"].replace("SHORT", "LONG")
 
         salmon._run_salmon(job_context)
         output_quant_filename = os.path.join(job_context['output_directory'], 'quant.sf')
@@ -151,6 +245,8 @@ class SalmonTestCase(TestCase):
     @tag('salmon')
     def test_salmon_quant_one_sample_double_reads(self):
         """Test `salmon quant` on a sample that has double reads."""
+        # Set up organism index database objects.
+        prepare_organism_indices()
 
         # Create an Experiment that includes two samples.
         # (The first sample has test data available, but the second does not.)
@@ -168,34 +264,32 @@ class SalmonTestCase(TestCase):
         fake_sample = Sample.objects.create(accession_code='fake_sample')
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=fake_sample)
 
+        experiment_dir = '/home/user/data_store/salmon_tests/test_experiment'
+
         og_read_1 = OriginalFile()
-        og_read_1.absolute_file_path = os.path.join(self.test_dir, experiment_accession, "raw/reads_1.fastq")
+        og_read_1.absolute_file_path = os.path.join(experiment_dir, 'raw/reads_1.fastq')
         og_read_1.filename = "reads_1.fastq"
         og_read_1.save()
 
         OriginalFileSampleAssociation.objects.create(original_file=og_read_1, sample=test_sample).save()
 
         og_read_2 = OriginalFile()
-        og_read_2.absolute_file_path = os.path.join(self.test_dir, experiment_accession, "raw/reads_2.fastq")
+        og_read_2.absolute_file_path = os.path.join(experiment_dir, "raw/reads_2.fastq")
         og_read_2.filename = "reads_1.fastq"
         og_read_2.save()
 
         OriginalFileSampleAssociation.objects.create(original_file=og_read_2, sample=test_sample).save()
 
-        experiment_dir = os.path.join(self.test_dir, experiment_accession)
         sample_dir = os.path.join(experiment_dir, 'test_sample')
 
         job_context = salmon._prepare_files({"job_dir_prefix": "TEST",
                                              "job_id": "TEST",
                                              'pipeline': Pipeline(name="Salmon"),
                                              'computed_files': [],
-                                             'index_length': 'short',
-                                             # Hard coded to be where we install before running tests.
-                                             "index_directory": experiment_dir + "/index",
                                              "original_files": [og_read_1, og_read_2]})
 
         # Run salmon.
-        self.chk_salmon_quant(job_context, sample_dir)
+        self.check_salmon_quant(job_context, sample_dir)
 
         # Confirm that this experiment is not ready for tximport yet,
         # because `salmon quant` is not run on 'fake_sample'.
@@ -207,6 +301,8 @@ class SalmonTestCase(TestCase):
         """Test `salmon quant` outputs on two samples that have single
         read and that belong to same experiment.
         """
+        prepare_organism_indices()
+
         # Create one experiment and two related samples, based on:
         #   https://www.ncbi.nlm.nih.gov/sra/?term=SRP040623
         # (For testing purpose, only two of the four samples' data are included.)
@@ -221,8 +317,10 @@ class SalmonTestCase(TestCase):
                                         organism=c_elegans)
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample1)
 
+        experiment_dir = "/home/user/data_store/salmon_tests/PRJNA242809"
+
         og_file_1 = OriginalFile()
-        og_file_1.absolute_file_path = os.path.join(self.test_dir, experiment_accession, "raw/SRR1206053.fastq.gz")
+        og_file_1.absolute_file_path = os.path.join(experiment_dir, "raw/SRR1206053.fastq.gz")
         og_file_1.filename = "SRR1206053.fastq.gz"
         og_file_1.save()
 
@@ -235,13 +333,11 @@ class SalmonTestCase(TestCase):
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample2)
 
         og_file_2 = OriginalFile()
-        og_file_2.absolute_file_path = os.path.join(self.test_dir, experiment_accession, "raw/SRR1206054.fastq.gz")
+        og_file_2.absolute_file_path = os.path.join(experiment_dir, "raw/SRR1206054.fastq.gz")
         og_file_2.filename = "SRR1206054.fastq.gz"
         og_file_2.save()
 
         OriginalFileSampleAssociation.objects.create(original_file=og_file_2, sample=sample2).save()
-
-        experiment_dir = os.path.join(self.test_dir, experiment_accession)
 
         # Test `salmon quant` on sample1 (SRR1206053)
         sample1_dir = os.path.join(experiment_dir, sample1_accession)
@@ -251,14 +347,11 @@ class SalmonTestCase(TestCase):
                                               "job_id": "TEST",
                                               'pipeline': Pipeline(name="Salmon"),
                                               'computed_files': [],
-                                              'index_length': 'short',
-                                              # Hard coded to be where we install before running tests.
-                                              "index_directory": experiment_dir + "/index",
                                               "genes_to_transcripts_path": genes_to_transcripts_path,
                                               "original_files": [og_file_1]})
 
         # Check quant.sf in `salmon quant` output dir of sample1
-        self.chk_salmon_quant(job1_context, sample1_dir)
+        self.check_salmon_quant(job1_context, sample1_dir)
         # Confirm that this experiment is not ready for tximport yet.
         experiments_ready = salmon._get_tximport_inputs(job1_context)
         self.assertEqual(len(experiments_ready), 0)
@@ -272,9 +365,6 @@ class SalmonTestCase(TestCase):
                                               "job_id": "TEST2",
                                               'pipeline': Pipeline(name="Salmon"),
                                               'computed_files': [],
-                                              'index_length': 'short',
-                                              # Hard coded to be where we install before running tests.
-                                              "index_directory": experiment_dir + "/index",
                                               "genes_to_transcripts_path": genes_to_transcripts_path,
                                               "original_files": [og_file_2]})
 
@@ -284,7 +374,7 @@ class SalmonTestCase(TestCase):
             os.remove(rds_filename)
 
         # Check quant.sf in `salmon quant` output dir of sample2
-        self.chk_salmon_quant(job2_context, sample2_dir)
+        self.check_salmon_quant(job2_context, sample2_dir)
 
         # rds_filename should have been generated bytximport at this point.
         # Note: `tximport` step is launched by subprocess module in Python.
@@ -308,8 +398,11 @@ class SalmonTestCase(TestCase):
             'pipeline': Pipeline(name="Salmon"),
             'qc_directory': "/home/user/data_store/raw/TEST/SALMON/qc",
             'original_files': og_files,
+            'input_file_path': og_files[0],
+            'input_file_path_2': og_files[1],
             "computed_files": [],
             'success': True
+
         }
 
         # Ensure clean testdir
@@ -411,7 +504,6 @@ class SalmonToolsTestCase(TestCase):
         expected_output_file = self.test_dir + 'expected_single_output/unmapped_by_salmon.fa'
         self.assertTrue(identical_checksum(output_file, expected_output_file))
 
-
 class DetermineIndexLengthTestCase(TestCase):
     """Test salmon._determine_index_length function, which gets the salmon index length of a sample.
     For now, these tests only ensure that the output of the new faster salmon index function match
@@ -459,7 +551,7 @@ class RuntimeProcessorTest(TestCase):
         self.assertEqual(tximport_processor.name,
                          utils.ProcessorEnum[proc_key].value['name'])
         self.assertEqual(tximport_processor.version,
-                         utils.__version__)
+                         get_env_variable("SYSTEM_VERSION"))
         self.assertEqual(tximport_processor.docker_image,
                          utils.ProcessorEnum[proc_key].value['docker_img'])
         self.assertEqual(tximport_processor.environment['os_distribution'],

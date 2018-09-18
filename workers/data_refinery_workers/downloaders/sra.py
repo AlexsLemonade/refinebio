@@ -20,7 +20,6 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 # chunk_size is in bytes
 CHUNK_SIZE = 1024 * 256
 
-
 def _download_file(download_url: str,
                    downloader_job: DownloaderJob,
                    target_file_path: str,
@@ -34,8 +33,9 @@ def _download_file(download_url: str,
         download_url = download_url.replace('ftp://', 'era-fasp@')
         download_url = download_url.replace('ftp', 'fasp')
         download_url = download_url.replace('.uk/', '.uk:/')
-
-        return _download_file_aspera(download_url, downloader_job, target_file_path)
+        return _download_file_aspera(download_url, downloader_job, target_file_path, source="ENA")
+    elif "ncbi.nlm.nih.gov" in download_url and not force_ftp:
+        return _download_file_aspera(download_url, downloader_job, target_file_path, source="NCBI")
     else:
         return _download_file_ftp(download_url, downloader_job, target_file_path)
 
@@ -57,11 +57,11 @@ def _download_file_ftp(download_url: str, downloader_job: DownloaderJob, target_
 
         urllib.request.urlcleanup()
     except Exception:
-        logger.exception("Exception caught while downloading batch from the URL via FTP: %s",
+        logger.exception("Exception caught while downloading file from the URL via FTP: %s",
                          download_url,
                          downloader_job=downloader_job.id)
         downloader_job.failure_reason = ("Exception caught while downloading "
-                                         "batch from the URL via FTP: {}").format(download_url)
+                                         "file from the URL via FTP: {}").format(download_url)
         return False
 
     return True
@@ -70,7 +70,9 @@ def _download_file_ftp(download_url: str, downloader_job: DownloaderJob, target_
 def _download_file_aspera(download_url: str,
                           downloader_job: DownloaderJob,
                           target_file_path: str,
-                          attempt: int=0) -> bool:
+                          attempt: int=0,
+                          source="NCBI"
+                          ) -> bool:
     """ Download a file to a location using Aspera by shelling out to the `ascp` client. """
 
     try:
@@ -79,36 +81,52 @@ def _download_file_aspera(download_url: str,
                      target_file_path,
                      downloader_job=downloader_job.id)
 
-        # aspera.sra.ebi.ac.uk users port 33001 for SSH communication
-        # We are also NOT using encryption (-T) to avoid slowdown,
-        # and we are not using any kind of rate limiting.
-        command_str = ".aspera/cli/bin/ascp -P33001 -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
-        formatted_command = command_str.format(src=download_url,
-                                               dest=target_file_path)
-        completed_command = subprocess.run(formatted_command.split(),
-                                           stdout=subprocess.PIPE,
-                                           stderr=subprocess.PIPE)
+        if source is "ENA":
+            # aspera.sra.ebi.ac.uk users port 33001 for SSH communication
+            # We are also NOT using encryption (-T) to avoid slowdown,
+            # and we are not using any kind of rate limiting.
+            command_str = ".aspera/cli/bin/ascp -P33001 -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
+            formatted_command = command_str.format(src=download_url,
+                                                   dest=target_file_path)
+            completed_command = subprocess.run(formatted_command.split(),
+                                               stdout=subprocess.PIPE,
+                                               stderr=subprocess.PIPE)
+        else:
+            # NCBI requires encryption and recommends -k1 resume.
+            command_str = ".aspera/cli/bin/ascp -T -k1 -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
+            formatted_command = command_str.format(src=download_url,
+                                                   dest=target_file_path)
+            completed_command = subprocess.run(formatted_command.split(),
+                                               stdout=subprocess.PIPE,
+                                               stderr=subprocess.PIPE)
 
         # Something went wrong! Else, just fall through to returning True.
         if completed_command.returncode != 0:
 
+            stdout = completed_command.stdout.decode().strip()
             stderr = completed_command.stderr.decode().strip()
             logger.debug("Shell call of `%s` to ascp failed with error message: %s",
                          formatted_command,
                          stderr,
                          downloader_job=downloader_job.id)
 
-            # Sometimes, SRA fails mysteriously.
+            # Sometimes, Aspera fails mysteriously.
             # Wait a few minutes and try again.
             if attempt > 5:
-                downloader_job.failure_reason = stderr
+                logger.info("Final shell call of `%s` to ascp failed with error message: %s",
+                         formatted_command,
+                         stderr,
+                         stdout,
+                         downloader_job=downloader_job.id)
+                downloader_job.failure_reason = "stderr:\n " + stderr + "\nstdout:\n " + stdout
                 return False
             else:
-                time.sleep(30)
+                time.sleep(5)
                 return _download_file_aspera(download_url,
                                              downloader_job,
                                              target_file_path,
-                                             attempt + 1
+                                             attempt + 1,
+                                             source
                                              )
     except Exception:
         logger.exception("Exception caught while downloading file from the URL via Aspera: %s",
@@ -132,7 +150,8 @@ def _download_file_aspera(download_url: str,
         return _download_file_aspera(download_url,
                                      downloader_job,
                                      target_file_path,
-                                     attempt + 1
+                                     attempt + 1,
+                                     source
                                      )
     return True
 
@@ -146,6 +165,7 @@ def download_sra(job_id: int) -> None:
     file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
 
     downloaded_files = []
+    success = None
     for assoc in file_assocs:
         original_file = assoc.original_file
 
@@ -180,3 +200,5 @@ def download_sra(job_id: int) -> None:
         utils.create_processor_job_for_original_files(downloaded_files, job)
 
     utils.end_downloader_job(job, success)
+
+    return success, downloaded_files

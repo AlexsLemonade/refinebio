@@ -141,7 +141,7 @@ class SmasherTestCase(TestCase):
         job = prepare_job()
 
         anno_samp = Sample.objects.get(accession_code='GSM1237810')
-        self.assertTrue('hi' in anno_samp.to_metadata_dict()['annotations'][0].keys())
+        self.assertTrue('hi' in anno_samp.to_metadata_dict()['refinebio_annotations'][0].keys())
 
         relations = ProcessorJobDatasetAssociation.objects.filter(processor_job=job)
         dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
@@ -227,11 +227,79 @@ class SmasherTestCase(TestCase):
             zf = zipfile.ZipFile(final_context['output_file'])
             namelist = zf.namelist()
 
-            self.assertTrue('GSE51081_metadata.tsv' in namelist)
+            self.assertTrue('GSE51081/GSE51081_metadata.tsv' in namelist)
             self.assertTrue('metadata.json' in namelist)
             self.assertTrue('README.md' in namelist)
             self.assertTrue('LICENSE.TXT' in namelist)
-            self.assertTrue('GSE51081.tsv' in namelist)
+            self.assertTrue('GSE51081/GSE51081.tsv' in namelist)
+
+            os.remove(final_context['output_file'])
+            job.start_time = None
+            job.end_time = None
+            job.save()
+
+        for scale_type in ['MINMAX', 'STANDARD']:
+            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+            dataset.aggregate_by = 'SPECIES'
+            dataset.scale_by = scale_type
+            dataset.save()
+
+            print("###")
+            print("# " + scale_type)
+            print('###')
+
+            final_context = smasher.smash(job.pk, upload=False)
+            final_frame = final_context['final_frame']
+
+            # Sanity test that these frames can be computed upon
+            final_frame.mean(axis=1)
+            final_frame.min(axis=1)
+            final_frame.max(axis=1)
+            final_frame.std(axis=1)
+            final_frame.median(axis=1)
+
+            zf = zipfile.ZipFile(final_context['output_file'])
+            namelist = zf.namelist()
+
+            self.assertTrue('HOMO_SAPIENS/HOMO_SAPIENS_metadata.tsv' in namelist)
+            self.assertTrue('metadata.json' in namelist)
+            self.assertTrue('README.md' in namelist)
+            self.assertTrue('LICENSE.TXT' in namelist)
+            self.assertTrue('HOMO_SAPIENS/HOMO_SAPIENS.tsv' in namelist)
+
+            os.remove(final_context['output_file'])
+            job.start_time = None
+            job.end_time = None
+            job.save()
+
+        for scale_type in ['MINMAX', 'STANDARD']:
+            dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
+            dataset.aggregate_by = 'ALL'
+            dataset.scale_by = scale_type
+            dataset.save()
+
+            print("###")
+            print("# " + scale_type)
+            print('###')
+
+            final_context = smasher.smash(job.pk, upload=False)
+            final_frame = final_context['final_frame']
+
+            # Sanity test that these frames can be computed upon
+            final_frame.mean(axis=1)
+            final_frame.min(axis=1)
+            final_frame.max(axis=1)
+            final_frame.std(axis=1)
+            final_frame.median(axis=1)
+
+            zf = zipfile.ZipFile(final_context['output_file'])
+            namelist = zf.namelist()
+
+            self.assertTrue('ALL/ALL_metadata.tsv' in namelist)
+            self.assertTrue('metadata.json' in namelist)
+            self.assertTrue('README.md' in namelist)
+            self.assertTrue('LICENSE.TXT' in namelist)
+            self.assertTrue('ALL/ALL.tsv' in namelist)
 
             os.remove(final_context['output_file'])
             job.start_time = None
@@ -886,8 +954,11 @@ class TsvTestCase(TestCase):
 
             'samples': {
                 "IFNa DC_LB016_IFNa": {  # Sample #1 is an ArrayExpress sample
+                    "refinebio_title": "IFNa DC_LB016_IFNa",
                     "refinebio_accession_code": "E-GEOD-44719-GSM1089311",
                     "refinebio_source_database": "ARRAY_EXPRESS",
+                    "refinebio_organism": "mysterious_species",
+                    ############# Annotations will be de-composed. #############
                     "refinebio_annotations": [
                         # annotation #1
                         {
@@ -898,7 +969,6 @@ class TsvTestCase(TestCase):
                         # annotation #2
                         {
                             "assay": { "name": "GSM1089311" },
-
                             # Special field that will be taken out as separate columns
                             "characteristic": [
                                 { "category": "cell population",
@@ -911,7 +981,6 @@ class TsvTestCase(TestCase):
                                   "value": "LB016"
                                 }
                             ],
-
                             # Another special field in Array Express sample
                             "variable": [
                                 { "name": "dose",  # also available in "characteristic"
@@ -929,6 +998,9 @@ class TsvTestCase(TestCase):
 
                 "Bone.Marrow_OA_No_ST03": {  # Sample #2 is a GEO sample
                     "refinebio_accession_code": "GSM1361050",
+                    "refinebio_source_database": "GEO",
+                    "refinebio_organism": "homo_sapiens",
+
                     "refinebio_annotations": [
                         {
                             "channel_count": [ "1" ],
@@ -945,10 +1017,7 @@ class TsvTestCase(TestCase):
                             "data_processing": [ "Data was processed and normalized" ],
                             "geo_accession": [ "GSM1361050" ],
                         }
-                    ],  # end of annotations
-
-                    "refinebio_organism": "HOMO_SAPIENS",
-                    "refinebio_source_database": "GEO"
+                    ]  # end of annotations
                 }  # end of sample #2
 
             }  # end of "samples"
@@ -956,11 +1025,10 @@ class TsvTestCase(TestCase):
 
         self.smash_path = "/tmp/"
 
-
     @tag("smasher")
     def test_columns(self):
         columns = smasher._get_tsv_columns(self.metadata['samples'])
-        self.assertEqual(len(columns), 20)
+        self.assertEqual(len(columns), 21)
         self.assertTrue('refinebio_accession_code' in columns)
         self.assertTrue('cell population' in columns)
         self.assertTrue('dose' in columns)
@@ -969,10 +1037,13 @@ class TsvTestCase(TestCase):
 
     @tag("smasher")
     def test_all_samples(self):
-        """Check tsv file that is not aggregated by experiment."""
+        """Check tsv file that includes all sample metadata."""
 
-        smasher._write_tsv(self.metadata, self.smash_path)
-        output_filename = self.smash_path + "metadata.tsv"
+        job_context = {
+            'dataset': Dataset.objects.create(aggregate_by='ALL')
+        }
+        smasher._write_tsv(job_context, self.metadata, self.smash_path)
+        output_filename = self.smash_path + "ALL/ALL_metadata.tsv"
         self.assertTrue(os.path.isfile(output_filename))
 
         with open(output_filename) as tsv_file:
@@ -985,7 +1056,7 @@ class TsvTestCase(TestCase):
 
                 elif row['refinebio_accession_code'] == 'GSM1361050':
                     self.assertEqual(row['tissue'], 'Bone Marrow')      # GEO specific
-                    self.assertEqual(row['refinebio_organism'], 'HOMO_SAPIENS')
+                    self.assertEqual(row['refinebio_organism'], 'homo_sapiens')
 
         self.assertEqual(row_num, 1)  # only two data rows in tsv file
         #os.remove(output_filename)
@@ -994,8 +1065,12 @@ class TsvTestCase(TestCase):
     def test_experiment_tsv(self):
         """Check tsv file that is aggregated by experiment."""
 
-        smasher._write_tsv(self.metadata, self.smash_path, aggregation="EXPERIMENT")
-        output_filename = self.smash_path + "E-GEOD-44719_metadata.tsv"
+        job_context = {
+            'dataset': Dataset.objects.create(aggregate_by='EXPERIMENT')
+        }
+        smasher._write_tsv(job_context, self.metadata, self.smash_path)
+
+        output_filename = self.smash_path + "E-GEOD-44719/E-GEOD-44719_metadata.tsv"
         self.assertTrue(os.path.isfile(output_filename))
 
         with open(output_filename) as tsv_file:
@@ -1005,6 +1080,31 @@ class TsvTestCase(TestCase):
                 self.assertEqual(row['cell population'], 'IFNa DC')  # ArrayExpress specific
                 self.assertEqual(row['dose'], '1 mL')                # ArrayExpress specific
                 self.assertEqual(row['detection_percentage'], '98.44078')
+
+        self.assertEqual(row_num, 0) # only one data row in tsv file
+        #os.remove(output_filename)
+
+    @tag("smasher")
+    def test_species_tsv(self):
+        """Check tsv file that is aggregated by species."""
+
+        job_context = {
+            'dataset': Dataset.objects.create(aggregate_by='SPECIES'),
+            'input_files': {
+                'homo_sapiens': []
+            }
+        }
+        # TSV file should include only sample "GSM1361050", whose organism is 'homo_sapiens'
+        smasher._write_tsv(job_context, self.metadata, self.smash_path)
+
+        output_filename = self.smash_path + "homo_sapiens/homo_sapiens_metadata.tsv"
+        self.assertTrue(os.path.isfile(output_filename))
+
+        with open(output_filename) as tsv_file:
+            reader = csv.DictReader(tsv_file, delimiter='\t')
+            for row_num, row in enumerate(reader):
+                self.assertEqual(row['tissue'], 'Bone Marrow')      # GEO specific
+                self.assertEqual(row['refinebio_organism'], 'homo_sapiens')
 
         self.assertEqual(row_num, 0) # only one data row in tsv file
         #os.remove(output_filename)

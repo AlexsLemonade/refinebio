@@ -46,7 +46,7 @@ while [  $COUNTER -lt 99 ]; do
 done
 
 sleep 15
-ATTACHED_AS=`lsblk -n | grep 1.6T | cut -d' ' -f1`
+ATTACHED_AS=`lsblk -n | grep 500G | cut -d' ' -f1`
 FILE_RESULT=`file -s /dev/$ATTACHED_AS`
 
 if file -s /dev/$ATTACHED_AS | grep data; then

@@ -13,14 +13,12 @@ from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
     ComputedFile,
-    OriginalFile,
     Pipeline,
     Processor,
     SampleComputedFileAssociation,
     SampleResultAssociation,
 )
 from data_refinery_common.utils import get_env_variable
-from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils, smasher
 
 
@@ -33,7 +31,7 @@ def _prepare_input(job_context: Dict) -> Dict:
     # We're going to use the smasher outside of the smasher.
     # I'm not crazy about this yet. Maybe refactor later,
     # but I need the data now.
-
+    job_context['only_raw'] = True
     job_context = smasher._prepare_files(job_context)
     job_context = smasher._smash(job_context)
 
@@ -44,8 +42,7 @@ def _prepare_input(job_context: Dict) -> Dict:
         job_context['success'] = False
         return job_context
 
-    # We only need the resulting frame, not the entire archive
-    os.makedirs(job_context["work_dir"])
+    # work_dir is already created by smasher._prepare_files
     outfile_base = job_context['work_dir'] + str(time.time()).split('.')[0]
     outfile = outfile_base + '.tsv'
     job_context['final_frame'].to_csv(outfile, sep='\t', encoding='utf-8')

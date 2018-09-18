@@ -25,11 +25,6 @@ while getopts ":t:h" opt; do
             print_options
             exit 0
             ;;
-        \?)
-            echo "Invalid option: -$OPTARG" >&2
-            print_options >&2
-            exit 1
-            ;;
         :)
             echo "Option -$OPTARG requires an argument." >&2
             print_options >&2
@@ -67,9 +62,13 @@ test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 
 if [[ -z $tag || $tag == "salmon" ]]; then
     # Download "salmon quant" test data
-    if [ ! -e $volume_directory/salmon_tests ]; then
+
+    # TODO: rename the test_data_new to test_data and remove check for
+    # the new file. These are here temporarily so other branches'
+    # tests don't break.
+    if [[ ! -e $volume_directory/salmon_tests || ! -e $volume_directory/salmon_tests/new ]]; then
         echo "Downloading 'salmon quant' test data..."
-        wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests.tar.gz
+        wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests_new.tar.gz
         tar xzf $volume_directory/salmon_tests.tar.gz -C $volume_directory
         rm $volume_directory/salmon_tests.tar.gz
     fi
@@ -82,27 +81,14 @@ if [[ -z $tag || $tag == "salmon" ]]; then
     rm -rf $volume_directory/tximport_test/
     git clone https://github.com/dongbohu/tximport_test.git $volume_directory/tximport_test
 
-    # Make sure test Transcriptome Index is downloaded from S3 for salmon tests.
-    index_dir="$volume_directory/processed/TEST/TRANSCRIPTOME_INDEX"
-    index_tarball="Caenorhabditis_elegans_short_1527089586.tar.gz"
-    gz_index_path="$index_dir/$index_tarball"
-
-    # The tarball gets extracted to a directory named 'index', so
-    # check to see if it's there already.
-    if [ ! -e "$index_dir/index" ]; then
-        mkdir -p $index_dir
-        echo "Downloading Salmon index for Salmon tests."
-        wget -q -O $gz_index_path \
-             "$test_data_repo/$index_tarball"
-        tar -xzf $gz_index_path -C "$index_dir"
-    fi
-
     # Make sure data for Salmon test is downloaded from S3.
     rna_seq_test_raw_dir="$volume_directory/raw/TEST/SALMON"
     read_1_name="ERR1562482_1.fastq.gz"
     read_2_name="ERR1562482_2.fastq.gz"
+    dotsra_name="ERR1562482.sra"
     rna_seq_test_data_1="$rna_seq_test_raw_dir/$read_1_name"
     rna_seq_test_data_2="$rna_seq_test_raw_dir/$read_2_name"
+    dotsra="$rna_seq_test_raw_dir/$dotsra_name"
     if [ ! -e "$rna_seq_test_data_1" ]; then
         mkdir -p $rna_seq_test_raw_dir
         echo "Downloading $read_1_name for Salmon tests."
@@ -111,6 +97,12 @@ if [[ -z $tag || $tag == "salmon" ]]; then
         echo "Downloading $read_2_name for Salmon tests."
         wget -q -O $rna_seq_test_data_2 \
              "$test_data_repo/$read_2_name"
+    fi
+    if [ ! -e "$dotsra" ]; then
+        mkdir -p $rna_seq_test_raw_dir
+        echo "Downloading $dotsra_name for Salmon tests."
+        wget -q -O $dotsra \
+             "$test_data_repo/$dotsra_name"
     fi
 fi
 

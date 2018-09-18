@@ -75,7 +75,7 @@ if (any(overlap >= 0.5)) {
   	detected_id <- names(which.max(overlap))
 } else {
 	# Less than 50%? Get outta here!
-  	stop("Not enough overlapping ids detected!")
+  	stop(paste("Not enough overlapping ids detected! Max of ", which.max(overlap), names(which.max(overlap))))
 }
 
 message("Merging..")
