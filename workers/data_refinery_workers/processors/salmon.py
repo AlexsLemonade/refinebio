@@ -66,6 +66,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     # There should only ever be one per Salmon run
     sample = job_context['original_files'][0].samples.first()
+    job_context['sample_accession_code'] = sample.accession_code
     job_context['sample'] = sample
     job_context['organism'] = job_context['sample'].organism
     job_context["success"] = True
@@ -115,8 +116,13 @@ def _extract_sra(job_context: Dict) -> Dict:
         job_context["success"] = False
         return job_context
 
+    # What the heck. Copy the file to work_dir, but remove the `.sra` extention.
+    # https://github.com/ncbi/sra-tools/issues/150#issuecomment-422529894
+    job_context['work_file'] = job_context['work_dir'] + job_context['sample_accession_code']
+    shutil.copyfile(job_context["input_file_path"], job_context['work_file'])
+
     time_start = timezone.now()
-    formatted_command = "fasterq-dump " + job_context["input_file_path"] + " -O " + job_context['work_dir'] + " --temp " + job_context["temp_dir"]
+    formatted_command = "fasterq-dump " + job_context['work_file'] + " -O " + job_context['work_dir'] + " --temp " + job_context["temp_dir"]
     logger.debug("Running fasterq-dump using the following shell command: %s",
                  formatted_command,
                  processor_job=job_context["job_id"])
