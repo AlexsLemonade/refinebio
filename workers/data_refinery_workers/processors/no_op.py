@@ -17,7 +17,6 @@ from data_refinery_common.models import (
     SampleResultAssociation,
 )
 from data_refinery_common.utils import get_env_variable, get_internal_microarray_accession
-from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 
 
@@ -37,7 +36,7 @@ def _prepare_files(job_context: Dict) -> Dict:
             job_context["is_illumina"] = False
 
         # All files for the job are in the same directory.
-        job_context["work_dir"] = LOCAL_ROOT_DIR + "/" + "processor_job_" + str(job_context["job_id"])
+        job_context["work_dir"] = LOCAL_ROOT_DIR + "/" + "processor_job_" + str(job_context["job_id"]) + "/"
         try:
             os.makedirs(job_context["work_dir"])
         except Exception as e:
@@ -50,7 +49,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         # Create the output directory and path
         job_context["input_file_path"] = original_file.absolute_file_path
         new_filename = "gene_converted_" + original_file.filename
-        job_context["output_file_path"] = job_context["work_dir"] + "/" + new_filename
+        job_context["output_file_path"] = job_context["work_dir"] + new_filename
 
         try:
             # Make sure header row is correct
@@ -200,9 +199,18 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
         job_context["job"].no_retry = True
         return job_context
 
-    job_context["success"] = True
-    return job_context
-
+    # Quality control!
+    # Related: https://github.com/AlexsLemonade/refinebio/issues/614
+    # Related: GSM102671
+    is_good_quality = check_output_quality(job_context['output_file_path'])
+    if not is_good_quality:
+        job_context["success"] = False
+        job_context["job"].failure_reason = "NO_OP output failed quality control check."
+        job_context["job"].no_retry = True
+        return job_context
+    else:
+        job_context["success"] = True
+        return job_context
 
 def _convert_illumina_genes(job_context: Dict) -> Dict:
     """ Convert to Ensembl genes if we can"""
@@ -345,6 +353,27 @@ def _create_result(job_context: Dict) -> Dict:
     logger.debug("Created %s", result)
     job_context["success"] = True
     return job_context
+
+
+def check_output_quality(output_file_path: str):
+    """ Verify our output file meets spec """
+    try:
+        with open(output_file_path, 'r') as tsv_in:
+            tsv_in = csv.reader(tsv_in, delimiter='\t')
+            for i, row in enumerate(tsv_in):
+                # We could change this to a header column checker
+                if i == 0:
+                    continue
+
+                # If there are more than 2 columns,
+                # we consider this bad data. (Likely old machine/processing!)
+                if len(row) > 2:
+                    return False
+    except Exception as e:
+        return False
+
+    return True
+
 
 def no_op_processor(job_id: int) -> None:
     pipeline = Pipeline(name=utils.PipelineEnum.NO_OP.value)

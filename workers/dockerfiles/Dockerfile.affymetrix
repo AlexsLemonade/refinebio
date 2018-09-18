@@ -9,12 +9,13 @@ RUN apt-get -y install apt-fast
 # Much of this dockerfile is based off of the rpy2 docker image found:
 # https://hub.docker.com/r/rpy2/rpy2/~/dockerfile/
 
+COPY workers/CRAN.gpg .
 RUN \
   apt-fast update -qq && \
   apt-fast install -y lsb-release && \
   echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
-  apt-key adv --keyserver na.pool.sks-keyservers.net --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 && \
+  apt-key add CRAN.gpg && \
   apt-fast update -qq && \
   apt-fast install -y \
   ed \
@@ -34,6 +35,7 @@ RUN \
   curl \
   wget && \
   rm -rf /var/lib/apt/lists/*
+RUN rm CRAN.gpg
 
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
@@ -65,6 +67,10 @@ RUN pip3 install -r requirements.txt
 # Install this one here instead of via requirements.txt because not
 # all processors need it.
 RUN pip3 install rpy2
+
+ARG SYSTEM_VERSION
+
+ENV SYSTEM_VERSION $SYSTEM_VERSION
 
 USER user
 

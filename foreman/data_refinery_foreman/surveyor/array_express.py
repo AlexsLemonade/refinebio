@@ -518,8 +518,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     experiment_protocol=experiment.protocol_description,
                     protocol_url=experiment.source_url + '/protocols'
                 )
-                if is_updated:
-                    sample_object.protocol_info = protocol_info
+                # Do not check is_updated the first time because we must
+                # save a list so we can append to it later.
+                sample_object.protocol_info = protocol_info
 
                 sample_object.save()
 

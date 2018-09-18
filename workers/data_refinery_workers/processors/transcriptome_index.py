@@ -19,7 +19,6 @@ from data_refinery_common.models import (
     ProcessorJob,
 )
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
-from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 
 
@@ -43,7 +42,7 @@ def _compute_paths(job_context: Dict) -> str:
     first_file_path = job_context["original_files"][0].absolute_file_path
     job_context["base_file_path"] = '/'.join(first_file_path.split('/')[:-1])
     job_context["work_dir"] = job_context["base_file_path"] + '/' + job_context["length"].upper() + '/' + \
-                              JOB_DIR_PREFIX + str(job_context["job_id"])
+                              JOB_DIR_PREFIX + str(job_context["job_id"]) + "/"
     try:
         os.makedirs(job_context["work_dir"])
     except Exception as e:
@@ -53,9 +52,9 @@ def _compute_paths(job_context: Dict) -> str:
         job_context["success"] = False
         return job_context
 
-    job_context["output_dir"] = job_context["work_dir"] + "/" + "index"
+    job_context["output_dir"] = job_context["work_dir"] + "index/"
     os.makedirs(job_context["output_dir"], exist_ok=True)
-    job_context["rsem_index_dir"] = job_context["work_dir"] + "/" + "rsem_index"
+    job_context["rsem_index_dir"] = job_context["work_dir"] + "rsem_index/"
     os.makedirs(job_context["rsem_index_dir"], exist_ok=True)
 
     # I think this is a bit sketchy.
@@ -65,7 +64,7 @@ def _compute_paths(job_context: Dict) -> str:
     archive_file_name = job_context["organism_name"] + "_" + \
                         job_context['length'].upper() + "_" + stamp + '.tar.gz'
 
-    job_context["computed_archive"] = job_context["work_dir"] + '/' + archive_file_name
+    job_context["computed_archive"] = job_context["work_dir"] + archive_file_name
 
     return job_context
 
@@ -81,7 +80,7 @@ def _prepare_files(job_context: Dict) -> Dict:
             gzipped_fasta_file_path = og_file.absolute_file_path
             job_context["fasta_file"] = og_file
             new_fasta_filename = gzipped_fasta_file_path.split('/')[-1].replace(".gz", "")
-            job_context["fasta_file_path"] = job_context["work_dir"] + "/" + new_fasta_filename
+            job_context["fasta_file_path"] = job_context["work_dir"] + new_fasta_filename
             with gzip.open(gzipped_fasta_file_path, "rb") as gzipped_file, \
                     open(job_context["fasta_file_path"], "wb") as gunzipped_file:
                 shutil.copyfileobj(gzipped_file, gunzipped_file)

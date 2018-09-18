@@ -29,7 +29,6 @@ from data_refinery_common.models import (
     SampleResultAssociation,
 )
 from data_refinery_common.utils import get_env_variable
-from data_refinery_workers._version import __version__
 from data_refinery_workers.processors import utils
 
 
@@ -50,12 +49,13 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     # `key` can either be the species name or experiment accession.
     for key, samples in job_context["samples"].items():
-        samples_for_key = []
+        smashable_files = []
         for sample in samples:
-            samples_for_key = samples_for_key + list(sample.get_smashable_result_files())
-        samples_for_key = list(set(samples_for_key))
-        job_context['input_files'][key] = samples_for_key
-        all_sample_files = all_sample_files + samples_for_key
+            smashable_files = smashable_files + \
+                [sample.get_most_recent_smashable_result_file(only_raw=job_context.get('only_raw', False))]
+        smashable_files = list(set(smashable_files))
+        job_context['input_files'][key] = smashable_files
+        all_sample_files = all_sample_files + smashable_files
 
     if all_sample_files == []:
         error_message = "Couldn't get any files to smash for Smash job!!"
@@ -72,6 +72,12 @@ def _prepare_files(job_context: Dict) -> Dict:
         return job_context
 
     job_context["work_dir"] = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk) + "/"
+    # Ensure we have a fresh smash directory
+    shutil.rmtree(job_context["work_dir"], ignore_errors=True)
+    os.makedirs(job_context["work_dir"])
+
+    job_context["output_dir"] = job_context["work_dir"] + "output/"
+    os.makedirs(job_context["output_dir"])
 
     return job_context
 
@@ -94,38 +100,37 @@ def _get_tsv_columns(samples_metadata):
     """
 
     refinebio_columns = set()
-    #refinebio_columns.add('sample_id')
     annotation_columns = set()
-    for title, metadata in samples_metadata.items():
-        for meta_key, meta_value in metadata.items():
+    for sample_metadata in samples_metadata.values():
+        for meta_key, meta_value in sample_metadata.items():
             if meta_key != 'refinebio_annotations':
                 refinebio_columns.add(meta_key)
                 continue
 
-            # Handle sample_metadata["annotations"], which is an array of annotations!
+            # Decompose sample_metadata["annotations"], which is an array of annotations!
             for annotation in meta_value:
                 for annotation_key, annotation_value in annotation.items():
                     # For ArrayExpress samples, take out the fields
                     # nested in "characteristic" as separate columns.
-                    if (metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
+                    if (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
                         and annotation_key == "characteristic"):
                         for pair_dict in annotation_value:
                             if 'category' in pair_dict and 'value' in pair_dict:
                                 _add_annotation_column(annotation_columns, pair_dict['category'])
                     # For ArrayExpress samples, also take out the fields
                     # nested in "variable" as separate columns.
-                    elif (metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
+                    elif (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
                           and annotation_key == "variable"):
                         for pair_dict in annotation_value:
                             if 'name' in pair_dict and 'value' in pair_dict:
                                 _add_annotation_column(annotation_columns, pair_dict['name'])
                     # For ArrayExpress samples, skip "source" field
-                    elif (metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
+                    elif (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
                           and annotation_key == "source"):
                         continue
                     # For GEO samples, take out the fields nested in
                     # "characteristics_ch1" as separate columns.
-                    elif (metadata.get('refinebio_source_database', '') == "GEO"
+                    elif (sample_metadata.get('refinebio_source_database', '') == "GEO"
                           and annotation_key == "characteristics_ch1"): # array of strings
                         for pair_str in annotation_value:
                             if ':' in pair_str:
@@ -231,32 +236,42 @@ def _get_tsv_row_data(sample_metadata):
     return row_data
 
 
-def _write_tsv(metadata, smash_path, aggregation=None):
+def _write_tsv(job_context, metadata, smash_path):
     """Writes tsv files on disk."""
 
     # Uniform TSV header per dataset
     columns = _get_tsv_columns(metadata['samples'])
 
-    if aggregation == "EXPERIMENT":
-        for title, keys in metadata['experiments'].items():
-            with open(smash_path + title + '_metadata.tsv', 'w') as output_file:
-                sample_titles = keys['sample_titles']
+    if job_context["dataset"].aggregate_by == "EXPERIMENT":
+        for experiment_title, experiment_data in metadata['experiments'].items():
+            experiment_dir = smash_path + experiment_title + '/'
+            os.makedirs(experiment_dir, exist_ok=True)
+            with open(experiment_dir + experiment_title + '_metadata.tsv', 'w') as output_file:
                 dw = csv.DictWriter(output_file, columns, delimiter='\t')
                 dw.writeheader()
-                for key, value in metadata['samples'].items():
-                    if key not in sample_titles:
-                        continue
-                    else:
-                        #value['sample_id'] = key
-                        row_data = _get_tsv_row_data(value)
+                for sample_title, sample_metadata in metadata['samples'].items():
+                    if sample_title in experiment_data['sample_titles']:
+                        row_data = _get_tsv_row_data(sample_metadata)
+                        dw.writerow(row_data)
+    elif job_context["dataset"].aggregate_by == "SPECIES":
+        for species in job_context['input_files'].keys():
+            species_dir = smash_path + species + '/'
+            os.makedirs(species_dir, exist_ok=True)
+            with open(species_dir + species + '_metadata.tsv', 'w') as output_file:
+                dw = csv.DictWriter(output_file, columns, delimiter='\t')
+                dw.writeheader()
+                for sample_metadata in metadata['samples'].values():
+                    if sample_metadata.get('refinebio_organism', '') == species:
+                        row_data = _get_tsv_row_data(sample_metadata)
                         dw.writerow(row_data)
     else:
-        with open(smash_path + 'metadata.tsv', 'w') as output_file:
+        all_dir = smash_path + "ALL/"
+        os.makedirs(all_dir, exist_ok=True)
+        with open(all_dir + 'ALL_metadata.tsv', 'w') as output_file:
             dw = csv.DictWriter(output_file, columns, delimiter='\t')
             dw.writeheader()
-            for key, value in metadata['samples'].items():
-                # value['sample_id'] = key
-                row_data = _get_tsv_row_data(value)
+            for sample_metadata in metadata['samples'].values():
+                row_data = _get_tsv_row_data(sample_metadata)
                 dw.writerow(row_data)
 
 
@@ -273,10 +288,7 @@ def _smash(job_context: Dict) -> Dict:
 
     try:
         # Prepare the output directory
-        smash_path = job_context["work_dir"]
-        # Ensure we have a fresh smash directory
-        shutil.rmtree(smash_path, ignore_errors=True)
-        os.makedirs(smash_path, exist_ok=True)
+        smash_path = job_context["output_dir"]
 
         scalers = {
             'MINMAX': preprocessing.MinMaxScaler,
@@ -378,7 +390,9 @@ def _smash(job_context: Dict) -> Dict:
                         file=computed_file_path,
                         dataset_id=job_context['dataset'].id,
                         )
-                    continue
+                finally:
+                    # Delete before archiving the work dir
+                    os.remove(computed_file_path)
 
             job_context['all_frames'] = all_frames
 
@@ -431,7 +445,8 @@ def _smash(job_context: Dict) -> Dict:
                         )
                     else:
                         qn_target_path = qn_target.sync_from_s3()
-                        qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None, index_col=None, error_bad_lines=False)
+                        qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None,
+                                                      index_col=None, error_bad_lines=False)
 
                         # Prepare our RPy2 bridge
                         pandas2ri.activate()
@@ -489,7 +504,15 @@ def _smash(job_context: Dict) -> Dict:
             job_context['final_frame'] = untransposed
 
             # Write to temp file with dataset UUID in filename.
-            outfile = smash_path + key + ".tsv"
+            subdir = ''
+            if job_context['dataset'].aggregate_by in ["SPECIES", "EXPERIMENT"]:
+                subdir = key
+            elif job_context['dataset'].aggregate_by == "ALL":
+                subdir = "ALL"
+
+            outfile_dir = smash_path + key + "/"
+            os.makedirs(outfile_dir, exist_ok=True)
+            outfile = outfile_dir + key + ".tsv"
             untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
 
         # Copy LICENSE.txt and README.md files
@@ -518,36 +541,8 @@ def _smash(job_context: Dict) -> Dict:
             experiments[experiment.accession_code] = exp_dict
         metadata['experiments'] = experiments
 
-        # Metadata to TSV
-        # if job_context["dataset"].aggregate_by == "EXPERIMENT":
-        #     for title, keys in metadata['experiments'].items():
-        #         with open(smash_path + title + '_metadata.tsv', 'w') as output_file:
-        #             sample_titles = keys['sample_titles']
-        #             # keys = list(metadata['samples'][sample_titles[0]].keys()) + ['sample_id']
-        #             columns = _get_tsv_columns(metadata['samples'])
-        #             dw = csv.DictWriter(output_file, columns, delimiter='\t')
-        #             dw.writeheader()
-        #             for key, value in metadata['samples'].items():
-        #                 if key not in sample_titles:
-        #                     continue
-        #                 else:
-        #                     value['sample_id'] = key
-        #                     row_data = _get_tsv_row_data(value)
-        #                     dw.writerow(row_data)
-        # else:
-        #     with open(smash_path + 'metadata.tsv', 'w') as output_file:
-        #         sample_ids = list(metadata['samples'].keys())
-        #         # keys = list(metadata['samples'][sample_ids[0]].keys()) + ['sample_id']
-        #         columns = _get_tsv_columns(metadata['samples'])
-        #         dw = csv.DictWriter(output_file, columns, delimiter='\t')
-        #         dw.writeheader()
-        #         for key, value in metadata['samples'].items():
-        #             value['sample_id'] = key
-        #             row_data = _get_tsv_row_data(value)
-        #             dw.writerow(row_data)
-
-        # Metadata to TSV
-        _write_tsv(metadata, smash_path, job_context["dataset"].aggregate_by)
+        # Write samples metadata to TSV
+        _write_tsv(job_context, metadata, smash_path)
 
         metadata['files'] = os.listdir(smash_path)
 
@@ -560,8 +555,6 @@ def _smash(job_context: Dict) -> Dict:
         final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk)
         shutil.make_archive(final_zip_base, 'zip', smash_path)
         job_context["output_file"] = final_zip_base + ".zip"
-        # and clean up the unzipped directory.
-        shutil.rmtree(smash_path)
     except Exception as e:
         logger.exception("Could not smash dataset.",
                         dataset_id=job_context['dataset'].id,
@@ -600,7 +593,9 @@ def _upload(job_context: Dict) -> Dict:
                     job_context["output_file"].split('/')[-1],
                     ExtraArgs={'ACL':'public-read'}
                 )
-            result_url = "https://s3.amazonaws.com/" + RESULTS_BUCKET + "/" + job_context["output_file"].split('/')[-1]
+            result_url = ("https://s3.amazonaws.com/" + RESULTS_BUCKET + "/" +
+                          job_context["output_file"].split('/')[-1])
+
             job_context["result_url"] = result_url
 
             logger.debug("Result uploaded!",
@@ -645,13 +640,9 @@ def _notify(job_context: Dict) -> Dict:
             CHARSET = "UTF-8"
 
             if job_context['job'].failure_reason not in ['', None]:
-                SUBJECT = "Your refine.bio Dataset is Ready!"
-                BODY_TEXT = "Hot off the presses:\n\n" + job_context["result_url"] + "\n\nLove!,\nThe refine.bio Team"
-                BODY_HTML = "Hot off the presses:<br /><br />" + job_context["result_url"] + "<br /><br />Love!,<br />The refine.bio Team"
-            else:
                 SUBJECT = "There was a problem processing your refine.bio dataset :("
                 BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(dataset.id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
-                BODY_HTML = BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: <br /><br />" + job_context['job'].failure_reason + "<br />Dataset: " + str(dataset.id) + "<br /> We have been notified and are looking into the problem. <br /><br />Sorry!"
+                FORMATTED_HTML = "We tried but were unable to process your requested dataset. Error was: <br /><br />" + job_context['job'].failure_reason + "<br />Dataset: " + str(dataset.id) + "<br /> We have been notified and are looking into the problem. <br /><br />Sorry!"
                 job_context['success'] = False
 
             # Try to send the email.

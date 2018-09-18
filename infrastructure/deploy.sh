@@ -19,10 +19,13 @@ print_options() {
     echo 'DO NOT DEPLOY without setting that $TF_VAR_username or modifying the value in variables.tf!'
 }
 
-while getopts ":e:h" opt; do
+while getopts ":e:v:h" opt; do
     case $opt in
     e)
         env=$OPTARG
+        ;;
+    v)
+        SYSTEM_VERSION=$OPTARG
         ;;
     h)
         print_description
@@ -45,6 +48,11 @@ done
 
 if [[ $env != "dev" && $env != "staging" && $env != "prod" ]]; then
     echo 'Error: must specify environment as either "dev", "staging", or "prod" with -e.'
+    exit 1
+fi
+
+if [[ -z $SYSTEM_VERSION ]]; then
+    echo 'Error: must specify the system version with -v.'
     exit 1
 fi
 
@@ -138,9 +146,13 @@ if [[ $(nomad status) != "No running jobs" ]]; then
     do
         # '|| true' so that if a job is garbage collected before we can remove it the error
         # doesn't interrupt our deploy.
-        nomad stop -purge -detach $job > /dev/null || true
+        nomad stop -purge -detach $job > /dev/null || true &
     done
 fi
+
+# Wait to make sure that all base jobs are killed so no new jobs can
+# be queued while we kill the parameterized Nomad jobs.
+wait $(jobs -p)
 
 # Kill parameterized Nomad Jobs so no jobs will be running when we
 # apply migrations.
@@ -152,10 +164,13 @@ if [[ $(nomad status) != "No running jobs" ]]; then
         if [ $job != "ID" ]; then
             # '|| true' so that if a job is garbage collected before we can remove it the error
             # doesn't interrupt our deploy.
-            nomad stop -purge -detach $job > /dev/null || true
+            nomad stop -purge -detach $job > /dev/null || true &
         fi
     done
 fi
+
+# Wait for these jobs to all die.
+wait $(jobs -p)
 
 # Make sure that prod_env is empty since we are only appending to it.
 # prod_env is a temporary file we use to pass environment variables to
@@ -164,6 +179,16 @@ rm -f prod_env
 
 # (cont'd) ..and once again after the update when this is re-run.
 format_environment_variables
+
+CCDL_IMGS="smasher illumina affymetrix salmon transcriptome no_op downloaders foreman api"
+
+for IMG in $CCDL_IMGS; do
+    # For each image we need to set the env var that is used by our
+    # scripts and the env var that gets picked up by terraform because
+    # it is preceeded with TF_VAR.
+    export ${IMG^^}_DOCKER_IMAGE=dr_$IMG:$SYSTEM_VERSION
+    export TF_VAR_$IMG_docker_image=dr_$IMG:$SYSTEM_VERSION
+done
 
 # Get an image to run the migrations with.
 docker pull $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE
@@ -203,9 +228,9 @@ rm -f prod_env
 echo "Registering new job specifications.."
 nomad_job_specs=nomad-job-specs/*
 for nomad_job_spec in $nomad_job_specs; do
-    echo "Registering $nomad_job_spec"
-    nomad run $nomad_job_spec
+    nomad run $nomad_job_spec &
 done
+echo "Job registrations have been fired off."
 
 # Ensure the latest image version is being used for the Foreman
 terraform taint aws_instance.foreman_server_1

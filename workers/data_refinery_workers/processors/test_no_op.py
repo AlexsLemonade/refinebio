@@ -132,7 +132,7 @@ class NOOPTestCase(TestCase):
         self.assertTrue(final_context['success'])
         self.assertTrue(os.path.exists(final_context['output_file_path']))
         self.assertEqual(os.path.getsize(final_context['output_file_path']), 920374)
-
+        self.assertTrue(no_op.check_output_quality(final_context['output_file_path']))
 
     @tag('no_op')
     def test_convert_illumina_no_header(self):

@@ -24,11 +24,15 @@ else
     exit 1
 fi
 
+echo $CIRCLE_TAG > ~/refinebio/common/version
+
 # Docker images that we want to protect from accidental overwriting in "ccdl" account.
 CCDL_WORKER_IMGS="smasher illumina affymetrix salmon transcriptome no_op downloaders"
 
 # Create ~/refinebio/common/dist/data-refinery-common-*.tar.gz, which is
 # required by the workers and data_refinery_foreman images.
+## Remove old common distributions if they exist
+rm ~/refinebio/common/dist/*
 cd ~/refinebio/common && python setup.py sdist
 
 # Log into DockerHub
@@ -41,8 +45,11 @@ for IMG in $CCDL_WORKER_IMGS; do
         echo "Docker image exists, skipping: $image_name:$CIRCLE_TAG"
     else
         echo "Building docker image: $image_name:$CIRCLE_TAG"
-        # Build and push image
-        docker build -t $image_name:$CIRCLE_TAG -f workers/dockerfiles/Dockerfile.$IMG .
+        # Build and push image. We use the CIRCLE_TAG as the system version.
+        docker build \
+               -t $image_name:$CIRCLE_TAG \
+               -f workers/dockerfiles/Dockerfile.$IMG \
+               --build-arg SYSTEM_VERSION=$CIRCLE_TAG .
         docker push $image_name:$CIRCLE_TAG
         # Update latest version
         docker tag $image_name:$CIRCLE_TAG $image_name:latest
@@ -58,7 +65,11 @@ FOREMAN_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_foreman"
 if docker_img_exists $FOREMAN_DOCKER_IMAGE $CIRCLE_TAG; then
     echo "Docker image exists, skipping: $FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG"
 else
-    docker build -t "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG" -f foreman/dockerfiles/Dockerfile.foreman .
+    # Build and push image. We use the CIRCLE_TAG as the system version.
+    docker build \
+           -t "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG" \
+           -f foreman/dockerfiles/Dockerfile.foreman \
+           --build-arg SYSTEM_VERSION=$CIRCLE_TAG .
     docker push "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG"
     # Update latest version
     docker tag "$FOREMAN_DOCKER_IMAGE:$CIRCLE_TAG" "$FOREMAN_DOCKER_IMAGE:latest"
@@ -70,7 +81,11 @@ API_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_api"
 if docker_img_exists $API_DOCKER_IMAGE $CIRCLE_TAG; then
     echo "Docker image exists, skipping: $API_DOCKER_IMAGE:$CIRCLE_TAG"
 else
-    docker build -t "$API_DOCKER_IMAGE:$CIRCLE_TAG" -f api/dockerfiles/Dockerfile.api_production .
+    # Build and push image. We use the CIRCLE_TAG as the system version.
+    docker build \
+           -t "$API_DOCKER_IMAGE:$CIRCLE_TAG" \
+           -f api/dockerfiles/Dockerfile.api_production \
+           --build-arg SYSTEM_VERSION=$CIRCLE_TAG .
     docker push "$API_DOCKER_IMAGE:$CIRCLE_TAG"
     # Update latest version
     docker tag "$API_DOCKER_IMAGE:$CIRCLE_TAG" "$API_DOCKER_IMAGE:latest"
