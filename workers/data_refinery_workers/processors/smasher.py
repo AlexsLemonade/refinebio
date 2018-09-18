@@ -156,7 +156,9 @@ def _add_annotation_value(row_data, col_name, col_value, sample_accession_code):
     # "refinebio_".  This should rarely (if ever) happen.
     if col_name.startswith("refinebio_"):
         logger.warning(
-            "Annotation value skipped: vs. %s" % (col_name, col_value),
+            "Annotation value skipped",
+            annotation_field=col_name,
+            annotation_value=col_value,
             sample_accession_code=sample_accession_code
         )
     elif col_name not in row_data:
