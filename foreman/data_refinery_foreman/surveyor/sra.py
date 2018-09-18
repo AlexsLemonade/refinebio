@@ -317,13 +317,18 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         return download_url
 
-    def _generate_experiment_and_samples(self, run_accession: str) -> (Experiment, List[Sample]):
+    def _generate_experiment_and_samples(self, run_accession: str, study_accession: str=None) -> (Experiment, List[Sample]):
         """Generates Experiments and Samples for the provided run_accession."""
         metadata = SraSurveyor.gather_all_metadata(run_accession)
 
         if metadata == {}:
-            logger.error("Could not discover any metadata for run.",
-                         accession=run_accession)
+            if study_accession:
+                logger.error("Could not discover any metadata for run.",
+                             accession=run_accession,
+                study_accession=study_accession)
+            else:
+                logger.error("Could not discover any metadata for run.",
+                             accession=run_accession)
             return (None, None)  # This will cascade properly
 
         if DOWNLOAD_SOURCE == "ENA":
@@ -538,7 +543,8 @@ class SraSurveyor(ExternalSourceSurveyor):
                         end_id = end[3::]
 
                         for run_id in range(int(start_id), int(end_id) + 1):
-                            accessions_to_run.append(accession[0] + "RR" + str(run_id))
+                            run_id = str(run_id).zfill(len(start_id))
+                            accessions_to_run.append(accession[0] + "RR" + run_id)
                     break
 
             experiment = None
@@ -549,7 +555,7 @@ class SraSurveyor(ExternalSourceSurveyor):
                              accession,
                              survey_job=self.survey_job.id)
 
-                returned_experiment, samples = self._generate_experiment_and_samples(run_id)
+                returned_experiment, samples = self._generate_experiment_and_samples(run_id, accession)
 
                 # Some runs may return (None, None). If this happens
                 # we don't want to set experiment to None.
