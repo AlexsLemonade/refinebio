@@ -44,7 +44,7 @@ class Command(BaseCommand):
             sys.exit(1)
 
         organism = Organism.get_object_for_name(options["organism"].upper())
-        samples = Sample.processed_objects.filter(organism=organism, has_raw=True)
+        samples = Sample.processed_objects.filter(organism=organism, has_raw=True, is_processed=True)
         if samples.count() == 0:
             logger.error("No processed samples for that organism.")
             sys.exit(1)

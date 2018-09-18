@@ -2,6 +2,7 @@ import boto3
 import csv
 import os
 import rpy2
+import rpy2.robjects as ro
 import shutil
 import simplejson as json
 import string
@@ -51,11 +52,15 @@ def _prepare_files(job_context: Dict) -> Dict:
     for key, samples in job_context["samples"].items():
         smashable_files = []
         for sample in samples:
-            smashable_files = smashable_files + \
-                [sample.get_most_recent_smashable_result_file(only_raw=job_context.get('only_raw', False))]
+            smashable_file = sample.get_most_recent_smashable_result_file()
+            if smashable_file is not None:
+                smashable_files = smashable_files + [smashable_file]
         smashable_files = list(set(smashable_files))
         job_context['input_files'][key] = smashable_files
         all_sample_files = all_sample_files + smashable_files
+
+    # Filter empty results. This shouldn't get here, but it's possible, so we filter just in case it does.
+    all_sample_files = [sf for sf in all_sample_files if sf is not None]
 
     if all_sample_files == []:
         error_message = "Couldn't get any files to smash for Smash job!!"
@@ -137,6 +142,16 @@ def _smash(job_context: Dict) -> Dict:
 
                     # Make sure the index type is correct
                     data.index = data.index.map(str)
+
+                    if len(data.columns) > 2:
+                        # Most of the time, >1 is actually bad, but we also need to support
+                        # two-channel samples. I think ultimately those should be given some kind of
+                        # special consideration.
+                        logger.info("Found a frame with more than 2 columns - this shouldn't happen!",
+                            computed_file_path=computed_file_path,
+                            computed_file_id=computed_file.id
+                            )
+                        continue
 
                     # via https://github.com/AlexsLemonade/refinebio/issues/330:
                     #   aggregating by experiment -> return untransformed output from tximport
@@ -226,7 +241,8 @@ def _smash(job_context: Dict) -> Dict:
                     logger.warning("Column repeated for smash job!",
                                    input_files=str(input_files),
                                    dataset_id=job_context["dataset"].id,
-                                   processor_job_id=job_context["job"].id
+                                   processor_job_id=job_context["job"].id,
+                                   column=column
                     )
                     continue
 
@@ -270,6 +286,38 @@ def _smash(job_context: Dict) -> Dict:
                                                             target=target_vector,
                                                             copy=True
                                                         )
+
+                        # Verify this QN, related: https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
+                        set_seed = rlang("set.seed")
+                        combn = rlang("combn")
+                        ncol = rlang("ncol")
+                        ks_test = rlang("ks.test")
+
+                        set_seed(123)
+                        combos = combn(ncol(reso), 2)
+
+                        # Convert to NP, Shuffle, Return to R
+                        ar = np.array(combos)
+                        np.random.shuffle(np.transpose(ar))
+                        nr, nc = ar.shape
+                        combos = ro.r.matrix(ar, nrow=nr, ncol=nc)
+
+                        # adapted from
+                        # https://stackoverflow.com/questions/9661469/r-t-test-over-all-columns
+                        # apply KS test to randomly selected pairs of columns (samples)
+                        for i in range(1, min(ncol(combos)[0], 100)):
+                            value1 = combos.rx(1, i)[0]
+                            value2 = combos.rx(2, i)[0]
+
+                            test_a = reso.rx(True, value1)
+                            test_b = reso.rx(True, value2)
+
+                            ks_res = ks_test(test_a, test_b)
+                            statistic = ks_res.rx('statistic')[0][0]
+                            pvalue = ks_res.rx('p.value')[0][0]
+
+                            if statistic > 0.001 or pvalue != 1.0:
+                                raise Exception("Failed Kolmogorov–Smirnov test! Stat: " + str(statistic) + ", PVal: " + str(pvalue))
 
                         # And finally convert back to Pandas
                         ar = np.array(reso)
