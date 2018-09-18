@@ -115,8 +115,7 @@ def _download_file_aspera(download_url: str,
             if attempt > 5:
                 logger.info("Final shell call of `%s` to ascp failed with error message: %s",
                          formatted_command,
-                         stderr,
-                         stdout,
+                         stderr + "\nSTDOUT: " + stdout,
                          downloader_job=downloader_job.id)
                 downloader_job.failure_reason = "stderr:\n " + stderr + "\nstdout:\n " + stdout
                 return False

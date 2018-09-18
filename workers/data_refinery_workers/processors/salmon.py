@@ -266,19 +266,23 @@ def _find_or_download_index(job_context: Dict) -> Dict:
         job_context["success"] = False
         return job_context
 
-    index_target = index_object.absolute_directory_path
+    job_context["index_directory"] = index_object.absolute_directory_path
 
     try:
-        os.makedirs(index_target)
-        index_tarball = ComputedFile.objects.filter(result=index_object.result)[0].sync_from_s3()
+        os.makedirs(job_context["index_directory"])
+        index_file = ComputedFile.objects.filter(result=index_object.result)[0]
+        index_tarball = index_file.sync_from_s3()
         with tarfile.open(index_tarball, "r:gz") as index_archive:
-            index_archive.extractall(index_target)
+            index_archive.extractall(job_context["index_directory"])
+
+        # Cleanup the tarball to save a few GB.
+        index_file.delete_local_file()
     except FileExistsError:
         # Someone already installed the index or is doing so now.
         pass
     except Exception as e:
         # Make sure we don't leave an empty index directory lying around.
-        shutil.rmtree(index_target, ignore_errors=True)
+        shutil.rmtree(job_context["index_directory"], ignore_errors=True)
 
         error_template = "Failed to download or extract transcriptome index for organism {0}: {1}"
         error_message = error_template.format(str(job_context['organism']), str(e))
@@ -289,7 +293,6 @@ def _find_or_download_index(job_context: Dict) -> Dict:
 
     # The index tarball contains a directory named index, so add that
     # to the path where we should put it.
-    job_context["index_directory"] = index_target + "/index"
     job_context["genes_to_transcripts_path"] = os.path.join(
         job_context["index_directory"], "genes_to_transcripts.txt")
 
