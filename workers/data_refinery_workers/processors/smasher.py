@@ -2,6 +2,7 @@ import boto3
 import csv
 import os
 import rpy2
+import rpy2.robjects as ro
 import shutil
 import simplejson as json
 import string
@@ -295,10 +296,16 @@ def _smash(job_context: Dict) -> Dict:
                         set_seed(123)
                         combos = combn(ncol(reso), 2)
 
+                        # Convert to NP, Shuffle, Return to R
+                        ar = np.array(combos)
+                        np.random.shuffle(np.transpose(ar))
+                        nr, nc = ar.shape
+                        combos = ro.r.matrix(ar, nrow=nr, ncol=nc)
+
                         # adapted from
                         # https://stackoverflow.com/questions/9661469/r-t-test-over-all-columns
                         # apply KS test to randomly selected pairs of columns (samples)
-                        for i in range(1, min(ncol(reso)[0], 100)):
+                        for i in range(1, min(ncol(combos)[0], 100)):
                             value1 = combos.rx(1, i)[0]
                             value2 = combos.rx(2, i)[0]
 
@@ -310,7 +317,7 @@ def _smash(job_context: Dict) -> Dict:
                             pvalue = ks_res.rx('p.value')[0][0]
 
                             if statistic > 0.001 or pvalue != 1.0:
-                                raise Exception("Failed Kolmogorov–Smirnov test!")
+                                raise Exception("Failed Kolmogorov–Smirnov test! Stat: " + str(statistic) + ", PVal: " + str(pvalue))
 
                         # And finally convert back to Pandas
                         ar = np.array(reso)
