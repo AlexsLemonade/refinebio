@@ -80,7 +80,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["temp_dir"] = job_context["work_dir"] + "temp/"
     os.makedirs(job_context["temp_dir"], exist_ok=True)
 
-    job_context["output_directory"] = job_context["work_dir"] + sample.accession_code + "/"
+    job_context["output_directory"] = job_context["work_dir"] + sample.accession_code + "_output/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
     # The sample's directory is what should be used for MultiQC input

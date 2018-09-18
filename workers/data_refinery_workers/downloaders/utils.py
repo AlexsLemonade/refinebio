@@ -61,6 +61,8 @@ def end_downloader_job(job: DownloaderJob, success: bool):
         logger.debug("Downloader Job completed successfully.",
                     downloader_job=job.id)
     else:
+        # Should be set by now, but make sure.
+        success = False
         file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
         for file_assoc in file_assocs:
             file_assoc.original_file.delete_local_file()
