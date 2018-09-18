@@ -457,8 +457,9 @@ class SraSurveyor(ExternalSourceSurveyor):
                 experiment_protocol=experiment_object.protocol_description,
                 experiment_url=experiment_object.source_url
             )
-            if is_updated:
-                sample_object.protocol_info = protocol_info
+            # Do not check is_updated the first time because we must
+            # save a list so we can append to it later.
+            sample_object.protocol_info = protocol_info
 
             sample_object.save()
 
