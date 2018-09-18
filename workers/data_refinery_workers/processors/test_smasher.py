@@ -957,7 +957,7 @@ class TsvTestCase(TestCase):
                     "refinebio_title": "IFNa DC_LB016_IFNa",
                     "refinebio_accession_code": "E-GEOD-44719-GSM1089311",
                     "refinebio_source_database": "ARRAY_EXPRESS",
-                    "refinebio_organism": "mysterious_species",
+                    "refinebio_organism": "fake_species",
                     ############# Annotations will be de-composed. #############
                     "refinebio_annotations": [
                         # annotation #1
@@ -1043,10 +1043,10 @@ class TsvTestCase(TestCase):
             'dataset': Dataset.objects.create(aggregate_by='ALL')
         }
         smasher._write_tsv(job_context, self.metadata, self.smash_path)
-        output_filename = self.smash_path + "ALL/ALL_metadata.tsv"
-        self.assertTrue(os.path.isfile(output_filename))
+        tsv_filename = self.smash_path + "ALL/ALL_metadata.tsv"
+        self.assertTrue(os.path.isfile(tsv_filename))
 
-        with open(output_filename) as tsv_file:
+        with open(tsv_filename) as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
             for row_num, row in enumerate(reader):
                 if row['refinebio_accession_code'] == 'E-GEOD-44719-GSM1089311':
@@ -1059,7 +1059,7 @@ class TsvTestCase(TestCase):
                     self.assertEqual(row['refinebio_organism'], 'homo_sapiens')
 
         self.assertEqual(row_num, 1)  # only two data rows in tsv file
-        #os.remove(output_filename)
+        os.remove(tsv_filename)
 
     @tag("smasher")
     def test_experiment_tsv(self):
@@ -1070,10 +1070,10 @@ class TsvTestCase(TestCase):
         }
         smasher._write_tsv(job_context, self.metadata, self.smash_path)
 
-        output_filename = self.smash_path + "E-GEOD-44719/E-GEOD-44719_metadata.tsv"
-        self.assertTrue(os.path.isfile(output_filename))
+        tsv_filename = self.smash_path + "E-GEOD-44719/E-GEOD-44719_metadata.tsv"
+        self.assertTrue(os.path.isfile(tsv_filename))
 
-        with open(output_filename) as tsv_file:
+        with open(tsv_filename) as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
             for row_num, row in enumerate(reader):
                 self.assertEqual(row['refinebio_accession_code'], 'E-GEOD-44719-GSM1089311')
@@ -1082,7 +1082,7 @@ class TsvTestCase(TestCase):
                 self.assertEqual(row['detection_percentage'], '98.44078')
 
         self.assertEqual(row_num, 0) # only one data row in tsv file
-        #os.remove(output_filename)
+        os.remove(tsv_filename)
 
     @tag("smasher")
     def test_species_tsv(self):
@@ -1091,20 +1091,35 @@ class TsvTestCase(TestCase):
         job_context = {
             'dataset': Dataset.objects.create(aggregate_by='SPECIES'),
             'input_files': {
-                'homo_sapiens': []
+                'homo_sapiens': [],
+                'fake_species': []
             }
         }
-        # TSV file should include only sample "GSM1361050", whose organism is 'homo_sapiens'
+        # Generate two TSV files, one should include only "GSM1361050",
+        # and the other should include only "E-GEOD-44719-GSM1089311".
         smasher._write_tsv(job_context, self.metadata, self.smash_path)
 
-        output_filename = self.smash_path + "homo_sapiens/homo_sapiens_metadata.tsv"
-        self.assertTrue(os.path.isfile(output_filename))
-
-        with open(output_filename) as tsv_file:
+        tsv_filename = self.smash_path + "homo_sapiens/homo_sapiens_metadata.tsv"
+        self.assertTrue(os.path.isfile(tsv_filename))
+        with open(tsv_filename) as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
             for row_num, row in enumerate(reader):
+                self.assertEqual(row['refinebio_accession_code'], 'GSM1361050')
                 self.assertEqual(row['tissue'], 'Bone Marrow')      # GEO specific
                 self.assertEqual(row['refinebio_organism'], 'homo_sapiens')
 
         self.assertEqual(row_num, 0) # only one data row in tsv file
-        #os.remove(output_filename)
+        os.remove(tsv_filename)
+
+        tsv_filename = self.smash_path + "fake_species/fake_species_metadata.tsv"
+        self.assertTrue(os.path.isfile(tsv_filename))
+        with open(tsv_filename) as tsv_file:
+            reader = csv.DictReader(tsv_file, delimiter='\t')
+            for row_num, row in enumerate(reader):
+                self.assertEqual(row['refinebio_accession_code'], 'E-GEOD-44719-GSM1089311')
+                self.assertEqual(row['cell population'], 'IFNa DC')  # ArrayExpress specific
+                self.assertEqual(row['dose'], '1 mL')                # ArrayExpress specific
+                self.assertEqual(row['detection_percentage'], '98.44078')
+
+        self.assertEqual(row_num, 0) # only one data row in tsv file
+        os.remove(tsv_filename)
