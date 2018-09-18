@@ -75,49 +75,99 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     return job_context
 
-def _get_tsv_columns(samples_metadata):
-    """Returns a set of strings that will be written as a TSV file's
-    header. The columns are based on fields found in samples_metadata.
 
-    Some annotation fields are taken out as separate columns because
-    they are more important than the others.
+def _add_annotation_column(annotation_columns, column_name):
+    """Add annotation column names in place.
+    Any column_name that starts with "refinebio_" will be skipped.
     """
 
-    columns = set()
-    columns.add('sample_id')
+    if not column_name.startswith("refinebio_"):
+        annotation_columns.add(column_name)
+
+
+def _get_tsv_columns(samples_metadata):
+    """Returns an array of strings that will be written as a TSV file's
+    header. The columns are based on fields found in samples_metadata.
+
+    Some nested annotation fields are taken out as separate columns
+    because they are more important than the others.
+    """
+
+    refinebio_columns = set()
+    #refinebio_columns.add('sample_id')
+    annotation_columns = set()
     for title, metadata in samples_metadata.items():
         for meta_key, meta_value in metadata.items():
-            if meta_key != 'annotations':
-                columns.add(meta_key)
+            if meta_key != 'refinebio_annotations':
+                refinebio_columns.add(meta_key)
                 continue
 
             # Handle sample_metadata["annotations"], which is an array of annotations!
             for annotation in meta_value:
                 for annotation_key, annotation_value in annotation.items():
-                    # For ArrayExpress samples, "characteristic" in annotation is important.
-                    if (metadata.get('source_database', '') == "ARRAY_EXPRESS"
+                    # For ArrayExpress samples, take out the fields
+                    # nested in "characteristic" as separate columns.
+                    if (metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
                         and annotation_key == "characteristic"):
                         for pair_dict in annotation_value:
                             if 'category' in pair_dict and 'value' in pair_dict:
-                                columns.add(pair_dict['category'])
-                    # "variable" is another important field in ArrayExpress sample annotation.
-                    elif (metadata.get('source_database', '') == "ARRAY_EXPRESS"
+                                _add_annotation_column(annotation_columns, pair_dict['category'])
+                    # For ArrayExpress samples, also take out the fields
+                    # nested in "variable" as separate columns.
+                    elif (metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
                           and annotation_key == "variable"):
                         for pair_dict in annotation_value:
                             if 'name' in pair_dict and 'value' in pair_dict:
-                                columns.add(pair_dict['name'])
-                    # For GEO samples, "characteristics_ch1" in annotation is important.
-                    elif (metadata.get('source_database', '') == "GEO"
+                                _add_annotation_column(annotation_columns, pair_dict['name'])
+                    # For ArrayExpress samples, skip "source" field
+                    elif (metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
+                          and annotation_key == "source"):
+                        continue
+                    # For GEO samples, take out the fields nested in
+                    # "characteristics_ch1" as separate columns.
+                    elif (metadata.get('refinebio_source_database', '') == "GEO"
                           and annotation_key == "characteristics_ch1"): # array of strings
                         for pair_str in annotation_value:
                             if ':' in pair_str:
                                 tokens = pair_str.split(':', 1)
-                                columns.add(tokens[0])
-                    else: # Save the other annotation fields in separate columns
-                        columns.add(annotation_key)
+                                _add_annotation_column(annotation_columns, tokens[0])
+                    # Saves all other annotation fields in separate columns
+                    else:
+                        _add_annotation_column(annotation_columns, annotation_key)
+
+    # Return sorted columns. "refinebio_title" is always the first one,
+    # followed by the other refinebio columns, and annotation columns.
+    if 'refinebio_title' in refinebio_columns:
+        refinebio_columns = refinebio_columns - {'refinebio_title'}
+        sorted_refinebio_columns = ['refinebio_title'] + sorted(refinebio_columns)
+    else:
+        sorted_refinebio_columns = sorted(refinebio_columns)
+    return sorted_refinebio_columns + sorted(annotation_columns)
 
 
-    return sorted(list(columns))  # Return sorted column names
+def _add_annotation_value(row_data, col_name, col_value, sample_accession_code):
+    """Adds a new `col_name` key whose value is `col_value` to row_data.
+    If col_name already exists in row_data with different value, print
+    out a warning message.
+    """
+
+    # Generate a warning message if annotation field name starts with
+    # "refinebio_".  This should rarely (if ever) happen.
+    if col_name.startswith("refinebio_"):
+        logger.warning(
+            "Annotation value skipped: vs. %s" % (col_name, col_value),
+            sample_accession_code=sample_accession_code
+        )
+    elif col_name not in row_data:
+        row_data[col_name] = col_value
+    # Generate a warning message in case of conflicts of annotation values.
+    # (Requested by Dr. Jackie Taroni)
+    elif row_data[col_name] != col_value:
+        logger.warning(
+            "Conflict of values found in column %s: %s vs. %s" % (
+                col_name, row_data[col_name], col_value),
+            sample_accession_code=sample_accession_code
+        )
 
 
 def _get_tsv_row_data(sample_metadata):
@@ -127,42 +177,56 @@ def _get_tsv_row_data(sample_metadata):
     important.  See `_get_tsv_columns` function above for details.
     """
 
+    sample_accession_code = sample_metadata.get('refinebio_accession_code', '')
     row_data = dict()
     for meta_key, meta_value in sample_metadata.items():
-        if meta_key != 'annotations':
+        # If the field is a refinebio-specific field, simply copy it.
+        if meta_key != 'refinebio_annotations':
             row_data[meta_key] = meta_value
             continue
 
-        # Handle sample_metadata["annotations"], which is an array of annotations!
+        # Decompose sample_metadata["refinebio_annotations"], which is
+        # an array of annotations.
         for annotation in meta_value:
             for annotation_key, annotation_value in annotation.items():
-                # For ArrayExpress samples, "characteristic" in annotation is important.
-                if (sample_metadata.get('source_database', '') == "ARRAY_EXPRESS"
+                # "characteristic" in ArrayExpress annotation
+                if (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
                     and annotation_key == "characteristic"):
                     for pair_dict in annotation_value:
                         if 'category' in pair_dict and 'value' in pair_dict:
-                            row_data[pair_dict['category']] = pair_dict['value']
-                # "variable" is another important field in ArrayExpress sample annotation.
-                elif (sample_metadata.get('source_database', '') == "ARRAY_EXPRESS"
+                            col_name, col_value = pair_dict['category'], pair_dict['value']
+                            _add_annotation_value(row_data, col_name, col_value,
+                                                  sample_accession_code)
+                # "variable" in ArrayExpress annotation
+                elif (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
                       and annotation_key == "variable"):
                     for pair_dict in annotation_value:
                         if 'name' in pair_dict and 'value' in pair_dict:
-                            row_data[pair_dict['name']] = pair_dict['value']
-                # For GEO samples, "characteristics_ch1" in annotation is important.
-                elif (sample_metadata.get('source_database', '') == "GEO"
+                            col_name, col_value = pair_dict['name'], pair_dict['value']
+                            _add_annotation_value(row_data, col_name, col_value,
+                                                  sample_accession_code)
+                # "characteristics_ch1" in GEO annotation
+                elif (sample_metadata.get('refinebio_source_database', '') == "GEO"
                       and annotation_key == "characteristics_ch1"): # array of strings
                     for pair_str in annotation_value:
                         if ':' in pair_str:
-                            tokens = pair_str.split(':', 1)
-                            row_data[tokens[0]] = tokens[1].strip()
-                # Flatten annotation values that are arrays of single element.
+                            col_name, col_value = pair_str.split(':', 1)
+                            col_value = col_value.strip()
+                            _add_annotation_value(row_data, col_name, col_value,
+                                                  sample_accession_code)
+                # If annotation_value includes only a 'name' key, extract its value directly:
+                elif (isinstance(annotation_value, dict)
+                      and len(annotation_value) == 1 and 'name' in annotation_value):
+                    _add_annotation_value(row_data, annotation_key, annotation_value['name'],
+                                          sample_accession_code)
+                # If annotation_value is a single-element array, extract the element directly:
                 elif isinstance(annotation_value, list) and len(annotation_value) == 1:
-                    row_data[annotation_key] = annotation_value[0]
+                    _add_annotation_value(row_data, annotation_key, annotation_value[0],
+                                          sample_accession_code)
                 # Otherwise save all annotation fields in separate columns
                 else:
-                    row_data[annotation_key] = annotation_value
-
-
+                    _add_annotation_value(row_data, annotation_key, annotation_value,
+                                          sample_accession_code)
 
     return row_data
 
@@ -183,16 +247,15 @@ def _write_tsv(metadata, smash_path, aggregation=None):
                     if key not in sample_titles:
                         continue
                     else:
-                        value['sample_id'] = key
+                        #value['sample_id'] = key
                         row_data = _get_tsv_row_data(value)
                         dw.writerow(row_data)
     else:
         with open(smash_path + 'metadata.tsv', 'w') as output_file:
-            sample_ids = list(metadata['samples'].keys())
             dw = csv.DictWriter(output_file, columns, delimiter='\t')
             dw.writeheader()
             for key, value in metadata['samples'].items():
-                value['sample_id'] = key
+                # value['sample_id'] = key
                 row_data = _get_tsv_row_data(value)
                 dw.writerow(row_data)
 

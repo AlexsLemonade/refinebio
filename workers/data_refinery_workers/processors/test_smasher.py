@@ -886,9 +886,9 @@ class TsvTestCase(TestCase):
 
             'samples': {
                 "IFNa DC_LB016_IFNa": {  # Sample #1 is an ArrayExpress sample
-                    "accession_code": "E-GEOD-44719-GSM1089311",
-                    "source_database": "ARRAY_EXPRESS",
-                    "annotations": [
+                    "refinebio_accession_code": "E-GEOD-44719-GSM1089311",
+                    "refinebio_source_database": "ARRAY_EXPRESS",
+                    "refinebio_annotations": [
                         # annotation #1
                         {
                             "detected_platform": "illuminaHumanv3",
@@ -904,7 +904,7 @@ class TsvTestCase(TestCase):
                                 { "category": "cell population",
                                   "value": "IFNa DC"
                                 },
-                                { "category": "dose",
+                                { "category": "dose",   # also available in "variable"
                                   "value": "1 mL"
                                 },
                                 { "category": "donor id",
@@ -914,7 +914,7 @@ class TsvTestCase(TestCase):
 
                             # Another special field in Array Express sample
                             "variable": [
-                                { "name": "dose",
+                                { "name": "dose",  # also available in "characteristic"
                                   "value": "1 mL"
                                 },
                                 { "name": "stimulation",
@@ -928,8 +928,8 @@ class TsvTestCase(TestCase):
                 },  # end of sample #1
 
                 "Bone.Marrow_OA_No_ST03": {  # Sample #2 is a GEO sample
-                    "accession_code": "GSM1361050",
-                    "annotations": [
+                    "refinebio_accession_code": "GSM1361050",
+                    "refinebio_annotations": [
                         {
                             "channel_count": [ "1" ],
 
@@ -947,8 +947,8 @@ class TsvTestCase(TestCase):
                         }
                     ],  # end of annotations
 
-                    "organism": "HOMO_SAPIENS",
-                    "source_database": "GEO"
+                    "refinebio_organism": "HOMO_SAPIENS",
+                    "refinebio_source_database": "GEO"
                 }  # end of sample #2
 
             }  # end of "samples"
@@ -960,8 +960,8 @@ class TsvTestCase(TestCase):
     @tag("smasher")
     def test_columns(self):
         columns = smasher._get_tsv_columns(self.metadata['samples'])
-        self.assertEqual(len(columns), 21)
-        self.assertTrue('accession_code' in columns)
+        self.assertEqual(len(columns), 20)
+        self.assertTrue('refinebio_accession_code' in columns)
         self.assertTrue('cell population' in columns)
         self.assertTrue('dose' in columns)
         self.assertTrue('stimulation' in columns)
@@ -978,17 +978,17 @@ class TsvTestCase(TestCase):
         with open(output_filename) as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
             for row_num, row in enumerate(reader):
-                if row['accession_code'] == 'E-GEOD-44719-GSM1089311':
+                if row['refinebio_accession_code'] == 'E-GEOD-44719-GSM1089311':
                     self.assertEqual(row['cell population'], 'IFNa DC') # ArrayExpress specific
                     self.assertEqual(row['dose'], '1 mL')               # ArrayExpress specific
                     self.assertEqual(row['detection_percentage'], '98.44078')
 
-                elif row['accession_code'] == 'GSM1361050':
+                elif row['refinebio_accession_code'] == 'GSM1361050':
                     self.assertEqual(row['tissue'], 'Bone Marrow')      # GEO specific
-                    self.assertEqual(row['organism'], 'HOMO_SAPIENS')
+                    self.assertEqual(row['refinebio_organism'], 'HOMO_SAPIENS')
 
         self.assertEqual(row_num, 1)  # only two data rows in tsv file
-        os.remove(output_filename)
+        #os.remove(output_filename)
 
     @tag("smasher")
     def test_experiment_tsv(self):
@@ -1001,10 +1001,10 @@ class TsvTestCase(TestCase):
         with open(output_filename) as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
             for row_num, row in enumerate(reader):
-                self.assertEqual(row['accession_code'], 'E-GEOD-44719-GSM1089311')
+                self.assertEqual(row['refinebio_accession_code'], 'E-GEOD-44719-GSM1089311')
                 self.assertEqual(row['cell population'], 'IFNa DC')  # ArrayExpress specific
                 self.assertEqual(row['dose'], '1 mL')                # ArrayExpress specific
                 self.assertEqual(row['detection_percentage'], '98.44078')
 
         self.assertEqual(row_num, 0) # only one data row in tsv file
-        os.remove(output_filename)
+        #os.remove(output_filename)
