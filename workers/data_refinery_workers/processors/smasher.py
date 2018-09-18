@@ -142,8 +142,11 @@ def _smash(job_context: Dict) -> Dict:
                     # Make sure the index type is correct
                     data.index = data.index.map(str)
 
-                    if len(data.columns) > 1:
-                        logger.info("Found a frame with more than 1 columns - this shouldn't happen!",
+                    if len(data.columns) > 2:
+                        # Most of the time, >1 is actually bad, but we also need to support
+                        # two-channel samples. I think ultimately those should be given some kind of
+                        # special consideration.
+                        logger.info("Found a frame with more than 2 columns - this shouldn't happen!",
                             computed_file_path=computed_file_path,
                             computed_file_id=computed_file.id
                             )
@@ -296,9 +299,7 @@ def _smash(job_context: Dict) -> Dict:
                         # adapted from
                         # https://stackoverflow.com/questions/9661469/r-t-test-over-all-columns
                         # apply KS test to randomly selected pairs of columns (samples)
-
-                        # TODO: Improve this
-                        for i in range(1,3):
+                        for i in range(1, min(ncol(reso)[0], 100)):
                             value1 = combos.rx(1, i)[0]
                             value2 = combos.rx(2, i)[0]
 
