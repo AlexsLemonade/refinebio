@@ -342,12 +342,10 @@ class SalmonTestCase(TestCase):
         # Test `salmon quant` on sample1 (SRR1206053)
         sample1_dir = os.path.join(experiment_dir, sample1_accession)
 
-        genes_to_transcripts_path = os.path.join(experiment_dir, 'index', 'genes_to_transcripts.txt')
         job1_context = salmon._prepare_files({"job_dir_prefix": "TEST",
                                               "job_id": "TEST",
                                               'pipeline': Pipeline(name="Salmon"),
                                               'computed_files': [],
-                                              "genes_to_transcripts_path": genes_to_transcripts_path,
                                               "original_files": [og_file_1]})
 
         # Check quant.sf in `salmon quant` output dir of sample1
@@ -365,7 +363,6 @@ class SalmonTestCase(TestCase):
                                               "job_id": "TEST2",
                                               'pipeline': Pipeline(name="Salmon"),
                                               'computed_files': [],
-                                              "genes_to_transcripts_path": genes_to_transcripts_path,
                                               "original_files": [og_file_2]})
 
         # Clean up tximport output:
