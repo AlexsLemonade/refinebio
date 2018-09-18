@@ -66,9 +66,9 @@ if [[ -z $tag || $tag == "salmon" ]]; then
     # TODO: rename the test_data_new to test_data and remove check for
     # the new file. These are here temporarily so other branches'
     # tests don't break.
-    if [[ ! -e $volume_directory/salmon_tests || ! -e $volume_directory/salmon_tests/new ]]; then
+    if [[ ! -e $volume_directory/salmon_tests || ! -e $volume_directory/salmon_tests/newer ]]; then
         echo "Downloading 'salmon quant' test data..."
-        wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests_new.tar.gz
+        wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests_newer.tar.gz
         tar xzf $volume_directory/salmon_tests.tar.gz -C $volume_directory
         rm $volume_directory/salmon_tests.tar.gz
     fi
