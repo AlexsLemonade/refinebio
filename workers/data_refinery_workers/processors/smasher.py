@@ -290,7 +290,6 @@ def _smash(job_context: Dict) -> Dict:
                         set_seed = rlang("set.seed")
                         combn = rlang("combn")
                         ncol = rlang("ncol")
-                        sample = rlang("sample")
                         ks_test = rlang("ks.test")
 
                         set_seed(123)
