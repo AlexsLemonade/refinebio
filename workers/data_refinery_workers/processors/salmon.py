@@ -106,7 +106,7 @@ def _extract_sra(job_context: Dict) -> Dict:
 
     if not os.path.exists(job_context["input_file_path"]):
         logger.error("Was told to SRA-extract a non-existent file - why did this happen?",
-            organism=job_context["input_file_path"],
+            input_file_path=job_context["input_file_path"],
             processor_job=job_context["job_id"]
         )
         job_context["job"].failure_reason = "Missing SRA file: " + str(job_context["input_file_path"])
