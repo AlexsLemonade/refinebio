@@ -15,6 +15,10 @@ job "SURVEYOR" {
       # delay    = "30s"
     }
 
+    ephemeral_disk {
+      size = "10"
+    }
+
     task "surveyor" {
       driver = "docker"
 
@@ -49,6 +53,11 @@ job "SURVEYOR" {
         cpu = 500
         # Memory is in MB of RAM.
         memory = 256
+      }
+
+      logs {
+        max_files = 1
+        max_file_size = 1
       }
 
       config {

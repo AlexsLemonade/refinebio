@@ -16,6 +16,10 @@ job "SMASHER" {
       # delay    = "30s"
     }
 
+    ephemeral_disk {
+      size = "10"
+    }
+
     task "smasher" {
       driver = "docker"
 
@@ -53,6 +57,11 @@ job "SMASHER" {
         cpu = 1024
         # Memory is in MB of RAM.
         memory = 4096
+      }
+
+      logs {
+        max_files = 1
+        max_file_size = 1
       }
 
       config {
