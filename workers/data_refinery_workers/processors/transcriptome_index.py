@@ -223,7 +223,7 @@ def _create_index(job_context: Dict) -> Dict:
                                job_context['base_file_path'].split('/')[-1])
 
     rsem_command_string = (
-        "rsem-prepare-reference --gtf {gtf_file}"
+        "rsem-prepare-reference --num-threads 16 --gtf {gtf_file}"
         " --transcript-to-gene-map {genes_to_transcripts} {fasta_file} {rsem_prefix}"
     )
 
@@ -251,7 +251,7 @@ def _create_index(job_context: Dict) -> Dict:
         job_context["success"] = False
         return job_context
 
-    salmon_command_string = ("salmon --no-version-check index -t {rsem_transcripts}"
+    salmon_command_string = ("salmon --num-threads 16 --no-version-check index -t {rsem_transcripts}"
                              " -i {index_dir} --type quasi -k {kmer_size}")
 
     # See this function's docstring for more info.
