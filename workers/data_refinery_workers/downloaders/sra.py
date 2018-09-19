@@ -172,6 +172,7 @@ def download_sra(job_id: int) -> None:
             logger.info("File already downloaded!",
                          original_file_id=original_file.id,
                          downloader_job=job_id)
+            success = True
             continue
 
         sample_accession_code = original_file.samples.first().accession_code

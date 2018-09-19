@@ -22,6 +22,10 @@ job "DOWNLOADER" {
       # delay    = "30s"
     }
 
+    ephemeral_disk {
+      size = "10"
+    }
+
     task "downloader" {
       driver = "docker"
 
@@ -56,7 +60,12 @@ job "DOWNLOADER" {
         # CPU is in AWS's CPU units.
         cpu = 256
         # Memory is in MB of RAM.
-        memory = 512
+        memory = 1024
+      }
+
+      logs {
+        max_files = 1
+        max_file_size = 1
       }
 
       config {

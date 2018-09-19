@@ -16,6 +16,10 @@ job "SALMON_${{INDEX}}_${{RAM}}" {
       # delay    = "30s"
     }
 
+    ephemeral_disk {
+      size = "10"
+    }
+
     task "salmon" {
       driver = "docker"
 
@@ -52,6 +56,11 @@ job "SALMON_${{INDEX}}_${{RAM}}" {
         cpu = 1024
         # Memory is in MB of RAM.
         memory = ${{RAM}}
+      }
+
+      logs {
+        max_files = 1
+        max_file_size = 1
       }
 
       constraint {

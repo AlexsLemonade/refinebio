@@ -80,7 +80,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["temp_dir"] = job_context["work_dir"] + "temp/"
     os.makedirs(job_context["temp_dir"], exist_ok=True)
 
-    job_context["output_directory"] = job_context["work_dir"] + sample.accession_code + "/"
+    job_context["output_directory"] = job_context["work_dir"] + sample.accession_code + "_output/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
     # The sample's directory is what should be used for MultiQC input
@@ -479,7 +479,8 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
         frame_path = os.path.join(job_context["work_dir"], sample_file_name)
         frame.to_csv(frame_path, sep='\t', encoding='utf-8')
 
-        sample = Sample.objects.get(accession_code=frame.columns.values[0])
+        # The frame column header is based off of the path, which includes _output.
+        sample = Sample.objects.get(accession_code=frame.columns.values[0].replace("_output", ""))
 
         computed_file = ComputedFile()
         computed_file.absolute_file_path = frame_path

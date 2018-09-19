@@ -16,6 +16,10 @@ job "NO_OP_${{INDEX}}_${{RAM}}" {
       # delay    = "30s"
     }
 
+    ephemeral_disk {
+      size = "10"
+    }
+
     task "no_op" {
       driver = "docker"
 
@@ -44,7 +48,7 @@ job "NO_OP_${{INDEX}}_${{RAM}}" {
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
         EBS_INDEX = "${{INDEX}}"
-        
+
       }
 
       # The resources the job will require.
@@ -53,6 +57,11 @@ job "NO_OP_${{INDEX}}_${{RAM}}" {
         cpu = 256
         # Memory is in MB of RAM.
         memory = ${{RAM}}
+      }
+
+      logs {
+        max_files = 1
+        max_file_size = 1
       }
 
       constraint {
