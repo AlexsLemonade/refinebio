@@ -16,6 +16,10 @@ job "TRANSCRIPTOME_INDEX_${{INDEX}}_${{RAM}}" {
       # delay    = "30s"
     }
 
+    ephemeral_disk {
+      size    = "1"
+    }
+
     task "transcriptome_index" {
       driver = "docker"
 

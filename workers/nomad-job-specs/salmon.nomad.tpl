@@ -16,6 +16,10 @@ job "SALMON_${{INDEX}}_${{RAM}}" {
       # delay    = "30s"
     }
 
+    ephemeral_disk {
+      size    = "1"
+    }
+
     task "salmon" {
       driver = "docker"
 

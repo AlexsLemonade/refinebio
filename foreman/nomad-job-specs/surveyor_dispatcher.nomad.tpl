@@ -15,6 +15,10 @@ job "SURVEYOR_DISPATCHER" {
       # delay    = "30s"
     }
 
+    ephemeral_disk {
+      size    = "1"
+    }
+
     task "surveyor" {
       driver = "docker"
 

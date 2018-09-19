@@ -16,6 +16,10 @@ job "AFFY_TO_PCL_${{INDEX}}_${{RAM}}" {
       # delay    = "30s"
     }
 
+    ephemeral_disk {
+      size    = "1"
+    }
+
     task "affy_to_pcl" {
       driver = "docker"
 

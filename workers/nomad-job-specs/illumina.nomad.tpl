@@ -16,6 +16,10 @@ job "ILLUMINA_TO_PCL_${{INDEX}}_${{RAM}}" {
       # delay    = "30s"
     }
 
+    ephemeral_disk {
+      size    = "1"
+    }
+
     task "illumina_to_pcl" {
       driver = "docker"
 

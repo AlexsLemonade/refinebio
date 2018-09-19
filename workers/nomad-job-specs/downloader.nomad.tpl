@@ -22,6 +22,10 @@ job "DOWNLOADER" {
       # delay    = "30s"
     }
 
+    ephemeral_disk {
+      size    = "1"
+    }
+
     task "downloader" {
       driver = "docker"
 

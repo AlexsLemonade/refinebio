@@ -16,6 +16,10 @@ job "SMASHER" {
       # delay    = "30s"
     }
 
+    ephemeral_disk {
+      size    = "1"
+    }
+
     task "smasher" {
       driver = "docker"
 
