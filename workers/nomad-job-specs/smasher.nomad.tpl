@@ -17,7 +17,7 @@ job "SMASHER" {
     }
 
     ephemeral_disk {
-      size    = "1"
+      size = "10"
     }
 
     task "smasher" {

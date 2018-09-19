@@ -16,7 +16,7 @@ job "SURVEYOR" {
     }
 
     ephemeral_disk {
-      size    = "1"
+      size = "10"
     }
 
     task "surveyor" {

@@ -17,7 +17,7 @@ job "AFFY_TO_PCL_${{INDEX}}_${{RAM}}" {
     }
 
     ephemeral_disk {
-      size    = "1"
+      size = "10"
     }
 
     task "affy_to_pcl" {

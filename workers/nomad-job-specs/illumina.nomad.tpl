@@ -17,7 +17,7 @@ job "ILLUMINA_TO_PCL_${{INDEX}}_${{RAM}}" {
     }
 
     ephemeral_disk {
-      size    = "1"
+      size = "10"
     }
 
     task "illumina_to_pcl" {

@@ -17,7 +17,7 @@ job "TRANSCRIPTOME_INDEX_${{INDEX}}_${{RAM}}" {
     }
 
     ephemeral_disk {
-      size    = "1"
+      size = "10"
     }
 
     task "transcriptome_index" {
