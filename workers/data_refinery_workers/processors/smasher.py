@@ -86,6 +86,202 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     return job_context
 
+
+def _add_annotation_column(annotation_columns, column_name):
+    """Add annotation column names in place.
+    Any column_name that starts with "refinebio_" will be skipped.
+    """
+
+    if not column_name.startswith("refinebio_"):
+        annotation_columns.add(column_name)
+
+
+def _get_tsv_columns(samples_metadata):
+    """Returns an array of strings that will be written as a TSV file's
+    header. The columns are based on fields found in samples_metadata.
+
+    Some nested annotation fields are taken out as separate columns
+    because they are more important than the others.
+    """
+
+    refinebio_columns = set()
+    annotation_columns = set()
+    for sample_metadata in samples_metadata.values():
+        for meta_key, meta_value in sample_metadata.items():
+            if meta_key != 'refinebio_annotations':
+                refinebio_columns.add(meta_key)
+                continue
+
+            # Decompose sample_metadata["annotations"], which is an array of annotations!
+            for annotation in meta_value:
+                for annotation_key, annotation_value in annotation.items():
+                    # For ArrayExpress samples, take out the fields
+                    # nested in "characteristic" as separate columns.
+                    if (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
+                        and annotation_key == "characteristic"):
+                        for pair_dict in annotation_value:
+                            if 'category' in pair_dict and 'value' in pair_dict:
+                                _add_annotation_column(annotation_columns, pair_dict['category'])
+                    # For ArrayExpress samples, also take out the fields
+                    # nested in "variable" as separate columns.
+                    elif (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
+                          and annotation_key == "variable"):
+                        for pair_dict in annotation_value:
+                            if 'name' in pair_dict and 'value' in pair_dict:
+                                _add_annotation_column(annotation_columns, pair_dict['name'])
+                    # For ArrayExpress samples, skip "source" field
+                    elif (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
+                          and annotation_key == "source"):
+                        continue
+                    # For GEO samples, take out the fields nested in
+                    # "characteristics_ch1" as separate columns.
+                    elif (sample_metadata.get('refinebio_source_database', '') == "GEO"
+                          and annotation_key == "characteristics_ch1"): # array of strings
+                        for pair_str in annotation_value:
+                            if ':' in pair_str:
+                                tokens = pair_str.split(':', 1)
+                                _add_annotation_column(annotation_columns, tokens[0])
+                    # Saves all other annotation fields in separate columns
+                    else:
+                        _add_annotation_column(annotation_columns, annotation_key)
+
+    # Return sorted columns, in which "refinebio_title" is always the first,
+    # followed by the other refinebio columns (in alphabetic order), and
+    # annotation columns (in alphabetic order) at the end.
+    refinebio_columns.discard('refinebio_title')
+    return ['refinebio_title'] + sorted(refinebio_columns) + sorted(annotation_columns)
+
+def _add_annotation_value(row_data, col_name, col_value, sample_accession_code):
+    """Adds a new `col_name` key whose value is `col_value` to row_data.
+    If col_name already exists in row_data with different value, print
+    out a warning message.
+    """
+
+    # Generate a warning message if annotation field name starts with
+    # "refinebio_".  This should rarely (if ever) happen.
+    if col_name.startswith("refinebio_"):
+        logger.warning(
+            "Annotation value skipped",
+            annotation_field=col_name,
+            annotation_value=col_value,
+            sample_accession_code=sample_accession_code
+        )
+    elif col_name not in row_data:
+        row_data[col_name] = col_value
+    # Generate a warning message in case of conflicts of annotation values.
+    # (Requested by Dr. Jackie Taroni)
+    elif row_data[col_name] != col_value:
+        logger.warning(
+            "Conflict of values found in column %s: %s vs. %s" % (
+                col_name, row_data[col_name], col_value),
+            sample_accession_code=sample_accession_code
+        )
+
+
+def _get_tsv_row_data(sample_metadata):
+    """Returns field values based on input sample_metadata.
+
+    Some annotation fields are treated specially because they are more
+    important.  See `_get_tsv_columns` function above for details.
+    """
+
+    sample_accession_code = sample_metadata.get('refinebio_accession_code', '')
+    row_data = dict()
+    for meta_key, meta_value in sample_metadata.items():
+        # If the field is a refinebio-specific field, simply copy it.
+        if meta_key != 'refinebio_annotations':
+            row_data[meta_key] = meta_value
+            continue
+
+        # Decompose sample_metadata["refinebio_annotations"], which is
+        # an array of annotations.
+        for annotation in meta_value:
+            for annotation_key, annotation_value in annotation.items():
+                # "characteristic" in ArrayExpress annotation
+                if (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
+                    and annotation_key == "characteristic"):
+                    for pair_dict in annotation_value:
+                        if 'category' in pair_dict and 'value' in pair_dict:
+                            col_name, col_value = pair_dict['category'], pair_dict['value']
+                            _add_annotation_value(row_data, col_name, col_value,
+                                                  sample_accession_code)
+                # "variable" in ArrayExpress annotation
+                elif (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
+                      and annotation_key == "variable"):
+                    for pair_dict in annotation_value:
+                        if 'name' in pair_dict and 'value' in pair_dict:
+                            col_name, col_value = pair_dict['name'], pair_dict['value']
+                            _add_annotation_value(row_data, col_name, col_value,
+                                                  sample_accession_code)
+                 # Skip "source" field ArrayExpress sample's annotation
+                elif (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
+                      and annotation_key == "source"):
+                    continue
+                # "characteristics_ch1" in GEO annotation
+                elif (sample_metadata.get('refinebio_source_database', '') == "GEO"
+                      and annotation_key == "characteristics_ch1"): # array of strings
+                    for pair_str in annotation_value:
+                        if ':' in pair_str:
+                            col_name, col_value = pair_str.split(':', 1)
+                            col_value = col_value.strip()
+                            _add_annotation_value(row_data, col_name, col_value,
+                                                  sample_accession_code)
+                # If annotation_value includes only a 'name' key, extract its value directly:
+                elif (isinstance(annotation_value, dict)
+                      and len(annotation_value) == 1 and 'name' in annotation_value):
+                    _add_annotation_value(row_data, annotation_key, annotation_value['name'],
+                                          sample_accession_code)
+                # If annotation_value is a single-element array, extract the element directly:
+                elif isinstance(annotation_value, list) and len(annotation_value) == 1:
+                    _add_annotation_value(row_data, annotation_key, annotation_value[0],
+                                          sample_accession_code)
+                # Otherwise save all annotation fields in separate columns
+                else:
+                    _add_annotation_value(row_data, annotation_key, annotation_value,
+                                          sample_accession_code)
+
+    return row_data
+
+
+def _write_tsv(job_context, metadata, smash_path):
+    """Writes tsv files on disk."""
+
+    # Uniform TSV header per dataset
+    columns = _get_tsv_columns(metadata['samples'])
+
+    if job_context["dataset"].aggregate_by == "EXPERIMENT":
+        for experiment_title, experiment_data in metadata['experiments'].items():
+            experiment_dir = smash_path + experiment_title + '/'
+            os.makedirs(experiment_dir, exist_ok=True)
+            with open(experiment_dir + experiment_title + '_metadata.tsv', 'w') as output_file:
+                dw = csv.DictWriter(output_file, columns, delimiter='\t')
+                dw.writeheader()
+                for sample_title, sample_metadata in metadata['samples'].items():
+                    if sample_title in experiment_data['sample_titles']:
+                        row_data = _get_tsv_row_data(sample_metadata)
+                        dw.writerow(row_data)
+    elif job_context["dataset"].aggregate_by == "SPECIES":
+        for species in job_context['input_files'].keys():
+            species_dir = smash_path + species + '/'
+            os.makedirs(species_dir, exist_ok=True)
+            with open(species_dir + species + '_metadata.tsv', 'w') as output_file:
+                dw = csv.DictWriter(output_file, columns, delimiter='\t')
+                dw.writeheader()
+                for sample_metadata in metadata['samples'].values():
+                    if sample_metadata.get('refinebio_organism', '') == species:
+                        row_data = _get_tsv_row_data(sample_metadata)
+                        dw.writerow(row_data)
+    else:
+        all_dir = smash_path + "ALL/"
+        os.makedirs(all_dir, exist_ok=True)
+        with open(all_dir + 'ALL_metadata.tsv', 'w') as output_file:
+            dw = csv.DictWriter(output_file, columns, delimiter='\t')
+            dw.writeheader()
+            for sample_metadata in metadata['samples'].values():
+                row_data = _get_tsv_row_data(sample_metadata)
+                dw.writerow(row_data)
+
+
 def _smash(job_context: Dict) -> Dict:
     """
     Smash all of the samples together!
@@ -267,7 +463,8 @@ def _smash(job_context: Dict) -> Dict:
                         )
                     else:
                         qn_target_path = qn_target.sync_from_s3()
-                        qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None, index_col=None, error_bad_lines=False)
+                        qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None,
+                                                      index_col=None, error_bad_lines=False)
 
                         # Prepare our RPy2 bridge
                         pandas2ri.activate()
@@ -394,49 +591,8 @@ def _smash(job_context: Dict) -> Dict:
             experiments[experiment.accession_code] = exp_dict
         metadata['experiments'] = experiments
 
-        # Metadata to TSV
-        if job_context["dataset"].aggregate_by == "EXPERIMENT":
-            for title, keys in metadata['experiments'].items():
-                with open(smash_path + title + '/' + title + '_metadata.tsv', 'w') as output_file:
-                    sample_titles = keys['sample_titles']
-                    keys = list(metadata['samples'][sample_titles[0]].keys()) + ['sample_id']
-                    dw = csv.DictWriter(output_file, keys, delimiter='\t')
-                    dw.writeheader()
-                    for key, value in metadata['samples'].items():
-                        if key not in sample_titles:
-                            continue
-                        else:
-                            value['sample_id'] = key
-                            dw.writerow(value)
-        elif job_context["dataset"].aggregate_by == "SPECIES":
-            for species, input_files in job_context['input_files'].items():
-                species_samples = []
-                sample_titles = []
-                for sample_id, metadata in metadata['samples'].items():
-                    if metadata['organism'] == species:
-                        metadata['sample_id'] = sample_id
-                        species_samples.append(metadata)
-                        sample_titles.append(metadata['title'])
-
-                species_dir = smash_path + species + '/'
-                os.makedirs(species_dir, exist_ok=True)
-                with open(species_dir + species + '_metadata.tsv', 'w') as output_file:
-                    keys = list(species_samples[0].keys()) + ['sample_id']
-                    dw = csv.DictWriter(output_file, keys, delimiter='\t')
-                    dw.writeheader()
-                    for sample in species_samples:
-                        dw.writerow(sample)
-        else:
-            all_dir = smash_path + "ALL/"
-            os.makedirs(all_dir, exist_ok=True)
-            with open(all_dir + 'ALL_metadata.tsv', 'w') as output_file:
-                sample_ids = list(metadata['samples'].keys())
-                keys = list(metadata['samples'][sample_ids[0]].keys()) + ['sample_id']
-                dw = csv.DictWriter(output_file, keys, delimiter='\t')
-                dw.writeheader()
-                for key, value in metadata['samples'].items():
-                    value['sample_id'] = key
-                    dw.writerow(value)
+        # Write samples metadata to TSV
+        _write_tsv(job_context, metadata, smash_path)
 
         metadata['files'] = os.listdir(smash_path)
 
@@ -487,7 +643,9 @@ def _upload(job_context: Dict) -> Dict:
                     job_context["output_file"].split('/')[-1],
                     ExtraArgs={'ACL':'public-read'}
                 )
-            result_url = "https://s3.amazonaws.com/" + RESULTS_BUCKET + "/" + job_context["output_file"].split('/')[-1]
+            result_url = ("https://s3.amazonaws.com/" + RESULTS_BUCKET + "/" +
+                          job_context["output_file"].split('/')[-1])
+
             job_context["result_url"] = result_url
 
             logger.debug("Result uploaded!",
