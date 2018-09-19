@@ -251,7 +251,7 @@ def _create_index(job_context: Dict) -> Dict:
         job_context["success"] = False
         return job_context
 
-    salmon_command_string = ("salmon --num-threads 16 --no-version-check index -t {rsem_transcripts}"
+    salmon_command_string = ("salmon --threads=16 --no-version-check index -t {rsem_transcripts}"
                              " -i {index_dir} --type quasi -k {kmer_size}")
 
     # See this function's docstring for more info.
