@@ -990,7 +990,22 @@ class TsvTestCase(TestCase):
                                   "value": "IFNa"
                                 }
                             ],
+                            # "source" field in Array Express sample annotation will be
+                            # skipped in tsv file.
+                            'source': {
+                                'name': 'GSM1288968 1',
+                                'comment': [
+                                    { 'name': 'Sample_source_name',
+                                      'value': 'pineal glands at CT18, after light exposure'
+                                    },
+                                    { 'name': 'Sample_title',
+                                      'value': 'Pineal_Light_CT18'
+                                    }
+                                ]
+                            },
 
+                            # For single-key object whose key is "name",
+                            # the key will be ignored in tsv file.
                             "extract": { "name": "GSM1089311 extract 1" }
                         }
                     ]  # end of annotations
@@ -1013,6 +1028,8 @@ class TsvTestCase(TestCase):
                                 "serum: Low Serum"
                             ],
 
+                            # For single-element array, the element will
+                            # be saved directly in tsv file.
                             "contact_address": [ "Crown Street" ],
                             "contact_country": [ "United Kingdom" ],
                             "data_processing": [ "Data was processed and normalized" ],
@@ -1054,11 +1071,13 @@ class TsvTestCase(TestCase):
                 if row['refinebio_accession_code'] == 'E-GEOD-44719-GSM1089311':
                     self.assertEqual(row['cell population'], 'IFNa DC') # ArrayExpress specific
                     self.assertEqual(row['dose'], '1 mL')               # ArrayExpress specific
+                    self.assertFalse('source' in row)                   # ArrayExpress specific
                     self.assertEqual(row['detection_percentage'], '98.44078')
-
+                    self.assertEqual(row["extract"], "GSM1089311 extract 1")
                 elif row['refinebio_accession_code'] == 'GSM1361050':
                     self.assertEqual(row['tissue'], 'Bone Marrow')      # GEO specific
                     self.assertEqual(row['refinebio_organism'], 'homo_sapiens')
+                    self.assertEqual(row["contact_address"], "Crown Street")
 
         self.assertEqual(row_num, 1)  # only two data rows in tsv file
         os.remove(tsv_filename)
