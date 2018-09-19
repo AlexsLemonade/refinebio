@@ -59,6 +59,11 @@ job "NO_OP_${{INDEX}}_${{RAM}}" {
         memory = ${{RAM}}
       }
 
+      logs {
+        max_files = 1
+        max_file_size = 1
+      }
+
       constraint {
         attribute = "${meta.volume_index}"
         operator  = "="

@@ -55,6 +55,11 @@ job "SURVEYOR" {
         memory = 256
       }
 
+      logs {
+        max_files = 1
+        max_file_size = 1
+      }
+
       config {
         image = "${{DOCKERHUB_REPO}}/${{FOREMAN_DOCKER_IMAGE}}"
         force_pull = false

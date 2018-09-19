@@ -63,6 +63,11 @@ job "DOWNLOADER" {
         memory = 1024
       }
 
+      logs {
+        max_files = 1
+        max_file_size = 1
+      }
+
       config {
         image = "${{DOCKERHUB_REPO}}/${{DOWNLOADERS_DOCKER_IMAGE}}"
         force_pull = false

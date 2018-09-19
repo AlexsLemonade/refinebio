@@ -59,6 +59,11 @@ job "SMASHER" {
         memory = 4096
       }
 
+      logs {
+        max_files = 1
+        max_file_size = 1
+      }
+
       config {
         image = "${{DOCKERHUB_REPO}}/${{SMASHER_DOCKER_IMAGE}}"
         force_pull = false
