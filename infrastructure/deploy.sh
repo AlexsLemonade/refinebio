@@ -81,6 +81,17 @@ format_environment_variables () {
 source ../common.sh
 export TF_VAR_host_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
 
+# Set the environment variables that dictate which Docker images are used.
+CCDL_IMGS="smasher illumina affymetrix salmon transcriptome no_op downloaders foreman api"
+
+for IMG in $CCDL_IMGS; do
+    # For each image we need to set the env var that is used by our
+    # scripts and the env var that gets picked up by terraform because
+    # it is preceeded with TF_VAR.
+    export ${IMG^^}_DOCKER_IMAGE=dr_$IMG:$SYSTEM_VERSION
+    export TF_VAR_$IMG_docker_image=dr_$IMG:$SYSTEM_VERSION
+done
+
 # Copy ingress config to top level so it can be applied.
 cp deploy/ci_ingress.tf .
 
@@ -179,16 +190,6 @@ rm -f prod_env
 
 # (cont'd) ..and once again after the update when this is re-run.
 format_environment_variables
-
-CCDL_IMGS="smasher illumina affymetrix salmon transcriptome no_op downloaders foreman api"
-
-for IMG in $CCDL_IMGS; do
-    # For each image we need to set the env var that is used by our
-    # scripts and the env var that gets picked up by terraform because
-    # it is preceeded with TF_VAR.
-    export ${IMG^^}_DOCKER_IMAGE=dr_$IMG:$SYSTEM_VERSION
-    export TF_VAR_$IMG_docker_image=dr_$IMG:$SYSTEM_VERSION
-done
 
 # Get an image to run the migrations with.
 docker pull $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE
