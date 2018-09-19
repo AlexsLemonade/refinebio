@@ -208,6 +208,10 @@ def _get_tsv_row_data(sample_metadata):
                             col_name, col_value = pair_dict['name'], pair_dict['value']
                             _add_annotation_value(row_data, col_name, col_value,
                                                   sample_accession_code)
+                 # Skip "source" field ArrayExpress sample's annotation
+                elif (sample_metadata.get('refinebio_source_database', '') == "ARRAY_EXPRESS"
+                      and annotation_key == "source"):
+                    continue
                 # "characteristics_ch1" in GEO annotation
                 elif (sample_metadata.get('refinebio_source_database', '') == "GEO"
                       and annotation_key == "characteristics_ch1"): # array of strings
