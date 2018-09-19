@@ -1,3 +1,4 @@
+import random
 import requests
 from typing import List, Dict
 
@@ -31,6 +32,8 @@ ENA_METADATA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/data/view/{}&display=xml"
 ENA_DOWNLOAD_URL_TEMPLATE = ("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/{short_accession}{sub_dir}"
                              "/{long_accession}/{long_accession}{read_suffix}.fastq.gz")
 NCBI_DOWNLOAD_URL_TEMPLATE = ("anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/"
+                             "{first_three}/{first_six}/{accession}/{accession}.sra")
+NCBI_PRIVATE_DOWNLOAD_URL_TEMPLATE = ("anonftp@ftp-private.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/"
                              "{first_three}/{first_six}/{accession}/{accession}.sra")
 ENA_SUB_DIR_PREFIX = "/00"
 
@@ -309,11 +312,20 @@ class SraSurveyor(ExternalSourceSurveyor):
         accession = run_accession
         first_three = accession[:3]
         first_six = accession[:6]
-        download_url = NCBI_DOWNLOAD_URL_TEMPLATE.format(
-            first_three=first_three,
-            first_six=first_six,
-            accession=accession
-        )
+
+        # Load balancing via coin flip.
+        if random.choice([True, False]):
+            download_url = NCBI_DOWNLOAD_URL_TEMPLATE.format(
+                first_three=first_three,
+                first_six=first_six,
+                accession=accession
+            )
+        else:
+            download_url = NCBI_PRIVATE_DOWNLOAD_URL_TEMPLATE.format(
+                first_three=first_three,
+                first_six=first_six,
+                accession=accession
+            )
 
         return download_url
 
