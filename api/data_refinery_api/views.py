@@ -561,21 +561,17 @@ class SurveyJobList(PaginatedAPIView):
 	  - ?start_time__lte=2018-03-23T15:29:40.848381Z&start_time__gte=2018-03-23T14:29:40.848381Z
 	  - ?success=True
 
+      Works with required 'limit' and 'offset' params.
+
     """
 
     def get(self, request, format=None):
         filter_dict = request.query_params.dict()
-        filter_dict.pop('limit', None)
-        filter_dict.pop('offset', None)
-        jobs = SurveyJob.objects.filter(**filter_dict)
-
-        page = self.paginate_queryset(jobs)
-        if page is not None:
-            serializer = SurveyJobSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        else:
-            serializer = SurveyJobSerializer(jobs, many=True)
-            return Response(serializer.data)
+        limit = max(int(filter_dict.pop('limit', 100)), 100)
+        offset = int(filter_dict.pop('offset', 0))
+        jobs = SurveyJob.objects.filter(**filter_dict)[offset:(offset + limit)]
+        serializer = SurveyJobSerializer(jobs, many=True)
+        return Response(serializer.data)
 
 class DownloaderJobList(PaginatedAPIView):
     """
@@ -584,17 +580,11 @@ class DownloaderJobList(PaginatedAPIView):
 
     def get(self, request, format=None):
         filter_dict = request.query_params.dict()
-        filter_dict.pop('limit', None)
-        filter_dict.pop('offset', None)
-        jobs = DownloaderJob.objects.filter(**filter_dict)
-
-        page = self.paginate_queryset(jobs)
-        if page is not None:
-            serializer = DownloaderJobSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        else:
-            serializer = DownloaderJobSerializer(jobs, many=True)
-            return Response(serializer.data)
+        limit = max(int(filter_dict.pop('limit', 100)), 100)
+        offset = int(filter_dict.pop('offset', 0))
+        jobs = DownloaderJob.objects.filter(**filter_dict)[offset: offset + limit]
+        serializer = DownloaderJobSerializer(jobs, many=True)
+        return Response(serializer.data)
 
 class ProcessorJobList(PaginatedAPIView):
     """
@@ -603,17 +593,11 @@ class ProcessorJobList(PaginatedAPIView):
 
     def get(self, request, format=None):
         filter_dict = request.query_params.dict()
-        filter_dict.pop('limit', None)
-        filter_dict.pop('offset', None)
-        jobs = ProcessorJob.objects.filter(**filter_dict)
-
-        page = self.paginate_queryset(jobs)
-        if page is not None:
-            serializer = ProcessorJobSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        else:
-            serializer = ProcessorJobSerializer(jobs, many=True)
-            return Response(serializer.data)
+        limit = max(int(filter_dict.pop('limit', 100)), 100)
+        offset = int(filter_dict.pop('offset', 0))
+        jobs = ProcessorJob.objects.filter(**filter_dict)[offset: offset + limit]
+        serializer = ProcessorJobSerializer(jobs, many=True)
+        return Response(serializer.data)
 
 ###
 # Statistics
