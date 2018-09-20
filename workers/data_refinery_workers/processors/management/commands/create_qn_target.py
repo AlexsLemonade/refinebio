@@ -34,6 +34,12 @@ class Command(BaseCommand):
             "--organism",
             type=str,
             help=("Name of organism"))
+        parser.add_argument(
+            "--platform",
+            type=str,
+            default=None,
+            help=("Name of platform")
+            )
 
     def handle(self, *args, **options):
         """
@@ -44,15 +50,22 @@ class Command(BaseCommand):
             sys.exit(1)
 
         organism = Organism.get_object_for_name(options["organism"].upper())
-        samples = Sample.processed_objects.filter(organism=organism, has_raw=True, is_processed=True)
+        samples = Sample.processed_objects.filter(organism=organism, has_raw=True, technology="MICROARRAY", is_processed=True)
         if samples.count() == 0:
             logger.error("No processed samples for that organism.")
             sys.exit(1)
 
-        platform_counts = samples.values('platform_accession_code').annotate(dcount=Count('platform_accession_code')).order_by('-dcount')
+        if options["platform"] is None:
+            platform_counts = samples.values('platform_accession_code').annotate(dcount=Count('platform_accession_code')).order_by('-dcount')
+            biggest_platform = platform_counts[0]['platform_accession_code']
+        else:
+            biggest_platform = options["platform"]
 
-        biggest_platform = platform_counts[0]['platform_accession_code']
-        sample_codes_results = Sample.objects.filter(platform_accession_code=biggest_platform).values('accession_code')
+        sample_codes_results = Sample.processed_objects.filter(
+            platform_accession_code=biggest_platform, 
+            has_raw=True, 
+            technology="MICROARRAY", 
+            is_processed=True).values('accession_code')
         sample_codes = [res['accession_code'] for res in sample_codes_results]
 
         dataset = Dataset()
