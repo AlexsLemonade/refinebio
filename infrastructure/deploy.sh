@@ -89,7 +89,7 @@ for IMG in $CCDL_IMGS; do
     # scripts and the env var that gets picked up by terraform because
     # it is preceeded with TF_VAR.
     export ${IMG^^}_DOCKER_IMAGE=dr_$IMG:$SYSTEM_VERSION
-    export TF_VAR_$IMG_docker_image=dr_$IMG:$SYSTEM_VERSION
+    export TF_VAR_${IMG}_docker_image=dr_$IMG:$SYSTEM_VERSION
 done
 
 # Copy ingress config to top level so it can be applied.
