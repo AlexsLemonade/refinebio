@@ -17,6 +17,7 @@ job "ILLUMINA_TO_PCL_${{INDEX}}_${{RAM}}" {
 
     reschedule {
       attempts = 0
+      unlimited = false
     }
 
     ephemeral_disk {

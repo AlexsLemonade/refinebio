@@ -16,6 +16,7 @@ job "SURVEYOR_DISPATCHER" {
 
     reschedule {
       attempts = 0
+      unlimited = false
     }
 
     ephemeral_disk {
