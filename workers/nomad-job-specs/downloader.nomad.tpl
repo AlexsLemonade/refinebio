@@ -19,7 +19,11 @@ job "DOWNLOADER" {
     restart {
       attempts = 0
       mode = "fail"
-      # delay    = "30s"
+    }
+
+    reschedule {
+      attempts = 0
+      unlimited = false
     }
 
     ephemeral_disk {

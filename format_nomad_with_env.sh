@@ -61,6 +61,10 @@ if [[ -z $env ]]; then
     env="local"
 fi
 
+if [[ -z $MAX_CLIENTS ]]; then
+    MAX_CLIENTS="1"
+fi
+
 # Default docker repo.
 # This are very sensible defaults, but we want to let these be set
 # outside the script so only set them if they aren't already set.
@@ -226,8 +230,7 @@ if [[ $project == "workers" ]]; then
             rams=(2048 3072 4096 8192 12288)
             for r in "${rams[@]}"
             do
-                indexes=(0 1 2 3 4 5 6 7 8 9)
-                for j in "${indexes[@]}"
+                for ((j=0; j<MAX_CLIENTS; j++));
                 do
                     export INDEX_POSTFIX="_$j"
                     export INDEX="$j"
