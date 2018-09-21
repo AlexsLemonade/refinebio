@@ -1,5 +1,9 @@
+import csv
+import random
 import requests
+import string
 
+from io import StringIO
 from typing import Dict, List
 
 from data_refinery_common.logging import get_and_configure_logger
@@ -291,11 +295,15 @@ def harmonize(metadata: List) -> Dict:
     # Title!
     # We also use the title as the key in the returned dictionary
     ##
+    used_titles = []
     for sample in metadata:
         title = extract_title(sample)
         # If we can't even find a unique title for this sample
         # something has gone horribly wrong.
         if title:
+            if title in used_titles:
+                title = title + "_" + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(12))
+            used_titles.append(title)
             new_sample = sample.copy()
             new_sample['title'] = title
             original_samples.append(new_sample)
@@ -667,20 +675,15 @@ def parse_sdrf(sdrf_url: str) -> List:
 
     samples = []
 
-    lines = sdrf_text.split('\n')
-    for offset, line in enumerate(lines):
+    reader = csv.reader(StringIO(sdrf_text), delimiter='\t')
+    for offset, line in enumerate(reader):
 
         # Get the keys
         if offset == 0:
-            keys = line.split('\t')
+            keys = line
             continue
 
-        line = line.strip()
-        # Skip blank lines
-        if line == "":
-            continue
-
-        sample_values = line.split('\t')
+        sample_values = line
 
         # Skip malformed lines
         if len(sample_values) != len(keys):

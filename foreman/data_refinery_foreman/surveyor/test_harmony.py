@@ -199,6 +199,7 @@ class HarmonyTestCase(TestCase):
             'E-GEOD-19617',
             'E-MTAB-1944',
             'E-GEOD-17114',
+            'E-GEOD-44719'
         ]
 
         for accession in lots:
