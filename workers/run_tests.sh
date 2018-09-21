@@ -358,7 +358,7 @@ DB_HOST_IP=$(get_docker_db_ip_address)
 # Ensure permissions are set for everything within the test data directory.
 chmod -R a+rwX $volume_directory
 
-worker_images=(salmon transcriptome no_op downloaders smasher illumina agilent affymetrix qn)
+worker_images=(salmon transcriptome no_op downloaders smasher illumina agilent affymetrix qn affymetrix_local)
 
 for image in ${worker_images[*]}; do
     if [[ -z $tag || $tag == $image ]]; then

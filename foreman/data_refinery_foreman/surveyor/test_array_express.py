@@ -60,6 +60,22 @@ class SurveyTestCase(TestCase):
         self.assertEqual(sample.protocol_info[0]['Text'], "Aliquoting of biomaterials.")
         self.assertEqual(sample.protocol_info[0]['Type'], "split")
 
+        survey_job2 = SurveyJob(source_type="ARRAY_EXPRESS")
+        survey_job2.save()
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job2,
+                                           key="experiment_accession_code",
+                                           value="E-GEOD-44719")
+        key_value_pair.save()
+        ae_surveyor = ArrayExpressSurveyor(survey_job2)
+        ae_surveyor.survey()
+
+        # We are expecting this to discover 77 samples.
+        self.assertEqual(samples.count(), 77+5)
+
+        # And for one DownloaderJob to be created for all of them.
+        self.assertEqual(downloader_jobs.count(), 2)
+
+
     def test_determine_accession(self):
         """Test of the `determine_sample_accession` function
         """
