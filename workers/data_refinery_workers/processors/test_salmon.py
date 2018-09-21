@@ -189,6 +189,10 @@ class SalmonTestCase(TestCase):
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertTrue(job.success)
 
+        sample = files[0].samples.first()
+        self.assertTrue(sample.is_processed)
+        self.assertEqual(sample.organism_index.index_type, "TRANSCRIPTOME_SHORT")
+
     @tag('salmon')
     def test_salmon_dotsra(self):
         """Test the whole pipeline."""
