@@ -372,7 +372,7 @@ probeIDs <- data[,probeIDColumn]
 
 
 if (length(exprColumns) == 0)
-  stop(paste0("No columns match this pattern: ", exprColumnPattern))
+  stop("No expression columns provided")
 
 exprData <- as.matrix(data[,exprColumns,drop=FALSE])
 rownames(exprData) <- probeIDs

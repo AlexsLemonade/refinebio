@@ -812,6 +812,13 @@ class ComputedFile(models.Model):
             else:
                 return self.sync_from_s3(force)
 
+    def s3_url(self):
+        """ Render the resulting S3 URL """
+        if (self.s3_key) and (self.s3_bucket):
+            return "https://s3.amazonaws.com/" + self.s3_bucket + "/" + self.s3_key
+        else:
+            return None
+
 class Dataset(models.Model):
     """ A Dataset is a desired set of experiments/samples to smash and download """
 
