@@ -152,8 +152,8 @@ if [[ $env != "prod" && $env != "staging" && $env != "dev" ]]; then
 else
     export EXTRA_HOSTS=""
     export AWS_CREDS="
-    AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_WORKER\"
-    AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_WORKER\""
+    AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID_CLIENT\"
+    AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_CLIENT\""
     # When deploying prod we write the output of Terraform to a
     # temporary environment file.
     environment_file="$script_directory/infrastructure/prod_env"
