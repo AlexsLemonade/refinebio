@@ -79,6 +79,9 @@ class Sample(models.Model):
     original_files = models.ManyToManyField('OriginalFile', through='OriginalFileSampleAssociation')
     computed_files = models.ManyToManyField('ComputedFile', through='SampleComputedFileAssociation')
 
+    # The Organism Index used to process the sample.
+    organism_index = models.ForeignKey(OrganismIndex, blank=True, null=True, on_delete=models.SET_NULL)
+
     # Historical Properties
     source_database = models.CharField(max_length=255, blank=False)
     source_archive_url = models.CharField(max_length=255)

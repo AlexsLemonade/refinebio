@@ -304,6 +304,9 @@ def _find_or_download_index(job_context: Dict) -> Dict:
     job_context["genes_to_transcripts_path"] = os.path.join(
         job_context["index_directory"], "genes_to_transcripts.txt")
 
+    # This will be saved if the job is successful.
+    job_context["sample"].organism_index = index_object
+
     return job_context
 
 
