@@ -302,7 +302,7 @@ def harmonize(metadata: List) -> Dict:
         # something has gone horribly wrong.
         if title:
             if title in used_titles:
-                title = title + "_" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=12))
+                title = title + "_" + ''.join(random.choice(string.ascii_uppercase + string.digits, k=12))
             used_titles.append(title)
             new_sample = sample.copy()
             new_sample['title'] = title
