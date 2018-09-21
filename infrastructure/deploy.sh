@@ -72,7 +72,10 @@ format_environment_variables () {
   json_env_vars=$(terraform output -json environment_variables | jq -c '.value[]')
   for row in $json_env_vars; do
       env_var_assignment=$(echo $row | jq -r ".name")=$(echo $row | jq -r ".value")
-      export $env_var_assignment
+      # Don't export AWS keys, they'll interefere with our ability to deploy.
+      if [[ $env_var_assignment != *ACCESS_KEY* ]]; then
+          export $env_var_assignment
+      fi
       echo $env_var_assignment >> prod_env
   done
 }
