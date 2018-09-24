@@ -1,4 +1,5 @@
 import csv
+import json
 import os
 import shutil
 import sys
@@ -941,7 +942,7 @@ class CompendiaTestCase(TestCase):
         sys.stdout = old_stdout
 
 
-class TsvTestCase(TestCase):
+class AggregationTestCase(TestCase):
     """Test the tsv file generation."""
     def setUp(self):
         self.metadata = {
@@ -1061,7 +1062,7 @@ class TsvTestCase(TestCase):
         job_context = {
             'dataset': Dataset.objects.create(aggregate_by='ALL')
         }
-        smasher._write_tsv(job_context, self.metadata, self.smash_path)
+        smasher._write_tsv_json(job_context, self.metadata, self.smash_path)
         tsv_filename = self.smash_path + "ALL/ALL_metadata.tsv"
         self.assertTrue(os.path.isfile(tsv_filename))
 
@@ -1083,15 +1084,15 @@ class TsvTestCase(TestCase):
         os.remove(tsv_filename)
 
     @tag("smasher")
-    def test_experiment_tsv(self):
+    def test_experiment(self):
         """Check tsv file that is aggregated by experiment."""
 
         job_context = {
             'dataset': Dataset.objects.create(aggregate_by='EXPERIMENT')
         }
-        smasher._write_tsv(job_context, self.metadata, self.smash_path)
+        smasher._write_tsv_json(job_context, self.metadata, self.smash_path)
 
-        tsv_filename = self.smash_path + "E-GEOD-44719/E-GEOD-44719_metadata.tsv"
+        tsv_filename = self.smash_path + "E-GEOD-44719/metadata_E-GEOD-44719.tsv"
         self.assertTrue(os.path.isfile(tsv_filename))
 
         with open(tsv_filename) as tsv_file:
@@ -1106,7 +1107,7 @@ class TsvTestCase(TestCase):
         os.remove(tsv_filename)
 
     @tag("smasher")
-    def test_species_tsv(self):
+    def test_species(self):
         """Check tsv file that is aggregated by species."""
 
         job_context = {
@@ -1118,9 +1119,10 @@ class TsvTestCase(TestCase):
         }
         # Generate two TSV files, one should include only "GSM1361050",
         # and the other should include only "E-GEOD-44719-GSM1089311".
-        smasher._write_tsv(job_context, self.metadata, self.smash_path)
+        smasher._write_tsv_json(job_context, self.metadata, self.smash_path)
 
-        tsv_filename = self.smash_path + "homo_sapiens/homo_sapiens_metadata.tsv"
+        # Test tsv file of "homo_sapiens"
+        tsv_filename = self.smash_path + "homo_sapiens/metadata_homo_sapiens.tsv"
         self.assertTrue(os.path.isfile(tsv_filename))
         with open(tsv_filename) as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
@@ -1132,7 +1134,20 @@ class TsvTestCase(TestCase):
         self.assertEqual(row_num, 0) # only one data row in tsv file
         os.remove(tsv_filename)
 
-        tsv_filename = self.smash_path + "fake_species/fake_species_metadata.tsv"
+        # Test json file of "homo_sapiens"
+        json_filename = self.smash_path + "homo_sapiens/metadata_homo_sapiens.json"
+        self.assertTrue(os.path.isfile(json_filename))
+
+        with open(json_filename) as json_fp:
+            species_metadada = json.load(json_fp)
+        self.assertEqual(species_metadada['species'], 'homo_sapiens')
+        self.assertEqual(len(species_metadada['samples']), 1)
+        self.assertEqual(species_metadada['samples'][0]['refinebio_accession_code'],
+                         'GSM1361050')
+        os.remove(json_filename)
+
+        # Test tsv file of "fake_species"
+        tsv_filename = self.smash_path + "fake_species/metadata_fake_species.tsv"
         self.assertTrue(os.path.isfile(tsv_filename))
         with open(tsv_filename) as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
@@ -1144,3 +1159,15 @@ class TsvTestCase(TestCase):
 
         self.assertEqual(row_num, 0) # only one data row in tsv file
         os.remove(tsv_filename)
+
+        # Test json file of "fake_species"
+        json_filename = self.smash_path + "fake_species/metadata_fake_species.json"
+        self.assertTrue(os.path.isfile(json_filename))
+
+        with open(json_filename) as json_fp:
+            species_metadada = json.load(json_fp)
+        self.assertEqual(species_metadada['species'], 'fake_species')
+        self.assertEqual(len(species_metadada['samples']), 1)
+        self.assertEqual(species_metadada['samples'][0]['refinebio_accession_code'],
+                         'E-GEOD-44719-GSM1089311')
+        os.remove(json_filename)
