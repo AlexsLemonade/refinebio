@@ -87,12 +87,6 @@ resource "aws_instance" "nomad_server_1" {
     volume_type = "gp2"
     volume_size = 100
   }
-
-  ebs_block_device = {
-    device_name = "/dev/xvdcz"
-    volume_type = "gp2"
-    volume_size = 40
-  }
 }
 
 output "nomad_server_1_ip" {
@@ -154,12 +148,6 @@ resource "aws_instance" "nomad_server_2" {
     volume_type = "gp2"
     volume_size = 100
   }
-
-  ebs_block_device = {
-    device_name = "/dev/xvdcz"
-    volume_type = "gp2"
-    volume_size = 40
-  }
 }
 
 output "nomad_server_2_ip" {
@@ -194,12 +182,6 @@ resource "aws_instance" "nomad_server_3" {
   root_block_device = {
     volume_type = "gp2"
     volume_size = 100
-  }
-
-  ebs_block_device = {
-    device_name = "/dev/xvdcz"
-    volume_type = "gp2"
-    volume_size = 40
   }
 }
 
@@ -292,7 +274,7 @@ resource "aws_launch_configuration" "auto_client_configuration" {
 resource "aws_autoscaling_group" "clients" {
     name = "asg-clients-${var.user}-${var.stage}"
     max_size = "${var.max_clients}"
-    min_size = "1" # So the smasher always has an instance to run smasher jobs with.
+    min_size = "0"
     health_check_grace_period = 300
     health_check_type = "EC2"
     default_cooldown = 0
@@ -378,9 +360,12 @@ resource "aws_db_instance" "postgres_db" {
   db_subnet_group_name = "${aws_db_subnet_group.data_refinery.name}"
   parameter_group_name = "${aws_db_parameter_group.postgres_parameters.name}"
 
-  # We probably actually want to keep this, but TF is broken here.
+  # TF is broken, but we do want this protection in prod.
   # Related: https://github.com/hashicorp/terraform/issues/5417
-  skip_final_snapshot = true
+  # Only the prod's bucket prefix is empty.
+  skip_final_snapshot = "${var.static_bucket_prefix == "" ? false : true}"
+  final_snapshot_identifier = "${var.static_bucket_prefix == "" ? "data_refinery_prod_snapshot" : ""}"
+
   vpc_security_group_ids = ["${aws_security_group.data_refinery_db.id}"]
   multi_az = true
   publicly_accessible = true
@@ -413,12 +398,6 @@ resource "aws_instance" "pg_bouncer" {
   root_block_device = {
     volume_type = "gp2"
     volume_size = 100
-  }
-
-  ebs_block_device = {
-    device_name = "/dev/xvdcz"
-    volume_type = "gp2"
-    volume_size = 40
   }
 }
 
@@ -499,12 +478,6 @@ resource "aws_instance" "api_server_1" {
     volume_type = "gp2"
     volume_size = 100
   }
-
-  ebs_block_device = {
-    device_name = "/dev/xvdcz"
-    volume_type = "gp2"
-    volume_size = 40
-  }
 }
 
 output "api_server_1_ip" {
@@ -560,12 +533,6 @@ resource "aws_instance" "foreman_server_1" {
   root_block_device = {
     volume_type = "gp2"
     volume_size = 100
-  }
-
-  ebs_block_device = {
-    device_name = "/dev/xvdcz"
-    volume_type = "gp2"
-    volume_size = 40
   }
 }
 
