@@ -44,4 +44,13 @@ library(rjson)
 metadata_list <- fromJSON(file = "aggregated_metadata.json")
 ```
 
+In Python, we can read in the metadata json like so:
+
+```
+import json
+with open('aggregated_metadata.json', 'r') as jsonfile:
+    data = json.load(jsonfile)
+print(data)
+```
+
 For example R workflows, such as clustering of gene expression data, please see https://github.com/AlexsLemonade/refinebio-examples.
