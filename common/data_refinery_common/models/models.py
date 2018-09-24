@@ -51,6 +51,7 @@ class ProcessedObjectsManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(is_processed=True, is_public=True)
 
+
 class Sample(models.Model):
     """
     An individual sample.
@@ -418,6 +419,10 @@ class ComputationalResult(models.Model):
 
     commands = ArrayField(models.TextField(), default=[])
     processor = models.ForeignKey(Processor, blank=True, null=True, on_delete=models.CASCADE)
+
+    # The Organism Index used to process the sample.
+    organism_index = models.ForeignKey('OrganismIndex', blank=True, null=True, on_delete=models.SET_NULL)
+
     is_ccdl = models.BooleanField(default=True)
     # TODO: "pipeline" field is now redundant due to "processor". Should be removed later.
     # Human-readable nickname for this computation
@@ -536,6 +541,7 @@ class OrganismIndex(models.Model):
             self.created_at = current_time
         self.last_modified = current_time
         return super(OrganismIndex, self).save(*args, **kwargs)
+
 
 """
 # Files
