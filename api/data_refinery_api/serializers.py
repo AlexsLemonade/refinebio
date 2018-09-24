@@ -104,6 +104,7 @@ class ComputationalResultSerializer(serializers.ModelSerializer):
                     'is_ccdl',
                     'annotations',
                     'files',
+                    'organism_index',
                     'time_start',
                     'time_end',
                     'created_at',

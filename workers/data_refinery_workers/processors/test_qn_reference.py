@@ -44,8 +44,9 @@ class QNRefTestCase(TestCase):
             sample.accession_code = code
             sample.title = code
             sample.platform_accession_code = 'A-MEXP-1171'
-            sample.manufacturer = "ILLUMINA"
+            sample.manufacturer = "SLIPPERY DICK'S DISCOUNT MICROARRAYS"
             sample.organism = homo_sapiens
+            sample.technology = "MICROARRAY"
             sample.is_processed = True
             sample.save()
 
@@ -119,3 +120,23 @@ class QNRefTestCase(TestCase):
 
         self.assertEqual(final_context['merged_qn']['1'][0], -0.437948852881293)
         self.assertEqual(final_context['original_merged']['1'][0], -0.576210936113982)
+
+        ## 
+        # Test via management command
+        ##
+
+        from django.core.management import call_command
+        from django.test import TestCase
+        from django.utils.six import StringIO
+
+        out = StringIO()
+        try:
+            call_command('create_qn_target', organism='homo_sapiens', stdout=out)
+        except SystemExit as e: # this is okay!
+            pass
+
+        stdout = out.getvalue()
+        self.assertTrue('Target file' in stdout)
+        path = stdout.split('\n')[0].split(':')[1].strip()
+        self.assertTrue(os.path.exists(path))
+        self.assertEqual(path, utils.get_most_recent_qn_target_for_organism(homo_sapiens).absolute_file_path)

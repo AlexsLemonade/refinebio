@@ -19,7 +19,11 @@ job "DOWNLOADER" {
     restart {
       attempts = 0
       mode = "fail"
-      # delay    = "30s"
+    }
+
+    reschedule {
+      attempts = 0
+      unlimited = false
     }
 
     ephemeral_disk {
@@ -60,7 +64,7 @@ job "DOWNLOADER" {
         # CPU is in AWS's CPU units.
         cpu = 512
         # Memory is in MB of RAM.
-        memory = 12289 
+        memory = 12289
       }
 
       logs {

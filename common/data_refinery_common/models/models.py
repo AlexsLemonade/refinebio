@@ -51,6 +51,7 @@ class ProcessedObjectsManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(is_processed=True, is_public=True)
 
+
 class Sample(models.Model):
     """
     An individual sample.
@@ -124,26 +125,29 @@ class Sample(models.Model):
         return super(Sample, self).save(*args, **kwargs)
 
     def to_metadata_dict(self):
-        """ Render this Sample as a dict """
+        """Render this Sample as a dict."""
         metadata = {}
-        metadata['title'] = self.title
-        metadata['accession_code'] = self.accession_code
-        metadata['organism'] = self.organism.name if self.organism else None
-        metadata['source_archive_url'] = self.source_archive_url
-        metadata['sex'] = self.sex
-        metadata['age'] = self.age or ''
-        metadata['specimen_part'] = self.specimen_part
-        metadata['genotype'] = self.genotype
-        metadata['disease'] = self.disease
-        metadata['disease_stage'] = self.disease_stage
-        metadata['cell_line'] = self.cell_line
-        metadata['treatment'] = self.treatment
-        metadata['race'] = self.race
-        metadata['subject'] = self.subject
-        metadata['compound'] = self.compound
-        metadata['time'] = self.time
-        metadata['platform'] = self.pretty_platform
-        metadata['annotations'] = [data for data in self.sampleannotation_set.all().values_list('data', flat=True)]
+        metadata['refinebio_title'] = self.title
+        metadata['refinebio_accession_code'] = self.accession_code
+        metadata['refinebio_organism'] = self.organism.name if self.organism else None
+        metadata['refinebio_source_database'] = self.source_database
+        metadata['refinebio_source_archive_url'] = self.source_archive_url
+        metadata['refinebio_sex'] = self.sex
+        metadata['refinebio_age'] = self.age or ''
+        metadata['refinebio_specimen_part'] = self.specimen_part
+        metadata['refinebio_genetic_information'] = self.genotype
+        metadata['refinebio_disease'] = self.disease
+        metadata['refinebio_disease_stage'] = self.disease_stage
+        metadata['refinebio_cell_line'] = self.cell_line
+        metadata['refinebio_treatment'] = self.treatment
+        metadata['refinebio_race'] = self.race
+        metadata['refinebio_subject'] = self.subject
+        metadata['refinebio_compound'] = self.compound
+        metadata['refinebio_time'] = self.time
+        metadata['refinebio_platform'] = self.pretty_platform
+        metadata['refinebio_annotations'] = [
+            data for data in self.sampleannotation_set.all().values_list('data', flat=True)
+        ]
 
         return metadata
 
@@ -249,7 +253,7 @@ class Experiment(models.Model):
     accession_code = models.CharField(max_length=64, unique=True)
 
     # Historical Properties
-    source_database = models.CharField(max_length=32)  # "ArrayExpress, "SRA"
+    source_database = models.CharField(max_length=32)  # "ArrayExpress, "SRA", "GEO"
     source_url = models.CharField(max_length=256)
 
     # Properties
@@ -415,6 +419,10 @@ class ComputationalResult(models.Model):
 
     commands = ArrayField(models.TextField(), default=[])
     processor = models.ForeignKey(Processor, blank=True, null=True, on_delete=models.CASCADE)
+
+    # The Organism Index used to process the sample.
+    organism_index = models.ForeignKey('OrganismIndex', blank=True, null=True, on_delete=models.SET_NULL)
+
     is_ccdl = models.BooleanField(default=True)
     # TODO: "pipeline" field is now redundant due to "processor". Should be removed later.
     # Human-readable nickname for this computation
@@ -533,6 +541,7 @@ class OrganismIndex(models.Model):
             self.created_at = current_time
         self.last_modified = current_time
         return super(OrganismIndex, self).save(*args, **kwargs)
+
 
 """
 # Files
@@ -808,6 +817,13 @@ class ComputedFile(models.Model):
                 return self.absolute_file_path
             else:
                 return self.sync_from_s3(force)
+
+    def s3_url(self):
+        """ Render the resulting S3 URL """
+        if (self.s3_key) and (self.s3_bucket):
+            return "https://s3.amazonaws.com/" + self.s3_bucket + "/" + self.s3_key
+        else:
+            return None
 
 class Dataset(models.Model):
     """ A Dataset is a desired set of experiments/samples to smash and download """

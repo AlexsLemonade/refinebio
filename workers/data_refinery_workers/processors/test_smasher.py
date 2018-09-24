@@ -1,3 +1,4 @@
+import csv
 import os
 import shutil
 import sys
@@ -140,7 +141,7 @@ class SmasherTestCase(TestCase):
         job = prepare_job()
 
         anno_samp = Sample.objects.get(accession_code='GSM1237810')
-        self.assertTrue('hi' in anno_samp.to_metadata_dict()['annotations'][0].keys())
+        self.assertTrue('hi' in anno_samp.to_metadata_dict()['refinebio_annotations'][0].keys())
 
         relations = ProcessorJobDatasetAssociation.objects.filter(processor_job=job)
         dataset = Dataset.objects.filter(id__in=relations.values('dataset_id')).first()
@@ -910,8 +911,10 @@ class SmasherTestCase(TestCase):
 
 
 class CompendiaTestCase(TestCase):
-    """ Testing management commands are hard. Since there is always an explicit sys.exit (which is really an Exception),
-    we have to do weird stdio rerouting to capture the result. Really, these are just sanity tests."""
+    """Testing management commands are hard.  Since there is always an explicit
+    sys.exit (which is really an Exception), we have to do weird stdio rerouting
+    to capture the result. Really, these are just sanity tests.
+    """
 
     @tag("smasher")
     def test_call_create(self):
@@ -936,3 +939,208 @@ class CompendiaTestCase(TestCase):
         self.assertRaises(BaseException, call_command, 'fetch_compendia')
         sys.stderr = old_stderr
         sys.stdout = old_stdout
+
+
+class TsvTestCase(TestCase):
+    """Test the tsv file generation."""
+    def setUp(self):
+        self.metadata = {
+            'experiments': {
+                "E-GEOD-44719": {
+                    "accession_code": "E-GEOD-44719",
+                    "sample_titles": [ "IFNa DC_LB016_IFNa", "undefined_sample" ]
+                }
+            },
+
+            'samples': {
+                "IFNa DC_LB016_IFNa": {  # Sample #1 is an ArrayExpress sample
+                    "refinebio_title": "IFNa DC_LB016_IFNa",
+                    "refinebio_accession_code": "E-GEOD-44719-GSM1089311",
+                    "refinebio_source_database": "ARRAY_EXPRESS",
+                    "refinebio_organism": "fake_species",
+                    ############# Annotations will be de-composed. #############
+                    "refinebio_annotations": [
+                        # annotation #1
+                        {
+                            "detected_platform": "illuminaHumanv3",
+                            "detection_percentage": 98.44078,
+                            "mapped_percentage": 100.0
+                        },
+                        # annotation #2
+                        {
+                            "assay": { "name": "GSM1089311" },
+                            # Special field that will be taken out as separate columns
+                            "characteristic": [
+                                { "category": "cell population",
+                                  "value": "IFNa DC"
+                                },
+                                { "category": "dose",   # also available in "variable"
+                                  "value": "1 mL"
+                                },
+                                { "category": "donor id",
+                                  "value": "LB016"
+                                }
+                            ],
+                            # Another special field in Array Express sample
+                            "variable": [
+                                { "name": "dose",  # also available in "characteristic"
+                                  "value": "1 mL"
+                                },
+                                { "name": "stimulation",
+                                  "value": "IFNa"
+                                }
+                            ],
+                            # "source" field in Array Express sample annotation will be
+                            # skipped in tsv file.
+                            'source': {
+                                'name': 'GSM1288968 1',
+                                'comment': [
+                                    { 'name': 'Sample_source_name',
+                                      'value': 'pineal glands at CT18, after light exposure'
+                                    },
+                                    { 'name': 'Sample_title',
+                                      'value': 'Pineal_Light_CT18'
+                                    }
+                                ]
+                            },
+
+                            # For single-key object whose key is "name",
+                            # the key will be ignored in tsv file.
+                            "extract": { "name": "GSM1089311 extract 1" }
+                        }
+                    ]  # end of annotations
+                },  # end of sample #1
+
+                "Bone.Marrow_OA_No_ST03": {  # Sample #2 is a GEO sample
+                    "refinebio_title": "Bone.Marrow_OA_No_ST03",
+                    "refinebio_accession_code": "GSM1361050",
+                    "refinebio_source_database": "GEO",
+                    "refinebio_organism": "homo_sapiens",
+
+                    "refinebio_annotations": [
+                        {
+                            "channel_count": [ "1" ],
+
+                            # Special field that will be taken out as separate columns
+                            "characteristics_ch1": [
+                                "tissue: Bone Marrow",
+                                "disease: OA",
+                                "serum: Low Serum"
+                            ],
+
+                            # For single-element array, the element will
+                            # be saved directly in tsv file.
+                            "contact_address": [ "Crown Street" ],
+                            "contact_country": [ "United Kingdom" ],
+                            "data_processing": [ "Data was processed and normalized" ],
+                            "geo_accession": [ "GSM1361050" ],
+                        }
+                    ]  # end of annotations
+                }  # end of sample #2
+
+            }  # end of "samples"
+        }
+
+        self.smash_path = "/tmp/"
+
+    @tag("smasher")
+    def test_columns(self):
+        columns = smasher._get_tsv_columns(self.metadata['samples'])
+        self.assertEqual(len(columns), 21)
+        self.assertEqual(columns[0], 'refinebio_title')
+        self.assertTrue('refinebio_accession_code' in columns)
+        self.assertTrue('cell population' in columns)
+        self.assertTrue('dose' in columns)
+        self.assertTrue('stimulation' in columns)
+        self.assertTrue('serum' in columns)
+
+    @tag("smasher")
+    def test_all_samples(self):
+        """Check tsv file that includes all sample metadata."""
+
+        job_context = {
+            'dataset': Dataset.objects.create(aggregate_by='ALL')
+        }
+        smasher._write_tsv(job_context, self.metadata, self.smash_path)
+        tsv_filename = self.smash_path + "ALL/ALL_metadata.tsv"
+        self.assertTrue(os.path.isfile(tsv_filename))
+
+        with open(tsv_filename) as tsv_file:
+            reader = csv.DictReader(tsv_file, delimiter='\t')
+            for row_num, row in enumerate(reader):
+                if row['refinebio_accession_code'] == 'E-GEOD-44719-GSM1089311':
+                    self.assertEqual(row['cell population'], 'IFNa DC') # ArrayExpress specific
+                    self.assertEqual(row['dose'], '1 mL')               # ArrayExpress specific
+                    self.assertFalse('source' in row)                   # ArrayExpress specific
+                    self.assertEqual(row['detection_percentage'], '98.44078')
+                    self.assertEqual(row["extract"], "GSM1089311 extract 1")
+                elif row['refinebio_accession_code'] == 'GSM1361050':
+                    self.assertEqual(row['tissue'], 'Bone Marrow')      # GEO specific
+                    self.assertEqual(row['refinebio_organism'], 'homo_sapiens')
+                    self.assertEqual(row["contact_address"], "Crown Street")
+
+        self.assertEqual(row_num, 1)  # only two data rows in tsv file
+        os.remove(tsv_filename)
+
+    @tag("smasher")
+    def test_experiment_tsv(self):
+        """Check tsv file that is aggregated by experiment."""
+
+        job_context = {
+            'dataset': Dataset.objects.create(aggregate_by='EXPERIMENT')
+        }
+        smasher._write_tsv(job_context, self.metadata, self.smash_path)
+
+        tsv_filename = self.smash_path + "E-GEOD-44719/E-GEOD-44719_metadata.tsv"
+        self.assertTrue(os.path.isfile(tsv_filename))
+
+        with open(tsv_filename) as tsv_file:
+            reader = csv.DictReader(tsv_file, delimiter='\t')
+            for row_num, row in enumerate(reader):
+                self.assertEqual(row['refinebio_accession_code'], 'E-GEOD-44719-GSM1089311')
+                self.assertEqual(row['cell population'], 'IFNa DC')  # ArrayExpress specific
+                self.assertEqual(row['dose'], '1 mL')                # ArrayExpress specific
+                self.assertEqual(row['detection_percentage'], '98.44078')
+
+        self.assertEqual(row_num, 0) # only one data row in tsv file
+        os.remove(tsv_filename)
+
+    @tag("smasher")
+    def test_species_tsv(self):
+        """Check tsv file that is aggregated by species."""
+
+        job_context = {
+            'dataset': Dataset.objects.create(aggregate_by='SPECIES'),
+            'input_files': {
+                'homo_sapiens': [], # only the key matters in this test
+                'fake_species': []  # only the key matters in this test
+            }
+        }
+        # Generate two TSV files, one should include only "GSM1361050",
+        # and the other should include only "E-GEOD-44719-GSM1089311".
+        smasher._write_tsv(job_context, self.metadata, self.smash_path)
+
+        tsv_filename = self.smash_path + "homo_sapiens/homo_sapiens_metadata.tsv"
+        self.assertTrue(os.path.isfile(tsv_filename))
+        with open(tsv_filename) as tsv_file:
+            reader = csv.DictReader(tsv_file, delimiter='\t')
+            for row_num, row in enumerate(reader):
+                self.assertEqual(row['refinebio_accession_code'], 'GSM1361050')
+                self.assertEqual(row['tissue'], 'Bone Marrow')      # GEO specific
+                self.assertEqual(row['refinebio_organism'], 'homo_sapiens')
+
+        self.assertEqual(row_num, 0) # only one data row in tsv file
+        os.remove(tsv_filename)
+
+        tsv_filename = self.smash_path + "fake_species/fake_species_metadata.tsv"
+        self.assertTrue(os.path.isfile(tsv_filename))
+        with open(tsv_filename) as tsv_file:
+            reader = csv.DictReader(tsv_file, delimiter='\t')
+            for row_num, row in enumerate(reader):
+                self.assertEqual(row['refinebio_accession_code'], 'E-GEOD-44719-GSM1089311')
+                self.assertEqual(row['cell population'], 'IFNa DC')  # ArrayExpress specific
+                self.assertEqual(row['dose'], '1 mL')                # ArrayExpress specific
+                self.assertEqual(row['detection_percentage'], '98.44078')
+
+        self.assertEqual(row_num, 0) # only one data row in tsv file
+        os.remove(tsv_filename)

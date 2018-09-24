@@ -165,10 +165,10 @@ output "environment_variables" {
       value = "${var.user}"},
     {name = "STAGE"
       value = "${var.stage}"},
-    {name = "AWS_ACCESS_KEY_ID_WORKER"
-      value = "${aws_iam_access_key.data_refinery_user_worker_key.id}"},
-    {name = "AWS_SECRET_ACCESS_KEY_WORKER"
-      value = "${aws_iam_access_key.data_refinery_user_worker_key.secret}"},
+    {name = "AWS_ACCESS_KEY_ID_CLIENT"
+      value = "${aws_iam_access_key.data_refinery_user_client_key.id}"},
+    {name = "AWS_SECRET_ACCESS_KEY_CLIENT"
+      value = "${aws_iam_access_key.data_refinery_user_client_key.secret}"},
     {name = "DJANGO_DEBUG"
       value = "${var.django_debug}"},
     {name = "DJANGO_SECRET_KEY"
@@ -230,6 +230,8 @@ output "environment_variables" {
     {name = "NOMAD_PUBLIC_HOST"
       value = "${aws_instance.nomad_server_1.public_ip}"},
     {name = "NOMAD_PORT"
-      value = "4646"}
+      value = "4646"},
+    {name = "MAX_CLIENTS"
+      value = "${var.max_clients}"}
   ]
 }
