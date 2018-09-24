@@ -44,7 +44,7 @@ library(rjson)
 metadata_list <- fromJSON(file = "aggregated_metadata.json")
 ```
 
-In Python, we can read in the metadata json like so:
+In Python, we can read in the metadata JSON like so:
 
 ```
 import json
