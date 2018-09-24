@@ -83,6 +83,8 @@ class ComputedFileSerializer(serializers.ModelSerializer):
                     'id',
                     'filename',
                     'size_in_bytes',
+                    'is_smashable',
+                    'is_qc',
                     'sha1',
                     's3_bucket',
                     's3_key',

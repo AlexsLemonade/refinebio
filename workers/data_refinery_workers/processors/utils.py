@@ -121,16 +121,23 @@ def end_job(job_context: Dict, abort=False):
 
     if not abort:
         if job_context.get("success", False) and not (job_context["job"].pipeline_applied in ["SMASHER", "QN_REFERENCE"]):
-            # This handles most of our cases
-            for sample in job_context["samples"]:
-                sample.is_processed = True
-                sample.save()
 
-            # Explicitly for the single-salmon scenario
-            if 'sample' in job_context:
-                sample = job_context['sample']
-                sample.is_processed = True
-                sample.save()
+            # Salmon requires the final `tximport` step to be fully `is_processed`.
+            mark_as_processed = True
+            if (job_context["job"].pipeline_applied == "SALMON" and not job_context.get('tximported', False)):
+                mark_as_processed = False
+
+            if mark_as_processed:
+                # This handles most of our cases
+                for sample in job_context["samples"]:
+                    sample.is_processed = True
+                    sample.save()
+
+                # Explicitly for the single-salmon scenario
+                if 'sample' in job_context:
+                    sample = job_context['sample']
+                    sample.is_processed = True
+                    sample.save()
 
     # If we are aborting, it's because we want to do something
     # different, so leave the original files so that "something

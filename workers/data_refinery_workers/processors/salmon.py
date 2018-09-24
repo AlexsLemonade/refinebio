@@ -68,6 +68,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     sample = job_context['original_files'][0].samples.first()
     job_context['sample_accession_code'] = sample.accession_code
     job_context['sample'] = sample
+    job_context['samples'] = [] # This will only be populated in the `tximport` job
     job_context['organism'] = job_context['sample'].organism
     job_context["success"] = True
 
@@ -538,6 +539,7 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
         computed_file.calculate_size()
         computed_file.save()
         job_context['computed_files'].append(computed_file)
+        job_context['smashable_files'].append(computed_file)
 
         SampleResultAssociation.objects.get_or_create(
             sample=sample,
@@ -554,6 +556,7 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
             computed_file=computed_file)
 
         individual_files.append(computed_file)
+        job_context['samples'].append(sample)
 
     # Clean up quant.sf files that were created just for this.
     for quant_file in quant_files:
@@ -564,6 +567,9 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
         quant_file.delete_local_file()
         quant_file.delete()
 
+    # Salmon-processed samples aren't marked as is_processed
+    # until they are fully tximported, this value sets that
+    # for the end_job function.
     job_context['tximported'] = True
     job_context['individual_files'] = individual_files
     return job_context
