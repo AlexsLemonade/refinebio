@@ -46,10 +46,11 @@ while [  $COUNTER -lt 99 ]; do
 done
 
 sleep 15
-ATTACHED_AS=`lsblk -n | grep 500G | cut -d' ' -f1`
+ATTACHED_AS=`lsblk -n | grep 8.8T | cut -d' ' -f1`
 FILE_RESULT=`file -s /dev/$ATTACHED_AS`
 
-if file -s /dev/$ATTACHED_AS | grep data; then
+# grep -v ext4: make sure the disk is not already formatted.
+if file -s /dev/$ATTACHED_AS | grep data | grep -v ext4; then
 	mkfs -t ext4 /dev/$ATTACHED_AS # This is slow
 fi
 mount /dev/$ATTACHED_AS /var/ebs/
