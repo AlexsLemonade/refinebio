@@ -304,6 +304,8 @@ def _find_or_download_index(job_context: Dict) -> Dict:
     job_context["genes_to_transcripts_path"] = os.path.join(
         job_context["index_directory"], "genes_to_transcripts.txt")
 
+    job_context["organism_index"] = index_object
+
     return job_context
 
 
@@ -583,6 +585,7 @@ def _run_salmon(job_context: Dict) -> Dict:
         result.time_start = job_context['time_start']
         result.time_end = job_context['time_end']
         result.pipeline = "Salmon"  # TODO: should be removed
+        result.organism_index = job_context["organism_index"]
         result.is_ccdl = True
 
         try:
@@ -656,6 +659,7 @@ def _run_salmon(job_context: Dict) -> Dict:
         with transaction.atomic():
             ComputationalResult.objects.select_for_update()
             result.save()
+            job_context["quant_result"] = result
             quant_file.result = result
             quant_file.save()
 
