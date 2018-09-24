@@ -293,6 +293,10 @@ def _smash(job_context: Dict) -> Dict:
         Transpose again such that samples are columns and genes are rows
     """
 
+    # We have already failed - return now so we can send our fail email.
+    if job_context['dataset'].failure_reason is not None:
+        return job_context
+
     try:
         # Prepare the output directory
         smash_path = job_context["output_dir"]
@@ -638,6 +642,10 @@ def _smash(job_context: Dict) -> Dict:
 
 def _upload(job_context: Dict) -> Dict:
     """ Uploads the result file to S3 and notifies user. """
+
+    # There has been a failure already, don't try to upload anything.
+    if not job_context.get("output_file", None):
+        return job_context
 
     try:
         if job_context.get("upload", True) and RUNNING_IN_CLOUD:
