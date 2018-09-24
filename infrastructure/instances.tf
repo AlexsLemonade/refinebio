@@ -398,7 +398,7 @@ resource "aws_instance" "pg_bouncer" {
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
   # Don't delete production servers by mistake!
-  disable_api_termination = "${var.stage == "prod" ? true : false}"
+  # disable_api_termination = "${var.stage == "prod" ? true : false}"
 
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
@@ -493,7 +493,7 @@ resource "aws_instance" "api_server_1" {
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
   # Don't delete production servers by mistake!
-  disable_api_termination = "${var.stage == "prod" ? true : false}"
+  # disable_api_termination = "${var.stage == "prod" ? true : false}"
 
   tags = {
     Name = "API Server 1 ${var.user}-${var.stage}"
