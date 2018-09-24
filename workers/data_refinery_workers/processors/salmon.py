@@ -277,17 +277,60 @@ def _find_or_download_index(job_context: Dict) -> Dict:
     job_context["index_directory"] = index_object.absolute_directory_path
 
     try:
-        os.makedirs(job_context["index_directory"])
-        index_file = ComputedFile.objects.filter(result=index_object.result)[0]
-        index_tarball = index_file.sync_from_s3()
-        with tarfile.open(index_tarball, "r:gz") as index_archive:
-            index_archive.extractall(job_context["index_directory"])
+        # The organism index only needs to be downloaded from S3 once per
+        # organism per index length per EBS volume. We don't know if
+        # another job has started downloading it yet, started extracting
+        # it yet, or already finished and been symlinked to a common
+        # location. Therefore check to see if it's happened before we
+        # complete each step.
+        version_info_path = job_context["index_directory"] + "/versionInfo.json"
 
-        # Cleanup the tarball to save a few GB.
-        index_file.delete_local_file()
-    except FileExistsError:
-        # Someone already installed the index or is doing so now.
-        pass
+        index_tarball = None
+        if not os.path.exists(version_info_path):
+            # Index is not installed yet, so download it.
+            index_file = ComputedFile.objects.filter(result=index_object.result)[0]
+            index_tarball = index_file.sync_from_s3(path=job_context["work_dir"] + index_file.filename)
+
+        index_hard_dir = None
+        if not os.path.exists(version_info_path):
+            # Index is still not installed yet, so extract it.
+
+            # Create a temporary location to download the index to, which
+            # can be symlinked to once extraction is complete.
+            index_hard_dir = os.path.join(LOCAL_ROOT_DIR,
+                                           job_context["job_dir_prefix"]) + "_index/"
+            os.makedirs(index_hard_dir)
+            with tarfile.open(index_tarball, "r:gz") as index_archive:
+                index_archive.extractall(index_hard_dir)
+
+        if index_tarball:
+            # Cleanup the tarball now that it's been extracted.
+            os.remove(index_tarball)
+
+        if not os.path.exists(version_info_path):
+            # Index is still not installed yet, so symlink the files we
+            # have to where they are expected to reside.
+            os.makedirs(job_context["index_directory"], exist_ok=True)
+
+            index_files = [
+                "versionInfo.json",
+                "duplicate_clusters.tsv",
+                "hash.bin",
+                "indexing.log",
+                "refInfo.json",
+                "sa.bin",
+                "genes_to_transcripts.txt",
+                "header.json",
+                "quasi_index.log",
+                "rsd.bin",
+                "txpInfo.bin"
+            ]
+
+            for subfile in index_files:
+                os.symlink(index_hard_dir + subfile, job_context["index_directory"] + "/" + subfile)
+        elif index_hard_dir:
+            # Cleanup the extracted directory, it's not needed.
+            shutil.rmtree(index_hard_dir)
     except Exception as e:
         # Make sure we don't leave an empty index directory lying around.
         shutil.rmtree(job_context["index_directory"], ignore_errors=True)
