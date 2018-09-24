@@ -52,149 +52,6 @@ class ProcessedObjectsManager(models.Manager):
         return super().get_queryset().filter(is_processed=True, is_public=True)
 
 
-class Processor(models.Model):
-    """Processor associated with a certain ComputationalResult."""
-
-    name = models.CharField(max_length=255)
-    version = models.CharField(max_length=64)
-    docker_image = models.CharField(max_length=255)
-    environment = JSONField(default={})
-
-    class Meta:
-        db_table = "processors"
-        unique_together = ('name', 'version', 'docker_image', 'environment')
-
-    def __str__(self):
-        return "Processor: %s (version: %s, docker_image: %s)" % (self.name, self.version, self.docker_image)
-
-
-class ComputationalResult(models.Model):
-    """ Meta-information about the output of a computer process. (Ex Salmon) """
-
-    class Meta:
-        db_table = "computational_results"
-        base_manager_name = 'public_objects'
-
-    def __str__(self):
-        return "ComputationalResult " + str(self.pk) + ": " + str(self.pipeline)
-
-    # Managers
-    objects = models.Manager()
-    public_objects = PublicObjectsManager()
-
-    commands = ArrayField(models.TextField(), default=[])
-    processor = models.ForeignKey(Processor, blank=True, null=True, on_delete=models.CASCADE)
-    is_ccdl = models.BooleanField(default=True)
-    # TODO: "pipeline" field is now redundant due to "processor". Should be removed later.
-    # Human-readable nickname for this computation
-    pipeline = models.CharField(max_length=255)
-
-    # Stats
-    time_start = models.DateTimeField(blank=True, null=True)
-    time_end = models.DateTimeField(blank=True, null=True)
-
-    # Common Properties
-    is_public = models.BooleanField(default=True)
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now)
-
-    def save(self, *args, **kwargs):
-        """ On save, update timestamps """
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        self.last_modified = current_time
-        return super(ComputationalResult, self).save(*args, **kwargs)
-
-
-class ComputationalResultAnnotation(models.Model):
-    """ Non-standard information associated with an ComputationalResult """
-
-    class Meta:
-        db_table = "computational_result_annotations"
-        base_manager_name = 'public_objects'
-
-    # Managers
-    objects = models.Manager()
-    public_objects = PublicObjectsManager()
-
-    # Relations
-    result = models.ForeignKey(
-        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
-
-    # Properties
-    data = JSONField(default={})
-    is_ccdl = models.BooleanField(default=True)
-
-    # Common Properties
-    is_public = models.BooleanField(default=True)
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now)
-
-    def save(self, *args, **kwargs):
-        """ On save, update timestamps """
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        self.last_modified = current_time
-        return super(ComputationalResultAnnotation, self).save(*args, **kwargs)
-
-
-class OrganismIndex(models.Model):
-    """ A special type of process result, necessary for processing other SRA samples """
-
-    class Meta:
-        db_table = "organism_index"
-        base_manager_name = 'public_objects'
-
-    def __str__(self):
-        return "OrganismIndex " + str(self.pk) + ": " + self.organism.name + ' [' + self.index_type + '] - ' + str(self.salmon_version)
-
-    # Managers
-    objects = models.Manager()
-    public_objects = PublicObjectsManager()
-
-    # Relations
-    organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
-    result = models.ForeignKey(
-        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
-
-    # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
-    index_type = models.CharField(max_length=255)
-
-    # This corresponds to Ensembl's release number:
-    # http://ensemblgenomes.org/info/about/release_cycle
-    # Determined by hitting:
-    # http://rest.ensembl.org/info/software?content-type=application/json
-    source_version = models.CharField(max_length=255, default="93")
-
-    # The name of the genome assembly used which corresponds to 'GRCh38' in:
-    # ftp://ftp.ensembl.org/pub/release-93/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
-    assembly_name = models.CharField(max_length=255, default="UNKNOWN")
-
-    # This matters, for instance salmon 0.9.0 indexes don't work with 0.10.0
-    salmon_version = models.CharField(max_length=255, default="0.9.1")
-
-    # We keep the director unextracted on the shared filesystem so all
-    # Salmon jobs can access it.
-    absolute_directory_path = models.CharField(max_length=255, blank=True, null=True, default="")
-
-    # S3 Information
-    s3_url = models.CharField(max_length=255, default="")
-
-    # Common Properties
-    is_public = models.BooleanField(default=True)
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-    last_modified = models.DateTimeField(default=timezone.now)
-
-    def save(self, *args, **kwargs):
-        """ On save, update timestamps """
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        self.last_modified = current_time
-        return super(OrganismIndex, self).save(*args, **kwargs)
-
 class Sample(models.Model):
     """
     An individual sample.
@@ -222,9 +79,6 @@ class Sample(models.Model):
     results = models.ManyToManyField('ComputationalResult', through='SampleResultAssociation')
     original_files = models.ManyToManyField('OriginalFile', through='OriginalFileSampleAssociation')
     computed_files = models.ManyToManyField('ComputedFile', through='SampleComputedFileAssociation')
-
-    # The Organism Index used to process the sample.
-    organism_index = models.ForeignKey(OrganismIndex, blank=True, null=True, on_delete=models.SET_NULL)
 
     # Historical Properties
     source_database = models.CharField(max_length=255, blank=False)
@@ -533,12 +387,161 @@ class Pipeline(models.Model):
         db_table = "pipelines"
 
 
+class Processor(models.Model):
+    """Processor associated with a certain ComputationalResult."""
+
+    name = models.CharField(max_length=255)
+    version = models.CharField(max_length=64)
+    docker_image = models.CharField(max_length=255)
+    environment = JSONField(default={})
+
+    class Meta:
+        db_table = "processors"
+        unique_together = ('name', 'version', 'docker_image', 'environment')
+
+    def __str__(self):
+        return "Processor: %s (version: %s, docker_image: %s)" % (self.name, self.version, self.docker_image)
+
+
+class ComputationalResult(models.Model):
+    """ Meta-information about the output of a computer process. (Ex Salmon) """
+
+    class Meta:
+        db_table = "computational_results"
+        base_manager_name = 'public_objects'
+
+    def __str__(self):
+        return "ComputationalResult " + str(self.pk) + ": " + str(self.pipeline)
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
+
+    commands = ArrayField(models.TextField(), default=[])
+    processor = models.ForeignKey(Processor, blank=True, null=True, on_delete=models.CASCADE)
+
+    # The Organism Index used to process the sample.
+    organism_index = models.ForeignKey('OrganismIndex', blank=True, null=True, on_delete=models.SET_NULL)
+
+    is_ccdl = models.BooleanField(default=True)
+    # TODO: "pipeline" field is now redundant due to "processor". Should be removed later.
+    # Human-readable nickname for this computation
+    pipeline = models.CharField(max_length=255)
+
+    # Stats
+    time_start = models.DateTimeField(blank=True, null=True)
+    time_end = models.DateTimeField(blank=True, null=True)
+
+    # Common Properties
+    is_public = models.BooleanField(default=True)
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(ComputationalResult, self).save(*args, **kwargs)
+
+
+class ComputationalResultAnnotation(models.Model):
+    """ Non-standard information associated with an ComputationalResult """
+
+    class Meta:
+        db_table = "computational_result_annotations"
+        base_manager_name = 'public_objects'
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
+
+    # Relations
+    result = models.ForeignKey(
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+
+    # Properties
+    data = JSONField(default={})
+    is_ccdl = models.BooleanField(default=True)
+
+    # Common Properties
+    is_public = models.BooleanField(default=True)
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(ComputationalResultAnnotation, self).save(*args, **kwargs)
+
+
 # TODO
 # class Gene(models.Model):
     """ A representation of a Gene """
 
 #     class Meta:
 #         db_table = "genes"
+
+
+class OrganismIndex(models.Model):
+    """ A special type of process result, necessary for processing other SRA samples """
+
+    class Meta:
+        db_table = "organism_index"
+        base_manager_name = 'public_objects'
+
+    def __str__(self):
+        return "OrganismIndex " + str(self.pk) + ": " + self.organism.name + ' [' + self.index_type + '] - ' + str(self.salmon_version)
+
+    # Managers
+    objects = models.Manager()
+    public_objects = PublicObjectsManager()
+
+    # Relations
+    organism = models.ForeignKey(Organism, blank=False, null=False, on_delete=models.CASCADE)
+    result = models.ForeignKey(
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+
+    # ex., "TRANSCRIPTOME_LONG", "TRANSCRIPTOME_SHORT"
+    index_type = models.CharField(max_length=255)
+
+    # This corresponds to Ensembl's release number:
+    # http://ensemblgenomes.org/info/about/release_cycle
+    # Determined by hitting:
+    # http://rest.ensembl.org/info/software?content-type=application/json
+    source_version = models.CharField(max_length=255, default="93")
+
+    # The name of the genome assembly used which corresponds to 'GRCh38' in:
+    # ftp://ftp.ensembl.org/pub/release-93/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+    assembly_name = models.CharField(max_length=255, default="UNKNOWN")
+
+    # This matters, for instance salmon 0.9.0 indexes don't work with 0.10.0
+    salmon_version = models.CharField(max_length=255, default="0.9.1")
+
+    # We keep the director unextracted on the shared filesystem so all
+    # Salmon jobs can access it.
+    absolute_directory_path = models.CharField(max_length=255, blank=True, null=True, default="")
+
+    # S3 Information
+    s3_url = models.CharField(max_length=255, default="")
+
+    # Common Properties
+    is_public = models.BooleanField(default=True)
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(OrganismIndex, self).save(*args, **kwargs)
+
 
 """
 # Files
