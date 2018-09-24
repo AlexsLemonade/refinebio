@@ -153,7 +153,7 @@ variable "foreman_instance_type" {
 }
 
 variable "volume_size_in_gb" {
-  default = "500"
+  default = "9000"
 }
 
 # Output our production environment variables.
