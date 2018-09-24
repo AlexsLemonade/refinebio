@@ -58,9 +58,9 @@ job "DOWNLOADER" {
       # The resources the job will require.
       resources {
         # CPU is in AWS's CPU units.
-        cpu = 256
+        cpu = 512
         # Memory is in MB of RAM.
-        memory = 1024
+        memory = 12289 
       }
 
       logs {
