@@ -70,6 +70,8 @@ resource "aws_instance" "nomad_server_1" {
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
+  disable_api_termination = "${var.stage == "prod" ? true : false}"
+
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
   # instance. For more information see the definition of this resource.
@@ -131,6 +133,8 @@ resource "aws_instance" "nomad_server_2" {
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
+  disable_api_termination = "${var.stage == "prod" ? true : false}"
+
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
   # instance. For more information see the definition of this resource.
@@ -165,6 +169,8 @@ resource "aws_instance" "nomad_server_3" {
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
+
+  disable_api_termination = "${var.stage == "prod" ? true : false}"
 
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
@@ -363,8 +369,8 @@ resource "aws_db_instance" "postgres_db" {
   # TF is broken, but we do want this protection in prod.
   # Related: https://github.com/hashicorp/terraform/issues/5417
   # Only the prod's bucket prefix is empty.
-  skip_final_snapshot = "${var.static_bucket_prefix == "" ? false : true}"
-  final_snapshot_identifier = "${var.static_bucket_prefix == "" ? "data_refinery_prod_snapshot" : ""}"
+  skip_final_snapshot = "${var.stage == "prod" ? false : true}"
+  final_snapshot_identifier = "${var.stage == "prod" ? "data_refinery_prod_snapshot" : ""}"
 
   vpc_security_group_ids = ["${aws_security_group.data_refinery_db.id}"]
   multi_az = true
@@ -381,6 +387,8 @@ resource "aws_instance" "pg_bouncer" {
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_db_instance.postgres_db"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
+
+  disable_api_termination = "${var.stage == "prod" ? true : false}"
 
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
@@ -460,6 +468,8 @@ resource "aws_instance" "api_server_1" {
   user_data = "${data.template_file.api_server_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
+  disable_api_termination = "${var.stage == "prod" ? true : false}"
+
   tags = {
     Name = "API Server 1 ${var.user}-${var.stage}"
   }
@@ -515,6 +525,8 @@ resource "aws_instance" "foreman_server_1" {
   depends_on = ["aws_db_instance.postgres_db", "aws_instance.pg_bouncer"]
   user_data = "${data.template_file.foreman_server_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"
+
+  disable_api_termination = "${var.stage == "prod" ? true : false}"
 
   tags = {
     Name = "Foreman Server 1 ${var.user}-${var.stage}"
