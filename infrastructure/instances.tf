@@ -385,6 +385,8 @@ resource "aws_db_instance" "postgres_db" {
   multi_az = true
   publicly_accessible = true
 
+  backup_retention_period  = "${var.stage == "prod" ? "7" : ""}"
+
 }
 
 resource "aws_instance" "pg_bouncer" {
