@@ -564,6 +564,9 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
         quant_file.delete_local_file()
         quant_file.delete()
 
+    # Salmon-processed samples aren't marked as is_processed
+    # until they are fully tximported, this value sets that
+    # for the end_job function.
     job_context['tximported'] = True
     job_context['individual_files'] = individual_files
     return job_context
