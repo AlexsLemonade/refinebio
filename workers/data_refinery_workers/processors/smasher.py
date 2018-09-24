@@ -294,7 +294,7 @@ def _smash(job_context: Dict) -> Dict:
     """
 
     # We have already failed - return now so we can send our fail email.
-    if job_context['dataset'].failure_reason is not None:
+    if job_context['dataset'].failure_reason not in ['', None]:
         return job_context
 
     try:
