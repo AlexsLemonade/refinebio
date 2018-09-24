@@ -518,7 +518,7 @@ def _smash(job_context: Dict) -> Dict:
                             pvalue = ks_res.rx('p.value')[0][0]
 
                             if statistic > 0.001 or pvalue != 1.0:
-                                raise Exception("Failed Kolmogorov–Smirnov test! Stat: " + str(statistic) + ", PVal: " + str(pvalue))
+                                raise Exception("Failed Kolmogorov Smirnov test! Stat: " + str(statistic) + ", PVal: " + str(pvalue))
 
                         # And finally convert back to Pandas
                         ar = np.array(reso)
