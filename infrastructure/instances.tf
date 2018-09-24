@@ -376,6 +376,8 @@ resource "aws_db_instance" "postgres_db" {
   multi_az = true
   publicly_accessible = true
 
+  backup_retention_period  = "${var.stage == "prod" ? "7" : ""}"
+
 }
 
 resource "aws_instance" "pg_bouncer" {
@@ -388,6 +390,7 @@ resource "aws_instance" "pg_bouncer" {
   depends_on = ["aws_db_instance.postgres_db"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
+  # Don't delete production servers by mistake!
   disable_api_termination = "${var.stage == "prod" ? true : false}"
 
   # Our instance-user-data.sh script is built by Terraform at
@@ -468,6 +471,7 @@ resource "aws_instance" "api_server_1" {
   user_data = "${data.template_file.api_server_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
+  # Don't delete production servers by mistake!
   disable_api_termination = "${var.stage == "prod" ? true : false}"
 
   tags = {

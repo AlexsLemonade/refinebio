@@ -190,7 +190,7 @@ class SalmonTestCase(TestCase):
         self.assertTrue(job.success)
 
         sample = files[0].samples.first()
-        self.assertTrue(sample.is_processed)
+        self.assertFalse(sample.is_processed)
         organism_index = job_context["quant_result"].organism_index
         self.assertEqual(organism_index.index_type, "TRANSCRIPTOME_SHORT")
 

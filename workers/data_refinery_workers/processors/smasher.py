@@ -293,6 +293,10 @@ def _smash(job_context: Dict) -> Dict:
         Transpose again such that samples are columns and genes are rows
     """
 
+    # We have already failed - return now so we can send our fail email.
+    if job_context['dataset'].failure_reason not in ['', None]:
+        return job_context
+
     try:
         # Prepare the output directory
         smash_path = job_context["output_dir"]
@@ -514,7 +518,7 @@ def _smash(job_context: Dict) -> Dict:
                             pvalue = ks_res.rx('p.value')[0][0]
 
                             if statistic > 0.001 or pvalue != 1.0:
-                                raise Exception("Failed Kolmogorov–Smirnov test! Stat: " + str(statistic) + ", PVal: " + str(pvalue))
+                                raise Exception("Failed Kolmogorov Smirnov test! Stat: " + str(statistic) + ", PVal: " + str(pvalue))
 
                         # And finally convert back to Pandas
                         ar = np.array(reso)
@@ -528,6 +532,14 @@ def _smash(job_context: Dict) -> Dict:
                         dataset_data=job_context['dataset'].data,
                         processor_job_id=job_context["job"].id,
                     )
+                    job_context['dataset'].success = False
+                    job_context['job'].failure_reason = "Failure reason: " + str(e)
+                    job_context['dataset'].failure_reason = "Failure reason: " + str(e)
+                    job_context['dataset'].save()
+                    # Delay failing this pipeline until the failure notify has been sent
+                    job_context['job'].success = False
+                    job_context['failure_reason'] = str(e)
+                    return job_context
 
             # Transpose before scaling
             # Do this even if we don't want to scale in case transpose
@@ -630,6 +642,10 @@ def _smash(job_context: Dict) -> Dict:
 
 def _upload(job_context: Dict) -> Dict:
     """ Uploads the result file to S3 and notifies user. """
+
+    # There has been a failure already, don't try to upload anything.
+    if not job_context.get("output_file", None):
+        return job_context
 
     try:
         if job_context.get("upload", True) and RUNNING_IN_CLOUD:
