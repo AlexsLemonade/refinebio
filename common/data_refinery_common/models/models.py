@@ -796,7 +796,7 @@ class ComputedFile(models.Model):
             return False
 
         try:
-            S3.delete_object(self.s3_bucket, self.s3_key)
+            S3.delete_object(Bucket=self.s3_bucket, Key=self.s3_key)
             return True
         except:
             logger.exception("Failed to delete S3 object for Computed File.",
