@@ -70,6 +70,8 @@ resource "aws_instance" "nomad_server_1" {
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
+  disable_api_termination = "${var.stage == "prod" ? true : false}"
+
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
   # instance. For more information see the definition of this resource.
@@ -86,12 +88,6 @@ resource "aws_instance" "nomad_server_1" {
   root_block_device = {
     volume_type = "gp2"
     volume_size = 100
-  }
-
-  ebs_block_device = {
-    device_name = "/dev/xvdcz"
-    volume_type = "gp2"
-    volume_size = 40
   }
 }
 
@@ -137,6 +133,8 @@ resource "aws_instance" "nomad_server_2" {
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
+  disable_api_termination = "${var.stage == "prod" ? true : false}"
+
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
   # instance. For more information see the definition of this resource.
@@ -153,12 +151,6 @@ resource "aws_instance" "nomad_server_2" {
   root_block_device = {
     volume_type = "gp2"
     volume_size = 100
-  }
-
-  ebs_block_device = {
-    device_name = "/dev/xvdcz"
-    volume_type = "gp2"
-    volume_size = 40
   }
 }
 
@@ -178,6 +170,8 @@ resource "aws_instance" "nomad_server_3" {
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
+  disable_api_termination = "${var.stage == "prod" ? true : false}"
+
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
   # instance. For more information see the definition of this resource.
@@ -194,12 +188,6 @@ resource "aws_instance" "nomad_server_3" {
   root_block_device = {
     volume_type = "gp2"
     volume_size = 100
-  }
-
-  ebs_block_device = {
-    device_name = "/dev/xvdcz"
-    volume_type = "gp2"
-    volume_size = 40
   }
 }
 
@@ -292,7 +280,7 @@ resource "aws_launch_configuration" "auto_client_configuration" {
 resource "aws_autoscaling_group" "clients" {
     name = "asg-clients-${var.user}-${var.stage}"
     max_size = "${var.max_clients}"
-    min_size = "1" # So the smasher always has an instance to run smasher jobs with.
+    min_size = "0"
     health_check_grace_period = 300
     health_check_type = "EC2"
     default_cooldown = 0
@@ -378,9 +366,12 @@ resource "aws_db_instance" "postgres_db" {
   db_subnet_group_name = "${aws_db_subnet_group.data_refinery.name}"
   parameter_group_name = "${aws_db_parameter_group.postgres_parameters.name}"
 
-  # We probably actually want to keep this, but TF is broken here.
+  # TF is broken, but we do want this protection in prod.
   # Related: https://github.com/hashicorp/terraform/issues/5417
-  skip_final_snapshot = true
+  # Only the prod's bucket prefix is empty.
+  skip_final_snapshot = "${var.stage == "prod" ? false : true}"
+  final_snapshot_identifier = "${var.stage == "prod" ? "data_refinery_prod_snapshot" : ""}"
+
   vpc_security_group_ids = ["${aws_security_group.data_refinery_db.id}"]
   multi_az = true
   publicly_accessible = true
@@ -396,6 +387,8 @@ resource "aws_instance" "pg_bouncer" {
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_db_instance.postgres_db"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
+
+  disable_api_termination = "${var.stage == "prod" ? true : false}"
 
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
@@ -413,12 +406,6 @@ resource "aws_instance" "pg_bouncer" {
   root_block_device = {
     volume_type = "gp2"
     volume_size = 100
-  }
-
-  ebs_block_device = {
-    device_name = "/dev/xvdcz"
-    volume_type = "gp2"
-    volume_size = 40
   }
 }
 
@@ -442,13 +429,8 @@ data "template_file" "pg_bouncer_script_smusher" {
 # API Webserver
 ##
 
-# This is the configuration for the Nomad Server.
 data "local_file" "api_nginx_config" {
   filename = "api-configuration/nginx_config.conf"
-}
-
-data "local_file" "api_environment" {
-  filename = "api-configuration/environment"
 }
 
 # This script smusher serves a similar purpose to
@@ -458,9 +440,6 @@ data "template_file" "api_server_script_smusher" {
 
   vars {
     nginx_config = "${data.local_file.api_nginx_config.content}"
-    api_environment = "${data.local_file.api_environment.content}"
-    dockerhub_repo = "${var.dockerhub_repo}"
-    api_docker_image = "${var.api_docker_image}"
     user = "${var.user}"
     stage = "${var.stage}"
     region = "${var.region}"
@@ -489,6 +468,8 @@ resource "aws_instance" "api_server_1" {
   user_data = "${data.template_file.api_server_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
+  disable_api_termination = "${var.stage == "prod" ? true : false}"
+
   tags = {
     Name = "API Server 1 ${var.user}-${var.stage}"
   }
@@ -498,12 +479,6 @@ resource "aws_instance" "api_server_1" {
   root_block_device = {
     volume_type = "gp2"
     volume_size = 100
-  }
-
-  ebs_block_device = {
-    device_name = "/dev/xvdcz"
-    volume_type = "gp2"
-    volume_size = 40
   }
 }
 
@@ -551,6 +526,8 @@ resource "aws_instance" "foreman_server_1" {
   user_data = "${data.template_file.foreman_server_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
+  disable_api_termination = "${var.stage == "prod" ? true : false}"
+
   tags = {
     Name = "Foreman Server 1 ${var.user}-${var.stage}"
   }
@@ -560,12 +537,6 @@ resource "aws_instance" "foreman_server_1" {
   root_block_device = {
     volume_type = "gp2"
     volume_size = 100
-  }
-
-  ebs_block_device = {
-    device_name = "/dev/xvdcz"
-    volume_type = "gp2"
-    volume_size = 40
   }
 }
 
