@@ -254,7 +254,7 @@ class Experiment(models.Model):
 
     # Historical Properties
     source_database = models.CharField(max_length=32)  # "ArrayExpress, "SRA", "GEO"
-    source_url = models.CharField(max_length=256)
+    source_url = models.TextField()
 
     # Properties
     # I was always under the impression that TextFields were slower
@@ -578,7 +578,7 @@ class OriginalFile(models.Model):
     samples = models.ManyToManyField('Sample', through='OriginalFileSampleAssociation')
 
     # Historical Properties
-    source_url = models.CharField(max_length=255)
+    source_url = models.TextField()
     is_archive = models.BooleanField(default=True)
     source_filename = models.CharField(max_length=255, blank=False)
 
