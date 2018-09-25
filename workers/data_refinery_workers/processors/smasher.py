@@ -277,18 +277,19 @@ def _write_tsv_json(job_context, metadata, smash_path):
                         dw.writerow(row_data)
                         samples_in_species.append(sample_metadata)
 
-            # Writes species-level json file:
+            # Writes a json file for current species:
             if len(samples_in_species):
                 species_metadata = {
                     'species': species,
-                    'samples': samples_in_species
+                    'samples': samples_in_species,
+                    'created_at': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
                 }
                 with open(species_dir + "metadata_" + species + '.json', 'w') as json_file:
                     json.dump(species_metadata, json_file, indent=4, sort_keys=True)
     else:
         all_dir = smash_path + "ALL/"
         os.makedirs(all_dir, exist_ok=True)
-        with open(all_dir + 'ALL_metadata.tsv', 'w') as tsv_file:
+        with open(all_dir + 'metadata_ALL.tsv', 'w') as tsv_file:
             dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
             dw.writeheader()
             for sample_metadata in metadata['samples'].values():

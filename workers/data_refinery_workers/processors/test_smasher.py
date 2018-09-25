@@ -228,8 +228,8 @@ class SmasherTestCase(TestCase):
             zf = zipfile.ZipFile(final_context['output_file'])
             namelist = zf.namelist()
 
-            self.assertTrue('GSE51081/GSE51081_metadata.tsv' in namelist)
-            self.assertTrue('metadata.json' in namelist)
+            self.assertTrue('GSE51081/metadata_GSE51081.tsv' in namelist)
+            self.assertTrue('aggregated_metadata.json' in namelist)
             self.assertTrue('README.md' in namelist)
             self.assertTrue('LICENSE.TXT' in namelist)
             self.assertTrue('GSE51081/GSE51081.tsv' in namelist)
@@ -262,8 +262,8 @@ class SmasherTestCase(TestCase):
             zf = zipfile.ZipFile(final_context['output_file'])
             namelist = zf.namelist()
 
-            self.assertTrue('HOMO_SAPIENS/HOMO_SAPIENS_metadata.tsv' in namelist)
-            self.assertTrue('metadata.json' in namelist)
+            self.assertTrue('HOMO_SAPIENS/metadata_HOMO_SAPIENS.tsv' in namelist)
+            self.assertTrue('aggregated_metadata.json' in namelist)
             self.assertTrue('README.md' in namelist)
             self.assertTrue('LICENSE.TXT' in namelist)
             self.assertTrue('HOMO_SAPIENS/HOMO_SAPIENS.tsv' in namelist)
@@ -296,8 +296,8 @@ class SmasherTestCase(TestCase):
             zf = zipfile.ZipFile(final_context['output_file'])
             namelist = zf.namelist()
 
-            self.assertTrue('ALL/ALL_metadata.tsv' in namelist)
-            self.assertTrue('metadata.json' in namelist)
+            self.assertTrue('ALL/metadata_ALL.tsv' in namelist)
+            self.assertTrue('aggregated_metadata.json' in namelist)
             self.assertTrue('README.md' in namelist)
             self.assertTrue('LICENSE.TXT' in namelist)
             self.assertTrue('ALL/ALL.tsv' in namelist)
@@ -1063,7 +1063,7 @@ class AggregationTestCase(TestCase):
             'dataset': Dataset.objects.create(aggregate_by='ALL')
         }
         smasher._write_tsv_json(job_context, self.metadata, self.smash_path)
-        tsv_filename = self.smash_path + "ALL/ALL_metadata.tsv"
+        tsv_filename = self.smash_path + "ALL/metadata_ALL.tsv"
         self.assertTrue(os.path.isfile(tsv_filename))
 
         with open(tsv_filename) as tsv_file:
@@ -1144,7 +1144,7 @@ class AggregationTestCase(TestCase):
         self.assertEqual(len(species_metadada['samples']), 1)
         self.assertEqual(species_metadada['samples'][0]['refinebio_accession_code'],
                          'GSM1361050')
-        os.remove(json_filename)
+        #os.remove(json_filename)
 
         # Test tsv file of "fake_species"
         tsv_filename = self.smash_path + "fake_species/metadata_fake_species.tsv"
