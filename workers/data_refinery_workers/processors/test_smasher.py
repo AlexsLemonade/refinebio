@@ -613,7 +613,7 @@ class SmasherTestCase(TestCase):
 
     @tag("smasher")
     def test_no_smash_dupe_two(self):
-        """ """
+        """ Tests the SRP051449 case, where the titles collide. Also uses a real QN target file."""
 
         job = ProcessorJob()
         job.pipeline_applied = "SMASHER"
