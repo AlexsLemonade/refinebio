@@ -105,7 +105,6 @@ class APITestCases(APITestCase):
         experiment_sample_association.save()
 
         result = ComputationalResult()
-        result.pipeline = "Affymetrix SCAN"
         result.save()
 
         sra = SampleResultAssociation()
@@ -114,7 +113,6 @@ class APITestCases(APITestCase):
         sra.save()
 
         result = ComputationalResult()
-        result.pipeline = "MultiQC"
         result.save()
 
         sra = SampleResultAssociation()

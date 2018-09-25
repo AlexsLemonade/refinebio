@@ -172,7 +172,6 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
                     'protocol_info',
                     'annotations',
                     'results',
-                    'pipelines',
                     'source_archive_url',
                     'has_raw',
                     'sex',

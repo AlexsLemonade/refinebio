@@ -152,7 +152,6 @@ def _extract_sra(job_context: Dict) -> Dict:
     result.time_start = time_start
     result.time_end = timezone.now()
     result.is_ccdl = True
-    result.pipeline = "FASTERQ_DUMP"  # TODO: should be removed
 
     try:
         processor_key = "FASTERQ_DUMP"
@@ -484,7 +483,6 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
     result.time_end = timezone.now()
     result.commands.append(" ".join(cmd_tokens))
     result.is_ccdl = True
-    result.pipeline = "tximport"  # TODO: should be removed
     try:
         processor_key = "TXIMPORT"
         result.processor = utils.find_processor(processor_key)
@@ -634,7 +632,6 @@ def _run_salmon(job_context: Dict) -> Dict:
         result.commands.append(formatted_command)
         result.time_start = job_context['time_start']
         result.time_end = job_context['time_end']
-        result.pipeline = "Salmon"  # TODO: should be removed
         result.organism_index = job_context["organism_index"]
         result.is_ccdl = True
 
@@ -802,7 +799,6 @@ def _run_multiqc(job_context: Dict) -> Dict:
     result.time_start = time_start
     result.time_end = time_end
     result.is_ccdl = True
-    result.pipeline = "MultiQC"  # TODO: should be removed
 
     try:
         processor_key = "MULTIQC"
@@ -913,7 +909,6 @@ def _run_salmontools(job_context: Dict) -> Dict:
         result.time_start = start_time
         result.time_end = end_time
         result.is_ccdl = True
-        result.pipeline = "Salmontools"  # TODO: should be removed
 
         try:
             processor_key = "SALMONTOOLS"

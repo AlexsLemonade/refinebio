@@ -315,7 +315,6 @@ def _create_result(job_context: Dict) -> Dict:
     result = ComputationalResult()
     result.commands.append(job_context['script_name'])
     result.is_ccdl = True
-    result.pipeline = "Submitter-processed"  # TODO: should be removed
     try:
         processor_key = "SUBMITTER_PROCESSED"
         result.processor = utils.find_processor(processor_key)
