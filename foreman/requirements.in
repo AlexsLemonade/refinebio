@@ -1,9 +1,5 @@
 django
-psycopg2-binary
+psycopg2
 requests
 retrying
 python-nomad
-coverage
-GEOparse
-python-dateutil
-raven

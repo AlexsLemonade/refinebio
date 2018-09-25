@@ -13,22 +13,17 @@ cd $script_directory
 # move up a level
 cd ..
 
-# Ensure that postgres is running
-if ! [[ $(docker ps --filter name=drdb -q) ]]; then
-    echo "You must start Postgres first with:" >&2
-    echo "./run_postgres.sh" >&2
-    exit 1
-fi
-
-./prepare_image.sh -i common_tests -s common
+docker build -t common_tests -f common/Dockerfile .
 
 source common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
+NOMAD_HOST_IP=$(get_docker_nomad_ip_address)
 HOST_IP=$(get_ip_address)
+NOMAD_LINK=$(get_nomad_link_option)
 
 docker run \
        --add-host=database:$DB_HOST_IP \
-       --add-host=nomad:$HOST_IP \
+       --add-host=nomad:$NOMAD_HOST_IP \
        --env-file common/environments/test \
-       --link drdb:postgres \
-       -it ccdlstaging/dr_common_tests bash -c "$(run_tests_with_coverage $@)" --parallel
+       --link drdb:postgres $NOMAD_LINK \
+       -i common_tests bash -c 'coverage run --source="." manage.py test --no-input "$@"; coverage report -m'

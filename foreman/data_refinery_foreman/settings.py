@@ -12,7 +12,14 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import os
 from django.core.exceptions import ImproperlyConfigured
-from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
+
+
+def get_env_variable(var_name):
+    try:
+        return os.environ[var_name]
+    except KeyError:
+        error_msg = "Set the %s environment variable" % var_name
+        raise ImproperlyConfigured(error_msg)
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -40,11 +47,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.postgres',
     'data_refinery_common',
     'data_refinery_foreman.surveyor',
     'data_refinery_foreman.foreman',
-    'raven.contrib.django.raven_compat',
 ]
 
 MIDDLEWARE = [
@@ -92,13 +97,6 @@ DATABASES = {
 
         'OPTIONS': {
             'connect_timeout': get_env_variable('DATABASE_TIMEOUT')
-        },
-
-        'TEST': {
-            # Our environment variables for test have a different
-            # database name than the other envs so just use that
-            # rather than letting Django munge it.
-            'NAME': get_env_variable('DATABASE_NAME')
         }
     }
 }
@@ -141,22 +139,3 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
-
-
-# Setting the RAVEN_CONFIG when RAVEN_DSN isn't set will cause the
-# following warning:
-# /usr/local/lib/python3.6/site-packages/raven/conf/remote.py:91:
-# UserWarning: Transport selection via DSN is deprecated. You should
-# explicitly pass the transport class to Client() instead.
-raven_dsn = get_env_variable_gracefully('RAVEN_DSN', False)
-if raven_dsn:
-    RAVEN_CONFIG = {
-        'dsn': raven_dsn
-    }
-else:
-    # Preven raven from logging about how it's not configured...
-    import logging
-    raven_logger = logging.getLogger('raven.contrib.django.client.DjangoClient')
-    raven_logger.setLevel(logging.CRITICAL)
-
-RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD') == "True"

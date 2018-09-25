@@ -1,30 +1,23 @@
-from django.db import transaction
-from django.utils import timezone
 from retrying import retry
-from typing import List, Dict
-
-from data_refinery_common.job_lookup import ProcessorPipeline, determine_processor_pipeline, determine_ram_amount
+from django.utils import timezone
+from django.db import transaction
+from data_refinery_common.utils import get_worker_id
+from data_refinery_common.models import (
+    Batch,
+    BatchStatuses,
+    DownloaderJob,
+    ProcessorJob
+)
+from data_refinery_workers._version import __version__
+from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
-from data_refinery_common.models import (
-    DownloaderJob,
-    DownloaderJobOriginalFileAssociation,
-    Experiment,
-    ExperimentAnnotation,
-    ExperimentSampleAssociation,
-    OriginalFile,
-    ProcessorJob,
-    ProcessorJobOriginalFileAssociation,
-    Sample,
-)
-from data_refinery_common.utils import get_instance_id, get_env_variable
 
 
 logger = get_and_configure_logger(__name__)
-# Let this fail if SYSTEM_VERSION is unset.
-SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
-# TODO: extend this list.
-BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
+
+
+JOB_DIR_PREFIX = "downloader_job_"
 
 
 def start_job(job_id: int) -> DownloaderJob:
@@ -33,146 +26,89 @@ def start_job(job_id: int) -> DownloaderJob:
     Retrieves the job from the database and returns it after marking
     it as started.
     """
-    logger.debug("Starting Downloader Job.", downloader_job=job_id)
+    logger.info("Starting Downloader Job.", downloader_job=job_id)
     try:
         job = DownloaderJob.objects.get(id=job_id)
     except DownloaderJob.DoesNotExist:
         logger.error("Cannot find downloader job record.", downloader_job=job_id)
         raise
 
-    # This job should not have been started.
-    if job.start_time is not None:
-        logger.error("This downloader job has already been started!!!", downloader_job=job.id)
-        raise Exception("downloaders.start_job called on a job that has already been started!")
-
-    job.worker_id = get_instance_id()
-    job.worker_version = SYSTEM_VERSION
+    job.worker_id = get_worker_id()
+    job.worker_version = __version__
     job.start_time = timezone.now()
     job.save()
 
     return job
 
 
-def end_downloader_job(job: DownloaderJob, success: bool):
-    """
-    Record in the database that this job has completed.
-    """
-    if success:
-        logger.debug("Downloader Job completed successfully.",
-                    downloader_job=job.id)
-    else:
-        # Should be set by now, but make sure.
-        success = False
-        file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
-        for file_assoc in file_assocs:
-            file_assoc.original_file.delete_local_file()
-            file_assoc.original_file.is_downloaded = False
-            file_assoc.original_file.save()
+def end_job(job: DownloaderJob, batches: Batch, success: bool):
+    """Record in the database that this job has completed.
 
-        if not job.failure_reason:
-            logger.error("Downloader job failed without having failure_reason set. FIX ME!!!!!!!!",
+    Create a processor job and queue a processor task for each batch
+    if the job was successful.
+    """
+    @retry(stop_max_attempt_number=3)
+    def save_batch_create_job(batch):
+        batch.status = BatchStatuses.DOWNLOADED.value
+        batch.save()
+
+        # TEMPORARY for Jackie's grant:
+        if batch.pipeline_required != ProcessorPipeline.NONE.value:
+            logger.debug("Creating processor job for Batch.",
                          downloader_job=job.id,
-                         downloader_task=job.downloader_task)
+                         batch=batch.id)
+            with transaction.atomic():
+                processor_job = ProcessorJob.create_job_and_relationships(
+                    batches=[batch], pipeline_applied=batch.pipeline_required)
+            return processor_job
         else:
-            logger.info("Downloader job failed!",
+            logger.debug("Not queuing a processor job for batch.",
+                         downloader_job=job.id,
+                         batch=batch.id)
+            return None
+
+    @retry(stop_max_attempt_number=3)
+    def queue_task(processor_job, batch):
+        if batch.pipeline_required in ProcessorPipeline.__members__:
+            send_job(ProcessorPipeline[batch.pipeline_required], processor_job.id)
+            logger.info("Queuing processor job.",
                         downloader_job=job.id,
-                        downloader_task=job.downloader_task,
-                        failure_reason=job.failure_reason)
+                        processor_job=processor_job.id,
+                        batch=batch.id)
+            return True
+        else:
+            failure_template = "Could not find Processor Pipeline {} in the lookup."
+            failure_message = failure_template.format(batch.pipeline_required)
+            logger.error(failure_message, downloader_job=job.id, batch=batch.id)
+            processor_job.failure_reason = failure_message
+            processor_job.success = False
+            processor_job.retried = True
+            processor_job.save()
+            return False
+
+    if success:
+        for batch in batches:
+            processor_job = save_batch_create_job(batch)
+            if batch.pipeline_required != ProcessorPipeline.NONE.value:
+                try:
+                    success = queue_task(processor_job, batch)
+                except:
+                    logger.exception("Could not queue processor job task.")
+                    # If the task doesn't get sent we don't want the
+                    # processor_job to be left floating
+                    processor_job.delete()
+
+                    success = False
+                    job.failure_message = "Could not queue processor job task."
+
+                if success:
+                    logger.info("Downloader job completed successfully.", downloader_job=job.id)
+
+    # Check to make sure job didn't end because of missing batches or files.
+    if len(batches) > 0 and len(batches[0].files) > 0:
+        # Clean up temp directory to free up local disk space.
+        batches[0].files[0].remove_temp_directory(JOB_DIR_PREFIX + str(job.id))
 
     job.success = success
     job.end_time = timezone.now()
     job.save()
-
-def delete_if_blacklisted(original_file: OriginalFile) -> OriginalFile:
-    extension = original_file.filename.split(".")[-1]
-    if extension.lower() in BLACKLISTED_EXTENSIONS:
-        logger.debug("Original file had a blacklisted extension of %s, skipping",
-                     extension,
-                     original_file=original_file.id)
-
-        original_file.delete_local_file()
-        original_file.is_downloaded = False
-        original_file.save()
-        return None
-
-    return OriginalFile
-
-
-def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
-                                             downloader_job: DownloaderJob=None):
-    """
-    Create a processor jobs and queue a processor task for samples related to an experiment.
-    """
-    for original_file in original_files:
-        sample_object = original_file.samples.first()
-
-        if not delete_if_blacklisted(original_file):
-            continue
-
-        pipeline_to_apply = determine_processor_pipeline(sample_object, original_file)
-
-        if pipeline_to_apply == ProcessorPipeline.NONE:
-            logger.info("No valid processor pipeline found to apply to sample.",
-                        sample=sample_object.id,
-                        original_file=original_files[0].id)
-            original_file.delete_local_file()
-            original_file.is_downloaded = False
-            original_file.save()
-        else:
-            processor_job = ProcessorJob()
-            processor_job.pipeline_applied = pipeline_to_apply.value
-            processor_job.ram_amount = determine_ram_amount(sample_object, processor_job)
-            processor_job.save()
-
-            assoc = ProcessorJobOriginalFileAssociation()
-            assoc.original_file = original_file
-            assoc.processor_job = processor_job
-            assoc.save()
-
-            if downloader_job:
-                logger.debug("Queuing processor job.",
-                             processor_job=processor_job.id,
-                             original_file=original_file.id,
-                             downloader_job=downloader_job.id)
-            else:
-                logger.debug("Queuing processor job.",
-                             processor_job=processor_job.id,
-                             original_file=original_file.id)
-
-            send_job(pipeline_to_apply, processor_job)
-
-
-def create_processor_job_for_original_files(original_files: List[OriginalFile],
-                                            downloader_job: DownloaderJob=None):
-    """
-    Create a processor job and queue a processor task for sample related to an experiment.
-
-    """
-
-    # For anything that has raw data there should only be one Sample per OriginalFile
-    sample_object = original_files[0].samples.first()
-    pipeline_to_apply = determine_processor_pipeline(sample_object, original_files[0])
-
-    if pipeline_to_apply == ProcessorPipeline.NONE:
-        logger.info("No valid processor pipeline found to apply to sample.",
-                    sample=sample_object.id,
-                    original_file=original_files[0].id)
-        for original_file in original_files:
-            original_file.delete_local_file()
-            original_file.is_downloaded = False
-            original_file.save()
-    else:
-        processor_job = ProcessorJob()
-        processor_job.pipeline_applied = pipeline_to_apply.value
-        processor_job.ram_amount = determine_ram_amount(sample_object, processor_job)
-        processor_job.save()
-        for original_file in original_files:
-            assoc = ProcessorJobOriginalFileAssociation()
-            assoc.original_file = original_file
-            assoc.processor_job = processor_job
-            assoc.save()
-
-        logger.debug("Queuing processor job.",
-                     processor_job=processor_job.id)
-
-        send_job(pipeline_to_apply, processor_job)

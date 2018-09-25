@@ -1,12 +1,9 @@
-import sys
-
 from django.core.management.base import BaseCommand
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_workers.downloaders.array_express import download_array_express
 from data_refinery_workers.downloaders.transcriptome_index import download_transcriptome
 from data_refinery_workers.downloaders.sra import download_sra
-from data_refinery_workers.downloaders.geo import download_geo
 
 
 logger = get_and_configure_logger(__name__)
@@ -26,13 +23,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options["job_id"] is None:
             logger.error("You must specify a job ID.")
-            sys.exit(1) 
+            return 1
 
         try:
             job_type = Downloaders[options["job_name"]]
         except KeyError:
             logger.error("You must specify a valid job name.")
-            sys.exit(1) 
+            return 1
 
         if job_type is Downloaders.ARRAY_EXPRESS:
             download_array_express(options["job_id"])
@@ -40,13 +37,11 @@ class Command(BaseCommand):
             download_transcriptome(options["job_id"])
         elif job_type is Downloaders.SRA:
             download_sra(options["job_id"])
-        elif job_type is Downloaders.GEO:
-            download_geo(options["job_id"])
         else:
             logger.error(("A valid job name was specified for job %s with id %d but "
                           "no downloader function is known to run it."),
                          options["job_name"],
                          options["job_id"])
-            sys.exit(1) 
+            return 1
 
-        sys.exit(0) 
+        return 0

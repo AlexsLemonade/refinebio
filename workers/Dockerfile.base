@@ -1,0 +1,87 @@
+FROM ubuntu:16.04
+
+# Much of this dockerfile is based off of the rpy2 docker image found:
+# https://hub.docker.com/r/rpy2/rpy2/~/dockerfile/
+
+RUN \
+  apt-get update -qq && \
+  apt-get install -y lsb-release && \
+  echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) multiverse\n" \
+      >> /etc/apt/sources.list.d/added_repos.list && \
+  echo "deb http://cran.cnr.berkeley.edu/bin/linux/ubuntu $(lsb_release -sc)/" \
+      >> /etc/apt/sources.list.d/added_repos.list && \
+  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9 && \
+  apt-get update -qq && \
+  apt-get install -y \
+  ed \
+  git \
+  mercurial \
+  libcairo-dev \
+  libedit-dev \
+  lsb-release \
+  python3 \
+  python3-pip \
+  r-base \
+  r-base-dev \
+  libxml2-dev \
+  libssl-dev \
+  libcurl4-openssl-dev \
+  curl \
+  wget && \
+  rm -rf /var/lib/apt/lists/*
+
+RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
+WORKDIR /home/user
+
+ENV R_LIBS "/usr/local/lib/R/site-library"
+
+COPY workers/r_dependencies.R .
+
+RUN Rscript r_dependencies.R
+
+# Move these apt-gets up into the other one once I have time for rebuild
+# libpq-dev install pg_config which is needed for psycopg2
+RUN apt-get update -qq && \
+    apt-get install -y libpq-dev
+
+# It's annoying that this can only be installed via git.
+RUN git clone https://github.com/deweylab/RSEM.git
+
+RUN cd RSEM && make install
+
+RUN rm -rf RSEM
+
+# Starting here, code is based on:
+# https://github.com/COMBINE-lab/salmon/blob/master/docker/Dockerfile
+ENV PACKAGES gcc make g++ cmake libboost-all-dev liblzma-dev libbz2-dev \
+    ca-certificates zlib1g-dev unzip autoconf
+
+# Version 0.8.2 has an outdated sha hash which breaks its make command.
+# I fixed this in the lastest commit, but that hasn't been cut to a
+# new version yet.
+ENV SALMON_COMMIT_HASH 0b9f1eb8a0a321adc6320f490b015e75ebf3d3bb
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ${PACKAGES} && \
+    apt-get clean
+
+RUN curl -k -L https://github.com/COMBINE-lab/salmon/archive/${SALMON_COMMIT_HASH}.zip \
+         -o salmon-${SALMON_COMMIT_HASH}.zip && \
+    unzip salmon-${SALMON_COMMIT_HASH}.zip && \
+    cd salmon-${SALMON_COMMIT_HASH} && \
+    mkdir build && \
+    cd build && \
+    cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && make && make install
+
+ENV PATH /home/user/salmon-${SALMON_COMMIT_HASH}/bin:${PATH}
+# End code from salmon repo.
+
+
+COPY workers/requirements.txt .
+
+RUN \
+  pip3 --no-cache-dir install pip --upgrade && \
+  pip3 --no-cache-dir install setuptools --upgrade && \
+  pip3 --no-cache-dir install wheel --upgrade && \
+  pip3 --no-cache-dir install -r requirements.txt --upgrade && \
+  rm -rf /root/.cache

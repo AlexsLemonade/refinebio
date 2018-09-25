@@ -12,12 +12,8 @@ from data_refinery_foreman.surveyor.test_sra_xml import (
     SUBMISSION_XML
 )
 from data_refinery_common.models import (
-    DownloaderJob,
-    Experiment,
     SurveyJob,
-    SurveyJobKeyValue,
-    Organism,
-    Sample
+    SurveyJobKeyValue
 )
 
 EXPERIMENT_ACCESSION = "DRX001563"
@@ -27,7 +23,7 @@ STUDY_ACCESSION = "DRP000595"
 SUBMISSION_ACCESSION = "DRA000567"
 
 
-def mocked_requests_get(url, timeout=1):
+def mocked_requests_get(url):
     mock = Mock(ok=True)
     if url == ENA_METADATA_URL_TEMPLATE.format(EXPERIMENT_ACCESSION):
         mock.text = EXPERIMENT_XML
@@ -46,89 +42,35 @@ def mocked_requests_get(url, timeout=1):
 
 
 class SraSurveyorTestCase(TestCase):
-    def setUp(self):
+    def test_get_next_accession(self):
+        self.assertEqual(SraSurveyor.get_next_accession("DRR123456"), "DRR123457")
+        self.assertEqual(SraSurveyor.get_next_accession("DRR1234567"), "DRR1234568")
+        self.assertEqual(SraSurveyor.get_next_accession("DRR12345678"), "DRR12345679")
+        self.assertEqual(SraSurveyor.get_next_accession("DRR123456789"), "DRR123456790")
+
+    @patch.object(SraSurveyor, "_generate_batch")
+    def test_discover_batches(self, mock_generate_batch):
         survey_job = SurveyJob(source_type="SRA")
         survey_job.save()
-        self.survey_job = survey_job
 
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="experiment_accession_code",
-                                           value="DRR002116")
+                                           key="start_accession",
+                                           value="DRR012345")
         key_value_pair.save()
-
-        # Insert the organism into the database so the model doesn't call the
-        # taxonomy API to populate it.
-        organism = Organism(name="HOMO_SAPIENS",
-                            taxonomy_id=9606,
-                            is_scientific_name=True)
-        organism.save()
-
-    def tearDown(self):
-        DownloaderJob.objects.all().delete()
-        SurveyJobKeyValue.objects.all().delete()
-        SurveyJob.objects.all().delete()
-
-    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
-    def test_survey(self, mock_send_task):
-        """A Simple test of the SRA surveyor.
-        """
-        sra_surveyor = SraSurveyor(self.survey_job)
-        sra_surveyor.discover_experiment_and_samples()
-
-        samples = Sample.objects.all()
-        downloader_jobs = DownloaderJob.objects.all()
-
-        # We are expecting this to discover 1 sample.
-        self.assertEqual(samples.count(), 1)
-        # Confirm the sample's protocol_info
-        experiment = Experiment.objects.all().first()
-        self.assertEqual(samples.first().protocol_info[0]['Description'],
-                         experiment.protocol_description
-        )
-
-
-    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
-    def test_srp_survey(self, mock_send_task):
-        """A slightly harder test of the SRA surveyor.
-        """
-
-        survey_job = SurveyJob(source_type="SRA")
-        survey_job.save()
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="experiment_accession_code",
-                                           value="SRP068364")
+                                           key="end_accession",
+                                           value="DRR012348")
         key_value_pair.save()
 
         sra_surveyor = SraSurveyor(survey_job)
-        experiment, samples = sra_surveyor.discover_experiment_and_samples()
-        self.assertEqual(experiment.accession_code, "SRP068364")
-        self.assertEqual(len(samples), 4)
+        sra_surveyor.discover_batches()
 
-        survey_job = SurveyJob(source_type="SRA")
-        survey_job.save()
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="experiment_accession_code",
-                                           value="SRP111553")
-        key_value_pair.save()
-
-        sra_surveyor = SraSurveyor(survey_job)
-        experiment, samples = sra_surveyor.discover_experiment_and_samples()
-
-        self.assertEqual(experiment.accession_code, "SRP111553")
-        self.assertEqual(len(samples), 16) # 8 samples with 2 runs each
-
-        survey_job = SurveyJob(source_type="SRA")
-        survey_job.save()
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="experiment_accession_code",
-                                           value="DRP003977")
-        key_value_pair.save()
-
-        sra_surveyor = SraSurveyor(survey_job)
-        experiment, samples = sra_surveyor.discover_experiment_and_samples()
-
-        self.assertEqual(experiment.accession_code, "DRP003977")
-        self.assertEqual(len(samples), 9)
+        mock_generate_batch.assert_has_calls([
+            call("DRR012345"),
+            call("DRR012346"),
+            call("DRR012347"),
+            call("DRR012348")
+        ])
 
     @patch('data_refinery_foreman.surveyor.sra.requests.get')
     def test_metadata_is_gathered_correctly(self, mock_get):
@@ -191,6 +133,48 @@ class SraSurveyorTestCase(TestCase):
                           "methods."))
         self.assertEqual(metadata["submission_title"], "Submitted by RIKEN_CDB on 19-JUL-2013")
 
-        ncbi_url = SraSurveyor._build_ncbi_file_url(metadata["run_accession"])
-        self.assertTrue(ncbi_url in ['anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/DRR/DRR002/DRR002116/DRR002116.sra',
-            'anonftp@ftp-private.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/DRR/DRR002/DRR002116/DRR002116.sra'])
+    @patch('data_refinery_foreman.surveyor.sra.requests.get')
+    def test_batch_created(self, mock_get):
+        mock_get.side_effect = mocked_requests_get
+
+        # Use same run accession for the start and end of the range to
+        # achieve a length of 1
+        survey_job = SurveyJob(source_type="SRA")
+        survey_job.save()
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                           key="start_accession",
+                                           value=RUN_ACCESSION)
+        key_value_pair.save()
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                           key="end_accession",
+                                           value=RUN_ACCESSION)
+        key_value_pair.save()
+
+        surveyor = SraSurveyor(survey_job)
+
+        self.assertTrue(surveyor.discover_batches())
+        # With only a single run accession there should only be a
+        # single batch.
+        self.assertEqual(len(surveyor.batches), 1)
+
+        batch = surveyor.batches[0]
+        self.assertEqual(batch.survey_job.id, survey_job.id)
+        self.assertEqual(batch.source_type, "SRA")
+        self.assertEqual(batch.pipeline_required, "SALMON")
+        self.assertEqual(batch.platform_accession_code, "IlluminaHiSeq2000")
+        self.assertEqual(batch.experiment_accession_code, "DRX001563")
+        self.assertEqual(batch.experiment_title, ("Illumina HiSeq 2000 sequencing; "
+                                                  "Exp_Gg_HH16_1_embryo_mRNAseq"))
+        self.assertEqual(batch.status, "NEW")
+        self.assertEqual(batch.release_date, "2013-07-19")
+        self.assertEqual(batch.last_uploaded_date, "2017-08-11")
+        self.assertEqual(batch.organism_id, 9031)
+        self.assertEqual(batch.organism_name, "GALLUS GALLUS")
+
+        file = batch.files[0]
+        self.assertEqual(file.size_in_bytes, -1)
+        self.assertEqual(file.download_url, "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/DRR002/DRR002116/DRR002116.fastq.gz")  # noqa
+        self.assertEqual(file.raw_format, "fastq.gz")
+        self.assertEqual(file.processed_format, "tar.gz")
+        self.assertEqual(file.name, "DRR002116.fastq.gz")
+        self.assertEqual(file.internal_location, "IlluminaHiSeq2000/SALMON")

@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 # Script for migrating the database using a Docker container so no
 # virtual environment is needed on the host machine.
@@ -14,25 +14,27 @@ cd $script_directory
 # move up a level
 cd ..
 
-./prepare_image.sh -i migrations -s common
+docker build -t dr_models -f common/Dockerfile .
 
 source common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
+NOMAD_HOST_IP=$(get_docker_nomad_ip_address)
 HOST_IP=$(get_ip_address)
+NOMAD_LINK=$(get_nomad_link_option)
 
 docker run \
        --volume $script_directory/data_refinery_common:/home/user/data_refinery_common \
        --add-host=database:$DB_HOST_IP \
-       --add-host=nomad:$HOST_IP \
-       --env-file common/environments/local \
+       --add-host=nomad:$NOMAD_HOST_IP \
+       --env-file common/environments/dev \
        --interactive \
-       --link drdb:postgres\
-       ccdlstaging/dr_migrations python3.6 manage.py makemigrations data_refinery_common
+       --link drdb:postgres $NOMAD_LINK \
+       dr_models python3.6 manage.py makemigrations data_refinery_common
 
 docker run \
        --volume $script_directory/data_refinery_common:/home/user/data_refinery_common \
        --add-host=database:$DB_HOST_IP \
-       --add-host=nomad:$HOST_IP \
-       --env-file common/environments/local \
-       --link drdb:postgres \
-       ccdlstaging/dr_migrations python3.6 manage.py migrate
+       --add-host=nomad:$NOMAD_HOST_IP \
+       --env-file common/environments/dev \
+       --link drdb:postgres $NOMAD_LINK \
+       dr_models python3.6 manage.py migrate

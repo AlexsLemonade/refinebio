@@ -118,18 +118,18 @@ class OrganismModelTestCase(TestCase):
 
     @patch('data_refinery_common.models.organism.requests.get')
     def test_cached_names_are_found(self, mock_get):
-        Organism.objects.create(name="HOMO_SAPIENS",
+        Organism.objects.create(name="HOMO SAPIENS",
                                 taxonomy_id=9606,
                                 is_scientific_name=True)
 
         name = Organism.get_name_for_id(9606)
 
-        self.assertEqual(name, "HOMO_SAPIENS")
+        self.assertEqual(name, "HOMO SAPIENS")
         mock_get.assert_not_called()
 
     @patch('data_refinery_common.models.organism.requests.get')
     def test_cached_ids_are_found(self, mock_get):
-        Organism.objects.create(name="HOMO_SAPIENS",
+        Organism.objects.create(name="HOMO SAPIENS",
                                 taxonomy_id=9606,
                                 is_scientific_name=True)
 
@@ -148,7 +148,7 @@ class OrganismModelTestCase(TestCase):
         self.assertEqual(taxonomy_id, 9606)
         mock_get.assert_called_once_with(
             ESEARCH_URL,
-            {"db": "taxonomy", "field": "scin", "term": "HOMO_SAPIENS"}
+            {"db": "taxonomy", "field": "scin", "term": "HOMO SAPIENS"}
         )
 
         # The first call should have stored the organism record in the
@@ -187,7 +187,7 @@ class OrganismModelTestCase(TestCase):
 
         organism_name = Organism.get_name_for_id(9606)
 
-        self.assertEqual(organism_name, "HOMO_SAPIENS")
+        self.assertEqual(organism_name, "HOMO SAPIENS")
         mock_get.assert_called_once_with(
             EFETCH_URL,
             {"db": "taxonomy", "id": "9606"}
@@ -198,7 +198,7 @@ class OrganismModelTestCase(TestCase):
         mock_get.reset_mock()
         new_name = Organism.get_name_for_id(9606)
 
-        self.assertEqual(new_name, "HOMO_SAPIENS")
+        self.assertEqual(new_name, "HOMO SAPIENS")
         mock_get.assert_not_called()
 
     @patch('data_refinery_common.models.organism.requests.get')

@@ -6,19 +6,12 @@
 #
 certifi==2017.11.5        # via requests
 chardet==3.0.4            # via requests
-coverage==4.5.1
 django==2.0
-geoparse==1.1.0
 idna==2.6                 # via requests
-numpy==1.14.2             # via geoparse, pandas
-pandas==0.22.0            # via geoparse
-psycopg2-binary==2.7.4
-python-dateutil==2.7.2
+psycopg2==2.7.3.2
 python-nomad==0.5.0
-pytz==2017.3              # via django, pandas
-raven==6.9.0
+pytz==2017.3              # via django
 requests==2.18.4
 retrying==1.3.3
-six==1.11.0               # via python-dateutil, retrying
+six==1.11.0               # via retrying
 urllib3==1.22             # via requests
-wgetter==0.7              # via geoparse

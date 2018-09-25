@@ -1,9 +1,9 @@
 coverage
 django
-psycopg2-binary
+psycopg2
 boto3
 requests
 retrying
 daiquiri
+billiard
 python-nomad
-raven

@@ -1,6 +1,0 @@
-django
-requests
-psycopg2-binary
-retrying
-python-nomad
-coveralls

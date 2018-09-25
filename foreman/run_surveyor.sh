@@ -20,16 +20,18 @@ if [ ! -d "$volume_directory" ]; then
     chmod -R a+rwX $volume_directory
 fi
 
-./prepare_image.sh -i foreman -s foreman
+docker build -t dr_foreman -f foreman/Dockerfile .
 
 source common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
+NOMAD_HOST_IP=$(get_docker_nomad_ip_address)
+NOMAD_LINK=$(get_nomad_link_option)
 
-docker run -it \
+docker run \
        --add-host=database:$DB_HOST_IP \
-       --add-host=nomad:$HOST_IP \
-       --env-file foreman/environments/local \
+       --add-host=nomad:$NOMAD_HOST_IP \
+       --env-file foreman/environments/dev \
        --volume $volume_directory:/home/user/data_store \
-       --link drdb:postgres \
-       ccdlstaging/dr_foreman python3 manage.py "$@"
+       --link drdb:postgres $NOMAD_LINK \
+       dr_foreman "$@"
