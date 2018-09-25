@@ -249,6 +249,10 @@ chmod 600 data-refinery-key.pem
 API_IP_ADDRESS=$(terraform output -json api_server_1_ip | jq -c '.value' | tr -d '"')
 echo "Restarting API with latest image."
 
+# To check to see if the docker container needs to be stopped before
+# it can be started, grep for the name of the container. However if
+# it's not found then grep will return a non-zero exit code so in that
+# case return an empty string.
 container_running=$(ssh -o StrictHostKeyChecking=no \
                         -i data-refinery-key.pem \
                         ubuntu@$API_IP_ADDRESS  "docker ps" | grep dr_api || echo "")
