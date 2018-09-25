@@ -1,0 +1,39 @@
+---  # "Illumina SCAN" processor
+
+# Operating system distribution (such as Ubuntu 16.04, CentOS 7.2, etc)
+os_distribution:   # DO NOT forget the trailing ':'
+
+# OS-level packages (installed by OS package manager)
+os_pkg:
+  - python3
+  - python3-pip
+  - r-base
+
+# Python pip packages
+python:
+  - Django
+  - data-refinery-common
+  - numpy
+  - pandas
+
+# User-installed R packages
+R:
+  - AnnotationDbi
+  - Bioconductor
+  - limma
+  - oligo
+  - illuminaHumanv1.db
+  - illuminaHumanv2.db
+  - illuminaHumanv3.db
+  - illuminaHumanv4.db
+  - illuminaMousev1.db
+  - illuminaMousev1p1.db
+  - illuminaMousev2.db
+  - illuminaRatv1.db
+
+# Fingerprints of selected files.
+# Filenames should be specified relative to the current directory,
+# so "illumina.R" refers to:
+#   .../workers/data_refinery_workers/processors/illumina.R
+checksum:
+  - illumina.R

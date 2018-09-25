@@ -1,229 +1,18 @@
 import json
 import datetime
+import requests
+
 from unittest.mock import Mock, patch, call
 from django.test import TestCase
 from data_refinery_common.job_lookup import Downloaders
 from data_refinery_common.models import (
-    Batch,
-    File,
     DownloaderJob,
     SurveyJob,
     SurveyJobKeyValue,
-    Organism
+    Organism,
+    Sample
 )
-from data_refinery_foreman.surveyor.array_express import (
-    ArrayExpressSurveyor,
-    EXPERIMENTS_URL,
-)
-
-
-EXPERIMENTS_JSON = """
-{
-    "experiments": {
-        "api-revision": "091015",
-        "api-version": 3,
-        "experiment": [
-            {
-                "accession": "E-MTAB-3050",
-                "arraydesign": [
-                    {
-                        "accession": "A-AFFY-1",
-                        "count": 5,
-                        "id": 11048,
-                        "legacy_id": 5728564,
-                        "name": "Affymetrix GeneChip Human  U95Av2 [HG_U95Av2]"
-                    }
-                ],
-                "bioassaydatagroup": [
-                    {
-                        "arraydesignprovider": null,
-                        "bioassaydatacubes": 5,
-                        "bioassays": 5,
-                        "dataformat": "rawData",
-                        "id": null,
-                        "isderived": 0,
-                        "name": "rawData"
-                    }
-                ],
-                "description": [
-                    {
-                        "id": null,
-                        "text": "description tex"
-                    }
-                ],
-                "experimentalvariable": [
-                    {
-                        "name": "cell type",
-                        "value": [
-                            "differentiated",
-                            "expanded",
-                            "freshly isolated"
-                        ]
-                    }
-                ],
-                "experimentdesign": [
-                    "cell type comparison design",
-                    "development or differentiation design"
-                ],
-                "experimenttype": [
-                    "transcription profiling by array"
-                ],
-                "id": 511696,
-                "lastupdatedate": "2014-10-30",
-                "name": "Microarray analysis of in vitro differentiation",
-                "organism": [
-                    "Homo sapiens"
-                ],
-                "protocol": [
-                    {
-                        "accession": "P-MTAB-41859",
-                        "id": 1092859
-                    }
-                ],
-                "provider": [
-                    {
-                        "contact": "Joel Habener",
-                        "email": "jhabener@partners.org",
-                        "role": "submitter"
-                    }
-                ],
-                "releasedate": "2014-10-31",
-                "samplecharacteristic": [
-                    {
-                        "category": "age",
-                        "value": [
-                            "38 year",
-                            "54 year"
-                        ]
-                    }
-                ]
-            }
-        ],
-        "revision": "091015",
-        "total": 1,
-        "total-assays": 5,
-        "total-samples": 2,
-        "version": 3.0
-    }
-} """
-
-SAMPLES_JSON = """
-{
-    "experiment": {
-        "accession": "E-MTAB-3050",
-        "api-revision": "091015",
-        "api-version": 3,
-        "revision": "091015",
-        "sample": [
-            {
-                "assay": {
-                    "name": "1007409-C30057"
-                },
-                "characteristic": [
-                    {
-                        "category": "organism",
-                        "value": "Homo sapiens"
-                    }
-                ],
-                "extract": {
-                    "name": "donor A islets RNA"
-                },
-                "file": [
-                    {
-                        "comment": {
-                            "name": "ArrayExpress FTP file",
-                            "value": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.raw.1.zip"
-                        },
-                        "name": "C30057.CEL",
-                        "type": "data",
-                        "url": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.raw.1.zip/C30057.CEL"
-                    },
-                    {
-                        "comment": {
-                            "name": "Derived ArrayExpress FTP file",
-                            "value": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.processed.1.zip"
-                        },
-                        "name": "C30057.txt",
-                        "type": "derived data",
-                        "url": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.processed.1.zip/C30057.txt"
-                    }
-                ],
-                "labeled-extract": {
-                    "label": "biotin",
-                    "name": "donor A islets LEX"
-                },
-                "source": {
-                    "name": "donor A islets"
-                },
-                "variable": [
-                    {
-                        "name": "cell type",
-                        "value": "freshly isolated"
-                    }
-                ]
-            },
-            {
-                "assay": {
-                    "name": "1007409-C30058"
-                },
-                "characteristic": [
-                    {
-                        "category": "organism",
-                        "value": "Homo sapiens"
-                    }
-                ],
-                "extract": {
-                    "name": "donor A expanded cells RNA"
-                },
-                "file": [
-                    {
-                        "comment": {
-                            "name": "ArrayExpress FTP file",
-                            "value": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.raw.1.zip"
-                        },
-                        "name": "C30058.CEL",
-                        "type": "data",
-                        "url": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.raw.1.zip/C30058.CEL"
-                    },
-                    {
-                        "comment": {
-                            "name": "Derived ArrayExpress FTP file",
-                            "value": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.processed.1.zip"
-                        },
-                        "name": "C30058.txt",
-                        "type": "derived data",
-                        "url": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.processed.1.zip/C30058.txt"
-                    }
-                ],
-                "labeled-extract": {
-                    "label": "biotin",
-                    "name": "donor A expanded cells LEX"
-                },
-                "source": {
-                    "name": "donor A islets"
-                },
-                "variable": [
-                    {
-                        "name": "cell type",
-                        "value": "expanded"
-                    }
-                ]
-            }
-        ],
-        "version": 1.0
-    }
-}"""  # noqa
-
-
-def mocked_requests_get(url):
-    mock = Mock(ok=True)
-    if url == (EXPERIMENTS_URL + "E-MTAB-3050"):
-        mock.json.return_value = json.loads(EXPERIMENTS_JSON)
-    else:
-        mock.json.return_value = json.loads(SAMPLES_JSON)
-
-    return mock
-
+from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
 
 class SurveyTestCase(TestCase):
     def setUp(self):
@@ -238,89 +27,115 @@ class SurveyTestCase(TestCase):
 
         # Insert the organism into the database so the model doesn't call the
         # taxonomy API to populate it.
-        organism = Organism(name="HOMO SAPIENS",
+        organism = Organism(name="HOMO_SAPIENS",
                             taxonomy_id=9606,
                             is_scientific_name=True)
         organism.save()
 
     def tearDown(self):
         DownloaderJob.objects.all().delete()
-        Batch.objects.all().delete()
         SurveyJobKeyValue.objects.all().delete()
         SurveyJob.objects.all().delete()
 
-    @patch('data_refinery_foreman.surveyor.array_express.requests.get')
-    def test_experiment_object(self, mock_get):
-        """The get_experiment_metadata function extracts all experiment metadata
-        from the experiments API."""
-        mock_get.return_value = Mock(ok=True)
-        mock_get.return_value.json.return_value = json.loads(EXPERIMENTS_JSON)
-
-        ae_surveyor = ArrayExpressSurveyor(self.survey_job)
-        experiment = ae_surveyor.get_experiment_metadata("E-MTAB-3050")
-        self.assertEqual("Microarray analysis of in vitro differentiation", experiment["name"])
-        self.assertEqual("E-MTAB-3050", experiment["experiment_accession_code"])
-        self.assertEqual("A-AFFY-1", experiment["platform_accession_code"])
-        self.assertEqual("2014-10-31", experiment["release_date"])
-        self.assertEqual("2014-10-30", experiment["last_update_date"])
-
-    @patch('data_refinery_foreman.surveyor.array_express.requests.get')
-    @patch('data_refinery_foreman.surveyor.external_source.send_job')
-    def test_survey(self, mock_send_task, mock_get):
-        """The 'survey' function generates one Batch per sample.
-
-        This test also tests the handle_batches method of ExternalSourceSurveyor
-        which isn't tested on its own because it is an abstract class.
-        """
-        mock_send_task.return_value = Mock(ok=True)
-        mock_get.side_effect = mocked_requests_get
-
+    @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
+    def test_survey(self, mock_send_task):
+        """A Simple test of the ArrayExpress surveyor."""
         ae_surveyor = ArrayExpressSurveyor(self.survey_job)
         ae_surveyor.survey()
 
+        samples = Sample.objects.all()
         downloader_jobs = DownloaderJob.objects.all()
-        mock_send_task.assert_has_calls([
-            call(Downloaders.ARRAY_EXPRESS,
-                 downloader_jobs[0].id)
-        ])
-        batches = Batch.objects.all()
-        self.assertEqual(2, len(batches))
-        self.assertEqual(1, len(downloader_jobs))
 
-        batch = batches[0]
-        self.assertEqual(batch.survey_job.id, self.survey_job.id)
-        self.assertEqual(batch.source_type, "ARRAY_EXPRESS")
-        self.assertEqual(batch.pipeline_required, "AFFY_TO_PCL")
-        self.assertEqual(batch.platform_accession_code, "A-AFFY-1")
-        self.assertEqual(batch.experiment_accession_code, "E-MTAB-3050")
-        self.assertEqual(batch.experiment_title, "Microarray analysis of in vitro differentiation")
-        self.assertEqual(batch.status, "NEW")
-        self.assertEqual(batch.release_date, datetime.date(2014, 10, 31))
-        self.assertEqual(batch.last_uploaded_date, datetime.date(2014, 10, 30))
-        self.assertEqual(batch.organism_id, 9606)
-        self.assertEqual(batch.organism_name, "HOMO SAPIENS")
+        # We are expecting this to discover 5 samples.
+        self.assertEqual(samples.count(), 5)
 
-        file = batch.files[0]
-        self.assertEqual(file.size_in_bytes, -1)
-        self.assertEqual(file.download_url, "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3050/E-MTAB-3050.raw.1.zip")  # noqa
-        self.assertEqual(file.raw_format, "CEL")
-        self.assertEqual(file.processed_format, "PCL")
-        self.assertEqual(file.name, "C30057.CEL")
-        self.assertEqual(file.internal_location, "A-AFFY-1/AFFY_TO_PCL")
+        # And for one DownloaderJob to be created for all of them.
+        self.assertEqual(downloader_jobs.count(), 1)
+
+        sample = Sample.objects.first()
+        self.assertTrue(' (hgu95av2)' in sample.pretty_platform)
+        # Confirm the sample's protocol_info
+        self.assertEqual(len(sample.protocol_info), 9)
+        self.assertEqual(sample.protocol_info[0]['Accession'], "P-MTAB-41854")
+        self.assertEqual(sample.protocol_info[0]['Text'], "Aliquoting of biomaterials.")
+        self.assertEqual(sample.protocol_info[0]['Type'], "split")
+
+        survey_job2 = SurveyJob(source_type="ARRAY_EXPRESS")
+        survey_job2.save()
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job2,
+                                           key="experiment_accession_code",
+                                           value="E-GEOD-44719")
+        key_value_pair.save()
+        ae_surveyor = ArrayExpressSurveyor(survey_job2)
+        ae_surveyor.survey()
+
+        # We are expecting this to discover 77 samples.
+        self.assertEqual(samples.count(), 77+5)
+
+        # And for one DownloaderJob to be created for all of them.
+        self.assertEqual(downloader_jobs.count(), 2)
 
 
-class GroupBatchesTestCase(TestCase):
-    def test_survey(self):
-        survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
-        surveyor = ArrayExpressSurveyor(survey_job)
-        file1 = File(download_url="a")
-        file2 = File(download_url="a")
-        file3 = File(download_url="b")
-        file4 = File(download_url="a")
-        batch1 = Batch(files=[file1])
-        batch2 = Batch(files=[file2])
-        batch3 = Batch(files=[file3, file4])
+    def test_determine_accession(self):
+        """Test of the `determine_sample_accession` function
+        """
+        ae_surveyor = ArrayExpressSurveyor(self.survey_job)
 
-        surveyor.batches = [batch1, batch2, batch3]
-        groups = surveyor.group_batches()
-        self.assertEqual(groups, [[batch1, batch2], [batch3]])
+        EXPERIMENTS_URL = "https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/"
+        SAMPLES_URL = EXPERIMENTS_URL + "{}/samples"
+
+        ex_accessions = [
+                            "E-MTAB-3050",
+                            "E-MEXP-669",
+                            "E-MEXP-2215",
+                            "E-MEXP-2288",
+                            "E-MEXP-2381",
+                            "E-MTAB-6739",
+                        ]
+
+        for ex_accession in ex_accessions:
+            samples_endpoint = SAMPLES_URL.format(ex_accession)
+            r = requests.get(samples_endpoint, timeout=60)
+            samples = r.json()["experiment"]["sample"]
+
+            # An experiment can have many samples
+            for sample in samples:
+
+                # For some reason, this sample has no files associated with it.
+                if "file" not in sample or len(sample['file']) == 0:
+                    continue
+
+                # The accession code is not a simple matter to determine.
+                sample_source_name = sample["source"].get("name", "")
+                sample_assay_name = sample["assay"].get("name", "")
+
+                has_raw = False
+                for sub_file in sample['file']:
+
+                    # For ex: E-GEOD-15645
+                    if isinstance(sub_file['comment'], list):
+                        sub_file_mod = sub_file
+                        sub_file_mod['comment'] = sub_file['comment'][0]
+                    else:
+                        sub_file_mod = sub_file
+
+                    if sub_file_mod['type'] == "data" and sub_file_mod['comment'].get('value', None) != None:
+                        has_raw = True
+                    if 'raw' in sub_file_mod['comment'].get('value', ''):
+                        has_raw = True
+
+                    # Skip derived data if we have it raw.
+                    if has_raw and "derived data" in sub_file['type']:
+                        continue
+                    elif (not has_raw) and "derived data" not in sub_file['type']:
+                        # If there is a platform warning then we don't want raw data.
+                        has_raw = False
+                        continue
+                    filename = sub_file["name"]
+
+                sample_accession_code = ae_surveyor.determine_sample_accession(
+                    ex_accession,
+                    sample_source_name,
+                    sample_assay_name,
+                    filename)
+                self.assertTrue(sample_accession_code is not None)

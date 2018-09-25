@@ -1,0 +1,94 @@
+FROM ubuntu:16.04
+
+RUN apt-get update -qq
+RUN apt-get install -y software-properties-common
+RUN add-apt-repository ppa:apt-fast/stable
+RUN apt-get update -qq
+RUN apt-get -y install apt-fast
+
+COPY workers/CRAN.gpg .
+RUN \
+  apt-fast update -qq && \
+  apt-fast install -y apt-utils lsb-release && \
+  echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
+      >> /etc/apt/sources.list.d/added_repos.list && \
+  apt-key add CRAN.gpg && \
+  apt-fast update -qq && \
+  apt-fast install -y \
+  ed \
+  git \
+  mercurial \
+  libcairo-dev \
+  libedit-dev \
+  lsb-release \
+  python3 \
+  python3-pip \
+  libxml2-dev \
+  cmake \
+  r-base \
+  libssl-dev \
+  libcurl4-openssl-dev \
+  curl \
+  wget && \
+  rm -rf /var/lib/apt/lists/*
+RUN rm CRAN.gpg
+
+RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
+WORKDIR /home/user
+
+# Install Salmon
+ENV SALMON_VERSION 0.9.1
+RUN wget https://github.com/COMBINE-lab/salmon/releases/download/v${SALMON_VERSION}/Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
+RUN tar -xzf Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
+# Create soft link `/usr/local/bin/salmon` that points to the actual program
+RUN ln -sf `pwd`/Salmon-latest_linux_x86_64/bin/salmon /usr/local/bin/
+RUN rm -f Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
+# End Salmon installation.
+
+# Install tximport
+COPY workers/install_tximport.R .
+RUN Rscript install_tximport.R
+
+# Install SalmonTools
+RUN git clone https://github.com/COMBINE-lab/SalmonTools.git
+RUN cd SalmonTools && cmake . -DCMAKE_INSTALL_PREFIX=/usr/local && make install
+RUN rm -rf SalmonTools
+
+# Install sra-tools
+ENV SRA_VERSION 2.9.1
+RUN wget "http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/${SRA_VERSION}/sratoolkit.${SRA_VERSION}-ubuntu64.tar.gz" && \
+    tar zxfv sratoolkit.${SRA_VERSION}-ubuntu64.tar.gz && \
+    cp -r sratoolkit.${SRA_VERSION}-ubuntu64/bin/* /usr/bin
+
+RUN pip3 install --upgrade pip
+
+# We need JRE for QC tools
+RUN apt-get update -y && apt-get install -y default-jre --fix-missing
+
+# Install FastQC
+RUN wget -q https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.7.zip
+RUN unzip fastqc_v0.11.7.zip
+RUN chmod +x ./FastQC/fastqc
+RUN rm -f fastqc_v0.11.7.zip
+
+COPY config/ config/
+COPY .boto .boto
+
+COPY workers/data_refinery_workers/processors/requirements.txt .
+
+RUN pip3 install -r requirements.txt
+
+COPY common/dist/data-refinery-common-* common/
+
+# Get the latest version from the dist directory.
+RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
+
+ARG SYSTEM_VERSION
+
+ENV SYSTEM_VERSION $SYSTEM_VERSION
+
+USER user
+
+COPY workers/ .
+
+ENTRYPOINT []

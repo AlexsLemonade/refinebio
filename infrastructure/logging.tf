@@ -17,46 +17,86 @@ resource "aws_cloudwatch_log_group" "data_refinery_log_group" {
 # Streams
 ##
 
-# Nomad
-resource "aws_cloudwatch_log_stream" "log_stream_nomad_server" {
-  name           = "log-stream-nomad-server-${var.user}-${var.stage}"
-  log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
-}
-
-resource "aws_cloudwatch_log_stream" "log_stream_nomad_client" {
-  name           = "log-stream-nomad-client-${var.user}-${var.stage}"
-  log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
-}
-
 # Nomad / Docker
-resource "aws_cloudwatch_log_stream" "log_stream_nomad_docker_processor" {
-  name           = "log-stream-nomad-docker-processor-${var.user}-${var.stage}"
+resource "aws_cloudwatch_log_stream" "log_stream_surveyor" {
+  name           = "log-stream-surveyor-${var.user}-${var.stage}"
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
 }
 
-resource "aws_cloudwatch_log_stream" "log_stream_nomad_docker_downloader" {
-  name           = "log-stream-nomad-docker-downloader-${var.user}-${var.stage}"
+resource "aws_cloudwatch_log_stream" "log_stream_processor" {
+  name           = "log-stream-processor-${var.user}-${var.stage}"
+  log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
+}
+
+resource "aws_cloudwatch_log_stream" "log_stream_downloader" {
+  name           = "log-stream-downloader-${var.user}-${var.stage}"
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
 }
 
 # Foreman
-resource "aws_cloudwatch_log_stream" "log_stream_foreman_django" {
-  name           = "log-stream-foreman-django-${var.user}-${var.stage}"
+resource "aws_cloudwatch_log_stream" "log_stream_foreman" {
+  name           = "log-stream-foreman-${var.user}-${var.stage}"
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
 }
 
-resource "aws_cloudwatch_log_stream" "log_stream_foreman_docker" {
-  name           = "log-stream-foreman-docker-${var.user}-${var.stage}"
+# API
+resource "aws_cloudwatch_log_stream" "log_stream_api" {
+  name           = "log-stream-api-${var.user}-${var.stage}"
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
 }
 
-# Worker
-resource "aws_cloudwatch_log_stream" "log_stream_worker_django" {
-  name           = "log-stream-worker-django-${var.user}-${var.stage}"
+resource "aws_cloudwatch_log_stream" "log_stream_api_nginx_access" {
+  name           = "log-stream-api-nginx-access-${var.user}-${var.stage}"
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
 }
 
-resource "aws_cloudwatch_log_stream" "log_stream_worker_docker" {
-  name           = "log-stream-worker-docker-${var.user}-${var.stage}"
+resource "aws_cloudwatch_log_stream" "log_stream_api_nginx_error" {
+  name           = "log-stream-api-nginx-error-${var.user}-${var.stage}"
   log_group_name = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
+}
+
+##
+# Metrics and Alarms
+##
+
+# Turns out we don't need to actually _make_ the metric - we can just push to it
+# without creating it via TF and it JustWorks^tm - we just have to make sure
+# that we match to this value in our script.
+
+# We need one metric for scaling up and another for scaling down.
+# If the queue length is larger than [threshold], on average,
+# for more than [evaluation_periods] of [period] seconds, then
+# fire the alarm action to the scale up command, which adds a server.
+
+# For the down alarm, do the opposite.
+resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm_up" {
+    alarm_name = "nomad-queue-length-alarm-up-${var.user}-${var.stage}"
+    comparison_operator = "GreaterThanOrEqualToThreshold"
+    evaluation_periods = "2"
+    metric_name = "NomadQueueLength"
+    namespace = "${var.user}-${var.stage}"
+    period = "120"
+    statistic = "Average"
+    threshold = "${var.scale_up_threshold}"
+    alarm_description = "The queue is too long - we need more workers!"
+    alarm_actions = [
+        "${aws_autoscaling_policy.clients_scale_up.arn}"
+    ]
+
+}
+
+resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm_down" {
+    alarm_name = "nomad-queue-length-alarm-down-${var.user}-${var.stage}"
+    comparison_operator = "LessThanOrEqualToThreshold"
+    evaluation_periods = "2"
+    metric_name = "NomadQueueLength"
+    namespace = "${var.user}-${var.stage}"
+    period = "120"
+    statistic = "Average"
+    threshold = "${var.scale_down_threshold}"
+    alarm_description = "The queue is too short - we need less workers!"
+    alarm_actions = [
+        "${aws_autoscaling_policy.clients_scale_down.arn}"
+    ]
+
 }

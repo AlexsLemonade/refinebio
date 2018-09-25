@@ -1,6 +1,9 @@
 import requests
 from xml.etree import ElementTree
+
 from django.db import models
+from django.utils import timezone
+
 from data_refinery_common.models.base_models import TimeTrackedModel
 
 
@@ -16,11 +19,11 @@ EFETCH_URL = NCBI_ROOT_URL + "efetch.fcgi"
 TAXONOMY_DATABASE = "taxonomy"
 
 
-class UnscientificNameError(BaseException):
+class UnscientificNameError(Exception):
     pass
 
 
-class InvalidNCBITaxonomyId(BaseException):
+class InvalidNCBITaxonomyId(Exception):
     pass
 
 
@@ -77,7 +80,7 @@ def get_taxonomy_id_scientific(organism_name: str) -> int:
     return int(id_list[0].text)
 
 
-class Organism(TimeTrackedModel):
+class Organism(models.Model):
     """Provides a lookup between organism name and taxonomy ids.
 
     Should only be used via the two class methods get_name_for_id and
@@ -85,9 +88,22 @@ class Organism(TimeTrackedModel):
     with any missing values by accessing the NCBI API.
     """
 
-    name = models.CharField(max_length=256)
-    taxonomy_id = models.IntegerField()
+    def __str__ (self):
+        return str(self.name)
+
+    name = models.CharField(max_length=256, unique=True)
+    taxonomy_id = models.IntegerField(unique=True)
     is_scientific_name = models.BooleanField(default=False)
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(Organism, self).save(*args, **kwargs)
 
     @classmethod
     def get_name_for_id(cls, taxonomy_id: int) -> str:
@@ -97,7 +113,7 @@ class Organism(TimeTrackedModel):
                         .order_by("-is_scientific_name")
                         [0])
         except IndexError:
-            name = get_scientific_name(taxonomy_id).upper()
+            name = get_scientific_name(taxonomy_id).upper().replace(' ', '_')
             organism = Organism(name=name,
                                 taxonomy_id=taxonomy_id,
                                 is_scientific_name=True)
@@ -107,7 +123,7 @@ class Organism(TimeTrackedModel):
 
     @classmethod
     def get_id_for_name(cls, name: str) -> id:
-        name = name.upper()
+        name = name.upper().replace(' ', '_')
         try:
             organism = (cls.objects
                         .filter(name=name)
@@ -126,6 +142,30 @@ class Organism(TimeTrackedModel):
             organism.save()
 
         return organism.taxonomy_id
+
+    @classmethod
+    def get_object_for_name(cls, name: str) -> id:
+        name = name.upper()
+        name = name.replace(' ', '_')
+        try:
+            organism = (cls.objects
+                        .filter(name=name)
+                        [0])
+        except IndexError:
+            is_scientific_name = False
+            try:
+                taxonomy_id = get_taxonomy_id_scientific(name)
+                is_scientific_name = True
+            except UnscientificNameError:
+                taxonomy_id = get_taxonomy_id(name)
+
+            organism = Organism(name=name,
+                                taxonomy_id=taxonomy_id,
+                                is_scientific_name=is_scientific_name)
+            organism.save()
+
+        return organism
+
 
     class Meta:
         db_table = "organisms"

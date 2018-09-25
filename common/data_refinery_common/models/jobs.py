@@ -1,19 +1,88 @@
+from typing import Dict
+
 from django.db import transaction
 from django.db import models
-from data_refinery_common.models.base_models import TimeTrackedModel
-from data_refinery_common.models.batches import Batch
+from django.utils import timezone
+
+from data_refinery_common.models.models import Sample, Experiment, OriginalFile
 
 
-class WorkerJob(TimeTrackedModel):
-    """Base model with auto created_at and updated_at fields."""
+class SurveyJob(models.Model):
+    """Records information about a Surveyor Job."""
 
     class Meta:
-        abstract = True
+        db_table = "survey_jobs"
 
-    batches = models.ManyToManyField(Batch)
+    source_type = models.CharField(max_length=256)
+    success = models.NullBooleanField(null=True)
+    no_retry = models.BooleanField(default=False)
+
+    # The start time of the job
+    start_time = models.DateTimeField(null=True)
+
+    # The end time of the job
+    end_time = models.DateTimeField(null=True)
+
+    # This field allows jobs to specify why they failed.
+    failure_reason = models.TextField(null=True)
+
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(SurveyJob, self).save(*args, **kwargs)
+
+    def get_properties(self) -> Dict:
+        return {pair.key: pair.value for pair in self.surveyjobkeyvalue_set.all()}
+
+    def __str__(self):
+        return "SurveyJob " + str(self.pk) + ": " + str(self.source_type)
+
+
+class SurveyJobKeyValue(models.Model):
+    """Tracks additional fields for SurveyJobs.
+
+    Useful for fields that would be sparsely populated if they were
+    their own columns. I.e. one source may have an extra field or two
+    that are worth tracking but are specific to that source.
+    """
+
+    survey_job = models.ForeignKey(SurveyJob, on_delete=models.CASCADE)
+    key = models.CharField(max_length=256)
+    value = models.CharField(max_length=256)
+
+    class Meta:
+        db_table = "survey_job_key_values"
+
+
+class ProcessorJob(models.Model):
+    """Records information about running a processor."""
+
+    class Meta:
+        db_table = "processor_jobs"
+
+    # This field will contain an enumerated value specifying which
+    # processor pipeline was applied during the processor job.
+    pipeline_applied = models.CharField(max_length=256)
+
+    original_files = models.ManyToManyField('OriginalFile', through='ProcessorJobOriginalFileAssociation')
+    datasets = models.ManyToManyField('DataSet', through='ProcessorJobDataSetAssociation')
+    no_retry = models.BooleanField(default=False)
+
+    # Resources
+    ram_amount = models.IntegerField(default=2048)
+    volume_index = models.CharField(max_length=3, null=True)
+
+    # Tracking
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
     success = models.NullBooleanField(null=True)
+    nomad_job_id = models.CharField(max_length=256, null=True)
 
     # This field represents how many times this job has been
     # retried. It starts at 0 and each time the job has to be retried
@@ -34,44 +103,26 @@ class WorkerJob(TimeTrackedModel):
     worker_version = models.CharField(max_length=128, null=True)
 
     # This field allows jobs to specify why they failed.
-    failure_reason = models.CharField(max_length=256, null=True)
+    failure_reason = models.TextField(null=True)
 
     # If the job is retried, this is the id of the new job
     retried_job = models.ForeignKey('self', on_delete=models.PROTECT, null=True)
 
-    @classmethod
-    @transaction.atomic
-    def create_job_and_relationships(cls, *args, **kwargs):
-        """Inits and saves a job and its relationships to its batches.
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now)
 
-        Expects keyword arguments that could be passed to the init
-        method for WorkerJob, with the addition of the keyword
-        argument 'batches', which must be specified as a list of Batch
-        objects which have already been saved (so they have an id).
-        """
-        batches = kwargs.pop('batches', None)
-        this_job = cls(*args, **kwargs)
-        if batches is None:
-            raise KeyError("The 'batches' argument must be specified.")
-        else:
-            this_job.save()
-            this_job.batches.add(*batches)
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(ProcessorJob, self).save(*args, **kwargs)
 
-        return this_job
+    def __str__(self):
+        return "ProcessorJob " + str(self.pk) + ": " + str(self.pipeline_applied)
 
-
-class ProcessorJob(WorkerJob):
-    """Records information about running a processor."""
-
-    class Meta:
-        db_table = "processor_jobs"
-
-    # This field will contain an enumerated value specifying which
-    # processor pipeline was applied during the processor job.
-    pipeline_applied = models.CharField(max_length=256)
-
-
-class DownloaderJob(WorkerJob):
+class DownloaderJob(models.Model):
     """Records information about running a Downloader."""
 
     class Meta:
@@ -81,3 +132,51 @@ class DownloaderJob(WorkerJob):
     # Downloader Task. Valid values are enumerated in:
     # data_refinery_common.job_lookup.Downloaders
     downloader_task = models.CharField(max_length=256)
+    accession_code = models.CharField(max_length=256, blank=True, null=True)
+    no_retry = models.BooleanField(default=False)
+
+    original_files = models.ManyToManyField('OriginalFile', through='DownloaderJobOriginalFileAssociation')
+
+    # Tracking
+    start_time = models.DateTimeField(null=True)
+    end_time = models.DateTimeField(null=True)
+    success = models.NullBooleanField(null=True)
+    nomad_job_id = models.CharField(max_length=256, null=True)
+
+    # This field represents how many times this job has been
+    # retried. It starts at 0 and each time the job has to be retried
+    # it will be incremented.
+    num_retries = models.IntegerField(default=0)
+
+    # This field indicates whether or not this job has been retried
+    # already or not.
+    retried = models.BooleanField(default=False)
+
+    # This point of this field is to identify which worker ran the
+    # job. A few fields may actually be required or something other
+    # than just an id.
+    worker_id = models.CharField(max_length=256, null=True)
+
+    # This field corresponds to the version number of the
+    # data_refinery_workers project that was used to run the job.
+    worker_version = models.CharField(max_length=128, null=True)
+
+    # This field allows jobs to specify why they failed.
+    failure_reason = models.TextField(null=True)
+
+    # If the job is retried, this is the id of the new job
+    retried_job = models.ForeignKey('self', on_delete=models.PROTECT, null=True)
+
+    created_at = models.DateTimeField(editable=False, default=timezone.now)
+    last_modified = models.DateTimeField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        """ On save, update timestamps """
+        current_time = timezone.now()
+        if not self.id:
+            self.created_at = current_time
+        self.last_modified = current_time
+        return super(DownloaderJob, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return "DownloaderJob " + str(self.pk) + ": " + str(self.downloader_task)
