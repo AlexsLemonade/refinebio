@@ -166,11 +166,6 @@ class Sample(models.Model):
             return None
 
     @property
-    def pipelines(self):
-        """ Returns a list of related pipelines """
-        return [p for p in self.results.values_list('pipeline', flat=True).distinct()]
-
-    @property
     def pretty_platform(self):
         """ Turns
 
@@ -411,7 +406,11 @@ class ComputationalResult(models.Model):
         base_manager_name = 'public_objects'
 
     def __str__(self):
-        return "ComputationalResult " + str(self.pk) + ": " + str(self.pipeline)
+        processor_name_str = ""
+        if self.processor:
+            processor_name_str = ": " + str(self.processor.name)
+
+        return "ComputationalResult " + str(self.pk) + processor_name_str
 
     # Managers
     objects = models.Manager()
@@ -424,9 +423,6 @@ class ComputationalResult(models.Model):
     organism_index = models.ForeignKey('OrganismIndex', blank=True, null=True, on_delete=models.SET_NULL)
 
     is_ccdl = models.BooleanField(default=True)
-    # TODO: "pipeline" field is now redundant due to "processor". Should be removed later.
-    # Human-readable nickname for this computation
-    pipeline = models.CharField(max_length=255)
 
     # Stats
     time_start = models.DateTimeField(blank=True, null=True)
