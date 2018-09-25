@@ -1,26 +1,23 @@
 import abc
 import os
-from typing import List, Dict
-from retrying import retry
+
 from django.db import transaction
+from retrying import retry
+from typing import List, Dict
+
+from data_refinery_common import message_queue, job_lookup, logging
 from data_refinery_common.models import (
-    Batch,
-    BatchKeyValue,
-    BatchStatuses,
-    File,
     DownloaderJob,
-    SurveyJob
+    DownloaderJobOriginalFileAssociation,
+    Experiment,
+    ExperimentSampleAssociation,
+    OriginalFile,
+    Sample,
+    SurveyJob,
 )
-from data_refinery_common.message_queue import send_job
-from data_refinery_common.job_lookup import Downloaders
-from data_refinery_common.logging import get_and_configure_logger
 
 
-logger = get_and_configure_logger(__name__)
-
-
-class InvalidProcessedFormatError(BaseException):
-    pass
+logger = logging.get_and_configure_logger(__name__)
 
 
 class ExternalSourceSurveyor:
@@ -28,160 +25,172 @@ class ExternalSourceSurveyor:
 
     def __init__(self, survey_job: SurveyJob):
         self.survey_job = survey_job
-        self.batches = []
 
     @abc.abstractproperty
     def source_type(self):
         return
 
-    def group_batches(self) -> List[List[Batch]]:
-        """Groups batches together which should be downloaded together.
-
-        The default implementation just creates one group per batch.
-        """
-        return [[batch] for batch in self.batches]
-
     @abc.abstractmethod
-    def determine_pipeline(self,
-                           batch: Batch,
-                           key_values: Dict = {}):
-        """Determines the appropriate pipeline for the batch.
-
-        Returns a string that represents a processor pipeline.
-        Must return a member of PipelineEnums.
-        """
+    def discover_experiments_and_samples(self):
+        """Abstract method to survey a source."""
         return
 
-    def downloader_task(self):
-        """Returns the Downloaders Enum for the source.
+    def queue_downloader_jobs(self, experiment: Experiment, samples: List[Sample]):
+        """This enqueues DownloaderJobs on a per-file basis.
 
-        Returns the Downloaders Enum which should be queued to
-        download Batches discovered by this surveyor.
+        There is a complementary function below for enqueueing multi-file
+        DownloaderJobs.
         """
-        return Downloaders[self.source_type()]
+        files_to_download = []
+        for sample in samples:
+            files_for_sample = OriginalFile.objects.filter(sample=sample, is_downloaded=False)
+            for og_file in files_for_sample:
+                files_to_download.append(og_file)
 
-    @retry(stop_max_attempt_number=3)
-    @transaction.atomic
-    def add_batch(self,
-                  platform_accession_code: str,
-                  experiment_accession_code: str,
-                  organism_id: int,
-                  organism_name: str,
-                  experiment_title: str,
-                  release_date,
-                  last_uploaded_date,
-                  files: List[File],
-                  key_values: Dict = {}):
-        # Prevent creating duplicate Batches.
-        for file in files:
-            if File.objects.filter(name=file.name).count() != 0:
-                logger.info(("Skipping sample with name %s because a File already exists with "
-                             "that name."),
-                            file.name)
-                return
+        download_urls_with_jobs = {}
+        for original_file in files_to_download:
 
-        batch = Batch(survey_job=self.survey_job,
-                      source_type=self.source_type(),
-                      status=BatchStatuses.NEW.value,
-                      platform_accession_code=platform_accession_code,
-                      experiment_accession_code=experiment_accession_code,
-                      organism_id=organism_id,
-                      organism_name=organism_name,
-                      experiment_title=experiment_title,
-                      release_date=release_date,
-                      last_uploaded_date=last_uploaded_date)
-        batch.files = files
-        batch.pipeline_required = self.determine_pipeline(batch, key_values).value
-        batch.save()
+            # We don't need to create multiple downloaders for the same file.
+            # However, we do want to associate original_files with the
+            # DownloaderJobs that will download them.
+            if original_file.source_url in download_urls_with_jobs.keys():
+                DownloaderJobOriginalFileAssociation.objects.get_or_create(
+                    downloader_job = download_urls_with_jobs[original_file.source_url],
+                    original_file = original_file
+                )
+                continue
 
-        for file in files:
-            file.internal_location = os.path.join(batch.platform_accession_code,
-                                                  batch.pipeline_required)
-            file.batch = batch
-            file.save()
+            # There is already a downloader job associated with this file.
+            old_assocs = DownloaderJobOriginalFileAssociation.objects.filter(
+                original_file__source_url=original_file.source_url)
+            if len(old_assocs) > 0:
+                logger.debug("We found an existing DownloaderJob for this file/url.",
+                             original_file_id=original_file.id)
+                continue
 
-        for key, value in key_values.items():
-            BatchKeyValue(batch=batch,
-                          key=key,
-                          value=value).save()
+            sample_object = original_file.samples.first()
+            downloader_task = job_lookup.determine_downloader_task(sample_object)
 
-        self.batches.append(batch)
+            if downloader_task == job_lookup.Downloaders.NONE:
+                logger.info("No valid downloader task found for sample.",
+                            sample=sample_object.id,
+                            original_file=original_file.id)
+            else:
+                downloader_job = DownloaderJob()
+                downloader_job.downloader_task = downloader_task.value
+                downloader_job.accession_code = experiment.accession_code
+                downloader_job.save()
 
-    @abc.abstractmethod
-    def discover_batches(self):
-        """Abstract method to survey a source.
+                DownloaderJobOriginalFileAssociation.objects.get_or_create(
+                    downloader_job = downloader_job,
+                    original_file = original_file
+                )
 
-        Implementations of this method should do the following:
-        1. Query the external source to discover batches that should be
-           downloaded.
-        2. Create a Batch object for each discovered batch and optionally
-           a list of BatchKeyValues.
-        3. Call self.handle_batch for each Batch object that is created.
+                download_urls_with_jobs[original_file.source_url] = downloader_job
 
-        Each Batch object should have the following fields populated:
-            size_in_bytes
-            download_url
-            raw_format -- it is possible this will not yet be known
-            accession_code
-            organism
+                try:
+                    logger.debug("Queuing downloader job for URL: " + original_file.source_url,
+                                 survey_job=self.survey_job.id,
+                                 downloader_job=downloader_job.id)
+                    message_queue.send_job(downloader_task, downloader_job)
+                except Exception as e:
+                    # If the task doesn't get sent we don't want the
+                    # downloader_job to be left floating
+                    logger.exception("Failed to enqueue downloader job for URL: "
+                                     + original_file.source_url,
+                                     survey_job=self.survey_job.id,
+                                     downloader_job=downloader_job.id)
+                    downloader_job.success = False
+                    downloader_job.failure_reason = str(e)
+                    downloader_job.save()
 
-        The following fields will be set by handle_batch:
-            survey_job
-            source_type
-            pipeline_required
-            status
-
-        The processed_format should be set if it is already known what it
-        will be. If it is not set then the determine_pipeline method must
-        return a DiscoveryPipeline (a pipeline that determines what the
-        raw_format of the data is, what the processed_format should be, and
-        which pipeline to use to transform it).
-
-        Return:
-        This method should return True if the job completed successfully with
-        no issues. Otherwise it should log any issues and return False.
+    def queue_downloader_job_for_original_files(self,
+                                                original_files: List[OriginalFile],
+                                                experiment_accession_code: str=None,
+                                                is_transcriptome: bool=False
+                                                ):
+        """Creates a single DownloaderJob with multiple files to download.
         """
-        return
+        # Transcriptome is a special case because there's no sample_object.
+        if is_transcriptome:
+            downloader_task = job_lookup.Downloaders.TRANSCRIPTOME_INDEX
+        else:
+            sample_object = original_files[0].samples.first()
+            downloader_task = job_lookup.determine_downloader_task(sample_object)
 
-    @retry(stop_max_attempt_number=3)
-    def queue_downloader_jobs(self, batches: List[Batch]):
-        if len(batches) > 0:
-            downloader_task = self.downloader_task()
+        if downloader_task == job_lookup.Downloaders.NONE:
+            logger.info("No valid downloader task found for sample.",
+                        sample=sample_object.id,
+                        original_file=original_files[0].id)
+        else:
+            downloader_job = DownloaderJob()
+            downloader_job.downloader_task = downloader_task.value
+            downloader_job.accession_code = experiment_accession_code
+            downloader_job.save()
 
-            with transaction.atomic():
-                downloader_job = DownloaderJob.create_job_and_relationships(
-                    batches=batches, downloader_task=downloader_task.value)
+            downloaded_urls = []
+            for original_file in original_files:
+                DownloaderJobOriginalFileAssociation.objects.get_or_create(
+                    downloader_job = downloader_job,
+                    original_file = original_file
+                )
 
-            logger.info("Queuing downloader job.",
-                        survey_job=self.survey_job.id,
-                        downloader_job=downloader_job.id)
+                downloaded_urls.append(original_file.source_url)
+
             try:
-                send_job(downloader_task, downloader_job.id)
-            except:
+                logger.debug("Queuing downloader job.",
+                             survey_job=self.survey_job.id,
+                             downloader_job=downloader_job.id,
+                             downloaded_urls=downloaded_urls)
+                message_queue.send_job(downloader_task, downloader_job)
+            except Exception as e:
                 # If the task doesn't get sent we don't want the
                 # downloader_job to be left floating
-                downloader_job.delete()
-                raise
-        else:
-            logger.info("Survey job found no new Batches.",
-                        survey_job=self.survey_job.id)
+                logger.exception("Failed to enqueue downloader job.",
+                                 survey_job=self.survey_job.id,
+                                 downloader_job=downloader_job.id,
+                                 error=str(e)
+                                )
+                downloader_job.success = False
+                downloader_job.failure_reason = str(e)
+                downloader_job.save()
 
-    def survey(self) -> bool:
+    def survey(self, source_type=None) -> bool:
+        """Retrieves metadata from external source to queue jobs.
+
+        Queries the external source's API to discover an experiment
+        and its samples, creates database records for them, and queues
+        nomad jobs for them.
+        Returns True if successful, False otherwise.
+        """
         try:
-            self.discover_batches()
+            experiment, samples = self.discover_experiment_and_samples()
         except Exception:
-            logger.exception(("Exception caught while discovering batches. "
+            logger.exception(("Exception caught while discovering samples. "
                               "Terminating survey job."),
                              survey_job=self.survey_job.id)
             return False
 
-        for group in self.group_batches():
-            try:
-                self.queue_downloader_jobs(group)
-            except Exception:
-                logger.exception(("Failed to queue downloader jobs. "
-                                  "Terminating survey job."),
-                                 survey_job=self.survey_job.id)
-                return False
+        if not experiment:
+            logger.info("No experiment found.",
+                        survey_job=self.survey_job.id)
+            return False
 
+        try:
+            # SRA can have samples with multiple related files,
+            # so make sure we download those together.
+            if source_type == "SRA":
+                for sample in samples:
+                    sample_files = sample.original_files.all()
+                    self.queue_downloader_job_for_original_files(sample_files,
+                                                                 experiment_accession_code=experiment.accession_code)
+            else:
+                self.queue_downloader_jobs(experiment, samples)
+        except Exception:
+            logger.exception(("Failed to queue downloader jobs. "
+                              "Terminating survey job."),
+                             survey_job=self.survey_job.id)
+            return False
+
+        logger.debug("Survey job completed successfully.", survey_job=self.survey_job.id)
         return True

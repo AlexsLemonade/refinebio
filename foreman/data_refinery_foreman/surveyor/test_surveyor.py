@@ -12,7 +12,6 @@ class RunJobTestCase(TestCase):
         job.save()
         surveyor.run_job(job)
 
-        self.assertIsInstance(job.replication_ended_at, datetime.datetime)
         self.assertIsInstance(job.start_time, datetime.datetime)
         self.assertIsInstance(job.end_time, datetime.datetime)
         self.assertFalse(job.success)
@@ -26,8 +25,7 @@ class RunJobTestCase(TestCase):
         job.save()
         surveyor.run_job(job)
 
-        survey_method.assert_called()
-        self.assertIsInstance(job.replication_ended_at, datetime.datetime)
+        self.assertEqual(len(survey_method.mock_calls), 1)
         self.assertIsInstance(job.start_time, datetime.datetime)
         self.assertIsInstance(job.end_time, datetime.datetime)
         self.assertTrue(job.success)

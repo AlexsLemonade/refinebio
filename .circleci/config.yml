@@ -1,35 +1,248 @@
 version: 2
 jobs:
-  build:
-    working_directory: /home/circleci/data_refinery
-    machine: true
+  # This runs foreman, end-to-end, and illumina tests.
+  # These are grouped together because in total they take less time than our other tests individually.
+  main_tests:
+    working_directory: ~/refinebio
+    machine:
+      docker_layer_caching: true
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
     steps:
       - checkout
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
+      # Let Postgres start up.
       - run: sleep 30
+      # Finish setting up Postgres now that it's running.
       - run: ./common/install_db_docker.sh
-      - run: sleep 30
 
-      # Setup Nomad in a Container
-      #- run: ./run_nomad.sh
-      - run: ./run_nomad_docker.sh
-      - run: sleep 30
+      # Install our application. Provides the data_refinery_common package for the other images.
+      - run: chmod -R a+wr common
+      - run: ./update_models.sh
 
-      # Install our application
-      - run: cd common && python setup.py sdist
+        # Install Nomad
+      - run: sudo ./install_nomad.sh
 
-      # Run Common Tests.
-      - run: ./common/make_migrations.sh
-      - run: ./common/run_tests.sh
+        # Start Nomad, build images, and register jobs.
+      - run:
+          command: sudo -E ./run_nomad.sh -e test
+
+      - run: ./prepare_image.sh -i no_op -s workers -d localhost:5000
+      - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
+      - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
+
+      # Run Downloader Tests
+      # Running these in the same job as the common tests is good
+      # because their dockerfiles are very similar so a lot of the
+      # build time is saved by only building those layers once.
+      - run:
+          command: .circleci/filter_tests.sh -t downloaders
+          no_output_timeout: 36000
 
       # Run Foreman Tests
+      - run: mkdir -p test_volume && chmod -R a+rw test_volume
       - run: ./foreman/run_tests.sh
 
-      # Run Worker Tests
-      - run: chmod -R a+rw workers/test_volume
+     # Run NO_OP tests
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run: .circleci/filter_tests.sh -t no_op
+
+      # Run Smasher tests.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
-            command:
-              .circleci/filter_tests.sh
-            no_output_timeout: 36000
+          command: .circleci/filter_tests.sh -t smasher
+          # Smashing can apparently take a long time on CI
+          no_output_timeout: 36000
+
+      # Run QN tests.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run:
+          command: .circleci/filter_tests.sh -t qn
+          no_output_timeout: 36000
+
+  # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
+  affymetrix_common_agilent_tests:
+    working_directory: ~/refinebio
+    machine:
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
+    steps:
+      - checkout
+
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      # Let Postgres start up.
+      - run: sleep 30
+      # Finish setting up Postgres now that it's running.
+      - run: ./common/install_db_docker.sh
+
+      # Install our application. Provides the data_refinery_common package for the other images.
+      - run: chmod -R a+wr common
+      - run: ./update_models.sh
+
+      # Run Common Tests.
+      - run: ./common/run_tests.sh
+
+      - run:
+          command: .circleci/filter_tests.sh -t affymetrix
+          # This takes a while because the affymetrix image is huge
+          no_output_timeout: 36000
+
+      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
+      # from making sure all the files in workers/test_volume have read/write permissions.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+
+      # This doesn't take as long because the image has already been pulled.
+      - run: .circleci/filter_tests.sh -t agilent
+
+  # This tests workers tests tagged as 'salmon'
+  salmon_and_api_tests:
+    working_directory: ~/refinebio
+    machine:
+      docker_layer_caching: true
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
+    steps:
+      - checkout
+
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      # Let Postgres start up.
+      - run: sleep 30
+      # Finish setting up Postgres now that it's running.
+      - run: ./common/install_db_docker.sh
+
+      # Install our application. Provides the data_refinery_common package for the other images.
+      - run: chmod -R a+wr common
+      - run: ./update_models.sh
+
+      # Run API Tests.
+      - run: ./api/run_tests.sh
+
+      - run:
+          command: .circleci/filter_tests.sh -t salmon
+          no_output_timeout: 1h
+
+  # This tests workers tests tagged as 'transcriptome' and 'downloaders'
+  # These are grouped together because together they take less time than affy or salmon.
+  transcriptome_and_illumina_tests:
+    working_directory: ~/refinebio
+    machine:
+      docker_layer_caching: true
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
+    steps:
+      - checkout
+
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      # Let Postgres start up.
+      - run: sleep 30
+      # Finish setting up Postgres now that it's running.
+      - run: ./common/install_db_docker.sh
+
+      # Install our application. Provides the data_refinery_common package for the other images.
+      - run: chmod -R a+wr common
+      - run: ./update_models.sh
+
+      - run: ./prepare_image.sh -i transcriptome -s workers
+      - run: .circleci/filter_tests.sh -t transcriptome
+
+      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
+      # from making sure all the files in workers/test_volume have read/write permissions.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+
+      # Run Illumina tests.
+      - run: .circleci/filter_tests.sh -t illumina
+
+
+  deploy:
+    machine:
+      pre:
+        - sudo rm -rf /usr/local/android-sdk-linux
+        - sudo rm -rf /usr/local/go
+        - sudo rm -rf /usr/local/android-ndk
+        - sudo rm -rf /home/ubuntu/nvm
+        - sudo rm -rf /home/ubuntu/.android
+        - sudo rm -rf /home/ubuntu/.phpenv
+        - sudo rm -rf /home/ubuntu/.rvm
+    working_directory: ~/refinebio
+    steps:
+      - checkout
+      - run: bash .circleci/git_decrypt.sh
+      - run: bash .circleci/update_docker_img.sh
+      - run: bash .circleci/run_terraform.sh
+      - run: bash .circleci/slackpost.sh robots deploybot
+
+workflows:
+  version: 2
+  test-and-deploy:
+    jobs:
+      # test jobs will be triggered by:
+      # - any branch commit, or:
+      # - tag commits whose names start with letter "v".
+      - main_tests:
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+      - affymetrix_common_agilent_tests:
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+      - salmon_and_api_tests:
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+      - transcriptome_and_illumina_tests:
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+
+      # "deploy" job will be triggered ONLY by tag commits whose name
+      # start with letter "v".
+      - deploy:
+          requires:
+            - main_tests
+            - affymetrix_common_agilent_tests
+            - salmon_and_api_tests
+            - transcriptome_and_illumina_tests
+          filters:
+            # No branch commit will ever trigger this job.
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v.*/

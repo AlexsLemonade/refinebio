@@ -13,14 +13,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 import os
 from django.core.exceptions import ImproperlyConfigured
 
-
-def get_env_variable(var_name):
-    try:
-        return os.environ[var_name]
-    except KeyError:
-        error_msg = "Set the %s environment variable" % var_name
-        raise ImproperlyConfigured(error_msg)
-
+from .utils import get_env_variable
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -46,8 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.postgres',
     'django.contrib.staticfiles',
-    'data_refinery_common',
+    'data_refinery_common'
 ]
 
 MIDDLEWARE = [
@@ -93,7 +87,6 @@ DATABASES = {
         'PASSWORD': get_env_variable('DATABASE_PASSWORD'),
         'HOST': get_env_variable('DATABASE_HOST'),
         'PORT': get_env_variable('DATABASE_PORT'),
-
         'OPTIONS': {
             'connect_timeout': get_env_variable('DATABASE_TIMEOUT')
         }
@@ -142,3 +135,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+
+RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD') == "True"

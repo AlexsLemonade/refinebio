@@ -8,12 +8,20 @@ script_directory=`perl -e 'use File::Basename;
 cd $script_directory
 
 # CircleCI Docker won't make this by default for some reason
-if [ ! -d /tmp/volumes_postgres ]; then
-  mkdir /tmp/volumes_postgres
+VOLUMES=$script_directory/volumes_postgres
+if [ ! -d $VOLUMES ]; then
+  mkdir $VOLUMES
 fi
-VOLUMES=/tmp/volumes_postgres
 
-# via https://hub.docker.com/_/postgres/
-# 9.6.6 is the current (as of Jan 23 2018) RDS most recent version.
-# Password can be exposed to git/CI because this is only for dev/testing purposes, not real data.
-docker run --name drdb -v "$VOLUMES":/var/lib/postgresql/data -e POSTGRES_PASSWORD=mysecretpassword -d postgres:9.6.6
+# Check if a docker database named "drdb" exists, and if so just run it
+if [[ $(docker ps -a --filter name=drdb -q) ]]; then
+  docker start drdb > /dev/null
+  echo "Started database."
+# Otherwise, install it from docker hub
+else
+  # via https://hub.docker.com/_/postgres/
+  # 9.6.6 is the current (as of Jan 23 2018) RDS most recent version.
+  # Password can be exposed to git/CI because this is only for dev/testing purposes, not real data.
+  echo "Installing database..."
+  docker run -p 5432:5432 --name drdb -v "$VOLUMES":/var/lib/postgresql/data -e POSTGRES_PASSWORD=mysecretpassword -d postgres:9.6.6
+fi

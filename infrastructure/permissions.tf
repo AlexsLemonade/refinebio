@@ -1,13 +1,8 @@
 # The configuration contained in this file specifies AWS IAM roles and
 # permissions.
 
-resource "aws_iam_instance_profile" "ecs_instance_profile" {
-  name  = "data-refinery-ecs-instance-profile-${var.user}-${var.stage}"
-  role = "${aws_iam_role.ecs_instance.name}"
-}
-
-resource "aws_iam_role" "ecs_instance" {
-  name = "data-refinery-ecs-instance-${var.user}-${var.stage}"
+resource "aws_iam_role" "data_refinery_instance" {
+  name = "data-refinery-instance-${var.user}-${var.stage}"
 
   # Policy text found at:
   # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html
@@ -28,12 +23,9 @@ resource "aws_iam_role" "ecs_instance" {
 EOF
 }
 
-resource "aws_iam_role_policy_attachment" "ecs" {
-  role = "${aws_iam_role.ecs_instance.name}"
-
-  # The following can be found here:
-  # https://console.aws.amazon.com/iam/home?region=us-east-1#/policies/arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+resource "aws_iam_instance_profile" "data_refinery_instance_profile" {
+  name  = "data-refinery-instance-profile-${var.user}-${var.stage}"
+  role = "${aws_iam_role.data_refinery_instance.name}"
 }
 
 resource "aws_iam_policy" "s3_access_policy" {
@@ -76,8 +68,34 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "s3" {
-  role = "${aws_iam_role.ecs_instance.name}"
+  role = "${aws_iam_role.data_refinery_instance.name}"
   policy_arn = "${aws_iam_policy.s3_access_policy.arn}"
+}
+
+resource "aws_iam_policy" "ec2_access_policy" {
+  name = "data-refinery-ec2-access-policy-${var.user}-${var.stage}"
+  description = "Allows EC2 Permissions."
+
+  policy = <<EOF
+{
+   "Version":"2012-10-17",
+   "Statement":[
+      {
+         "Effect":"Allow",
+         "Action": [
+            "ec2:DescribeVolumes",
+            "ec2:AttachVolume"
+          ],
+         "Resource": "*"
+      }
+   ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "ec2" {
+  role = "${aws_iam_role.data_refinery_instance.name}"
+  policy_arn = "${aws_iam_policy.ec2_access_policy.arn}"
 }
 
 resource "aws_iam_policy" "cloudwatch_policy" {
@@ -102,6 +120,18 @@ resource "aws_iam_policy" "cloudwatch_policy" {
             "Resource": [
                 "arn:aws:logs:*:*:*"
             ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:ListMetrics",
+                "cloudwatch:PutMetricAlarm",
+                "cloudwatch:PutMetricData",
+                "cloudwatch:SetAlarmState"
+            ],
+            "Resource":
+                "*"
         }
     ]
 }
@@ -109,6 +139,6 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "cloudwatch" {
-  role = "${aws_iam_role.ecs_instance.name}"
+  role = "${aws_iam_role.data_refinery_instance.name}"
   policy_arn = "${aws_iam_policy.cloudwatch_policy.arn}"
 }

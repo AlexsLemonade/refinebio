@@ -1,0 +1,228 @@
+# Turn warnings into errors because biocLite throws warnings instead
+# of error if it fails to install something.
+options(warn=2)
+options(repos=structure(c(CRAN="https://cloud.r-project.org")))
+options(Ncpus=parallel::detectCores())
+
+# Install dev packages
+install.packages("devtools")
+
+# Use devtools::install_version() to install packages in cran.
+devtools::install_version('ff', version='2.2-13')
+devtools::install_version('XML', version='3.98-1.10')
+devtools::install_version('RCurl', version='1.95-4.10')
+devtools::install_version('RSQLite', version='2.0')
+devtools::install_version('tibble', version='1.4.2')
+devtools::install_version('xtable', version='1.8-2')
+devtools::install_version('pkgconfig', version='2.0.1')
+
+# Bioconductor packages, installed by devtools::install_url()
+
+# devtools::install_url() requires biocLite.R
+source('https://bioconductor.org/biocLite.R')
+
+# Helper function that installs a list of packages based on input URL
+install_with_url <- function(main_url, packages) {
+  lapply(packages,
+         function(pkg) devtools::install_url(paste0(main_url, pkg)))
+}
+
+bioc_url <- 'https://bioconductor.org/packages/3.6/bioc/src/contrib/'
+bioc_pkgs <- c(
+  'oligo_1.42.0.tar.gz',
+  'Biobase_2.38.0.tar.gz',
+  'SCAN.UPC_2.20.0.tar.gz',
+  'affy_1.56.0.tar.gz',
+  'affyio_1.48.0.tar.gz',
+  'AnnotationDbi_1.40.0.tar.gz',
+  'zlibbioc_1.24.0.tar.gz',
+  'preprocessCore_1.40.0.tar.gz',
+  'genefilter_1.60.0.tar.gz',
+  'sva_3.26.0.tar.gz',
+  'limma_3.34.9.tar.gz'
+)
+install_with_url(bioc_url, bioc_pkgs)
+
+# Invoke another R script to install BrainArray ensg packages
+source("install_ensg_pkgs.R")
+
+# Install Bioconductor platform design (pd) packages
+experiment_url <- 'https://bioconductor.org/packages/release/data/experiment/src/contrib/'
+pd_experiment_pkgs <- c(
+  'pd.atdschip.tiling_0.16.0.tar.gz'
+)
+install_with_url(experiment_url, pd_experiment_pkgs)
+
+annotation_url <- 'https://bioconductor.org/packages/3.6/data/annotation/src/contrib/'
+pd_annotation_pkgs <- c(
+  'pd.081229.hg18.promoter.medip.hx1_0.99.4.tar.gz',
+  'pd.2006.07.18.hg18.refseq.promoter_1.8.1.tar.gz',
+  'pd.2006.07.18.mm8.refseq.promoter_0.99.3.tar.gz',
+  'pd.2006.10.31.rn34.refseq.promoter_0.99.3.tar.gz',
+  'pd.ag_3.12.0.tar.gz',
+  'pd.aragene.1.0.st_3.12.0.tar.gz',
+  'pd.aragene.1.1.st_3.12.0.tar.gz',
+  'pd.ath1.121501_3.12.0.tar.gz',
+  'pd.barley1_3.12.0.tar.gz',
+  'pd.bovgene.1.0.st_3.12.0.tar.gz',
+  'pd.bovgene.1.1.st_3.12.0.tar.gz',
+  'pd.bovine_3.12.0.tar.gz',
+  'pd.bsubtilis_3.12.0.tar.gz',
+  'pd.cangene.1.0.st_3.12.0.tar.gz',
+  'pd.cangene.1.1.st_3.12.0.tar.gz',
+  'pd.canine_3.12.0.tar.gz',
+  'pd.canine.2_3.12.0.tar.gz',
+  'pd.celegans_3.12.0.tar.gz',
+  'pd.charm.hg18.example_0.99.4.tar.gz',
+  'pd.chicken_3.12.0.tar.gz',
+  'pd.chigene.1.0.st_3.12.0.tar.gz',
+  'pd.chigene.1.1.st_3.12.0.tar.gz',
+  'pd.chogene.2.0.st_3.12.0.tar.gz',
+  'pd.chogene.2.1.st_3.12.0.tar.gz',
+  'pd.citrus_3.12.0.tar.gz',
+  'pd.clariom.d.human_3.14.1.tar.gz',
+  'pd.clariom.s.human_3.14.1.tar.gz',
+  'pd.clariom.s.human.ht_3.14.1.tar.gz',
+  'pd.clariom.s.mouse_3.14.1.tar.gz',
+  'pd.clariom.s.mouse.ht_3.14.1.tar.gz',
+  'pd.clariom.s.rat_3.14.1.tar.gz',
+  'pd.clariom.s.rat.ht_3.14.1.tar.gz',
+  'pd.cotton_3.12.0.tar.gz',
+  'pd.cyngene.1.0.st_3.12.0.tar.gz',
+  'pd.cyngene.1.1.st_3.12.0.tar.gz',
+  'pd.cyrgene.1.0.st_3.12.0.tar.gz',
+  'pd.cyrgene.1.1.st_3.12.0.tar.gz',
+  'pd.cytogenetics.array_3.12.0.tar.gz',
+  'pd.drogene.1.0.st_3.12.0.tar.gz',
+  'pd.drogene.1.1.st_3.12.0.tar.gz',
+  'pd.drosgenome1_3.12.0.tar.gz',
+  'pd.drosophila.2_3.12.0.tar.gz',
+  'pd.e.coli.2_3.12.0.tar.gz',
+  'pd.ecoli_3.12.0.tar.gz',
+  'pd.ecoli.asv2_3.12.0.tar.gz',
+  'pd.elegene.1.0.st_3.12.0.tar.gz',
+  'pd.elegene.1.1.st_3.12.0.tar.gz',
+  'pd.equgene.1.0.st_3.12.0.tar.gz',
+  'pd.equgene.1.1.st_3.12.0.tar.gz',
+  'pd.feinberg.hg18.me.hx1_0.99.3.tar.gz',
+  'pd.feinberg.mm8.me.hx1_0.99.3.tar.gz',
+  'pd.felgene.1.0.st_3.12.0.tar.gz',
+  'pd.felgene.1.1.st_3.12.0.tar.gz',
+  'pd.fingene.1.0.st_3.12.0.tar.gz',
+  'pd.fingene.1.1.st_3.12.0.tar.gz',
+  'pd.genomewidesnp.5_3.14.1.tar.gz',
+  'pd.genomewidesnp.6_3.14.1.tar.gz',
+  'pd.guigene.1.0.st_3.12.0.tar.gz',
+  'pd.guigene.1.1.st_3.12.0.tar.gz',
+  'pd.hc.g110_3.12.0.tar.gz',
+  'pd.hg.focus_3.12.0.tar.gz',
+  'pd.hg.u133.plus.2_3.12.0.tar.gz',
+  'pd.hg.u133a_3.12.0.tar.gz',
+  'pd.hg.u133a.2_3.12.0.tar.gz',
+  'pd.hg.u133a.tag_3.12.0.tar.gz',
+  'pd.hg.u133b_3.12.0.tar.gz',
+  'pd.hg.u219_3.12.0.tar.gz',
+  'pd.hg.u95a_3.12.0.tar.gz',
+  'pd.hg.u95av2_3.12.0.tar.gz',
+  'pd.hg.u95b_3.12.0.tar.gz',
+  'pd.hg.u95c_3.12.0.tar.gz',
+  'pd.hg.u95d_3.12.0.tar.gz',
+  'pd.hg.u95e_3.12.0.tar.gz',
+  'pd.hg18.60mer.expr_3.12.0.tar.gz',
+  'pd.ht.hg.u133.plus.pm_3.12.0.tar.gz',
+  'pd.ht.hg.u133a_3.12.0.tar.gz',
+  'pd.ht.mg.430a_3.12.0.tar.gz',
+  'pd.hta.2.0_3.12.2.tar.gz',
+  'pd.hu6800_3.12.0.tar.gz',
+  'pd.huex.1.0.st.v2_3.14.1.tar.gz',
+  'pd.hugene.1.0.st.v1_3.14.1.tar.gz',
+  'pd.hugene.1.1.st.v1_3.14.1.tar.gz',
+  'pd.hugene.2.0.st_3.14.1.tar.gz',
+  'pd.hugene.2.1.st_3.14.1.tar.gz',
+  'pd.maize_3.12.0.tar.gz',
+  'pd.mapping250k.nsp_3.12.0.tar.gz',
+  'pd.mapping250k.sty_3.12.0.tar.gz',
+  'pd.mapping50k.hind240_3.12.0.tar.gz',
+  'pd.mapping50k.xba240_3.12.0.tar.gz',
+  'pd.margene.1.0.st_3.12.0.tar.gz',
+  'pd.margene.1.1.st_3.12.0.tar.gz',
+  'pd.medgene.1.0.st_3.12.0.tar.gz',
+  'pd.medgene.1.1.st_3.12.0.tar.gz',
+  'pd.medicago_3.12.0.tar.gz',
+  'pd.mg.u74a_3.12.0.tar.gz',
+  'pd.mg.u74av2_3.12.0.tar.gz',
+  'pd.mg.u74b_3.12.0.tar.gz',
+  'pd.mg.u74bv2_3.12.0.tar.gz',
+  'pd.mg.u74c_3.12.0.tar.gz',
+  'pd.mg.u74cv2_3.12.0.tar.gz',
+  'pd.mirna.1.0_3.12.0.tar.gz',
+  'pd.mirna.2.0_3.12.0.tar.gz',
+  'pd.mirna.3.0_3.12.0.tar.gz',
+  'pd.mirna.3.1_3.8.1.tar.gz',
+  'pd.mirna.4.0_3.12.0.tar.gz',
+  'pd.moe430a_3.12.0.tar.gz',
+  'pd.moe430b_3.12.0.tar.gz',
+  'pd.moex.1.0.st.v1_3.14.1.tar.gz',
+  'pd.mogene.1.0.st.v1_3.14.1.tar.gz',
+  'pd.mogene.1.1.st.v1_3.14.1.tar.gz',
+  'pd.mogene.2.0.st_3.14.1.tar.gz',
+  'pd.mogene.2.1.st_3.14.1.tar.gz',
+  'pd.mouse430.2_3.12.0.tar.gz',
+  'pd.mouse430a.2_3.12.0.tar.gz',
+  'pd.mta.1.0_3.12.0.tar.gz',
+  'pd.mu11ksuba_3.12.0.tar.gz',
+  'pd.mu11ksubb_3.12.0.tar.gz',
+  'pd.nugo.hs1a520180_3.4.0.tar.gz',
+  'pd.nugo.mm1a520177_3.4.0.tar.gz',
+  'pd.ovigene.1.0.st_3.12.0.tar.gz',
+  'pd.ovigene.1.1.st_3.12.0.tar.gz',
+  'pd.pae.g1a_3.12.0.tar.gz',
+  'pd.plasmodium.anopheles_3.12.0.tar.gz',
+  'pd.poplar_3.12.0.tar.gz',
+  'pd.porcine_3.12.0.tar.gz',
+  'pd.porgene.1.0.st_3.12.0.tar.gz',
+  'pd.porgene.1.1.st_3.12.0.tar.gz',
+  'pd.rabgene.1.0.st_3.12.0.tar.gz',
+  'pd.rabgene.1.1.st_3.12.0.tar.gz',
+  'pd.rae230a_3.12.0.tar.gz',
+  'pd.rae230b_3.12.0.tar.gz',
+  'pd.raex.1.0.st.v1_3.14.1.tar.gz',
+  'pd.ragene.1.0.st.v1_3.14.1.tar.gz',
+  'pd.ragene.1.1.st.v1_3.14.1.tar.gz',
+  'pd.ragene.2.0.st_3.14.1.tar.gz',
+  'pd.ragene.2.1.st_3.14.1.tar.gz',
+  'pd.rat230.2_3.12.0.tar.gz',
+  'pd.rcngene.1.0.st_3.12.0.tar.gz',
+  'pd.rcngene.1.1.st_3.12.0.tar.gz',
+  'pd.rg.u34a_3.12.0.tar.gz',
+  'pd.rg.u34b_3.12.0.tar.gz',
+  'pd.rg.u34c_3.12.0.tar.gz',
+  'pd.rhegene.1.0.st_3.12.0.tar.gz',
+  'pd.rhegene.1.1.st_3.12.0.tar.gz',
+  'pd.rhesus_3.12.0.tar.gz',
+  'pd.rice_3.12.0.tar.gz',
+  'pd.rjpgene.1.0.st_3.12.0.tar.gz',
+  'pd.rjpgene.1.1.st_3.12.0.tar.gz',
+  'pd.rn.u34_3.12.0.tar.gz',
+  'pd.rta.1.0_3.12.2.tar.gz',
+  'pd.rusgene.1.0.st_3.12.0.tar.gz',
+  'pd.rusgene.1.1.st_3.12.0.tar.gz',
+  'pd.s.aureus_3.12.0.tar.gz',
+  'pd.soybean_3.12.0.tar.gz',
+  'pd.soygene.1.0.st_3.12.0.tar.gz',
+  'pd.soygene.1.1.st_3.12.0.tar.gz',
+  'pd.sugar.cane_3.12.0.tar.gz',
+  'pd.tomato_3.12.0.tar.gz',
+  'pd.u133.x3p_3.12.0.tar.gz',
+  'pd.vitis.vinifera_3.12.0.tar.gz',
+  'pd.wheat_3.12.0.tar.gz',
+  'pd.x.laevis.2_3.12.0.tar.gz',
+  'pd.x.tropicalis_3.12.0.tar.gz',
+  'pd.xenopus.laevis_3.12.0.tar.gz',
+  'pd.yeast.2_3.12.0.tar.gz',
+  'pd.yg.s98_3.12.0.tar.gz',
+  'pd.zebgene.1.0.st_3.12.0.tar.gz',
+  'pd.zebgene.1.1.st_3.12.0.tar.gz',
+  'pd.zebrafish_3.12.0.tar.gz'
+)
+install_with_url(annotation_url, pd_annotation_pkgs)
