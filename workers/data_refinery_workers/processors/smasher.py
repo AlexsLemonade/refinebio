@@ -243,8 +243,11 @@ def _get_tsv_row_data(sample_metadata):
     return row_data
 
 
-def _write_tsv(job_context, metadata, smash_path):
-    """Writes tsv files on disk."""
+def _write_tsv_json(job_context, metadata, smash_path):
+    """Writes tsv files on disk.
+    If the dataset is aggregated by species, also write species-level
+    JSON file.
+    """
 
     # Uniform TSV header per dataset
     columns = _get_tsv_columns(metadata['samples'])
@@ -253,8 +256,8 @@ def _write_tsv(job_context, metadata, smash_path):
         for experiment_title, experiment_data in metadata['experiments'].items():
             experiment_dir = smash_path + experiment_title + '/'
             os.makedirs(experiment_dir, exist_ok=True)
-            with open(experiment_dir + experiment_title + '_metadata.tsv', 'w') as output_file:
-                dw = csv.DictWriter(output_file, columns, delimiter='\t')
+            with open(experiment_dir + 'metadata_' + experiment_title + '.tsv', 'w') as tsv_file:
+                dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
                 dw.writeheader()
                 for sample_title, sample_metadata in metadata['samples'].items():
                     if sample_title in experiment_data['sample_titles']:
@@ -264,18 +267,29 @@ def _write_tsv(job_context, metadata, smash_path):
         for species in job_context['input_files'].keys():
             species_dir = smash_path + species + '/'
             os.makedirs(species_dir, exist_ok=True)
-            with open(species_dir + species + '_metadata.tsv', 'w') as output_file:
-                dw = csv.DictWriter(output_file, columns, delimiter='\t')
+            samples_in_species = []
+            with open(species_dir + "metadata_" + species + '.tsv', 'w') as tsv_file:
+                dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
                 dw.writeheader()
                 for sample_metadata in metadata['samples'].values():
                     if sample_metadata.get('refinebio_organism', '') == species:
                         row_data = _get_tsv_row_data(sample_metadata)
                         dw.writerow(row_data)
+                        samples_in_species.append(sample_metadata)
+
+            # Writes a json file for current species:
+            if len(samples_in_species):
+                species_metadata = {
+                    'species': species,
+                    'samples': samples_in_species
+                }
+                with open(species_dir + "metadata_" + species + '.json', 'w') as json_file:
+                    json.dump(species_metadata, json_file, indent=4, sort_keys=True)
     else:
         all_dir = smash_path + "ALL/"
         os.makedirs(all_dir, exist_ok=True)
-        with open(all_dir + 'ALL_metadata.tsv', 'w') as output_file:
-            dw = csv.DictWriter(output_file, columns, delimiter='\t')
+        with open(all_dir + 'metadata_ALL.tsv', 'w') as tsv_file:
+            dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
             dw.writeheader()
             for sample_metadata in metadata['samples'].values():
                 row_data = _get_tsv_row_data(sample_metadata)
@@ -518,7 +532,8 @@ def _smash(job_context: Dict) -> Dict:
                             pvalue = ks_res.rx('p.value')[0][0]
 
                             if statistic > 0.001 or pvalue != 1.0:
-                                raise Exception("Failed Kolmogorov Smirnov test! Stat: " + str(statistic) + ", PVal: " + str(pvalue))
+                                raise Exception("Failed Kolmogorov Smirnov test! Stat: " +
+                                                str(statistic) + ", PVal: " + str(pvalue))
 
                         # And finally convert back to Pandas
                         ar = np.array(reso)
@@ -604,13 +619,13 @@ def _smash(job_context: Dict) -> Dict:
         metadata['experiments'] = experiments
 
         # Write samples metadata to TSV
-        _write_tsv(job_context, metadata, smash_path)
+        _write_tsv_json(job_context, metadata, smash_path)
 
         metadata['files'] = os.listdir(smash_path)
 
         # Metadata to JSON
         metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-        with open(smash_path + 'metadata.json', 'w') as metadata_file:
+        with open(smash_path + 'aggregated_metadata.json', 'w') as metadata_file:
             json.dump(metadata, metadata_file, indent=4, sort_keys=True)
 
         # Finally, compress all files into a zip
