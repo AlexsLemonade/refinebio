@@ -1144,7 +1144,7 @@ class TsvTestCase(TestCase):
     def test_columns(self):
         columns = smasher._get_tsv_columns(self.metadata['samples'])
         self.assertEqual(len(columns), 21)
-        self.assertEqual(columns[0], 'refinebio_title')
+        self.assertEqual(columns[0], 'refinebio_accession_code')
         self.assertTrue('refinebio_accession_code' in columns)
         self.assertTrue('cell population' in columns)
         self.assertTrue('dose' in columns)
