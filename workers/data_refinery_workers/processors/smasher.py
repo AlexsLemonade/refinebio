@@ -393,14 +393,14 @@ def _smash(job_context: Dict) -> Dict:
 
                     # Explicitly title this dataframe
                     try:
-                        data.columns = [computed_file.samples.all()[0].title]
+                        # Unfortuantely, we can't use this as `title` can cause a collision
+                        #data.columns = [computed_file.samples.all()[0].title]
+                        # So we use this, which also helps us support the case of missing SampleComputedFileAssociation
+                        data.columns = [computed_file.filename]
                     except ValueError:
                         # This sample might have multiple channels, or something else.
                         # Don't mess with it.
                         pass
-                    except Exception as e:
-                        # Okay, somebody probably forgot to create a SampleComputedFileAssociation
-                        data.columns = [computed_file.filename]
 
                     all_frames.append(data)
                     num_samples = num_samples + 1
@@ -437,12 +437,14 @@ def _smash(job_context: Dict) -> Dict:
                 for column in frame.columns:
                     if column in merged.columns:
                         breaker = True
+
                 if breaker:
                     logger.warning("Column repeated for smash job!",
                                    input_files=str(input_files),
                                    dataset_id=job_context["dataset"].id,
                                    processor_job_id=job_context["job"].id,
-                                   column=column
+                                   column=column,
+                                   frame=frame
                     )
                     continue
 
@@ -495,6 +497,10 @@ def _smash(job_context: Dict) -> Dict:
                         ks_test = rlang("ks.test")
 
                         set_seed(123)
+                        n = ncol(reso)
+                        m = 2
+                        if n < m:
+                            raise Exception("Found fewer columns that required for QN combinatorial - bad smash?")
                         combos = combn(ncol(reso), 2)
 
                         # Convert to NP, Shuffle, Return to R
@@ -700,9 +706,6 @@ def _notify(job_context: Dict) -> Dict:
             SENDER = "Refine.bio Mail Robot <noreply@refine.bio>"
             RECIPIENT = job_context["dataset"].email_address
             AWS_REGION = "us-east-1"
-            SUBJECT = "Your refine.bio Dataset is Ready!"
-            BODY_TEXT = "Hot off the presses:\n\n" + job_context["result_url"] + "\n\nLove!,\nThe refine.bio Team"
-            FORMATTED_HTML = BODY_HTML.replace('REPLACEME', job_context["result_url"])
             CHARSET = "UTF-8"
 
             if job_context['job'].failure_reason not in ['', None]:
@@ -710,6 +713,10 @@ def _notify(job_context: Dict) -> Dict:
                 BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(dataset.id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
                 FORMATTED_HTML = "We tried but were unable to process your requested dataset. Error was: <br /><br />" + job_context['job'].failure_reason + "<br />Dataset: " + str(dataset.id) + "<br /> We have been notified and are looking into the problem. <br /><br />Sorry!"
                 job_context['success'] = False
+            else:
+                SUBJECT = "Your refine.bio Dataset is Ready!"
+                BODY_TEXT = "Hot off the presses:\n\n" + job_context["result_url"] + "\n\nLove!,\nThe refine.bio Team"
+                FORMATTED_HTML = BODY_HTML.replace('REPLACEME', job_context["result_url"])
 
             # Try to send the email.
             try:
