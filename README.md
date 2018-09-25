@@ -389,6 +389,11 @@ Where the prod_env file has been temporarily copied to the host with:
 scp -i data-refinery-key.pem prod_env ubuntu@<host_address>:/home/ubuntu/prod_env
 ```
 
+However two keys in the prod_env file are incorrect.
+These are the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` values, which are named `AWS_ACCESS_KEY_ID_CLIENT` and `AWS_SECRET_ACCESS_KEY`_CLIENT.
+(This difference is introduced intentionally to avoid conflicting with the environment variables of the developer at deploy time.)
+Therefore, all that needs to be done is to delete the `_CLIENT` part of the keys.
+
 ### Checking on Local Jobs
 
 _Note:_ The following instructions assume you have set the environment
