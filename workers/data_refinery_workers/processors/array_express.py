@@ -169,7 +169,6 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
-    result.pipeline = "Affymetrix SCAN"  # TODO: should be removed
     try:
         processor_key = "AFFYMETRIX_SCAN"
         result.processor = utils.find_processor(processor_key)
