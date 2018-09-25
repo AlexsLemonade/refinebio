@@ -497,10 +497,11 @@ def _smash(job_context: Dict) -> Dict:
                         ks_test = rlang("ks.test")
 
                         set_seed(123)
-                        n = ncol(reso)
+
+                        n = ncol(reso)[0]
                         m = 2
                         if n < m:
-                            raise Exception("Found fewer columns that required for QN combinatorial - bad smash?")
+                            raise Exception("Found fewer columns than required for QN combinatorial - bad smash?")
                         combos = combn(ncol(reso), 2)
 
                         # Convert to NP, Shuffle, Return to R
@@ -710,8 +711,8 @@ def _notify(job_context: Dict) -> Dict:
 
             if job_context['job'].failure_reason not in ['', None]:
                 SUBJECT = "There was a problem processing your refine.bio dataset :("
-                BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(dataset.id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
-                FORMATTED_HTML = "We tried but were unable to process your requested dataset. Error was: <br /><br />" + job_context['job'].failure_reason + "<br />Dataset: " + str(dataset.id) + "<br /> We have been notified and are looking into the problem. <br /><br />Sorry!"
+                BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(job_context['dataset'].id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
+                FORMATTED_HTML = "We tried but were unable to process your requested dataset. Error was: <br /><br />" + job_context['job'].failure_reason + "<br />Dataset: " + str(job_context['dataset'].id) + "<br /> We have been notified and are looking into the problem. <br /><br />Sorry!"
                 job_context['success'] = False
             else:
                 SUBJECT = "Your refine.bio Dataset is Ready!"
