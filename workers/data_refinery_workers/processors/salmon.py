@@ -97,6 +97,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["output_archive"] = job_context["work_dir"] + 'result-' + timestamp +  '.tar.gz'
 
     job_context["computed_files"] = []
+    job_context["smashable_files"] = []
 
     return job_context
 
