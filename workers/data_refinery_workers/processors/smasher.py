@@ -394,13 +394,16 @@ def _smash(job_context: Dict) -> Dict:
                     # Explicitly title this dataframe
                     try:
                         # Unfortuantely, we can't use this as `title` can cause a collision
-                        #data.columns = [computed_file.samples.all()[0].title]
+                        # data.columns = [computed_file.samples.all()[0].title]
                         # So we use this, which also helps us support the case of missing SampleComputedFileAssociation
-                        data.columns = [computed_file.filename]
+                        data.columns = [computed_file.samples.all()[0].accession_code]
                     except ValueError:
                         # This sample might have multiple channels, or something else.
                         # Don't mess with it.
                         pass
+                    except Exception as e:
+                        # Okay, somebody probably forgot to create a SampleComputedFileAssociation
+                        data.columns = [computed_file.filename]
 
                     all_frames.append(data)
                     num_samples = num_samples + 1
