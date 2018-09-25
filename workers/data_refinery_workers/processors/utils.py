@@ -152,7 +152,7 @@ def end_job(job_context: Dict, abort=False):
         # S3-sync Computed Files
         for computed_file in job_context.get('computed_files', []):
             # Ensure even distribution across S3 servers
-            nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
+            nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(24))
             result = computed_file.sync_to_s3(S3_BUCKET_NAME, nonce + "_" + computed_file.filename)
             if result:
                 computed_file.delete_local_file()

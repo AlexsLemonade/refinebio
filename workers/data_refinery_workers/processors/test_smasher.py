@@ -611,6 +611,103 @@ class SmasherTestCase(TestCase):
             self.assertTrue('_x' not in column)
 
     @tag("smasher")
+    def test_no_smash_dupe_two(self):
+        """ """
+
+        job = ProcessorJob()
+        job.pipeline_applied = "SMASHER"
+        job.save()
+
+        experiment = Experiment()
+        experiment.accession_code = "SRP051449"
+        experiment.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
+
+        sample = Sample()
+        sample.accession_code = 'SRR1731761'
+        sample.title = 'SRR1731761_output_gene_lengthScaledTPM.tsv'
+        sample.organism = danio_rerio
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "SRR1731761_output_gene_lengthScaledTPM.tsv"
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
+        computed_file.result = result
+        computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
+        computed_file.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
+        sample = Sample()
+        sample.accession_code = 'SRR1731762'
+        sample.title = 'SRR1731762_output_gene_lengthScaledTPM.tsv'
+        sample.organism = danio_rerio
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "SRR1731762_output_gene_lengthScaledTPM.tsv"
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
+        computed_file.result = result
+        computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
+        computed_file.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
+        ds = Dataset()
+        ds.data = {'SRP051449': ['SRR1731761', 'SRR1731762']}
+        ds.aggregate_by = 'SPECIES'
+        ds.scale_by = 'NONE'
+        ds.email_address = "null@derp.com"
+        ds.quantile_normalize = False
+        ds.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = job
+        pjda.dataset = ds
+        pjda.save()
+
+        final_context = smasher.smash(job.pk, upload=False)
+        self.assertTrue(final_context['success'])
+
+    @tag("smasher")
     def test_log2(self):
         pj = ProcessorJob()
         pj.pipeline_applied = "SMASHER"
