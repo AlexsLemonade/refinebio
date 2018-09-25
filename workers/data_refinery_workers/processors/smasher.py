@@ -281,8 +281,7 @@ def _write_tsv_json(job_context, metadata, smash_path):
             if len(samples_in_species):
                 species_metadata = {
                     'species': species,
-                    'samples': samples_in_species,
-                    'created_at': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+                    'samples': samples_in_species
                 }
                 with open(species_dir + "metadata_" + species + '.json', 'w') as json_file:
                     json.dump(species_metadata, json_file, indent=4, sort_keys=True)
