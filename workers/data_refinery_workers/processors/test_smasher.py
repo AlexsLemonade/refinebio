@@ -629,7 +629,7 @@ class SmasherTestCase(TestCase):
 
         sample = Sample()
         sample.accession_code = 'SRR1731761'
-        sample.title = 'SRR1731761_output_gene_lengthScaledTPM.tsv'
+        sample.title = 'Danio rerio'
         sample.organism = danio_rerio
         sample.save()
 
@@ -661,7 +661,7 @@ class SmasherTestCase(TestCase):
 
         sample = Sample()
         sample.accession_code = 'SRR1731762'
-        sample.title = 'SRR1731762_output_gene_lengthScaledTPM.tsv'
+        sample.title = 'Danio rerio'
         sample.organism = danio_rerio
         sample.save()
 
