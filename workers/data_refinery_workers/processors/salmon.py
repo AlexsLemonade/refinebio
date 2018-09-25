@@ -68,6 +68,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     sample = job_context['original_files'][0].samples.first()
     job_context['sample_accession_code'] = sample.accession_code
     job_context['sample'] = sample
+    job_context['samples'] = [] # This will only be populated in the `tximport` job
     job_context['organism'] = job_context['sample'].organism
     job_context["success"] = True
 
@@ -96,6 +97,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["output_archive"] = job_context["work_dir"] + 'result-' + timestamp +  '.tar.gz'
 
     job_context["computed_files"] = []
+    job_context["smashable_files"] = []
 
     return job_context
 
@@ -277,17 +279,60 @@ def _find_or_download_index(job_context: Dict) -> Dict:
     job_context["index_directory"] = index_object.absolute_directory_path
 
     try:
-        os.makedirs(job_context["index_directory"])
-        index_file = ComputedFile.objects.filter(result=index_object.result)[0]
-        index_tarball = index_file.sync_from_s3()
-        with tarfile.open(index_tarball, "r:gz") as index_archive:
-            index_archive.extractall(job_context["index_directory"])
+        # The organism index only needs to be downloaded from S3 once per
+        # organism per index length per EBS volume. We don't know if
+        # another job has started downloading it yet, started extracting
+        # it yet, or already finished and been symlinked to a common
+        # location. Therefore check to see if it's happened before we
+        # complete each step.
+        version_info_path = job_context["index_directory"] + "/versionInfo.json"
 
-        # Cleanup the tarball to save a few GB.
-        index_file.delete_local_file()
-    except FileExistsError:
-        # Someone already installed the index or is doing so now.
-        pass
+        index_tarball = None
+        if not os.path.exists(version_info_path):
+            # Index is not installed yet, so download it.
+            index_file = ComputedFile.objects.filter(result=index_object.result)[0]
+            index_tarball = index_file.sync_from_s3(path=job_context["work_dir"] + index_file.filename)
+
+        index_hard_dir = None
+        if not os.path.exists(version_info_path):
+            # Index is still not installed yet, so extract it.
+
+            # Create a temporary location to download the index to, which
+            # can be symlinked to once extraction is complete.
+            index_hard_dir = os.path.join(LOCAL_ROOT_DIR,
+                                           job_context["job_dir_prefix"]) + "_index/"
+            os.makedirs(index_hard_dir)
+            with tarfile.open(index_tarball, "r:gz") as index_archive:
+                index_archive.extractall(index_hard_dir)
+
+        if index_tarball:
+            # Cleanup the tarball now that it's been extracted.
+            os.remove(index_tarball)
+
+        if not os.path.exists(version_info_path):
+            # Index is still not installed yet, so symlink the files we
+            # have to where they are expected to reside.
+            os.makedirs(job_context["index_directory"], exist_ok=True)
+
+            index_files = [
+                "versionInfo.json",
+                "duplicate_clusters.tsv",
+                "hash.bin",
+                "indexing.log",
+                "refInfo.json",
+                "sa.bin",
+                "genes_to_transcripts.txt",
+                "header.json",
+                "quasi_index.log",
+                "rsd.bin",
+                "txpInfo.bin"
+            ]
+
+            for subfile in index_files:
+                os.symlink(index_hard_dir + subfile, job_context["index_directory"] + "/" + subfile)
+        elif index_hard_dir:
+            # Cleanup the extracted directory, it's not needed.
+            shutil.rmtree(index_hard_dir)
     except Exception as e:
         # Make sure we don't leave an empty index directory lying around.
         shutil.rmtree(job_context["index_directory"], ignore_errors=True)
@@ -303,6 +348,8 @@ def _find_or_download_index(job_context: Dict) -> Dict:
     # to the path where we should put it.
     job_context["genes_to_transcripts_path"] = os.path.join(
         job_context["index_directory"], "genes_to_transcripts.txt")
+
+    job_context["organism_index"] = index_object
 
     return job_context
 
@@ -493,6 +540,7 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
         computed_file.calculate_size()
         computed_file.save()
         job_context['computed_files'].append(computed_file)
+        job_context['smashable_files'].append(computed_file)
 
         SampleResultAssociation.objects.get_or_create(
             sample=sample,
@@ -509,6 +557,7 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
             computed_file=computed_file)
 
         individual_files.append(computed_file)
+        job_context['samples'].append(sample)
 
     # Clean up quant.sf files that were created just for this.
     for quant_file in quant_files:
@@ -519,6 +568,9 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
         quant_file.delete_local_file()
         quant_file.delete()
 
+    # Salmon-processed samples aren't marked as is_processed
+    # until they are fully tximported, this value sets that
+    # for the end_job function.
     job_context['tximported'] = True
     job_context['individual_files'] = individual_files
     return job_context
@@ -583,6 +635,7 @@ def _run_salmon(job_context: Dict) -> Dict:
         result.time_start = job_context['time_start']
         result.time_end = job_context['time_end']
         result.pipeline = "Salmon"  # TODO: should be removed
+        result.organism_index = job_context["organism_index"]
         result.is_ccdl = True
 
         try:
@@ -656,6 +709,7 @@ def _run_salmon(job_context: Dict) -> Dict:
         with transaction.atomic():
             ComputationalResult.objects.select_for_update()
             result.save()
+            job_context["quant_result"] = result
             quant_file.result = result
             quant_file.save()
 

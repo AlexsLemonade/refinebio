@@ -256,22 +256,23 @@ container_running=$(ssh -q -o StrictHostKeyChecking=no \
                         -i data-refinery-key.pem \
                         ubuntu@$API_IP_ADDRESS  "docker ps" | grep dr_api)
 
+ssh -o StrictHostKeyChecking=no \
+    -i data-refinery-key.pem \
+    ubuntu@$API_IP_ADDRESS  "docker pull $DOCKERHUB_REPO/$API_DOCKER_IMAGE"
+
 if [[ ! -z $container_running ]]; then
     ssh -o StrictHostKeyChecking=no \
         -i data-refinery-key.pem \
-        ubuntu@$API_IP_ADDRESS  "docker pull $DOCKERHUB_REPO/$API_DOCKER_IMAGE"
-
-    ssh -o StrictHostKeyChecking=no \
-        -i data-refinery-key.pem \
         ubuntu@$API_IP_ADDRESS "docker rm -f dr_api"
+fi
 
-    scp -o StrictHostKeyChecking=no \
-        -i data-refinery-key.pem \
-        api-configuration/environment ubuntu@$API_IP_ADDRESS:/home/ubuntu/environment
+scp -o StrictHostKeyChecking=no \
+    -i data-refinery-key.pem \
+    api-configuration/environment ubuntu@$API_IP_ADDRESS:/home/ubuntu/environment
 
-    ssh -o StrictHostKeyChecking=no \
-        -i data-refinery-key.pem \
-        ubuntu@$API_IP_ADDRESS "docker run \
+ssh -o StrictHostKeyChecking=no \
+    -i data-refinery-key.pem \
+    ubuntu@$API_IP_ADDRESS "docker run \
        --env-file environment \
        -e DATABASE_HOST=$DATABASE_HOST \
        -e DATABASE_NAME=$DATABASE_NAME \
@@ -285,7 +286,6 @@ if [[ ! -z $container_running ]]; then
        -p 8081:8081 \
        --name=dr_api \
        -it -d $DOCKERHUB_REPO/$API_DOCKER_IMAGE /bin/sh -c /home/user/collect_and_run_uwsgi.sh"
-fi
 
 
 echo "Deploy completed successfully."

@@ -51,6 +51,7 @@ class ProcessedObjectsManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(is_processed=True, is_public=True)
 
+
 class Sample(models.Model):
     """
     An individual sample.
@@ -253,7 +254,7 @@ class Experiment(models.Model):
 
     # Historical Properties
     source_database = models.CharField(max_length=32)  # "ArrayExpress, "SRA", "GEO"
-    source_url = models.CharField(max_length=256)
+    source_url = models.TextField()
 
     # Properties
     # I was always under the impression that TextFields were slower
@@ -418,6 +419,10 @@ class ComputationalResult(models.Model):
 
     commands = ArrayField(models.TextField(), default=[])
     processor = models.ForeignKey(Processor, blank=True, null=True, on_delete=models.CASCADE)
+
+    # The Organism Index used to process the sample.
+    organism_index = models.ForeignKey('OrganismIndex', blank=True, null=True, on_delete=models.SET_NULL)
+
     is_ccdl = models.BooleanField(default=True)
     # TODO: "pipeline" field is now redundant due to "processor". Should be removed later.
     # Human-readable nickname for this computation
@@ -537,6 +542,7 @@ class OrganismIndex(models.Model):
         self.last_modified = current_time
         return super(OrganismIndex, self).save(*args, **kwargs)
 
+
 """
 # Files
 
@@ -572,7 +578,7 @@ class OriginalFile(models.Model):
     samples = models.ManyToManyField('Sample', through='OriginalFileSampleAssociation')
 
     # Historical Properties
-    source_url = models.CharField(max_length=255)
+    source_url = models.TextField()
     is_archive = models.BooleanField(default=True)
     source_filename = models.CharField(max_length=255, blank=False)
 
@@ -790,7 +796,7 @@ class ComputedFile(models.Model):
             return False
 
         try:
-            S3.delete_object(self.s3_bucket, self.s3_key)
+            S3.delete_object(Bucket=self.s3_bucket, Key=self.s3_key)
             return True
         except:
             logger.exception("Failed to delete S3 object for Computed File.",
