@@ -145,11 +145,11 @@ def _get_tsv_columns(samples_metadata):
                     else:
                         _add_annotation_column(annotation_columns, annotation_key)
 
-    # Return sorted columns, in which "refinebio_title" is always the first,
+    # Return sorted columns, in which "refinebio_accession_code" is always the first,
     # followed by the other refinebio columns (in alphabetic order), and
     # annotation columns (in alphabetic order) at the end.
-    refinebio_columns.discard('refinebio_title')
-    return ['refinebio_title'] + sorted(refinebio_columns) + sorted(annotation_columns)
+    refinebio_columns.discard('refinebio_accession_code')
+    return ['refinebio_accession_code'] + sorted(refinebio_columns) + sorted(annotation_columns)
 
 def _add_annotation_value(row_data, col_name, col_value, sample_accession_code):
     """Adds a new `col_name` key whose value is `col_value` to row_data.
@@ -407,7 +407,10 @@ def _smash(job_context: Dict) -> Dict:
 
                     # Explicitly title this dataframe
                     try:
-                        data.columns = [computed_file.samples.all()[0].title]
+                        # Unfortuantely, we can't use this as `title` can cause a collision
+                        # data.columns = [computed_file.samples.all()[0].title]
+                        # So we use this, which also helps us support the case of missing SampleComputedFileAssociation
+                        data.columns = [computed_file.samples.all()[0].accession_code]
                     except ValueError:
                         # This sample might have multiple channels, or something else.
                         # Don't mess with it.
@@ -451,12 +454,14 @@ def _smash(job_context: Dict) -> Dict:
                 for column in frame.columns:
                     if column in merged.columns:
                         breaker = True
+
                 if breaker:
                     logger.warning("Column repeated for smash job!",
                                    input_files=str(input_files),
                                    dataset_id=job_context["dataset"].id,
                                    processor_job_id=job_context["job"].id,
-                                   column=column
+                                   column=column,
+                                   frame=frame
                     )
                     continue
 
@@ -509,6 +514,11 @@ def _smash(job_context: Dict) -> Dict:
                         ks_test = rlang("ks.test")
 
                         set_seed(123)
+
+                        n = ncol(reso)[0]
+                        m = 2
+                        if n < m:
+                            raise Exception("Found fewer columns than required for QN combinatorial - bad smash?")
                         combos = combn(ncol(reso), 2)
 
                         # Convert to NP, Shuffle, Return to R
@@ -715,16 +725,17 @@ def _notify(job_context: Dict) -> Dict:
             SENDER = "Refine.bio Mail Robot <noreply@refine.bio>"
             RECIPIENT = job_context["dataset"].email_address
             AWS_REGION = "us-east-1"
-            SUBJECT = "Your refine.bio Dataset is Ready!"
-            BODY_TEXT = "Hot off the presses:\n\n" + job_context["result_url"] + "\n\nLove!,\nThe refine.bio Team"
-            FORMATTED_HTML = BODY_HTML.replace('REPLACEME', job_context["result_url"])
             CHARSET = "UTF-8"
 
             if job_context['job'].failure_reason not in ['', None]:
                 SUBJECT = "There was a problem processing your refine.bio dataset :("
-                BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(dataset.id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
-                FORMATTED_HTML = "We tried but were unable to process your requested dataset. Error was: <br /><br />" + job_context['job'].failure_reason + "<br />Dataset: " + str(dataset.id) + "<br /> We have been notified and are looking into the problem. <br /><br />Sorry!"
+                BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(job_context['dataset'].id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
+                FORMATTED_HTML = "We tried but were unable to process your requested dataset. Error was: <br /><br />" + job_context['job'].failure_reason + "<br />Dataset: " + str(job_context['dataset'].id) + "<br /> We have been notified and are looking into the problem. <br /><br />Sorry!"
                 job_context['success'] = False
+            else:
+                SUBJECT = "Your refine.bio Dataset is Ready!"
+                BODY_TEXT = "Hot off the presses:\n\n" + job_context["result_url"] + "\n\nLove!,\nThe refine.bio Team"
+                FORMATTED_HTML = BODY_HTML.replace('REPLACEME', job_context["result_url"])
 
             # Try to send the email.
             try:
