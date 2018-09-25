@@ -22,7 +22,8 @@ from data_refinery_common.models import (
     ExperimentSampleAssociation,
     Dataset,
     ProcessorJobDatasetAssociation,
-    SampleComputedFileAssociation
+    SampleComputedFileAssociation,
+    ComputationalResultAnnotation
 )
 from data_refinery_workers.processors import smasher
 
@@ -696,13 +697,29 @@ class SmasherTestCase(TestCase):
         ds.aggregate_by = 'SPECIES'
         ds.scale_by = 'NONE'
         ds.email_address = "null@derp.com"
-        ds.quantile_normalize = False
+        ds.quantile_normalize = True
         ds.save()
 
         pjda = ProcessorJobDatasetAssociation()
         pjda.processor_job = job
         pjda.dataset = ds
         pjda.save()
+
+        cr = ComputationalResult()
+        cr.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "danio_target.tsv"
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
+        computed_file.result = cr
+        computed_file.size_in_bytes = 123
+        computed_file.is_smashable = False
+        computed_file.save()
+
+        cra = ComputationalResultAnnotation()
+        cra.data = {'organism_id': danio_rerio.id, 'is_qn': True}
+        cra.result = cr
+        cra.save()
 
         final_context = smasher.smash(job.pk, upload=False)
         self.assertTrue(final_context['success'])
