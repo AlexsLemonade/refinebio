@@ -566,6 +566,9 @@ def _smash(job_context: Dict) -> Dict:
                             statistic = ks_res.rx('statistic')[0][0]
                             pvalue = ks_res.rx('p.value')[0][0]
 
+                            # We're unsure of how strigent to be about
+                            # the pvalue just yet, so we're extra lax
+                            # rather than failing tons of tests. This may need tuning.
                             if statistic > 0.001 or pvalue >= 0.8:
                                 raise Exception("Failed Kolmogorov Smirnov test! Stat: " +
                                                 str(statistic) + ", PVal: " + str(pvalue))
