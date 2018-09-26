@@ -56,20 +56,13 @@ sudo mv nomad /usr/local/bin/
 cd ~/refinebio/infrastructure
 
 # Circle won't set the branch name for us, so do it ourselves.
+source ~/refinebio/common.sh
+branch=$(get_master_or_dev)
 
-# A single tag could potentially be on more than one branch (or even
-# something like: (HEAD detached at v0.8.0))
-# However it cannot be on both master and dev because merges create new commits.
-# Therefore check to see if either master or dev show up in the list
-# of branches containing that tag.
-master_check=$(git branch --contains tags/$CIRCLE_TAG | grep '^  master$' || true)
-dev_check=$(git branch --contains tags/$CIRCLE_TAG | grep '^  dev$' || true)
-
-
-if [[ ! -z $master_check ]]; then
+if [[ $branch == "master" ]]; then
     ENVIRONMENT=prod
     BUCKET_NAME="refinebio-tfstate-deploy-production"
-elif [[ ! -z $dev_check ]]; then
+elif [[ $branch == "dev" ]]; then
     ENVIRONMENT=staging
     BUCKET_NAME="refinebio-tfstate-deploy-staging"
 else
