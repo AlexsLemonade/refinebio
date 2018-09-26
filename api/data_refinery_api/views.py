@@ -276,11 +276,11 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 except mailchimp3.mailchimpclient.MailChimpError as mc_e:
                     pass # This is likely an user-already-on-list error. It's okay.
                 except Exception as e:
+                    # Something outside of our control has gone wrong. It's okay.
                     logger.exception("Unexpected failure trying to add user to MailChimp list.",
                             supplied_email_address=supplied_email_address,
                             mc_user=MAILCHIMP_USER
                         )
-                    pass # Something outside of our control has gone wrong. It's okay.
 
             if not already_processing:
                 # Create and dispatch the new job.
