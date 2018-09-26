@@ -538,6 +538,13 @@ def _smash(job_context: Dict) -> Dict:
                             test_a = reso.rx(True, value1)
                             test_b = reso.rx(True, value2)
 
+                            # RNA-seq has a lot of zeroes in it, which
+                            # breaks the ks_test. Therefore we want to
+                            # filter them out. To do this we drop the
+                            # lowest half of the values. If there's
+                            # still zeroes in there, then that's
+                            # probably too many zeroes so it's okay to
+                            # fail.
                             median_a = np.median(test_a)
                             median_b = np.median(test_b)
 
