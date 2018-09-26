@@ -5,7 +5,7 @@ set -e
 source ~/refinebio/common.sh
 
 # Circle won't set the branch name for us, so do it ourselves.
-branch=$(is_master_or_dev)
+branch=$(get_master_or_dev)
 
 if [[ $branch == "master" ]]; then
     DOCKERHUB_REPO=ccdl
