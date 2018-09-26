@@ -59,10 +59,10 @@ cd ~/refinebio/infrastructure
 source ~/refinebio/common.sh
 branch=$(is_master_or_dev)
 
-if [[ $is_master_or_dev == "master" ]]; then
+if [[ $branch == "master" ]]; then
     ENVIRONMENT=prod
     BUCKET_NAME="refinebio-tfstate-deploy-production"
-elif [[ $is_master_or_dev == "dev" ]]; then
+elif [[ $branch == "dev" ]]; then
     ENVIRONMENT=staging
     BUCKET_NAME="refinebio-tfstate-deploy-staging"
 else
