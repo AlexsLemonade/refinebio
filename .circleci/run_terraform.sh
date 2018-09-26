@@ -57,7 +57,7 @@ cd ~/refinebio/infrastructure
 
 # Circle won't set the branch name for us, so do it ourselves.
 source ~/refinebio/common.sh
-branch=$(is_master_or_dev)
+branch=$(get_master_or_dev)
 
 if [[ $branch == "master" ]]; then
     ENVIRONMENT=prod

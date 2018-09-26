@@ -37,7 +37,7 @@ function docker_img_exists() {
 # A tag is linked to a commit hash, not a branch. A single commit hash
 # can end up on multiple branches. So we first check to see if we're
 # on master, then on dev, then error out because we should only deploy master or dev.
-is_master_or_dev() {
+get_master_or_dev() {
     master_check=$(git log --decorate=full | head -1 | grep origin/master || true)
     dev_check=$(git log --decorate=full | head -1 | grep origin/dev || true)
 
