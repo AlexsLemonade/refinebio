@@ -33,3 +33,20 @@ function docker_img_exists() {
              | jq -r "[.results | .[] | .name == \"$2\"] | any" 2> /dev/null)
     test -n "$EXISTS" -a "$EXISTS" = true
 }
+
+# A tag is linked to a commit hash, not a branch. A single commit hash
+# can end up on multiple branches. So we first check to see if we're
+# on master, then on dev, then error out because we should only deploy master or dev.
+is_master_or_dev() {
+    master_check=$(git log --decorate=full | head -1 | grep origin/master || true)
+    dev_check=$(git log --decorate=full | head -1 | grep origin/dev || true)
+
+    if [[ ! -z $master_check ]]; then
+        echo "master"
+    elif [[ ! -z $dev_check ]]; then
+        echo "dev"
+    else
+        echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"
+        exit 1
+    fi
+}
