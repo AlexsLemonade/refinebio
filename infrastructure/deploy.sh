@@ -112,7 +112,7 @@ if [[ ! -f terraform.tfstate ]]; then
     # Until terraform plan supports -var-file the plan is wrong.
     # terraform plan
 
-    terraform apply -var-file=environments/$env.tfvars -auto-approve
+    terraform apply -var-file=environments/$env.tfvars -auto-approve > /dev/null
 fi
 
 # We have to do this once before the initial deploy..
@@ -130,7 +130,7 @@ if [[ -z $ran_init_build ]]; then
     # Until terraform plan supports -var-file the plan is wrong.
     # terraform plan
 
-    terraform apply -var-file=environments/$env.tfvars -auto-approve
+    terraform apply -var-file=environments/$env.tfvars -auto-approve > /dev/null
 fi
 
 # Find address of Nomad server.
@@ -240,7 +240,7 @@ terraform taint aws_instance.foreman_server_1
 # access for Circle.
 echo "Removing ingress.."
 rm ci_ingress.tf
-terraform apply -var-file=environments/$env.tfvars -auto-approve
+terraform apply -var-file=environments/$env.tfvars -auto-approve >  > /dev/null
 
 # We try to avoid rebuilding the API server because we can only run certbot
 # 5 times a week. Therefore we pull the newest image and restart the API
