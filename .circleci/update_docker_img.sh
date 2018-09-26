@@ -7,9 +7,9 @@ source ~/refinebio/common.sh
 # Circle won't set the branch name for us, so do it ourselves.
 branch=$(is_master_or_dev)
 
-if [[ $is_master_or_dev == "master" ]]; then
+if [[ $branch == "master" ]]; then
     DOCKERHUB_REPO=ccdl
-elif [[ $is_master_or_dev == "dev" ]]; then
+elif [[ $branch == "dev" ]]; then
     DOCKERHUB_REPO=ccdlstaging
 else
     echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"
