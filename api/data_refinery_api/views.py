@@ -19,6 +19,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework import status, filters, generics
 
 from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     Experiment,
@@ -58,6 +59,9 @@ from data_refinery_api.serializers import (
     APITokenSerializer
 )
 from data_refinery_common.utils import get_env_variable
+
+logger = get_and_configure_logger(__name__)
+
 
 ##
 # Variables
@@ -272,6 +276,10 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 except mailchimp3.mailchimpclient.MailChimpError as mc_e:
                     pass # This is likely an user-already-on-list error. It's okay.
                 except Exception as e:
+                    logger.exception("Unexpected failure trying to add user to MailChimp list.",
+                            supplied_email_address=supplied_email_address,
+                            mc_user=MAILCHIMP_USER
+                        )
                     pass # Something outside of our control has gone wrong. It's okay.
 
             if not already_processing:
