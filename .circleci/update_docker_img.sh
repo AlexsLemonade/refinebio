@@ -5,18 +5,11 @@ set -e
 source ~/refinebio/common.sh
 
 # Circle won't set the branch name for us, so do it ourselves.
+branch=$(is_master_or_dev)
 
-# A single tag could potentially be on more than one branch (or even
-# something like: (HEAD detached at v0.8.0))
-# However it cannot be on both master and dev because merges create new commits.
-# Therefore check to see if either master or dev show up in the list
-# of branches containing that tag.
-master_check=$(git log --decorate=full | head -1 | grep origin/master || true)
-dev_check=$(git log --decorate=full | head -1 | grep origin/dev || true)
-
-if [[ ! -z $master_check ]]; then
+if [[ $is_master_or_dev == "master" ]]; then
     DOCKERHUB_REPO=ccdl
-elif [[ ! -z $dev_check ]]; then
+elif [[ $is_master_or_dev == "dev" ]]; then
     DOCKERHUB_REPO=ccdlstaging
 else
     echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"
