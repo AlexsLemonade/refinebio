@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
+import mailchimp3
 
 from rest_framework.exceptions import APIException
 from rest_framework.pagination import LimitOffsetPagination
@@ -56,6 +57,16 @@ from data_refinery_api.serializers import (
     DatasetDetailsSerializer,
     APITokenSerializer
 )
+from data_refinery_common.utils import get_env_variable
+
+##
+# Variables
+##
+
+RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD")
+MAILCHIMP_USER = get_env_variable("MAILCHIMP_USER")
+MAILCHIMP_API_KEY = get_env_variable("MAILCHIMP_API_KEY")
+MAILCHIMP_LIST_ID = get_env_variable("MAILCHIMP_LIST_ID")
 
 ##
 # Custom Views
@@ -250,6 +261,18 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             # We could be more aggressive with requirements checking here, but
             # there could be use cases where you don't want to supply an email.
             supplied_email_address = self.request.data.get('email_address', None)
+            if supplied_email_address and MAILCHIMP_API_KEY and RUNNING_IN_CLOUD:
+                try:
+                    client = mailchimp3.MailChimp(mc_user=MAILCHIMP_USER, mc_api=MAILCHIMP_API_KEY)
+                    data = {
+                        "email_address": supplied_email_address,
+                        "status": "subscribed"
+                    }
+                    client.lists.members.create(MAILCHIMP_LIST_ID, data)
+                except mailchimp3.mailchimpclient.MailChimpError as mc_e:
+                    pass # This is likely an user-already-on-list error. It's okay.
+                except Exception as e:
+                    pass # Something outside of our control has gone wrong. It's okay.
 
             if not already_processing:
                 # Create and dispatch the new job.
