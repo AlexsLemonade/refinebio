@@ -530,8 +530,6 @@ resource "aws_instance" "foreman_server_1" {
   user_data = "${data.template_file.foreman_server_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
-  disable_api_termination = "${var.stage == "prod" ? true : false}"
-
   tags = {
     Name = "Foreman Server 1 ${var.user}-${var.stage}"
   }
