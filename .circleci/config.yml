@@ -236,9 +236,9 @@ workflows:
       - deploy:
           requires:
             - main_tests
-            - affymetrix_common_agilent_tests
+            - common_tests
             - salmon_and_api_tests
-            - transcriptome_and_illumina_tests
+            - tx_illumina_affy_agilent_tests
           filters:
             # No branch commit will ever trigger this job.
             branches:
