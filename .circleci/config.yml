@@ -68,8 +68,7 @@ jobs:
           command: .circleci/filter_tests.sh -t qn
           no_output_timeout: 36000
 
-  # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
-  affymetrix_common_agilent_tests:
+  common_tests:
     working_directory: ~/refinebio
     machine:
       pre:
@@ -96,18 +95,6 @@ jobs:
 
       # Run Common Tests.
       - run: ./common/run_tests.sh
-
-      - run:
-          command: .circleci/filter_tests.sh -t affymetrix
-          # This takes a while because the affymetrix image is huge
-          no_output_timeout: 36000
-
-      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
-      # from making sure all the files in workers/test_volume have read/write permissions.
-      - run: sudo chown -R circleci:circleci workers/test_volume/
-
-      # This doesn't take as long because the image has already been pulled.
-      - run: .circleci/filter_tests.sh -t agilent
 
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
@@ -143,9 +130,7 @@ jobs:
           command: .circleci/filter_tests.sh -t salmon
           no_output_timeout: 1h
 
-  # This tests workers tests tagged as 'transcriptome' and 'downloaders'
-  # These are grouped together because together they take less time than affy or salmon.
-  transcriptome_and_illumina_tests:
+  tx_illumina_affy_agilent_tests:
     working_directory: ~/refinebio
     machine:
       docker_layer_caching: true
@@ -181,6 +166,18 @@ jobs:
       # Run Illumina tests.
       - run: .circleci/filter_tests.sh -t illumina
 
+      - run:
+          command: .circleci/filter_tests.sh -t affymetrix
+          # This takes a while because the affymetrix image is huge
+          no_output_timeout: 36000
+
+      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
+      # from making sure all the files in workers/test_volume have read/write permissions.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+
+      # This doesn't take as long because the image has already been pulled.
+      - run: .circleci/filter_tests.sh -t agilent
+
 
   deploy:
     machine:
@@ -197,7 +194,9 @@ jobs:
       - checkout
       - run: bash .circleci/git_decrypt.sh
       - run: bash .circleci/update_docker_img.sh
-      - run: bash .circleci/run_terraform.sh
+      - run:
+          command: bash .circleci/run_terraform.sh
+          no_output_timeout: 18000 # Creating a postgres instance can take up to 20 minutes.
       - run: bash .circleci/slackpost.sh robots deploybot
 
 workflows:
@@ -213,7 +212,7 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      - affymetrix_common_agilent_tests:
+      - common_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
@@ -225,7 +224,7 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      - transcriptome_and_illumina_tests:
+      - tx_illumina_affy_agilent_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
