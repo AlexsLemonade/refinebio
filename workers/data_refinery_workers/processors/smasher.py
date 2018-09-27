@@ -485,6 +485,15 @@ def _smash(job_context: Dict) -> Dict:
                             dataset_data=job_context['dataset'].data,
                             processor_job_id=job_context["job"].id,
                         )
+                        job_context['dataset'].success = False
+                        job_context['dataset'].is_processing = False
+                        job_context['job'].failure_reason = "Could not find QN target for Organism!"
+                        job_context['dataset'].failure_reason = "Could not find QN target for Organism!"
+                        job_context['dataset'].save()
+                        # Delay failing this pipeline until the failure notify has been sent
+                        job_context['job'].success = False
+                        job_context['failure_reason'] = str(e)
+                        return job_context
                     else:
                         qn_target_path = qn_target.sync_from_s3()
                         qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None,
