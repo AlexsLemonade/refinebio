@@ -57,7 +57,7 @@ from data_refinery_api.serializers import (
     APITokenSerializer
 )
 
-import datetime as dt
+from datetime import timedelta, datetime
 from django.utils import timezone
 
 ##
@@ -636,12 +636,12 @@ class Stats(APIView):
                 average_time=Avg(F('end_time') - F('start_time')))['average_time']
         }
 
-        if result['average_time'] is None:
+        if not result['average_time']:
             result['average_time'] = 0
         else:
             result['average_time'] = result['average_time'].total_seconds()
 
-        if range_param is not None:
+        if range_param:
             result['timeline'] = self._jobs_timeline(jobs, range_param)
 
         return result
@@ -651,29 +651,28 @@ class Stats(APIView):
             'total': objects.count()
         }
 
-        if range_param is not None:
+        if range_param:
             result['timeline'] = self._created_timeline(Sample.objects, range_param)
 
         return result
 
-    interval_timedelta = {
-        'day': dt.timedelta(days=1),
-        'week': dt.timedelta(weeks=1),
-        'month': dt.timedelta(weeks=4),
-        'year': dt.timedelta(weeks=52)
-    }
-
-    interval_timestep = {
-        'day': dt.timedelta(hours=1),
-        'week': dt.timedelta(days=1),
-        'month': dt.timedelta(days=2),
-        'year': dt.timedelta(weeks=4)
-    }
-
     def _get_time_intervals(self, range_param):
-        current_date = dt.datetime.now(tz=timezone.utc)
-        time_step = self.interval_timestep.get(range_param)
-        start_date = current_date - self.interval_timedelta.get(range_param)
+        interval_timedelta = {
+            'day': timedelta(days=1),
+            'week': timedelta(weeks=1),
+            'month': timedelta(weeks=4),
+            'year': timedelta(weeks=52)
+        }
+        interval_timestep = {
+            'day': timedelta(hours=1),
+            'week': timedelta(days=1),
+            'month': timedelta(days=2),
+            'year': timedelta(weeks=4)
+        }
+
+        current_date = datetime.now(tz=timezone.utc)
+        time_step = interval_timestep.get(range_param)
+        start_date = current_date - interval_timedelta.get(range_param)
 
         intervals = [(current_date - time_step*(i+1), current_date - time_step*i)
                      for i in range(100) if current_date - time_step*(i+1) > start_date]
@@ -700,7 +699,11 @@ class Stats(APIView):
         return [self._get_job_interval(jobs, start, end) for (start, end) in self._get_time_intervals(range_param)]
 
     def _created_timeline(self, objects, range_param):
-        return [({'start': start, 'end': end, 'total': objects.filter(created_at__gte=start, created_at__lte=end).count()}) for (start, end) in self._get_time_intervals(range_param)]
+        return [({
+            'start': start, 
+            'end': end, 
+            'total': objects.filter(created_at__gte=start, created_at__lte=end).count()
+        }) for (start, end) in self._get_time_intervals(range_param)]
 
 ###
 # Transcriptome Indices
