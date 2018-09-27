@@ -71,6 +71,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         # Delay failing this pipeline until the failure notify has been sent
         job_context['dataset'].failure_reason = error_message
         job_context['dataset'].success = False
+        job_context['dataset'].is_processing = False
         job_context['dataset'].save()
         job_context['job'].success = False
         job_context["job"].failure_reason = "Couldn't get any files to smash for Smash job - empty all_sample_files"
@@ -558,6 +559,7 @@ def _smash(job_context: Dict) -> Dict:
                         processor_job_id=job_context["job"].id,
                     )
                     job_context['dataset'].success = False
+                    job_context['dataset'].is_processing = False
                     job_context['job'].failure_reason = "Failure reason: " + str(e)
                     job_context['dataset'].failure_reason = "Failure reason: " + str(e)
                     job_context['dataset'].save()
@@ -648,6 +650,7 @@ def _smash(job_context: Dict) -> Dict:
                         processor_job_id=job_context['job_id'],
                         input_files=job_context['input_files'])
         job_context['dataset'].success = False
+        job_context['dataset'].is_processing = False
         job_context['job'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].save()
@@ -707,6 +710,12 @@ def _upload(job_context: Dict) -> Dict:
         logger.exception("Failed to upload smash result file.", file=job_context["output_file"])
         job_context['job'].success = False
         job_context['job'].failure_reason = str(e)
+
+        job_context['dataset'].success = False
+        job_context['dataset'].is_processing = False
+        job_context['dataset'].failure_reason = "Failed to upload result file."
+        job_context['dataset'].save()
+
         # Delay failing this pipeline until the failure notify has been sent
         # job_context['success'] = False
 
