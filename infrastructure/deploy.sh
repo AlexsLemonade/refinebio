@@ -240,7 +240,7 @@ terraform taint aws_instance.foreman_server_1
 # access for Circle.
 echo "Removing ingress.."
 rm ci_ingress.tf
-terraform apply -var-file=environments/$env.tfvars -auto-approve >  > /dev/null
+terraform apply -var-file=environments/$env.tfvars -auto-approve > /dev/null
 
 # We try to avoid rebuilding the API server because we can only run certbot
 # 5 times a week. Therefore we pull the newest image and restart the API
