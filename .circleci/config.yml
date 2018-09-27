@@ -166,6 +166,10 @@ jobs:
       # Run Illumina tests.
       - run: .circleci/filter_tests.sh -t illumina
 
+      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
+      # from making sure all the files in workers/test_volume have read/write permissions.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+
       - run:
           command: .circleci/filter_tests.sh -t affymetrix
           # This takes a while because the affymetrix image is huge
