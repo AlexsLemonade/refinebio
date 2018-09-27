@@ -302,6 +302,10 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                     if obj.email_address != supplied_email_address:
                         obj.email_address = supplied_email_address
                         obj.save()
+                if email_ccdl_ok:
+                    obj.email_ccdl_ok = email_ccdl_ok
+                    obj.save()
+
                 try:
                     # Hidden method of non-dispatching for testing purposes.
                     if not self.request.data.get('no_send_job', False):
