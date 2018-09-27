@@ -699,11 +699,16 @@ class Stats(APIView):
         return [self._get_job_interval(jobs, start, end) for (start, end) in self._get_time_intervals(range_param)]
 
     def _created_timeline(self, objects, range_param):
-        return [({
-            'start': start, 
-            'end': end, 
-            'total': objects.filter(created_at__gte=start, created_at__lte=end).count()
-        }) for (start, end) in self._get_time_intervals(range_param)]
+        results = []
+        for start, end in self._get_time_intervals(range_param):
+            total = objects.filter(created_at__gte=start, created_at__lte=end).count()
+            stats = {
+                'start': start, 
+                'end': end, 
+                'total': total
+            }
+            results.append(stats)
+        return results
 
 ###
 # Transcriptome Indices
