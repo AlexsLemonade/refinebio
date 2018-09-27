@@ -403,7 +403,8 @@ class CreateDatasetSerializer(serializers.ModelSerializer):
         fields = (
                     'id',
                     'data',
-                    'email_address'
+                    'email_address',
+                    'email_ccdl_ok'
             )
 
     def validate(self, data):

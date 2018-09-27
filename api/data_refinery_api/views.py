@@ -265,9 +265,10 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             # We could be more aggressive with requirements checking here, but
             # there could be use cases where you don't want to supply an email.
             supplied_email_address = self.request.data.get('email_address', None)
-            if supplied_email_address and MAILCHIMP_API_KEY and RUNNING_IN_CLOUD:
+            email_ccdl_ok = self.request.data.get('email_ccdl_ok', False)
+            if supplied_email_address and MAILCHIMP_API_KEY and RUNNING_IN_CLOUD and email_ccdl_ok:
                 try:
-                    client = mailchimp3.MailChimp(mc_user=MAILCHIMP_USER, mc_api=MAILCHIMP_API_KEY)
+                    client = mailchimp3.MailChimp(mc_api=MAILCHIMP_API_KEY, mc_user=MAILCHIMP_USER)
                     data = {
                         "email_address": supplied_email_address,
                         "status": "subscribed"
