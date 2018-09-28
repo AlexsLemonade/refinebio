@@ -96,6 +96,7 @@ class ComputationalResultSerializer(serializers.ModelSerializer):
     annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
     files = ComputedFileSerializer(many=True, source='computedfile_set')
     processor = ProcessorSerializer(many=False)
+    organism_index = OrganismIndexSerializer(many=False)
 
     class Meta:
         model = ComputationalResult
