@@ -18,7 +18,7 @@ from data_refinery_common.models import (
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 
 
 logger = get_and_configure_logger(__name__)
