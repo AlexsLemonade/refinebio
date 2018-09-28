@@ -57,6 +57,9 @@ from data_refinery_api.serializers import (
     APITokenSerializer
 )
 
+from datetime import timedelta, datetime
+from django.utils import timezone
+
 ##
 # Custom Views
 ##
@@ -606,33 +609,106 @@ class ProcessorJobList(PaginatedAPIView):
 class Stats(APIView):
     """
     Statistics about the health of the system.
+
+    ?range=week  includes statics for the last week
     """
 
     def get(self, request, format=None):
+        range_param = request.query_params.dict().pop('range', None)
+
         data = {}
-        data['survey_jobs'] = {}
-        data['survey_jobs']['total'] = SurveyJob.objects.count()
-        data['survey_jobs']['pending'] = SurveyJob.objects.filter(start_time__isnull=True).count()
-        data['survey_jobs']['completed'] = SurveyJob.objects.filter(end_time__isnull=False).count()
-        data['survey_jobs']['open'] = SurveyJob.objects.filter(start_time__isnull=False, end_time__isnull=True).count()
-        # via https://stackoverflow.com/questions/32520655/get-average-of-difference-of-datetime-fields-in-django
-        data['survey_jobs']['average_time'] = SurveyJob.objects.filter(start_time__isnull=False, end_time__isnull=False).aggregate(average_time=Avg(F('end_time') - F('start_time')))['average_time']
-
-        data['downloader_jobs'] = {}
-        data['downloader_jobs']['total'] = DownloaderJob.objects.count()
-        data['downloader_jobs']['pending'] = DownloaderJob.objects.filter(start_time__isnull=True).count()
-        data['downloader_jobs']['completed'] = DownloaderJob.objects.filter(end_time__isnull=False).count()
-        data['downloader_jobs']['open'] = DownloaderJob.objects.filter(start_time__isnull=False, end_time__isnull=True).count()
-        data['downloader_jobs']['average_time'] = DownloaderJob.objects.filter(start_time__isnull=False, end_time__isnull=False).aggregate(average_time=Avg(F('end_time') - F('start_time')))['average_time']
-
-        data['processor_jobs'] = {}
-        data['processor_jobs']['total'] = ProcessorJob.objects.count()
-        data['processor_jobs']['pending'] = ProcessorJob.objects.filter(start_time__isnull=True).count()
-        data['processor_jobs']['completed'] = ProcessorJob.objects.filter(end_time__isnull=False).count()
-        data['processor_jobs']['open'] = ProcessorJob.objects.filter(start_time__isnull=False, end_time__isnull=True).count()
-        data['processor_jobs']['average_time'] = ProcessorJob.objects.filter(start_time__isnull=False, end_time__isnull=False).aggregate(average_time=Avg(F('end_time') - F('start_time')))['average_time']
+        data['survey_jobs'] = self._get_job_stats(SurveyJob.objects, range_param)
+        data['downloader_jobs'] = self._get_job_stats(DownloaderJob.objects, range_param)
+        data['processor_jobs'] = self._get_job_stats(ProcessorJob.objects, range_param)
+        data['samples'] = self._get_object_stats(Sample.objects, range_param)
+        data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
 
         return Response(data)
+
+    def _get_job_stats(self, jobs, range_param):
+        result = {
+            'total': jobs.count(),
+            'pending': jobs.filter(start_time__isnull=True).count(),
+            'completed': jobs.filter(end_time__isnull=False).count(),
+            'open': jobs.filter(start_time__isnull=False, end_time__isnull=True).count(),
+            # via https://stackoverflow.com/questions/32520655/get-average-of-difference-of-datetime-fields-in-django
+            'average_time': jobs.filter(start_time__isnull=False, end_time__isnull=False).aggregate(
+                average_time=Avg(F('end_time') - F('start_time')))['average_time']
+        }
+
+        if not result['average_time']:
+            result['average_time'] = 0
+        else:
+            result['average_time'] = result['average_time'].total_seconds()
+
+        if range_param:
+            result['timeline'] = self._jobs_timeline(jobs, range_param)
+
+        return result
+
+    def _get_object_stats(self, objects, range_param):
+        result = {
+            'total': objects.count()
+        }
+
+        if range_param:
+            result['timeline'] = self._created_timeline(Sample.objects, range_param)
+
+        return result
+
+    def _get_time_intervals(self, range_param):
+        interval_timedelta = {
+            'day': timedelta(days=1),
+            'week': timedelta(weeks=1),
+            'month': timedelta(weeks=4),
+            'year': timedelta(weeks=52)
+        }
+        interval_timestep = {
+            'day': timedelta(hours=1),
+            'week': timedelta(days=1),
+            'month': timedelta(days=2),
+            'year': timedelta(weeks=4)
+        }
+
+        current_date = datetime.now(tz=timezone.utc)
+        time_step = interval_timestep.get(range_param)
+        start_date = current_date - interval_timedelta.get(range_param)
+
+        intervals = [(current_date - time_step*(i+1), current_date - time_step*i)
+                     for i in range(100) if current_date - time_step*(i+1) > start_date]
+        return intervals[::-1]
+
+    def _get_job_interval(self, jobs, start, end):
+        filtered_jobs = jobs.filter(created_at__gte=start, created_at__lte=end)
+        pending = filtered_jobs and jobs.filter(start_time__isnull=True)
+        failed = filtered_jobs and jobs.filter(success=False)
+        completed = filtered_jobs and jobs.filter(success=True)
+        open = filtered_jobs and jobs.filter(success__isnull=True)
+
+        return {
+            'start': start,
+            'end': end,
+            'total': filtered_jobs.count(),
+            'completed': completed.count(),
+            'pending': pending.count(),
+            'failed': failed.count(),
+            'open': open.count()
+        }
+
+    def _jobs_timeline(self, jobs, range_param):
+        return [self._get_job_interval(jobs, start, end) for (start, end) in self._get_time_intervals(range_param)]
+
+    def _created_timeline(self, objects, range_param):
+        results = []
+        for start, end in self._get_time_intervals(range_param):
+            total = objects.filter(created_at__gte=start, created_at__lte=end).count()
+            stats = {
+                'start': start, 
+                'end': end, 
+                'total': total
+            }
+            results.append(stats)
+        return results
 
 ###
 # Transcriptome Indices
