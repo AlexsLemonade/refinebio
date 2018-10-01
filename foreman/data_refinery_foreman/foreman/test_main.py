@@ -259,7 +259,7 @@ class SurveyTestCase(TestCase):
         # Make sure no additional job was created.
         self.assertEqual(jobs.count(), 1)
 
-    def create_processor_job(self, pipline="AFFY_TO_PCL", ram_amount=2048):
+    def create_processor_job(self, pipeline="AFFY_TO_PCL", ram_amount=2048):
         job = ProcessorJob(pipeline_applied=pipline,
                            nomad_job_id="PROCESSOR/dispatch-1528945054-e8eaf540",
                            ram_amount=ram_amount,
@@ -307,8 +307,6 @@ class SurveyTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
-        ProcessorJob.objects.all().delete()
-
     @patch('data_refinery_foreman.foreman.main.send_job')
     def test_requeuing_processor_job_w_more_ram(self, mock_send_job):
         job = self.create_processor_job(pipeline="SALMON", ram_amount=8192)
@@ -327,8 +325,6 @@ class SurveyTestCase(TestCase):
 
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
-
-        ProcessorJob.objects.all().delete()
 
     @patch('data_refinery_foreman.foreman.main.send_job')
     def test_repeated_processor_failures(self, mock_send_job):
