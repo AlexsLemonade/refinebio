@@ -319,12 +319,10 @@ class SurveyTestCase(TestCase):
         self.assertTrue(original_job.retried)
         self.assertEqual(original_job.num_retries, 0)
         self.assertFalse(original_job.success)
-
-        # import pdb
-        # pdb.set_trace()
-
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
+        self.assertEqual(original_job.ram_amount, 8192)
+        self.assertEqual(retried_job.ram_amount, 12288)
 
     @patch('data_refinery_foreman.foreman.main.send_job')
     def test_repeated_processor_failures(self, mock_send_job):
