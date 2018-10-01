@@ -260,7 +260,7 @@ class SurveyTestCase(TestCase):
         self.assertEqual(jobs.count(), 1)
 
     def create_processor_job(self, pipeline="AFFY_TO_PCL", ram_amount=2048):
-        job = ProcessorJob(pipeline_applied=pipline,
+        job = ProcessorJob(pipeline_applied=pipeline,
                            nomad_job_id="PROCESSOR/dispatch-1528945054-e8eaf540",
                            ram_amount=ram_amount,
                            num_retries=0,

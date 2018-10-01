@@ -407,8 +407,10 @@ class ExperimentDetail(APIView):
         try:
             return Experiment.public_objects.get(pk=pk)
         except Experiment.DoesNotExist:
+            raise Http404
+        except Exception:
             try:
-                return Experiment.public_objects.get(accession_code=accession_code)
+                return Experiment.public_objects.get(accession_code=pk)
             except Experiment.DoesNotExist:
                 raise Http404
             raise Http404
