@@ -1,3 +1,6 @@
+import datetime
+import sys
+
 from django.db import transaction
 from django.utils import timezone
 from retrying import retry
@@ -26,6 +29,8 @@ SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
 # TODO: extend this list.
 BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
 
+MAX_JOBS_PER_NODE = 1
+
 
 def start_job(job_id: int) -> DownloaderJob:
     """Record in the database that this job is being started.
@@ -40,12 +45,32 @@ def start_job(job_id: int) -> DownloaderJob:
         logger.error("Cannot find downloader job record.", downloader_job=job_id)
         raise
 
+    worker_id = get_instance_id()
+    num_jobs_currently_running = DownloaderJob.objects.filter(
+                                worker_id=worker_id, 
+                                start_time__isnull=False, 
+                                end_time__isnull=True
+                            ).count()
+
+    # Death and rebirth.
+    if num_jobs_currently_running >= MAX_JOBS_PER_NODE:
+        # Wait for the death window
+        while True:
+            minute = str(datetime.datetime.now().minute)[-1]
+            if minute in ["0", "5"]:
+                job.start_time = None
+                job.num_retries = job.num_retries - 1
+                job.save()
+
+                # What is dead may never die!
+                sys.exit(0)
+
     # This job should not have been started.
     if job.start_time is not None:
         logger.error("This downloader job has already been started!!!", downloader_job=job.id)
         raise Exception("downloaders.start_job called on a job that has already been started!")
 
-    job.worker_id = get_instance_id()
+    job.worker_id = worker_id
     job.worker_version = SYSTEM_VERSION
     job.start_time = timezone.now()
     job.save()
