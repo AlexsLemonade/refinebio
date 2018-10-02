@@ -434,6 +434,8 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'expires_on',
                     's3_bucket',
                     's3_key',
+                    'success',
+                    'failure_reason',
                     'created_at',
                     'last_modified',
                     'start'
@@ -458,6 +460,12 @@ class DatasetSerializer(serializers.ModelSerializer):
                             'read_only': True,
                         },
                         's3_key': {
+                            'read_only': True,
+                        },
+                        'success': {
+                            'read_only': True,
+                        },
+                        'failure_reason': {
                             'read_only': True,
                         },
                         'created_at': {
