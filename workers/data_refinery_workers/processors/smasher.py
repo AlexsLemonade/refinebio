@@ -760,7 +760,7 @@ def _notify(job_context: Dict) -> Dict:
                 SUBJECT = "There was a problem processing your refine.bio dataset :("
                 BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(job_context['dataset'].id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
                 # Link to the dataset page, where the user can re-try the download job
-                dataset_url = 'http://www.refine.bio/dataset/' + str(job_context['dataset'].id)
+                dataset_url = 'https://www.refine.bio/dataset/' + str(job_context['dataset'].id)
                 FORMATTED_HTML = BODY_ERROR_HTML.replace('REPLACE_DATASET_URL', dataset_url).replace('REPLACE_ERROR_TEXT', job_context['job'].failure_reason)
                 job_context['success'] = False
             else:
