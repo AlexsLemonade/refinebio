@@ -281,7 +281,7 @@ resource "aws_autoscaling_group" "clients" {
     name = "asg-clients-${var.user}-${var.stage}"
     max_size = "${var.max_clients}"
     min_size = "0"
-    desired_capacity = "4"
+    desired_capacity = "1"
     health_check_grace_period = 300
     health_check_type = "EC2"
 
