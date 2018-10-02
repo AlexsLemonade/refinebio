@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db.models import Count
 from django.db.models.aggregates import Avg
 from django.db.models.expressions import F
-from django.http import Http400, Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -413,7 +413,7 @@ class ExperimentDetail(APIView):
                 return Experiment.public_objects.get(accession_code=pk)
             except Experiment.DoesNotExist:
                 raise Http404
-            raise Http400
+            return HttpResponseBadRequest("Bad PK or Accession") 
 
     def get(self, request, pk, format=None):
         experiment = self.get_object(pk)
