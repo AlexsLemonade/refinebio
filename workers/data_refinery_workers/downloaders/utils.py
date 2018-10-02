@@ -28,8 +28,7 @@ logger = get_and_configure_logger(__name__)
 SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
 # TODO: extend this list.
 BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
-
-MAX_JOBS_PER_NODE = 1
+MAX_JOBS_PER_NODE = 15
 
 
 def start_job(job_id: int) -> DownloaderJob:
