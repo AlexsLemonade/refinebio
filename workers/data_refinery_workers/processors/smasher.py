@@ -37,6 +37,7 @@ RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-b
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD", "False")
 BODY_HTML = Path('data_refinery_workers/processors/smasher_email.min.html').read_text().replace('\n', '')
+BODY_ERROR_HTML = Path('data_refinery_workers/processors/smasher_email_error.min.html').read_text().replace('\n', '')
 logger = get_and_configure_logger(__name__)
 
 
@@ -758,7 +759,9 @@ def _notify(job_context: Dict) -> Dict:
             if job_context['job'].failure_reason not in ['', None]:
                 SUBJECT = "There was a problem processing your refine.bio dataset :("
                 BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(job_context['dataset'].id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
-                FORMATTED_HTML = "We tried but were unable to process your requested dataset. Error was: <br /><br />" + job_context['job'].failure_reason + "<br />Dataset: " + str(job_context['dataset'].id) + "<br /> We have been notified and are looking into the problem. <br /><br />Sorry!"
+                # Link to the dataset page, where the user can re-try the download job
+                dataset_url = 'http://www.refine.bio/dataset/' + str(job_context['dataset'].id)
+                FORMATTED_HTML = BODY_ERROR_HTML.replace('REPLACE_DATASET_URL', dataset_url).replace('REPLACE_ERROR_TEXT', job_context['job'].failure_reason)
                 job_context['success'] = False
             else:
                 SUBJECT = "Your refine.bio Dataset is Ready!"
