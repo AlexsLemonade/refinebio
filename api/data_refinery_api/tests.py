@@ -639,6 +639,29 @@ class APITestCases(APITestCase):
 
 class ProcessorTestCases(APITestCase):
     def setUp(self):
+        transcriptome_env = {
+            "os_pkg": {
+                "g++": "4:5.3.1-1ubuntu1",
+                "python3": "3.5.1-3",
+                "python3-pip": "8.1.1-2ubuntu0.4"
+            },
+            "python": {
+                "Django": "2.0.6",
+                "data-refinery-common": "1.0.1"
+            },
+            "cmd_line": {
+                "salmon --version": "salmon 0.9.1",
+                "rsem-calculate-expression --version": "Current version: RSEM v1.3.1"
+            },
+            "os_distribution": "Ubuntu 16.04.5 LTS"
+        }
+        self.transcriptome_proc = Processor.objects.create(
+            name="Transcriptome Index",
+            version="1.3.1",
+            docker_image="ccdl/transcriptome_img:v1.3.1",
+            environment=transcriptome_env
+        )
+
         salmon_quant_env = {
             'os_distribution': 'Ubuntu 16.04.4 LTS',
             'os_pkg': {
@@ -695,15 +718,26 @@ class ProcessorTestCases(APITestCase):
         self.assertEqual(processors[1]['environment']['cmd_line']['salmontools --version'],
                          'Salmon Tools 0.1.0')
 
-    def test_processor_in_sample(self):
+    def test_processor_and_organism_in_sample(self):
         sample = Sample.objects.create(title="fake sample")
-        result = ComputationalResult.objects.create(processor=self.salmon_quant_proc)
+        organism = Organism.get_object_for_name("HOMO_SAPIENS")
+        transcriptome_result = ComputationalResult.objects.create(processor=self.transcriptome_proc)
+        organism_index = OrganismIndex.objects.create(organism=organism,
+                                                      result=transcriptome_result,
+                                                      index_type="TRANSCRIPTOME_LONG")
+        result = ComputationalResult.objects.create(processor=self.salmon_quant_proc,
+                                                    organism_index=organism_index)
         sra = SampleResultAssociation.objects.create(sample=sample, result=result)
 
         response = self.client.get(reverse('samples_detail',
                                            kwargs={'pk': sample.id}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
         processor = response.json()['results'][0]['processor']
         self.assertEqual(processor['name'], self.salmon_quant_proc.name)
         self.assertEqual(processor['environment']['os_pkg']['python3'],
                          self.salmon_quant_proc.environment['os_pkg']['python3'])
+
+        organism_index = response.json()['results'][0]['organism_index']
+        self.assertEqual(organism_index["result"], transcriptome_result.id)
+        self.assertEqual(organism_index["index_type"], "TRANSCRIPTOME_LONG")

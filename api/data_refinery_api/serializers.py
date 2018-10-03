@@ -53,10 +53,12 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrganismIndex
         fields = (
+                    'index_type',
                     's3_url',
                     'source_version',
                     'assembly_name',
                     'salmon_version',
+                    'result',
                     'last_modified',
                 )
 
