@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from contextlib import closing
 from django.test import TestCase, tag
