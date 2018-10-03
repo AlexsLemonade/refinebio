@@ -658,7 +658,7 @@ class Stats(APIView):
         }
 
         if range_param:
-            result['timeline'] = self._created_timeline(Sample.objects, range_param)
+            result['timeline'] = self._created_timeline(objects, range_param)
 
         return result
 
