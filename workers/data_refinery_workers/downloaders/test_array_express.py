@@ -133,7 +133,7 @@ class DownloadArrayExpressTestCase(TestCase):
 
         assoc = DownloaderJobOriginalFileAssociation()
         assoc.original_file = original_file
-        assoc.downloader_job = dlj1
+        assoc.downloader_job = dlj3
         assoc.save()
 
         sample = Sample()
@@ -147,10 +147,11 @@ class DownloadArrayExpressTestCase(TestCase):
         OriginalFileSampleAssociation.objects.get_or_create(sample=sample, original_file=original_file)
 
         try:
-            array_express.download_array_express(dlj3.id)
+            utils.start_job(dlj3.id)
         except SystemExit as e:
             # This is supposed to happen!
             self.assertTrue(True)
-        except:
+        except Exception as e:
+
             # This isn't!
             self.assertTrue(False)
