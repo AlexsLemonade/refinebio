@@ -146,12 +146,26 @@ class DownloadArrayExpressTestCase(TestCase):
 
         OriginalFileSampleAssociation.objects.get_or_create(sample=sample, original_file=original_file)
 
+        exited = False
         try:
-            utils.start_job(dlj3.id)
+            utils.start_job(dlj3.id, 2)
         except SystemExit as e:
             # This is supposed to happen!
             self.assertTrue(True)
+            exited = True
         except Exception as e:
-
             # This isn't!
             self.assertTrue(False)
+        self.assertTrue(exited)
+
+        exited = False
+        try:
+            utils.start_job(dlj3.id, 15)
+        except SystemExit as e:
+            # This is not supposed to happen!
+            self.assertTrue(False)
+            exited = True
+        except Exception as e:
+            # This is!
+            self.assertTrue(True)
+        self.assertFalse(exited)

@@ -31,7 +31,7 @@ BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
 MAX_JOBS_PER_NODE = 15
 
 
-def start_job(job_id: int) -> DownloaderJob:
+def start_job(job_id: int, max_jobs_per_node=MAX_JOBS_PER_NODE) -> DownloaderJob:
     """Record in the database that this job is being started.
 
     Retrieves the job from the database and returns it after marking
@@ -52,7 +52,7 @@ def start_job(job_id: int) -> DownloaderJob:
                             ).count()
 
     # Death and rebirth.
-    if num_jobs_currently_running >= MAX_JOBS_PER_NODE:
+    if num_jobs_currently_running >= max_jobs_per_node:
         # Wait for the death window
         while True:
             minute = str(datetime.datetime.now().minute)[-1]
