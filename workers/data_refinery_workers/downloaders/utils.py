@@ -28,10 +28,10 @@ logger = get_and_configure_logger(__name__)
 SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
 # TODO: extend this list.
 BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
-MAX_JOBS_PER_NODE = 15
+MAX_DOWNLOADER_JOBS_PER_NODE = get_env_variable("MAX_DOWNLOADER_JOBS_PER_NODE", 8)
 
 
-def start_job(job_id: int, max_jobs_per_node=MAX_JOBS_PER_NODE) -> DownloaderJob:
+def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_NODE) -> DownloaderJob:
     """Record in the database that this job is being started.
 
     Retrieves the job from the database and returns it after marking
@@ -45,14 +45,14 @@ def start_job(job_id: int, max_jobs_per_node=MAX_JOBS_PER_NODE) -> DownloaderJob
         raise
 
     worker_id = get_instance_id()
-    num_jobs_currently_running = DownloaderJob.objects.filter(
+    num_downloader_jobs_currently_running = DownloaderJob.objects.filter(
                                 worker_id=worker_id, 
                                 start_time__isnull=False, 
                                 end_time__isnull=True
                             ).count()
 
     # Death and rebirth.
-    if num_jobs_currently_running >= max_jobs_per_node:
+    if num_downloader_jobs_currently_running >= max_downloader_jobs_per_node:
         # Wait for the death window
         while True:
             minute = str(datetime.datetime.now().minute)[-1]
