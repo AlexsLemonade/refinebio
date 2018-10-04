@@ -263,6 +263,7 @@ class APITestCases(APITestCase):
         ex2.description = "SOWILLTHIS"
         ex2.technology = "RNA-SEQ"
         ex2.submitter_institution = "Funkytown"
+        ex2.has_publication = True
         experiments.append(ex2)
 
         ex3 = Experiment()
@@ -336,8 +337,13 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('search'), {'search': 'THISWILLBEINASEARCHRESULT'})
         self.assertEqual(response.json()['count'], 3)
 
-        response = self.client.get(reverse('search'), {'search': 'TEMPURA'})
-        self.assertEqual(response.json()['count'], 1)
+        # Test filter
+        response = self.client.get(reverse('search'), {'search': 'FINDME', 'has_publication': True})
+        for result in response.json()['results']:
+            self.assertTrue(result['has_publication'])
+        response = self.client.get(reverse('search'), {'search': 'FINDME', 'has_publication': False})
+        for result in response.json()['results']:
+            self.assertFalse(result['has_publication'])
 
         # Test search and filter
         response = self.client.get(reverse('search'),
@@ -349,7 +355,7 @@ class APITestCases(APITestCase):
         self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(ex.platforms))
         self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(['AFFY', 'ILLUMINA']))
         self.assertEqual(response.json()['filters']['technology'], {'FAKE-TECH': 1, 'MICROARRAY': 2, 'RNA-SEQ': 1})
-        self.assertEqual(response.json()['filters']['publication'], {})
+        self.assertEqual(response.json()['filters']['publication'], {'has_publication': 1})
         self.assertEqual(response.json()['filters']['organism'], {'Extra-Terrestrial-1982': 1, 'HOMO_SAPIENS': 3})
 
         response = self.client.get(reverse('search'),
