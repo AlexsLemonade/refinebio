@@ -91,7 +91,7 @@ urlpatterns = [
 
     # Endpoints / Self-documentation
     url(r'^experiments/$', ExperimentList.as_view(), name="experiments"),
-    url(r'^experiments/(?P<pk>[0-9]+)/$', ExperimentDetail.as_view(), name="experiments_detail"),
+    url(r'^experiments/(?P<pk>.+)/$', ExperimentDetail.as_view(), name="experiments_detail"),
     url(r'^samples/$', SampleList.as_view(), name="samples"),
     url(r'^samples/(?P<pk>[0-9]+)/$', SampleDetail.as_view(), name="samples_detail"),
     url(r'^organisms/$', OrganismList.as_view(), name="organisms"),
