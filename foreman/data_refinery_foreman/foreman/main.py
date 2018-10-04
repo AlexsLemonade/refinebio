@@ -232,9 +232,20 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     """
     num_retries = last_job.num_retries + 1
 
+    # The Salmon pipeline is quite RAM-sensitive.
+    # Try it again with an increased RAM amount, if possible.
+    new_ram_amount = last_job.ram_amount
+    if last_job.pipeline_applied == "SALMON":
+        if new_ram_amount == 4096:
+            new_ram_amount = 8192
+        elif new_ram_amount == 8192:
+            new_ram_amount = 12288
+        elif new_ram_amount == 12288:
+            new_ram_amount = 16384
+
     new_job = ProcessorJob(num_retries=num_retries,
                            pipeline_applied=last_job.pipeline_applied,
-                           ram_amount=last_job.ram_amount,
+                           ram_amount=new_ram_amount,
                            volume_index=last_job.volume_index)
     new_job.save()
 
