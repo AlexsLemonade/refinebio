@@ -13,6 +13,7 @@ from data_refinery_api.serializers import (
     DetailedSampleSerializer,
     ExperimentSerializer,
     InstitutionSerializer,
+    OrganismIndexSerializer,
     OrganismSerializer,
     PlatformSerializer,
     SampleSerializer,
@@ -34,6 +35,7 @@ from data_refinery_common.models import (
     ExperimentOrganismAssociation,
     ExperimentSampleAssociation,
     Organism,
+    OrganismIndex,
     OriginalFile,
     OriginalFileSampleAssociation,
     Processor,
@@ -693,15 +695,26 @@ class ProcessorTestCases(APITestCase):
         self.assertEqual(processors[1]['environment']['cmd_line']['salmontools --version'],
                          'Salmon Tools 0.1.0')
 
-    def test_processor_in_sample(self):
+    def test_processor_and_organism_in_sample(self):
         sample = Sample.objects.create(title="fake sample")
-        result = ComputationalResult.objects.create(processor=self.salmon_quant_proc)
+        organism = Organism.get_object_for_name("HOMO_SAPIENS")
+        transcriptome_result = ComputationalResult.objects.create()
+        organism_index = OrganismIndex.objects.create(organism=organism,
+                                                      result=transcriptome_result,
+                                                      index_type="TRANSCRIPTOME_LONG")
+        result = ComputationalResult.objects.create(processor=self.salmon_quant_proc,
+                                                    organism_index=organism_index)
         sra = SampleResultAssociation.objects.create(sample=sample, result=result)
 
         response = self.client.get(reverse('samples_detail',
                                            kwargs={'pk': sample.id}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
         processor = response.json()['results'][0]['processor']
         self.assertEqual(processor['name'], self.salmon_quant_proc.name)
         self.assertEqual(processor['environment']['os_pkg']['python3'],
                          self.salmon_quant_proc.environment['os_pkg']['python3'])
+
+        organism_index = response.json()['results'][0]['organism_index']
+        self.assertEqual(organism_index["result"], transcriptome_result.id)
+        self.assertEqual(organism_index["index_type"], "TRANSCRIPTOME_LONG")
