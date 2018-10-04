@@ -157,8 +157,13 @@ variable "volume_size_in_gb" {
 }
 
 variable "max_downloader_jobs_per_nodes" {
-  default = "8"
+  default = 8
 }
+
+variable "salmon_iops" {
+  default = 125
+}
+
 
 # Output our production environment variables.
 output "environment_variables" {
@@ -238,6 +243,8 @@ output "environment_variables" {
     {name = "MAX_CLIENTS"
       value = "${var.max_clients}"},
     {name = "MAX_DOWNLOADER_JOBS_PER_NODE"
-      value = "${var.max_downloader_jobs_per_nodes}"}
+      value = "${var.max_downloader_jobs_per_nodes}"},
+    {name = "SALMON_IOPS"
+      value = "${var.salmon_iops}"}
   ]
 }

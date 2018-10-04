@@ -60,6 +60,7 @@ job "SALMON_${{INDEX}}_${{RAM}}" {
         cpu = 1024
         # Memory is in MB of RAM.
         memory = ${{RAM}}
+        iops = ${{SALMON_IOPS}}
       }
 
       logs {
