@@ -52,7 +52,7 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
                             ).count()
 
     # Death and rebirth.
-    if num_downloader_jobs_currently_running >= max_downloader_jobs_per_node:
+    if num_downloader_jobs_currently_running >= int(max_downloader_jobs_per_node):
         # Wait for the death window
         while True:
             minute = str(datetime.datetime.now().minute)[-1]
