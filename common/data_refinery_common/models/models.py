@@ -92,7 +92,7 @@ class Sample(models.Model):
     platform_name = models.CharField(max_length=256, blank=True)
     technology = models.CharField(max_length=256, blank=True) # MICROARRAY, RNA-SEQ
     manufacturer = models.CharField(max_length=256, blank=True)
-    protocol_info = JSONField(default={})
+    protocol_info = JSONField(default=dict)
 
     # Scientific Properties
     sex = models.CharField(max_length=255, blank=True)
@@ -197,7 +197,7 @@ class SampleAnnotation(models.Model):
     sample = models.ForeignKey(Sample, blank=False, null=False, on_delete=models.CASCADE)
 
     # Properties
-    data = JSONField(default={})
+    data = JSONField(default=dict)
     is_ccdl = models.BooleanField(default=False)
 
     # Common Properties
@@ -257,13 +257,13 @@ class Experiment(models.Model):
     # https://www.postgresql.org/docs/9.0/static/datatype-character.html
     title = models.TextField()
     description = models.TextField()
-    protocol_description = JSONField(default={})
+    protocol_description = JSONField(default=dict)
     technology = models.CharField(max_length=256, blank=True)
     submitter_institution = models.CharField(max_length=256, blank=True)
     has_publication = models.BooleanField(default=False)
     publication_title = models.TextField(default="")
     publication_doi = models.CharField(max_length=64, blank=True)
-    publication_authors = ArrayField(models.TextField(), default=[])
+    publication_authors = ArrayField(models.TextField(), default=list)
     pubmed_id = models.CharField(max_length=32, blank=True)
     source_first_published = models.DateTimeField(null=True)
     source_last_modified = models.DateTimeField(null=True)
@@ -356,7 +356,7 @@ class ExperimentAnnotation(models.Model):
     experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
 
     # Properties
-    data = JSONField(default={})
+    data = JSONField(default=dict)
     is_ccdl = models.BooleanField(default=False)
 
     # Common Properties
@@ -376,7 +376,7 @@ class Pipeline(models.Model):
     """Pipeline that is associated with a series of ComputationalResult records."""
 
     name = models.CharField(max_length=255)
-    steps = ArrayField(models.IntegerField(), default=[])
+    steps = ArrayField(models.IntegerField(), default=list)
 
     class Meta:
         db_table = "pipelines"
@@ -388,7 +388,7 @@ class Processor(models.Model):
     name = models.CharField(max_length=255)
     version = models.CharField(max_length=64)
     docker_image = models.CharField(max_length=255)
-    environment = JSONField(default={})
+    environment = JSONField(default=dict)
 
     class Meta:
         db_table = "processors"
@@ -416,7 +416,7 @@ class ComputationalResult(models.Model):
     objects = models.Manager()
     public_objects = PublicObjectsManager()
 
-    commands = ArrayField(models.TextField(), default=[])
+    commands = ArrayField(models.TextField(), default=list)
     processor = models.ForeignKey(Processor, blank=True, null=True, on_delete=models.CASCADE)
 
     # The Organism Index used to process the sample.
@@ -458,7 +458,7 @@ class ComputationalResultAnnotation(models.Model):
         ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
 
     # Properties
-    data = JSONField(default={})
+    data = JSONField(default=dict)
     is_ccdl = models.BooleanField(default=True)
 
     # Common Properties
@@ -843,7 +843,7 @@ class Dataset(models.Model):
     # Experiments and samples live here: {'E-ABC-1': ['SAMP1', 'SAMP2']}
     # This isn't going to be queryable, so we can use JSON-in-text, just make
     # sure we validate properly in and out!
-    data = JSONField(default={})
+    data = JSONField(default=dict)
 
     # Processing properties
     aggregate_by = models.CharField(max_length=255, choices=AGGREGATE_CHOICES, default="EXPERIMENT")
