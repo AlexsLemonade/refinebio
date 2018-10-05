@@ -156,7 +156,7 @@ variable "volume_size_in_gb" {
   default = "9000"
 }
 
-variable "max_downloader_jobs_per_nodes" {
+variable "max_downloader_jobs_per_node" {
   default = 8
 }
 
@@ -238,6 +238,6 @@ output "environment_variables" {
     {name = "MAX_CLIENTS"
       value = "${var.max_clients}"},
     {name = "MAX_DOWNLOADER_JOBS_PER_NODE"
-      value = "${var.max_downloader_jobs_per_nodes}"}
+      value = "${var.max_downloader_jobs_per_node}"}
   ]
 }

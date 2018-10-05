@@ -46,17 +46,19 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
 
     worker_id = get_instance_id()
     num_downloader_jobs_currently_running = DownloaderJob.objects.filter(
-                                worker_id=worker_id, 
-                                start_time__isnull=False, 
-                                end_time__isnull=True
+                                worker_id=worker_id,
+                                start_time__isnull=False,
+                                end_time__isnull=True,
+                                success__isnull=True,
+                                retried=False
                             ).count()
 
     # Death and rebirth.
     if num_downloader_jobs_currently_running >= int(max_downloader_jobs_per_node):
         # Wait for the death window
         while True:
-            minute = str(datetime.datetime.now().minute)[-1]
-            if minute in ["0", "5"]:
+            second = str(datetime.datetime.now().second)[-2]
+            if second in ["00", "15", "30", "45"]:
                 job.start_time = None
                 job.num_retries = job.num_retries - 1
                 job.save()
