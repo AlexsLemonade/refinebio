@@ -43,9 +43,9 @@ def sigterm_handler(sig, frame):
     if not CURRENT_JOB:
         sys.exit(0)
     else:
-        job.start_time = None
-        job.num_retries = job.num_retries - 1
-        job.save()
+        CURRENT_JOB.start_time = None
+        CURRENT_JOB.num_retries = CURRENT_JOB.num_retries - 1
+        CURRENT_JOB.save()
         sys.exit(0)
 
 def start_job(job_context: Dict):
