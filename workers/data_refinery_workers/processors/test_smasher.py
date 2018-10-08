@@ -229,6 +229,7 @@ class SmasherTestCase(TestCase):
             zf = zipfile.ZipFile(final_context['output_file'])
             namelist = zf.namelist()
 
+            self.assertFalse(True in final_frame.index.str.contains('AFFX-'))
             self.assertTrue('GSE51081/metadata_GSE51081.tsv' in namelist)
             self.assertTrue('aggregated_metadata.json' in namelist)
             self.assertTrue('README.md' in namelist)

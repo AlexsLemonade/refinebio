@@ -388,6 +388,9 @@ def _smash(job_context: Dict) -> Dict:
                     # So, we chop them off and don't worry about it.
                     data.index = data.index.str.replace('_at', '')
 
+                    # Remove any lingering Affymetrix control probes ("AFFX-")
+                    data = data[~data.index.str.contains('AFFX-')]
+
                     # If there are any _versioned_ gene identifiers, remove that
                     # version information. We're using the latest brainarray for everything anyway.
                     # Jackie says this is okay.
