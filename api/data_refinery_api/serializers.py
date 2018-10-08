@@ -53,10 +53,12 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrganismIndex
         fields = (
+                    'index_type',
                     's3_url',
                     'source_version',
                     'assembly_name',
                     'salmon_version',
+                    'result',
                     'last_modified',
                 )
 
@@ -96,6 +98,7 @@ class ComputationalResultSerializer(serializers.ModelSerializer):
     annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
     files = ComputedFileSerializer(many=True, source='computedfile_set')
     processor = ProcessorSerializer(many=False)
+    organism_index = OrganismIndexSerializer(many=False)
 
     class Meta:
         model = ComputationalResult
@@ -434,6 +437,8 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'expires_on',
                     's3_bucket',
                     's3_key',
+                    'success',
+                    'failure_reason',
                     'created_at',
                     'last_modified',
                     'start'
@@ -458,6 +463,12 @@ class DatasetSerializer(serializers.ModelSerializer):
                             'read_only': True,
                         },
                         's3_key': {
+                            'read_only': True,
+                        },
+                        'success': {
+                            'read_only': True,
+                        },
+                        'failure_reason': {
                             'read_only': True,
                         },
                         'created_at': {

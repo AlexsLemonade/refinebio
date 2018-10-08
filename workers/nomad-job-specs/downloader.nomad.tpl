@@ -57,6 +57,7 @@ job "DOWNLOADER" {
         USE_S3 = "${{USE_S3}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
+        MAX_DOWNLOADER_JOBS_PER_NODE = "${{MAX_DOWNLOADER_JOBS_PER_NODE}}"
       }
 
       # The resources the job will require.
@@ -64,7 +65,7 @@ job "DOWNLOADER" {
         # CPU is in AWS's CPU units.
         cpu = 512
         # Memory is in MB of RAM.
-        memory = 12289
+        memory = 4096
       }
 
       logs {

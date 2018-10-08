@@ -281,9 +281,13 @@ resource "aws_autoscaling_group" "clients" {
     name = "asg-clients-${var.user}-${var.stage}"
     max_size = "${var.max_clients}"
     min_size = "0"
+    desired_capacity = "2"
     health_check_grace_period = 300
     health_check_type = "EC2"
-    default_cooldown = 0
+
+    # 300 seconds so we don't start more than an instance worth of
+    # downloader jobs at once as we scale up.
+    default_cooldown = 300
 
     # Super important flag. Makes it so that terraform doesn't fail
     # every time because it can't acquire spot instances fast enough
