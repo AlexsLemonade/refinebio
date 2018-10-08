@@ -1,3 +1,5 @@
+import nomad
+import socket
 import time
 from nomad import Nomad
 from nomad.api.exceptions import URLNotFoundNomadException
@@ -210,8 +212,12 @@ def retry_lost_downloader_jobs() -> None:
                 # If this job really should be restarted we'll get it in the next loop.
                 if timezone.now() - job.created_at > MIN_LOOP_TIME:
                     lost_jobs.append(job)
+        except socket.timeout:
+            logger.info("Timeout connecting to Nomad - is Nomad down?", job_id=job.id)
+        except nomad.api.exceptions.BaseNomadException:
+            logger.info("Problem connecting to Nomad - is Nomad down?", job_id=job.id)
         except URLNotFoundNomadException:
-            logger.exception(("Determined that a downloader job needs to be requeued because "
+            logger.info(("Determined that a downloader job needs to be requeued because "
                               "querying for its Nomad job failed: "),
                              job_id=job.id
             )
