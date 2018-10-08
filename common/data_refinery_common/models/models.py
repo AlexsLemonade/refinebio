@@ -325,10 +325,12 @@ class Experiment(models.Model):
         return fields
 
     def get_sample_technologies(self):
-        """ Get all metadata fields that are non-empty for at least one sample in the experiment.
-        See https://github.com/AlexsLemonade/refinebio-frontend/issues/211 for why this is needed.
+        """ Get a list of unique technologies for all of the associated samples
         """
-        technologies = list(filter(None, list(set([t['technology'] for t in self.samples.all().values('technology')]))))
+        tech_values_qs = self.samples.all().values('technology')
+        tech_values = [t['technology'] for t in technology_values]
+        unique_tech_values = list(set(tech_values))
+        technologies = list(filter(None, unique_tech_values))
         return technologies
 
     @property
