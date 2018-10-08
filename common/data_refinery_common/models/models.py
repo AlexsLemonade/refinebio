@@ -328,7 +328,7 @@ class Experiment(models.Model):
         """ Get a list of unique technologies for all of the associated samples
         """
         tech_values_qs = self.samples.all().values('technology')
-        tech_values = [t['technology'] for t in technology_values]
+        tech_values = [t['technology'] for t in tech_values_qs]
         unique_tech_values = list(set(tech_values))
         technologies = list(filter(None, unique_tech_values))
         return technologies
