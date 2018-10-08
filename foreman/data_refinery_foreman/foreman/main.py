@@ -1,3 +1,4 @@
+import nomad
 import socket
 import time
 from nomad import Nomad
