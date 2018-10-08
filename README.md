@@ -27,10 +27,13 @@ Refine.bio currently has four sub-projects contained within this repo:
     - [Virtual Environment](#virtual-environment)
     - [Common Dependecies](#common-dependecies)
     - [Services](#services)
-      - [Nomad](#nomad)
       - [Postgres](#postgres)
+      - [Nomad](#nomad)
   - [Testing](#testing)
-  - [Development Helpers](#development-helpers)
+    - [API](#api)
+    - [Common](#common)
+    - [Foreman](#foreman)
+    - [Workers](#workers)
   - [Style](#style)
   - [Gotchas](#gotchas)
 - [Running Locally](#running-locally)
@@ -41,19 +44,16 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Processor Jobs](#processor-jobs)
   - [Creating Quantile Normalization Reference Targets](#creating-quantile-normalization-reference-targets)
   - [Checking on Local Jobs](#checking-on-local-jobs)
-  - [Testing](#testing-1)
-    - [API](#api)
-    - [Common](#common)
-    - [Foreman](#foreman)
-    - [Workers](#workers)
-  - [Development Helpers](#development-helpers-1)
-  - [Style](#style-1)
-- [Production Deployment](#production-deployment)
+  - [Development Helpers](#development-helpers)
+- [Cloud Deployment](#cloud-deployment)
   - [Terraform](#terraform)
+  - [Docker Images](#docker-images)
   - [Autoscaling and Setting Spot Prices](#autoscaling-and-setting-spot-prices)
   - [Running Jobs](#running-jobs)
   - [Log Consumption](#log-consumption)
+  - [Tearing Down](#tearing-down)
 - [Support](#support)
+- [Meta-README](#meta-readme)
 - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -667,6 +667,12 @@ Refine.bio is supported by
 [Alex's Lemonade Stand Foundation](https://www.alexslemonade.org/),
 with some initial development supported by the Gordon and Betty Moore
 Foundation via GBMF 4552 to Casey Greene.
+
+## Meta-README
+
+The table of contents for this README is generated using `doctoc`.
+`doctoc` can be installed with: `sudo npm install -g doctoc`
+Once `doctoc` is installed the table of contents can be re-generated with: `doctoc README.md`
 
 ## License
 
