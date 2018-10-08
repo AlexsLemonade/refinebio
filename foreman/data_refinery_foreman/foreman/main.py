@@ -1,3 +1,4 @@
+import socket
 import time
 from nomad import Nomad
 from nomad.api.exceptions import URLNotFoundNomadException
