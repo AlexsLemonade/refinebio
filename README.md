@@ -224,7 +224,7 @@ To run the entire test suite:
 ./run_all_tests.sh
 ```
 
-(_Note:_ Running all the tests can take some time because it downloads a lot of files)
+(_Note:_ Running all the tests can take some time, especially the first time because it downloads a lot of files.)
 
 These tests will also be run continuosly for each commit via CircleCI.
 
@@ -290,17 +290,6 @@ the line length limit for the autopep8 and flake8 linters. If you run either
 linter within the project's directory tree, it will enforce a line length limit
 of 100 instead of 80. This will also be true for editors which rely on either
 linter.
-
-### Development Helpers
-
-It can be useful to have an interactive Python interpreter running within the
-context of the Docker container. The `run_shell.sh` script has been provided
-for this purpose. It is in the top level directory so that if you wish to
-reference it in any integrations its location will be constant. However, it
-is configured by default for the Foreman project. The interpreter will
-have all the environment variables, dependencies, and Django configurations
-for the Foreman project. There are instructions within the script describing
-how to change this to another project.
 
 ### Gotchas
 
@@ -530,20 +519,6 @@ have all the environment variables, dependencies, and Django configurations
 for the Foreman project. There are instructions within the script describing
 how to change this to another project.
 
-### Style
-
-R files in this repo follow
-[Google's R Style Guide](https://google.github.io/styleguide/Rguide.xml).
-Python Files in this repo follow
-[PEP 8](https://www.python.org/dev/peps/pep-0008/). All files (including
-Python and R) have a line length limit of 100 characters.
-
-A `setup.cfg` file has been included in the root of this repo which specifies
-the line length limit for the autopep8 and flake8 linters. If you run either
-linter within the project's directory tree, it will enforce a line length limit
-of 100 instead of 80. This will also be true for editors which rely on either
-linter.
-
 ## Cloud Deployment
 
 Refine.bio requires an active, credentialed AWS account with appropriate permissions to create network infrastructure, users, compute instances and databases.
@@ -551,7 +526,7 @@ Refine.bio requires an active, credentialed AWS account with appropriate permiss
 ### Terraform
 
 Once you have Terraform installed and your AWS account credentials installed, you're ready to deploy. The correct way to deploy to the cloud is by running the `deploy.sh` script. This script will perform additional
-configuration steps, such as setting environment variables, setting up Nomad job specifications, and performing database migrations. It can be used simply (from the `infrastructure` directory), like so:
+configuration steps, such as setting environment variables, setting up Nomad job specifications, and performing database migrations. It can be used from the `infrastructure` directory like so:
 
 ```bash
 ./deploy.sh -u myusername -e dev -r us-east-1 -v v1.0.0 -d my-dockerhub-repo
