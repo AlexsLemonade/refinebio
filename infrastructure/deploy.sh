@@ -10,22 +10,41 @@ print_description() {
 }
 
 print_options() {
-    echo 'There is only one argument for this script, -e, and it is not optional.'
-    echo '-e specifies the environment you would like to deploy to. Its valid values are:'
-    echo '"-e prod" will deploy the production stack. This should only be used from a CD machine.'
-    echo '"-e staging" will deploy the staging stack. This should only be used from a CD machine.'
-    echo '"-e dev" will deploy a dev stack which will namespace all of its resources with the value'
-    echo 'of $TF_VAR_username. '
-    echo 'DO NOT DEPLOY without setting that $TF_VAR_username or modifying the value in variables.tf!'
+    echo 'This script accepts the following arguments: -e, -v, -u, -r, and -h.'
+    echo '-h prints this help message and exits.'
+    echo '-e specifies the environment you would like to deploy to and is not optional. Its valid values are:'
+    echo '   "-e prod" will deploy the production stack. This should only be used from a CD machine.'
+    echo '   "-e staging" will deploy the staging stack. This should only be used from a CD machine.'
+    echo '   "-e dev" will deploy a dev stack which is appropriate for a single developer to use to test.'
+    echo '-d May be used to override the Dockerhub repo where the images will be pulled from.'
+    echo '   This may also be specified by setting the TF_VAR_dockerhub_repo environment variable.'
+    echo '   If unset, defaults to the value in `infrastructure/environments/$env`, which is "ccdlstaging"'
+    echo '   for dev and staging environments and "ccdl" for prod.'
+    echo '   This option is useful for testing code changes. Images with the code to be tested can be pushed'
+    echo '   to your private Dockerhub repo and then the system will find them.'
+    echo '-v specifies the version of the system which is being deployed and is not optional.'
+    echo "-u specifies the username of the deployer. Should be the developer's name in development stacks."
+    echo '   This option may be omitted, in which case the TF_VAR_user variable MUST be set instead.'
+    echo '-r specifies the AWS region to deploy the stack to. Defaults to us-east-1.'
 }
 
-while getopts ":e:v:h" opt; do
+while getopts ":e:d:v:u:s:r:h" opt; do
     case $opt in
     e)
         env=$OPTARG
+        TF_VAR_stage=$OPTARG
+        ;;
+    d)
+        TF_VAR_dockerhub_repo=$OPTARG
         ;;
     v)
         SYSTEM_VERSION=$OPTARG
+        ;;
+    u)
+        TF_VAR_user=$OPTARG
+        ;;
+    r)
+        TF_VAR_region=$OPTARG
         ;;
     h)
         print_description
@@ -51,9 +70,18 @@ if [[ $env != "dev" && $env != "staging" && $env != "prod" ]]; then
     exit 1
 fi
 
+if [[ -z $TF_VAR_user ]]; then
+    echo 'Error: must specify the username by either providing the -u argument or setting TF_VAR_user.'
+    exit 1
+fi
+
 if [[ -z $SYSTEM_VERSION ]]; then
     echo 'Error: must specify the system version with -v.'
     exit 1
+fi
+
+if [[ -z $TF_VAR_region ]]; then
+    TF_VAR_region=us-east-1
 fi
 
 # This function checks what the status of the Nomad agent is.
