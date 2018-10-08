@@ -1,4 +1,5 @@
 import datetime
+import signal
 import sys
 
 from django.db import transaction
@@ -29,7 +30,19 @@ SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
 # TODO: extend this list.
 BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
 MAX_DOWNLOADER_JOBS_PER_NODE = get_env_variable("MAX_DOWNLOADER_JOBS_PER_NODE", 8)
+CURRENT_JOB = None
 
+
+def sigterm_handler(sig, frame):
+    """ SIGTERM Handler """
+    global CURRENT_JOB
+    if not CURRENT_JOB:
+        sys.exit(0)
+    else:
+        CURRENT_JOB.start_time = None
+        CURRENT_JOB.num_retries = CURRENT_JOB.num_retries - 1
+        CURRENT_JOB.save()
+        sys.exit(0)
 
 def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_NODE) -> DownloaderJob:
     """Record in the database that this job is being started.
@@ -72,10 +85,17 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
         logger.error("This downloader job has already been started!!!", downloader_job=job.id)
         raise Exception("downloaders.start_job called on a job that has already been started!")
 
+    # Set up the SIGTERM handler so we can appropriately handle being interrupted.
+    # (`docker stop` uses SIGTERM, not SIGINT.)
+    signal.signal(signal.SIGTERM, sigterm_handler)
+
     job.worker_id = worker_id
     job.worker_version = SYSTEM_VERSION
     job.start_time = timezone.now()
     job.save()
+
+    global CURRENT_JOB
+    CURRENT_JOB = job
 
     return job
 
