@@ -3,6 +3,7 @@ import random
 import shutil
 import string
 import subprocess
+import sys
 import yaml
 
 from django.utils import timezone
@@ -32,7 +33,19 @@ SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 RUNNING_IN_CLOUD = get_env_variable_gracefully("RUNNING_IN_CLOUD", "False")
 DIRNAME = os.path.dirname(os.path.abspath(__file__))
+CURRENT_JOB = None
 
+
+def sigterm_handler(sig, frame):
+    """ SIGTERM Handler """
+    global CURRENT_JOB
+    if not CURRENT_JOB:
+        sys.exit(0)
+    else:
+        job.start_time = None
+        job.num_retries = job.num_retries - 1
+        job.save()
+        sys.exit(0)
 
 def start_job(job_context: Dict):
     """A processor function to start jobs.
@@ -48,10 +61,17 @@ def start_job(job_context: Dict):
         logger.error("This processor job has already been started!!!", processor_job=job.id)
         raise Exception("processors.start_job called on job %s that has already been started!" % str(job.id))
 
+    # Set up the SIGTERM handler so we can appropriately handle being interrupted.
+    # (`docker stop` uses SIGTERM, not SIGINT.)
+    signal.signal(signal.SIGTERM, sigterm_handler)
+
     job.worker_id = get_instance_id()
     job.worker_version = SYSTEM_VERSION
     job.start_time = timezone.now()
     job.save()
+
+    global CURRENT_JOB
+    CURRENT_JOB = job
 
     logger.debug("Starting processor Job.", processor_job=job.id, pipeline=job.pipeline_applied)
 
