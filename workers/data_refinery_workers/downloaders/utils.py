@@ -57,8 +57,9 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
     if num_downloader_jobs_currently_running >= int(max_downloader_jobs_per_node):
         # Wait for the death window
         while True:
-            second = str(datetime.datetime.now().second)[-2]
-            if second in ["00", "15", "30", "45"]:
+            seconds = datetime.datetime.now().second
+            # Mass harikari happens every 15 seconds.
+            if seconds % 15 == 0:
                 job.start_time = None
                 job.num_retries = job.num_retries - 1
                 job.save()
