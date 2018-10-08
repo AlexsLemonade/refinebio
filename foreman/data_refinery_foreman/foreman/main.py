@@ -214,10 +214,8 @@ def retry_lost_downloader_jobs() -> None:
                     lost_jobs.append(job)
         except socket.timeout:
             logger.info("Timeout connecting to Nomad - is Nomad down?", job_id=job.id)
-            lost_jobs.append(job)
         except nomad.api.exceptions.BaseNomadException:
             logger.info("Problem connecting to Nomad - is Nomad down?", job_id=job.id)
-            lost_jobs.append(job)
         except URLNotFoundNomadException:
             logger.info(("Determined that a downloader job needs to be requeued because "
                               "querying for its Nomad job failed: "),
