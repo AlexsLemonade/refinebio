@@ -196,6 +196,7 @@ jobs:
     working_directory: ~/refinebio
     steps:
       - checkout
+      - run: bash .circleci/verify_tag.sh
       - run: bash .circleci/git_decrypt.sh
       - run: bash .circleci/update_docker_img.sh
       - run:

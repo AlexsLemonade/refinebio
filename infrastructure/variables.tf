@@ -156,6 +156,10 @@ variable "volume_size_in_gb" {
   default = "9000"
 }
 
+variable "max_downloader_jobs_per_node" {
+  default = 8
+}
+
 # Output our production environment variables.
 output "environment_variables" {
   value = [
@@ -232,6 +236,8 @@ output "environment_variables" {
     {name = "NOMAD_PORT"
       value = "4646"},
     {name = "MAX_CLIENTS"
-      value = "${var.max_clients}"}
+      value = "${var.max_clients}"},
+    {name = "MAX_DOWNLOADER_JOBS_PER_NODE"
+      value = "${var.max_downloader_jobs_per_node}"}
   ]
 }

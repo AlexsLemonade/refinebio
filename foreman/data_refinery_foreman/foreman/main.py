@@ -18,10 +18,11 @@ from data_refinery_common.models import (
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 
 
 logger = get_and_configure_logger(__name__)
+RUNNING_IN_CLOUD = get_env_variable_gracefully("RUNNING_IN_CLOUD", False)
 
 # Maximum number of retries, so the number of attempts will be one
 # greater than this because of the first attempt
@@ -231,9 +232,20 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     """
     num_retries = last_job.num_retries + 1
 
+    # The Salmon pipeline is quite RAM-sensitive.
+    # Try it again with an increased RAM amount, if possible.
+    new_ram_amount = last_job.ram_amount
+    if last_job.pipeline_applied == "SALMON":
+        if new_ram_amount == 4096:
+            new_ram_amount = 8192
+        elif new_ram_amount == 8192:
+            new_ram_amount = 12288
+        elif new_ram_amount == 12288:
+            new_ram_amount = 16384
+
     new_job = ProcessorJob(num_retries=num_retries,
                            pipeline_applied=last_job.pipeline_applied,
-                           ram_amount=last_job.ram_amount,
+                           ram_amount=new_ram_amount,
                            volume_index=last_job.volume_index)
     new_job.save()
 
@@ -375,15 +387,31 @@ def retry_lost_processor_jobs() -> None:
 
 def monitor_jobs():
     """Runs a thread for each job monitoring loop."""
-    functions = [retry_failed_downloader_jobs,
-                 retry_hung_downloader_jobs,
-                 retry_lost_downloader_jobs,
-                 retry_failed_processor_jobs,
-                 retry_hung_processor_jobs,
-                 retry_lost_processor_jobs]
+    processor_functions = [ retry_failed_processor_jobs,
+                            retry_hung_processor_jobs,
+                            retry_lost_processor_jobs]
 
     threads = []
-    for f in functions:
+    for f in processor_functions:
+        thread = Thread(target=f, name=f.__name__)
+        thread.start()
+        threads.append(thread)
+        logger.info("Thread started for monitoring function: %s", f.__name__)
+
+    # This is only a concern when running at scale.
+    if RUNNING_IN_CLOUD:
+        # We start the processor threads first so that we don't
+        # accidentally queue too many downloader jobs and knock down our
+        # source databases. They may take a while to run, and this
+        # function only runs once per deploy, so give a generous amount of
+        # time, say 5 minutes:
+        time.sleep(60*5)
+
+    downloader_functions = [retry_failed_downloader_jobs,
+                            retry_hung_downloader_jobs,
+                            retry_lost_downloader_jobs]
+
+    for f in downloader_functions:
         thread = Thread(target=f, name=f.__name__)
         thread.start()
         threads.append(thread)

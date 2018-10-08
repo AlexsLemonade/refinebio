@@ -16,7 +16,7 @@
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get upgrade -y
-apt-get install --yes jq iotop dstat speedometer awscli docker.io
+apt-get install --yes jq iotop dstat speedometer awscli docker.io chrony
 
 ulimit -n 65536
 
@@ -118,6 +118,11 @@ chmod +x install_nomad.sh
 
 # Start the Nomad agent in client mode.
 nomad agent -config client.hcl > /var/log/nomad_client.log &
+
+# Set up the AWS NTP
+# via https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-time.html#configure_ntp
+echo 'server 169.254.169.123 prefer iburst' | cat - /etc/chrony/chrony.conf > temp && mv temp /etc/chrony/chrony.conf
+/etc/init.d/chrony restart
 
 # Delete the cloudinit and syslog in production.
 export STAGE=${stage}
