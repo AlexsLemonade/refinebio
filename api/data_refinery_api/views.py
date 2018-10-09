@@ -144,8 +144,9 @@ class SearchAndFilter(generics.ListAPIView):
     serializer_class = ExperimentSerializer
     pagination_class = LimitOffsetPagination
 
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
     filter_class = ExperimentFilter
+    ordering_fields = '__all__'
 
     # via http://www.django-rest-framework.org/api-guide/filtering/#searchfilter
     # '^' Starts-with search.
