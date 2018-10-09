@@ -9,16 +9,24 @@ from data_refinery_common.models import (
     ProcessorJob,
     OriginalFile,
     Dataset,
+    SurveyJobKeyValue,
     DownloaderJobOriginalFileAssociation,
     ProcessorJobOriginalFileAssociation,
     ProcessorJobDatasetAssociation,
 )
 
 
-class SurveyTestCase(TestCase):
+class ForemanTestCase(TestCase):
     def setUp(self):
         survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
         survey_job.save()
+
+        sjkv = SurveyJobKeyValue()
+        sjkv.key = "Key"
+        sjkv.value = "Value"
+        sjkv.survey_job = survey_job
+        sjkv.save()
+
         self.survey_job = survey_job
 
     def create_downloader_job(self):
@@ -505,6 +513,22 @@ class SurveyTestCase(TestCase):
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = ProcessorJob.objects.order_by('id')
+        original_job = jobs[0]
+        self.assertTrue(original_job.retried)
+        self.assertEqual(original_job.num_retries, 0)
+        self.assertFalse(original_job.success)
+
+        retried_job = jobs[1]
+        self.assertEqual(retried_job.num_retries, 1)
+
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_requeuing_survey_job(self, mock_send_job):
+        job = self.survey_job
+
+        main.requeue_survey_job(job)
+        self.assertEqual(len(mock_send_job.mock_calls), 1)
+
+        jobs = SurveyJob.objects.order_by('id')
         original_job = jobs[0]
         self.assertTrue(original_job.retried)
         self.assertEqual(original_job.num_retries, 0)
