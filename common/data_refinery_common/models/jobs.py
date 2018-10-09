@@ -23,6 +23,15 @@ class SurveyJob(models.Model):
     # The end time of the job
     end_time = models.DateTimeField(null=True)
 
+    # This field represents how many times this job has been
+    # retried. It starts at 0 and each time the job has to be retried
+    # it will be incremented.
+    num_retries = models.IntegerField(default=0)
+
+    # This field indicates whether or not this job has been retried
+    # already or not.
+    retried = models.BooleanField(default=False)
+
     # This field allows jobs to specify why they failed.
     failure_reason = models.TextField(null=True)
 
