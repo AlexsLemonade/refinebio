@@ -521,12 +521,10 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch('data_refinery_foreman.foreman.main.send_job')
-    def test_requeuing_survey_job(self, mock_send_job):
+    def test_requeuing_survey_job(self):
         job = self.survey_job
 
-        main.requeue_survey_job(job)
-        self.assertEqual(len(mock_send_job.mock_calls), 1)
+        main.requeue_survey_job(job, dispatch=False)
 
         jobs = SurveyJob.objects.order_by('id')
         original_job = jobs[0]
@@ -536,3 +534,5 @@ class ForemanTestCase(TestCase):
 
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
+
+
