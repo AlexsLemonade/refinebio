@@ -443,8 +443,7 @@ def requeue_survey_job(last_job: SurveyJob, dispatch=True) -> None:
             nomad_port = get_env_variable("NOMAD_PORT", "4646")
             nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
             if dispatch:
-                nomad_response = nomad_client.job.dispatch_job("SURVEYOR", meta={"JOB_NAME": "SURVEYOR",
-                                                                                "JOB_ID": str(job.id)})
+                nomad_response = nomad_client.job.dispatch_job("SURVEYOR", meta={"ACCESSION": last_job.get_accession_code()})
                 job.nomad_job_id = nomad_response["DispatchedJobID"]
                 job.save()
         except URLNotFoundNomadException:

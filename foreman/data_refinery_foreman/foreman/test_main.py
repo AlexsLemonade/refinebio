@@ -22,8 +22,8 @@ class ForemanTestCase(TestCase):
         survey_job.save()
 
         sjkv = SurveyJobKeyValue()
-        sjkv.key = "Key"
-        sjkv.value = "Value"
+        sjkv.key = "experiment_accession_code"
+        sjkv.value = "RJ-1234-XYZ"
         sjkv.survey_job = survey_job
         sjkv.save()
 
@@ -527,6 +527,9 @@ class ForemanTestCase(TestCase):
         main.requeue_survey_job(job, dispatch=False)
 
         jobs = SurveyJob.objects.order_by('id')
+
+        code1 = jobs[0].get_accession_code()
+
         original_job = jobs[0]
         self.assertTrue(original_job.retried)
         self.assertEqual(original_job.num_retries, 0)
@@ -534,5 +537,7 @@ class ForemanTestCase(TestCase):
 
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
+        code2 = jobs[1].get_accession_code()
 
-
+        self.assertNotEqual(code1, None)
+        self.assertEqual(code1, code2)
