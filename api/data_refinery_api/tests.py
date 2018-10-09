@@ -377,6 +377,12 @@ class APITestCases(APITestCase):
         self.assertEqual(response.json()['results'][0]['processed_samples'], ['1123', '3345'])
         self.assertEqual(response.json()['results'][0]['technologies'], ['RNA-SEQ'])
 
+        # Test ordering
+        response = self.client.get(reverse('search') + "?search=SEARCH&ordering=id")
+        response2 = self.client.get(reverse('search') + "?search=SEARCH&ordering=-id")
+        self.assertNotEqual(response.json()['results'][0]['id'], response2.json()['results'][0]['id'])
+        self.assertTrue(response2.json()['results'][0]['id'] > response.json()['results'][0]['id'])
+
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
 
