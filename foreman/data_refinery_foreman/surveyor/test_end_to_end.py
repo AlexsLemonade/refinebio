@@ -53,27 +53,6 @@ def wait_for_job(job, job_class: type, start_time: datetime):
     return job
 
 
-def mock_get_sample(accession_code: str):
-    """Mock out Sample.objects.get to prevent too much work from being done.
-
-    There are a lot of Samples on this experiment, but we only want to
-    do one from each zip file. To accomplish this we make every other
-    Sample in the experiment appear to already exist so it is not
-    created and processed.
-
-    Not being used as of 09/07/2018.
-    """
-    if accession_code == "GSM1109016" or accession_code == "GSM1108516":
-        raise Sample.DoesNotExist
-
-    # This sample isn't actually used, we just want to prevent it from
-    # being created and actually run.
-    fake_accession_code = "fake" + str(timezone.now().timestamp())
-    sample = Sample(accession_code=fake_accession_code)
-    sample.save()
-    return sample
-
-
 def mock_logger_info(message: str, *args, **kwargs):
     """Silence the log messages we're forcing on purpose.
 
