@@ -47,7 +47,16 @@ class SurveyJob(models.Model):
         return super(SurveyJob, self).save(*args, **kwargs)
 
     def get_properties(self) -> Dict:
+        """ Return all associated SurveyJobKeyValues as a dict"""
         return {pair.key: pair.value for pair in self.surveyjobkeyvalue_set.all()}
+
+    def get_accession_code(self):
+        """ Return `experiment_accession_code`, the most important code."""
+        try:
+            kvp = self.surveyjobkeyvalue_set.get(key="experiment_accession_code")
+            return kvp.value
+        except:
+            return None
 
     def __str__(self):
         return "SurveyJob " + str(self.pk) + ": " + str(self.source_type)
