@@ -45,7 +45,7 @@ jobs:
       # build time is saved by only building those layers once.
       - run:
           command: .circleci/filter_tests.sh -t downloaders
-          no_output_timeout: 36000
+          no_output_timeout: 1h
 
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
@@ -60,13 +60,13 @@ jobs:
       - run:
           command: .circleci/filter_tests.sh -t smasher
           # Smashing can apparently take a long time on CI
-          no_output_timeout: 36000
+          no_output_timeout: 1h
 
       # Run QN tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
           command: .circleci/filter_tests.sh -t qn
-          no_output_timeout: 36000
+          no_output_timeout: 1h
 
   common_tests:
     working_directory: ~/refinebio
@@ -173,7 +173,7 @@ jobs:
       - run:
           command: .circleci/filter_tests.sh -t affymetrix
           # This takes a while because the affymetrix image is huge
-          no_output_timeout: 36000
+          no_output_timeout: 1h
 
       # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
       # from making sure all the files in workers/test_volume have read/write permissions.
@@ -201,7 +201,7 @@ jobs:
       - run: bash .circleci/update_docker_img.sh
       - run:
           command: bash .circleci/run_terraform.sh
-          no_output_timeout: 18000 # Creating a postgres instance can take up to 20 minutes.
+          no_output_timeout: 30m # Creating a postgres instance can take up to 20 minutes.
       - run: bash .circleci/slackpost.sh robots deploybot
 
 workflows:
