@@ -413,7 +413,7 @@ def retry_lost_processor_jobs() -> None:
 
 @retry(stop_max_attempt_number=3)
 @transaction.atomic
-def requeue_survey_job(last_job: SurveyJob) -> None:
+def requeue_survey_job(last_job: SurveyJob, dispatch=True) -> None:
     """Queues a new survey job.
 
     The new survey job will have num_retries one greater than
@@ -442,10 +442,11 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
             nomad_host = get_env_variable("NOMAD_HOST")
             nomad_port = get_env_variable("NOMAD_PORT", "4646")
             nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
-            nomad_response = nomad_client.job.dispatch_job("SURVEYOR", meta={"JOB_NAME": "SURVEYOR",
-                                                                            "JOB_ID": str(job.id)})
-            job.nomad_job_id = nomad_response["DispatchedJobID"]
-            job.save()
+            if dispatch:
+                nomad_response = nomad_client.job.dispatch_job("SURVEYOR", meta={"JOB_NAME": "SURVEYOR",
+                                                                                "JOB_ID": str(job.id)})
+                job.nomad_job_id = nomad_response["DispatchedJobID"]
+                job.save()
         except URLNotFoundNomadException:
             logger.error("Dispatching Nomad job of type %s for job spec %s to host %s and port %s failed.",
                          job_type, nomad_job, nomad_host, nomad_port, job=str(job.id))
