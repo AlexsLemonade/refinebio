@@ -46,7 +46,7 @@ tx2gene <- gene2tx_df[, c("tx_name", "gene_id")]
 # Run tximport and save RDS
 txi <- tximport::tximport(files = sf_files,
                           type = "salmon",
-                          txOut = FALSE,
+                          txOut = TRUE,
                           tx2gene = tx2gene,
                           countsFromAbundance = "no")
 rds_filename <- opt$rds_file
