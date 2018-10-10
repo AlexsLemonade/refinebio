@@ -512,3 +512,20 @@ class SurveyTestCase(TestCase):
 
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
+
+    def test_janitor(self):
+
+        for p in ["1", "2", "3"]:
+            pj = ProcessorJob()
+            pj.volume_index = p
+            pj.save()
+
+        main.send_janitor_jobs(range(0,60))
+
+        self.assertEqual(ProcessorJob.objects.all().count(), 6)
+        self.assertEqual(ProcessorJob.objects.filter(pipeline_applied="JANITOR").count(), 3)
+
+        ixs = ["1", "2", "3"]
+        for p in ProcessorJob.objects.filter(pipeline_applied="JANITOR"):
+            self.assertTrue(p.volume_index in ixs)
+            ixs.remove(p.volume_index)

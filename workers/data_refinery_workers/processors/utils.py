@@ -373,6 +373,12 @@ class ProcessorEnum(Enum):
         "yml_file": "qn.yml"
     }
 
+    JANITOR = {
+        "name": "Janitor",
+        "docker_img": "dr_smasher",
+        "yml_file": "smasher.yml"
+    }
+
     @classmethod
     def has_key(cls, key):
         """Class method that tells whether a certain key exists."""

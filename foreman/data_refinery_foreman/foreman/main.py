@@ -7,7 +7,7 @@ from typing import Callable, List
 from threading import Thread
 from functools import wraps
 from retrying import retry
-from datetime import timedelta
+from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db import transaction
 from data_refinery_common.models import (
@@ -391,6 +391,32 @@ def retry_lost_processor_jobs() -> None:
         handle_processor_jobs(lost_jobs)
 
 
+def send_janitor_jobs(send_minutes=[0, 30]):
+    """ If we're in the send_minutes window, dispatch some janitors """
+    if (datetime.now().minute in send_minutes) or (RUNNING_IN_CLOUD == "False"):
+        # This is a fairly hacky way of finding all of our volume indexes
+        indexes = ProcessorJob.objects.all().values_list('volume_index').distinct()\
+
+        for index in indexes:
+            actual_index = index[0]
+            new_job = ProcessorJob(num_retries=0,
+                                   pipeline_applied="JANITOR",
+                                   ram_amount=256,
+                                   volume_index=actual_index)
+            new_job.save()
+            logger.info("Sending Janitor with index: ",
+                job_id=new_job.id,
+                index=actual_index
+            )
+            try:
+                send_job(ProcessorPipeline["JANITOR"], new_job)
+            except Exception as e:
+                import pdb
+                pdb.set_trace()
+
+    # Wait for the next minute
+    time.sleep(60)
+
 def monitor_jobs():
     """Runs a thread for each job monitoring loop."""
     processor_functions = [ retry_failed_processor_jobs,
@@ -426,6 +452,9 @@ def monitor_jobs():
     # Make sure that no threads die quietly.
     while(True):
         start_time = timezone.now()
+
+        send_janitor_jobs()
+
         for thread in threads:
             if not thread.is_alive():
                 logger.error("Foreman Thread for the function %s has died!!!!", thread.name)
