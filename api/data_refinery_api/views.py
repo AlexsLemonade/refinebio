@@ -154,6 +154,7 @@ class SearchAndFilter(generics.ListAPIView):
     # Ordering
     ordering_fields = ('samples_count', 'id', 'created_at', 'accession_code',)
     samples_count = django_filters.NumberFilter(method='filter_samples_count')
+    ordering = ('-samples_count',)
     def filter_samples_count(self, queryset, name, value):
         return queryset.filter(samples_count=value)
 
