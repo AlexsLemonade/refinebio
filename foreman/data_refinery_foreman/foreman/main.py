@@ -395,7 +395,7 @@ def send_janitor_jobs(send_minutes=[0, 30]):
     """ If we're in the send_minutes window, dispatch some janitors """
     if (datetime.now().minute in send_minutes) or (RUNNING_IN_CLOUD == "False"):
         # This is a fairly hacky way of finding all of our volume indexes
-        indexes = ProcessorJob.objects.all().values_list('volume_index').distinct()\
+        indexes = ProcessorJob.objects.all().values_list('volume_index').distinct()
 
         for index in indexes:
             actual_index = index[0]
