@@ -6,7 +6,7 @@ job "JANITOR_${{INDEX}}_${{RAM}}" {
 
   parameterized {
     payload       = "forbidden"
-    meta_required = []
+    meta_required = ["JOB_NAME", "JOB_ID"]
   }
 
   group "jobs" {

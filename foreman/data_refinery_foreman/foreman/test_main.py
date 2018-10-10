@@ -525,6 +525,7 @@ class SurveyTestCase(TestCase):
         self.assertEqual(ProcessorJob.objects.all().count(), 6)
         self.assertEqual(ProcessorJob.objects.filter(pipeline_applied="JANITOR").count(), 3)
 
+        # Make sure that the janitors are dispatched to the correct volumes.
         ixs = ["1", "2", "3"]
         for p in ProcessorJob.objects.filter(pipeline_applied="JANITOR"):
             self.assertTrue(p.volume_index in ixs)
