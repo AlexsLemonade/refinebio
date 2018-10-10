@@ -1,31 +1,34 @@
-import time
 import json
-from django.test import TransactionTestCase, tag
+import requests
+import time
+
 from datetime import timedelta, datetime
+from django.test import TransactionTestCase, tag
 from django.utils import timezone
 from unittest.mock import patch, Mock
+
 from data_refinery_common.models import (
     Organism,
-    SurveyJob,
-    SurveyJobKeyValue,
-    Experiment,
-    ExperimentAnnotation,
-    ExperimentSampleAssociation,
-    Sample,
-    SampleAnnotation,
-    OriginalFile,
-    OriginalFileSampleAssociation,
-    SampleResultAssociation,
     ComputationalResult,
     ComputationalResultAnnotation,
-    SampleComputedFileAssociation,
     ComputedFile,
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
+    Experiment,
+    ExperimentAnnotation,
+    ExperimentSampleAssociation,
+    OriginalFile,
+    OriginalFileSampleAssociation,
     ProcessorJob,
-    ProcessorJobOriginalFileAssociation
+    ProcessorJobOriginalFileAssociation,
+    Sample,
+    SampleAnnotation,
+    SampleComputedFileAssociation,
+    SampleResultAssociation,
+    SurveyJob,
+    SurveyJobKeyValue,
 )
-from data_refinery_foreman.surveyor import surveyor
+from data_refinery_foreman.surveyor import surveyor, utils
 from data_refinery_foreman.surveyor.management.commands.unsurvey import purge_experiment
 
 # Import and set logger
@@ -84,11 +87,14 @@ class NoOpEndToEndTestCase(TransactionTestCase):
         organism.save()
 
         accession_code = "E-GEOD-45547"
+        accession_code= "E-GEOD-4585"
         survey_job = surveyor.survey_experiment(accession_code, "ARRAY_EXPRESS")
 
         self.assertTrue(survey_job.success)
 
         downloader_jobs = DownloaderJob.objects.all()
+        self.assertGreater(downloader_jobs.count(), 0)
+
         logger.info("Survey Job finished, waiting for Downloader Jobs to complete.")
         start_time = timezone.now()
         for downloader_job in downloader_jobs:
@@ -96,6 +102,8 @@ class NoOpEndToEndTestCase(TransactionTestCase):
             self.assertTrue(downloader_job.success)
 
         processor_jobs = ProcessorJob.objects.all()
+        self.assertGreater(processor_jobs.count(), 0)
+
         logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
         start_time = timezone.now()
         for processor_job in processor_jobs:
