@@ -411,8 +411,8 @@ def send_janitor_jobs(send_minutes=[0, 30]):
             try:
                 send_job(ProcessorPipeline["JANITOR"], new_job)
             except Exception as e:
-                import pdb
-                pdb.set_trace()
+                # If we can't dispatch this job, something else has gone wrong.
+                continue
 
     # Wait for the next minute
     time.sleep(60)
