@@ -5,7 +5,7 @@ job "SURVEYOR" {
 
   parameterized {
     payload       = "forbidden"
-    meta_required = [ "ACCESSION"]
+    meta_required = [ "JOB_ID"]
   }
 
   group "jobs" {
@@ -73,7 +73,7 @@ job "SURVEYOR" {
           "python3",
           "manage.py",
           "survey_all",
-          "--accession", "${NOMAD_META_ACCESSION}",
+          "--job-id", "${NOMAD_META_JOB_ID}",
         ]
         ${{EXTRA_HOSTS}}
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]

@@ -443,16 +443,16 @@ def requeue_survey_job(last_job: SurveyJob, dispatch=True) -> None:
             nomad_port = get_env_variable("NOMAD_PORT", "4646")
             nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
             if dispatch:
-                nomad_response = nomad_client.job.dispatch_job("SURVEYOR", meta={"ACCESSION": last_job.get_accession_code()})
-                job.nomad_job_id = nomad_response["DispatchedJobID"]
-                job.save()
+                nomad_response = nomad_client.job.dispatch_job("SURVEYOR", meta={"JOB_ID": new_job.id})
+                new_job.nomad_job_id = nomad_response["DispatchedJobID"]
+                new_job.save()
         except URLNotFoundNomadException:
             logger.error("Dispatching Nomad job of type %s for job spec %s to host %s and port %s failed.",
-                         job_type, nomad_job, nomad_host, nomad_port, job=str(job.id))
+                         job_type, nomad_job, nomad_host, nomad_port, job=str(new_job.id))
         except Exception as e:
             logger.exception('Unable to Dispatch Nomad Job.',
                 job_name=job_type.value,
-                job_id=str(job.id),
+                job_id=str(new_job.id),
                 reason=str(e)
             )
             raise
