@@ -13,6 +13,7 @@ from nomad.api.exceptions import URLNotFoundNomadException
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
+from data_refinery_common.models import SurveyJob, SurveyJobKeyValue
 from data_refinery_common.utils import parse_s3_url, get_env_variable
 from data_refinery_foreman.surveyor import surveyor
 
@@ -21,20 +22,68 @@ logger = get_and_configure_logger(__name__)
 
 SURVEYOR_JOB_NAME = "SURVEYOR"
 
+def set_source_type_for_accession(survey_job, accession: str) -> None:
+    """Type a surveyor based on accession structure"""
+    if 'GSE' in accession[:3]:
+        survey_job.source_type = "GEO"
+        survey_job.save()
+        return
+    elif 'E-' in accession[:2]:
+        survey_job.source_type = "ARRAY_EXPRESS"
+        survey_job.save()
+        return
+    elif " " in accession:
+
+        survey_job.source_type = "TRANSCRIPTOME_INDEX"
+        survey_job.save()
+
+        args = accession.split(",")
+        # Allow organism to be unspecified so we survey the entire division.
+        organism = args[0] if len(args[0]) > 0 else None
+        if len(args) > 1:
+            division = args[1].strip()
+        else:
+            division = "Ensembl"
+
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                           key="ensembl_division",
+                                           value=ensembl_division)
+        key_value_pair.save()
+        if organism_name:
+            key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                               key="organism_name",
+                                               value=organism_name)
+            key_value_pair.save()
+
+        return
+    else:
+        survey_job.source_type = "SRA"
+        survey_job.save()
+        return
+
 def queue_surveyor_for_accession(accession: str) -> None:
     """Dispatches a surveyor job for the accession code."""
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=5)
 
+    survey_job = SurveyJob(source_type=source_type)
+    survey_job.save()
+    key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                       key="experiment_accession_code",
+                                       value=accession)
+    key_value_pair.save()
+
+    set_source_type_for_accession(survey_job, accession)
+
     try:
-        nomad_response = nomad_client.job.dispatch_job("SURVEYOR", meta={"ACCESSION": accession})
+        nomad_response = nomad_client.job.dispatch_job("SURVEYOR", meta={"JOB_ID": survey_job.id})
     except URLNotFoundNomadException:
         logger.error("Dispatching Surveyor Nomad job to host %s and port %s failed.",
-                     job_type, nomad_job, nomad_host, nomad_port, accession_code=accession)
+                     SURVEYOR_JOB_NAME, nomad_job, nomad_host, nomad_port, accession_code=accession)
     except Exception as e:
         logger.exception('Unable to Dispatch Nomad Job.',
-            job_name=job_type.value,
+            job_name=SURVEYOR_JOB_NAME,
             job_id=str(job.id),
             reason=str(e)
         )
