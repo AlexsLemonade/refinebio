@@ -32,6 +32,7 @@ class ProcessorPipeline(PipelineEnums):
     SMASHER = "SMASHER"
     NO_OP = "NO_OP"
     QN_REFERENCE = "QN_REFERENCE"
+    JANITOR = "JANITOR"
     NONE = "NONE"
 
 
