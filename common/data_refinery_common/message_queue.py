@@ -45,6 +45,8 @@ def send_job(job_type: Enum, job) -> bool:
         nomad_job = ProcessorPipeline.ILLUMINA_TO_PCL.value
     elif job_type is ProcessorPipeline.SMASHER:
         nomad_job = ProcessorPipeline.SMASHER.value
+    elif job_type is ProcessorPipeline.JANITOR:
+        nomad_job = ProcessorPipeline.JANITOR.value
 
     # QN_REFERENCE commands never get sent this way (yet)
     # If we want to be able to dispatch QN Reference jobs via Nomad,
