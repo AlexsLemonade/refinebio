@@ -39,7 +39,7 @@ module_logger = logging.getLogger("data_refinery_foreman.surveyor.array_express"
 
 
 LOOP_TIME = 5  # seconds
-MAX_WAIT_TIME = timedelta(minutes=45)
+MAX_WAIT_TIME = timedelta(minutes=15)
 
 def wait_for_job(job, job_class: type, start_time: datetime):
     """Monitors the `job_class` table for when `job` is done."""
@@ -63,6 +63,11 @@ class NoOpEndToEndTestCase(TransactionTestCase):
     @tag("slow")
     def test_no_op(self):
         """Survey, download, then process an experiment we know is NO_OP."""
+        # Make sure there are no already existing jobs we might poll for unsuccessfully.
+        DownloaderJobOriginalFileAssociation.objects.all().delete()
+        DownloaderJob.objects.all().delete()
+        ProcessorJobOriginalFileAssociation.objects.all().delete()
+        ProcessorJob.objects.all().delete()
 
         # Prevent a call being made to NCBI's API to determine
         # organism name/id.
