@@ -56,38 +56,20 @@ def wait_for_job(job, job_class: type, start_time: datetime):
     return job
 
 
-def mock_logger_info(message: str, *args, **kwargs):
-    """Silence the log messages we're forcing on purpose.
-
-    Since we fake out having a ton of samples in mock_get_sample, the
-    surveyor logs a bunch of messages about them already
-    existing. However we're expecting this and it blows up the logs
-    for the test. Therefore if the message is about that, don't
-    log.
-    """
-    if "skipping object creation" in message:
-        return None
-
-    module_logger.info(message, *args, **kwargs)
-
-
 # TransactionTestCase makes database calls complete before the test
 # ends.  Otherwise the workers wouldn't actually be able to find the
 # job in the database because it'd be stuck in a transaction.
 class NoOpEndToEndTestCase(TransactionTestCase):
     @tag("slow")
-    @patch('data_refinery_foreman.surveyor.array_express.logger')
-    def test_no_op(self, mocked_logger):
+    def test_no_op(self):
         """Survey, download, then process an experiment we know is NO_OP."""
-        mocked_logger.side_effect = mock_logger_info
 
         # Prevent a call being made to NCBI's API to determine
         # organism name/id.
         organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
         organism.save()
 
-        accession_code = "E-GEOD-45547"
-        accession_code= "E-GEOD-4585"
+        accession_code = "E-GEOD-3303"
         survey_job = surveyor.survey_experiment(accession_code, "ARRAY_EXPRESS")
 
         self.assertTrue(survey_job.success)

@@ -54,6 +54,8 @@ job "TRANSCRIPTOME_INDEX_${{INDEX}}_${{RAM}}" {
         NOMAD_PORT = "${{NOMAD_PORT}}"
 
         S3_TRANSCRIPTOME_INDEX_BUCKET_NAME = "${{S3_TRANSCRIPTOME_INDEX_BUCKET_NAME}}"
+
+        LOG_LEVEL = "${{LOG_LEVEL}}"
       }
 
       # The resources the job will require.
