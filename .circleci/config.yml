@@ -60,13 +60,12 @@ jobs:
       - run:
           command: .circleci/filter_tests.sh -t smasher
           # Smashing can apparently take a long time on CI
+          no_output_timeout: 1h
 
       # Run Smasher tests.
-          - run: sudo chown -R circleci:circleci workers/test_volume/
-          - run:
-              command: .circleci/filter_tests.sh -t janitor 
-              # Smashing can apparently take a long time on CI
-              no_output_timeout: 1h
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run:
+          command: .circleci/filter_tests.sh -t janitor 
           no_output_timeout: 1h
 
       # Run QN tests.
