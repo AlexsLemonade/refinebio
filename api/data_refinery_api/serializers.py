@@ -1,3 +1,4 @@
+from django.db.models import Count, Prefetch
 from rest_framework import serializers
 from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
 from data_refinery_common.models import (
@@ -5,6 +6,8 @@ from data_refinery_common.models import (
     ExperimentAnnotation,
     Sample,
     SampleAnnotation,
+    ExperimentSampleAssociation,
+    ExperimentOrganismAssociation,
     Organism,
     OrganismIndex,
     OriginalFile,
@@ -200,12 +203,12 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 
 class ExperimentSerializer(serializers.ModelSerializer):
     organisms = serializers.StringRelatedField(many=True)
-    platforms = serializers.ReadOnlyField()
+    # platforms = serializers.ReadOnlyField()
     samples = serializers.StringRelatedField(many=True)
-    processed_samples = serializers.StringRelatedField(many=True)
-    pretty_platforms = serializers.ReadOnlyField()
-    sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
-    technologies = serializers.ReadOnlyField(source='get_sample_technologies')
+    # processed_samples = serializers.StringRelatedField(many=True)
+    # pretty_platforms = serializers.ReadOnlyField()
+    # sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
+    # technologies = serializers.ReadOnlyField(source='get_sample_technologies')
 
     class Meta:
         model = Experiment
@@ -216,9 +219,9 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'accession_code',
                     'source_database',
                     'source_url',
-                    'platforms',
-                    'pretty_platforms',
-                    'processed_samples',
+                    # 'platforms',
+                    # 'pretty_platforms',
+                    # 'processed_samples',
                     'has_publication',
                     'publication_title',
                     'publication_doi',
@@ -229,9 +232,30 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'submitter_institution',
                     'created_at',
                     'last_modified',
-                    'sample_metadata',
-                    'technologies'
+                    # 'sample_metadata',
+                    # 'technologies'
                 )
+
+    def setup_eager_loading(queryset):
+        """ Perform necessary eager loading of data. """
+        queryset = queryset.prefetch_related(
+            Prefetch(
+                'samples',
+                queryset=ExperimentSampleAssociation.objects.select_related(
+                    'experiment',
+                    'sample',
+                ),
+            ),
+        ).prefetch_related(
+            Prefetch(
+                'organisms',
+                queryset=ExperimentOrganismAssociation.objects.select_related(
+                    'experiment',
+                    'organism',
+                ),
+            ),
+        )
+        return queryset
 
 class ExperimentAnnotationSerializer(serializers.ModelSerializer):
 
