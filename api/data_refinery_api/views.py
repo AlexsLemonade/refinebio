@@ -151,20 +151,26 @@ class SearchAndFilter(generics.ListAPIView):
     # '@' Full-text search.
     # '$' Regex search.
     search_fields = (   'title',
-                        'description',
-                        'accession_code',
-                        'protocol_description',
-                        'publication_title',
+                        '@description',
+                        '@accession_code',
+                        '@protocol_description',
+                        '@publication_title',
                         'publication_doi',
                         'publication_authors',
                         'pubmed_id',
-                        'submitter_institution',
+                        '@submitter_institution',
                         'experimentannotation__data'
-                    )
+)
     filter_fields = ('has_publication')
 
     def get_queryset(self):
-        queryset = Experiment.objects.all()
+
+        # For Prod:
+        queryset = Experiment.processed_public_objects.all()
+
+        # For Dev:
+        # queryset = Experiment.objects.all()
+
         # Set up eager loading to avoid N+1 selects
         queryset = self.get_serializer_class().setup_eager_loading(queryset)
         return queryset
