@@ -1,4 +1,4 @@
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Prefetch, Q
 from rest_framework import serializers
 from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
 from data_refinery_common.models import (
@@ -232,8 +232,15 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 ##
 
 class ExperimentSerializer(serializers.ModelSerializer):
-    organisms = serializers.StringRelatedField(many=True)
-    samples = SearchSampleSerializer(many=True)
+    organisms = serializers.StringRelatedField(many=True, read_only=True)
+    samples = SearchSampleSerializer(many=True, read_only=True)
+    total_samples_count = serializers.IntegerField(
+                        read_only=True
+                    )
+    processed_samples_count = serializers.IntegerField(
+                        read_only=True
+                    )
+
     class Meta:
         model = Experiment
         fields = (
@@ -249,6 +256,8 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'publication_authors',
                     'pubmed_id',
                     'samples',
+                    'total_samples_count',
+                    'processed_samples_count',
                     'organisms',
                     'submitter_institution',
                     'created_at',
@@ -258,6 +267,12 @@ class ExperimentSerializer(serializers.ModelSerializer):
     def setup_eager_loading(queryset):
         """ Perform necessary eager loading of data. """
         queryset = queryset.prefetch_related('samples').prefetch_related('organisms')
+
+        # Multiple count annotations
+        queryset = queryset.annotate(
+            total_samples_count=Count('samples', unique=True), 
+            processed_samples_count=Count('samples', filter=Q(samples__is_processed=True)))
+
         return queryset
 
 class ExperimentAnnotationSerializer(serializers.ModelSerializer):
