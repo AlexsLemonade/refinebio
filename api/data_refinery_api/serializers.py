@@ -146,6 +146,36 @@ class SampleSerializer(serializers.ModelSerializer):
                     'last_modified',
                 )
 
+class SearchSampleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Sample
+        fields = (
+                    'id',
+                    'title',
+                    'accession_code',
+                    'source_database',
+                    'platform_accession_code',
+                    'platform_name',
+                    'pretty_platform',
+                    'technology',
+                    'sex',
+                    'age',
+                    'specimen_part',
+                    'genotype',
+                    'disease',
+                    'disease_stage',
+                    'cell_line',
+                    'treatment',
+                    'race',
+                    'subject',
+                    'compound',
+                    'time',
+                    'is_processed',
+                    'created_at',
+                    'last_modified',
+                )
+
 class SampleAnnotationSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -203,14 +233,7 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 
 class ExperimentSerializer(serializers.ModelSerializer):
     organisms = serializers.StringRelatedField(many=True)
-    # platforms = serializers.ReadOnlyField()
-    # samples = serializers.StringRelatedField(many=True)
-    samples = SampleSerializer(many=True)
-    # processed_samples = serializers.StringRelatedField(many=True)
-    # pretty_platforms = serializers.ReadOnlyField()
-    # sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
-    # technologies = serializers.ReadOnlyField(source='get_sample_technologies')
-
+    samples = SearchSampleSerializer(many=True)
     class Meta:
         model = Experiment
         fields = (
@@ -220,9 +243,6 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'accession_code',
                     'source_database',
                     'source_url',
-                    # 'platforms',
-                    # 'pretty_platforms',
-                    # 'processed_samples',
                     'has_publication',
                     'publication_title',
                     'publication_doi',
@@ -233,8 +253,6 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'submitter_institution',
                     'created_at',
                     'last_modified',
-                    # 'sample_metadata',
-                    # 'technologies'
                 )
 
     def setup_eager_loading(queryset):
