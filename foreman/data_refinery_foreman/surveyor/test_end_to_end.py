@@ -1,5 +1,7 @@
+import glob
 import json
 import requests
+import shutil
 import time
 
 from datetime import timedelta, datetime
@@ -28,6 +30,7 @@ from data_refinery_common.models import (
     SurveyJob,
     SurveyJobKeyValue,
 )
+from data_refinery_common.utils import get_env_variable
 from data_refinery_foreman.surveyor import surveyor, utils
 from data_refinery_foreman.surveyor.management.commands.unsurvey import purge_experiment
 
@@ -35,9 +38,7 @@ from data_refinery_foreman.surveyor.management.commands.unsurvey import purge_ex
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-module_logger = logging.getLogger("data_refinery_foreman.surveyor.array_express")
-
-
+LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 LOOP_TIME = 5  # seconds
 MAX_WAIT_TIME = timedelta(minutes=15)
 
@@ -63,6 +64,10 @@ class NoOpEndToEndTestCase(TransactionTestCase):
     @tag("slow")
     def test_no_op(self):
         """Survey, download, then process an experiment we know is NO_OP."""
+        # Clear out pre-existing work dirs so there's no conflicts:
+        for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
+            shutil.rmtree(work_dir)
+
         # Make sure there are no already existing jobs we might poll for unsuccessfully.
         DownloaderJobOriginalFileAssociation.objects.all().delete()
         DownloaderJob.objects.all().delete()
