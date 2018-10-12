@@ -204,7 +204,8 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 class ExperimentSerializer(serializers.ModelSerializer):
     organisms = serializers.StringRelatedField(many=True)
     # platforms = serializers.ReadOnlyField()
-    samples = serializers.StringRelatedField(many=True)
+    # samples = serializers.StringRelatedField(many=True)
+    samples = SampleSerializer(many=True)
     # processed_samples = serializers.StringRelatedField(many=True)
     # pretty_platforms = serializers.ReadOnlyField()
     # sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
@@ -238,23 +239,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
 
     def setup_eager_loading(queryset):
         """ Perform necessary eager loading of data. """
-        queryset = queryset.prefetch_related(
-            Prefetch(
-                'samples',
-                queryset=ExperimentSampleAssociation.objects.select_related(
-                    'experiment',
-                    'sample',
-                ),
-            ),
-        ).prefetch_related(
-            Prefetch(
-                'organisms',
-                queryset=ExperimentOrganismAssociation.objects.select_related(
-                    'experiment',
-                    'organism',
-                ),
-            ),
-        )
+        queryset = queryset.prefetch_related('samples').prefetch_related('organisms')
         return queryset
 
 class ExperimentAnnotationSerializer(serializers.ModelSerializer):
