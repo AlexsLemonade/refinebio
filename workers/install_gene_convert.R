@@ -7,7 +7,7 @@ devtools::install_version('data.table', version='1.11.0')
 devtools::install_version('optparse', version='1.4.4')
 
 devtools::install_version('tidyverse', version='1.2.1')
-devtools::install_version('rlang', version='0.2.1')
+devtools::install_version('rlang', version='0.2.2')
 
 # devtools::install_url() requires biocLite.R
 source('https://bioconductor.org/biocLite.R')
