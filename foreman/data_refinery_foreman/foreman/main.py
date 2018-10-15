@@ -403,7 +403,7 @@ def send_janitor_jobs(send_minutes=[0, 30]):
             actual_index = index[0]
             new_job = ProcessorJob(num_retries=0,
                                    pipeline_applied="JANITOR",
-                                   ram_amount=256,
+                                   ram_amount=2048,
                                    volume_index=actual_index)
             new_job.save()
             logger.info("Sending Janitor with index: ",
