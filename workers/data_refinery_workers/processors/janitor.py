@@ -8,7 +8,7 @@ import warnings
 
 from django.utils import timezone
 from nomad import Nomad
-from nomad.api.exceptions import URLNotFoundNomadException
+from nomad.api.exceptions import BaseNomadException
 from typing import Dict
 
 from data_refinery_common.logging import get_and_configure_logger
@@ -51,11 +51,11 @@ def _find_and_remove_expired_jobs(job_context):
             # Is this job running?
             try:
                 job_status = nomad_client.job.get_job(job_id)["Status"]
-                
+
                 # This job is running, don't delete  the working directory.
                 if job_status == "running":
                     continue
-            except URLNotFoundNomadException:
+            except BaseNomadException as e:
                 # If we can't currently access Nomad,
                 # just continue until we can again.
                 continue
