@@ -226,3 +226,7 @@ pd_annotation_pkgs <- c(
   'pd.zebrafish_3.12.0.tar.gz'
 )
 install_with_url(annotation_url, pd_annotation_pkgs)
+
+# Load this libraries because apparently just installing it isn't
+# enough to verify that the correct versions of dependencies are installed.
+library('foreach')
