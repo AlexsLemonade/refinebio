@@ -155,6 +155,7 @@ jobs:
 
       # We've been running out of space while downloading the Affy
       # image, so clear out other images to ensure enough space for it.
+      - run: docker rm $(docker ps -qa --no-trunc --filter "status=exited") || true
       - run: docker image rm ccdlstaging/dr_transcriptome
       - run: docker image rm ccdlstaging/dr_illumina
 
