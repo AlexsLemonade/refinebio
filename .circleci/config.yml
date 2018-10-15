@@ -59,7 +59,7 @@ jobs:
       # Run Smasher tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
-          command: .circleci/filter_tests.sh -t janitor 
+          command: .circleci/filter_tests.sh -t janitor
           no_output_timeout: 1h
 
       # Run QN tests.
@@ -152,6 +152,11 @@ jobs:
       # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
       # from making sure all the files in workers/test_volume have read/write permissions.
       - run: sudo chown -R circleci:circleci workers/test_volume/
+
+      # We've been running out of space while downloading the Affy
+      # image, so clear out other images to ensure enough space for it.
+      - run: docker image rm ccdlstaging/dr_transcriptome
+      - run: docker image rm ccdlstaging/dr_illumina
 
       - run:
           command: .circleci/filter_tests.sh -t affymetrix
