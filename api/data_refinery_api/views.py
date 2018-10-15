@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db.models import Count, Prefetch
 from django.db.models.aggregates import Avg
-from django.db.models.expressions import F
+from django.db.models.expressions import F, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 
@@ -464,6 +464,8 @@ class SampleList(PaginatedAPIView):
         ids = filter_dict.pop('ids', None)
         accession_codes = filter_dict.pop('accession_codes', None)
 
+        filter_by = filter_dict.pop('filter_by', None)
+
         if ids is not None:
             ids = [ int(x) for x in ids.split(',')]
             filter_dict['pk__in'] = ids
@@ -481,6 +483,22 @@ class SampleList(PaginatedAPIView):
         samples = Sample.public_objects.filter(**filter_dict)
         if order_by:
             samples = samples.order_by(order_by)
+
+        if filter_by:
+            samples = samples.filter(   Q(sex__contains=filter_by) |
+                                        Q(age__contains=filter_by) |
+                                        Q(specimen_part__contains=filter_by) |
+                                        Q(genotype__contains=filter_by) |
+                                        Q(disease__contains=filter_by) |
+                                        Q(disease_stage__contains=filter_by) |
+                                        Q(cell_line__contains=filter_by) |
+                                        Q(treatment__contains=filter_by) |
+                                        Q(race__contains=filter_by) |
+                                        Q(subject__contains=filter_by) |
+                                        Q(compound__contains=filter_by) |
+                                        Q(time__contains=filter_by) |
+                                        Q(sampleannotation__data__contains=filter_by)
+                                    )
 
         page = self.paginate_queryset(samples)
         if page is not None:
