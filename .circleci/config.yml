@@ -36,7 +36,9 @@ jobs:
           command: sudo -E ./run_nomad.sh -e test
 
       - run: ./prepare_image.sh -i no_op -s workers -d localhost:5000
+      - run: docker push localhost:5000/dr_no_op
       - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
+        - run: docker push localhost:5000/dr_downloaders
       - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
 
       # Run Downloader Tests
