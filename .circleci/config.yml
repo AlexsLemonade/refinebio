@@ -4,18 +4,12 @@ jobs:
   # These are grouped together because in total they take less time than our other tests individually.
   main_tests:
     working_directory: ~/refinebio
-    machine:
-      docker_layer_caching: true
-      pre:
-        - sudo rm -rf /usr/local/android-sdk-linux
-        - sudo rm -rf /usr/local/go
-        - sudo rm -rf /usr/local/android-ndk
-        - sudo rm -rf /home/ubuntu/nvm
-        - sudo rm -rf /home/ubuntu/.android
-        - sudo rm -rf /home/ubuntu/.phpenv
-        - sudo rm -rf /home/ubuntu/.rvm
+    machine: true
     steps:
       - checkout
+
+      # Clean up stuff circle provides that we don't need.
+      - run: sudo bash .circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
@@ -36,7 +30,9 @@ jobs:
           command: sudo -E ./run_nomad.sh -e test
 
       - run: ./prepare_image.sh -i no_op -s workers -d localhost:5000
+      - run: docker push localhost:5000/dr_no_op
       - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
+      - run: docker push localhost:5000/dr_downloaders
       - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
 
       # Run Downloader Tests
@@ -76,17 +72,12 @@ jobs:
 
   common_tests:
     working_directory: ~/refinebio
-    machine:
-      pre:
-        - sudo rm -rf /usr/local/android-sdk-linux
-        - sudo rm -rf /usr/local/go
-        - sudo rm -rf /usr/local/android-ndk
-        - sudo rm -rf /home/ubuntu/nvm
-        - sudo rm -rf /home/ubuntu/.android
-        - sudo rm -rf /home/ubuntu/.phpenv
-        - sudo rm -rf /home/ubuntu/.rvm
+    machine: true
     steps:
       - checkout
+
+      # Clean up stuff circle provides that we don't need.
+      - run: sudo bash .circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
@@ -105,18 +96,12 @@ jobs:
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
     working_directory: ~/refinebio
-    machine:
-      docker_layer_caching: true
-      pre:
-        - sudo rm -rf /usr/local/android-sdk-linux
-        - sudo rm -rf /usr/local/go
-        - sudo rm -rf /usr/local/android-ndk
-        - sudo rm -rf /home/ubuntu/nvm
-        - sudo rm -rf /home/ubuntu/.android
-        - sudo rm -rf /home/ubuntu/.phpenv
-        - sudo rm -rf /home/ubuntu/.rvm
+    machine: true
     steps:
       - checkout
+
+      # Clean up stuff circle provides that we don't need.
+      - run: sudo bash .circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
@@ -138,18 +123,12 @@ jobs:
 
   tx_illumina_affy_agilent_tests:
     working_directory: ~/refinebio
-    machine:
-      docker_layer_caching: true
-      pre:
-        - sudo rm -rf /usr/local/android-sdk-linux
-        - sudo rm -rf /usr/local/go
-        - sudo rm -rf /usr/local/android-ndk
-        - sudo rm -rf /home/ubuntu/nvm
-        - sudo rm -rf /home/ubuntu/.android
-        - sudo rm -rf /home/ubuntu/.phpenv
-        - sudo rm -rf /home/ubuntu/.rvm
+    machine: true
     steps:
       - checkout
+
+      # Clean up stuff circle provides that we don't need.
+      - run: sudo bash .circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
@@ -190,18 +169,14 @@ jobs:
 
 
   deploy:
-    machine:
-      pre:
-        - sudo rm -rf /usr/local/android-sdk-linux
-        - sudo rm -rf /usr/local/go
-        - sudo rm -rf /usr/local/android-ndk
-        - sudo rm -rf /home/ubuntu/nvm
-        - sudo rm -rf /home/ubuntu/.android
-        - sudo rm -rf /home/ubuntu/.phpenv
-        - sudo rm -rf /home/ubuntu/.rvm
+    machine: true
     working_directory: ~/refinebio
     steps:
       - checkout
+
+      # Clean up stuff circle provides that we don't need.
+      - run: sudo bash .circleci/cleanup_instance.sh
+
       - run: bash .circleci/verify_tag.sh
       - run: bash .circleci/git_decrypt.sh
       - run: bash .circleci/update_docker_img.sh
