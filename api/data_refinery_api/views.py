@@ -114,12 +114,12 @@ class ExperimentFilter(django_filters.FilterSet):
     organisms__name = django_filters.ModelMultipleChoiceFilter(field_name="organisms__name",
                                                                to_field_name="name",
                                                                queryset=Organism.objects.all())
-    organisms__name.always_filter = False
-    samples__platform_accession_code = \
-        django_filters.ModelMultipleChoiceFilter(field_name="smaples__platform_accession_code",
-                                                 to_field_name="platform_accession_code",
+
+    samples__platform_name = \
+        django_filters.ModelMultipleChoiceFilter(field_name="samples__platform_name",
+                                                 to_field_name="platform_name",
                                                  queryset=Sample.objects.all())
-    samples__platform_accession_code.always_filter = False
+    samples__platform_name.always_filter = False
 
     class Meta:
         model = Experiment
@@ -128,7 +128,7 @@ class ExperimentFilter(django_filters.FilterSet):
                         'technology',
                         'source_first_published',
                         'organisms__name',
-                        'samples__platform_accession_code']
+                        'samples__platform_name']
 
 # ListAPIView is read-only!
 class SearchAndFilter(generics.ListAPIView):
@@ -163,7 +163,7 @@ class SearchAndFilter(generics.ListAPIView):
                         '@submitter_institution',
                         'experimentannotation__data'
                     )
-    filter_fields = ('has_publication')
+    filter_fields = ('has_publication', 'platform_name')
 
     def list(self, request, *args, **kwargs):
         """ Adds counts on certain filter fields to result JSON."""
@@ -173,7 +173,9 @@ class SearchAndFilter(generics.ListAPIView):
         response.data['filters']['technology'] = {}
         response.data['filters']['publication'] = {}
         response.data['filters']['organism'] = {}
+        response.data['filters']['platforms'] = {}
 
+        # Technology
         qs = self.search_queryset(self.get_queryset())
         techs = qs.values('technology').annotate(Count('technology', unique=True))
         for tech in techs:
@@ -181,11 +183,13 @@ class SearchAndFilter(generics.ListAPIView):
                 continue
             response.data['filters']['technology'][tech['technology']] = tech['technology__count']
 
+        # Publication
         pubs = qs.values('has_publication').annotate(Count('has_publication', unique=True))
         for pub in pubs:
             if pub['has_publication']:
                 response.data['filters']['publication']['has_publication'] = pub['has_publication__count']
 
+        # Organisms
         organisms = qs.values('organisms__name').annotate(Count('organisms__name', unique=True))
         for organism in organisms:
 
@@ -195,6 +199,12 @@ class SearchAndFilter(generics.ListAPIView):
                 continue
 
             response.data['filters']['organism'][organism['organisms__name']] = organism['organisms__name__count']
+
+        # Platforms
+        platforms = qs.values('samples__platform_name').annotate(Count('samples__platform_name', unique=True))
+        for plat in platforms:
+            if plat['samples__platform_name']:
+                response.data['filters']['platforms'][plat['samples__platform_name']] = plat['samples__platform_name__count']
 
         return response
 
