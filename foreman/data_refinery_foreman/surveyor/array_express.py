@@ -537,6 +537,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 sample_annotation.save()
 
                 original_file = OriginalFile()
+                original_file.filename = filename
                 original_file.source_filename = filename
                 original_file.source_url = download_url
                 original_file.is_downloaded = False
