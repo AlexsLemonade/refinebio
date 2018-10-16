@@ -65,8 +65,13 @@ elif [[ $branch == "dev" ]]; then
     ENVIRONMENT=staging
 else
     echo "Why in the world was run_terraform.sh called from a branch other than dev or master?!?!?"
-    exit 1
+    # TODO: uncomment this
+    # exit 1
 fi
+
+# TODO: remove these two lines
+ENVIRONMENT=dev
+BUCKEY_NAME="refinebio-tfstate-deploy-dev"
 
 # New deployment
 TF_VAR_user=circleci TF_VAR_stage=$ENVIRONMENT ./deploy.sh -e $ENVIRONMENT -v $CIRCLE_TAG
