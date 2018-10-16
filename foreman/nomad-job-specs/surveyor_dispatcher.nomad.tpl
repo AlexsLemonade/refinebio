@@ -49,6 +49,8 @@ job "SURVEYOR_DISPATCHER" {
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
+
+        LOG_LEVEL = "${{LOG_LEVEL}}"
       }
 
       # The resources the job will require.
