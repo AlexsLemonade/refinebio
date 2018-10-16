@@ -13,8 +13,12 @@ elif [[ $branch == "dev" ]]; then
     DOCKERHUB_REPO=ccdlstaging
 else
     echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"
-    exit 1
+    # TODO: uncomment this!
+    # exit 1
 fi
+
+# TODO: removethis line!!!
+DOCKERHUB_REPO=wkurt
 
 echo $CIRCLE_TAG > ~/refinebio/common/version
 
