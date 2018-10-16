@@ -34,10 +34,3 @@ bioc_pkgs <- c(
   'limma_3.34.9.tar.gz'
 )
 install_with_url(bioc_url, bioc_pkgs)
-
-# Load these libraries because apparently just installing them isn't
-# enough to verify that they have complementary versions.
-library("optparse")
-library(data.table)
-library(lazyeval)
-library(AnnotationDbi)
