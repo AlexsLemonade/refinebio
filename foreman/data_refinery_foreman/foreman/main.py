@@ -463,8 +463,6 @@ def monitor_jobs():
     while(True):
         start_time = timezone.now()
 
-        send_janitor_jobs()
-
         for thread in threads:
             if not thread.is_alive():
                 logger.error("Foreman Thread for the function %s has died!!!!", thread.name)
