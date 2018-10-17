@@ -396,7 +396,7 @@ def retry_lost_processor_jobs() -> None:
 
 @do_forever(JANITOR_DISPATCH_TIME)
 def send_janitor_jobs():
-    """ If we're in the send_minutes window, dispatch some janitors """
+    """Dispatch a Janitor job for each instance in the cluster"""
 
     # This is a fairly hacky way of finding all of our volume indexes
     indexes = ProcessorJob.objects.all().values_list('volume_index').distinct()
