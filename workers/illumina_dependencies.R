@@ -9,6 +9,8 @@ devtools::install_version('doParallel', version='1.0.11')
 devtools::install_version('data.table', version='1.11.0')
 devtools::install_version('optparse', version='1.4.4')
 devtools::install_version('lazyeval', version='0.2.1')
+devtools::install_version('tidyverse', version='1.2.1')
+devtools::install_version('rlang', version='0.2.2')
 
 # devtools::install_url() requires biocLite.R
 source('https://bioconductor.org/biocLite.R')
@@ -39,3 +41,15 @@ illumina_pkgs <- c(
   'illuminaRatv1.db_1.26.0.tar.gz'
 )
 install_with_url(release_url, illumina_pkgs)
+
+# Load these libraries because apparently just installing them isn't
+# enough to verify that they have complementary versions.
+library("optparse")
+library(data.table)
+library("dplyr")
+library("rlang")
+library(AnnotationDbi)
+library(lazyeval)
+library(limma)
+library(oligo)
+library(doParallel)
