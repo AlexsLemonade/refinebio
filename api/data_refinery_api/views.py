@@ -153,12 +153,12 @@ class SearchAndFilter(generics.ListAPIView):
     filter_class = ExperimentFilter
 
     # Ordering
-    ordering_fields = ('samples_count', 'id', 'created_at', 'source_first_published', 'accession_code',)
+    ordering_fields = ('total_samples_count', 'id', 'created_at', 'source_first_published', 'accession_code',)
     samples_count = django_filters.NumberFilter(method='filter_samples_count')
-    ordering = ('-samples_count',)
+    ordering = ('-total_samples_count',)
 
     def filter_samples_count(self, queryset, name, value):
-        return queryset.filter(samples_count=value)
+        return queryset.filter(total_samples_count=value)
 
     # via http://www.django-rest-framework.org/api-guide/filtering/#searchfilter
     # '^' Starts-with search.
