@@ -445,7 +445,14 @@ def requeue_survey_job(last_job: SurveyJob, dispatch=True) -> None:
             nomad_port = get_env_variable("NOMAD_PORT", "4646")
             nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
             if dispatch:
-                nomad_response = nomad_client.job.dispatch_job("SURVEYOR", meta={"JOB_ID": new_job.id})
+                if new_job.num_retries == 1:
+                    ram_amount = "4096"
+                elif new_job.num_retries in [2, 3]:
+                    ram_amount = "16384"
+                else:
+                    ram_amount = "256"
+
+                nomad_response = nomad_client.job.dispatch_job("SURVEYOR_" + ram_amount, meta={"JOB_ID": new_job.id})
                 new_job.nomad_job_id = nomad_response["DispatchedJobID"]
                 new_job.save()
         except URLNotFoundNomadException:
