@@ -63,4 +63,4 @@ run_on_deploy_box "source env_vars && echo -e '######\nDeploying $CIRCLE_TAG fin
 # Don't leave secrets lying around.
 ## Clean out any files we've created or moved so git-crypt will relock the repo.
 run_on_deploy_box "git clean -f"
-run_on_deploy_box "source env_vars && bash .circleci/git_encrypt.sh"
+run_on_deploy_box "git-crypt lock"
