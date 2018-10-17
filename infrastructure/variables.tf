@@ -71,6 +71,10 @@ variable "running_in_cloud" {
   default = "True"
 }
 
+variable "log_level" {
+  default = "WARN"
+}
+
 variable "dockerhub_repo" {
   default = "ccdlstaging"
 }
@@ -195,6 +199,8 @@ output "environment_variables" {
       value = "${var.database_timeout}"},
     {name = "RUNNING_IN_CLOUD"
       value = "${var.running_in_cloud}"},
+    {name = "LOG_LEVEL"
+      value = "${var.log_level}"},
     {name = "USE_S3"
       value = "${var.use_s3}"},
     {name = "RAVEN_DSN"
