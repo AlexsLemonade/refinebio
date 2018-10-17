@@ -20,7 +20,7 @@ from data_refinery_foreman.surveyor import surveyor
 
 logger = get_and_configure_logger(__name__)
 
-SURVEYOR_JOB_NAME = "SURVEYOR"
+SURVEYOR_JOB_NAME = "SURVEYOR_256"
 
 def set_source_type_for_accession(survey_job, accession: str) -> None:
     """Type a surveyor based on accession structure"""
