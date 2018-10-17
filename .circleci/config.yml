@@ -155,6 +155,12 @@ jobs:
       # from making sure all the files in workers/test_volume have read/write permissions.
       - run: sudo chown -R circleci:circleci workers/test_volume/
 
+      # We've been running out of space while downloading the Affy
+      # image, so clear out other images to ensure enough space for it.
+      - run: docker rm $(docker ps -qa --no-trunc --filter "status=exited") || true
+      - run: docker image rm ccdlstaging/dr_transcriptome
+      - run: docker image rm ccdlstaging/dr_illumina
+
       - run:
           command: .circleci/filter_tests.sh -t affymetrix
           # This takes a while because the affymetrix image is huge
