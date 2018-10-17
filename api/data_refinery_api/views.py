@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.db.models import Count
+from django.db.models import Count, Prefetch
 from django.db.models.aggregates import Avg
 from django.db.models.expressions import F
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
@@ -31,7 +31,8 @@ from data_refinery_common.models import (
     Dataset,
     APIToken,
     ProcessorJobDatasetAssociation,
-    OrganismIndex
+    OrganismIndex,
+    ExperimentSampleAssociation
 )
 from data_refinery_api.serializers import (
     ExperimentSerializer,
@@ -155,6 +156,7 @@ class SearchAndFilter(generics.ListAPIView):
     ordering_fields = ('samples_count', 'id', 'created_at', 'source_first_published', 'accession_code',)
     samples_count = django_filters.NumberFilter(method='filter_samples_count')
     ordering = ('-samples_count',)
+
     def filter_samples_count(self, queryset, name, value):
         return queryset.filter(samples_count=value)
 
@@ -173,8 +175,20 @@ class SearchAndFilter(generics.ListAPIView):
                         'pubmed_id',
                         '@submitter_institution',
                         'experimentannotation__data'
-                    )
+    )
     filter_fields = ('has_publication')
+
+    def get_queryset(self):
+
+        # For Prod:
+        queryset = Experiment.processed_public_objects.all()
+
+        # For Dev:
+        # queryset = Experiment.objects.all()
+
+        # Set up eager loading to avoid N+1 selects
+        queryset = self.get_serializer_class().setup_eager_loading(queryset)
+        return queryset
 
     def list(self, request, *args, **kwargs):
         """ Adds counts on certain filter fields to result JSON."""
