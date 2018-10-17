@@ -10,6 +10,7 @@
 #    - Select an Ubuntu 18.04 HVM SSD AMI for the region. If you are using us-east-1 then
 #      ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-20180912 (ami-0ac019f4fcb7cb7e6)
 #      should be correct.
+#    - A t3.small instance should be sufficient.
 #    - Set the EBS volume to have at least 100 GB.
 #    - Use the deploy VPC and security group referenced in earlier steps.
 #    - Paste the contents of this script into the instance-user-data.
