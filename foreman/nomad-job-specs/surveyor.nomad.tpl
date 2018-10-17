@@ -1,4 +1,4 @@
-job "SURVEYOR" {
+job "SURVEYOR_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -58,7 +58,7 @@ job "SURVEYOR" {
         # CPU is in AWS's CPU units.
         cpu = 500
         # Memory is in MB of RAM.
-        memory = 256
+        memory = ${{RAM}}
       }
 
       logs {
