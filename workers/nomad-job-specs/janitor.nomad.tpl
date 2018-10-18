@@ -1,14 +1,8 @@
-job "DOWNLOADER" {
+job "JANITOR_${{INDEX}}_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
-
-  # Downloader jobs run at a lower priority than processor jobs so
-  # that we don't download all the data and only then start processing
-  # it. (Especially since downloader jobs get queued before processor
-  # jobs, the default ordering can cause us to only be downloading
-  # even with plenty of processing jobs queued.)
-  priority = 40
+  priority = 75
 
   parameterized {
     payload       = "forbidden"
@@ -30,7 +24,7 @@ job "DOWNLOADER" {
       size = "10"
     }
 
-    task "downloader" {
+    task "janitor" {
       driver = "docker"
 
       # This env will be passed into the container for the job.
@@ -57,17 +51,16 @@ job "DOWNLOADER" {
         USE_S3 = "${{USE_S3}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
-        MAX_DOWNLOADER_JOBS_PER_NODE = "${{MAX_DOWNLOADER_JOBS_PER_NODE}}"
+        EBS_INDEX = "${{INDEX}}"
 
-        LOG_LEVEL = "${{LOG_LEVEL}}"
       }
 
       # The resources the job will require.
       resources {
         # CPU is in AWS's CPU units.
-        cpu = 512
+        cpu = 256
         # Memory is in MB of RAM.
-        memory = 4096
+        memory = 256
       }
 
       logs {
@@ -75,15 +68,21 @@ job "DOWNLOADER" {
         max_file_size = 1
       }
 
+      constraint {
+        attribute = "${meta.volume_index}"
+        operator  = "="
+        value     = "${{INDEX}}"
+      }
+
       config {
-        image = "${{DOCKERHUB_REPO}}/${{DOWNLOADERS_DOCKER_IMAGE}}"
+        image = "${{DOCKERHUB_REPO}}/${{SMASHER_DOCKER_IMAGE}}"
         force_pull = false
 
         # The args to pass to the Docker container's entrypoint.
         args = [
           "python3",
           "manage.py",
-          "run_downloader_job",
+          "run_processor_job",
           "--job-name", "${NOMAD_META_JOB_NAME}",
           "--job-id", "${NOMAD_META_JOB_ID}"
         ]

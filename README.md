@@ -4,6 +4,11 @@
 Refine.bio harmonizes petabytes of publicly available biological data into
 ready-to-use datasets for cancer researchers and AI/ML scientists.
 
+This README file is about building and running the refine.bio project source code.
+
+If you're interested in simply using the service, you should [go to the website](https://www.refine.bio) or
+[read the documentation](http://docs.refine.bio).
+
 Refine.bio currently has four sub-projects contained within this repo:
 - [common](./common) Contains code needed by both `foreman` and `workers`.
 - [foreman](./foreman) Discovers data to download/process and manages jobs.

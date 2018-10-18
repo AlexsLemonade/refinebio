@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from contextlib import closing
 from django.test import TestCase, tag
@@ -68,7 +69,7 @@ def prepare_illumina_job(species="Homo sapiens"):
     sample = Sample.objects.get(title="LV-T350A&si-EZH2-3")
     sample.title = "ignoreme_for_description"
     sample.accession_code = "ignoreme_for_description"
-    sample.save() 
+    sample.save()
 
     return pj
 
@@ -104,6 +105,9 @@ class IlluminaToPCLTestCase(TestCase):
             self.assertTrue(os.path.exists(smashme.absolute_file_path))
             os.remove(smashme.absolute_file_path)
 
+        # Cleanup after the job since it won't since we aren't running in cloud.
+        shutil.rmtree(final_context["work_dir"], ignore_errors=True)
+
     @tag("illumina")
     def test_bad_illumina_detection(self):
         """ With the wrong species, this will fail the platform detection threshold. """
@@ -111,6 +115,9 @@ class IlluminaToPCLTestCase(TestCase):
         job = prepare_illumina_job('RATTUS_NORVEGICUS')
         final_context = illumina.illumina_to_pcl(job.pk)
         self.assertTrue(final_context['abort'])
+
+        # Cleanup after the job since it won't since we aren't running in cloud.
+        shutil.rmtree(final_context["work_dir"], ignore_errors=True)
 
     @tag("illumina")
     def test_good_detection(self):
@@ -148,6 +155,9 @@ class IlluminaToPCLTestCase(TestCase):
 
         for key in final_context['samples'][0].sampleannotation_set.all()[0].data.keys():
             self.assertTrue(key in ['detected_platform', 'detection_percentage', 'mapped_percentage'])
+
+        # Cleanup after the job since it won't since we aren't running in cloud.
+        shutil.rmtree(final_context["work_dir"], ignore_errors=True)
 
 class AgilentTwoColorTestCase(TestCase):
 

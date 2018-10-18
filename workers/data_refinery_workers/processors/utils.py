@@ -1,8 +1,10 @@
 import os
 import random
 import shutil
+import signal
 import string
 import subprocess
+import sys
 import yaml
 
 from django.utils import timezone
@@ -32,7 +34,75 @@ SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 RUNNING_IN_CLOUD = get_env_variable_gracefully("RUNNING_IN_CLOUD", "False")
 DIRNAME = os.path.dirname(os.path.abspath(__file__))
+CURRENT_JOB = None
 
+
+def sigterm_handler(sig, frame):
+    """ SIGTERM Handler """
+    global CURRENT_JOB
+    if not CURRENT_JOB:
+        sys.exit(0)
+    else:
+        CURRENT_JOB.start_time = None
+        CURRENT_JOB.num_retries = CURRENT_JOB.num_retries - 1
+        CURRENT_JOB.save()
+        sys.exit(0)
+
+def prepare_original_files(job_context):
+    """ Provision in the Job context for OriginalFile-driven processors
+    """
+    job = job_context["job"]
+    relations = ProcessorJobOriginalFileAssociation.objects.filter(processor_job=job)
+    original_files = OriginalFile.objects.filter(id__in=relations.values('original_file_id'))
+
+    if len(original_files) == 0:
+        logger.error("No files found.", processor_job=job.id)
+        job_context["success"] = False
+        job.failure_reason = "No files were found for the job."
+        return job_context
+
+    job_context["original_files"] = original_files
+    original_file = job_context['original_files'][0]
+    assocs = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
+    samples = Sample.objects.filter(id__in=assocs.values('sample_id')).distinct()
+    job_context['samples'] = samples
+    job_context["computed_files"] = []
+
+    return job_context
+
+def prepare_dataset(job_context):
+    """ Provision in the Job context for Dataset-driven processors
+    """
+    job = job_context["job"]
+    relations = ProcessorJobDatasetAssociation.objects.filter(processor_job=job)
+
+    # This should never be more than one!
+    if relations.count() > 1:
+        failure_reason = "More than one dataset for processor job!"
+        logger.error(failure_reason, processor_job=job.id)
+        job_context["success"] = False
+        job.failure_reason = failure_reason
+        return job_context
+    elif relations.count() == 0:
+        failure_reason = "No datasets found for processor job!"
+        logger.error(failure_reason, processor_job=job.id)
+        job_context["success"] = False
+        job.failure_reason = failure_reason
+        return job_context
+
+    dataset = Dataset.objects.get(id=relations[0].dataset_id)
+    dataset.is_processing = True
+    dataset.save()
+
+    # Get the samples to smash
+    job_context["dataset"] = dataset
+    job_context["samples"] = dataset.get_aggregated_samples()
+    job_context["experiments"] = dataset.get_experiments()
+
+    # Just in case
+    job_context["original_files"] = []
+    job_context["computed_files"] = []
+    return job_context
 
 def start_job(job_context: Dict):
     """A processor function to start jobs.
@@ -48,57 +118,32 @@ def start_job(job_context: Dict):
         logger.error("This processor job has already been started!!!", processor_job=job.id)
         raise Exception("processors.start_job called on job %s that has already been started!" % str(job.id))
 
+    # Set up the SIGTERM handler so we can appropriately handle being interrupted.
+    # (`docker stop` uses SIGTERM, not SIGINT.)
+    signal.signal(signal.SIGTERM, sigterm_handler)
+
     job.worker_id = get_instance_id()
     job.worker_version = SYSTEM_VERSION
     job.start_time = timezone.now()
     job.save()
 
+    global CURRENT_JOB
+    CURRENT_JOB = job
+
     logger.debug("Starting processor Job.", processor_job=job.id, pipeline=job.pipeline_applied)
 
-    # Some jobs take OriginalFiles, other take Datasets
-    if job.pipeline_applied not in ["SMASHER", "QN_REFERENCE"]:
-        relations = ProcessorJobOriginalFileAssociation.objects.filter(processor_job=job)
-        original_files = OriginalFile.objects.filter(id__in=relations.values('original_file_id'))
-
-        if len(original_files) == 0:
-            logger.error("No files found.", processor_job=job.id)
-            job_context["success"] = False
-            job.failure_reason = "No files were found for the job."
-            return job_context
-
-        job_context["original_files"] = original_files
-        original_file = job_context['original_files'][0]
-        assocs = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
-        samples = Sample.objects.filter(id__in=assocs.values('sample_id')).distinct()
-        job_context['samples'] = samples
-        job_context["computed_files"] = []
-
+    # Janitors have no requirement
+    if job.pipeline_applied not in ["JANITOR"]:
+        # Some jobs take OriginalFiles, other take Datasets
+        if job.pipeline_applied not in ["SMASHER", "QN_REFERENCE"]:
+            job_context = prepare_original_files(job_context)
+            if not job_context.get("success", True):
+                return job_context
+        else:
+            job_context = prepare_dataset(job_context)
+            if not job_context.get("success", True):
+                return job_context
     else:
-        relations = ProcessorJobDatasetAssociation.objects.filter(processor_job=job)
-
-        # This should never be more than one!
-        if relations.count() > 1:
-            failure_reason = "More than one dataset for processor job!"
-            logger.error(failure_reason, processor_job=job.id)
-            job_context["success"] = False
-            job.failure_reason = failure_reason
-            return job_context
-        elif relations.count() == 0:
-            failure_reason = "No datasets found for processor job!"
-            logger.error(failure_reason, processor_job=job.id)
-            job_context["success"] = False
-            job.failure_reason = failure_reason
-            return job_context
-
-        dataset = Dataset.objects.get(id=relations[0].dataset_id)
-        dataset.is_processing = True
-        dataset.save()
-
-        # Get the samples to smash
-        job_context["dataset"] = dataset
-        job_context["samples"] = dataset.get_aggregated_samples()
-        job_context["experiments"] = dataset.get_experiments()
-
         # Just in case
         job_context["original_files"] = []
         job_context["computed_files"] = []
@@ -129,7 +174,7 @@ def end_job(job_context: Dict, abort=False):
 
             if mark_as_processed:
                 # This handles most of our cases
-                for sample in job_context["samples"]:
+                for sample in job_context.get("samples", []):
                     sample.is_processed = True
                     sample.save()
 
@@ -264,6 +309,7 @@ class PipelineEnum(Enum):
     SMASHER = "Smasher"
     TX_INDEX = "Transcriptome Index"
     QN_REFERENCE = "Quantile Normalization Reference"
+    JANITOR = "Janitor"
 
 
 @unique

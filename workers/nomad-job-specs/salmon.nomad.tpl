@@ -52,6 +52,8 @@ job "SALMON_${{INDEX}}_${{RAM}}" {
 
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
+
+        LOG_LEVEL = "${{LOG_LEVEL}}"
       }
 
       # The resources the job will require.

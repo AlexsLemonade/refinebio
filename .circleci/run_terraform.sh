@@ -61,36 +61,15 @@ branch=$(get_master_or_dev)
 
 if [[ $branch == "master" ]]; then
     ENVIRONMENT=prod
-    BUCKET_NAME="refinebio-tfstate-deploy-production"
 elif [[ $branch == "dev" ]]; then
     ENVIRONMENT=staging
-    BUCKET_NAME="refinebio-tfstate-deploy-staging"
 else
     echo "Why in the world was run_terraform.sh called from a branch other than dev or master?!?!?"
     exit 1
 fi
 
-state_files=$(aws s3 ls s3://$BUCKET_NAME)
-if [[ ! -z $state_files ]]; then
-   # Download encrypted tfstate files from S3, if they exist
-   aws s3 cp s3://$BUCKET_NAME/$TFSTATE.enc .
-   aws s3 cp s3://$BUCKET_NAME/$TFSTATE_BAK.enc .
-
-   # Decrypt tfstate files
-   openssl aes-256-cbc -d -in $TFSTATE.enc -out $TFSTATE -k $OPENSSL_KEY
-   openssl aes-256-cbc -d -in $TFSTATE_BAK.enc -out $TFSTATE_BAK -k $OPENSSL_KEY
-fi
-
 # New deployment
 TF_VAR_user=circleci TF_VAR_stage=$ENVIRONMENT ./deploy.sh -e $ENVIRONMENT -v $CIRCLE_TAG
 exit_code=$?
-
-# Encrypt new tfstate files
-openssl aes-256-cbc -e -in $TFSTATE -out $TFSTATE.enc -k $OPENSSL_KEY
-openssl aes-256-cbc -e -in $TFSTATE_BAK -out $TFSTATE_BAK.enc -k $OPENSSL_KEY
-
-# Upload encrypted tfstate files back to S3
-aws s3 cp $TFSTATE.enc s3://$BUCKET_NAME/
-aws s3 cp $TFSTATE_BAK.enc s3://$BUCKET_NAME/
 
 exit $exit_code

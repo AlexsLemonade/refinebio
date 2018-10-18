@@ -88,7 +88,8 @@ for IMG in $CCDL_IMGS; do
     # For each image we need to set the env var that is used by our
     # scripts and the env var that gets picked up by terraform because
     # it is preceeded with TF_VAR.
-    export ${IMG^^}_DOCKER_IMAGE=dr_$IMG:$SYSTEM_VERSION
+    IMG_UPPER=$IMG | tr a-z A-Z
+    export ${IMG_UPPER}_DOCKER_IMAGE=dr_$IMG:$SYSTEM_VERSION
     export TF_VAR_${IMG}_docker_image=dr_$IMG:$SYSTEM_VERSION
 done
 

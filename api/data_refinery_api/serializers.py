@@ -1,3 +1,4 @@
+from django.db.models import Count, Prefetch, Q
 from rest_framework import serializers
 from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
 from data_refinery_common.models import (
@@ -5,6 +6,8 @@ from data_refinery_common.models import (
     ExperimentAnnotation,
     Sample,
     SampleAnnotation,
+    ExperimentSampleAssociation,
+    ExperimentOrganismAssociation,
     Organism,
     OrganismIndex,
     OriginalFile,
@@ -53,10 +56,12 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrganismIndex
         fields = (
+                    'index_type',
                     's3_url',
                     'source_version',
                     'assembly_name',
                     'salmon_version',
+                    'result',
                     'last_modified',
                 )
 
@@ -96,6 +101,7 @@ class ComputationalResultSerializer(serializers.ModelSerializer):
     annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
     files = ComputedFileSerializer(many=True, source='computedfile_set')
     processor = ProcessorSerializer(many=False)
+    organism_index = OrganismIndexSerializer(many=False)
 
     class Meta:
         model = ComputationalResult
@@ -135,6 +141,36 @@ class SampleSerializer(serializers.ModelSerializer):
                     'technology',
                     'manufacturer',
                     'protocol_info',
+                    'is_processed',
+                    'created_at',
+                    'last_modified',
+                )
+
+class SearchSampleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Sample
+        fields = (
+                    'id',
+                    'title',
+                    'accession_code',
+                    'source_database',
+                    'platform_accession_code',
+                    'platform_name',
+                    'pretty_platform',
+                    'technology',
+                    'sex',
+                    'age',
+                    'specimen_part',
+                    'genotype',
+                    'disease',
+                    'disease_stage',
+                    'cell_line',
+                    'treatment',
+                    'race',
+                    'subject',
+                    'compound',
+                    'time',
                     'is_processed',
                     'created_at',
                     'last_modified',
@@ -196,12 +232,14 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 ##
 
 class ExperimentSerializer(serializers.ModelSerializer):
-    organisms = serializers.StringRelatedField(many=True)
-    platforms = serializers.ReadOnlyField()
-    samples = serializers.StringRelatedField(many=True)
-    processed_samples = serializers.StringRelatedField(many=True)
-    pretty_platforms = serializers.ReadOnlyField()
-    sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
+    organisms = serializers.StringRelatedField(many=True, read_only=True)
+    samples = SearchSampleSerializer(many=True, read_only=True)
+    total_samples_count = serializers.IntegerField(
+                        read_only=True
+                    )
+    processed_samples_count = serializers.IntegerField(
+                        read_only=True
+                    )
 
     class Meta:
         model = Experiment
@@ -212,21 +250,30 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'accession_code',
                     'source_database',
                     'source_url',
-                    'platforms',
-                    'pretty_platforms',
-                    'processed_samples',
                     'has_publication',
                     'publication_title',
                     'publication_doi',
                     'publication_authors',
                     'pubmed_id',
                     'samples',
+                    'total_samples_count',
+                    'processed_samples_count',
                     'organisms',
                     'submitter_institution',
                     'created_at',
                     'last_modified',
-                    'sample_metadata',
                 )
+
+    def setup_eager_loading(queryset):
+        """ Perform necessary eager loading of data. """
+        queryset = queryset.prefetch_related('samples').prefetch_related('organisms')
+
+        # Multiple count annotations
+        queryset = queryset.annotate(
+            total_samples_count=Count('samples', unique=True), 
+            processed_samples_count=Count('samples', filter=Q(samples__is_processed=True)))
+
+        return queryset
 
 class ExperimentAnnotationSerializer(serializers.ModelSerializer):
 
@@ -434,6 +481,8 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'expires_on',
                     's3_bucket',
                     's3_key',
+                    'success',
+                    'failure_reason',
                     'created_at',
                     'last_modified',
                     'start'
@@ -458,6 +507,12 @@ class DatasetSerializer(serializers.ModelSerializer):
                             'read_only': True,
                         },
                         's3_key': {
+                            'read_only': True,
+                        },
+                        'success': {
+                            'read_only': True,
+                        },
+                        'failure_reason': {
                             'read_only': True,
                         },
                         'created_at': {

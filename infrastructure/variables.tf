@@ -71,6 +71,10 @@ variable "running_in_cloud" {
   default = "True"
 }
 
+variable "log_level" {
+  default = "WARN"
+}
+
 variable "dockerhub_repo" {
   default = "ccdlstaging"
 }
@@ -156,6 +160,10 @@ variable "volume_size_in_gb" {
   default = "9000"
 }
 
+variable "max_downloader_jobs_per_node" {
+  default = 8
+}
+
 # Output our production environment variables.
 output "environment_variables" {
   value = [
@@ -191,6 +199,8 @@ output "environment_variables" {
       value = "${var.database_timeout}"},
     {name = "RUNNING_IN_CLOUD"
       value = "${var.running_in_cloud}"},
+    {name = "LOG_LEVEL"
+      value = "${var.log_level}"},
     {name = "USE_S3"
       value = "${var.use_s3}"},
     {name = "RAVEN_DSN"
@@ -232,6 +242,8 @@ output "environment_variables" {
     {name = "NOMAD_PORT"
       value = "4646"},
     {name = "MAX_CLIENTS"
-      value = "${var.max_clients}"}
+      value = "${var.max_clients}"},
+    {name = "MAX_DOWNLOADER_JOBS_PER_NODE"
+      value = "${var.max_downloader_jobs_per_node}"}
   ]
 }
