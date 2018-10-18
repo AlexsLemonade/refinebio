@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db.models import Count, Prefetch
-from django.db.models.aggregates import Avg
+from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
@@ -32,7 +32,8 @@ from data_refinery_common.models import (
     APIToken,
     ProcessorJobDatasetAssociation,
     OrganismIndex,
-    ExperimentSampleAssociation
+    ExperimentSampleAssociation,
+    OriginalFile,
 )
 from data_refinery_api.serializers import (
     ExperimentSerializer,
@@ -683,8 +684,14 @@ class Stats(APIView):
         data['processor_jobs'] = self._get_job_stats(ProcessorJob.objects, range_param)
         data['samples'] = self._get_object_stats(Sample.objects, range_param)
         data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
+        data['total_downloaded'] = self._get_total_downloaded()
 
         return Response(data)
+
+    def _get_total_downloaded(self):
+
+        total_size = OriginalFile.objects.filter(is_downloaded=True).aggregate(Sum('size_in_bytes'))
+        return total_size['size_in_bytes__sum']
 
     def _get_job_stats(self, jobs, range_param):
         result = {
