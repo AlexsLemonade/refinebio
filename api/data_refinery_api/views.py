@@ -691,7 +691,7 @@ class Stats(APIView):
             'total': jobs.count(),
             'pending': jobs.filter(start_time__isnull=True).count(),
             'completed': jobs.filter(end_time__isnull=False).count(),
-            'open': jobs.filter(start_time__isnull=False, end_time__isnull=True).count(),
+            'open': jobs.filter(start_time__isnull=False, end_time__isnull=True, success__isnull=True).count(),
             # via https://stackoverflow.com/questions/32520655/get-average-of-difference-of-datetime-fields-in-django
             'average_time': jobs.filter(start_time__isnull=False, end_time__isnull=False).aggregate(
                 average_time=Avg(F('end_time') - F('start_time')))['average_time']
