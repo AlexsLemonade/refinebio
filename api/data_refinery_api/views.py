@@ -1,8 +1,8 @@
 from django.conf import settings
-from django.db.models import Count
+from django.db.models import Count, Prefetch
 from django.db.models.aggregates import Avg
 from django.db.models.expressions import F
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -31,7 +31,8 @@ from data_refinery_common.models import (
     Dataset,
     APIToken,
     ProcessorJobDatasetAssociation,
-    OrganismIndex
+    OrganismIndex,
+    ExperimentSampleAssociation
 )
 from data_refinery_api.serializers import (
     ExperimentSerializer,
@@ -138,9 +139,6 @@ class SearchAndFilter(generics.ListAPIView):
     Ex: search/?search=human&has_publication=True
 
     """
-
-    queryset = Experiment.processed_public_objects.all()
-
     serializer_class = ExperimentSerializer
     pagination_class = LimitOffsetPagination
 
@@ -162,7 +160,20 @@ class SearchAndFilter(generics.ListAPIView):
                         'pubmed_id',
                         '@submitter_institution',
                         'experimentannotation__data'
-                    )
+)
+    filter_fields = ('has_publication')
+
+    def get_queryset(self):
+
+        # For Prod:
+        queryset = Experiment.processed_public_objects.all()
+
+        # For Dev:
+        # queryset = Experiment.objects.all()
+
+        # Set up eager loading to avoid N+1 selects
+        queryset = self.get_serializer_class().setup_eager_loading(queryset)
+        return queryset
 
     def list(self, request, *args, **kwargs):
         """ Adds counts on certain filter fields to result JSON."""
@@ -408,6 +419,12 @@ class ExperimentDetail(APIView):
             return Experiment.public_objects.get(pk=pk)
         except Experiment.DoesNotExist:
             raise Http404
+        except Exception:
+            try:
+                return Experiment.public_objects.get(accession_code=pk)
+            except Experiment.DoesNotExist:
+                raise Http404
+            return HttpResponseBadRequest("Bad PK or Accession") 
 
     def get(self, request, pk, format=None):
         experiment = self.get_object(pk)
@@ -652,7 +669,7 @@ class Stats(APIView):
         }
 
         if range_param:
-            result['timeline'] = self._created_timeline(Sample.objects, range_param)
+            result['timeline'] = self._created_timeline(objects, range_param)
 
         return result
 

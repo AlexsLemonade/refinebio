@@ -259,9 +259,10 @@ class SurveyTestCase(TestCase):
         # Make sure no additional job was created.
         self.assertEqual(jobs.count(), 1)
 
-    def create_processor_job(self):
-        job = ProcessorJob(pipeline_applied="AFFY_TO_PCL",
+    def create_processor_job(self, pipeline="AFFY_TO_PCL", ram_amount=2048):
+        job = ProcessorJob(pipeline_applied=pipeline,
                            nomad_job_id="PROCESSOR/dispatch-1528945054-e8eaf540",
+                           ram_amount=ram_amount,
                            num_retries=0,
                            success=None)
         job.save()
@@ -305,6 +306,23 @@ class SurveyTestCase(TestCase):
 
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
+
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_requeuing_processor_job_w_more_ram(self, mock_send_job):
+        job = self.create_processor_job(pipeline="SALMON", ram_amount=8192)
+
+        main.requeue_processor_job(job)
+        self.assertEqual(len(mock_send_job.mock_calls), 1)
+
+        jobs = ProcessorJob.objects.order_by('id')
+        original_job = jobs[0]
+        self.assertTrue(original_job.retried)
+        self.assertEqual(original_job.num_retries, 0)
+        self.assertFalse(original_job.success)
+        retried_job = jobs[1]
+        self.assertEqual(retried_job.num_retries, 1)
+        self.assertEqual(original_job.ram_amount, 8192)
+        self.assertEqual(retried_job.ram_amount, 12288)
 
     @patch('data_refinery_foreman.foreman.main.send_job')
     def test_repeated_processor_failures(self, mock_send_job):
@@ -494,3 +512,24 @@ class SurveyTestCase(TestCase):
 
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
+
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_janitor(self, mock_send_job):
+
+        for p in ["1", "2", "3"]:
+            pj = ProcessorJob()
+            pj.volume_index = p
+            pj.save()
+
+        # Just run it once, not forever so get the function that is
+        # decorated with @do_forever
+        main.send_janitor_jobs.__wrapped__()
+
+        self.assertEqual(ProcessorJob.objects.all().count(), 6)
+        self.assertEqual(ProcessorJob.objects.filter(pipeline_applied="JANITOR").count(), 3)
+
+        # Make sure that the janitors are dispatched to the correct volumes.
+        ixs = ["1", "2", "3"]
+        for p in ProcessorJob.objects.filter(pipeline_applied="JANITOR"):
+            self.assertTrue(p.volume_index in ixs)
+            ixs.remove(p.volume_index)

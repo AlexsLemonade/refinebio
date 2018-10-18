@@ -13,6 +13,7 @@ from data_refinery_api.serializers import (
     DetailedSampleSerializer,
     ExperimentSerializer,
     InstitutionSerializer,
+    OrganismIndexSerializer,
     OrganismSerializer,
     PlatformSerializer,
     SampleSerializer,
@@ -34,6 +35,7 @@ from data_refinery_common.models import (
     ExperimentOrganismAssociation,
     ExperimentSampleAssociation,
     Organism,
+    OrganismIndex,
     OriginalFile,
     OriginalFileSampleAssociation,
     Processor,
@@ -216,6 +218,7 @@ class APITestCases(APITestCase):
         sample = Sample()
         sample.accession_code = "XXXXXXXXXXXXXXX"
         sample.is_processed = True
+        sample.technology = "RNA-SEQ"
         sample.save()
 
         # Our Docker image doesn't have the standard dict. >=[
@@ -261,6 +264,7 @@ class APITestCases(APITestCase):
         ex2.description = "SOWILLTHIS"
         ex2.technology = "RNA-SEQ"
         ex2.submitter_institution = "Funkytown"
+        ex2.has_publication = True
         experiments.append(ex2)
 
         ex3 = Experiment()
@@ -276,6 +280,7 @@ class APITestCases(APITestCase):
         sample1.accession_code = "1123"
         sample1.platform_name = "AFFY"
         sample1.is_processed = True
+        sample1.technology = "RNA-SEQ"
         sample1.save()
 
         sample2 = Sample()
@@ -284,6 +289,7 @@ class APITestCases(APITestCase):
         sample2.platform_name = "ILLUMINA"
         sample2.organism = homo_sapiens
         sample2.is_processed = True
+        sample1.technology = "MICROARRAY"
         sample2.save()
 
         Experiment.objects.bulk_create(experiments)
@@ -334,8 +340,13 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('search'), {'search': 'THISWILLBEINASEARCHRESULT'})
         self.assertEqual(response.json()['count'], 3)
 
-        response = self.client.get(reverse('search'), {'search': 'TEMPURA'})
-        self.assertEqual(response.json()['count'], 1)
+        # Test filter
+        response = self.client.get(reverse('search'), {'search': 'FINDME', 'has_publication': True})
+        for result in response.json()['results']:
+            self.assertTrue(result['has_publication'])
+        response = self.client.get(reverse('search'), {'search': 'FINDME', 'has_publication': False})
+        for result in response.json()['results']:
+            self.assertFalse(result['has_publication'])
 
         # Test search and filter
         response = self.client.get(reverse('search'),
@@ -343,11 +354,8 @@ class APITestCases(APITestCase):
                                     'technology': 'MICROARRAY'})
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME_TEMPURA')
-        self.assertEqual(len(response.json()['results'][0]['platforms']), 2)
-        self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(ex.platforms))
-        self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(['AFFY', 'ILLUMINA']))
         self.assertEqual(response.json()['filters']['technology'], {'FAKE-TECH': 1, 'MICROARRAY': 2, 'RNA-SEQ': 1})
-        self.assertEqual(response.json()['filters']['publication'], {})
+        self.assertEqual(response.json()['filters']['publication'], {'has_publication': 1})
         self.assertEqual(response.json()['filters']['organism'], {'Extra-Terrestrial-1982': 1, 'HOMO_SAPIENS': 3})
 
         response = self.client.get(reverse('search'),
@@ -363,7 +371,6 @@ class APITestCases(APITestCase):
         # This has to be done manually due to dicts requring distinct keys
         response = self.client.get(reverse('search') + "?search=THISWILLBEINASEARCHRESULT&technology=MICROARRAY&technology=FAKE-TECH")
         self.assertEqual(response.json()['count'], 2)
-        self.assertEqual(response.json()['results'][0]['processed_samples'], ['1123', '3345'])
 
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
@@ -693,15 +700,26 @@ class ProcessorTestCases(APITestCase):
         self.assertEqual(processors[1]['environment']['cmd_line']['salmontools --version'],
                          'Salmon Tools 0.1.0')
 
-    def test_processor_in_sample(self):
+    def test_processor_and_organism_in_sample(self):
         sample = Sample.objects.create(title="fake sample")
-        result = ComputationalResult.objects.create(processor=self.salmon_quant_proc)
+        organism = Organism.get_object_for_name("HOMO_SAPIENS")
+        transcriptome_result = ComputationalResult.objects.create()
+        organism_index = OrganismIndex.objects.create(organism=organism,
+                                                      result=transcriptome_result,
+                                                      index_type="TRANSCRIPTOME_LONG")
+        result = ComputationalResult.objects.create(processor=self.salmon_quant_proc,
+                                                    organism_index=organism_index)
         sra = SampleResultAssociation.objects.create(sample=sample, result=result)
 
         response = self.client.get(reverse('samples_detail',
                                            kwargs={'pk': sample.id}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
         processor = response.json()['results'][0]['processor']
         self.assertEqual(processor['name'], self.salmon_quant_proc.name)
         self.assertEqual(processor['environment']['os_pkg']['python3'],
                          self.salmon_quant_proc.environment['os_pkg']['python3'])
+
+        organism_index = response.json()['results'][0]['organism_index']
+        self.assertEqual(organism_index["result"], transcriptome_result.id)
+        self.assertEqual(organism_index["index_type"], "TRANSCRIPTOME_LONG")
