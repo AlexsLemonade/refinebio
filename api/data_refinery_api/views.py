@@ -115,6 +115,7 @@ class ExperimentFilter(django_filters.FilterSet):
     organisms__name = django_filters.ModelMultipleChoiceFilter(field_name="organisms__name",
                                                                to_field_name="name",
                                                                queryset=Organism.objects.all())
+    organisms__name.always_filter = False
 
     samples__platform_name = \
         django_filters.ModelMultipleChoiceFilter(field_name="samples__platform_name",
@@ -124,7 +125,7 @@ class ExperimentFilter(django_filters.FilterSet):
 
     class Meta:
         model = Experiment
-        fields = ['has_publication',
+        fields =    [   'has_publication',
                         'submitter_institution',
                         'technology',
                         'source_first_published',
@@ -139,11 +140,26 @@ class SearchAndFilter(generics.ListAPIView):
     Ex: search/?search=human&has_publication=True
 
     """
+
+    # Only Experiments with processed objects are exposed
+    queryset = Experiment.processed_public_objects.annotate(samples_count=Count('samples')).all()
+
+    # For developing, you can uncomment this to expose everything.
+    #queryset = Experiment.objects.annotate(samples_count=Count('samples')).all()
+
     serializer_class = ExperimentSerializer
     pagination_class = LimitOffsetPagination
 
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
     filter_class = ExperimentFilter
+
+    # Ordering
+    ordering_fields = ('total_samples_count', 'id', 'created_at', 'source_first_published', 'accession_code',)
+    samples_count = django_filters.NumberFilter(method='filter_samples_count')
+    ordering = ('-total_samples_count',)
+
+    def filter_samples_count(self, queryset, name, value):
+        return queryset.filter(total_samples_count=value)
 
     # via http://www.django-rest-framework.org/api-guide/filtering/#searchfilter
     # '^' Starts-with search.
