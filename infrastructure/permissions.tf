@@ -34,7 +34,7 @@ resource "aws_iam_role" "data_refinery_spot_fleet" {
       "Sid": "",
       "Effect": "Allow",
       "Principal": {
-        "Service": ["ec2.amazonaws.com"]
+        "Service": ["spotfleet.amazonaws.com"]
       },
       "Action": "sts:AssumeRole"
     }
