@@ -69,34 +69,35 @@ resource "aws_cloudwatch_log_stream" "log_stream_api_nginx_error" {
 # fire the alarm action to the scale up command, which adds a server.
 
 # For the down alarm, do the opposite.
-resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm_up" {
-    alarm_name = "nomad-queue-length-alarm-up-${var.user}-${var.stage}"
-    comparison_operator = "GreaterThanOrEqualToThreshold"
-    evaluation_periods = "2"
-    metric_name = "NomadQueueLength"
-    namespace = "${var.user}-${var.stage}"
-    period = "120"
-    statistic = "Average"
-    threshold = "${var.scale_up_threshold}"
-    alarm_description = "The queue is too long - we need more workers!"
-    alarm_actions = [
-        "${aws_autoscaling_policy.clients_scale_up.arn}"
-    ]
 
-}
+# resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm_up" {
+#     alarm_name = "nomad-queue-length-alarm-up-${var.user}-${var.stage}"
+#     comparison_operator = "GreaterThanOrEqualToThreshold"
+#     evaluation_periods = "2"
+#     metric_name = "NomadQueueLength"
+#     namespace = "${var.user}-${var.stage}"
+#     period = "120"
+#     statistic = "Average"
+#     threshold = "${var.scale_up_threshold}"
+#     alarm_description = "The queue is too long - we need more workers!"
+#     alarm_actions = [
+#         "${aws_autoscaling_policy.clients_scale_up.arn}"
+#     ]
 
-resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm_down" {
-    alarm_name = "nomad-queue-length-alarm-down-${var.user}-${var.stage}"
-    comparison_operator = "LessThanOrEqualToThreshold"
-    evaluation_periods = "2"
-    metric_name = "NomadQueueLength"
-    namespace = "${var.user}-${var.stage}"
-    period = "120"
-    statistic = "Average"
-    threshold = "${var.scale_down_threshold}"
-    alarm_description = "The queue is too short - we need less workers!"
-    alarm_actions = [
-        "${aws_autoscaling_policy.clients_scale_down.arn}"
-    ]
+# }
 
-}
+# resource "aws_cloudwatch_metric_alarm" "nomad_queue_length_alarm_down" {
+#     alarm_name = "nomad-queue-length-alarm-down-${var.user}-${var.stage}"
+#     comparison_operator = "LessThanOrEqualToThreshold"
+#     evaluation_periods = "2"
+#     metric_name = "NomadQueueLength"
+#     namespace = "${var.user}-${var.stage}"
+#     period = "120"
+#     statistic = "Average"
+#     threshold = "${var.scale_down_threshold}"
+#     alarm_description = "The queue is too short - we need less workers!"
+#     alarm_actions = [
+#         "${aws_autoscaling_policy.clients_scale_down.arn}"
+#     ]
+
+# }
