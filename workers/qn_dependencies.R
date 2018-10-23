@@ -2,16 +2,13 @@ options(warn=2)
 options(repos=structure(c(CRAN="https://cloud.r-project.org")))
 options(Ncpus=parallel::detectCores())
 
-# Install dev packages
-install.packages("devtools")
-
 devtools::install_version('doParallel', version='1.0.11')
 devtools::install_version('data.table', version='1.11.0')
 devtools::install_version('optparse', version='1.4.4')
 devtools::install_version('lazyeval', version='0.2.1')
 
 # devtools::install_url() requires biocLite.R
-source('https://bioconductor.org/biocLite.R')
+source('biocLite.R')
 
 # Helper function that installs a list of packages based on input URL
 install_with_url <- function(main_url, packages) {

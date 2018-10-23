@@ -42,6 +42,12 @@ WORKDIR /home/user
 
 ENV R_LIBS "/usr/local/lib/R/site-library"
 
+COPY common/install_devtools.R .
+
+RUN Rscript install_devtools.R
+
+COPY common/biocLite.R .
+
 COPY workers/affymetrix_dependencies.R .
 COPY workers/install_ensg_pkgs.R .
 

@@ -45,6 +45,11 @@ RUN ln -sf `pwd`/Salmon-latest_linux_x86_64/bin/salmon /usr/local/bin/
 RUN rm -f Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
 # End Salmon installation.
 
+# Install R dependencies
+COPY common/install_devtools.R .
+RUN Rscript install_devtools.R
+COPY common/biocLite.R .
+
 # Install tximport
 COPY workers/install_tximport.R .
 RUN Rscript install_tximport.R
