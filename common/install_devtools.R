@@ -21,6 +21,11 @@ options(Ncpus=parallel::detectCores())
 
 
 install_package_version <- function(package_name, version) {
+  # This function install a specific version of a package.
+
+  # However, because the most current version of a package lives in a
+  # different location than the older versions, we have to check where
+  # it can be found.
   package_tarball <- paste0(package_name, "_", version, ".tar.gz")
   package_url <- paste0("https://cran.r-project.org/src/contrib/", package_tarball)
 
