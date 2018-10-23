@@ -37,7 +37,15 @@ WORKDIR /home/user
 RUN pip3 install --upgrade pip
 
 ENV R_LIBS "/usr/local/lib/R/site-library"
+
+COPY common/install_devtools.R .
+
+RUN Rscript install_devtools.R
+
+COPY common/biocLite.R .
+
 COPY workers/install_downloader_R_only.R .
+
 RUN Rscript install_downloader_R_only.R
 
 # Aspera will only install as the current user.

@@ -1,8 +1,5 @@
 options(repos=structure(c(CRAN="https://cloud.r-project.org")))
 
-# Install dev packages
-install.packages("devtools")
-
 devtools::install_version('data.table', version='1.11.0')
 devtools::install_version('optparse', version='1.4.4')
 
@@ -10,7 +7,7 @@ devtools::install_version('tidyverse', version='1.2.1')
 devtools::install_version('rlang', version='0.2.2')
 
 # devtools::install_url() requires biocLite.R
-source('https://bioconductor.org/biocLite.R')
+source('biocLite.R')
 
 # Helper function that installs a list of packages based on input URL
 install_with_url <- function(main_url, packages) {
