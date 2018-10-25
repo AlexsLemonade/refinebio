@@ -13,8 +13,12 @@ elif [[ $branch == "dev" ]]; then
     DOCKERHUB_REPO=ccdlstaging
 else
     echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"
-    exit 1
+    # TODO: uncomment this!
+    # exit 1
 fi
+
+# TODO: removethis line!!!
+DOCKERHUB_REPO=wkurt
 
 echo $CIRCLE_TAG > ~/refinebio/common/version
 
@@ -25,7 +29,7 @@ CCDL_WORKER_IMGS="smasher illumina affymetrix salmon transcriptome no_op downloa
 # required by the workers and data_refinery_foreman images.
 ## Remove old common distributions if they exist
 rm -f ~/refinebio/common/dist/*
-cd ~/refinebio/common && python setup.py sdist
+cd ~/refinebio/common && python3 setup.py sdist
 
 # Log into DockerHub
 docker login -u $DOCKER_ID -p $DOCKER_PASSWD
