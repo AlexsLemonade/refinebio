@@ -550,14 +550,7 @@ If you want to change a single entity in the state, you can use
 terraform taint <your-entity-from-state-list>
 ```
 
-And then rerun `deploy.sh`.
-
-To tear down the entire system:
-
-```
-terraform destroy
-```
-Note that this will prompt you for confirmation before actually destroying all of your cloud resources.
+And then rerun `deploy.sh` with the same parameters you originally ran it with.
 
 
 ### Docker Images
@@ -568,7 +561,7 @@ If you would like to use images you have built yourself you can set the `TF_VAR_
 
 To make building and pushing your own images easier, the `update_my_docker_images.sh` has been provided.
 The `-d` option will allow you to specify which repo you'd like to push to.
-If the Dockerhub repo requires you to be logged in, you should do so before running the script.
+If the Dockerhub repo requires you to be logged in, you should do so before running the script using `docker login`.
 The -v option allows you to specify the version, which will both end up on the Docker images you're building as the SYSTEM_VERSION environment variable and also will be the docker tag for the image.
 
 `update_my_docker_images.sh` will not build the dr_affymetrix image, because this image requires a lot of resources and time to build.
@@ -658,8 +651,9 @@ will show all of the API access logs made by Nginx.
 
 ### Tearing Down
 
-A stack that has been spun up via `deploy.sh` can be taken down with `destroy_terraform.sh`.
+A stack that has been spun up via `deploy.sh -u myusername -e dev` can be taken down with `destroy_terraform.sh  -u myusername -e dev`.
 The same username and environment must be passed into `destroy_terraform.sh` as were used to run `deploy.sh` either via the -e and -u options or by specifying `TF_VAR_stage` or `TF_VAR_user` so that the script knows which to take down.
+Note that this will prompt you for confirmation before actually destroying all of your cloud resources.
 
 ## Support
 
