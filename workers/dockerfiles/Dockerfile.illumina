@@ -43,8 +43,6 @@ COPY common/install_devtools.R .
 
 RUN Rscript install_devtools.R
 
-COPY common/biocLite.R .
-
 # These are for Illumina
 COPY workers/illumina_dependencies.R .
 RUN Rscript illumina_dependencies.R

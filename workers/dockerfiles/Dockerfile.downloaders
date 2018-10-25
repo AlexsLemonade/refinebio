@@ -42,8 +42,6 @@ COPY common/install_devtools.R .
 
 RUN Rscript install_devtools.R
 
-COPY common/biocLite.R .
-
 COPY workers/install_downloader_R_only.R .
 
 RUN Rscript install_downloader_R_only.R
