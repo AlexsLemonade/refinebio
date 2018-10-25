@@ -79,12 +79,11 @@ def queue_surveyor_for_accession(accession: str) -> None:
     try:
         nomad_response = nomad_client.job.dispatch_job("SURVEYOR", meta={"JOB_ID": survey_job.id})
     except URLNotFoundNomadException:
-        logger.error("Dispatching Surveyor Nomad job to host %s and port %s failed.",
-                     SURVEYOR_JOB_NAME, nomad_job, nomad_host, nomad_port, accession_code=accession)
+        logger.error("Dispatching Surveyor Nomad job failed (URLNotFoundNomadException).",
+                     accession_code=accession, job=str(survey_job.id))
     except Exception as e:
-        logger.exception('Unable to Dispatch Nomad Job.',
-            job_name=SURVEYOR_JOB_NAME,
-            job_id=str(job.id),
+        logger.exception('Unable to Dispatch Nomad Survey Job.',
+            job_id=str(survey_job.id),
             reason=str(e)
         )
 
