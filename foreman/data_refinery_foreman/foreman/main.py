@@ -456,11 +456,10 @@ def requeue_survey_job(last_job: SurveyJob, dispatch=True) -> None:
                 new_job.nomad_job_id = nomad_response["DispatchedJobID"]
                 new_job.save()
         except URLNotFoundNomadException:
-            logger.error("Dispatching Nomad job of type %s for job spec %s to host %s and port %s failed.",
-                         job_type, nomad_job, nomad_host, nomad_port, job=str(new_job.id))
+            logger.error("Dispatching Nomad survey job failed (URLNotFoundNomadException).",
+                         job=str(new_job.id))
         except Exception as e:
             logger.exception('Unable to Dispatch Nomad Job.',
-                job_name=job_type.value,
                 job_id=str(new_job.id),
                 reason=str(e)
             )
