@@ -9,6 +9,7 @@
 # It has been written with the intention of being run from CircleCI as
 #   part of our CI/CD process. It therefore assumes that the following
 #   environment variables will be set:
+#     - DEPLOY_IP_ADDRESS --  The IP address of the instance to run the deploy on.
 #     - CIRCLE_TAG -- The tag that was pushed to CircleCI to trigger the deploy.
 #         Will be used as the version for the system and the tag for Docker images.
 #     - DOCKER_ID -- The username that will be used to log into Dockerhub.
