@@ -42,8 +42,6 @@ COPY common/install_devtools.R .
 
 RUN Rscript install_devtools.R
 
-COPY common/biocLite.R .
-
 COPY workers/qn_dependencies.R .
 RUN Rscript qn_dependencies.R
 # End QN-specific

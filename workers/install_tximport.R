@@ -8,7 +8,7 @@ devtools::install_version('optparse', version='1.4.4')
 devtools::install_version('rjson', version='0.2.19')
 devtools::install_version('readr', version='1.1.1')
 
-# devtools::install_url() requires biocLite.R
-source('biocLite.R')
+# devtools::install_url() requires BiocInstaller
+install.packages('https://bioconductor.org/packages/3.6/bioc/src/contrib/BiocInstaller_1.28.0.tar.gz')
 
 devtools::install_url('https://bioconductor.org/packages/3.6/bioc/src/contrib/tximport_1.6.0.tar.gz')

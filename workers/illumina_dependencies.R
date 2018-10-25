@@ -9,8 +9,8 @@ devtools::install_version('lazyeval', version='0.2.1')
 devtools::install_version('tidyverse', version='1.2.1')
 devtools::install_version('rlang', version='0.2.2')
 
-# devtools::install_url() requires biocLite.R
-source('biocLite.R')
+# devtools::install_url() requires BiocInstaller
+install.packages('https://bioconductor.org/packages/3.6/bioc/src/contrib/BiocInstaller_1.28.0.tar.gz')
 
 # Helper function that installs a list of packages based on input URL
 install_with_url <- function(main_url, packages) {
