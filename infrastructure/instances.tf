@@ -249,7 +249,7 @@ data "template_file" "nomad_client_script_smasher_smusher" {
 resource "aws_spot_fleet_request" "cheap_ram" {
   iam_fleet_role      = "${aws_iam_role.data_refinery_spot_fleet.arn}"
   allocation_strategy = "diversified"
-  target_capacity     = 100
+  target_capacity     = 100 # We're using RAM/10 here. (1000 is apparently too many for AWS.)
   valid_until         = "2021-11-04T20:44:20Z"
   fleet_type          = "maintain"
 
@@ -382,13 +382,13 @@ resource "aws_spot_fleet_request" "cheap_ram" {
   }
 
   ##
-  # c5d.18xlarge
+  # r5d.24xlarge
   ##
   launch_specification {
 
     # Client Specific
-    instance_type             = "c5d.18xlarge"
-    weighted_capacity         = 5 # Really, more like 1.4 # via https://aws.amazon.com/ec2/instance-types/
+    instance_type             = "r5d.24xlarge"
+    weighted_capacity         = 8 # Really, more like 1.4 # via https://aws.amazon.com/ec2/instance-types/
     spot_price                = "${var.spot_price}"
     ami                       = "${data.aws_ami.ubuntu.id}"
     iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
@@ -404,7 +404,7 @@ resource "aws_spot_fleet_request" "cheap_ram" {
     }
 
     tags {
-        Name = "Spot Fleet Launch Specification c5d.18xlarge ${var.user}-${var.stage}"
+        Name = "Spot Fleet Launch Specification r5d.24xlarge ${var.user}-${var.stage}"
         User = "${var.user}"
         Stage = "${var.stage}"
     }
