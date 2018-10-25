@@ -33,10 +33,6 @@ geneIndexPath <- opt$geneIndexPath
 filePath <- opt$inputFile
 outFilePath <- opt$outputFile
 
-# Get and use this DB
-message("Loading...")
-source("http://bioconductor.org/biocLite.R")
-
 # Read the data file
 message("Reading data file...")
 suppressWarnings(data <- fread(filePath,
