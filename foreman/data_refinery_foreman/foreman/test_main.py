@@ -512,3 +512,24 @@ class SurveyTestCase(TestCase):
 
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
+
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_janitor(self, mock_send_job):
+
+        for p in ["1", "2", "3"]:
+            pj = ProcessorJob()
+            pj.volume_index = p
+            pj.save()
+
+        # Just run it once, not forever so get the function that is
+        # decorated with @do_forever
+        main.send_janitor_jobs.__wrapped__()
+
+        self.assertEqual(ProcessorJob.objects.all().count(), 6)
+        self.assertEqual(ProcessorJob.objects.filter(pipeline_applied="JANITOR").count(), 3)
+
+        # Make sure that the janitors are dispatched to the correct volumes.
+        ixs = ["1", "2", "3"]
+        for p in ProcessorJob.objects.filter(pipeline_applied="JANITOR"):
+            self.assertTrue(p.volume_index in ixs)
+            ixs.remove(p.volume_index)
