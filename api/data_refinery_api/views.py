@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db.models import Count, Prefetch
 from django.db.models.aggregates import Avg
-from django.db.models.expressions import F
+from django.db.models.expressions import F, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 
@@ -116,20 +116,21 @@ class ExperimentFilter(django_filters.FilterSet):
                                                                to_field_name="name",
                                                                queryset=Organism.objects.all())
     organisms__name.always_filter = False
-    samples__platform_accession_code = \
-        django_filters.ModelMultipleChoiceFilter(field_name="smaples__platform_accession_code",
-                                                 to_field_name="platform_accession_code",
+
+    samples__platform_name = \
+        django_filters.ModelMultipleChoiceFilter(field_name="samples__platform_name",
+                                                 to_field_name="platform_name",
                                                  queryset=Sample.objects.all())
-    samples__platform_accession_code.always_filter = False
+    samples__platform_name.always_filter = False
 
     class Meta:
         model = Experiment
-        fields = ['has_publication',
+        fields =    [   'has_publication',
                         'submitter_institution',
                         'technology',
                         'source_first_published',
                         'organisms__name',
-                        'samples__platform_accession_code']
+                        'samples__platform_name']
 
 # ListAPIView is read-only!
 class SearchAndFilter(generics.ListAPIView):
@@ -139,11 +140,26 @@ class SearchAndFilter(generics.ListAPIView):
     Ex: search/?search=human&has_publication=True
 
     """
+
+    # Only Experiments with processed objects are exposed
+    queryset = Experiment.processed_public_objects.annotate(samples_count=Count('samples')).all()
+
+    # For developing, you can uncomment this to expose everything.
+    #queryset = Experiment.objects.annotate(samples_count=Count('samples')).all()
+
     serializer_class = ExperimentSerializer
     pagination_class = LimitOffsetPagination
 
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
     filter_class = ExperimentFilter
+
+    # Ordering
+    ordering_fields = ('total_samples_count', 'id', 'created_at', 'source_first_published', 'accession_code',)
+    samples_count = django_filters.NumberFilter(method='filter_samples_count')
+    ordering = ('-total_samples_count',)
+
+    def filter_samples_count(self, queryset, name, value):
+        return queryset.filter(total_samples_count=value)
 
     # via http://www.django-rest-framework.org/api-guide/filtering/#searchfilter
     # '^' Starts-with search.
@@ -160,8 +176,8 @@ class SearchAndFilter(generics.ListAPIView):
                         'pubmed_id',
                         '@submitter_institution',
                         'experimentannotation__data'
-)
-    filter_fields = ('has_publication')
+                    )
+    filter_fields = ('has_publication', 'platform_name')
 
     def get_queryset(self):
 
@@ -183,7 +199,9 @@ class SearchAndFilter(generics.ListAPIView):
         response.data['filters']['technology'] = {}
         response.data['filters']['publication'] = {}
         response.data['filters']['organism'] = {}
+        response.data['filters']['platforms'] = {}
 
+        # Technology
         qs = self.search_queryset(self.get_queryset())
         techs = qs.values('technology').annotate(Count('technology', unique=True))
         for tech in techs:
@@ -191,11 +209,13 @@ class SearchAndFilter(generics.ListAPIView):
                 continue
             response.data['filters']['technology'][tech['technology']] = tech['technology__count']
 
+        # Publication
         pubs = qs.values('has_publication').annotate(Count('has_publication', unique=True))
         for pub in pubs:
             if pub['has_publication']:
                 response.data['filters']['publication']['has_publication'] = pub['has_publication__count']
 
+        # Organisms
         organisms = qs.values('organisms__name').annotate(Count('organisms__name', unique=True))
         for organism in organisms:
 
@@ -205,6 +225,12 @@ class SearchAndFilter(generics.ListAPIView):
                 continue
 
             response.data['filters']['organism'][organism['organisms__name']] = organism['organisms__name__count']
+
+        # Platforms
+        platforms = qs.values('samples__platform_name').annotate(Count('samples__platform_name', unique=True))
+        for plat in platforms:
+            if plat['samples__platform_name']:
+                response.data['filters']['platforms'][plat['samples__platform_name']] = plat['samples__platform_name__count']
 
         return response
 
@@ -454,6 +480,8 @@ class SampleList(PaginatedAPIView):
         ids = filter_dict.pop('ids', None)
         accession_codes = filter_dict.pop('accession_codes', None)
 
+        filter_by = filter_dict.pop('filter_by', None)
+
         if ids is not None:
             ids = [ int(x) for x in ids.split(',')]
             filter_dict['pk__in'] = ids
@@ -471,6 +499,22 @@ class SampleList(PaginatedAPIView):
         samples = Sample.public_objects.filter(**filter_dict)
         if order_by:
             samples = samples.order_by(order_by)
+
+        if filter_by:
+            samples = samples.filter(   Q(sex__contains=filter_by) |
+                                        Q(age__contains=filter_by) |
+                                        Q(specimen_part__contains=filter_by) |
+                                        Q(genotype__contains=filter_by) |
+                                        Q(disease__contains=filter_by) |
+                                        Q(disease_stage__contains=filter_by) |
+                                        Q(cell_line__contains=filter_by) |
+                                        Q(treatment__contains=filter_by) |
+                                        Q(race__contains=filter_by) |
+                                        Q(subject__contains=filter_by) |
+                                        Q(compound__contains=filter_by) |
+                                        Q(time__contains=filter_by) |
+                                        Q(sampleannotation__data__contains=filter_by)
+                                    )
 
         page = self.paginate_queryset(samples)
         if page is not None:
