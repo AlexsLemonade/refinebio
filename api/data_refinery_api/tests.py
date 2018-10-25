@@ -218,6 +218,7 @@ class APITestCases(APITestCase):
         sample = Sample()
         sample.accession_code = "XXXXXXXXXXXXXXX"
         sample.is_processed = True
+        sample.technology = "RNA-SEQ"
         sample.save()
 
         # Our Docker image doesn't have the standard dict. >=[
@@ -279,6 +280,7 @@ class APITestCases(APITestCase):
         sample1.accession_code = "1123"
         sample1.platform_name = "AFFY"
         sample1.is_processed = True
+        sample1.technology = "RNA-SEQ"
         sample1.save()
 
         sample2 = Sample()
@@ -287,6 +289,7 @@ class APITestCases(APITestCase):
         sample2.platform_name = "ILLUMINA"
         sample2.organism = homo_sapiens
         sample2.is_processed = True
+        sample1.technology = "MICROARRAY"
         sample2.save()
 
         Experiment.objects.bulk_create(experiments)
@@ -351,9 +354,6 @@ class APITestCases(APITestCase):
                                     'technology': 'MICROARRAY'})
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME_TEMPURA')
-        self.assertEqual(len(response.json()['results'][0]['platforms']), 2)
-        self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(ex.platforms))
-        self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(['AFFY', 'ILLUMINA']))
         self.assertEqual(response.json()['filters']['technology'], {'FAKE-TECH': 1, 'MICROARRAY': 2, 'RNA-SEQ': 1})
         self.assertEqual(response.json()['filters']['publication'], {'has_publication': 1})
         self.assertEqual(response.json()['filters']['organism'], {'Extra-Terrestrial-1982': 1, 'HOMO_SAPIENS': 3})
@@ -371,7 +371,12 @@ class APITestCases(APITestCase):
         # This has to be done manually due to dicts requring distinct keys
         response = self.client.get(reverse('search') + "?search=THISWILLBEINASEARCHRESULT&technology=MICROARRAY&technology=FAKE-TECH")
         self.assertEqual(response.json()['count'], 2)
-        self.assertEqual(response.json()['results'][0]['processed_samples'], ['1123', '3345'])
+
+        # Test ordering
+        response = self.client.get(reverse('search') + "?search=SEARCH&ordering=id")
+        response2 = self.client.get(reverse('search') + "?search=SEARCH&ordering=-id")
+        self.assertNotEqual(response.json()['results'][0]['id'], response2.json()['results'][0]['id'])
+        self.assertTrue(response2.json()['results'][0]['id'] > response.json()['results'][0]['id'])
 
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):

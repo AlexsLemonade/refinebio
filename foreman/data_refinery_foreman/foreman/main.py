@@ -1,3 +1,5 @@
+import nomad
+import socket
 import time
 from nomad import Nomad
 from nomad.api.exceptions import URLNotFoundNomadException
@@ -5,7 +7,7 @@ from typing import Callable, List
 from threading import Thread
 from functools import wraps
 from retrying import retry
-from datetime import timedelta
+from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db import transaction
 from data_refinery_common.models import (
@@ -35,6 +37,9 @@ MIN_LOOP_TIME = timedelta(minutes=2)
 # The amount of time the main loop will wait in between checking if
 # threads are still alive and then heart beating.
 THREAD_WAIT_TIME = timedelta(minutes=10)
+
+# How frequently we dispatch Janitor jobs.
+JANITOR_DISPATCH_TIME = timedelta(minutes=30)
 
 
 @retry(stop_max_attempt_number=3)
@@ -121,7 +126,7 @@ def do_forever(min_loop_time: timedelta) -> Callable:
 
                 loop_time = timezone.now() - start_time
                 if loop_time < min_loop_time:
-                    remaining_time = MIN_LOOP_TIME - loop_time
+                    remaining_time = min_loop_time - loop_time
                     time.sleep(remaining_time.seconds)
 
         return wrapper
@@ -210,8 +215,12 @@ def retry_lost_downloader_jobs() -> None:
                 # If this job really should be restarted we'll get it in the next loop.
                 if timezone.now() - job.created_at > MIN_LOOP_TIME:
                     lost_jobs.append(job)
+        except socket.timeout:
+            logger.info("Timeout connecting to Nomad - is Nomad down?", job_id=job.id)
+        except nomad.api.exceptions.BaseNomadException:
+            logger.info("Problem connecting to Nomad - is Nomad down?", job_id=job.id)
         except URLNotFoundNomadException:
-            logger.exception(("Determined that a downloader job needs to be requeued because "
+            logger.info(("Determined that a downloader job needs to be requeued because "
                               "querying for its Nomad job failed: "),
                              job_id=job.id
             )
@@ -385,6 +394,31 @@ def retry_lost_processor_jobs() -> None:
         handle_processor_jobs(lost_jobs)
 
 
+@do_forever(JANITOR_DISPATCH_TIME)
+def send_janitor_jobs():
+    """Dispatch a Janitor job for each instance in the cluster"""
+
+    # This is a fairly hacky way of finding all of our volume indexes
+    indexes = ProcessorJob.objects.all().values_list('volume_index').distinct()
+
+    for index in indexes:
+        actual_index = index[0]
+        new_job = ProcessorJob(num_retries=0,
+                               pipeline_applied="JANITOR",
+                               ram_amount=2048,
+                               volume_index=actual_index)
+        new_job.save()
+        logger.info("Sending Janitor with index: ",
+            job_id=new_job.id,
+            index=actual_index
+        )
+        try:
+            send_job(ProcessorPipeline["JANITOR"], new_job)
+        except Exception as e:
+            # If we can't dispatch this job, something else has gone wrong.
+            continue
+
+
 def monitor_jobs():
     """Runs a thread for each job monitoring loop."""
     processor_functions = [ retry_failed_processor_jobs,
@@ -392,6 +426,14 @@ def monitor_jobs():
                             retry_lost_processor_jobs]
 
     threads = []
+
+    # Start the thread to dispatch Janitor jobs.
+    thread = Thread(target=send_janitor_jobs, name="send_janitor_jobs")
+    thread.start()
+    threads.append(thread)
+    logger.info("Thread started for monitoring function: send_janitor_jobs")
+
+
     for f in processor_functions:
         thread = Thread(target=f, name=f.__name__)
         thread.start()
@@ -420,6 +462,7 @@ def monitor_jobs():
     # Make sure that no threads die quietly.
     while(True):
         start_time = timezone.now()
+
         for thread in threads:
             if not thread.is_alive():
                 logger.error("Foreman Thread for the function %s has died!!!!", thread.name)
