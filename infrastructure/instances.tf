@@ -440,6 +440,10 @@ data "local_file" "api_nginx_config" {
   filename = "api-configuration/nginx_config.conf"
 }
 
+data "local_file" "api_environment" {
+  filename = "api-configuration/environment"
+}
+
 # This script smusher serves a similar purpose to
 # ${data.template_file.nomad_lead_server_script_smusher} but for the Nginx/API.
 data "template_file" "api_server_script_smusher" {
@@ -447,6 +451,9 @@ data "template_file" "api_server_script_smusher" {
 
   vars {
     nginx_config = "${data.local_file.api_nginx_config.content}"
+    api_environment = "${data.local_file.api_environment.content}"
+    dockerhub_repo = "${var.dockerhub_repo}"
+    api_docker_image = "${var.api_docker_image}"
     user = "${var.user}"
     stage = "${var.stage}"
     region = "${var.region}"
@@ -474,9 +481,6 @@ resource "aws_instance" "api_server_1" {
   ]
   user_data = "${data.template_file.api_server_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"
-
-  # Don't delete production servers by mistake!
-  disable_api_termination = "${var.stage == "prod" ? true : false}"
 
   tags = {
     Name = "API Server 1 ${var.user}-${var.stage}"

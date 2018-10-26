@@ -286,23 +286,26 @@ container_running=$(ssh -o StrictHostKeyChecking=no \
                         -i data-refinery-key.pem \
                         ubuntu@$API_IP_ADDRESS  "docker ps" | grep dr_api || echo "")
 
-ssh -o StrictHostKeyChecking=no \
-    -i data-refinery-key.pem \
-    ubuntu@$API_IP_ADDRESS  "docker pull $DOCKERHUB_REPO/$API_DOCKER_IMAGE"
+# If the container isn't running, then it's because the instance is spinning up.
+# The container will be started by the API's init script, so no need to do anything more.
+if [[ -z $container_running ]]; then
 
-if [[ ! -z $container_running ]]; then
+
+    ssh -o StrictHostKeyChecking=no \
+        -i data-refinery-key.pem \
+        ubuntu@$API_IP_ADDRESS  "docker pull $DOCKERHUB_REPO/$API_DOCKER_IMAGE"
+
     ssh -o StrictHostKeyChecking=no \
         -i data-refinery-key.pem \
         ubuntu@$API_IP_ADDRESS "docker rm -f dr_api"
-fi
 
-scp -o StrictHostKeyChecking=no \
-    -i data-refinery-key.pem \
-    api-configuration/environment ubuntu@$API_IP_ADDRESS:/home/ubuntu/environment
+    scp -o StrictHostKeyChecking=no \
+        -i data-refinery-key.pem \
+        api-configuration/environment ubuntu@$API_IP_ADDRESS:/home/ubuntu/environment
 
-ssh -o StrictHostKeyChecking=no \
-    -i data-refinery-key.pem \
-    ubuntu@$API_IP_ADDRESS "docker run \
+    ssh -o StrictHostKeyChecking=no \
+        -i data-refinery-key.pem \
+        ubuntu@$API_IP_ADDRESS "docker run \
        --env-file environment \
        -e DATABASE_HOST=$DATABASE_HOST \
        -e DATABASE_NAME=$DATABASE_NAME \
@@ -317,5 +320,10 @@ ssh -o StrictHostKeyChecking=no \
        --name=dr_api \
        -it -d $DOCKERHUB_REPO/$API_DOCKER_IMAGE /bin/sh -c /home/user/collect_and_run_uwsgi.sh"
 
+    # Don't leave secrets lying around.
+    ssh -o StrictHostKeyChecking=no \
+        -i data-refinery-key.pem \
+        ubuntu@$API_IP_ADDRESS "rm -f environment"
+fi
 
 echo "Deploy completed successfully."
