@@ -69,7 +69,7 @@ else
 fi
 
 # New deployment
-TF_VAR_user=circleci TF_VAR_stage=$ENVIRONMENT ./deploy.sh -e $ENVIRONMENT -v $CIRCLE_TAG
+./deploy.sh -e $ENVIRONMENT -v $CIRCLE_TAG -u circleci
 exit_code=$?
 
 exit $exit_code
