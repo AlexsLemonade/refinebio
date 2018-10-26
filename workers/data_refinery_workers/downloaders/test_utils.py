@@ -11,6 +11,6 @@ class UtilsTestCase(TestCase):
     @tag('downloaders')
     def test_no_jobs_to_create(self):
         """Make sure this function doesn't raise an exception with no files."""
-        create_processor_job_for_original_files([])
+        utils.create_processor_job_for_original_files([])
 
         self.assertTrue(True)
