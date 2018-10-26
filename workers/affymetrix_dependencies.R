@@ -4,9 +4,6 @@ options(warn=2)
 options(repos=structure(c(CRAN="https://cloud.r-project.org")))
 options(Ncpus=parallel::detectCores())
 
-# Install dev packages
-install.packages("devtools")
-
 # Use devtools::install_version() to install packages in cran.
 devtools::install_version('ff', version='2.2-13')
 devtools::install_version('XML', version='3.98-1.10')
@@ -18,8 +15,8 @@ devtools::install_version('pkgconfig', version='2.0.1')
 
 # Bioconductor packages, installed by devtools::install_url()
 
-# devtools::install_url() requires biocLite.R
-source('https://bioconductor.org/biocLite.R')
+# devtools::install_url() requires BiocInstaller
+install.packages('https://bioconductor.org/packages/3.6/bioc/src/contrib/BiocInstaller_1.28.0.tar.gz')
 
 # Helper function that installs a list of packages based on input URL
 install_with_url <- function(main_url, packages) {
