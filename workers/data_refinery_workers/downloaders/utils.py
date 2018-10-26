@@ -196,6 +196,10 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
 
     """
 
+    # If there's no original files then we've created all the jobs we need to!
+    if len(original_files) == 0:
+        return
+
     # For anything that has raw data there should only be one Sample per OriginalFile
     sample_object = original_files[0].samples.first()
     pipeline_to_apply = determine_processor_pipeline(sample_object, original_files[0])
