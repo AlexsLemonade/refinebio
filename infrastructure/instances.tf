@@ -440,6 +440,10 @@ data "local_file" "api_nginx_config" {
   filename = "api-configuration/nginx_config.conf"
 }
 
+data "local_file" "api_environment" {
+  filename = "api-configuration/environment"
+}
+
 # This script smusher serves a similar purpose to
 # ${data.template_file.nomad_lead_server_script_smusher} but for the Nginx/API.
 data "template_file" "api_server_script_smusher" {
