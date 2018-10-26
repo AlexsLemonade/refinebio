@@ -246,6 +246,7 @@ class Experiment(models.Model):
 
     # Identifiers
     accession_code = models.CharField(max_length=64, unique=True)
+    alternate_accession_code = models.CharField(max_length=64, unique=True, null=True)
 
     # Historical Properties
     source_database = models.CharField(max_length=32)  # "ArrayExpress, "SRA", "GEO"
