@@ -538,7 +538,6 @@ All of the images used in that stack would come from `my-dockerhub-repo` and wou
 
 The `-e` specifies the environment you would like to spin up. You may specify, `dev`, `staging`, or `prod`. `dev` is meant for individuals to test infrastructure changes or to run large tests. `staging` is to test the overall system before re-deploying to `prod`.
 
-
 To see what's been created at any time, you can:
 ```
 terraform state list
