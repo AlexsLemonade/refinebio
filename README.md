@@ -551,12 +551,11 @@ terraform taint <your-entity-from-state-list>
 
 And then rerun `deploy.sh` with the same parameters you originally ran it with.
 
-
 ### Docker Images
 
 Refine.bio uses a number of different Docker images to run different pieces of the system.
 By default, refine.bio will pull images from the Dockerhub repo `ccdlstaging`.
-If you would like to use images you have built yourself you can set the `TF_VAR_dockerhub_repo` variable to the name of the Dockerhub repo where you have pushed your images.
+If you would like to use images you have built and pushed to Dockerhub yourself you can pass the `-d` option to the `deploy.sh` script.
 
 To make building and pushing your own images easier, the `update_my_docker_images.sh` has been provided.
 The `-d` option will allow you to specify which repo you'd like to push to.
@@ -564,6 +563,9 @@ If the Dockerhub repo requires you to be logged in, you should do so before runn
 The -v option allows you to specify the version, which will both end up on the Docker images you're building as the SYSTEM_VERSION environment variable and also will be the docker tag for the image.
 
 `update_my_docker_images.sh` will not build the dr_affymetrix image, because this image requires a lot of resources and time to build.
+It can instead be built with `./prepare_image.sh -i affymetrix -d <YOUR_DOCKERHUB_REPO`.
+WARNING: The affymetrix image installs a lot of data-as-R-packages and needs a lot of disk space to build the image.
+It's not recommended to build the image with less than 60GB of free space on the disk that Docker runs on.
 
 
 ### Autoscaling and Setting Spot Prices
@@ -581,6 +583,37 @@ Then set your `TF_VAR_client_instance_type`, `TF_VAR_spot_price` and
 `TF_VAR_scale_up_threshold` and `TF_VAR_scale_down_threshold` define the queue
 lengths which trigger the scaling alarms, though you probably won't need to
 tweak these as much.
+
+
+### Terraform
+
+Once you have Terraform installed and your AWS account credentials installed, you're ready to deploy. The correct way to deploy to the cloud is by running the `deploy.sh` script. This script will perform additional
+configuration steps, such as setting environment variables, setting up Nomad job specifications, and performing database migrations. It can be used from the `infrastructure` directory like so:
+
+```bash
+./deploy.sh -u myusername -e dev -r us-east-1 -v v1.0.0 -d my-dockerhub-repo
+```
+
+This will spin up the whole system. It will usually take about 15 minutes, most of which is spent waiting for the Postgres instance to start.
+The command above would spin up a development stack in the `us-east-1` region where all the resources' names would end with `-myusername-dev`.
+All of the images used in that stack would come from `my-dockerhub-repo` and would be tagged with `v1.0.0`.
+
+The `-e` specifies the environment you would like to spin up. You may specify, `dev`, `staging`, or `prod`. `dev` is meant for individuals to test infrastructure changes or to run large tests. `staging` is to test the overall system before re-deploying to `prod`.
+
+
+To see what's been created at any time, you can:
+```
+terraform state list
+```
+
+If you want to change a single entity in the state, you can use
+
+```
+terraform taint <your-entity-from-state-list>
+```
+
+And then rerun `deploy.sh` with the same parameters you originally ran it with.
+
 
 ### Running Jobs
 
