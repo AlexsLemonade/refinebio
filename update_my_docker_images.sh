@@ -16,13 +16,13 @@ print_options() {
     echo '  It also will be used as the tag for the Docker images built.'
 }
 
-while getopts ":e:v:h" opt; do
+while getopts ":d:v:h" opt; do
     case $opt in
-    e)
-        DOCKERHUB_REPO=$OPTARG
+    d)
+        export DOCKERHUB_REPO=$OPTARG
         ;;
     v)
-        SYSTEM_VERSION=$OPTARG
+        export SYSTEM_VERSION=$OPTARG
         ;;
     h)
         print_description
@@ -56,10 +56,13 @@ fi
 # Intentionally omit affymetrix since it is so intense to build.
 CCDL_WORKER_IMGS="salmon transcriptome no_op downloaders illumina smasher"
 
+# Set the version for the common project.
+echo $SYSTEM_VERSION > common/version
+
 # Create common/dist/data-refinery-common-*.tar.gz, which is
 # required by the workers and data_refinery_foreman images.
 ## Remove old common distributions if they exist
-rm common/dist/*
+rm -f common/dist/*
 cd common && python setup.py sdist
 
 cd ..
