@@ -523,34 +523,6 @@ how to change this to another project.
 
 Refine.bio requires an active, credentialed AWS account with appropriate permissions to create network infrastructure, users, compute instances and databases.
 
-### Terraform
-
-Once you have Terraform installed and your AWS account credentials installed, you're ready to deploy. The correct way to deploy to the cloud is by running the `deploy.sh` script. This script will perform additional
-configuration steps, such as setting environment variables, setting up Nomad job specifications, and performing database migrations. It can be used from the `infrastructure` directory like so:
-
-```bash
-./deploy.sh -u myusername -e dev -r us-east-1 -v v1.0.0 -d my-dockerhub-repo
-```
-
-This will spin up the whole system. It will usually take about 15 minutes, most of which is spent waiting for the Postgres instance to start.
-The command above would spin up a development stack in the `us-east-1` region where all the resources' names would end with `-myusername-dev`.
-All of the images used in that stack would come from `my-dockerhub-repo` and would be tagged with `v1.0.0`.
-
-The `-e` specifies the environment you would like to spin up. You may specify, `dev`, `staging`, or `prod`. `dev` is meant for individuals to test infrastructure changes or to run large tests. `staging` is to test the overall system before re-deploying to `prod`.
-
-To see what's been created at any time, you can:
-```
-terraform state list
-```
-
-If you want to change a single entity in the state, you can use
-
-```
-terraform taint <your-entity-from-state-list>
-```
-
-And then rerun `deploy.sh` with the same parameters you originally ran it with.
-
 ### Docker Images
 
 Refine.bio uses a number of different Docker images to run different pieces of the system.
