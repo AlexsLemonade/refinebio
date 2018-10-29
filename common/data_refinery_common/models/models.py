@@ -246,6 +246,7 @@ class Experiment(models.Model):
 
     # Identifiers
     accession_code = models.CharField(max_length=64, unique=True)
+    alternate_accession_code = models.CharField(max_length=64, unique=True, null=True)
 
     # Historical Properties
     source_database = models.CharField(max_length=32)  # "ArrayExpress, "SRA", "GEO"
@@ -279,6 +280,13 @@ class Experiment(models.Model):
         if not self.id:
             self.created_at = current_time
         self.last_modified = current_time
+
+        if self.accession_code and not self.alternate_accession_code:
+            if self.accession_code.startswith('GSE'):
+                self.alternate_accession_code = 'E-GEOD-' + self.accession_code[3:]
+            elif self.accession_code.startswith('E-GEOD-'):
+                self.alternate_accession_code = 'GSE' + self.accession_code[7:]
+
         return super(Experiment, self).save(*args, **kwargs)
 
     def to_metadata_dict(self):
