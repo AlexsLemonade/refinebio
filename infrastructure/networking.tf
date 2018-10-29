@@ -169,11 +169,11 @@ resource "aws_lb_target_group_attachment" "api-https" {
 # this since we're using cloudfront. The cert for the API is created
 # an installed by certbot.
 resource "aws_acm_certificate" "ssl-cert" {
-  domain_name = "staging.refine.bio"
+  domain_name = "${ var.stage == "prod" ? "" : var.stage"." }refine.bio"
   validation_method = "DNS"
 
   tags {
-    Environment = "data-refinery-circleci-staging"
+    Environment = "data-refinery-circleci-${var.stage}"
   }
 }
 
