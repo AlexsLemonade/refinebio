@@ -282,10 +282,10 @@ class Experiment(models.Model):
         self.last_modified = current_time
 
         if self.accession_code and not self.alternate_accession_code:
-            if self.accession_code.startswith('GSM'):
+            if self.accession_code.startswith('GSE'):
                 self.alternate_accession_code = 'E-GEOD-' + self.accession_code[3:]
             elif self.accession_code.startswith('E-GEOD-'):
-                self.alternate_accession_code = 'GSM' + self.accession_code[7:]
+                self.alternate_accession_code = 'GSE' + self.accession_code[7:]
 
         return super(Experiment, self).save(*args, **kwargs)
 
