@@ -275,6 +275,27 @@ class APITestCases(APITestCase):
         ex3.submitter_institution = "Utopia"
         experiments.append(ex3)
 
+        # Use an E-GEOD-XXXX accession so we can test the E-GEOD -> GSM alternate accession.
+        ex4 = Experiment()
+        ex4.accession_code = "E-GEOD-1234"
+        ex4.title = "IGNORED"
+        ex4.description = "IGNORED"
+        ex4.technology = "MICROARRAY"
+        ex4.submitter_institution = "IGNORED"
+        # Bulk create won't call the save method.
+        ex4.save()
+
+        # Use an E-GEOD-XXXX accession so we can test the E-GEOD -> GSM alternate accession.
+        ex5 = Experiment()
+        ex5.accession_code = "GSM5678"
+        ex5.title = "IGNORED"
+        ex5.description = "IGNORED"
+        ex5.technology = "RNA-SEQ"
+        ex5.submitter_institution = "IGNORED"
+        ex5.has_publication = True
+        # Bulk create won't call the save method.
+        ex5.save()
+
         sample1 = Sample()
         sample1.title = "1123"
         sample1.accession_code = "1123"
@@ -300,6 +321,14 @@ class APITestCases(APITestCase):
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = ex3
+        experiment_sample_association.save()
+        experiment_sample_association = ExperimentSampleAssociation()
+        experiment_sample_association.sample = sample
+        experiment_sample_association.experiment = ex4
+        experiment_sample_association.save()
+        experiment_sample_association = ExperimentSampleAssociation()
+        experiment_sample_association.sample = sample
+        experiment_sample_association.experiment = ex5
         experiment_sample_association.save()
 
         xa = ExperimentAnnotation()
@@ -334,7 +363,7 @@ class APITestCases(APITestCase):
 
         # Test all
         response = self.client.get(reverse('search'))
-        self.assertEqual(response.json()['count'], LOTS + 2)
+        self.assertEqual(response.json()['count'], LOTS + 4)
 
         # Test search
         response = self.client.get(reverse('search'), {'search': 'THISWILLBEINASEARCHRESULT'})
@@ -377,6 +406,15 @@ class APITestCases(APITestCase):
         response2 = self.client.get(reverse('search') + "?search=SEARCH&ordering=-id")
         self.assertNotEqual(response.json()['results'][0]['id'], response2.json()['results'][0]['id'])
         self.assertTrue(response2.json()['results'][0]['id'] > response.json()['results'][0]['id'])
+
+        # Test Searching on Alternate Accession Codes
+        response = self.client.get(reverse('search'), {'search': 'GSM1234'})
+        self.assertEqual(response.json()['count'], 1)
+        self.assertEqual(response.json()['results'][0]['accession_code'], "E-GEOD-1234")
+
+        response = self.client.get(reverse('search'), {'search': 'E-GEOD-5678'})
+        self.assertEqual(response.json()['count'], 1)
+        self.assertEqual(response.json()['results'][0]['accession_code'], "GSM5678")
 
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):

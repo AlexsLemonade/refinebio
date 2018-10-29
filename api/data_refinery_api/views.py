@@ -169,6 +169,7 @@ class SearchAndFilter(generics.ListAPIView):
     search_fields = (   'title',
                         '@description',
                         '@accession_code',
+                        '@alternate_accession_code',
                         '@protocol_description',
                         '@publication_title',
                         'publication_doi',
