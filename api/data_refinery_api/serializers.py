@@ -248,6 +248,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'title',
                     'description',
                     'accession_code',
+                    'alternate_accession_code',
                     'source_database',
                     'source_url',
                     'has_publication',
@@ -270,7 +271,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
 
         # Multiple count annotations
         queryset = queryset.annotate(
-            total_samples_count=Count('samples', unique=True), 
+            total_samples_count=Count('samples', unique=True),
             processed_samples_count=Count('samples', filter=Q(samples__is_processed=True)))
 
         return queryset
