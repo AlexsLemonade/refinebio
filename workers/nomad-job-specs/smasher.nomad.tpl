@@ -70,6 +70,12 @@ job "SMASHER" {
         max_file_size = 1
       }
 
+      constraint {
+        attribute = "${meta.is_smasher}"
+        operator = "="
+        value = "true"
+      }
+
       config {
         image = "${{DOCKERHUB_REPO}}/${{SMASHER_DOCKER_IMAGE}}"
         force_pull = false
