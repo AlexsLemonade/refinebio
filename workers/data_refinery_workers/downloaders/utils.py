@@ -37,17 +37,12 @@ def get_max_jobs_for_current_node():
 
     total_vm = psutil.virtual_memory().total
     gb = int(total_vm / 1000000000)
-    logger.info("Detected " + str(gb) + " of RAM.")
+    logger.info("Detected " + str(gb) + "GB of RAM.")
 
-    # This is likely an X1
-    if (gb >= 800):
-        return 8
-    # Probably a C or M class
-    elif (100 < gb > 800):
-        return 5
-    # Probably a T class
-    else:
-        return 3
+    # We basically want to hit 2GB/s total across 10 x1.32larges. Each job hits 18MB/s.
+    # So it'd take 111 jobs across 10 boxes to hit our limit, so let's set our GB per to 12,
+    # which should pack well enough and give us a slight buffer.
+    return (gb/12)
 
 MAX_DOWNLOADER_JOBS_PER_NODE = get_max_jobs_for_current_node()
 

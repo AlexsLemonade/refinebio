@@ -1,4 +1,5 @@
 import os
+import psutil
 
 from django.test import TestCase, tag
 from typing import List
@@ -22,7 +23,7 @@ class UtilsTestCase(TestCase):
         total_vm = psutil.virtual_memory().total
         gb = int(total_vm / 1000000000)
 
-        max_jobs = get_max_jobs_for_current_node()
+        max_jobs = utils.get_max_jobs_for_current_node()
         # We're not going to run our tests on a prod box, so this should always be True.
         self.assertNotEqual(max_jobs, 8)
         self.assertNotEqual(max_jobs, None)
