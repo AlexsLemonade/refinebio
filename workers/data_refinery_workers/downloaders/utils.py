@@ -1,4 +1,5 @@
 import datetime
+import psutil
 import signal
 import sys
 
@@ -23,15 +24,32 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.utils import get_instance_id, get_env_variable
 
-
 logger = get_and_configure_logger(__name__)
 # Let this fail if SYSTEM_VERSION is unset.
 SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
 # TODO: extend this list.
 BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
-MAX_DOWNLOADER_JOBS_PER_NODE = get_env_variable("MAX_DOWNLOADER_JOBS_PER_NODE", 8)
 CURRENT_JOB = None
 
+def get_max_jobs_for_current_node():
+    """ Determine the maximum number of Downloader jobs that this node should sustain,
+    based on total system RAM made available to this container """
+
+    total_vm = psutil.virtual_memory().total
+    gb = int(total_vm / 1000000000)
+    logger.info("Detected " + str(gb) + " of RAM.")
+
+    # This is likely an X1
+    if (gb >= 800):
+        return 8
+    # Probably a C or M class
+    elif (100 < gb > 800):
+        return 5
+    # Probably a T class
+    else:
+        return 3
+
+MAX_DOWNLOADER_JOBS_PER_NODE = get_max_jobs_for_current_node()
 
 def sigterm_handler(sig, frame):
     """ SIGTERM Handler """

@@ -4,3 +4,4 @@ psycopg2-binary
 retrying
 python-nomad
 coveralls
+psutil
