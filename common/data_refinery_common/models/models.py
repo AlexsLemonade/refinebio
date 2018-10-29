@@ -280,6 +280,13 @@ class Experiment(models.Model):
         if not self.id:
             self.created_at = current_time
         self.last_modified = current_time
+
+        if self.accession_code and not self.alternate_accession_code:
+            if self.accession_code.startswith('GSM'):
+                self.alternate_accession_code = 'E-GEOD-' + accession_code[3:]
+            elif self.accession_code.startswith('E-GEOD-'):
+                self.alternate_accession_code = 'GSM' + accession_code[7:]
+
         return super(Experiment, self).save(*args, **kwargs)
 
     def to_metadata_dict(self):
