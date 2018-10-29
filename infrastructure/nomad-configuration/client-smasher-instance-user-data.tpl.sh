@@ -20,12 +20,9 @@ apt-get install --yes jq iotop dstat speedometer awscli docker.io
 
 ulimit -n 65536
 
-# Find, configure and mount a free EBS volume
+# Set up the data directory
 mkdir -p /var/ebs/
-
 chown ubuntu:ubuntu /var/ebs/
-echo $EBS_VOLUME_INDEX >  /var/ebs/VOLUME_INDEX
-chown ubuntu:ubuntu /var/ebs/VOLUME_INDEX
 
 # Set up the required database extensions.
 # HStore allows us to treat object annotations as pseudo-NoSQL data tables.
@@ -71,14 +68,8 @@ EOF
 
 # Create the Nomad Client configuration.
 cat <<"EOF" > client.hcl
-${nomad_client_config}
+${nomad_client_smasher_config}
 EOF
-# Make the client.meta.volume_id is set to waht we just mounted
-sed -i "s/REPLACE_ME/$EBS_VOLUME_INDEX/" client.hcl
-
-# Create a directory for docker to use as a volume.
-mkdir /home/ubuntu/docker_volume
-chmod a+rwx /home/ubuntu/docker_volume
 
 # Install Nomad
 chmod +x install_nomad.sh
