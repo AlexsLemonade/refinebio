@@ -275,7 +275,7 @@ class APITestCases(APITestCase):
         ex3.submitter_institution = "Utopia"
         experiments.append(ex3)
 
-        # Use an E-GEOD-XXXX accession so we can test the E-GEOD -> GSM alternate accession.
+        # Use an E-GEOD-XXXX accession so we can test the E-GEOD -> GSE alternate accession.
         ex4 = Experiment()
         ex4.accession_code = "E-GEOD-1234"
         ex4.title = "IGNORED"
@@ -285,9 +285,9 @@ class APITestCases(APITestCase):
         # Bulk create won't call the save method.
         ex4.save()
 
-        # Use an E-GEOD-XXXX accession so we can test the E-GEOD -> GSM alternate accession.
+        # Use an GSEXXX accession so we can test the GSE -> E-GEOD alternate accession.
         ex5 = Experiment()
-        ex5.accession_code = "GSM5678"
+        ex5.accession_code = "GSE5678"
         ex5.title = "IGNORED"
         ex5.description = "IGNORED"
         ex5.technology = "RNA-SEQ"
@@ -408,13 +408,13 @@ class APITestCases(APITestCase):
         self.assertTrue(response2.json()['results'][0]['id'] > response.json()['results'][0]['id'])
 
         # Test Searching on Alternate Accession Codes
-        response = self.client.get(reverse('search'), {'search': 'GSM1234'})
+        response = self.client.get(reverse('search'), {'search': 'GSE1234'})
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['results'][0]['accession_code'], "E-GEOD-1234")
 
         response = self.client.get(reverse('search'), {'search': 'E-GEOD-5678'})
         self.assertEqual(response.json()['count'], 1)
-        self.assertEqual(response.json()['results'][0]['accession_code'], "GSM5678")
+        self.assertEqual(response.json()['results'][0]['accession_code'], "GSE5678")
 
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
