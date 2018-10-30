@@ -337,7 +337,7 @@ resource "aws_autoscaling_group" "clients" {
     wait_for_capacity_timeout = "0"
     force_delete = true
     launch_configuration = "${aws_launch_configuration.auto_client_configuration.name}"
-    vpc_zone_identifier = ["${aws_subnet.data_refinery_1a.id}"]
+    vpc_zone_identifier = ["${aws_subnet.data_refinery_1a.id}", "${aws_subnet.data_refinery_1b.id}"]
 
     tag {
         key = "Name"
