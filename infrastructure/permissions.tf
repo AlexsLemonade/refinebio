@@ -14,13 +14,39 @@ resource "aws_iam_role" "data_refinery_instance" {
       "Sid": "",
       "Effect": "Allow",
       "Principal": {
-        "Service": "ec2.amazonaws.com"
+        "Service": ["ec2.amazonaws.com"]
       },
       "Action": "sts:AssumeRole"
     }
   ]
 }
 EOF
+}
+
+resource "aws_iam_role" "data_refinery_spot_fleet" {
+  name = "data-refinery-spot-fleet-${var.user}-${var.stage}"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2008-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": ["spotfleet.amazonaws.com"]
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_policy_attachment" "fleet_role" {
+  name       = "EC2SpotFleetRole"
+  roles      = ["${aws_iam_role.data_refinery_spot_fleet.name}"]
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetRole"
 }
 
 resource "aws_iam_instance_profile" "data_refinery_instance_profile" {
