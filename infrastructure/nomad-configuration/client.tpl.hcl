@@ -13,6 +13,7 @@ client {
 
     meta {
       volume_index = "REPLACE_ME"
+      is_smasher = "false"
     }
 }
 
