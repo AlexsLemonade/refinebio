@@ -288,7 +288,7 @@ container_running=$(ssh -o StrictHostKeyChecking=no \
 
 # If the container isn't running, then it's because the instance is spinning up.
 # The container will be started by the API's init script, so no need to do anything more.
-if [[ -z $container_running ]]; then
+if [[ ! -z $container_running ]]; then
 
 
     ssh -o StrictHostKeyChecking=no \
