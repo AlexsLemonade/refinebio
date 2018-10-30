@@ -523,7 +523,6 @@ how to change this to another project.
 
 Refine.bio requires an active, credentialed AWS account with appropriate permissions to create network infrastructure, users, compute instances and databases.
 
-
 ### Docker Images
 
 Refine.bio uses a number of different Docker images to run different pieces of the system.

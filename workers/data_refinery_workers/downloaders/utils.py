@@ -1,4 +1,5 @@
 import datetime
+import psutil
 import signal
 import sys
 
@@ -23,15 +24,27 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.utils import get_instance_id, get_env_variable
 
-
 logger = get_and_configure_logger(__name__)
 # Let this fail if SYSTEM_VERSION is unset.
 SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
 # TODO: extend this list.
 BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
-MAX_DOWNLOADER_JOBS_PER_NODE = get_env_variable("MAX_DOWNLOADER_JOBS_PER_NODE", 8)
 CURRENT_JOB = None
 
+def get_max_jobs_for_current_node():
+    """ Determine the maximum number of Downloader jobs that this node should sustain,
+    based on total system RAM made available to this container """
+
+    total_vm = psutil.virtual_memory().total
+    gb = int(total_vm / 1000000000)
+    logger.info("Detected " + str(gb) + "GB of RAM.")
+
+    # We basically want to hit 2GB/s total across 10 x1.32larges. Each job hits 18MB/s.
+    # So it'd take 111 jobs across 10 boxes to hit our limit, so let's set our GB per to 12,
+    # which should pack well enough and give us a slight buffer.
+    return (gb/12)
+
+MAX_DOWNLOADER_JOBS_PER_NODE = get_max_jobs_for_current_node()
 
 def sigterm_handler(sig, frame):
     """ SIGTERM Handler """
