@@ -37,7 +37,7 @@ python-dateutil==2.7.3    # via botocore, matplotlib, pandas
 python-nomad==0.9.0
 pytz==2018.5              # via django, pandas
 pyyaml==3.13              # via multiqc
-requests==2.19.1
+requests==2.20.0
 retrying==1.3.3
 s3transfer==0.1.13        # via boto3
 scikit-learn==0.20.0
