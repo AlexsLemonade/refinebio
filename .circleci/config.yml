@@ -4,7 +4,8 @@ jobs:
   # These are grouped together because in total they take less time than our other tests individually.
   main_tests:
     working_directory: ~/refinebio
-    machine: true
+    machine:
+      docker_layer_caching: true
     steps:
       - checkout
 
@@ -72,7 +73,8 @@ jobs:
 
   common_tests:
     working_directory: ~/refinebio
-    machine: true
+    machine:
+      docker_layer_caching: true
     steps:
       - checkout
 
@@ -96,7 +98,8 @@ jobs:
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
     working_directory: ~/refinebio
-    machine: true
+    machine:
+      docker_layer_caching: true
     steps:
       - checkout
 
@@ -123,7 +126,8 @@ jobs:
 
   tx_illumina_affy_agilent_tests:
     working_directory: ~/refinebio
-    machine: true
+    machine:
+      docker_layer_caching: true
     steps:
       - checkout
 
