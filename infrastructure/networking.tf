@@ -167,7 +167,7 @@ resource "aws_lb_target_group_attachment" "api-https" {
 
 # Kurt figured this out
 locals {
-  stage_with_dot = "${var.stage}" + "."
+  stage_with_dot = "${var.stage}."
 }
 
 # This is the SSL certificate for the site itself. We can use ACM for
