@@ -523,6 +523,41 @@ how to change this to another project.
 
 Refine.bio requires an active, credentialed AWS account with appropriate permissions to create network infrastructure, users, compute instances and databases.
 
+
+### Docker Images
+
+Refine.bio uses a number of different Docker images to run different pieces of the system.
+By default, refine.bio will pull images from the Dockerhub repo `ccdlstaging`.
+If you would like to use images you have built and pushed to Dockerhub yourself you can pass the `-d` option to the `deploy.sh` script.
+
+To make building and pushing your own images easier, the `update_my_docker_images.sh` has been provided.
+The `-d` option will allow you to specify which repo you'd like to push to.
+If the Dockerhub repo requires you to be logged in, you should do so before running the script using `docker login`.
+The -v option allows you to specify the version, which will both end up on the Docker images you're building as the SYSTEM_VERSION environment variable and also will be the docker tag for the image.
+
+`update_my_docker_images.sh` will not build the dr_affymetrix image, because this image requires a lot of resources and time to build.
+It can instead be built with `./prepare_image.sh -i affymetrix -d <YOUR_DOCKERHUB_REPO`.
+WARNING: The affymetrix image installs a lot of data-as-R-packages and needs a lot of disk space to build the image.
+It's not recommended to build the image with less than 60GB of free space on the disk that Docker runs on.
+
+
+### Autoscaling and Setting Spot Prices
+
+`refinebio` uses AWS Auto Scaling Groups to provide elastic capacity for large
+work loads. To do this, we use "Spot Requests". To find a good bid price for
+your instance type, use the [spot request
+page](https://console.aws.amazon.com/ec2sp/v1/spot/home?region=us-east-1) and
+then click on the **view pricing history** chart. Choose your instance type and
+then choose a bid price that is slightly higher than the current price for your
+availability zone (AZ). [This graph](https://cdn-images-1.medium.com/max/1600/0*gk64fOrhSFBoFGXK.) is useful for understanding instance types.
+
+Then set your `TF_VAR_client_instance_type`, `TF_VAR_spot_price` and
+`TF_VAR_max_clients` to configure your scaling instance types, cost and size.
+`TF_VAR_scale_up_threshold` and `TF_VAR_scale_down_threshold` define the queue
+lengths which trigger the scaling alarms, though you probably won't need to
+tweak these as much.
+
+
 ### Terraform
 
 Once you have Terraform installed and your AWS account credentials installed, you're ready to deploy. The correct way to deploy to the cloud is by running the `deploy.sh` script. This script will perform additional
@@ -552,36 +587,6 @@ terraform taint <your-entity-from-state-list>
 
 And then rerun `deploy.sh` with the same parameters you originally ran it with.
 
-
-### Docker Images
-
-Refine.bio uses a number of different Docker images to run different pieces of the system.
-By default, refine.bio will pull images from the Dockerhub repo `ccdlstaging`.
-If you would like to use images you have built yourself you can set the `TF_VAR_dockerhub_repo` variable to the name of the Dockerhub repo where you have pushed your images.
-
-To make building and pushing your own images easier, the `update_my_docker_images.sh` has been provided.
-The `-d` option will allow you to specify which repo you'd like to push to.
-If the Dockerhub repo requires you to be logged in, you should do so before running the script using `docker login`.
-The -v option allows you to specify the version, which will both end up on the Docker images you're building as the SYSTEM_VERSION environment variable and also will be the docker tag for the image.
-
-`update_my_docker_images.sh` will not build the dr_affymetrix image, because this image requires a lot of resources and time to build.
-
-
-### Autoscaling and Setting Spot Prices
-
-`refinebio` uses AWS Auto Scaling Groups to provide elastic capacity for large
-work loads. To do this, we use "Spot Requests". To find a good bid price for
-your instance type, use the [spot request
-page](https://console.aws.amazon.com/ec2sp/v1/spot/home?region=us-east-1) and
-then click on the **view pricing history** chart. Choose your instance type and
-then choose a bid price that is slightly higher than the current price for your
-availability zone (AZ). [This graph](https://cdn-images-1.medium.com/max/1600/0*gk64fOrhSFBoFGXK.) is useful for understanding instance types.
-
-Then set your `TF_VAR_client_instance_type`, `TF_VAR_spot_price` and
-`TF_VAR_max_clients` to configure your scaling instance types, cost and size.
-`TF_VAR_scale_up_threshold` and `TF_VAR_scale_down_threshold` define the queue
-lengths which trigger the scaling alarms, though you probably won't need to
-tweak these as much.
 
 ### Running Jobs
 

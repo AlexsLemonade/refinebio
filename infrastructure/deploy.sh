@@ -28,23 +28,23 @@ print_options() {
     echo '-r specifies the AWS region to deploy the stack to. Defaults to us-east-1.'
 }
 
-while getopts ":e:d:v:u:s:r:h" opt; do
+while getopts ":e:d:v:u:r:h" opt; do
     case $opt in
     e)
-        env=$OPTARG
-        TF_VAR_stage=$OPTARG
+        export env=$OPTARG
+        export TF_VAR_stage=$OPTARG
         ;;
     d)
-        TF_VAR_dockerhub_repo=$OPTARG
+        export TF_VAR_dockerhub_repo=$OPTARG
         ;;
     v)
-        SYSTEM_VERSION=$OPTARG
+        export SYSTEM_VERSION=$OPTARG
         ;;
     u)
-        TF_VAR_user=$OPTARG
+        export TF_VAR_user=$OPTARG
         ;;
     r)
-        TF_VAR_region=$OPTARG
+        export TF_VAR_region=$OPTARG
         ;;
     h)
         print_description
