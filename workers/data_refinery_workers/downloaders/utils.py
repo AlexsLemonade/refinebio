@@ -42,7 +42,13 @@ def get_max_jobs_for_current_node():
     # We basically want to hit 2GB/s total across 10 x1.32larges. Each job hits 18MB/s.
     # So it'd take 111 jobs across 10 boxes to hit our limit, so let's set our GB per to 12,
     # which should pack well enough and give us a slight buffer.
-    return (gb/12)
+    max_jobs = (gb/12)
+
+    # However this will make sure we can still run a few jobs in local environments and in CI.
+    if max_jobs < 5:
+        max_jobs = 5
+
+    return max_jobs
 
 MAX_DOWNLOADER_JOBS_PER_NODE = get_max_jobs_for_current_node()
 
