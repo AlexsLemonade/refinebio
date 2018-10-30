@@ -165,15 +165,20 @@ resource "aws_lb_target_group_attachment" "api-https" {
   port = 443
 }
 
+# Kurt figured this out
+locals {
+  stage_with_dot = "${var.stage}."
+}
+
 # This is the SSL certificate for the site itself. We can use ACM for
 # this since we're using cloudfront. The cert for the API is created
 # an installed by certbot.
 resource "aws_acm_certificate" "ssl-cert" {
-  domain_name = "staging.refine.bio"
+  domain_name = "${ var.stage == "prod" ? "" : local.stage_with_dot }refine.bio"
   validation_method = "DNS"
 
   tags {
-    Environment = "data-refinery-circleci-staging"
+    Environment = "data-refinery-circleci-${var.stage}"
   }
 }
 

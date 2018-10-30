@@ -1,6 +1,7 @@
 django
-requests
+requests>=2.20.0
 psycopg2-binary
 retrying
 python-nomad
 coveralls
+psutil
