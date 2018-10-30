@@ -40,6 +40,12 @@ def _find_and_remove_expired_jobs(job_context):
 
     for item in os.listdir(LOCAL_ROOT_DIR):
         if 'processor_job_' in item:
+
+            # TX Index jobs are the only ones who are allowed to hang around
+            # after their jobs are finished. They're marked with an _index in their path.
+            if '_index' in item:
+                continue
+
             job_id = item.split('processor_job_')[1]
 
             # Okay, does this job exist?

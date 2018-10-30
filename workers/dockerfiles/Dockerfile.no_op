@@ -40,6 +40,11 @@ WORKDIR /home/user
 
 # Noop-specific requirements
 ENV R_LIBS "/usr/local/lib/R/site-library"
+
+COPY common/install_devtools.R .
+
+RUN Rscript install_devtools.R
+
 COPY workers/install_gene_convert.R .
 RUN Rscript install_gene_convert.R
 RUN mkdir -p gene_indexes
