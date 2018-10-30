@@ -29,12 +29,13 @@ install_package_version <- function(package_name, version) {
   package_tarball <- paste0(package_name, "_", version, ".tar.gz")
   package_url <- paste0("https://cran.r-project.org/src/contrib/", package_tarball)
 
-  curl_result <- system(paste0("curl --head ", package_url), intern=TRUE)
+  # Give CRAN a full minute to timeout since it's not always the most reliable.
+  curl_result <- system(paste0("curl --head --connect-timeout 60 ", package_url), intern=TRUE)
   if (grepl("404", curl_result[1])) {
     package_url <- paste0("https://cran.r-project.org/src/contrib/Archive/", package_name, "/", package_tarball)
 
     # Make sure the package actually exists in the archive!
-    curl_result <- system(paste0("curl --head ", package_url), intern=TRUE)
+    curl_result <- system(paste0("curl --head --connect-timeout 60 ", package_url), intern=TRUE)
     if (grepl("404", curl_result[1])) {
       stop(paste("Package", package_name, "version", version, "does not exist!"))
     }
