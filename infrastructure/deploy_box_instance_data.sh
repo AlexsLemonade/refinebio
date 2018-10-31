@@ -1,3 +1,5 @@
+#!/bin/bash -e
+
 # This script can be used as the instance-user-data.sh script for AWS
 # instances to configure a new instance to be used as a deploy box.
 
@@ -20,9 +22,10 @@
 #    - Select an Ubuntu 18.04 HVM SSD AMI for the region. If you are using us-east-1 then
 #      ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-20180912 (ami-0ac019f4fcb7cb7e6)
 #      should be correct.
-#    - A t3.small instance should be sufficient.
+#    - A t3.medium instance should be sufficient.
 #    - Set the EBS volume to have at least 100 GB.
 #    - Use the deploy VPC and security group referenced in earlier steps.
+#    - It needs to have a public IP address (so set 'Auto-assign Public IP' to 'Enable').
 #    - Paste the contents of this script into the instance-user-data.
 #    - When it prompts you for a key, specify the `data-refinery-deployer` key you created earlier.
 #    See https://docs.aws.amazon.com/efs/latest/ug/gs-step-one-create-ec2-resources.html for detailed instructions.
