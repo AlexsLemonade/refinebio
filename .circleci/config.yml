@@ -183,6 +183,7 @@ jobs:
     working_directory: ~/refinebio
     steps:
       - checkout
+      - run: bash .circleci/git_decrypt.sh
       - run:
           command: bash .circleci/remote_deploy.sh
           no_output_timeout: 4h # Building images and createing postgres instances can take a while.

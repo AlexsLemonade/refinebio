@@ -61,7 +61,6 @@ apt-get install -y \
         docker-ce \
         unzip
 
-groupadd docker
 usermod -aG docker ubuntu
 
 cd /home/ubuntu
