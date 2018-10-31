@@ -149,7 +149,7 @@ class DownloadArrayExpressTestCase(TestCase):
 
         exited = False
         try:
-            utils.start_job(dlj3.id, 2)
+            utils.start_job(dlj3.id, max_downloader_jobs_per_node=2, force_harakiri=True)
         except SystemExit as e:
             # This is supposed to happen!
             self.assertTrue(True)
@@ -161,7 +161,7 @@ class DownloadArrayExpressTestCase(TestCase):
 
         exited = False
         try:
-            utils.start_job(dlj3.id, 15)
+            utils.start_job(dlj3.id, max_downloader_jobs_per_node=15, force_harakiri=True)
         except SystemExit as e:
             # This is not supposed to happen!
             self.assertTrue(False)
