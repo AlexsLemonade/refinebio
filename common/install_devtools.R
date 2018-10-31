@@ -16,7 +16,7 @@
 
 # Treat warnings as errors, set CRAN mirror, and set parallelization:
 options(warn=2)
-options(repos=structure(c(CRAN="https://cloud.r-project.org")))
+options(repos=structure(c(CRAN="http://lib.stat.cmu.edu/R/CRAN/")))
 options(Ncpus=parallel::detectCores())
 
 
@@ -27,15 +27,15 @@ install_package_version <- function(package_name, version) {
   # different location than the older versions, we have to check where
   # it can be found.
   package_tarball <- paste0(package_name, "_", version, ".tar.gz")
-  package_url <- paste0("https://cran.r-project.org/src/contrib/", package_tarball)
+  package_url <- paste0("http://lib.stat.cmu.edu/R/CRAN/src/contrib/", package_tarball)
 
   # Give CRAN a full minute to timeout since it's not always the most reliable.
   curl_result <- system(paste0("curl --head --connect-timeout 60 ", package_url), intern=TRUE)
   if (grepl("404", curl_result[1])) {
-    package_url <- paste0("https://cran.r-project.org/src/contrib/Archive/", package_name, "/", package_tarball)
+    package_url <- paste0("http://lib.stat.cmu.edu/R/CRAN/src/contrib/Archive/", package_name, "/", package_tarball)
 
     # Make sure the package actually exists in the archive!
-    curl_result <- system(paste0("curl --head --connect-timeout 60 ", package_url), intern=TRUE)
+    curl_result <- system(paste0("curl --head --connect-timeout 120 ", package_url), intern=TRUE)
     if (grepl("404", curl_result[1])) {
       stop(paste("Package", package_name, "version", version, "does not exist!"))
     }
