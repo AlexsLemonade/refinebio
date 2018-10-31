@@ -9,16 +9,24 @@ from data_refinery_common.models import (
     ProcessorJob,
     OriginalFile,
     Dataset,
+    SurveyJobKeyValue,
     DownloaderJobOriginalFileAssociation,
     ProcessorJobOriginalFileAssociation,
     ProcessorJobDatasetAssociation,
 )
 
 
-class SurveyTestCase(TestCase):
+class ForemanTestCase(TestCase):
     def setUp(self):
         survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
         survey_job.save()
+
+        sjkv = SurveyJobKeyValue()
+        sjkv.key = "experiment_accession_code"
+        sjkv.value = "RJ-1234-XYZ"
+        sjkv.survey_job = survey_job
+        sjkv.save()
+
         self.survey_job = survey_job
 
     def create_downloader_job(self):
@@ -512,6 +520,27 @@ class SurveyTestCase(TestCase):
 
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
+
+    def test_requeuing_survey_job(self):
+        job = self.survey_job
+
+        main.requeue_survey_job(job, dispatch=False)
+
+        jobs = SurveyJob.objects.order_by('id')
+
+        code1 = jobs[0].get_accession_code()
+
+        original_job = jobs[0]
+        self.assertTrue(original_job.retried)
+        self.assertEqual(original_job.num_retries, 0)
+        self.assertFalse(original_job.success)
+
+        retried_job = jobs[1]
+        self.assertEqual(retried_job.num_retries, 1)
+        code2 = jobs[1].get_accession_code()
+
+        self.assertNotEqual(code1, None)
+        self.assertEqual(code1, code2)
 
     @patch('data_refinery_foreman.foreman.main.send_job')
     def test_janitor(self, mock_send_job):

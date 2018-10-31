@@ -10,6 +10,7 @@ import uuid
 from django.core.management.base import BaseCommand
 from data_refinery_foreman.surveyor import surveyor
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.models import SurveyJob, SurveyJobKeyValue
 from data_refinery_common.utils import parse_s3_url
 
 logger = get_and_configure_logger(__name__)
@@ -50,10 +51,16 @@ class Command(BaseCommand):
             help=("Skip a number of lines at the beginning"),
             default=0
         )
+        parser.add_argument(
+            "--job-id",
+            type=int,
+            help=("An ID of a SurveyJob to execute"),
+            default=None
+        )
 
     def handle(self, *args, **options):
-        if options['file'] is None and options['accession'] is None:
-            logger.error("You must specify an accession or file.")
+        if options['file'] is None and options['accession'] is None and options['job_id'] is None:
+            logger.error("You must specify an accession or file or job ID.")
             return "1"
 
         if options["file"]:
@@ -85,5 +92,13 @@ class Command(BaseCommand):
             accession = options["accession"]
             try:
                 run_surveyor_for_accession(accession)
+            except Exception as e:
+                logger.exception(e)
+
+        if options['job_id']:
+            job_id = options["job_id"]
+            try:
+                survey_job = SurveyJob.objects.get(id=job_id)
+                surveyor.run_job(survey_job)
             except Exception as e:
                 logger.exception(e)
