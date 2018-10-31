@@ -185,7 +185,7 @@ jobs:
       - checkout
       - run:
           command: bash .circleci/remote_deploy.sh
-          no_output_timeout: 4hr # Building images and createing postgres instances can take a while.
+          no_output_timeout: 4h # Building images and createing postgres instances can take a while.
       - run: bash .circleci/slackpost.sh robots deploybot
 
 workflows:
