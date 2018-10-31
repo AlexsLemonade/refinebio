@@ -58,7 +58,7 @@ def sigterm_handler(sig, frame):
         CURRENT_JOB.save()
         sys.exit(0)
 
-def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_NODE) -> DownloaderJob:
+def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_NODE, force_harakiri=False) -> DownloaderJob:
     """Record in the database that this job is being started.
 
     Retrieves the job from the database and returns it after marking
@@ -81,7 +81,7 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
                             ).count()
 
     # Death and rebirth.
-    if RUNNING_IN_CLOUD:
+    if RUNNING_IN_CLOUD != "False" or force_harakiri:
         if num_downloader_jobs_currently_running >= int(max_downloader_jobs_per_node):
             # Wait for the death window
             while True:
