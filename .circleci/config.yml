@@ -183,6 +183,7 @@ jobs:
     working_directory: ~/refinebio
     steps:
       - checkout
+      - run: bash .circleci/install_git_decrypt.sh
       - run: bash .circleci/git_decrypt.sh
       - run:
           command: bash .circleci/remote_deploy.sh
