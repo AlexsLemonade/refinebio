@@ -1,4 +1,4 @@
-options(repos=structure(c(CRAN="https://cloud.r-project.org")))
+options(repos=structure(c(CRAN="http://lib.stat.cmu.edu/R/CRAN")))
 
 devtools::install_version('data.table', version='1.11.0')
 devtools::install_version('optparse', version='1.4.4')
