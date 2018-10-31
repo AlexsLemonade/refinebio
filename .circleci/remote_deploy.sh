@@ -22,6 +22,8 @@
 
 cd ~/refinebio
 
+chmod 600 infrastructure/data-refinery-key.pem
+
 run_on_deploy_box () {
     ssh -o StrictHostKeyChecking=no \
         -i infrastructure/data-refinery-key.pem \
