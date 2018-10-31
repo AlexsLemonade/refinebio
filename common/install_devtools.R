@@ -16,7 +16,7 @@
 
 # Treat warnings as errors, set CRAN mirror, and set parallelization:
 options(warn=2)
-options(repos=structure(c(CRAN="https://cloud.r-project.org")))
+options(repos=structure(c(CRAN="http://lib.stat.cmu.edu/R/CRAN/")))
 options(Ncpus=parallel::detectCores())
 
 
