@@ -53,7 +53,6 @@ class SurveyTestCase(TestCase):
         self.assertEqual(downloader_jobs.count(), 1)
 
         sample = Sample.objects.first()
-        self.assertTrue(' (hgu95av2)' in sample.pretty_platform)
         # Confirm the sample's protocol_info
         self.assertEqual(len(sample.protocol_info), 9)
         self.assertEqual(sample.protocol_info[0]['Accession'], "P-MTAB-41854")

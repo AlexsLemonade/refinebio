@@ -144,7 +144,6 @@ class Sample(models.Model):
         metadata['refinebio_subject'] = self.subject
         metadata['refinebio_compound'] = self.compound
         metadata['refinebio_time'] = self.time
-        metadata['refinebio_platform'] = self.pretty_platform
         metadata['refinebio_annotations'] = [
             data for data in self.sampleannotation_set.all().values_list('data', flat=True)
         ]
@@ -164,23 +163,6 @@ class Sample(models.Model):
         except Exception as e:
             # This sample has no smashable files yet.
             return None
-
-    @property
-    def pretty_platform(self):
-        """ Turns
-
-        [HT_HG-U133_Plus_PM] Affymetrix HT HG-U133+ PM Array Plate
-
-        into
-
-        Affymetrix HT HG-U133+ PM Array Plate (hthgu133pluspm)
-
-        """
-        if ']' in self.platform_name:
-            platform_base = self.platform_name.split(']')[1].strip()
-        else:
-            platform_base = self.platform_name
-        return platform_base + ' (' + self.platform_accession_code + ')'
 
 class SampleAnnotation(models.Model):
     """ Semi-standard information associated with a Sample """
@@ -345,11 +327,6 @@ class Experiment(models.Model):
     def platforms(self):
         """ Returns a list of related pipelines """
         return [p for p in self.samples.values_list('platform_name', flat=True).distinct()]
-
-    @property
-    def pretty_platforms(self):
-        """ Returns a prettified list of related pipelines """
-        return list(set([p.pretty_platform for p in self.samples.exclude(platform_name__exact='')]))
 
     def get_processed_samples(self):
         return self.samples.filter(is_processed=True)

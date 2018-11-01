@@ -145,7 +145,6 @@ class SampleSerializer(serializers.ModelSerializer):
             'organism',
             'platform_accession_code',
             'platform_name',
-            'pretty_platform',
             'technology',
             'manufacturer',
             'protocol_info',
@@ -166,7 +165,6 @@ class SearchSampleSerializer(serializers.ModelSerializer):
             'source_database',
             'platform_accession_code',
             'platform_name',
-            'pretty_platform',
             'technology',
             'sex',
             'age',
@@ -213,7 +211,6 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
             'organism',
             'platform_accession_code',
             'platform_name',
-            'pretty_platform',
             'technology',
             'manufacturer',
             'protocol_info',
@@ -600,7 +597,6 @@ class DatasetDetailsExperimentSerializer(serializers.ModelSerializer):
     organisms = serializers.StringRelatedField(many=True)
     samples = serializers.StringRelatedField(many=True)
     sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
-    pretty_platforms = serializers.ReadOnlyField()
 
     class Meta:
         model = Experiment
@@ -608,7 +604,6 @@ class DatasetDetailsExperimentSerializer(serializers.ModelSerializer):
             'id',
             'title',
             'accession_code',
-            'pretty_platforms',
             'samples',
             'organisms',
             'sample_metadata',
