@@ -11,6 +11,11 @@ else
     STAGE=$TF_VAR_stage
 fi
 
+# Terraform leaves some stack-specific config lying around.
+# This config messes up initialization of an arbitrary stage, since it is stack-specific.
+# Therefore in order to be able to switch between different stacks, just remove that config.
+rm -rf .terraform
+
 # Force copy will allow us to get past the prompt asking if we want to
 # switch to the remote backend.
 terraform init \
