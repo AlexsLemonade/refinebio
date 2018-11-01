@@ -118,20 +118,20 @@ class ExperimentFilter(django_filters.FilterSet):
                                                                queryset=Organism.objects.all())
     organisms__name.always_filter = False
 
-    samples__platform_name = \
-        django_filters.ModelMultipleChoiceFilter(field_name="samples__platform_name",
-                                                 to_field_name="platform_name",
+    platform = \
+        django_filters.ModelMultipleChoiceFilter(field_name="samples__platform_accession_code",
+                                                 to_field_name="platform_accession_code",
                                                  queryset=Sample.objects.all())
-    samples__platform_name.always_filter = False
+    platform.always_filter = False
 
     class Meta:
         model = Experiment
-        fields =    [   'has_publication',
-                        'submitter_institution',
-                        'technology',
-                        'source_first_published',
-                        'organisms__name',
-                        'samples__platform_name']
+        fields = ['has_publication',
+                  'submitter_institution',
+                  'technology',
+                  'source_first_published',
+                  'organisms__name',
+                  'platform']
 
 # ListAPIView is read-only!
 class SearchAndFilter(generics.ListAPIView):
@@ -179,7 +179,7 @@ class SearchAndFilter(generics.ListAPIView):
                         '@submitter_institution',
                         'experimentannotation__data'
                     )
-    filter_fields = ('has_publication', 'platform_name')
+    filter_fields = ('has_publication', 'platform')
 
     def get_queryset(self):
 
