@@ -253,6 +253,10 @@ resource "aws_spot_fleet_request" "cheap_ram" {
   valid_until         = "2021-11-04T20:44:20Z"
   fleet_type          = "maintain"
 
+  # Instances won't be destroyed on Terraform destroy without this flag.
+  # See https://github.com/hashicorp/terraform/issues/13859
+  terminate_instances_with_expiration = true
+
   ##
   # Common / Depends On
   ##

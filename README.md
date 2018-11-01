@@ -523,6 +523,10 @@ how to change this to another project.
 
 Refine.bio requires an active, credentialed AWS account with appropriate permissions to create network infrastructure, users, compute instances and databases.
 
+Deploys are automated to run via CirlceCI whenever a signed tag starting with a `v` is pushed to either the `dev` or `master` branches (v as in version, i.e. v1.0.0).
+CircleCI runs a deploy on a dedicated AWS instance so that the Docker cache can be preserved between runs.
+Instructions for setting up that instance can be found in the infrastructure/deploy_box_instance_data.sh script.
+
 ### Docker Images
 
 Refine.bio uses a number of different Docker images to run different pieces of the system.

@@ -183,16 +183,11 @@ jobs:
     working_directory: ~/refinebio
     steps:
       - checkout
-
-      # Clean up stuff circle provides that we don't need.
-      - run: sudo bash .circleci/cleanup_instance.sh
-
-      - run: bash .circleci/verify_tag.sh
+      - run: bash .circleci/install_git_decrypt.sh
       - run: bash .circleci/git_decrypt.sh
-      - run: bash .circleci/update_docker_img.sh
       - run:
-          command: bash .circleci/run_terraform.sh
-          no_output_timeout: 30m # Creating a postgres instance can take up to 20 minutes.
+          command: bash .circleci/remote_deploy.sh
+          no_output_timeout: 4h # Building images and createing postgres instances can take a while.
       - run: bash .circleci/slackpost.sh robots deploybot
 
 workflows:
