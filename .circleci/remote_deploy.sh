@@ -60,7 +60,7 @@ run_on_deploy_box "source env_vars && bash .circleci/update_docker_img.sh >> /va
 run_on_deploy_box "source env_vars && echo -e '######\nFinished building new images for $CIRCLE_TAG\n######'  &>> /var/log/docker_update.log 2>&1"
 
 run_on_deploy_box "source env_vars && echo -e '######\nStarting new deploy for $CIRCLE_TAG\n######' >> /var/log/deploy.log 2>&1"
-run_on_deploy_box "source env_vars && bash .circleci/run_terraform.sh >> /var/log/deploy.log"
+run_on_deploy_box "source env_vars && bash .circleci/run_terraform.sh >> /var/log/deploy.log 2>&1"
 run_on_deploy_box "source env_vars && echo -e '######\nDeploying $CIRCLE_TAG finished!\n######' >> /var/log/deploy.log 2>&1"
 
 # Don't leave secrets lying around.
