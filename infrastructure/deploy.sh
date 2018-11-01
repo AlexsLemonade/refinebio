@@ -292,7 +292,6 @@ fi
 # this way rather than by tainting the server like we do for foreman.
 chmod 600 data-refinery-key.pem
 API_IP_ADDRESS=$(terraform output -json api_server_1_ip | jq -c '.value' | tr -d '"')
-echo "Restarting API with latest image."
 
 # To check to see if the docker container needs to be stopped before
 # it can be started, grep for the name of the container. However if
@@ -307,7 +306,7 @@ container_running=$(ssh -o StrictHostKeyChecking=no \
 # The container will be started by the API's init script, so no need to do anything more.
 # However if $container_running isn't empty then we need to stop and restart it.
 if [[ ! -z $container_running ]]; then
-
+    echo "Restarting API with latest image."
 
     ssh -o StrictHostKeyChecking=no \
         -i data-refinery-key.pem \
