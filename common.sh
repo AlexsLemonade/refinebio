@@ -46,8 +46,7 @@ get_master_or_dev() {
     elif [[ ! -z $dev_check ]]; then
         echo "dev"
     else
-        echo "TODO: remove this!"
-        # echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"
-        # exit 1
+        echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"
+        exit 1
     fi
 }
