@@ -229,10 +229,10 @@ class SearchAndFilter(generics.ListAPIView):
             response.data['filters']['organism'][organism['organisms__name']] = organism['organisms__name__count']
 
         # Platforms
-        platforms = qs.values('samples__platform_name').annotate(Count('samples__platform_name', unique=True))
+        platforms = qs.values('samples__platform_accession_code').annotate(Count('samples__platform_accession_code', unique=True))
         for plat in platforms:
-            if plat['samples__platform_name']:
-                response.data['filters']['platforms'][plat['samples__platform_name']] = plat['samples__platform_name__count']
+            if plat['samples__platform_accession_code']:
+                response.data['filters']['platforms'][plat['samples__platform_accession_code']] = plat['samples__platform_accession_code__count']
 
         return response
 
