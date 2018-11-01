@@ -353,6 +353,10 @@ class PlatformSerializer(serializers.ModelSerializer):
         Format platform names
 
         """
+        rnaseq_platform_list = get_supported_rnaseq_platforms().copy()
+        for platform in rnaseq_platform_list:
+            if platform.replace(' ', '').upper() == obj['platform_name'].replace(' ', '').upper():
+                return platform
 
         if ']' in obj['platform_name']:
             platform_base = obj['platform_name'].split(']')[1].strip()
