@@ -166,6 +166,7 @@ jobs:
       - run: docker image rm ccdlstaging/dr_illumina
 
   affy_agilent_tests:
+    machine: true
     working_directory: ~/refinebio
     steps:
       - checkout
