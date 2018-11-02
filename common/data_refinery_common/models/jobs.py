@@ -16,6 +16,9 @@ class SurveyJob(models.Model):
     source_type = models.CharField(max_length=256)
     success = models.NullBooleanField(null=True)
     no_retry = models.BooleanField(default=False)
+    nomad_job_id = models.CharField(max_length=256, null=True)
+
+    ram_amount = models.IntegerField(default=256)
 
     # The start time of the job
     start_time = models.DateTimeField(null=True)

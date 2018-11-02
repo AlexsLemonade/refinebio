@@ -20,7 +20,7 @@ from data_refinery_common.models import (
     SurveyJobKeyValue
 )
 from data_refinery_common.message_queue import send_job
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
+from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders, SurveyJobTypes
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 
@@ -121,12 +121,14 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
                 last_job.id,
                 new_job.id)
     try:
-        send_job(Downloaders[last_job.downloader_task], new_job)
-
-        last_job.retried = True
-        last_job.success = False
-        last_job.retried_job = new_job
-        last_job.save()
+        if send_job(Downloaders[last_job.downloader_task], new_job):
+            last_job.retried = True
+            last_job.success = False
+            last_job.retried_job = new_job
+            last_job.save()
+        else:
+            # Can't communicate with nomad just now, leave the job for a later loop.
+            new_job.delete()
     except:
         logger.error("Failed to requeue Downloader Job which had ID %d with a new Downloader Job with ID %d.",
                      last_job.id,
@@ -286,12 +288,14 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
         logger.info("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",
                     last_job.id,
                     new_job.id)
-        send_job(ProcessorPipeline[last_job.pipeline_applied], new_job)
-
-        last_job.retried = True
-        last_job.success = False
-        last_job.retried_job = new_job
-        last_job.save()
+        if send_job(ProcessorPipeline[last_job.pipeline_applied], new_job):
+            last_job.retried = True
+            last_job.success = False
+            last_job.retried_job = new_job
+            last_job.save()
+        else:
+            # Can't communicate with nomad just now, leave the job for a later loop.
+            new_job.delete()
     except:
         logger.error("Failed to requeue Processor Job which had ID %d with a new Processor Job with ID %d.",
                      last_job.id,
@@ -415,7 +419,7 @@ def retry_lost_processor_jobs() -> None:
 
 @retry(stop_max_attempt_number=3)
 @transaction.atomic
-def requeue_survey_job(last_job: SurveyJob, dispatch=True) -> None:
+def requeue_survey_job(last_job: SurveyJob) -> None:
     """Queues a new survey job.
 
     The new survey job will have num_retries one greater than
@@ -426,6 +430,14 @@ def requeue_survey_job(last_job: SurveyJob, dispatch=True) -> None:
     new_job = SurveyJob(num_retries=num_retries,
                         source_type=last_job.source_type
                     )
+
+    if new_job.num_retries == 1:
+        new_job.ram_amount = 4096
+    elif new_job.num_retries in [2, 3]:
+        new_job.ram_amount = 16384
+    else:
+        new_job.ram_amount = 256
+
     new_job.save()
 
     keyvalues = SurveyJobKeyValue.objects.filter(survey_job=last_job)
@@ -436,41 +448,21 @@ def requeue_survey_job(last_job: SurveyJob, dispatch=True) -> None:
                                                 value=keyvalue.value,
                                             )
 
+    logger.info("Requeuing SurveyJob which had ID %d with a new SurveyJob with ID %d.",
+                last_job.id,
+                new_job.id)
+
     try:
-        logger.info("Requeuing SurveyJob which had ID %d with a new SurveyJob with ID %d.",
-                    last_job.id,
-                    new_job.id)
-        try:
-            nomad_host = get_env_variable("NOMAD_HOST")
-            nomad_port = get_env_variable("NOMAD_PORT", "4646")
-            nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
-            if dispatch:
-                if new_job.num_retries == 1:
-                    ram_amount = "4096"
-                elif new_job.num_retries in [2, 3]:
-                    ram_amount = "16384"
-                else:
-                    ram_amount = "256"
-
-                nomad_response = nomad_client.job.dispatch_job("SURVEYOR_" + ram_amount, meta={"JOB_ID": new_job.id})
-                new_job.nomad_job_id = nomad_response["DispatchedJobID"]
-                new_job.save()
-        except URLNotFoundNomadException:
-            logger.error("Dispatching Nomad survey job failed (URLNotFoundNomadException).",
-                         job=str(new_job.id))
-        except Exception as e:
-            logger.exception('Unable to Dispatch Nomad Job.',
-                job_id=str(new_job.id),
-                reason=str(e)
-            )
-            raise
-
-        last_job.retried = True
-        last_job.success = False
-        last_job.retried_job = new_job
-        last_job.save()
+        if send_job(SurveyJobTypes.SURVEYOR, new_job):
+            last_job.retried = True
+            last_job.success = False
+            last_job.retried_job = new_job
+            last_job.save()
+        else:
+            # Can't communicate with nomad just now, leave the job for a later loop.
+            new_job.delete()
     except:
-        logger.error("Failed to requeue SurveyJob Job which had ID %d with a new SurveyJob Job with ID %d.",
+        logger.error("Failed to requeue Survey Job which had ID %d with a new Surevey Job with ID %d.",
                      last_job.id,
                      new_job.id)
         # Can't communicate with nomad just now, leave the job for a later loop.
