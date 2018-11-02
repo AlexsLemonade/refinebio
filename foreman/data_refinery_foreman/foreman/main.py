@@ -507,7 +507,13 @@ def retry_hung_survey_jobs() -> None:
     hung_jobs = []
     for job in potentially_hung_jobs:
         try:
-            job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+            # Surveyor jobs didn't always have nomad_job_ids. If they
+            # don't have one then by this point they've definitely died.
+            if job.nomad_job_id:
+                job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+            else:
+                job_status = "dead"
+
             if job_status != "running":
                 # Make sure it didn't finish since our original query.
                 job.refresh_from_db()
