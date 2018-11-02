@@ -10,7 +10,6 @@ logger = get_and_configure_logger(__name__)
 
 
 class PipelineEnums(Enum):
-
     """An abstract class to enumerate valid processor pipelines.
 
     Enumerations which extend this class are valid values for the
@@ -20,7 +19,6 @@ class PipelineEnums(Enum):
 
 
 class ProcessorPipeline(PipelineEnums):
-
     """An enumeration of supported processors"""
     AFFY_TO_PCL = "AFFY_TO_PCL"
     AGILENT_ONECOLOR_TO_PCL = "AGILENT_ONECOLOR_TO_PCL"  # Currently unsupported
@@ -37,19 +35,22 @@ class ProcessorPipeline(PipelineEnums):
 
 
 class DiscoveryPipeline(PipelineEnums):
-
     """Pipelines which discover appropriate processing for the data."""
     pass
 
 
 class Downloaders(Enum):
-
     """An enumeration of downloaders for downloader_task."""
     ARRAY_EXPRESS = "ARRAY_EXPRESS"
     SRA = "SRA"
     TRANSCRIPTOME_INDEX = "TRANSCRIPTOME_INDEX"
     GEO = "GEO"
     NONE = "NONE"
+
+
+class SurveyJobTypes(Enum):
+    """An enumeration of downloaders for downloader_task."""
+    SURVEYOR = "SURVEYOR"
 
 
 def _is_platform_supported(platform: str) -> bool:
