@@ -68,7 +68,7 @@ def send_job(job_type: Enum, job) -> bool:
         raise ValueError(NONE_JOB_ERROR_TEMPLATE.format(job_type.value, "Processor", job_id))
     elif job_type in list(Downloaders):
         nomad_job = NOMAD_DOWNLOADER_JOB
-    elif job_type in list (SurveyJobTypes):
+    elif job_type in list(SurveyJobTypes):
         nomad_job = job_type.value
     else:
         raise ValueError("Invalid job_type: {}".format(job_type.value))
