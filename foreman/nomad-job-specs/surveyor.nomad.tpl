@@ -5,7 +5,7 @@ job "SURVEYOR_${{RAM}}" {
 
   parameterized {
     payload       = "forbidden"
-    meta_required = [ "JOB_ID"]
+    meta_required = ["JOB_NAME", "JOB_ID"]
   }
 
   group "jobs" {
