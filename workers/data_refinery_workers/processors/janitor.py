@@ -51,23 +51,25 @@ def _find_and_remove_expired_jobs(job_context):
             # Okay, does this job exist?
             try:
                 job = ProcessorJob.objects.get(id=job_id)
-            except Exception:
-                pass
 
-            # Is this job running?
-            try:
-                job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+                # Is this job running?
+                try:
+                    job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
 
-                # This job is running, don't delete  the working directory.
-                if job_status == "running":
+                    # This job is running, don't delete  the working directory.
+                    if job_status == "running":
+                        continue
+                except BaseNomadException as e:
+                    # If we can't currently access Nomad,
+                    # just continue until we can again.
                     continue
-            except BaseNomadException as e:
-                # If we can't currently access Nomad,
-                # just continue until we can again.
-                continue
-            except Exception as e:
-                # This job is likely vanished. No need for this directory.
+                except Exception as e:
+                    # This job is likely vanished. No need for this directory.
+                    pass
+            except Exception:
+                # If we don't have a record of the job, we don't need the directory.
                 pass
+
 
             # Delete it!
             try:
