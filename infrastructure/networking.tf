@@ -174,7 +174,7 @@ locals {
 # this since we're using cloudfront. The cert for the API is created
 # an installed by certbot.
 resource "aws_acm_certificate" "ssl-cert" {
-  domain_name = "${ var.stage == "prod" ? "" : local.stage_with_dot }refine.bio"
+  domain_name = "${ var.stage == "prod" ? "www." : local.stage_with_dot }refine.bio"
   validation_method = "DNS"
 
   tags {
