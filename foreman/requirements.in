@@ -1,6 +1,6 @@
 django
 psycopg2-binary
-requests
+requests>=2.20.0
 retrying
 python-nomad
 coverage

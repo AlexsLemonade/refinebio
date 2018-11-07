@@ -243,96 +243,212 @@ data "template_file" "nomad_client_script_smasher_smusher" {
 }
 
 ##
-# Autoscaling
+# Autoscaling / Spot Fleets
 ##
 
-resource "aws_launch_configuration" "auto_client_configuration" {
-    # Don't include availability_zones because of:
-    # https://github.com/hashicorp/terraform/issues/15978
+resource "aws_spot_fleet_request" "cheap_ram" {
+  iam_fleet_role      = "${aws_iam_role.data_refinery_spot_fleet.arn}"
+  allocation_strategy = "diversified"
+  valid_until         = "2021-11-04T20:44:20Z"
+  fleet_type          = "maintain"
 
-    name_prefix = "auto-client-"
-    image_id = "${data.aws_ami.ubuntu.id}"
-    instance_type = "${var.client_instance_type}"
-    security_groups = ["${aws_security_group.data_refinery_worker.id}"]
-    iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
-    depends_on = [
-              "aws_internet_gateway.data_refinery",
-              "aws_instance.nomad_server_1",
-              "aws_ebs_volume.data_refinery_ebs",
-              "aws_instance.pg_bouncer"
-    ]
-    user_data = "${data.template_file.nomad_client_script_smusher.rendered}"
+  # We're using RAM_IN_GB/100 here, so 100 capacity == 10000GB == 10TB
+  # (Letting capacity go up to 1000 is apparently too much for AWS.)
+  target_capacity ="${var.spot_fleet_capacity}"
+
+  # Instances won't be destroyed on Terraform destroy without this flag.
+  # See https://github.com/hashicorp/terraform/issues/13859
+  terminate_instances_with_expiration = true
+
+  ##
+  # Common / Depends On
+  ##
+  depends_on = [
+            "aws_internet_gateway.data_refinery",
+            "aws_instance.nomad_server_1",
+            "aws_ebs_volume.data_refinery_ebs",
+            "aws_instance.pg_bouncer"
+  ]
+
+  ##
+  # x1.16xlarge
+  ##
+  launch_specification {
+
+    # Client Specific
+    instance_type             = "x1.16xlarge"
+    weighted_capacity         = 10 # via https://aws.amazon.com/ec2/instance-types/
+    spot_price                = "${var.spot_price}"
+    ami                       = "${data.aws_ami.ubuntu.id}"
+    iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
+    user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
+    vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
+    subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
+    availability_zone         = "${var.region}a"
     key_name = "${aws_key_pair.data_refinery.key_name}"
-    spot_price = "${var.spot_price}"
 
-    lifecycle {
-        create_before_destroy = true
-    }
-
-    # I think these are the defaults provided in terraform examples.
-    # They should be removed or revisited.
-    root_block_device = {
+    root_block_device {
+      volume_size = 20
       volume_type = "gp2"
-      volume_size = 100
-    }
-}
-
-resource "aws_autoscaling_group" "clients" {
-    name = "asg-clients-${var.user}-${var.stage}"
-    max_size = "${var.max_clients}"
-    min_size = "0"
-    desired_capacity = "2"
-    health_check_grace_period = 300
-    health_check_type = "EC2"
-
-    # 300 seconds so we don't start more than an instance worth of
-    # downloader jobs at once as we scale up.
-    default_cooldown = 300
-
-    # Super important flag. Makes it so that terraform doesn't fail
-    # every time because it can't acquire spot instances fast enough
-    # for the autoscaling group.
-    wait_for_capacity_timeout = "0"
-    force_delete = true
-    launch_configuration = "${aws_launch_configuration.auto_client_configuration.name}"
-    vpc_zone_identifier = ["${aws_subnet.data_refinery_1a.id}"]
-
-    tag {
-        key = "Name"
-        value = "Nomad Client Instance ${var.user}-${var.stage}"
-        propagate_at_launch = true
     }
 
-    tag {
-        key = "User"
-        value = "${var.user}"
-        propagate_at_launch = true
+    tags {
+        Name = "Spot Fleet Launch Specification x1.16xlarge ${var.user}-${var.stage}"
+        User = "${var.user}"
+        Stage = "${var.stage}"
     }
 
-    tag {
-        key = "Stage"
-        value = "${var.stage}"
-        propagate_at_launch = true
+  }
+  ##
+  # x1.32xlarge
+  ##
+  launch_specification {
+
+    # Client Specific
+    instance_type             = "x1.32xlarge"
+    weighted_capacity         = 20 # via https://aws.amazon.com/ec2/instance-types/
+    spot_price                = "${var.spot_price}"
+    ami                       = "${data.aws_ami.ubuntu.id}"
+    iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
+    user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
+    vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
+    subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
+    availability_zone         = "${var.region}a"
+    key_name = "${aws_key_pair.data_refinery.key_name}"
+
+    root_block_device {
+      volume_size = 20
+      volume_type = "gp2"
     }
 
-}
+    tags {
+        Name = "Spot Fleet Launch Specification x1.32xlarge ${var.user}-${var.stage}"
+        User = "${var.user}"
+        Stage = "${var.stage}"
+    }
 
-resource "aws_autoscaling_policy" "clients_scale_up" {
-    name = "asg-clients-scale-up-${var.user}-${var.stage}"
-    scaling_adjustment = 1
-    adjustment_type = "ChangeInCapacity"
-    cooldown = 60
-    autoscaling_group_name = "${aws_autoscaling_group.clients.name}"
-    depends_on = ["aws_instance.nomad_server_1"]
-}
+  }
 
-resource "aws_autoscaling_policy" "clients_scale_down" {
-    name = "asg-clients-scale-down-${var.user}-${var.stage}"
-    scaling_adjustment = -1
-    adjustment_type = "ChangeInCapacity"
-    cooldown = 60
-    autoscaling_group_name = "${aws_autoscaling_group.clients.name}"
-    depends_on = ["aws_instance.nomad_server_1"]
+  ##
+  # x1e.8xlarge
+  ##
+  launch_specification {
+
+    # Client Specific
+    instance_type             = "x1e.8xlarge"
+    weighted_capacity         = 10 # via https://aws.amazon.com/ec2/instance-types/
+    spot_price                = "${var.spot_price}"
+    ami                       = "${data.aws_ami.ubuntu.id}"
+    iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
+    user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
+    vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
+    subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
+    availability_zone         = "${var.region}a"
+    key_name = "${aws_key_pair.data_refinery.key_name}"
+
+    root_block_device {
+      volume_size = 20
+      volume_type = "gp2"
+    }
+
+    tags {
+        Name = "Spot Fleet Launch Specification x1e.8xlarge ${var.user}-${var.stage}"
+        User = "${var.user}"
+        Stage = "${var.stage}"
+    }
+
+  }
+
+  ##
+  # x1e.16xlarge
+  ##
+  launch_specification {
+
+    # Client Specific
+    instance_type             = "x1e.16xlarge"
+    weighted_capacity         = 20 # via https://aws.amazon.com/ec2/instance-types/
+    spot_price                = "${var.spot_price}"
+    ami                       = "${data.aws_ami.ubuntu.id}"
+    iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
+    user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
+    vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
+    subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
+    availability_zone         = "${var.region}a"
+    key_name = "${aws_key_pair.data_refinery.key_name}"
+
+    root_block_device {
+      volume_size = 20
+      volume_type = "gp2"
+    }
+
+    tags {
+        Name = "Spot Fleet Launch Specification x1e.16xlarge ${var.user}-${var.stage}"
+        User = "${var.user}"
+        Stage = "${var.stage}"
+    }
+
+  }
+
+  ##
+  # x1e.32xlarge
+  ##
+  launch_specification {
+
+    # Client Specific
+    instance_type             = "x1e.32xlarge"
+    weighted_capacity         = 40 # via https://aws.amazon.com/ec2/instance-types/
+    spot_price                = "${var.spot_price}"
+    ami                       = "${data.aws_ami.ubuntu.id}"
+    iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
+    user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
+    vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
+    subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
+    availability_zone         = "${var.region}a"
+    key_name = "${aws_key_pair.data_refinery.key_name}"
+
+    root_block_device {
+      volume_size = 20
+      volume_type = "gp2"
+    }
+
+    tags {
+        Name = "Spot Fleet Launch Specification x1e.32xlarge ${var.user}-${var.stage}"
+        User = "${var.user}"
+        Stage = "${var.stage}"
+    }
+
+  }
+
+  ##
+  # r5d.24xlarge
+  ##
+  launch_specification {
+
+    # Client Specific
+    instance_type             = "r5d.24xlarge"
+    weighted_capacity         = 8 # Really, more like 1.4 # via https://aws.amazon.com/ec2/instance-types/
+    spot_price                = "${var.spot_price}"
+    ami                       = "${data.aws_ami.ubuntu.id}"
+    iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
+    user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
+    vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
+    subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
+    availability_zone         = "${var.region}a"
+    key_name = "${aws_key_pair.data_refinery.key_name}"
+
+    root_block_device {
+      volume_size = 20
+      volume_type = "gp2"
+    }
+
+    tags {
+        Name = "Spot Fleet Launch Specification r5d.24xlarge ${var.user}-${var.stage}"
+        User = "${var.user}"
+        Stage = "${var.stage}"
+    }
+
+  }
+
 }
 
 ##
@@ -440,6 +556,10 @@ data "local_file" "api_nginx_config" {
   filename = "api-configuration/nginx_config.conf"
 }
 
+data "local_file" "api_environment" {
+  filename = "api-configuration/environment"
+}
+
 # This script smusher serves a similar purpose to
 # ${data.template_file.nomad_lead_server_script_smusher} but for the Nginx/API.
 data "template_file" "api_server_script_smusher" {
@@ -447,6 +567,9 @@ data "template_file" "api_server_script_smusher" {
 
   vars {
     nginx_config = "${data.local_file.api_nginx_config.content}"
+    api_environment = "${data.local_file.api_environment.content}"
+    dockerhub_repo = "${var.dockerhub_repo}"
+    api_docker_image = "${var.api_docker_image}"
     user = "${var.user}"
     stage = "${var.stage}"
     region = "${var.region}"
@@ -474,9 +597,6 @@ resource "aws_instance" "api_server_1" {
   ]
   user_data = "${data.template_file.api_server_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"
-
-  # Don't delete production servers by mistake!
-  disable_api_termination = "${var.stage == "prod" ? true : false}"
 
   tags = {
     Name = "API Server 1 ${var.user}-${var.stage}"

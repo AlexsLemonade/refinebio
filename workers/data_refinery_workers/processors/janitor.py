@@ -40,28 +40,36 @@ def _find_and_remove_expired_jobs(job_context):
 
     for item in os.listdir(LOCAL_ROOT_DIR):
         if 'processor_job_' in item:
+
+            # TX Index jobs are the only ones who are allowed to hang around
+            # after their jobs are finished. They're marked with an _index in their path.
+            if '_index' in item:
+                continue
+
             job_id = item.split('processor_job_')[1]
 
             # Okay, does this job exist?
             try:
                 job = ProcessorJob.objects.get(id=job_id)
-            except Exception:
-                pass
 
-            # Is this job running?
-            try:
-                job_status = nomad_client.job.get_job(job_id)["Status"]
+                # Is this job running?
+                try:
+                    job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
 
-                # This job is running, don't delete  the working directory.
-                if job_status == "running":
+                    # This job is running, don't delete  the working directory.
+                    if job_status == "running":
+                        continue
+                except BaseNomadException as e:
+                    # If we can't currently access Nomad,
+                    # just continue until we can again.
                     continue
-            except BaseNomadException as e:
-                # If we can't currently access Nomad,
-                # just continue until we can again.
-                continue
-            except Exception as e:
-                # This job is likely vanished. No need for this directory.
+                except Exception as e:
+                    # This job is likely vanished. No need for this directory.
+                    pass
+            except Exception:
+                # If we don't have a record of the job, we don't need the directory.
                 pass
+
 
             # Delete it!
             try:

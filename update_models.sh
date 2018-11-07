@@ -15,4 +15,7 @@ fi
 # Put this in place for common to read from.
 echo $SYSTEM_VERSION > common/version
 
+# Ensure there is only one distribution to copy over.
+rm -f common/dist/*
+
 ./common/make_migrations.sh && cd common && python setup.py sdist
