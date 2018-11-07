@@ -133,6 +133,16 @@ class ExperimentFilter(django_filters.FilterSet):
                         'organisms__name',
                         'samples__platform_name']
 
+    def to_html(self, request, queryset, view):
+        # Don't render the FKs in browsable view
+        return ''
+
+# Via: https://github.com/encode/django-rest-framework/issues/3905#issuecomment-294391278
+class NoMarkupDjangoFilterBackend(DjangoFilterBackend):
+    def to_html(self, request, queryset, view):
+        # We want this, but currently it incurs a huge performance penality on ChoiceFields with 1000+ choices
+        return ''
+
 # ListAPIView is read-only!
 class SearchAndFilter(generics.ListAPIView):
     """
@@ -151,7 +161,7 @@ class SearchAndFilter(generics.ListAPIView):
     serializer_class = ExperimentSerializer
     pagination_class = LimitOffsetPagination
 
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
+    filter_backends = (NoMarkupDjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
     filter_class = ExperimentFilter
 
     # Ordering
