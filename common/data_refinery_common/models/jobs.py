@@ -16,12 +16,24 @@ class SurveyJob(models.Model):
     source_type = models.CharField(max_length=256)
     success = models.NullBooleanField(null=True)
     no_retry = models.BooleanField(default=False)
+    nomad_job_id = models.CharField(max_length=256, null=True)
+
+    ram_amount = models.IntegerField(default=256)
 
     # The start time of the job
     start_time = models.DateTimeField(null=True)
 
     # The end time of the job
     end_time = models.DateTimeField(null=True)
+
+    # This field represents how many times this job has been
+    # retried. It starts at 0 and each time the job has to be retried
+    # it will be incremented.
+    num_retries = models.IntegerField(default=0)
+
+    # This field indicates whether or not this job has been retried
+    # already or not.
+    retried = models.BooleanField(default=False)
 
     # This field allows jobs to specify why they failed.
     failure_reason = models.TextField(null=True)
@@ -38,7 +50,16 @@ class SurveyJob(models.Model):
         return super(SurveyJob, self).save(*args, **kwargs)
 
     def get_properties(self) -> Dict:
+        """ Return all associated SurveyJobKeyValues as a dict"""
         return {pair.key: pair.value for pair in self.surveyjobkeyvalue_set.all()}
+
+    def get_accession_code(self):
+        """ Return `experiment_accession_code`, the most important code."""
+        try:
+            kvp = self.surveyjobkeyvalue_set.get(key="experiment_accession_code")
+            return kvp.value
+        except:
+            return None
 
     def __str__(self):
         return "SurveyJob " + str(self.pk) + ": " + str(self.source_type)

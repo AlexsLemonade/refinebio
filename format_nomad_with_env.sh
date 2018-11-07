@@ -25,13 +25,13 @@ print_options() {
 while getopts ":p:e:o:h" opt; do
     case $opt in
     p)
-        project=$OPTARG
+        export project=$OPTARG
         ;;
     e)
-        env=$OPTARG
+        export env=$OPTARG
         ;;
     o)
-        output_dir=$OPTARG
+        export output_dir=$OPTARG
         ;;
     h)
         print_description
@@ -53,7 +53,7 @@ while getopts ":p:e:o:h" opt; do
 done
 
 if [[ $project != "workers" && $project != "surveyor" && $project != "foreman" && $project != "api" ]]; then
-    echo 'Error: must specify project as either "api", "workers", or "foreman" with -p.'
+    echo 'Error: must specify project as either "api", "workers", "surveyor", or "foreman" with -p.'
     exit 1
 fi
 
@@ -146,7 +146,9 @@ if [[ $env != "prod" && $env != "staging" && $env != "dev" ]]; then
         extra_hosts = [\"database:$DB_HOST_IP\",
                        \"nomad:$NOMAD_HOST_IP\"]
 "
-    export AWS_CREDS=""
+    export AWS_CREDS="
+    AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID\"
+    AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY\""
     export LOGGING_CONFIG=""
     environment_file="environments/$env"
 else
@@ -244,20 +246,38 @@ if [[ $project == "workers" ]]; then
                 done
             done
         fi
-
     done
 elif [[ $project == "surveyor" ]]; then
-    # surveyor sub-project
-    export_log_conf "surveyor"
-    cat nomad-job-specs/surveyor.nomad.tpl \
-        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"/surveyor.nomad"$TEST_POSTFIX" \
-               2> /dev/null
 
-    cat nomad-job-specs/surveyor_dispatcher.nomad.tpl \
-        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"/surveyor_dispatcher.nomad"$TEST_POSTFIX" \
-               2> /dev/null
+    # Iterate over all the template files in the directory.
+    for template in $(ls -1 nomad-job-specs | grep \.tpl); do
+        # Strip off the trailing .tpl for once we've formatted it.
+        output_file=${template/.tpl/}
+
+        # Downloader logs go to a separate log stream.
+        if [ $output_file == "surveyor_dispatcher.nomad" ]; then
+            export_log_conf "surveyor_dispatcher"
+            cat nomad-job-specs/$template \
+                | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                       > "$output_dir/$output_file$TEST_POSTFIX" \
+                       2> /dev/null
+            echo "Made $output_dir/$output_file$TEST_POSTFIX"
+        else
+            export_log_conf "surveyor"
+            rams=(256 4096 16384)
+            for r in "${rams[@]}"
+            do
+                export RAM_POSTFIX="_$r.nomad"
+                export RAM="$r"
+                cat nomad-job-specs/$template \
+                    | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                           > "$output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX" \
+                           2> /dev/null
+                echo "Made $output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX"
+            done
+        fi
+    done
+
 elif [[ $project == "foreman" ]]; then
     # foreman sub-project
     export_log_conf "foreman"
