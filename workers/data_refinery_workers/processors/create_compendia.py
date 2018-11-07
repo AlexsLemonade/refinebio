@@ -39,9 +39,9 @@ def _prepare_input(job_context: Dict) -> Dict:
     job_context = smasher._smash(job_context)
 
     if not 'final_frame' in job_context.keys():
-        logger.error("Unable to prepare files for creating QN target.",
+        logger.error("Unable to prepare files for creating compendia.",
             job_id=job_context['job'].id)
-        job_context["job"].failure_reason = "Couldn't prepare files creating QN target (no final_frame)."
+        job_context["job"].failure_reason = "Couldn't prepare files creating compendia."
         job_context['success'] = False
         return job_context
 

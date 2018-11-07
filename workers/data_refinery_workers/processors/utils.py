@@ -135,7 +135,7 @@ def start_job(job_context: Dict):
     # Janitors have no requirement
     if job.pipeline_applied not in ["JANITOR"]:
         # Some jobs take OriginalFiles, other take Datasets
-        if job.pipeline_applied not in ["SMASHER", "QN_REFERENCE"]:
+        if job.pipeline_applied not in ["SMASHER", "QN_REFERENCE", "COMPENDIA"]:
             job_context = prepare_original_files(job_context)
             if not job_context.get("success", True):
                 return job_context
@@ -310,6 +310,7 @@ class PipelineEnum(Enum):
     TX_INDEX = "Transcriptome Index"
     QN_REFERENCE = "Quantile Normalization Reference"
     JANITOR = "Janitor"
+    COMPENDIA = "Compendia"
 
 
 @unique
