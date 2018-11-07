@@ -140,10 +140,7 @@ class SraSurveyor(ExternalSourceSurveyor):
                         SraSurveyor.gather_spot_metadata(metadata, grandchild)
             elif child.tag == "PLATFORM":
                 # This structure is extraneously nested.
-                # This is used as the platform_accession_code for SRA
-                # objects, which becomes part of file paths, so we
-                # don't want any spaces in it.
-                metadata["platform_instrument_model"] = child[0][0].text.replace(" ", "")
+                metadata["platform_instrument_model"] = child[0][0].text
 
     @staticmethod
     def parse_run_link(run_link: ET.ElementTree) -> (str, str):
