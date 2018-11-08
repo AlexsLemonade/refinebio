@@ -35,25 +35,22 @@ class CompendiaTestCase(TestCase):
         job.pipeline_applied = "COMPENDIA"
         job.save()
 
+        # MICROARRAY TECH
         experiment = Experiment()
-        experiment.accession_code = "GSE51081"
+        experiment.accession_code = "GSE1487313"
         experiment.save()
 
         result = ComputationalResult()
         result.save()
 
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS")
 
         sample = Sample()
-        sample.accession_code = 'GSM1237810'
-        sample.title = 'GSM1237810'
-        sample.organism = homo_sapiens
+        sample.accession_code = 'GSM1487313'
+        sample.title = 'GSM1487313'
+        sample.organism = gallus_gallus
+        sample.technology="MICROARRAY"
         sample.save()
-
-        sample_annotation = SampleAnnotation()
-        sample_annotation.data = {'hi': 'friend'}
-        sample_annotation.sample = sample
-        sample_annotation.save()
 
         sra = SampleResultAssociation()
         sra.sample = sample
@@ -66,7 +63,7 @@ class CompendiaTestCase(TestCase):
         esa.save()
 
         computed_file = ComputedFile()
-        computed_file.filename = "GSM1237810_T09-1084.PCL"
+        computed_file.filename = "GSM1487313_liver.PCL"
         computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
         computed_file.result = result
         computed_file.size_in_bytes = 123
@@ -78,50 +75,46 @@ class CompendiaTestCase(TestCase):
         assoc.computed_file = computed_file
         assoc.save()
 
-        sample = Sample()
-        sample.accession_code = 'GSM1237812'
-        sample.title = 'GSM1237812'
-        sample.organism = homo_sapiens
-        sample.save()
+        # RNASEQ TECH
+        experiment2 = Experiment()
+        experiment2.accession_code = "SRS332914"
+        experiment2.save()
 
-        esa = ExperimentSampleAssociation()
-        esa.experiment = experiment
-        esa.sample = sample
-        esa.save()
+        result2 = ComputationalResult()
+        result2.save()
 
-        assoc = SampleComputedFileAssociation()
-        assoc.sample = sample
-        assoc.computed_file = computed_file
-        assoc.save()
+        sample2 = Sample()
+        sample2.accession_code = 'SRS332914'
+        sample2.title = 'SRS332914'
+        sample2.organism = gallus_gallus
+        sample2.technology = "RNA-SEQ"
+        sample2.save()
 
-        sra = SampleResultAssociation()
-        sra.sample = sample
-        sra.result = result
-        sra.save()
+        sra2 = SampleResultAssociation()
+        sra2.sample = sample2
+        sra2.result = result2
+        sra2.save()
 
-        computed_file = ComputedFile()
-        computed_file.filename = "GSM1237812_S97-PURE.PCL"
-        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
-        computed_file.result = result
-        computed_file.size_in_bytes = 123
-        computed_file.is_smashable = True
-        computed_file.save()
+        esa2 = ExperimentSampleAssociation()
+        esa2.experiment = experiment2
+        esa2.sample = sample2
+        esa2.save()
 
-        computed_file = ComputedFile()
-        computed_file.filename = "GSM1237812_S97-PURE.DAT"
-        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
-        computed_file.result = result
-        computed_file.size_in_bytes = 123
-        computed_file.is_smashable = False
-        computed_file.save()
+        computed_file2 = ComputedFile()
+        computed_file2.filename = "SRP149598_gene_lengthScaledTPM.tsv"
+        computed_file2.absolute_file_path = "/home/user/data_store/PCL/" + computed_file2.filename
+        computed_file2.result = result2
+        computed_file2.size_in_bytes = 234
+        computed_file2.is_smashable = True
+        computed_file2.save()
 
-        assoc = SampleComputedFileAssociation()
-        assoc.sample = sample
-        assoc.computed_file = computed_file
-        assoc.save()
+        assoc2 = SampleComputedFileAssociation()
+        assoc2.sample = sample2
+        assoc2.computed_file = computed_file2
+        assoc2.save()
 
         dset = Dataset()
-        dset.data = {'GSE51081': ['GSM1237810', 'GSM1237812']}
+        dset.data = {'GSE1487313': ['GSM1487313'], 'SRX332914': ['SRS332914']}
         dset.scale_by = 'NONE'
         dset.aggregate_by = 'SPECIES'
         dset.quantile_normalize = False

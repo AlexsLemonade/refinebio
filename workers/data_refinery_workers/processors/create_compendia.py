@@ -45,6 +45,17 @@ def _prepare_input(job_context: Dict) -> Dict:
         job_context['success'] = False
         return job_context
 
+    # Prep the two data types for imputation
+    og_merged = job_context['original_merged']
+    job_context['microarray_inputs'] = og_merged.copy()
+    job_context['rnaseq_inputs'] = og_merged.copy()
+
+    for column_name in og_merged.columns:
+        if column_name in job_context['technologies']['microarray']:
+            del job_context['rnaseq_inputs'][column_name]
+        else:
+            del job_context['microarray_inputs'][column_name]
+
     # work_dir is already created by smasher._prepare_files
     outfile_base = job_context['work_dir'] + str(time.time()).split('.')[0]
     outfile = outfile_base + '.tsv'
@@ -86,7 +97,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     rnaseq_expression_matrix = job_context['rnaseq_inputs']
 
     # Calculate the sum of the lengthScaledTPM values for each row (gene) of the rnaseq_expression_matrix (rnaseq_row_sums)
-    rnaseq_row_sums = np.sum(rnaseq_expression_matrix, axis=0)
+    rnaseq_row_sums = np.sum(rnaseq_expression_matrix, axis=1)
 
     # Calculate the 10th percentile of rnaseq_row_sums
     rnaseq_tenth_percentile = np.percentile(rnaseq_row_sums, 10)
@@ -97,7 +108,8 @@ def _perform_imputation(job_context: Dict) -> Dict:
     for (x, sum_val) in rnaseq_row_sums.items():
         if sum_val < rnaseq_tenth_percentile:
             rows_to_filter.append(x)
-    filtered_rnaseq_matrix = np.delete(rnaseq_expression_matrix, rows_to_filter, axis=0)
+
+    filtered_rnaseq_matrix = rnaseq_expression_matrix.drop(rows_to_filter)
 
     # log2(x + 1) transform filtered_rnaseq_matrix; this is now log2_rnaseq_matrix
     filtered_rnaseq_matrix_plus_one = filtered_rnaseq_matrix + 1

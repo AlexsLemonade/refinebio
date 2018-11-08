@@ -331,6 +331,7 @@ def _smash(job_context: Dict) -> Dict:
                      dataset_data=job_context['dataset'].data,
         )
 
+        job_context['technologies'] = {'microarray': [], 'rnaseq': []}
         # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context['input_files'].items():
 
@@ -422,6 +423,11 @@ def _smash(job_context: Dict) -> Dict:
                     except Exception as e:
                         # Okay, somebody probably forgot to create a SampleComputedFileAssociation
                         data.columns = [computed_file.filename]
+
+                    if computed_file_path.endswith("lengthScaledTPM.tsv"):
+                        job_context['technologies']['rnaseq'].append(data.columns)
+                    else:
+                        job_context['technologies']['microarray'].append(data.columns)
 
                     all_frames.append(data)
                     num_samples = num_samples + 1
