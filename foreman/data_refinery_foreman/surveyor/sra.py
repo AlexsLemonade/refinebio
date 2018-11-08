@@ -449,8 +449,9 @@ class SraSurveyor(ExternalSourceSurveyor):
             sample_object.organism = organism
 
             sample_object.platform_name = metadata.get("platform_instrument_model", "UNKNOWN")
-            # No platform accession nonsense with RNASeq, just use the name:
-            sample_object.platform_accession_code = sample_object.platform_name
+            # The platform_name is human readable and contains spaces,
+            # accession codes shouldn't have spaces though:
+            sample_object.platform_accession_code = sample_object.platform_name.replace(" ", "")
             sample_object.technology = "RNA-SEQ"
             if "ILLUMINA" in sample_object.platform_name.upper() \
             or "NEXTSEQ" in sample_object.platform_name.upper():
