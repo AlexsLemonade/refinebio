@@ -116,21 +116,22 @@ def _perform_imputation(job_context: Dict) -> Dict:
     log2_rnaseq_matrix = np.log2(filtered_rnaseq_matrix)
 
     # Set all zero values in log2_rnaseq_matrix to NA, but make sure to keep track of where these zeroes are
-    log2_rnaseq_matrix[log2_rnaseq_matrix==0]=numpy.nan
+    log2_rnaseq_matrix[log2_rnaseq_matrix==0]=np.nan
 
     # Perform a full outer join of microarray_expression_matrix and log2_rnaseq_matrix; combined_matrix
-    combined_matrix = pd.merge(result, df, how='outer', on='ID_REF') # TODO - get this programatically?
+    combined_matrix = pd.merge(microarray_expression_matrix, log2_rnaseq_matrix, how='outer', left_index=True, right_index=True)
 
     # Remove genes (rows) with >30% missing values in combined_matrix
-    thresh = int(30/100) # XXX: No.
-    filtered_combined_matrix = combined_matrix.dropna(thresh=thresh)
+    thresh = len(combined_matrix.columns) * .6
+    filtered_combined_matrix = combined_matrix.dropna(axis=0, thresh=thresh, how='any')
 
     # Remove samples (columns) with >50% missing values in combined_matrix
-    thresh = int(50/100) # XXX: No.
-    filtered_combined_matrix_samples = filtered_combined_matrix.dropna(thresh=thresh, axis=columns)
+    # XXX: Find better test data for this!
+    thresh = len(combined_matrix.columns) * .5
+    filtered_combined_matrix_samples = filtered_combined_matrix.dropna(axis=1, thresh=thresh, how='any')
 
     # "Reset" zero values that were set to NA in RNA-seq samples (i.e., make these zero again) in combined_matrix
-    combined_matrix_zero = np.nan_to_num(filtered_combined_matrix_samples)
+    combined_matrix_zero = filtered_combined_matrix_samples.fillna(value=0)
 
     # Transpose combined_matrix; transposed_matrix
     transposed_matrix = combined_matrix_zero.transpose()
