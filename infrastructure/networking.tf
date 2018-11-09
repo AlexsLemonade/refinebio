@@ -187,7 +187,7 @@ resource "aws_acm_certificate_validation" "ssl-cert" {
 }
 
 resource "aws_cloudfront_distribution" "static-distribution" {
-  aliases = ["${var.static_bucket_prefix == "dev" ? var.user : var.static_bucket_prefix}${var.static_bucket_root}"]
+  aliases = ["${var.static_bucket_prefix == "dev" ? var.user : var.static_bucket_prefix}${var.static_bucket_root}", "www.refine.bio"]
 
   origin {
     domain_name = "${aws_s3_bucket.data-refinery-static.website_endpoint}"
