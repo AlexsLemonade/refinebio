@@ -148,7 +148,6 @@ def _perform_imputation(job_context: Dict) -> Dict:
     return job_context
 
 
-
 def _create_result_objects(job_context: Dict) -> Dict:
     """
     Store and host the result as a ComputationalResult object.
