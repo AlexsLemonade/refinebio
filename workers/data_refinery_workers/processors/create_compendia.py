@@ -131,17 +131,25 @@ def _perform_imputation(job_context: Dict) -> Dict:
     filtered_combined_matrix_samples = filtered_combined_matrix.dropna(axis=1, thresh=thresh, how='any')
 
     # "Reset" zero values that were set to NA in RNA-seq samples (i.e., make these zero again) in combined_matrix
-    combined_matrix_zero = filtered_combined_matrix_samples.fillna(value=0)
+    #combined_matrix_zero = filtered_combined_matrix_samples.fillna(value=0)
 
     # Transpose combined_matrix; transposed_matrix
     transposed_matrix = combined_matrix_zero.transpose()
+
+    # Remove -inf and inf
+    transposed_matrix = transposed_matrix.replace([np.inf, -np.inf], np.nan)
 
     # Perform imputation of missing values with IterativeSVD (rank=10) on the transposed_matrix; imputed_matrix
     imputed_matrix = IterativeSVD(rank=10).fit_transform(transposed_matrix)
 
     # Untranspose imputed_matrix (genes are now rows, samples are now columns)
-    untranspoed_imputed_matrix = imputed_matrix.transpose()
-    
+    untransposed_imputed_matrix = imputed_matrix.transpose()
+
+    # Convert back to Pandas
+    untransposed_imputed_matrix_df = pd.DataFrame.from_records(untransposed_imputed_matrix)
+    untransposed_imputed_matrix_df.index = combined_matrix_zero.index
+    untransposed_imputed_matrix_df.columns = combined_matrix_zero.columns
+
     # Quantile normalize imputed_matrix where genes are rows and samples are columns
     # XXX: Refactor QN target acquisition and application before doing this
 

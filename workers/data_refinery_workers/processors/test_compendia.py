@@ -126,3 +126,115 @@ class CompendiaTestCase(TestCase):
         pjda.save()
 
         final_context = create_compendia.create_compendia(job.id)
+
+    @tag('compendia')
+    def test_create_compendia_danio(self):
+        job = ProcessorJob()
+        job.pipeline_applied = "COMPENDIA"
+        job.save()
+
+        # MICROARRAY TECH
+        experiment = Experiment()
+        experiment.accession_code = "GSE1234"
+        experiment.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
+
+        micros = [] 
+        for file in os.listdir('/home/user/data_store/raw/TEST/MICROARRAY/'):
+
+            if 'microarray.txt' in file:
+                continue
+
+            sample = Sample()
+            sample.accession_code = file
+            sample.title = file
+            sample.organism = danio_rerio
+            sample.technology="MICROARRAY"
+            sample.save()
+
+            sra = SampleResultAssociation()
+            sra.sample = sample
+            sra.result = result
+            sra.save()
+
+            esa = ExperimentSampleAssociation()
+            esa.experiment = experiment
+            esa.sample = sample
+            esa.save()
+
+            computed_file = ComputedFile()
+            computed_file.filename = file
+            computed_file.absolute_file_path = "/home/user/data_store/raw/TEST/MICROARRAY/" + file
+            computed_file.result = result
+            computed_file.size_in_bytes = 123
+            computed_file.is_smashable = True
+            computed_file.save()
+
+            assoc = SampleComputedFileAssociation()
+            assoc.sample = sample
+            assoc.computed_file = computed_file
+            assoc.save()
+
+            micros.append(file)
+
+        experiment = Experiment()
+        experiment.accession_code = "GSE5678"
+        experiment.save()
+
+        result = ComputationalResult()
+        result.save()
+        rnas = []
+        for file in os.listdir('/home/user/data_store/raw/TEST/RNASEQ/'):
+
+            if 'rnaseq.txt' in file:
+                continue
+
+            sample = Sample()
+            sample.accession_code = file
+            sample.title = file
+            sample.organism = danio_rerio
+            sample.technology="RNASEQ"
+            sample.save()
+
+            sra = SampleResultAssociation()
+            sra.sample = sample
+            sra.result = result
+            sra.save()
+
+            esa = ExperimentSampleAssociation()
+            esa.experiment = experiment
+            esa.sample = sample
+            esa.save()
+
+            computed_file = ComputedFile()
+            computed_file.filename = file
+            computed_file.absolute_file_path = "/home/user/data_store/raw/TEST/RNASEQ/" + file
+            computed_file.result = result
+            computed_file.size_in_bytes = 123
+            computed_file.is_smashable = True
+            computed_file.save()
+
+            assoc = SampleComputedFileAssociation()
+            assoc.sample = sample
+            assoc.computed_file = computed_file
+            assoc.save()
+
+            rnas.append(file)
+
+        dset = Dataset()
+        dset.data = {'GSE1234': micros, 'GSE5678': rnas}
+        dset.scale_by = 'NONE'
+        dset.aggregate_by = 'SPECIES'
+        dset.quantile_normalize = False
+        dset.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = job
+        pjda.dataset = dset
+        pjda.save()
+
+        final_context = create_compendia.create_compendia(job.id)

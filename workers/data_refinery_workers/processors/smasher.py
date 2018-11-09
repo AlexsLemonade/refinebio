@@ -347,7 +347,7 @@ def _smash(job_context: Dict) -> Dict:
 
                 # Bail appropriately if this isn't a real file.
                 if not computed_file_path or not os.path.exists(computed_file_path):
-                    raise ValueError("Smasher received non-existent file path.")
+                    raise ValueError("Smasher received non-existent file path: " + str(computed_file_path))
 
                 try:
                     data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0, error_bad_lines=False)

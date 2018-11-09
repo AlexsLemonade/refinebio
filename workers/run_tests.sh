@@ -370,6 +370,29 @@ if [[ -z $tag || $tag == "qn" ]]; then
              "$test_data_repo/$qn_name"
     fi
 fi
+if [[ -z $tag || $tag == "compendia" ]]; then
+    # Download RNASEQ and MICROARRAY data from prod S3
+    micro_list_file="microarray.txt"
+    micro_list_dir="$volume_directory/raw/TEST/MICROARRAY"
+    if [ ! -e "$micro_list_dir/$micro_list_file" ]; then
+        mkdir -p $micro_list_dir
+        cp "$micro_list_file" "$micro_list_dir/$micro_list_file"
+        cd "$micro_list_dir"
+        echo "Downloading Microarray Files!"
+        wget -i "$micro_list_file"
+        cd -
+    fi
+    rnaseq_list_file="rnaseq.txt"
+    rnaseq_list_dir="$volume_directory/raw/TEST/RNASEQ"
+    if [ ! -e "$rnaseq_list_dir/$rnaseq_list_file" ]; then
+        mkdir -p $rnaseq_list_dir
+        cp "$rnaseq_list_file" "$rnaseq_list_dir/$rnaseq_list_file"
+        cd "$rnaseq_list_dir"
+        echo "Downloading RNASEQ Files!"
+        wget -i "$rnaseq_list_file"
+        cd -
+    fi
+fi
 
 source common.sh
 HOST_IP=$(get_ip_address)
