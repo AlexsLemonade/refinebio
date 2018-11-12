@@ -152,12 +152,6 @@ class SearchAndFilter(generics.ListAPIView):
 
     """
 
-    # Only Experiments with processed objects are exposed
-    queryset = Experiment.processed_public_objects.annotate(samples_count=Count('samples')).all()
-
-    # For developing, you can uncomment this to expose everything.
-    #queryset = Experiment.objects.annotate(samples_count=Count('samples')).all()
-
     serializer_class = ExperimentSerializer
     pagination_class = LimitOffsetPagination
 
@@ -165,8 +159,12 @@ class SearchAndFilter(generics.ListAPIView):
     filter_class = ExperimentFilter
 
     # Ordering
+    ordering_fields = ('total_samples_count', 'id', 'created_at',
+                       'source_first_published', 'accession_code',)
+    ordering = ('-total_samples_count',)
+
+    # Ordering
     ordering_fields = ('total_samples_count', 'id', 'created_at', 'source_first_published', 'accession_code',)
-    samples_count = django_filters.NumberFilter(method='filter_samples_count')
     ordering = ('-total_samples_count',)
 
     def filter_samples_count(self, queryset, name, value):
