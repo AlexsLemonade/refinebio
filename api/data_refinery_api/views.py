@@ -204,26 +204,31 @@ class SearchAndFilter(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         """ Adds counts on certain filter fields to result JSON."""
         response = super(SearchAndFilter, self).list(request, args, kwargs)
+        qs = self.search_queryset(self.get_queryset())
+        response.data['filters'] = self.get_filters(qs)
 
-        response.data['filters'] = {}
-        response.data['filters']['technology'] = {}
-        response.data['filters']['publication'] = {}
-        response.data['filters']['organism'] = {}
-        response.data['filters']['platforms'] = {}
+        return response
+
+    def get_filters(self, qs):
+        result = {
+            'technology': {},
+            'publication': {},
+            'organism': {},
+            'platforms': {}
+        }
 
         # Technology
-        qs = self.search_queryset(self.get_queryset())
         techs = qs.values('technology').annotate(Count('technology', unique=True))
         for tech in techs:
             if not tech['technology'] or not tech['technology'].strip():
                 continue
-            response.data['filters']['technology'][tech['technology']] = tech['technology__count']
+            result['technology'][tech['technology']] = tech['technology__count']
 
         # Publication
         pubs = qs.values('has_publication').annotate(Count('has_publication', unique=True))
         for pub in pubs:
             if pub['has_publication']:
-                response.data['filters']['publication']['has_publication'] = pub['has_publication__count']
+                result['publication']['has_publication'] = pub['has_publication__count']
 
         # Organisms
         organisms = qs.values('organisms__name').annotate(Count('organisms__name', unique=True))
@@ -234,15 +239,15 @@ class SearchAndFilter(generics.ListAPIView):
             if not organism['organisms__name']:
                 continue
 
-            response.data['filters']['organism'][organism['organisms__name']] = organism['organisms__name__count']
+            result['organism'][organism['organisms__name']] = organism['organisms__name__count']
 
         # Platforms
         platforms = qs.values('samples__platform_name').annotate(Count('samples__platform_name', unique=True))
         for plat in platforms:
             if plat['samples__platform_name']:
-                response.data['filters']['platforms'][plat['samples__platform_name']] = plat['samples__platform_name__count']
+                result['platforms'][plat['samples__platform_name']] = plat['samples__platform_name__count']
 
-        return response
+        return result
 
     # We want to determine filters based off of the search term but not the filters to allow for
     # multiple filters of the same type.
