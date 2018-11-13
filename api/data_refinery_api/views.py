@@ -205,42 +205,37 @@ class SearchAndFilter(generics.ListAPIView):
         """ Adds counts on certain filter fields to result JSON."""
         response = super(SearchAndFilter, self).list(request, args, kwargs)
 
-        # Calculate queryset with all filters applied
-        queryset = self.search_queryset(request.GET)
-        response.data['filters'] = self.get_filters(queryset)
+        filter_param_names = ['organisms__name', 'technology', 'has_publication', 'platform']
+        # mapping between parameter names and category names
+        filter_name_map = {
+            'technology': 'technology',
+            'has_publication': 'publication',
+            'organisms__name': 'organism',
+            'platform': 'platforms'
+        }
 
-        last_category = self.last_category(request.get_full_path())
-        if last_category:
-            params_without_last_category = request.GET.copy()
+        # If the user provides a `last_filter` params, we use interactive filters
+        if 'last_filter' in request.query_params and request.query_params['last_filter'] in filter_param_names:
+            # Calculate queryset with all filters applied
+            queryset = self.search_queryset(request.query_params)
+            response.data['filters'] = self.get_filters(queryset)
+            
+            last_category = request.query_params['last_filter']
+            params_without_last_category = request.query_params.copy()
             params_without_last_category.pop(last_category)
             
             queryset_without_last_category = self.search_queryset(params_without_last_category)
-
-            # mapping between parameter names and category names
-            filter_name_map = {
-                'technology': 'technology',
-                'has_publication': 'publication',
-                'organisms__name': 'organism',
-                'platform': 'platforms'
-            }
 
             # The filters of the last category are calculated differently, since they should stay the same
             # we use a queryset with all filters applied except the ones in the last category
             # ref https://github.com/AlexsLemonade/refinebio-frontend/issues/374#issuecomment-436373470
             last_category_filters = self.get_filters(queryset_without_last_category)[filter_name_map[last_category]]
             response.data['filters'][filter_name_map[last_category]] = last_category_filters
+        else:
+            # Otherwise calculate the filters 
+            response.data['filters'] = self.get_filters(self.search_queryset({}))
 
         return response
-
-    # Returns the last filter that was applied: the last filter parameter in the url
-    def last_category(self, url):
-        categories = ['organisms__name', 'technology', 'has_publication', 'platform']
-        indexes = [(url.find(category), category)
-                   for category in categories if url.find(category) > 0]
-        # return False if no filters have been applied
-        if not indexes: return False
-        indexes = sorted(indexes, key=lambda tuple: -tuple[0])
-        return indexes[0][1]
 
     def get_filters(self, qs):
         result = {
