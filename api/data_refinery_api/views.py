@@ -204,10 +204,43 @@ class SearchAndFilter(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         """ Adds counts on certain filter fields to result JSON."""
         response = super(SearchAndFilter, self).list(request, args, kwargs)
-        qs = self.search_queryset(self.get_queryset())
-        response.data['filters'] = self.get_filters(qs)
+
+        # Calculate queryset with all filters applied
+        queryset = ExperimentFilter(request.GET, queryset=self.get_queryset()).qs
+        response.data['filters'] = self.get_filters(queryset)
+
+        last_category = self.last_category(request.get_full_path())
+        if last_category:
+            params_without_last_category = request.GET.copy()
+            params_without_last_category.pop(last_category)
+            
+            queryset_without_last_category = ExperimentFilter(params_without_last_category, queryset=self.get_queryset()).qs
+
+            # mapping between parameter names and category names
+            filter_name_map = {
+                'technology': 'technology',
+                'has_publication': 'publication',
+                'organisms__name': 'organism',
+                'platform': 'platforms'
+            }
+
+            # The filters of the last category are calculated differently, since they should stay the same
+            # we use a queryset with all filters applied except the ones in the last category
+            # ref https://github.com/AlexsLemonade/refinebio-frontend/issues/374#issuecomment-436373470
+            last_category_filters = self.get_filters(queryset_without_last_category)[filter_name_map[last_category]]
+            response.data['filters'][filter_name_map[last_category]] = last_category_filters
 
         return response
+
+    # Returns the last filter that was applied: the last filter parameter in the url
+    def last_category(self, url):
+        categories = ['organisms__name', 'technology', 'has_publication', 'platform']
+        indexes = [(url.find(category), category)
+                   for category in categories if url.find(category) > 0]
+        # return False if no filters have been applied
+        if not indexes: return False
+        indexes = sorted(indexes, key=lambda tuple: -tuple[0])
+        return indexes[0][1]
 
     def get_filters(self, qs):
         result = {
@@ -248,12 +281,6 @@ class SearchAndFilter(generics.ListAPIView):
                 result['platforms'][plat['samples__platform_name']] = plat['samples__platform_name__count']
 
         return result
-
-    # We want to determine filters based off of the search term but not the filters to allow for
-    # multiple filters of the same type.
-    def search_queryset(self, queryset):
-        """ Filters the queryset based off of the search term (but not the filters) """
-        return filters.SearchFilter().filter_queryset(self.request, queryset, view=self)
 
 ##
 # Dataset
