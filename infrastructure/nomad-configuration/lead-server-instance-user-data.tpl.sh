@@ -90,7 +90,7 @@ chmod +x install_nomad.sh
 #  graphiteapp/graphite-statsd
 
 # Start the Nomad agent in server mode via Monit
-apt-get -y install monit
+apt-get -y install monit htop
 
 echo "
 #!/bin/sh
