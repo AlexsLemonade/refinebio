@@ -56,7 +56,7 @@ chmod +x install_nomad.sh
 ./install_nomad.sh
 
 # Start the Nomad agent in server mode via Monit
-apt-get -y install monit
+apt-get -y install monit htop
 
 echo "
 #!/bin/sh
