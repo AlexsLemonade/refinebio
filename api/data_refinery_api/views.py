@@ -215,11 +215,11 @@ class SearchAndFilter(generics.ListAPIView):
         }
 
         # If the user provides a `last_filter` params, we use interactive filters
-        if 'last_filter' in request.query_params and request.query_params['last_filter'] in filter_param_names:
+        if 'last_filter' in request.query_params and request.query_params['last_filter'] in filter_param_names and request.query_params['last_filter'] in request.query_params:
             # Calculate queryset with all filters applied
             queryset = self.search_queryset(request.query_params)
             response.data['filters'] = self.get_filters(queryset)
-            
+
             last_category = request.query_params['last_filter']
             params_without_last_category = request.query_params.copy()
             params_without_last_category.pop(last_category)
