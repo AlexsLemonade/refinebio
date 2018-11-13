@@ -21,6 +21,7 @@ from data_refinery_common.models import (
     Processor,
     SampleComputedFileAssociation,
     SampleResultAssociation,
+    Organism
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils, smasher
@@ -134,7 +135,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     #combined_matrix_zero = filtered_combined_matrix_samples.fillna(value=0)
 
     # Transpose combined_matrix; transposed_matrix
-    transposed_matrix = combined_matrix_zero.transpose()
+    transposed_matrix = filtered_combined_matrix_samples.transpose()
 
     # Remove -inf and inf
     transposed_matrix = transposed_matrix.replace([np.inf, -np.inf], np.nan)
@@ -147,11 +148,17 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # Convert back to Pandas
     untransposed_imputed_matrix_df = pd.DataFrame.from_records(untransposed_imputed_matrix)
-    untransposed_imputed_matrix_df.index = combined_matrix_zero.index
-    untransposed_imputed_matrix_df.columns = combined_matrix_zero.columns
+    untransposed_imputed_matrix_df.index = filtered_combined_matrix_samples.index
+    untransposed_imputed_matrix_df.columns = filtered_combined_matrix_samples.columns
 
     # Quantile normalize imputed_matrix where genes are rows and samples are columns
     # XXX: Refactor QN target acquisition and application before doing this
+    job_context['organism'] = Organism.get_object_for_name(list(job_context['input_files'].keys())[0])
+    job_context['merged_no_qn'] = untransposed_imputed_matrix_df
+    job_context = smasher._quantile_normalize(job_context)
+
+    import pdb
+    pdb.set_trace()
 
     return job_context
 
