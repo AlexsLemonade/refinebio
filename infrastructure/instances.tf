@@ -291,9 +291,16 @@ resource "aws_instance" "smasher_instance" {
 resource "aws_spot_fleet_request" "cheap_ram" {
   iam_fleet_role      = "${aws_iam_role.data_refinery_spot_fleet.arn}"
   allocation_strategy = "diversified"
-  target_capacity     = 100 # We're using RAM/10 here. (1000 is apparently too many for AWS.)
   valid_until         = "2021-11-04T20:44:20Z"
   fleet_type          = "maintain"
+
+  # We're using RAM_IN_GB/100 here, so 100 capacity == 10000GB == 10TB
+  # (Letting capacity go up to 1000 is apparently too much for AWS.)
+  target_capacity ="${var.spot_fleet_capacity}"
+
+  # Instances won't be destroyed on Terraform destroy without this flag.
+  # See https://github.com/hashicorp/terraform/issues/13859
+  terminate_instances_with_expiration = true
 
   ##
   # Common / Depends On

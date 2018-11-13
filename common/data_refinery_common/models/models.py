@@ -641,9 +641,6 @@ class OriginalFile(models.Model):
 
     def delete_local_file(self):
         """ Deletes this file from the local file system."""
-        if not settings.RUNNING_IN_CLOUD:
-            return
-
         try:
             os.remove(self.absolute_file_path)
         except OSError:

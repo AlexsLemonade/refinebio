@@ -1,3 +1,5 @@
+import signal
+
 from django.utils import timezone
 
 from data_refinery_common.logging import get_and_configure_logger
@@ -13,6 +15,17 @@ logger = get_and_configure_logger(__name__)
 
 class SourceNotSupportedError(Exception):
     pass
+
+def sigterm_handler(sig, frame):
+    """ SIGTERM Handler """
+    global CURRENT_JOB
+    if not CURRENT_JOB:
+        sys.exit(0)
+    else:
+        CURRENT_JOB.start_time = None
+        CURRENT_JOB.num_retries = CURRENT_JOB.num_retries - 1
+        CURRENT_JOB.save()
+        sys.exit(0)
 
 
 def _get_surveyor_for_source(survey_job: SurveyJob):
@@ -38,6 +51,9 @@ def _start_job(survey_job: SurveyJob) -> SurveyJob:
 
     survey_job.start_time = timezone.now()
     survey_job.save()
+
+    global CURRENT_JOB
+    CURRENT_JOB = survey_job
 
     return survey_job
 
