@@ -206,7 +206,7 @@ class SearchAndFilter(generics.ListAPIView):
         response = super(SearchAndFilter, self).list(request, args, kwargs)
 
         # Calculate queryset with all filters applied
-        queryset = ExperimentFilter(request.GET, queryset=self.get_queryset()).qs
+        queryset = self.search_queryset(request.GET)
         response.data['filters'] = self.get_filters(queryset)
 
         last_category = self.last_category(request.get_full_path())
@@ -214,7 +214,7 @@ class SearchAndFilter(generics.ListAPIView):
             params_without_last_category = request.GET.copy()
             params_without_last_category.pop(last_category)
             
-            queryset_without_last_category = ExperimentFilter(params_without_last_category, queryset=self.get_queryset()).qs
+            queryset_without_last_category = self.search_queryset(params_without_last_category)
 
             # mapping between parameter names and category names
             filter_name_map = {
@@ -282,6 +282,9 @@ class SearchAndFilter(generics.ListAPIView):
 
         return result
 
+    def search_queryset(self, filter_params):
+        queryset = ExperimentFilter(filter_params, queryset=self.get_queryset()).qs
+        return filters.SearchFilter().filter_queryset(self.request, queryset, view=self)
 ##
 # Dataset
 ##
