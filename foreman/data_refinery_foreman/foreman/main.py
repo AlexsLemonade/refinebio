@@ -32,6 +32,9 @@ RUNNING_IN_CLOUD = get_env_variable_gracefully("RUNNING_IN_CLOUD", False)
 # greater than this because of the first attempt
 MAX_NUM_RETRIES = 2
 
+# Maximum number of total jobs running at a time
+MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", 1000))
+
 # The fastest each thread will repeat its checks.
 # Could be slower if the thread takes longer than this to check its jobs.
 MIN_LOOP_TIME = timedelta(minutes=2)
@@ -425,6 +428,16 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
     The new survey job will have num_retries one greater than
     last_job.num_retries.
     """
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    lost_jobs = []
+
+    all_jobs = nomad_client.jobs.get_jobs()
+    if len(all_jobs) >= MAX_TOTAL_JOBS:
+        logger.info("Not requeuing job until we're running less jobs.")
+        return
+
     num_retries = last_job.num_retries + 1
 
     new_job = SurveyJob(num_retries=num_retries,
@@ -547,6 +560,7 @@ def retry_lost_survey_jobs() -> None:
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
     lost_jobs = []
+
     for job in potentially_lost_jobs:
         try:
             # Surveyor jobs didn't always have nomad_job_ids. If they
