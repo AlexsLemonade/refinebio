@@ -13,12 +13,14 @@ from django.db import transaction
 from data_refinery_common.models import (
     DownloaderJob,
     ProcessorJob,
+    SurveyJob,
     DownloaderJobOriginalFileAssociation,
     ProcessorJobOriginalFileAssociation,
-    ProcessorJobDatasetAssociation
+    ProcessorJobDatasetAssociation,
+    SurveyJobKeyValue
 )
 from data_refinery_common.message_queue import send_job
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
+from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders, SurveyJobTypes
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 
@@ -40,6 +42,60 @@ THREAD_WAIT_TIME = timedelta(minutes=10)
 
 # How frequently we dispatch Janitor jobs.
 JANITOR_DISPATCH_TIME = timedelta(minutes=30)
+
+
+##
+# Utilities
+##
+
+def do_forever(min_loop_time: timedelta) -> Callable:
+    """Run the wrapped function in a loop forever.
+
+    The function won't be run more often than once per min_loop_time,
+    however if it takes longer to run than min_loop_time, then it will
+    be run less often than once per min_loop_time.
+    """
+    def decorator(function: Callable) -> Callable:
+        @wraps(function)
+        def wrapper(*args, **kwargs):
+            while(True):
+                start_time = timezone.now()
+
+                try:
+                    function(*args, **kwargs)
+                except:
+                    logger.exception("Exception caught by Foreman while running " + function.__name__)
+
+                loop_time = timezone.now() - start_time
+                if loop_time < min_loop_time:
+                    remaining_time = MIN_LOOP_TIME - loop_time
+                    time.sleep(remaining_time.seconds)
+
+        return wrapper
+    return decorator
+
+
+def handle_repeated_failure(job) -> None:
+    """If a job fails too many times, log it and stop retrying."""
+    # Not strictly retried but will prevent the job from getting
+    # retried any more times.
+    job.retried = True
+
+    # success may already be False, but if it was a hung or lost job
+    # this will ensure it's marked as failed.
+    job.success = False
+    job.save()
+
+    # At some point this should become more noisy/attention
+    # grabbing. However for the time being just logging should be
+    # sufficient because all log messages will be closely monitored
+    # during early testing stages.
+    logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1)
+
+
+##
+# Downloaders
+##
 
 
 @retry(stop_max_attempt_number=3)
@@ -65,36 +121,20 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
                 last_job.id,
                 new_job.id)
     try:
-        send_job(Downloaders[last_job.downloader_task], new_job)
-
-        last_job.retried = True
-        last_job.success = False
-        last_job.retried_job = new_job
-        last_job.save()
+        if send_job(Downloaders[last_job.downloader_task], new_job):
+            last_job.retried = True
+            last_job.success = False
+            last_job.retried_job = new_job
+            last_job.save()
+        else:
+            # Can't communicate with nomad just now, leave the job for a later loop.
+            new_job.delete()
     except:
         logger.error("Failed to requeue Downloader Job which had ID %d with a new Downloader Job with ID %d.",
                      last_job.id,
                      new_job.id)
         # Can't communicate with nomad just now, leave the job for a later loop.
         new_job.delete()
-
-
-def handle_repeated_failure(job) -> None:
-    """If a job fails too many times, log it and stop retrying."""
-    # Not strictly retried but will prevent the job from getting
-    # retried any more times.
-    job.retried = True
-
-    # success may already be False, but if it was a hung or lost job
-    # this will ensure it's marked as failed.
-    job.success = False
-    job.save()
-
-    # At some point this should become more noisy/attention
-    # grabbing. However for the time being just logging should be
-    # sufficient because all log messages will be closely monitored
-    # during early testing stages.
-    logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1)
 
 
 def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
@@ -104,33 +144,6 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
             requeue_downloader_job(job)
         else:
             handle_repeated_failure(job)
-
-
-def do_forever(min_loop_time: timedelta) -> Callable:
-    """Run the wrapped function in a loop forever.
-
-    The function won't be run more often than once per min_loop_time,
-    however if it takes longer to run than min_loop_time, then it will
-    be run less often than once per min_loop_time.
-    """
-    def decorator(function: Callable) -> Callable:
-        @wraps(function)
-        def wrapper(*args, **kwargs):
-            while(True):
-                start_time = timezone.now()
-
-                try:
-                    function(*args, **kwargs)
-                except:
-                    logger.exception("Exception caught by Foreman while running " + function.__name__)
-
-                loop_time = timezone.now() - start_time
-                if loop_time < min_loop_time:
-                    remaining_time = min_loop_time - loop_time
-                    time.sleep(remaining_time.seconds)
-
-        return wrapper
-    return decorator
 
 
 @do_forever(MIN_LOOP_TIME)
@@ -231,6 +244,11 @@ def retry_lost_downloader_jobs() -> None:
     handle_downloader_jobs(lost_jobs)
 
 
+##
+# Processors
+##
+
+
 @retry(stop_max_attempt_number=3)
 @transaction.atomic
 def requeue_processor_job(last_job: ProcessorJob) -> None:
@@ -270,12 +288,14 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
         logger.info("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",
                     last_job.id,
                     new_job.id)
-        send_job(ProcessorPipeline[last_job.pipeline_applied], new_job)
-
-        last_job.retried = True
-        last_job.success = False
-        last_job.retried_job = new_job
-        last_job.save()
+        if send_job(ProcessorPipeline[last_job.pipeline_applied], new_job):
+            last_job.retried = True
+            last_job.success = False
+            last_job.retried_job = new_job
+            last_job.save()
+        else:
+            # Can't communicate with nomad just now, leave the job for a later loop.
+            new_job.delete()
     except:
         logger.error("Failed to requeue Processor Job which had ID %d with a new Processor Job with ID %d.",
                      last_job.id,
@@ -393,6 +413,178 @@ def retry_lost_processor_jobs() -> None:
         )
         handle_processor_jobs(lost_jobs)
 
+##
+# Surveyors
+##
+
+@retry(stop_max_attempt_number=3)
+@transaction.atomic
+def requeue_survey_job(last_job: SurveyJob) -> None:
+    """Queues a new survey job.
+
+    The new survey job will have num_retries one greater than
+    last_job.num_retries.
+    """
+    num_retries = last_job.num_retries + 1
+
+    new_job = SurveyJob(num_retries=num_retries,
+                        source_type=last_job.source_type
+                    )
+
+    if new_job.num_retries == 1:
+        new_job.ram_amount = 4096
+    elif new_job.num_retries in [2, 3]:
+        new_job.ram_amount = 16384
+    else:
+        new_job.ram_amount = 256
+
+    new_job.save()
+
+    keyvalues = SurveyJobKeyValue.objects.filter(survey_job=last_job)
+
+    for keyvalue in keyvalues:
+        SurveyJobKeyValue.objects.get_or_create(survey_job=new_job,
+                                                key=keyvalue.key,
+                                                value=keyvalue.value,
+                                            )
+
+    logger.info("Requeuing SurveyJob which had ID %d with a new SurveyJob with ID %d.",
+                last_job.id,
+                new_job.id)
+
+    try:
+        if send_job(SurveyJobTypes.SURVEYOR, new_job):
+            last_job.retried = True
+            last_job.success = False
+            last_job.retried_job = new_job
+            last_job.save()
+        else:
+            # Can't communicate with nomad just now, leave the job for a later loop.
+            new_job.delete()
+    except:
+        logger.error("Failed to requeue Survey Job which had ID %d with a new Surevey Job with ID %d.",
+                     last_job.id,
+                     new_job.id)
+        # Can't communicate with nomad just now, leave the job for a later loop.
+        new_job.delete()
+
+
+def handle_survey_jobs(jobs: List[SurveyJob]) -> None:
+    """For each job in jobs, either retry it or log it."""
+    for job in jobs:
+        if job.num_retries < MAX_NUM_RETRIES:
+            requeue_survey_job(job)
+        else:
+            handle_repeated_failure(job)
+
+
+@do_forever(MIN_LOOP_TIME)
+def retry_failed_survey_jobs() -> None:
+    """Handle survey jobs that were marked as a failure."""
+    failed_jobs = SurveyJob.objects.filter(success=False, retried=False)
+    if failed_jobs:
+        logger.info(
+            "Handling failed (explicitly-marked-as-failure) jobs!",
+            jobs=failed_jobs
+        )
+        handle_survey_jobs(failed_jobs)
+
+
+@do_forever(MIN_LOOP_TIME)
+def retry_hung_survey_jobs() -> None:
+    """Retry survey jobs that were started but never finished."""
+    potentially_hung_jobs = SurveyJob.objects.filter(
+        success=None,
+        retried=False,
+        end_time=None,
+        start_time__isnull=False,
+        no_retry=False
+    )
+
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    hung_jobs = []
+    for job in potentially_hung_jobs:
+        try:
+            # Surveyor jobs didn't always have nomad_job_ids. If they
+            # don't have one then by this point they've definitely died.
+            if job.nomad_job_id:
+                job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+            else:
+                job_status = "dead"
+
+            if job_status != "running":
+                # Make sure it didn't finish since our original query.
+                job.refresh_from_db()
+                if job.end_time is None:
+                    hung_jobs.append(job)
+        except URLNotFoundNomadException:
+            hung_jobs.append(job)
+        except Exception:
+            logger.exception("Couldn't query Nomad about SurveyJob Job.", survey_job=job.id)
+
+    if hung_jobs:
+        logger.info(
+            "Handling hung (started-but-never-finished) jobs!",
+            jobs=hung_jobs
+        )
+        handle_survey_jobs(hung_jobs)
+
+
+@do_forever(MIN_LOOP_TIME)
+def retry_lost_survey_jobs() -> None:
+    """Retry survey jobs which never even got started for too long."""
+    potentially_lost_jobs = SurveyJob.objects.filter(
+        success=None,
+        retried=False,
+        start_time=None,
+        end_time=None,
+        no_retry=False
+    )
+
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    lost_jobs = []
+    for job in potentially_lost_jobs:
+        try:
+            # Surveyor jobs didn't always have nomad_job_ids. If they
+            # don't have one then by this point they've definitely died.
+            if job.nomad_job_id:
+                job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+            else:
+                job_status = "dead"
+
+            # If the job is still pending, then it makes sense that it
+            # hasn't started and if it's running then it may not have
+            # been able to mark the job record as started yet.
+            if job_status != "pending" and job_status != "running":
+                logger.info(("Determined that a survey job needs to be requeued because its"
+                             " Nomad Job's status is: %s."),
+                            job_status,
+                            job_id=job.id
+                )
+                lost_jobs.append(job)
+        except URLNotFoundNomadException:
+            logger.exception(("Determined that a survey job needs to be requeued because "
+                              "querying for its Nomad job failed: "),
+                             job_id=job.id
+            )
+            lost_jobs.append(job)
+        except Exception:
+            logger.exception("Couldn't query Nomad about Processor Job.", survey_job=job.id)
+
+    if lost_jobs:
+        logger.info(
+            "Handling lost (never-started) jobs!",
+            jobs=lost_jobs
+        )
+        handle_survey_jobs(lost_jobs)
+
+##
+# Main loop
+##
 
 @do_forever(JANITOR_DISPATCH_TIME)
 def send_janitor_jobs():
@@ -454,6 +646,16 @@ def monitor_jobs():
                             retry_lost_downloader_jobs]
 
     for f in downloader_functions:
+        thread = Thread(target=f, name=f.__name__)
+        thread.start()
+        threads.append(thread)
+        logger.info("Thread started for monitoring function: %s", f.__name__)
+
+    survey_functions = [retry_failed_survey_jobs,
+                            retry_hung_survey_jobs,
+                            retry_lost_survey_jobs]
+
+    for f in survey_functions:
         thread = Thread(target=f, name=f.__name__)
         thread.start()
         threads.append(thread)

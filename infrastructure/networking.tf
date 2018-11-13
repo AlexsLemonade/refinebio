@@ -2,7 +2,7 @@
 # related to networking.
 
 provider "aws" {
-  version = "1.31.0"
+  version = "1.37.0"
   region = "${var.region}"
 }
 
@@ -174,7 +174,7 @@ locals {
 # this since we're using cloudfront. The cert for the API is created
 # an installed by certbot.
 resource "aws_acm_certificate" "ssl-cert" {
-  domain_name = "${ var.stage == "prod" ? "" : local.stage_with_dot }refine.bio"
+  domain_name = "${ var.stage == "prod" ? "www." : local.stage_with_dot }refine.bio"
   validation_method = "DNS"
 
   tags {
@@ -187,7 +187,7 @@ resource "aws_acm_certificate_validation" "ssl-cert" {
 }
 
 resource "aws_cloudfront_distribution" "static-distribution" {
-  aliases = ["${var.static_bucket_prefix == "dev" ? var.user : var.static_bucket_prefix}${var.static_bucket_root}"]
+  aliases = ["${var.static_bucket_prefix == "dev" ? var.user : var.static_bucket_prefix}${var.static_bucket_root}", "www.refine.bio"]
 
   origin {
     domain_name = "${aws_s3_bucket.data-refinery-static.website_endpoint}"

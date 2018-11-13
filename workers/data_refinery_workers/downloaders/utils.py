@@ -27,6 +27,7 @@ from data_refinery_common.utils import get_instance_id, get_env_variable
 logger = get_and_configure_logger(__name__)
 # Let this fail if SYSTEM_VERSION is unset.
 SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
+RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD", "False")
 # TODO: extend this list.
 BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
 CURRENT_JOB = None
@@ -42,7 +43,13 @@ def get_max_jobs_for_current_node():
     # We basically want to hit 2GB/s total across 10 x1.32larges. Each job hits 18MB/s.
     # So it'd take 111 jobs across 10 boxes to hit our limit, so let's set our GB per to 12,
     # which should pack well enough and give us a slight buffer.
-    return (gb/12)
+    max_jobs = (gb/12)
+
+    # However this will make sure we can still run a few jobs in local environments and in CI.
+    if max_jobs < 5:
+        max_jobs = 5
+
+    return max_jobs
 
 MAX_DOWNLOADER_JOBS_PER_NODE = get_max_jobs_for_current_node()
 
@@ -57,7 +64,7 @@ def sigterm_handler(sig, frame):
         CURRENT_JOB.save()
         sys.exit(0)
 
-def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_NODE) -> DownloaderJob:
+def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_NODE, force_harakiri=False) -> DownloaderJob:
     """Record in the database that this job is being started.
 
     Retrieves the job from the database and returns it after marking
@@ -80,18 +87,19 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
                             ).count()
 
     # Death and rebirth.
-    if num_downloader_jobs_currently_running >= int(max_downloader_jobs_per_node):
-        # Wait for the death window
-        while True:
-            seconds = datetime.datetime.now().second
-            # Mass harakiri happens every 15 seconds.
-            if seconds % 15 == 0:
-                job.start_time = None
-                job.num_retries = job.num_retries - 1
-                job.save()
+    if RUNNING_IN_CLOUD != "False" or force_harakiri:
+        if num_downloader_jobs_currently_running >= int(max_downloader_jobs_per_node):
+            # Wait for the death window
+            while True:
+                seconds = datetime.datetime.now().second
+                # Mass harakiri happens every 15 seconds.
+                if seconds % 15 == 0:
+                    job.start_time = None
+                    job.num_retries = job.num_retries - 1
+                    job.save()
 
-                # What is dead may never die!
-                sys.exit(0)
+                    # What is dead may never die!
+                    sys.exit(0)
 
     # This job should not have been started.
     if job.start_time is not None:

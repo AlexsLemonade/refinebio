@@ -141,7 +141,12 @@ if [[ ! -f terraform.tfstate ]]; then
     # Until terraform plan supports -var-file the plan is wrong.
     # terraform plan
 
-    terraform apply -var-file=environments/$env.tfvars -auto-approve > /dev/null
+    if [[ ! -z $CIRCLE_BUILD_NUM ]]; then
+        # Make sure we can't expose secrets in circleci
+        terraform apply -var-file=environments/$env.tfvars -auto-approve > /dev/null
+    else
+        terraform apply -var-file=environments/$env.tfvars -auto-approve
+    fi
 fi
 
 # We have to do this once before the initial deploy..
@@ -159,7 +164,12 @@ if [[ -z $ran_init_build ]]; then
     # Until terraform plan supports -var-file the plan is wrong.
     # terraform plan
 
-    terraform apply -var-file=environments/$env.tfvars -auto-approve > /dev/null
+    if [[ ! -z $CIRCLE_BUILD_NUM ]]; then
+        # Make sure we can't expose secrets in circleci
+        terraform apply -var-file=environments/$env.tfvars -auto-approve > /dev/null
+    else
+        terraform apply -var-file=environments/$env.tfvars -auto-approve
+    fi
 fi
 
 # Find address of Nomad server.
@@ -269,14 +279,19 @@ terraform taint aws_instance.foreman_server_1
 # access for Circle.
 echo "Removing ingress.."
 rm ci_ingress.tf
-terraform apply -var-file=environments/$env.tfvars -auto-approve > /dev/null
+
+if [[ ! -z $CIRCLE_BUILD_NUM ]]; then
+    # Make sure we can't expose secrets in circleci
+    terraform apply -var-file=environments/$env.tfvars -auto-approve > /dev/null
+else
+    terraform apply -var-file=environments/$env.tfvars -auto-approve
+fi
 
 # We try to avoid rebuilding the API server because we can only run certbot
 # 5 times a week. Therefore we pull the newest image and restart the API
 # this way rather than by tainting the server like we do for foreman.
 chmod 600 data-refinery-key.pem
 API_IP_ADDRESS=$(terraform output -json api_server_1_ip | jq -c '.value' | tr -d '"')
-echo "Restarting API with latest image."
 
 # To check to see if the docker container needs to be stopped before
 # it can be started, grep for the name of the container. However if
@@ -284,12 +299,15 @@ echo "Restarting API with latest image."
 # case return an empty string.
 container_running=$(ssh -o StrictHostKeyChecking=no \
                         -i data-refinery-key.pem \
-                        ubuntu@$API_IP_ADDRESS  "docker ps" | grep dr_api || echo "")
+                        ubuntu@$API_IP_ADDRESS  "docker ps -a" | grep dr_api || echo "")
 
+# If $container_running is empty, then it's because the container isn't running.
 # If the container isn't running, then it's because the instance is spinning up.
 # The container will be started by the API's init script, so no need to do anything more.
-if [[ ! -z $container_running ]]; then
 
+# However if $container_running isn't empty then we need to stop and restart it.
+if [[ ! -z $container_running ]]; then
+    echo "Restarting API with latest image."
 
     ssh -o StrictHostKeyChecking=no \
         -i data-refinery-key.pem \
