@@ -232,8 +232,8 @@ class SearchAndFilter(generics.ListAPIView):
             last_category_filters = self.get_filters(queryset_without_last_category)[filter_name_map[last_category]]
             response.data['filters'][filter_name_map[last_category]] = last_category_filters
         else:
-            # Otherwise calculate the filters 
-            response.data['filters'] = self.get_filters(self.search_queryset({}))
+            # Otherwise calculate the filters only with the search term
+            response.data['filters'] = self.get_filters(self.search_queryset())
 
         return response
 
@@ -277,8 +277,11 @@ class SearchAndFilter(generics.ListAPIView):
 
         return result
 
-    def search_queryset(self, filter_params):
-        queryset = ExperimentFilter(filter_params, queryset=self.get_queryset()).qs
+    def search_queryset(self, filter_params = False):
+        if filter_params:
+            queryset = ExperimentFilter(filter_params, queryset=self.get_queryset()).qs
+        else:
+            queryset = self.get_queryset()
         return filters.SearchFilter().filter_queryset(self.request, queryset, view=self)
 ##
 # Dataset
