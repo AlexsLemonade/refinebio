@@ -74,11 +74,8 @@ def queue_surveyor_for_accession(accession: str) -> None:
                                        value=accession)
     key_value_pair.save()
 
-    try:
-        send_job(SurveyJobTypes.SURVEYOR, survey_job)
-    except:
-        # If we can't dispatch this, then let the foreman retry it late.
-        pass
+    # We don't actually send the job here, we just create it.
+    # The foreman will pick it up and dispatch it when the time is appropriate.
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
