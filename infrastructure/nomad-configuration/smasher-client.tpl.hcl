@@ -1,5 +1,5 @@
-# This is a Nomad Configuration file for client instances.
-# I.e. the instances that actually run Nomad jobs.
+# This is a Nomad Configuration file for an instance dedicated to
+# running smasher jobs.
 
 log_level = "WARN"
 
