@@ -436,7 +436,7 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
     all_jobs = nomad_client.jobs.get_jobs()
 
     if len(all_jobs) >= MAX_TOTAL_JOBS:
-        logger.info("Not requeuing job until we're running less jobs.")
+        logger.info("Not requeuing job until we're running fewer jobs.")
         return False
 
     num_retries = last_job.num_retries + 1
@@ -496,7 +496,7 @@ def handle_survey_jobs(jobs: List[SurveyJob]) -> None:
 @do_forever(MIN_LOOP_TIME)
 def retry_failed_survey_jobs() -> None:
     """Handle survey jobs that were marked as a failure."""
-    failed_jobs = SurveyJob.objects.filter(success=False, retried=False)
+    failed_jobs = SurveyJob.objects.filter(success=False, retried=False).order_by('pk')
     if failed_jobs:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) jobs!",
@@ -514,7 +514,7 @@ def retry_hung_survey_jobs() -> None:
         end_time=None,
         start_time__isnull=False,
         no_retry=False
-    )
+    ).order_by('pk')
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
@@ -556,11 +556,11 @@ def retry_lost_survey_jobs() -> None:
         start_time=None,
         end_time=None,
         no_retry=False
-    )
+    ).order_by('pk')
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     lost_jobs = []
 
     for job in potentially_lost_jobs:
