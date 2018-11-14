@@ -32,6 +32,9 @@ RUNNING_IN_CLOUD = get_env_variable_gracefully("RUNNING_IN_CLOUD", False)
 # greater than this because of the first attempt
 MAX_NUM_RETRIES = 2
 
+# This can be overritten by the env var "MAX_TOTAL_JOBS"
+DEFAULT_MAX_JOBS = 10000
+
 # The fastest each thread will repeat its checks.
 # Could be slower if the thread takes longer than this to check its jobs.
 MIN_LOOP_TIME = timedelta(minutes=2)
@@ -145,9 +148,9 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     # Maximum number of total jobs running at a time.
     # We do this now rather than import time for testing purposes.
-    MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", 1000))
-    all_jobs = nomad_client.jobs.get_jobs()
-    if len(all_jobs) >= MAX_TOTAL_JOBS:
+    MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
+    len_all_jobs = len(nomad_client.jobs.get_jobs())
+    if len_all_jobs >= MAX_TOTAL_JOBS:
         logger.info("Not requeuing job until we're running fewer jobs.")
         return False
 
@@ -159,7 +162,7 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
         else:
             handle_repeated_failure(job)
 
-        if jobs_dispatched >= MAX_TOTAL_JOBS:
+        if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
             logger.info("We hit the maximum total jobs ceiling, so we're not handling any more downloader jobs now.")
             return False
 
@@ -331,9 +334,9 @@ def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     # Maximum number of total jobs running at a time.
     # We do this now rather than import time for testing purposes.
-    MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", 1000))
-    all_jobs = nomad_client.jobs.get_jobs()
-    if len(all_jobs) >= MAX_TOTAL_JOBS:
+    MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
+    len_all_jobs = len(nomad_client.jobs.get_jobs())
+    if llen_all_jobs >= MAX_TOTAL_JOBS:
         logger.info("Not requeuing job until we're running fewer jobs.")
         return False
 
@@ -345,7 +348,7 @@ def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
         else:
             handle_repeated_failure(job)
 
-        if jobs_dispatched >= MAX_TOTAL_JOBS:
+        if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
             logger.info("We hit the maximum total jobs ceiling, so we're not handling any more processor jobs now.")
             return False
 
@@ -519,9 +522,9 @@ def handle_survey_jobs(jobs: List[SurveyJob]) -> None:
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     # Maximum number of total jobs running at a time.
     # We do this now rather than import time for testing purposes.
-    MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", 1000))
-    all_jobs = nomad_client.jobs.get_jobs()
-    if len(all_jobs) >= MAX_TOTAL_JOBS:
+    MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
+    len_all_jobs = len(nomad_client.jobs.get_jobs())
+    if len_all_jobs >= MAX_TOTAL_JOBS:
         logger.info("Not requeuing job until we're running fewer jobs.")
         return False
 
@@ -533,7 +536,7 @@ def handle_survey_jobs(jobs: List[SurveyJob]) -> None:
         else:
             handle_repeated_failure(job)
 
-        if jobs_dispatched >= MAX_TOTAL_JOBS:
+        if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
             logger.info("We hit the maximum total jobs ceiling, so we're not handling any more survey jobs now.")
             return False
 
