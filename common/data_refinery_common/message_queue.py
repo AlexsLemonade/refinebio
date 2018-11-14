@@ -19,7 +19,7 @@ NOMAD_DOWNLOADER_JOB = "DOWNLOADER"
 NONE_JOB_ERROR_TEMPLATE = "send_job was called with NONE job_type: {} for {} job {}"
 
 
-def send_job(job_type: Enum, job) -> bool:
+def send_job(job_type: Enum, job=job, is_dispatch=False) -> bool:
     """Queues a worker job by sending a Nomad Job dispatch message.
 
     job_type must be a valid Enum for ProcessorPipelines or
@@ -98,7 +98,7 @@ def send_job(job_type: Enum, job) -> bool:
 
     # We only want to dispatch processor jobs directly.
     # Everything else will be handled by the Foreman, which will increment the retry counter.
-    if is_processor:
+    if is_processor or is_dispatch:
         try:
             nomad_response = nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,
                                                                             "JOB_ID": str(job.id)})

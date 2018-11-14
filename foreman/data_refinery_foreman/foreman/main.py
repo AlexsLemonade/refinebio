@@ -124,7 +124,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
                 last_job.id,
                 new_job.id)
     try:
-        if send_job(Downloaders[last_job.downloader_task], new_job):
+        if send_job(Downloaders[last_job.downloader_task], job=new_job, is_dispatch=True):
             last_job.retried = True
             last_job.success = False
             last_job.retried_job = new_job
@@ -313,7 +313,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
         logger.info("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",
                     last_job.id,
                     new_job.id)
-        if send_job(ProcessorPipeline[last_job.pipeline_applied], new_job):
+        if send_job(ProcessorPipeline[last_job.pipeline_applied], job=new_job, is_dispatch=True):
             last_job.retried = True
             last_job.success = False
             last_job.retried_job = new_job
@@ -502,7 +502,7 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
                 new_job.id)
 
     try:
-        if send_job(SurveyJobTypes.SURVEYOR, new_job):
+        if send_job(SurveyJobTypes.SURVEYOR, job=new_job, is_dispatch=True):
             last_job.retried = True
             last_job.success = False
             last_job.retried_job = new_job
@@ -679,7 +679,7 @@ def send_janitor_jobs():
             index=actual_index
         )
         try:
-            send_job(ProcessorPipeline["JANITOR"], new_job)
+            send_job(ProcessorPipeline["JANITOR"], job=new_job, is_dispatch=True)
         except Exception as e:
             # If we can't dispatch this job, something else has gone wrong.
             continue
