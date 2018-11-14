@@ -96,6 +96,8 @@ def send_job(job_type: Enum, job) -> bool:
     elif isinstance(job, SurveyJob):
         nomad_job = nomad_job + "_" + str(job.ram_amount)
 
+    # We only want to dispatch processor jobs directly.
+    # Everything else will be handled by the Foreman, which will increment the retry counter.
     if is_processor:
         try:
             nomad_response = nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,
@@ -114,4 +116,7 @@ def send_job(job_type: Enum, job) -> bool:
                 reason=str(e)
             )
             raise
+    else:
+        job.num_retries = job.num_retries - 1
+        job.save()
     return True
