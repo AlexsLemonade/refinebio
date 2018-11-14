@@ -19,7 +19,7 @@ NOMAD_DOWNLOADER_JOB = "DOWNLOADER"
 NONE_JOB_ERROR_TEMPLATE = "send_job was called with NONE job_type: {} for {} job {}"
 
 
-def send_job(job_type: Enum, job=job, is_dispatch=False) -> bool:
+def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
     """Queues a worker job by sending a Nomad Job dispatch message.
 
     job_type must be a valid Enum for ProcessorPipelines or
