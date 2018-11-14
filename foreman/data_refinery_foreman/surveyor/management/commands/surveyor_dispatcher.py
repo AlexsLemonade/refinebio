@@ -66,10 +66,6 @@ def queue_surveyor_for_accession(accession: str) -> None:
     """Dispatches a surveyor job for the accession code."""
     # Start at 256MB of RAM for surveyor jobs.
     survey_job = SurveyJob(ram_amount=256)
-    # Survey Jobs will actually be dispatched by the foreman retry logic as capacity allows,
-    # so we set num_retries to -1 for right now.
-    survey_job.num_retries = -1
-
     set_source_type_for_accession(survey_job, accession)
 
     key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
