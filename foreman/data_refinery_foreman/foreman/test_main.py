@@ -14,7 +14,7 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     ProcessorJobDatasetAssociation,
 )
-
+from test.support import EnvironmentVarGuard # Python >=3
 
 class ForemanTestCase(TestCase):
     def create_downloader_job(self):
@@ -778,6 +778,22 @@ class ForemanTestCase(TestCase):
 
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
+
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_max_jobs(self, mock_send_job):
+        self.env = EnvironmentVarGuard()
+
+        self.env.set('MAX_TOTAL_JOBS', '0')
+        with self.env:
+            job = self.create_survey_job()
+            result = main.requeue_survey_job(job)
+            self.assertFalse(result)
+
+        self.env.set('MAX_TOTAL_JOBS', '1000')
+        with self.env:
+            job = self.create_survey_job()
+            result = main.requeue_survey_job(job)
+            self.assertTrue(result)
 
     @patch('data_refinery_foreman.foreman.main.send_job')
     def test_janitor(self, mock_send_job):
