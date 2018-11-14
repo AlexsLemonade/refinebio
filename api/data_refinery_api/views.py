@@ -159,11 +159,6 @@ class SearchAndFilter(generics.ListAPIView):
     filter_class = ExperimentFilter
 
     # Ordering
-    ordering_fields = ('total_samples_count', 'id', 'created_at',
-                       'source_first_published', 'accession_code',)
-    ordering = ('-total_samples_count',)
-
-    # Ordering
     ordering_fields = ('total_samples_count', 'id', 'created_at', 'source_first_published', 'accession_code',)
     ordering = ('-total_samples_count',)
 
