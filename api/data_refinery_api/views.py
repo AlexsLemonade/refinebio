@@ -209,28 +209,26 @@ class SearchAndFilter(generics.ListAPIView):
             'platform': 'platforms'
         }
 
+        # The API supports interactive filtering, this means that the filters in the last group are calculated
+        # differently, since they should stay unchanged when applied.
+        # ref https://github.com/AlexsLemonade/refinebio-frontend/issues/374#issuecomment-436373470
+        # This is only enabled when the parameter `filter_order` is provided (eg `filter_order=technology,platform`)
         last_filter = self.get_last_filter()
-        # Use interactive filters if the user provides `filter_order` param
-        # eg `filter_order=technology,platform`
         if last_filter and last_filter in filter_param_names:
-            # Calculate queryset with all filters applied
+            # 1. Calculate all filters except the one in the last category
             queryset = self.search_queryset(request.query_params)
-            # list all filters except the last category (will be calculated later)
             filter_names = [f for f in filter_param_names if f != last_filter]
             response.data['filters'] = self.get_filters(queryset, filter_names)
 
+            # 2. Calculate the filters in the last category.
+            # We use a queryset built with all filters except those in the last category
             params_without_last_category = request.query_params.copy()
             params_without_last_category.pop(last_filter)
-
             queryset_without_last_category = self.search_queryset(params_without_last_category)
-
-            # The filters of the last category are calculated differently, since they should stay the same
-            # we use a queryset with all filters applied except the ones in the last category
-            # ref https://github.com/AlexsLemonade/refinebio-frontend/issues/374#issuecomment-436373470
             last_category_filters = self.get_filters(queryset_without_last_category, [last_filter])
             response.data['filters'][filter_name_map[last_filter]] = last_category_filters[filter_name_map[last_filter]]
         else:
-            # Otherwise calculate the filters only with the search term
+            # Otherwise calculate the filters with the search term
             response.data['filters'] = self.get_filters(self.search_queryset(), filter_param_names)
 
         return response
