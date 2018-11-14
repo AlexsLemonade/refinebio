@@ -214,30 +214,44 @@ class SearchAndFilter(generics.ListAPIView):
             'platform': 'platforms'
         }
 
-        # If the user provides a `last_filter` params, we use interactive filters
-        if 'last_filter' in request.query_params and request.query_params['last_filter'] in filter_param_names and request.query_params['last_filter'] in request.query_params:
+        last_filter = self.get_last_filter()
+        # Use interactive filters if the user provides `filter_order` param
+        # eg `filter_order=technology,platform`
+        if last_filter and last_filter in filter_param_names:
             # Calculate queryset with all filters applied
             queryset = self.search_queryset(request.query_params)
-            response.data['filters'] = self.get_filters(queryset)
+            # list all filters except the last category (will be calculated later)
+            filter_names = [f for f in filter_param_names if f != last_filter]
+            response.data['filters'] = self.get_filters(queryset, filter_names)
 
-            last_category = request.query_params['last_filter']
             params_without_last_category = request.query_params.copy()
-            params_without_last_category.pop(last_category)
-            
+            params_without_last_category.pop(last_filter)
+
             queryset_without_last_category = self.search_queryset(params_without_last_category)
 
             # The filters of the last category are calculated differently, since they should stay the same
             # we use a queryset with all filters applied except the ones in the last category
             # ref https://github.com/AlexsLemonade/refinebio-frontend/issues/374#issuecomment-436373470
-            last_category_filters = self.get_filters(queryset_without_last_category)[filter_name_map[last_category]]
-            response.data['filters'][filter_name_map[last_category]] = last_category_filters
+            last_category_filters = self.get_filters(queryset_without_last_category, [last_filter])
+            response.data['filters'][filter_name_map[last_filter]] = last_category_filters[filter_name_map[last_filter]]
         else:
             # Otherwise calculate the filters only with the search term
-            response.data['filters'] = self.get_filters(self.search_queryset())
+            response.data['filters'] = self.get_filters(self.search_queryset(), filter_param_names)
 
         return response
 
-    def get_filters(self, qs):
+    def get_last_filter(self):
+        request = self.request
+        if 'filter_order' not in request.query_params:
+            return False
+        filter_order = request.query_params['filter_order']
+        last_filter = filter_order.split(',')[-1:][0]
+        # Ensure the last filter is valid and one of the applied filters
+        if not last_filter or last_filter not in request.query_params:
+            return False
+        return last_filter
+
+    def get_filters(self, queryset, filters_to_calculate):
         result = {
             'technology': {},
             'publication': {},
@@ -245,35 +259,38 @@ class SearchAndFilter(generics.ListAPIView):
             'platforms': {}
         }
 
-        # Technology
-        techs = qs.values('technology').annotate(Count('technology', unique=True))
-        for tech in techs:
-            if not tech['technology'] or not tech['technology'].strip():
-                continue
-            result['technology'][tech['technology']] = tech['technology__count']
+        if 'technology' in filters_to_calculate:
+            # Technology
+            techs = queryset.values('technology').annotate(Count('technology', unique=True))
+            for tech in techs:
+                if not tech['technology'] or not tech['technology'].strip():
+                    continue
+                result['technology'][tech['technology']] = tech['technology__count']
 
-        # Publication
-        pubs = qs.values('has_publication').annotate(Count('has_publication', unique=True))
-        for pub in pubs:
-            if pub['has_publication']:
-                result['publication']['has_publication'] = pub['has_publication__count']
+        if 'has_publication' in filters_to_calculate:
+            # Publication
+            pubs = queryset.values('has_publication').annotate(Count('has_publication', unique=True))
+            for pub in pubs:
+                if pub['has_publication']:
+                    result['publication']['has_publication'] = pub['has_publication__count']
 
-        # Organisms
-        organisms = qs.values('organisms__name').annotate(Count('organisms__name', unique=True))
-        for organism in organisms:
+        if 'organisms__name' in filters_to_calculate:
+            # Organisms
+            organisms = queryset.values('organisms__name').annotate(Count('organisms__name', unique=True))
+            for organism in organisms:
+                # This experiment has no ExperimentOrganism-association, which is bad.
+                # This information may still live on the samples though.
+                if not organism['organisms__name']:
+                    continue
 
-            # This experiment has no ExperimentOrganism-association, which is bad.
-            # This information may still live on the samples though.
-            if not organism['organisms__name']:
-                continue
+                result['organism'][organism['organisms__name']] = organism['organisms__name__count']
 
-            result['organism'][organism['organisms__name']] = organism['organisms__name__count']
-
-        # Platforms
-        platforms = qs.values('samples__platform_name').annotate(Count('samples__platform_name', unique=True))
-        for plat in platforms:
-            if plat['samples__platform_name']:
-                result['platforms'][plat['samples__platform_name']] = plat['samples__platform_name__count']
+        if 'platform' in filters_to_calculate:
+            # Platforms
+            platforms = queryset.values('samples__platform_name').annotate(Count('samples__platform_name', unique=True))
+            for plat in platforms:
+                if plat['samples__platform_name']:
+                    result['platforms'][plat['samples__platform_name']] = plat['samples__platform_name__count']
 
         return result
 
@@ -283,10 +300,10 @@ class SearchAndFilter(generics.ListAPIView):
         else:
             queryset = self.get_queryset()
         return filters.SearchFilter().filter_queryset(self.request, queryset, view=self)
+
 ##
 # Dataset
 ##
-
 class CreateDatasetView(generics.CreateAPIView):
     """ Creates and returns new Dataset. """
 

@@ -392,7 +392,7 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('search'),
                                    {'search': 'THISWILLBEINASEARCHRESULT',
                                     'technology': 'MICROARRAY',
-                                    'last_filter': 'technology'})
+                                    'filter_order': 'technology'})
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME_TEMPURA')
         self.assertEqual(response.json()['filters']['technology'], {'FAKE-TECH': 1, 'MICROARRAY': 2, 'RNA-SEQ': 1})
