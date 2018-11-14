@@ -794,10 +794,6 @@ class ForemanTestCase(TestCase):
         self.assertEqual(retried_job.num_retries, 1)
 
     @patch('data_refinery_foreman.foreman.main.send_job')
-    def test_max_jobs(self, mock_send_job):
-        return
-
-    @patch('data_refinery_foreman.foreman.main.send_job')
     def test_janitor(self, mock_send_job):
         mock_send_job.return_value = True
 
