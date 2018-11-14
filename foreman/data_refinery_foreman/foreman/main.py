@@ -155,12 +155,15 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
         return False
 
     jobs_dispatched = 0
-    for job in jobs:
+    for count, job in enumerate(jobs):
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_downloader_job(job)
             jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
+
+        if (count % 100) == 0:
+            len_all_jobs = len(nomad_client.jobs.get_jobs())
 
         if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
             logger.info("We hit the maximum total jobs ceiling, so we're not handling any more downloader jobs now.")
@@ -336,17 +339,20 @@ def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
     # We do this now rather than import time for testing purposes.
     MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
     len_all_jobs = len(nomad_client.jobs.get_jobs())
-    if llen_all_jobs >= MAX_TOTAL_JOBS:
+    if len_all_jobs >= MAX_TOTAL_JOBS:
         logger.info("Not requeuing job until we're running fewer jobs.")
         return False
 
     jobs_dispatched = 0
-    for job in jobs:
+    for count, job in enumerate(jobs):
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_processor_job(job)
             jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
+
+        if (count % 100) == 0:
+            len_all_jobs = len(nomad_client.jobs.get_jobs())
 
         if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
             logger.info("We hit the maximum total jobs ceiling, so we're not handling any more processor jobs now.")
@@ -529,12 +535,15 @@ def handle_survey_jobs(jobs: List[SurveyJob]) -> None:
         return False
 
     jobs_dispatched = 0
-    for job in jobs:
+    for count, job in enumerate(jobs):
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_survey_job(job)
             jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
+
+        if (count % 100) == 0:
+            len_all_jobs = len(nomad_client.jobs.get_jobs())
 
         if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
             logger.info("We hit the maximum total jobs ceiling, so we're not handling any more survey jobs now.")
