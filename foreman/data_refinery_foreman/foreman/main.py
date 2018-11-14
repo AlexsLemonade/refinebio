@@ -166,7 +166,7 @@ def retry_hung_downloader_jobs() -> None:
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     hung_jobs = []
     for job in potentially_hung_jobs:
         try:
@@ -205,7 +205,7 @@ def retry_lost_downloader_jobs() -> None:
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     lost_jobs = []
     for job in potentially_lost_jobs:
         try:
@@ -338,7 +338,7 @@ def retry_hung_processor_jobs() -> None:
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     hung_jobs = []
     for job in potentially_hung_jobs:
         try:
@@ -427,7 +427,7 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
     """
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     # Maximum number of total jobs running at a time.
     # We do this now rather than import time for testing purposes.
     MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", 1000))
@@ -518,7 +518,7 @@ def retry_hung_survey_jobs() -> None:
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     hung_jobs = []
     for job in potentially_hung_jobs:
         try:
