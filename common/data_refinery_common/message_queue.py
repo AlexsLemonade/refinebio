@@ -17,7 +17,11 @@ logger = get_and_configure_logger(__name__)
 NOMAD_TRANSCRIPTOME_JOB = "TRANSCRIPTOME_INDEX"
 NOMAD_DOWNLOADER_JOB = "DOWNLOADER"
 NONE_JOB_ERROR_TEMPLATE = "send_job was called with NONE job_type: {} for {} job {}"
-RUNNING_IN_CLOUD = bool(get_env_variable_gracefully("RUNNING_IN_CLOUD", "False"))
+RUNNING_IN_CLOUD = get_env_variable_gracefully("RUNNING_IN_CLOUD", "False")
+if RUNNING_IN_CLOUD == "False":
+    RUNNING_IN_CLOUD = False
+else:
+    RUNNING_IN_CLOUD = True
 
 
 def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
@@ -99,7 +103,7 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
 
     # We only want to dispatch processor jobs directly.
     # Everything else will be handled by the Foreman, which will increment the retry counter.
-    if is_processor or is_dispatch or not RUNNING_IN_CLOUD:
+    if is_processor or is_dispatch or (not RUNNING_IN_CLOUD):
         try:
             nomad_response = nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,
                                                                             "JOB_ID": str(job.id)})
