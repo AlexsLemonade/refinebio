@@ -40,11 +40,11 @@ def set_source_type_for_accession(survey_job, accession: str) -> None:
 
         args = accession.split(",")
         # Allow organism to be unspecified so we survey the entire division.
-        organism = args[0] if len(args[0]) > 0 else None
+        organism_name = args[0] if len(args[0]) > 0 else None
         if len(args) > 1:
-            division = args[1].strip()
+            ensembl_division = args[1].strip()
         else:
-            division = "Ensembl"
+            ensembl_division = "Ensembl"
 
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
                                            key="ensembl_division",
