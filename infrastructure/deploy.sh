@@ -219,9 +219,9 @@ if [[ $(nomad status) != "No running jobs" ]]; then
             counter=$((counter+1))
         fi
 
-        # Wait for all the jobs to stop every 500 so we don't knock
+        # Wait for all the jobs to stop every 100 so we don't knock
         # over the deploy box if there are 1000's.
-        if [[ "$counter" -gt 500 ]]; then
+        if [[ "$counter" -gt 100 ]]; then
             wait $(jobs -p)
             counter=0
         fi
