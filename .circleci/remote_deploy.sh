@@ -65,6 +65,11 @@ run_on_deploy_box "source env_vars && echo -e '######\nFinished building new ima
 # Load docker_img_exists function and $ALL_CCDL_IMAGES
 source ~/refinebio/common.sh
 
+# It's somehow possible for Docker to sometimes not successfully push
+# an image but yet still exit successfully. See:
+# https://github.com/AlexsLemonade/refinebio/issues/784
+# Since it's not clear how that happened, the safest thing is to add
+# an explicit check that the Docker images were successfully updated.
 for IMAGE in $ALL_CCDL_IMAGES; do
     image_name="$DOCKERHUB_REPO/dr_$IMAGE"
     if ! docker_img_exists $image_name $CIRCLE_TAG; then
