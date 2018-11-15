@@ -62,6 +62,18 @@ run_on_deploy_box "source env_vars && echo -e '######\nBuilding new images for $
 run_on_deploy_box "source env_vars && bash .circleci/update_docker_img.sh >> /var/log/docker_update.log 2>&1"
 run_on_deploy_box "source env_vars && echo -e '######\nFinished building new images for $CIRCLE_TAG\n######'  &>> /var/log/docker_update.log 2>&1"
 
+# Load docker_img_exists function and $ALL_CCDL_IMAGES
+source ~/refinebio/common.sh
+
+for IMAGE in $ALL_CCDL_IMAGES; do
+    image_name="$DOCKERHUB_REPO/dr_$IMAGE"
+    if ! docker_img_exists $image_name $CIRCLE_TAG; then
+        echo "Docker image $image_name:$CIRCLE_TAG doesn't exist after running update_docker_img.sh!"
+        echo "This is generally caused by a temporary error, please try the 'Rerun job with SSH' button."
+        exit 1
+    fi
+done
+
 # Notify CircleCI that the images have been built.
 echo "Finished building new images, running run_terraform.sh."
 
