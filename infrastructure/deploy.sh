@@ -311,6 +311,7 @@ container_running=$(ssh -o StrictHostKeyChecking=no \
 # If $container_running is empty, then it's because the container isn't running.
 # If the container isn't running, then it's because the instance is spinning up.
 # The container will be started by the API's init script, so no need to do anything more.
+
 # However if $container_running isn't empty then we need to stop and restart it.
 if [[ ! -z $container_running ]]; then
     echo "Restarting API with latest image."
