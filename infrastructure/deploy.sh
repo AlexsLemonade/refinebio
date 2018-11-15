@@ -208,6 +208,7 @@ wait $(jobs -p)
 # apply migrations.
 echo "Killing dispatch jobs.. (this also takes a while..)"
 if [[ $(nomad status) != "No running jobs" ]]; then
+    counter=0
     for job in $(nomad status | awk {'print $1'} || grep /)
     do
         # Skip the header row for jobs.
@@ -215,11 +216,19 @@ if [[ $(nomad status) != "No running jobs" ]]; then
             # '|| true' so that if a job is garbage collected before we can remove it the error
             # doesn't interrupt our deploy.
             nomad stop -purge -detach $job > /dev/null || true &
+            counter=$((counter+1))
+        fi
+
+        # Wait for all the jobs to stop every 100 so we don't knock
+        # over the deploy box if there are 1000's.
+        if [[ "$counter" -gt 100 ]]; then
+            wait $(jobs -p)
+            counter=0
         fi
     done
 fi
 
-# Wait for these jobs to all die.
+# Wait for any remaining jobs to all die.
 wait $(jobs -p)
 
 # Make sure that prod_env is empty since we are only appending to it.
