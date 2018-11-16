@@ -65,6 +65,18 @@ run_on_deploy_box "source env_vars && echo -e '######\nFinished building new ima
 # Load docker_img_exists function and $ALL_CCDL_IMAGES
 source ~/refinebio/common.sh
 
+# Circle won't set the branch name for us, so do it ourselves.
+branch=$(get_master_or_dev)
+
+if [[ $branch == "master" ]]; then
+    DOCKERHUB_REPO=ccdl
+elif [[ $branch == "dev" ]]; then
+    DOCKERHUB_REPO=ccdlstaging
+else
+    echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"
+    exit 1
+fi
+
 # It's somehow possible for Docker to sometimes not successfully push
 # an image but yet still exit successfully. See:
 # https://github.com/AlexsLemonade/refinebio/issues/784
