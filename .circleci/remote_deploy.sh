@@ -27,7 +27,7 @@ chmod 600 infrastructure/data-refinery-key.pem
 run_on_deploy_box () {
     ssh -o StrictHostKeyChecking=no \
         -i infrastructure/data-refinery-key.pem \
-        ubuntu@${DEPLOY_IP_ADDRESS} "cd refinebio && $1"
+        ubuntu@"${DEPLOY_IP_ADDRESS}" "cd refinebio && $1"
 }
 
 # Create file containing local env vars that are needed for deploy.
@@ -50,7 +50,7 @@ run_on_deploy_box "bash .circleci/verify_tag.sh"
 # Copy the necessary environment variables over.
 scp -o StrictHostKeyChecking=no \
     -i infrastructure/data-refinery-key.pem \
-    -r env_vars ubuntu@$DEPLOY_IP_ADDRESS:refinebio/env_vars
+    -r env_vars ubuntu@"$DEPLOY_IP_ADDRESS":refinebio/env_vars
 
 # Decrypt the secrets in our repo.
 run_on_deploy_box "source env_vars && bash .circleci/git_decrypt.sh"
@@ -68,9 +68,9 @@ source ~/refinebio/common.sh
 # Circle won't set the branch name for us, so do it ourselves.
 branch=$(get_master_or_dev)
 
-if [[ $branch == "master" ]]; then
+if [[ "$branch" == "master" ]]; then
     DOCKERHUB_REPO=ccdl
-elif [[ $branch == "dev" ]]; then
+elif [[ "$branch" == "dev" ]]; then
     DOCKERHUB_REPO=ccdlstaging
 else
     echo "Why in the world was remote_deploy.sh called from a branch other than dev or master?!?!?"
@@ -84,7 +84,7 @@ fi
 # an explicit check that the Docker images were successfully updated.
 for IMAGE in $ALL_CCDL_IMAGES; do
     image_name="$DOCKERHUB_REPO/dr_$IMAGE"
-    if ! docker_img_exists $image_name $CIRCLE_TAG; then
+    if ! docker_img_exists "$image_name" "$CIRCLE_TAG"; then
         echo "Docker image $image_name:$CIRCLE_TAG doesn't exist after running update_docker_img.sh!"
         echo "This is generally caused by a temporary error, please try the 'Rerun job with SSH' button."
         exit 1
