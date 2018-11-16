@@ -73,7 +73,7 @@ if [[ $branch == "master" ]]; then
 elif [[ $branch == "dev" ]]; then
     DOCKERHUB_REPO=ccdlstaging
 else
-    echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"
+    echo "Why in the world was remote_deploy.sh called from a branch other than dev or master?!?!?"
     exit 1
 fi
 
