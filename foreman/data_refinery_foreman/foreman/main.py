@@ -362,8 +362,16 @@ def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
 
 @do_forever(MIN_LOOP_TIME)
 def retry_failed_processor_jobs() -> None:
-    """Handle processor jobs that were marked as a failure."""
-    failed_jobs = ProcessorJob.objects.filter(success=False, retried=False)
+    """Handle processor jobs that were marked as a failure.
+
+    Ignores Janitor jobs since they are queued every half hour anyway."""
+    failed_jobs = ProcessorJob.objects.filter(
+        success=False,
+        retried=False
+    ).exclude(
+        pipeline_applied="JANITOR"
+    )
+
     if failed_jobs:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) jobs!",
@@ -374,14 +382,19 @@ def retry_failed_processor_jobs() -> None:
 
 @do_forever(MIN_LOOP_TIME)
 def retry_hung_processor_jobs() -> None:
-    """Retry processor jobs that were started but never finished."""
+    """Retry processor jobs that were started but never finished.
+
+    Ignores Janitor jobs since they are queued every half hour anyway."""
     potentially_hung_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
         end_time=None,
         start_time__isnull=False,
-        no_retry=False
+        no_retry=False,
+    ).exclude(
+        pipeline_applied="JANITOR"
     )
+
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
@@ -410,13 +423,17 @@ def retry_hung_processor_jobs() -> None:
 
 @do_forever(MIN_LOOP_TIME)
 def retry_lost_processor_jobs() -> None:
-    """Retry processor jobs which never even got started for too long."""
+    """Retry processor jobs which never even got started for too long.
+
+    Ignores Janitor jobs since they are queued every half hour anyway."""
     potentially_lost_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
         start_time=None,
         end_time=None,
         no_retry=False
+    ).exclude(
+        pipeline_applied="JANITOR"
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
