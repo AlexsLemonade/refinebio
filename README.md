@@ -552,6 +552,11 @@ git push origin v1.1.4-dev
 We use semantic versioning for this project so the last number should correspond to bug fixes and patches, the second middle number should correspond to minor changes that don't break backwards compatibility, and the first number should correspond to major changes that break backwards compatibility.
 Please try to keep the `dev` and `master` versions in sync for major and minor versions so only the patch version gets out of sync between the two.
 
+#### WARNING:
+Once a commit has been merged into the `master` branch, do not try to use it for a staging deploy.
+We cannot actually tell that the tag originated in another branch as tagging is solely based on commits and commits can be part of multiple branches.
+This could result in your tag which was intended to trigger a staging deploy instead triggering a production deploy.
+
 ### Docker Images
 
 Refine.bio uses a number of different Docker images to run different pieces of the system.
