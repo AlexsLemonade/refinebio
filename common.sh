@@ -49,17 +49,16 @@ get_master_or_dev() {
 
     if [[ -z $version ]]; then
         echo "You must pass the version to get_master_or_dev."
-        exit
-    fi
-    master_check=$(git log --decorate=full | grep -e $version -e origin/master || true)
-    dev_check=$(git log --decorate=full | grep -e $version -e origin/dev || true)
-
-    if [[ ! -z $master_check ]]; then
-        echo "master"
-    elif [[ ! -z $dev_check ]]; then
-        echo "dev"
     else
-        echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"
-        exit
+        master_check=$(git log master --decorate=full | grep "$version" || true)
+        dev_check=$(git log dev --decorate=full | grep "$version" || true)
+
+        if [[ ! -z $master_check ]]; then
+            echo "master"
+        elif [[ ! -z $dev_check ]]; then
+            echo "dev"
+        else
+            echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"
+        fi
     fi
 }
