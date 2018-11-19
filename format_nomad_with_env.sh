@@ -203,7 +203,7 @@ export_log_conf (){
         # local/test can still run smasher jobs.
         export SMASHER_CONSTRAINT="
         constraint {
-          attribute = \"${meta.is_smasher}\"
+          attribute = \"\${meta.is_smasher}\"
           operator = \"=\"
           value = \"true\"
         }"
