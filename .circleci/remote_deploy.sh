@@ -68,7 +68,7 @@ run_on_deploy_box "source env_vars && echo -e '######\nFinished building new ima
 source ~/refinebio/common.sh
 
 # Circle won't set the branch name for us, so do it ourselves.
-branch=$(get_master_or_dev)
+branch=$(get_master_or_dev $CIRCLE_TAG)
 
 if [[ "$branch" == "master" ]]; then
     DOCKERHUB_REPO=ccdl
