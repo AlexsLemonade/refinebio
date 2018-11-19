@@ -61,7 +61,7 @@ echo "Building new images"
 run_on_deploy_box "sudo touch /var/log/docker_update_$CIRCLE_TAG.log"
 run_on_deploy_box "sudo chown ubuntu:ubuntu /var/log/docker_update_$CIRCLE_TAG.log"
 run_on_deploy_box "source env_vars && echo -e '######\nBuilding new images for $CIRCLE_TAG\n######'  &>> /var/log/docker_update_$CIRCLE_TAG.log 2>&1"
-run_on_deploy_box "source env_vars && bash .circleci/update_docker_img.sh >> /var/log/docker_update_$CIRCLE_TAG.log 2>&1"
+run_on_deploy_box "source env_vars && ./.circleci/update_docker_img.sh >> /var/log/docker_update_$CIRCLE_TAG.log 2>&1"
 run_on_deploy_box "source env_vars && echo -e '######\nFinished building new images for $CIRCLE_TAG\n######'  &>> /var/log/docker_update_$CIRCLE_TAG.log 2>&1"
 
 # Load docker_img_exists function and $ALL_CCDL_IMAGES
