@@ -1,3 +1,5 @@
+#!/bin/bash -e
+
 # Import Hashicorps' Key.
 curl https://keybase.io/hashicorp/pgp_keys.asc | gpg --import
 
@@ -70,6 +72,3 @@ fi
 
 # New deployment
 ./deploy.sh -e $ENVIRONMENT -v $CIRCLE_TAG -u circleci
-exit_code=$?
-
-exit $exit_code
