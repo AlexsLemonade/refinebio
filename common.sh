@@ -44,8 +44,15 @@ function docker_img_exists() {
 # can end up on multiple branches. So we first check to see if we're
 # on master, then on dev, then error out because we should only deploy master or dev.
 get_master_or_dev() {
-    master_check=$(git log --decorate=full | head -1 | grep origin/master || true)
-    dev_check=$(git log --decorate=full | head -1 | grep origin/dev || true)
+    # Takes the version that is being deployed as its only parameter
+    version=$1
+
+    if [[ -z $version ]]; then
+        echo "You must pass the version to get_master_or_dev."
+        exit
+    fi
+    master_check=$(git log --decorate=full | grep -e $version -e origin/master || true)
+    dev_check=$(git log --decorate=full | grep -e $version -e origin/dev || true)
 
     if [[ ! -z $master_check ]]; then
         echo "master"
@@ -53,6 +60,6 @@ get_master_or_dev() {
         echo "dev"
     else
         echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"
-        exit 1
+        exit
     fi
 }
