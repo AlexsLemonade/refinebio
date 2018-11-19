@@ -53,9 +53,10 @@ get_master_or_dev() {
         master_check=$(git log master --decorate=full | grep "$version" || true)
         dev_check=$(git log dev --decorate=full | grep "$version" || true)
 
-        if [[ ! -z $master_check ]]; then
+        # All dev versions should end with '-dev' and all master versions should not.
+        if [[ ! -z $master_check ]] && [[ $version != *-dev ]]; then
             echo "master"
-        elif [[ ! -z $dev_check ]]; then
+        elif [[ ! -z $dev_check ]] && [[ $version == *-dev ]]; then
             echo "dev"
         else
             echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"

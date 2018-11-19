@@ -524,6 +524,7 @@ how to change this to another project.
 Refine.bio requires an active, credentialed AWS account with appropriate permissions to create network infrastructure, users, compute instances and databases.
 
 Deploys are automated to run via CirlceCI whenever a signed tag starting with a `v` is pushed to either the `dev` or `master` branches (v as in version, i.e. v1.0.0).
+Tags intended to trigger a staging deploy MUST end with `-dev`, i.e. `v1.0.0-dev`.
 CircleCI runs a deploy on a dedicated AWS instance so that the Docker cache can be preserved between runs.
 Instructions for setting up that instance can be found in the infrastructure/deploy_box_instance_data.sh script.
 
@@ -551,11 +552,6 @@ git push origin v1.1.4-dev
 
 We use semantic versioning for this project so the last number should correspond to bug fixes and patches, the second middle number should correspond to minor changes that don't break backwards compatibility, and the first number should correspond to major changes that break backwards compatibility.
 Please try to keep the `dev` and `master` versions in sync for major and minor versions so only the patch version gets out of sync between the two.
-
-#### WARNING:
-Once a commit has been merged into the `master` branch, do not try to use it for a staging deploy.
-We cannot actually tell that the tag originated in another branch as tagging is solely based on commits and commits can be part of multiple branches.
-This could result in your tag which was intended to trigger a staging deploy instead triggering a production deploy.
 
 ### Docker Images
 
