@@ -1,8 +1,8 @@
 """Provides an interface to send messages to the Message Queue."""
 
+from __future__ import absolute_import, unicode_literals
 import nomad
 
-from __future__ import absolute_import, unicode_literals
 from django.conf import settings
 from enum import Enum
 from nomad.api.exceptions import URLNotFoundNomadException
