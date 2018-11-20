@@ -22,7 +22,6 @@ class UtilsTestCase(TestCase):
         # (By resetting the mocks, calling it again, and checking that
         # the values didn't need to be set again).
         mock_get.reset_mock()
-        mock_get_env_variable.reset_mock()
         utils.get_instance_id()
         mock_get.assert_not_called()
 
