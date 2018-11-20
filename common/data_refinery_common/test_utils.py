@@ -5,44 +5,39 @@ from data_refinery_common import utils
 
 class UtilsTestCase(TestCase):
 
-    @patch('data_refinery_common.utils.get_env_variable')
     @patch('data_refinery_common.utils.requests.get')
-    def test_get_instance_id_cloud(self, mock_get, mock_get_env_variable):
+    def test_get_instance_id_cloud(self, mock_get):
         """Test that a request is made and the global value is stored"""
         # Ensure utils.INSTANCE_ID hasn't been set yet in case the
         # order the tests are run in ever changes
         utils.INSTANCE_ID = None
         mock_get.return_value = Mock(ok=True)
         mock_get.return_value.text = "instance_id"
-        mock_get_env_variable.return_value = "True"
 
-        self.assertEqual(utils.get_instance_id(), "instance_id")
+
+        with self.settings(RUNNING_IN_CLOUD=True):
+            self.assertEqual(utils.get_instance_id(), "instance_id")
 
         # Ensure that the second call uses the now-set global value.
         # (By resetting the mocks, calling it again, and checking that
         # the values didn't need to be set again).
         mock_get.reset_mock()
-        mock_get_env_variable.reset_mock()
         utils.get_instance_id()
         mock_get.assert_not_called()
-        mock_get_env_variable.assert_not_called()
 
-    @patch('data_refinery_common.utils.get_env_variable')
-    def test_get_instance_id_local(self, mock_get_env_variable):
+    def test_get_instance_id_local(self):
         """Test that local is used for instance id."""
         # Ensure utils.INSTANCE_ID hasn't been set yet in case the
         # order the tests are run in ever changes
         utils.INSTANCE_ID = None
-        mock_get_env_variable.return_value = "False"
 
-        self.assertEqual(utils.get_instance_id(), "local")
+        with self.settings(RUNNING_IN_CLOUD=False):
+            self.assertEqual(utils.get_instance_id(), "local")
 
-        # Ensure that the second call uses the now-set global value.
-        # (By resetting the mocks, calling it again, and checking that
-        # the values didn't need to be set again).
-        mock_get_env_variable.reset_mock()
-        utils.get_instance_id()
-        mock_get_env_variable.assert_not_called()
+        # Ensure that the second call uses the now-set global value
+        # by changing what settings would tell it.
+        with self.settings(RUNNING_IN_CLOUD=True):
+            self.assertEqual(utils.get_instance_id(), "local")
 
     def test_supported_microarray_platforms(self):
         """Test that supported microarray platforms setting is set correctly."""
