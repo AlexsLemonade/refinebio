@@ -42,7 +42,7 @@ job "SURVEYOR_${{RAM}}" {
         RAVEN_DSN="${{RAVEN_DSN}}"
         RAVEN_DSN_API="${{RAVEN_DSN_API}}"
 
-        RUNNING_IN_CLOUD = "False"
+        RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
 
         USE_S3 = "${{USE_S3}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
