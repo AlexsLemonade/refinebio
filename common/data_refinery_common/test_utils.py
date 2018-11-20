@@ -11,6 +11,9 @@ class UtilsTestCase(TestCase):
         # Ensure utils.INSTANCE_ID hasn't been set yet in case the
         # order the tests are run in ever changes
         utils.INSTANCE_ID = None
+        mock_get.return_value = Mock(ok=True)
+        mock_get.return_value.text = "instance_id"
+
 
         with self.settings(RUNNING_IN_CLOUD=True):
             self.assertEqual(utils.get_instance_id(), "instance_id")
