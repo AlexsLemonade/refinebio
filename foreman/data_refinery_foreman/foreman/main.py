@@ -602,7 +602,7 @@ def retry_hung_survey_jobs() -> None:
             if job.nomad_job_id:
                 job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
             else:
-                job_status = "missing"
+                job_status = "absent"
 
             if job_status != "running":
                 # Make sure it didn't finish since our original query.
@@ -645,7 +645,7 @@ def retry_lost_survey_jobs() -> None:
             if job.nomad_job_id:
                 job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
             else:
-                job_status = "missing"
+                job_status = "absent"
 
             # If the job is still pending, then it makes sense that it
             # hasn't started and if it's running then it may not have
