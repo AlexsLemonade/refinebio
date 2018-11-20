@@ -294,6 +294,9 @@ else
     terraform apply -var-file=environments/$env.tfvars -auto-approve
 fi
 
+# Sleep for 2 minutes so the servers are available to connect to 
+sleep 120
+
 # We try to avoid rebuilding the API server because we can only run certbot
 # 5 times a week. Therefore we pull the newest image and restart the API
 # this way rather than by tainting the server like we do for foreman.
