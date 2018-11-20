@@ -290,10 +290,6 @@ def _zip_index(job_context: Dict) -> Dict:
     only be a single file along with compressing the size of the file
     during storage.
     """
-    # The zip file is only for storing in the cloud, so if we aren't
-    # in the cloud don't build it.
-    if not settings.RUNNING_IN_CLOUD:
-        return job_context
 
     try:
         with tarfile.open(job_context["computed_archive"], "w:gz") as tar:
