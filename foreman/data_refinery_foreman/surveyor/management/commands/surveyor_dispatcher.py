@@ -81,7 +81,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--file",
             type=str,
-            help=("""An file listing accession codes. s3:// URLs are also accepted."
+            help=("""A file listing accession codes. s3:// URLs are also accepted."
 
 Note: One entry per line, GSE* entries survey GEO, E-GEO-* entries survey ArrayExpress.
 """)
