@@ -543,6 +543,23 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
+
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_not_retrying_janitor_jobs(self, mock_send_job):
+        mock_send_job.return_value = True
+
+        job = self.create_processor_job(pipeline="JANITOR")
+        job.created_at = timezone.now() - (main.MIN_LOOP_TIME + timedelta(minutes=1))
+        job.save()
+
+        # Just run it once, not forever so get the function that is
+        # decorated with @do_forever
+        main.retry_lost_processor_jobs.__wrapped__()
+        self.assertEqual(len(mock_send_job.mock_calls), 0)
+
+        jobs = ProcessorJob.objects.order_by('id')
+        self.assertEqual(len(jobs), 1)
+
     def create_survey_job(self):
         job = SurveyJob(source_type="SRA",
                         nomad_job_id="SURVEYOR/dispatch-1528945054-e8eaf540",

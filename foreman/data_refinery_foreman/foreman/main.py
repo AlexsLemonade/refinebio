@@ -8,6 +8,7 @@ from threading import Thread
 from functools import wraps
 from retrying import retry
 from datetime import datetime, timedelta
+from django.conf import settings
 from django.utils import timezone
 from django.db import transaction
 from data_refinery_common.models import (
@@ -26,7 +27,6 @@ from data_refinery_common.utils import get_env_variable, get_env_variable_gracef
 
 
 logger = get_and_configure_logger(__name__)
-RUNNING_IN_CLOUD = get_env_variable_gracefully("RUNNING_IN_CLOUD", False)
 
 # Maximum number of retries, so the number of attempts will be one
 # greater than this because of the first attempt
@@ -362,8 +362,16 @@ def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
 
 @do_forever(MIN_LOOP_TIME)
 def retry_failed_processor_jobs() -> None:
-    """Handle processor jobs that were marked as a failure."""
-    failed_jobs = ProcessorJob.objects.filter(success=False, retried=False)
+    """Handle processor jobs that were marked as a failure.
+
+    Ignores Janitor jobs since they are queued every half hour anyway."""
+    failed_jobs = ProcessorJob.objects.filter(
+        success=False,
+        retried=False
+    ).exclude(
+        pipeline_applied="JANITOR"
+    )
+
     if failed_jobs:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) jobs!",
@@ -374,14 +382,19 @@ def retry_failed_processor_jobs() -> None:
 
 @do_forever(MIN_LOOP_TIME)
 def retry_hung_processor_jobs() -> None:
-    """Retry processor jobs that were started but never finished."""
+    """Retry processor jobs that were started but never finished.
+
+    Ignores Janitor jobs since they are queued every half hour anyway."""
     potentially_hung_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
         end_time=None,
         start_time__isnull=False,
-        no_retry=False
+        no_retry=False,
+    ).exclude(
+        pipeline_applied="JANITOR"
     )
+
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
@@ -410,13 +423,17 @@ def retry_hung_processor_jobs() -> None:
 
 @do_forever(MIN_LOOP_TIME)
 def retry_lost_processor_jobs() -> None:
-    """Retry processor jobs which never even got started for too long."""
+    """Retry processor jobs which never even got started for too long.
+
+    Ignores Janitor jobs since they are queued every half hour anyway."""
     potentially_lost_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
         start_time=None,
         end_time=None,
         no_retry=False
+    ).exclude(
+        pipeline_applied="JANITOR"
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -585,7 +602,7 @@ def retry_hung_survey_jobs() -> None:
             if job.nomad_job_id:
                 job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
             else:
-                job_status = "dead"
+                job_status = "absent"
 
             if job_status != "running":
                 # Make sure it didn't finish since our original query.
@@ -628,7 +645,7 @@ def retry_lost_survey_jobs() -> None:
             if job.nomad_job_id:
                 job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
             else:
-                job_status = "dead"
+                job_status = "absent"
 
             # If the job is still pending, then it makes sense that it
             # hasn't started and if it's running then it may not have
@@ -710,7 +727,7 @@ def monitor_jobs():
         logger.info("Thread started for monitoring function: %s", f.__name__)
 
     # This is only a concern when running at scale.
-    if RUNNING_IN_CLOUD:
+    if settings.RUNNING_IN_CLOUD:
         # We start the processor threads first so that we don't
         # accidentally queue too many downloader jobs and knock down our
         # source databases. They may take a while to run, and this
