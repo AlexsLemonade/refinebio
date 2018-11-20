@@ -5,6 +5,7 @@ import os
 import re
 import requests
 
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from retrying import retry
 
@@ -42,7 +43,7 @@ def get_instance_id() -> str:
     """Returns the AWS instance id where this is running or "local"."""
     global INSTANCE_ID
     if INSTANCE_ID is None:
-        if get_env_variable("RUNNING_IN_CLOUD") == "True":
+        if settings.RUNNING_IN_CLOUD:
             @retry(stop_max_attempt_number=3)
             def retrieve_instance_id():
                 return requests.get(os.path.join(METADATA_URL, "instance-id")).text
