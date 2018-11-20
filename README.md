@@ -527,6 +527,31 @@ Deploys are automated to run via CirlceCI whenever a signed tag starting with a 
 CircleCI runs a deploy on a dedicated AWS instance so that the Docker cache can be preserved between runs.
 Instructions for setting up that instance can be found in the infrastructure/deploy_box_instance_data.sh script.
 
+To trigger a new deploy, first see what tags already exist with `git tag --list`
+We have two different version counters, one for `dev` and one for `master` so a list including things like:
+* v1.1.2
+* v1.1.2-dev
+* v1.1.3
+* v1.1.3-dev
+
+
+However you may see that the `dev` counter is way ahead, because we often need more than one staging deploy to be ready for a production deploy.
+This is okay, just find the latest version of the type you want to deploy and increment that to get your version.
+For example, if you wanted to deploy to staging and the above versions were the largest that `git tag --list` output, you would increment `v1.1.3-dev` to get `v1.1.4-dev`.
+
+Once you know which version you want to deploy, say `v1.1.4-dev`, you can trigger the deploy with these commands:
+```bash
+git checkout dev
+git pull origin dev
+git tag -s v1.1.4-dev
+git push origin v1.1.4-dev
+```
+
+`git tag -s v1.1.4-dev` will prompt you to write a tag message; please try to make it descriptive.
+
+We use semantic versioning for this project so the last number should correspond to bug fixes and patches, the second middle number should correspond to minor changes that don't break backwards compatibility, and the first number should correspond to major changes that break backwards compatibility.
+Please try to keep the `dev` and `master` versions in sync for major and minor versions so only the patch version gets out of sync between the two.
+
 ### Docker Images
 
 Refine.bio uses a number of different Docker images to run different pieces of the system.

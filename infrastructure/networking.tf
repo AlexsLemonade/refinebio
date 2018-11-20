@@ -174,6 +174,11 @@ locals {
 # this since we're using cloudfront. The cert for the API is created
 # an installed by certbot.
 resource "aws_acm_certificate" "ssl-cert" {
+  # We don't need this resource for dev stacks.
+  # Apparently `count` is the officially recommended way to conditionally enable or disable a resource:
+  # https://github.com/hashicorp/terraform/issues/1604#issuecomment-266070770
+  count = "${var.stage == "dev" ? 0 : 1}"
+
   domain_name = "${ var.stage == "prod" ? "www." : local.stage_with_dot }refine.bio"
   validation_method = "DNS"
 
@@ -183,11 +188,21 @@ resource "aws_acm_certificate" "ssl-cert" {
 }
 
 resource "aws_acm_certificate_validation" "ssl-cert" {
+  # We don't need this resource for dev stacks.
+  # Apparently `count` is the officially recommended way to conditionally enable or disable a resource:
+  # https://github.com/hashicorp/terraform/issues/1604#issuecomment-266070770
+  count = "${var.stage == "dev" ? 0 : 1}"
+
   certificate_arn = "${aws_acm_certificate.ssl-cert.arn}"
 }
 
 resource "aws_cloudfront_distribution" "static-distribution" {
-  aliases = ["${var.static_bucket_prefix == "dev" ? var.user : var.static_bucket_prefix}${var.static_bucket_root}"]
+  # We don't need this resource for dev stacks.
+  # Apparently `count` is the officially recommended way to conditionally enable or disable a resource:
+  # https://github.com/hashicorp/terraform/issues/1604#issuecomment-266070770
+  count = "${var.stage == "dev" ? 0 : 1}"
+
+  aliases = ["${aws_acm_certificate.ssl-cert.domain_name}"]
 
   origin {
     domain_name = "${aws_s3_bucket.data-refinery-static.website_endpoint}"

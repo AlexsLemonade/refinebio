@@ -198,8 +198,18 @@ export_log_conf (){
             awslogs-stream = \"log-stream-$1-docker-$USER-$STAGE\"
           }
         }"
+
+        # Only constrain smasher jobs in the cloud so that
+        # local/test can still run smasher jobs.
+        export SMASHER_CONSTRAINT="
+        constraint {
+          attribute = \"\${meta.is_smasher}\"
+          operator = \"=\"
+          value = \"true\"
+        }"
     else
         export LOGGING_CONFIG=""
+        export SMASHER_CONSTRAINT=""
     fi
 }
 

@@ -1,5 +1,5 @@
-# This is a Nomad Configuration file for client instances.
-# I.e. the instances that actually run Nomad jobs.
+# This is a Nomad Configuration file for an instance dedicated to
+# running smasher jobs.
 
 log_level = "WARN"
 
@@ -12,8 +12,7 @@ client {
     servers = ["${nomad_lead_server_ip}:4647"]
 
     meta {
-      volume_index = "REPLACE_ME"
-      is_smasher = "false"
+      is_smasher = "true"
     }
 }
 
