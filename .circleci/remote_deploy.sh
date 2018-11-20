@@ -26,6 +26,7 @@ chmod 600 infrastructure/data-refinery-key.pem
 
 run_on_deploy_box () {
     ssh -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
         -i infrastructure/data-refinery-key.pem \
         ubuntu@"${DEPLOY_IP_ADDRESS}" "cd refinebio && $1"
 }
