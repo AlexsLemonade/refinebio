@@ -162,7 +162,7 @@ variable "api_instance_type" {
 }
 
 variable "foreman_instance_type" {
-  default = "t2.micro"
+  default = "m5.large"
 }
 
 variable "volume_size_in_gb" {
