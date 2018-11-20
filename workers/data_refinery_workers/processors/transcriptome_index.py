@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import tarfile
 
+from django.conf import settings
 from django.utils import timezone
 from typing import Dict
 
@@ -27,7 +28,6 @@ JOB_DIR_PREFIX = "processor_job_"
 GENE_TO_TRANSCRIPT_TEMPLATE = "{gene_id}\t{transcript_id}\n"
 GENE_TYPE_COLUMN = 2
 S3_TRANSCRIPTOME_INDEX_BUCKET_NAME = get_env_variable_gracefully("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", False)
-RUNNING_IN_CLOUD = get_env_variable_gracefully("RUNNING_IN_CLOUD", False)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 # Removes each occurrance of ; and "
 IDS_CLEANUP_TABLE = str.maketrans({";": None, "\"": None})
@@ -290,10 +290,6 @@ def _zip_index(job_context: Dict) -> Dict:
     only be a single file along with compressing the size of the file
     during storage.
     """
-    # The zip file is only for storing in the cloud, so if we aren't
-    # in the cloud don't build it.
-    if not RUNNING_IN_CLOUD:
-        return job_context
 
     try:
         with tarfile.open(job_context["computed_archive"], "w:gz") as tar:

@@ -8,6 +8,7 @@ from threading import Thread
 from functools import wraps
 from retrying import retry
 from datetime import datetime, timedelta
+from django.conf import settings
 from django.utils import timezone
 from django.db import transaction
 from data_refinery_common.models import (
@@ -26,11 +27,13 @@ from data_refinery_common.utils import get_env_variable, get_env_variable_gracef
 
 
 logger = get_and_configure_logger(__name__)
-RUNNING_IN_CLOUD = get_env_variable_gracefully("RUNNING_IN_CLOUD", False)
 
 # Maximum number of retries, so the number of attempts will be one
 # greater than this because of the first attempt
 MAX_NUM_RETRIES = 2
+
+# This can be overritten by the env var "MAX_TOTAL_JOBS"
+DEFAULT_MAX_JOBS = 10000
 
 # The fastest each thread will repeat its checks.
 # Could be slower if the thread takes longer than this to check its jobs.
@@ -121,7 +124,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
                 last_job.id,
                 new_job.id)
     try:
-        if send_job(Downloaders[last_job.downloader_task], new_job):
+        if send_job(Downloaders[last_job.downloader_task], job=new_job, is_dispatch=True):
             last_job.retried = True
             last_job.success = False
             last_job.retried_job = new_job
@@ -139,12 +142,34 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
 
 def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
     """For each job in jobs, either retry it or log it."""
-    for job in jobs:
+
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+    # Maximum number of total jobs running at a time.
+    # We do this now rather than import time for testing purposes.
+    MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
+    len_all_jobs = len(nomad_client.jobs.get_jobs())
+    if len_all_jobs >= MAX_TOTAL_JOBS:
+        logger.info("Not requeuing job until we're running fewer jobs.")
+        return False
+
+    jobs_dispatched = 0
+    for count, job in enumerate(jobs):
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_downloader_job(job)
+            jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
 
+        if (count % 100) == 0:
+            len_all_jobs = len(nomad_client.jobs.get_jobs())
+
+        if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
+            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more downloader jobs now.")
+            return False
+
+    return True
 
 @do_forever(MIN_LOOP_TIME)
 def retry_failed_downloader_jobs() -> None:
@@ -166,7 +191,7 @@ def retry_hung_downloader_jobs() -> None:
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     hung_jobs = []
     for job in potentially_hung_jobs:
         try:
@@ -205,7 +230,7 @@ def retry_lost_downloader_jobs() -> None:
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     lost_jobs = []
     for job in potentially_lost_jobs:
         try:
@@ -288,7 +313,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
         logger.info("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",
                     last_job.id,
                     new_job.id)
-        if send_job(ProcessorPipeline[last_job.pipeline_applied], new_job):
+        if send_job(ProcessorPipeline[last_job.pipeline_applied], job=new_job, is_dispatch=True):
             last_job.retried = True
             last_job.success = False
             last_job.retried_job = new_job
@@ -306,17 +331,47 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
 
 def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
     """For each job in jobs, either retry it or log it."""
-    for job in jobs:
+
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+    # Maximum number of total jobs running at a time.
+    # We do this now rather than import time for testing purposes.
+    MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
+    len_all_jobs = len(nomad_client.jobs.get_jobs())
+    if len_all_jobs >= MAX_TOTAL_JOBS:
+        logger.info("Not requeuing job until we're running fewer jobs.")
+        return False
+
+    jobs_dispatched = 0
+    for count, job in enumerate(jobs):
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_processor_job(job)
+            jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
 
+        if (count % 100) == 0:
+            len_all_jobs = len(nomad_client.jobs.get_jobs())
+
+        if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
+            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more processor jobs now.")
+            return False
+
+    return True
 
 @do_forever(MIN_LOOP_TIME)
 def retry_failed_processor_jobs() -> None:
-    """Handle processor jobs that were marked as a failure."""
-    failed_jobs = ProcessorJob.objects.filter(success=False, retried=False)
+    """Handle processor jobs that were marked as a failure.
+
+    Ignores Janitor jobs since they are queued every half hour anyway."""
+    failed_jobs = ProcessorJob.objects.filter(
+        success=False,
+        retried=False
+    ).exclude(
+        pipeline_applied="JANITOR"
+    )
+
     if failed_jobs:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) jobs!",
@@ -327,18 +382,23 @@ def retry_failed_processor_jobs() -> None:
 
 @do_forever(MIN_LOOP_TIME)
 def retry_hung_processor_jobs() -> None:
-    """Retry processor jobs that were started but never finished."""
+    """Retry processor jobs that were started but never finished.
+
+    Ignores Janitor jobs since they are queued every half hour anyway."""
     potentially_hung_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
         end_time=None,
         start_time__isnull=False,
-        no_retry=False
+        no_retry=False,
+    ).exclude(
+        pipeline_applied="JANITOR"
     )
+
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     hung_jobs = []
     for job in potentially_hung_jobs:
         try:
@@ -363,13 +423,17 @@ def retry_hung_processor_jobs() -> None:
 
 @do_forever(MIN_LOOP_TIME)
 def retry_lost_processor_jobs() -> None:
-    """Retry processor jobs which never even got started for too long."""
+    """Retry processor jobs which never even got started for too long.
+
+    Ignores Janitor jobs since they are queued every half hour anyway."""
     potentially_lost_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
         start_time=None,
         end_time=None,
         no_retry=False
+    ).exclude(
+        pipeline_applied="JANITOR"
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -425,6 +489,8 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
     The new survey job will have num_retries one greater than
     last_job.num_retries.
     """
+
+    lost_jobs = []
     num_retries = last_job.num_retries + 1
 
     new_job = SurveyJob(num_retries=num_retries,
@@ -453,7 +519,7 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
                 new_job.id)
 
     try:
-        if send_job(SurveyJobTypes.SURVEYOR, new_job):
+        if send_job(SurveyJobTypes.SURVEYOR, job=new_job, is_dispatch=True):
             last_job.retried = True
             last_job.success = False
             last_job.retried_job = new_job
@@ -468,20 +534,44 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
         # Can't communicate with nomad just now, leave the job for a later loop.
         new_job.delete()
 
+    return True
+
 
 def handle_survey_jobs(jobs: List[SurveyJob]) -> None:
     """For each job in jobs, either retry it or log it."""
-    for job in jobs:
+
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+    # Maximum number of total jobs running at a time.
+    # We do this now rather than import time for testing purposes.
+    MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
+    len_all_jobs = len(nomad_client.jobs.get_jobs())
+    if len_all_jobs >= MAX_TOTAL_JOBS:
+        logger.info("Not requeuing job until we're running fewer jobs.")
+        return False
+
+    jobs_dispatched = 0
+    for count, job in enumerate(jobs):
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_survey_job(job)
+            jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
 
+        if (count % 100) == 0:
+            len_all_jobs = len(nomad_client.jobs.get_jobs())
+
+        if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
+            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more survey jobs now.")
+            return False
+
+    return True
 
 @do_forever(MIN_LOOP_TIME)
 def retry_failed_survey_jobs() -> None:
     """Handle survey jobs that were marked as a failure."""
-    failed_jobs = SurveyJob.objects.filter(success=False, retried=False)
+    failed_jobs = SurveyJob.objects.filter(success=False, retried=False).order_by('pk')
     if failed_jobs:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) jobs!",
@@ -499,11 +589,11 @@ def retry_hung_survey_jobs() -> None:
         end_time=None,
         start_time__isnull=False,
         no_retry=False
-    )
+    ).order_by('pk')
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     hung_jobs = []
     for job in potentially_hung_jobs:
         try:
@@ -512,7 +602,7 @@ def retry_hung_survey_jobs() -> None:
             if job.nomad_job_id:
                 job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
             else:
-                job_status = "dead"
+                job_status = "absent"
 
             if job_status != "running":
                 # Make sure it didn't finish since our original query.
@@ -541,12 +631,13 @@ def retry_lost_survey_jobs() -> None:
         start_time=None,
         end_time=None,
         no_retry=False
-    )
+    ).order_by('pk')
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     lost_jobs = []
+
     for job in potentially_lost_jobs:
         try:
             # Surveyor jobs didn't always have nomad_job_ids. If they
@@ -554,7 +645,7 @@ def retry_lost_survey_jobs() -> None:
             if job.nomad_job_id:
                 job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
             else:
-                job_status = "dead"
+                job_status = "absent"
 
             # If the job is still pending, then it makes sense that it
             # hasn't started and if it's running then it may not have
@@ -583,7 +674,7 @@ def retry_lost_survey_jobs() -> None:
         handle_survey_jobs(lost_jobs)
 
 ##
-# Main loop
+# Janitor
 ##
 
 @do_forever(JANITOR_DISPATCH_TIME)
@@ -605,11 +696,14 @@ def send_janitor_jobs():
             index=actual_index
         )
         try:
-            send_job(ProcessorPipeline["JANITOR"], new_job)
+            send_job(ProcessorPipeline["JANITOR"], job=new_job, is_dispatch=True)
         except Exception as e:
             # If we can't dispatch this job, something else has gone wrong.
             continue
 
+##
+# Main loop
+##
 
 def monitor_jobs():
     """Runs a thread for each job monitoring loop."""
@@ -633,7 +727,7 @@ def monitor_jobs():
         logger.info("Thread started for monitoring function: %s", f.__name__)
 
     # This is only a concern when running at scale.
-    if RUNNING_IN_CLOUD:
+    if settings.RUNNING_IN_CLOUD:
         # We start the processor threads first so that we don't
         # accidentally queue too many downloader jobs and knock down our
         # source databases. They may take a while to run, and this

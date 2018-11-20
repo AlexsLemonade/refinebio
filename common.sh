@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# These are lists of docker images that we use. The actual names end
+# up being <DOCKERHUB_REPO>/dr_<IMAGE_NAME> but this is useful for scripting.
+export ALL_CCDL_IMAGES="smasher illumina affymetrix salmon transcriptome no_op downloaders foreman api"
+# Sometimes we only want to work with the worker images.
+export CCDL_WORKER_IMAGES="smasher illumina affymetrix salmon transcriptome no_op downloaders"
+
 get_ip_address () {
     if [ `uname` == "Linux" ]; then
         echo $(ip route get 8.8.8.8 | grep -oE 'src ([0-9]{1,3}\.){3}[0-9]{1,3}' | awk '{print $2; exit}')

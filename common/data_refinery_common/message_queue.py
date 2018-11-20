@@ -1,10 +1,13 @@
 """Provides an interface to send messages to the Message Queue."""
 
 from __future__ import absolute_import, unicode_literals
-from enum import Enum
 import nomad
+
+from django.conf import settings
+from enum import Enum
 from nomad.api.exceptions import URLNotFoundNomadException
-from data_refinery_common.utils import get_env_variable, get_volume_index
+
+from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully, get_volume_index
 from data_refinery_common.models import ProcessorJob, SurveyJob
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders, SurveyJobTypes
 from data_refinery_common.logging import get_and_configure_logger
@@ -19,7 +22,7 @@ NOMAD_DOWNLOADER_JOB = "DOWNLOADER"
 NONE_JOB_ERROR_TEMPLATE = "send_job was called with NONE job_type: {} for {} job {}"
 
 
-def send_job(job_type: Enum, job) -> bool:
+def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
     """Queues a worker job by sending a Nomad Job dispatch message.
 
     job_type must be a valid Enum for ProcessorPipelines or
@@ -32,6 +35,7 @@ def send_job(job_type: Enum, job) -> bool:
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
 
+    is_processor = True
     if job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_LONG \
        or job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_SHORT:
         nomad_job = NOMAD_TRANSCRIPTOME_JOB
@@ -60,16 +64,18 @@ def send_job(job_type: Enum, job) -> bool:
     elif job_type is ProcessorPipeline.AGILENT_TWOCOLOR_TO_PCL:
         # Agilent twocolor uses the same job specification as Affy.
         nomad_job = ProcessorPipeline.AFFY_TO_PCL.value
+    elif job_type in list(Downloaders):
+        nomad_job = NOMAD_DOWNLOADER_JOB
+        is_processor = False
+    elif job_type in list(SurveyJobTypes):
+        nomad_job = job_type.value
+        is_processor = False
     elif job_type is Downloaders.NONE:
         logger.warn("Not queuing %s job.", job_type, job_id=job_id)
         raise ValueError(NONE_JOB_ERROR_TEMPLATE.format(job_type.value, "Downloader", job_id))
     elif job_type is ProcessorPipeline.NONE:
         logger.warn("Not queuing %s job.", job_type, job_id=job_id)
         raise ValueError(NONE_JOB_ERROR_TEMPLATE.format(job_type.value, "Processor", job_id))
-    elif job_type in list(Downloaders):
-        nomad_job = NOMAD_DOWNLOADER_JOB
-    elif job_type in list(SurveyJobTypes):
-        nomad_job = job_type.value
     else:
         raise ValueError("Invalid job_type: {}".format(job_type.value))
 
@@ -93,20 +99,27 @@ def send_job(job_type: Enum, job) -> bool:
     elif isinstance(job, SurveyJob):
         nomad_job = nomad_job + "_" + str(job.ram_amount)
 
-    try:
-        nomad_response = nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,
-                                                                        "JOB_ID": str(job.id)})
-        job.nomad_job_id = nomad_response["DispatchedJobID"]
+    # We only want to dispatch processor jobs directly.
+    # Everything else will be handled by the Foreman, which will increment the retry counter.
+    if is_processor or is_dispatch or (not settings.RUNNING_IN_CLOUD):
+        try:
+            nomad_response = nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,
+                                                                            "JOB_ID": str(job.id)})
+            job.nomad_job_id = nomad_response["DispatchedJobID"]
+            job.save()
+            return True
+        except URLNotFoundNomadException:
+            logger.error("Dispatching Nomad job of type %s for job spec %s to host %s and port %s failed.",
+                         job_type, nomad_job, nomad_host, nomad_port, job=str(job.id))
+            return False
+        except Exception as e:
+            logger.exception('Unable to Dispatch Nomad Job.',
+                job_name=job_type.value,
+                job_id=str(job.id),
+                reason=str(e)
+            )
+            raise
+    else:
+        job.num_retries = job.num_retries - 1
         job.save()
-        return True
-    except URLNotFoundNomadException:
-        logger.error("Dispatching Nomad job of type %s for job spec %s to host %s and port %s failed.",
-                     job_type, nomad_job, nomad_host, nomad_port, job=str(job.id))
-        return False
-    except Exception as e:
-        logger.exception('Unable to Dispatch Nomad Job.',
-            job_name=job_type.value,
-            job_id=str(job.id),
-            reason=str(e)
-        )
-        raise
+    return True
