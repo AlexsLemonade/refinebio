@@ -271,6 +271,16 @@ mkdir -p nomad-job-specs
 # Don't leave secrets lying around!
 rm -f prod_env
 
+# Wait for Nomad to get started.
+## A maximum of 10 minutes, since if a deploy necessitates new nomad
+## servers they can take a bit to come up.
+END_SECONDS=$(($SECONDS+600))
+nomad_status=$(check_nomad_status)
+while [ $nomad_status != "200" ] && [ $SECONDS -lt $END_SECONDS ]; do
+    sleep 1
+    nomad_status=$(check_nomad_status)
+done
+
 # Re-register Nomad jobs.
 echo "Registering new job specifications.."
 nomad_job_specs=nomad-job-specs/*

@@ -109,18 +109,11 @@ if [[ -z $(docker ps | grep "image-registry") ]]; then
     docker run -d -p 5000:5000 --restart=always --name image-registry registry:2
 fi
 
-# This function checks what the status of the Nomad agent is.
-# Returns an HTTP response code. i.e. 200 means everything is ok.
-check_nomad_status () {
-    echo $(curl --write-out %{http_code} \
-                  --silent \
-                  --output /dev/null \
-                  $NOMAD_ADDR/v1/status/leader)
-}
-
 # Wait for Nomad to get started.
+## A maximum of 1 minute, since it shouldn't take longer than that.
+END_SECONDS=$(($SECONDS+60))
 nomad_status=$(check_nomad_status)
-while [ $nomad_status != "200" ]; do
+while [ $nomad_status != "200" ] && [ $SECONDS -lt $END_SECONDS ]; do
     sleep 1
     nomad_status=$(check_nomad_status)
 done

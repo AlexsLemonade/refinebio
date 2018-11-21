@@ -56,3 +56,12 @@ get_master_or_dev() {
         exit 1
     fi
 }
+
+# This function checks what the status of the Nomad agent is.
+# Returns an HTTP response code. i.e. 200 means everything is ok.
+check_nomad_status () {
+    echo $(curl --write-out %{http_code} \
+                  --silent \
+                  --output /dev/null \
+                  $NOMAD_ADDR/v1/status/leader)
+}
