@@ -33,7 +33,7 @@ logger = get_and_configure_logger(__name__)
 MAX_NUM_RETRIES = 2
 
 # This can be overritten by the env var "MAX_TOTAL_JOBS"
-DEFAULT_MAX_JOBS = 10000
+DEFAULT_MAX_JOBS = 20000
 
 # The fastest each thread will repeat its checks.
 # Could be slower if the thread takes longer than this to check its jobs.
