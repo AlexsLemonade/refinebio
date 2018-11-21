@@ -120,9 +120,9 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
         DownloaderJobOriginalFileAssociation.objects.get_or_create(downloader_job=new_job,
                                                            original_file=original_file)
 
-    logger.info("Requeuing Downloader Job which had ID %d with a new Downloader Job with ID %d.",
-                last_job.id,
-                new_job.id)
+    logger.debug("Requeuing Downloader Job which had ID %d with a new Downloader Job with ID %d.",
+                 last_job.id,
+                 new_job.id)
     try:
         if send_job(Downloaders[last_job.downloader_task], job=new_job, is_dispatch=True):
             last_job.retried = True
@@ -240,10 +240,10 @@ def retry_lost_downloader_jobs() -> None:
                 # hasn't started and if it's running then it may not have
                 # been able to mark the job record as started yet.
                 if job_status != "pending" and job_status != "running":
-                    logger.info(("Determined that a downloader job needs to be requeued because its"
-                                 " Nomad Job's status is: %s."),
-                                job_status,
-                                job_id=job.id
+                    logger.debug(("Determined that a downloader job needs to be requeued because its"
+                                  " Nomad Job's status is: %s."),
+                                 job_status,
+                                 job_id=job.id
                     )
                     lost_jobs.append(job)
             else:
@@ -258,7 +258,7 @@ def retry_lost_downloader_jobs() -> None:
         except nomad.api.exceptions.BaseNomadException:
             logger.info("Problem connecting to Nomad - is Nomad down?", job_id=job.id)
         except URLNotFoundNomadException:
-            logger.info(("Determined that a downloader job needs to be requeued because "
+            logger.debug(("Determined that a downloader job needs to be requeued because "
                               "querying for its Nomad job failed: "),
                              job_id=job.id
             )
@@ -310,9 +310,9 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
                                                      dataset=dataset)
 
     try:
-        logger.info("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",
-                    last_job.id,
-                    new_job.id)
+        logger.debug("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",
+                     last_job.id,
+                     new_job.id)
         if send_job(ProcessorPipeline[last_job.pipeline_applied], job=new_job, is_dispatch=True):
             last_job.retried = True
             last_job.success = False
@@ -448,10 +448,10 @@ def retry_lost_processor_jobs() -> None:
                 # hasn't started and if it's running then it may not have
                 # been able to mark the job record as started yet.
                 if job_status != "pending" and job_status != "running":
-                    logger.info(("Determined that a processor job needs to be requeued because its"
-                                 " Nomad Job's status is: %s."),
-                                job_status,
-                                job_id=job.id
+                    logger.debug(("Determined that a processor job needs to be requeued because its"
+                                  " Nomad Job's status is: %s."),
+                                 job_status,
+                                 job_id=job.id
                     )
                     lost_jobs.append(job)
             else:
@@ -514,9 +514,9 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
                                                 value=keyvalue.value,
                                             )
 
-    logger.info("Requeuing SurveyJob which had ID %d with a new SurveyJob with ID %d.",
-                last_job.id,
-                new_job.id)
+    logger.debug("Requeuing SurveyJob which had ID %d with a new SurveyJob with ID %d.",
+                 last_job.id,
+                 new_job.id)
 
     try:
         if send_job(SurveyJobTypes.SURVEYOR, job=new_job, is_dispatch=True):
@@ -651,16 +651,16 @@ def retry_lost_survey_jobs() -> None:
             # hasn't started and if it's running then it may not have
             # been able to mark the job record as started yet.
             if job_status != "pending" and job_status != "running":
-                logger.info(("Determined that a survey job needs to be requeued because its"
+                logger.debug(("Determined that a survey job needs to be requeued because its"
                              " Nomad Job's status is: %s."),
                             job_status,
                             job_id=job.id
                 )
                 lost_jobs.append(job)
         except URLNotFoundNomadException:
-            logger.exception(("Determined that a survey job needs to be requeued because "
-                              "querying for its Nomad job failed: "),
-                             job_id=job.id
+            logger.debug(("Determined that a survey job needs to be requeued because "
+                          "querying for its Nomad job failed."),
+                         job_id=job.id
             )
             lost_jobs.append(job)
         except Exception:
