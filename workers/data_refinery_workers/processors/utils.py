@@ -7,6 +7,7 @@ import subprocess
 import sys
 import yaml
 
+from django.conf import settings
 from django.utils import timezone
 from enum import Enum, unique
 from typing import List, Dict, Callable
@@ -32,7 +33,6 @@ logger = get_and_configure_logger(__name__)
 # Let this fail if SYSTEM_VERSION is unset.
 SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
-RUNNING_IN_CLOUD = get_env_variable_gracefully("RUNNING_IN_CLOUD", "False")
 DIRNAME = os.path.dirname(os.path.abspath(__file__))
 CURRENT_JOB = None
 
@@ -212,7 +212,7 @@ def end_job(job_context: Dict, abort=False):
         if len(pipeline.steps):
             pipeline.save()
 
-    if "work_dir" in job_context and RUNNING_IN_CLOUD == "True":
+    if "work_dir" in job_context and settings.RUNNING_IN_CLOUD:
         shutil.rmtree(job_context["work_dir"], ignore_errors=True)
 
     job.success = success
