@@ -16,7 +16,7 @@
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get upgrade -y
-apt-get install --yes jq iotop dstat speedometer awscli docker.io chrony
+apt-get install --yes jq iotop dstat speedometer awscli docker.io chrony htop
 
 ulimit -n 65536
 
