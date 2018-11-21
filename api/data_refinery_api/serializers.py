@@ -146,36 +146,6 @@ class SampleSerializer(serializers.ModelSerializer):
                     'last_modified',
                 )
 
-class SearchSampleSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Sample
-        fields = (
-                    'id',
-                    'title',
-                    'accession_code',
-                    'source_database',
-                    'platform_accession_code',
-                    'platform_name',
-                    'pretty_platform',
-                    'technology',
-                    'sex',
-                    'age',
-                    'specimen_part',
-                    'genotype',
-                    'disease',
-                    'disease_stage',
-                    'cell_line',
-                    'treatment',
-                    'race',
-                    'subject',
-                    'compound',
-                    'time',
-                    'is_processed',
-                    'created_at',
-                    'last_modified',
-                )
-
 class SampleAnnotationSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -291,9 +261,21 @@ class ExperimentAnnotationSerializer(serializers.ModelSerializer):
                     'last_modified',
                 )
 
+class DetailedExperimentSampleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Sample
+        fields = (
+                    'accession_code',
+                    'platform_name',
+                    'pretty_platform',
+                    'technology',
+                    'is_processed',
+                )
+
 class DetailedExperimentSerializer(serializers.ModelSerializer):
     annotations = ExperimentAnnotationSerializer(many=True, source='experimentannotation_set')
-    samples = SampleSerializer(many=True)
+    samples = DetailedExperimentSampleSerializer(many=True)
     organisms = OrganismSerializer(many=True)
     sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
 
