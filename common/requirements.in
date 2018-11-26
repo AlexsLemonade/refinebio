@@ -5,5 +5,5 @@ boto3
 requests>=2.20.0
 retrying
 daiquiri
-python-nomad
+python-nomad>=1.0.2
 raven

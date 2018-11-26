@@ -16,7 +16,7 @@ idna==2.7                 # via requests
 jmespath==0.9.3           # via boto3, botocore
 psycopg2-binary==2.7.5
 python-dateutil==2.7.3    # via botocore
-python-nomad==0.9.0
+python-nomad==1.0.2
 pytz==2018.5              # via django
 raven==6.9.0
 requests==2.20.0
