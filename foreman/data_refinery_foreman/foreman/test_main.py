@@ -859,7 +859,7 @@ class ForemanTestCase(TestCase):
     @patch('data_refinery_foreman.foreman.main.send_job')
     def test_janitor(self, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
-        mock_send_job.return_value = {"1", "2", "3"}
+        mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         for p in ["1", "2", "3"]:
             pj = ProcessorJob()
