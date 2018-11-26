@@ -34,7 +34,7 @@ pandas==0.23.4
 psycopg2-binary==2.7.5
 pyparsing==2.2.2          # via matplotlib
 python-dateutil==2.7.3    # via botocore, matplotlib, pandas
-python-nomad==0.9.0
+python-nomad==1.0.2
 pytz==2018.5              # via django, pandas
 pyyaml==3.13              # via multiqc
 requests==2.20.0
