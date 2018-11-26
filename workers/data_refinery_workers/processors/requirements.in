@@ -3,7 +3,7 @@ requests>=2.20.0
 psycopg2-binary
 boto3
 retrying
-python-nomad
+python-nomad>=1.0.2
 coveralls
 multiqc
 numpy
