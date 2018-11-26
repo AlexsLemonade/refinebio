@@ -19,6 +19,9 @@ EOF
 
 # These database values are created after TF
 # is run, so we have to pass them in programatically
+echo "
+docker kill $(docker ps -q)
+sleep 120
 docker run \
        --env-file environment \
        -e DATABASE_HOST=${database_host} \
@@ -31,7 +34,35 @@ docker run \
        --log-opt awslogs-group=${log_group} \
        --log-opt awslogs-stream=log-stream-foreman-${user}-${stage} \
        -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py retry_jobs
+" >> /home/ubuntu/run_foreman.sh
+chmod +x /home/ubuntu/run_foreman.sh
+/home/ubuntu/run_foreman.sh
 
+# Start the Nomad agent in server mode via Monit
+apt-get -y install monit htop
+
+echo '
+#!/bin/sh
+lasttime=$(</tmp/foreman_last)
+nowtime=`date +%s`
+let "difftime=$nowtime-$lasttime"
+if [difftime -gt 600]:
+then
+  exit 1;
+fi
+exit 0;
+' >> /home/ubuntu/foreman_status.sh
+chmod +x /home/ubuntu/foreman_status.sh
+
+echo '
+check program foreman with path "/bin/bash /home/ubuntu/foreman_status.sh" as uid 0 and with gid 0
+    start program = "/home/ubuntu/run_foreman.sh" as uid 0 and with gid 0
+    if status != 0
+        then restart
+set daemon 300
+' >> /etc/monit/monitrc
+
+service monit restart
 
 # Delete the cloudinit and syslog in production.
 export STAGE=${stage}
