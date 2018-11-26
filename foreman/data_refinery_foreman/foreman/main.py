@@ -757,6 +757,12 @@ def monitor_jobs():
 
     # Make sure that no threads die quietly.
     while(True):
+
+        # Write the health file for Monit to check
+        now_secs = int(time.time())
+        with open('/tmp/foreman_last_time', 'w') as timefile:
+            timefile.write(now_secs)
+
         start_time = timezone.now()
 
         for thread in threads:
@@ -769,7 +775,3 @@ def monitor_jobs():
             time.sleep(remaining_time.seconds)
 
         logger.info("The Foreman's heart is beating, but he does not feel.")
-
-        now_secs = int(time.time())
-        with open('/tmp/foreman_last', 'w') as timefile:
-            timefile.write(now_secs)
