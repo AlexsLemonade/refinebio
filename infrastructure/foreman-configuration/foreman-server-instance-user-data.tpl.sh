@@ -41,13 +41,13 @@ chmod +x /home/ubuntu/run_foreman.sh
 # Start the Nomad agent in server mode via Monit
 apt-get -y install monit htop
 
+date +%s > /tmp/foreman_last_time
 echo '
 #!/bin/sh
-lasttime=$(</tmp/foreman_last)
-nowtime=`date +%s`
-let "difftime=$nowtime-$lasttime"
-if [difftime -gt 600]:
-then
+lasttime=$(</tmp/foreman_last_time);
+nowtime=`date +%s`;
+((difftime = $nowtime - $lasttime));
+if (( $difftime > 1800 )); then
   exit 1;
 fi
 exit 0;
