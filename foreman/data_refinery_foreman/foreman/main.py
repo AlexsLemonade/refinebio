@@ -3,7 +3,7 @@ import socket
 import time
 from nomad import Nomad
 from nomad.api.exceptions import URLNotFoundNomadException
-from typing import Callable, List
+from typing import Callable, List, Set
 from threading import Thread
 from functools import wraps
 from retrying import retry
@@ -45,6 +45,9 @@ THREAD_WAIT_TIME = timedelta(minutes=10)
 
 # How frequently we dispatch Janitor jobs.
 JANITOR_DISPATCH_TIME = timedelta(minutes=30)
+
+# How frequently we clean unplaceable jobs out of the Nomad queue.
+CLEANUP_QUEUE_TIME = timedelta(minutes=30)
 
 
 ##
@@ -94,6 +97,25 @@ def handle_repeated_failure(job) -> None:
     # sufficient because all log messages will be closely monitored
     # during early testing stages.
     logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1)
+
+
+def get_active_volumes() -> Set[str]:
+    """Returns a Set of indices for volumes that are currently mounted.
+
+    These can be used to determine which jobs would actually be able
+    to be placed if they were queued up.
+    """
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
+
+    volumes = set()
+    for node in nomad_client.nodes.get_nodes():
+        node_detail = nomad_client.node.get_node(node["ID"])
+        if 'Meta' in node_detail and 'volume_index' in node_detail['Meta']:
+            volumes.add(node_detail['Meta']['volume_index'])
+
+    return volumes
 
 
 ##
@@ -365,9 +387,16 @@ def retry_failed_processor_jobs() -> None:
     """Handle processor jobs that were marked as a failure.
 
     Ignores Janitor jobs since they are queued every half hour anyway."""
+    try:
+        active_volumes = get_active_volumes()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
+
     failed_jobs = ProcessorJob.objects.filter(
         success=False,
-        retried=False
+        retried=False,
+        volume_index__in=active_volumes
     ).exclude(
         pipeline_applied="JANITOR"
     )
@@ -385,12 +414,19 @@ def retry_hung_processor_jobs() -> None:
     """Retry processor jobs that were started but never finished.
 
     Ignores Janitor jobs since they are queued every half hour anyway."""
+    try:
+        active_volumes = get_active_volumes()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
+
     potentially_hung_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
         end_time=None,
         start_time__isnull=False,
         no_retry=False,
+        volume_index__in=active_volumes
     ).exclude(
         pipeline_applied="JANITOR"
     )
@@ -426,12 +462,19 @@ def retry_lost_processor_jobs() -> None:
     """Retry processor jobs which never even got started for too long.
 
     Ignores Janitor jobs since they are queued every half hour anyway."""
+    try:
+        active_volumes = get_active_volumes()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
+
     potentially_lost_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
         start_time=None,
         end_time=None,
-        no_retry=False
+        no_retry=False,
+        volume_index__in=active_volumes
     ).exclude(
         pipeline_applied="JANITOR"
     )
@@ -680,20 +723,21 @@ def retry_lost_survey_jobs() -> None:
 @do_forever(JANITOR_DISPATCH_TIME)
 def send_janitor_jobs():
     """Dispatch a Janitor job for each instance in the cluster"""
+    try:
+        active_volumes = get_active_volumes()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
 
-    # This is a fairly hacky way of finding all of our volume indexes
-    indexes = ProcessorJob.objects.all().values_list('volume_index').distinct()
-
-    for index in indexes:
-        actual_index = index[0]
+    for volume_index in active_volumes:
         new_job = ProcessorJob(num_retries=0,
                                pipeline_applied="JANITOR",
                                ram_amount=2048,
-                               volume_index=actual_index)
+                               volume_index=volume_index)
         new_job.save()
         logger.info("Sending Janitor with index: ",
             job_id=new_job.id,
-            index=actual_index
+            index=volume_index
         )
         try:
             send_job(ProcessorPipeline["JANITOR"], job=new_job, is_dispatch=True)
@@ -701,15 +745,82 @@ def send_janitor_jobs():
             # If we can't dispatch this job, something else has gone wrong.
             continue
 
+
+##
+# Handling of node cycling
+##
+
+@do_forever(CLEANUP_QUEUE_TIME)
+def cleanup_the_queue():
+    """This cleans up any jobs which cannot currently be queued.
+
+    We often have more volumes than instances because we have enough
+    volumes for the scenario where the entire cluster is using the
+    smallest instance type, however that doesn't happen very
+    often. Therefore it's possible for some volumes to not be mounted,
+    which means that jobs which are constrained to run on instances
+    with those volumes cannot be placed and just clog up the queue.
+
+    Therefore we clear out jobs of that type every once in a while so
+    our queue is dedicated to jobs that can actually be placed.
+    """
+    # Smasher and QN Reference jobs aren't tied to a specific EBS volume.
+    indexed_job_types = [e.value for e in ProcessorPipeline if e.value not in ["SMASHER", "QN_REFERENCE"]]
+
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
+
+    try:
+        active_volumes = get_active_volumes()
+        jobs = nomad_client.jobs.get_jobs()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
+
+
+    jobs_to_kill = []
+    for job in jobs:
+        # Skip over the Parameterized Jobs because we need those to
+        # always be running.
+        if "ParameterizedJob" not in job or not job["ParameterizedJob"]:
+            continue
+
+        for job_type in indexed_job_types:
+            # We're only concerned with jobs that have to be tied to a volume index.
+            if "ParentID" not in job or not job["ParentID"].startswith(job_type):
+                continue
+
+            # If this job has an index, then its ParentID will
+            # have the pattern of <job-type>_<index>_<RAM-amount>
+            # and we want to check the value of <index>:
+            split_parent_id = job["ParentID"].split("_")
+            if len(split_parent_id) < 2:
+                continue
+            else:
+                index = split_parent_id[-2]
+
+            if index not in active_volumes:
+                # The index for this job isn't currently mounted, kill
+                # the job and decrement the retry counter (since it
+                # will be incremented when it is requeued).
+                try:
+                    nomad_client.job.deregister_job(job["ID"], purge=True)
+                    job_record = ProcessorJob(nomad_job_id=job["ID"])
+                    job_record.num_retries = job_record.num_retries - 1
+                    job_record.save()
+                except:
+                    # If we can't do this for some reason, we'll get it next loop.
+                    pass
+
+
+
 ##
 # Main loop
 ##
 
 def monitor_jobs():
     """Runs a thread for each job monitoring loop."""
-    processor_functions = [ retry_failed_processor_jobs,
-                            retry_hung_processor_jobs,
-                            retry_lost_processor_jobs]
 
     threads = []
 
@@ -717,8 +828,17 @@ def monitor_jobs():
     thread = Thread(target=send_janitor_jobs, name="send_janitor_jobs")
     thread.start()
     threads.append(thread)
-    logger.info("Thread started for monitoring function: send_janitor_jobs")
+    logger.info("Thread started for function: send_janitor_jobs")
 
+    # Start the thread to keep the Nomad clean of jobs it cannot place.
+    thread = Thread(target=cleanup_the_queue, name="cleanup_the_queue")
+    thread.start()
+    threads.append(thread)
+    logger.info("Thread started for function: cleanup_the_queue")
+
+    processor_functions = [ retry_failed_processor_jobs,
+                            retry_hung_processor_jobs,
+                            retry_lost_processor_jobs]
 
     for f in processor_functions:
         thread = Thread(target=f, name=f.__name__)
