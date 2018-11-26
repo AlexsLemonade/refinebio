@@ -112,7 +112,8 @@ def get_active_volumes() -> Set[str]:
     volumes = set()
     for node in nomad_client.nodes.get_nodes():
         node_detail = nomad_client.node.get_node(node["ID"])
-        if 'Meta' in node_detail and 'volume_index' in node_detail['Meta']:
+        if 'Status' in node_detail and node_detail['Status'] == 'ready'
+           and 'Meta' in node_detail and 'volume_index' in node_detail['Meta']:
             volumes.add(node_detail['Meta']['volume_index'])
 
     return volumes
