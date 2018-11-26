@@ -20,19 +20,19 @@ EOF
 # These database values are created after TF
 # is run, so we have to pass them in programatically
 echo "
-docker kill $(docker ps -q)
+docker kill \$(docker ps -q)
 sleep 120
-docker run \
-       --env-file environment \
-       -e DATABASE_HOST=${database_host} \
-       -e DATABASE_NAME=${database_name} \
-       -e DATABASE_USER=${database_user} \
-       -e DATABASE_PASSWORD=${database_password} \
-       --add-host=nomad:${nomad_lead_server_ip}\
-       --log-driver=awslogs \
-       --log-opt awslogs-region=${region} \
-       --log-opt awslogs-group=${log_group} \
-       --log-opt awslogs-stream=log-stream-foreman-${user}-${stage} \
+docker run \\
+       --env-file environment \\
+       -e DATABASE_HOST=${database_host} \\
+       -e DATABASE_NAME=${database_name} \\
+       -e DATABASE_USER=${database_user} \\
+       -e DATABASE_PASSWORD=${database_password} \\
+       --add-host=nomad:${nomad_lead_server_ip} \\
+       --log-driver=awslogs \\
+       --log-opt awslogs-region=${region} \\
+       --log-opt awslogs-group=${log_group} \\
+       --log-opt awslogs-stream=log-stream-foreman-${user}-${stage} \\
        -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py retry_jobs
 " >> /home/ubuntu/run_foreman.sh
 chmod +x /home/ubuntu/run_foreman.sh
