@@ -28,6 +28,7 @@ docker run \\
        -e DATABASE_NAME=${database_name} \\
        -e DATABASE_USER=${database_user} \\
        -e DATABASE_PASSWORD=${database_password} \\
+       -v /tmp:/tmp \\
        --add-host=nomad:${nomad_lead_server_ip} \\
        --log-driver=awslogs \\
        --log-opt awslogs-region=${region} \\
