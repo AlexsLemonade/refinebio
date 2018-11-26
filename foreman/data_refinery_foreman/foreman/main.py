@@ -794,9 +794,6 @@ def cleanup_the_queue():
 
 def monitor_jobs():
     """Runs a thread for each job monitoring loop."""
-    processor_functions = [ retry_failed_processor_jobs,
-                            retry_hung_processor_jobs,
-                            retry_lost_processor_jobs]
 
     threads = []
 
@@ -804,8 +801,17 @@ def monitor_jobs():
     thread = Thread(target=send_janitor_jobs, name="send_janitor_jobs")
     thread.start()
     threads.append(thread)
-    logger.info("Thread started for monitoring function: send_janitor_jobs")
+    logger.info("Thread started for function: send_janitor_jobs")
 
+    # Start the thread to keep the Nomad clean of jobs it cannot place.
+    thread = Thread(target=cleanup_the_queue, name="cleanup_the_queue")
+    thread.start()
+    threads.append(thread)
+    logger.info("Thread started for function: cleanup_the_queue")
+
+    processor_functions = [ retry_failed_processor_jobs,
+                            retry_hung_processor_jobs,
+                            retry_lost_processor_jobs]
 
     for f in processor_functions:
         thread = Thread(target=f, name=f.__name__)
