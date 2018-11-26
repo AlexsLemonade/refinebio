@@ -761,7 +761,7 @@ def monitor_jobs():
         # Write the health file for Monit to check
         now_secs = int(time.time())
         with open('/tmp/foreman_last_time', 'w') as timefile:
-            timefile.write(now_secs)
+            timefile.write(str(now_secs))
 
         start_time = timezone.now()
 

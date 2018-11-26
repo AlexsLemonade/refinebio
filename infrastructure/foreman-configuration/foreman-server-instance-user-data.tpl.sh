@@ -43,6 +43,7 @@ apt-get -y update
 apt-get -y install monit htop
 
 date +%s > /tmp/foreman_last_time
+chown ubuntu:ubuntu /tmp/foreman_last_time
 echo '
 #!/bin/sh
 lasttime=$(</tmp/foreman_last_time);
