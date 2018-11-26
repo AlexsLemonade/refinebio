@@ -21,10 +21,9 @@ EOF
 # is run, so we have to pass them in programatically
 echo "
 #!/bin/sh
-docker kill \$(docker ps -q)
-sleep 120
+docker kill \$(docker ps -q) || true
 docker run \\
-       --env-file environment \\
+       --env-file /home/ubuntu/environment \\
        -e DATABASE_HOST=${database_host} \\
        -e DATABASE_NAME=${database_name} \\
        -e DATABASE_USER=${database_user} \\
@@ -60,10 +59,10 @@ chmod +x /home/ubuntu/foreman_status.sh
 
 echo '
 check program foreman with path "/bin/bash /home/ubuntu/foreman_status.sh" as uid 0 and with gid 0
-    start program = "/home/ubuntu/run_foreman.sh" as uid 0 and with gid 0
+    start program = "/bin/bash /home/ubuntu/run_foreman.sh" as uid 0 and with gid 0
     if status != 0
         then restart
-set daemon 300
+set daemon 900
 ' >> /etc/monit/monitrc
 
 service monit restart
