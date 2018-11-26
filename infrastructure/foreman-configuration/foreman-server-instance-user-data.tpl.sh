@@ -20,6 +20,7 @@ EOF
 # These database values are created after TF
 # is run, so we have to pass them in programatically
 echo "
+#!/bin/sh
 docker kill \$(docker ps -q)
 sleep 120
 docker run \\
