@@ -39,6 +39,7 @@ chmod +x /home/ubuntu/run_foreman.sh
 /home/ubuntu/run_foreman.sh
 
 # Start the Nomad agent in server mode via Monit
+apt-get -y update
 apt-get -y install monit htop
 
 date +%s > /tmp/foreman_last_time
