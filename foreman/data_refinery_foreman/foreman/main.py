@@ -769,3 +769,7 @@ def monitor_jobs():
             time.sleep(remaining_time.seconds)
 
         logger.info("The Foreman's heart is beating, but he does not feel.")
+
+        now_secs = int(time.time())
+        with open('/tmp/foreman_last', 'w') as timefile:
+            timefile.write(now_secs)
