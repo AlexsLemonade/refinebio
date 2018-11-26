@@ -25,6 +25,7 @@ from data_refinery_api.serializers import (
     SurveyJobSerializer,
 )
 from data_refinery_api.views import ExperimentList
+from data_refinery_common.utils import get_env_variable
 from data_refinery_common.models import (
     ComputationalResult,
     Dataset,
@@ -127,6 +128,7 @@ class APITestCases(APITestCase):
     def test_all_endpoints(self):
         response = self.client.get(reverse('experiments'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['X-Source-Revision'], get_env_variable('SYSTEM_VERSION'))
 
         response = self.client.get(reverse('experiments'), kwargs={'page': 1})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
