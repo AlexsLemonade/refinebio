@@ -305,6 +305,8 @@ API_IP_ADDRESS=$(terraform output -json api_server_1_ip | jq -c '.value' | tr -d
 # it's not found then grep will return a non-zero exit code so in that
 # case return an empty string.
 container_running=$(ssh -o StrictHostKeyChecking=no \
+                        -o ServerAliveInterval=15 \
+                        -o ConnectTimeout=5 \
                         -i data-refinery-key.pem \
                         ubuntu@$API_IP_ADDRESS  "docker ps -a" | grep dr_api || echo "")
 
@@ -317,18 +319,26 @@ if [[ ! -z $container_running ]]; then
     echo "Restarting API with latest image."
 
     ssh -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
         -i data-refinery-key.pem \
         ubuntu@$API_IP_ADDRESS  "docker pull $DOCKERHUB_REPO/$API_DOCKER_IMAGE"
 
     ssh -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
         -i data-refinery-key.pem \
         ubuntu@$API_IP_ADDRESS "docker rm -f dr_api"
 
     scp -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
         -i data-refinery-key.pem \
         api-configuration/environment ubuntu@$API_IP_ADDRESS:/home/ubuntu/environment
 
     ssh -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
         -i data-refinery-key.pem \
         ubuntu@$API_IP_ADDRESS "docker run \
        --env-file environment \
@@ -347,6 +357,8 @@ if [[ ! -z $container_running ]]; then
 
     # Don't leave secrets lying around.
     ssh -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
         -i data-refinery-key.pem \
         ubuntu@$API_IP_ADDRESS "rm -f environment"
 fi
