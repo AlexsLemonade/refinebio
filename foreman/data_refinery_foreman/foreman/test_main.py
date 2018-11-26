@@ -276,6 +276,7 @@ class ForemanTestCase(TestCase):
                            nomad_job_id="PROCESSOR/dispatch-1528945054-e8eaf540",
                            ram_amount=ram_amount,
                            num_retries=0,
+                           volume_index="1",
                            success=None)
         job.save()
 
@@ -303,9 +304,11 @@ class ForemanTestCase(TestCase):
 
         return job
 
+    @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
-    def test_requeuing_processor_job(self, mock_send_job):
+    def test_requeuing_processor_job(self, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
+        mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         job = self.create_processor_job()
 
@@ -321,9 +324,11 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
+    @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
-    def test_requeuing_processor_job_w_more_ram(self, mock_send_job):
+    def test_requeuing_processor_job_w_more_ram(self, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
+        mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         job = self.create_processor_job(pipeline="SALMON", ram_amount=8192)
 
@@ -340,9 +345,11 @@ class ForemanTestCase(TestCase):
         self.assertEqual(original_job.ram_amount, 8192)
         self.assertEqual(retried_job.ram_amount, 12288)
 
+    @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
-    def test_repeated_processor_failures(self, mock_send_job):
+    def test_repeated_processor_failures(self, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
+        mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         """Jobs will be repeatedly retried."""
         job = self.create_processor_job()
@@ -369,9 +376,11 @@ class ForemanTestCase(TestCase):
         self.assertEqual(last_job.num_retries, main.MAX_NUM_RETRIES)
         self.assertFalse(last_job.success)
 
+    @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
-    def test_retrying_failed_processor_jobs(self, mock_send_job):
+    def test_retrying_failed_processor_jobs(self, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
+        mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         job = self.create_processor_job()
         job.success = False
@@ -391,10 +400,36 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
+    @patch('data_refinery_foreman.foreman.main.get_active_volumes')
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_not_retrying_wrong_volume_index(self, mock_send_job, mock_get_active_volumes):
+        """If a volume isn't mounted then we shouldn't queue jobs for it."""
+        mock_send_job.return_value = True
+        mock_get_active_volumes.return_value = {"2", "3"}
+
+        job = self.create_processor_job()
+        job.success = False
+        job.save()
+
+        # Just run it once, not forever so get the function that is
+        # decorated with @do_forever
+        main.retry_failed_processor_jobs.__wrapped__()
+        self.assertEqual(len(mock_send_job.mock_calls), 0)
+
+        jobs = ProcessorJob.objects.order_by('id')
+        original_job = jobs[0]
+        self.assertFalse(original_job.retried)
+        self.assertEqual(original_job.num_retries, 0)
+        self.assertFalse(original_job.success)
+
+        self.assertEqual(len(jobs), 1)
+
+    @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
     @patch('data_refinery_foreman.foreman.main.Nomad')
-    def test_retrying_hung_processor_jobs(self, mock_nomad, mock_send_job):
+    def test_retrying_hung_processor_jobs(self, mock_nomad, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
+        mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         def mock_init_nomad(host, port=0, timeout=0):
             ret_value = MagicMock()
@@ -423,10 +458,12 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
+    @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
     @patch('data_refinery_foreman.foreman.main.Nomad')
-    def test_not_retrying_hung_processor_jobs(self, mock_nomad, mock_send_job):
+    def test_not_retrying_hung_processor_jobs(self, mock_nomad, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
+        mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         """Tests that we don't restart processor jobs that are still running."""
         def mock_init_nomad(host, port=0, timeout=0):
@@ -455,10 +492,12 @@ class ForemanTestCase(TestCase):
 
         self.assertEqual(jobs.count(), 1)
 
+    @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
     @patch('data_refinery_foreman.foreman.main.Nomad')
-    def test_retrying_lost_processor_jobs(self, mock_nomad, mock_send_job):
+    def test_retrying_lost_processor_jobs(self, mock_nomad, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
+        mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         def mock_init_nomad(host, port=0, timeout=0):
             ret_value = MagicMock()
@@ -488,11 +527,13 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
+    @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
     @patch('data_refinery_foreman.foreman.main.Nomad')
-    def test_not_retrying_lost_processor_jobs(self, mock_nomad, mock_send_job):
+    def test_not_retrying_lost_processor_jobs(self, mock_nomad, mock_send_job, mock_get_active_volumes):
         """Make sure that we don't retry processor jobs we shouldn't."""
         mock_send_job.return_value = True
+        mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         def mock_init_nomad(host, port=0, timeout=0):
             ret_value = MagicMock()
@@ -521,9 +562,11 @@ class ForemanTestCase(TestCase):
         # Make sure no additional job was created.
         self.assertEqual(jobs.count(), 1)
 
+    @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
-    def test_retrying_lost_processor_jobs_time(self, mock_send_job):
+    def test_retrying_lost_processor_jobs_time(self, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
+        mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         job = self.create_processor_job()
         job.created_at = timezone.now() - (main.MIN_LOOP_TIME + timedelta(minutes=1))
@@ -544,9 +587,11 @@ class ForemanTestCase(TestCase):
         self.assertEqual(retried_job.num_retries, 1)
 
 
+    @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
-    def test_not_retrying_janitor_jobs(self, mock_send_job):
+    def test_not_retrying_janitor_jobs(self, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
+        mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         job = self.create_processor_job(pipeline="JANITOR")
         job.created_at = timezone.now() - (main.MIN_LOOP_TIME + timedelta(minutes=1))
@@ -810,9 +855,11 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
+    @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
-    def test_janitor(self, mock_send_job):
+    def test_janitor(self, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
+        mock_get_active_volumes.return_value = {"1", "2", "3"}
 
         for p in ["1", "2", "3"]:
             pj = ProcessorJob()
