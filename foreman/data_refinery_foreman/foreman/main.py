@@ -111,7 +111,9 @@ def get_active_volumes() -> Set[str]:
 
     volumes = set()
     for node in nomad_client.nodes.get_nodes():
-        volumes.add(nomad_client.node.get_node(node["ID"])['Meta']['volume_index'])
+        node_detail = nomad_client.node.get_node(node["ID"])
+        if 'Meta' in node_detail and 'volume_index' in node_detail['Meta']:
+            volumes.add(node_detail['Meta']['volume_index'])
 
     return volumes
 
@@ -385,7 +387,11 @@ def retry_failed_processor_jobs() -> None:
     """Handle processor jobs that were marked as a failure.
 
     Ignores Janitor jobs since they are queued every half hour anyway."""
-    active_volumes = get_active_volumes()
+    try:
+        active_volumes = get_active_volumes()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
 
     failed_jobs = ProcessorJob.objects.filter(
         success=False,
@@ -408,7 +414,11 @@ def retry_hung_processor_jobs() -> None:
     """Retry processor jobs that were started but never finished.
 
     Ignores Janitor jobs since they are queued every half hour anyway."""
-    active_volumes = get_active_volumes()
+    try:
+        active_volumes = get_active_volumes()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
 
     potentially_hung_jobs = ProcessorJob.objects.filter(
         success=None,
@@ -452,7 +462,11 @@ def retry_lost_processor_jobs() -> None:
     """Retry processor jobs which never even got started for too long.
 
     Ignores Janitor jobs since they are queued every half hour anyway."""
-    active_volumes = get_active_volumes()
+    try:
+        active_volumes = get_active_volumes()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
 
     potentially_lost_jobs = ProcessorJob.objects.filter(
         success=None,
@@ -709,7 +723,11 @@ def retry_lost_survey_jobs() -> None:
 @do_forever(JANITOR_DISPATCH_TIME)
 def send_janitor_jobs():
     """Dispatch a Janitor job for each instance in the cluster"""
-    active_volumes = get_active_volumes()
+    try:
+        active_volumes = get_active_volumes()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
 
     for volume_index in active_volumes:
         new_job = ProcessorJob(num_retries=0,
@@ -748,30 +766,39 @@ def cleanup_the_queue():
     """
     # Smasher and QN Reference jobs aren't tied to a specific EBS volume.
     indexed_job_types = [e.value for e in ProcessorPipeline if e.value not in ["SMASHER", "QN_REFERENCE"]]
-    active_volumes = get_active_volumes()
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
 
-    jobs = nomad_client.jobs.get_jobs()
+    try:
+        active_volumes = get_active_volumes()
+        jobs = nomad_client.jobs.get_jobs()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
+
 
     jobs_to_kill = []
     for job in jobs:
         # Skip over the Parameterized Jobs because we need those to
         # always be running.
-        if not job["ParameterizedJob"]:
+        if "ParameterizedJob" not in job or not job["ParameterizedJob"]:
             continue
 
         for job_type in indexed_job_types:
             # We're only concerned with jobs that have to be tied to a volume index.
-            if not job["ParentID"].startswith(job_type):
-                pass
+            if "ParentID" not in job or not job["ParentID"].startswith(job_type):
+                continue
 
             # If this job has an index, then its ParentID will
             # have the pattern of <job-type>_<index>_<RAM-amount>
             # and we want to check the value of <index>:
-            index = job["ParentID"].split("_")[-2]
+            split_parent_id = job["ParentID"].split("_")
+            if len(split_parent_id) < 2:
+                continue
+            else:
+                index = split_parent_id[-2]
 
             if index not in active_volumes:
                 # The index for this job isn't currently mounted, kill
