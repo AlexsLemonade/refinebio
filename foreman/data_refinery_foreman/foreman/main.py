@@ -778,7 +778,7 @@ def cleanup_the_queue():
                 # the job and decrement the retry counter (since it
                 # will be incremented when it is requeued).
                 try:
-                    nomad_client.job.deregister_job(job["ID"])
+                    nomad_client.job.deregister_job(job["ID"], purge=True)
                     job_record = ProcessorJob(nomad_job_id=job["ID"])
                     job_record.num_retries = job_record.num_retries - 1
                     job_record.save()
