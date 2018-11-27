@@ -141,7 +141,7 @@ for item in dockerps.split('\n'):
         continue
 
     num_hours = int(time.split(' ')[0])
-    if num_hours > 2:
+    if num_hours > 1:
         print("Killing " + cid)
         os.system('docker kill ' + cid)
 EOF
