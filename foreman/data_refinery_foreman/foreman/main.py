@@ -447,6 +447,16 @@ def retry_hung_processor_jobs() -> None:
                     hung_jobs.append(job)
         except URLNotFoundNomadException:
             hung_jobs.append(job)
+        except TypeError:
+            # Almost certainly a python-nomad issue:
+            # File "/usr/local/lib/python3.5/dist-packages/nomad/api/job.py", line 63, in get_job
+            #   return self.request(id, method="get").json()
+            # File "/usr/local/lib/python3.5/dist-packages/nomad/api/base.py", line 74, in request
+            #   endpoint = self._endpoint_builder(self.ENDPOINT, *args)
+            # File "/usr/local/lib/python3.5/dist-packages/nomad/api/base.py", line 28, in _endpoint_builder
+            #   u = "/".join(args)
+            # TypeError: sequence item 1: expected str instance, NoneType found
+            logger.info("Couldn't query Nomad about Processor Job.", processor_job=job.id)
         except Exception:
             logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
 

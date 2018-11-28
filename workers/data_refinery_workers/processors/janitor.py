@@ -65,15 +65,18 @@ def _find_and_remove_expired_jobs(job_context):
                     continue
                 except Exception as e:
                     # This job is likely vanished. No need for this directory.
-                    pass
+                    logger.exception("Janitor found vanished job for " + item + " - why?")
+                    continue
             except Exception:
                 # If we don't have a record of the job, we don't need the directory.
+                logger.exception("Janitor found no record of " + item + " - why?")
                 pass
 
 
             # Delete it!
             try:
                 to_delete = LOCAL_ROOT_DIR + '/' + item
+                logger.info("Janitor deleting " + to_delete)
                 shutil.rmtree(to_delete)
                 job_context['deleted_items'].append(to_delete)
             except Exception as e:
