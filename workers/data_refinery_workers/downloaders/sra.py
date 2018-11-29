@@ -137,7 +137,9 @@ def _download_file_aspera(download_url: str,
 
     # If Aspera has given a zero-byte file for some reason, let's back off and retry.
     if (not os.path.exists(target_file_path)) or (os.path.getsize(target_file_path) < 1):
-        os.remove(target_file_path)
+        if os.path.exists(target_file_path):
+            os.remove(target_file_path)
+
         if attempt > 5:
             downloader_job.failure_reason = "Got zero byte file from aspera after 5 attempts."
             return False

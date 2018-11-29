@@ -4,15 +4,20 @@ from django.utils import timezone
 from django.test import TestCase
 from data_refinery_foreman.foreman import main
 from data_refinery_common.models import (
-    SurveyJob,
-    DownloaderJob,
-    ProcessorJob,
-    OriginalFile,
     Dataset,
-    SurveyJobKeyValue,
+    DownloaderJob,
     DownloaderJobOriginalFileAssociation,
-    ProcessorJobOriginalFileAssociation,
+    Experiment,
+    ExperimentSampleAssociation,
+    Organism,
+    OriginalFile,
+    OriginalFileSampleAssociation,
+    ProcessorJob,
     ProcessorJobDatasetAssociation,
+    ProcessorJobOriginalFileAssociation,
+    Sample,
+    SurveyJob,
+    SurveyJobKeyValue,
 )
 from test.support import EnvironmentVarGuard # Python >=3
 
@@ -878,3 +883,362 @@ class ForemanTestCase(TestCase):
         for p in ProcessorJob.objects.filter(pipeline_applied="JANITOR"):
             self.assertTrue(p.volume_index in ixs)
             ixs.remove(p.volume_index)
+
+
+class JobPrioritizationTestCase(TestCase):
+    def setUp(self):
+        """Create a lot of resources that could be associated with either
+        ProcessorJobs or DownloaderJobs. Since the logic of when to actually
+        queue these is the same, we can use these for testing both. However
+        The actual jobs that will be queued need to be created by the job-type
+        specific functions.
+        """
+        human = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
+        human.save()
+        zebrafish = Organism(name="DANIO_RERIO", taxonomy_id=1337, is_scientific_name=True)
+        zebrafish.save()
+
+        # Salmon experiment that is 50% complete.
+        experiment = Experiment(accession_code='ERP036000')
+        experiment.save()
+
+        ## First sample, this one has been processed.
+        pj = ProcessorJob()
+        pj.accession_code = "ERR036000"
+        pj.pipeline_applied = "SALMON"
+        pj.success = True
+        pj.save()
+
+        og = OriginalFile()
+        og.filename = "ERR036000.fastq.gz"
+        og.source_filename = "ERR036000.fastq.gz"
+        og.source_url = "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036000/ERR036000_1.fastq.gz"
+        og.is_archive = True
+        og.save()
+
+        sample = Sample()
+        sample.accession_code = 'ERR036000'
+        sample.organism = human
+        sample.save()
+
+        assoc = OriginalFileSampleAssociation()
+        assoc.sample = sample
+        assoc.original_file = og
+        assoc.save()
+
+        assoc = ProcessorJobOriginalFileAssociation()
+        assoc.processor_job = pj
+        assoc.original_file = og
+        assoc.save()
+
+        assoc = ExperimentSampleAssociation()
+        assoc.sample = sample
+        assoc.experiment = experiment
+        assoc.save()
+
+        ## Second sample, this one hasn't been processed.
+        self.in_progress_salmon_og = OriginalFile()
+        self.in_progress_salmon_og.filename = "ERR036001.fastq.gz"
+        self.in_progress_salmon_og.source_filename = "ERR036001.fastq.gz"
+        self.in_progress_salmon_og.source_url = "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036001/ERR036001_1.fastq.gz"
+        self.in_progress_salmon_og.is_archive = True
+        self.in_progress_salmon_og.save()
+
+        self.in_progress_salmon_sample = Sample()
+        self.in_progress_salmon_sample.accession_code = 'ERR036001'
+        self.in_progress_salmon_sample.organism = human
+        self.in_progress_salmon_sample.save()
+
+        assoc = OriginalFileSampleAssociation()
+        assoc.sample = self.in_progress_salmon_sample
+        assoc.original_file = self.in_progress_salmon_og
+        assoc.save()
+
+        assoc = ExperimentSampleAssociation()
+        assoc.sample = self.in_progress_salmon_sample
+        assoc.experiment = experiment
+        assoc.save()
+
+
+        # Salmon experiment that is 0% complete.
+        experiment = Experiment(accession_code='ERP037000')
+        experiment.save()
+
+        self.unstarted_salmon_og = OriginalFile()
+        self.unstarted_salmon_og.filename = "ERR037001.fastq.gz"
+        self.unstarted_salmon_og.source_filename = "ERR037001.fastq.gz"
+        self.unstarted_salmon_og.source_url = "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR037/ERR037001/ERR037001_1.fastq.gz"
+        self.unstarted_salmon_og.is_archive = True
+        self.unstarted_salmon_og.save()
+
+        self.unstarted_salmon_sample = Sample()
+        self.unstarted_salmon_sample.accession_code = 'ERR037001'
+        self.unstarted_salmon_sample.organism = human
+        self.unstarted_salmon_sample.save()
+
+        assoc = OriginalFileSampleAssociation()
+        assoc.sample = self.unstarted_salmon_sample
+        assoc.original_file = self.unstarted_salmon_og
+        assoc.save()
+
+        assoc = ExperimentSampleAssociation()
+        assoc.sample = self.unstarted_salmon_sample
+        assoc.experiment = experiment
+        assoc.save()
+
+
+        # Zebrafish experiment.
+        experiment = Experiment(accession_code='ERP038000')
+        experiment.save()
+
+        self.zebrafish_og = OriginalFile()
+        self.zebrafish_og.source_filename = "ERR038001.fastq.gz"
+        self.zebrafish_og.source_url = "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR038/ERR038001/ERR038001_1.fastq.gz"
+        self.zebrafish_og.is_archive = True
+        self.zebrafish_og.save()
+
+        self.zebrafish_sample = Sample()
+        self.zebrafish_sample.accession_code = 'ERR038001'
+        self.zebrafish_sample.organism = zebrafish
+        self.zebrafish_sample.save()
+
+        assoc = OriginalFileSampleAssociation()
+        assoc.sample = self.zebrafish_sample
+        assoc.original_file = self.zebrafish_og
+        assoc.save()
+
+        assoc = ExperimentSampleAssociation()
+        assoc.sample = self.zebrafish_sample
+        assoc.experiment = experiment
+        assoc.save()
+
+
+        # Pediatric experiment.
+        experiment = Experiment(accession_code='GSE100568')
+        experiment.save()
+
+        self.pediatric_og = OriginalFile()
+        self.pediatric_og.source_url = "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE100568&format=file"
+        self.pediatric_og.is_archive = True
+        self.pediatric_og.save()
+
+        self.pediatric_sample = Sample()
+        self.pediatric_sample.accession_code = 'GSM2687180'
+        self.pediatric_sample.organism = human
+        self.pediatric_sample.save()
+
+        assoc = OriginalFileSampleAssociation()
+        assoc.sample = self.pediatric_sample
+        assoc.original_file = self.pediatric_og
+        assoc.save()
+
+        assoc = ExperimentSampleAssociation()
+        assoc.sample = self.pediatric_sample
+        assoc.experiment = experiment
+        assoc.save()
+
+
+        # hgu133plus2 experiment.
+        experiment = Experiment(accession_code='GSE100014')
+        experiment.save()
+
+        self.hgu133plus2_og = OriginalFile()
+        self.hgu133plus2_og.source_url = "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE100014&format=file"
+        self.hgu133plus2_og.is_archive = True
+        self.hgu133plus2_og.save()
+
+        self.hgu133plus2_sample = Sample()
+        self.hgu133plus2_sample.accession_code = 'GSM2667926'
+        self.hgu133plus2_sample.organism = human
+        self.hgu133plus2_sample.save()
+
+        assoc = OriginalFileSampleAssociation()
+        assoc.sample = self.hgu133plus2_sample
+        assoc.original_file = self.hgu133plus2_og
+        assoc.save()
+
+        assoc = ExperimentSampleAssociation()
+        assoc.sample = self.hgu133plus2_sample
+        assoc.experiment = experiment
+        assoc.save()
+
+    @patch('data_refinery_foreman.foreman.main.Nomad')
+    @patch('data_refinery_foreman.foreman.main.requeue_downloader_job')
+    def test_handle_downloader_jobs(self, mock_requeue_downloader_job, mock_nomad):
+        """Tests the prioritization of downloader jobs.
+
+        We want zebrafish jobs to be first, then jobs for hgu133plus2,
+        then jobs for pediatric cancer, finally salmon jobs should be
+        prioritized based on how close to completion they are."""
+
+        def mock_init_nomad(host, port=0, timeout=0):
+            ret_value = MagicMock()
+            ret_value.jobs = MagicMock()
+            ret_value.jobs.get_jobs = MagicMock()
+            ret_value.jobs.get_jobs.side_effect = lambda: []
+            return ret_value
+
+        mock_nomad.side_effect = mock_init_nomad
+
+        unstarted_salmon_job = DownloaderJob()
+        unstarted_salmon_job.accession_code = self.unstarted_salmon_sample.accession_code
+        unstarted_salmon_job.pipeline_applied = "SALMON"
+        unstarted_salmon_job.save()
+
+        assoc = DownloaderJobOriginalFileAssociation()
+        assoc.downloader_job = unstarted_salmon_job
+        assoc.original_file = self.unstarted_salmon_og
+        assoc.save()
+
+        in_progress_salmon_job = DownloaderJob()
+        in_progress_salmon_job.accession_code = self.in_progress_salmon_sample.accession_code
+        in_progress_salmon_job.pipeline_applied = "SALMON"
+        in_progress_salmon_job.save()
+
+        assoc = DownloaderJobOriginalFileAssociation()
+        assoc.downloader_job = in_progress_salmon_job
+        assoc.original_file = self.in_progress_salmon_og
+        assoc.save()
+
+        zebrafish_job = DownloaderJob()
+        zebrafish_job.accession_code = self.zebrafish_sample.accession_code
+        zebrafish_job.pipeline_applied = "SALMON"
+        zebrafish_job.save()
+
+        assoc = DownloaderJobOriginalFileAssociation()
+        assoc.downloader_job = zebrafish_job
+        assoc.original_file = self.zebrafish_og
+        assoc.save()
+
+        pediatric_job = DownloaderJob()
+        pediatric_job.accession_code = self.pediatric_sample.accession_code
+        pediatric_job.pipeline_applied = "SALMON"
+        pediatric_job.save()
+
+        assoc = DownloaderJobOriginalFileAssociation()
+        assoc.downloader_job = pediatric_job
+        assoc.original_file = self.pediatric_og
+        assoc.save()
+
+        hgu133plus2_job = DownloaderJob()
+        hgu133plus2_job.accession_code = self.hgu133plus2_sample.accession_code
+        hgu133plus2_job.pipeline_applied = "SALMON"
+        hgu133plus2_job.save()
+
+        assoc = DownloaderJobOriginalFileAssociation()
+        assoc.downloader_job = hgu133plus2_job
+        assoc.original_file = self.hgu133plus2_og
+        assoc.save()
+
+        jobs = [unstarted_salmon_job,
+                in_progress_salmon_job,
+                hgu133plus2_job,
+                zebrafish_job,
+                pediatric_job
+        ]
+        jobs_in_correct_order = [zebrafish_job,
+                                 hgu133plus2_job,
+                                 pediatric_job,
+                                 in_progress_salmon_job,
+                                 unstarted_salmon_job
+        ]
+
+        main.handle_downloader_jobs(jobs)
+
+        for count, job in enumerate(jobs_in_correct_order):
+            # Calls are a weird object that I think is just basically
+            # a tuple. Index 1 of a call object is the arguments
+            # tuple, we're interested in the first argument
+            job_called_at_count = mock_requeue_downloader_job.mock_calls[count][1][0]
+            self.assertEqual(job.id, job_called_at_count.id)
+
+
+    @patch('data_refinery_foreman.foreman.main.Nomad')
+    @patch('data_refinery_foreman.foreman.main.requeue_processor_job')
+    def test_handle_processor_jobs(self, mock_requeue_processor_job, mock_nomad):
+        """Tests the prioritization of processor jobs.
+
+        We want zebrafish jobs to be first, then jobs for hgu133plus2,
+        then jobs for pediatric cancer, finally salmon jobs should be
+        prioritized based on how close to completion they are."""
+
+        def mock_init_nomad(host, port=0, timeout=0):
+            ret_value = MagicMock()
+            ret_value.jobs = MagicMock()
+            ret_value.jobs.get_jobs = MagicMock()
+            ret_value.jobs.get_jobs.side_effect = lambda: []
+            return ret_value
+
+        mock_nomad.side_effect = mock_init_nomad
+
+        unstarted_salmon_job = ProcessorJob()
+        unstarted_salmon_job.accession_code = self.unstarted_salmon_sample.accession_code
+        unstarted_salmon_job.pipeline_applied = "SALMON"
+        unstarted_salmon_job.save()
+
+        assoc = ProcessorJobOriginalFileAssociation()
+        assoc.processor_job = unstarted_salmon_job
+        assoc.original_file = self.unstarted_salmon_og
+        assoc.save()
+
+        in_progress_salmon_job = ProcessorJob()
+        in_progress_salmon_job.accession_code = self.in_progress_salmon_sample.accession_code
+        in_progress_salmon_job.pipeline_applied = "SALMON"
+        in_progress_salmon_job.save()
+
+        assoc = ProcessorJobOriginalFileAssociation()
+        assoc.processor_job = in_progress_salmon_job
+        assoc.original_file = self.in_progress_salmon_og
+        assoc.save()
+
+        zebrafish_job = ProcessorJob()
+        zebrafish_job.accession_code = self.zebrafish_sample.accession_code
+        zebrafish_job.pipeline_applied = "SALMON"
+        zebrafish_job.save()
+
+        assoc = ProcessorJobOriginalFileAssociation()
+        assoc.processor_job = zebrafish_job
+        assoc.original_file = self.zebrafish_og
+        assoc.save()
+
+        pediatric_job = ProcessorJob()
+        pediatric_job.accession_code = self.pediatric_sample.accession_code
+        pediatric_job.pipeline_applied = "SALMON"
+        pediatric_job.save()
+
+        assoc = ProcessorJobOriginalFileAssociation()
+        assoc.processor_job = pediatric_job
+        assoc.original_file = self.pediatric_og
+        assoc.save()
+
+        hgu133plus2_job = ProcessorJob()
+        hgu133plus2_job.accession_code = self.hgu133plus2_sample.accession_code
+        hgu133plus2_job.pipeline_applied = "SALMON"
+        hgu133plus2_job.save()
+
+        assoc = ProcessorJobOriginalFileAssociation()
+        assoc.processor_job = hgu133plus2_job
+        assoc.original_file = self.hgu133plus2_og
+        assoc.save()
+
+        jobs = [unstarted_salmon_job,
+                in_progress_salmon_job,
+                hgu133plus2_job,
+                zebrafish_job,
+                pediatric_job
+        ]
+        jobs_in_correct_order = [zebrafish_job,
+                                 hgu133plus2_job,
+                                 pediatric_job,
+                                 in_progress_salmon_job,
+                                 unstarted_salmon_job
+        ]
+
+        main.handle_processor_jobs(jobs)
+
+        for count, job in enumerate(jobs_in_correct_order):
+            # Calls are a weird object that I think is just basically
+            # a tuple. Index 1 of a call object is the arguments
+            # tuple, we're interested in the first argument
+            job_called_at_count = mock_requeue_processor_job.mock_calls[count][1][0]
+            self.assertEqual(job.id, job_called_at_count.id)
