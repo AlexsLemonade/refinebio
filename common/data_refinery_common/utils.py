@@ -68,10 +68,10 @@ def get_volume_index(default="0", path='/home/user/data_store/VOLUME_INDEX') -> 
             v_id = f.read().strip()
             return v_id
     except Exception as e:
-        # Logger needs util, so we do this at runtime
-        from data_refinery_common.logging import get_and_configure_logger
-        logger = get_and_configure_logger(__name__)
-        logger.info("Could not read volume index file, using default", default=default)
+        # Our configured logger needs util, so we use the standard logging library for just this.
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("Could not read volume index file, using default: {}", default)
         logger.info(str(e))
 
     return default
