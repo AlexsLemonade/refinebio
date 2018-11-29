@@ -352,6 +352,60 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
         new_job.delete()
 
 
+def prioritize_salmon_jobs(jobs: List[ProcessorJob]) -> List[ProcessorJob]:
+    """Prioritizes salmon experiments based on how close to completion they are.
+
+    This is because salmon experiments have a final processing step
+    that must be performed on all the samples in the experiment, so if
+    9/10 samples in an experiment are processed then they can't
+    actually be used until that last sample is processed.
+    """
+    # The strategy for doing so is to build a mapping between every
+    # salmon job in `jobs` to a priority. This priority will be what
+    # percentage of the samples in this experiment have been
+    # processed. Once we have that mapping we can sort those jobs by
+    # that priority and move them to the front of the list.
+    prioritized_jobs = []
+    for job in jobs:
+        if job.pipeline_applied != ProcessorPipeline.SALMON.value:
+            continue
+
+        # Salmon jobs are specifc to one sample.
+        sample = job.get_samples()[0]
+
+        # Get a set of unique samples that share at least one
+        # experiment with the sample this job is for.
+        related_samples = set()
+        for experiment in sample.experiments.all():
+            for related_sample in experiment.samples.all():
+                related_samples.add(related_sample)
+
+        # We cannot simply filter on is_processed because that field
+        # doesn't get set until every sample in an experiment is processed.
+        # Instead we are looking for one successful processor job.
+        processed_samples = 0
+        for related_sample in related_samples:
+            sample_is_processed = False
+            for processor_job in related_sample.original_files.first().processor_jobs.all():
+                if processor_job.success == True:
+                    sample_is_processed = True
+
+            if sample_is_processed:
+                processed_samples += 1
+
+        experiment_completion_percent = processed_samples / len(related_samples)
+        prioritized_jobs.append({"job": job, "priority": experiment_completion_percent})
+
+    sorted_job_mappings = sorted(prioritized_jobs, reverse=True, key=lambda k: k["priority"])
+    sorted_jobs = [job_mapping["job"] for job_mapping in sorted_job_mappings]
+
+    # Remove all the jobs we're moving to the front of the list
+    for job in sorted_jobs:
+        jobs.pop(job)
+
+    return sorted_jobs + jobs
+
+
 def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
     """For each job in jobs, either retry it or log it."""
 
@@ -365,6 +419,8 @@ def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
     if len_all_jobs >= MAX_TOTAL_JOBS:
         logger.info("Not requeuing job until we're running fewer jobs.")
         return False
+
+    jobs = prioritize_salmon_jobs(jobs)
 
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
