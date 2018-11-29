@@ -365,12 +365,12 @@ class DatasetStatsView(APIView):
     """
 
     def get(self, request, id):
-
+        
         dataset = get_object_or_404(Dataset, id=id)
         stats = {}
 
         experiments = Experiment.objects.filter(accession_code__in=dataset.data.keys())
-
+        
         # Find all the species for these experiments
         for experiment in experiments:
             species_names = experiment.organisms.values_list('name')
@@ -462,7 +462,7 @@ class ExperimentDetail(APIView):
                 return Experiment.public_objects.get(accession_code=pk)
             except Experiment.DoesNotExist:
                 raise Http404
-            return HttpResponseBadRequest("Bad PK or Accession")
+            return HttpResponseBadRequest("Bad PK or Accession") 
 
     def get(self, request, pk, format=None):
         experiment = self.get_object(pk)
@@ -695,26 +695,13 @@ class Stats(APIView):
         data['processor_jobs'] = self._get_job_stats(ProcessorJob.objects, range_param)
         data['samples'] = self._get_object_stats(Sample.objects, range_param)
         data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
-        data['input_data_size'] = self._get_input_data_size()
-        data['output_data_size'] = self.get_output_data_size()
+        data['total_downloaded'] = self._get_total_downloaded()
 
         return Response(data)
 
-    def _get_input_data_size(self):
-        total_size = Sample.processed_objects.original_files.filter(
-            is_downloaded=True
-        ).aggregate(
-            Sum('size_in_bytes')
-        )
-        return total_size['size_in_bytes__sum']
+    def _get_total_downloaded(self):
 
-    def _get_output_data_size(self):
-        total_size = ComputedFile.public_objects.filter(
-            s3_bucket__isnull=False,
-            s3_key__isnull=True
-        ).aggregate(
-            Sum('size_in_bytes')
-        )
+        total_size = OriginalFile.objects.filter(is_downloaded=True).aggregate(Sum('size_in_bytes'))
         return total_size['size_in_bytes__sum']
 
     def _get_job_stats(self, jobs, range_param):
@@ -722,10 +709,9 @@ class Stats(APIView):
             'total': jobs.count(),
             'pending': jobs.filter(start_time__isnull=True).count(),
             'completed': jobs.filter(end_time__isnull=False).count(),
-            'successful': jobs.filter(success=True).count(),
             'open': jobs.filter(start_time__isnull=False, end_time__isnull=True, success__isnull=True).count(),
             # via https://stackoverflow.com/questions/32520655/get-average-of-difference-of-datetime-fields-in-django
-            'average_time': jobs.filter(start_time__isnull=False, end_time__isnull=False, success=True).aggregate(
+            'average_time': jobs.filter(start_time__isnull=False, end_time__isnull=False).aggregate(
                 average_time=Avg(F('end_time') - F('start_time')))['average_time']
         }
 
@@ -796,8 +782,8 @@ class Stats(APIView):
         for start, end in self._get_time_intervals(range_param):
             total = objects.filter(created_at__gte=start, created_at__lte=end).count()
             stats = {
-                'start': start,
-                'end': end,
+                'start': start, 
+                'end': end, 
                 'total': total
             }
             results.append(stats)
