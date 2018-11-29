@@ -65,6 +65,7 @@ def _find_and_remove_expired_jobs(job_context):
                     continue
                 except Exception as e:
                     # This job is likely vanished. No need for this directory.
+                    # Or, possibly, another Nomad error outside of BaseNomadException.
                     logger.exception("Janitor found vanished job for " + item + " - why?")
                     continue
             except Exception:
