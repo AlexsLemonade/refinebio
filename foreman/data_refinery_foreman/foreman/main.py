@@ -348,7 +348,14 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
 def retry_failed_downloader_jobs() -> None:
     """Handle downloader jobs that were marked as a failure."""
     failed_jobs = DownloaderJob.objects.filter(success=False, retried=False)
-    handle_downloader_jobs(failed_jobs)
+    failed_jobs_list = [job for job in failed_jobs]
+
+    if failed_jobs_list:
+        logger.info(
+            "Handling failed (explicitly-marked-as-failure) jobs!",
+            jobs=failed_jobs_list
+        )
+        handle_downloader_jobs(failed_jobs)
 
 
 @do_forever(MIN_LOOP_TIME)
@@ -562,12 +569,14 @@ def retry_failed_processor_jobs() -> None:
         pipeline_applied="JANITOR"
     )
 
-    if failed_jobs:
+    failed_jobs_list = [job for job in failed_jobs]
+
+    if failed_jobs_list:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) jobs!",
-            jobs=failed_jobs
+            jobs=failed_jobs_list
         )
-        handle_processor_jobs(failed_jobs)
+        handle_processor_jobs(failed_jobs_list)
 
 
 @do_forever(MIN_LOOP_TIME)
