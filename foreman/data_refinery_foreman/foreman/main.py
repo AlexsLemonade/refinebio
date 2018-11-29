@@ -50,6 +50,24 @@ JANITOR_DISPATCH_TIME = timedelta(minutes=30)
 CLEANUP_QUEUE_TIME = timedelta(minutes=30)
 
 
+def read_config_list(config_file: str) -> List[str]:
+    """
+    Reads a file and returns a list with one item per line.
+    """
+    return_list = []
+    with open(config_file) as config_list:
+        for line in config_list:
+            return_list.append(line.strip())
+
+    return return_list
+
+
+# These are lists of accessions that are for
+# subsets of experiments that we want to prioritize.
+PEDIATRIC_ACCESSION_LIST = read_config_list("config/pediatric_accessions.txt")
+HGU133PLUS2_ACCESSION_LIST = read_config_list("config/hgu133plus2_accessions.txt")
+
+
 ##
 # Utilities
 ##
@@ -120,6 +138,123 @@ def get_active_volumes() -> Set[str]:
 
 
 ##
+# Job Prioritization
+##
+
+
+def prioritize_salmon_jobs(jobs: List) -> List:
+    """Prioritizes salmon experiments based on how close to completion they are.
+
+    This is because salmon experiments have a final processing step
+    that must be performed on all the samples in the experiment, so if
+    9/10 samples in an experiment are processed then they can't
+    actually be used until that last sample is processed.
+    """
+    # The strategy for doing so is to build a mapping between every
+    # salmon job in `jobs` to a priority. This priority will be what
+    # percentage of the samples in this experiment have been
+    # processed. Once we have that mapping we can sort those jobs by
+    # that priority and move them to the front of the list.
+    prioritized_jobs = []
+    for job in jobs:
+        # Salmon jobs are specifc to one sample.
+        sample = job.get_samples().pop()
+
+        # Skip jobs that aren't for Salmon. Handle both ProcessorJobs and DownloaderJobs.
+        if type(job) is ProcessorJob and job.pipeline_applied != ProcessorPipeline.SALMON.value:
+            continue
+        elif type(job) is DownloaderJob:
+            is_salmon_sample = False
+            for original_file in sample.original_files.all():
+                if original_file.filename[-5:].upper() == "FASTQ" \
+                or original_file.filename[-8:].upper() == "FASTQ.GZ" \
+                or original_file.filename[-2:].upper() == "FQ" \
+                or original_file.filename[-3:].upper() == "SRA" \
+                or original_file.filename[-5:].upper() == "FQ.GZ":
+                    is_salmon_sample = True
+
+            if not is_salmon_sample:
+                continue
+
+        # Get a set of unique samples that share at least one
+        # experiment with the sample this job is for.
+        related_samples = set()
+        for experiment in sample.experiments.all():
+            for related_sample in experiment.samples.all():
+                related_samples.add(related_sample)
+
+        # We cannot simply filter on is_processed because that field
+        # doesn't get set until every sample in an experiment is processed.
+        # Instead we are looking for one successful processor job.
+        processed_samples = 0
+        for related_sample in related_samples:
+            sample_is_processed = False
+            for processor_job in related_sample.original_files.first().processor_jobs.all():
+                if processor_job.success == True:
+                    sample_is_processed = True
+
+            if sample_is_processed:
+                processed_samples += 1
+
+        experiment_completion_percent = processed_samples / len(related_samples)
+        prioritized_jobs.append({"job": job, "priority": experiment_completion_percent})
+
+    sorted_job_mappings = sorted(prioritized_jobs, reverse=True, key=lambda k: k["priority"])
+    sorted_jobs = [job_mapping["job"] for job_mapping in sorted_job_mappings]
+
+    # Remove all the jobs we're moving to the front of the list
+    for job in sorted_jobs:
+        jobs.remove(job)
+
+    return sorted_jobs + jobs
+
+
+def prioritize_zebrafish_jobs(jobs: List) -> List:
+    zebrafish_jobs = []
+    for job in jobs:
+        # There aren't cross-species jobs, so just checking one sample's organism will be sufficient.
+        samples = job.get_samples()
+
+        for sample in samples:
+            if sample.organism.name == 'DANIO_RERIO':
+                zebrafish_jobs.append(job)
+                break
+
+    # Remove all the jobs we're moving to the front of the list
+    for job in zebrafish_jobs:
+        jobs.remove(job)
+
+    return zebrafish_jobs + jobs
+
+
+def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
+    prioritized_jobs = []
+    for job in jobs:
+        # All samples in a job correspond to the same experiment, so just check one sample.
+        samples = job.get_samples()
+
+        # Iterate through all the samples' experiments until one is
+        # found with an accession in `accession_list`.
+        is_prioritized_job = False
+        for sample in samples:
+            if is_prioritized_job:
+                # We found one! So stop looping
+                break
+
+            for experiment in sample.experiments.all():
+                if experiment.accession_code in accession_list:
+                    prioritized_jobs.append(job)
+                    is_prioritized_job = True
+                    break
+
+    # Remove all the jobs we're moving to the front of the list
+    for job in prioritized_jobs:
+        jobs.remove(job)
+
+    return prioritized_jobs + jobs
+
+
+##
 # Downloaders
 ##
 
@@ -176,6 +311,16 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
     if len_all_jobs >= MAX_TOTAL_JOBS:
         logger.info("Not requeuing job until we're running fewer jobs.")
         return False
+
+    # We want zebrafish data first, then hgu133plus2, then data
+    # related to pediatric cancer, then to finish salmon experiments
+    # that are close to completion.
+    # Each function moves the jobs it prioritizes to the front of the
+    # list, so apply them in backwards order.
+    jobs = prioritize_salmon_jobs(jobs)
+    jobs = prioritize_jobs_by_accession(jobs, PEDIATRIC_ACCESSION_LIST)
+    jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
+    jobs = prioritize_zebrafish_jobs(jobs)
 
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
@@ -352,60 +497,6 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
         new_job.delete()
 
 
-def prioritize_salmon_jobs(jobs: List[ProcessorJob]) -> List[ProcessorJob]:
-    """Prioritizes salmon experiments based on how close to completion they are.
-
-    This is because salmon experiments have a final processing step
-    that must be performed on all the samples in the experiment, so if
-    9/10 samples in an experiment are processed then they can't
-    actually be used until that last sample is processed.
-    """
-    # The strategy for doing so is to build a mapping between every
-    # salmon job in `jobs` to a priority. This priority will be what
-    # percentage of the samples in this experiment have been
-    # processed. Once we have that mapping we can sort those jobs by
-    # that priority and move them to the front of the list.
-    prioritized_jobs = []
-    for job in jobs:
-        if job.pipeline_applied != ProcessorPipeline.SALMON.value:
-            continue
-
-        # Salmon jobs are specifc to one sample.
-        sample = job.get_samples()[0]
-
-        # Get a set of unique samples that share at least one
-        # experiment with the sample this job is for.
-        related_samples = set()
-        for experiment in sample.experiments.all():
-            for related_sample in experiment.samples.all():
-                related_samples.add(related_sample)
-
-        # We cannot simply filter on is_processed because that field
-        # doesn't get set until every sample in an experiment is processed.
-        # Instead we are looking for one successful processor job.
-        processed_samples = 0
-        for related_sample in related_samples:
-            sample_is_processed = False
-            for processor_job in related_sample.original_files.first().processor_jobs.all():
-                if processor_job.success == True:
-                    sample_is_processed = True
-
-            if sample_is_processed:
-                processed_samples += 1
-
-        experiment_completion_percent = processed_samples / len(related_samples)
-        prioritized_jobs.append({"job": job, "priority": experiment_completion_percent})
-
-    sorted_job_mappings = sorted(prioritized_jobs, reverse=True, key=lambda k: k["priority"])
-    sorted_jobs = [job_mapping["job"] for job_mapping in sorted_job_mappings]
-
-    # Remove all the jobs we're moving to the front of the list
-    for job in sorted_jobs:
-        jobs.pop(job)
-
-    return sorted_jobs + jobs
-
-
 def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
     """For each job in jobs, either retry it or log it."""
 
@@ -420,7 +511,15 @@ def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
         logger.info("Not requeuing job until we're running fewer jobs.")
         return False
 
+    # We want zebrafish data first, then hgu133plus2, then data
+    # related to pediatric cancer, then to finish salmon experiments
+    # that are close to completion.
+    # Each function moves the jobs it prioritizes to the front of the
+    # list, so apply them in backwards order.
     jobs = prioritize_salmon_jobs(jobs)
+    jobs = prioritize_jobs_by_accession(jobs, PEDIATRIC_ACCESSION_LIST)
+    jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
+    jobs = prioritize_zebrafish_jobs(jobs)
 
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
