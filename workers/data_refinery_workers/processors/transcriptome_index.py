@@ -353,7 +353,8 @@ def _populate_index_object(job_context: Dict) -> Dict:
 
     if S3_TRANSCRIPTOME_INDEX_BUCKET_NAME:
         logger.info("Uploading %s %s to s3", job_context['organism_name'], job_context['length'], processor_job=job_context["job_id"])
-        s3_key = organism_object.name + '_' + index_object.index_type + '.tar.gz'
+        timestamp = str(timezone.now().timestamp()).split('.')[0]
+        s3_key = organism_object.name + '_' + index_object.index_type + "_" + timestamp + '.tar.gz'
         sync_result = computed_file.sync_to_s3(S3_TRANSCRIPTOME_INDEX_BUCKET_NAME, s3_key)
         if sync_result:
             computed_file.delete_local_file()
