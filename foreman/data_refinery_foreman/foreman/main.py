@@ -21,7 +21,7 @@ from data_refinery_common.models import (
     SurveyJobKeyValue
 )
 from data_refinery_common.message_queue import send_job
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders, SurveyJobTypes
+from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders, SurveyJobTypes, is_file_rnaseq
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 
@@ -167,11 +167,7 @@ def prioritize_salmon_jobs(jobs: List) -> List:
             elif type(job) is DownloaderJob:
                 is_salmon_sample = False
                 for original_file in sample.original_files.all():
-                    if original_file.filename[-5:].upper() == "FASTQ" \
-                    or original_file.filename[-8:].upper() == "FASTQ.GZ" \
-                    or original_file.filename[-2:].upper() == "FQ" \
-                    or original_file.filename[-3:].upper() == "SRA" \
-                    or original_file.filename[-5:].upper() == "FQ.GZ":
+                    if is_file_rnaseq(original_file.filename):
                         is_salmon_sample = True
 
                 if not is_salmon_sample:
