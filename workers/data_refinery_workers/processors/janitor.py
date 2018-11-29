@@ -8,7 +8,7 @@ import warnings
 
 from django.utils import timezone
 from nomad import Nomad
-from nomad.api.exceptions import BaseNomadException
+from nomad.api.exceptions import BaseNomadException, URLNotFoundNomadException
 from typing import Dict
 
 from data_refinery_common.logging import get_and_configure_logger
@@ -59,6 +59,10 @@ def _find_and_remove_expired_jobs(job_context):
                     # This job is running, don't delete  the working directory.
                     if job_status == "running":
                         continue
+                except URLNotFoundNomadException as e:
+                    # If we can't currently access Nomad,
+                    # just continue until we can again.
+                    continue
                 except BaseNomadException as e:
                     # If we can't currently access Nomad,
                     # just continue until we can again.
@@ -68,11 +72,14 @@ def _find_and_remove_expired_jobs(job_context):
                     # Or, possibly, another Nomad error outside of BaseNomadException.
                     logger.exception("Janitor found vanished job for " + item + " - why?")
                     continue
-            except Exception:
-                # If we don't have a record of the job, we don't need the directory.
+            except ProcessorJob.DoesNotExist:
+                # This job has vanished from the DB - clean it up!
                 logger.exception("Janitor found no record of " + item + " - why?")
                 pass
-
+            except Exception:
+                # If we don't have a record of the job, we don't need the directory.
+                logger.exception("Problem finding job record for " + item + " - why?")
+                continue
 
             # Delete it!
             try:

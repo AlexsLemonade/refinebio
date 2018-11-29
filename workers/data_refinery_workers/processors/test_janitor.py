@@ -75,8 +75,6 @@ class JanitorTestCase(TestCase):
         def mock_get_job(job_id: str):
             if job_id == "running_job":
                 return {"Status": "running"}
-            elif job_id == "missing_job":
-                raise URLNotFoundNomadException()
             else:
                 return {"Status": "dead"}
 
