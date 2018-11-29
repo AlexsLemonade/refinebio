@@ -761,6 +761,17 @@ class ComputedFile(models.Model):
                         self.s3_key,
                         path
                     )
+
+            # Veryify sync integrity
+            hash_object = hashlib.sha1()
+            with open(path, mode='rb') as open_file:
+                for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
+                    hash_object.update(buf)
+            synced_sha1 = hash_object.hexdigest()
+
+            if self.sha1 != synced_sha1:
+                raise AssertionError("SHA1 of downloaded ComputedFile doesn't match database SHA1!")
+
             return path
         except Exception as e:
             logger.exception(e, computed_file_id=self.pk)
