@@ -62,7 +62,7 @@ def is_file_rnaseq(filename: str) -> bool:
         or filename[-8:].upper() == "FASTQ.GZ" \
         or filename[-2:].upper() == "FQ" \
         or filename[-3:].upper() == "SRA" \
-        or filename[-5:].upper() == "FQ.GZ":
+        or filename[-5:].upper() == "FQ.GZ"
 
 
 def _is_platform_supported(platform: str) -> bool:
