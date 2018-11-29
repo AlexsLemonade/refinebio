@@ -157,47 +157,48 @@ def prioritize_salmon_jobs(jobs: List) -> List:
     # that priority and move them to the front of the list.
     prioritized_jobs = []
     for job in jobs:
-        # Salmon jobs are specifc to one sample.
-        sample = job.get_samples().pop()
+        try:
+            # Salmon jobs are specifc to one sample.
+            sample = job.get_samples().pop()
 
-        # Skip jobs that aren't for Salmon. Handle both ProcessorJobs and DownloaderJobs.
-        if type(job) is ProcessorJob and job.pipeline_applied != ProcessorPipeline.SALMON.value:
-            continue
-        elif type(job) is DownloaderJob:
-            is_salmon_sample = False
-            for original_file in sample.original_files.all():
-                if original_file.filename[-5:].upper() == "FASTQ" \
-                or original_file.filename[-8:].upper() == "FASTQ.GZ" \
-                or original_file.filename[-2:].upper() == "FQ" \
-                or original_file.filename[-3:].upper() == "SRA" \
-                or original_file.filename[-5:].upper() == "FQ.GZ":
-                    is_salmon_sample = True
-
-            if not is_salmon_sample:
+            # Skip jobs that aren't for Salmon. Handle both ProcessorJobs and DownloaderJobs.
+            if type(job) is ProcessorJob and job.pipeline_applied != ProcessorPipeline.SALMON.value:
                 continue
+            elif type(job) is DownloaderJob:
+                is_salmon_sample = False
+                for original_file in sample.original_files.all():
+                    if original_file.filename[-5:].upper() == "FASTQ" \
+                    or original_file.filename[-8:].upper() == "FASTQ.GZ" \
+                    or original_file.filename[-2:].upper() == "FQ" \
+                    or original_file.filename[-3:].upper() == "SRA" \
+                    or original_file.filename[-5:].upper() == "FQ.GZ":
+                        is_salmon_sample = True
 
-        # Get a set of unique samples that share at least one
-        # experiment with the sample this job is for.
-        related_samples = set()
-        for experiment in sample.experiments.all():
-            for related_sample in experiment.samples.all():
-                related_samples.add(related_sample)
+                if not is_salmon_sample:
+                    continue
 
-        # We cannot simply filter on is_processed because that field
-        # doesn't get set until every sample in an experiment is processed.
-        # Instead we are looking for one successful processor job.
-        processed_samples = 0
-        for related_sample in related_samples:
-            sample_is_processed = False
-            for processor_job in related_sample.original_files.first().processor_jobs.all():
-                if processor_job.success == True:
-                    sample_is_processed = True
+            # Get a set of unique samples that share at least one
+            # experiment with the sample this job is for.
+            related_samples = set()
+            for experiment in sample.experiments.all():
+                for related_sample in experiment.samples.all():
+                    related_samples.add(related_sample)
 
-            if sample_is_processed:
-                processed_samples += 1
+            # We cannot simply filter on is_processed because that field
+            # doesn't get set until every sample in an experiment is processed.
+            # Instead we are looking for one successful processor job.
+            processed_samples = 0
+            for related_sample in related_samples:
+                original_files = related_sample.original_files
+                if original_files.count() == 0:
+                    logger.error("Salmon sample found without any original files!!!", sample=related_sample)
+                elif original_files.first().processor_jobs.filter(success=True).count() >= 1:
+                    processed_samples += 1
 
-        experiment_completion_percent = processed_samples / len(related_samples)
-        prioritized_jobs.append({"job": job, "priority": experiment_completion_percent})
+            experiment_completion_percent = processed_samples / len(related_samples)
+            prioritized_jobs.append({"job": job, "priority": experiment_completion_percent})
+        except:
+            logger.exception("Exception caught while prioritizing salmon jobs!")
 
     sorted_job_mappings = sorted(prioritized_jobs, reverse=True, key=lambda k: k["priority"])
     sorted_jobs = [job_mapping["job"] for job_mapping in sorted_job_mappings]
@@ -210,15 +211,19 @@ def prioritize_salmon_jobs(jobs: List) -> List:
 
 
 def prioritize_zebrafish_jobs(jobs: List) -> List:
+    """Moves zebrafish jobs to the beginnging of the input list."""
     zebrafish_jobs = []
     for job in jobs:
-        # There aren't cross-species jobs, so just checking one sample's organism will be sufficient.
-        samples = job.get_samples()
+        try:
+            # There aren't cross-species jobs, so just checking one sample's organism will be sufficient.
+            samples = job.get_samples()
 
-        for sample in samples:
-            if sample.organism.name == 'DANIO_RERIO':
-                zebrafish_jobs.append(job)
-                break
+            for sample in samples:
+                if sample.organism.name == 'DANIO_RERIO':
+                    zebrafish_jobs.append(job)
+                    break
+        except:
+            logger.exception("Exception caught while prioritizing zebrafish jobs!")
 
     # Remove all the jobs we're moving to the front of the list
     for job in zebrafish_jobs:
@@ -228,24 +233,28 @@ def prioritize_zebrafish_jobs(jobs: List) -> List:
 
 
 def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
+    """Moves jobs whose accessions are in accession_lst to the beginning of the input list."""
     prioritized_jobs = []
     for job in jobs:
-        # All samples in a job correspond to the same experiment, so just check one sample.
-        samples = job.get_samples()
+        try:
+            # All samples in a job correspond to the same experiment, so just check one sample.
+            samples = job.get_samples()
 
-        # Iterate through all the samples' experiments until one is
-        # found with an accession in `accession_list`.
-        is_prioritized_job = False
-        for sample in samples:
-            if is_prioritized_job:
-                # We found one! So stop looping
-                break
-
-            for experiment in sample.experiments.all():
-                if experiment.accession_code in accession_list:
-                    prioritized_jobs.append(job)
-                    is_prioritized_job = True
+            # Iterate through all the samples' experiments until one is
+            # found with an accession in `accession_list`.
+            is_prioritized_job = False
+            for sample in samples:
+                if is_prioritized_job:
+                    # We found one! So stop looping
                     break
+
+                for experiment in sample.experiments.all():
+                    if experiment.accession_code in accession_list:
+                        prioritized_jobs.append(job)
+                        is_prioritized_job = True
+                        break
+        except:
+            logger.exception("Exception caught while prioritizing zebrafish jobs!")
 
     # Remove all the jobs we're moving to the front of the list
     for job in prioritized_jobs:
