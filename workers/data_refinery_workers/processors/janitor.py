@@ -77,7 +77,7 @@ def _find_and_remove_expired_jobs(job_context):
                 logger.exception("Janitor found no record of " + item + " - why?")
                 pass
             except Exception:
-                # If we don't have a record of the job, we don't need the directory.
+                # We're unable to connect to the DB right now (or something), so hold onto it for right now.
                 logger.exception("Problem finding job record for " + item + " - why?")
                 continue
 
