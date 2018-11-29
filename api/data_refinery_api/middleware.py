@@ -1,5 +1,6 @@
 import logging
 from django.utils.deprecation import MiddlewareMixin
+from data_refinery_common.utils import get_env_variable_gracefully
 
 class SentryCatchBadRequestMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
@@ -44,3 +45,8 @@ class SentryCatchBadRequestMiddleware(MiddlewareMixin):
         })
 
         client.captureMessage(message=str(exception), data=data)
+
+class RevisionMiddleware(MiddlewareMixin):
+    def process_response(self, request, response):
+        response['X-Source-Revision'] = get_env_variable_gracefully("SYSTEM_VERSION")
+        return response
