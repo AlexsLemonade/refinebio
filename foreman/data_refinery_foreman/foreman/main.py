@@ -355,7 +355,7 @@ def retry_failed_downloader_jobs() -> None:
             "Handling failed (explicitly-marked-as-failure) jobs!",
             jobs=failed_jobs_list
         )
-        handle_downloader_jobs(failed_jobs)
+        handle_downloader_jobs(failed_jobs_list)
 
 
 @do_forever(MIN_LOOP_TIME)
