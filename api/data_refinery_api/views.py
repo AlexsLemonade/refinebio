@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+import nomad
 
 from django.conf import settings
 from django.db.models import Count, Prefetch
@@ -698,7 +699,64 @@ class Stats(APIView):
         data['input_data_size'] = self._get_input_data_size()
         data['output_data_size'] = self._get_output_data_size()
 
+        nomad_stats = self._get_nomad_jobs_breakdown()
+        data['nomad_running_jobs'] = nomad_stats["nomad_running_jobs_by_type"]
+        data['nomad_pending_jobs'] = nomad_stats["nomad_pending_jobs_by_type"]
+        data['nomad_running_jobs_by_type'] = None
+        data['nomad_pending_jobs_by_type'] = None
+        data['nomad_running_jobs_by_volume'] = None
+        data['nomad_pending_jobs_by_volume'] = None
+
         return Response(data)
+
+    def _aggregate_nomad_jobs_by_type(self, jobs: Dict):
+        """Aggregates the pending and running job counts for each Nomad job type.
+
+        This is accomplished by using the stats that each
+        parameterized job has about its children jobs.
+
+        `jobs` should be a response from the Nomad API's jobs endpoint.
+        """
+        job_types = set()
+        for job in jobs:
+            # Strips out the last two underscores like so:
+            # SALMON_1_16384 -> SALMON
+            job_type = "_".join(job["ID"].split("_")[0:-2])
+            job_types.add(job_type)
+
+        nomad_running_jobs_by_type = {}
+        nomad_pending_jobs_by_type = {}
+        for job_type in job_types:
+            same_jobs = [job for job in jobs if job["ID"].startswith(job_type)]
+
+            aggregated_pending = 0
+            aggregated_running = 0
+            for job in same_job:
+                children = job["JobSummary"]["Children"]
+                aggregated_pending = aggregated_pending + children["Pending"]
+                aggregated_running = aggregated_running + children["Running"]
+
+            nomad_pending_jobs_by_type[job_type] = aggregated_pending
+            nomad_running_jobs_by_type[job_type] = aggregated_running
+
+        return nomad_pending_jobs_by_type, nomad_running_jobs_by_type
+
+
+    def _get_nomad_jobs_breakdown(self):
+        nomad_host = get_env_variable("NOMAD_HOST")
+        nomad_port = get_env_variable("NOMAD_PORT", "4646")
+        nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
+
+        jobs = nomad_client.jobs.get_jobs()
+        parameterized_jobs = [job for job in jobs if job['ParameterizedJob']]
+
+        nomad_pending_jobs_by_type, nomad_running_jobs_by_type = self._aggregate_nomad_jobs_by_type(parameterized_jobs)
+
+        return {
+            "nomad_pending_jobs_by_type": nomad_pending_jobs_by_type,
+            "nomad_running_jobs_by_type": nomad_running_jobs_by_type
+        }
+
 
     def _get_input_data_size(self):
         total_size = OriginalFile.objects.filter(
