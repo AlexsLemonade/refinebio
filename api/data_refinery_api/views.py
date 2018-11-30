@@ -1,66 +1,66 @@
+from datetime import timedelta, datetime
+
 from django.conf import settings
 from django.db.models import Count, Prefetch
 from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
-
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
-
+from rest_framework import status, filters, generics
 from rest_framework.exceptions import APIException
+from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.settings import api_settings
-from rest_framework.exceptions import ValidationError
-from rest_framework import status, filters, generics
+from rest_framework.views import APIView
 
+from data_refinery_api.serializers import (
+    ComputationalResultSerializer,
+    DetailedExperimentSerializer,
+    DetailedSampleSerializer,
+    ExperimentSerializer,
+    InstitutionSerializer,
+    OrganismIndexSerializer,
+    OrganismSerializer,
+    PlatformSerializer,
+    ProcessorSerializer,
+    SampleSerializer,
+
+    # Job
+    DownloaderJobSerializer,
+    ProcessorJobSerializer,
+    SurveyJobSerializer,
+
+    # Dataset
+    APITokenSerializer
+    CreateDatasetSerializer,
+    DatasetDetailsSerializer,
+    DatasetSerializer,
+)
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
-    Experiment,
-    Sample,
-    Organism,
-    Processor,
-    ComputationalResult,
-    DownloaderJob,
-    SurveyJob,
-    ProcessorJob,
-    Dataset,
     APIToken,
-    ProcessorJobDatasetAssociation,
-    OrganismIndex,
+    ComputationalResult,
+    ComputedFile,
+    Dataset,
+    DownloaderJob,
+    Experiment,
     ExperimentSampleAssociation,
+    Organism,
+    OrganismIndex,
     OriginalFile,
-)
-from data_refinery_api.serializers import (
-    ExperimentSerializer,
-    DetailedExperimentSerializer,
-    SampleSerializer,
-    DetailedSampleSerializer,
-    OrganismSerializer,
-    OrganismIndexSerializer,
-    PlatformSerializer,
-    InstitutionSerializer,
-    ComputationalResultSerializer,
-    ProcessorSerializer,
-
-    # Job
-    SurveyJobSerializer,
-    DownloaderJobSerializer,
-    ProcessorJobSerializer,
-
-    # Dataset
-    CreateDatasetSerializer,
-    DatasetSerializer,
-    DatasetDetailsSerializer,
-    APITokenSerializer
+    Processor,
+    ProcessorJob,
+    ProcessorJobDatasetAssociation,
+    Sample,
+    SurveyJob,
 )
 
-from datetime import timedelta, datetime
-from django.utils import timezone
 
 ##
 # Custom Views
@@ -696,26 +696,26 @@ class Stats(APIView):
         data['samples'] = self._get_object_stats(Sample.objects, range_param)
         data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
         data['input_data_size'] = self._get_input_data_size()
-        data['output_data_size'] = self.get_output_data_size()
+        data['output_data_size'] = self._get_output_data_size()
 
         return Response(data)
 
     def _get_input_data_size(self):
-        total_size = Sample.processed_objects.original_files.filter(
-            is_downloaded=True
+        total_size = OriginalFile.objects.filter(
+            sample__is_processed=True
         ).aggregate(
             Sum('size_in_bytes')
         )
-        return total_size['size_in_bytes__sum']
+        return total_size['size_in_bytes__sum'] if total_size['size_in_bytes__sum'] else 0
 
     def _get_output_data_size(self):
-        total_size = ComputedFile.public_objects.filter(
+        total_size = ComputedFile.public_objects.all().filter(
             s3_bucket__isnull=False,
             s3_key__isnull=True
         ).aggregate(
             Sum('size_in_bytes')
         )
-        return total_size['size_in_bytes__sum']
+        return total_size['size_in_bytes__sum'] if total_size['size_in_bytes__sum'] else 0
 
     def _get_job_stats(self, jobs, range_param):
         result = {
