@@ -42,7 +42,7 @@ echo "export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> env_vars
 echo "export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> env_vars
 
 # And checkout the correct tag.
-run_on_deploy_box "git fetch"
+run_on_deploy_box "git fetch --all"
 run_on_deploy_box "git checkout $CIRCLE_TAG"
 
 # Verify that the tag has been signed by a trusted team member.
@@ -69,7 +69,7 @@ run_on_deploy_box "source env_vars && echo -e '######\nFinished building new ima
 source ~/refinebio/common.sh
 
 # Circle won't set the branch name for us, so do it ourselves.
-branch=$(get_master_or_dev)
+branch=$(get_master_or_dev $CIRCLE_TAG)
 
 if [[ "$branch" == "master" ]]; then
     DOCKERHUB_REPO=ccdl
