@@ -286,6 +286,11 @@ def _find_or_download_index(job_context: Dict) -> Dict:
         # complete each step.
         version_info_path = job_context["index_directory"] + "/versionInfo.json"
 
+        # Something very bad happened and now there are corrupt indexes installed. Nuke 'em. 
+        if os.path.exists(version_info_path) and (os.path.getsize(version_info_path) == 0):
+            shutil.rmtree(job_context["index_directory"], ignore_errors=True)
+            os.makedirs(job_context["index_directory"], exist_ok=True)
+
         index_tarball = None
         if not os.path.exists(version_info_path):
             # Index is not installed yet, so download it.
@@ -303,10 +308,6 @@ def _find_or_download_index(job_context: Dict) -> Dict:
             os.makedirs(index_hard_dir)
             with tarfile.open(index_tarball, "r:gz") as index_archive:
                 index_archive.extractall(index_hard_dir)
-
-        if index_tarball:
-            # Cleanup the tarball now that it's been extracted.
-            os.remove(index_tarball)
 
         if not os.path.exists(version_info_path):
             # Index is still not installed yet, so symlink the files we
@@ -330,17 +331,18 @@ def _find_or_download_index(job_context: Dict) -> Dict:
             for subfile in index_files:
                 os.symlink(index_hard_dir + subfile, job_context["index_directory"] + "/" + subfile)
         elif index_hard_dir:
-            # Cleanup the extracted directory, it's not needed.
-            shutil.rmtree(index_hard_dir)
+            # We have failed the race.
+            logger.error("We have failed the index extraction race! Removing dead trees.")
+            shutil.rmtree(index_hard_dir, ignore_errors=True)
     except Exception as e:
-        # Make sure we don't leave an empty index directory lying around.
-        shutil.rmtree(job_context["index_directory"], ignore_errors=True)
-
         error_template = "Failed to download or extract transcriptome index for organism {0}: {1}"
         error_message = error_template.format(str(job_context['organism']), str(e))
         logger.error(error_message, processor_job=job_context["job_id"])
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
+
+        # Make sure we don't leave an empty index directory lying around.
+        shutil.rmtree(index_hard_dir, ignore_errors=True)
         return job_context
 
     # The index tarball contains a directory named index, so add that
