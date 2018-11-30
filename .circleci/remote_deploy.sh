@@ -42,7 +42,7 @@ echo "export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> env_vars
 echo "export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> env_vars
 
 # And checkout the correct tag.
-run_on_deploy_box "git fetch"
+run_on_deploy_box "git fetch --all"
 run_on_deploy_box "git checkout $CIRCLE_TAG"
 
 # Verify that the tag has been signed by a trusted team member.
