@@ -36,7 +36,7 @@ from data_refinery_api.serializers import (
     SurveyJobSerializer,
 
     # Dataset
-    APITokenSerializer
+    APITokenSerializer,
     CreateDatasetSerializer,
     DatasetDetailsSerializer,
     DatasetSerializer,
