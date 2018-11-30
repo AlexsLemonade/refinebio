@@ -41,14 +41,8 @@ echo "export OPENSSL_KEY=$OPENSSL_KEY" >> env_vars
 echo "export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> env_vars
 echo "export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> env_vars
 
-# Update dev and master so we can make sure the tag belong to one of them.
-run_on_deploy_box "git fetch --all"
-run_on_deploy_box "git checkout dev"
-run_on_deploy_box "git pull origin dev"
-run_on_deploy_box "git checkout master"
-run_on_deploy_box "git pull origin master"
-
 # And checkout the correct tag.
+run_on_deploy_box "git fetch --all"
 run_on_deploy_box "git checkout $CIRCLE_TAG"
 
 # Verify that the tag has been signed by a trusted team member.

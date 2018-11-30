@@ -50,8 +50,8 @@ get_master_or_dev() {
     if [[ -z $version ]]; then
         echo "You must pass the version to get_master_or_dev."
     else
-        master_check=$(git log master --decorate=full | grep "$version" || true)
-        dev_check=$(git log dev --decorate=full | grep "$version" || true)
+        master_check=$(git log origin/master --decorate=full | grep "$version" || true)
+        dev_check=$(git log origin/dev --decorate=full | grep "$version" || true)
 
         # All dev versions should end with '-dev' and all master versions should not.
         if [[ ! -z $master_check ]] && [[ $version != *-dev ]]; then
