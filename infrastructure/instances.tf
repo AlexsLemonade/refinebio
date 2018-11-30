@@ -498,7 +498,7 @@ resource "aws_spot_fleet_request" "cheap_ram" {
 
     # Client Specific
     instance_type             = "m5a.24xlarge"
-    weighted_capacity         = 3
+    weighted_capacity         = 4
     spot_price                = "${var.spot_price}"
     ami                       = "${data.aws_ami.ubuntu.id}"
     iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
