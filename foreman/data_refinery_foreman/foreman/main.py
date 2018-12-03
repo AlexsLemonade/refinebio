@@ -685,7 +685,7 @@ def retry_lost_processor_jobs() -> None:
                 if timezone.now() - job.created_at > MIN_LOOP_TIME:
                     lost_jobs.append(job)
         except URLNotFoundNomadException:
-            logger.exception(("Determined that a processor job needs to be requeued because "
+            logger.debug(("Determined that a processor job needs to be requeued because "
                               "querying for its Nomad job failed: "),
                              job_id=job.id
             )
