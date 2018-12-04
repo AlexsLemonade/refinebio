@@ -3,7 +3,12 @@ from typing import List
 
 from data_refinery_common import utils
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import Sample, OriginalFile, OriginalFileSampleAssociation
+from data_refinery_common.models import (
+    OriginalFile,
+    OriginalFileSampleAssociation,
+    ProcessorJob,
+    Sample,
+)
 
 
 logger = get_and_configure_logger(__name__)
@@ -32,6 +37,12 @@ class ProcessorPipeline(PipelineEnums):
     QN_REFERENCE = "QN_REFERENCE"
     JANITOR = "JANITOR"
     NONE = "NONE"
+
+
+def does_processor_job_have_samples(job: ProcessorJob):
+    return not (job.pipeline_applied == ProcessorPipeline.SMASHER.value \
+                or job.pipeline_applied == ProcessorPipeline.JANITOR.value \
+                or job.pipeline_applied == ProcessorPipeline.QN_REFERENCE.value)
 
 
 class DiscoveryPipeline(PipelineEnums):
