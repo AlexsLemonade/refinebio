@@ -265,7 +265,7 @@ def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
                         is_prioritized_job = True
                         break
         except:
-            logger.exception("Exception caught while prioritizing zebrafish jobs!", job=job)
+            logger.exception("Exception caught while prioritizing jobs by accession!", job=job)
 
     # Remove all the jobs we're moving to the front of the list
     for job in prioritized_jobs:
