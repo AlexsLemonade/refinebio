@@ -92,7 +92,7 @@ def do_forever(min_loop_time: timedelta) -> Callable:
 
                 loop_time = timezone.now() - start_time
                 if loop_time < min_loop_time:
-                    remaining_time = MIN_LOOP_TIME - loop_time
+                    remaining_time = min_loop_time - loop_time
                     time.sleep(remaining_time.seconds)
 
         return wrapper
