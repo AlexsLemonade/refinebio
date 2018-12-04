@@ -10,6 +10,9 @@ data_dir = "/tmp/nomad_server1"
 server {
     enabled = true
 
+    # Clean out old jobs sooner
+    job_gc_threshold = "5m"
+
     # Only 1 for the lead server, 3 for the others. Tx Kurt.
     bootstrap_expect = 1
 }

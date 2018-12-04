@@ -138,6 +138,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         job_context["internal_accession"] = get_internal_microarray_accession(job_context["platform"])
         if not job_context["internal_accession"]:
             logger.error("Failed to find internal accession for code", code=job_context["platform"])
+            job_context["job"].failure_reason = "Failed to find internal accession for code" + job_context["platform"]
             job_context['success'] = False
             job_context["job"].no_retry = True
     except Exception as e:
@@ -159,6 +160,14 @@ def _convert_genes(job_context: Dict) -> Dict:
 
 def _convert_affy_genes(job_context: Dict) -> Dict:
     """ Convert to Ensembl genes if we can"""
+
+    if 'internal_accession' not in job_context or not job_context['internal_accession']:
+        error_msg = "Told to convert AFFY genes without an internal_accession - how did this happen?"
+        logger.error(error_msg, job_context=job_context)
+        job_context["job"].failure_reason = str(error_msg)
+        job_context['success'] = False
+        job_context["job"].no_retry = True
+        return job_context
 
     gene_index_path = "/home/user/gene_indexes/" + job_context["internal_accession"] + ".tsv.gz"
     if not os.path.exists(gene_index_path):

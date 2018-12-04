@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Set
 
 from django.db import transaction
 from django.db import models
@@ -16,6 +16,9 @@ class SurveyJob(models.Model):
     source_type = models.CharField(max_length=256)
     success = models.NullBooleanField(null=True)
     no_retry = models.BooleanField(default=False)
+    nomad_job_id = models.CharField(max_length=256, null=True)
+
+    ram_amount = models.IntegerField(default=256)
 
     # The start time of the job
     start_time = models.DateTimeField(null=True)
@@ -129,6 +132,14 @@ class ProcessorJob(models.Model):
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 
+    def get_samples(self) -> Set[Sample]:
+        samples = set()
+        for original_file in self.original_files.all():
+            for sample in original_file.samples.all():
+                samples.add(sample)
+
+        return samples
+
     def save(self, *args, **kwargs):
         """ On save, update timestamps """
         current_time = timezone.now()
@@ -187,6 +198,14 @@ class DownloaderJob(models.Model):
 
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
+
+    def get_samples(self) -> Set[Sample]:
+        samples = set()
+        for original_file in self.original_files.all():
+            for sample in original_file.samples.all():
+                samples.add(sample)
+
+        return samples
 
     def save(self, *args, **kwargs):
         """ On save, update timestamps """

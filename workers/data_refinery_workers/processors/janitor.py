@@ -8,7 +8,7 @@ import warnings
 
 from django.utils import timezone
 from nomad import Nomad
-from nomad.api.exceptions import BaseNomadException
+from nomad.api.exceptions import BaseNomadException, URLNotFoundNomadException
 from typing import Dict
 
 from data_refinery_common.logging import get_and_configure_logger
@@ -51,27 +51,40 @@ def _find_and_remove_expired_jobs(job_context):
             # Okay, does this job exist?
             try:
                 job = ProcessorJob.objects.get(id=job_id)
-            except Exception:
-                pass
 
-            # Is this job running?
-            try:
-                job_status = nomad_client.job.get_job(job_id)["Status"]
+                # Is this job running?
+                try:
+                    job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
 
-                # This job is running, don't delete  the working directory.
-                if job_status == "running":
+                    # This job is running, don't delete  the working directory.
+                    if job_status == "running":
+                        continue
+                except URLNotFoundNomadException as e:
+                    # If we can't currently access Nomad,
+                    # just continue until we can again.
                     continue
-            except BaseNomadException as e:
-                # If we can't currently access Nomad,
-                # just continue until we can again.
-                continue
-            except Exception as e:
-                # This job is likely vanished. No need for this directory.
+                except BaseNomadException as e:
+                    # If we can't currently access Nomad,
+                    # just continue until we can again.
+                    continue
+                except Exception as e:
+                    # This job is likely vanished. No need for this directory.
+                    # Or, possibly, another Nomad error outside of BaseNomadException.
+                    logger.exception("Janitor found vanished job for " + item + " - why?")
+                    continue
+            except ProcessorJob.DoesNotExist:
+                # This job has vanished from the DB - clean it up!
+                logger.exception("Janitor found no record of " + item + " - why?")
                 pass
+            except Exception:
+                # We're unable to connect to the DB right now (or something), so hold onto it for right now.
+                logger.exception("Problem finding job record for " + item + " - why?")
+                continue
 
             # Delete it!
             try:
                 to_delete = LOCAL_ROOT_DIR + '/' + item
+                logger.info("Janitor deleting " + to_delete)
                 shutil.rmtree(to_delete)
                 job_context['deleted_items'].append(to_delete)
             except Exception as e:

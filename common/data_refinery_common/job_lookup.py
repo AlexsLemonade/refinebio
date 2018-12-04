@@ -10,7 +10,6 @@ logger = get_and_configure_logger(__name__)
 
 
 class PipelineEnums(Enum):
-
     """An abstract class to enumerate valid processor pipelines.
 
     Enumerations which extend this class are valid values for the
@@ -20,7 +19,6 @@ class PipelineEnums(Enum):
 
 
 class ProcessorPipeline(PipelineEnums):
-
     """An enumeration of supported processors"""
     AFFY_TO_PCL = "AFFY_TO_PCL"
     AGILENT_ONECOLOR_TO_PCL = "AGILENT_ONECOLOR_TO_PCL"  # Currently unsupported
@@ -37,19 +35,34 @@ class ProcessorPipeline(PipelineEnums):
 
 
 class DiscoveryPipeline(PipelineEnums):
-
     """Pipelines which discover appropriate processing for the data."""
     pass
 
 
 class Downloaders(Enum):
-
     """An enumeration of downloaders for downloader_task."""
     ARRAY_EXPRESS = "ARRAY_EXPRESS"
     SRA = "SRA"
     TRANSCRIPTOME_INDEX = "TRANSCRIPTOME_INDEX"
     GEO = "GEO"
     NONE = "NONE"
+
+
+class SurveyJobTypes(Enum):
+    """An enumeration of downloaders for downloader_task."""
+    SURVEYOR = "SURVEYOR"
+
+
+def is_file_rnaseq(filename: str) -> bool:
+    """Returns true if `filename` matches the pattern of an RNAseq file, false otherwise."""
+    if not filename:
+        return False
+
+    return filename[-5:].upper() == "FASTQ" \
+        or filename[-8:].upper() == "FASTQ.GZ" \
+        or filename[-2:].upper() == "FQ" \
+        or filename[-3:].upper() == "SRA" \
+        or filename[-5:].upper() == "FQ.GZ"
 
 
 def _is_platform_supported(platform: str) -> bool:
@@ -125,11 +138,7 @@ def determine_processor_pipeline(sample_object: Sample, original_file=None) -> P
     if original_file:
         if original_file.filename[-4:].upper() == ".CEL":
             return ProcessorPipeline.AFFY_TO_PCL
-        if original_file.filename[-5:].upper() == "FASTQ" \
-        or original_file.filename[-8:].upper() == "FASTQ.GZ" \
-        or original_file.filename[-2:].upper() == "FQ" \
-        or original_file.filename[-3:].upper() == "SRA" \
-        or original_file.filename[-5:].upper() == "FQ.GZ":
+        if is_file_rnaseq(original_file.filename):
             return ProcessorPipeline.SALMON
 
     # We NO_OP processed data. It's what we do.

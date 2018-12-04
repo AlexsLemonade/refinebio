@@ -146,7 +146,9 @@ if [[ $env != "prod" && $env != "staging" && $env != "dev" ]]; then
         extra_hosts = [\"database:$DB_HOST_IP\",
                        \"nomad:$NOMAD_HOST_IP\"]
 "
-    export AWS_CREDS=""
+    export AWS_CREDS="
+    AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID\"
+    AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY\""
     export LOGGING_CONFIG=""
     environment_file="environments/$env"
 else
@@ -196,8 +198,18 @@ export_log_conf (){
             awslogs-stream = \"log-stream-$1-docker-$USER-$STAGE\"
           }
         }"
+
+        # Only constrain smasher jobs in the cloud so that
+        # local/test can still run smasher jobs.
+        export SMASHER_CONSTRAINT="
+        constraint {
+          attribute = \"\${meta.is_smasher}\"
+          operator = \"=\"
+          value = \"true\"
+        }"
     else
         export LOGGING_CONFIG=""
+        export SMASHER_CONSTRAINT=""
     fi
 }
 

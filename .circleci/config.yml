@@ -10,7 +10,7 @@ jobs:
       - checkout
 
       # Clean up stuff circle provides that we don't need.
-      - run: sudo bash .circleci/cleanup_instance.sh
+      - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
@@ -79,7 +79,7 @@ jobs:
       - checkout
 
       # Clean up stuff circle provides that we don't need.
-      - run: sudo bash .circleci/cleanup_instance.sh
+      - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
@@ -104,7 +104,7 @@ jobs:
       - checkout
 
       # Clean up stuff circle provides that we don't need.
-      - run: sudo bash .circleci/cleanup_instance.sh
+      - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
@@ -124,7 +124,7 @@ jobs:
           command: .circleci/filter_tests.sh -t salmon
           no_output_timeout: 1h
 
-  tx_illumina_affy_agilent_tests:
+  tx_illumina_tests:
     working_directory: ~/refinebio
     machine:
       docker_layer_caching: true
@@ -132,7 +132,7 @@ jobs:
       - checkout
 
       # Clean up stuff circle provides that we don't need.
-      - run: sudo bash .circleci/cleanup_instance.sh
+      - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
@@ -165,6 +165,26 @@ jobs:
       - run: docker image rm ccdlstaging/dr_transcriptome
       - run: docker image rm ccdlstaging/dr_illumina
 
+  affy_agilent_tests:
+    machine: true
+    working_directory: ~/refinebio
+    steps:
+      - checkout
+
+      # Clean up stuff circle provides that we don't need.
+      - run: sudo ./.circleci/cleanup_instance.sh
+
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      # Let Postgres start up.
+      - run: sleep 30
+      # Finish setting up Postgres now that it's running.
+      - run: ./common/install_db_docker.sh
+
+      # Install our application. Provides the data_refinery_common package for the other images.
+      - run: chmod -R a+wr common
+      - run: ./update_models.sh
+
       - run:
           command: .circleci/filter_tests.sh -t affymetrix
           # This takes a while because the affymetrix image is huge
@@ -177,18 +197,17 @@ jobs:
       # This doesn't take as long because the image has already been pulled.
       - run: .circleci/filter_tests.sh -t agilent
 
-
   deploy:
     machine: true
     working_directory: ~/refinebio
     steps:
       - checkout
-      - run: bash .circleci/install_git_decrypt.sh
-      - run: bash .circleci/git_decrypt.sh
+      - run: ./.circleci/install_git_decrypt.sh
+      - run: ./.circleci/git_decrypt.sh
       - run:
-          command: bash .circleci/remote_deploy.sh
+          command: ./.circleci/remote_deploy.sh
           no_output_timeout: 4h # Building images and createing postgres instances can take a while.
-      - run: bash .circleci/slackpost.sh robots deploybot
+      - run: ./.circleci/slackpost.sh robots deploybot
 
 workflows:
   version: 2
@@ -215,7 +234,13 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      - tx_illumina_affy_agilent_tests:
+      - tx_illumina_tests:
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+      - affy_agilent_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
@@ -229,7 +254,8 @@ workflows:
             - main_tests
             - common_tests
             - salmon_and_api_tests
-            - tx_illumina_affy_agilent_tests
+            - tx_illumina_tests
+            - affy_agilent_tests
           filters:
             # No branch commit will ever trigger this job.
             branches:

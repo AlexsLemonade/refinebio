@@ -5,6 +5,7 @@ import os
 import re
 import requests
 
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from retrying import retry
 
@@ -42,7 +43,7 @@ def get_instance_id() -> str:
     """Returns the AWS instance id where this is running or "local"."""
     global INSTANCE_ID
     if INSTANCE_ID is None:
-        if get_env_variable("RUNNING_IN_CLOUD") == "True":
+        if settings.RUNNING_IN_CLOUD:
             @retry(stop_max_attempt_number=3)
             def retrieve_instance_id():
                 return requests.get(os.path.join(METADATA_URL, "instance-id")).text
@@ -67,10 +68,10 @@ def get_volume_index(default="0", path='/home/user/data_store/VOLUME_INDEX') -> 
             v_id = f.read().strip()
             return v_id
     except Exception as e:
-        # Logger needs util, so we do this at runtime
-        from data_refinery_common.logging import get_and_configure_logger
-        logger = get_and_configure_logger(__name__)
-        logger.info("Could not read volume index file, using default", default=default)
+        # Our configured logger needs util, so we use the standard logging library for just this.
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("Could not read volume index file, using default: {}", default)
         logger.info(str(e))
 
     return default

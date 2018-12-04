@@ -981,6 +981,7 @@ class SmasherTestCase(TestCase):
         computed_file.result = result
         computed_file.size_in_bytes = 9001
         computed_file.is_smashable = False
+        computed_file.sha1 = "36cf21c08d461f74ddb0f2edb6257afee309c4a4"
         computed_file.save()
 
         # Make sure it's not there
