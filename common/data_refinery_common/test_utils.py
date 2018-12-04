@@ -94,7 +94,7 @@ class UtilsTestCase(TestCase):
 
     def test_volume_index(self):
         """Test that supported RNASeq platforms setting is set correctly."""
-        self.assertEqual(utils.get_volume_index(), "-1")
+        self.assertEqual(utils.get_volume_index(), "0")
         with open('/tmp/VOLUME_INDEX', 'wb') as f:
             f.write("123".encode())
         self.assertEqual(utils.get_volume_index(path='/tmp/VOLUME_INDEX'), "123")
