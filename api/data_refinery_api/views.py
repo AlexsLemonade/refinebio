@@ -1,5 +1,6 @@
 from datetime import timedelta, datetime
 import nomad
+from typing import Dict
 
 from django.conf import settings
 from django.db.models import Count, Prefetch
@@ -61,6 +62,7 @@ from data_refinery_common.models import (
     Sample,
     SurveyJob,
 )
+from data_refinery_common.utils import get_env_variable
 
 
 ##
@@ -188,7 +190,15 @@ class SearchAndFilter(generics.ListAPIView):
                         'publication_authors',
                         'pubmed_id',
                         '@submitter_institution',
-                        'experimentannotation__data'
+                        'experimentannotation__data',
+                        '@sample__accession_code',
+                        '@sample__platform_name',
+                        '@sample__platform_accession_code',
+                        '@sample__organism__name',
+                        '@sample__sex',
+                        '@sample__specimen_part',
+                        '@sample__disease',
+                        '@sample__compound'
                     )
     filter_fields = ('has_publication', 'platform_name')
 
@@ -700,10 +710,10 @@ class Stats(APIView):
         data['output_data_size'] = self._get_output_data_size()
 
         nomad_stats = self._get_nomad_jobs_breakdown()
-        data['nomad_running_jobs'] = nomad_stats["nomad_running_jobs_by_type"]
-        data['nomad_pending_jobs'] = nomad_stats["nomad_pending_jobs_by_type"]
-        data['nomad_running_jobs_by_type'] = None
-        data['nomad_pending_jobs_by_type'] = None
+        data['nomad_running_jobs'] = nomad_stats["nomad_running_jobs"]
+        data['nomad_pending_jobs'] = nomad_stats["nomad_pending_jobs"]
+        data['nomad_running_jobs_by_type'] = nomad_stats["nomad_running_jobs_by_type"]
+        data['nomad_pending_jobs_by_type'] = nomad_stats["nomad_pending_jobs_by_type"]
         data['nomad_running_jobs_by_volume'] = None
         data['nomad_pending_jobs_by_volume'] = None
 
@@ -731,7 +741,7 @@ class Stats(APIView):
 
             aggregated_pending = 0
             aggregated_running = 0
-            for job in same_job:
+            for job in same_jobs:
                 children = job["JobSummary"]["Children"]
                 aggregated_pending = aggregated_pending + children["Pending"]
                 aggregated_running = aggregated_running + children["Running"]
@@ -741,6 +751,37 @@ class Stats(APIView):
 
         return nomad_pending_jobs_by_type, nomad_running_jobs_by_type
 
+    def _aggregate_nomad_jobs_by_volume(self, jobs: Dict):
+        """Aggregates the job counts for each EBS volume.
+
+        This is accomplished by using the stats that each
+        parameterized job has about its children jobs.
+
+        `jobs` should be a response from the Nomad API's jobs endpoint.
+        """
+        volume_ids = set()
+        for job in jobs:
+            # Strips out the volume ID like so:
+            # SALMON_1_16384 -> 1
+            volume_id = "_".join(job["ID"].split("_")[-2])
+            volume_ids.add(volume_id)
+
+        nomad_running_jobs_by_volume = {}
+        nomad_pending_jobs_by_volume = {}
+        for volume_id in volume_ids:
+            jobs_with_same_volume = [job for job in jobs if job["ID"].split("_")[-2] == volume_id]
+
+            aggregated_pending = 0
+            aggregated_running = 0
+            for job in jobs_with_same_volume:
+                children = job["JobSummary"]["Children"]
+                aggregated_pending = aggregated_pending + children["Pending"]
+                aggregated_running = aggregated_running + children["Running"]
+
+            nomad_pending_jobs_by_volume["volume_" + str(volume_id)] = aggregated_pending
+            nomad_running_jobs_by_volume["volume_" + str(volume_id)] = aggregated_running
+
+        return nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume
 
     def _get_nomad_jobs_breakdown(self):
         nomad_host = get_env_variable("NOMAD_HOST")
@@ -752,9 +793,26 @@ class Stats(APIView):
 
         nomad_pending_jobs_by_type, nomad_running_jobs_by_type = self._aggregate_nomad_jobs_by_type(parameterized_jobs)
 
+        # To get the total jobs for running and pending, the easiest
+        # AND the most efficient way is to sum up the stats we've
+        # already partially summed up.
+        nomad_running_jobs = 0
+        for job_type, num_jobs in nomad_running_jobs_by_type.items():
+            nomad_running_jobs = nomad_running_jobs + num_jobs
+
+        nomad_pending_jobs = 0
+        for job_type, num_jobs in nomad_pending_jobs_by_type.items():
+            nomad_pending_jobs = nomad_pending_jobs + num_jobs
+
+        nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume = self._aggregate_nomad_jobs_by_volume(parameterized_jobs)
+
         return {
+            "nomad_pending_jobs": nomad_pending_jobs,
+            "nomad_running_jobs": nomad_running_jobs,
             "nomad_pending_jobs_by_type": nomad_pending_jobs_by_type,
-            "nomad_running_jobs_by_type": nomad_running_jobs_by_type
+            "nomad_running_jobs_by_type": nomad_running_jobs_by_type,
+            "nomad_pending_jobs_by_volume": nomad_pending_jobs_by_volume,
+            "nomad_running_jobs_by_volume": nomad_running_jobs_by_volume
         }
 
 
