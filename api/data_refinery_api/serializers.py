@@ -334,16 +334,7 @@ class PlatformSerializer(serializers.ModelSerializer):
         )
 
     def get_pretty_name(self, obj):
-        """
-
-        Format platform names
-
-        """
-        rnaseq_platform_list = get_supported_rnaseq_platforms().copy()
-        for platform in rnaseq_platform_list:
-            if platform.replace(' ', '').upper() == obj['platform_name'].replace(' ', '').upper():
-                return platform
-
+        """Format platform names"""
         if ']' in obj['platform_name']:
             platform_base = obj['platform_name'].split(']')[1].strip()
         else:
