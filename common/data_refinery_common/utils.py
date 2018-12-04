@@ -60,7 +60,7 @@ def get_worker_id() -> str:
     return get_instance_id() + "/" + current_process().name
 
 
-def get_volume_index(default="0", path='/home/user/data_store/VOLUME_INDEX') -> str:
+def get_volume_index(default="-1", path='/home/user/data_store/VOLUME_INDEX') -> str:
     """ Reads the contents of the VOLUME_INDEX file, else returns default """
 
     try:
