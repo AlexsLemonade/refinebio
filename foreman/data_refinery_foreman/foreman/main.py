@@ -21,7 +21,13 @@ from data_refinery_common.models import (
     SurveyJobKeyValue
 )
 from data_refinery_common.message_queue import send_job
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders, SurveyJobTypes, is_file_rnaseq
+from data_refinery_common.job_lookup import (
+    Downloaders,
+    ProcessorPipeline,
+    SurveyJobTypes,
+    does_processor_job_have_samples,
+    is_file_rnaseq,
+)
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 
@@ -158,9 +164,7 @@ def prioritize_salmon_jobs(jobs: List) -> List:
     prioritized_jobs = []
     for job in jobs:
         try:
-            if job.pipeline_applied == ProcessorPipeline.SMASHER.value \
-               or job.pipeline_applied == ProcessorPipeline.JANITOR.value \
-               or job.pipeline_applied == ProcessorPipeline.QN_REFERENCE.value:
+            if not does_processor_job_have_samples(job):
                 continue
 
             # Salmon jobs are specifc to one sample.
@@ -216,9 +220,7 @@ def prioritize_zebrafish_jobs(jobs: List) -> List:
     zebrafish_jobs = []
     for job in jobs:
         try:
-            if job.pipeline_applied == ProcessorPipeline.SMASHER.value \
-               or job.pipeline_applied == ProcessorPipeline.JANITOR.value \
-               or job.pipeline_applied == ProcessorPipeline.QN_REFERENCE.value:
+            if not does_processor_job_have_samples(job):
                 continue
 
             # There aren't cross-species jobs, so just checking one sample's organism will be sufficient.
@@ -243,9 +245,7 @@ def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
     prioritized_jobs = []
     for job in jobs:
         try:
-            if job.pipeline_applied == ProcessorPipeline.SMASHER.value \
-               or job.pipeline_applied == ProcessorPipeline.JANITOR.value \
-               or job.pipeline_applied == ProcessorPipeline.QN_REFERENCE.value:
+            if not does_processor_job_have_samples(job):
                 continue
 
             # All samples in a job correspond to the same experiment, so just check one sample.
