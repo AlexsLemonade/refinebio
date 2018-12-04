@@ -1153,92 +1153,92 @@ class JobPrioritizationTestCase(TestCase):
             self.assertEqual(job.id, job_called_at_count.id)
 
 
-    @patch('data_refinery_foreman.foreman.main.Nomad')
-    @patch('data_refinery_foreman.foreman.main.requeue_processor_job')
-    def test_handle_processor_jobs(self, mock_requeue_processor_job, mock_nomad):
-        """Tests the prioritization of processor jobs.
+    # @patch('data_refinery_foreman.foreman.main.Nomad')
+    # @patch('data_refinery_foreman.foreman.main.requeue_processor_job')
+    # def test_handle_processor_jobs(self, mock_requeue_processor_job, mock_nomad):
+    #     """Tests the prioritization of processor jobs.
 
-        We want zebrafish jobs to be first, then jobs for hgu133plus2,
-        then jobs for pediatric cancer, finally salmon jobs should be
-        prioritized based on how close to completion they are."""
+    #     We want zebrafish jobs to be first, then jobs for hgu133plus2,
+    #     then jobs for pediatric cancer, finally salmon jobs should be
+    #     prioritized based on how close to completion they are."""
 
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.jobs = MagicMock()
-            ret_value.jobs.get_jobs = MagicMock()
-            ret_value.jobs.get_jobs.side_effect = lambda: []
-            return ret_value
+    #     def mock_init_nomad(host, port=0, timeout=0):
+    #         ret_value = MagicMock()
+    #         ret_value.jobs = MagicMock()
+    #         ret_value.jobs.get_jobs = MagicMock()
+    #         ret_value.jobs.get_jobs.side_effect = lambda: []
+    #         return ret_value
 
-        mock_nomad.side_effect = mock_init_nomad
+    #     mock_nomad.side_effect = mock_init_nomad
 
-        unstarted_salmon_job = ProcessorJob()
-        unstarted_salmon_job.accession_code = self.unstarted_salmon_sample.accession_code
-        unstarted_salmon_job.pipeline_applied = "SALMON"
-        unstarted_salmon_job.save()
+    #     unstarted_salmon_job = ProcessorJob()
+    #     unstarted_salmon_job.accession_code = self.unstarted_salmon_sample.accession_code
+    #     unstarted_salmon_job.pipeline_applied = "SALMON"
+    #     unstarted_salmon_job.save()
 
-        assoc = ProcessorJobOriginalFileAssociation()
-        assoc.processor_job = unstarted_salmon_job
-        assoc.original_file = self.unstarted_salmon_og
-        assoc.save()
+    #     assoc = ProcessorJobOriginalFileAssociation()
+    #     assoc.processor_job = unstarted_salmon_job
+    #     assoc.original_file = self.unstarted_salmon_og
+    #     assoc.save()
 
-        in_progress_salmon_job = ProcessorJob()
-        in_progress_salmon_job.accession_code = self.in_progress_salmon_sample.accession_code
-        in_progress_salmon_job.pipeline_applied = "SALMON"
-        in_progress_salmon_job.save()
+    #     in_progress_salmon_job = ProcessorJob()
+    #     in_progress_salmon_job.accession_code = self.in_progress_salmon_sample.accession_code
+    #     in_progress_salmon_job.pipeline_applied = "SALMON"
+    #     in_progress_salmon_job.save()
 
-        assoc = ProcessorJobOriginalFileAssociation()
-        assoc.processor_job = in_progress_salmon_job
-        assoc.original_file = self.in_progress_salmon_og
-        assoc.save()
+    #     assoc = ProcessorJobOriginalFileAssociation()
+    #     assoc.processor_job = in_progress_salmon_job
+    #     assoc.original_file = self.in_progress_salmon_og
+    #     assoc.save()
 
-        zebrafish_job = ProcessorJob()
-        zebrafish_job.accession_code = self.zebrafish_sample.accession_code
-        zebrafish_job.pipeline_applied = "SALMON"
-        zebrafish_job.save()
+    #     zebrafish_job = ProcessorJob()
+    #     zebrafish_job.accession_code = self.zebrafish_sample.accession_code
+    #     zebrafish_job.pipeline_applied = "SALMON"
+    #     zebrafish_job.save()
 
-        assoc = ProcessorJobOriginalFileAssociation()
-        assoc.processor_job = zebrafish_job
-        assoc.original_file = self.zebrafish_og
-        assoc.save()
+    #     assoc = ProcessorJobOriginalFileAssociation()
+    #     assoc.processor_job = zebrafish_job
+    #     assoc.original_file = self.zebrafish_og
+    #     assoc.save()
 
-        pediatric_job = ProcessorJob()
-        pediatric_job.accession_code = self.pediatric_sample.accession_code
-        pediatric_job.pipeline_applied = "SALMON"
-        pediatric_job.save()
+    #     pediatric_job = ProcessorJob()
+    #     pediatric_job.accession_code = self.pediatric_sample.accession_code
+    #     pediatric_job.pipeline_applied = "SALMON"
+    #     pediatric_job.save()
 
-        assoc = ProcessorJobOriginalFileAssociation()
-        assoc.processor_job = pediatric_job
-        assoc.original_file = self.pediatric_og
-        assoc.save()
+    #     assoc = ProcessorJobOriginalFileAssociation()
+    #     assoc.processor_job = pediatric_job
+    #     assoc.original_file = self.pediatric_og
+    #     assoc.save()
 
-        hgu133plus2_job = ProcessorJob()
-        hgu133plus2_job.accession_code = self.hgu133plus2_sample.accession_code
-        hgu133plus2_job.pipeline_applied = "SALMON"
-        hgu133plus2_job.save()
+    #     hgu133plus2_job = ProcessorJob()
+    #     hgu133plus2_job.accession_code = self.hgu133plus2_sample.accession_code
+    #     hgu133plus2_job.pipeline_applied = "SALMON"
+    #     hgu133plus2_job.save()
 
-        assoc = ProcessorJobOriginalFileAssociation()
-        assoc.processor_job = hgu133plus2_job
-        assoc.original_file = self.hgu133plus2_og
-        assoc.save()
+    #     assoc = ProcessorJobOriginalFileAssociation()
+    #     assoc.processor_job = hgu133plus2_job
+    #     assoc.original_file = self.hgu133plus2_og
+    #     assoc.save()
 
-        jobs = [unstarted_salmon_job,
-                in_progress_salmon_job,
-                hgu133plus2_job,
-                zebrafish_job,
-                pediatric_job
-        ]
-        jobs_in_correct_order = [zebrafish_job,
-                                 hgu133plus2_job,
-                                 pediatric_job,
-                                 in_progress_salmon_job,
-                                 unstarted_salmon_job
-        ]
+    #     jobs = [unstarted_salmon_job,
+    #             in_progress_salmon_job,
+    #             hgu133plus2_job,
+    #             zebrafish_job,
+    #             pediatric_job
+    #     ]
+    #     jobs_in_correct_order = [zebrafish_job,
+    #                              hgu133plus2_job,
+    #                              pediatric_job,
+    #                              in_progress_salmon_job,
+    #                              unstarted_salmon_job
+    #     ]
 
-        main.handle_processor_jobs(jobs)
+    #     main.handle_processor_jobs(jobs)
 
-        for count, job in enumerate(jobs_in_correct_order):
-            # Calls are a weird object that I think is just basically
-            # a tuple. Index 1 of a call object is the arguments
-            # tuple, we're interested in the first argument
-            job_called_at_count = mock_requeue_processor_job.mock_calls[count][1][0]
-            self.assertEqual(job.id, job_called_at_count.id)
+    #     for count, job in enumerate(jobs_in_correct_order):
+    #         # Calls are a weird object that I think is just basically
+    #         # a tuple. Index 1 of a call object is the arguments
+    #         # tuple, we're interested in the first argument
+    #         job_called_at_count = mock_requeue_processor_job.mock_calls[count][1][0]
+    #         self.assertEqual(job.id, job_called_at_count.id)
