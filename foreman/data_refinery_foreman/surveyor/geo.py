@@ -265,7 +265,6 @@ class GeoSurveyor(ExternalSourceSurveyor):
         # Okay, here's the situation!
         # Sometimes, samples have a direct single representation for themselves.
         # Othertimes, there is a single file with references to every sample in it.
-
         created_samples = []
         for sample_accession_code, sample in gse.gsms.items():
 
@@ -338,6 +337,8 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
                     # We never want these!
                     if "idat.gz" in supplementary_file_url:
+                        continue
+                    if ".CHP.gz" in supplementary_file_url:
                         continue
 
                     # Sometimes, we are lied to about the data processing step.
