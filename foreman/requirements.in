@@ -2,7 +2,7 @@ django
 psycopg2-binary
 requests>=2.20.0
 retrying
-python-nomad
+python-nomad>=1.0.2
 coverage
 GEOparse
 python-dateutil

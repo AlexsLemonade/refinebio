@@ -3,11 +3,12 @@ import socket
 import time
 from nomad import Nomad
 from nomad.api.exceptions import URLNotFoundNomadException
-from typing import Callable, List
+from typing import Callable, List, Set
 from threading import Thread
 from functools import wraps
 from retrying import retry
 from datetime import datetime, timedelta
+from django.conf import settings
 from django.utils import timezone
 from django.db import transaction
 from data_refinery_common.models import (
@@ -20,17 +21,25 @@ from data_refinery_common.models import (
     SurveyJobKeyValue
 )
 from data_refinery_common.message_queue import send_job
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders, SurveyJobTypes
+from data_refinery_common.job_lookup import (
+    Downloaders,
+    ProcessorPipeline,
+    SurveyJobTypes,
+    does_processor_job_have_samples,
+    is_file_rnaseq,
+)
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 
 
 logger = get_and_configure_logger(__name__)
-RUNNING_IN_CLOUD = get_env_variable_gracefully("RUNNING_IN_CLOUD", False)
 
 # Maximum number of retries, so the number of attempts will be one
 # greater than this because of the first attempt
 MAX_NUM_RETRIES = 2
+
+# This can be overritten by the env var "MAX_TOTAL_JOBS"
+DEFAULT_MAX_JOBS = 20000
 
 # The fastest each thread will repeat its checks.
 # Could be slower if the thread takes longer than this to check its jobs.
@@ -42,6 +51,27 @@ THREAD_WAIT_TIME = timedelta(minutes=10)
 
 # How frequently we dispatch Janitor jobs.
 JANITOR_DISPATCH_TIME = timedelta(minutes=30)
+
+# How frequently we clean unplaceable jobs out of the Nomad queue.
+CLEANUP_QUEUE_TIME = timedelta(minutes=30)
+
+
+def read_config_list(config_file: str) -> List[str]:
+    """
+    Reads a file and returns a list with one item per line.
+    """
+    return_list = []
+    with open(config_file) as config_list:
+        for line in config_list:
+            return_list.append(line.strip())
+
+    return return_list
+
+
+# These are lists of accessions that are for
+# subsets of experiments that we want to prioritize.
+PEDIATRIC_ACCESSION_LIST = read_config_list("config/pediatric_accessions.txt")
+HGU133PLUS2_ACCESSION_LIST = read_config_list("config/hgu133plus2_accessions.txt")
 
 
 ##
@@ -68,7 +98,7 @@ def do_forever(min_loop_time: timedelta) -> Callable:
 
                 loop_time = timezone.now() - start_time
                 if loop_time < min_loop_time:
-                    remaining_time = MIN_LOOP_TIME - loop_time
+                    remaining_time = min_loop_time - loop_time
                     time.sleep(remaining_time.seconds)
 
         return wrapper
@@ -91,6 +121,157 @@ def handle_repeated_failure(job) -> None:
     # sufficient because all log messages will be closely monitored
     # during early testing stages.
     logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1)
+
+
+def get_active_volumes() -> Set[str]:
+    """Returns a Set of indices for volumes that are currently mounted.
+
+    These can be used to determine which jobs would actually be able
+    to be placed if they were queued up.
+    """
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
+
+    volumes = set()
+    for node in nomad_client.nodes.get_nodes():
+        node_detail = nomad_client.node.get_node(node["ID"])
+        if 'Status' in node_detail and node_detail['Status'] == 'ready' \
+           and 'Meta' in node_detail and 'volume_index' in node_detail['Meta']:
+            volumes.add(node_detail['Meta']['volume_index'])
+
+    return volumes
+
+
+##
+# Job Prioritization
+##
+
+
+def prioritize_salmon_jobs(jobs: List) -> List:
+    """Prioritizes salmon experiments based on how close to completion they are.
+
+    This is because salmon experiments have a final processing step
+    that must be performed on all the samples in the experiment, so if
+    9/10 samples in an experiment are processed then they can't
+    actually be used until that last sample is processed.
+    """
+    # The strategy for doing so is to build a mapping between every
+    # salmon job in `jobs` to a priority. This priority will be what
+    # percentage of the samples in this experiment have been
+    # processed. Once we have that mapping we can sort those jobs by
+    # that priority and move them to the front of the list.
+    prioritized_jobs = []
+    for job in jobs:
+        try:
+            if not does_processor_job_have_samples(job):
+                continue
+
+            # Salmon jobs are specifc to one sample.
+            sample = job.get_samples().pop()
+
+            # Skip jobs that aren't for Salmon. Handle both ProcessorJobs and DownloaderJobs.
+            if type(job) is ProcessorJob and job.pipeline_applied != ProcessorPipeline.SALMON.value:
+                continue
+            elif type(job) is DownloaderJob:
+                is_salmon_sample = False
+                for original_file in sample.original_files.all():
+                    if is_file_rnaseq(original_file.filename):
+                        is_salmon_sample = True
+
+                if not is_salmon_sample:
+                    continue
+
+            # Get a set of unique samples that share at least one
+            # experiment with the sample this job is for.
+            related_samples = set()
+            for experiment in sample.experiments.all():
+                for related_sample in experiment.samples.all():
+                    related_samples.add(related_sample)
+
+            # We cannot simply filter on is_processed because that field
+            # doesn't get set until every sample in an experiment is processed.
+            # Instead we are looking for one successful processor job.
+            processed_samples = 0
+            for related_sample in related_samples:
+                original_files = related_sample.original_files
+                if original_files.count() == 0:
+                    logger.error("Salmon sample found without any original files!!!", sample=related_sample)
+                elif original_files.first().processor_jobs.filter(success=True).count() >= 1:
+                    processed_samples += 1
+
+            experiment_completion_percent = processed_samples / len(related_samples)
+            prioritized_jobs.append({"job": job, "priority": experiment_completion_percent})
+        except:
+            logger.exception("Exception caught while prioritizing salmon jobs!", job=job)
+
+    sorted_job_mappings = sorted(prioritized_jobs, reverse=True, key=lambda k: k["priority"])
+    sorted_jobs = [job_mapping["job"] for job_mapping in sorted_job_mappings]
+
+    # Remove all the jobs we're moving to the front of the list
+    for job in sorted_jobs:
+        jobs.remove(job)
+
+    return sorted_jobs + jobs
+
+
+def prioritize_zebrafish_jobs(jobs: List) -> List:
+    """Moves zebrafish jobs to the beginnging of the input list."""
+    zebrafish_jobs = []
+    for job in jobs:
+        try:
+            if not does_processor_job_have_samples(job):
+                continue
+
+            # There aren't cross-species jobs, so just checking one sample's organism will be sufficient.
+            samples = job.get_samples()
+
+            for sample in samples:
+                if sample.organism.name == 'DANIO_RERIO':
+                    zebrafish_jobs.append(job)
+                    break
+        except:
+            logger.exception("Exception caught while prioritizing zebrafish jobs!", job=job)
+
+    # Remove all the jobs we're moving to the front of the list
+    for job in zebrafish_jobs:
+        jobs.remove(job)
+
+    return zebrafish_jobs + jobs
+
+
+def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
+    """Moves jobs whose accessions are in accession_lst to the beginning of the input list."""
+    prioritized_jobs = []
+    for job in jobs:
+        try:
+            if not does_processor_job_have_samples(job):
+                continue
+
+            # All samples in a job correspond to the same experiment, so just check one sample.
+            samples = job.get_samples()
+
+            # Iterate through all the samples' experiments until one is
+            # found with an accession in `accession_list`.
+            is_prioritized_job = False
+            for sample in samples:
+                if is_prioritized_job:
+                    # We found one! So stop looping
+                    break
+
+                for experiment in sample.experiments.all():
+                    if experiment.accession_code in accession_list:
+                        prioritized_jobs.append(job)
+                        is_prioritized_job = True
+                        break
+        except:
+            logger.exception("Exception caught while prioritizing jobs by accession!", job=job)
+
+    # Remove all the jobs we're moving to the front of the list
+    for job in prioritized_jobs:
+        jobs.remove(job)
+
+    return prioritized_jobs + jobs
 
 
 ##
@@ -117,11 +298,11 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
         DownloaderJobOriginalFileAssociation.objects.get_or_create(downloader_job=new_job,
                                                            original_file=original_file)
 
-    logger.info("Requeuing Downloader Job which had ID %d with a new Downloader Job with ID %d.",
-                last_job.id,
-                new_job.id)
+    logger.debug("Requeuing Downloader Job which had ID %d with a new Downloader Job with ID %d.",
+                 last_job.id,
+                 new_job.id)
     try:
-        if send_job(Downloaders[last_job.downloader_task], new_job):
+        if send_job(Downloaders[last_job.downloader_task], job=new_job, is_dispatch=True):
             last_job.retried = True
             last_job.success = False
             last_job.retried_job = new_job
@@ -139,18 +320,62 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
 
 def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
     """For each job in jobs, either retry it or log it."""
-    for job in jobs:
+
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+    # Maximum number of total jobs running at a time.
+    # We do this now rather than import time for testing purposes.
+    MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
+    len_all_jobs = len(nomad_client.jobs.get_jobs())
+    if len_all_jobs >= MAX_TOTAL_JOBS:
+        logger.info("Not requeuing job until we're running fewer jobs.")
+        return False
+
+    # We want zebrafish data first, then hgu133plus2, then data
+    # related to pediatric cancer, then to finish salmon experiments
+    # that are close to completion.
+    # Each function moves the jobs it prioritizes to the front of the
+    # list, so apply them in backwards order.
+    # jobs = prioritize_salmon_jobs(jobs)
+    # jobs = prioritize_jobs_by_accession(jobs, PEDIATRIC_ACCESSION_LIST)
+    # jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
+    # jobs = prioritize_zebrafish_jobs(jobs)
+
+    jobs_dispatched = 0
+    for count, job in enumerate(jobs):
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_downloader_job(job)
+            jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
 
+        if (count % 100) == 0:
+            len_all_jobs = len(nomad_client.jobs.get_jobs())
+
+        if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
+            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more downloader jobs now.")
+            return False
+
+    return True
 
 @do_forever(MIN_LOOP_TIME)
 def retry_failed_downloader_jobs() -> None:
     """Handle downloader jobs that were marked as a failure."""
-    failed_jobs = DownloaderJob.objects.filter(success=False, retried=False)
-    handle_downloader_jobs(failed_jobs)
+    failed_jobs = DownloaderJob.objects.filter(
+        success=False,
+        retried=False
+    ).prefetch_related(
+        "original_files__samples"
+    )
+    failed_jobs_list = [job for job in failed_jobs]
+
+    if failed_jobs_list:
+        logger.info(
+            "Handling failed (explicitly-marked-as-failure) jobs!",
+            jobs=failed_jobs_list
+        )
+        handle_downloader_jobs(failed_jobs_list)
 
 
 @do_forever(MIN_LOOP_TIME)
@@ -162,11 +387,13 @@ def retry_hung_downloader_jobs() -> None:
         end_time=None,
         start_time__isnull=False,
         no_retry=False
+    ).prefetch_related(
+        "original_files__samples"
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     hung_jobs = []
     for job in potentially_hung_jobs:
         try:
@@ -201,11 +428,13 @@ def retry_lost_downloader_jobs() -> None:
         start_time=None,
         end_time=None,
         no_retry=False
+    ).prefetch_related(
+        "original_files__samples"
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     lost_jobs = []
     for job in potentially_lost_jobs:
         try:
@@ -215,10 +444,10 @@ def retry_lost_downloader_jobs() -> None:
                 # hasn't started and if it's running then it may not have
                 # been able to mark the job record as started yet.
                 if job_status != "pending" and job_status != "running":
-                    logger.info(("Determined that a downloader job needs to be requeued because its"
-                                 " Nomad Job's status is: %s."),
-                                job_status,
-                                job_id=job.id
+                    logger.debug(("Determined that a downloader job needs to be requeued because its"
+                                  " Nomad Job's status is: %s."),
+                                 job_status,
+                                 job_id=job.id
                     )
                     lost_jobs.append(job)
             else:
@@ -230,14 +459,14 @@ def retry_lost_downloader_jobs() -> None:
                     lost_jobs.append(job)
         except socket.timeout:
             logger.info("Timeout connecting to Nomad - is Nomad down?", job_id=job.id)
-        except nomad.api.exceptions.BaseNomadException:
-            logger.info("Problem connecting to Nomad - is Nomad down?", job_id=job.id)
         except URLNotFoundNomadException:
-            logger.info(("Determined that a downloader job needs to be requeued because "
+            logger.debug(("Determined that a downloader job needs to be requeued because "
                               "querying for its Nomad job failed: "),
                              job_id=job.id
             )
             lost_jobs.append(job)
+        except nomad.api.exceptions.BaseNomadException:
+            logger.info("Problem connecting to Nomad - is Nomad down?", job_id=job.id)
         except Exception:
             logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
 
@@ -285,10 +514,10 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
                                                      dataset=dataset)
 
     try:
-        logger.info("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",
-                    last_job.id,
-                    new_job.id)
-        if send_job(ProcessorPipeline[last_job.pipeline_applied], new_job):
+        logger.debug("Requeuing Processor Job which had ID %d with a new Processor Job with ID %d.",
+                     last_job.id,
+                     new_job.id)
+        if send_job(ProcessorPipeline[last_job.pipeline_applied], job=new_job, is_dispatch=True):
             last_job.retried = True
             last_job.success = False
             last_job.retried_job = new_job
@@ -306,39 +535,104 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
 
 def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
     """For each job in jobs, either retry it or log it."""
-    for job in jobs:
+
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+    # Maximum number of total jobs running at a time.
+    # We do this now rather than import time for testing purposes.
+    MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
+    len_all_jobs = len(nomad_client.jobs.get_jobs())
+    if len_all_jobs >= MAX_TOTAL_JOBS:
+        logger.info("Not requeuing job until we're running fewer jobs.")
+        return False
+
+    # We want zebrafish data first, then hgu133plus2, then data
+    # related to pediatric cancer, then to finish salmon experiments
+    # that are close to completion.
+    # Each function moves the jobs it prioritizes to the front of the
+    # list, so apply them in backwards order.
+    # jobs = prioritize_salmon_jobs(jobs)
+    # jobs = prioritize_jobs_by_accession(jobs, PEDIATRIC_ACCESSION_LIST)
+    # jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
+    # jobs = prioritize_zebrafish_jobs(jobs)
+
+    jobs_dispatched = 0
+    for count, job in enumerate(jobs):
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_processor_job(job)
+            jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
 
+        if (count % 100) == 0:
+            len_all_jobs = len(nomad_client.jobs.get_jobs())
+
+        if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
+            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more processor jobs now.")
+            return False
+
+    return True
 
 @do_forever(MIN_LOOP_TIME)
 def retry_failed_processor_jobs() -> None:
-    """Handle processor jobs that were marked as a failure."""
-    failed_jobs = ProcessorJob.objects.filter(success=False, retried=False)
-    if failed_jobs:
+    """Handle processor jobs that were marked as a failure.
+
+    Ignores Janitor jobs since they are queued every half hour anyway."""
+    try:
+        active_volumes = get_active_volumes()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
+
+    failed_jobs = ProcessorJob.objects.filter(
+        success=False,
+        retried=False,
+        volume_index__in=active_volumes
+    ).exclude(
+        pipeline_applied="JANITOR"
+    ).prefetch_related(
+        "original_files__samples"
+    )
+
+    failed_jobs_list = [job for job in failed_jobs]
+
+    if failed_jobs_list:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) jobs!",
-            jobs=failed_jobs
+            jobs=failed_jobs_list
         )
-        handle_processor_jobs(failed_jobs)
+        handle_processor_jobs(failed_jobs_list)
 
 
 @do_forever(MIN_LOOP_TIME)
 def retry_hung_processor_jobs() -> None:
-    """Retry processor jobs that were started but never finished."""
+    """Retry processor jobs that were started but never finished.
+
+    Ignores Janitor jobs since they are queued every half hour anyway."""
+    try:
+        active_volumes = get_active_volumes()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
+
     potentially_hung_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
         end_time=None,
         start_time__isnull=False,
-        no_retry=False
+        no_retry=False,
+        volume_index__in=active_volumes
+    ).exclude(
+        pipeline_applied="JANITOR"
+    ).prefetch_related(
+        "original_files__samples"
     )
+
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     hung_jobs = []
     for job in potentially_hung_jobs:
         try:
@@ -350,6 +644,16 @@ def retry_hung_processor_jobs() -> None:
                     hung_jobs.append(job)
         except URLNotFoundNomadException:
             hung_jobs.append(job)
+        except TypeError:
+            # Almost certainly a python-nomad issue:
+            # File "/usr/local/lib/python3.5/dist-packages/nomad/api/job.py", line 63, in get_job
+            #   return self.request(id, method="get").json()
+            # File "/usr/local/lib/python3.5/dist-packages/nomad/api/base.py", line 74, in request
+            #   endpoint = self._endpoint_builder(self.ENDPOINT, *args)
+            # File "/usr/local/lib/python3.5/dist-packages/nomad/api/base.py", line 28, in _endpoint_builder
+            #   u = "/".join(args)
+            # TypeError: sequence item 1: expected str instance, NoneType found
+            logger.info("Couldn't query Nomad about Processor Job.", processor_job=job.id)
         except Exception:
             logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
 
@@ -363,13 +667,26 @@ def retry_hung_processor_jobs() -> None:
 
 @do_forever(MIN_LOOP_TIME)
 def retry_lost_processor_jobs() -> None:
-    """Retry processor jobs which never even got started for too long."""
+    """Retry processor jobs which never even got started for too long.
+
+    Ignores Janitor jobs since they are queued every half hour anyway."""
+    try:
+        active_volumes = get_active_volumes()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
+
     potentially_lost_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
         start_time=None,
         end_time=None,
-        no_retry=False
+        no_retry=False,
+        volume_index__in=active_volumes
+    ).exclude(
+        pipeline_applied="JANITOR"
+    ).prefetch_related(
+        "original_files__samples"
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -384,10 +701,10 @@ def retry_lost_processor_jobs() -> None:
                 # hasn't started and if it's running then it may not have
                 # been able to mark the job record as started yet.
                 if job_status != "pending" and job_status != "running":
-                    logger.info(("Determined that a processor job needs to be requeued because its"
-                                 " Nomad Job's status is: %s."),
-                                job_status,
-                                job_id=job.id
+                    logger.debug(("Determined that a processor job needs to be requeued because its"
+                                  " Nomad Job's status is: %s."),
+                                 job_status,
+                                 job_id=job.id
                     )
                     lost_jobs.append(job)
             else:
@@ -398,7 +715,7 @@ def retry_lost_processor_jobs() -> None:
                 if timezone.now() - job.created_at > MIN_LOOP_TIME:
                     lost_jobs.append(job)
         except URLNotFoundNomadException:
-            logger.exception(("Determined that a processor job needs to be requeued because "
+            logger.debug(("Determined that a processor job needs to be requeued because "
                               "querying for its Nomad job failed: "),
                              job_id=job.id
             )
@@ -425,6 +742,8 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
     The new survey job will have num_retries one greater than
     last_job.num_retries.
     """
+
+    lost_jobs = []
     num_retries = last_job.num_retries + 1
 
     new_job = SurveyJob(num_retries=num_retries,
@@ -448,12 +767,12 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
                                                 value=keyvalue.value,
                                             )
 
-    logger.info("Requeuing SurveyJob which had ID %d with a new SurveyJob with ID %d.",
-                last_job.id,
-                new_job.id)
+    logger.debug("Requeuing SurveyJob which had ID %d with a new SurveyJob with ID %d.",
+                 last_job.id,
+                 new_job.id)
 
     try:
-        if send_job(SurveyJobTypes.SURVEYOR, new_job):
+        if send_job(SurveyJobTypes.SURVEYOR, job=new_job, is_dispatch=True):
             last_job.retried = True
             last_job.success = False
             last_job.retried_job = new_job
@@ -468,20 +787,44 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
         # Can't communicate with nomad just now, leave the job for a later loop.
         new_job.delete()
 
+    return True
+
 
 def handle_survey_jobs(jobs: List[SurveyJob]) -> None:
     """For each job in jobs, either retry it or log it."""
-    for job in jobs:
+
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+    # Maximum number of total jobs running at a time.
+    # We do this now rather than import time for testing purposes.
+    MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
+    len_all_jobs = len(nomad_client.jobs.get_jobs())
+    if len_all_jobs >= MAX_TOTAL_JOBS:
+        logger.info("Not requeuing job until we're running fewer jobs.")
+        return False
+
+    jobs_dispatched = 0
+    for count, job in enumerate(jobs):
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_survey_job(job)
+            jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
 
+        if (count % 100) == 0:
+            len_all_jobs = len(nomad_client.jobs.get_jobs())
+
+        if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
+            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more survey jobs now.")
+            return False
+
+    return True
 
 @do_forever(MIN_LOOP_TIME)
 def retry_failed_survey_jobs() -> None:
     """Handle survey jobs that were marked as a failure."""
-    failed_jobs = SurveyJob.objects.filter(success=False, retried=False)
+    failed_jobs = SurveyJob.objects.filter(success=False, retried=False).order_by('pk')
     if failed_jobs:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) jobs!",
@@ -499,11 +842,11 @@ def retry_hung_survey_jobs() -> None:
         end_time=None,
         start_time__isnull=False,
         no_retry=False
-    )
+    ).order_by('pk')
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     hung_jobs = []
     for job in potentially_hung_jobs:
         try:
@@ -512,7 +855,7 @@ def retry_hung_survey_jobs() -> None:
             if job.nomad_job_id:
                 job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
             else:
-                job_status = "dead"
+                job_status = "absent"
 
             if job_status != "running":
                 # Make sure it didn't finish since our original query.
@@ -541,12 +884,13 @@ def retry_lost_survey_jobs() -> None:
         start_time=None,
         end_time=None,
         no_retry=False
-    )
+    ).order_by('pk')
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     lost_jobs = []
+
     for job in potentially_lost_jobs:
         try:
             # Surveyor jobs didn't always have nomad_job_ids. If they
@@ -554,22 +898,22 @@ def retry_lost_survey_jobs() -> None:
             if job.nomad_job_id:
                 job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
             else:
-                job_status = "dead"
+                job_status = "absent"
 
             # If the job is still pending, then it makes sense that it
             # hasn't started and if it's running then it may not have
             # been able to mark the job record as started yet.
             if job_status != "pending" and job_status != "running":
-                logger.info(("Determined that a survey job needs to be requeued because its"
+                logger.debug(("Determined that a survey job needs to be requeued because its"
                              " Nomad Job's status is: %s."),
                             job_status,
                             job_id=job.id
                 )
                 lost_jobs.append(job)
         except URLNotFoundNomadException:
-            logger.exception(("Determined that a survey job needs to be requeued because "
-                              "querying for its Nomad job failed: "),
-                             job_id=job.id
+            logger.debug(("Determined that a survey job needs to be requeued because "
+                          "querying for its Nomad job failed."),
+                         job_id=job.id
             )
             lost_jobs.append(job)
         except Exception:
@@ -583,39 +927,110 @@ def retry_lost_survey_jobs() -> None:
         handle_survey_jobs(lost_jobs)
 
 ##
-# Main loop
+# Janitor
 ##
 
 @do_forever(JANITOR_DISPATCH_TIME)
 def send_janitor_jobs():
     """Dispatch a Janitor job for each instance in the cluster"""
+    try:
+        active_volumes = get_active_volumes()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
 
-    # This is a fairly hacky way of finding all of our volume indexes
-    indexes = ProcessorJob.objects.all().values_list('volume_index').distinct()
-
-    for index in indexes:
-        actual_index = index[0]
+    for volume_index in active_volumes:
         new_job = ProcessorJob(num_retries=0,
                                pipeline_applied="JANITOR",
                                ram_amount=2048,
-                               volume_index=actual_index)
+                               volume_index=volume_index)
         new_job.save()
         logger.info("Sending Janitor with index: ",
             job_id=new_job.id,
-            index=actual_index
+            index=volume_index
         )
         try:
-            send_job(ProcessorPipeline["JANITOR"], new_job)
+            send_job(ProcessorPipeline["JANITOR"], job=new_job, is_dispatch=True)
         except Exception as e:
             # If we can't dispatch this job, something else has gone wrong.
             continue
 
 
+##
+# Handling of node cycling
+##
+
+@do_forever(CLEANUP_QUEUE_TIME)
+def cleanup_the_queue():
+    """This cleans up any jobs which cannot currently be queued.
+
+    We often have more volumes than instances because we have enough
+    volumes for the scenario where the entire cluster is using the
+    smallest instance type, however that doesn't happen very
+    often. Therefore it's possible for some volumes to not be mounted,
+    which means that jobs which are constrained to run on instances
+    with those volumes cannot be placed and just clog up the queue.
+
+    Therefore we clear out jobs of that type every once in a while so
+    our queue is dedicated to jobs that can actually be placed.
+    """
+    # Smasher and QN Reference jobs aren't tied to a specific EBS volume.
+    indexed_job_types = [e.value for e in ProcessorPipeline if e.value not in ["SMASHER", "QN_REFERENCE"]]
+
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
+
+    try:
+        active_volumes = get_active_volumes()
+        jobs = nomad_client.jobs.get_jobs()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
+
+
+    jobs_to_kill = []
+    for job in jobs:
+        # Skip over the Parameterized Jobs because we need those to
+        # always be running.
+        if "ParameterizedJob" not in job or not job["ParameterizedJob"]:
+            continue
+
+        for job_type in indexed_job_types:
+            # We're only concerned with jobs that have to be tied to a volume index.
+            if "ParentID" not in job or not job["ParentID"].startswith(job_type):
+                continue
+
+            # If this job has an index, then its ParentID will
+            # have the pattern of <job-type>_<index>_<RAM-amount>
+            # and we want to check the value of <index>:
+            split_parent_id = job["ParentID"].split("_")
+            if len(split_parent_id) < 2:
+                continue
+            else:
+                index = split_parent_id[-2]
+
+            if index not in active_volumes:
+                # The index for this job isn't currently mounted, kill
+                # the job and decrement the retry counter (since it
+                # will be incremented when it is requeued).
+                try:
+                    nomad_client.job.deregister_job(job["ID"], purge=True)
+                    job_record = ProcessorJob(nomad_job_id=job["ID"])
+                    job_record.num_retries = job_record.num_retries - 1
+                    job_record.save()
+                except:
+                    # If we can't do this for some reason, we'll get it next loop.
+                    pass
+
+
+
+##
+# Main loop
+##
+
 def monitor_jobs():
     """Runs a thread for each job monitoring loop."""
-    processor_functions = [ retry_failed_processor_jobs,
-                            retry_hung_processor_jobs,
-                            retry_lost_processor_jobs]
 
     threads = []
 
@@ -623,8 +1038,17 @@ def monitor_jobs():
     thread = Thread(target=send_janitor_jobs, name="send_janitor_jobs")
     thread.start()
     threads.append(thread)
-    logger.info("Thread started for monitoring function: send_janitor_jobs")
+    logger.info("Thread started for function: send_janitor_jobs")
 
+    # Start the thread to keep the Nomad clean of jobs it cannot place.
+    thread = Thread(target=cleanup_the_queue, name="cleanup_the_queue")
+    thread.start()
+    threads.append(thread)
+    logger.info("Thread started for function: cleanup_the_queue")
+
+    processor_functions = [ retry_failed_processor_jobs,
+                            retry_hung_processor_jobs,
+                            retry_lost_processor_jobs]
 
     for f in processor_functions:
         thread = Thread(target=f, name=f.__name__)
@@ -633,7 +1057,7 @@ def monitor_jobs():
         logger.info("Thread started for monitoring function: %s", f.__name__)
 
     # This is only a concern when running at scale.
-    if RUNNING_IN_CLOUD:
+    if settings.RUNNING_IN_CLOUD:
         # We start the processor threads first so that we don't
         # accidentally queue too many downloader jobs and knock down our
         # source databases. They may take a while to run, and this
@@ -663,6 +1087,12 @@ def monitor_jobs():
 
     # Make sure that no threads die quietly.
     while(True):
+
+        # Write the health file for Monit to check
+        now_secs = int(time.time())
+        with open('/tmp/foreman_last_time', 'w') as timefile:
+            timefile.write(str(now_secs))
+
         start_time = timezone.now()
 
         for thread in threads:

@@ -10,7 +10,7 @@ jobs:
       - checkout
 
       # Clean up stuff circle provides that we don't need.
-      - run: sudo bash .circleci/cleanup_instance.sh
+      - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
@@ -79,7 +79,7 @@ jobs:
       - checkout
 
       # Clean up stuff circle provides that we don't need.
-      - run: sudo bash .circleci/cleanup_instance.sh
+      - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
@@ -104,7 +104,7 @@ jobs:
       - checkout
 
       # Clean up stuff circle provides that we don't need.
-      - run: sudo bash .circleci/cleanup_instance.sh
+      - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
@@ -132,7 +132,7 @@ jobs:
       - checkout
 
       # Clean up stuff circle provides that we don't need.
-      - run: sudo bash .circleci/cleanup_instance.sh
+      - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
@@ -172,7 +172,7 @@ jobs:
       - checkout
 
       # Clean up stuff circle provides that we don't need.
-      - run: sudo bash .circleci/cleanup_instance.sh
+      - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
@@ -202,12 +202,12 @@ jobs:
     working_directory: ~/refinebio
     steps:
       - checkout
-      - run: bash .circleci/install_git_decrypt.sh
-      - run: bash .circleci/git_decrypt.sh
+      - run: ./.circleci/install_git_decrypt.sh
+      - run: ./.circleci/git_decrypt.sh
       - run:
-          command: bash .circleci/remote_deploy.sh
+          command: ./.circleci/remote_deploy.sh
           no_output_timeout: 4h # Building images and createing postgres instances can take a while.
-      - run: bash .circleci/slackpost.sh robots deploybot
+      - run: ./.circleci/slackpost.sh robots deploybot
 
 workflows:
   version: 2

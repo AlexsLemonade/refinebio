@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import tarfile
 
+from django.conf import settings
 from django.utils import timezone
 from typing import Dict
 
@@ -27,7 +28,6 @@ JOB_DIR_PREFIX = "processor_job_"
 GENE_TO_TRANSCRIPT_TEMPLATE = "{gene_id}\t{transcript_id}\n"
 GENE_TYPE_COLUMN = 2
 S3_TRANSCRIPTOME_INDEX_BUCKET_NAME = get_env_variable_gracefully("S3_TRANSCRIPTOME_INDEX_BUCKET_NAME", False)
-RUNNING_IN_CLOUD = get_env_variable_gracefully("RUNNING_IN_CLOUD", False)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 # Removes each occurrance of ; and "
 IDS_CLEANUP_TABLE = str.maketrans({";": None, "\"": None})
@@ -290,10 +290,6 @@ def _zip_index(job_context: Dict) -> Dict:
     only be a single file along with compressing the size of the file
     during storage.
     """
-    # The zip file is only for storing in the cloud, so if we aren't
-    # in the cloud don't build it.
-    if not RUNNING_IN_CLOUD:
-        return job_context
 
     try:
         with tarfile.open(job_context["computed_archive"], "w:gz") as tar:
@@ -357,7 +353,8 @@ def _populate_index_object(job_context: Dict) -> Dict:
 
     if S3_TRANSCRIPTOME_INDEX_BUCKET_NAME:
         logger.info("Uploading %s %s to s3", job_context['organism_name'], job_context['length'], processor_job=job_context["job_id"])
-        s3_key = organism_object.name + '_' + index_object.index_type + '.tar.gz'
+        timestamp = str(timezone.now().timestamp()).split('.')[0]
+        s3_key = organism_object.name + '_' + index_object.index_type + "_" + timestamp + '.tar.gz'
         sync_result = computed_file.sync_to_s3(S3_TRANSCRIPTOME_INDEX_BUCKET_NAME, s3_key)
         if sync_result:
             computed_file.delete_local_file()

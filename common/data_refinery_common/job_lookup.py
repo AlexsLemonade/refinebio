@@ -3,7 +3,12 @@ from typing import List
 
 from data_refinery_common import utils
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import Sample, OriginalFile, OriginalFileSampleAssociation
+from data_refinery_common.models import (
+    OriginalFile,
+    OriginalFileSampleAssociation,
+    ProcessorJob,
+    Sample,
+)
 
 
 logger = get_and_configure_logger(__name__)
@@ -34,6 +39,12 @@ class ProcessorPipeline(PipelineEnums):
     NONE = "NONE"
 
 
+def does_processor_job_have_samples(job: ProcessorJob):
+    return not (job.pipeline_applied == ProcessorPipeline.SMASHER.value \
+                or job.pipeline_applied == ProcessorPipeline.JANITOR.value \
+                or job.pipeline_applied == ProcessorPipeline.QN_REFERENCE.value)
+
+
 class DiscoveryPipeline(PipelineEnums):
     """Pipelines which discover appropriate processing for the data."""
     pass
@@ -51,6 +62,18 @@ class Downloaders(Enum):
 class SurveyJobTypes(Enum):
     """An enumeration of downloaders for downloader_task."""
     SURVEYOR = "SURVEYOR"
+
+
+def is_file_rnaseq(filename: str) -> bool:
+    """Returns true if `filename` matches the pattern of an RNAseq file, false otherwise."""
+    if not filename:
+        return False
+
+    return filename[-5:].upper() == "FASTQ" \
+        or filename[-8:].upper() == "FASTQ.GZ" \
+        or filename[-2:].upper() == "FQ" \
+        or filename[-3:].upper() == "SRA" \
+        or filename[-5:].upper() == "FQ.GZ"
 
 
 def _is_platform_supported(platform: str) -> bool:
@@ -126,11 +149,7 @@ def determine_processor_pipeline(sample_object: Sample, original_file=None) -> P
     if original_file:
         if original_file.filename[-4:].upper() == ".CEL":
             return ProcessorPipeline.AFFY_TO_PCL
-        if original_file.filename[-5:].upper() == "FASTQ" \
-        or original_file.filename[-8:].upper() == "FASTQ.GZ" \
-        or original_file.filename[-2:].upper() == "FQ" \
-        or original_file.filename[-3:].upper() == "SRA" \
-        or original_file.filename[-5:].upper() == "FQ.GZ":
+        if is_file_rnaseq(original_file.filename):
             return ProcessorPipeline.SALMON
 
     # We NO_OP processed data. It's what we do.

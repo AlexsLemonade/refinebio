@@ -13,6 +13,9 @@ server {
   # Self-elect, should be 3 or 5 for production
   bootstrap_expect = 3
 
+  # Clean out old jobs quickly
+  job_gc_threshold = "5m"
+
   # This is the IP address of the first server we provisioned
   retry_join = ["${nomad_lead_server_ip}:4648"]
 }

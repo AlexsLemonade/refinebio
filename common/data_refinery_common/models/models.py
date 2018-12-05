@@ -10,6 +10,7 @@ from botocore.client import Config
 
 from datetime import datetime
 from functools import partial
+from typing import Dict, Set
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
@@ -79,6 +80,7 @@ class Sample(models.Model):
     results = models.ManyToManyField('ComputationalResult', through='SampleResultAssociation')
     original_files = models.ManyToManyField('OriginalFile', through='OriginalFileSampleAssociation')
     computed_files = models.ManyToManyField('ComputedFile', through='SampleComputedFileAssociation')
+    experiments = models.ManyToManyField('Experiment', through='ExperimentSampleAssociation')
 
     # Historical Properties
     source_database = models.CharField(max_length=255, blank=False)
@@ -150,6 +152,16 @@ class Sample(models.Model):
         ]
 
         return metadata
+
+    # Returns a set of ProcessorJob objects but we cannot specify
+    # that in type hints because it hasn't been declared yet.
+    def get_processor_jobs(self) -> Set:
+        processor_jobs = set()
+        for original_file in self.original_files.all():
+            for processor_job in original_file.processor_jobs.all():
+                processor_jobs.add(processor_job)
+
+        return processor_jobs
 
     def get_result_files(self):
         """ Get all of the ComputedFile objects associated with this Sample """
@@ -589,6 +601,8 @@ class OriginalFile(models.Model):
 
     # Relations
     samples = models.ManyToManyField('Sample', through='OriginalFileSampleAssociation')
+    processor_jobs = models.ManyToManyField('data_refinery_common.ProcessorJob', through='ProcessorJobOriginalFileAssociation')
+    downloader_jobs = models.ManyToManyField('data_refinery_common.DownloaderJob', through='DownloaderJobOriginalFileAssociation')
 
     # Historical Properties
     source_url = models.TextField()
@@ -641,9 +655,6 @@ class OriginalFile(models.Model):
 
     def delete_local_file(self):
         """ Deletes this file from the local file system."""
-        if not settings.RUNNING_IN_CLOUD:
-            return
-
         try:
             os.remove(self.absolute_file_path)
         except OSError:
@@ -764,6 +775,17 @@ class ComputedFile(models.Model):
                         self.s3_key,
                         path
                     )
+
+            # Veryify sync integrity
+            hash_object = hashlib.sha1()
+            with open(path, mode='rb') as open_file:
+                for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
+                    hash_object.update(buf)
+            synced_sha1 = hash_object.hexdigest()
+
+            if self.sha1 != synced_sha1:
+                raise AssertionError("SHA1 of downloaded ComputedFile doesn't match database SHA1!")
+
             return path
         except Exception as e:
             logger.exception(e, computed_file_id=self.pk)
