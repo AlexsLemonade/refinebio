@@ -100,6 +100,9 @@ STATIC_VOLUMES=/tmp/volumes_static
 mkdir -p /tmp/volumes_static
 chmod a+rwx /tmp/volumes_static
 
+# Pull the API image.
+docker pull ${dockerhub_repo}/${api_docker_image}
+
 # These database values are created after TF
 # is run, so we have to pass them in programatically
 docker run \

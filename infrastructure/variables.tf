@@ -119,6 +119,11 @@ variable "client_instance_type" {
   default = "m5.4xlarge"
 }
 
+# Has 8 GB, which should be enough to run 2 smasher jobs at once.
+variable "smasher_instance_type" {
+  default = "t3.large"
+}
+
 variable "spot_price" {
   default = "4.10"
 }

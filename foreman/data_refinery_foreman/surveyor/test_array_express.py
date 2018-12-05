@@ -16,16 +16,7 @@ from data_refinery_foreman.surveyor.array_express import ArrayExpressSurveyor
 
 class SurveyTestCase(TestCase):
     def setUp(self):
-        survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
-        survey_job.save()
-        self.survey_job = survey_job
-
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                           key="experiment_accession_code",
-                                           value="E-MTAB-3050")
-        key_value_pair.save()
-
-        # Insert the organism into the database so the model doesn't call the
+        # Insert human organism into the database so the model doesn't call the
         # taxonomy API to populate it.
         organism = Organism(name="HOMO_SAPIENS",
                             taxonomy_id=9606,
@@ -37,10 +28,22 @@ class SurveyTestCase(TestCase):
         SurveyJobKeyValue.objects.all().delete()
         SurveyJob.objects.all().delete()
 
+    def create_job_for_accession(self, accession_code: str):
+        survey_job = SurveyJob(source_type="ARRAY_EXPRESS")
+        survey_job.save()
+
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                           key="experiment_accession_code",
+                                           value=accession_code)
+        key_value_pair.save()
+
+        return survey_job
+
     @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_survey(self, mock_send_task):
         """A Simple test of the ArrayExpress surveyor."""
-        ae_surveyor = ArrayExpressSurveyor(self.survey_job)
+        survey_job = self.create_job_for_accession("E-MTAB-3050")
+        ae_surveyor = ArrayExpressSurveyor(survey_job)
         ae_surveyor.survey()
 
         samples = Sample.objects.all()
@@ -60,12 +63,7 @@ class SurveyTestCase(TestCase):
         self.assertEqual(sample.protocol_info[0]['Text'], "Aliquoting of biomaterials.")
         self.assertEqual(sample.protocol_info[0]['Type'], "split")
 
-        survey_job2 = SurveyJob(source_type="ARRAY_EXPRESS")
-        survey_job2.save()
-        key_value_pair = SurveyJobKeyValue(survey_job=survey_job2,
-                                           key="experiment_accession_code",
-                                           value="E-GEOD-44719")
-        key_value_pair.save()
+        survey_job2 = self.create_job_for_accession("E-GEOD-44719")
         ae_surveyor = ArrayExpressSurveyor(survey_job2)
         ae_surveyor.survey()
 
@@ -76,10 +74,29 @@ class SurveyTestCase(TestCase):
         self.assertEqual(downloader_jobs.count(), 2)
 
 
+    def test_survey_with_protocol_list(self):
+        """Tests an edge case that came up after months:
+        https://github.com/AlexsLemonade/refinebio/issues/761
+        """
+        survey_job = self.create_job_for_accession("E-MEXP-2381")
+        ae_surveyor = ArrayExpressSurveyor(survey_job)
+        ae_surveyor.survey()
+
+        samples = Sample.objects.all()
+        downloader_jobs = DownloaderJob.objects.all()
+
+        # We are expecting this to discover 2 samples.
+        self.assertEqual(samples.count(), 2)
+
+        # And for one DownloaderJob to be created for all of them.
+        self.assertEqual(downloader_jobs.count(), 1)
+
+
     def test_determine_accession(self):
         """Test of the `determine_sample_accession` function
         """
-        ae_surveyor = ArrayExpressSurveyor(self.survey_job)
+        survey_job = self.create_job_for_accession("E-MTAB-3050")
+        ae_surveyor = ArrayExpressSurveyor(survey_job)
 
         EXPERIMENTS_URL = "https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/"
         SAMPLES_URL = EXPERIMENTS_URL + "{}/samples"
