@@ -374,7 +374,7 @@ def retry_failed_downloader_jobs() -> None:
     if failed_jobs_list:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) jobs!",
-            jobs=failed_jobs_list
+            jobs_count=len(failed_jobs_list)
         )
         handle_downloader_jobs(failed_jobs_list)
 
@@ -601,7 +601,7 @@ def retry_failed_processor_jobs() -> None:
     if failed_jobs_list:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) jobs!",
-            jobs=failed_jobs_list
+            len_jobs=len(failed_jobs_list)
         )
         handle_processor_jobs(failed_jobs_list)
 
@@ -661,7 +661,7 @@ def retry_hung_processor_jobs() -> None:
     if hung_jobs:
         logger.info(
             "Handling hung (started-but-never-finished) jobs!",
-            jobs=hung_jobs
+            len_jobs=len(hung_jobs)
         )
         handle_processor_jobs(hung_jobs)
 
@@ -727,7 +727,7 @@ def retry_lost_processor_jobs() -> None:
     if lost_jobs:
         logger.info(
             "Handling lost (never-started) jobs!",
-            jobs=lost_jobs
+            len_jobs=len(lost_jobs)
         )
         handle_processor_jobs(lost_jobs)
 
@@ -829,7 +829,7 @@ def retry_failed_survey_jobs() -> None:
     if failed_jobs:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) jobs!",
-            jobs=failed_jobs
+            len_jobs=len(failed_jobs)
         )
         handle_survey_jobs(failed_jobs)
 
@@ -871,7 +871,7 @@ def retry_hung_survey_jobs() -> None:
     if hung_jobs:
         logger.info(
             "Handling hung (started-but-never-finished) jobs!",
-            jobs=hung_jobs
+            len_jobs=len(hung_jobs)
         )
         handle_survey_jobs(hung_jobs)
 
@@ -923,7 +923,7 @@ def retry_lost_survey_jobs() -> None:
     if lost_jobs:
         logger.info(
             "Handling lost (never-started) jobs!",
-            jobs=lost_jobs
+            len_jobs=len(lost_jobs)
         )
         handle_survey_jobs(lost_jobs)
 
