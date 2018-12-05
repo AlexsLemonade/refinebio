@@ -33,6 +33,8 @@ job "DOWNLOADER" {
     task "downloader" {
       driver = "docker"
 
+      kill_timeout = "30s"
+
       # This env will be passed into the container for the job.
       env {
         ${{AWS_CREDS}}
