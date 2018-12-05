@@ -150,6 +150,10 @@ class SearchAndFilter(generics.ListAPIView):
 
     Ex: search/?search=human&has_publication=True
 
+    Interactive filtering allows users to explore results more easily. It can be enabled using the parameter `filter_order`.
+    The filter names should be sent sepparated by commas and depending on the order in which the filters are applied the 
+    number of samples per filter will be different.
+
     """
 
     serializer_class = ExperimentSerializer
@@ -209,8 +213,7 @@ class SearchAndFilter(generics.ListAPIView):
             'platform': 'platforms'
         }
 
-        # The API supports interactive filtering, this means that the filters in the last group are calculated
-        # differently, since they should stay unchanged when applied.
+        # With interactive filtering, the filters in the last group are calculated differently, since they should stay unchanged when applied.
         # ref https://github.com/AlexsLemonade/refinebio-frontend/issues/374#issuecomment-436373470
         # This is only enabled when the parameter `filter_order` is provided (eg `filter_order=technology,platform`)
         last_filter = self.get_last_filter()
