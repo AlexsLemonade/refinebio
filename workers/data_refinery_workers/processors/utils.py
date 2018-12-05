@@ -114,7 +114,7 @@ def start_job(job_context: Dict):
     job = job_context["job"]
 
     # This job should not have been started.
-    if job.start_time is not None:
+    if job.start_time is not None and settings.RUNNING_IN_CLOUD:
         logger.error("This processor job has already been started!!!", processor_job=job.id)
         raise Exception("processors.start_job called on job %s that has already been started!" % str(job.id))
 
