@@ -194,7 +194,7 @@ def prioritize_salmon_jobs(jobs: List) -> List:
             experiment_completion_percent = processed_samples / len(related_samples)
             prioritized_jobs.append({"job": job, "priority": experiment_completion_percent})
         except:
-            logger.exception("Exception caught while prioritizing salmon jobs!")
+            logger.debug("Exception caught while prioritizing salmon jobs!")
 
     sorted_job_mappings = sorted(prioritized_jobs, reverse=True, key=lambda k: k["priority"])
     sorted_jobs = [job_mapping["job"] for job_mapping in sorted_job_mappings]
