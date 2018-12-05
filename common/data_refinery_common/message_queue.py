@@ -111,14 +111,14 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
         except URLNotFoundNomadException:
             logger.info("Dispatching Nomad job of type %s for job spec %s to host %s and port %s failed.",
                 job_type, nomad_job, nomad_host, nomad_port, job=str(job.id))
-            return False
+            raise
         except Exception as e:
             logger.info('Unable to Dispatch Nomad Job.',
                 job_name=job_type.value,
                 job_id=str(job.id),
                 reason=str(e)
             )
-            return False
+            raise
     else:
         job.num_retries = job.num_retries - 1
         job.save()
