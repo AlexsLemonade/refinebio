@@ -338,15 +338,15 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     # We never want these!
                     if "idat.gz" in supplementary_file_url.lower():
                         continue
-                    if ".chp.gz" in supplementary_file_url.lower():
+                    if "chp.gz" in supplementary_file_url.lower():
                         continue
-                    if ".ndf.gz" in supplementary_file_url.lower():
+                    if "ndf.gz" in supplementary_file_url.lower():
                         continue
-                    if ".pos.gz" in supplementary_file_url.lower():
+                    if "pos.gz" in supplementary_file_url.lower():
                         continue
-                    if ".pair.gz" in supplementary_file_url.lower():
+                    if "pair.gz" in supplementary_file_url.lower():
                         continue
-                    if ".gff.gz" in supplementary_file_url.lower():
+                    if "gff.gz" in supplementary_file_url.lower():
                         continue
 
                     # Sometimes, we are lied to about the data processing step.
