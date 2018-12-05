@@ -1,3 +1,5 @@
+#!/bin/bash -e
+
 # Import Hashicorps' Key.
 curl https://keybase.io/hashicorp/pgp_keys.asc | gpg --import
 
@@ -5,9 +7,9 @@ curl https://keybase.io/hashicorp/pgp_keys.asc | gpg --import
 # Install terraform and nomad
 cd
 TERRAFORM_VERSION=0.11.8
-wget https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
-wget https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_${TERRAFORM_VERSION}_SHA256SUMS
-wget https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_${TERRAFORM_VERSION}_SHA256SUMS.sig
+wget -N https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+wget -N https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_${TERRAFORM_VERSION}_SHA256SUMS
+wget -N https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_${TERRAFORM_VERSION}_SHA256SUMS.sig
 
 
 # Verify the signature file is untampered.
@@ -31,9 +33,9 @@ sudo apt-get update
 sudo apt-get install lxc -y  # Install lxc, which is required by nomad
 
 NOMAD_VERSION=0.8.3
-wget https://releases.hashicorp.com/nomad/$NOMAD_VERSION/nomad_${NOMAD_VERSION}_linux_amd64.zip
-wget https://releases.hashicorp.com/nomad/$NOMAD_VERSION/nomad_${NOMAD_VERSION}_SHA256SUMS
-wget https://releases.hashicorp.com/nomad/$NOMAD_VERSION/nomad_${NOMAD_VERSION}_SHA256SUMS.sig
+wget -N https://releases.hashicorp.com/nomad/$NOMAD_VERSION/nomad_${NOMAD_VERSION}_linux_amd64.zip
+wget -N https://releases.hashicorp.com/nomad/$NOMAD_VERSION/nomad_${NOMAD_VERSION}_SHA256SUMS
+wget -N https://releases.hashicorp.com/nomad/$NOMAD_VERSION/nomad_${NOMAD_VERSION}_SHA256SUMS.sig
 
 
 # Verify the signature file is untampered.
@@ -70,6 +72,3 @@ fi
 
 # New deployment
 ./deploy.sh -e $ENVIRONMENT -v $CIRCLE_TAG -u circleci
-exit_code=$?
-
-exit $exit_code

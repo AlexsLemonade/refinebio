@@ -66,6 +66,13 @@ job "SURVEYOR_${{RAM}}" {
         max_file_size = 1
       }
 
+      # Don't run on the smasher instance, it's too small and should be running smasher jobs.
+      constraint {
+        attribute = "${meta.is_smasher}"
+        operator = "!="
+        value = "true"
+      }
+
       config {
         image = "${{DOCKERHUB_REPO}}/${{FOREMAN_DOCKER_IMAGE}}"
         force_pull = false

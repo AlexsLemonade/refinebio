@@ -283,6 +283,32 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             return experiment_accession + "-" + sample_assay_name
 
     @staticmethod
+    def extract_protocol_text(protocol_text):
+        """Returns a string representation of protocol_text.
+
+        protocol_text may be a string or a list containing both
+        strings and dicts, like so (it's what the API returns
+        sometimes, see E-MEXP-2381 as an example):
+        [
+          "Microarrays were imaged using an Agilent microarray scanner in XDR (eXtended Dynamic Range function) mode and a scan resolution of 5 \u00b5m.",
+          {
+            "br": null
+          },
+          "(Parameters: Scanning hardware = DNA Microarray Scanner BA [Agilent Technologies], Scanning software = Feature Extraction Software [Agilent])"
+        ]
+        """
+        if not protocol_text:
+            return ''
+        elif type(protocol_text) == str:
+            return protocol_text.strip()
+        elif type(protocol_text) == list:
+            # These can be {"br": None}, so skip non string lines
+            return " ".join([line.strip() for line in protocol_text if type(line) == str])
+        else:
+            # Not sure what would get us here, but it's not worth raising an error over
+            return str(protocol_text)
+
+    @staticmethod
     def update_sample_protocol_info(existing_protocols, experiment_protocol, protocol_url):
         """Compares experiment_protocol with a sample's
         existing_protocols and updates the latter if the former includes
@@ -303,23 +329,26 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         # Compare each entry in experiment protocol with the existing
         # protocols; if the entry is new, add it to exising_protocols.
         for new_protocol in experiment_protocol['protocol']:
+            new_protocol_text = new_protocol.get('text', '')
+            new_protocol_text = ArrayExpressSurveyor.extract_protocol_text(new_protocol_text)
+
             # Ignore experiment-level protocols whose accession or text
             # field is unavailable or empty.
             if (not new_protocol.get('accession', '').strip() or
-                not new_protocol.get('text', '').strip()):
+                not new_protocol_text):
                 continue
 
             new_protocol_is_found = False
             for existing_protocol in existing_protocols:
                 if (new_protocol.get('accession', '') == existing_protocol['Accession']
-                    and new_protocol.get('text', '') == existing_protocol['Text']
+                    and new_protocol_text == existing_protocol['Text']
                     and new_protocol.get('type', '') == existing_protocol['Type']):
                     new_protocol_is_found = True
                     break
             if not new_protocol_is_found:
                existing_protocols.append({
                    'Accession': new_protocol['accession'],
-                   'Text': new_protocol['text'],
+                   'Text': new_protocol_text,
                    'Type': new_protocol.get('type', ''),  # in case 'type' field is unavailable
                    'Reference': protocol_url
                })
