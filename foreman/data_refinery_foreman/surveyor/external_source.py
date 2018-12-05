@@ -89,7 +89,7 @@ class ExternalSourceSurveyor:
                 download_urls_with_jobs[original_file.source_url] = downloader_job
 
                 try:
-                    logger.debug("Queuing downloader job for URL: " + original_file.source_url,
+                    logger.info("Queuing downloader job for URL: " + original_file.source_url,
                                  survey_job=self.survey_job.id,
                                  downloader_job=downloader_job.id)
                     message_queue.send_job(downloader_task, downloader_job)
@@ -138,7 +138,7 @@ class ExternalSourceSurveyor:
                 downloaded_urls.append(original_file.source_url)
 
             try:
-                logger.debug("Queuing downloader job.",
+                logger.info("Queuing downloader job.",
                              survey_job=self.survey_job.id,
                              downloader_job=downloader_job.id,
                              downloaded_urls=downloaded_urls)
