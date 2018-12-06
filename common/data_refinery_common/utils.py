@@ -1,6 +1,7 @@
-from typing import Dict
+from typing import Dict, Set
 from urllib.parse import urlparse
 import csv
+import nomad
 import os
 import re
 import requests
@@ -79,6 +80,30 @@ def get_volume_index(path='/home/user/data_store/VOLUME_INDEX') -> str:
         logger.info(str(e))
 
     return default
+
+
+def get_active_volumes() -> Set[str]:
+    """Returns a Set of indices for volumes that are currently mounted.
+
+    These can be used to determine which jobs would actually be able
+    to be placed if they were queued up.
+    """
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
+
+    volumes = set()
+    try:
+        for node in nomad_client.nodes.get_nodes():
+            node_detail = nomad_client.node.get_node(node["ID"])
+            if 'Status' in node_detail and node_detail['Status'] == 'ready' \
+               and 'Meta' in node_detail and 'volume_index' in node_detail['Meta']:
+                volumes.add(node_detail['Meta']['volume_index'])
+    except nomad.api.exceptions.BaseNomadException:
+        # Nomad is down, return the empty set.
+        pass
+
+    return volumes
 
 
 def get_supported_microarray_platforms(platforms_csv: str="config/supported_microarray_platforms.csv"
