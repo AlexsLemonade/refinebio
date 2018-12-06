@@ -341,7 +341,7 @@ class Experiment(models.Model):
     @property
     def platforms(self):
         """ Returns a list of related pipelines """
-        return [p for p in self.samples.values_list('platform_name', flat=True).distinct()]
+        return [p for p in self.samples.values_list('platform_accession_code', flat=True).distinct()]
 
     def get_processed_samples(self):
         return self.samples.filter(is_processed=True)

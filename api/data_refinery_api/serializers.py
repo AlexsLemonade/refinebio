@@ -211,7 +211,6 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     )
     sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
     technologies = serializers.ReadOnlyField(source='get_sample_technologies')
-    pretty_platforms = serializers.ReadOnlyField()
 
     class Meta:
         model = Experiment
@@ -224,7 +223,6 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'source_database',
                     'source_url',
                     'platforms',
-                    'pretty_platforms',
                     'processed_samples',
                     'has_publication',
                     'publication_title',
@@ -268,8 +266,7 @@ class DetailedExperimentSampleSerializer(serializers.ModelSerializer):
         model = Sample
         fields = (
                     'accession_code',
-                    'platform_name',
-                    'pretty_platform',
+                    'platform_accession_code',
                     'technology',
                     'is_processed',
                 )
