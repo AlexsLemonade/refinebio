@@ -1,66 +1,69 @@
+from datetime import timedelta, datetime
+import nomad
+from typing import Dict
+
 from django.conf import settings
 from django.db.models import Count, Prefetch
 from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
-
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
-
+from rest_framework import status, filters, generics
 from rest_framework.exceptions import APIException
+from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.settings import api_settings
-from rest_framework.exceptions import ValidationError
-from rest_framework import status, filters, generics
+from rest_framework.views import APIView
 
+from data_refinery_api.serializers import (
+    ComputationalResultSerializer,
+    DetailedExperimentSerializer,
+    DetailedSampleSerializer,
+    ExperimentSerializer,
+    InstitutionSerializer,
+    OrganismIndexSerializer,
+    OrganismSerializer,
+    PlatformSerializer,
+    ProcessorSerializer,
+    SampleSerializer,
+
+    # Job
+    DownloaderJobSerializer,
+    ProcessorJobSerializer,
+    SurveyJobSerializer,
+
+    # Dataset
+    APITokenSerializer,
+    CreateDatasetSerializer,
+    DatasetDetailsSerializer,
+    DatasetSerializer,
+)
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
-    Experiment,
-    Sample,
-    Organism,
-    Processor,
-    ComputationalResult,
-    DownloaderJob,
-    SurveyJob,
-    ProcessorJob,
-    Dataset,
     APIToken,
-    ProcessorJobDatasetAssociation,
-    OrganismIndex,
+    ComputationalResult,
+    ComputedFile,
+    Dataset,
+    DownloaderJob,
+    Experiment,
     ExperimentSampleAssociation,
+    Organism,
+    OrganismIndex,
     OriginalFile,
+    Processor,
+    ProcessorJob,
+    ProcessorJobDatasetAssociation,
+    Sample,
+    SurveyJob,
 )
-from data_refinery_api.serializers import (
-    ExperimentSerializer,
-    DetailedExperimentSerializer,
-    SampleSerializer,
-    DetailedSampleSerializer,
-    OrganismSerializer,
-    OrganismIndexSerializer,
-    PlatformSerializer,
-    InstitutionSerializer,
-    ComputationalResultSerializer,
-    ProcessorSerializer,
+from data_refinery_common.utils import get_env_variable, get_active_volumes
 
-    # Job
-    SurveyJobSerializer,
-    DownloaderJobSerializer,
-    ProcessorJobSerializer,
-
-    # Dataset
-    CreateDatasetSerializer,
-    DatasetSerializer,
-    DatasetDetailsSerializer,
-    APITokenSerializer
-)
-
-from datetime import timedelta, datetime
-from django.utils import timezone
 
 ##
 # Custom Views
@@ -150,13 +153,11 @@ class SearchAndFilter(generics.ListAPIView):
 
     Ex: search/?search=human&has_publication=True
 
+    Interactive filtering allows users to explore results more easily. It can be enabled using the parameter `filter_order`.
+    The filter names should be sent sepparated by commas and depending on the order in which the filters are applied the 
+    number of samples per filter will be different.
+
     """
-
-    # Only Experiments with processed objects are exposed
-    queryset = Experiment.processed_public_objects.annotate(samples_count=Count('samples')).all()
-
-    # For developing, you can uncomment this to expose everything.
-    #queryset = Experiment.objects.annotate(samples_count=Count('samples')).all()
 
     serializer_class = ExperimentSerializer
     pagination_class = LimitOffsetPagination
@@ -166,7 +167,6 @@ class SearchAndFilter(generics.ListAPIView):
 
     # Ordering
     ordering_fields = ('total_samples_count', 'id', 'created_at', 'source_first_published', 'accession_code',)
-    samples_count = django_filters.NumberFilter(method='filter_samples_count')
     ordering = ('-total_samples_count',)
 
     def filter_samples_count(self, queryset, name, value):
@@ -187,7 +187,15 @@ class SearchAndFilter(generics.ListAPIView):
                         'publication_authors',
                         'pubmed_id',
                         '@submitter_institution',
-                        'experimentannotation__data'
+                        'experimentannotation__data',
+                        # '@sample__accession_code',
+                        # '@sample__platform_name',
+                        # '@sample__platform_accession_code',
+                        # '@sample__organism__name',
+                        # '@sample__sex',
+                        # '@sample__specimen_part',
+                        # '@sample__disease',
+                        # '@sample__compound'
                     )
     filter_fields = ('has_publication', 'platform_name')
 
@@ -207,55 +215,102 @@ class SearchAndFilter(generics.ListAPIView):
         """ Adds counts on certain filter fields to result JSON."""
         response = super(SearchAndFilter, self).list(request, args, kwargs)
 
-        response.data['filters'] = {}
-        response.data['filters']['technology'] = {}
-        response.data['filters']['publication'] = {}
-        response.data['filters']['organism'] = {}
-        response.data['filters']['platforms'] = {}
+        filter_param_names = ['organisms__name', 'technology', 'has_publication', 'platform']
+        # mapping between parameter names and category names
+        filter_name_map = {
+            'technology': 'technology',
+            'has_publication': 'publication',
+            'organisms__name': 'organism',
+            'platform': 'platforms'
+        }
 
-        # Technology
-        qs = self.search_queryset(self.get_queryset())
-        techs = qs.values('technology').annotate(Count('technology', unique=True))
-        for tech in techs:
-            if not tech['technology'] or not tech['technology'].strip():
-                continue
-            response.data['filters']['technology'][tech['technology']] = tech['technology__count']
+        # With interactive filtering, the filters in the last group are calculated differently, since they should stay unchanged when applied.
+        # ref https://github.com/AlexsLemonade/refinebio-frontend/issues/374#issuecomment-436373470
+        # This is only enabled when the parameter `filter_order` is provided (eg `filter_order=technology,platform`)
+        last_filter = self.get_last_filter()
+        if last_filter and last_filter in filter_param_names:
+            # 1. Calculate all filters except the one in the last category
+            queryset = self.search_queryset(request.query_params)
+            filter_names = [f for f in filter_param_names if f != last_filter]
+            response.data['filters'] = self.get_filters(queryset, filter_names)
 
-        # Publication
-        pubs = qs.values('has_publication').annotate(Count('has_publication', unique=True))
-        for pub in pubs:
-            if pub['has_publication']:
-                response.data['filters']['publication']['has_publication'] = pub['has_publication__count']
-
-        # Organisms
-        organisms = qs.values('organisms__name').annotate(Count('organisms__name', unique=True))
-        for organism in organisms:
-
-            # This experiment has no ExperimentOrganism-association, which is bad.
-            # This information may still live on the samples though.
-            if not organism['organisms__name']:
-                continue
-
-            response.data['filters']['organism'][organism['organisms__name']] = organism['organisms__name__count']
-
-        # Platforms
-        platforms = qs.values('samples__platform_name').annotate(Count('samples__platform_name', unique=True))
-        for plat in platforms:
-            if plat['samples__platform_name']:
-                response.data['filters']['platforms'][plat['samples__platform_name']] = plat['samples__platform_name__count']
+            # 2. Calculate the filters in the last category.
+            # We use a queryset built with all filters except those in the last category
+            params_without_last_category = request.query_params.copy()
+            params_without_last_category.pop(last_filter)
+            queryset_without_last_category = self.search_queryset(params_without_last_category)
+            last_category_filters = self.get_filters(queryset_without_last_category, [last_filter])
+            response.data['filters'][filter_name_map[last_filter]] = last_category_filters[filter_name_map[last_filter]]
+        else:
+            # Otherwise calculate the filters with the search term
+            response.data['filters'] = self.get_filters(self.search_queryset(), filter_param_names)
 
         return response
 
-    # We want to determine filters based off of the search term but not the filters to allow for
-    # multiple filters of the same type.
-    def search_queryset(self, queryset):
-        """ Filters the queryset based off of the search term (but not the filters) """
+    def get_last_filter(self):
+        request = self.request
+        if 'filter_order' not in request.query_params:
+            return False
+        filter_order = request.query_params['filter_order']
+        last_filter = filter_order.split(',')[-1:][0]
+        # Ensure the last filter is valid and one of the applied filters
+        if not last_filter or last_filter not in request.query_params:
+            return False
+        return last_filter
+
+    def get_filters(self, queryset, filters_to_calculate):
+        result = {
+            'technology': {},
+            'publication': {},
+            'organism': {},
+            'platforms': {}
+        }
+
+        if 'technology' in filters_to_calculate:
+            # Technology
+            techs = queryset.values('technology').annotate(Count('technology', unique=True))
+            for tech in techs:
+                if not tech['technology'] or not tech['technology'].strip():
+                    continue
+                result['technology'][tech['technology']] = tech['technology__count']
+
+        if 'has_publication' in filters_to_calculate:
+            # Publication
+            pubs = queryset.values('has_publication').annotate(Count('has_publication', unique=True))
+            for pub in pubs:
+                if pub['has_publication']:
+                    result['publication']['has_publication'] = pub['has_publication__count']
+
+        if 'organisms__name' in filters_to_calculate:
+            # Organisms
+            organisms = queryset.values('organisms__name').annotate(Count('organisms__name', unique=True))
+            for organism in organisms:
+                # This experiment has no ExperimentOrganism-association, which is bad.
+                # This information may still live on the samples though.
+                if not organism['organisms__name']:
+                    continue
+
+                result['organism'][organism['organisms__name']] = organism['organisms__name__count']
+
+        if 'platform' in filters_to_calculate:
+            # Platforms
+            platforms = queryset.values('samples__platform_name').annotate(Count('samples__platform_name', unique=True))
+            for plat in platforms:
+                if plat['samples__platform_name']:
+                    result['platforms'][plat['samples__platform_name']] = plat['samples__platform_name__count']
+
+        return result
+
+    def search_queryset(self, filter_params = False):
+        if filter_params:
+            queryset = ExperimentFilter(filter_params, queryset=self.get_queryset()).qs
+        else:
+            queryset = self.get_queryset()
         return filters.SearchFilter().filter_queryset(self.request, queryset, view=self)
 
 ##
 # Dataset
 ##
-
 class CreateDatasetView(generics.CreateAPIView):
     """ Creates and returns new Dataset. """
 
@@ -365,12 +420,12 @@ class DatasetStatsView(APIView):
     """
 
     def get(self, request, id):
-        
+
         dataset = get_object_or_404(Dataset, id=id)
         stats = {}
 
         experiments = Experiment.objects.filter(accession_code__in=dataset.data.keys())
-        
+
         # Find all the species for these experiments
         for experiment in experiments:
             species_names = experiment.organisms.values_list('name')
@@ -462,7 +517,7 @@ class ExperimentDetail(APIView):
                 return Experiment.public_objects.get(accession_code=pk)
             except Experiment.DoesNotExist:
                 raise Http404
-            return HttpResponseBadRequest("Bad PK or Accession") 
+            return HttpResponseBadRequest("Bad PK or Accession")
 
     def get(self, request, pk, format=None):
         experiment = self.get_object(pk)
@@ -695,23 +750,180 @@ class Stats(APIView):
         data['processor_jobs'] = self._get_job_stats(ProcessorJob.objects, range_param)
         data['samples'] = self._get_object_stats(Sample.objects, range_param)
         data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
-        data['total_downloaded'] = self._get_total_downloaded()
+        data['input_data_size'] = self._get_input_data_size()
+        data['output_data_size'] = self._get_output_data_size()
+        data['active_volumes'] = list(get_active_volumes())
+
+        try:
+            nomad_stats = self._get_nomad_jobs_breakdown()
+            data['nomad_running_jobs'] = nomad_stats["nomad_running_jobs"]
+            data['nomad_pending_jobs'] = nomad_stats["nomad_pending_jobs"]
+            data['nomad_running_jobs_by_type'] = nomad_stats["nomad_running_jobs_by_type"]
+            data['nomad_pending_jobs_by_type'] = nomad_stats["nomad_pending_jobs_by_type"]
+            data['nomad_running_jobs_by_volume'] = nomad_stats["nomad_running_jobs_by_volume"]
+            data['nomad_pending_jobs_by_volume'] = nomad_stats["nomad_pending_jobs_by_volume"]
+        except nomad.api.exceptions.BaseNomadException:
+            # Nomad is not available right now, so exclude these.
+            pass
 
         return Response(data)
 
-    def _get_total_downloaded(self):
+    def _aggregate_nomad_jobs_by_type(self, jobs: Dict):
+        """Aggregates the pending and running job counts for each Nomad job type.
 
-        total_size = OriginalFile.objects.filter(is_downloaded=True).aggregate(Sum('size_in_bytes'))
-        return total_size['size_in_bytes__sum']
+        This is accomplished by using the stats that each
+        parameterized job has about its children jobs.
+
+        `jobs` should be a response from the Nomad API's jobs endpoint.
+        """
+        job_types = set()
+        for job in jobs:
+            # Surveyor jobs don't have ids and RAM, so handle them specially.
+            if job["ID"].startswith("SURVEYOR"):
+                job_types.add("SURVEYOR")
+            elif job["ID"] == "SMASHER" or job["ID"] == "DOWNLOADER":
+                job_types.add(job["ID"])
+            else:
+                # Strips out the last two underscores like so:
+                # SALMON_1_16384 -> SALMON
+                job_type = "_".join(job["ID"].split("_")[0:-2])
+                job_types.add(job_type)
+
+        nomad_running_jobs_by_type = {}
+        nomad_pending_jobs_by_type = {}
+        for job_type in job_types:
+            # This will count SURVEYOR_DISPATCHER jobs as SURVEYOR
+            # jobs, but I think that's fine since we barely ever run
+            # SURVEYOR_DISPATCHER jobs and won't need to monitor them
+            # through the dashboard.
+            same_jobs = [job for job in jobs if job["ID"].startswith(job_type)]
+
+            aggregated_pending = 0
+            aggregated_running = 0
+            for job in same_jobs:
+                children = job["JobSummary"]["Children"]
+                aggregated_pending = aggregated_pending + children["Pending"]
+                aggregated_running = aggregated_running + children["Running"]
+
+            nomad_pending_jobs_by_type[job_type] = aggregated_pending
+            nomad_running_jobs_by_type[job_type] = aggregated_running
+
+        return nomad_pending_jobs_by_type, nomad_running_jobs_by_type
+
+    def _aggregate_nomad_jobs_by_volume(self, jobs: Dict):
+        """Aggregates the job counts for each EBS volume.
+
+        This is accomplished by using the stats that each
+        parameterized job has about its children jobs.
+
+        `jobs` should be a response from the Nomad API's jobs endpoint.
+        """
+        volume_ids = set()
+        for job in jobs:
+            # These job types don't have volume indices, so we just won't count them.
+            if not job["ID"].startswith("SURVEYOR") \
+               and job["ID"] != "SMASHER" \
+               and job["ID"] != "DOWNLOADER":
+                # Strips out the volume ID like so:
+                # SALMON_1_16384 -> 1
+                volume_id = "_".join(job["ID"].split("_")[-2])
+                volume_ids.add(volume_id)
+
+        nomad_running_jobs_by_volume = {}
+        nomad_pending_jobs_by_volume = {}
+        for volume_id in volume_ids:
+            if job["ID"].startswith("SURVEYOR") \
+               or job["ID"] == "SMASHER" \
+               or job["ID"] == "DOWNLOADER":
+                continue
+
+            def job_has_same_volume(job: Dict) -> bool:
+                """Returns true if the job is on the same volume as this iteration of the loop.
+
+                These job types don't have volume indices, so we just
+                won't count them. We theoretically could try, but it
+                really would be more trouble than it's worth and this
+                endpoint is already going to have a hard time returning
+                a response in time.
+                """
+                return not job["ID"].startswith("SURVEYOR") \
+                    and job["ID"] != "SMASHER" \
+                    and job["ID"] != "DOWNLOADER" \
+                    and job["ID"].split("_")[-2] == volume_id
+
+            jobs_with_same_volume = [job for job in jobs if job_has_same_volume(job)]
+
+            aggregated_pending = 0
+            aggregated_running = 0
+            for job in jobs_with_same_volume:
+                children = job["JobSummary"]["Children"]
+                aggregated_pending = aggregated_pending + children["Pending"]
+                aggregated_running = aggregated_running + children["Running"]
+
+            nomad_pending_jobs_by_volume["volume_" + str(volume_id)] = aggregated_pending
+            nomad_running_jobs_by_volume["volume_" + str(volume_id)] = aggregated_running
+
+        return nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume
+
+    def _get_nomad_jobs_breakdown(self):
+        nomad_host = get_env_variable("NOMAD_HOST")
+        nomad_port = get_env_variable("NOMAD_PORT", "4646")
+        nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
+
+        jobs = nomad_client.jobs.get_jobs()
+        parameterized_jobs = [job for job in jobs if job['ParameterizedJob']]
+
+        nomad_pending_jobs_by_type, nomad_running_jobs_by_type = self._aggregate_nomad_jobs_by_type(parameterized_jobs)
+
+        # To get the total jobs for running and pending, the easiest
+        # AND the most efficient way is to sum up the stats we've
+        # already partially summed up.
+        nomad_running_jobs = 0
+        for job_type, num_jobs in nomad_running_jobs_by_type.items():
+            nomad_running_jobs = nomad_running_jobs + num_jobs
+
+        nomad_pending_jobs = 0
+        for job_type, num_jobs in nomad_pending_jobs_by_type.items():
+            nomad_pending_jobs = nomad_pending_jobs + num_jobs
+
+        nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume = self._aggregate_nomad_jobs_by_volume(parameterized_jobs)
+
+        return {
+            "nomad_pending_jobs": nomad_pending_jobs,
+            "nomad_running_jobs": nomad_running_jobs,
+            "nomad_pending_jobs_by_type": nomad_pending_jobs_by_type,
+            "nomad_running_jobs_by_type": nomad_running_jobs_by_type,
+            "nomad_pending_jobs_by_volume": nomad_pending_jobs_by_volume,
+            "nomad_running_jobs_by_volume": nomad_running_jobs_by_volume
+        }
+
+
+    def _get_input_data_size(self):
+        total_size = OriginalFile.objects.filter(
+            sample__is_processed=True
+        ).aggregate(
+            Sum('size_in_bytes')
+        )
+        return total_size['size_in_bytes__sum'] if total_size['size_in_bytes__sum'] else 0
+
+    def _get_output_data_size(self):
+        total_size = ComputedFile.public_objects.all().filter(
+            s3_bucket__isnull=False,
+            s3_key__isnull=True
+        ).aggregate(
+            Sum('size_in_bytes')
+        )
+        return total_size['size_in_bytes__sum'] if total_size['size_in_bytes__sum'] else 0
 
     def _get_job_stats(self, jobs, range_param):
         result = {
             'total': jobs.count(),
             'pending': jobs.filter(start_time__isnull=True).count(),
             'completed': jobs.filter(end_time__isnull=False).count(),
+            'successful': jobs.filter(success=True).count(),
             'open': jobs.filter(start_time__isnull=False, end_time__isnull=True, success__isnull=True).count(),
             # via https://stackoverflow.com/questions/32520655/get-average-of-difference-of-datetime-fields-in-django
-            'average_time': jobs.filter(start_time__isnull=False, end_time__isnull=False).aggregate(
+            'average_time': jobs.filter(start_time__isnull=False, end_time__isnull=False, success=True).aggregate(
                 average_time=Avg(F('end_time') - F('start_time')))['average_time']
         }
 
@@ -782,8 +994,8 @@ class Stats(APIView):
         for start, end in self._get_time_intervals(range_param):
             total = objects.filter(created_at__gte=start, created_at__lte=end).count()
             stats = {
-                'start': start, 
-                'end': end, 
+                'start': start,
+                'end': end,
                 'total': total
             }
             results.append(stats)

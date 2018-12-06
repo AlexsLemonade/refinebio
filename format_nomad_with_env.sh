@@ -22,7 +22,7 @@ print_options() {
     echo "                     path to another directory (trailing / must be included)."
 }
 
-while getopts ":p:e:o:h" opt; do
+while getopts ":p:e:o:v:h" opt; do
     case $opt in
     p)
         export project=$OPTARG
@@ -32,6 +32,9 @@ while getopts ":p:e:o:h" opt; do
         ;;
     o)
         export output_dir=$OPTARG
+        ;;
+    v)
+        export system_version=$OPTARG
         ;;
     h)
         print_description
@@ -65,6 +68,10 @@ if [[ -z $MAX_CLIENTS ]]; then
     MAX_CLIENTS="1"
 fi
 
+if [[ -z $system_version ]]; then
+    system_version="latest"
+fi
+
 # Default docker repo.
 # This are very sensible defaults, but we want to let these be set
 # outside the script so only set them if they aren't already set.
@@ -78,28 +85,28 @@ if [[ -z $DOCKERHUB_REPO ]]; then
     fi
 fi
 if [[ -z $FOREMAN_DOCKER_IMAGE ]]; then
-    export FOREMAN_DOCKER_IMAGE=dr_foreman:latest
+    export FOREMAN_DOCKER_IMAGE=dr_foreman:$system_version
 fi
 if [[ -z $DOWNLOADERS_DOCKER_IMAGE ]]; then
-    export DOWNLOADERS_DOCKER_IMAGE=dr_downloaders:latest
+    export DOWNLOADERS_DOCKER_IMAGE=dr_downloaders:$system_version
 fi
 if [[ -z $TRANSCRIPTOME_DOCKER_IMAGE ]]; then
-    export TRANSCRIPTOME_DOCKER_IMAGE=dr_transcriptome:latest
+    export TRANSCRIPTOME_DOCKER_IMAGE=dr_transcriptome:$system_version
 fi
 if [[ -z $SALMON_DOCKER_IMAGE ]]; then
-    export SALMON_DOCKER_IMAGE=dr_salmon:latest
+    export SALMON_DOCKER_IMAGE=dr_salmon:$system_version
 fi
 if [[ -z $SMASHER_DOCKER_IMAGE ]]; then
-    export SMASHER_DOCKER_IMAGE=dr_smasher:latest
+    export SMASHER_DOCKER_IMAGE=dr_smasher:$system_version
 fi
 if [[ -z $AFFYMETRIX_DOCKER_IMAGE ]]; then
-    export AFFYMETRIX_DOCKER_IMAGE=dr_affymetrix:latest
+    export AFFYMETRIX_DOCKER_IMAGE=dr_affymetrix:$system_version
 fi
 if [[ -z $ILLUMINA_DOCKER_IMAGE ]]; then
-    export ILLUMINA_DOCKER_IMAGE=dr_illumina:latest
+    export ILLUMINA_DOCKER_IMAGE=dr_illumina:$system_version
 fi
 if [[ -z $NO_OP_DOCKER_IMAGE ]]; then
-    export NO_OP_DOCKER_IMAGE=dr_no_op:latest
+    export NO_OP_DOCKER_IMAGE=dr_no_op:$system_version
 fi
 
 

@@ -29,7 +29,11 @@ from data_refinery_common.job_lookup import (
     is_file_rnaseq,
 )
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
+from data_refinery_common.utils import (
+    get_active_volumes,
+    get_env_variable,
+    get_env_variable_gracefully
+)
 
 
 logger = get_and_configure_logger(__name__)
@@ -123,26 +127,6 @@ def handle_repeated_failure(job) -> None:
     logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1)
 
 
-def get_active_volumes() -> Set[str]:
-    """Returns a Set of indices for volumes that are currently mounted.
-
-    These can be used to determine which jobs would actually be able
-    to be placed if they were queued up.
-    """
-    nomad_host = get_env_variable("NOMAD_HOST")
-    nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
-
-    volumes = set()
-    for node in nomad_client.nodes.get_nodes():
-        node_detail = nomad_client.node.get_node(node["ID"])
-        if 'Status' in node_detail and node_detail['Status'] == 'ready' \
-           and 'Meta' in node_detail and 'volume_index' in node_detail['Meta']:
-            volumes.add(node_detail['Meta']['volume_index'])
-
-    return volumes
-
-
 ##
 # Job Prioritization
 ##
@@ -203,7 +187,8 @@ def prioritize_salmon_jobs(jobs: List) -> List:
             experiment_completion_percent = processed_samples / len(related_samples)
             prioritized_jobs.append({"job": job, "priority": experiment_completion_percent})
         except:
-            logger.exception("Exception caught while prioritizing salmon jobs!", job=job)
+            logger.debug("Exception caught while prioritizing salmon jobs!", job=job)
+
 
     sorted_job_mappings = sorted(prioritized_jobs, reverse=True, key=lambda k: k["priority"])
     sorted_jobs = [job_mapping["job"] for job_mapping in sorted_job_mappings]
@@ -231,7 +216,7 @@ def prioritize_zebrafish_jobs(jobs: List) -> List:
                     zebrafish_jobs.append(job)
                     break
         except:
-            logger.exception("Exception caught while prioritizing zebrafish jobs!", job=job)
+            logger.debug("Exception caught while prioritizing zebrafish jobs!", job=job)
 
     # Remove all the jobs we're moving to the front of the list
     for job in zebrafish_jobs:
@@ -373,7 +358,7 @@ def retry_failed_downloader_jobs() -> None:
     if failed_jobs_list:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) jobs!",
-            jobs=failed_jobs_list
+            jobs_count=len(failed_jobs_list)
         )
         handle_downloader_jobs(failed_jobs_list)
 
@@ -600,7 +585,7 @@ def retry_failed_processor_jobs() -> None:
     if failed_jobs_list:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) jobs!",
-            jobs=failed_jobs_list
+            len_jobs=len(failed_jobs_list)
         )
         handle_processor_jobs(failed_jobs_list)
 
@@ -660,7 +645,7 @@ def retry_hung_processor_jobs() -> None:
     if hung_jobs:
         logger.info(
             "Handling hung (started-but-never-finished) jobs!",
-            jobs=hung_jobs
+            len_jobs=len(hung_jobs)
         )
         handle_processor_jobs(hung_jobs)
 
@@ -726,7 +711,7 @@ def retry_lost_processor_jobs() -> None:
     if lost_jobs:
         logger.info(
             "Handling lost (never-started) jobs!",
-            jobs=lost_jobs
+            len_jobs=len(lost_jobs)
         )
         handle_processor_jobs(lost_jobs)
 
@@ -828,7 +813,7 @@ def retry_failed_survey_jobs() -> None:
     if failed_jobs:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) jobs!",
-            jobs=failed_jobs
+            len_jobs=len(failed_jobs)
         )
         handle_survey_jobs(failed_jobs)
 
@@ -870,7 +855,7 @@ def retry_hung_survey_jobs() -> None:
     if hung_jobs:
         logger.info(
             "Handling hung (started-but-never-finished) jobs!",
-            jobs=hung_jobs
+            len_jobs=len(hung_jobs)
         )
         handle_survey_jobs(hung_jobs)
 
@@ -922,7 +907,7 @@ def retry_lost_survey_jobs() -> None:
     if lost_jobs:
         logger.info(
             "Handling lost (never-started) jobs!",
-            jobs=lost_jobs
+            len_jobs=len(lost_jobs)
         )
         handle_survey_jobs(lost_jobs)
 

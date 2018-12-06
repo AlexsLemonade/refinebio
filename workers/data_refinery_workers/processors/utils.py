@@ -37,8 +37,8 @@ DIRNAME = os.path.dirname(os.path.abspath(__file__))
 CURRENT_JOB = None
 
 
-def sigterm_handler(sig, frame):
-    """ SIGTERM Handler """
+def signal_handler(sig, frame):
+    """Signal Handler, works for both SIGTERM and SIGINT"""
     global CURRENT_JOB
     if not CURRENT_JOB:
         sys.exit(0)
@@ -114,13 +114,15 @@ def start_job(job_context: Dict):
     job = job_context["job"]
 
     # This job should not have been started.
-    if job.start_time is not None:
+    if job.start_time is not None and settings.RUNNING_IN_CLOUD:
         logger.error("This processor job has already been started!!!", processor_job=job.id)
         raise Exception("processors.start_job called on job %s that has already been started!" % str(job.id))
 
     # Set up the SIGTERM handler so we can appropriately handle being interrupted.
     # (`docker stop` uses SIGTERM, not SIGINT.)
-    signal.signal(signal.SIGTERM, sigterm_handler)
+    # (however, Nomad sends an SIGINT so catch both.)
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
 
     job.worker_id = get_instance_id()
     job.worker_version = SYSTEM_VERSION
