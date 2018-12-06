@@ -386,7 +386,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME_TEMPURA')
         # filter contain values for the top search query
-        self.assertEqual(response.json()['filters']['technology'], {'FAKE-TECH': 1, 'MICROARRAY': 2, 'RNA-SEQ': 1})
+        self.assertEqual(response.json()['filters']['technology'], {'FAKE-TECH': 1, 'MICROARRAY': 4, 'RNA-SEQ': 1})
         self.assertEqual(response.json()['filters']['publication'], {'has_publication': 1})
         self.assertEqual(response.json()['filters']['organism'], {'Extra-Terrestrial-1982': 1, 'HOMO_SAPIENS': 3})
 
