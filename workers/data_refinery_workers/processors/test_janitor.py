@@ -40,7 +40,11 @@ def prepare_job():
 
     # Create 10 job directories
     for i in range(0, JOBS):
+
         os.makedirs(LOCAL_ROOT_DIR + '/processor_job_' + str(i), exist_ok=True)
+
+        # These live on prod volumes at locations such as:
+        # /var/ebs/SRP057116/SRR1972985/SRR1972985.sra
         os.makedirs(LOCAL_ROOT_DIR + '/SRP' + str(i), exist_ok=True)
         os.makedirs(LOCAL_ROOT_DIR + '/SRP' + str(i) + '/SRR' + str(i), exist_ok=True)
 
