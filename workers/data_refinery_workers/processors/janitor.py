@@ -60,9 +60,9 @@ def _find_and_remove_expired_jobs(job_context):
                     if job_status == "running":
                         continue
                 except URLNotFoundNomadException as e:
-                    # If we can't currently access Nomad,
-                    # just continue until we can again.
-                    continue
+                    # Nomad has no record of this job, meaning it has likely been GC'd after death.
+                    # It can be purged.
+                    pass
                 except BaseNomadException as e:
                     # If we can't currently access Nomad,
                     # just continue until we can again.
@@ -84,7 +84,7 @@ def _find_and_remove_expired_jobs(job_context):
             # Delete it!
             try:
                 to_delete = LOCAL_ROOT_DIR + '/' + item
-                logger.info("Janitor deleting " + to_delete)
+                logger.info("Janitor deleting " + to_delete, contents=str(os.listdir(to_delete)))
                 shutil.rmtree(to_delete)
                 job_context['deleted_items'].append(to_delete)
             except Exception as e:

@@ -21,7 +21,13 @@ from data_refinery_common.models import (
     SurveyJobKeyValue
 )
 from data_refinery_common.message_queue import send_job
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders, SurveyJobTypes, is_file_rnaseq
+from data_refinery_common.job_lookup import (
+    Downloaders,
+    ProcessorPipeline,
+    SurveyJobTypes,
+    does_processor_job_have_samples,
+    is_file_rnaseq,
+)
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import (
     get_active_volumes,
@@ -96,7 +102,7 @@ def do_forever(min_loop_time: timedelta) -> Callable:
 
                 loop_time = timezone.now() - start_time
                 if loop_time < min_loop_time:
-                    remaining_time = MIN_LOOP_TIME - loop_time
+                    remaining_time = min_loop_time - loop_time
                     time.sleep(remaining_time.seconds)
 
         return wrapper
@@ -142,6 +148,9 @@ def prioritize_salmon_jobs(jobs: List) -> List:
     prioritized_jobs = []
     for job in jobs:
         try:
+            if not does_processor_job_have_samples(job):
+                continue
+
             # Salmon jobs are specifc to one sample.
             sample = job.get_samples().pop()
 
@@ -178,7 +187,8 @@ def prioritize_salmon_jobs(jobs: List) -> List:
             experiment_completion_percent = processed_samples / len(related_samples)
             prioritized_jobs.append({"job": job, "priority": experiment_completion_percent})
         except:
-            logger.exception("Exception caught while prioritizing salmon jobs!")
+            logger.debug("Exception caught while prioritizing salmon jobs!", job=job)
+
 
     sorted_job_mappings = sorted(prioritized_jobs, reverse=True, key=lambda k: k["priority"])
     sorted_jobs = [job_mapping["job"] for job_mapping in sorted_job_mappings]
@@ -195,6 +205,9 @@ def prioritize_zebrafish_jobs(jobs: List) -> List:
     zebrafish_jobs = []
     for job in jobs:
         try:
+            if not does_processor_job_have_samples(job):
+                continue
+
             # There aren't cross-species jobs, so just checking one sample's organism will be sufficient.
             samples = job.get_samples()
 
@@ -203,7 +216,7 @@ def prioritize_zebrafish_jobs(jobs: List) -> List:
                     zebrafish_jobs.append(job)
                     break
         except:
-            logger.exception("Exception caught while prioritizing zebrafish jobs!")
+            logger.debug("Exception caught while prioritizing zebrafish jobs!", job=job)
 
     # Remove all the jobs we're moving to the front of the list
     for job in zebrafish_jobs:
@@ -217,6 +230,9 @@ def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
     prioritized_jobs = []
     for job in jobs:
         try:
+            if not does_processor_job_have_samples(job):
+                continue
+
             # All samples in a job correspond to the same experiment, so just check one sample.
             samples = job.get_samples()
 
@@ -234,7 +250,7 @@ def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
                         is_prioritized_job = True
                         break
         except:
-            logger.exception("Exception caught while prioritizing zebrafish jobs!")
+            logger.exception("Exception caught while prioritizing jobs by accession!", job=job)
 
     # Remove all the jobs we're moving to the front of the list
     for job in prioritized_jobs:
@@ -306,10 +322,10 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
     # that are close to completion.
     # Each function moves the jobs it prioritizes to the front of the
     # list, so apply them in backwards order.
-    jobs = prioritize_salmon_jobs(jobs)
-    jobs = prioritize_jobs_by_accession(jobs, PEDIATRIC_ACCESSION_LIST)
-    jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
-    jobs = prioritize_zebrafish_jobs(jobs)
+    # jobs = prioritize_salmon_jobs(jobs)
+    # jobs = prioritize_jobs_by_accession(jobs, PEDIATRIC_ACCESSION_LIST)
+    # jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
+    # jobs = prioritize_zebrafish_jobs(jobs)
 
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
@@ -331,13 +347,18 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
 @do_forever(MIN_LOOP_TIME)
 def retry_failed_downloader_jobs() -> None:
     """Handle downloader jobs that were marked as a failure."""
-    failed_jobs = DownloaderJob.objects.filter(success=False, retried=False)
+    failed_jobs = DownloaderJob.objects.filter(
+        success=False,
+        retried=False
+    ).prefetch_related(
+        "original_files__samples"
+    )
     failed_jobs_list = [job for job in failed_jobs]
 
     if failed_jobs_list:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) jobs!",
-            jobs=failed_jobs_list
+            jobs_count=len(failed_jobs_list)
         )
         handle_downloader_jobs(failed_jobs_list)
 
@@ -351,6 +372,8 @@ def retry_hung_downloader_jobs() -> None:
         end_time=None,
         start_time__isnull=False,
         no_retry=False
+    ).prefetch_related(
+        "original_files__samples"
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -390,6 +413,8 @@ def retry_lost_downloader_jobs() -> None:
         start_time=None,
         end_time=None,
         no_retry=False
+    ).prefetch_related(
+        "original_files__samples"
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -512,10 +537,10 @@ def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
     # that are close to completion.
     # Each function moves the jobs it prioritizes to the front of the
     # list, so apply them in backwards order.
-    jobs = prioritize_salmon_jobs(jobs)
-    jobs = prioritize_jobs_by_accession(jobs, PEDIATRIC_ACCESSION_LIST)
-    jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
-    jobs = prioritize_zebrafish_jobs(jobs)
+    # jobs = prioritize_salmon_jobs(jobs)
+    # jobs = prioritize_jobs_by_accession(jobs, PEDIATRIC_ACCESSION_LIST)
+    # jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
+    # jobs = prioritize_zebrafish_jobs(jobs)
 
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
@@ -551,6 +576,8 @@ def retry_failed_processor_jobs() -> None:
         volume_index__in=active_volumes
     ).exclude(
         pipeline_applied="JANITOR"
+    ).prefetch_related(
+        "original_files__samples"
     )
 
     failed_jobs_list = [job for job in failed_jobs]
@@ -558,7 +585,7 @@ def retry_failed_processor_jobs() -> None:
     if failed_jobs_list:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) jobs!",
-            jobs=failed_jobs_list
+            len_jobs=len(failed_jobs_list)
         )
         handle_processor_jobs(failed_jobs_list)
 
@@ -583,6 +610,8 @@ def retry_hung_processor_jobs() -> None:
         volume_index__in=active_volumes
     ).exclude(
         pipeline_applied="JANITOR"
+    ).prefetch_related(
+        "original_files__samples"
     )
 
 
@@ -616,7 +645,7 @@ def retry_hung_processor_jobs() -> None:
     if hung_jobs:
         logger.info(
             "Handling hung (started-but-never-finished) jobs!",
-            jobs=hung_jobs
+            len_jobs=len(hung_jobs)
         )
         handle_processor_jobs(hung_jobs)
 
@@ -641,6 +670,8 @@ def retry_lost_processor_jobs() -> None:
         volume_index__in=active_volumes
     ).exclude(
         pipeline_applied="JANITOR"
+    ).prefetch_related(
+        "original_files__samples"
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -669,7 +700,7 @@ def retry_lost_processor_jobs() -> None:
                 if timezone.now() - job.created_at > MIN_LOOP_TIME:
                     lost_jobs.append(job)
         except URLNotFoundNomadException:
-            logger.exception(("Determined that a processor job needs to be requeued because "
+            logger.debug(("Determined that a processor job needs to be requeued because "
                               "querying for its Nomad job failed: "),
                              job_id=job.id
             )
@@ -680,7 +711,7 @@ def retry_lost_processor_jobs() -> None:
     if lost_jobs:
         logger.info(
             "Handling lost (never-started) jobs!",
-            jobs=lost_jobs
+            len_jobs=len(lost_jobs)
         )
         handle_processor_jobs(lost_jobs)
 
@@ -782,7 +813,7 @@ def retry_failed_survey_jobs() -> None:
     if failed_jobs:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) jobs!",
-            jobs=failed_jobs
+            len_jobs=len(failed_jobs)
         )
         handle_survey_jobs(failed_jobs)
 
@@ -824,7 +855,7 @@ def retry_hung_survey_jobs() -> None:
     if hung_jobs:
         logger.info(
             "Handling hung (started-but-never-finished) jobs!",
-            jobs=hung_jobs
+            len_jobs=len(hung_jobs)
         )
         handle_survey_jobs(hung_jobs)
 
@@ -876,7 +907,7 @@ def retry_lost_survey_jobs() -> None:
     if lost_jobs:
         logger.info(
             "Handling lost (never-started) jobs!",
-            jobs=lost_jobs
+            len_jobs=len(lost_jobs)
         )
         handle_survey_jobs(lost_jobs)
 
