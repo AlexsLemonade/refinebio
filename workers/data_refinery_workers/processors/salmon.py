@@ -269,9 +269,10 @@ def _find_or_download_index(job_context: Dict) -> Dict:
     if not index_object:
         logger.error("Could not run Salmon processor without index for organism",
             organism=job_context['organism'],
-            processor_job=job_context["job_id"]
+            processor_job=job_context["job_id"],
+            index_type=index_type
         )
-        job_context["job"].failure_reason = "Missing transcriptome index."
+        job_context["job"].failure_reason = "Missing transcriptome index. (" + index_type + ")"
         job_context["success"] = False
         return job_context
 
