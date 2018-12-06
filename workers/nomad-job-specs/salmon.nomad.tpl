@@ -27,6 +27,8 @@ job "SALMON_${{INDEX}}_${{RAM}}" {
     task "salmon" {
       driver = "docker"
 
+      kill_timeout = "30s"
+
       # This env will be passed into the container for the job.
       env {
         ${{AWS_CREDS}}
