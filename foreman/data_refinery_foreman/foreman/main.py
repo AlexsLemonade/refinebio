@@ -23,7 +23,11 @@ from data_refinery_common.models import (
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders, SurveyJobTypes, is_file_rnaseq
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
+from data_refinery_common.utils import (
+    get_active_volumes,
+    get_env_variable,
+    get_env_variable_gracefully
+)
 
 
 logger = get_and_configure_logger(__name__)
@@ -115,26 +119,6 @@ def handle_repeated_failure(job) -> None:
     # sufficient because all log messages will be closely monitored
     # during early testing stages.
     logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1)
-
-
-def get_active_volumes() -> Set[str]:
-    """Returns a Set of indices for volumes that are currently mounted.
-
-    These can be used to determine which jobs would actually be able
-    to be placed if they were queued up.
-    """
-    nomad_host = get_env_variable("NOMAD_HOST")
-    nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
-
-    volumes = set()
-    for node in nomad_client.nodes.get_nodes():
-        node_detail = nomad_client.node.get_node(node["ID"])
-        if 'Status' in node_detail and node_detail['Status'] == 'ready' \
-           and 'Meta' in node_detail and 'volume_index' in node_detail['Meta']:
-            volumes.add(node_detail['Meta']['volume_index'])
-
-    return volumes
 
 
 ##
