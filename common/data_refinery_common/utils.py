@@ -17,7 +17,6 @@ SUPPORTED_MICROARRAY_PLATFORMS = None
 SUPPORTED_RNASEQ_PLATFORMS = None
 READABLE_PLATFORM_NAMES = None
 
-
 def get_env_variable(var_name: str, default: str=None) -> str:
     """ Get an environment variable or return a default value """
     try:
@@ -61,8 +60,13 @@ def get_worker_id() -> str:
     return get_instance_id() + "/" + current_process().name
 
 
-def get_volume_index(default="0", path='/home/user/data_store/VOLUME_INDEX') -> str:
+def get_volume_index(path='/home/user/data_store/VOLUME_INDEX') -> str:
     """ Reads the contents of the VOLUME_INDEX file, else returns default """
+
+    if settings.RUNNING_IN_CLOUD:
+        default = "-1"
+    else:
+        default = "0"
 
     try:
         with open(path, 'r') as f:

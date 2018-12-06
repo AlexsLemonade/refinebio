@@ -228,7 +228,7 @@ resource "aws_cloudfront_distribution" "static-distribution" {
   # https://stackoverflow.com/a/35673266/6095378
   custom_error_response {
     error_caching_min_ttl = 0
-    error_code = 403
+    error_code = 404
     response_code = 200
     response_page_path = "/index.html"
   }
