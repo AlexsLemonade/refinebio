@@ -89,11 +89,15 @@ def get_active_volumes() -> Set[str]:
     nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
 
     volumes = set()
-    for node in nomad_client.nodes.get_nodes():
-        node_detail = nomad_client.node.get_node(node["ID"])
-        if 'Status' in node_detail and node_detail['Status'] == 'ready' \
-           and 'Meta' in node_detail and 'volume_index' in node_detail['Meta']:
-            volumes.add(node_detail['Meta']['volume_index'])
+    try:
+        for node in nomad_client.nodes.get_nodes():
+            node_detail = nomad_client.node.get_node(node["ID"])
+            if 'Status' in node_detail and node_detail['Status'] == 'ready' \
+               and 'Meta' in node_detail and 'volume_index' in node_detail['Meta']:
+                volumes.add(node_detail['Meta']['volume_index'])
+    except nomad.api.exceptions.BaseNomadException:
+        # Nomad is down, return the empty set.
+        pass
 
     return volumes
 

@@ -710,13 +710,17 @@ class Stats(APIView):
         data['output_data_size'] = self._get_output_data_size()
         data['active_volumes'] = list(get_active_volumes())
 
-        nomad_stats = self._get_nomad_jobs_breakdown()
-        data['nomad_running_jobs'] = nomad_stats["nomad_running_jobs"]
-        data['nomad_pending_jobs'] = nomad_stats["nomad_pending_jobs"]
-        data['nomad_running_jobs_by_type'] = nomad_stats["nomad_running_jobs_by_type"]
-        data['nomad_pending_jobs_by_type'] = nomad_stats["nomad_pending_jobs_by_type"]
-        data['nomad_running_jobs_by_volume'] = nomad_stats["nomad_running_jobs_by_volume"]
-        data['nomad_pending_jobs_by_volume'] = nomad_stats["nomad_pending_jobs_by_volume"]
+        try:
+            nomad_stats = self._get_nomad_jobs_breakdown()
+            data['nomad_running_jobs'] = nomad_stats["nomad_running_jobs"]
+            data['nomad_pending_jobs'] = nomad_stats["nomad_pending_jobs"]
+            data['nomad_running_jobs_by_type'] = nomad_stats["nomad_running_jobs_by_type"]
+            data['nomad_pending_jobs_by_type'] = nomad_stats["nomad_pending_jobs_by_type"]
+            data['nomad_running_jobs_by_volume'] = nomad_stats["nomad_running_jobs_by_volume"]
+            data['nomad_pending_jobs_by_volume'] = nomad_stats["nomad_pending_jobs_by_volume"]
+        except nomad.api.exceptions.BaseNomadException:
+            # Nomad is not available right now, so exclude these.
+            pass
 
         return Response(data)
 
