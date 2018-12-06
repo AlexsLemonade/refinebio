@@ -62,7 +62,7 @@ from data_refinery_common.models import (
     Sample,
     SurveyJob,
 )
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable, get_active_volumes
 
 
 ##
@@ -708,14 +708,15 @@ class Stats(APIView):
         data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
         data['input_data_size'] = self._get_input_data_size()
         data['output_data_size'] = self._get_output_data_size()
+        data['active_volumes'] = list(get_active_volumes())
 
         nomad_stats = self._get_nomad_jobs_breakdown()
         data['nomad_running_jobs'] = nomad_stats["nomad_running_jobs"]
         data['nomad_pending_jobs'] = nomad_stats["nomad_pending_jobs"]
         data['nomad_running_jobs_by_type'] = nomad_stats["nomad_running_jobs_by_type"]
         data['nomad_pending_jobs_by_type'] = nomad_stats["nomad_pending_jobs_by_type"]
-        data['nomad_running_jobs_by_volume'] = None
-        data['nomad_pending_jobs_by_volume'] = None
+        data['nomad_running_jobs_by_volume'] = nomad_stats["nomad_running_jobs_by_volume"]
+        data['nomad_pending_jobs_by_volume'] = nomad_stats["nomad_pending_jobs_by_volume"]
 
         return Response(data)
 
@@ -729,14 +730,24 @@ class Stats(APIView):
         """
         job_types = set()
         for job in jobs:
-            # Strips out the last two underscores like so:
-            # SALMON_1_16384 -> SALMON
-            job_type = "_".join(job["ID"].split("_")[0:-2])
-            job_types.add(job_type)
+            # Surveyor jobs don't have ids and RAM, so handle them specially.
+            if job["ID"].startswith("SURVEYOR"):
+                job_types.add("SURVEYOR")
+            elif job["ID"] == "SMASHER" or job["ID"] == "DOWNLOADER":
+                job_types.add(job["ID"])
+            else:
+                # Strips out the last two underscores like so:
+                # SALMON_1_16384 -> SALMON
+                job_type = "_".join(job["ID"].split("_")[0:-2])
+                job_types.add(job_type)
 
         nomad_running_jobs_by_type = {}
         nomad_pending_jobs_by_type = {}
         for job_type in job_types:
+            # This will count SURVEYOR_DISPATCHER jobs as SURVEYOR
+            # jobs, but I think that's fine since we barely ever run
+            # SURVEYOR_DISPATCHER jobs and won't need to monitor them
+            # through the dashboard.
             same_jobs = [job for job in jobs if job["ID"].startswith(job_type)]
 
             aggregated_pending = 0
@@ -761,15 +772,38 @@ class Stats(APIView):
         """
         volume_ids = set()
         for job in jobs:
-            # Strips out the volume ID like so:
-            # SALMON_1_16384 -> 1
-            volume_id = "_".join(job["ID"].split("_")[-2])
-            volume_ids.add(volume_id)
+            # These job types don't have volume indices, so we just won't count them.
+            if not job["ID"].startswith("SURVEYOR") \
+               and job["ID"] != "SMASHER" \
+               and job["ID"] != "DOWNLOADER":
+                # Strips out the volume ID like so:
+                # SALMON_1_16384 -> 1
+                volume_id = "_".join(job["ID"].split("_")[-2])
+                volume_ids.add(volume_id)
 
         nomad_running_jobs_by_volume = {}
         nomad_pending_jobs_by_volume = {}
         for volume_id in volume_ids:
-            jobs_with_same_volume = [job for job in jobs if job["ID"].split("_")[-2] == volume_id]
+            if job["ID"].startswith("SURVEYOR") \
+               or job["ID"] == "SMASHER" \
+               or job["ID"] == "DOWNLOADER":
+                continue
+
+            def job_has_same_volume(job: Dict) -> bool:
+                """Returns true if the job is on the same volume as this iteration of the loop.
+
+                These job types don't have volume indices, so we just
+                won't count them. We theoretically could try, but it
+                really would be more trouble than it's worth and this
+                endpoint is already going to have a hard time returning
+                a response in time.
+                """
+                return not job["ID"].startswith("SURVEYOR") \
+                    and job["ID"] != "SMASHER" \
+                    and job["ID"] != "DOWNLOADER" \
+                    and job["ID"].split("_")[-2] == volume_id
+
+            jobs_with_same_volume = [job for job in jobs if job_has_same_volume(job)]
 
             aggregated_pending = 0
             aggregated_running = 0
