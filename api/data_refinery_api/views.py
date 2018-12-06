@@ -188,14 +188,14 @@ class SearchAndFilter(generics.ListAPIView):
                         'pubmed_id',
                         '@submitter_institution',
                         'experimentannotation__data',
-                        '@sample__accession_code',
-                        '@sample__platform_name',
-                        '@sample__platform_accession_code',
-                        '@sample__organism__name',
-                        '@sample__sex',
-                        '@sample__specimen_part',
-                        '@sample__disease',
-                        '@sample__compound'
+                        # '@sample__accession_code',
+                        # '@sample__platform_name',
+                        # '@sample__platform_accession_code',
+                        # '@sample__organism__name',
+                        # '@sample__sex',
+                        # '@sample__specimen_part',
+                        # '@sample__disease',
+                        # '@sample__compound'
                     )
     filter_fields = ('has_publication', 'platform_name')
 
