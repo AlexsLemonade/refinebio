@@ -94,8 +94,8 @@ def _find_and_remove_expired_jobs(job_context):
                 # This job is likely vanished. No need for this directory.
                 pass
 
-        # There may be successful processors 
-        if 'SRP' in item or 'ERP' in item:
+        # There may be successful processors
+        if 'SRP' in item or 'ERP' in item or 'DRR' in item:
             sub_path = os.path.join(LOCAL_ROOT_DIR, item)
             for sub_item in os.listdir(sub_path):
                 try:
