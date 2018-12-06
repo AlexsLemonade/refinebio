@@ -27,6 +27,8 @@ job "AFFY_TO_PCL_${{INDEX}}_${{RAM}}" {
     task "affy_to_pcl" {
       driver = "docker"
 
+      kill_timeout = "30s"
+
       # This env will be passed into the container for the job.
       env {
         ${{AWS_CREDS}}
