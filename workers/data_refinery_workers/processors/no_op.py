@@ -66,7 +66,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 
             job_context["job"].failure_reason = str(e)
             job_context["job"].no_retry = True
-            job_context["success"] = True
+            job_context["success"] = False
             return job_context
 
         # We want to make sure that all of our columns for conversion and smashing
@@ -214,7 +214,7 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
     is_good_quality = check_output_quality(job_context['output_file_path'])
     if not is_good_quality:
         job_context["success"] = False
-        job_context["job"].failure_reason = "NO_OP output failed quality control check."
+        job_context["job"].failure_reason = "NO_OP output failed quality control check. (" + job_context['output_file_path'] + ")"
         job_context["job"].no_retry = True
         return job_context
     else:

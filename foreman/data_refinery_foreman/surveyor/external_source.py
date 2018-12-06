@@ -89,7 +89,7 @@ class ExternalSourceSurveyor:
                 download_urls_with_jobs[original_file.source_url] = downloader_job
 
                 try:
-                    logger.debug("Queuing downloader job for URL: " + original_file.source_url,
+                    logger.info("Queuing downloader job for URL: " + original_file.source_url,
                                  survey_job=self.survey_job.id,
                                  downloader_job=downloader_job.id)
                     message_queue.send_job(downloader_task, downloader_job)
@@ -111,6 +111,15 @@ class ExternalSourceSurveyor:
                                                 ):
         """Creates a single DownloaderJob with multiple files to download.
         """
+        source_urls = [original_file.source_url for original_file in original_files]
+        # There is already a downloader job associated with this file.
+        old_assocs = DownloaderJobOriginalFileAssociation.objects.filter(
+            original_file__source_url__in=source_urls)
+        if len(old_assocs) > 0:
+            logger.debug("We found an existing DownloaderJob for these urls.",
+                         source_urls=source_urls)
+            return False
+
         # Transcriptome is a special case because there's no sample_object.
         if is_transcriptome:
             downloader_task = job_lookup.Downloaders.TRANSCRIPTOME_INDEX
@@ -138,7 +147,7 @@ class ExternalSourceSurveyor:
                 downloaded_urls.append(original_file.source_url)
 
             try:
-                logger.debug("Queuing downloader job.",
+                logger.info("Queuing downloader job.",
                              survey_job=self.survey_job.id,
                              downloader_job=downloader_job.id,
                              downloaded_urls=downloaded_urls)
