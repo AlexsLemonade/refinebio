@@ -450,7 +450,6 @@ Alternately, this can be done as a normal Nomad dispatch jobs:
 nomad job dispatch -meta ORGANISM=DANIO_RERIO CREATE_QN_TARGET
 ```
 
-
 ### Checking on Local Jobs
 
 _Note:_ The following instructions assume you have set the environment
