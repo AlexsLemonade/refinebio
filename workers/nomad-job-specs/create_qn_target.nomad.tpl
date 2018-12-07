@@ -9,7 +9,7 @@ job "CREATE_QN_TARGET" {
 
   parameterized {
     payload       = "forbidden"
-    meta_required = ["JOB_NAME", "JOB_ID"]
+    meta_required = ["ORGANISM"]
   }
 
   group "jobs" {
