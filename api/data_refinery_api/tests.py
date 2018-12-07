@@ -551,7 +551,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.json()['count'], 1)
 
         qs = Experiment.processed_public_objects
-        self.assertEqual(experiment.processed_samples.count(), 1)
+        self.assertEqual(len(experiment.processed_samples), 1)
 
         experiment.delete()
         sample.delete()
