@@ -108,6 +108,9 @@ fi
 if [[ -z $NO_OP_DOCKER_IMAGE ]]; then
     export NO_OP_DOCKER_IMAGE=dr_no_op:$system_version
 fi
+if [[ -z $COMPENDIA_DOCKER_IMAGE ]]; then
+    export COMPENDIA_DOCKER_IMAGE=dr_compendia:$system_version
+fi
 
 
 # This script should always run from the context of the directory of
@@ -236,7 +239,7 @@ if [[ $project == "workers" ]]; then
                        > "$output_dir/$output_file$TEST_POSTFIX" \
                        2> /dev/null
             echo "Made $output_dir/$output_file$TEST_POSTFIX"
-        elif [ $output_file == "smasher.nomad" ]; then
+        elif [ $output_file == "smasher.nomad" ] || [ $output_file == "create_compendia.nomad" ]; then
             export_log_conf "processor"
             cat nomad-job-specs/$template \
                 | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
