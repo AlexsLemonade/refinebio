@@ -480,9 +480,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
         if new_ram_amount == 4096:
             new_ram_amount = 8192
         elif new_ram_amount == 8192:
-            new_ram_amount = 12288
-        elif new_ram_amount == 12288:
-            new_ram_amount = 16384
+            new_ram_amount = 32768
     # The AFFY pipeline is somewhat RAM-sensitive.
     # Try it again with an increased RAM amount, if possible.
     elif last_job.pipeline_applied == "AFFY_TO_PCL":
