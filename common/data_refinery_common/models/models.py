@@ -335,14 +335,14 @@ class Experiment(models.Model):
         """
         fields = []
 
-        # possible_fields = ['sex', 'age', 'specimen_part', 'genotype', 'disease', 'disease_stage',
-        #                    'cell_line', 'treatment', 'race', 'subject', 'compound', 'time']
-        # samples = self.samples.all()
-        # for field in possible_fields:
-        #     for sample in samples:
-        #         if getattr(sample, field) != None and getattr(sample, field) != '':
-        #             fields.append(field)
-        #             break
+        possible_fields = ['sex', 'age', 'specimen_part', 'genotype', 'disease', 'disease_stage',
+                           'cell_line', 'treatment', 'race', 'subject', 'compound', 'time']
+        samples = self.samples.all()
+        for field in possible_fields:
+            for sample in samples:
+                if getattr(sample, field) != None and getattr(sample, field) != '':
+                    fields.append(field)
+                    break
 
         return fields
 
