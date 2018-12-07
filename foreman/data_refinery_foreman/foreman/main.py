@@ -291,10 +291,10 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
     # that are close to completion.
     # Each function moves the jobs it prioritizes to the front of the
     # list, so apply them in backwards order.
-    # jobs = prioritize_salmon_jobs(jobs)
-    # jobs = prioritize_jobs_by_accession(jobs, PEDIATRIC_ACCESSION_LIST)
-    # jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
-    # jobs = prioritize_zebrafish_jobs(jobs)
+    jobs = prioritize_salmon_jobs(jobs)
+    jobs = prioritize_jobs_by_accession(jobs, PEDIATRIC_ACCESSION_LIST)
+    jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
+    jobs = prioritize_zebrafish_jobs(jobs)
 
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
@@ -509,10 +509,10 @@ def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
     # that are close to completion.
     # Each function moves the jobs it prioritizes to the front of the
     # list, so apply them in backwards order.
-    # jobs = prioritize_salmon_jobs(jobs)
-    # jobs = prioritize_jobs_by_accession(jobs, PEDIATRIC_ACCESSION_LIST)
-    # jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
-    # jobs = prioritize_zebrafish_jobs(jobs)
+    jobs = prioritize_salmon_jobs(jobs)
+    jobs = prioritize_jobs_by_accession(jobs, PEDIATRIC_ACCESSION_LIST)
+    jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
+    jobs = prioritize_zebrafish_jobs(jobs)
 
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
