@@ -113,7 +113,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_failed_downloader_jobs.__wrapped__()
+        main.retry_failed_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = DownloaderJob.objects.order_by('id')
@@ -145,7 +145,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_hung_downloader_jobs.__wrapped__()
+        main.retry_hung_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = DownloaderJob.objects.order_by('id')
@@ -178,7 +178,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_hung_downloader_jobs.__wrapped__()
+        main.retry_hung_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = DownloaderJob.objects.order_by('id')
@@ -209,7 +209,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_downloader_jobs.__wrapped__()
+        main.retry_lost_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = DownloaderJob.objects.order_by('id')
@@ -231,7 +231,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_downloader_jobs.__wrapped__()
+        main.retry_lost_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = DownloaderJob.objects.order_by('id')
@@ -264,7 +264,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_downloader_jobs.__wrapped__()
+        main.retry_lost_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = DownloaderJob.objects.order_by('id')
@@ -348,7 +348,7 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
         self.assertEqual(original_job.ram_amount, 8192)
-        self.assertEqual(retried_job.ram_amount, 12288)
+        self.assertEqual(retried_job.ram_amount, 32768)
 
     @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
@@ -393,7 +393,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_failed_processor_jobs.__wrapped__()
+        main.retry_failed_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = ProcessorJob.objects.order_by('id')
@@ -418,7 +418,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_failed_processor_jobs.__wrapped__()
+        main.retry_failed_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = ProcessorJob.objects.order_by('id')
@@ -451,7 +451,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_hung_processor_jobs.__wrapped__()
+        main.retry_hung_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = ProcessorJob.objects.order_by('id')
@@ -486,7 +486,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_hung_processor_jobs.__wrapped__()
+        main.retry_hung_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = ProcessorJob.objects.order_by('id')
@@ -519,7 +519,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_processor_jobs.__wrapped__()
+        main.retry_lost_processor_jobs()
 
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -555,7 +555,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_processor_jobs.__wrapped__()
+        main.retry_lost_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = ProcessorJob.objects.order_by('id')
@@ -579,7 +579,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_processor_jobs.__wrapped__()
+        main.retry_lost_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = ProcessorJob.objects.order_by('id')
@@ -604,7 +604,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_processor_jobs.__wrapped__()
+        main.retry_lost_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = ProcessorJob.objects.order_by('id')
@@ -696,7 +696,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_failed_survey_jobs.__wrapped__()
+        main.retry_failed_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = SurveyJob.objects.order_by('id')
@@ -728,7 +728,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_hung_survey_jobs.__wrapped__()
+        main.retry_hung_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = SurveyJob.objects.order_by('id')
@@ -761,7 +761,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_hung_survey_jobs.__wrapped__()
+        main.retry_hung_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = SurveyJob.objects.order_by('id')
@@ -792,7 +792,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_survey_jobs.__wrapped__()
+        main.retry_lost_survey_jobs()
 
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -826,7 +826,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_survey_jobs.__wrapped__()
+        main.retry_lost_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = SurveyJob.objects.order_by('id')
@@ -848,7 +848,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_survey_jobs.__wrapped__()
+        main.retry_lost_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = SurveyJob.objects.order_by('id')
@@ -873,7 +873,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.send_janitor_jobs.__wrapped__()
+        main.send_janitor_jobs()
 
         self.assertEqual(ProcessorJob.objects.all().count(), 6)
         self.assertEqual(ProcessorJob.objects.filter(pipeline_applied="JANITOR").count(), 3)
