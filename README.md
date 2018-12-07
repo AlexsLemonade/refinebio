@@ -444,6 +444,13 @@ These are the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` values, which are 
 (This difference is introduced intentionally to avoid conflicting with the environment variables of the developer at deploy time.)
 Therefore, all that needs to be done is to delete the `_CLIENT` part of the keys.
 
+Alternately, this can be done as a normal Nomad dispatch jobs:
+
+```bash
+nomad job dispatch -meta ORGANISM=DANIO_RERIO CREATE_QN_TARGET
+```
+
+
 ### Checking on Local Jobs
 
 _Note:_ The following instructions assume you have set the environment
