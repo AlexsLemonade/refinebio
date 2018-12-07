@@ -348,7 +348,7 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
         self.assertEqual(original_job.ram_amount, 8192)
-        self.assertEqual(retried_job.ram_amount, 12288)
+        self.assertEqual(retried_job.ram_amount, 32768)
 
     @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
