@@ -350,28 +350,21 @@ class Experiment(models.Model):
     def get_sample_technologies(self):
         """ Get a list of unique technologies for all of the associated samples
         """
-        tech_values_qs = self.samples.all().values('technology')
-        tech_values = [t['technology'] for t in tech_values_qs]
-        unique_tech_values = list(set(tech_values))
-        technologies = list(filter(None, unique_tech_values))
-        return technologies
+        return list(set([sample.technology for sample in self.samples.all()]))
 
     @property
     def platforms(self):
         """ Returns a list of related pipelines """
-        return [p for p in self.samples.values_list('platform_name', flat=True).distinct()]
+        return list(set([sample.platform_name for sample in self.samples.all()]))        
 
     @property
     def pretty_platforms(self):
         """ Returns a prettified list of related pipelines """
-        return list(set([p.pretty_platform for p in self.samples.exclude(platform_name__exact='')]))
-
-    def get_processed_samples(self):
-        return self.samples.filter(is_processed=True)
+        return list(set([sample.pretty_platform for sample in self.samples.all()]))
 
     @property
     def processed_samples(self):
-        return self.samples.filter(is_processed=True)
+        return list([sample.accession_code for sample in self.samples.all() if sample.is_processed == True])
 
 class ExperimentAnnotation(models.Model):
     """ Semi-standard information associated with an Experiment """
