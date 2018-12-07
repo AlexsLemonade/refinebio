@@ -430,19 +430,8 @@ Or for more information run:
 If you want to quantile normalize combined outputs, you'll first need to create a reference target for a given organism. This can be done in a production environment with the following:
 
 ```bash
-docker run --env-file prod_env --volume /var/ebs/:/home/user/data_store -t ccdl/dr_smasher:latest python3 manage.py create_qn_target --organism DANIO_RERIO
+nomad job dispatch -meta ORGANISM=DANIO_RERIO CREATE_QN_TARGET
 ```
-
-Where the prod_env file has been temporarily copied to the host with:
-
-```bash
-scp -i data-refinery-key.pem prod_env ubuntu@<host_address>:/home/ubuntu/prod_env
-```
-
-However two keys in the prod_env file are incorrect.
-These are the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` values, which are named `AWS_ACCESS_KEY_ID_CLIENT` and `AWS_SECRET_ACCESS_KEY`_CLIENT.
-(This difference is introduced intentionally to avoid conflicting with the environment variables of the developer at deploy time.)
-Therefore, all that needs to be done is to delete the `_CLIENT` part of the keys.
 
 ### Checking on Local Jobs
 
