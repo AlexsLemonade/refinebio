@@ -563,7 +563,7 @@ class SampleList(PaginatedAPIView):
             # Python doesn't provide a prettier way of doing this that I know about.
             filter_dict['accession_code__in'] = [item for sublist in dataset.data.values() for item in sublist]
 
-        samples = Sample.public_objects.filter(**filter_dict)
+        samples = Sample.public_objects.filter(**filter_dict).order_by('-is_processed')
         if order_by:
             samples = samples.order_by(order_by)
 
