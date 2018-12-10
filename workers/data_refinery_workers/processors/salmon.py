@@ -81,6 +81,9 @@ def _prepare_files(job_context: Dict) -> Dict:
                                            job_context["job_dir_prefix"]) + "/"
     job_context["temp_dir"] = job_context["work_dir"] + "temp/"
     os.makedirs(job_context["temp_dir"], exist_ok=True)
+    # If we want to be really fancy here, we can do something like:
+    # `$ mount -o size=16G -t tmpfs none job_context["temp_dir"]`
+    # As fasterq-dump is slow due to disk thrashing.
 
     job_context["output_directory"] = job_context["work_dir"] + sample.accession_code + "_output/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
