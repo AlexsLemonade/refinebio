@@ -2,6 +2,7 @@ import boto3
 import glob
 import io
 import json
+import multiprocessing
 import os
 import re
 import shutil
@@ -80,6 +81,9 @@ def _prepare_files(job_context: Dict) -> Dict:
                                            job_context["job_dir_prefix"]) + "/"
     job_context["temp_dir"] = job_context["work_dir"] + "temp/"
     os.makedirs(job_context["temp_dir"], exist_ok=True)
+    # If we want to be really fancy here, we can do something like:
+    # `$ mount -o size=16G -t tmpfs none job_context["temp_dir"]`
+    # As fasterq-dump is slow due to disk thrashing.
 
     job_context["output_directory"] = job_context["work_dir"] + sample.accession_code + "_output/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
@@ -124,13 +128,22 @@ def _extract_sra(job_context: Dict) -> Dict:
     shutil.copyfile(job_context["input_file_path"], job_context['work_file'])
 
     time_start = timezone.now()
-    formatted_command = "fasterq-dump " + job_context['work_file'] + " -O " + job_context['work_dir'] + " --temp " + job_context["temp_dir"]
+    formatted_command = "fasterq-dump " + job_context['work_file'] + " -O " + job_context['work_dir'] + " --temp " + job_context["temp_dir"] + " -e " + str(multiprocessing.cpu_count())
     logger.debug("Running fasterq-dump using the following shell command: %s",
                  formatted_command,
                  processor_job=job_context["job_id"])
-    completed_command = subprocess.run(formatted_command.split(),
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
+    try:
+        completed_command = subprocess.run(formatted_command.split(),
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE,
+                                           timeout=600)
+    except subprocess.TimeoutExpired as e:
+        logger.exception("Shell call to fasterq-dump failed with timeout",
+                     processor_job=job_context["job_id"],
+                     file=job_context["input_file_path"])
+        job_context["job"].failure_reason = str(e)
+        job_context["success"] = False
+        return job_context
 
     stderr = completed_command.stderr.decode().strip()
     stdout = completed_command.stderr.decode().strip()
