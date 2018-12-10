@@ -444,7 +444,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     # Try it again with an increased RAM amount, if possible.
     new_ram_amount = last_job.ram_amount
 
-    # These initial values are set in common/job_lookup.py
+    # These initial values are set in common/job_lookup.py:determine_ram_amount
     if last_job.pipeline_applied == "SALMON":
         if new_ram_amount == 12288:
             new_ram_amount = 16384

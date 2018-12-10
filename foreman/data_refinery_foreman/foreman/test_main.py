@@ -335,7 +335,7 @@ class ForemanTestCase(TestCase):
         mock_send_job.return_value = True
         mock_get_active_volumes.return_value = {"1", "2", "3"}
 
-        job = self.create_processor_job(pipeline="SALMON", ram_amount=8192)
+        job = self.create_processor_job(pipeline="SALMON", ram_amount=16384)
 
         main.requeue_processor_job(job)
         self.assertEqual(len(mock_send_job.mock_calls), 1)
@@ -347,7 +347,7 @@ class ForemanTestCase(TestCase):
         self.assertFalse(original_job.success)
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
-        self.assertEqual(original_job.ram_amount, 8192)
+        self.assertEqual(original_job.ram_amount, 16384)
         self.assertEqual(retried_job.ram_amount, 32768)
 
     @patch('data_refinery_foreman.foreman.main.get_active_volumes')
