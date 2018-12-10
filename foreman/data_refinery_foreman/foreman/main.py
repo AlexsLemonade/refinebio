@@ -443,10 +443,12 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     # The Salmon pipeline is quite RAM-sensitive.
     # Try it again with an increased RAM amount, if possible.
     new_ram_amount = last_job.ram_amount
+
+    # These initial values are set in common/job_lookup.py:determine_ram_amount
     if last_job.pipeline_applied == "SALMON":
-        if new_ram_amount == 4096:
-            new_ram_amount = 8192
-        elif new_ram_amount == 8192:
+        if new_ram_amount == 12288:
+            new_ram_amount = 16384
+        elif new_ram_amount == 16384:
             new_ram_amount = 32768
     # The AFFY pipeline is somewhat RAM-sensitive.
     # Try it again with an increased RAM amount, if possible.
