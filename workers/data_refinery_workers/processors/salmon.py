@@ -128,7 +128,9 @@ def _extract_sra(job_context: Dict) -> Dict:
     shutil.copyfile(job_context["input_file_path"], job_context['work_file'])
 
     time_start = timezone.now()
-    formatted_command = "fasterq-dump " + job_context['work_file'] + " -O " + job_context['work_dir'] + " --temp " + job_context["temp_dir"] + " -e " + str(multiprocessing.cpu_count())
+    # This can be improved with: " -e " + str(multiprocessing.cpu_count())
+    # but it seems to cause time to increase if there are too many jobs calling it at once.
+    formatted_command = "fasterq-dump " + job_context['work_file'] + " -O " + job_context['work_dir'] + " --temp " + job_context["temp_dir"]
     logger.debug("Running fasterq-dump using the following shell command: %s",
                  formatted_command,
                  processor_job=job_context["job_id"])
@@ -136,7 +138,7 @@ def _extract_sra(job_context: Dict) -> Dict:
         completed_command = subprocess.run(formatted_command.split(),
                                            stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE,
-                                           timeout=600)
+                                           timeout=1200)
     except subprocess.TimeoutExpired as e:
         logger.exception("Shell call to fasterq-dump failed with timeout",
                      processor_job=job_context["job_id"],
