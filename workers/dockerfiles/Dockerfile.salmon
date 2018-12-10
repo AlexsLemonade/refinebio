@@ -55,6 +55,7 @@ RUN Rscript install_tximport.R
 
 # Install SalmonTools
 RUN git clone https://github.com/COMBINE-lab/SalmonTools.git
+RUN git checkout a4b4bf52af54dde224118f1069b6c04027514524
 RUN cd SalmonTools && cmake . -DCMAKE_INSTALL_PREFIX=/usr/local && make install
 RUN rm -rf SalmonTools
 

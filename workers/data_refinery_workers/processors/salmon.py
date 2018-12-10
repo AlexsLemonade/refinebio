@@ -976,7 +976,7 @@ def salmon(job_id: int) -> None:
 
                         _run_fastqc,
                         _run_salmon,
-                        # _run_salmontools,
+                        _run_salmontools,
                         _run_multiqc,
                         utils.end_job])
     return final_context
