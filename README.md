@@ -688,7 +688,7 @@ Dumps can be restored locally by copying the `backup.sql` file to the `volumes_p
 
 ```bash
 docker exec -it drdb /bin/bash
-psql --user postgres -f /var/lib/postgresql/data/backup.sql
+psql --user postgres -d data_refinery -f /var/lib/postgresql/data/backup.sql
 ```
 
 This can take a long time (>30 minutes)!
