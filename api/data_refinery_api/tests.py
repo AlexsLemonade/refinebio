@@ -55,7 +55,9 @@ class APITestCases(APITestCase):
         # self.user = User.objects.create(username="mike")
 
         experiment = Experiment()
+        experiment.accession_code = "GSE123"
         experiment.save()
+        self.experiment = experiment
 
         experiment_annotation = ExperimentAnnotation()
         experiment_annotation.data = {"hello": "world", "123": 456}
@@ -214,6 +216,16 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['results'][0]['title'], '123')
 
+    def test_fetching_experiment_samples(self):
+        response = self.client.get(reverse('samples'), {'experiment_accession_code': self.experiment.accession_code})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()['results']), 1)
+        self.assertEqual(response.json()['results'][0]['accession_code'], '789')
+
+        # Expect 404 if the experiment accession code isn't valid
+        response = self.client.get(reverse('samples'), {'experiment_accession_code': 'wrong-accession-code'})
+        self.assertEqual(response.status_code, 404)
+        
 
     def test_search_and_filter(self):
 
