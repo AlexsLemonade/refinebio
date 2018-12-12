@@ -533,7 +533,10 @@ class SampleList(PaginatedAPIView):
     List all Samples.
 
     Pass in a list of pk to an ids query parameter to filter by id.
-    Can also accept a `dataset_id` field instead of a list of accession codes.
+    
+    Also accepts:
+        - `dataset_id` field instead of a list of accession codes
+        - `experiment_accession_code` to return the samples associated with a given experiment
 
     Append the pk or accession_code to the end of this URL to see a detail view.
 
@@ -545,15 +548,19 @@ class SampleList(PaginatedAPIView):
         filter_dict.pop('offset', None)
         order_by = filter_dict.pop('order_by', None)
         ids = filter_dict.pop('ids', None)
-        accession_codes = filter_dict.pop('accession_codes', None)
-
         filter_by = filter_dict.pop('filter_by', None)
 
         if ids is not None:
             ids = [ int(x) for x in ids.split(',')]
             filter_dict['pk__in'] = ids
 
-        if accession_codes is not None:
+        experiment_accession_code = filter_dict.pop('experiment_accession_code', None)
+        if experiment_accession_code:
+            experiment = get_object_or_404(Experiment.objects.values('id'), accession_code=experiment_accession_code)
+            filter_dict['experiments__in'] = [experiment['id']]
+
+        accession_codes = filter_dict.pop('accession_codes', None)
+        if accession_codes:
             accession_codes = accession_codes.split(',')
             filter_dict['accession_code__in'] = accession_codes
 
@@ -563,7 +570,16 @@ class SampleList(PaginatedAPIView):
             # Python doesn't provide a prettier way of doing this that I know about.
             filter_dict['accession_code__in'] = [item for sublist in dataset.data.values() for item in sublist]
 
-        samples = Sample.public_objects.filter(**filter_dict).order_by('-is_processed')
+        samples = Sample.public_objects \
+            .prefetch_related('sampleannotation_set') \
+            .prefetch_related('organism') \
+            .prefetch_related('results') \
+            .prefetch_related('results__processor') \
+            .prefetch_related('results__computationalresultannotation_set') \
+            .prefetch_related('results__computedfile_set') \
+            .filter(**filter_dict) \
+            .order_by('-is_processed')
+
         if order_by:
             samples = samples.order_by(order_by)
 
