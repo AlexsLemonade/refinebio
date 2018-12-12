@@ -533,7 +533,10 @@ class SampleList(PaginatedAPIView):
     List all Samples.
 
     Pass in a list of pk to an ids query parameter to filter by id.
-    Can also accept a `dataset_id` field instead of a list of accession codes.
+    
+    Also accepts:
+        - `dataset_id` field instead of a list of accession codes
+        - `experiment_accession_code` to return the samples associated with a given experiment
 
     Append the pk or accession_code to the end of this URL to see a detail view.
 
