@@ -671,6 +671,27 @@ awslogs get data-refinery-log-group-myusername-dev log-stream-api-nginx-access-*
 
 will show all of the API access logs made by Nginx.
 
+### Dumping and Restoring Database Backups
+
+Automatic snapshots are created automatically by RDS. Manual database dumps can be created by priveledged users with [these instructions](https://gist.github.com/syafiqfaiz/5273cd41df6f08fdedeb96e12af70e3b). Postgres versions on the host (I suggest the PGBouncer instance) must match the RDS instance version:
+
+```bash
+sudo add-apt-repository "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -sc)-pgdg main"
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install postgresql-9.6
+```
+
+Archival dumps can also be provided upon request.
+
+Dumps can be restored locally by copying the `backup.sql` file to the `volumes_postgres` directory, then executing:
+
+```bash
+docker exec -it drdb /bin/bash
+psql --user postgres -d data_refinery -f /var/lib/postgresql/data/backup.sql
+```
+
+This can take a long time (>30 minutes)!
 
 ### Tearing Down
 
