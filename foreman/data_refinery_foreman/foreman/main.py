@@ -365,7 +365,7 @@ def retry_hung_downloader_jobs() -> None:
     if hung_jobs:
         logger.info(
             "Handling hung (started-but-never-finished) downloader jobs!",
-            jobs_count=len(hung_list)
+            jobs_count=len(hung_jobs)
         )
         handle_downloader_jobs(hung_jobs)
 
