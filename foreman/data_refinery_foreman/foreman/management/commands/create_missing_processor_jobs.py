@@ -1,11 +1,11 @@
-"""
-This command will run the Foreman's main function monitor_jobs.
-This will cause the Foreman to check for a number of different
-failures for both the DownloaderJobs and ProcessorJobs and requeue
-those jobs it detects as failed.
+"""This command will find successful downloader jobs who never
+spawned a processor job and will create processor jobs for them. This
+is most likely to be a temporary patch until we can figure out why
+downloader jobs are failing to create processor jobs.
 """
 
 from django.core.management.base import BaseCommand
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     DownloaderJob,
     ProcessorJob,
@@ -15,6 +15,9 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.utils import is_file_rnaseq
 from data_refinery_foreman.foreman.shepherd import create_missing_processor_jobs
+
+
+logger = get_and_configure_logger(__name__)
 
 
 def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
@@ -116,8 +119,18 @@ class Command(BaseCommand):
             original_files = dl_job.original_files
 
             if original_files.count() > 0:
-                if is_file_rnaseq(original_files.first().filename):
+                first_file=original_files.first()
+                if is_file_rnaseq(first_file.filename):
                     try:
+                        sample_object = first_file.samples.first()
+                        logger.info(("Found a downloader job that didn't make a processor"
+                                     " job for an RNA-Seq sample."),
+                                    downloader_job=dl_job.id,
+                                    file_name=first_file.filename,
+                                    original_file_id=first_file.id,
+                                    sample_accession=sample_object.accession_code,
+                                    sample_id=sample_object.id
+                        )
                         find_volume_index_for_dl_job(dl_job)
                         create_processor_job_for_original_files(original_files, volume_index)
                     except:
@@ -131,6 +144,15 @@ class Command(BaseCommand):
 
                     if non_archive_files:
                         try:
+                            sample_object = non_archive_files[0].samples.first()
+                            logger.info(("Found a downloader job that didn't make a processor"
+                                         " job for an Microarray sample."),
+                                        downloader_job=dl_job.id,
+                                        num_files_in_dl_job=len(non_archive_files),
+                                        sample_accession=sample_object.accession_code,
+                                        sample_id=sample_object.id
+                            )
+
                             find_volume_index_for_dl_job(dl_job)
                             create_processor_jobs_for_original_files(
                                 non_archive_files,
