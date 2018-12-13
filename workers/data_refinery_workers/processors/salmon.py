@@ -79,11 +79,12 @@ def _prepare_files(job_context: Dict) -> Dict:
     # same time.)
     job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR,
                                            job_context["job_dir_prefix"]) + "/"
-    job_context["temp_dir"] = job_context["work_dir"] + "temp/"
+    
+    # Since 0.9, Nomad can access Docker's tmpfs features,
+    # which allows us to avoid fasterq-dump's disk thrashing.
+    job_context["temp_dir"] = "/home/user/data_store_tmpfs"
+    # Should be created by Docker already, but do it anyway.
     os.makedirs(job_context["temp_dir"], exist_ok=True)
-    # If we want to be really fancy here, we can do something like:
-    # `$ mount -o size=16G -t tmpfs none job_context["temp_dir"]`
-    # As fasterq-dump is slow due to disk thrashing.
 
     job_context["output_directory"] = job_context["work_dir"] + sample.accession_code + "_output/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
@@ -130,7 +131,10 @@ def _extract_sra(job_context: Dict) -> Dict:
     time_start = timezone.now()
     # This can be improved with: " -e " + str(multiprocessing.cpu_count())
     # but it seems to cause time to increase if there are too many jobs calling it at once.
-    formatted_command = "fasterq-dump " + job_context['work_file'] + " -O " + job_context['work_dir'] + " --temp " + job_context["temp_dir"]
+    formatted_command = "fasterq-dump " + job_context['work_file'] + \
+                        " -O " +  job_context['work_dir'] + \
+                        " --temp " + job_context["temp_dir"]
+
     logger.debug("Running fasterq-dump using the following shell command: %s",
                  formatted_command,
                  processor_job=job_context["job_id"])

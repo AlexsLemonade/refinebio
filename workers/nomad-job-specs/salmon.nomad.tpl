@@ -92,6 +92,17 @@ job "SALMON_${{INDEX}}_${{RAM}}" {
         ${{EXTRA_HOSTS}}
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]
         ${{LOGGING_CONFIG}}
+
+        mounts = [
+          {
+            type = "tmpfs"
+            target = "/home/user/data_store_tmpfs"
+            readonly = false
+            tmpfs_options {
+              size = 17179869184 # size in bytes
+            }
+          }
+        ]
       }
     }
   }
