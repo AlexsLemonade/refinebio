@@ -118,7 +118,7 @@ def prioritize_salmon_jobs(jobs: List) -> List:
     prioritized_jobs = []
     for job in jobs:
         try:
-            if not does_processor_job_have_samples(job):
+            if type(job) == ProcessorJob and not does_processor_job_have_samples(job):
                 continue
 
             # Salmon jobs are specifc to one sample.
@@ -175,7 +175,7 @@ def prioritize_zebrafish_jobs(jobs: List) -> List:
     zebrafish_jobs = []
     for job in jobs:
         try:
-            if not does_processor_job_have_samples(job):
+            if type(job) == ProcessorJob and not does_processor_job_have_samples(job):
                 continue
 
             # There aren't cross-species jobs, so just checking one sample's organism will be sufficient.
@@ -200,7 +200,7 @@ def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
     prioritized_jobs = []
     for job in jobs:
         try:
-            if not does_processor_job_have_samples(job):
+            if type(job) == ProcessorJob and not does_processor_job_have_samples(job):
                 continue
 
             # All samples in a job correspond to the same experiment, so just check one sample.
@@ -325,7 +325,7 @@ def retry_failed_downloader_jobs() -> None:
 
     if failed_jobs_list:
         logger.info(
-            "Handling failed (explicitly-marked-as-failure) jobs!",
+            "Handling failed (explicitly-marked-as-failure) downloader jobs!",
             jobs_count=len(failed_jobs_list)
         )
         handle_downloader_jobs(failed_jobs_list)
@@ -360,9 +360,14 @@ def retry_hung_downloader_jobs() -> None:
         except nomad.api.exceptions.BaseNomadException:
             raise
         except Exception:
-            logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
+            logger.exception("Couldn't query Nomad about Downloader Job.", downloader_job=job.id)
 
-    handle_downloader_jobs(hung_jobs)
+    if hung_jobs:
+        logger.info(
+            "Handling hung (started-but-never-finished) downloader jobs!",
+            jobs_count=len(hung_jobs)
+        )
+        handle_downloader_jobs(hung_jobs)
 
 
 def retry_lost_downloader_jobs() -> None:
@@ -421,9 +426,14 @@ def retry_lost_downloader_jobs() -> None:
         except nomad.api.exceptions.BaseNomadException:
             raise
         except Exception:
-            logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
+            logger.exception("Couldn't query Nomad about Downloader Job.", downloader_job=job.id)
 
-    handle_downloader_jobs(lost_jobs)
+    if lost_jobs:
+        logger.info(
+            "Handling lost (never-started) downloader jobs!",
+            len_jobs=len(lost_jobs)
+        )
+        handle_downloader_jobs(lost_jobs)
 
 
 ##
@@ -558,7 +568,7 @@ def retry_failed_processor_jobs() -> None:
 
     if failed_jobs_list:
         logger.info(
-            "Handling failed (explicitly-marked-as-failure) jobs!",
+            "Handling failed (explicitly-marked-as-failure) processor jobs!",
             len_jobs=len(failed_jobs_list)
         )
         handle_processor_jobs(failed_jobs_list)
@@ -619,7 +629,7 @@ def retry_hung_processor_jobs() -> None:
 
     if hung_jobs:
         logger.info(
-            "Handling hung (started-but-never-finished) jobs!",
+            "Handling hung (started-but-never-finished) processor jobs!",
             len_jobs=len(hung_jobs)
         )
         handle_processor_jobs(hung_jobs)
@@ -686,7 +696,7 @@ def retry_lost_processor_jobs() -> None:
 
     if lost_jobs:
         logger.info(
-            "Handling lost (never-started) jobs!",
+            "Handling lost (never-started) processor jobs!",
             len_jobs=len(lost_jobs)
         )
         handle_processor_jobs(lost_jobs)
@@ -787,7 +797,7 @@ def retry_failed_survey_jobs() -> None:
     failed_jobs = SurveyJob.objects.filter(success=False, retried=False).order_by('pk')
     if failed_jobs:
         logger.info(
-            "Handling failed (explicitly-marked-as-failure) jobs!",
+            "Handling failed (explicitly-marked-as-failure) survey jobs!",
             len_jobs=len(failed_jobs)
         )
         handle_survey_jobs(failed_jobs)
@@ -830,7 +840,7 @@ def retry_hung_survey_jobs() -> None:
 
     if hung_jobs:
         logger.info(
-            "Handling hung (started-but-never-finished) jobs!",
+            "Handling hung (started-but-never-finished) survey jobs!",
             len_jobs=len(hung_jobs)
         )
         handle_survey_jobs(hung_jobs)
@@ -883,7 +893,7 @@ def retry_lost_survey_jobs() -> None:
 
     if lost_jobs:
         logger.info(
-            "Handling lost (never-started) jobs!",
+            "Handling lost (never-started) survey jobs!",
             len_jobs=len(lost_jobs)
         )
         handle_survey_jobs(lost_jobs)

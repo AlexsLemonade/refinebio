@@ -1082,7 +1082,6 @@ class JobPrioritizationTestCase(TestCase):
 
         unstarted_salmon_job = DownloaderJob()
         unstarted_salmon_job.accession_code = self.unstarted_salmon_sample.accession_code
-        unstarted_salmon_job.pipeline_applied = "SALMON"
         unstarted_salmon_job.save()
 
         assoc = DownloaderJobOriginalFileAssociation()
@@ -1092,7 +1091,6 @@ class JobPrioritizationTestCase(TestCase):
 
         in_progress_salmon_job = DownloaderJob()
         in_progress_salmon_job.accession_code = self.in_progress_salmon_sample.accession_code
-        in_progress_salmon_job.pipeline_applied = "SALMON"
         in_progress_salmon_job.save()
 
         assoc = DownloaderJobOriginalFileAssociation()
@@ -1102,7 +1100,6 @@ class JobPrioritizationTestCase(TestCase):
 
         zebrafish_job = DownloaderJob()
         zebrafish_job.accession_code = self.zebrafish_sample.accession_code
-        zebrafish_job.pipeline_applied = "SALMON"
         zebrafish_job.save()
 
         assoc = DownloaderJobOriginalFileAssociation()
@@ -1112,7 +1109,6 @@ class JobPrioritizationTestCase(TestCase):
 
         pediatric_job = DownloaderJob()
         pediatric_job.accession_code = self.pediatric_sample.accession_code
-        pediatric_job.pipeline_applied = "SALMON"
         pediatric_job.save()
 
         assoc = DownloaderJobOriginalFileAssociation()
@@ -1122,7 +1118,6 @@ class JobPrioritizationTestCase(TestCase):
 
         hgu133plus2_job = DownloaderJob()
         hgu133plus2_job.accession_code = self.hgu133plus2_sample.accession_code
-        hgu133plus2_job.pipeline_applied = "SALMON"
         hgu133plus2_job.save()
 
         assoc = DownloaderJobOriginalFileAssociation()
