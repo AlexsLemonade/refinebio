@@ -157,7 +157,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     job_context['merged_no_qn'] = untransposed_imputed_matrix_df
     job_context = smasher._quantile_normalize(job_context)
 
-    job_context['formatted_command'] + "create_compendia.py" # ???
+    job_context['formatted_command'] = "create_compendia.py" # ???
 
     return job_context
 
