@@ -74,7 +74,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     # Copy the .sra file so fasterq-dump can't corrupt it.
     if job_context["input_file_path"][-4:] == ".sra":
-        new_input_file_path = os.path.join(job_context["work_dir"], filename)
+        new_input_file_path = os.path.join(job_context["work_dir"], original_files[0].filename)
         shutil.copyfile(job_context["input_file_path"], new_input_file_path)
         job_context['input_file_path'] = new_input_file_path
 
