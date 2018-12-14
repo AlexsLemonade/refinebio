@@ -118,7 +118,7 @@ def prioritize_salmon_jobs(jobs: List) -> List:
     prioritized_jobs = []
     for job in jobs:
         try:
-            if not does_processor_job_have_samples(job):
+            if type(job) == ProcessorJob and not does_processor_job_have_samples(job):
                 continue
 
             # Salmon jobs are specifc to one sample.
@@ -175,7 +175,7 @@ def prioritize_zebrafish_jobs(jobs: List) -> List:
     zebrafish_jobs = []
     for job in jobs:
         try:
-            if not does_processor_job_have_samples(job):
+            if type(job) == ProcessorJob and not does_processor_job_have_samples(job):
                 continue
 
             # There aren't cross-species jobs, so just checking one sample's organism will be sufficient.
@@ -200,7 +200,7 @@ def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
     prioritized_jobs = []
     for job in jobs:
         try:
-            if not does_processor_job_have_samples(job):
+            if type(job) == ProcessorJob and not does_processor_job_have_samples(job):
                 continue
 
             # All samples in a job correspond to the same experiment, so just check one sample.
