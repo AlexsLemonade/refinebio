@@ -4,6 +4,8 @@ is most likely to be a temporary patch until we can figure out why
 downloader jobs are failing to create processor jobs.
 """
 
+from typing import List
+
 from django.core.management.base import BaseCommand
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
@@ -13,8 +15,7 @@ from data_refinery_common.models import (
     DownloaderJobOriginalFileAssociation,
     ProcessorJobOriginalFileAssociation
 )
-from data_refinery_common.utils import is_file_rnaseq
-from data_refinery_foreman.foreman.shepherd import create_missing_processor_jobs
+from data_refinery_common.job_lookup import is_file_rnaseq
 
 
 logger = get_and_configure_logger(__name__)
@@ -104,7 +105,7 @@ def find_volume_index_for_dl_job(job: DownloaderJob) -> int:
     pjs = ProcessorJob.objects.filter(worker_id=job.worker_id)
 
     if pjs:
-        retrun pjs.first().volume_index
+        return pjs.first().volume_index
     else:
         logger.warn(
             "Could not determine what volume index a downloader job was run on",
@@ -120,7 +121,8 @@ class Command(BaseCommand):
 
             if original_files.count() > 0:
                 first_file=original_files.first()
-                if is_file_rnaseq(first_file.filename):
+                if is_file_rnaseq(first_file.filename) \
+                   and first_file.processor_jobs.all().count() == 0:
                     try:
                         sample_object = first_file.samples.first()
                         logger.info(("Found a downloader job that didn't make a processor"
@@ -137,25 +139,30 @@ class Command(BaseCommand):
                         # Already logged.
                         pass
                 else:
-                    non_archive_files = []
-                    for og_file in dl_job.original_files:
-                        if not og_file.is_archive:
-                            non_archive_files.append(og_file)
+                    # When the GEO downloader extracts files it
+                    # downloads, it doesn't link them back to the
+                    # downloader job, but they do get linked to the
+                    # sample.
+                    all_original_files = first_file.samples.first().original_files.all()
+                    files_needing_jobs = []
+                    for og_file in all_original_files:
+                        if not og_file.is_archive and og_file.processor_jobs.all().count() == 0:
+                            files_needing_jobs.append(og_file)
 
-                    if non_archive_files:
+                    if files_needing_jops:
                         try:
-                            sample_object = non_archive_files[0].samples.first()
+                            sample_object = files_needing_jobs[0].samples.first()
                             logger.info(("Found a downloader job that didn't make a processor"
                                          " job for an Microarray sample."),
                                         downloader_job=dl_job.id,
-                                        num_files_in_dl_job=len(non_archive_files),
+                                        num_files_in_dl_job=len(files_needing_jobs),
                                         sample_accession=sample_object.accession_code,
                                         sample_id=sample_object.id
                             )
 
                             find_volume_index_for_dl_job(dl_job)
                             create_processor_jobs_for_original_files(
-                                non_archive_files,
+                                files_needing_jobs,
                                 volume_index
                             )
                         except:
