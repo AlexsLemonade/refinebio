@@ -75,9 +75,6 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     original_files = job_context["original_files"]
     job_context["input_file_path"] = original_files[0].absolute_file_path
-    if len(original_files) == 2:
-        job_context["input_file_path_2"] = original_files[1].absolute_file_path
-
     if not os.path.exists(job_context["input_file_path"]):
         logger.error("Was told to process a non-existent file - why did this happen?",
             input_file_path=job_context["input_file_path"],
@@ -87,11 +84,27 @@ def _prepare_files(job_context: Dict) -> Dict:
         job_context["success"] = False
         return job_context
 
+    if len(original_files) == 2:
+        job_context["input_file_path_2"] = original_files[1].absolute_file_path
+    if not os.path.exists(job_context["input_file_path_2"]):
+        logger.error("Was told to process a non-existent file2 - why did this happen?",
+            input_file_path=job_context["input_file_path_2"],
+            processor_job=job_context["job_id"]
+        )
+        job_context["job"].failure_reason = "Missing input file2: " + str(job_context["input_file_path_2"])
+        job_context["success"] = False
+        return job_context
+
     # Copy the .sra file so fasterq-dump can't corrupt it.
-    if job_context["input_file_path"][-4:] == ".sra":
+    if job_context["input_file_path"][-4:].upper() == ".SRA":
         new_input_file_path = os.path.join(job_context["work_dir"], original_files[0].filename)
         shutil.copyfile(job_context["input_file_path"], new_input_file_path)
         job_context['input_file_path'] = new_input_file_path
+
+    if job_context.get("input_file_path_2", False):
+        new_input_file_path = os.path.join(job_context["work_dir"], original_files[1].filename)
+        shutil.copyfile(job_context["input_file_path_2"], new_input_file_path)
+        job_context['input_file_path_2'] = new_input_file_path
 
     # There should only ever be one per Salmon run
     sample = job_context['original_files'][0].samples.first()
