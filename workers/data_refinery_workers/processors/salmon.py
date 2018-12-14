@@ -86,14 +86,14 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     if len(original_files) == 2:
         job_context["input_file_path_2"] = original_files[1].absolute_file_path
-    if not os.path.exists(job_context["input_file_path_2"]):
-        logger.error("Was told to process a non-existent file2 - why did this happen?",
-            input_file_path=job_context["input_file_path_2"],
-            processor_job=job_context["job_id"]
-        )
-        job_context["job"].failure_reason = "Missing input file2: " + str(job_context["input_file_path_2"])
-        job_context["success"] = False
-        return job_context
+        if not os.path.exists(job_context["input_file_path_2"]):
+            logger.error("Was told to process a non-existent file2 - why did this happen?",
+                input_file_path=job_context["input_file_path_2"],
+                processor_job=job_context["job_id"]
+            )
+            job_context["job"].failure_reason = "Missing input file2: " + str(job_context["input_file_path_2"])
+            job_context["success"] = False
+            return job_context
 
     # Copy the .sra file so fasterq-dump can't corrupt it.
     if job_context["input_file_path"][-4:].upper() == ".SRA":
