@@ -60,10 +60,23 @@ def _prepare_files(job_context: Dict) -> Dict:
     """
     logger.debug("Preparing files..")
 
+    # Create a directory specific to this processor job combo.
+    # (A single sample could belong to multiple experiments, meaning
+    # that it could be run more than once, potentially even at the
+    # same time.)
+    job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR,
+                                           job_context["job_dir_prefix"]) + "/"
+
     original_files = job_context["original_files"]
     job_context["input_file_path"] = original_files[0].absolute_file_path
     if len(original_files) == 2:
         job_context["input_file_path_2"] = original_files[1].absolute_file_path
+
+    # Copy the .sra file so fasterq-dump can't corrupt it.
+    if job_context["input_file_path"][-4:] == ".sra":
+        new_input_file_path = os.path.join(job_context["work_dir"], filename)
+        shutil.copyfile(job_context["input_file_path"], new_input_file_path)
+        job_context['input_file_path'] = new_input_file_path
 
     # There should only ever be one per Salmon run
     sample = job_context['original_files'][0].samples.first()
@@ -73,13 +86,6 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context['organism'] = job_context['sample'].organism
     job_context["success"] = True
 
-    # Create a directory specific to this processor job combo.
-    # (A single sample could belong to multiple experiments, meaning
-    # that it could be run more than once, potentially even at the
-    # same time.)
-    job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR,
-                                           job_context["job_dir_prefix"]) + "/"
-    
     # Since 0.9, Nomad can access Docker's tmpfs features,
     # which allows us to avoid fasterq-dump's disk thrashing.
     job_context["temp_dir"] = "/home/user/data_store_tmpfs"
