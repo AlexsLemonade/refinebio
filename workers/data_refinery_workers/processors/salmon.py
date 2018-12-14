@@ -60,10 +60,38 @@ def _prepare_files(job_context: Dict) -> Dict:
     """
     logger.debug("Preparing files..")
 
+    # Create a directory specific to this processor job combo.
+    # (A single sample could belong to multiple experiments, meaning
+    # that it could be run more than once, potentially even at the
+    # same time.)
+    job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR,
+                                           job_context["job_dir_prefix"]) + "/"
+    job_context["temp_dir"] = job_context["work_dir"] + "temp/"
+    os.makedirs(job_context["work_dir"], exist_ok=True)
+    os.makedirs(job_context["temp_dir"], exist_ok=True)
+    # If we want to be really fancy here, we can do something like:
+    # `$ mount -o size=16G -t tmpfs none job_context["temp_dir"]`
+    # As fasterq-dump is slow due to disk thrashing.
+
     original_files = job_context["original_files"]
     job_context["input_file_path"] = original_files[0].absolute_file_path
     if len(original_files) == 2:
         job_context["input_file_path_2"] = original_files[1].absolute_file_path
+
+    if not os.path.exists(job_context["input_file_path"]):
+        logger.error("Was told to process a non-existent file - why did this happen?",
+            input_file_path=job_context["input_file_path"],
+            processor_job=job_context["job_id"]
+        )
+        job_context["job"].failure_reason = "Missing input file: " + str(job_context["input_file_path"])
+        job_context["success"] = False
+        return job_context
+
+    # Copy the .sra file so fasterq-dump can't corrupt it.
+    if job_context["input_file_path"][-4:] == ".sra":
+        new_input_file_path = os.path.join(job_context["work_dir"], original_files[0].filename)
+        shutil.copyfile(job_context["input_file_path"], new_input_file_path)
+        job_context['input_file_path'] = new_input_file_path
 
     # There should only ever be one per Salmon run
     sample = job_context['original_files'][0].samples.first()
@@ -72,18 +100,6 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context['samples'] = [] # This will only be populated in the `tximport` job
     job_context['organism'] = job_context['sample'].organism
     job_context["success"] = True
-
-    # Create a directory specific to this processor job combo.
-    # (A single sample could belong to multiple experiments, meaning
-    # that it could be run more than once, potentially even at the
-    # same time.)
-    job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR,
-                                           job_context["job_dir_prefix"]) + "/"
-    job_context["temp_dir"] = job_context["work_dir"] + "temp/"
-    os.makedirs(job_context["temp_dir"], exist_ok=True)
-    # If we want to be really fancy here, we can do something like:
-    # `$ mount -o size=16G -t tmpfs none job_context["temp_dir"]`
-    # As fasterq-dump is slow due to disk thrashing.
 
     job_context["output_directory"] = job_context["work_dir"] + sample.accession_code + "_output/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
