@@ -66,9 +66,20 @@ def _prepare_files(job_context: Dict) -> Dict:
     # same time.)
     job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR,
                                            job_context["job_dir_prefix"]) + "/"
+    os.makedirs(job_context["work_dir"], exist_ok=True)
 
     original_files = job_context["original_files"]
     job_context["input_file_path"] = original_files[0].absolute_file_path
+
+    if not os.path.exists(job_context["input_file_path"]):
+        logger.error("Was told to process a non-existent file - why did this happen?",
+            input_file_path=job_context["input_file_path"],
+            processor_job=job_context["job_id"]
+        )
+        job_context["job"].failure_reason = "Missing input file: " + str(job_context["input_file_path"])
+        job_context["success"] = False
+        return job_context
+
     if len(original_files) == 2:
         job_context["input_file_path_2"] = original_files[1].absolute_file_path
 
