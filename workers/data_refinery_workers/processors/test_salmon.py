@@ -486,6 +486,9 @@ class SalmonToolsTestCase(TestCase):
         # Confirm job status
         self.assertTrue(job_context["success"])
 
+        # Unpack result for checking
+        os.system('gunzip ' + job_context['salmontools_directory'] + "*.gz")
+
         # Check two output files
         output_file1 = job_context['salmontools_directory'] + 'unmapped_by_salmon_1.fa'
         expected_output_file1 = self.test_dir + 'expected_double_output/unmapped_by_salmon_1.fa'
@@ -520,6 +523,9 @@ class SalmonToolsTestCase(TestCase):
 
         # Confirm job status
         self.assertTrue(job_context["success"])
+
+        # Unpack result for checking
+        os.system('gunzip ' + job_context['salmontools_directory'] + "*.gz")
 
         # Check output file
         output_file = job_context['salmontools_directory'] + 'unmapped_by_salmon.fa'
