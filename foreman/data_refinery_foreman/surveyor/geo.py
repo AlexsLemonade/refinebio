@@ -374,6 +374,10 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 ExperimentSampleAssociation.objects.get_or_create(
                     experiment=experiment_object, sample=sample_object)
 
+
+        # Update the Experiment's accession list
+        experiment_object.refresh_platforms()
+
         # These supplementary files _may-or-may-not_ contain the type of raw data we can process.
         for experiment_supplement_url in gse.metadata.get('supplementary_file', []):
 

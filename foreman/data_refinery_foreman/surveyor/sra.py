@@ -491,6 +491,9 @@ class SraSurveyor(ExternalSourceSurveyor):
                         sample = sample_object
                     )
 
+            # Update the Experiment's accession list
+            experiment_object.refresh_platforms()
+
         # Create associations if they don't already exist
         ExperimentSampleAssociation.objects.get_or_create(
             experiment=experiment_object, sample=sample_object)

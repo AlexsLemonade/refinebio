@@ -593,6 +593,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             ExperimentOrganismAssociation.objects.get_or_create(
                 experiment=experiment, organism=organism)
 
+        # Update the Experiment's accession list
+        experiment_object.refresh_platforms()
+
         return created_samples
 
     def discover_experiment_and_samples(self) -> (Experiment, List[Sample]):
