@@ -203,7 +203,6 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 
 class ExperimentSerializer(serializers.ModelSerializer):
     organisms = serializers.StringRelatedField(many=True, read_only=True)
-    platforms = serializers.ReadOnlyField()
     processed_samples = serializers.StringRelatedField(many=True)
     total_samples_count = serializers.IntegerField(
                         read_only=True

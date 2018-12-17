@@ -280,6 +280,7 @@ class Experiment(models.Model):
     pubmed_id = models.CharField(max_length=32, blank=True)
     source_first_published = models.DateTimeField(null=True)
     source_last_modified = models.DateTimeField(null=True)
+    platforms = ArrayField(models.TextField(), default=list)
 
     # Common Properties
     is_public = models.BooleanField(default=True)
@@ -351,10 +352,10 @@ class Experiment(models.Model):
         """
         return list(set([sample.technology for sample in self.samples.all()]))
 
-    @property
-    def platforms(self):
-        """ Returns a list of related pipelines """
-        return list(set([sample.platform_name for sample in self.samples.all()]))        
+    def refresh_platforms(self):
+        """ Set the platforms fied to the unique set of all sample platforms """
+        self.platforms = list(set([sample.platform_name for sample in self.samples.all()]))        
+        self.save()
 
     @property
     def pretty_platforms(self):
