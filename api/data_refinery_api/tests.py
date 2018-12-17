@@ -251,7 +251,7 @@ class APITestCases(APITestCase):
             ex.description = " ".join(random.choice(words) for i in range(100))
             ex.technology = random.choice(["RNA-SEQ", "MICROARRAY"])
             ex.submitter_institution = random.choice(["Funkytown", "Monkeytown"])
-            experiment.platforms = ["illumina hiseq 2000", "illumina hiseq 3000", "illumina hiseq 99999",]
+            ex.platforms = ["illumina hiseq 2000", "illumina hiseq 3000", "illumina hiseq 99999",]
             experiments.append(ex)
 
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")

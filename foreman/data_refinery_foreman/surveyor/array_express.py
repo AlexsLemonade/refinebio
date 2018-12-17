@@ -593,9 +593,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             ExperimentOrganismAssociation.objects.get_or_create(
                 experiment=experiment, organism=organism)
 
-        # Update the Experiment's accession list
-        experiment_object.refresh_platforms()
-
         return created_samples
 
     def discover_experiment_and_samples(self) -> (Experiment, List[Sample]):
@@ -613,7 +610,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                     survey_job=self.survey_job.id)
 
         try:
-            experiment, platform_dict = self.create_experiment_from_api(experiment_accession_code)
+            experiment_object, platform_dict = self.create_experiment_from_api(experiment_accession_code)
         except UnsupportedPlatformException as e:
             logger.info("Experiment was not on a supported platform, skipping.",
                         experiment_accession_code=experiment_accession_code,
@@ -624,5 +621,9 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                              experiment_accession_code=experiment_accession_code)
             return None, []
 
-        samples = self.create_samples_from_api(experiment, platform_dict)
-        return experiment, samples
+        samples = self.create_samples_from_api(experiment_object, platform_dict)
+
+        # Update the Experiment's accession list
+        experiment_object.refresh_platforms()
+
+        return experiment_object, samples
