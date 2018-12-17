@@ -88,6 +88,7 @@ The following services will need to be installed:
 so Docker does not need sudo permissions.
 - [Terraform](https://www.terraform.io/)
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./install_nomad.sh`.
+- [pip3](https://pip.pypa.io/en/stable/) can be installed on Linux clients with `sudo apt-get install python3-pip`
 - [git-crypt](https://www.agwa.name/projects/git-crypt/)
 - [jq](https://stedolan.github.io/jq/)
 - [iproute2](https://wiki.linuxfoundation.org/networking/iproute2)
@@ -135,17 +136,6 @@ repo. Sub-projects each have their own environments managed by their
 containers. When returning to this project you should run
 `source dr_env/bin/activate` to reactivate the virtualenv.
 
-#### Common Dependecies
-
-The [common](./common) sub-project contains common code which is
-depended upon by the other sub-projects. So before anything else you
-should prepare the distribution directory `common/dist` with this
-command:
-
-```bash
-(cd common && python setup.py sdist)
-```
-
 #### Services
 
 `refinebio` also depends on Postgres and Nomad. Postgres can be
@@ -165,16 +155,6 @@ Then, to initialize the database, run:
 ```bash
 ./common/install_db_docker.sh
 ```
-
-Finally, to make the migrations to the database, use:
-
-```bash
-./common/make_migrations.sh
-```
-
-Note: there is a small chance this might fail with a `can't stat`, error. If this happens, you have
-to manually change permissions on the volumes directory with `sudo chmod -R 740 volumes_postgres`
-then re-run the migrations.
 
 If you need to access a `psql` shell for inspecting the database, you can use:
 
@@ -207,6 +187,22 @@ the Nomad agent, which will then launch a Docker container which runs
 the job. If address conflicts emerge, old Docker containers can be purged
 with `docker container prune -f`.
 
+#### Common Dependecies
+
+The [common](./common) sub-project contains common code which is
+depended upon by the other sub-projects. So before anything else you
+should prepare the distribution directory `common/dist` with this
+script:
+
+```bash
+./update_models.sh
+```
+
+(_Note:_ This step requires the postgres container to be running and initialized.)
+
+Note: there is a small chance this might fail with a `can't stat`, error. If this happens, you have
+to manually change permissions on the volumes directory with `sudo chmod -R 740 volumes_postgres`
+then re-run the migrations.
 
 ### Testing
 
