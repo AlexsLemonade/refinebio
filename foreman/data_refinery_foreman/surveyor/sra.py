@@ -26,7 +26,7 @@ from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyo
 logger = get_and_configure_logger(__name__)
 
 
-DOWNLOAD_SOURCE = "NCBI" # or "ENA". Change this to download from NCBI (US) or ENA (UK).
+DOWNLOAD_SOURCE = "ENA" # or "NCBI". Change this to download from NCBI (US) or ENA (UK).
 ENA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/data/view/{}"
 ENA_METADATA_URL_TEMPLATE = "https://www.ebi.ac.uk/ena/data/view/{}&display=xml"
 ENA_DOWNLOAD_URL_TEMPLATE = ("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/{short_accession}{sub_dir}"
