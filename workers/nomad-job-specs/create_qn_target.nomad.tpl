@@ -64,17 +64,15 @@ job "CREATE_QN_TARGET" {
       # The resources the job will require.
       resources {
         # CPU is in AWS's CPU units.
-        cpu = 1024
+        cpu = 2048
         # Memory is in MB of RAM.
-        memory = 16384
+        memory = 131072
       }
 
       logs {
         max_files = 1
         max_file_size = 1
       }
-
-      ${{SMASHER_CONSTRAINT}}
 
       config {
         image = "${{DOCKERHUB_REPO}}/${{SMASHER_DOCKER_IMAGE}}"

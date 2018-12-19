@@ -453,78 +453,84 @@ class SalmonTestCase(TestCase):
         self.assertFalse(fail['success'])
 
 
-# class SalmonToolsTestCase(TestCase):
-#     """Test SalmonTools command."""
+class SalmonToolsTestCase(TestCase):
+    """Test SalmonTools command."""
 
-#     def setUp(self):
-#         self.test_dir = '/home/user/data_store/salmontools/'
+    def setUp(self):
+        self.test_dir = '/home/user/data_store/salmontools/'
 
-#     @tag('salmon')
-#     def test_double_reads(self):
-#         """Test outputs when the sample has both left and right reads."""
-#         job_context = {
-#             'job_id': 123,
-#             'job': ProcessorJob(),
-#             'pipeline': Pipeline(name="Salmon"),
-#             'input_file_path': self.test_dir + 'double_input/reads_1.fastq',
-#             'input_file_path_2': self.test_dir + 'double_input/reads_2.fastq',
-#             'salmontools_directory': self.test_dir + 'double_salmontools/',
-#             'salmontools_archive': self.test_dir + 'salmontools-result.tar.gz',
-#             'output_directory': self.test_dir + 'double_output/',
-#             'computed_files': []
-#         }
-#         os.makedirs(job_context["salmontools_directory"], exist_ok=True)
+    @tag('salmon')
+    def test_double_reads(self):
+        """Test outputs when the sample has both left and right reads."""
+        job_context = {
+            'job_id': 123,
+            'job': ProcessorJob(),
+            'pipeline': Pipeline(name="Salmon"),
+            'input_file_path': self.test_dir + 'double_input/reads_1.fastq',
+            'input_file_path_2': self.test_dir + 'double_input/reads_2.fastq',
+            'salmontools_directory': self.test_dir + 'double_salmontools/',
+            'salmontools_archive': self.test_dir + 'salmontools-result.tar.gz',
+            'output_directory': self.test_dir + 'double_output/',
+            'computed_files': []
+        }
+        os.makedirs(job_context["salmontools_directory"], exist_ok=True)
 
-#         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
-#         sample = Sample()
-#         sample.organism = homo_sapiens
-#         sample.save()
-#         job_context["sample"] = sample
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        sample = Sample()
+        sample.organism = homo_sapiens
+        sample.save()
+        job_context["sample"] = sample
 
-#         salmon._run_salmontools(job_context)
+        salmon._run_salmontools(job_context)
 
-#         # Confirm job status
-#         self.assertTrue(job_context["success"])
+        # Confirm job status
+        self.assertTrue(job_context["success"])
 
-#         # Check two output files
-#         output_file1 = job_context['salmontools_directory'] + 'unmapped_by_salmon_1.fa'
-#         expected_output_file1 = self.test_dir + 'expected_double_output/unmapped_by_salmon_1.fa'
-#         self.assertTrue(identical_checksum(output_file1, expected_output_file1))
+        # Unpack result for checking
+        os.system('gunzip ' + job_context['salmontools_directory'] + "*.gz")
 
-#         output_file2 = job_context['salmontools_directory'] + 'unmapped_by_salmon_2.fa'
-#         expected_output_file2 = self.test_dir + 'expected_double_output/unmapped_by_salmon_2.fa'
-#         self.assertTrue(identical_checksum(output_file2, expected_output_file2))
+        # Check two output files
+        output_file1 = job_context['salmontools_directory'] + 'unmapped_by_salmon_1.fa'
+        expected_output_file1 = self.test_dir + 'expected_double_output/unmapped_by_salmon_1.fa'
+        self.assertTrue(identical_checksum(output_file1, expected_output_file1))
 
-#     @tag('salmon')
-#     def test_single_read(self):
-#         """Test outputs when the sample has one read only."""
-#         job_context = {
-#             'job_id': 456,
-#             'job': ProcessorJob(),
-#             'pipeline': Pipeline(name="Salmon"),
-#             'input_file_path': self.test_dir + 'single_input/single_read.fastq',
-#             'output_directory': self.test_dir + 'single_output/',
-#             'salmontools_directory': self.test_dir + 'single_salmontools/',
-#             'salmontools_archive': self.test_dir + 'salmontools-result.tar.gz',
-#             'computed_files': []
-#         }
-#         os.makedirs(job_context["salmontools_directory"], exist_ok=True)
+        output_file2 = job_context['salmontools_directory'] + 'unmapped_by_salmon_2.fa'
+        expected_output_file2 = self.test_dir + 'expected_double_output/unmapped_by_salmon_2.fa'
+        self.assertTrue(identical_checksum(output_file2, expected_output_file2))
 
-#         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
-#         sample = Sample()
-#         sample.organism = homo_sapiens
-#         sample.save()
-#         job_context["sample"] = sample
+    @tag('salmon')
+    def test_single_read(self):
+        """Test outputs when the sample has one read only."""
+        job_context = {
+            'job_id': 456,
+            'job': ProcessorJob(),
+            'pipeline': Pipeline(name="Salmon"),
+            'input_file_path': self.test_dir + 'single_input/single_read.fastq',
+            'output_directory': self.test_dir + 'single_output/',
+            'salmontools_directory': self.test_dir + 'single_salmontools/',
+            'salmontools_archive': self.test_dir + 'salmontools-result.tar.gz',
+            'computed_files': []
+        }
+        os.makedirs(job_context["salmontools_directory"], exist_ok=True)
 
-#         salmon._run_salmontools(job_context)
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        sample = Sample()
+        sample.organism = homo_sapiens
+        sample.save()
+        job_context["sample"] = sample
 
-#         # Confirm job status
-#         self.assertTrue(job_context["success"])
+        salmon._run_salmontools(job_context)
 
-#         # Check output file
-#         output_file = job_context['salmontools_directory'] + 'unmapped_by_salmon.fa'
-#         expected_output_file = self.test_dir + 'expected_single_output/unmapped_by_salmon.fa'
-#         self.assertTrue(identical_checksum(output_file, expected_output_file))
+        # Confirm job status
+        self.assertTrue(job_context["success"])
+
+        # Unpack result for checking
+        os.system('gunzip ' + job_context['salmontools_directory'] + "*.gz")
+
+        # Check output file
+        output_file = job_context['salmontools_directory'] + 'unmapped_by_salmon.fa'
+        expected_output_file = self.test_dir + 'expected_single_output/unmapped_by_salmon.fa'
+        self.assertTrue(identical_checksum(output_file, expected_output_file))
 
 class DetermineIndexLengthTestCase(TestCase):
     """Test salmon._determine_index_length function, which gets the salmon index length of a sample.
