@@ -133,7 +133,6 @@ def find_volume_index_for_dl_job(job: DownloaderJob) -> int:
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        logger.info(DownloaderJob.objects.filter(success='t').count())
         for dl_job in DownloaderJob.objects.filter(success='t').all():
             original_files = dl_job.original_files.all()
 
@@ -188,6 +187,5 @@ class Command(BaseCommand):
                                     volume_index
                                 )
                             except:
-                                logger.exception("woah")
                                 # Already logged.
                                 pass
