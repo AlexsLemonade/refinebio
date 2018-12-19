@@ -765,8 +765,10 @@ class Stats(APIView):
         data['survey_jobs'] = self._get_job_stats(SurveyJob.objects, range_param)
         data['downloader_jobs'] = self._get_job_stats(DownloaderJob.objects, range_param)
         data['processor_jobs'] = self._get_job_stats(ProcessorJob.objects, range_param)
-        data['samples'] = self._get_object_stats(Sample.processed_objects, range_param)
-        data['experiments'] = self._get_object_stats(Experiment.processed_public_objects, range_param)
+        data['samples'] = self._get_object_stats(Sample.objects, range_param)
+        data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
+        data['processed_samples'] = self._get_object_stats(Sample.processed_objects)
+        data['processed_experiments'] = self._get_object_stats(Experiment.processed_public_objects)
         data['input_data_size'] = self._get_input_data_size()
         data['output_data_size'] = self._get_output_data_size()
         data['active_volumes'] = list(get_active_volumes())
@@ -954,7 +956,7 @@ class Stats(APIView):
 
         return result
 
-    def _get_object_stats(self, objects, range_param):
+    def _get_object_stats(self, objects, range_param = False):
         result = {
             'total': objects.count()
         }
