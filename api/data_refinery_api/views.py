@@ -211,7 +211,7 @@ class SearchAndFilter(generics.ListAPIView):
         queryset = self.get_serializer_class().setup_eager_loading(queryset)
         return queryset
 
-    def list(self, request, *args, **kwargs):        
+    def list(self, request, *args, **kwargs):
         """ Adds counts on certain filter fields to result JSON."""
         response = super(SearchAndFilter, self).list(request, args, kwargs)
 
