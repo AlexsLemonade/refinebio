@@ -211,7 +211,7 @@ class SearchAndFilter(generics.ListAPIView):
         queryset = self.get_serializer_class().setup_eager_loading(queryset)
         return queryset
 
-    def list(self, request, *args, **kwargs):
+    def list(self, request, *args, **kwargs):        
         """ Adds counts on certain filter fields to result JSON."""
         response = super(SearchAndFilter, self).list(request, args, kwargs)
 
@@ -578,7 +578,8 @@ class SampleList(PaginatedAPIView):
             .prefetch_related('results__computationalresultannotation_set') \
             .prefetch_related('results__computedfile_set') \
             .filter(**filter_dict) \
-            .order_by('-is_processed')
+            .order_by('-is_processed') \
+            .distinct()
 
         if order_by:
             samples = samples.order_by(order_by)
@@ -764,8 +765,8 @@ class Stats(APIView):
         data['survey_jobs'] = self._get_job_stats(SurveyJob.objects, range_param)
         data['downloader_jobs'] = self._get_job_stats(DownloaderJob.objects, range_param)
         data['processor_jobs'] = self._get_job_stats(ProcessorJob.objects, range_param)
-        data['samples'] = self._get_object_stats(Sample.objects, range_param)
-        data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
+        data['samples'] = self._get_object_stats(Sample.processed_objects, range_param)
+        data['experiments'] = self._get_object_stats(Experiment.processed_public_objects, range_param)
         data['input_data_size'] = self._get_input_data_size()
         data['output_data_size'] = self._get_output_data_size()
         data['active_volumes'] = list(get_active_volumes())
