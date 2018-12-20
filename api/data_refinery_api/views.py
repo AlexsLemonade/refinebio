@@ -578,7 +578,8 @@ class SampleList(PaginatedAPIView):
             .prefetch_related('results__computationalresultannotation_set') \
             .prefetch_related('results__computedfile_set') \
             .filter(**filter_dict) \
-            .order_by('-is_processed')
+            .order_by('-is_processed') \
+            .distinct()
 
         if order_by:
             samples = samples.order_by(order_by)
@@ -766,6 +767,8 @@ class Stats(APIView):
         data['processor_jobs'] = self._get_job_stats(ProcessorJob.objects, range_param)
         data['samples'] = self._get_object_stats(Sample.objects, range_param)
         data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
+        data['processed_samples'] = self._get_object_stats(Sample.processed_objects)
+        data['processed_experiments'] = self._get_object_stats(Experiment.processed_public_objects)
         data['input_data_size'] = self._get_input_data_size()
         data['output_data_size'] = self._get_output_data_size()
         data['active_volumes'] = list(get_active_volumes())
@@ -953,7 +956,7 @@ class Stats(APIView):
 
         return result
 
-    def _get_object_stats(self, objects, range_param):
+    def _get_object_stats(self, objects, range_param = False):
         result = {
             'total': objects.count()
         }
