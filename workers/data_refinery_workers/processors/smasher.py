@@ -53,6 +53,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         smashable_files = []
         for sample in samples:
             smashable_file = sample.get_most_recent_smashable_result_file()
+
             if smashable_file is not None:
                 smashable_files = smashable_files + [smashable_file]
         smashable_files = list(set(smashable_files))
@@ -345,7 +346,13 @@ def _smash(job_context: Dict) -> Dict:
 
                 # Bail appropriately if this isn't a real file.
                 if not computed_file_path or not os.path.exists(computed_file_path):
-                    raise ValueError("Smasher received non-existent file path.")
+                    unsmashable_files.append(computed_file_path)
+                    logger.error("Smasher received non-existent file path.",
+                        computed_file_path=computed_file_path,
+                        computed_file=computed_file,
+                        dataset=job_context['dataset'],
+                        )
+                    continue
 
                 try:
                     data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0, error_bad_lines=False)
@@ -596,6 +603,7 @@ def _smash(job_context: Dict) -> Dict:
                     job_context['job'].success = False
                     job_context['failure_reason'] = str(e)
                     return job_context
+            # End QN
 
             # Transpose before scaling
             # Do this even if we don't want to scale in case transpose
