@@ -696,6 +696,7 @@ def _smash(job_context: Dict) -> Dict:
         return job_context
 
     job_context['metadata'] = metadata
+    job_context['unsmashable_files'] = unsmashable_files
     job_context['dataset'].success = True
     job_context['dataset'].save()
 
