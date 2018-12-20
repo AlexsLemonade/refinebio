@@ -406,8 +406,7 @@ class SmasherTestCase(TestCase):
         ds = Dataset.objects.get(id=dsid)
         print(ds.failure_reason)
         print(final_context['dataset'].failure_reason)
-        self.assertFalse(ds.success)
-        self.assertNotEqual(ds.failure_reason, "")
+        self.assertNotEqual(final_context['unsmashable_files'], [])
 
     @tag("smasher")
     def test_no_smash_all_diff_species(self):
