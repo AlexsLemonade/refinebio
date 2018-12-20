@@ -87,13 +87,7 @@ class StartJobTestCase(TestCase):
             job.save()
             job_context = utils.start_job({"job": job})
 
-            try:
-                job = ProcessorJob()
-                job.start_time = timezone.now()
-                job.success = None
-                job.save()
             self.assertRaises(utils.start_job({"job": job}))
-            except Exception
 
 class RunPipelineTestCase(TestCase):
     def test_no_job(self):
