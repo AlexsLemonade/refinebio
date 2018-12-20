@@ -344,6 +344,14 @@ dispatch survey jobs based on accession codes like so:
 ./foreman/run_surveyor.sh survey_all --file MY_BIG_LIST_OF_CODES.txt
 ```
 
+The main foreman job loop can be started with:
+
+```bash
+./foreman/run_surveyor.sh retry_jobs
+```
+
+This must actually be running for jobs to move forward through the pipeline.
+
 #### Sequence Read Archive
 
 When surveying SRA, you can supply _either_ run accession codes (e.g.,
