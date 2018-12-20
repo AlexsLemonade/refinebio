@@ -716,7 +716,7 @@ class SurveyJobList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         limit = max(int(filter_dict.pop('limit', 100)), 100)
         offset = int(filter_dict.pop('offset', 0))
-        jobs = SurveyJob.objects.filter(**filter_dict)[offset:(offset + limit)]
+        jobs = SurveyJob.objects.filter(**filter_dict).order_by('-id')[offset:(offset + limit)]
         serializer = SurveyJobSerializer(jobs, many=True)
         return Response(serializer.data)
 
@@ -729,7 +729,7 @@ class DownloaderJobList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         limit = max(int(filter_dict.pop('limit', 100)), 100)
         offset = int(filter_dict.pop('offset', 0))
-        jobs = DownloaderJob.objects.filter(**filter_dict)[offset: offset + limit]
+        jobs = DownloaderJob.objects.filter(**filter_dict).order_by('-id')[offset: offset + limit]
         serializer = DownloaderJobSerializer(jobs, many=True)
         return Response(serializer.data)
 
@@ -742,7 +742,7 @@ class ProcessorJobList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         limit = max(int(filter_dict.pop('limit', 100)), 100)
         offset = int(filter_dict.pop('offset', 0))
-        jobs = ProcessorJob.objects.filter(**filter_dict)[offset: offset + limit]
+        jobs = ProcessorJob.objects.filter(**filter_dict).order_by('-id')[offset: offset + limit]
         serializer = ProcessorJobSerializer(jobs, many=True)
         return Response(serializer.data)
 
