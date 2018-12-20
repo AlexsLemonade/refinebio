@@ -524,7 +524,6 @@ We have two different version counters, one for `dev` and one for `master` so a 
 * v1.1.3
 * v1.1.3-dev
 
-
 However you may see that the `dev` counter is way ahead, because we often need more than one staging deploy to be ready for a production deploy.
 This is okay, just find the latest version of the type you want to deploy and increment that to get your version.
 For example, if you wanted to deploy to staging and the above versions were the largest that `git tag --list` output, you would increment `v1.1.3-dev` to get `v1.1.4-dev`.
