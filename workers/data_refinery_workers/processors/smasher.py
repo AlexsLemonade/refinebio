@@ -452,8 +452,13 @@ def _smash(job_context: Dict) -> Dict:
                 continue
 
             # Merge all of the frames we've gathered into a single big frame, skipping duplicates.
+            # TODO: If the very first frame is the wrong platform, are we boned?
             merged = all_frames[0]
             i = 1
+
+            old_len_merged = len(merged)
+            new_len_merged = len(merged)
+            merged_backup = merged
             while i < len(all_frames):
                 frame = all_frames[i]
                 i = i + 1
@@ -477,6 +482,30 @@ def _smash(job_context: Dict) -> Dict:
 
                 # This is the inner join, the main "Smash" operation
                 merged = merged.merge(frame, left_index=True, right_index=True)
+                new_len_merged = len(merged)
+                if new_len_merged < old_len_merged:
+                    logger.warning("Dropped rows while smashing!",
+                        dataset_id=job_context["dataset"].id,
+                        old_len_merged=old_len_merged,
+                        new_len_merged=new_len_merged
+                    )
+                if new_len_merged == 0:
+                    logger.warning("Skipping a bad merge frame!",
+                        dataset_id=job_context["dataset"].id,
+                        old_len_merged=old_len_merged,
+                        new_len_merged=new_len_merged,
+                        bad_frame_number=i,
+                    )
+                    merged = merged_backup
+                    new_len_merged = len(merged)
+                    try:
+                        unsmashable_files.append(frame.columns[0])
+                    except Exception:
+                        # Something is really, really wrong with this frame.
+                        pass
+
+                old_len_merged = len(merged)
+                merged_backup = merged
 
             job_context['original_merged'] = merged
 
