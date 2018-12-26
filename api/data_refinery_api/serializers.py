@@ -474,20 +474,20 @@ class DatasetDetailsExperimentSerializer(serializers.ModelSerializer):
 
 class DatasetSerializer(serializers.ModelSerializer):
     start = serializers.NullBooleanField(required=False)
-    experiments = DatasetDetailsExperimentSerializer(read_only=True, many=True, source='get_experiments')
-    organisms_samples = serializers.SerializerMethodField()
+    experiments = serializers.SerializerMethodField(read_only=True)
+    organism_samples = serializers.SerializerMethodField(read_only=True)
 
     def __init__(self, *args, **kwargs):
         super(DatasetSerializer, self).__init__(*args, **kwargs)
 
-        # only inclue the fields `experiments` and `organisms_samples` when the param `?details=true` 
+        # only inclue the fields `experiments` and `organism_samples` when the param `?details=true` 
         # is provided. This is used on the frontend to render the downloads page
         # thanks to https://django.cowhite.com/blog/dynamically-includeexclude-fields-to-django-rest-framwork-serializers-based-on-user-requests/
         if 'context' in kwargs:
             if 'request' in kwargs['context']:
                 if 'details' not in kwargs['context']['request'].query_params:
                     self.fields.pop('experiments')
-                    self.fields.pop('organisms_samples')
+                    self.fields.pop('organism_samples')
 
     class Meta:
         model = Dataset
@@ -509,7 +509,7 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'last_modified',
                     'start',
                     'experiments',
-                    'organisms_samples'
+                    'organism_samples'
             )
         extra_kwargs = {
                         'id': {
@@ -557,27 +557,26 @@ class DatasetSerializer(serializers.ModelSerializer):
             raise
         return data
 
-    def get_organisms_samples(self, obj):
+    def get_organism_samples(self, obj):
         """
         Groups the sample accession codes inside a dataset by their organisms, eg:
         { HOMO_SAPIENS: [S1, S2], DANIO: [S3] }
         Useful to avoid sending sample information on the downloads page
         """
-        all_samples = []
-        for sample_list in obj.data.values():
-            all_samples = all_samples + sample_list
-        all_samples = list(set(all_samples))
-
-        samples = Sample.objects.filter(accession_code__in=all_samples) \
-                        .values('organism__name', 'accession_code') \
-                        .order_by('organism__name', 'accession_code') \
-                        .prefetch_related('organism')
+        samples = obj.get_samples().prefetch_related('organism') \
+                     .values('organism__name', 'accession_code') \
+                     .order_by('organism__name', 'accession_code')
 
         result = defaultdict(list)
         for sample in samples:
             result[sample['organism__name']].append(sample['accession_code'])
 
         return result
+
+    def get_experiments(self, obj):
+        """ Call `get_experiments` in the model but add some `prefetch_related` calls """
+        experiments = obj.get_experiments().prefetch_related('samples').prefetch_related('organisms')
+        return DatasetDetailsExperimentSerializer(experiments, many=True).data
 
 class APITokenSerializer(serializers.ModelSerializer):
 
