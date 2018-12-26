@@ -18,6 +18,7 @@ from data_refinery_common.models import (
     Dataset,
     APIToken
 )
+from collections import defaultdict 
 
 ##
 # Organism
@@ -450,9 +451,43 @@ class CreateDatasetSerializer(serializers.ModelSerializer):
             raise
         return data
 
-class DatasetSerializer(serializers.ModelSerializer):
+class DatasetDetailsExperimentSerializer(serializers.ModelSerializer):
+    """ This serializer contains all of the information about an experiment needed for the download
+    page
+    """
+    organisms = serializers.StringRelatedField(many=True)
+    processed_samples = serializers.StringRelatedField(many=True)
+    sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
+    pretty_platforms = serializers.ReadOnlyField()
 
+    class Meta:
+        model = Experiment
+        fields = (
+                    'id',
+                    'title',
+                    'accession_code',
+                    'pretty_platforms',
+                    'processed_samples',
+                    'organisms',
+                    'sample_metadata',
+                )
+
+class DatasetSerializer(serializers.ModelSerializer):
     start = serializers.NullBooleanField(required=False)
+    experiments = DatasetDetailsExperimentSerializer(read_only=True, many=True, source='get_experiments')
+    organisms_samples = serializers.SerializerMethodField()
+
+    def __init__(self, *args, **kwargs):
+        super(DatasetSerializer, self).__init__(*args, **kwargs)
+
+        # only inclue the fields `experiments` and `organisms_samples` when the param `?details=true` 
+        # is provided. This is used on the frontend to render the downloads page
+        # thanks to https://django.cowhite.com/blog/dynamically-includeexclude-fields-to-django-rest-framwork-serializers-based-on-user-requests/
+        if 'context' in kwargs:
+            if 'request' in kwargs['context']:
+                if 'details' not in kwargs['context']['request'].query_params:
+                    self.fields.pop('experiments')
+                    self.fields.pop('organisms_samples')
 
     class Meta:
         model = Dataset
@@ -472,7 +507,9 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'failure_reason',
                     'created_at',
                     'last_modified',
-                    'start'
+                    'start',
+                    'experiments',
+                    'organisms_samples'
             )
         extra_kwargs = {
                         'id': {
@@ -520,64 +557,27 @@ class DatasetSerializer(serializers.ModelSerializer):
             raise
         return data
 
-class DatasetDetailsSampleSerializer(serializers.ModelSerializer):
-    """ This serializer contains all of the information about a sample needed for the download page
-    """
-    organism = OrganismSerializer(many=False)
+    def get_organisms_samples(self, obj):
+        """
+        Groups the sample accession codes inside a dataset by their organisms, eg:
+        { HOMO_SAPIENS: [S1, S2], DANIO: [S3] }
+        Useful to avoid sending sample information on the downloads page
+        """
+        all_samples = []
+        for sample_list in obj.data.values():
+            all_samples = all_samples + sample_list
+        all_samples = list(set(all_samples))
 
-    class Meta:
-        model = Sample
-        fields = (
-                    'accession_code',
-                    'organism',
-                )
+        samples = Sample.objects.filter(accession_code__in=all_samples) \
+                        .values('organism__name', 'accession_code') \
+                        .order_by('organism__name', 'accession_code') \
+                        .prefetch_related('organism')
 
-class DatasetDetailsExperimentSerializer(serializers.ModelSerializer):
-    """ This serializer contains all of the information about an experiment needed for the download
-    page
-    """
-    organisms = serializers.StringRelatedField(many=True)
-    samples = serializers.StringRelatedField(many=True)
-    sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
-    pretty_platforms = serializers.ReadOnlyField()
+        result = defaultdict(list)
+        for sample in samples:
+            result[sample['organism__name']].append(sample['accession_code'])
 
-    class Meta:
-        model = Experiment
-        fields = (
-                    'id',
-                    'title',
-                    'accession_code',
-                    'pretty_platforms',
-                    'samples',
-                    'organisms',
-                    'sample_metadata',
-                )
-
-class DatasetDetailsSerializer(serializers.ModelSerializer):
-    """ This serializer contains all of the information about a dataset needed for the download page
-    """
-    samples = DatasetDetailsSampleSerializer(read_only=True, many=True, source='get_samples')
-    experiments = DatasetDetailsExperimentSerializer(read_only=True, many=True, source='get_experiments')
-
-    class Meta:
-        model = Dataset
-        fields = (
-                    'data',
-                    'aggregate_by',
-                    'scale_by',
-                    'is_processing',
-                    'is_processed',
-                    'experiments',
-                    'samples'
-            )
-        extra_kwargs = {
-                        'is_processing': {
-                            'read_only': True,
-                        },
-                        'is_processed': {
-                            'read_only': True,
-                        },
-                    }
+        return result
 
 class APITokenSerializer(serializers.ModelSerializer):
 

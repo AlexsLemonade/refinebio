@@ -914,16 +914,6 @@ class Dataset(models.Model):
         self.last_modified = current_time
         return super(Dataset, self).save(*args, **kwargs)
 
-    def get_samples(self):
-        """ Retuns all of the Sample objects in this Dataset """
-
-        all_samples = []
-        for sample_list in self.data.values():
-            all_samples = all_samples + sample_list
-        all_samples = list(set(all_samples))
-
-        return Sample.objects.filter(accession_code__in=all_samples)
-
     def get_experiments(self):
         """ Retuns all of the Experiments objects in this Dataset """
 
