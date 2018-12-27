@@ -456,18 +456,15 @@ class DatasetDetailsExperimentSerializer(serializers.ModelSerializer):
     page
     """
     organisms = serializers.StringRelatedField(many=True)
-    processed_samples = serializers.StringRelatedField(many=True)
     sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
     pretty_platforms = serializers.ReadOnlyField()
 
     class Meta:
         model = Experiment
         fields = (
-                    'id',
                     'title',
                     'accession_code',
                     'pretty_platforms',
-                    'processed_samples',
                     'organisms',
                     'sample_metadata',
                 )
