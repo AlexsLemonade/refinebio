@@ -46,6 +46,9 @@ from data_refinery_common.models import (
     SampleAnnotation,
     SampleResultAssociation,
 )
+from data_refinery_common.models.documents import (
+    ExperimentDocument
+)
 
 class APITestCases(APITestCase):
     def setUp(self):
@@ -715,18 +718,12 @@ class APITestCases(APITestCase):
         mock_client.captureMessage.assert_called()
 
     def test_es(self):
-
-        from data_refinery_common.models.documents import (
-            ExperimentDocument
-        )
+        """ Test basic ES functionality """
     
         es_search_result = ExperimentDocument.search().filter("term", description="soda")
         es_search_result_qs = es_search_result.to_queryset()
 
         self.assertEqual(len(es_search_result_qs), 1)
-
-        import pdb
-        pdb.set_trace()
 
 class ProcessorTestCases(APITestCase):
     def setUp(self):
