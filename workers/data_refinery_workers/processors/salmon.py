@@ -331,7 +331,7 @@ def _find_or_download_index(job_context: Dict) -> Dict:
         # complete each step.
         version_info_path = job_context["index_directory"] + "/versionInfo.json"
 
-        # Something very bad happened and now there are corrupt indexes installed. Nuke 'em. 
+        # Something very bad happened and now there are corrupt indexes installed. Nuke 'em.
         if os.path.exists(version_info_path) and (os.path.getsize(version_info_path) == 0):
             logger.error("We have to nuke a zero-valued index directory: " + version_info_path)
             shutil.rmtree(job_context["index_directory"], ignore_errors=True)
@@ -466,8 +466,34 @@ def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFil
     quantified_experiments = {}
     for experiment in experiments:
         salmon_quant_results = _find_salmon_quant_results(experiment)
+        num_quant_results = len(salmon_quant_results)
+        num_samples_in_experiment = experiment.samples.count()
 
-        if len(salmon_quant_results) == experiment.samples.count():
+        # Some experiments won't be entirely processed, but we'd still
+        # like to make the samples we can process available. This
+        # means we need to run tximport on the experiment before 100%
+        # of the samples are processed individually.
+        # This idea has been discussed here: https://github.com/AlexsLemonade/refinebio/issues/909
+
+        # The consensus is that this is a good idea, but that we need
+        # a cutoff to determine which experiments have enough data to
+        # have tximport run on them early.  Candace ran an experiment
+        # to find these cutoff values and recorded the results of this
+        # experiment here:
+        # https://github.com/AlexsLemonade/tximport_partial_run_tests/pull/3
+
+        # The gist of that discussion/experiment is that we need two
+        # cutoff values, one for a minimum size experiment that can be
+        # processed early and the percentage of completion necessary
+        # before we start running tximport on the experiment. The
+        # values we decided on are:
+        early_tximport_min_size = 20
+        early_tximport_min_percent = .80
+
+        # However if an experiment is 100% complete we should always run tximport.
+        if num_quant_results == num_samples_in_experiment \
+           or (num_samples_in_experiment > early_tximport_min_size \
+               and num_quant_results / num_samples_in_experiment > early_tximport_min_percent):
             quant_files = []
             for result in salmon_quant_results:
                 quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])
