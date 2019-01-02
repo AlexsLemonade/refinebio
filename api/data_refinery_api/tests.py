@@ -56,6 +56,8 @@ class APITestCases(APITestCase):
 
         experiment = Experiment()
         experiment.accession_code = "GSE123"
+        experiment.title = "Hey Ho Let's Go"
+        experiment.description = "This is a very exciting test experiment. Faygo soda. Blah blah blah."
         experiment.save()
         self.experiment = experiment
 
@@ -712,6 +714,19 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 500)
         mock_client.captureMessage.assert_called()
 
+    def test_es(self):
+
+        from data_refinery_common.models.documents import (
+            ExperimentDocument
+        )
+    
+        es_search_result = ExperimentDocument.search().filter("term", description="soda")
+        es_search_result_qs = es_search_result.to_queryset()
+
+        self.assertEqual(len(es_search_result_qs), 1)
+
+        import pdb
+        pdb.set_trace()
 
 class ProcessorTestCases(APITestCase):
     def setUp(self):
