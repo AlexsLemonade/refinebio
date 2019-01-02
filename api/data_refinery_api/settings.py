@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'django_filters',
     'corsheaders',
     'raven.contrib.django.raven_compat',
+    'debug_toolbar',
+    'django_elasticsearch_dsl',
 
     # Local
     'data_refinery_common',
@@ -59,6 +61,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'data_refinery_api.middleware.RevisionMiddleware',
     'data_refinery_api.middleware.SentryCatchBadRequestMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -183,9 +186,18 @@ else:
 
 RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD') == "True"
 
+# Elastic Search
+ELASTICSEARCH_DSL = {
+    'default': {
+        'hosts': 'elasticsearch:9200'
+    }
+}
+
+# DRF
 # XXX: Add this in Production!
 # REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = 'rest_framework.renderers.JSONRenderer'
 
+# ToS
 TERMS_AND_CONDITIONS = """Welcome to the Alex’s Lemonade Childhood Cancer Data Lab, which is supported by Alex’s Lemonade Stand Foundation ("we," "our," or "us"). These Terms of Use (these "Terms") are a binding legal agreement between you and us regarding your access to and use of the websites located at https://www.ccdatalab.org, https://cognoma.org, http://www.refine.bio or any subdomains thereof and any embedded or associated software, applications, data or other content, provided or managed by us in connection with such websites (collectively, as may be updated, modified or replaced from time to time, the "CCDL").
 
 Please read these Terms carefully. By accessing, registering for, downloading, installing or using the CCDL, or any software, applications, data or other content available on or through the CCDL (collectively, "Content" and any such data, "Data"), you agree to be bound by these Terms and to use the CCDL, including any Content, in accordance with these Terms. If you are using the CCDL on behalf of an entity, you represent and warrant that you have the legal authority to bind such entity to these Terms.

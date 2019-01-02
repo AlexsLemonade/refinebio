@@ -1,11 +1,13 @@
 from django.conf.urls import url, include
 from django.conf import settings
 from django.contrib import admin
+from django.urls import include, path
 from rest_framework.documentation import include_docs_urls
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.urlpatterns import format_suffix_patterns
+import debug_toolbar
 
 from data_refinery_api.views import (
     SearchAndFilter,
@@ -86,6 +88,8 @@ class DatasetRoot(APIView):
         })
 
 urlpatterns = [
+    path('__debug__/', include(debug_toolbar.urls)),
+
     # Primary search and filter interface
     url(r'^search/$', SearchAndFilter.as_view(), name="search"),
 

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'data_refinery_foreman.surveyor',
     'data_refinery_foreman.foreman',
     'raven.contrib.django.raven_compat',
+    'django_elasticsearch_dsl'
 ]
 
 MIDDLEWARE = [
@@ -160,3 +161,9 @@ else:
     raven_logger.setLevel(logging.CRITICAL)
 
 RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD') == "True"
+
+ELASTICSEARCH_DSL = {
+    'default': {
+        'hosts': 'elasticsearch:9200'
+    }
+}
