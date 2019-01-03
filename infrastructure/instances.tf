@@ -628,8 +628,10 @@ resource "aws_elasticsearch_domain" "es" {
   domain_name = "es-${var.user}-${var.stage}"
   elasticsearch_version = "6.3"
 
+  # TODO: Figure out the power/cost balance of this type.
+  # Prices are here: https://aws.amazon.com/elasticsearch-service/pricing/
   cluster_config {
-      instance_type = "r4.large.elasticsearch"
+      instance_type = "t2.medium.elasticsearch"
   }
 
   vpc_options {
