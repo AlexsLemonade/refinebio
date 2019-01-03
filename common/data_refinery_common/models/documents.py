@@ -31,5 +31,6 @@ class ExperimentDocument(DocType):
         fields = [
             'id',
             'title',
-            'description'
+            'description',
         ]
+        related_models = [Sample,]
