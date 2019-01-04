@@ -609,6 +609,8 @@ class ExperimentDocumentSerializer(serializers.Serializer):
 
     id = serializers.IntegerField(read_only=True)
     title = serializers.CharField(read_only=True)
+    description = serializers.CharField(read_only=True)
+    organisms = OrganismSerializer(many=True)
 
     class Meta(object):
         """Meta options."""
@@ -618,7 +620,8 @@ class ExperimentDocumentSerializer(serializers.Serializer):
         fields = (
             'id',
             'title',
-            'description'
+            'description',
+            'organisms'
         )
 
     # def get_tags(self, obj):

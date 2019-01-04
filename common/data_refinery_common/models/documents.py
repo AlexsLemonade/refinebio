@@ -2,7 +2,7 @@ from elasticsearch_dsl import analyzer
 
 from django_elasticsearch_dsl import DocType, Index, fields 
 
-from .models import Sample, Experiment
+from .models import Sample, Experiment, Organism
 
 experiment_index = Index('experiments')
 experiment_index.settings(
@@ -38,10 +38,17 @@ class ExperimentDocument(DocType):
         fields={'raw': fields.KeywordField()}
     )
 
+    # FK/M2M
+    organisms = fields.NestedField(properties={
+        'name': fields.TextField(),
+        'taxonomy_id': fields.IntegerField(),
+        'pk': fields.IntegerField(),
+    })
+
     class Meta:
         model = Experiment
 
         fields = [
            'id',
         ]
-        # related_models = [Sample,]
+        related_models = [Sample, Organism]
