@@ -21,12 +21,13 @@ html_strip = analyzer(
 class ExperimentDocument(DocType):
     """Experiment elasticsearch document"""
 
-    # XXX: M2M?
-    # samples = fields.NestedField(properties={
-    #     'title': fields.StringField()
-    # })
-
+    # Keyword Fields
     title = fields.TextField(
+        analyzer=html_strip,
+        fielddata=True,
+        fields={'raw': fields.KeywordField()}
+    )
+    publication_title = fields.TextField(
         analyzer=html_strip,
         fielddata=True,
         fields={'raw': fields.KeywordField()}
@@ -37,6 +38,19 @@ class ExperimentDocument(DocType):
         fielddata=True,
         fields={'raw': fields.KeywordField()}
     )
+
+    # Basic Fields
+    technology = fields.TextField()
+    accession_code = fields.TextField()
+    alternate_accession_code = fields.TextField()
+    submitter_institution = fields.TextField()
+    publication_doi = fields.TextField()
+    publication_authors = fields.TextField()
+    has_publication = fields.BooleanField()
+    sample_metadata_fields = fields.TextField()
+    pubmed_id = fields.TextField()
+    num_total_samples = fields.IntegerField()
+    num_processed_samples = fields.IntegerField()
 
     # FK/M2M
     organisms = fields.NestedField(properties={

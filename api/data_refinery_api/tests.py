@@ -722,8 +722,8 @@ class APITestCases(APITestCase):
     
         es_search_result = ExperimentDocument.search().filter("term", description="soda")
         es_search_result_qs = es_search_result.to_queryset()
-
         self.assertEqual(len(es_search_result_qs), 1)
+
 
 class ProcessorTestCases(APITestCase):
     def setUp(self):

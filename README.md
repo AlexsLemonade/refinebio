@@ -331,6 +331,12 @@ data repositories (e.g., Sequencing Read Archive,
 ./foreman/run_surveyor.sh survey_all --accession <ACCESSION_CODE>
 ```
 
+Example for a GEO experiment:
+
+```bash
+./foreman/run_surveyor.sh survey_all --accession GSE85217
+```
+
 Example for an ArrayExpress experiment:
 
 ```bash

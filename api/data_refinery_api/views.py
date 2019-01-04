@@ -152,49 +152,38 @@ class ExperimentDocumentView(DocumentViewSet):
 
     # Define filtering fields
     filter_fields = {}
-    # filter_fields = {
-    #     'id': {
-    #         'field': '_id',
-    #         'lookups': [
-    #             LOOKUP_FILTER_RANGE,
-    #             LOOKUP_QUERY_IN,
-    #         ],
-    #     },
-        # 'publisher': 'publisher.raw',
-        # 'publication_date': 'publication_date',
-        # 'isbn': 'isbn.raw',
-        # 'tags': {
-        #     'field': 'tags',
-        #     'lookups': [
-        #         LOOKUP_FILTER_TERMS,
-        #         LOOKUP_FILTER_PREFIX,
-        #         LOOKUP_FILTER_WILDCARD,
-        #         LOOKUP_QUERY_IN,
-        #         LOOKUP_QUERY_EXCLUDE,
-        #     ],
-        # },
-        # 'tags.raw': {
-        #     'field': 'tags.raw',
-        #     'lookups': [
-        #         LOOKUP_FILTER_TERMS,
-        #         LOOKUP_FILTER_PREFIX,
-        #         LOOKUP_FILTER_WILDCARD,
-        #         LOOKUP_QUERY_IN,
-        #         LOOKUP_QUERY_EXCLUDE,
-        #     ],
-        # },
-    # }
+    filter_fields = {
+        'id': {
+            'field': '_id',
+            'lookups': [
+                LOOKUP_FILTER_RANGE,
+                LOOKUP_QUERY_IN,
+            ],
+        },
+        'technology': 'technology.raw',
+        'has_publication': 'has_publication'
+    }
 
     # Define ordering fields
     ordering_fields = {
         'id': 'id',
         'title': 'title.raw',
         'description': 'description.raw',
+        'num_total_samples': 'num_total_samples',
+        'num_processed_samples': 'num_processed_samples'
     }
 
     # Specify default ordering
-    ordering = ('id', 'title', 'description')
+    ordering = ('-num_total_samples', 'id', 'title', 'description')
 
+    # Facets
+    faceted_search_fields = {
+        'state_global': {
+            'field': 'state.raw',
+            'enabled': True,
+            'global': True,  # This makes the aggregation global
+        },
+    }
 
 ##
 # Search and Filter
@@ -299,10 +288,10 @@ class SearchAndFilter(generics.ListAPIView):
     def get_queryset(self):
 
         # For Prod:
-        queryset = Experiment.processed_public_objects.all()
+        # queryset = Experiment.processed_public_objects.all()
 
         # For Dev:
-        # queryset = Experiment.objects.all()
+        queryset = Experiment.objects.all()
 
         # Set up eager loading to avoid N+1 selects
         queryset = self.get_serializer_class().setup_eager_loading(queryset)

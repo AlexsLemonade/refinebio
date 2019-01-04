@@ -281,6 +281,11 @@ class Experiment(models.Model):
     source_first_published = models.DateTimeField(null=True)
     source_last_modified = models.DateTimeField(null=True)
 
+    # Cached Computed Properties
+    num_total_samples = models.IntegerField(default=0)
+    num_processed_samples = models.IntegerField(default=0)
+    sample_metadata_fields = ArrayField(models.TextField(), default=list)
+
     # Common Properties
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
@@ -300,6 +305,12 @@ class Experiment(models.Model):
                 self.alternate_accession_code = 'GSE' + self.accession_code[7:]
 
         return super(Experiment, self).save(*args, **kwargs)
+
+    def update_num_samples(self):
+        """ Update our cache values """
+        self.num_total_samples = self.samples.count()
+        self.num_processed_samples = self.samples.filter(is_processed=True).count()
+        self.save()
 
     def to_metadata_dict(self):
         """ Render this Experiment as a dict """
@@ -345,6 +356,9 @@ class Experiment(models.Model):
                     break
 
         return fields
+
+    def update_sample_metadata_fields(self):
+        self.sample_metadata_fields = self.get_sample_metadata_fields()
 
     def get_sample_technologies(self):
         """ Get a list of unique technologies for all of the associated samples

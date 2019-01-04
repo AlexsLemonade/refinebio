@@ -201,5 +201,10 @@ class ExternalSourceSurveyor:
                              survey_job=self.survey_job.id)
             return False
 
+        # Update our cached values
+        experiment.update_num_samples()
+        experiment.update_sample_metadata_fields()
+        experiment.save()
+
         logger.debug("Survey job completed successfully.", survey_job=self.survey_job.id)
         return True

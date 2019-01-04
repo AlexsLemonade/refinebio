@@ -604,12 +604,45 @@ class APITokenSerializer(serializers.ModelSerializer):
 # ES
 ##
 
+class StringArrayField(serializers.ListField):
+    """
+    String representation of an array field.
+    """
+    def to_representation(self, obj):
+        obj = super().to_representation(obj)
+        # convert list to string
+        return ",".join([str(element) for element in obj])
+
+    def to_internal_value(self, data):
+        data = data.split(",")  # convert string to list
+        return super().to_internal_value(self, data)
+
 class ExperimentDocumentSerializer(serializers.Serializer):
     """Serializer for the Experiment document."""
 
+    # PK
     id = serializers.IntegerField(read_only=True)
+
+    #  Complex
     title = serializers.CharField(read_only=True)
+    publication_title = serializers.CharField(read_only=True)
     description = serializers.CharField(read_only=True)
+
+    # Simple
+    technology = serializers.CharField(read_only=True)
+    technology = serializers.CharField(read_only=True)
+    accession_code = serializers.CharField(read_only=True)
+    alternate_accession_code = serializers.CharField(read_only=True)
+    submitter_institution = serializers.CharField(read_only=True)
+    has_publication = serializers.BooleanField(read_only=True)
+    publication_doi = serializers.CharField(read_only=True)
+    publication_authors = serializers.ListField(child=serializers.CharField(max_length=32, allow_blank=True))
+    sample_metadata_fields = serializers.ListField(child=serializers.CharField(max_length=32, allow_blank=True))
+    pubmed_id = serializers.CharField(read_only=True)
+    num_total_samples = serializers.IntegerField(read_only=True)
+    num_processed_samples = serializers.IntegerField(read_only=True)
+
+    # FK/M2M
     organisms = OrganismSerializer(many=True)
 
     class Meta(object):
@@ -621,12 +654,6 @@ class ExperimentDocumentSerializer(serializers.Serializer):
             'id',
             'title',
             'description',
+            'technology',
             'organisms'
         )
-
-    # def get_tags(self, obj):
-    #     """Get tags."""
-    #     if obj.tags:
-    #         return list(obj.tags)
-    #     else:
-    #         return []
