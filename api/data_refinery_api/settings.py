@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'raven.contrib.django.raven_compat',
     'debug_toolbar',
     'django_elasticsearch_dsl',
+    'django_elasticsearch_dsl_drf',
 
     # Local
     'data_refinery_common',
@@ -194,6 +195,10 @@ ELASTICSEARCH_DSL = {
         'hosts': 'elasticsearch:9200'
     }
 }
+ELASTICSEARCH_INDEX_NAMES = {
+    'data_refinery_common.models.documents': 'experiments',
+}
+
 
 # DRF
 # XXX: Add this in Production!

@@ -18,13 +18,13 @@ script_directory=`perl -e 'use File::Basename;
 cd $script_directory
 
 # Set up the data volume directory if it does not already exist
-volume_directory="$script_directory/foreman/volume"
+volume_directory="$script_directory/api/volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir $volume_directory
     chmod -R a+rwX $volume_directory
 fi
 
-docker build -t dr_shell -f foreman/dockerfiles/Dockerfile.foreman .
+docker build -t dr_shell -f api/dockerfiles/Dockerfile.api_local .
 
 source common.sh
 HOST_IP=$(get_ip_address)
@@ -37,7 +37,7 @@ docker run -it \
        --add-host=elasticsearch:$ES_HOST_IP \
        --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
        --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-       --env-file foreman/environments/local \
+       --env-file api/environments/local \
        --link dres:elasticsearch \
        --volume /tmp:/tmp \
        --volume $volume_directory:/home/user/data_store \

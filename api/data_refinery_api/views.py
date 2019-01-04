@@ -103,6 +103,100 @@ class PaginatedAPIView(APIView):
         return self.paginator.get_paginated_response(data)
 
 ##
+# ElasticSearch
+##
+
+from django_elasticsearch_dsl_drf.viewsets import DocumentViewSet
+from data_refinery_common.models.documents import ExperimentDocument
+from django_elasticsearch_dsl_drf.filter_backends import (
+    FilteringFilterBackend,
+    IdsFilterBackend,
+    OrderingFilterBackend,
+    DefaultOrderingFilterBackend,
+    SearchFilterBackend,
+)
+from .serializers import ExperimentDocumentSerializer
+from django_elasticsearch_dsl_drf.constants import (
+    LOOKUP_FILTER_TERMS,
+    LOOKUP_FILTER_RANGE,
+    LOOKUP_FILTER_PREFIX,
+    LOOKUP_FILTER_WILDCARD,
+    LOOKUP_QUERY_IN,
+    LOOKUP_QUERY_GT,
+    LOOKUP_QUERY_GTE,
+    LOOKUP_QUERY_LT,
+    LOOKUP_QUERY_LTE,
+    LOOKUP_QUERY_EXCLUDE,
+)
+
+class ExperimentDocumentView(DocumentViewSet):
+    """The BookDocument view."""
+
+    document = ExperimentDocument
+    serializer_class = ExperimentDocumentSerializer
+
+    lookup_field = 'id'
+
+    filter_backends = [
+        FilteringFilterBackend,
+        OrderingFilterBackend,
+        DefaultOrderingFilterBackend,
+        SearchFilterBackend,
+    ]
+
+    # Define search fields
+    search_fields = (
+        'title',
+        'description',
+    )
+
+    # Define filtering fields
+    filter_fields = {}
+    # filter_fields = {
+    #     'id': {
+    #         'field': '_id',
+    #         'lookups': [
+    #             LOOKUP_FILTER_RANGE,
+    #             LOOKUP_QUERY_IN,
+    #         ],
+    #     },
+        # 'publisher': 'publisher.raw',
+        # 'publication_date': 'publication_date',
+        # 'isbn': 'isbn.raw',
+        # 'tags': {
+        #     'field': 'tags',
+        #     'lookups': [
+        #         LOOKUP_FILTER_TERMS,
+        #         LOOKUP_FILTER_PREFIX,
+        #         LOOKUP_FILTER_WILDCARD,
+        #         LOOKUP_QUERY_IN,
+        #         LOOKUP_QUERY_EXCLUDE,
+        #     ],
+        # },
+        # 'tags.raw': {
+        #     'field': 'tags.raw',
+        #     'lookups': [
+        #         LOOKUP_FILTER_TERMS,
+        #         LOOKUP_FILTER_PREFIX,
+        #         LOOKUP_FILTER_WILDCARD,
+        #         LOOKUP_QUERY_IN,
+        #         LOOKUP_QUERY_EXCLUDE,
+        #     ],
+        # },
+    # }
+
+    # Define ordering fields
+    ordering_fields = {
+        'id': 'id',
+        'title': 'title.raw',
+        'description': 'description.raw',
+    }
+
+    # Specify default ordering
+    ordering = ('id', 'title', 'description')
+
+
+##
 # Search and Filter
 ##
 

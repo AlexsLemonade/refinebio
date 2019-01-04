@@ -21,16 +21,27 @@ html_strip = analyzer(
 class ExperimentDocument(DocType):
     """Experiment elasticsearch document"""
 
-    samples = fields.NestedField(properties={
-        'title': fields.StringField()
-    })
+    # XXX: M2M?
+    # samples = fields.NestedField(properties={
+    #     'title': fields.StringField()
+    # })
+
+    title = fields.TextField(
+        analyzer=html_strip,
+        fielddata=True,
+        fields={'raw': fields.KeywordField()}
+    )
+
+    description = fields.TextField(
+        analyzer=html_strip,
+        fielddata=True,
+        fields={'raw': fields.KeywordField()}
+    )
 
     class Meta:
         model = Experiment
 
         fields = [
-            'id',
-            'title',
-            'description',
+           'id',
         ]
-        related_models = [Sample,]
+        # related_models = [Sample,]

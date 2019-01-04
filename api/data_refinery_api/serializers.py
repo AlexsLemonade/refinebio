@@ -599,3 +599,31 @@ class APITokenSerializer(serializers.ModelSerializer):
                             'read_only': True
                         }
                     }
+
+##
+# ES
+##
+
+class ExperimentDocumentSerializer(serializers.Serializer):
+    """Serializer for the Experiment document."""
+
+    id = serializers.IntegerField(read_only=True)
+    title = serializers.CharField(read_only=True)
+
+    class Meta(object):
+        """Meta options."""
+
+        # List the serializer fields. Note, that the order of the fields
+        # is preserved in the ViewSet.
+        fields = (
+            'id',
+            'title',
+            'description'
+        )
+
+    # def get_tags(self, obj):
+    #     """Get tags."""
+    #     if obj.tags:
+    #         return list(obj.tags)
+    #     else:
+    #         return []

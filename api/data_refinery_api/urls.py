@@ -87,6 +87,19 @@ class DatasetRoot(APIView):
             'create': reverse('create_dataset', request=request)
         })
 
+##
+# ES
+##
+from django.conf.urls import url, include
+from rest_framework.routers import DefaultRouter
+from data_refinery_api.views import ExperimentDocumentView
+
+router = DefaultRouter()
+router.register(r'',
+                    ExperimentDocumentView,
+                    base_name='experimentdocument')
+router.include_format_suffixes = False
+
 urlpatterns = [
     path('__debug__/', include(debug_toolbar.urls)),
 
@@ -130,6 +143,9 @@ urlpatterns = [
 
     # Core API schema docs
     url(r'^docs/', include_docs_urls(title='Refine.bio API'), name="docs_schema"),
+
+    # ES
+    url(r'^es/', include(router.urls)),
 
     # Root
     url(r'^$', APIRoot.as_view(), name="api_root"),
