@@ -114,7 +114,9 @@ from django_elasticsearch_dsl_drf.filter_backends import (
     OrderingFilterBackend,
     DefaultOrderingFilterBackend,
     SearchFilterBackend,
+    FacetedSearchFilterBackend
 )
+from elasticsearch_dsl import TermsFacet, DateHistogramFacet
 from .serializers import ExperimentDocumentSerializer
 from django_elasticsearch_dsl_drf.constants import (
     LOOKUP_FILTER_TERMS,
@@ -130,7 +132,7 @@ from django_elasticsearch_dsl_drf.constants import (
 )
 
 class ExperimentDocumentView(DocumentViewSet):
-    """The BookDocument view."""
+    """The ExperimentDocument view."""
 
     document = ExperimentDocument
     serializer_class = ExperimentDocumentSerializer
@@ -141,7 +143,8 @@ class ExperimentDocumentView(DocumentViewSet):
         FilteringFilterBackend,
         OrderingFilterBackend,
         DefaultOrderingFilterBackend,
-        SearchFilterBackend,
+        # SearchFilterBackend,
+        FacetedSearchFilterBackend
     ]
 
     # Define search fields
@@ -151,7 +154,6 @@ class ExperimentDocumentView(DocumentViewSet):
     )
 
     # Define filtering fields
-    filter_fields = {}
     filter_fields = {
         'id': {
             'field': '_id',
@@ -160,7 +162,7 @@ class ExperimentDocumentView(DocumentViewSet):
                 LOOKUP_QUERY_IN,
             ],
         },
-        'technology': 'technology.raw',
+        #'technology': 'technology',
         'has_publication': 'has_publication'
     }
 
@@ -177,13 +179,15 @@ class ExperimentDocumentView(DocumentViewSet):
     ordering = ('-num_total_samples', 'id', 'title', 'description')
 
     # Facets
+    # Trying via https://github.com/barseghyanartur/django-elasticsearch-dsl-drf/blob/03a3aa716db31868ca3a71340513a993741a4177/src/django_elasticsearch_dsl_drf/filter_backends/faceted_search.py#L24
     faceted_search_fields = {
-        'state_global': {
-            'field': 'state.raw',
-            'enabled': True,
-            'global': True,  # This makes the aggregation global
-        },
+        'technology': {
+            'field': 'technology',
+            'facet': TermsFacet,
+            'enabled': True
+        }
     }
+    faceted_search_param = 'facet'
 
 ##
 # Search and Filter

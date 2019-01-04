@@ -40,7 +40,11 @@ class ExperimentDocument(DocType):
     )
 
     # Basic Fields
-    technology = fields.TextField()
+    technology = fields.TextField(
+        analyzer=html_strip,
+        fielddata=True,
+        fields={'raw': fields.TextField()}
+    )
     accession_code = fields.TextField()
     alternate_accession_code = fields.TextField()
     submitter_institution = fields.TextField()
