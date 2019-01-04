@@ -491,9 +491,10 @@ def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFil
         early_tximport_min_percent = .80
 
         # However if an experiment is 100% complete we should always run tximport.
-        if num_quant_results == num_samples_in_experiment \
+        percent_complete = num_quant_results / num_samples_in_experiment
+        if percent_complete == 1.0 \
            or (num_samples_in_experiment > early_tximport_min_size \
-               and num_quant_results / num_samples_in_experiment > early_tximport_min_percent):
+               and percent_complete > early_tximport_min_percent):
             quant_files = []
             for result in salmon_quant_results:
                 quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])
@@ -566,16 +567,6 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
     result.save()
     job_context['pipeline'].steps.append(result.id)
 
-    # Associate this result with all samples in this experiment.
-    # TODO: This may not be completely sensible, because `tximport` is
-    # done at experiment level, not at sample level.
-    # Could be very problematic if SRA's data model allows many
-    # Experiments to one Run.
-    # https://github.com/AlexsLemonade/refinebio/issues/297
-    for sample in experiment.samples.all():
-        s_r = SampleResultAssociation(sample=sample, result=result)
-        s_r.save()
-
     rds_file = ComputedFile()
     rds_file.absolute_file_path = rds_file_path
     rds_file.filename = rds_filename
@@ -600,6 +591,15 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
 
         # The frame column header is based off of the path, which includes _output.
         sample = Sample.objects.get(accession_code=frame.columns.values[0].replace("_output", ""))
+
+        # Associate this result with all processed samples in this experiment.
+        # TODO: This may not be completely sensible, because `tximport` is
+        # done at experiment level, not at sample level.
+        # Could be very problematic if SRA's data model allows many
+        # Experiments to one Run.
+        # https://github.com/AlexsLemonade/refinebio/issues/297
+        s_r = SampleResultAssociation(sample=sample, result=result)
+        s_r.save()
 
         computed_file = ComputedFile()
         computed_file.absolute_file_path = frame_path
@@ -631,14 +631,38 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
         individual_files.append(computed_file)
         job_context['samples'].append(sample)
 
-    # Clean up quant.sf files that were created just for this.
-    for quant_file in quant_files:
-        quant_file.delete_s3_file()
+    # Clean up previous results if they exist. Note that we do this
+    # after, not before, creating new results. This is because it is
+    # better to have extra results and associations rather than none
+    # in the unlikely event of an interruption around this point.
+    try:
+        old_associations = ExperimentResultAssociation.objects.filter(experiment=experiment)
+        for old_association in old_associations:
+            old_result = old_association.result
 
-        # It's only okay to delete the local file because the full
-        # output directory has already been zipped up.
-        quant_file.delete_local_file()
-        quant_file.delete()
+            # Delete the old computed files and their associations
+            old_computed_files = ComputedFile.object.filter(result=old_result)
+            for old_computed_file in old_computed_files:
+                old_sample_associations = SampleComputedFileAssociation.objects.filter(
+                    computed_file=old_computed_file
+                )
+
+                for old_sample_association in old_sample_associations:
+                    old_sample_association.delete()
+
+                old_computed_file.delete_local_file(force=True)
+                old_computed_file.delete_s3_file()
+                old_computed_file.delete()
+
+            old_association.delete()
+            old_result.delete()
+    except Exception as e:
+        logger.exception(
+            "Error occurred while cleaning up old tximport results for an Experiment.",
+            experiment=experiment,
+            processor_job=job_context["job_id"]
+        )
+        # We shouldn't fail an otherwise successful job over this, so logging is all we gotta do.
 
     # Salmon-processed samples aren't marked as is_processed
     # until they are fully tximported, this value sets that
