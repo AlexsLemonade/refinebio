@@ -78,4 +78,8 @@ class ExperimentDocument(DocType):
         fields = [
            'id',
         ]
-        related_models = [Sample, Organism]
+        # related_models = [Sample, Organism]
+
+    # def get_instances_from_related(self, related_instance):
+    #     return related_instance.experts_set.all()
+

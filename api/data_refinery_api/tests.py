@@ -58,9 +58,17 @@ class APITestCases(APITestCase):
         # self.user = User.objects.create(username="mike")
 
         experiment = Experiment()
+        experiment.accession_code = "GSE000"
+        experiment.title = "NONONONO"
+        experiment.description = "Boooooourns. Wasabi."
+        experiment.technology = "RNA-SEQ"
+        experiment.save()
+
+        experiment = Experiment()
         experiment.accession_code = "GSE123"
         experiment.title = "Hey Ho Let's Go"
         experiment.description = "This is a very exciting test experiment. Faygo soda. Blah blah blah."
+        experiment.technology = "MICROARRAY"
         experiment.save()
         self.experiment = experiment
 
@@ -717,13 +725,26 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 500)
         mock_client.captureMessage.assert_called()
 
-    def test_es(self):
+    def test_es_basic(self):
         """ Test basic ES functionality """
-    
         es_search_result = ExperimentDocument.search().filter("term", description="soda")
         es_search_result_qs = es_search_result.to_queryset()
         self.assertEqual(len(es_search_result_qs), 1)
 
+    def test_es_endpoint(self):
+        """ Test basic ES functionality """
+        response = self.client.get('/es/')
+
+        # Sanity
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 18)
+
+        # Basic Search
+        response = self.client.get('/es/?search=soda')
+        self.assertEqual(response.json()['count'], 1)
+
+        response = self.client.get('/es/?search=Wasabi&technology=rna-seq')
+        self.assertEqual(response.json()['count'], 1)
 
 class ProcessorTestCases(APITestCase):
     def setUp(self):

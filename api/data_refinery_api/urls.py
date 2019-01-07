@@ -94,10 +94,15 @@ from django.conf.urls import url, include
 from rest_framework.routers import DefaultRouter
 from data_refinery_api.views import ExperimentDocumentView
 
+# TODO:
+# Move this to a custom router 
+# so we can use 'name' 
+# https://www.django-rest-framework.org/api-guide/routers/
 router = DefaultRouter()
 router.register(r'',
                     ExperimentDocumentView,
-                    base_name='experimentdocument')
+                    base_name='esearch',
+                    )
 router.include_format_suffixes = False
 
 urlpatterns = [
@@ -145,7 +150,7 @@ urlpatterns = [
     url(r'^docs/', include_docs_urls(title='Refine.bio API'), name="docs_schema"),
 
     # ES
-    url(r'^es/', include(router.urls), name="es_search"),
+    url(r'^es/', include(router.urls), name="esearch"),
 
     # Root
     url(r'^$', APIRoot.as_view(), name="api_root"),
