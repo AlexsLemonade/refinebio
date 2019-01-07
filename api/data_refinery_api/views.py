@@ -132,7 +132,18 @@ from django_elasticsearch_dsl_drf.constants import (
 )
 
 class ExperimentDocumentView(DocumentViewSet):
-    """The ExperimentDocument view."""
+    """ElasticSearch powered experiment search.
+
+    Search can be used by affixing:
+
+        ?search=medulloblastoma
+        ?id=1
+        ?search=medulloblastoma&technology=microarray&has_publication=true
+
+    Full examples can be found in the Django-ES-DSL-DRF docs:
+        https://django-elasticsearch-dsl-drf.readthedocs.io/en/0.17.1/filtering_usage_examples.html#filtering
+
+    """
 
     document = ExperimentDocument
     serializer_class = ExperimentDocumentSerializer
@@ -143,7 +154,7 @@ class ExperimentDocumentView(DocumentViewSet):
         FilteringFilterBackend,
         OrderingFilterBackend,
         DefaultOrderingFilterBackend,
-        # SearchFilterBackend,
+        SearchFilterBackend,
         FacetedSearchFilterBackend
     ]
 
@@ -151,6 +162,8 @@ class ExperimentDocumentView(DocumentViewSet):
     search_fields = (
         'title',
         'description',
+        'publication_authors',
+        'submitter_institution',
     )
 
     # Define filtering fields
@@ -162,7 +175,7 @@ class ExperimentDocumentView(DocumentViewSet):
                 LOOKUP_QUERY_IN,
             ],
         },
-        #'technology': 'technology',
+        'technology': 'technology',
         'has_publication': 'has_publication'
     }
 
@@ -185,7 +198,12 @@ class ExperimentDocumentView(DocumentViewSet):
             'field': 'technology',
             'facet': TermsFacet,
             'enabled': True
-        }
+        },
+        'organism_names': {
+            'field': 'organism_names',
+            'facet': TermsFacet,
+            'enabled': True
+        },
     }
     faceted_search_param = 'facet'
 

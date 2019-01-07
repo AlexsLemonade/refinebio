@@ -145,7 +145,7 @@ urlpatterns = [
     url(r'^docs/', include_docs_urls(title='Refine.bio API'), name="docs_schema"),
 
     # ES
-    url(r'^es/', include(router.urls)),
+    url(r'^es/', include(router.urls), name="es_search"),
 
     # Root
     url(r'^$', APIRoot.as_view(), name="api_root"),

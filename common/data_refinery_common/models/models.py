@@ -285,6 +285,7 @@ class Experiment(models.Model):
     num_total_samples = models.IntegerField(default=0)
     num_processed_samples = models.IntegerField(default=0)
     sample_metadata_fields = ArrayField(models.TextField(), default=list)
+    organism_names = ArrayField(models.TextField(), default=list)
 
     # Common Properties
     is_public = models.BooleanField(default=True)
@@ -360,10 +361,18 @@ class Experiment(models.Model):
     def update_sample_metadata_fields(self):
         self.sample_metadata_fields = self.get_sample_metadata_fields()
 
+    def update_organism_names(self):
+        self.organism_names = self.get_organism_names()
+
     def get_sample_technologies(self):
         """ Get a list of unique technologies for all of the associated samples
         """
         return list(set([sample.technology for sample in self.samples.all()]))
+
+    def get_organism_names(self):
+        """ Get a list of unique technologies for all of the associated samples
+        """
+        return list(set([organism.name for organism in self.organisms.all()]))
 
     @property
     def platforms(self):

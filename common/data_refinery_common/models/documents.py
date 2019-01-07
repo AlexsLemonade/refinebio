@@ -32,8 +32,12 @@ class ExperimentDocument(DocType):
         fielddata=True,
         fields={'raw': fields.KeywordField()}
     )
-
     description = fields.TextField(
+        analyzer=html_strip,
+        fielddata=True,
+        fields={'raw': fields.KeywordField()}
+    )
+    publication_authors = fields.TextField(
         analyzer=html_strip,
         fielddata=True,
         fields={'raw': fields.KeywordField()}
@@ -43,13 +47,18 @@ class ExperimentDocument(DocType):
     technology = fields.TextField(
         analyzer=html_strip,
         fielddata=True,
-        fields={'raw': fields.TextField()}
+        fields={'raw': fields.KeywordField()}
     )
+    organism_names = fields.TextField(
+        analyzer=html_strip,
+        fielddata=True,
+        fields={'raw': fields.KeywordField()}
+    )
+
     accession_code = fields.TextField()
     alternate_accession_code = fields.TextField()
     submitter_institution = fields.TextField()
     publication_doi = fields.TextField()
-    publication_authors = fields.TextField()
     has_publication = fields.BooleanField()
     sample_metadata_fields = fields.TextField()
     pubmed_id = fields.TextField()
@@ -57,11 +66,11 @@ class ExperimentDocument(DocType):
     num_processed_samples = fields.IntegerField()
 
     # FK/M2M
-    organisms = fields.NestedField(properties={
-        'name': fields.TextField(),
-        'taxonomy_id': fields.IntegerField(),
-        'pk': fields.IntegerField(),
-    })
+    # organisms = fields.NestedField(properties={
+    #     'name': fields.KeywordField(),
+    #     'taxonomy_id': fields.IntegerField(),
+    #     'pk': fields.IntegerField(),
+    # })
 
     class Meta:
         model = Experiment
