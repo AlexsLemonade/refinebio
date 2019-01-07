@@ -25,6 +25,7 @@ from data_refinery_common.models import (
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
     Sample,
+    SampleResultAssociation,
     SurveyJob,
 )
 from data_refinery_workers.processors import salmon, utils
@@ -703,3 +704,195 @@ class RuntimeProcessorTest(TestCase):
 
         # Change yml filename back
         utils.ProcessorEnum['SALMONTOOLS'].value['yml_file'] = original_yml_file
+
+
+class SalmonTestCase(TestCase):
+    @tag('salmon')
+    def test_tximport_numerical_cutoff(self):
+        """Tests logic for determining if tximport should be run early.
+
+        This test is verifying that tximport won't run if the
+        experiment has too few samples in it to be elegible.
+
+        The general strategy for this test is:
+          1. Create an Experiment that has (min - 1) total samples where
+             (min - 3) samples have already been processed.
+          2. Then we'll process the (min - 2)th sample, which means that
+             all but one samples are processed. This should have been
+             sufficient to take us across the min percent threshold.
+          3. Verify that tximport wasn't run despite the experiment
+             qualifying based on percentage completed, which means the
+             number of samples in the experiment effectively prevented
+             tximport from being run.
+        """
+        # Set up organism index database objects.
+        prepare_organism_indices()
+
+        # Create the experiment
+        experiment_accession = 'SRP173638'
+        experiment = Experiment.objects.create(accession_code=experiment_accession)
+
+        c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+
+        last_sample = Sample.objects.create(accession_code="SRR8330422", organism=c_elegans)
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=last_sample)
+
+        # fake_sample record (created to prevent 100% completion which would trigger tximport)
+        fake_sample = Sample.objects.create(accession_code='fake_sample', organism=c_elegans)
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=fake_sample)
+
+        experiment_dir = '/home/user/data_store/salmon_tests/' + experiment_accession
+
+        last_og = OriginalFile()
+        last_og.absolute_file_path = os.path.join(experiment_dir, 'SRR8330422.fastq.gz')
+        last_og.filename = "SRR8330422.fastq.gz"
+        last_og.save()
+
+        OriginalFileSampleAssociation.objects.create(original_file=last_og, sample=last_sample).save()
+
+        job_context = salmon._prepare_files({"job_dir_prefix": "TEST",
+                                             "job_id": "TEST",
+                                             'pipeline': Pipeline(name="Salmon"),
+                                             'computed_files': [],
+                                             "original_files": [last_og]})
+
+        # Now create (min - 3) samples that have already been
+        # processed along with their associated ComputedFiles and
+        # ComputationalResults.
+        for i in range(salmon.EARLY_TXIMPORT_MIN_SIZE - 3):
+            sample = Sample.objects.create(accession_code="test_" + str(i), organism=c_elegans)
+            ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
+
+            result = ComputationalResult()
+            result.is_ccdl = True
+            processor_key = "SALMON_QUANT"
+            result.processor = utils.find_processor(processor_key)
+            result.save()
+
+            quant_file = ComputedFile()
+            quant_file.filename = "quant.sf"
+            quant_file.absolute_file_path = job_context["output_directory"] + "quant.sf"
+            quant_file.is_public = False
+            quant_file.is_smashable = False
+            quant_file.is_qc = False
+            quant_file.result = result
+            quant_file.size_in_bytes = 12345
+            quant_file.save()
+
+            SampleResultAssociation.objects.get_or_create(
+                sample=sample,
+                result=result
+            )
+
+        # Clean up if there were previous tests, but we still need that directory.
+        shutil.rmtree(job_context['output_directory'], ignore_errors=True)
+        os.makedirs(job_context["output_directory"], exist_ok=True)
+        job_context = salmon._determine_index_length(job_context)
+        job_context = salmon._find_or_download_index(job_context)
+
+        # Actually run salmon on the second to last sample in the experiment.
+        job_context = salmon._run_salmon(job_context)
+
+        # Confirm that this experiment is not ready for tximport yet,
+        # because `salmon quant` is not run on 'fake_sample' and it
+        # doens't have enough samples to have tximport run early.
+        self.assertFalse("tximported" in job_context)
+
+    @tag('salmon')
+    def test_tximport_percentage_cutoff(self):
+        """Tests logic for determining if tximport should be run early.
+
+        This test is verifying that tximport won't run if the
+        experiment has too few samples processed to be elegible.
+
+        The general strategy for this test is:
+          1. Create an Experiment that has the minimum total samples
+             necessary for tximport to potentially be run early except
+             that only 60% of the samples have already been processed.
+          2. Then we'll process one more sample, which won't be enough
+             to cross the minimum percentage necessary for tximport to
+             be run early.
+          3. Verify that tximport wasn't run despite the experiment
+             qualifying based on its number of samples, which means the
+             percentage of processed samples in the experiment
+             effectively prevented tximport from being run.
+        """
+        # Set up organism index database objects.
+        prepare_organism_indices()
+
+        # Create the experiment
+        experiment_accession = 'SRP173638'
+        experiment = Experiment.objects.create(accession_code=experiment_accession)
+
+        c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+
+        last_sample = Sample.objects.create(accession_code="SRR8330422", organism=c_elegans)
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=last_sample)
+
+        # fake_sample record (created to prevent 100% completion which would trigger tximport)
+        fake_sample = Sample.objects.create(accession_code='fake_sample', organism=c_elegans)
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=fake_sample)
+
+        experiment_dir = '/home/user/data_store/salmon_tests/' + experiment_accession
+
+        last_og = OriginalFile()
+        last_og.absolute_file_path = os.path.join(experiment_dir, 'SRR8330422.fastq.gz')
+        last_og.filename = "SRR8330422.fastq.gz"
+        last_og.save()
+
+        OriginalFileSampleAssociation.objects.create(original_file=last_og, sample=last_sample).save()
+
+        job_context = salmon._prepare_files({"job_dir_prefix": "TEST",
+                                             "job_id": "TEST",
+                                             'pipeline': Pipeline(name="Salmon"),
+                                             'computed_files': [],
+                                             "original_files": [last_og]})
+
+        # Now create 60% samples that have already been
+        # processed along with their associated ComputedFiles and
+        # ComputationalResults.
+        sixty_percent = int((salmon.EARLY_TXIMPORT_MIN_SIZE * 0.60))
+        for i in range(sixty_percent):
+            sample = Sample.objects.create(accession_code="processed_" + str(i), organism=c_elegans)
+            ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
+
+            result = ComputationalResult()
+            result.is_ccdl = True
+            processor_key = "SALMON_QUANT"
+            result.processor = utils.find_processor(processor_key)
+            result.save()
+
+            quant_file = ComputedFile()
+            quant_file.filename = "quant.sf"
+            quant_file.absolute_file_path = job_context["output_directory"] + "quant.sf"
+            quant_file.is_public = False
+            quant_file.is_smashable = False
+            quant_file.is_qc = False
+            quant_file.result = result
+            quant_file.size_in_bytes = 12345
+            quant_file.save()
+
+            SampleResultAssociation.objects.get_or_create(
+                sample=sample,
+                result=result
+            )
+
+        # Now create the remaining samples which haven't been
+        # processed and also aren't the one we're about to process.
+        for i in range(salmon.EARLY_TXIMPORT_MIN_SIZE - sixty_percent - 1):
+            sample = Sample.objects.create(accession_code="unprocessed_" + str(i), organism=c_elegans)
+            ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
+
+        # Clean up if there were previous tests, but we still need that directory.
+        shutil.rmtree(job_context['output_directory'], ignore_errors=True)
+        os.makedirs(job_context["output_directory"], exist_ok=True)
+        job_context = salmon._determine_index_length(job_context)
+        job_context = salmon._find_or_download_index(job_context)
+
+        # Actually run salmon on the second to last sample in the experiment.
+        job_context = salmon._run_salmon(job_context)
+
+        # Confirm that this experiment is not ready for tximport yet,
+        # because `salmon quant` is not run on 'fake_sample' and it
+        # doens't have enough samples to have tximport run early.
+        self.assertFalse("tximported" in job_context)
