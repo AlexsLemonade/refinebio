@@ -24,6 +24,7 @@ from data_refinery_common.models import (
     ComputationalResultAnnotation,
     ComputedFile,
     Experiment,
+    ExperimentResultAssociation,
     ExperimentSampleAssociation,
     OrganismIndex,
     Pipeline,
@@ -42,6 +43,27 @@ logger = get_and_configure_logger(__name__)
 JOB_DIR_PREFIX = "processor_job_"
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
+
+
+
+# Some experiments won't be entirely processed, but we'd still like to
+# make the samples we can process available. This means we need to run
+# tximport on the experiment before 100% of the samples are processed
+# individually.
+# This idea has been discussed here: https://github.com/AlexsLemonade/refinebio/issues/909
+
+# The consensus is that this is a good idea, but that we need a cutoff
+# to determine which experiments have enough data to have tximport run
+# on them early.  Candace ran an experiment to find these cutoff
+# values and recorded the results of this experiment here:
+# https://github.com/AlexsLemonade/tximport_partial_run_tests/pull/3
+
+# The gist of that discussion/experiment is that we need two cutoff
+# values, one for a minimum size experiment that can be processed
+# early and the percentage of completion necessary before we start
+# running tximport on the experiment. The values we decided on are:
+EARLY_TXIMPORT_MIN_SIZE = 20
+EARLY_TXIMPORT_MIN_PERCENT = .80
 
 
 def _set_job_prefix(job_context: Dict) -> Dict:
@@ -442,7 +464,6 @@ def _find_salmon_quant_results(experiment: Experiment):
     results = []
     for sample in experiment.samples.all():
         for result in sample.results.order_by('-created_at').all():
-            # TODO: this will break when we want to run for a new version.
             if result.processor.name == utils.ProcessorEnum.SALMON_QUANT.value['name']:
                 results.append(result)
                 break
@@ -469,32 +490,14 @@ def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFil
         num_quant_results = len(salmon_quant_results)
         num_samples_in_experiment = experiment.samples.count()
 
-        # Some experiments won't be entirely processed, but we'd still
-        # like to make the samples we can process available. This
-        # means we need to run tximport on the experiment before 100%
-        # of the samples are processed individually.
-        # This idea has been discussed here: https://github.com/AlexsLemonade/refinebio/issues/909
-
-        # The consensus is that this is a good idea, but that we need
-        # a cutoff to determine which experiments have enough data to
-        # have tximport run on them early.  Candace ran an experiment
-        # to find these cutoff values and recorded the results of this
-        # experiment here:
-        # https://github.com/AlexsLemonade/tximport_partial_run_tests/pull/3
-
-        # The gist of that discussion/experiment is that we need two
-        # cutoff values, one for a minimum size experiment that can be
-        # processed early and the percentage of completion necessary
-        # before we start running tximport on the experiment. The
-        # values we decided on are:
-        early_tximport_min_size = 20
-        early_tximport_min_percent = .80
-
-        # However if an experiment is 100% complete we should always run tximport.
+        # If an experiment is 100% complete we should always run tximport.
+        # Otherwise we use EARLY_TXIMPORT_MIN_SIZE and
+        # EARLY_TXIMPORT_MIN_PERCENT to determine if tximport should be
+        # run. See the definitions of those values for more context.
         percent_complete = num_quant_results / num_samples_in_experiment
         if percent_complete == 1.0 \
-           or (num_samples_in_experiment > early_tximport_min_size \
-               and percent_complete > early_tximport_min_percent):
+           or (num_samples_in_experiment > EARLY_TXIMPORT_MIN_SIZE \
+               and percent_complete > EARLY_TXIMPORT_MIN_PERCENT):
             quant_files = []
             for result in salmon_quant_results:
                 quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])
