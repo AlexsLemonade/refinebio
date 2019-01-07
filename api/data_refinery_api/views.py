@@ -113,7 +113,7 @@ from django_elasticsearch_dsl_drf.filter_backends import (
     IdsFilterBackend,
     OrderingFilterBackend,
     DefaultOrderingFilterBackend,
-    SearchFilterBackend,
+    CompoundSearchFilterBackend,
     FacetedSearchFilterBackend
 )
 from elasticsearch_dsl import TermsFacet, DateHistogramFacet
@@ -154,7 +154,7 @@ class ExperimentDocumentView(DocumentViewSet):
         FilteringFilterBackend,
         OrderingFilterBackend,
         DefaultOrderingFilterBackend,
-        SearchFilterBackend,
+        CompoundSearchFilterBackend,
         FacetedSearchFilterBackend
     ]
 
