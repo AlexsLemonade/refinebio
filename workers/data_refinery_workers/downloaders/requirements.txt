@@ -19,3 +19,8 @@ requests==2.20.0
 retrying==1.3.3
 six==1.11.0               # via retrying
 urllib3==1.23             # via requests
+
+# For ElasticSearch support:
+django-elasticsearch-dsl==0.5.1
+elasticsearch==6.2.0
+elasticsearch-dsl==6.1.0
