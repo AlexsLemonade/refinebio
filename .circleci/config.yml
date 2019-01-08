@@ -23,6 +23,9 @@ jobs:
       # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
       - run: ./update_models.sh
+      
+      # Update ES models
+      - run: ./run_manage.sh search_index --rebuild -f;
 
         # Install Nomad
       - run: sudo ./install_nomad.sh
