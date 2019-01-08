@@ -198,7 +198,8 @@ def end_job(job_context: Dict, abort=False):
                 for sample in job_context.get("samples", []):
                     sample.is_processed = True
                     sample.save()
-                    unique_experiments = set(unique_experiments.append(sample.experiments.all()))
+                    if sample.experiments.all().count() > 0:
+                        unique_experiments = set(unique_experiments.append(sample.experiments.all()))
 
                 # Explicitly for the single-salmon scenario
                 if 'sample' in job_context:
