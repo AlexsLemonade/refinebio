@@ -310,10 +310,10 @@ class SearchAndFilter(generics.ListAPIView):
     def get_queryset(self):
 
         # For Prod:
-        # queryset = Experiment.processed_public_objects.all()
+        queryset = Experiment.processed_public_objects.all()
 
         # For Dev:
-        queryset = Experiment.objects.all()
+        # queryset = Experiment.objects.all()
 
         # Set up eager loading to avoid N+1 selects
         queryset = self.get_serializer_class().setup_eager_loading(queryset)

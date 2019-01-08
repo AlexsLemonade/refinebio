@@ -195,9 +195,16 @@ ELASTICSEARCH_DSL = {
         'hosts': 'elasticsearch:9200'
     }
 }
-ELASTICSEARCH_INDEX_NAMES = {
-    'data_refinery_common.models.documents': 'experiments',
-}
+
+import sys
+if 'test' in sys.argv:
+    ELASTICSEARCH_INDEX_NAMES = {
+            'data_refinery_common.models.documents': 'experiments_test',
+        }
+else:
+    ELASTICSEARCH_INDEX_NAMES = {
+        'data_refinery_common.models.documents': 'experiments_test',
+    }
 
 
 # DRF
