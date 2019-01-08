@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
+import sys
 from django.core.exceptions import ImproperlyConfigured
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 
@@ -41,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.postgres',
+    'django_elasticsearch_dsl',
     'data_refinery_common',
     'data_refinery_workers.downloaders',
     'data_refinery_workers.processors',
@@ -158,3 +160,19 @@ else:
     raven_logger.setLevel(logging.CRITICAL)
 
 RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD') == "True"
+
+# Elastic Search
+ELASTICSEARCH_DSL = {
+    'default': {
+        'hosts': 'elasticsearch:9200'
+    }
+}
+
+if 'test' in sys.argv:
+    ELASTICSEARCH_INDEX_NAMES = {
+            'data_refinery_common.models.documents': 'experiments_test',
+        }
+else:
+    ELASTICSEARCH_INDEX_NAMES = {
+        'data_refinery_common.models.documents': 'experiments_test',
+    }

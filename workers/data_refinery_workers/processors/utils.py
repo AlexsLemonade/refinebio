@@ -194,15 +194,21 @@ def end_job(job_context: Dict, abort=False):
 
             if mark_as_processed:
                 # This handles most of our cases
+                unique_experiments = []
                 for sample in job_context.get("samples", []):
                     sample.is_processed = True
                     sample.save()
+                    unique_experiments = set(unique_experiments.append(sample.experiments.all()))
 
                 # Explicitly for the single-salmon scenario
                 if 'sample' in job_context:
                     sample = job_context['sample']
                     sample.is_processed = True
                     sample.save()
+
+                for experiment in unique_experiments:
+                    experiment.update_num_samples()
+                    experiment.save()
 
     # If we are aborting, it's because we want to do something
     # different, so leave the original files so that "something

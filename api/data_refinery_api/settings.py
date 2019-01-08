@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
+import sys
 from django.core.exceptions import ImproperlyConfigured
 
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
@@ -196,7 +197,6 @@ ELASTICSEARCH_DSL = {
     }
 }
 
-import sys
 if 'test' in sys.argv:
     ELASTICSEARCH_INDEX_NAMES = {
             'data_refinery_common.models.documents': 'experiments_test',
