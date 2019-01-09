@@ -290,7 +290,11 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         all_new_species = []
         if organism_name:
             for species in specieses:
-                if species['species'] == organism_name:
+                # This key varies based on whether the division is the
+                # main one or not... why couldn't they just make them
+                # consistent?
+                if ('species' in species and species['species'] == organism_name) \
+                   or ('name' in species and species['name'] == organism_name):
                     all_new_species.append(self._generate_files(species))
                     break
         else:

@@ -42,9 +42,9 @@ class SurveyTestCase(TestCase):
 
     def test_correct_index_location(self):
         """ Tests that the files returned actually exist.
-        This will break whenever this is a new Ensembl release.
-        """
 
+        Uses an organism in the main division.
+        """
         survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
         survey_job.save()
         self.survey_job = survey_job
@@ -62,6 +62,30 @@ class SurveyTestCase(TestCase):
         surveyor = TranscriptomeIndexSurveyor(self.survey_job)
         files = surveyor.discover_species()[0]
 
-        # This will URLError/550 is there is a new release
+        for file in files:
+            urllib.request.urlopen(file.source_url)
+
+    def test_correct_index_location_metazoa(self):
+        """ Tests that the files returned actually exist.
+
+        Tests the Metazoa division instead of the main division.
+        """
+        survey_job = SurveyJob(source_type="TRANSCRIPTOME_INDEX")
+        survey_job.save()
+        self.survey_job = survey_job
+
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                           key="ensembl_division",
+                                           value="EnsemblMetazoa")
+        key_value_pair.save()
+
+        key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
+                                                key="organism_name",
+                                                value="Caenorhabditis elegans")
+        key_value_pair.save()
+
+        surveyor = TranscriptomeIndexSurveyor(self.survey_job)
+        files = surveyor.discover_species()[0]
+
         for file in files:
             urllib.request.urlopen(file.source_url)
