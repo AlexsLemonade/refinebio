@@ -9,8 +9,30 @@ from django.db.models.expressions import F, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django_elasticsearch_dsl_drf.constants import (
+    LOOKUP_FILTER_TERMS,
+    LOOKUP_FILTER_RANGE,
+    LOOKUP_FILTER_PREFIX,
+    LOOKUP_FILTER_WILDCARD,
+    LOOKUP_QUERY_IN,
+    LOOKUP_QUERY_GT,
+    LOOKUP_QUERY_GTE,
+    LOOKUP_QUERY_LT,
+    LOOKUP_QUERY_LTE,
+    LOOKUP_QUERY_EXCLUDE,
+)
+from django_elasticsearch_dsl_drf.viewsets import DocumentViewSet
+from django_elasticsearch_dsl_drf.filter_backends import (
+    FilteringFilterBackend,
+    IdsFilterBackend,
+    OrderingFilterBackend,
+    DefaultOrderingFilterBackend,
+    CompoundSearchFilterBackend,
+    FacetedSearchFilterBackend
+)
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
+from elasticsearch_dsl import TermsFacet, DateHistogramFacet
 from rest_framework import status, filters, generics
 from rest_framework.exceptions import APIException
 from rest_framework.exceptions import ValidationError
@@ -66,6 +88,7 @@ from data_refinery_common.models.documents import (
     ExperimentDocument
 )
 from data_refinery_common.utils import get_env_variable, get_active_volumes
+from .serializers import ExperimentDocumentSerializer
 
 
 ##
@@ -106,31 +129,6 @@ class PaginatedAPIView(APIView):
 # ElasticSearch
 ##
 
-from django_elasticsearch_dsl_drf.viewsets import DocumentViewSet
-from data_refinery_common.models.documents import ExperimentDocument
-from django_elasticsearch_dsl_drf.filter_backends import (
-    FilteringFilterBackend,
-    IdsFilterBackend,
-    OrderingFilterBackend,
-    DefaultOrderingFilterBackend,
-    CompoundSearchFilterBackend,
-    FacetedSearchFilterBackend
-)
-from elasticsearch_dsl import TermsFacet, DateHistogramFacet
-from .serializers import ExperimentDocumentSerializer
-from django_elasticsearch_dsl_drf.constants import (
-    LOOKUP_FILTER_TERMS,
-    LOOKUP_FILTER_RANGE,
-    LOOKUP_FILTER_PREFIX,
-    LOOKUP_FILTER_WILDCARD,
-    LOOKUP_QUERY_IN,
-    LOOKUP_QUERY_GT,
-    LOOKUP_QUERY_GTE,
-    LOOKUP_QUERY_LT,
-    LOOKUP_QUERY_LTE,
-    LOOKUP_QUERY_EXCLUDE,
-)
-
 class ExperimentDocumentView(DocumentViewSet):
     """ElasticSearch powered experiment search.
 
@@ -148,8 +146,7 @@ class ExperimentDocumentView(DocumentViewSet):
     document = ExperimentDocument
     serializer_class = ExperimentDocumentSerializer
 
-    lookup_field = 'id'
-
+    # Filter backends provide different functionality we want
     filter_backends = [
         FilteringFilterBackend,
         OrderingFilterBackend,
@@ -158,7 +155,11 @@ class ExperimentDocumentView(DocumentViewSet):
         FacetedSearchFilterBackend
     ]
 
+    # Primitive
+    lookup_field = 'id'
+
     # Define search fields
+    # Is this exhaustive enough?
     search_fields = (
         'title',
         'description',
@@ -192,12 +193,12 @@ class ExperimentDocumentView(DocumentViewSet):
     ordering = ('-num_total_samples', 'id', 'title', 'description')
 
     # Facets
-    # Trying via https://github.com/barseghyanartur/django-elasticsearch-dsl-drf/blob/03a3aa716db31868ca3a71340513a993741a4177/src/django_elasticsearch_dsl_drf/filter_backends/faceted_search.py#L24
+    # More information here: https://github.com/barseghyanartur/django-elasticsearch-dsl-drf/blob/03a3aa716db31868ca3a71340513a993741a4177/src/django_elasticsearch_dsl_drf/filter_backends/faceted_search.py#L24
     faceted_search_fields = {
         'technology': {
             'field': 'technology',
             'facet': TermsFacet,
-            'enabled': True
+            'enabled': True # These are enabled by default, which is more expensive but more simple.
         },
         'organism_names': {
             'field': 'organism_names',

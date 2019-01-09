@@ -601,21 +601,8 @@ class APITokenSerializer(serializers.ModelSerializer):
                     }
 
 ##
-# ES
+# ElasticSearch Document Serializers
 ##
-
-class StringArrayField(serializers.ListField):
-    """
-    String representation of an array field.
-    """
-    def to_representation(self, obj):
-        obj = super().to_representation(obj)
-        # convert list to string
-        return ",".join([str(element) for element in obj])
-
-    def to_internal_value(self, data):
-        data = data.split(",")  # convert string to list
-        return super().to_internal_value(self, data)
 
 class ExperimentDocumentSerializer(serializers.Serializer):
     """Serializer for the Experiment document."""
@@ -623,13 +610,12 @@ class ExperimentDocumentSerializer(serializers.Serializer):
     # PK
     id = serializers.IntegerField(read_only=True)
 
-    #  Complex
+    #  Complex (Keyword)
     title = serializers.CharField(read_only=True)
     publication_title = serializers.CharField(read_only=True)
     description = serializers.CharField(read_only=True)
 
     # Simple
-    technology = serializers.CharField(read_only=True)
     technology = serializers.CharField(read_only=True)
     accession_code = serializers.CharField(read_only=True)
     alternate_accession_code = serializers.CharField(read_only=True)
@@ -644,17 +630,5 @@ class ExperimentDocumentSerializer(serializers.Serializer):
     num_processed_samples = serializers.IntegerField(read_only=True)
 
     # FK/M2M
+    # We don't use any ForgeinKey serializers right now, but if we did, we'd do it like this:
     # organisms = OrganismSerializer(many=True)
-
-    class Meta(object):
-        """Meta options."""
-
-        # List the serializer fields. Note, that the order of the fields
-        # is preserved in the ViewSet.
-        fields = (
-            'id',
-            'title',
-            'description',
-            'technology',
-            'organisms'
-        )
