@@ -4,6 +4,7 @@ psycopg2-binary
 boto3
 retrying
 python-nomad>=1.0.2
+pyyaml>=4.2b1
 coveralls
 multiqc
 numpy
