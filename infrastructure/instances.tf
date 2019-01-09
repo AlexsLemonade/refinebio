@@ -624,6 +624,11 @@ data "template_file" "pg_bouncer_script_smusher" {
 # ElasticSearch
 ##
 
+# Related: https://github.com/terraform-providers/terraform-provider-aws/issues/5218
+resource "aws_iam_service_linked_role" "es" {
+  aws_service_name = "es.amazonaws.com"
+}
+
 resource "aws_elasticsearch_domain" "es" {
   domain_name = "es-${var.user}-${var.stage}"
   elasticsearch_version = "6.3"
