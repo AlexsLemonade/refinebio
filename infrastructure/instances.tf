@@ -635,7 +635,9 @@ resource "aws_elasticsearch_domain" "es" {
   }
 
   vpc_options {
-      subnet_ids = "${aws_subnet.data_refinery_1a.id}"
+      subnet_ids = [
+          "${aws_subnet.data_refinery_1a.id}"
+      ]
       security_group_ids = [
           "${aws_security_group.data_refinery_es.id}"
       ]
@@ -654,7 +656,7 @@ resource "aws_elasticsearch_domain" "es" {
           "Action": "es:*",
           "Principal": "*",
           "Effect": "Allow",
-          "Resource": "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.es_domain}/*"
+          "Resource": "arn:aws:es:::domain/es-${var.user}-${var.stage}/*"
       }
   ]
 }
