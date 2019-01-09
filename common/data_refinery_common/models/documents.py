@@ -19,7 +19,8 @@ html_strip = analyzer(
 
 @experiment_index.doc_type
 class ExperimentDocument(DocType):
-    """Experiment elasticsearch document"""
+    """ Our Experiment ElasticSearch Document, which
+    corresponds to our Experiment model. """
 
     # Keyword Fields
     title = fields.TextField(
@@ -42,8 +43,6 @@ class ExperimentDocument(DocType):
         fielddata=True,
         fields={'raw': fields.KeywordField()}
     )
-
-    # Basic Fields
     technology = fields.TextField(
         analyzer=html_strip,
         fielddata=True,
@@ -55,6 +54,7 @@ class ExperimentDocument(DocType):
         fields={'raw': fields.KeywordField()}
     )
 
+    # Basic Fields
     accession_code = fields.TextField()
     alternate_accession_code = fields.TextField()
     submitter_institution = fields.TextField()
@@ -66,11 +66,18 @@ class ExperimentDocument(DocType):
     num_processed_samples = fields.IntegerField()
 
     # FK/M2M
+    # We actually don't use any ForeignKeys in our Experiment document,
+    # but if we did, we'd do it like this. The function is similarly requirement,
+    # as is the `related_models` field in the Meta class.
+
     # organisms = fields.NestedField(properties={
     #     'name': fields.KeywordField(),
     #     'taxonomy_id': fields.IntegerField(),
     #     'pk': fields.IntegerField(),
     # })
+    # 
+    # def get_instances_from_related(self, related_instance):
+    #     return related_instance.experts_set.all()
 
     class Meta:
         model = Experiment
@@ -79,7 +86,3 @@ class ExperimentDocument(DocType):
            'id',
         ]
         # related_models = [Sample, Organism]
-
-    # def get_instances_from_related(self, related_instance):
-    #     return related_instance.experts_set.all()
-

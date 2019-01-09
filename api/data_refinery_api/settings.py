@@ -203,7 +203,7 @@ if 'test' in sys.argv:
         }
 else:
     ELASTICSEARCH_INDEX_NAMES = {
-        'data_refinery_common.models.documents': 'experiments_test',
+        'data_refinery_common.models.documents': 'experiments',
     }
 
 
