@@ -164,7 +164,7 @@ def ensembl_url_builder_factory(species: Dict) -> EnsemblUrlBuilder:
         return EnsemblProtistsUrlBuilder(species)
     elif species["division"] == "EnsemblFungi":
         return EnsemblFungiUrlBuilder(species)
-    elif species["division"] == "Ensembl":
+    elif species["division"] == "EnsemblVertebrates":
         return MainEnsemblUrlBuilder(species)
     else:
         return EnsemblUrlBuilder(species)
