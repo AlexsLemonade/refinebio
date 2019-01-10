@@ -87,7 +87,9 @@ resource "aws_instance" "nomad_server_1" {
   # I think these are the defaults provided in terraform examples.
   root_block_device = {
     volume_type = "gp2"
-    volume_size = 100
+    # This depends on the instance type, else you'll get this error:
+    #   * aws_elasticsearch_domain.es: LimitExceededException: Volume size must be between 10 and 35 for t2.medium.elasticsearch instance type and elasticsearch version 6.3
+    volume_size = 10
   }
 }
 
