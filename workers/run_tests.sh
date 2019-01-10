@@ -63,10 +63,9 @@ test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 if [[ -z $tag || $tag == "salmon" ]]; then
     # Download "salmon quant" test data
 
-    # TODO: rename the test_data_new to test_data and remove check for
-    # the new file. These are here temporarily so other branches'
-    # tests don't break.
-    if [[ ! -e $volume_directory/salmon_tests || ! -e $volume_directory/salmon_tests/newer ]]; then
+    # TODO: Remove check for the new file. It is here temporarily so
+    # other branches' tests don't break.
+    if [[ ! -e $volume_directory/salmon_tests || -e $volume_directory/salmon_tests/newer ]]; then
         echo "Downloading 'salmon quant' test data..."
         wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests_newer.tar.gz
         tar xzf $volume_directory/salmon_tests.tar.gz -C $volume_directory
@@ -74,12 +73,20 @@ if [[ -z $tag || $tag == "salmon" ]]; then
     fi
 
     # Download salmontools test data
-    rm -rf $volume_directory/salmontools/
-    git clone https://github.com/dongbohu/salmontools_tests.git $volume_directory/salmontools
+    if [[ -d "$volume_directory/salmontools" ]]; then
+        # Do this in a subshell so we don't change directories
+        echo $(cd "$volume_directory/salmontools" && git pull)
+    else
+        git clone https://github.com/dongbohu/salmontools_tests.git $volume_directory/salmontools
+    fi
 
     # Download tximport test data
-    rm -rf $volume_directory/tximport_test/
-    git clone https://github.com/dongbohu/tximport_test.git $volume_directory/tximport_test
+    if [[ -d "$volume_directory/tximport_test" ]]; then
+        # Do this in a subshell so we don't change directories
+        echo $(cd "$volume_directory/salmontools" && git pull)
+    else
+        git clone https://github.com/dongbohu/tximport_test.git $volume_directory/tximport_test
+    fi
 
     # Make sure data for Salmon test is downloaded from S3.
     rna_seq_test_raw_dir="$volume_directory/raw/TEST/SALMON"
