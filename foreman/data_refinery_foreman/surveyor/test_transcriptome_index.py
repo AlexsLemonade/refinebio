@@ -81,7 +81,7 @@ class SurveyTestCase(TestCase):
 
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
                                                 key="organism_name",
-                                                value="Caenorhabditis elegans")
+                                                value="Octopus bimaculoides")
         key_value_pair.save()
 
         surveyor = TranscriptomeIndexSurveyor(self.survey_job)
