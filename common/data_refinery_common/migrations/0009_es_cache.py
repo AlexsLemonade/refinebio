@@ -17,7 +17,7 @@ def update_cached_values(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0008_auto_20190104_2135.py'),
+        ('data_refinery_common', '0008_auto_20190104_2135'),
     ]
 
     operations = [
