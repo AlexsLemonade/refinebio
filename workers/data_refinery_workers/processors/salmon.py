@@ -644,7 +644,7 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
             old_result = old_association.result
 
             # Delete the old computed files and their associations
-            old_computed_files = ComputedFile.object.filter(result=old_result)
+            old_computed_files = ComputedFile.objects.filter(result=old_result)
             for old_computed_file in old_computed_files:
                 old_sample_associations = SampleComputedFileAssociation.objects.filter(
                     computed_file=old_computed_file
@@ -666,6 +666,12 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
             processor_job=job_context["job_id"]
         )
         # We shouldn't fail an otherwise successful job over this, so logging is all we gotta do.
+
+    # Now make the new association.
+    era = ExperimentResultAssociation()
+    era.experiment = experiment
+    era.result = result
+    era.save()
 
     # Salmon-processed samples aren't marked as is_processed
     # until they are fully tximported, this value sets that
