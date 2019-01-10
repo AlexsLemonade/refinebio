@@ -67,7 +67,7 @@ class ExperimentDocument(DocType):
 
     # FK/M2M
     # We actually don't use any ForeignKeys in our Experiment document,
-    # but if we did, we'd do it like this. The function is similarly requirement,
+    # but if we did, we'd do it like this. The function `get_instances_from_related` is similarly required,
     # as is the `related_models` field in the Meta class.
 
     # organisms = fields.NestedField(properties={
