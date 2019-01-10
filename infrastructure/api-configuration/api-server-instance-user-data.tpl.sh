@@ -111,6 +111,8 @@ docker run \
        -e DATABASE_NAME=${database_name} \
        -e DATABASE_USER=${database_user} \
        -e DATABASE_PASSWORD=${database_password} \
+       -e ELASTICSEARCH_HOST=${elasticsearch_host} \
+       -e ELASTICSEARCH_PORT=${elasticsearch_port} \
        -v "$STATIC_VOLUMES":/tmp/www/static \
        --log-driver=awslogs \
        --log-opt awslogs-region=${region} \

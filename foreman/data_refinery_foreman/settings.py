@@ -164,6 +164,6 @@ RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD') == "True"
 
 ELASTICSEARCH_DSL = {
     'default': {
-        'hosts': get_env_variable('ELASTICSEARCH_HOST_AND_PORT')
+        'hosts': get_env_variable('ELASTICSEARCH_HOST') + ":" + get_env_variable('ELASTICSEARCH_PORT')
     }
 }
