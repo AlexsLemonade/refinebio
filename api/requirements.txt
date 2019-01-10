@@ -33,7 +33,6 @@ s3transfer==0.1.13        # via boto3
 six==1.11.0               # via python-dateutil
 uritemplate==3.0.0        # via coreapi
 urllib3==1.23             # via botocore, requests
-django-debug-toolbar
 
 # For ElasticSearch support:
 django-elasticsearch-dsl==0.5.1

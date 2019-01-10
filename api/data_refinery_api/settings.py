@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     'django_filters',
     'corsheaders',
     'raven.contrib.django.raven_compat',
-    'debug_toolbar',
     'django_elasticsearch_dsl',
     'django_elasticsearch_dsl_drf',
 
@@ -63,7 +62,6 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'data_refinery_api.middleware.RevisionMiddleware',
     'data_refinery_api.middleware.SentryCatchBadRequestMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -92,7 +90,8 @@ TEMPLATES = [
     },
 ]
 
-INTERNAL_IPS = type(str('c'), (), {'__contains__': lambda *a: True})()
+# Uncomment this line to use Django Debug Toolbar inside Docker
+#INTERNAL_IPS = type(str('c'), (), {'__contains__': lambda *a: True})()
 
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
