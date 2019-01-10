@@ -720,6 +720,15 @@ data "template_file" "api_server_script_smusher" {
     log_group = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
     log_stream = "${aws_cloudwatch_log_stream.log_stream_api.name}"
   }
+
+  depends_on = [
+    "aws_db_instance.postgres_db",
+    "aws_elasticsearch_domain.es",
+    "aws_instance.pg_bouncer",
+    "aws_security_group_rule.data_refinery_api_http",
+    "aws_security_group_rule.data_refinery_api_outbound"
+  ]
+
 }
 
 resource "aws_instance" "api_server_1" {
