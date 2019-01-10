@@ -60,7 +60,6 @@ fi
 
 test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 
-tag=salmon
 if [[ -z $tag || $tag == "salmon" ]]; then
     # Download "salmon quant" test data
 
