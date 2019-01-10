@@ -10,11 +10,13 @@ from contextlib import closing
 from django.test import TestCase, tag
 from unittest.mock import MagicMock
 
+import data_refinery_common
 from data_refinery_common.utils import get_env_variable
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
     Experiment,
+    ExperimentResultAssociation,
     ExperimentSampleAssociation,
     Organism,
     OrganismIndex,
@@ -25,6 +27,7 @@ from data_refinery_common.models import (
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
     Sample,
+    SampleComputedFileAssociation,
     SampleResultAssociation,
     SurveyJob,
 )
@@ -706,7 +709,7 @@ class RuntimeProcessorTest(TestCase):
         utils.ProcessorEnum['SALMONTOOLS'].value['yml_file'] = original_yml_file
 
 
-class SalmonTestCase(TestCase):
+class EarlyTximportTestCase(TestCase):
     @tag('salmon')
     def test_tximport_numerical_cutoff(self):
         """Tests logic for determining if tximport should be run early.
@@ -893,6 +896,238 @@ class SalmonTestCase(TestCase):
         job_context = salmon._run_salmon(job_context)
 
         # Confirm that this experiment is not ready for tximport yet,
-        # because `salmon quant` is not run on 'fake_sample' and it
-        # doens't have enough samples to have tximport run early.
+        # because `salmon quant` has not been run for a high enough
+        # percentage of samples in the experiment.
         self.assertFalse("tximported" in job_context)
+
+    @tag('salmon')
+    def test_second_early_tximport(self):
+        """Tests that running tximport early works correctly.
+
+        Makes sure that when we should in fact run tximport early that
+        we do so, it works, and that it works even if there already is
+        an existing tximport result for the experiment.
+
+        The general strategy for this test is:
+          1. Create an Experiment that has:
+            * More the minimum total samples necessary for tximport
+              to be run early.
+            * A high enough percentage of samples already processed
+              for tximport to have been run previously.
+            * An existing tximport result.
+            * Two samples that haven't yet been processed.
+          2. Run salmon on one of the two remaining samples.
+          3. Verify that the old tximport result is removed and
+             replaced with a new one.
+        """
+        # Set up organism index database objects.
+        prepare_organism_indices()
+
+        # Create the experiment
+        experiment_accession = 'SRP155220'
+        data_dir = '/home/user/data_store/salmon_tests/'
+        experiment_dir = data_dir + experiment_accession
+        experiment = Experiment.objects.create(accession_code=experiment_accession)
+
+        c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+
+        # Create the sample that won't be processed (without this guy
+        # we aren't running tximport early.)
+        last_sample = Sample.objects.create(accession_code="SRR7591878", organism=c_elegans)
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=last_sample)
+
+        # Create the sample which will be processed and it's original file.
+        current_sample = Sample.objects.create(accession_code="SRR7591879", organism=c_elegans)
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=current_sample)
+
+        current_og = OriginalFile()
+        current_og.absolute_file_path = os.path.join(experiment_dir, 'SRR7591879.fastq.gz')
+        current_og.filename = "SRR7591879.fastq.gz"
+        current_og.save()
+
+        OriginalFileSampleAssociation.objects.create(original_file=current_og, sample=current_sample).save()
+
+        # Prep our job context
+        job_context = salmon._prepare_files({"job_dir_prefix": "TEST",
+                                             "job_id": "TEST",
+                                             'pipeline': Pipeline(name="Salmon"),
+                                             'computed_files': [],
+                                             "original_files": [current_og]})
+
+        other_sample_accessions = [
+            "SRR7591880",
+            "SRR7591881",
+            "SRR7591882",
+            "SRR7591883",
+            "SRR7591884",
+            "SRR7591885",
+            "SRR7591886",
+            "SRR7591887",
+            "SRR7591888",
+            "SRR7591889",
+            "SRR7591890",
+            "SRR7591891",
+            "SRR7591892",
+            "SRR7591893",
+            "SRR7591894",
+            "SRR7591895",
+            "SRR7591896",
+            "SRR7591897",
+            "SRR7591898",
+            "SRR7591899",
+            "SRR7591900",
+        ]
+
+        # Create tximport result and files
+        quant_processor = utils.find_processor("SALMON_QUANT")
+        tximport_processor = utils.find_processor("TXIMPORT")
+
+        tximport_result = ComputationalResult()
+        tximport_result.is_ccdl = True
+        tximport_result.processor = tximport_processor
+        tximport_result.save()
+
+        era = ExperimentResultAssociation()
+        era.experiment = experiment
+        era.result = tximport_result
+        era.save()
+
+        rds_file = ComputedFile()
+        rds_file.filename = "txi_out.RDS"
+        rds_file.absolute_file_path = job_context["output_directory"] + "txi_out.RDS"
+        rds_file.is_public = False
+        rds_file.is_smashable = False
+        rds_file.is_qc = False
+        rds_file.result = tximport_result
+        rds_file.size_in_bytes = 12345
+        rds_file.save()
+
+        # Create the already processed samples along with their
+        # ComputationalResults and ComputedFiles. They don't need
+        # original files for this test because we aren't going to run
+        # salmon quant on them. They just need the quant files,
+        # however we create the result and files that are generated by
+        # salmon quant for all of them so we can be sure tximport
+        # doesn't destroy anything it's not supposed to.
+        # Also create the sample-specific tximport file and link the
+        # tximport stuff to the sample.
+
+        # Keep track of these objects, so it's easy to go through and
+        # make sure they don't get erroneously deleted.
+        quant_results = []
+        archive_files = []
+        quant_files = []
+        for accession_code in other_sample_accessions:
+            sample = Sample.objects.create(accession_code=accession_code, organism=c_elegans)
+            ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
+
+            # Create and associate quant result and files.
+            quant_result = ComputationalResult()
+            quant_result.is_ccdl = True
+            quant_result.processor = quant_processor
+            quant_result.save()
+            quant_results.append(quant_result)
+
+            archive_file = ComputedFile()
+            archive_file.filename = "result.tar.gz"
+            archive_file.absolute_file_path = data_dir + "result.tar.gz"
+            archive_file.is_public = False
+            archive_file.is_smashable = False
+            archive_file.is_qc = False
+            archive_file.result = quant_result
+            archive_file.size_in_bytes = 12345
+            archive_file.save()
+            archive_files.append(archive_file)
+
+            quant_file = ComputedFile()
+            quant_file.filename = "quant.sf"
+            quant_file.absolute_file_path = experiment_dir + "/quant_files/" + accession_code + "_output/quant.sf"
+            quant_file.is_public = False
+            quant_file.is_smashable = False
+            quant_file.is_qc = False
+            quant_file.result = quant_result
+            quant_file.size_in_bytes = 12345
+            quant_file.save()
+            quant_files.append(quant_file)
+
+            SampleResultAssociation.objects.get_or_create(
+                sample=sample,
+                result=quant_result
+            )
+
+            # Create tximort TPM files and associate sample with
+            # tximport results and files.
+            tpm_file = ComputedFile()
+            tpm_file.filename = accession_code + '_gene_lengthScaledTPM.tsv'
+            tpm_file.absolute_file_path = os.path.join(
+                job_context["work_dir"],
+                tpm_file.filename
+            )
+            tpm_file.result = tximport_result
+            tpm_file.is_smashable = True
+            tpm_file.is_qc = False
+            tpm_file.is_public = True
+            tpm_file.size_in_bytes = 12345
+            tpm_file.save()
+
+            SampleComputedFileAssociation.objects.get_or_create(
+                sample=sample,
+                computed_file=tpm_file
+            )
+            SampleResultAssociation.objects.get_or_create(
+                sample=sample,
+                result=tximport_result
+            )
+
+        # Clean up if there were previous tests, but we still need that directory.
+        shutil.rmtree(job_context['output_directory'], ignore_errors=True)
+        os.makedirs(job_context["output_directory"], exist_ok=True)
+        job_context = salmon._determine_index_length(job_context)
+        job_context = salmon._find_or_download_index(job_context)
+
+        # Actually run salmon on the second to last sample in the experiment.
+        job_context = salmon._run_salmon(job_context)
+
+        # Test that tximport ran, deleted the old tximport related
+        # records, created new ones, and didn't touch the records
+        # related to quant.
+        self.assertTrue("tximported" in job_context)
+
+        for quant_result in quant_results:
+            # Will throw exception if the object got deleted.
+            quant_result.refresh_from_db()
+
+        for archive_file in archive_files:
+            # We don't actually have the files for these, so we're
+            # just keeping track of the object.
+            archive_file.refresh_from_db()
+
+        for quant_file in quant_files:
+            os.path.exists(quant_file.absolute_file_path)
+
+        with self.assertRaises(data_refinery_common.models.models.ComputationalResult.DoesNotExist):
+            tximport_result.refresh_from_db()
+
+        with self.assertRaises(data_refinery_common.models.models.ComputedFile.DoesNotExist):
+            rds_file.refresh_from_db()
+
+        # Verify that the experiment has been associated with the new tximport result:
+        new_eras = ExperimentResultAssociation.objects.filter(experiment=experiment)
+        self.assertEqual(1, len(new_eras))
+
+        # One less than the total number of samples because there's
+        # one unprocessed sample.
+        new_result_samples = new_eras.first().result.samples
+        self.assertEqual(22, new_result_samples.count())
+
+        for sample in new_result_samples.all():
+            for result in sample.results.all():
+                if result.processor == quant_processor:
+                    # There should be two files for each quant result:
+                    # one for the quant file, one for the archive.
+                    result_files = ComputedFile.objects.filter(result=result)
+                    self.assertEqual(2, result_files.count())
+                elif result.processor == tximport_processor:
+                    # One file for the RDS file and 22 samples' TPM slice.
+                    result_files = ComputedFile.objects.filter(result=result)
+                    self.assertEqual(23, result_files.count())
