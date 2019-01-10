@@ -377,7 +377,7 @@ class Experiment(models.Model):
     @property
     def platforms(self):
         """ Returns a list of related pipelines """
-        return list(set([sample.platform_name for sample in self.samples.all()]))        
+        return list(set([sample.platform_name for sample in self.samples.all()]))
 
     @property
     def pretty_platforms(self):
@@ -465,6 +465,8 @@ class ComputationalResult(models.Model):
 
     commands = ArrayField(models.TextField(), default=list)
     processor = models.ForeignKey(Processor, blank=True, null=True, on_delete=models.CASCADE)
+
+    samples = models.ManyToManyField('Sample', through='SampleResultAssociation')
 
     # The Organism Index used to process the sample.
     organism_index = models.ForeignKey('OrganismIndex', blank=True, null=True, on_delete=models.SET_NULL)
@@ -1127,3 +1129,14 @@ class SampleComputedFileAssociation(models.Model):
     class Meta:
         db_table = "sample_computed_file_associations"
         unique_together = ('sample', 'computed_file')
+
+
+class ExperimentResultAssociation(models.Model):
+
+    experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
+    result = models.ForeignKey(
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "experiment_result_associations"
+        unique_together = ('result', 'experiment')
