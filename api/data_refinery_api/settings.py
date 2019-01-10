@@ -192,7 +192,7 @@ RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD') == "True"
 # Elastic Search
 ELASTICSEARCH_DSL = {
     'default': {
-        'hosts': 'elasticsearch:9200'
+        'hosts': get_env_variable('ELASTICSEARCH_HOST_AND_PORT')
     }
 }
 
