@@ -99,6 +99,4 @@ docker run \
        --env AWS_SECRET_ACCESS_KEY \
        --entrypoint ./manage.py \
        --volume $volume_directory:/home/user/data_store \
-       --link drdb:postgres \
-       --link dres:elasticsearch \
        $image_name "${@: -3}" "${@: -2}" "${@: -1}"

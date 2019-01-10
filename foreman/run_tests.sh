@@ -45,6 +45,4 @@ docker run \
        --add-host=nomad:$HOST_IP \
        --add-host=elasticsearch:$ES_HOST_IP \
        --env-file foreman/environments/test \
-       --link drdb:postgres \
-       --link dres:elasticsearch \
        -it ccdlstaging/dr_foreman bash -c "$(run_tests_with_coverage $@)"

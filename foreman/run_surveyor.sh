@@ -35,6 +35,4 @@ docker run -it \
        --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
        --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
        --volume $volume_directory:/home/user/data_store \
-       --link drdb:postgres \
-       --link dres:elasticsearch \
        ccdlstaging/dr_foreman python3 manage.py "$@"

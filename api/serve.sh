@@ -25,7 +25,5 @@ docker run \
        --add-host=nomad:$HOST_IP \
        --add-host=elasticsearch:$ES_HOST_IP \
        --env-file api/environments/local \
-       --link drdb:postgres \
-       --link dres:elasticsearch \
        -p 8000:8000 \
        -it ccdlstaging/dr_api_local python3.6 manage.py runserver 0.0.0.0:8000 "$@"

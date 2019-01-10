@@ -38,7 +38,6 @@ docker run -it \
        --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
        --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
        --env-file api/environments/local \
-       --link dres:elasticsearch \
        --volume /tmp:/tmp \
        --volume $volume_directory:/home/user/data_store \
        --interactive dr_shell python3 manage.py $@
