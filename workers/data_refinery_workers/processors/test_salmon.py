@@ -925,7 +925,7 @@ class EarlyTximportTestCase(TestCase):
 
         # Create the experiment
         experiment_accession = 'SRP155220'
-        data_dir = '/home/user/data_store/'
+        data_dir = '/home/user/data_store/salmon_tests/'
         experiment_dir = data_dir + experiment_accession
         experiment = Experiment.objects.create(accession_code=experiment_accession)
 

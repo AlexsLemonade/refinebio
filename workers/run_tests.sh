@@ -60,13 +60,13 @@ fi
 
 test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 
+tag=salmon
 if [[ -z $tag || $tag == "salmon" ]]; then
     # Download "salmon quant" test data
 
-    # TODO: rename the test_data_new to test_data and remove check for
-    # the new file. These are here temporarily so other branches'
-    # tests don't break.
-    if [[ ! -e $volume_directory/salmon_tests || ! -e $volume_directory/salmon_tests/newer ]]; then
+    # TODO: Remove check for the new file. It is here temporarily so
+    # other branches' tests don't break.
+    if [[ ! -e $volume_directory/salmon_tests || -e $volume_directory/salmon_tests/newer ]]; then
         echo "Downloading 'salmon quant' test data..."
         wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests_newer.tar.gz
         tar xzf $volume_directory/salmon_tests.tar.gz -C $volume_directory
