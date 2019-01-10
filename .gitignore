@@ -30,6 +30,7 @@ workers/test_volume
 !workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX/aegilops_tauschii_short.gtf.gz
 !workers/test_volume/raw/TEST/NO_OP/test.txt
 !workers/test_volume/SRP155220
+!workers/test_volume/SRP155220/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
