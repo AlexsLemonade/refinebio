@@ -629,6 +629,7 @@ resource "aws_iam_service_linked_role" "es" {
   aws_service_name = "es.amazonaws.com"
 }
 
+data "aws_caller_identity" "current" {}
 resource "aws_elasticsearch_domain" "es" {
   domain_name = "es-${var.user}-${var.stage}"
   elasticsearch_version = "6.3"
@@ -659,12 +660,14 @@ resource "aws_elasticsearch_domain" "es" {
 {
   "Version": "2012-10-17",
   "Statement": [
-      {
-          "Action": "es:*",
-          "Principal": "*",
-          "Effect": "Allow",
-          "Resource": "arn:aws:es:::domain/es-${var.user}-${var.stage}/*"
-      }
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "es:*",
+      "Resource": "arn:aws:es:us-east-1:${data.aws_caller_identity.current.account_id}:domain/es-${var.user}-${var.stage}/*"
+    }
   ]
 }
   CONFIG
@@ -713,7 +716,7 @@ data "template_file" "api_server_script_smusher" {
     database_password = "${var.database_password}"
     database_name = "${aws_db_instance.postgres_db.name}"
     elasticsearch_host = "${aws_elasticsearch_domain.es.endpoint}"
-    elasticsearch_port = "9200"
+    elasticsearch_port = "80" # AWS doesn't support the data transfer protocol on 9200 >:[
     log_group = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
     log_stream = "${aws_cloudwatch_log_stream.log_stream_api.name}"
   }

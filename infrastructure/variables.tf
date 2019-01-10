@@ -208,7 +208,7 @@ output "environment_variables" {
     {name = "ELASTICSEARCH_HOST"
       value = "${aws_elasticsearch_domain.es.endpoint}"},
     {name = "ELASTICSEARCH_PORT"
-      value = "9200"},
+      value = "80"},
     {name = "RUNNING_IN_CLOUD"
       value = "${var.running_in_cloud}"},
     {name = "LOG_LEVEL"
