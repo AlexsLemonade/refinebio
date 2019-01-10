@@ -337,6 +337,29 @@ Example for an ArrayExpress experiment:
 ./foreman/run_surveyor.sh survey_all --accession E-MTAB-3050
 ```
 
+Transcriptome indices are a bit special.
+For species within the "main" Ensembl division, the species name can be provided like so:
+
+```bash
+./foreman/run_surveyor.sh survey_all --accession "Homo sapiens"
+```
+
+However for species that are in other divisions, the division must follow the species name after a comma like so:
+
+```bash
+./foreman/run_surveyor.sh survey_all --accession "Caenorhabditis elegans, EnsemblMetazoa"
+```
+The possible divisions that can be specified are:
+* Ensembl (this is the "main" division and is the default)
+* EnsemblPlants
+* EnsemblFungi
+* EnsemblBacteria
+* EnsemblProtists
+* EnsemblMetazoa
+
+If you are unsure what division a species falls into, unfortunately the only way to tell is go to check ensembl.com.
+(Although googling the species name + "ensembl" may work pretty well.)
+
 You can also supply a newline-deliminated file to `survey_all` which will
 dispatch survey jobs based on accession codes like so:
 

@@ -268,36 +268,35 @@ class SearchAndFilter(generics.ListAPIView):
 
         if 'technology' in filters_to_calculate:
             # Technology
-            techs = queryset.values('technology').annotate(Count('technology', unique=True))
+            techs = queryset.values('technology').annotate(count=Count('sample__id', distinct=True))
             for tech in techs:
                 if not tech['technology'] or not tech['technology'].strip():
                     continue
-                result['technology'][tech['technology']] = tech['technology__count']
+                result['technology'][tech['technology']] = tech['count']
 
         if 'has_publication' in filters_to_calculate:
             # Publication
-            pubs = queryset.values('has_publication').annotate(Count('has_publication', unique=True))
+            pubs = queryset.values('has_publication').annotate(count=Count('sample__id', distinct=True))
             for pub in pubs:
                 if pub['has_publication']:
-                    result['publication']['has_publication'] = pub['has_publication__count']
+                    result['publication']['has_publication'] = pub['count']
 
         if 'organisms__name' in filters_to_calculate:
             # Organisms
-            organisms = queryset.values('organisms__name').annotate(Count('organisms__name', unique=True))
+            organisms = queryset.values('organisms__name').annotate(count=Count('sample__id', distinct=True))
             for organism in organisms:
                 # This experiment has no ExperimentOrganism-association, which is bad.
                 # This information may still live on the samples though.
                 if not organism['organisms__name']:
                     continue
-
-                result['organism'][organism['organisms__name']] = organism['organisms__name__count']
+                result['organism'][organism['organisms__name']] = organism['count']
 
         if 'platform' in filters_to_calculate:
             # Platforms
-            platforms = queryset.values('samples__platform_name').annotate(Count('samples__platform_name', unique=True))
+            platforms = queryset.values('samples__platform_name').annotate(count=Count('sample__id', distinct=True))
             for plat in platforms:
                 if plat['samples__platform_name']:
-                    result['platforms'][plat['samples__platform_name']] = plat['samples__platform_name__count']
+                    result['platforms'][plat['samples__platform_name']] = plat['count']
 
         return result
 
