@@ -206,7 +206,7 @@ output "environment_variables" {
     {name = "DATABASE_TIMEOUT"
       value = "${var.database_timeout}"},
     {name = "ELASTICSEARCH_HOST_AND_PORT"
-      value = "${aws_elasticsearch_domain.es.endpoint}:9200",
+      value = "${aws_elasticsearch_domain.es.endpoint}:9200"},
     {name = "RUNNING_IN_CLOUD"
       value = "${var.running_in_cloud}"},
     {name = "LOG_LEVEL"
