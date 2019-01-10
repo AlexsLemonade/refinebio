@@ -29,6 +29,7 @@ workers/test_volume
 # However for a couple tests we do store the data in the repo and need to track them.
 !workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX/aegilops_tauschii_short.gtf.gz
 !workers/test_volume/raw/TEST/NO_OP/test.txt
+!workers/test_volume/SRP155220
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
