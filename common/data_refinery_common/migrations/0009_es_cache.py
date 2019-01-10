@@ -17,7 +17,7 @@ def update_cached_values(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0006_auto_20181102_1526'),
+        ('data_refinery_common', '0008_auto_20190104_2135.py'),
     ]
 
     operations = [
@@ -56,5 +56,5 @@ class Migration(migrations.Migration):
             name='experiments',
             field=models.ManyToManyField(through='data_refinery_common.ExperimentSampleAssociation', to='data_refinery_common.Experiment'),
         ),
-
+        migrations.RunPython(update_cached_values)
     ]
