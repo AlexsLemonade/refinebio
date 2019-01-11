@@ -889,6 +889,9 @@ class Dataset(models.Model):
     s3_bucket = models.CharField(max_length=255)
     s3_key = models.CharField(max_length=255)
 
+    size_in_bytes = models.BigIntegerField(blank=True, null=True, default=0)
+    sha1 = models.CharField(max_length=64, default='')
+
     # Common Properties
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)

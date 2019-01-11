@@ -472,7 +472,8 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'failure_reason',
                     'created_at',
                     'last_modified',
-                    'start'
+                    'start',
+                    'size_in_bytes'
             )
         extra_kwargs = {
                         'id': {
@@ -506,6 +507,9 @@ class DatasetSerializer(serializers.ModelSerializer):
                             'read_only': True,
                         },
                         'last_modified': {
+                            'read_only': True,
+                        },
+                        'size_in_bytes': {
                             'read_only': True,
                         }
                     }
