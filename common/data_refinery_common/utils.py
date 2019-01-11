@@ -76,7 +76,7 @@ def get_volume_index(path='/home/user/data_store/VOLUME_INDEX') -> str:
         # Our configured logger needs util, so we use the standard logging library for just this.
         import logging
         logger = logging.getLogger(__name__)
-        logger.info("Could not read volume index file, using default: {}", default)
+        logger.info("Could not read volume index file, using default: " + str(default))
         logger.info(str(e))
 
     return default

@@ -122,7 +122,7 @@ docker run \
        --name=dr_api \
        -it -d ${dockerhub_repo}/${api_docker_image} /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
 
-# Let's index now too
+# Let's reindex now too
 docker exec -it dr_api python3 manage.py search_index --rebuild -f
 
 # Don't leave secrets lying around.
