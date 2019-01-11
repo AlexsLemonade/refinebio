@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
+import sys
 from django.core.exceptions import ImproperlyConfigured
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
 
@@ -167,3 +168,11 @@ ELASTICSEARCH_DSL = {
         'hosts': get_env_variable('ELASTICSEARCH_HOST') + ":" + get_env_variable('ELASTICSEARCH_PORT')
     }
 }
+if 'test' in sys.argv:
+    ELASTICSEARCH_INDEX_NAMES = {
+            'data_refinery_common.models.documents': 'experiments_test',
+        }
+else:
+    ELASTICSEARCH_INDEX_NAMES = {
+        'data_refinery_common.models.documents': 'experiments',
+    }

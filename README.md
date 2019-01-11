@@ -448,6 +448,12 @@ For example:
 ./workers/tester.sh run_downloader_job --job-name=SRA --job-id=12345
 ```
 
+or
+
+```bash
+./workers/tester.sh run_downloader_job --job-name=ARRAY_EXPRESS --job-id=1
+```
+
 Or for more information run:
 ```bash
 ./workers/tester.sh -h
@@ -466,6 +472,12 @@ a `Downloader Job` do it for you, the following command will do so:
 For example
 ```bash
 ./workers/tester.sh -i affymetrix run_processor_job --job-name=AFFY_TO_PCL --job-id=54321
+```
+
+or
+
+```bash
+./workers/tester.sh -i no_op run_processor_job --job-name=NO_OP --job-id=1
 ```
 
 Or for more information run:
