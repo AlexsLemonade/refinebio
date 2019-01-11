@@ -187,6 +187,20 @@ the Nomad agent, which will then launch a Docker container which runs
 the job. If address conflicts emerge, old Docker containers can be purged
 with `docker container prune -f`.
 
+##### ElasticSearch
+
+One of the API endpoints is powered by ElasticSearch. ElasticSearch must be running for this functionality to work. A local ElasticSearch instance in a Docker container can be executed with:
+
+```bash
+./run_es.sh
+```
+
+And then the ES Indexes (akin to Postgres 'databases') can be created with:
+
+```bash
+./run_manage.sh search_index --rebuild -f;
+```
+
 #### Common Dependecies
 
 The [common](./common) sub-project contains common code which is
