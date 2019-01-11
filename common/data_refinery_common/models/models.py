@@ -20,7 +20,7 @@ from django.utils import timezone
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.organism import Organism
-from data_refinery_common.utils import get_env_variable, get_s3_url
+from data_refinery_common.utils import get_env_variable, get_s3_url, calculate_file_size, calculate_sha1
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.
@@ -628,19 +628,13 @@ class OriginalFile(models.Model):
     def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
-
-        hash_object = hashlib.sha1()
-        with open(self.absolute_file_path, mode='rb') as open_file:
-            for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
-                hash_object.update(buf)
-
-        self.sha1 = hash_object.hexdigest()
+        self.sha1 = calculate_sha1(self.absolute_file_path)
         return self.sha1
 
     def calculate_size(self) -> None:
         """ Calculate the number of bytes in a given file.
         """
-        self.size_in_bytes = os.path.getsize(self.absolute_file_path)
+        self.size_in_bytes = calculate_file_size(self.absolute_file_path)
         return self.size_in_bytes
 
     def get_display_name(self):
@@ -774,11 +768,7 @@ class ComputedFile(models.Model):
                     )
 
             # Veryify sync integrity
-            hash_object = hashlib.sha1()
-            with open(path, mode='rb') as open_file:
-                for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
-                    hash_object.update(buf)
-            synced_sha1 = hash_object.hexdigest()
+            synced_sha1 = calculate_sha1(path)
 
             if self.sha1 != synced_sha1:
                 raise AssertionError("SHA1 of downloaded ComputedFile doesn't match database SHA1!")
@@ -791,18 +781,13 @@ class ComputedFile(models.Model):
     def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
-        hash_object = hashlib.sha1()
-        with open(self.absolute_file_path, mode='rb') as open_file:
-            for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
-                hash_object.update(buf)
-
-        self.sha1 = hash_object.hexdigest()
+        self.sha1 = calculate_sha1(self.absolute_file_path)
         return self.sha1
 
     def calculate_size(self) -> None:
         """ Calculate the number of bytes in a given file.
         """
-        self.size_in_bytes = os.path.getsize(self.absolute_file_path)
+        self.size_in_bytes = calculate_file_size(self.absolute_file_path)
         return self.size_in_bytes
 
     def delete_local_file(self, force=False):

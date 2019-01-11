@@ -576,7 +576,7 @@ class DatasetDetailsSerializer(serializers.ModelSerializer):
                         },
                         'is_processed': {
                             'read_only': True,
-                        },
+                        }
                     }
 
 class APITokenSerializer(serializers.ModelSerializer):
