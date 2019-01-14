@@ -97,6 +97,22 @@ class ComputedFileSerializer(serializers.ModelSerializer):
                     'last_modified'
                 )
 
+class QNTargetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ComputedFile
+        fields = (
+                    'id',
+                    'filename',
+                    'size_in_bytes',
+                    'is_qn_target',
+                    'sha1',
+                    's3_bucket',
+                    's3_key',
+                    's3_url',
+                    'created_at',
+                    'last_modified'
+                )
+
 class ComputationalResultSerializer(serializers.ModelSerializer):
     annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
     files = ComputedFileSerializer(many=True, source='computedfile_set')

@@ -873,6 +873,7 @@ class ComputedFile(models.Model):
             else:
                 return self.sync_from_s3(force)
 
+    @property
     def s3_url(self):
         """ Render the resulting S3 URL """
         if (self.s3_key) and (self.s3_bucket):

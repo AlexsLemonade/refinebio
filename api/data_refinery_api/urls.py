@@ -27,7 +27,8 @@ from data_refinery_api.views import (
     DatasetView,
     DatasetStatsView,
     APITokenView,
-    TranscriptomeIndexDetail
+    TranscriptomeIndexDetail,
+    QNTargetsDetail
 )
 
 # This provides _public_ access to the /admin interface!
@@ -137,9 +138,12 @@ urlpatterns = [
     # Dashboard Driver
     url(r'^stats/$', Stats.as_view(), name="stats"),
 
-    # Transcriptome Indices
+    # Not-publically listed APIs
+    # Transcriptome Indices and QN Targets
     url(r'^transcriptome_indices', TranscriptomeIndexDetail.as_view(),
         name="transcriptome-indices"),
+    url(r'^qn_targets', QNTargetsDetail.as_view(),
+        name="qn-targets"),
 
     # Admin
     url(r'^admin/', admin.site.urls),

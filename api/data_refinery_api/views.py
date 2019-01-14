@@ -53,6 +53,7 @@ from data_refinery_api.serializers import (
     PlatformSerializer,
     ProcessorSerializer,
     SampleSerializer,
+    QNTargetSerializer,
 
     # Job
     DownloaderJobSerializer,
@@ -1166,3 +1167,17 @@ class TranscriptomeIndexDetail(APIView):
             return Response(serializer.data)
         except OrganismIndex.DoesNotExist:
             raise Http404
+###
+# QN Targets
+###
+
+class QNTargetsDetail(APIView):
+    """
+    Quantile Normalization Targets
+    """
+
+    """List all processors."""
+    def get(self, request, format=None):
+        computed_files = ComputedFile.objects.filter(is_public=True, is_qn_target=True)
+        serializer = QNTargetSerializer(computed_files, many=True)
+        return Response(serializer.data)

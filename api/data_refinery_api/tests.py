@@ -28,6 +28,7 @@ from data_refinery_api.views import ExperimentList
 from data_refinery_common.utils import get_env_variable
 from data_refinery_common.models import (
     ComputationalResult,
+    ComputedFile,
     Dataset,
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -464,6 +465,35 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('search'), {'search': 'E-GEOD-5678'})
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['results'][0]['accession_code'], "GSE5678")
+
+        cr = ComputationalResult()
+        cr.save()
+
+        qni = ComputedFile()
+        qni.is_qn_target = True
+        qni.s3_bucket = "fake_qni_bucket"
+        qni.s3_key = "zazaza_homo_sapiens_1234.tsv"
+        qni.filename = "homo_sapiens_1234.tsv"
+        qni.is_public = True
+        qni.size_in_bytes = 56789
+        qni.sha1 = "c0a88d0bb020dadee3b707e647f7290368c235ba"
+        qni.result = cr
+        qni.save()
+
+        qni = ComputedFile()
+        qni.is_qn_target = False
+        qni.s3_bucket = "X"
+        qni.s3_key = "X.tsv"
+        qni.filename = "XXXXXXXXXXXXXXX.tsv"
+        qni.is_public = True
+        qni.size_in_bytes = 1
+        qni.sha1 = "123"
+        qni.result = cr
+        qni.save()
+
+        response = self.client.get(reverse('qn-targets'))
+        self.assertEqual(len(response.json()), 1)
+        self.assertEqual(response.json()['s3_url'], 'https://s3.amazonaws.com/fake_qni_bucket/zazaza_homo_sapiens_1234.tsv')
 
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
