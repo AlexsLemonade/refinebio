@@ -176,6 +176,3 @@ else:
     ELASTICSEARCH_INDEX_NAMES = {
         'data_refinery_common.models.documents': 'experiments',
     }
-
-print("ELASTICSEARCH_INDEX_NAMES is..")
-print(ELASTICSEARCH_INDEX_NAMES)
