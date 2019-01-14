@@ -177,5 +177,5 @@ else:
         'data_refinery_common.models.documents': 'experiments',
     }
 
-print "ELASTICSEARCH_INDEX_NAMES is.."
-print ELASTICSEARCH_INDEX_NAMES
+print("ELASTICSEARCH_INDEX_NAMES is..")
+print(ELASTICSEARCH_INDEX_NAMES)
