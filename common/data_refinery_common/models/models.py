@@ -876,6 +876,10 @@ class ComputedFile(models.Model):
     @property
     def s3_url(self):
         """ Render the resulting S3 URL """
+        return self.get_s3_url()
+
+    def get_s3_url(self):
+        """ Render the resulting S3 URL """
         if (self.s3_key) and (self.s3_bucket):
             return "https://s3.amazonaws.com/" + self.s3_bucket + "/" + self.s3_key
         else:

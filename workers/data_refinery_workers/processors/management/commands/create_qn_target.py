@@ -89,7 +89,7 @@ class Command(BaseCommand):
         if final_context['success']:
             print(":D")
             self.stdout.write("Target file: " + final_context['target_file'])
-            self.stdout.write("Target S3: " + str(final_context['computed_files'][0].s3_url()))
+            self.stdout.write("Target S3: " + str(final_context['computed_files'][0].get_s3_url()))
             sys.exit(0)
         else:
             print(":(")
