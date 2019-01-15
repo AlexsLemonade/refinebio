@@ -160,7 +160,9 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # XXX: Refactor QN target acquisition and application before doing this
     job_context['organism'] = Organism.get_object_for_name(list(job_context['input_files'].keys())[0])
     job_context['merged_no_qn'] = untransposed_imputed_matrix_df
-    job_context = smasher._quantile_normalize(job_context)
+
+    job_context = smasher._quantile_normalize(job_context, ks_stat=.003)
+    job_context['time_end'] = timezone.now()
 
     job_context['formatted_command'] = "create_compendia.py"
 

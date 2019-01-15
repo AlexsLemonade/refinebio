@@ -232,7 +232,7 @@ class CompendiaTestCase(TestCase):
 
         qn_target = ComputedFile()
         qn_target.filename = "danio_target.tsv"
-        qn_target.absolute_file_path = '/home/user/data_store/raw/TEST/QN/danio_target.tsv'
+        qn_target.absolute_file_path = '/home/user/data_store/QN/danio_target.tsv'
         qn_target.is_qn_target = True
         qn_target.size_in_bytes = "12345"
         qn_target.sha1 = "aabbccddeeff"
