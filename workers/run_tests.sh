@@ -417,6 +417,15 @@ if [[ -z $tag || $tag == "compendia" ]]; then
         wget -i "$rnaseq_list_file"
         cd -
     fi
+    qn_name="danio_target.tsv"
+    qn_test_raw_dir="$volume_directory/QN"
+    qn_test_data_1="$qn_test_raw_dir/$qn_name"
+    if [ ! -e "$qn_test_data_1" ]; then
+        mkdir -p $qn_test_raw_dir
+        echo "Downloading QN for compendia tests."
+        wget -q -O $qn_test_data_1 \
+             "$test_data_repo/$qn_name"
+    fi
 fi
 
 source common.sh
