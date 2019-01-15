@@ -70,6 +70,11 @@ jobs:
       - run:
           command: .circleci/filter_tests.sh -t qn
           no_output_timeout: 1h
+      
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run:
+          command: .circleci/filter_tests.sh -t compendia 
+          no_output_timeout: 1h
 
   common_tests:
     working_directory: ~/refinebio
