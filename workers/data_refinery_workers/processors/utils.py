@@ -115,6 +115,24 @@ def start_job(job_context: Dict):
 
     # This job should not have been started.
     if job.start_time is not None and settings.RUNNING_IN_CLOUD:
+
+        if job.success:
+            logger.error("ProcessorJob has already completed succesfully - why are we here again? Bad Nomad!",
+                job_id=job.id
+            )
+            job_context["original_files"] = []
+            job_context["computed_files"] = []
+            job_context['abort'] = True
+            return job_context
+        if job.success == False:
+            logger.error("ProcessorJob has already completed with a fail - why are we here again? Bad Nomad!",
+                job_id=job.id
+            )
+            job_context["original_files"] = []
+            job_context["computed_files"] = []
+            job_context['abort'] = True
+            return job_context
+
         logger.error("This processor job has already been started!!!", processor_job=job.id)
         raise Exception("processors.start_job called on job %s that has already been started!" % str(job.id))
 

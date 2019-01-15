@@ -53,6 +53,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         smashable_files = []
         for sample in samples:
             smashable_file = sample.get_most_recent_smashable_result_file()
+
             if smashable_file is not None:
                 smashable_files = smashable_files + [smashable_file]
         smashable_files = list(set(smashable_files))
@@ -457,7 +458,13 @@ def _smash(job_context: Dict) -> Dict:
 
                 # Bail appropriately if this isn't a real file.
                 if not computed_file_path or not os.path.exists(computed_file_path):
-                    raise ValueError("Smasher received non-existent file path: " + str(computed_file_path))
+                    unsmashable_files.append(computed_file_path)
+                    logger.error("Smasher received non-existent file path.",
+                        computed_file_path=computed_file_path,
+                        computed_file=computed_file,
+                        dataset=job_context['dataset'],
+                        )
+                    continue
 
                 try:
                     data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0, error_bad_lines=False)
@@ -562,8 +569,13 @@ def _smash(job_context: Dict) -> Dict:
                 continue
 
             # Merge all of the frames we've gathered into a single big frame, skipping duplicates.
+            # TODO: If the very first frame is the wrong platform, are we boned?
             merged = all_frames[0]
             i = 1
+
+            old_len_merged = len(merged)
+            new_len_merged = len(merged)
+            merged_backup = merged
             while i < len(all_frames):
                 frame = all_frames[i]
                 i = i + 1
@@ -587,6 +599,30 @@ def _smash(job_context: Dict) -> Dict:
 
                 # This is the inner join, the main "Smash" operation
                 merged = merged.merge(frame, left_index=True, right_index=True)
+                new_len_merged = len(merged)
+                if new_len_merged < old_len_merged:
+                    logger.warning("Dropped rows while smashing!",
+                        dataset_id=job_context["dataset"].id,
+                        old_len_merged=old_len_merged,
+                        new_len_merged=new_len_merged
+                    )
+                if new_len_merged == 0:
+                    logger.warning("Skipping a bad merge frame!",
+                        dataset_id=job_context["dataset"].id,
+                        old_len_merged=old_len_merged,
+                        new_len_merged=new_len_merged,
+                        bad_frame_number=i,
+                    )
+                    merged = merged_backup
+                    new_len_merged = len(merged)
+                    try:
+                        unsmashable_files.append(frame.columns[0])
+                    except Exception:
+                        # Something is really, really wrong with this frame.
+                        pass
+
+                old_len_merged = len(merged)
+                merged_backup = merged
 
             job_context['original_merged'] = merged
 
@@ -611,6 +647,7 @@ def _smash(job_context: Dict) -> Dict:
                     job_context['job'].success = False
                     job_context['failure_reason'] = str(e)
                     return job_context
+            # End QN
 
             # Transpose before scaling
             # Do this even if we don't want to scale in case transpose
@@ -703,6 +740,7 @@ def _smash(job_context: Dict) -> Dict:
         return job_context
 
     job_context['metadata'] = metadata
+    job_context['unsmashable_files'] = unsmashable_files
     job_context['dataset'].success = True
     job_context['dataset'].save()
 

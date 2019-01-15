@@ -178,15 +178,15 @@ class SearchAndFilter(generics.ListAPIView):
     # '@' Full-text search.
     # '$' Regex search.
     search_fields = (   'title',
-                        '@description',
-                        '@accession_code',
-                        '@alternate_accession_code',
-                        '@protocol_description',
-                        '@publication_title',
+                        'description',
+                        'accession_code',
+                        'alternate_accession_code',
+                        'protocol_description',
+                        'publication_title',
                         'publication_doi',
                         'publication_authors',
                         'pubmed_id',
-                        '@submitter_institution',
+                        'submitter_institution',
                         'experimentannotation__data',
                         # '@sample__accession_code',
                         # '@sample__platform_name',
@@ -268,36 +268,35 @@ class SearchAndFilter(generics.ListAPIView):
 
         if 'technology' in filters_to_calculate:
             # Technology
-            techs = queryset.values('technology').annotate(Count('technology', unique=True))
+            techs = queryset.values('technology').annotate(count=Count('sample__id', distinct=True))
             for tech in techs:
                 if not tech['technology'] or not tech['technology'].strip():
                     continue
-                result['technology'][tech['technology']] = tech['technology__count']
+                result['technology'][tech['technology']] = tech['count']
 
         if 'has_publication' in filters_to_calculate:
             # Publication
-            pubs = queryset.values('has_publication').annotate(Count('has_publication', unique=True))
+            pubs = queryset.values('has_publication').annotate(count=Count('sample__id', distinct=True))
             for pub in pubs:
                 if pub['has_publication']:
-                    result['publication']['has_publication'] = pub['has_publication__count']
+                    result['publication']['has_publication'] = pub['count']
 
         if 'organisms__name' in filters_to_calculate:
             # Organisms
-            organisms = queryset.values('organisms__name').annotate(Count('organisms__name', unique=True))
+            organisms = queryset.values('organisms__name').annotate(count=Count('sample__id', distinct=True))
             for organism in organisms:
                 # This experiment has no ExperimentOrganism-association, which is bad.
                 # This information may still live on the samples though.
                 if not organism['organisms__name']:
                     continue
-
-                result['organism'][organism['organisms__name']] = organism['organisms__name__count']
+                result['organism'][organism['organisms__name']] = organism['count']
 
         if 'platform' in filters_to_calculate:
             # Platforms
-            platforms = queryset.values('samples__platform_name').annotate(Count('samples__platform_name', unique=True))
+            platforms = queryset.values('samples__platform_name').annotate(count=Count('sample__id', distinct=True))
             for plat in platforms:
                 if plat['samples__platform_name']:
-                    result['platforms'][plat['samples__platform_name']] = plat['samples__platform_name__count']
+                    result['platforms'][plat['samples__platform_name']] = plat['count']
 
         return result
 
@@ -533,7 +532,10 @@ class SampleList(PaginatedAPIView):
     List all Samples.
 
     Pass in a list of pk to an ids query parameter to filter by id.
-    Can also accept a `dataset_id` field instead of a list of accession codes.
+    
+    Also accepts:
+        - `dataset_id` field instead of a list of accession codes
+        - `experiment_accession_code` to return the samples associated with a given experiment
 
     Append the pk or accession_code to the end of this URL to see a detail view.
 
@@ -545,15 +547,19 @@ class SampleList(PaginatedAPIView):
         filter_dict.pop('offset', None)
         order_by = filter_dict.pop('order_by', None)
         ids = filter_dict.pop('ids', None)
-        accession_codes = filter_dict.pop('accession_codes', None)
-
         filter_by = filter_dict.pop('filter_by', None)
 
         if ids is not None:
             ids = [ int(x) for x in ids.split(',')]
             filter_dict['pk__in'] = ids
 
-        if accession_codes is not None:
+        experiment_accession_code = filter_dict.pop('experiment_accession_code', None)
+        if experiment_accession_code:
+            experiment = get_object_or_404(Experiment.objects.values('id'), accession_code=experiment_accession_code)
+            filter_dict['experiments__in'] = [experiment['id']]
+
+        accession_codes = filter_dict.pop('accession_codes', None)
+        if accession_codes:
             accession_codes = accession_codes.split(',')
             filter_dict['accession_code__in'] = accession_codes
 
@@ -563,7 +569,17 @@ class SampleList(PaginatedAPIView):
             # Python doesn't provide a prettier way of doing this that I know about.
             filter_dict['accession_code__in'] = [item for sublist in dataset.data.values() for item in sublist]
 
-        samples = Sample.public_objects.filter(**filter_dict)
+        samples = Sample.public_objects \
+            .prefetch_related('sampleannotation_set') \
+            .prefetch_related('organism') \
+            .prefetch_related('results') \
+            .prefetch_related('results__processor') \
+            .prefetch_related('results__computationalresultannotation_set') \
+            .prefetch_related('results__computedfile_set') \
+            .filter(**filter_dict) \
+            .order_by('-is_processed') \
+            .distinct()
+
         if order_by:
             samples = samples.order_by(order_by)
 
@@ -700,7 +716,7 @@ class SurveyJobList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         limit = max(int(filter_dict.pop('limit', 100)), 100)
         offset = int(filter_dict.pop('offset', 0))
-        jobs = SurveyJob.objects.filter(**filter_dict)[offset:(offset + limit)]
+        jobs = SurveyJob.objects.filter(**filter_dict).order_by('-id')[offset:(offset + limit)]
         serializer = SurveyJobSerializer(jobs, many=True)
         return Response(serializer.data)
 
@@ -713,7 +729,7 @@ class DownloaderJobList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         limit = max(int(filter_dict.pop('limit', 100)), 100)
         offset = int(filter_dict.pop('offset', 0))
-        jobs = DownloaderJob.objects.filter(**filter_dict)[offset: offset + limit]
+        jobs = DownloaderJob.objects.filter(**filter_dict).order_by('-id')[offset: offset + limit]
         serializer = DownloaderJobSerializer(jobs, many=True)
         return Response(serializer.data)
 
@@ -726,7 +742,7 @@ class ProcessorJobList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         limit = max(int(filter_dict.pop('limit', 100)), 100)
         offset = int(filter_dict.pop('offset', 0))
-        jobs = ProcessorJob.objects.filter(**filter_dict)[offset: offset + limit]
+        jobs = ProcessorJob.objects.filter(**filter_dict).order_by('-id')[offset: offset + limit]
         serializer = ProcessorJobSerializer(jobs, many=True)
         return Response(serializer.data)
 
@@ -750,6 +766,8 @@ class Stats(APIView):
         data['processor_jobs'] = self._get_job_stats(ProcessorJob.objects, range_param)
         data['samples'] = self._get_object_stats(Sample.objects, range_param)
         data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
+        data['processed_samples'] = self._get_object_stats(Sample.processed_objects)
+        data['processed_experiments'] = self._get_object_stats(Experiment.processed_public_objects)
         data['input_data_size'] = self._get_input_data_size()
         data['output_data_size'] = self._get_output_data_size()
         data['active_volumes'] = list(get_active_volumes())
@@ -937,7 +955,7 @@ class Stats(APIView):
 
         return result
 
-    def _get_object_stats(self, objects, range_param):
+    def _get_object_stats(self, objects, range_param = False):
         result = {
             'total': objects.count()
         }

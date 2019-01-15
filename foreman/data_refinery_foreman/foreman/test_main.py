@@ -113,7 +113,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_failed_downloader_jobs.__wrapped__()
+        main.retry_failed_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = DownloaderJob.objects.order_by('id')
@@ -145,7 +145,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_hung_downloader_jobs.__wrapped__()
+        main.retry_hung_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = DownloaderJob.objects.order_by('id')
@@ -178,7 +178,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_hung_downloader_jobs.__wrapped__()
+        main.retry_hung_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = DownloaderJob.objects.order_by('id')
@@ -209,7 +209,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_downloader_jobs.__wrapped__()
+        main.retry_lost_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = DownloaderJob.objects.order_by('id')
@@ -231,7 +231,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_downloader_jobs.__wrapped__()
+        main.retry_lost_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = DownloaderJob.objects.order_by('id')
@@ -264,7 +264,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_downloader_jobs.__wrapped__()
+        main.retry_lost_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = DownloaderJob.objects.order_by('id')
@@ -335,7 +335,7 @@ class ForemanTestCase(TestCase):
         mock_send_job.return_value = True
         mock_get_active_volumes.return_value = {"1", "2", "3"}
 
-        job = self.create_processor_job(pipeline="SALMON", ram_amount=8192)
+        job = self.create_processor_job(pipeline="SALMON", ram_amount=16384)
 
         main.requeue_processor_job(job)
         self.assertEqual(len(mock_send_job.mock_calls), 1)
@@ -347,8 +347,8 @@ class ForemanTestCase(TestCase):
         self.assertFalse(original_job.success)
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
-        self.assertEqual(original_job.ram_amount, 8192)
-        self.assertEqual(retried_job.ram_amount, 12288)
+        self.assertEqual(original_job.ram_amount, 16384)
+        self.assertEqual(retried_job.ram_amount, 32768)
 
     @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
@@ -393,7 +393,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_failed_processor_jobs.__wrapped__()
+        main.retry_failed_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = ProcessorJob.objects.order_by('id')
@@ -418,7 +418,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_failed_processor_jobs.__wrapped__()
+        main.retry_failed_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = ProcessorJob.objects.order_by('id')
@@ -451,7 +451,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_hung_processor_jobs.__wrapped__()
+        main.retry_hung_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = ProcessorJob.objects.order_by('id')
@@ -486,7 +486,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_hung_processor_jobs.__wrapped__()
+        main.retry_hung_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = ProcessorJob.objects.order_by('id')
@@ -519,7 +519,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_processor_jobs.__wrapped__()
+        main.retry_lost_processor_jobs()
 
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -555,7 +555,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_processor_jobs.__wrapped__()
+        main.retry_lost_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = ProcessorJob.objects.order_by('id')
@@ -579,7 +579,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_processor_jobs.__wrapped__()
+        main.retry_lost_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = ProcessorJob.objects.order_by('id')
@@ -604,7 +604,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_processor_jobs.__wrapped__()
+        main.retry_lost_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = ProcessorJob.objects.order_by('id')
@@ -696,7 +696,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_failed_survey_jobs.__wrapped__()
+        main.retry_failed_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = SurveyJob.objects.order_by('id')
@@ -728,7 +728,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_hung_survey_jobs.__wrapped__()
+        main.retry_hung_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = SurveyJob.objects.order_by('id')
@@ -761,7 +761,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_hung_survey_jobs.__wrapped__()
+        main.retry_hung_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = SurveyJob.objects.order_by('id')
@@ -792,7 +792,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_survey_jobs.__wrapped__()
+        main.retry_lost_survey_jobs()
 
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -826,7 +826,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_survey_jobs.__wrapped__()
+        main.retry_lost_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
         jobs = SurveyJob.objects.order_by('id')
@@ -848,7 +848,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.retry_lost_survey_jobs.__wrapped__()
+        main.retry_lost_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
         jobs = SurveyJob.objects.order_by('id')
@@ -873,7 +873,7 @@ class ForemanTestCase(TestCase):
 
         # Just run it once, not forever so get the function that is
         # decorated with @do_forever
-        main.send_janitor_jobs.__wrapped__()
+        main.send_janitor_jobs()
 
         self.assertEqual(ProcessorJob.objects.all().count(), 6)
         self.assertEqual(ProcessorJob.objects.filter(pipeline_applied="JANITOR").count(), 3)
@@ -1082,7 +1082,6 @@ class ForemanTestCase(TestCase):
 
 #         unstarted_salmon_job = DownloaderJob()
 #         unstarted_salmon_job.accession_code = self.unstarted_salmon_sample.accession_code
-#         unstarted_salmon_job.pipeline_applied = "SALMON"
 #         unstarted_salmon_job.save()
 
 #         assoc = DownloaderJobOriginalFileAssociation()
@@ -1092,7 +1091,6 @@ class ForemanTestCase(TestCase):
 
 #         in_progress_salmon_job = DownloaderJob()
 #         in_progress_salmon_job.accession_code = self.in_progress_salmon_sample.accession_code
-#         in_progress_salmon_job.pipeline_applied = "SALMON"
 #         in_progress_salmon_job.save()
 
 #         assoc = DownloaderJobOriginalFileAssociation()
@@ -1102,7 +1100,6 @@ class ForemanTestCase(TestCase):
 
 #         zebrafish_job = DownloaderJob()
 #         zebrafish_job.accession_code = self.zebrafish_sample.accession_code
-#         zebrafish_job.pipeline_applied = "SALMON"
 #         zebrafish_job.save()
 
 #         assoc = DownloaderJobOriginalFileAssociation()
@@ -1112,7 +1109,6 @@ class ForemanTestCase(TestCase):
 
 #         pediatric_job = DownloaderJob()
 #         pediatric_job.accession_code = self.pediatric_sample.accession_code
-#         pediatric_job.pipeline_applied = "SALMON"
 #         pediatric_job.save()
 
 #         assoc = DownloaderJobOriginalFileAssociation()
@@ -1122,7 +1118,6 @@ class ForemanTestCase(TestCase):
 
 #         hgu133plus2_job = DownloaderJob()
 #         hgu133plus2_job.accession_code = self.hgu133plus2_sample.accession_code
-#         hgu133plus2_job.pipeline_applied = "SALMON"
 #         hgu133plus2_job.save()
 
 #         assoc = DownloaderJobOriginalFileAssociation()
@@ -1153,92 +1148,92 @@ class ForemanTestCase(TestCase):
 #             self.assertEqual(job.id, job_called_at_count.id)
 
 
-    # @patch('data_refinery_foreman.foreman.main.Nomad')
-    # @patch('data_refinery_foreman.foreman.main.requeue_processor_job')
-    # def test_handle_processor_jobs(self, mock_requeue_processor_job, mock_nomad):
-    #     """Tests the prioritization of processor jobs.
+#     @patch('data_refinery_foreman.foreman.main.Nomad')
+#     @patch('data_refinery_foreman.foreman.main.requeue_processor_job')
+#     def test_handle_processor_jobs(self, mock_requeue_processor_job, mock_nomad):
+#         """Tests the prioritization of processor jobs.
 
-    #     We want zebrafish jobs to be first, then jobs for hgu133plus2,
-    #     then jobs for pediatric cancer, finally salmon jobs should be
-    #     prioritized based on how close to completion they are."""
+#         We want zebrafish jobs to be first, then jobs for hgu133plus2,
+#         then jobs for pediatric cancer, finally salmon jobs should be
+#         prioritized based on how close to completion they are."""
 
-    #     def mock_init_nomad(host, port=0, timeout=0):
-    #         ret_value = MagicMock()
-    #         ret_value.jobs = MagicMock()
-    #         ret_value.jobs.get_jobs = MagicMock()
-    #         ret_value.jobs.get_jobs.side_effect = lambda: []
-    #         return ret_value
+#         def mock_init_nomad(host, port=0, timeout=0):
+#             ret_value = MagicMock()
+#             ret_value.jobs = MagicMock()
+#             ret_value.jobs.get_jobs = MagicMock()
+#             ret_value.jobs.get_jobs.side_effect = lambda: []
+#             return ret_value
 
-    #     mock_nomad.side_effect = mock_init_nomad
+#         mock_nomad.side_effect = mock_init_nomad
 
-    #     unstarted_salmon_job = ProcessorJob()
-    #     unstarted_salmon_job.accession_code = self.unstarted_salmon_sample.accession_code
-    #     unstarted_salmon_job.pipeline_applied = "SALMON"
-    #     unstarted_salmon_job.save()
+#         unstarted_salmon_job = ProcessorJob()
+#         unstarted_salmon_job.accession_code = self.unstarted_salmon_sample.accession_code
+#         unstarted_salmon_job.pipeline_applied = "SALMON"
+#         unstarted_salmon_job.save()
 
-    #     assoc = ProcessorJobOriginalFileAssociation()
-    #     assoc.processor_job = unstarted_salmon_job
-    #     assoc.original_file = self.unstarted_salmon_og
-    #     assoc.save()
+#         assoc = ProcessorJobOriginalFileAssociation()
+#         assoc.processor_job = unstarted_salmon_job
+#         assoc.original_file = self.unstarted_salmon_og
+#         assoc.save()
 
-    #     in_progress_salmon_job = ProcessorJob()
-    #     in_progress_salmon_job.accession_code = self.in_progress_salmon_sample.accession_code
-    #     in_progress_salmon_job.pipeline_applied = "SALMON"
-    #     in_progress_salmon_job.save()
+#         in_progress_salmon_job = ProcessorJob()
+#         in_progress_salmon_job.accession_code = self.in_progress_salmon_sample.accession_code
+#         in_progress_salmon_job.pipeline_applied = "SALMON"
+#         in_progress_salmon_job.save()
 
-    #     assoc = ProcessorJobOriginalFileAssociation()
-    #     assoc.processor_job = in_progress_salmon_job
-    #     assoc.original_file = self.in_progress_salmon_og
-    #     assoc.save()
+#         assoc = ProcessorJobOriginalFileAssociation()
+#         assoc.processor_job = in_progress_salmon_job
+#         assoc.original_file = self.in_progress_salmon_og
+#         assoc.save()
 
-    #     zebrafish_job = ProcessorJob()
-    #     zebrafish_job.accession_code = self.zebrafish_sample.accession_code
-    #     zebrafish_job.pipeline_applied = "SALMON"
-    #     zebrafish_job.save()
+#         zebrafish_job = ProcessorJob()
+#         zebrafish_job.accession_code = self.zebrafish_sample.accession_code
+#         zebrafish_job.pipeline_applied = "SALMON"
+#         zebrafish_job.save()
 
-    #     assoc = ProcessorJobOriginalFileAssociation()
-    #     assoc.processor_job = zebrafish_job
-    #     assoc.original_file = self.zebrafish_og
-    #     assoc.save()
+#         assoc = ProcessorJobOriginalFileAssociation()
+#         assoc.processor_job = zebrafish_job
+#         assoc.original_file = self.zebrafish_og
+#         assoc.save()
 
-    #     pediatric_job = ProcessorJob()
-    #     pediatric_job.accession_code = self.pediatric_sample.accession_code
-    #     pediatric_job.pipeline_applied = "SALMON"
-    #     pediatric_job.save()
+#         pediatric_job = ProcessorJob()
+#         pediatric_job.accession_code = self.pediatric_sample.accession_code
+#         pediatric_job.pipeline_applied = "SALMON"
+#         pediatric_job.save()
 
-    #     assoc = ProcessorJobOriginalFileAssociation()
-    #     assoc.processor_job = pediatric_job
-    #     assoc.original_file = self.pediatric_og
-    #     assoc.save()
+#         assoc = ProcessorJobOriginalFileAssociation()
+#         assoc.processor_job = pediatric_job
+#         assoc.original_file = self.pediatric_og
+#         assoc.save()
 
-    #     hgu133plus2_job = ProcessorJob()
-    #     hgu133plus2_job.accession_code = self.hgu133plus2_sample.accession_code
-    #     hgu133plus2_job.pipeline_applied = "SALMON"
-    #     hgu133plus2_job.save()
+#         hgu133plus2_job = ProcessorJob()
+#         hgu133plus2_job.accession_code = self.hgu133plus2_sample.accession_code
+#         hgu133plus2_job.pipeline_applied = "SALMON"
+#         hgu133plus2_job.save()
 
-    #     assoc = ProcessorJobOriginalFileAssociation()
-    #     assoc.processor_job = hgu133plus2_job
-    #     assoc.original_file = self.hgu133plus2_og
-    #     assoc.save()
+#         assoc = ProcessorJobOriginalFileAssociation()
+#         assoc.processor_job = hgu133plus2_job
+#         assoc.original_file = self.hgu133plus2_og
+#         assoc.save()
 
-    #     jobs = [unstarted_salmon_job,
-    #             in_progress_salmon_job,
-    #             hgu133plus2_job,
-    #             zebrafish_job,
-    #             pediatric_job
-    #     ]
-    #     jobs_in_correct_order = [zebrafish_job,
-    #                              hgu133plus2_job,
-    #                              pediatric_job,
-    #                              in_progress_salmon_job,
-    #                              unstarted_salmon_job
-    #     ]
+#         jobs = [unstarted_salmon_job,
+#                 in_progress_salmon_job,
+#                 hgu133plus2_job,
+#                 zebrafish_job,
+#                 pediatric_job
+#         ]
+#         jobs_in_correct_order = [zebrafish_job,
+#                                  hgu133plus2_job,
+#                                  pediatric_job,
+#                                  in_progress_salmon_job,
+#                                  unstarted_salmon_job
+#         ]
 
-    #     main.handle_processor_jobs(jobs)
+#         main.handle_processor_jobs(jobs)
 
-    #     for count, job in enumerate(jobs_in_correct_order):
-    #         # Calls are a weird object that I think is just basically
-    #         # a tuple. Index 1 of a call object is the arguments
-    #         # tuple, we're interested in the first argument
-    #         job_called_at_count = mock_requeue_processor_job.mock_calls[count][1][0]
-    #         self.assertEqual(job.id, job_called_at_count.id)
+#         for count, job in enumerate(jobs_in_correct_order):
+#             # Calls are a weird object that I think is just basically
+#             # a tuple. Index 1 of a call object is the arguments
+#             # tuple, we're interested in the first argument
+#             job_called_at_count = mock_requeue_processor_job.mock_calls[count][1][0]
+#             self.assertEqual(job.id, job_called_at_count.id)
