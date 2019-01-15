@@ -114,7 +114,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # log2(x + 1) transform filtered_rnaseq_matrix; this is now log2_rnaseq_matrix
     filtered_rnaseq_matrix_plus_one = filtered_rnaseq_matrix + 1
-    log2_rnaseq_matrix = np.log2(filtered_rnaseq_matrix)
+    log2_rnaseq_matrix = np.log2(filtered_rnaseq_matrix_plus_one)
 
     # Set all zero values in log2_rnaseq_matrix to NA, but make sure to keep track of where these zeroes are
     log2_rnaseq_matrix[log2_rnaseq_matrix==0]=np.nan
@@ -123,21 +123,26 @@ def _perform_imputation(job_context: Dict) -> Dict:
     combined_matrix = pd.merge(microarray_expression_matrix, log2_rnaseq_matrix, how='outer', left_index=True, right_index=True)
 
     # Remove genes (rows) with >30% missing values in combined_matrix
-    thresh = len(combined_matrix.columns) * .6
-    filtered_combined_matrix = combined_matrix.dropna(axis=0, thresh=thresh, how='any')
+    thresh = combined_matrix.shape[1] * .7
+    row_filtered_combined_matrix = combined_matrix.dropna(axis=0, thresh=thresh, how='any')
 
     # Remove samples (columns) with >50% missing values in combined_matrix
     # XXX: Find better test data for this!
     thresh = len(combined_matrix.columns) * .5
-    filtered_combined_matrix_samples = filtered_combined_matrix.dropna(axis=1, thresh=thresh, how='any')
+    row_col_filtered_combined_matrix_samples = row_filtered_combined_matrix.dropna(axis=1, thresh=thresh, how='any')
 
     # "Reset" zero values that were set to NA in RNA-seq samples (i.e., make these zero again) in combined_matrix
-    #combined_matrix_zero = filtered_combined_matrix_samples.fillna(value=0)
+    # XXX: IterativeSVD doesn't see 0.000 as something to impute, only NA.
+    # So, we skip this step!
+    # combined_matrix_zero = row_col_filtered_combined_matrix_samples.fillna(value=0)
+    # No operation
+    combined_matrix_zero = row_col_filtered_combined_matrix_samples
 
     # Transpose combined_matrix; transposed_matrix
-    transposed_matrix = filtered_combined_matrix_samples.transpose()
+    transposed_matrix = combined_matrix_zero.transpose() #  row_col_filtered_combined_matrix_samples.transpose()
 
     # Remove -inf and inf
+    # This should never happen, but make sure it doesn't!
     transposed_matrix = transposed_matrix.replace([np.inf, -np.inf], np.nan)
 
     # Perform imputation of missing values with IterativeSVD (rank=10) on the transposed_matrix; imputed_matrix
@@ -148,8 +153,8 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # Convert back to Pandas
     untransposed_imputed_matrix_df = pd.DataFrame.from_records(untransposed_imputed_matrix)
-    untransposed_imputed_matrix_df.index = filtered_combined_matrix_samples.index
-    untransposed_imputed_matrix_df.columns = filtered_combined_matrix_samples.columns
+    untransposed_imputed_matrix_df.index = row_col_filtered_combined_matrix_samples.index
+    untransposed_imputed_matrix_df.columns = row_col_filtered_combined_matrix_samples.columns
 
     # Quantile normalize imputed_matrix where genes are rows and samples are columns
     # XXX: Refactor QN target acquisition and application before doing this
@@ -157,7 +162,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     job_context['merged_no_qn'] = untransposed_imputed_matrix_df
     job_context = smasher._quantile_normalize(job_context)
 
-    job_context['formatted_command'] = "create_compendia.py" # ???
+    job_context['formatted_command'] = "create_compendia.py"
 
     return job_context
 
