@@ -181,6 +181,19 @@ class ExperimentDocumentView(DocumentViewSet):
         'has_publication': 'has_publication'
     }
 
+    # Post filter fields
+    post_filter_fields = {
+        'id': {
+            'field': '_id',
+            'lookups': [
+                LOOKUP_FILTER_RANGE,
+                LOOKUP_QUERY_IN,
+            ],
+        },
+        'technology': 'technology',
+        'has_publication': 'has_publication'
+    }
+
     # Define ordering fields
     ordering_fields = {
         'id': 'id',
@@ -205,6 +218,12 @@ class ExperimentDocumentView(DocumentViewSet):
             'field': 'organism_names',
             'facet': TermsFacet,
             'enabled': True
+        },
+        'organism_names_global': {
+            'field': 'organism_names',
+            'facet': TermsFacet,
+            'enabled': True,
+            'global': True
         },
     }
     faceted_search_param = 'facet'

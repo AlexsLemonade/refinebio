@@ -644,6 +644,7 @@ class ExperimentDocumentSerializer(serializers.Serializer):
     pubmed_id = serializers.CharField(read_only=True)
     num_total_samples = serializers.IntegerField(read_only=True)
     num_processed_samples = serializers.IntegerField(read_only=True)
+    source_first_published = serializers.DateTimeField(read_only=True)
 
     # FK/M2M
     # We don't use any ForgeinKey serializers right now, but if we did, we'd do it like this:
