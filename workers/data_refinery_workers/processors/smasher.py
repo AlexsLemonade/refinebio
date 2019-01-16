@@ -296,7 +296,7 @@ def _write_tsv_json(job_context, metadata, smash_path):
                 row_data = _get_tsv_row_data(sample_metadata)
                 dw.writerow(row_data)
 
-def _quantile_normalize(job_context: Dict, ks_stat=0.001) -> Dict:
+def _quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
     """
     Apply quantile normalization.
 
@@ -400,9 +400,10 @@ def _quantile_normalize(job_context: Dict, ks_stat=0.001) -> Dict:
             # We're unsure of how strigent to be about
             # the pvalue just yet, so we're extra lax
             # rather than failing tons of tests. This may need tuning.
-            if statistic > ks_stat or pvalue < 0.8:
-                raise Exception("Failed Kolmogorov Smirnov test! Stat: " +
-                                str(statistic) + ", PVal: " + str(pvalue))
+            if ks_check:
+                if statistic > ks_stat or pvalue < 0.8:
+                    raise Exception("Failed Kolmogorov Smirnov test! Stat: " +
+                                    str(statistic) + ", PVal: " + str(pvalue))
 
         # And finally convert back to Pandas
         ar = np.array(reso)
