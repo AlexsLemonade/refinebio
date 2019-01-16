@@ -116,6 +116,11 @@ def _perform_imputation(job_context: Dict) -> Dict:
     filtered_rnaseq_matrix_plus_one = filtered_rnaseq_matrix + 1
     log2_rnaseq_matrix = np.log2(filtered_rnaseq_matrix_plus_one)
 
+    # Cache our RNA-Seq zero values
+    cached_zeroes = {}
+    for column in log2_rnaseq_matrix.columns:
+        cached_zeroes[column] = np.where(log2_rnaseq_matrix[column] == 0)
+
     # Set all zero values in log2_rnaseq_matrix to NA, but make sure to keep track of where these zeroes are
     log2_rnaseq_matrix[log2_rnaseq_matrix==0]=np.nan
 
@@ -132,10 +137,18 @@ def _perform_imputation(job_context: Dict) -> Dict:
     row_col_filtered_combined_matrix_samples = row_filtered_combined_matrix.dropna(axis=1, thresh=thresh, how='any')
 
     # "Reset" zero values that were set to NA in RNA-seq samples (i.e., make these zero again) in combined_matrix
-    # XXX: IterativeSVD doesn't see 0.000 as something to impute, only NA.
-    # So, we skip this step!
-    # combined_matrix_zero = row_col_filtered_combined_matrix_samples.fillna(value=0)
-    # No operation
+    for column in cached_zeroes.keys():
+        zeroes = cached_zeroes[column]
+
+        # Skip purged columns
+        if column not in row_col_filtered_combined_matrix_samples:
+            continue
+        try:
+            np.put(row_col_filtered_combined_matrix_samples[column], zeroes, 0.0)
+        except Exception as e:
+            continue
+
+    # Label our new replaced data
     combined_matrix_zero = row_col_filtered_combined_matrix_samples
 
     # Transpose combined_matrix; transposed_matrix
@@ -161,7 +174,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     job_context['organism'] = Organism.get_object_for_name(list(job_context['input_files'].keys())[0])
     job_context['merged_no_qn'] = untransposed_imputed_matrix_df
 
-    job_context = smasher._quantile_normalize(job_context, ks_stat=.003)
+    job_context = smasher._quantile_normalize(job_context, ks_stat=.4)
     job_context['time_end'] = timezone.now()
 
     job_context['formatted_command'] = "create_compendia.py"
