@@ -37,7 +37,7 @@ def _prepare_input(job_context: Dict) -> Dict:
     # I'm not crazy about this yet. Maybe refactor later,
     # but I need the data now.
     job_context = smasher._prepare_files(job_context)
-    job_context = smasher._smash(job_context)
+    job_context = smasher._smash(job_context, how="outer")
 
     if not 'final_frame' in job_context.keys():
         logger.error("Unable to prepare files for creating compendia.",
@@ -125,16 +125,16 @@ def _perform_imputation(job_context: Dict) -> Dict:
     log2_rnaseq_matrix[log2_rnaseq_matrix==0]=np.nan
 
     # Perform a full outer join of microarray_expression_matrix and log2_rnaseq_matrix; combined_matrix
-    combined_matrix = pd.merge(microarray_expression_matrix, log2_rnaseq_matrix, how='outer', left_index=True, right_index=True)
+    combined_matrix = microarray_expression_matrix.merge(log2_rnaseq_matrix, how='outer', left_index=True, right_index=True)
 
-    # Remove genes (rows) with >30% missing values in combined_matrix
+    # Remove genes (rows) with <=70% missing values in combined_matrix
     thresh = combined_matrix.shape[1] * .7
-    row_filtered_combined_matrix = combined_matrix.dropna(axis=0, thresh=thresh, how='any')
+    row_filtered_combined_matrix = combined_matrix.dropna(axis='index', thresh=thresh, how='any') # Everything below `thresh` is dropped
 
-    # Remove samples (columns) with >50% missing values in combined_matrix
+    # Remove samples (columns) with <50% missing values in combined_matrix
     # XXX: Find better test data for this!
     thresh = len(combined_matrix.columns) * .5
-    row_col_filtered_combined_matrix_samples = row_filtered_combined_matrix.dropna(axis=1, thresh=thresh, how='any')
+    row_col_filtered_combined_matrix_samples = row_filtered_combined_matrix.dropna(axis='columns', thresh=thresh, how='any')
 
     # "Reset" zero values that were set to NA in RNA-seq samples (i.e., make these zero again) in combined_matrix
     for column in cached_zeroes.keys():

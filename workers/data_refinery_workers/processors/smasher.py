@@ -411,7 +411,7 @@ def _quantile_normalize(job_context: Dict, ks_stat=0.001) -> Dict:
         merged = new_merged
     return job_context   
 
-def _smash(job_context: Dict) -> Dict:
+def _smash(job_context: Dict, how="inner") -> Dict:
     """
     Smash all of the samples together!
 
@@ -601,7 +601,11 @@ def _smash(job_context: Dict) -> Dict:
                     continue
 
                 # This is the inner join, the main "Smash" operation
-                merged = merged.merge(frame, left_index=True, right_index=True)
+                if how == "inner":
+                    merged = merged.merge(frame, how='inner', left_index=True, right_index=True)
+                else:
+                    merged = merged.merge(frame, how='outer', left_index=True, right_index=True)
+
                 new_len_merged = len(merged)
                 if new_len_merged < old_len_merged:
                     logger.warning("Dropped rows while smashing!",
