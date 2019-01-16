@@ -461,7 +461,7 @@ for image in ${worker_images[*]}; do
 
         echo "Running tests with the following command:"
         echo $test_command
-        docker run \
+        docker run -i -t \
                --add-host=database:$DB_HOST_IP \
                --add-host=nomad:$HOST_IP \
                --env-file workers/environments/test \
