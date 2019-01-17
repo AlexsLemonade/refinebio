@@ -181,19 +181,6 @@ class ExperimentDocumentView(DocumentViewSet):
         'has_publication': 'has_publication'
     }
 
-    # Post filter fields
-    post_filter_fields = {
-        'id': {
-            'field': '_id',
-            'lookups': [
-                LOOKUP_FILTER_RANGE,
-                LOOKUP_QUERY_IN,
-            ],
-        },
-        'technology': 'technology',
-        'has_publication': 'has_publication'
-    }
-
     # Define ordering fields
     ordering_fields = {
         'id': 'id',
@@ -213,6 +200,12 @@ class ExperimentDocumentView(DocumentViewSet):
             'field': 'technology',
             'facet': TermsFacet,
             'enabled': True # These are enabled by default, which is more expensive but more simple.
+        },
+        'technology_global': {
+            'field': 'technology',
+            'facet': TermsFacet,
+            'enabled': True,
+            'global': True
         },
         'organism_names': {
             'field': 'organism_names',

@@ -64,7 +64,6 @@ class ExperimentDocument(DocType):
     pubmed_id = fields.TextField()
     num_total_samples = fields.IntegerField()
     num_processed_samples = fields.IntegerField()
-    source_first_published = fields.DateField()
 
     # FK/M2M
     # We actually don't use any ForeignKeys in our Experiment document,
