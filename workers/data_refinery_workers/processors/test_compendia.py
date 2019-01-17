@@ -259,3 +259,10 @@ class CompendiaTestCase(TestCase):
         pjda.save()
 
         final_context = create_compendia.create_compendia(job.id)
+
+        # Verify result
+        self.assertEqual(len(final_context['computed_files']), 3)
+        for file in final_context['computed_files']:
+            self.assertTrue(os.path.exists(ffile.absolute_file_path))
+
+        self.assertEqual(final_context['merged_qn'].shape, (9045, 834))

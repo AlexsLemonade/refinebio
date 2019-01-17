@@ -203,7 +203,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.save()
 
     # Write the compendia dataframe to a file, overwriting the previous smash
-    job_context['merged_no_qn'].to_csv(job_context['smash_outfile'], sep='\t', encoding='utf-8')
+    job_context['merged_qn'].to_csv(job_context['smash_outfile'], sep='\t', encoding='utf-8')
     compendia_tsv_computed_file = ComputedFile()
     compendia_tsv_computed_file.absolute_file_path = job_context['smash_outfile']
     compendia_tsv_computed_file.filename = job_context['smash_outfile'].split('/')[-1]
@@ -239,7 +239,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     metadata_computed_file.save()
 
     # Create the resulting archive
-    final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk)
+    final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk) + "_compendia"
     archive_path = shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
 
     # Save the related metadata file
