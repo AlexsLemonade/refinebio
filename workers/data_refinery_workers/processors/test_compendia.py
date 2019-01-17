@@ -263,6 +263,6 @@ class CompendiaTestCase(TestCase):
         # Verify result
         self.assertEqual(len(final_context['computed_files']), 3)
         for file in final_context['computed_files']:
-            self.assertTrue(os.path.exists(ffile.absolute_file_path))
+            self.assertTrue(os.path.exists(file.absolute_file_path))
 
         self.assertEqual(final_context['merged_qn'].shape, (9045, 834))
