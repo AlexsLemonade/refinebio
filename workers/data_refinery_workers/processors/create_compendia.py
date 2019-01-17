@@ -29,6 +29,7 @@ from data_refinery_workers.processors import utils, smasher
 
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
+S3_COMPENDIA_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery-compendia")
 logger = get_and_configure_logger(__name__)
 
 
@@ -178,10 +179,6 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # Perform the Quantile Normalization
     job_context = smasher._quantile_normalize(job_context, ks_check=False)
     job_context['time_end'] = timezone.now()
-
-    # Write the result to a file
-    job_context['merged_qn']
-
     job_context['formatted_command'] = "create_compendia.py"
 
     return job_context
@@ -255,15 +252,19 @@ def _create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.is_qn_target = False
     archive_computed_file.result = result
     archive_computed_file.save()
+    logger.info("Compendia created!",
+        archive_path=archive_path,
+        organism_name=job_context['samples'][organism_key][0].organism.name
+    )
 
-    import pdb
-    pdb.set_trace()
+    # Upload the result to S3
+    key = job_context['samples'][organism_key][0].organism.name + "_" + str(int(time.time())) + ".zip"
+    archive_computed_file.sync_to_s3(S3_COMPENDIA_BUCKET_NAME, key)
 
-    # TODO: upload this to a public read bucket.
-    # https://github.com/AlexsLemonade/refinebio/issues/586
     job_context['result'] = result
     job_context['computed_files'] = [compendia_tsv_computed_file, metadata_computed_file, archive_computed_file]
     job_context['success'] = True
+
     return job_context
 
 def create_compendia(job_id: int) -> None:
