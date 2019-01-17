@@ -88,6 +88,7 @@ The following services will need to be installed:
 so Docker does not need sudo permissions.
 - [Terraform](https://www.terraform.io/)
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./install_nomad.sh`.
+- [pip3](https://pip.pypa.io/en/stable/) can be installed on Linux clients with `sudo apt-get install python3-pip`
 - [git-crypt](https://www.agwa.name/projects/git-crypt/)
 - [jq](https://stedolan.github.io/jq/)
 - [iproute2](https://wiki.linuxfoundation.org/networking/iproute2)
@@ -135,17 +136,6 @@ repo. Sub-projects each have their own environments managed by their
 containers. When returning to this project you should run
 `source dr_env/bin/activate` to reactivate the virtualenv.
 
-#### Common Dependecies
-
-The [common](./common) sub-project contains common code which is
-depended upon by the other sub-projects. So before anything else you
-should prepare the distribution directory `common/dist` with this
-command:
-
-```bash
-(cd common && python setup.py sdist)
-```
-
 #### Services
 
 `refinebio` also depends on Postgres and Nomad. Postgres can be
@@ -165,16 +155,6 @@ Then, to initialize the database, run:
 ```bash
 ./common/install_db_docker.sh
 ```
-
-Finally, to make the migrations to the database, use:
-
-```bash
-./common/make_migrations.sh
-```
-
-Note: there is a small chance this might fail with a `can't stat`, error. If this happens, you have
-to manually change permissions on the volumes directory with `sudo chmod -R 740 volumes_postgres`
-then re-run the migrations.
 
 If you need to access a `psql` shell for inspecting the database, you can use:
 
@@ -207,6 +187,22 @@ the Nomad agent, which will then launch a Docker container which runs
 the job. If address conflicts emerge, old Docker containers can be purged
 with `docker container prune -f`.
 
+#### Common Dependecies
+
+The [common](./common) sub-project contains common code which is
+depended upon by the other sub-projects. So before anything else you
+should prepare the distribution directory `common/dist` with this
+script:
+
+```bash
+./update_models.sh
+```
+
+(_Note:_ This step requires the postgres container to be running and initialized.)
+
+Note: there is a small chance this might fail with a `can't stat`, error. If this happens, you have
+to manually change permissions on the volumes directory with `sudo chmod -R 740 volumes_postgres`
+then re-run the migrations.
 
 ### Testing
 
@@ -341,12 +337,43 @@ Example for an ArrayExpress experiment:
 ./foreman/run_surveyor.sh survey_all --accession E-MTAB-3050
 ```
 
+Transcriptome indices are a bit special.
+For species within the "main" Ensembl division, the species name can be provided like so:
+
+```bash
+./foreman/run_surveyor.sh survey_all --accession "Homo sapiens"
+```
+
+However for species that are in other divisions, the division must follow the species name after a comma like so:
+
+```bash
+./foreman/run_surveyor.sh survey_all --accession "Caenorhabditis elegans, EnsemblMetazoa"
+```
+The possible divisions that can be specified are:
+* Ensembl (this is the "main" division and is the default)
+* EnsemblPlants
+* EnsemblFungi
+* EnsemblBacteria
+* EnsemblProtists
+* EnsemblMetazoa
+
+If you are unsure what division a species falls into, unfortunately the only way to tell is go to check ensembl.com.
+(Although googling the species name + "ensembl" may work pretty well.)
+
 You can also supply a newline-deliminated file to `survey_all` which will
 dispatch survey jobs based on accession codes like so:
 
 ```bash
 ./foreman/run_surveyor.sh survey_all --file MY_BIG_LIST_OF_CODES.txt
 ```
+
+The main foreman job loop can be started with:
+
+```bash
+./foreman/run_surveyor.sh retry_jobs
+```
+
+This must actually be running for jobs to move forward through the pipeline.
 
 #### Sequence Read Archive
 
@@ -430,19 +457,8 @@ Or for more information run:
 If you want to quantile normalize combined outputs, you'll first need to create a reference target for a given organism. This can be done in a production environment with the following:
 
 ```bash
-docker run --env-file prod_env --volume /var/ebs/:/home/user/data_store -t ccdl/dr_smasher:latest python3 manage.py create_qn_target --organism DANIO_RERIO
+nomad job dispatch -meta ORGANISM=DANIO_RERIO CREATE_QN_TARGET
 ```
-
-Where the prod_env file has been temporarily copied to the host with:
-
-```bash
-scp -i data-refinery-key.pem prod_env ubuntu@<host_address>:/home/ubuntu/prod_env
-```
-
-However two keys in the prod_env file are incorrect.
-These are the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` values, which are named `AWS_ACCESS_KEY_ID_CLIENT` and `AWS_SECRET_ACCESS_KEY`_CLIENT.
-(This difference is introduced intentionally to avoid conflicting with the environment variables of the developer at deploy time.)
-Therefore, all that needs to be done is to delete the `_CLIENT` part of the keys.
 
 ### Checking on Local Jobs
 
@@ -534,7 +550,6 @@ We have two different version counters, one for `dev` and one for `master` so a 
 * v1.1.2-dev
 * v1.1.3
 * v1.1.3-dev
-
 
 However you may see that the `dev` counter is way ahead, because we often need more than one staging deploy to be ready for a production deploy.
 This is okay, just find the latest version of the type you want to deploy and increment that to get your version.
@@ -682,6 +697,27 @@ awslogs get data-refinery-log-group-myusername-dev log-stream-api-nginx-access-*
 
 will show all of the API access logs made by Nginx.
 
+### Dumping and Restoring Database Backups
+
+Automatic snapshots are created automatically by RDS. Manual database dumps can be created by priveledged users with [these instructions](https://gist.github.com/syafiqfaiz/5273cd41df6f08fdedeb96e12af70e3b). Postgres versions on the host (I suggest the PGBouncer instance) must match the RDS instance version:
+
+```bash
+sudo add-apt-repository "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -sc)-pgdg main"
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install postgresql-9.6
+```
+
+Archival dumps can also be provided upon request.
+
+Dumps can be restored locally by copying the `backup.sql` file to the `volumes_postgres` directory, then executing:
+
+```bash
+docker exec -it drdb /bin/bash
+psql --user postgres -d data_refinery -f /var/lib/postgresql/data/backup.sql
+```
+
+This can take a long time (>30 minutes)!
 
 ### Tearing Down
 

@@ -1,11 +1,15 @@
-job "SURVEYOR_${{RAM}}" {
+job "CREATE_QN_TARGET" {
   datacenters = ["dc1"]
 
   type = "batch"
 
+  # These are high priority because if we've dispatched them,
+  # we need them.
+  priority = 80
+
   parameterized {
     payload       = "forbidden"
-    meta_required = ["JOB_NAME", "JOB_ID"]
+    meta_required = ["ORGANISM"]
   }
 
   group "jobs" {
@@ -23,7 +27,7 @@ job "SURVEYOR_${{RAM}}" {
       size = "10"
     }
 
-    task "surveyor" {
+    task "create_qn_target" {
       driver = "docker"
 
       kill_timeout = "30s"
@@ -44,13 +48,15 @@ job "SURVEYOR_${{RAM}}" {
         RAVEN_DSN="${{RAVEN_DSN}}"
         RAVEN_DSN_API="${{RAVEN_DSN_API}}"
 
+        NOMAD_HOST = "${{NOMAD_HOST}}"
+        NOMAD_PORT = "${{NOMAD_PORT}}"
+
         RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
 
         USE_S3 = "${{USE_S3}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
-        NOMAD_HOST = "${{NOMAD_HOST}}"
-        NOMAD_PORT = "${{NOMAD_PORT}}"
+        MAX_DOWNLOADER_JOBS_PER_NODE = "${{MAX_DOWNLOADER_JOBS_PER_NODE}}"
 
         LOG_LEVEL = "${{LOG_LEVEL}}"
       }
@@ -58,9 +64,9 @@ job "SURVEYOR_${{RAM}}" {
       # The resources the job will require.
       resources {
         # CPU is in AWS's CPU units.
-        cpu = 500
+        cpu = 2048
         # Memory is in MB of RAM.
-        memory = ${{RAM}}
+        memory = 131072
       }
 
       logs {
@@ -68,23 +74,16 @@ job "SURVEYOR_${{RAM}}" {
         max_file_size = 1
       }
 
-      # Don't run on the smasher instance, it's too small and should be running smasher jobs.
-      constraint {
-        attribute = "${meta.is_smasher}"
-        operator = "!="
-        value = "true"
-      }
-
       config {
-        image = "${{DOCKERHUB_REPO}}/${{FOREMAN_DOCKER_IMAGE}}"
+        image = "${{DOCKERHUB_REPO}}/${{SMASHER_DOCKER_IMAGE}}"
         force_pull = false
 
         # The args to pass to the Docker container's entrypoint.
         args = [
           "python3",
           "manage.py",
-          "survey_all",
-          "--job-id", "${NOMAD_META_JOB_ID}",
+          "create_qn_target",
+          "--organism", "${NOMAD_META_ORGANISM}",
         ]
         ${{EXTRA_HOSTS}}
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]

@@ -319,24 +319,19 @@ class Experiment(models.Model):
 
         possible_fields = ['sex', 'age', 'specimen_part', 'genotype', 'disease', 'disease_stage',
                            'cell_line', 'treatment', 'race', 'subject', 'compound', 'time']
-
         samples = self.samples.all()
-
         for field in possible_fields:
             for sample in samples:
                 if getattr(sample, field) != None and getattr(sample, field) != '':
                     fields.append(field)
                     break
+
         return fields
 
     def get_sample_technologies(self):
         """ Get a list of unique technologies for all of the associated samples
         """
-        tech_values_qs = self.samples.all().values('technology')
-        tech_values = [t['technology'] for t in tech_values_qs]
-        unique_tech_values = list(set(tech_values))
-        technologies = list(filter(None, unique_tech_values))
-        return technologies
+        return list(set([sample.technology for sample in self.samples.all()]))
 
     @property
     def platforms(self):
@@ -348,7 +343,7 @@ class Experiment(models.Model):
 
     @property
     def processed_samples(self):
-        return self.samples.filter(is_processed=True)
+        return list([sample.accession_code for sample in self.samples.all() if sample.is_processed == True])
 
 class ExperimentAnnotation(models.Model):
     """ Semi-standard information associated with an Experiment """
@@ -427,6 +422,8 @@ class ComputationalResult(models.Model):
 
     commands = ArrayField(models.TextField(), default=list)
     processor = models.ForeignKey(Processor, blank=True, null=True, on_delete=models.CASCADE)
+
+    samples = models.ManyToManyField('Sample', through='SampleResultAssociation')
 
     # The Organism Index used to process the sample.
     organism_index = models.ForeignKey('OrganismIndex', blank=True, null=True, on_delete=models.SET_NULL)
@@ -1089,3 +1086,14 @@ class SampleComputedFileAssociation(models.Model):
     class Meta:
         db_table = "sample_computed_file_associations"
         unique_together = ('sample', 'computed_file')
+
+
+class ExperimentResultAssociation(models.Model):
+
+    experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
+    result = models.ForeignKey(
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "experiment_result_associations"
+        unique_together = ('result', 'experiment')

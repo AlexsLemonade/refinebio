@@ -111,6 +111,15 @@ class ExternalSourceSurveyor:
                                                 ):
         """Creates a single DownloaderJob with multiple files to download.
         """
+        source_urls = [original_file.source_url for original_file in original_files]
+        # There is already a downloader job associated with this file.
+        old_assocs = DownloaderJobOriginalFileAssociation.objects.filter(
+            original_file__source_url__in=source_urls)
+        if len(old_assocs) > 0:
+            logger.debug("We found an existing DownloaderJob for these urls.",
+                         source_urls=source_urls)
+            return False
+
         # Transcriptome is a special case because there's no sample_object.
         if is_transcriptome:
             downloader_task = job_lookup.Downloaders.TRANSCRIPTOME_INDEX

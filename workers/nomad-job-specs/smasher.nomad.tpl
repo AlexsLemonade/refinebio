@@ -27,6 +27,8 @@ job "SMASHER" {
     task "smasher" {
       driver = "docker"
 
+      kill_timeout = "30s"
+
       # This env will be passed into the container for the job.
       env {
         ${{AWS_CREDS}}
@@ -62,7 +64,7 @@ job "SMASHER" {
         # CPU is in AWS's CPU units.
         cpu = 1024
         # Memory is in MB of RAM.
-        memory = 4096
+        memory = 12288
       }
 
       logs {

@@ -41,7 +41,7 @@ DIVISION_LOOKUP = {"EnsemblPlants": "plants",
 # release versions. These urls will return what the most recent
 # release version is.
 MAIN_RELEASE_URL = "https://rest.ensembl.org/info/software?content-type=application/json"
-DIVISION_RELEASE_URL = "https://rest.ensemblgenomes.org/info/software?content-type=application/json"
+DIVISION_RELEASE_URL = "https://rest.ensemblgenomes.org/info/eg_version?content-type=application/json"
 
 
 class EnsemblUrlBuilder(ABC):
@@ -59,7 +59,7 @@ class EnsemblUrlBuilder(ABC):
         self.url_root = "ensemblgenomes.org/pub/release-{assembly_version}/{short_division}"
         self.short_division = DIVISION_LOOKUP[species["division"]]
         self.assembly = species["assembly_name"].replace(" ", "_")
-        self.assembly_version = utils.requests_retry_session().get(DIVISION_RELEASE_URL).json()["release"]
+        self.assembly_version = utils.requests_retry_session().get(DIVISION_RELEASE_URL).json()["version"]
 
         # Some species are nested within a collection directory. If
         # this is the case, then we need to add that extra directory
@@ -164,7 +164,7 @@ def ensembl_url_builder_factory(species: Dict) -> EnsemblUrlBuilder:
         return EnsemblProtistsUrlBuilder(species)
     elif species["division"] == "EnsemblFungi":
         return EnsemblFungiUrlBuilder(species)
-    elif species["division"] == "Ensembl":
+    elif species["division"] == "EnsemblVertebrates":
         return MainEnsemblUrlBuilder(species)
     else:
         return EnsemblUrlBuilder(species)
@@ -233,7 +233,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         Surveying here is a bit different than discovering an experiment
         and samples.
         """
-        if source_type is not "TRANSCRIPTOME_INDEX":
+        if source_type != "TRANSCRIPTOME_INDEX":
             return False
 
         try:
@@ -290,7 +290,11 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         all_new_species = []
         if organism_name:
             for species in specieses:
-                if species['name'] == organism_name:
+                # This key varies based on whether the division is the
+                # main one or not... why couldn't they just make them
+                # consistent?
+                if ('species' in species and species['species'] == organism_name) \
+                   or ('name' in species and species['name'] == organism_name):
                     all_new_species.append(self._generate_files(species))
                     break
         else:

@@ -19,10 +19,13 @@ print_options() {
     echo "                     The other options are 'prod' and 'test'"
 }
 
-while getopts ":e:h" opt; do
+while getopts ":e:v:h" opt; do
     case $opt in
         e)
             env=$OPTARG
+            ;;
+        v)
+            export system_version=$OPTARG
             ;;
         h)
             print_description
@@ -45,6 +48,10 @@ done
 
 if [[ -z $env ]]; then
     env="local"
+fi
+
+if [[ -z $system_version ]]; then
+    system_version="latest"
 fi
 
 # Figure out the right location to put the nomad directory.
@@ -127,8 +134,8 @@ done
 
 echo "Nomad is online. Registering jobs."
 
-./format_nomad_with_env.sh -p workers -e $env
-./format_nomad_with_env.sh -p surveyor -e $env
+./format_nomad_with_env.sh -p workers -e $env -v $system_version
+./format_nomad_with_env.sh -p surveyor -e $env -v $system_version
 
 # Register the jobs for dispatching.
 for job_spec in $(ls -1 workers/nomad-job-specs/*.nomad$TEST_POSTFIX); do

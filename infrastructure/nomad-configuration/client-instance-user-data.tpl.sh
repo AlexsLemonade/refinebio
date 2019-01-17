@@ -90,7 +90,7 @@ echo "
 # Cannot specify bip option in config file because it is hardcoded in
 # the startup command because docker is run by clowns.
 service docker stop
-nohup /usr/bin/dockerd -s overlay2 --bip=172.17.77.1/22 --log-driver=json-file --log-opt max-size=100m --log-opt max-file=3 > /dev/null &
+nohup /usr/bin/dockerd -s overlay2 --bip=172.17.77.1/22 --log-driver=json-file --log-opt max-size=100m --log-opt max-file=3 > /var/log/docker_daemon.log &
 
 # Output the files we need to start up Nomad and register jobs:
 # (Note that the lines starting with "$" are where
@@ -122,7 +122,7 @@ nomad agent -config client.hcl > /var/log/nomad_client.log &
 # Set up the Docker hung process killer
 cat <<EOF >/home/ubuntu/killer.py
 # Call like:
-# docker ps --format 'table {{.Names}}|{{.RunningFor}}' | python killer.py
+# docker ps --format 'table {{.Names}}|{{.RunningFor}}' | grep -v qn | grep -v compendia | python killer.py
 
 import os
 import sys
@@ -148,7 +148,7 @@ EOF
 # Create the CW metric job in a crontab
 # write out current crontab
 crontab -l > tempcron
-echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/5 * * * * docker ps --format 'table {{.Names}}|{{.RunningFor}}' | python /home/ubuntu/killer.py" >> tempcron
+echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/5 * * * * docker ps --format 'table {{.Names}}|{{.RunningFor}}' | grep -v qn | grep -v compendia | python /home/ubuntu/killer.py" >> tempcron
 # install new cron file
 crontab tempcron
 rm tempcron
