@@ -1,5 +1,6 @@
 import os
 import random
+import shutil
 import string
 import subprocess
 import time
@@ -174,8 +175,12 @@ def _perform_imputation(job_context: Dict) -> Dict:
     job_context['organism'] = Organism.get_object_for_name(list(job_context['input_files'].keys())[0])
     job_context['merged_no_qn'] = untransposed_imputed_matrix_df
 
+    # Perform the Quantile Normalization
     job_context = smasher._quantile_normalize(job_context, ks_check=False)
     job_context['time_end'] = timezone.now()
+
+    # Write the result to a file
+    job_context['merged_qn']
 
     job_context['formatted_command'] = "create_compendia.py"
 
@@ -200,30 +205,64 @@ def _create_result_objects(job_context: Dict) -> Dict:
         return utils.handle_processor_exception(job_context, processor_key, e)
     result.save()
 
-    computed_file = ComputedFile()
-    computed_file.absolute_file_path = job_context['target_file']
-    computed_file.filename = job_context['target_file'].split('/')[-1]
-    computed_file.calculate_sha1()
-    computed_file.calculate_size()
-    computed_file.is_smashable = False
-    computed_file.is_qn_target = True
-    computed_file.result = result
-    computed_file.save()
+    # Write the compendia dataframe to a file, overwriting the previous smash
+    job_context['merged_no_qn'].to_csv(job_context['smash_outfile'], sep='\t', encoding='utf-8')
+    compendia_tsv_computed_file = ComputedFile()
+    compendia_tsv_computed_file.absolute_file_path = job_context['smash_outfile']
+    compendia_tsv_computed_file.filename = job_context['smash_outfile'].split('/')[-1]
+    compendia_tsv_computed_file.calculate_sha1()
+    compendia_tsv_computed_file.calculate_size()
+    compendia_tsv_computed_file.is_smashable = False
+    compendia_tsv_computed_file.is_qn_target = False
+    compendia_tsv_computed_file.result = result
+    compendia_tsv_computed_file.save()
 
+    organism_key = list(job_context['samples'].keys())[0]
     annotation = ComputationalResultAnnotation()
     annotation.result = result
     annotation.data = {
-        "organism_id": job_context['samples']['ALL'][0].organism_id,
+        "organism_id": job_context['samples'][organism_key][0].organism_id,
+        "organism_name": job_context['samples'][organism_key][0].organism.name,
         "is_qn": False,
-        "platform_accession_code": job_context['samples']['ALL'][0].platform_accession_code,
-        "samples": [sample.accession_code for sample in job_context["samples"]["ALL"]]
+        "is_compendia": True,
+        "samples": [sample.accession_code for sample in job_context["samples"][organism_key]],
+        "num_samples": len(job_context["samples"][organism_key])
     }
     annotation.save()
+
+    # Save the related metadata file
+    metadata_computed_file = ComputedFile()
+    metadata_computed_file.absolute_file_path = job_context['metadata_tsv_paths'][0]
+    metadata_computed_file.filename = job_context['metadata_tsv_paths'][0].split('/')[-1]
+    metadata_computed_file.calculate_sha1()
+    metadata_computed_file.calculate_size()
+    metadata_computed_file.is_smashable = False
+    metadata_computed_file.is_qn_target = False
+    metadata_computed_file.result = result
+    metadata_computed_file.save()
+
+    # Create the resulting archive
+    final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk)
+    archive_path = shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
+
+    # Save the related metadata file
+    archive_computed_file = ComputedFile()
+    archive_computed_file.absolute_file_path = archive_path
+    archive_computed_file.filename = archive_path.split('/')[-1]
+    archive_computed_file.calculate_sha1()
+    archive_computed_file.calculate_size()
+    archive_computed_file.is_smashable = False
+    archive_computed_file.is_qn_target = False
+    archive_computed_file.result = result
+    archive_computed_file.save()
+
+    import pdb
+    pdb.set_trace()
 
     # TODO: upload this to a public read bucket.
     # https://github.com/AlexsLemonade/refinebio/issues/586
     job_context['result'] = result
-    job_context['computed_files'] = [computed_file]
+    job_context['computed_files'] = [compendia_tsv_computed_file, metadata_computed_file, archive_computed_file]
     job_context['success'] = True
     return job_context
 

@@ -248,28 +248,39 @@ def _write_tsv_json(job_context, metadata, smash_path):
     """Writes tsv files on disk.
     If the dataset is aggregated by species, also write species-level
     JSON file.
+
+
     """
 
     # Uniform TSV header per dataset
     columns = _get_tsv_columns(metadata['samples'])
 
+    # Per-Experiment Metadata
     if job_context["dataset"].aggregate_by == "EXPERIMENT":
+        tsv_paths = []
         for experiment_title, experiment_data in metadata['experiments'].items():
             experiment_dir = smash_path + experiment_title + '/'
             os.makedirs(experiment_dir, exist_ok=True)
-            with open(experiment_dir + 'metadata_' + experiment_title + '.tsv', 'w') as tsv_file:
+            tsv_path = experiment_dir + 'metadata_' + experiment_title + '.tsv'
+            tsv_paths.append(tsv_path)
+            with open(tsv_path, 'w') as tsv_file:
                 dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
                 dw.writeheader()
                 for sample_title, sample_metadata in metadata['samples'].items():
                     if sample_title in experiment_data['sample_titles']:
                         row_data = _get_tsv_row_data(sample_metadata)
                         dw.writerow(row_data)
+        return tsv_paths
+    # Per-Species Metadata
     elif job_context["dataset"].aggregate_by == "SPECIES":
+        tsv_paths = []
         for species in job_context['input_files'].keys():
             species_dir = smash_path + species + '/'
             os.makedirs(species_dir, exist_ok=True)
             samples_in_species = []
-            with open(species_dir + "metadata_" + species + '.tsv', 'w') as tsv_file:
+            tsv_path = species_dir + "metadata_" + species + '.tsv'
+            tsv_paths.append(tsv_path)
+            with open(tsv_path, 'w') as tsv_file:
                 dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
                 dw.writeheader()
                 for sample_metadata in metadata['samples'].values():
@@ -284,17 +295,22 @@ def _write_tsv_json(job_context, metadata, smash_path):
                     'species': species,
                     'samples': samples_in_species
                 }
-                with open(species_dir + "metadata_" + species + '.json', 'w') as json_file:
+                json_path = species_dir + "metadata_" + species + '.json'
+                with open(json_path, 'w') as json_file:
                     json.dump(species_metadata, json_file, indent=4, sort_keys=True)
+        return tsv_paths
+    # All Metadata
     else:
         all_dir = smash_path + "ALL/"
         os.makedirs(all_dir, exist_ok=True)
-        with open(all_dir + 'metadata_ALL.tsv', 'w') as tsv_file:
+        tsv_path = all_dir + 'metadata_ALL.tsv' 
+        with open(tsv_path, 'w') as tsv_file:
             dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
             dw.writeheader()
             for sample_metadata in metadata['samples'].values():
                 row_data = _get_tsv_row_data(sample_metadata)
                 dw.writerow(row_data)
+        return [tsv_path]
 
 def _quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
     """
@@ -691,6 +707,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             outfile_dir = smash_path + key + "/"
             os.makedirs(outfile_dir, exist_ok=True)
             outfile = outfile_dir + key + ".tsv"
+            job_context['smash_outfile'] = outfile
             untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
 
         # Copy LICENSE.txt and README.md files
@@ -720,8 +737,8 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         metadata['experiments'] = experiments
 
         # Write samples metadata to TSV
-        _write_tsv_json(job_context, metadata, smash_path)
-
+        tsv_paths = _write_tsv_json(job_context, metadata, smash_path)
+        job_context['metadata_tsv_paths'] = tsv_paths
         metadata['files'] = os.listdir(smash_path)
 
         # Metadata to JSON

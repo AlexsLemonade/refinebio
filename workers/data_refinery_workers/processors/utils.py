@@ -412,6 +412,12 @@ class ProcessorEnum(Enum):
         "yml_file": "qn.yml"
     }
 
+    COMPENDIA = {
+        "name": "Compendia Creation",
+        "docker_img": "dr_compendia",
+        "yml_file": "compendia.yml"
+    }
+
     @classmethod
     def has_key(cls, key):
         """Class method that tells whether a certain key exists."""
