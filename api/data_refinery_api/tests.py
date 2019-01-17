@@ -81,11 +81,13 @@ class APITestCases(APITestCase):
         sample = Sample()
         sample.title = "123"
         sample.accession_code = "123"
+        sample.is_processed = True
         sample.save()
 
         sample = Sample()
         sample.title = "789"
         sample.accession_code = "789"
+        sample.is_processed = True
         sample.save()
         self.sample = sample
 
@@ -400,7 +402,7 @@ class APITestCases(APITestCase):
 
         # Test all
         response = self.client.get(reverse('search'))
-        self.assertEqual(response.json()['count'], LOTS + 4)
+        self.assertEqual(response.json()['count'], LOTS + 5)
 
         # Test search
         response = self.client.get(reverse('search'), {'search': 'THISWILLBEINASEARCHRESULT'})
@@ -534,6 +536,17 @@ class APITestCases(APITestCase):
                                     content_type="application/json")
 
         self.assertEqual(response.status_code, 400)
+
+        # Update, just an experiment accession
+        jdata = json.dumps({'data': {"GSE123": ["ALL"]}})
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id}),
+                                   jdata,
+                                   content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['id'], good_id)
+        # We are not entirely RESTful here, that's okay.
+        self.assertNotEqual(response.json()['data'], json.loads(jdata)['data'])
+        self.assertEqual(response.json()['data']["GSE123"], ["789"])
 
         # Update
         jdata = json.dumps({'data': {"A": ["C"]}})

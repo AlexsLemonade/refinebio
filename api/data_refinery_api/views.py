@@ -442,6 +442,8 @@ class DatasetView(generics.RetrieveUpdateAPIView):
     """ View and modify a single Dataset. Set `start` to `true` along with a valid
     activated API token (from /token/) to begin smashing and delivery.
 
+    Adding a supplying `["ALL"]` as an experiment's accession list will add all of the associated samples.
+
     You must also supply `email_address` with `start`, though this will never be serialized back to you.
 
     """
@@ -462,6 +464,14 @@ class DatasetView(generics.RetrieveUpdateAPIView):
         old_aggregate = old_object.aggregate_by
         already_processing = old_object.is_processing
         new_data = serializer.validated_data
+
+        # We convert 'ALL' into the actual accession codes given
+        for key in new_data['data'].keys():
+            accessions = new_data['data'][key]
+            if accessions == ["ALL"]:
+                experiment = get_object_or_404(Experiment, accession_code=key)
+                sample_codes = list(experiment.samples.filter(is_processed=True).values_list('accession_code', flat=True))
+                new_data['data'][key] = sample_codes
 
         if old_object.is_processed:
             raise APIException("You may not update Datasets which have already been processed")
