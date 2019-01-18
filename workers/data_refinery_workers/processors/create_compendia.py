@@ -247,10 +247,10 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
     try:
         last_compendia = ComputedFile.objects.filter(
-                                    is_compendia=True
+                                    is_compendia=True,
                                     compendia_organism=organism).order_by('-compendia_version')[-1]
         compendia_version = last_compendia.compendia_version + 1
-    except:
+    except Exception as e:
         # This is the first compendia for this Organism
         compendia_version = 1
 
