@@ -245,33 +245,39 @@ class APITestCases(APITestCase):
         hsc1.is_compendia = True
         hsc1.compendia_organism = homo_sapiens
         hsc1.compendia_version = 1
+        hsc1.s3_bucket = "dr-compendia"
+        hsc1.s3_key = "hsc1.tsv"
         hsc1.save()
 
-        hsc1 = ComputedFile()
-        hsc1.absolute_file_path = '/null/2.tsv'
-        hsc1.filename = '2.tsv'
-        hsc1.sha1 = "abc"
-        hsc1.size_in_bytes = 1
-        hsc1.is_smashable = False
-        hsc1.is_qn_target = False
-        hsc1.result = result
-        hsc1.is_compendia = True
-        hsc1.compendia_organism = homo_sapiens
-        hsc1.compendia_version = 2
-        hsc1.save()
+        hsc2 = ComputedFile()
+        hsc2.absolute_file_path = '/null/2.tsv'
+        hsc2.filename = '2.tsv'
+        hsc2.sha1 = "abc"
+        hsc2.size_in_bytes = 1
+        hsc2.is_smashable = False
+        hsc2.is_qn_target = False
+        hsc2.result = result
+        hsc2.is_compendia = True
+        hsc2.compendia_organism = homo_sapiens
+        hsc2.compendia_version = 2
+        hsc2.s3_bucket = "dr-compendia"
+        hsc2.s3_key = "hsc2.tsv"
+        hsc2.save()
 
-        dsc1 = ComputedFile()
-        dsc1.absolute_file_path = '/null/1.tsv'
-        dsc1.filename = '1.tsv'
-        dsc1.sha1 = "abc"
-        dsc1.size_in_bytes = 1
-        dsc1.is_smashable = False
-        dsc1.is_qn_target = False
-        dsc1.result = result
-        dsc1.is_compendia = True
-        dsc1.compendia_organism = danio_rerio
-        dsc1.compendia_version = 1
-        dsc1.save()
+        drc1 = ComputedFile()
+        drc1.absolute_file_path = '/null/1.tsv'
+        drc1.filename = '1.tsv'
+        drc1.sha1 = "abc"
+        drc1.size_in_bytes = 1
+        drc1.is_smashable = False
+        drc1.is_qn_target = False
+        drc1.result = result
+        drc1.is_compendia = True
+        drc1.compendia_organism = danio_rerio
+        drc1.compendia_version = 1
+        drc1.s3_bucket = "dr-compendia"
+        drc1.s3_key = "drc2.tsv"
+        drc1.save()
 
         response = self.client.get(reverse('compendia'))
         self.assertEqual(3, len(response.json()))
