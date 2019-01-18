@@ -30,7 +30,7 @@ def update_cached_values(apps, schema_editor):
         experiment.sample_metadata_fields = fields
 
         # via experiment.update_organism_names
-        experiment.organism_names = list(set([organism.name for organism in self.organisms.all()]))
+        experiment.organism_names = list(set([organism.name for organism in experiment.organisms.all()]))
         experiment.save()
 
 class Migration(migrations.Migration):
