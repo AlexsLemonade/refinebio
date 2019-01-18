@@ -601,7 +601,7 @@ class APITokenSerializer(serializers.ModelSerializer):
                     }
 
 class CompendiaSerializer(serializers.ModelSerializer):
-    compendia_organism = OrganismSerializer(many=False)
+    organism_name = serializers.CharField(source='compendia_organism.name', read_only=True)
 
     class Meta:
         model = ComputedFile
@@ -610,8 +610,8 @@ class CompendiaSerializer(serializers.ModelSerializer):
                     'filename',
                     'size_in_bytes',
                     'is_compendia',
-                    'compendia_organism',
                     'compendia_version',
+                    'organism_name',
                     'sha1',
                     's3_bucket',
                     's3_key',
