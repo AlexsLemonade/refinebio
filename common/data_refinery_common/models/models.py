@@ -700,6 +700,15 @@ class ComputedFile(models.Model):
     is_qc = models.BooleanField(default=False)
     is_qn_target = models.BooleanField(default=False)
 
+    # Compendia details
+    is_compendia = models.BooleanField(default=False)
+    compendia_organism = models.ForeignKey(Organism,
+                                        blank=True,
+                                        null=True, 
+                                        on_delete=models.CASCADE
+                                    )
+    compendia_version = models.IntegerField(blank=True, null=True)
+
     # AWS
     s3_bucket = models.CharField(max_length=255, blank=True, null=True)
     s3_key = models.CharField(max_length=255, blank=True, null=True)

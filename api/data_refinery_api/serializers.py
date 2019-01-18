@@ -599,3 +599,25 @@ class APITokenSerializer(serializers.ModelSerializer):
                             'read_only': True
                         }
                     }
+
+class CompendiaSerializer(serializers.ModelSerializer):
+    compendia_organism = OrganismSerializer(many=False)
+
+    class Meta:
+        model = ComputedFile
+        fields = (
+                    'id',
+                    'filename',
+                    'size_in_bytes',
+                    'is_compendia',
+                    'compendia_organism',
+                    'compendia_version',
+                    'sha1',
+                    's3_bucket',
+                    's3_key',
+                    's3_url',
+                    'created_at',
+                    'last_modified'
+                )
+
+

@@ -28,6 +28,7 @@ from data_refinery_api.views import ExperimentList
 from data_refinery_common.utils import get_env_variable
 from data_refinery_common.models import (
     ComputationalResult,
+    ComputedFile,
     Dataset,
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -226,6 +227,54 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('samples'), {'experiment_accession_code': 'wrong-accession-code'})
         self.assertEqual(response.status_code, 404)
         
+    def test_compendia(self):
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
+        
+        result = ComputationalResult()
+        result.save()
+
+        hsc1 = ComputedFile()
+        hsc1.absolute_file_path = '/null/1.tsv'
+        hsc1.filename = '1.tsv'
+        hsc1.sha1 = "abc"
+        hsc1.size_in_bytes = 1
+        hsc1.is_smashable = False
+        hsc1.is_qn_target = False
+        hsc1.result = result
+        hsc1.is_compendia = True
+        hsc1.compendia_organism = homo_sapiens
+        hsc1.compendia_version = 1
+        hsc1.save()
+
+        hsc1 = ComputedFile()
+        hsc1.absolute_file_path = '/null/2.tsv'
+        hsc1.filename = '2.tsv'
+        hsc1.sha1 = "abc"
+        hsc1.size_in_bytes = 1
+        hsc1.is_smashable = False
+        hsc1.is_qn_target = False
+        hsc1.result = result
+        hsc1.is_compendia = True
+        hsc1.compendia_organism = homo_sapiens
+        hsc1.compendia_version = 2
+        hsc1.save()
+
+        dsc1 = ComputedFile()
+        dsc1.absolute_file_path = '/null/1.tsv'
+        dsc1.filename = '1.tsv'
+        dsc1.sha1 = "abc"
+        dsc1.size_in_bytes = 1
+        dsc1.is_smashable = False
+        dsc1.is_qn_target = False
+        dsc1.result = result
+        dsc1.is_compendia = True
+        dsc1.compendia_organism = danio_rerio
+        dsc1.compendia_version = 1
+        dsc1.save()
+
+        response = self.client.get(reverse('compendia'))
+        self.assertEqual(3, len(response.json()))
 
     def test_search_and_filter(self):
 

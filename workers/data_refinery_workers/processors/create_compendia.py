@@ -243,6 +243,17 @@ def _create_result_objects(job_context: Dict) -> Dict:
     archive_path = shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
 
     # Save the related metadata file
+    organism = job_context['samples'][organism_key][0].organism
+
+    try:
+        last_compendia = ComputedFile.objects.filter(
+                                    is_compendia=True
+                                    compendia_organism=organism).order_by('-compendia_version')[-1]
+        compendia_version = last_compendia.compendia_version + 1
+    except:
+        # This is the first compendia for this Organism
+        compendia_version = 1
+
     archive_computed_file = ComputedFile()
     archive_computed_file.absolute_file_path = archive_path
     archive_computed_file.filename = archive_path.split('/')[-1]
@@ -251,7 +262,11 @@ def _create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.is_smashable = False
     archive_computed_file.is_qn_target = False
     archive_computed_file.result = result
+    archive_computed_file.is_compendia = True
+    archive_computed_file.compendia_organism = job_context['samples'][organism_key][0].organism
+    archive_computed_file.compendia_version = compendia_version
     archive_computed_file.save()
+
     logger.info("Compendia created!",
         archive_path=archive_path,
         organism_name=job_context['samples'][organism_key][0].organism.name

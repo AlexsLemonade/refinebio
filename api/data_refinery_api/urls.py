@@ -26,7 +26,8 @@ from data_refinery_api.views import (
     DatasetView,
     DatasetStatsView,
     APITokenView,
-    TranscriptomeIndexDetail
+    TranscriptomeIndexDetail,
+    CompendiaDetail,
 )
 
 # This provides _public_ access to the /admin interface!
@@ -120,6 +121,8 @@ urlpatterns = [
     # Transcriptome Indices
     url(r'^transcriptome_indices', TranscriptomeIndexDetail.as_view(),
         name="transcriptome-indices"),
+    url(r'^compendia', CompendiaDetail.as_view(),
+        name="compendia"),
 
     # Admin
     url(r'^admin/', admin.site.urls),
