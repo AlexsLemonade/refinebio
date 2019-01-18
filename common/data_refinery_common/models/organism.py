@@ -32,10 +32,7 @@ def get_scientific_name(taxonomy_id: int) -> str:
     response = requests.get(EFETCH_URL, parameters)
 
     if response.status_code != 200:
-        logger.error("Bad response from Entrez!",
-            response=response.status_code,
-            text=response.text
-        )
+        logger.error("Bad response from Entrez!: " + str(response.status_code))
         return -1
 
     root = ElementTree.fromstring(response.text)
@@ -55,10 +52,7 @@ def get_taxonomy_id(organism_name: str) -> int:
     response = requests.get(ESEARCH_URL, parameters)
 
     if response.status_code != 200:
-        logger.error("Bad response from Entrez!",
-            response=response.status_code,
-            text=response.text
-        )
+        logger.error("Bad response from Entrez!: " + str(response.status_code))
         return -1
 
     root = ElementTree.fromstring(response.text)
@@ -82,10 +76,7 @@ def get_taxonomy_id_scientific(organism_name: str) -> int:
     response = requests.get(ESEARCH_URL, parameters)
 
     if response.status_code != 200:
-        logger.error("Bad response from Entrez!",
-            response=response.status_code,
-            text=response.text
-        )
+        logger.error("Bad response from Entrez!: " + str(response.status_code))
         return -1
 
     root = ElementTree.fromstring(response.text)
