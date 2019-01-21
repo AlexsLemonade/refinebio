@@ -14,7 +14,7 @@ coverage==4.5.1           # via coveralls
 coveralls==1.5.1
 cycler==0.10.0            # via matplotlib
 decorator==4.3.0          # via networkx
-django==2.1.2
+django==2.1.5
 docopt==0.6.2             # via coveralls
 docutils==0.14            # via botocore
 future==0.16.0            # via lzstring, multiqc
