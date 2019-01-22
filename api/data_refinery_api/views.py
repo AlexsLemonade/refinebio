@@ -215,28 +215,36 @@ class ExperimentDocumentView(DocumentViewSet):
             'field': 'organism_names',
             'facet': TermsFacet,
             'enabled': True,
-            'size': 99999
+            'options': {
+                'size': 999999
+            }
         },
         'organism_names_global': {
             'field': 'organism_names',
             'facet': TermsFacet,
             'enabled': True,
             'global': True,
-            'size': 99999
+            'options': {
+                'size': 999999
+            }
         },
         'platform_names': {
             'field': 'platform_names',
             'facet': TermsFacet,
             'enabled': True,
             'global': False,
-            'size': 99999
+            'options': {
+                'size': 999999
+            }
         },
         'platform_names_global': {
             'field': 'platform_names',
             'facet': TermsFacet,
             'enabled': True,
             'global': True,
-            'size': 99999
+            'options': {
+                'size': 999999
+            }
         },
         'has_publication': {
             'field': 'has_publication',
