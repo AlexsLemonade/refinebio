@@ -16,6 +16,11 @@ html_strip = analyzer(
     filter=["standard", "lowercase", "stop", "snowball"],
     char_filter=["html_strip"]
 )
+standard = analyzer(
+    'standard',
+    tokenizer="keyword",
+    filter=[],
+)
 
 @experiment_index.doc_type
 class ExperimentDocument(DocType):
@@ -44,7 +49,7 @@ class ExperimentDocument(DocType):
         fields={'raw': fields.KeywordField()}
     )
     technology = fields.TextField(
-        analyzer=html_strip,
+        analyzer=standard,
         fielddata=True,
         fields={'raw': fields.KeywordField()}
     )
@@ -53,7 +58,11 @@ class ExperimentDocument(DocType):
         fielddata=True,
         fields={'raw': fields.KeywordField()}
     )
-
+    platform_names = fields.TextField(
+        analyzer=standard,
+        fielddata=True,
+        fields={'raw': fields.TextField()}
+    )
     # Basic Fields
     accession_code = fields.TextField()
     alternate_accession_code = fields.TextField()
@@ -61,7 +70,6 @@ class ExperimentDocument(DocType):
     publication_doi = fields.TextField()
     has_publication = fields.BooleanField()
     sample_metadata_fields = fields.TextField()
-    platform_names = fields.TextField()
     pubmed_id = fields.TextField()
     num_total_samples = fields.IntegerField()
     num_processed_samples = fields.IntegerField()
