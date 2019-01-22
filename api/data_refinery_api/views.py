@@ -180,7 +180,8 @@ class ExperimentDocumentView(DocumentViewSet):
             ],
         },
         'technology': 'technology',
-        'has_publication': 'has_publication'
+        'has_publication': 'has_publication',
+        'platform': 'platform_names'
     }
 
     # Define ordering fields
