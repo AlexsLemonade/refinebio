@@ -129,6 +129,7 @@ class PaginatedAPIView(APIView):
 ##
 # ElasticSearch
 ##
+from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
 
 class ExperimentDocumentView(DocumentViewSet):
     """ElasticSearch powered experiment search.
@@ -146,6 +147,7 @@ class ExperimentDocumentView(DocumentViewSet):
 
     document = ExperimentDocument
     serializer_class = ExperimentDocumentSerializer
+    pagination_class = ESLimitOffsetPagination
 
     # Filter backends provide different functionality we want
     filter_backends = [
