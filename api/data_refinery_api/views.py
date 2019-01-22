@@ -214,13 +214,15 @@ class ExperimentDocumentView(DocumentViewSet):
         'organism_names': {
             'field': 'organism_names',
             'facet': TermsFacet,
-            'enabled': True
+            'enabled': True,
+            'size': 99999
         },
         'organism_names_global': {
             'field': 'organism_names',
             'facet': TermsFacet,
             'enabled': True,
-            'global': True
+            'global': True,
+            'size': 99999
         },
         'platform_names': {
             'field': 'platform_names',
