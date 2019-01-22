@@ -229,12 +229,14 @@ class ExperimentDocumentView(DocumentViewSet):
             'facet': TermsFacet,
             'enabled': True,
             'global': False,
+            'size': 99999
         },
         'platform_names_global': {
             'field': 'platform_names',
             'facet': TermsFacet,
             'enabled': True,
             'global': True,
+            'size': 99999
         },
         'has_publication': {
             'field': 'has_publication',
