@@ -61,6 +61,7 @@ class ExperimentDocument(DocType):
     publication_doi = fields.TextField()
     has_publication = fields.BooleanField()
     sample_metadata_fields = fields.TextField()
+    platform_names = fields.TextField()
     pubmed_id = fields.TextField()
     num_total_samples = fields.IntegerField()
     num_processed_samples = fields.IntegerField()

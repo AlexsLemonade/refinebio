@@ -33,6 +33,9 @@ def update_cached_values(apps, schema_editor):
         experiment.organism_names = list(set([organism.name for organism in experiment.organisms.all()]))
         experiment.save()
 
+        # experiment.update_platform_names
+        experiment.platform_names = list(set([sample.platform_name for sample in experiment.samples.all()]))
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -58,6 +61,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='experiment',
             name='sample_metadata_fields',
+            field=django.contrib.postgres.fields.ArrayField(base_field=models.TextField(), default=list, size=None),
+        ),
+        migrations.AddField(
+            model_name='experiment',
+            name='platform_names',
             field=django.contrib.postgres.fields.ArrayField(base_field=models.TextField(), default=list, size=None),
         ),
         migrations.AddField(

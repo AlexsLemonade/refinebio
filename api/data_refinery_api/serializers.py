@@ -640,6 +640,7 @@ class ExperimentDocumentSerializer(serializers.Serializer):
     publication_doi = serializers.CharField(read_only=True)
     publication_authors = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
     sample_metadata_fields = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
+    platform_names = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
     organism_names = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
     pubmed_id = serializers.CharField(read_only=True)
     num_total_samples = serializers.IntegerField(read_only=True)
