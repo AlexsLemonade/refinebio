@@ -40,8 +40,6 @@ DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)
 HOST_IP=$(get_ip_address)
 
-echo $(run_tests_with_coverage $@)
-
 docker run \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
