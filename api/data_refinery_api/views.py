@@ -181,7 +181,8 @@ class ExperimentDocumentView(DocumentViewSet):
         },
         'technology': 'technology',
         'has_publication': 'has_publication',
-        'platform': 'platform_names'
+        'platform': 'platform_names',
+        'organism': 'organism_names'
     }
 
     # Define ordering fields
