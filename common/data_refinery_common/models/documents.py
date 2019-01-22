@@ -63,6 +63,7 @@ class ExperimentDocument(DocType):
         fielddata=True,
         fields={'raw': fields.TextField()}
     )
+    
     # Basic Fields
     accession_code = fields.TextField()
     alternate_accession_code = fields.TextField()

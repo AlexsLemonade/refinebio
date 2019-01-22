@@ -233,6 +233,18 @@ class ExperimentDocumentView(DocumentViewSet):
             'enabled': True,
             'global': True,
         },
+        'has_publication': {
+            'field': 'has_publication',
+            'facet': TermsFacet,
+            'enabled': True,
+            'global': False,
+        },
+        'has_publication_global': {
+            'field': 'platform_names',
+            'facet': TermsFacet,
+            'enabled': True,
+            'global': True,
+        },
     }
     faceted_search_param = 'facet'
 
