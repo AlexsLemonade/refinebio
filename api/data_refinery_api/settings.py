@@ -204,7 +204,7 @@ else:
     ELASTICSEARCH_INDEX_NAMES = {
         'data_refinery_common.models.documents': 'experiments',
     }
-
+    ELASTICSEARCH_DSL_AUTOSYNC = False
 
 # DRF
 # XXX: Add this in Production!
