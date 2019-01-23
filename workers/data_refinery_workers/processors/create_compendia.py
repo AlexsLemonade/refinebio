@@ -133,7 +133,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     thresh = combined_matrix.shape[1] * .7 # (Rows, Columns)
     row_filtered_combined_matrix = combined_matrix.dropna(axis='index', thresh=thresh) # Everything below `thresh` is dropped
 
-    # Remove samples (columns) with <50% missing values in combined_matrix
+    # Remove samples (columns) with <50% present values in combined_matrix
     # XXX: Find better test data for this!
     col_thresh = row_filtered_combined_matrix.shape[0] * .5
     row_col_filtered_combined_matrix_samples = row_filtered_combined_matrix.dropna(axis='columns', thresh=col_thresh)
