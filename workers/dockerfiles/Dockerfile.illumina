@@ -7,7 +7,6 @@ RUN apt-get update -qq
 RUN apt-get -y install apt-fast
 
 COPY workers/CRAN.gpg .
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
 RUN \
   apt-fast update -qq && \
   apt-get install apt-transport-https  -y&& \
