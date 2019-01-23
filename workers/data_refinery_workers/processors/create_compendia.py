@@ -145,9 +145,12 @@ def _perform_imputation(job_context: Dict) -> Dict:
         # Skip purged columns
         if column not in row_col_filtered_combined_matrix_samples:
             continue
+        
+        # Place the zero
         try:
             np.put(row_col_filtered_combined_matrix_samples[column], zeroes, 0.0)
         except Exception as e:
+            logger.exception("Error when replacing zero")
             continue
 
     # Label our new replaced data
@@ -217,13 +220,15 @@ def _create_result_objects(job_context: Dict) -> Dict:
     organism_key = list(job_context['samples'].keys())[0]
     annotation = ComputationalResultAnnotation()
     annotation.result = result
+
     annotation.data = {
         "organism_id": job_context['samples'][organism_key][0].organism_id,
         "organism_name": job_context['samples'][organism_key][0].organism.name,
         "is_qn": False,
         "is_compendia": True,
         "samples": [sample.accession_code for sample in job_context["samples"][organism_key]],
-        "num_samples": len(job_context["samples"][organism_key])
+        "num_samples": len(job_context["samples"][organism_key]),
+        "experiment_accessions": [e.accession_code for e in job_context['experiments']]
     }
     annotation.save()
 
