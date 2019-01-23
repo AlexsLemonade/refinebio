@@ -1065,7 +1065,7 @@ class TranscriptomeIndexDetail(APIView):
 
 class CompendiaDetail(APIView):
     """
-    Compendi
+    A very simple modified ComputedFile endpoint which only shows Compendia results
     """
 
     """List all processors."""
