@@ -129,14 +129,14 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # Perform a full outer join of microarray_expression_matrix and log2_rnaseq_matrix; combined_matrix
     combined_matrix = microarray_expression_matrix.merge(log2_rnaseq_matrix, how='outer', left_index=True, right_index=True)
 
-    # Remove genes (rows) with <=70% missing values in combined_matrix
-    thresh = combined_matrix.shape[1] * .7
-    row_filtered_combined_matrix = combined_matrix.dropna(axis='index', thresh=thresh, how='any') # Everything below `thresh` is dropped
+    # Remove genes (rows) with <=70% present values in combined_matrix
+    thresh = combined_matrix.shape[1] * .7 # (Rows, Columns)
+    row_filtered_combined_matrix = combined_matrix.dropna(axis='index', thresh=thresh) # Everything below `thresh` is dropped
 
     # Remove samples (columns) with <50% missing values in combined_matrix
     # XXX: Find better test data for this!
-    thresh = len(combined_matrix.columns) * .5
-    row_col_filtered_combined_matrix_samples = row_filtered_combined_matrix.dropna(axis='columns', thresh=thresh, how='any')
+    col_thresh = row_filtered_combined_matrix.shape[0] * .5
+    row_col_filtered_combined_matrix_samples = row_filtered_combined_matrix.dropna(axis='columns', thresh=col_thresh)
 
     # "Reset" zero values that were set to NA in RNA-seq samples (i.e., make these zero again) in combined_matrix
     for column in cached_zeroes.keys():
