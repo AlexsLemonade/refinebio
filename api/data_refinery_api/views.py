@@ -205,25 +205,10 @@ class ExperimentDocumentView(DocumentViewSet):
             'facet': TermsFacet,
             'enabled': True # These are enabled by default, which is more expensive but more simple.
         },
-        'technology_global': {
-            'field': 'technology',
-            'facet': TermsFacet,
-            'enabled': True,
-            'global': True
-        },
         'organism_names': {
             'field': 'organism_names',
             'facet': TermsFacet,
             'enabled': True,
-            'options': {
-                'size': 999999
-            }
-        },
-        'organism_names_global': {
-            'field': 'organism_names',
-            'facet': TermsFacet,
-            'enabled': True,
-            'global': True,
             'options': {
                 'size': 999999
             }
@@ -237,25 +222,44 @@ class ExperimentDocumentView(DocumentViewSet):
                 'size': 999999
             }
         },
-        'platform_names_global': {
-            'field': 'platform_names',
-            'facet': TermsFacet,
-            'enabled': True,
-            'global': True,
-            'options': {
-                'size': 999999
-            }
-        },
         'has_publication': {
             'field': 'has_publication',
             'facet': TermsFacet,
             'enabled': True,
             'global': False,
         },
+
+        # We don't actually need any "globals" to drive our web frontend,
+        # but we'll leave them available but not enabled by default, as they're
+        # expensive.
+        'technology_global': {
+            'field': 'technology',
+            'facet': TermsFacet,
+            'enabled': False,
+            'global': True
+        },
+        'organism_names_global': {
+            'field': 'organism_names',
+            'facet': TermsFacet,
+            'enabled': False,
+            'global': True,
+            'options': {
+                'size': 999999
+            }
+        },
+        'platform_names_global': {
+            'field': 'platform_names',
+            'facet': TermsFacet,
+            'enabled': False,
+            'global': True,
+            'options': {
+                'size': 999999
+            }
+        },
         'has_publication_global': {
             'field': 'platform_names',
             'facet': TermsFacet,
-            'enabled': True,
+            'enabled': False,
             'global': True,
         },
     }
