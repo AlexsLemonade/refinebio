@@ -2,7 +2,7 @@
 # of error if it fails to install something.
 options(warn=2)
 options(Ncpus=parallel::detectCores())
-options(repos=structure(c(CRAN="http://lib.stat.cmu.edu/R/CRAN")))
+options(repos=structure(c(CRAN="https://cran.revolutionanalytics.com")))
 
 devtools::install_version('optparse', version='1.4.4')
 devtools::install_version('rjson', version='0.2.19')

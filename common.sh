@@ -18,6 +18,10 @@ get_docker_db_ip_address () {
     docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' drdb 2> /dev/null
 }
 
+get_docker_es_ip_address () {
+    docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' dres 2> /dev/null
+}
+
 # `coverage report -m` will always have an exit code of 0 which makes
 # it seem like the test is passing. Therefore we store the exit code
 # of running the tests as $exit_code, then report the coverage, and

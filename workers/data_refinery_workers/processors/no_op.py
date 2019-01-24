@@ -38,7 +38,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         # All files for the job are in the same directory.
         job_context["work_dir"] = LOCAL_ROOT_DIR + "/" + "processor_job_" + str(job_context["job_id"]) + "/"
         try:
-            os.makedirs(job_context["work_dir"])
+            os.makedirs(job_context["work_dir"], exist_ok=True)
         except Exception as e:
             logger.exception("Could not create work directory for processor job.",
                              job_context=job_context)

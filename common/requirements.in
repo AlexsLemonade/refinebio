@@ -7,3 +7,6 @@ retrying
 daiquiri
 python-nomad>=1.0.2
 raven
+elasticsearch-dsl
+django-elasticsearch-dsl
+django-elasticsearch-dsl-drf
