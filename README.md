@@ -187,6 +187,20 @@ the Nomad agent, which will then launch a Docker container which runs
 the job. If address conflicts emerge, old Docker containers can be purged
 with `docker container prune -f`.
 
+##### ElasticSearch
+
+One of the API endpoints is powered by ElasticSearch. ElasticSearch must be running for this functionality to work. A local ElasticSearch instance in a Docker container can be executed with:
+
+```bash
+./run_es.sh
+```
+
+And then the ES Indexes (akin to Postgres 'databases') can be created with:
+
+```bash
+./run_manage.sh search_index --rebuild -f;
+```
+
 #### Common Dependecies
 
 The [common](./common) sub-project contains common code which is
@@ -331,10 +345,17 @@ data repositories (e.g., Sequencing Read Archive,
 ./foreman/run_surveyor.sh survey_all --accession <ACCESSION_CODE>
 ```
 
+Example for a GEO experiment:
+
+```bash
+./foreman/run_surveyor.sh survey_all --accession GSE85217
+```
+
 Example for an ArrayExpress experiment:
 
 ```bash
-./foreman/run_surveyor.sh survey_all --accession E-MTAB-3050
+./foreman/run_surveyor.sh survey_all --accession E-MTAB-3050 # AFFY
+./foreman/run_surveyor.sh survey_all --accession E-GEOD-3303 # NO_OP
 ```
 
 Transcriptome indices are a bit special.
@@ -427,6 +448,12 @@ For example:
 ./workers/tester.sh run_downloader_job --job-name=SRA --job-id=12345
 ```
 
+or
+
+```bash
+./workers/tester.sh run_downloader_job --job-name=ARRAY_EXPRESS --job-id=1
+```
+
 Or for more information run:
 ```bash
 ./workers/tester.sh -h
@@ -445,6 +472,12 @@ a `Downloader Job` do it for you, the following command will do so:
 For example
 ```bash
 ./workers/tester.sh -i affymetrix run_processor_job --job-name=AFFY_TO_PCL --job-id=54321
+```
+
+or
+
+```bash
+./workers/tester.sh -i no_op run_processor_job --job-name=NO_OP --job-id=1
 ```
 
 Or for more information run:

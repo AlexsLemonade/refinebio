@@ -5,3 +5,5 @@ retrying
 python-nomad>=1.0.2
 coveralls
 psutil
+elasticsearch-dsl
+django-elasticsearch-dsl
