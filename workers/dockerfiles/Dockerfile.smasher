@@ -6,7 +6,7 @@ RUN add-apt-repository ppa:apt-fast/stable
 RUN apt-get update -qq
 RUN apt-get -y install apt-fast
 
-# The packages related to R are somewhat weird, see the README for more details.w
+# The packages related to R are somewhat weird, see the README for more details.
 
 COPY workers/CRAN.gpg .
 RUN \
