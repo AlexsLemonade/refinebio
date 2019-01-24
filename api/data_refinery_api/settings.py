@@ -31,6 +31,7 @@ DEBUG = get_env_variable('DJANGO_DEBUG') == "True"
 
 # XXX: Should be closed down when we figure out domain endpoints
 ALLOWED_HOSTS = ['*']
+CORS_ORIGIN_ALLOW_ALL = True
 
 # Application definition
 
@@ -60,11 +61,12 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
+
     'data_refinery_api.middleware.RevisionMiddleware',
     'data_refinery_api.middleware.SentryCatchBadRequestMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
