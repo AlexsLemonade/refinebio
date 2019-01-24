@@ -624,10 +624,15 @@ data "template_file" "pg_bouncer_script_smusher" {
 # ElasticSearch
 ##
 
+# This only needs to be run one time per account.
+# Run it zero times, it won't work. Run it more than one time, it won't work.
+# TF needs away to manage these.
+
 # Related: https://github.com/terraform-providers/terraform-provider-aws/issues/5218
-resource "aws_iam_service_linked_role" "es" {
-  aws_service_name = "es.amazonaws.com"
-}
+# Related: https://github.com/cloudposse/terraform-aws-elasticsearch/issues/5
+# resource "aws_iam_service_linked_role" "es" {
+#   aws_service_name = "es.amazonaws.com"
+# }
 
 data "aws_caller_identity" "current" {}
 resource "aws_elasticsearch_domain" "es" {
