@@ -6,14 +6,24 @@ RUN add-apt-repository ppa:apt-fast/stable
 RUN apt-get update -qq
 RUN apt-get -y install apt-fast
 
+# The version for r-base-core is weird, I'm not sure why it's named
+# that way. I found it here:
+# https://cran.revolutionanalytics.com/bin/linux/ubuntu/xenial/
+# If it needs to be updated then a version should be selected from
+# that list.
+
+# I am not entirely sure what the difference between r-base and r-base
+# core is, except that r-base is supposed to have some extra utilities
+# which increases the size of the package. However we don't get a ton
+# of choice because trying to use r-base causes a "you have held
+# broken pacakges" error.
+
 COPY workers/CRAN.gpg .
 RUN \
   apt-fast update -qq && \
   apt-get install -y apt-transport-https && \
   apt-fast install -y lsb-release && \
-  echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
-      >> /etc/apt/sources.list.d/added_repos.list && \
-  echo "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -sc)/" \
+  echo "deb https://cran.revolutionanalytics.com/bin/linux/ubuntu $(lsb_release -sc)/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
   apt-key add CRAN.gpg && \
   apt-fast update -qq && \
@@ -28,7 +38,7 @@ RUN \
   python3-pip \
   libxml2-dev \
   cmake \
-  r-base \
+  r-base-core=3.4.2-1xenial1 \
   libssl-dev \
   libcurl4-openssl-dev \
   curl \
