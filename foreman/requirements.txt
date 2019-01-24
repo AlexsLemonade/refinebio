@@ -8,14 +8,14 @@ biopython==1.72           # via geoparse
 certifi==2018.8.24        # via requests
 chardet==3.0.4            # via requests
 coverage==4.5.1
-django==2.1.2
+django==2.1.5
 geoparse==1.1.0
 idna==2.7                 # via requests
 numpy==1.15.2             # via biopython, geoparse, pandas
 pandas==0.23.4            # via geoparse
 psycopg2-binary==2.7.5
 python-dateutil==2.7.3
-python-nomad>=1.0.2
+python-nomad==1.1.0
 pytz==2018.5              # via django, pandas
 raven==6.9.0
 requests==2.20.0
