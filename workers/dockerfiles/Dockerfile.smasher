@@ -35,7 +35,7 @@ RUN \
   libcurl4-openssl-dev \
   libpq-dev \
   r-base-core=3.4.2-1xenial1 \
-  r-base-dev==3.4.2-1xenial1 \
+  r-base-dev=3.4.2-1xenial1 \
   libpq-dev \
   libxml2-dev \
   libssl-dev \
