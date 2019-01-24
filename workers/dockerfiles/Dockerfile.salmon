@@ -9,8 +9,11 @@ RUN apt-get -y install apt-fast
 COPY workers/CRAN.gpg .
 RUN \
   apt-fast update -qq && \
-  apt-fast install -y apt-utils lsb-release && \
+  apt-get install -y apt-transport-https && \
+  apt-fast install -y lsb-release && \
   echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
+      >> /etc/apt/sources.list.d/added_repos.list && \
+  echo "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -sc)/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
   apt-key add CRAN.gpg && \
   apt-fast update -qq && \

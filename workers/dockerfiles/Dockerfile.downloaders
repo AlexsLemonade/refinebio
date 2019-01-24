@@ -9,8 +9,11 @@ RUN apt-get -y install apt-fast
 COPY workers/CRAN.gpg .
 RUN \
   apt-fast update -qq && \
+  apt-get install -y apt-transport-https && \
   apt-fast install -y lsb-release && \
   echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
+      >> /etc/apt/sources.list.d/added_repos.list && \
+  echo "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -sc)/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
   apt-key add CRAN.gpg && \
   apt-fast update -qq && \
@@ -62,7 +65,7 @@ COPY .boto .boto
 
 COPY workers/data_refinery_workers/downloaders/requirements.txt .
 
-RUN  pip3 --no-cache-dir install -r requirements.txt
+RUN  pip3 install -r requirements.txt
 
 # Install this rpy2 here instead of via requirements.txt because
 # pip-compile throws an error for it.
