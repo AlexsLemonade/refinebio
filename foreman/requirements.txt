@@ -8,7 +8,7 @@ biopython==1.72           # via geoparse
 certifi==2018.8.24        # via requests
 chardet==3.0.4            # via requests
 coverage==4.5.1
-django==2.1.2
+django==2.1.5
 geoparse==1.1.0
 idna==2.7                 # via requests
 numpy==1.15.2             # via biopython, geoparse, pandas
