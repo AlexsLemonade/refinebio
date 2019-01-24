@@ -97,15 +97,16 @@ def create_downloader_job(undownloaded_files: OriginalFiles) -> bool:
     # properly, if a file that came from the same archive is getting
     # retried then it could get reprocessed.
     if archive_file:
-        # If this downloader job is for an archive file, then the
-        # files that were passed into this function aren't what need
-        # to be directly downloaded, they were extracted out of this
-        # archive. The DownloaderJob will re-extract them and set up
-        # the associations for the new ProcessorJob.
-        DownloaderJobOriginalFileAssociation.objects.get_or_create(
-            downloader_job=new_job,
-            original_file=archive_file
-        )
+        if archive_file.needs_downloading():
+            # If this downloader job is for an archive file, then the
+            # files that were passed into this function aren't what need
+            # to be directly downloaded, they were extracted out of this
+            # archive. The DownloaderJob will re-extract them and set up
+            # the associations for the new ProcessorJob.
+            DownloaderJobOriginalFileAssociation.objects.get_or_create(
+                downloader_job=new_job,
+                original_file=archive_file
+            )
     else:
         for original_file in undownloaded_files:
             DownloaderJobOriginalFileAssociation.objects.get_or_create(
@@ -114,19 +115,6 @@ def create_downloader_job(undownloaded_files: OriginalFiles) -> bool:
             )
 
     return True
-
-
-def delete_processor_job(job: ProcessorJob):
-    "Deletes the processor job and any associations it has.
-
-    Is this even necessary? It may be a one line call if Django
-    handles it correctly. I think the self-reference in retried_jobs
-    may break this though... Can I fix that at the model level so that
-    it just does what's right?
-    Looks like I found a way to do that!!!
-    Which might mean this is unnecessary.
-    "
-    pass
 
 
 def prepare_original_files(job_context):
@@ -162,7 +150,13 @@ def prepare_original_files(job_context):
             job.failure_reason = failure_reason
             return job_context
 
-        delete_processor_job(job)
+        # If we can't process the data because it's not on the disk we
+        # can't mark the job as a success since it obviously didn't
+        # succeed. However if we mark it as a failure the job could be
+        # retried triggering yet another DownloaderJob to be created
+        # to re-download the data. Therefore the best option is to
+        # delete this job.
+        job.delete()
         job_context["delete_self"] = True
         return job_context
 

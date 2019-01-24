@@ -22,7 +22,6 @@ from data_refinery_common.utils import (
     get_env_variable,
     get_readable_affymetrix_names,
     get_supported_microarray_platforms,
-    file_needs_downloading,
 )
 from data_refinery_workers.downloaders import utils
 
