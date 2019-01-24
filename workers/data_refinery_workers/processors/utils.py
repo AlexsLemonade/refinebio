@@ -48,6 +48,87 @@ def signal_handler(sig, frame):
         CURRENT_JOB.save()
         sys.exit(0)
 
+
+def create_downloader_job(undownloaded_files: OriginalFiles) -> bool:
+    """Creates a downloader job to download `undownloaded_files`."""
+    original_downloader_job = None
+    archive_file = None
+    for undownloaded_file in undownloaded_files:
+        try:
+            original_downloader_job = DownloaderJobOriginalFileAssociation.objects.filter(
+                original_file=undownloaded_file
+            ).first()
+        except DownloaderJobOriginalFileAssociation.DoesNotExist:
+            # If there's no association between this file and any
+            # downloader jobs, it's most likely because the original
+            # file was created after extracting a archive containing
+            # multiple files worth of data.
+            # The way to handle this is to find that archive and
+            # recreate a downloader job FOR THAT. That archive will
+            # have the same filename as the file at the end of the
+            # 'source_url' field, because that source URL is pointing
+            # to the archive we need.
+            archive_filename = undownloaded_files.source_url.split("/")[-1]
+
+            # This file or its job might not exist, but we'll wait
+            # until we've checked all the files before calling it a
+            # failure.
+            try:
+                archive_file = OriginalFiles.objects.filter(filename=archive_filename).first()
+                original_downloader_job = DownloaderJobOriginalFileAssociation.objects.filter(
+                    original_file=archive_file
+                ).first()
+            except:
+                pass
+
+    if not original_downloader_job:
+        return False
+
+    new_job = DownloaderJob()
+    new_job.downloader_task = original_downloader_job.downloader_task
+    new_job.accession_code = original_downloader_job.accession_code
+    new_job.save()
+
+    # I could check to make sure there's not a unstarted downloader
+    # job for this archive already... since multiple files could be
+    # missing from the same archive.
+    # OK yeah, I'm gonna toss a TODO on this cause that's gotta happen.
+    # The other concern is that even if a file did get processed
+    # properly, if a file that came from the same archive is getting
+    # retried then it could get reprocessed.
+    if archive_file:
+        # If this downloader job is for an archive file, then the
+        # files that were passed into this function aren't what need
+        # to be directly downloaded, they were extracted out of this
+        # archive. The DownloaderJob will re-extract them and set up
+        # the associations for the new ProcessorJob.
+        DownloaderJobOriginalFileAssociation.objects.get_or_create(
+            downloader_job=new_job,
+            original_file=archive_file
+        )
+    else:
+        for original_file in undownloaded_files:
+            DownloaderJobOriginalFileAssociation.objects.get_or_create(
+                downloader_job=new_job,
+                original_file=archive_file
+            )
+
+    return True
+
+
+def delete_processor_job(job: ProcessorJob):
+    "Deletes the processor job and any associations it has.
+
+    Is this even necessary? It may be a one line call if Django
+    handles it correctly. I think the self-reference in retried_jobs
+    may break this though... Can I fix that at the model level so that
+    it just does what's right?
+    Looks like I found a way to do that!!!
+    Which might mean this is unnecessary.
+    "
+    pass
+
+
 def prepare_original_files(job_context):
     """ Provision in the Job context for OriginalFile-driven processors
     """
@@ -61,6 +142,30 @@ def prepare_original_files(job_context):
         job.failure_reason = "No files were found for the job."
         return job_context
 
+    undownloaded_files = set()
+    for original_file in original_files:
+        if original_file.needs_downloading():
+            undownloaded_files.add(original_file)
+
+    if undownloaded_files:
+        logger.info(
+            ("One or more files found which were missing or not downloaded."
+             " Creating downloader jobs for them."),
+            processor_job=job.id,
+            missing_files=list(undownloaded_files)
+        )
+
+        if not create_downloader_job(undownloaded_files):
+            failure_reason = "Missing file for processor job but unable to recreate downloader jobs!"
+            logger.error(failure_reason, processor_job=job.id)
+            job_context["success"] = False
+            job.failure_reason = failure_reason
+            return job_context
+
+        delete_processor_job(job)
+        job_context["delete_self"] = True
+        return job_context
+
     job_context["original_files"] = original_files
     original_file = job_context['original_files'][0]
     assocs = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
@@ -69,6 +174,7 @@ def prepare_original_files(job_context):
     job_context["computed_files"] = []
 
     return job_context
+
 
 def prepare_dataset(job_context):
     """ Provision in the Job context for Dataset-driven processors
@@ -311,7 +417,9 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
                          failure_reason=last_result["job"].failure_reason)
             return end_job(last_result)
 
-        if last_result.get("abort", False):
+        # We don't want to run end_job if the job has deleted itself,
+        # which happens if the data for the job was missing.
+        if not last_result.get("delete_self", False) and last_result.get("abort", False):
             return end_job(last_result, abort=True)
 
     return last_result

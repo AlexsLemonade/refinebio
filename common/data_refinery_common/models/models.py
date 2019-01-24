@@ -354,7 +354,7 @@ class Experiment(models.Model):
     @property
     def platforms(self):
         """ Returns a list of related pipelines """
-        return list(set([sample.platform_name for sample in self.samples.all()]))        
+        return list(set([sample.platform_name for sample in self.samples.all()]))
 
     @property
     def pretty_platforms(self):
@@ -662,6 +662,37 @@ class OriginalFile(models.Model):
             )
         self.is_downloaded = False
         self.save()
+
+    def needs_downloading(self) -> bool:
+        """Determine if a file needs to be downloaded.
+
+        This is true if the file has already been downloaded and lost
+        without getting processed.
+        """
+        # If the file is downloaded and the file actually exists on disk,
+        # then it doens't need to be downloaded.
+        if not self.is_downloaded \
+           or not self.absolute_file_path \
+           or not os.path.exists(self.absolute_file_path):
+            return False
+
+        unstarted_downloader_jobs = self.downloader_jobs.filter(
+            start_time__is_null=True,
+            success__is_null=True,
+            retried=False
+        )
+
+        # If the file has a downloader job that hasn't even started yet,
+        # then it doesn't need another.
+        if unstarted_downloader_jobs.count() > 0:
+            return False
+
+        successful_processor_jobs = self.processor_jobs.filter(success=True)
+
+        # Finally, if there is a successful processor job, then the file
+        # has been processed and doesn't need to be processed again.
+        # XXX: if we ever want to reprocess everything, this will be problematic.
+        return successful_processor_jobs.count() == 0
 
 
 class ComputedFile(models.Model):

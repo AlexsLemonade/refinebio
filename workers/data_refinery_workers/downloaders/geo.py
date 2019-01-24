@@ -231,6 +231,61 @@ def _extract_gz(file_path: str, accession_code: str) -> List[str]:
     return files
 
 
+def _get_actual_file_if_queueable(
+        extracted_subfile: Dict,
+        original_file: OriginalFile,
+        samples: List[Sample]) -> OriginalFile:
+    """Returns the actual file from the archive if it should be queued.
+
+    If the file has been processed or has an unstarted DownloaderJob,
+    None will be returned.
+
+    `extracted_subfile` should be a Dict containing metadata about the
+    file that was extracted from an archive.
+
+    `original_file` should be the file associated with the CURRENT
+    DownloaderJob.
+
+    `samples` are the samples that the actual file should be associated
+    with if it has to be created.
+    """
+    # Check to see if we've made this original file before:
+    potential_existing_files = OriginalFile.objects.filter(
+        source_filename=original_file.source_filename,
+        filename=extracted_subfile['filename'],
+        is_archive=False
+    )
+    if potential_existing_files.count() > 0:
+        # We've already created this record, let's see if we actually
+        # needed to download it or if we just got it because we needed
+        # a file in the same archive.
+        actual_file = potential_existing_files[0]
+        if actual_file.needs_downloading():
+            return actual_file
+        else:
+            return None
+    else:
+        actual_file = OriginalFile()
+        actual_file.is_downloaded = True
+        actual_file.is_archive = False
+        actual_file.absolute_file_path = extracted_subfile['absolute_path']
+        actual_file.filename = extracted_subfil['filename']
+        actual_file.calculate_size()
+        actual_file.calculate_sha1()
+        actual_file.has_raw = True
+        actual_file.source_url = original_file.source_url
+        actual_file.source_filename = original_file.source_filename
+        actual_file.save()
+
+        for sample in samples:
+            original_file_sample_association = OriginalFileSampleAssociation()
+            original_file_sample_association.sample = sample
+            original_file_sample_association.original_file = actual_file
+            original_file_sample_association.save()
+
+        return actual_file
+
+
 def download_geo(job_id: int) -> None:
     """The main function for the GEO Downloader.
 
@@ -308,28 +363,17 @@ def download_geo(job_id: int) -> None:
                 else:
                     extracted_subfile = [og_file]
 
-                actual_file = OriginalFile()
-                actual_file.is_downloaded = True
-                actual_file.is_archive = False
-                actual_file.absolute_file_path = extracted_subfile[0]['absolute_path']
-                actual_file.filename = extracted_subfile[0]['filename']
-                actual_file.calculate_size()
-                actual_file.calculate_sha1()
-                actual_file.has_raw = True
-                actual_file.source_url = original_file.source_url
-                actual_file.source_filename = original_file.source_filename
-                actual_file.save()
-
-                original_file_sample_association = OriginalFileSampleAssociation()
-                original_file_sample_association.sample = sample
-                original_file_sample_association.original_file = actual_file
-                original_file_sample_association.save()
+                # Check if the OriginalFile for the file contained
+                # within the archive exists already, create it if it
+                # doesn't, and then check if we actually need to queue
+                # it for processing or not.
+                actual_file = _get_actual_file_if_queueable(extracted_subfile[0], original_file, [sample])
+                if actual_file:
+                    unpacked_sample_files.append(actual_file)
 
                 archive_file.delete_local_file()
                 archive_file.is_downloaded = False
                 archive_file.save()
-
-                unpacked_sample_files.append(actual_file)
             except Exception as e:
                 # TODO - is this worth failing a job for?
                 logger.debug("Found a file we didn't have an OriginalFile for! Why did this happen?: "
@@ -367,24 +411,13 @@ def download_geo(job_id: int) -> None:
                     os.remove(og_file["absolute_path"])
                     continue
 
-                actual_file = OriginalFile()
-                actual_file.is_downloaded = True
-                actual_file.is_archive = False
-                actual_file.absolute_file_path = og_file['absolute_path']
-                actual_file.filename = og_file['filename']
-                actual_file.calculate_size()
-                actual_file.calculate_sha1()
-                actual_file.has_raw = has_raw
-                actual_file.source_url = original_file.source_url
-                actual_file.source_filename = original_file.source_filename
-                actual_file.save()
-
-                original_file_sample_association = OriginalFileSampleAssociation()
-                original_file_sample_association.sample = sample
-                original_file_sample_association.original_file = actual_file
-                original_file_sample_association.save()
-
-                unpacked_sample_files.append(actual_file)
+                # Check if the OriginalFile for the file contained
+                # within the archive exists already, create it if it
+                # doesn't, and then check if we actually need to queue
+                # it for processing or not.
+                actual_file = _get_actual_file_if_queueable(og_file, original_file, [sample])
+                if actual_file:
+                    unpacked_sample_files.append(actual_file)
 
     # These files are only gzipped.
     # These are generally the _actually_ raw (rather than the non-raw data in a RAW file) data
@@ -414,29 +447,17 @@ def download_geo(job_id: int) -> None:
                 archive_file.calculate_sha1()
                 archive_file.save()
 
-                actual_file = OriginalFile()
-                actual_file.is_downloaded = True
-                actual_file.is_archive = False
-                actual_file.absolute_file_path = og_file['absolute_path']
-                actual_file.filename = og_file['filename']
-                actual_file.calculate_size()
-                actual_file.calculate_sha1()
-                actual_file.has_raw = True
-                actual_file.source_url = original_file.source_url
-                actual_file.source_filename = original_file.source_filename
-                actual_file.save()
-
-                for sample in related_samples:
-                    new_association = OriginalFileSampleAssociation()
-                    new_association.original_file = actual_file
-                    new_association.sample = sample
-                    new_association.save()
+                # Check if the OriginalFile for the file contained
+                # within the archive exists already, create it if it
+                # doesn't, and then check if we actually need to queue
+                # it for processing or not.
+                actual_file = _get_actual_file_if_queueable(og_file, original_file, related_samples)
+                if actual_file:
+                    unpacked_sample_files.append(actual_file)
 
                 archive_file.delete_local_file()
                 archive_file.is_downloaded = False
                 archive_file.save()
-
-                unpacked_sample_files.append(actual_file)
             except Exception as e:
                 logger.debug("Found a file we didn't have an OriginalFile for! Why did this happen?: "
                             + og_file['filename'],

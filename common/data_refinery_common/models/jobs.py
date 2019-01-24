@@ -127,7 +127,7 @@ class ProcessorJob(models.Model):
     failure_reason = models.TextField(null=True)
 
     # If the job is retried, this is the id of the new job
-    retried_job = models.ForeignKey('self', on_delete=models.PROTECT, null=True)
+    retried_job = models.ForeignKey('self', on_delete=models.SET_NULL, null=True)
 
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
