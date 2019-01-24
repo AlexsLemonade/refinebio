@@ -318,7 +318,6 @@ can prune old images with `docker system prune -a`.
 
 #### R
 
-The R language is not really production grade, however there are a lot of packages we need that only exist within its ecosystem.
 We have created some utilities to help us keep R stable, reliable, and from periodically causing build errors related to version incompatibilites.
 The primary goal of these is to pin the version for every R package that we have.
 The R package `devtools` is useful for this, but in order to be able to install a specific version of it, we've created the R script `common/install_devtools.R`.
