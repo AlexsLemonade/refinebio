@@ -14,6 +14,7 @@ jobs:
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
+      - run: ./run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
@@ -22,6 +23,9 @@ jobs:
       # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
       - run: ./update_models.sh
+
+      # Update ES models
+      - run: ./run_manage.sh search_index --rebuild -f;
 
         # Install Nomad
       - run: sudo ./install_nomad.sh
@@ -88,6 +92,7 @@ jobs:
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
+      - run: ./run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
@@ -113,6 +118,7 @@ jobs:
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
+      - run: ./run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
@@ -121,6 +127,9 @@ jobs:
       # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
       - run: ./update_models.sh
+
+      # Update ES models
+      - run: ./run_manage.sh search_index --rebuild -f;
 
       # Run API Tests.
       - run: ./api/run_tests.sh
@@ -141,6 +150,7 @@ jobs:
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
+      - run: ./run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
@@ -181,6 +191,7 @@ jobs:
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
+      - run: ./run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.

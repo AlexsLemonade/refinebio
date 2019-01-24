@@ -6,11 +6,14 @@ RUN add-apt-repository ppa:apt-fast/stable
 RUN apt-get update -qq
 RUN apt-get -y install apt-fast
 
+# The packages related to R are somewhat weird, see the README for more details.
+
 COPY workers/CRAN.gpg .
 RUN \
   apt-fast update -qq && \
-  apt-fast install -y apt-utils lsb-release && \
-  echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
+  apt-get install -y apt-transport-https && \
+  apt-fast install -y lsb-release && \
+  echo "deb https://cran.revolutionanalytics.com/bin/linux/ubuntu $(lsb_release -sc)/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
   apt-key add CRAN.gpg && \
   apt-fast update -qq && \
@@ -25,7 +28,7 @@ RUN \
   python3-pip \
   libxml2-dev \
   cmake \
-  r-base \
+  r-base-core=3.4.2-1xenial1 \
   libssl-dev \
   libcurl4-openssl-dev \
   curl \

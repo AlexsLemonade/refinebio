@@ -281,6 +281,13 @@ class Experiment(models.Model):
     source_first_published = models.DateTimeField(null=True)
     source_last_modified = models.DateTimeField(null=True)
 
+    # Cached Computed Properties
+    num_total_samples = models.IntegerField(default=0)
+    num_processed_samples = models.IntegerField(default=0)
+    sample_metadata_fields = ArrayField(models.TextField(), default=list)
+    organism_names = ArrayField(models.TextField(), default=list)
+    platform_names = ArrayField(models.TextField(), default=list)
+
     # Common Properties
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
@@ -300,6 +307,12 @@ class Experiment(models.Model):
                 self.alternate_accession_code = 'GSE' + self.accession_code[7:]
 
         return super(Experiment, self).save(*args, **kwargs)
+
+    def update_num_samples(self):
+        """ Update our cache values """
+        self.num_total_samples = self.samples.count()
+        self.num_processed_samples = self.samples.filter(is_processed=True).count()
+        self.save()
 
     def to_metadata_dict(self):
         """ Render this Experiment as a dict """
@@ -346,10 +359,29 @@ class Experiment(models.Model):
 
         return fields
 
+    def update_sample_metadata_fields(self):
+        self.sample_metadata_fields = self.get_sample_metadata_fields()
+
+    def update_organism_names(self):
+        self.organism_names = self.get_organism_names()
+
+    def update_platform_names(self):
+        self.platform_names = self.get_platform_names()
+
     def get_sample_technologies(self):
         """ Get a list of unique technologies for all of the associated samples
         """
         return list(set([sample.technology for sample in self.samples.all()]))
+
+    def get_organism_names(self):
+        """ Get a list of unique technologies for all of the associated samples
+        """
+        return list(set([organism.name for organism in self.organisms.all()]))
+
+    def get_platform_names(self):
+        """ Get a list of unique platforms for all of the associated samples
+        """
+        return list(set([sample.platform_name for sample in self.samples.all()]))
 
     @property
     def platforms(self):
@@ -859,7 +891,12 @@ class ComputedFile(models.Model):
             else:
                 return self.sync_from_s3(force)
 
+    @property
     def s3_url(self):
+        """ Render the resulting S3 URL """
+        return self.get_s3_url()
+
+    def get_s3_url(self):
         """ Render the resulting S3 URL """
         if (self.s3_key) and (self.s3_bucket):
             return "https://s3.amazonaws.com/" + self.s3_bucket + "/" + self.s3_key

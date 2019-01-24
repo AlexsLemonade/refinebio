@@ -25,10 +25,10 @@ Refine.bio currently has four sub-projects contained within this repo:
     - [Linux](#linux)
     - [Mac](#mac)
     - [Virtual Environment](#virtual-environment)
-    - [Common Dependecies](#common-dependecies)
     - [Services](#services)
       - [Postgres](#postgres)
       - [Nomad](#nomad)
+    - [Common Dependecies](#common-dependecies)
   - [Testing](#testing)
     - [API](#api)
     - [Common](#common)
@@ -36,6 +36,7 @@ Refine.bio currently has four sub-projects contained within this repo:
     - [Workers](#workers)
   - [Style](#style)
   - [Gotchas](#gotchas)
+    - [R](#r)
 - [Running Locally](#running-locally)
   - [Surveyor Jobs](#surveyor-jobs)
     - [Sequence Read Archive](#sequence-read-archive)
@@ -46,11 +47,12 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Checking on Local Jobs](#checking-on-local-jobs)
   - [Development Helpers](#development-helpers)
 - [Cloud Deployment](#cloud-deployment)
-  - [Terraform](#terraform)
   - [Docker Images](#docker-images)
   - [Autoscaling and Setting Spot Prices](#autoscaling-and-setting-spot-prices)
+  - [Terraform](#terraform)
   - [Running Jobs](#running-jobs)
   - [Log Consumption](#log-consumption)
+  - [Dumping and Restoring Database Backups](#dumping-and-restoring-database-backups)
   - [Tearing Down](#tearing-down)
 - [Support](#support)
 - [Meta-README](#meta-readme)
@@ -187,6 +189,20 @@ the Nomad agent, which will then launch a Docker container which runs
 the job. If address conflicts emerge, old Docker containers can be purged
 with `docker container prune -f`.
 
+##### ElasticSearch
+
+One of the API endpoints is powered by ElasticSearch. ElasticSearch must be running for this functionality to work. A local ElasticSearch instance in a Docker container can be executed with:
+
+```bash
+./run_es.sh
+```
+
+And then the ES Indexes (akin to Postgres 'databases') can be created with:
+
+```bash
+./run_manage.sh search_index --rebuild -f;
+```
+
 #### Common Dependecies
 
 The [common](./common) sub-project contains common code which is
@@ -300,6 +316,20 @@ can prune old images with `docker system prune -a`.
   - If it's killed abruptly, the containerized Postgres images can be
   left in an unrecoverable state. Annoying.
 
+#### R
+
+We have created some utilities to help us keep R stable, reliable, and from periodically causing build errors related to version incompatibilites.
+The primary goal of these is to pin the version for every R package that we have.
+The R package `devtools` is useful for this, but in order to be able to install a specific version of it, we've created the R script `common/install_devtools.R`.
+
+There is annother gotcha to be aware of should you ever need to modify versions of R or its packages.
+In Dockerfiles for images that need the R language, we install apt packages that look like `r-base-core=3.4.2-1xenial1`.
+It's unclear why the version for these is so weird, but it was determined by visiting the package list here: https://cran.revolutionanalytics.com/bin/linux/ubuntu/xenial/
+If it needs to be updated then a version should be selected from that list.
+
+Additionally there are two apt packages, r-base and r-base-core, which seem to be very similar except that r-base-core is slimmed down some by not including some additional packages.
+For a while we were using r-base, but we switched to r-base-core when we pinned the version of the R language because the r-base package caused an apt error.
+
 ## Running Locally
 
 Once you've built the `common/dist` directory and have
@@ -331,10 +361,17 @@ data repositories (e.g., Sequencing Read Archive,
 ./foreman/run_surveyor.sh survey_all --accession <ACCESSION_CODE>
 ```
 
+Example for a GEO experiment:
+
+```bash
+./foreman/run_surveyor.sh survey_all --accession GSE85217
+```
+
 Example for an ArrayExpress experiment:
 
 ```bash
-./foreman/run_surveyor.sh survey_all --accession E-MTAB-3050
+./foreman/run_surveyor.sh survey_all --accession E-MTAB-3050 # AFFY
+./foreman/run_surveyor.sh survey_all --accession E-GEOD-3303 # NO_OP
 ```
 
 Transcriptome indices are a bit special.
@@ -427,6 +464,12 @@ For example:
 ./workers/tester.sh run_downloader_job --job-name=SRA --job-id=12345
 ```
 
+or
+
+```bash
+./workers/tester.sh run_downloader_job --job-name=ARRAY_EXPRESS --job-id=1
+```
+
 Or for more information run:
 ```bash
 ./workers/tester.sh -h
@@ -445,6 +488,12 @@ a `Downloader Job` do it for you, the following command will do so:
 For example
 ```bash
 ./workers/tester.sh -i affymetrix run_processor_job --job-name=AFFY_TO_PCL --job-id=54321
+```
+
+or
+
+```bash
+./workers/tester.sh -i no_op run_processor_job --job-name=NO_OP --job-id=1
 ```
 
 Or for more information run:

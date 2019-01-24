@@ -431,6 +431,7 @@ fi
 source common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
+ES_HOST_IP=$(get_docker_es_ip_address)
 
 # Ensure permissions are set for everything within the test data directory.
 chmod -R a+rwX $volume_directory
@@ -463,12 +464,12 @@ for image in ${worker_images[*]}; do
         echo $test_command
         docker run -i -t \
                --add-host=database:$DB_HOST_IP \
+               --add-host=elasticsearch:$ES_HOST_IP \
                --add-host=nomad:$HOST_IP \
                --env-file workers/environments/test \
                --env AWS_ACCESS_KEY_ID \
                --env AWS_SECRET_ACCESS_KEY \
                --volume $volume_directory:/home/user/data_store \
-               --link drdb:postgres \
                -it $image_name bash -c "$test_command"
     fi
 done

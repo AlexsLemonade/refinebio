@@ -26,7 +26,6 @@ docker run \
        --add-host=nomad:$HOST_IP \
        --env-file common/environments/local \
        --interactive \
-       --link drdb:postgres\
        ccdlstaging/dr_migrations python3.6 manage.py makemigrations data_refinery_common
 
 docker run \
@@ -34,5 +33,4 @@ docker run \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
        --env-file common/environments/local \
-       --link drdb:postgres \
        ccdlstaging/dr_migrations python3.6 manage.py migrate

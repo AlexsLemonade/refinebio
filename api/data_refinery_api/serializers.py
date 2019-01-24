@@ -97,6 +97,22 @@ class ComputedFileSerializer(serializers.ModelSerializer):
                     'last_modified'
                 )
 
+class QNTargetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ComputedFile
+        fields = (
+                    'id',
+                    'filename',
+                    'size_in_bytes',
+                    'is_qn_target',
+                    'sha1',
+                    's3_bucket',
+                    's3_key',
+                    's3_url',
+                    'created_at',
+                    'last_modified'
+                )
+
 class ComputationalResultSerializer(serializers.ModelSerializer):
     annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
     files = ComputedFileSerializer(many=True, source='computedfile_set')
@@ -620,4 +636,36 @@ class CompendiaSerializer(serializers.ModelSerializer):
                     'last_modified'
                 )
 
+##
+# ElasticSearch Document Serializers
+##
 
+class ExperimentDocumentSerializer(serializers.Serializer):
+    """Serializer for the Experiment document."""
+
+    # PK
+    id = serializers.IntegerField(read_only=True)
+
+    #  Complex (Keyword)
+    title = serializers.CharField(read_only=True)
+    publication_title = serializers.CharField(read_only=True)
+    description = serializers.CharField(read_only=True)
+
+    # Simple
+    technology = serializers.CharField(read_only=True)
+    accession_code = serializers.CharField(read_only=True)
+    alternate_accession_code = serializers.CharField(read_only=True)
+    submitter_institution = serializers.CharField(read_only=True)
+    has_publication = serializers.BooleanField(read_only=True)
+    publication_doi = serializers.CharField(read_only=True)
+    publication_authors = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
+    sample_metadata_fields = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
+    platform_names = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
+    organism_names = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
+    pubmed_id = serializers.CharField(read_only=True)
+    num_total_samples = serializers.IntegerField(read_only=True)
+    num_processed_samples = serializers.IntegerField(read_only=True)
+
+    # FK/M2M
+    # We don't use any ForgeinKey serializers right now, but if we did, we'd do it like this:
+    # organisms = OrganismSerializer(many=True)

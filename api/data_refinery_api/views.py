@@ -9,8 +9,30 @@ from django.db.models.expressions import F, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django_elasticsearch_dsl_drf.constants import (
+    LOOKUP_FILTER_TERMS,
+    LOOKUP_FILTER_RANGE,
+    LOOKUP_FILTER_PREFIX,
+    LOOKUP_FILTER_WILDCARD,
+    LOOKUP_QUERY_IN,
+    LOOKUP_QUERY_GT,
+    LOOKUP_QUERY_GTE,
+    LOOKUP_QUERY_LT,
+    LOOKUP_QUERY_LTE,
+    LOOKUP_QUERY_EXCLUDE,
+)
+from django_elasticsearch_dsl_drf.viewsets import DocumentViewSet
+from django_elasticsearch_dsl_drf.filter_backends import (
+    FilteringFilterBackend,
+    IdsFilterBackend,
+    OrderingFilterBackend,
+    DefaultOrderingFilterBackend,
+    CompoundSearchFilterBackend,
+    FacetedSearchFilterBackend
+)
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
+from elasticsearch_dsl import TermsFacet, DateHistogramFacet
 from rest_framework import status, filters, generics
 from rest_framework.exceptions import APIException
 from rest_framework.exceptions import ValidationError
@@ -32,6 +54,7 @@ from data_refinery_api.serializers import (
     ProcessorSerializer,
     SampleSerializer,
     CompendiaSerializer,
+    QNTargetSerializer,
 
     # Job
     DownloaderJobSerializer,
@@ -63,7 +86,11 @@ from data_refinery_common.models import (
     Sample,
     SurveyJob,
 )
+from data_refinery_common.models.documents import (
+    ExperimentDocument
+)
 from data_refinery_common.utils import get_env_variable, get_active_volumes
+from .serializers import ExperimentDocumentSerializer
 
 
 ##
@@ -99,6 +126,145 @@ class PaginatedAPIView(APIView):
         """
         assert self.paginator is not None
         return self.paginator.get_paginated_response(data)
+
+##
+# ElasticSearch
+##
+from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
+
+class ExperimentDocumentView(DocumentViewSet):
+    """ElasticSearch powered experiment search.
+
+    Search can be used by affixing:
+
+        ?search=medulloblastoma
+        ?id=1
+        ?search=medulloblastoma&technology=microarray&has_publication=true
+
+    Full examples can be found in the Django-ES-DSL-DRF docs:
+        https://django-elasticsearch-dsl-drf.readthedocs.io/en/0.17.1/filtering_usage_examples.html#filtering
+
+    """
+
+    document = ExperimentDocument
+    serializer_class = ExperimentDocumentSerializer
+    pagination_class = ESLimitOffsetPagination
+
+    # Filter backends provide different functionality we want
+    filter_backends = [
+        FilteringFilterBackend,
+        OrderingFilterBackend,
+        DefaultOrderingFilterBackend,
+        CompoundSearchFilterBackend,
+        FacetedSearchFilterBackend
+    ]
+
+    # Primitive
+    lookup_field = 'id'
+
+    # Define search fields
+    # Is this exhaustive enough?
+    search_fields = (
+        'title',
+        'description',
+        'publication_authors',
+        'submitter_institution',
+    )
+
+    # Define filtering fields
+    filter_fields = {
+        'id': {
+            'field': '_id',
+            'lookups': [
+                LOOKUP_FILTER_RANGE,
+                LOOKUP_QUERY_IN,
+            ],
+        },
+        'technology': 'technology',
+        'has_publication': 'has_publication',
+        'platform': 'platform_names',
+        'organism': 'organism_names'
+    }
+
+    # Define ordering fields
+    ordering_fields = {
+        'id': 'id',
+        'title': 'title.raw',
+        'description': 'description.raw',
+        'num_total_samples': 'num_total_samples',
+        'num_processed_samples': 'num_processed_samples'
+    }
+
+    # Specify default ordering
+    ordering = ('-num_total_samples', 'id', 'title', 'description')
+
+    # Facets (aka Aggregations) provide statistics about the query result set in the API response.
+    # More information here: https://github.com/barseghyanartur/django-elasticsearch-dsl-drf/blob/03a3aa716db31868ca3a71340513a993741a4177/src/django_elasticsearch_dsl_drf/filter_backends/faceted_search.py#L24
+    faceted_search_fields = {
+        'technology': {
+            'field': 'technology',
+            'facet': TermsFacet,
+            'enabled': True # These are enabled by default, which is more expensive but more simple.
+        },
+        'organism_names': {
+            'field': 'organism_names',
+            'facet': TermsFacet,
+            'enabled': True,
+            'options': {
+                'size': 999999
+            }
+        },
+        'platform_names': {
+            'field': 'platform_names',
+            'facet': TermsFacet,
+            'enabled': True,
+            'global': False,
+            'options': {
+                'size': 999999
+            }
+        },
+        'has_publication': {
+            'field': 'has_publication',
+            'facet': TermsFacet,
+            'enabled': True,
+            'global': False,
+        },
+
+        # We don't actually need any "globals" to drive our web frontend,
+        # but we'll leave them available but not enabled by default, as they're
+        # expensive.
+        'technology_global': {
+            'field': 'technology',
+            'facet': TermsFacet,
+            'enabled': False,
+            'global': True
+        },
+        'organism_names_global': {
+            'field': 'organism_names',
+            'facet': TermsFacet,
+            'enabled': False,
+            'global': True,
+            'options': {
+                'size': 999999
+            }
+        },
+        'platform_names_global': {
+            'field': 'platform_names',
+            'facet': TermsFacet,
+            'enabled': False,
+            'global': True,
+            'options': {
+                'size': 999999
+            }
+        },
+        'has_publication_global': {
+            'field': 'platform_names',
+            'facet': TermsFacet,
+            'enabled': False,
+            'global': True,
+        },
+    }
+    faceted_search_param = 'facet'
 
 ##
 # Search and Filter
@@ -321,6 +487,8 @@ class DatasetView(generics.RetrieveUpdateAPIView):
     """ View and modify a single Dataset. Set `start` to `true` along with a valid
     activated API token (from /token/) to begin smashing and delivery.
 
+    Adding a supplying `["ALL"]` as an experiment's accession list will add all of the associated samples.
+
     You must also supply `email_address` with `start`, though this will never be serialized back to you.
 
     """
@@ -341,6 +509,14 @@ class DatasetView(generics.RetrieveUpdateAPIView):
         old_aggregate = old_object.aggregate_by
         already_processing = old_object.is_processing
         new_data = serializer.validated_data
+
+        # We convert 'ALL' into the actual accession codes given
+        for key in new_data['data'].keys():
+            accessions = new_data['data'][key]
+            if accessions == ["ALL"]:
+                experiment = get_object_or_404(Experiment, accession_code=key)
+                sample_codes = list(experiment.samples.filter(is_processed=True).values_list('accession_code', flat=True))
+                new_data['data'][key] = sample_codes
 
         if old_object.is_processed:
             raise APIException("You may not update Datasets which have already been processed")
@@ -1073,4 +1249,20 @@ class CompendiaDetail(APIView):
 
         computed_files = ComputedFile.objects.filter(is_compendia=True, is_public=True, is_qn_target=False).order_by('-created_at')
         serializer = CompendiaSerializer(computed_files, many=True)
+        return Response(serializer.data)
+
+
+###
+# QN Targets
+###
+
+class QNTargetsDetail(APIView):
+    """
+    Quantile Normalization Targets
+    """
+
+    """List all processors."""
+    def get(self, request, format=None):
+        computed_files = ComputedFile.objects.filter(is_public=True, is_qn_target=True)
+        serializer = QNTargetSerializer(computed_files, many=True)
         return Response(serializer.data)
