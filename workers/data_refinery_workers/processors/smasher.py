@@ -29,7 +29,7 @@ from data_refinery_common.models import (
     Pipeline,
     SampleResultAssociation,
 )
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable, calculate_file_size, calculate_sha1
 from data_refinery_workers.processors import utils
 from urllib.parse import quote
 
@@ -765,6 +765,9 @@ def _upload(job_context: Dict) -> Dict:
 
             job_context["dataset"].s3_bucket = RESULTS_BUCKET
             job_context["dataset"].s3_key = job_context["output_file"].split('/')[-1]
+            job_context["dataset"].size_in_bytes = calculate_file_size(job_context["output_file"])
+            job_context["dataset"].sha1 = calculate_sha1(job_context["output_file"])
+
             job_context["dataset"].save()
 
             # File is uploaded, we can delete the local.
