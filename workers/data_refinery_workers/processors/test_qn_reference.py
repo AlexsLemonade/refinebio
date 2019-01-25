@@ -131,7 +131,7 @@ class QNRefTestCase(TestCase):
 
         out = StringIO()
         try:
-            call_command('create_qn_target', organism='homo_sapiens', stdout=out)
+            call_command('create_qn_target', organism='homo_sapiens', min=1, stdout=out)
         except SystemExit as e: # this is okay!
             pass
 

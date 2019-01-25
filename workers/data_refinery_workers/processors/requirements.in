@@ -1,4 +1,4 @@
-django
+django>=2.1.5
 requests>=2.20.0
 psycopg2-binary
 boto3
@@ -13,3 +13,5 @@ matplotlib
 pandas
 scikit-learn
 sympy
+elasticsearch-dsl
+django-elasticsearch-dsl

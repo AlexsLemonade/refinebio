@@ -24,11 +24,12 @@ fi
 
 source common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
+ES_HOST_IP=$(get_docker_es_ip_address)
 HOST_IP=$(get_ip_address)
 
 docker run \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
-       --env-file common/environments/test \
-       --link drdb:postgres \
+       --add-host=elasticsearch:$ES_HOST_IP \
+       --env-file api/environments/test \
        -it ccdlstaging/dr_common_tests bash -c "$(run_tests_with_coverage $@)" --parallel
