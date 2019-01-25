@@ -31,6 +31,7 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
+from urllib.parse import quote
 
 
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
@@ -796,17 +797,31 @@ def _notify(job_context: Dict) -> Dict:
             AWS_REGION = "us-east-1"
             CHARSET = "UTF-8"
 
+            # Link to the dataset page, where the user can re-try the download job
+            dataset_url = 'https://www.refine.bio/dataset/' + str(job_context['dataset'].id)
+
             if job_context['job'].failure_reason not in ['', None]:
                 SUBJECT = "There was a problem processing your refine.bio dataset :("
                 BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(job_context['dataset'].id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
-                # Link to the dataset page, where the user can re-try the download job
-                dataset_url = 'https://www.refine.bio/dataset/' + str(job_context['dataset'].id)
-                FORMATTED_HTML = BODY_ERROR_HTML.replace('REPLACE_DATASET_URL', dataset_url).replace('REPLACE_ERROR_TEXT', job_context['job'].failure_reason)
+                
+                ERROR_EMAIL_TITLE = quote('I can\'t download my dataset')
+                ERROR_EMAIL_BODY = quote("""
+                [What browser are you using?]
+                [Add details of the issue you are facing]
+
+                ---
+                """ + str(job_context['dataset'].id))
+                
+                FORMATTED_HTML = BODY_ERROR_HTML.replace('REPLACE_DATASET_URL', dataset_url)\
+                                                .replace('REPLACE_ERROR_TEXT', job_context['job'].failure_reason)\
+                                                .replace('REPLACE_NEW_ISSUE', 'https://github.com/AlexsLemonade/refinebio/issues/new?title={0}&body={1}&labels=bug'.format(ERROR_EMAIL_TITLE, ERROR_EMAIL_BODY))\
+                                                .replace('REPLACE_MAILTO', 'mailto:ccdl@alexslemonade.org?subject={0}&body={1}'.format(ERROR_EMAIL_TITLE, ERROR_EMAIL_BODY))
                 job_context['success'] = False
             else:
                 SUBJECT = "Your refine.bio Dataset is Ready!"
                 BODY_TEXT = "Hot off the presses:\n\n" + job_context["result_url"] + "\n\nLove!,\nThe refine.bio Team"
-                FORMATTED_HTML = BODY_HTML.replace('REPLACEME', job_context["result_url"])
+                FORMATTED_HTML = BODY_HTML.replace('REPLACE_DOWNLOAD_URL', job_context["result_url"])\
+                                          .replace('REPLACE_DATASET_URL', dataset_url)
 
             # Try to send the email.
             try:
