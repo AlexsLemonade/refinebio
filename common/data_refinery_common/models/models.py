@@ -955,7 +955,6 @@ class Dataset(models.Model):
 
     def get_samples(self):
         """ Retuns all of the Sample objects in this Dataset """
-
         all_samples = []
         for sample_list in self.data.values():
             all_samples = all_samples + sample_list
@@ -965,12 +964,7 @@ class Dataset(models.Model):
 
     def get_experiments(self):
         """ Retuns all of the Experiments objects in this Dataset """
-
-        all_experiments = []
-        for experiment in self.data.keys():
-            all_experiments.append(experiment)
-        all_experiments = list(set(all_experiments))
-
+        all_experiments = self.data.keys()
         return Experiment.objects.filter(accession_code__in=all_experiments)
 
     def get_samples_by_experiment(self):

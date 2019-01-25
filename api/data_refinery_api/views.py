@@ -63,7 +63,6 @@ from data_refinery_api.serializers import (
     # Dataset
     APITokenSerializer,
     CreateDatasetSerializer,
-    DatasetDetailsSerializer,
     DatasetSerializer,
 )
 from data_refinery_common.job_lookup import ProcessorPipeline
@@ -495,11 +494,6 @@ class DatasetView(generics.RetrieveUpdateAPIView):
     queryset = Dataset.objects.all()
     serializer_class = DatasetSerializer
     lookup_field = 'id'
-
-    def get_serializer_class(self):
-        if 'details' in self.request.query_params:
-            return DatasetDetailsSerializer
-        return self.serializer_class
 
     def perform_update(self, serializer):
         """ If `start` is set, fire off the job. Disables dataset data updates after that. """
