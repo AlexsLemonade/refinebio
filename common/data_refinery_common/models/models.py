@@ -927,7 +927,7 @@ class Dataset(models.Model):
     s3_key = models.CharField(max_length=255)
 
     size_in_bytes = models.BigIntegerField(blank=True, null=True, default=0)
-    sha1 = models.CharField(max_length=64, default='')
+    sha1 = models.CharField(max_length=64, null=True, default='')
 
     # Common Properties
     created_at = models.DateTimeField(editable=False, default=timezone.now)
