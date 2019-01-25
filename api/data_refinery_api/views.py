@@ -754,7 +754,8 @@ class SampleList(PaginatedAPIView):
             samples = samples.order_by(order_by)
 
         if filter_by:
-            samples = samples.filter(   Q(sex__contains=filter_by) |
+            samples = samples.filter(   Q(title__contains=filter_by) |
+                                        Q(sex__contains=filter_by) |
                                         Q(age__contains=filter_by) |
                                         Q(specimen_part__contains=filter_by) |
                                         Q(genotype__contains=filter_by) |
