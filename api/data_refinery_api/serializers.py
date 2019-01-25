@@ -522,7 +522,7 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'last_modified',
                     'start',
                     'size_in_bytes',
-                    'sha1'
+                    'sha1',
                     'experiments',
                     'organism_samples'
             )
