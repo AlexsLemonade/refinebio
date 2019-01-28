@@ -174,7 +174,7 @@ source common.sh && PGPASSWORD=mysecretpassword psql -h $(get_docker_db_ip_addre
 ##### Nomad
 
 Similarly, you will need to run a local [Nomad](https://www.nomadproject.io/) service in development mode.
-Unfortunately it seems that Nomad is not currently supporting using both Docker and Mac [Citation Needed].
+
 However if you run Linux and you have followed the [installation instructions](#installation), you
 can run Nomad with:
 
