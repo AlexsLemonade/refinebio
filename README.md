@@ -113,17 +113,18 @@ This sets pip to install all packages in your user directory so sudo is not requ
 #### Mac
 
 The following services will need to be installed:
+- [Homebrew](https://brew.sh/)
 - [Docker for Mac](https://www.docker.com/docker-mac)
 - [Terraform](https://www.terraform.io/)
-- [Homebrew](https://brew.sh/)
+- [Nomad](https://www.nomad.io/)
 - [git-crypt](https://www.agwa.name/projects/git-crypt/)
 - [iproute2mac](https://github.com/brona/iproute2mac)
 - [jq](https://stedolan.github.io/jq/)
-- [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) This may not work for Mac. [Citation Needed]
 
-Instructions for installing Docker, Nomad, and Homebrew can be found by
-following the link for those services. The others on that list can
-be installed by running: `brew install iproute2mac git-crypt terraform jq`.
+Instructions for installing [Docker](https://www.docker.com/docker-mac) and [Homebrew](https://brew.sh/) can be found by
+on their respective homepages.
+
+Once Homebrew is installed, the other required applications can be installed by running: `brew install iproute2mac git-crypt nomad terraform jq`.
 
 Many of the computational processes running are very memory intensive. You will need
 to [raise the amount of virtual memory available to
