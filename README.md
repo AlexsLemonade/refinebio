@@ -121,9 +121,11 @@ The following services will need to be installed:
 - [jq](https://stedolan.github.io/jq/)
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) This may not work for Mac. [Citation Needed]
 
-Instructions for installing Docker, Nomad, and Homebrew can be found by
-following the link for those services. The others on that list can
-be installed by running: `brew install iproute2mac git-crypt terraform jq`.
+Instructions for installing Docker and Homebrew can be found by
+following the link for those services.
+Terraform and Nomad are both installed by downloading the macOS binary and placing it somewhere on your PATH.
+If you are unfamiliar with managing your PATH, a fairly reliable way to do this is to move the binary file to `/usr/local/bin`.
+The others on that list can be installed by running: `brew install iproute2mac git-crypt terraform jq`.
 
 Many of the computational processes running are very memory intensive. You will need
 to [raise the amount of virtual memory available to
