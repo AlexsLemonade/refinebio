@@ -9,8 +9,12 @@ script_directory=`perl -e 'use File::Basename;
  print dirname(abs_path(@ARGV[0]));' -- "$0"`
 cd $script_directory
 
-# Set up the data volume directory if it does not already exist
-volume_directory="$script_directory/test_volume"
+# Set up the data volume directory if it does not already exist.
+# Since the end-to-end tests are run from the Foreman image, use the
+# top level test_volume rather than one nested within the foreman
+# directory.
+project_root=$(cd .. && pwd)
+volume_directory="$project_root/test_volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir $volume_directory
     chmod -R a+rwX $volume_directory
@@ -44,4 +48,5 @@ docker run \
        --add-host=nomad:$HOST_IP \
        --env-file foreman/environments/test \
        --link drdb:postgres \
+       --volume $volume_directory:/home/user/data_store \
        -it ccdlstaging/dr_foreman bash -c "$(run_tests_with_coverage $@)"

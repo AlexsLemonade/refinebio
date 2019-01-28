@@ -671,14 +671,14 @@ class OriginalFile(models.Model):
         """
         # If the file is downloaded and the file actually exists on disk,
         # then it doens't need to be downloaded.
-        if not self.is_downloaded \
-           or not self.absolute_file_path \
-           or not os.path.exists(self.absolute_file_path):
+        if self.is_downloaded \
+           and self.absolute_file_path \
+           and os.path.exists(self.absolute_file_path):
             return False
 
         unstarted_downloader_jobs = self.downloader_jobs.filter(
-            start_time__is_null=True,
-            success__is_null=True,
+            start_time__isnull=True,
+            success__isnull=True,
             retried=False
         )
 
