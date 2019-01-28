@@ -31,10 +31,10 @@ def update_cached_values(apps, schema_editor):
 
         # via experiment.update_organism_names
         experiment.organism_names = list(set([organism.name for organism in experiment.organisms.all()]))
-        experiment.save()
 
         # experiment.update_platform_names
         experiment.platform_names = list(set([sample.platform_name for sample in experiment.samples.all()]))
+        experiment.save()
 
 class Migration(migrations.Migration):
 
