@@ -59,7 +59,7 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
         try:
             original_downloader_job = DownloaderJobOriginalFileAssociation.objects.filter(
                 original_file=undownloaded_file
-            ).first().downloader_job
+            ).latest('id').downloader_job
 
             # Found the job so we don't need to keep going.
             break
@@ -73,7 +73,7 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
             # have the same filename as the file at the end of the
             # 'source_url' field, because that source URL is pointing
             # to the archive we need.
-            archive_filename = undownloaded_files.source_url.split("/")[-1]
+            archive_filename = undownloaded_file.source_url.split("/")[-1]
 
             # This file or its job might not exist, but we'll wait
             # until we've checked all the files before calling it a
@@ -82,7 +82,7 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
                 archive_file = OriginalFile.objects.filter(filename=archive_filename).first()
                 original_downloader_job = DownloaderJobOriginalFileAssociation.objects.filter(
                     original_file=archive_file
-                ).first().downloader_job
+                ).latest('id').downloader_job
                 # Found the job so we don't need to keep going.
                 break
             except:

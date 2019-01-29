@@ -35,6 +35,11 @@ elif ! [[ $(docker ps --filter name=drdb -q) ]]; then
     echo "You must start Postgres first with:" >&2
     echo "./run_postgres.sh" >&2
     exit 1
+# Then ensure elasticsearch is running
+elif ! [[ $(docker ps --filter name=dres -q) ]]; then
+    echo "You must start Elasticsearch first with:" >&2
+    echo "./run_es.sh" >&2
+    exit 1
 fi
 
 ./prepare_image.sh -i foreman -s foreman
