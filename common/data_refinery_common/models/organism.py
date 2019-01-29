@@ -31,10 +31,6 @@ def get_scientific_name(taxonomy_id: int) -> str:
     parameters = {"db": TAXONOMY_DATABASE, "id": str(taxonomy_id)}
     response = requests.get(EFETCH_URL, parameters)
 
-    if response.status_code != 200:
-        logger.error("Bad response from Entrez!: " + str(response.status_code))
-        return -1
-
     root = ElementTree.fromstring(response.text)
     taxon_list = root.findall("Taxon")
 
@@ -50,10 +46,6 @@ def get_scientific_name(taxonomy_id: int) -> str:
 def get_taxonomy_id(organism_name: str) -> int:
     parameters = {"db": TAXONOMY_DATABASE, "term": organism_name}
     response = requests.get(ESEARCH_URL, parameters)
-
-    if response.status_code != 200:
-        logger.error("Bad response from Entrez!: " + str(response.status_code))
-        return -1
 
     root = ElementTree.fromstring(response.text)
     id_list = root.find("IdList").findall("Id")
@@ -74,10 +66,6 @@ def get_taxonomy_id(organism_name: str) -> int:
 def get_taxonomy_id_scientific(organism_name: str) -> int:
     parameters = {"db": TAXONOMY_DATABASE, "field": "scin", "term": organism_name}
     response = requests.get(ESEARCH_URL, parameters)
-
-    if response.status_code != 200:
-        logger.error("Bad response from Entrez!: " + str(response.status_code))
-        return -1
 
     root = ElementTree.fromstring(response.text)
     id_list = root.find("IdList").findall("Id")
