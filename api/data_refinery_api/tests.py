@@ -1,5 +1,6 @@
 import json
 import random
+import time
 
 from django.contrib.auth.models import User
 from django.http import HttpResponseForbidden, HttpResponseServerError
@@ -692,8 +693,11 @@ class APITestCases(APITestCase):
         """ Test the dataset stats endpoint """
 
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        time.sleep(30)
         gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS")
+        time.sleep(30)
         equus_ferus = Organism.get_object_for_name("EQUUS_FERUS")
+        time.sleep(30)
 
         ex = Experiment()
         ex.accession_code = "XYZ123"
