@@ -301,6 +301,28 @@ resource "aws_security_group_rule" "data_refinery_pg_outbound" {
 }
 
 ##
+# ElasticSearch
+##
+
+resource "aws_security_group" "data_refinery_es" {
+  name = "data-refinery-es-${var.user}-${var.stage}"
+  description = "data_refinery_es-${var.user}-${var.stage}"
+  vpc_id = "${aws_vpc.data_refinery_vpc.id}"
+
+  tags {
+    Name = "data-refinery-es-${var.user}-${var.stage}"
+  }
+
+  # Wide open, but inside inside the VPC
+  ingress {
+      from_port = 0
+      to_port = 0
+      protocol = "-1"
+      cidr_blocks = [ "0.0.0.0/0" ]
+  }
+}
+
+##
 # API
 ##
 

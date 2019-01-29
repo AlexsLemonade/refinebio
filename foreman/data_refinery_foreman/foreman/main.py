@@ -233,8 +233,6 @@ def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
 # Downloaders
 ##
 
-
-@transaction.atomic
 def requeue_downloader_job(last_job: DownloaderJob) -> None:
     """Queues a new downloader job.
 
@@ -435,8 +433,6 @@ def retry_lost_downloader_jobs() -> None:
 # Processors
 ##
 
-
-@transaction.atomic
 def requeue_processor_job(last_job: ProcessorJob) -> None:
     """Queues a new processor job.
 
@@ -700,7 +696,6 @@ def retry_lost_processor_jobs() -> None:
 # Surveyors
 ##
 
-@transaction.atomic
 def requeue_survey_job(last_job: SurveyJob) -> None:
     """Queues a new survey job.
 
@@ -987,7 +982,6 @@ def cleanup_the_queue():
                 except:
                     # If we can't do this for some reason, we'll get it next loop.
                     pass
-
 
 
 ##

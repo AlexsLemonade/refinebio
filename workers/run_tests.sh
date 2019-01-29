@@ -255,6 +255,13 @@ if [[ -z $tag || $tag == "smasher" ]]; then
     pcl_test_data_ts1="$pcl_test_raw_dir/$pcl_name_ts1"
     pcl_test_data_ts2="$pcl_test_raw_dir/$pcl_name_ts2"
     pcl_test_data_ta1="$pcl_test_raw_dir/$pcl_name_ta1"
+    bad_test_raw_dir="$volume_directory/BADSMASH"
+    bad_name="big.PCL"
+    bad_name2="small.PCL"
+    bad_name3="bad.PCL"
+    bad_test_data_1="$bad_test_raw_dir/$bad_name"
+    bad_test_data_2="$bad_test_raw_dir/$bad_name2"
+    bad_test_data_3="$bad_test_raw_dir/$bad_name3"
     if [ ! -e "$pcl_test_data_1" ]; then
         mkdir -p $pcl_test_raw_dir
         echo "Downloading PCL for tests."
@@ -316,6 +323,24 @@ if [[ -z $tag || $tag == "smasher" ]]; then
         wget -q -O $pcl_test_data_ta1 \
              "$test_data_repo/$pcl_name_ta1"
     fi
+    if [ ! -e "$bad_test_data_1" ]; then
+        mkdir -p $bad_test_raw_dir
+        echo "Downloading Bad PCL for tests."
+        wget -q -O $bad_test_data_1 \
+             "$test_data_repo/$bad_name"
+    fi
+    if [ ! -e "$bad_test_data_2" ]; then
+        mkdir -p $bad_test_raw_dir
+        echo "Downloading Bad PCL for tests."
+        wget -q -O $bad_test_data_2 \
+             "$test_data_repo/$bad_name2"
+    fi
+    if [ ! -e "$bad_test_data_3" ]; then
+        mkdir -p $bad_test_raw_dir
+        echo "Downloading Bad PCL for tests."
+        wget -q -O $bad_test_data_3 \
+             "$test_data_repo/$bad_name3"
+    fi
     if [[ -z $AWS_ACCESS_KEY_ID ]]; then
         export AWS_ACCESS_KEY_ID=`~/bin/aws configure get default.aws_access_key_id`
         export AWS_SECRET_ACCESS_KEY=`~/bin/aws configure get default.aws_secret_access_key`
@@ -374,6 +399,7 @@ fi
 source common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
+ES_HOST_IP=$(get_docker_es_ip_address)
 
 # Ensure permissions are set for everything within the test data directory.
 chmod -R a+rwX $volume_directory
@@ -406,12 +432,12 @@ for image in ${worker_images[*]}; do
         echo $test_command
         docker run \
                --add-host=database:$DB_HOST_IP \
+               --add-host=elasticsearch:$ES_HOST_IP \
                --add-host=nomad:$HOST_IP \
                --env-file workers/environments/test \
                --env AWS_ACCESS_KEY_ID \
                --env AWS_SECRET_ACCESS_KEY \
                --volume $volume_directory:/home/user/data_store \
-               --link drdb:postgres \
                -it $image_name bash -c "$test_command"
     fi
 done

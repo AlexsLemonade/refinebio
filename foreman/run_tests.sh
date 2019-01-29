@@ -40,13 +40,14 @@ fi
 ./prepare_image.sh -i foreman -s foreman
 
 source common.sh
-HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
+ES_HOST_IP=$(get_docker_es_ip_address)
+HOST_IP=$(get_ip_address)
 
 docker run \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
+       --add-host=elasticsearch:$ES_HOST_IP \
        --env-file foreman/environments/test \
-       --link drdb:postgres \
        --volume $volume_directory:/home/user/data_store \
        -it ccdlstaging/dr_foreman bash -c "$(run_tests_with_coverage $@)"

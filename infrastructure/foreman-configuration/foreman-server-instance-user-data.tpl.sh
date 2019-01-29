@@ -34,6 +34,7 @@ docker run \\
        --log-opt awslogs-region=${region} \\
        --log-opt awslogs-group=${log_group} \\
        --log-opt awslogs-stream=log-stream-foreman-${user}-${stage} \\
+       --name=dr_foreman \\
        -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py retry_jobs
 " >> /home/ubuntu/run_foreman.sh
 chmod +x /home/ubuntu/run_foreman.sh
@@ -66,6 +67,21 @@ set daemon 900
 ' >> /etc/monit/monitrc
 
 service monit restart
+
+docker run \
+       --env-file /home/ubuntu/environment \
+       -e DATABASE_HOST=${database_host} \
+       -e DATABASE_NAME=${database_name} \
+       -e DATABASE_USER=${database_user} \
+       -e DATABASE_PASSWORD=${database_password} \
+       -v /tmp:/tmp \
+       --add-host=nomad:${nomad_lead_server_ip} \
+       --log-driver=awslogs \
+       --log-opt awslogs-region=${region} \
+       --log-opt awslogs-group=${log_group} \
+       --log-opt awslogs-stream=log-stream-foreman-${user}-${stage} \
+       --name=job_filler \
+       -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py create_missing_processor_jobs
 
 # Delete the cloudinit and syslog in production.
 export STAGE=${stage}

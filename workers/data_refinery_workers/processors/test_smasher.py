@@ -410,8 +410,10 @@ class SmasherTestCase(TestCase):
 
     @tag("smasher")
     def test_no_smash_all_diff_species(self):
-        """ Smashing together with 'ALL' with different species should
-        cause a 0 length data frame after inner join. """
+        """ Smashing together with 'ALL' with different species is a really weird behavior. 
+        This test isn't really testing a normal case, just make sure that it's marking the
+        unsmashable files.
+        """
 
         job = ProcessorJob()
         job.pipeline_applied = "SMASHER"
@@ -513,9 +515,7 @@ class SmasherTestCase(TestCase):
         print(ds.failure_reason)
         print(final_context['dataset'].failure_reason)
 
-        self.assertFalse(ds.success)
-        self.assertNotEqual(ds.failure_reason, "")
-        self.assertEqual(len(final_context['original_merged']), 0)
+        self.assertEqual(final_context['unsmashable_files'], ['GSM1238108'])
 
     @tag("smasher")
     def test_no_smash_dupe(self):
@@ -1286,3 +1286,162 @@ class AggregationTestCase(TestCase):
         self.assertEqual(species_metadada['samples'][0]['refinebio_accession_code'],
                          'E-GEOD-44719-GSM1089311')
         os.remove(json_filename)
+
+    @tag("smasher")
+    def test_bad_overlap(self):
+
+        pj = ProcessorJob()
+        pj.pipeline_applied = "SMASHER"
+        pj.save()
+
+        experiment = Experiment()
+        experiment.accession_code = "GSE51081"
+        experiment.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+
+        sample = Sample()
+        sample.accession_code = 'GSM1237810'
+        sample.title = 'GSM1237810'
+        sample.organism = homo_sapiens
+        sample.save()
+
+        sample_annotation = SampleAnnotation()
+        sample_annotation.data = {'hi': 'friend'}
+        sample_annotation.sample = sample
+        sample_annotation.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "big.PCL"
+        computed_file.absolute_file_path = "/home/user/data_store/BADSMASH/" + computed_file.filename
+        computed_file.result = result
+        computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
+        computed_file.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
+        sample = Sample()
+        sample.accession_code = 'GSM1237812'
+        sample.title = 'GSM1237812'
+        sample.organism = homo_sapiens
+        sample.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "small.PCL"
+        computed_file.absolute_file_path = "/home/user/data_store/BADSMASH/" + computed_file.filename
+        computed_file.result = result
+        computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
+        computed_file.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
+        ds = Dataset()
+        ds.data = {'GSE51081': ['GSM1237810', 'GSM1237812']}
+        ds.aggregate_by = 'ALL' # [ALL or SPECIES or EXPERIMENT]
+        ds.scale_by = 'NONE' # [NONE or MINMAX or STANDARD or ROBUST]
+        ds.email_address = "null@derp.com"
+        #ds.email_address = "miserlou+heyo@gmail.com"
+        ds.quantile_normalize = False
+        ds.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = pj
+        pjda.dataset = ds
+        pjda.save()
+
+        final_context = smasher.smash(pj.pk, upload=False)
+        ds = Dataset.objects.get(id=ds.id)
+
+        pj = ProcessorJob()
+        pj.pipeline_applied = "SMASHER"
+        pj.save()
+
+        # Now, make sure the bad can't zero this out.
+        sample = Sample()
+        sample.accession_code = 'GSM999'
+        sample.title = 'GSM999'
+        sample.organism = homo_sapiens
+        sample.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        computed_file = ComputedFile()
+        computed_file.filename = "bad.PCL"
+        computed_file.absolute_file_path = "/home/user/data_store/BADSMASH/" + computed_file.filename
+        computed_file.result = result
+        computed_file.size_in_bytes = 123
+        computed_file.is_smashable = True
+        computed_file.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
+        ds = Dataset()
+        ds.data = {'GSE51081': ['GSM1237810', 'GSM1237812', 'GSM999']}
+        ds.aggregate_by = 'ALL' # [ALL or SPECIES or EXPERIMENT]
+        ds.scale_by = 'NONE' # [NONE or MINMAX or STANDARD or ROBUST]
+        ds.email_address = "null@derp.com"
+        #ds.email_address = "miserlou+heyo@gmail.com"
+        ds.quantile_normalize = False
+        ds.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = pj
+        pjda.dataset = ds
+        pjda.save()
+
+        final_context = smasher.smash(pj.pk, upload=False)
+        ds = Dataset.objects.get(id=ds.id)
+
+        self.assertEqual(len(final_context['final_frame']), 4)

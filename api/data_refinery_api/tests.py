@@ -28,6 +28,7 @@ from data_refinery_api.views import ExperimentList
 from data_refinery_common.utils import get_env_variable
 from data_refinery_common.models import (
     ComputationalResult,
+    ComputedFile,
     Dataset,
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -46,6 +47,9 @@ from data_refinery_common.models import (
     SampleAnnotation,
     SampleResultAssociation,
 )
+from data_refinery_common.models.documents import (
+    ExperimentDocument
+)
 
 class APITestCases(APITestCase):
     def setUp(self):
@@ -55,7 +59,17 @@ class APITestCases(APITestCase):
         # self.user = User.objects.create(username="mike")
 
         experiment = Experiment()
+        experiment.accession_code = "GSE000"
+        experiment.title = "NONONONO"
+        experiment.description = "Boooooourns. Wasabi."
+        experiment.technology = "RNA-SEQ"
+        experiment.save()
+
+        experiment = Experiment()
         experiment.accession_code = "GSE123"
+        experiment.title = "Hey Ho Let's Go"
+        experiment.description = "This is a very exciting test experiment. Faygo soda. Blah blah blah."
+        experiment.technology = "MICROARRAY"
         experiment.save()
         self.experiment = experiment
 
@@ -67,11 +81,13 @@ class APITestCases(APITestCase):
         sample = Sample()
         sample.title = "123"
         sample.accession_code = "123"
+        sample.is_processed = True
         sample.save()
 
         sample = Sample()
         sample.title = "789"
         sample.accession_code = "789"
+        sample.is_processed = True
         sample.save()
         self.sample = sample
 
@@ -126,6 +142,15 @@ class APITestCases(APITestCase):
         sra.save()
 
         return
+
+    def tearDown(self):
+        """ Good bye """
+        Experiment.objects.all().delete()
+        ExperimentAnnotation.objects.all().delete()
+        Sample.objects.all().delete()
+        SampleAnnotation.objects.all().delete()
+        Sample.objects.all().delete()
+        SampleAnnotation.objects.all().delete()
 
     def test_all_endpoints(self):
         response = self.client.get(reverse('experiments'))
@@ -377,7 +402,7 @@ class APITestCases(APITestCase):
 
         # Test all
         response = self.client.get(reverse('search'))
-        self.assertEqual(response.json()['count'], LOTS + 4)
+        self.assertEqual(response.json()['count'], LOTS + 5)
 
         # Test search
         response = self.client.get(reverse('search'), {'search': 'THISWILLBEINASEARCHRESULT'})
@@ -443,6 +468,35 @@ class APITestCases(APITestCase):
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['results'][0]['accession_code'], "GSE5678")
 
+        cr = ComputationalResult()
+        cr.save()
+
+        qni = ComputedFile()
+        qni.is_qn_target = True
+        qni.s3_bucket = "fake_qni_bucket"
+        qni.s3_key = "zazaza_homo_sapiens_1234.tsv"
+        qni.filename = "homo_sapiens_1234.tsv"
+        qni.is_public = True
+        qni.size_in_bytes = 56789
+        qni.sha1 = "c0a88d0bb020dadee3b707e647f7290368c235ba"
+        qni.result = cr
+        qni.save()
+
+        qni = ComputedFile()
+        qni.is_qn_target = False
+        qni.s3_bucket = "X"
+        qni.s3_key = "X.tsv"
+        qni.filename = "XXXXXXXXXXXXXXX.tsv"
+        qni.is_public = True
+        qni.size_in_bytes = 1
+        qni.sha1 = "123"
+        qni.result = cr
+        qni.save()
+
+        response = self.client.get(reverse('qn-targets'))
+        self.assertEqual(len(response.json()), 1)
+        self.assertEqual(response.json()[0]['s3_url'], 'https://s3.amazonaws.com/fake_qni_bucket/zazaza_homo_sapiens_1234.tsv')
+
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
 
@@ -482,6 +536,17 @@ class APITestCases(APITestCase):
                                     content_type="application/json")
 
         self.assertEqual(response.status_code, 400)
+
+        # Update, just an experiment accession
+        jdata = json.dumps({'data': {"GSE123": ["ALL"]}})
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id}),
+                                   jdata,
+                                   content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['id'], good_id)
+        # We are not entirely RESTful here, that's okay.
+        self.assertNotEqual(response.json()['data'], json.loads(jdata)['data'])
+        self.assertEqual(response.json()['data']["GSE123"], ["789"])
 
         # Update
         jdata = json.dumps({'data': {"A": ["C"]}})
@@ -712,6 +777,122 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 500)
         mock_client.captureMessage.assert_called()
 
+class ESTestCases(APITestCase):
+
+    def test_es_endpoint(self):
+        """ Test basic ES functionality 
+
+        This is pretty tricky because ES doesn't know that we're creating
+        test objects.
+        """
+
+        # First, we purge.
+        Experiment.objects.all().delete()
+
+        experiment = Experiment()
+        experiment.accession_code = "GSE000-X"
+        experiment.title = "NONONONO"
+        experiment.description = "Boooooourns. Wasabi."
+        experiment.technology = "RNA-SEQ"
+        experiment.save()
+
+        experiment = Experiment()
+        experiment.accession_code = "GSE123-X"
+        experiment.title = "Hey Ho Let's Go"
+        experiment.description = "This is a very exciting test experiment. Faygo soda. Blah blah blah."
+        experiment.technology = "MICROARRAY"
+        experiment.save()
+        self.experiment = experiment
+
+        experiment_annotation = ExperimentAnnotation()
+        experiment_annotation.data = {"hello": "world", "123": 456}
+        experiment_annotation.experiment = experiment
+        experiment_annotation.save()
+
+        sample = Sample()
+        sample.title = "123"
+        sample.accession_code = "123"
+        sample.save()
+
+        sample = Sample()
+        sample.title = "789"
+        sample.accession_code = "789"
+        sample.save()
+        self.sample = sample
+
+        sample_annotation = SampleAnnotation()
+        sample_annotation.data = {"goodbye": "world", "789": 123}
+        sample_annotation.sample = sample
+        sample_annotation.save()
+
+        original_file = OriginalFile()
+        original_file.save()
+
+        original_file_sample_association = OriginalFileSampleAssociation()
+        original_file_sample_association.sample = sample
+        original_file_sample_association.original_file = original_file
+        original_file_sample_association.save()
+
+        downloader_job = DownloaderJob()
+        downloader_job.save()
+
+        download_assoc = DownloaderJobOriginalFileAssociation()
+        download_assoc.original_file = original_file
+        download_assoc.downloader_job = downloader_job
+        download_assoc.save()
+
+        processor_job = ProcessorJob()
+        processor_job.save()
+
+        processor_assoc = ProcessorJobOriginalFileAssociation()
+        processor_assoc.original_file = original_file
+        processor_assoc.processor_job = processor_job
+        processor_assoc.save()
+
+        experiment_sample_association = ExperimentSampleAssociation()
+        experiment_sample_association.sample = sample
+        experiment_sample_association.experiment = experiment
+        experiment_sample_association.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        # TODO: Use `reverse` when not using the DefaultRouter
+        response = self.client.get('/es/')
+
+        """ Test basic ES functionality """
+        es_search_result = ExperimentDocument.search().filter("term", description="soda")
+        es_search_result_qs = es_search_result.to_queryset()
+        self.assertEqual(len(es_search_result_qs), 1)
+
+        # Sanity
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 2)
+
+        # Basic Search
+        response = self.client.get('/es/?search=soda')
+        self.assertEqual(response.json()['count'], 1)
+
+        # Positive filter result
+        response = self.client.get('/es/?search=soda&technology=MICROARRAY')
+        self.assertEqual(response.json()['count'], 1)
+
+        # Negative filter result
+        response = self.client.get('/es/?search=soda&technology=rna')
+        self.assertEqual(response.json()['count'], 0)
 
 class ProcessorTestCases(APITestCase):
     def setUp(self):

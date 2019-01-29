@@ -111,6 +111,8 @@ docker run \
        -e DATABASE_NAME=${database_name} \
        -e DATABASE_USER=${database_user} \
        -e DATABASE_PASSWORD=${database_password} \
+       -e ELASTICSEARCH_HOST=${elasticsearch_host} \
+       -e ELASTICSEARCH_PORT=${elasticsearch_port} \
        -v "$STATIC_VOLUMES":/tmp/www/static \
        --log-driver=awslogs \
        --log-opt awslogs-region=${region} \
@@ -119,6 +121,20 @@ docker run \
        -p 8081:8081 \
        --name=dr_api \
        -it -d ${dockerhub_repo}/${api_docker_image} /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
+
+# Let's reindex now too
+docker exec -it dr_api python3 manage.py search_index --rebuild -f
+
+# Let's use this instance to call the populate command every twenty minutes.
+crontab -l > tempcron
+# echo new cron into cron file
+echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/20 * * * * docker exec -it dr_api python3 manage.py search_index --populate -f" >> tempcron
+# install new cron file
+crontab tempcron
+rm tempcron
+
+# Rebuild the search index. Hopefully this doesn't take too long.
+docker exec -it dr_api python3 manage.py search_index --rebuild -f
 
 # Don't leave secrets lying around.
 rm -f environment

@@ -25,10 +25,10 @@ Refine.bio currently has four sub-projects contained within this repo:
     - [Linux](#linux)
     - [Mac](#mac)
     - [Virtual Environment](#virtual-environment)
-    - [Common Dependecies](#common-dependecies)
     - [Services](#services)
       - [Postgres](#postgres)
       - [Nomad](#nomad)
+    - [Common Dependecies](#common-dependecies)
   - [Testing](#testing)
     - [API](#api)
     - [Common](#common)
@@ -36,6 +36,7 @@ Refine.bio currently has four sub-projects contained within this repo:
     - [Workers](#workers)
   - [Style](#style)
   - [Gotchas](#gotchas)
+    - [R](#r)
 - [Running Locally](#running-locally)
   - [Surveyor Jobs](#surveyor-jobs)
     - [Sequence Read Archive](#sequence-read-archive)
@@ -46,11 +47,12 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Checking on Local Jobs](#checking-on-local-jobs)
   - [Development Helpers](#development-helpers)
 - [Cloud Deployment](#cloud-deployment)
-  - [Terraform](#terraform)
   - [Docker Images](#docker-images)
   - [Autoscaling and Setting Spot Prices](#autoscaling-and-setting-spot-prices)
+  - [Terraform](#terraform)
   - [Running Jobs](#running-jobs)
   - [Log Consumption](#log-consumption)
+  - [Dumping and Restoring Database Backups](#dumping-and-restoring-database-backups)
   - [Tearing Down](#tearing-down)
 - [Support](#support)
 - [Meta-README](#meta-readme)
@@ -88,6 +90,7 @@ The following services will need to be installed:
 so Docker does not need sudo permissions.
 - [Terraform](https://www.terraform.io/)
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./install_nomad.sh`.
+- [pip3](https://pip.pypa.io/en/stable/) can be installed on Linux clients with `sudo apt-get install python3-pip`
 - [git-crypt](https://www.agwa.name/projects/git-crypt/)
 - [jq](https://stedolan.github.io/jq/)
 - [iproute2](https://wiki.linuxfoundation.org/networking/iproute2)
@@ -110,17 +113,18 @@ This sets pip to install all packages in your user directory so sudo is not requ
 #### Mac
 
 The following services will need to be installed:
+- [Homebrew](https://brew.sh/)
 - [Docker for Mac](https://www.docker.com/docker-mac)
 - [Terraform](https://www.terraform.io/)
-- [Homebrew](https://brew.sh/)
+- [Nomad](https://www.nomad.io/)
 - [git-crypt](https://www.agwa.name/projects/git-crypt/)
 - [iproute2mac](https://github.com/brona/iproute2mac)
 - [jq](https://stedolan.github.io/jq/)
-- [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) This may not work for Mac. [Citation Needed]
 
-Instructions for installing Docker, Nomad, and Homebrew can be found by
-following the link for those services. The others on that list can
-be installed by running: `brew install iproute2mac git-crypt terraform jq`.
+Instructions for installing [Docker](https://www.docker.com/docker-mac) and [Homebrew](https://brew.sh/) can be found by
+on their respective homepages.
+
+Once Homebrew is installed, the other required applications can be installed by running: `brew install iproute2mac git-crypt nomad terraform jq`.
 
 Many of the computational processes running are very memory intensive. You will need
 to [raise the amount of virtual memory available to
@@ -134,17 +138,6 @@ for you the first time. This virtualenv is valid for the entire `refinebio`
 repo. Sub-projects each have their own environments managed by their
 containers. When returning to this project you should run
 `source dr_env/bin/activate` to reactivate the virtualenv.
-
-#### Common Dependecies
-
-The [common](./common) sub-project contains common code which is
-depended upon by the other sub-projects. So before anything else you
-should prepare the distribution directory `common/dist` with this
-command:
-
-```bash
-(cd common && python setup.py sdist)
-```
 
 #### Services
 
@@ -166,16 +159,6 @@ Then, to initialize the database, run:
 ./common/install_db_docker.sh
 ```
 
-Finally, to make the migrations to the database, use:
-
-```bash
-./common/make_migrations.sh
-```
-
-Note: there is a small chance this might fail with a `can't stat`, error. If this happens, you have
-to manually change permissions on the volumes directory with `sudo chmod -R 740 volumes_postgres`
-then re-run the migrations.
-
 If you need to access a `psql` shell for inspecting the database, you can use:
 
 ```bash
@@ -191,7 +174,7 @@ source common.sh && PGPASSWORD=mysecretpassword psql -h $(get_docker_db_ip_addre
 ##### Nomad
 
 Similarly, you will need to run a local [Nomad](https://www.nomadproject.io/) service in development mode.
-Unfortunately it seems that Nomad is not currently supporting using both Docker and Mac [Citation Needed].
+
 However if you run Linux and you have followed the [installation instructions](#installation), you
 can run Nomad with:
 
@@ -207,6 +190,36 @@ the Nomad agent, which will then launch a Docker container which runs
 the job. If address conflicts emerge, old Docker containers can be purged
 with `docker container prune -f`.
 
+##### ElasticSearch
+
+One of the API endpoints is powered by ElasticSearch. ElasticSearch must be running for this functionality to work. A local ElasticSearch instance in a Docker container can be executed with:
+
+```bash
+./run_es.sh
+```
+
+And then the ES Indexes (akin to Postgres 'databases') can be created with:
+
+```bash
+./run_manage.sh search_index --rebuild -f;
+```
+
+#### Common Dependecies
+
+The [common](./common) sub-project contains common code which is
+depended upon by the other sub-projects. So before anything else you
+should prepare the distribution directory `common/dist` with this
+script:
+
+```bash
+./update_models.sh
+```
+
+(_Note:_ This step requires the postgres container to be running and initialized.)
+
+Note: there is a small chance this might fail with a `can't stat`, error. If this happens, you have
+to manually change permissions on the volumes directory with `sudo chmod -R 740 volumes_postgres`
+then re-run the migrations.
 
 ### Testing
 
@@ -304,6 +317,20 @@ can prune old images with `docker system prune -a`.
   - If it's killed abruptly, the containerized Postgres images can be
   left in an unrecoverable state. Annoying.
 
+#### R
+
+We have created some utilities to help us keep R stable, reliable, and from periodically causing build errors related to version incompatibilites.
+The primary goal of these is to pin the version for every R package that we have.
+The R package `devtools` is useful for this, but in order to be able to install a specific version of it, we've created the R script `common/install_devtools.R`.
+
+There is annother gotcha to be aware of should you ever need to modify versions of R or its packages.
+In Dockerfiles for images that need the R language, we install apt packages that look like `r-base-core=3.4.2-1xenial1`.
+It's unclear why the version for these is so weird, but it was determined by visiting the package list here: https://cran.revolutionanalytics.com/bin/linux/ubuntu/xenial/
+If it needs to be updated then a version should be selected from that list.
+
+Additionally there are two apt packages, r-base and r-base-core, which seem to be very similar except that r-base-core is slimmed down some by not including some additional packages.
+For a while we were using r-base, but we switched to r-base-core when we pinned the version of the R language because the r-base package caused an apt error.
+
 ## Running Locally
 
 Once you've built the `common/dist` directory and have
@@ -335,11 +362,41 @@ data repositories (e.g., Sequencing Read Archive,
 ./foreman/run_surveyor.sh survey_all --accession <ACCESSION_CODE>
 ```
 
+Example for a GEO experiment:
+
+```bash
+./foreman/run_surveyor.sh survey_all --accession GSE85217
+```
+
 Example for an ArrayExpress experiment:
 
 ```bash
-./foreman/run_surveyor.sh survey_all --accession E-MTAB-3050
+./foreman/run_surveyor.sh survey_all --accession E-MTAB-3050 # AFFY
+./foreman/run_surveyor.sh survey_all --accession E-GEOD-3303 # NO_OP
 ```
+
+Transcriptome indices are a bit special.
+For species within the "main" Ensembl division, the species name can be provided like so:
+
+```bash
+./foreman/run_surveyor.sh survey_all --accession "Homo sapiens"
+```
+
+However for species that are in other divisions, the division must follow the species name after a comma like so:
+
+```bash
+./foreman/run_surveyor.sh survey_all --accession "Caenorhabditis elegans, EnsemblMetazoa"
+```
+The possible divisions that can be specified are:
+* Ensembl (this is the "main" division and is the default)
+* EnsemblPlants
+* EnsemblFungi
+* EnsemblBacteria
+* EnsemblProtists
+* EnsemblMetazoa
+
+If you are unsure what division a species falls into, unfortunately the only way to tell is go to check ensembl.com.
+(Although googling the species name + "ensembl" may work pretty well.)
 
 You can also supply a newline-deliminated file to `survey_all` which will
 dispatch survey jobs based on accession codes like so:
@@ -347,6 +404,14 @@ dispatch survey jobs based on accession codes like so:
 ```bash
 ./foreman/run_surveyor.sh survey_all --file MY_BIG_LIST_OF_CODES.txt
 ```
+
+The main foreman job loop can be started with:
+
+```bash
+./foreman/run_surveyor.sh retry_jobs
+```
+
+This must actually be running for jobs to move forward through the pipeline.
 
 #### Sequence Read Archive
 
@@ -400,6 +465,12 @@ For example:
 ./workers/tester.sh run_downloader_job --job-name=SRA --job-id=12345
 ```
 
+or
+
+```bash
+./workers/tester.sh run_downloader_job --job-name=ARRAY_EXPRESS --job-id=1
+```
+
 Or for more information run:
 ```bash
 ./workers/tester.sh -h
@@ -418,6 +489,12 @@ a `Downloader Job` do it for you, the following command will do so:
 For example
 ```bash
 ./workers/tester.sh -i affymetrix run_processor_job --job-name=AFFY_TO_PCL --job-id=54321
+```
+
+or
+
+```bash
+./workers/tester.sh -i no_op run_processor_job --job-name=NO_OP --job-id=1
 ```
 
 Or for more information run:

@@ -2,6 +2,7 @@ from typing import Dict, Set
 from urllib.parse import urlparse
 import csv
 import nomad
+import io
 import os
 import re
 import requests
@@ -9,6 +10,9 @@ import requests
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from retrying import retry
+
+import hashlib
+from functools import partial
 
 # Found: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html
 METADATA_URL = "http://169.254.169.254/latest/meta-data"
@@ -76,8 +80,8 @@ def get_volume_index(path='/home/user/data_store/VOLUME_INDEX') -> str:
         # Our configured logger needs util, so we use the standard logging library for just this.
         import logging
         logger = logging.getLogger(__name__)
-        logger.info("Could not read volume index file, using default: {}", default)
         logger.info(str(e))
+        logger.info("Could not read volume index file, using default: " + str(default))
 
     return default
 
@@ -239,3 +243,15 @@ def get_s3_url(s3_bucket: str, s3_key: str) -> str:
     Calculates the s3 URL for a file from the bucket name and the file key.
     """
     return "%s.s3.amazonaws.com/%s" % (s3_bucket, s3_key)
+
+def calculate_file_size(absolute_file_path):
+    return os.path.getsize(absolute_file_path)
+
+def calculate_sha1(absolute_file_path):
+    hash_object = hashlib.sha1()
+    with open(absolute_file_path, mode='rb') as open_file:
+        for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
+            hash_object.update(buf)
+
+    return hash_object.hexdigest()
+
