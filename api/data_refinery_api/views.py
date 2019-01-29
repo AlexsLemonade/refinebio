@@ -53,6 +53,7 @@ from data_refinery_api.serializers import (
     PlatformSerializer,
     ProcessorSerializer,
     SampleSerializer,
+    CompendiaSerializer,
     QNTargetSerializer,
 
     # Job
@@ -1228,6 +1229,24 @@ class TranscriptomeIndexDetail(APIView):
             return Response(serializer.data)
         except OrganismIndex.DoesNotExist:
             raise Http404
+
+###
+# Compendia
+###
+
+class CompendiaDetail(APIView):
+    """
+    A very simple modified ComputedFile endpoint which only shows Compendia results
+    """
+
+    """List all processors."""
+    def get(self, request, format=None):
+
+        computed_files = ComputedFile.objects.filter(is_compendia=True, is_public=True, is_qn_target=False).order_by('-created_at')
+        serializer = CompendiaSerializer(computed_files, many=True)
+        return Response(serializer.data)
+
+
 ###
 # QN Targets
 ###

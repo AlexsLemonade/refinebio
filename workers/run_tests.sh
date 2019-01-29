@@ -395,6 +395,38 @@ if [[ -z $tag || $tag == "qn" ]]; then
              "$test_data_repo/$qn_name"
     fi
 fi
+if [[ -z $tag || $tag == "compendia" ]]; then
+    # Download RNASEQ and MICROARRAY data from prod S3
+    micro_list_file="microarray.txt"
+    micro_list_dir="$volume_directory/raw/TEST/MICROARRAY"
+    if [ ! -e "$micro_list_dir/$micro_list_file" ]; then
+        mkdir -p $micro_list_dir
+        cp "$micro_list_file" "$micro_list_dir/$micro_list_file"
+        cd "$micro_list_dir"
+        echo "Downloading Microarray Files!"
+        wget -i "$micro_list_file"
+        cd -
+    fi
+    rnaseq_list_file="rnaseq.txt"
+    rnaseq_list_dir="$volume_directory/raw/TEST/RNASEQ"
+    if [ ! -e "$rnaseq_list_dir/$rnaseq_list_file" ]; then
+        mkdir -p $rnaseq_list_dir
+        cp "$rnaseq_list_file" "$rnaseq_list_dir/$rnaseq_list_file"
+        cd "$rnaseq_list_dir"
+        echo "Downloading RNASEQ Files!"
+        wget -i "$rnaseq_list_file"
+        cd -
+    fi
+    qn_name="danio_target.tsv"
+    qn_test_raw_dir="$volume_directory/QN"
+    qn_test_data_1="$qn_test_raw_dir/$qn_name"
+    if [ ! -e "$qn_test_data_1" ]; then
+        mkdir -p $qn_test_raw_dir
+        echo "Downloading QN for compendia tests."
+        wget -q -O $qn_test_data_1 \
+             "$test_data_repo/$qn_name"
+    fi
+fi
 
 source common.sh
 HOST_IP=$(get_ip_address)
@@ -404,7 +436,7 @@ ES_HOST_IP=$(get_docker_es_ip_address)
 # Ensure permissions are set for everything within the test data directory.
 chmod -R a+rwX $volume_directory
 
-worker_images=(salmon transcriptome no_op downloaders smasher illumina agilent affymetrix qn affymetrix_local janitor)
+worker_images=(salmon transcriptome no_op downloaders smasher illumina agilent affymetrix qn affymetrix_local janitor compendia)
 
 for image in ${worker_images[*]}; do
     if [[ -z $tag || $tag == $image ]]; then
@@ -430,7 +462,7 @@ for image in ${worker_images[*]}; do
 
         echo "Running tests with the following command:"
         echo $test_command
-        docker run \
+        docker run -i -t \
                --add-host=database:$DB_HOST_IP \
                --add-host=elasticsearch:$ES_HOST_IP \
                --add-host=nomad:$HOST_IP \
