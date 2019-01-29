@@ -64,7 +64,6 @@ from data_refinery_api.serializers import (
     # Dataset
     APITokenSerializer,
     CreateDatasetSerializer,
-    DatasetDetailsSerializer,
     DatasetSerializer,
 )
 from data_refinery_common.job_lookup import ProcessorPipeline
@@ -497,11 +496,6 @@ class DatasetView(generics.RetrieveUpdateAPIView):
     serializer_class = DatasetSerializer
     lookup_field = 'id'
 
-    def get_serializer_class(self):
-        if 'details' in self.request.query_params:
-            return DatasetDetailsSerializer
-        return self.serializer_class
-
     def perform_update(self, serializer):
         """ If `start` is set, fire off the job. Disables dataset data updates after that. """
         old_object = self.get_object()
@@ -761,7 +755,8 @@ class SampleList(PaginatedAPIView):
             samples = samples.order_by(order_by)
 
         if filter_by:
-            samples = samples.filter(   Q(sex__contains=filter_by) |
+            samples = samples.filter(   Q(title__contains=filter_by) |
+                                        Q(sex__contains=filter_by) |
                                         Q(age__contains=filter_by) |
                                         Q(specimen_part__contains=filter_by) |
                                         Q(genotype__contains=filter_by) |

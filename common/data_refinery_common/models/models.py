@@ -20,7 +20,7 @@ from django.utils import timezone
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.organism import Organism
-from data_refinery_common.utils import get_env_variable, get_s3_url
+from data_refinery_common.utils import get_env_variable, get_s3_url, calculate_file_size, calculate_sha1
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.
@@ -660,19 +660,13 @@ class OriginalFile(models.Model):
     def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
-
-        hash_object = hashlib.sha1()
-        with open(self.absolute_file_path, mode='rb') as open_file:
-            for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
-                hash_object.update(buf)
-
-        self.sha1 = hash_object.hexdigest()
+        self.sha1 = calculate_sha1(self.absolute_file_path)
         return self.sha1
 
     def calculate_size(self) -> None:
         """ Calculate the number of bytes in a given file.
         """
-        self.size_in_bytes = os.path.getsize(self.absolute_file_path)
+        self.size_in_bytes = calculate_file_size(self.absolute_file_path)
         return self.size_in_bytes
 
     def get_display_name(self):
@@ -815,11 +809,7 @@ class ComputedFile(models.Model):
                     )
 
             # Veryify sync integrity
-            hash_object = hashlib.sha1()
-            with open(path, mode='rb') as open_file:
-                for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
-                    hash_object.update(buf)
-            synced_sha1 = hash_object.hexdigest()
+            synced_sha1 = calculate_sha1(path)
 
             if self.sha1 != synced_sha1:
                 raise AssertionError("SHA1 of downloaded ComputedFile doesn't match database SHA1!")
@@ -832,18 +822,13 @@ class ComputedFile(models.Model):
     def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
-        hash_object = hashlib.sha1()
-        with open(self.absolute_file_path, mode='rb') as open_file:
-            for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
-                hash_object.update(buf)
-
-        self.sha1 = hash_object.hexdigest()
+        self.sha1 = calculate_sha1(self.absolute_file_path)
         return self.sha1
 
     def calculate_size(self) -> None:
         """ Calculate the number of bytes in a given file.
         """
-        self.size_in_bytes = os.path.getsize(self.absolute_file_path)
+        self.size_in_bytes = calculate_file_size(self.absolute_file_path)
         return self.size_in_bytes
 
     def delete_local_file(self, force=False):
@@ -950,6 +935,9 @@ class Dataset(models.Model):
     s3_bucket = models.CharField(max_length=255)
     s3_key = models.CharField(max_length=255)
 
+    size_in_bytes = models.BigIntegerField(blank=True, null=True, default=0)
+    sha1 = models.CharField(max_length=64, null=True, default='')
+
     # Common Properties
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
@@ -964,7 +952,6 @@ class Dataset(models.Model):
 
     def get_samples(self):
         """ Retuns all of the Sample objects in this Dataset """
-
         all_samples = []
         for sample_list in self.data.values():
             all_samples = all_samples + sample_list
@@ -974,12 +961,7 @@ class Dataset(models.Model):
 
     def get_experiments(self):
         """ Retuns all of the Experiments objects in this Dataset """
-
-        all_experiments = []
-        for experiment in self.data.keys():
-            all_experiments.append(experiment)
-        all_experiments = list(set(all_experiments))
-
+        all_experiments = self.data.keys()
         return Experiment.objects.filter(accession_code__in=all_experiments)
 
     def get_samples_by_experiment(self):
