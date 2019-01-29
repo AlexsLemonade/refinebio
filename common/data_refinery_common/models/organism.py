@@ -67,7 +67,6 @@ def get_taxonomy_id_scientific(organism_name: str) -> int:
     parameters = {"db": TAXONOMY_DATABASE, "field": "scin", "term": organism_name}
     response = requests.get(ESEARCH_URL, parameters)
 
-    print(response.text)
     root = ElementTree.fromstring(response.text)
     id_list = root.find("IdList").findall("Id")
 
