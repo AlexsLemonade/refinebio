@@ -287,6 +287,7 @@ class Experiment(models.Model):
     sample_metadata_fields = ArrayField(models.TextField(), default=list)
     organism_names = ArrayField(models.TextField(), default=list)
     platform_names = ArrayField(models.TextField(), default=list)
+    platform_accession_codes = ArrayField(models.TextField(), default=list)
 
     # Common Properties
     is_public = models.BooleanField(default=True)
@@ -367,6 +368,7 @@ class Experiment(models.Model):
 
     def update_platform_names(self):
         self.platform_names = self.get_platform_names()
+        self.platform_accession_codes = self.get_platform_accession_codes()
 
     def get_sample_technologies(self):
         """ Get a list of unique technologies for all of the associated samples
@@ -382,6 +384,11 @@ class Experiment(models.Model):
         """ Get a list of unique platforms for all of the associated samples
         """
         return list(set([sample.platform_name for sample in self.samples.all()]))
+
+    def get_platform_accession_codes(self):
+        """ Get a list of unique platforms for all of the associated samples
+        """
+        return list(set([sample.platform_accession_code for sample in self.samples.all()]))
 
     @property
     def platforms(self):
