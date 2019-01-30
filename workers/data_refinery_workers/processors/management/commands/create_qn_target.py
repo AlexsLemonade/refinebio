@@ -59,7 +59,7 @@ class Command(BaseCommand):
             logger.error("You must specify an organism or --all")
             sys.exit(1)
 
-        if options["organism"]:
+        if options["organism"] and (options.get('organism', '') != "ALL"):
             organisms = [Organism.get_object_for_name(options["organism"].upper())]
         else:
             organisms = Organism.objects.all()
