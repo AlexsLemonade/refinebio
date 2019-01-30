@@ -269,7 +269,7 @@ def _get_actual_file_if_queueable(
         actual_file.is_downloaded = True
         actual_file.is_archive = False
         actual_file.absolute_file_path = extracted_subfile['absolute_path']
-        actual_file.filename = extracted_subfil['filename']
+        actual_file.filename = extracted_subfile['filename']
         actual_file.calculate_size()
         actual_file.calculate_sha1()
         actual_file.has_raw = True
