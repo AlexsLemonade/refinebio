@@ -53,6 +53,9 @@ job "SMASHER" {
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
         EBS_INDEX = "${{INDEX}}"
 
+        ELASTICSEARCH_HOST = "${{ELASTICSEARCH_HOST}}"
+        ELASTICSEARCH_PORT = "${{ELASTICSEARCH_PORT}}"
+
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
 

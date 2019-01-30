@@ -22,49 +22,47 @@ logger = get_and_configure_logger(__name__)
 
 class Command(BaseCommand):
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--organism",
+            type=str,
+            help=("Name of organism"))
+
     def handle(self, *args, **options):
-        """ For every organism, fetch all of the experiments and compile large but normally formated Dataset.
+        """ For every (or a supplied) organism, fetch all of the experiments and compile large but normally formated Dataset.
 
         Send all of them to the Smasher. Smash them. Retrieve manually as desired.
         """
 
         dataset_ids = []
 
-        all_organisms = Organism.objects.all()
+        if options["organism"] is None:
+            all_organisms = Organism.objects.all()
+        else:
+            all_organisms = [Organism.get_object_for_name(options["organism"].upper())]
+
         for organism in all_organisms:
             data = {}
             experiments = Experiment.objects.filter(id__in=(ExperimentOrganismAssociation.objects.filter(organism=organism)).values('experiment'))
             for experiment in experiments:
                 data[experiment.accession_code] = list(experiment.samples.values_list('accession_code', flat=True))
 
-            dataset = Dataset()
-            dataset.data = data
-            dataset.aggregate_by = "EXPERIMENT"
-            dataset.scale_by = "MINMAX"
-            dataset.email_address = "ccdl_compendia_" + organism.name + "@mailinator.com"
-            dataset.save()
-            dataset_ids.append(str(dataset.pk))
+            job = ProcessorJob()
+            job.pipeline_applied = "COMPENDIA"
+            job.save()
 
-            processor_job = ProcessorJob()
-            processor_job.pipeline_applied = "SMASHER"
-            processor_job.ram_amount = 4096
-            processor_job.save()
+            dset = Dataset()
+            dset.data = data
+            dset.scale_by = 'NONE'
+            dset.aggregate_by = 'SPECIES'
+            dset.quantile_normalize = False
+            dset.save()
 
             pjda = ProcessorJobDatasetAssociation()
-            pjda.processor_job = processor_job
-            pjda.dataset = dataset
+            pjda.processor_job = job
+            pjda.dataset = dset
             pjda.save()
 
-            try:
-                send_job(ProcessorPipeline.SMASHER, processor_job)
-            except Exception as e:
-                print("Couldn't send job for organism: " + organism.name)
-                print(str(e))
-                continue
-
-            print("Created compendia smasher job for " + organism.name + " with " + str(len(data.keys())) + " experiments!")
-
-        print("Smashers dispatched, to retrieve:")
-        print("python manage.py fetch_compendia --dataset-ids " + ','.join(dataset_ids))
+            final_context = create_compendia.create_compendia(job.id)
 
         sys.exit(0)

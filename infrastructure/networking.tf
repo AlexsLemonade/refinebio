@@ -232,6 +232,12 @@ resource "aws_cloudfront_distribution" "static-distribution" {
     response_code = 200
     response_page_path = "/index.html"
   }
+  custom_error_response {
+    error_caching_min_ttl = 0
+    error_code = 403
+    response_code = 200
+    response_page_path = "/index.html"
+  }
 
   default_cache_behavior {
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]

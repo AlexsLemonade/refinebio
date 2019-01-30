@@ -20,7 +20,7 @@ from django.utils import timezone
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.organism import Organism
-from data_refinery_common.utils import get_env_variable, get_s3_url
+from data_refinery_common.utils import get_env_variable, get_s3_url, calculate_file_size, calculate_sha1
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.
@@ -281,6 +281,13 @@ class Experiment(models.Model):
     source_first_published = models.DateTimeField(null=True)
     source_last_modified = models.DateTimeField(null=True)
 
+    # Cached Computed Properties
+    num_total_samples = models.IntegerField(default=0)
+    num_processed_samples = models.IntegerField(default=0)
+    sample_metadata_fields = ArrayField(models.TextField(), default=list)
+    organism_names = ArrayField(models.TextField(), default=list)
+    platform_names = ArrayField(models.TextField(), default=list)
+
     # Common Properties
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
@@ -300,6 +307,12 @@ class Experiment(models.Model):
                 self.alternate_accession_code = 'GSE' + self.accession_code[7:]
 
         return super(Experiment, self).save(*args, **kwargs)
+
+    def update_num_samples(self):
+        """ Update our cache values """
+        self.num_total_samples = self.samples.count()
+        self.num_processed_samples = self.samples.filter(is_processed=True).count()
+        self.save()
 
     def to_metadata_dict(self):
         """ Render this Experiment as a dict """
@@ -346,15 +359,34 @@ class Experiment(models.Model):
 
         return fields
 
+    def update_sample_metadata_fields(self):
+        self.sample_metadata_fields = self.get_sample_metadata_fields()
+
+    def update_organism_names(self):
+        self.organism_names = self.get_organism_names()
+
+    def update_platform_names(self):
+        self.platform_names = self.get_platform_names()
+
     def get_sample_technologies(self):
         """ Get a list of unique technologies for all of the associated samples
         """
         return list(set([sample.technology for sample in self.samples.all()]))
 
+    def get_organism_names(self):
+        """ Get a list of unique technologies for all of the associated samples
+        """
+        return list(set([organism.name for organism in self.organisms.all()]))
+
+    def get_platform_names(self):
+        """ Get a list of unique platforms for all of the associated samples
+        """
+        return list(set([sample.platform_name for sample in self.samples.all()]))
+
     @property
     def platforms(self):
         """ Returns a list of related pipelines """
-        return list(set([sample.platform_name for sample in self.samples.all()]))        
+        return list(set([sample.platform_name for sample in self.samples.all()]))
 
     @property
     def pretty_platforms(self):
@@ -442,6 +474,8 @@ class ComputationalResult(models.Model):
 
     commands = ArrayField(models.TextField(), default=list)
     processor = models.ForeignKey(Processor, blank=True, null=True, on_delete=models.CASCADE)
+
+    samples = models.ManyToManyField('Sample', through='SampleResultAssociation')
 
     # The Organism Index used to process the sample.
     organism_index = models.ForeignKey('OrganismIndex', blank=True, null=True, on_delete=models.SET_NULL)
@@ -626,19 +660,13 @@ class OriginalFile(models.Model):
     def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
-
-        hash_object = hashlib.sha1()
-        with open(self.absolute_file_path, mode='rb') as open_file:
-            for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
-                hash_object.update(buf)
-
-        self.sha1 = hash_object.hexdigest()
+        self.sha1 = calculate_sha1(self.absolute_file_path)
         return self.sha1
 
     def calculate_size(self) -> None:
         """ Calculate the number of bytes in a given file.
         """
-        self.size_in_bytes = os.path.getsize(self.absolute_file_path)
+        self.size_in_bytes = calculate_file_size(self.absolute_file_path)
         return self.size_in_bytes
 
     def get_display_name(self):
@@ -697,6 +725,15 @@ class ComputedFile(models.Model):
     is_smashable = models.BooleanField(default=False)
     is_qc = models.BooleanField(default=False)
     is_qn_target = models.BooleanField(default=False)
+
+    # Compendia details
+    is_compendia = models.BooleanField(default=False)
+    compendia_organism = models.ForeignKey(Organism,
+                                        blank=True,
+                                        null=True, 
+                                        on_delete=models.CASCADE
+                                    )
+    compendia_version = models.IntegerField(blank=True, null=True)
 
     # AWS
     s3_bucket = models.CharField(max_length=255, blank=True, null=True)
@@ -772,11 +809,7 @@ class ComputedFile(models.Model):
                     )
 
             # Veryify sync integrity
-            hash_object = hashlib.sha1()
-            with open(path, mode='rb') as open_file:
-                for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
-                    hash_object.update(buf)
-            synced_sha1 = hash_object.hexdigest()
+            synced_sha1 = calculate_sha1(path)
 
             if self.sha1 != synced_sha1:
                 raise AssertionError("SHA1 of downloaded ComputedFile doesn't match database SHA1!")
@@ -789,18 +822,13 @@ class ComputedFile(models.Model):
     def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
-        hash_object = hashlib.sha1()
-        with open(self.absolute_file_path, mode='rb') as open_file:
-            for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
-                hash_object.update(buf)
-
-        self.sha1 = hash_object.hexdigest()
+        self.sha1 = calculate_sha1(self.absolute_file_path)
         return self.sha1
 
     def calculate_size(self) -> None:
         """ Calculate the number of bytes in a given file.
         """
-        self.size_in_bytes = os.path.getsize(self.absolute_file_path)
+        self.size_in_bytes = calculate_file_size(self.absolute_file_path)
         return self.size_in_bytes
 
     def delete_local_file(self, force=False):
@@ -848,7 +876,12 @@ class ComputedFile(models.Model):
             else:
                 return self.sync_from_s3(force)
 
+    @property
     def s3_url(self):
+        """ Render the resulting S3 URL """
+        return self.get_s3_url()
+
+    def get_s3_url(self):
         """ Render the resulting S3 URL """
         if (self.s3_key) and (self.s3_bucket):
             return "https://s3.amazonaws.com/" + self.s3_bucket + "/" + self.s3_key
@@ -902,6 +935,9 @@ class Dataset(models.Model):
     s3_bucket = models.CharField(max_length=255)
     s3_key = models.CharField(max_length=255)
 
+    size_in_bytes = models.BigIntegerField(blank=True, null=True, default=0)
+    sha1 = models.CharField(max_length=64, null=True, default='')
+
     # Common Properties
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
@@ -916,7 +952,6 @@ class Dataset(models.Model):
 
     def get_samples(self):
         """ Retuns all of the Sample objects in this Dataset """
-
         all_samples = []
         for sample_list in self.data.values():
             all_samples = all_samples + sample_list
@@ -926,12 +961,7 @@ class Dataset(models.Model):
 
     def get_experiments(self):
         """ Retuns all of the Experiments objects in this Dataset """
-
-        all_experiments = []
-        for experiment in self.data.keys():
-            all_experiments.append(experiment)
-        all_experiments = list(set(all_experiments))
-
+        all_experiments = self.data.keys()
         return Experiment.objects.filter(accession_code__in=all_experiments)
 
     def get_samples_by_experiment(self):
@@ -1104,3 +1134,14 @@ class SampleComputedFileAssociation(models.Model):
     class Meta:
         db_table = "sample_computed_file_associations"
         unique_together = ('sample', 'computed_file')
+
+
+class ExperimentResultAssociation(models.Model):
+
+    experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
+    result = models.ForeignKey(
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "experiment_result_associations"
+        unique_together = ('result', 'experiment')

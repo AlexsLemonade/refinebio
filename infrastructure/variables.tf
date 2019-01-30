@@ -205,6 +205,10 @@ output "environment_variables" {
       value = "${var.database_hidden_port}"},
     {name = "DATABASE_TIMEOUT"
       value = "${var.database_timeout}"},
+    {name = "ELASTICSEARCH_HOST"
+      value = "${aws_elasticsearch_domain.es.endpoint}"},
+    {name = "ELASTICSEARCH_PORT"
+      value = "80"},
     {name = "RUNNING_IN_CLOUD"
       value = "${var.running_in_cloud}"},
     {name = "LOG_LEVEL"
@@ -221,6 +225,8 @@ output "environment_variables" {
       value = "${aws_s3_bucket.data_refinery_results_bucket.id}"},
     {name = "S3_TRANSCRIPTOME_INDEX_BUCKET_NAME"
       value = "${aws_s3_bucket.data_refinery_transcriptome_index_bucket.id}"},
+    {name = "S3_COMPENDIA_BUCKET_NAME"
+      value = "${aws_s3_bucket.data_refinery_compendia_bucket.id}"},
     {name = "LOCAL_ROOT_DIR"
       value = "${var.local_root_dir}"},
     {name = "DOCKERHUB_REPO"

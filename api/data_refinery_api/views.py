@@ -9,8 +9,30 @@ from django.db.models.expressions import F, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django_elasticsearch_dsl_drf.constants import (
+    LOOKUP_FILTER_TERMS,
+    LOOKUP_FILTER_RANGE,
+    LOOKUP_FILTER_PREFIX,
+    LOOKUP_FILTER_WILDCARD,
+    LOOKUP_QUERY_IN,
+    LOOKUP_QUERY_GT,
+    LOOKUP_QUERY_GTE,
+    LOOKUP_QUERY_LT,
+    LOOKUP_QUERY_LTE,
+    LOOKUP_QUERY_EXCLUDE,
+)
+from django_elasticsearch_dsl_drf.viewsets import DocumentViewSet
+from django_elasticsearch_dsl_drf.filter_backends import (
+    FilteringFilterBackend,
+    IdsFilterBackend,
+    OrderingFilterBackend,
+    DefaultOrderingFilterBackend,
+    CompoundSearchFilterBackend,
+    FacetedSearchFilterBackend
+)
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
+from elasticsearch_dsl import TermsFacet, DateHistogramFacet
 from rest_framework import status, filters, generics
 from rest_framework.exceptions import APIException
 from rest_framework.exceptions import ValidationError
@@ -31,6 +53,8 @@ from data_refinery_api.serializers import (
     PlatformSerializer,
     ProcessorSerializer,
     SampleSerializer,
+    CompendiaSerializer,
+    QNTargetSerializer,
 
     # Job
     DownloaderJobSerializer,
@@ -40,7 +64,6 @@ from data_refinery_api.serializers import (
     # Dataset
     APITokenSerializer,
     CreateDatasetSerializer,
-    DatasetDetailsSerializer,
     DatasetSerializer,
 )
 from data_refinery_common.job_lookup import ProcessorPipeline
@@ -62,7 +85,11 @@ from data_refinery_common.models import (
     Sample,
     SurveyJob,
 )
+from data_refinery_common.models.documents import (
+    ExperimentDocument
+)
 from data_refinery_common.utils import get_env_variable, get_active_volumes
+from .serializers import ExperimentDocumentSerializer
 
 
 ##
@@ -98,6 +125,145 @@ class PaginatedAPIView(APIView):
         """
         assert self.paginator is not None
         return self.paginator.get_paginated_response(data)
+
+##
+# ElasticSearch
+##
+from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
+
+class ExperimentDocumentView(DocumentViewSet):
+    """ElasticSearch powered experiment search.
+
+    Search can be used by affixing:
+
+        ?search=medulloblastoma
+        ?id=1
+        ?search=medulloblastoma&technology=microarray&has_publication=true
+
+    Full examples can be found in the Django-ES-DSL-DRF docs:
+        https://django-elasticsearch-dsl-drf.readthedocs.io/en/0.17.1/filtering_usage_examples.html#filtering
+
+    """
+
+    document = ExperimentDocument
+    serializer_class = ExperimentDocumentSerializer
+    pagination_class = ESLimitOffsetPagination
+
+    # Filter backends provide different functionality we want
+    filter_backends = [
+        FilteringFilterBackend,
+        OrderingFilterBackend,
+        DefaultOrderingFilterBackend,
+        CompoundSearchFilterBackend,
+        FacetedSearchFilterBackend
+    ]
+
+    # Primitive
+    lookup_field = 'id'
+
+    # Define search fields
+    # Is this exhaustive enough?
+    search_fields = (
+        'title',
+        'description',
+        'publication_authors',
+        'submitter_institution',
+    )
+
+    # Define filtering fields
+    filter_fields = {
+        'id': {
+            'field': '_id',
+            'lookups': [
+                LOOKUP_FILTER_RANGE,
+                LOOKUP_QUERY_IN,
+            ],
+        },
+        'technology': 'technology',
+        'has_publication': 'has_publication',
+        'platform': 'platform_names',
+        'organism': 'organism_names'
+    }
+
+    # Define ordering fields
+    ordering_fields = {
+        'id': 'id',
+        'title': 'title.raw',
+        'description': 'description.raw',
+        'num_total_samples': 'num_total_samples',
+        'num_processed_samples': 'num_processed_samples'
+    }
+
+    # Specify default ordering
+    ordering = ('-num_total_samples', 'id', 'title', 'description')
+
+    # Facets (aka Aggregations) provide statistics about the query result set in the API response.
+    # More information here: https://github.com/barseghyanartur/django-elasticsearch-dsl-drf/blob/03a3aa716db31868ca3a71340513a993741a4177/src/django_elasticsearch_dsl_drf/filter_backends/faceted_search.py#L24
+    faceted_search_fields = {
+        'technology': {
+            'field': 'technology',
+            'facet': TermsFacet,
+            'enabled': True # These are enabled by default, which is more expensive but more simple.
+        },
+        'organism_names': {
+            'field': 'organism_names',
+            'facet': TermsFacet,
+            'enabled': True,
+            'options': {
+                'size': 999999
+            }
+        },
+        'platform_names': {
+            'field': 'platform_names',
+            'facet': TermsFacet,
+            'enabled': True,
+            'global': False,
+            'options': {
+                'size': 999999
+            }
+        },
+        'has_publication': {
+            'field': 'has_publication',
+            'facet': TermsFacet,
+            'enabled': True,
+            'global': False,
+        },
+
+        # We don't actually need any "globals" to drive our web frontend,
+        # but we'll leave them available but not enabled by default, as they're
+        # expensive.
+        'technology_global': {
+            'field': 'technology',
+            'facet': TermsFacet,
+            'enabled': False,
+            'global': True
+        },
+        'organism_names_global': {
+            'field': 'organism_names',
+            'facet': TermsFacet,
+            'enabled': False,
+            'global': True,
+            'options': {
+                'size': 999999
+            }
+        },
+        'platform_names_global': {
+            'field': 'platform_names',
+            'facet': TermsFacet,
+            'enabled': False,
+            'global': True,
+            'options': {
+                'size': 999999
+            }
+        },
+        'has_publication_global': {
+            'field': 'platform_names',
+            'facet': TermsFacet,
+            'enabled': False,
+            'global': True,
+        },
+    }
+    faceted_search_param = 'facet'
 
 ##
 # Search and Filter
@@ -268,36 +434,35 @@ class SearchAndFilter(generics.ListAPIView):
 
         if 'technology' in filters_to_calculate:
             # Technology
-            techs = queryset.values('technology').annotate(Count('technology', unique=True))
+            techs = queryset.values('technology').annotate(count=Count('sample__id', distinct=True))
             for tech in techs:
                 if not tech['technology'] or not tech['technology'].strip():
                     continue
-                result['technology'][tech['technology']] = tech['technology__count']
+                result['technology'][tech['technology']] = tech['count']
 
         if 'has_publication' in filters_to_calculate:
             # Publication
-            pubs = queryset.values('has_publication').annotate(Count('has_publication', unique=True))
+            pubs = queryset.values('has_publication').annotate(count=Count('sample__id', distinct=True))
             for pub in pubs:
                 if pub['has_publication']:
-                    result['publication']['has_publication'] = pub['has_publication__count']
+                    result['publication']['has_publication'] = pub['count']
 
         if 'organisms__name' in filters_to_calculate:
             # Organisms
-            organisms = queryset.values('organisms__name').annotate(Count('organisms__name', unique=True))
+            organisms = queryset.values('organisms__name').annotate(count=Count('sample__id', distinct=True))
             for organism in organisms:
                 # This experiment has no ExperimentOrganism-association, which is bad.
                 # This information may still live on the samples though.
                 if not organism['organisms__name']:
                     continue
-
-                result['organism'][organism['organisms__name']] = organism['organisms__name__count']
+                result['organism'][organism['organisms__name']] = organism['count']
 
         if 'platform' in filters_to_calculate:
             # Platforms
-            platforms = queryset.values('samples__platform_name').annotate(Count('samples__platform_name', unique=True))
+            platforms = queryset.values('samples__platform_name').annotate(count=Count('sample__id', distinct=True))
             for plat in platforms:
                 if plat['samples__platform_name']:
-                    result['platforms'][plat['samples__platform_name']] = plat['samples__platform_name__count']
+                    result['platforms'][plat['samples__platform_name']] = plat['count']
 
         return result
 
@@ -321,6 +486,8 @@ class DatasetView(generics.RetrieveUpdateAPIView):
     """ View and modify a single Dataset. Set `start` to `true` along with a valid
     activated API token (from /token/) to begin smashing and delivery.
 
+    Adding a supplying `["ALL"]` as an experiment's accession list will add all of the associated samples.
+
     You must also supply `email_address` with `start`, though this will never be serialized back to you.
 
     """
@@ -329,11 +496,6 @@ class DatasetView(generics.RetrieveUpdateAPIView):
     serializer_class = DatasetSerializer
     lookup_field = 'id'
 
-    def get_serializer_class(self):
-        if 'details' in self.request.query_params:
-            return DatasetDetailsSerializer
-        return self.serializer_class
-
     def perform_update(self, serializer):
         """ If `start` is set, fire off the job. Disables dataset data updates after that. """
         old_object = self.get_object()
@@ -341,6 +503,14 @@ class DatasetView(generics.RetrieveUpdateAPIView):
         old_aggregate = old_object.aggregate_by
         already_processing = old_object.is_processing
         new_data = serializer.validated_data
+
+        # We convert 'ALL' into the actual accession codes given
+        for key in new_data['data'].keys():
+            accessions = new_data['data'][key]
+            if accessions == ["ALL"]:
+                experiment = get_object_or_404(Experiment, accession_code=key)
+                sample_codes = list(experiment.samples.filter(is_processed=True).values_list('accession_code', flat=True))
+                new_data['data'][key] = sample_codes
 
         if old_object.is_processed:
             raise APIException("You may not update Datasets which have already been processed")
@@ -578,13 +748,15 @@ class SampleList(PaginatedAPIView):
             .prefetch_related('results__computationalresultannotation_set') \
             .prefetch_related('results__computedfile_set') \
             .filter(**filter_dict) \
-            .order_by('-is_processed')
+            .order_by('-is_processed') \
+            .distinct()
 
         if order_by:
             samples = samples.order_by(order_by)
 
         if filter_by:
-            samples = samples.filter(   Q(sex__contains=filter_by) |
+            samples = samples.filter(   Q(title__contains=filter_by) |
+                                        Q(sex__contains=filter_by) |
                                         Q(age__contains=filter_by) |
                                         Q(specimen_part__contains=filter_by) |
                                         Q(genotype__contains=filter_by) |
@@ -716,7 +888,7 @@ class SurveyJobList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         limit = max(int(filter_dict.pop('limit', 100)), 100)
         offset = int(filter_dict.pop('offset', 0))
-        jobs = SurveyJob.objects.filter(**filter_dict)[offset:(offset + limit)]
+        jobs = SurveyJob.objects.filter(**filter_dict).order_by('-id')[offset:(offset + limit)]
         serializer = SurveyJobSerializer(jobs, many=True)
         return Response(serializer.data)
 
@@ -729,7 +901,7 @@ class DownloaderJobList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         limit = max(int(filter_dict.pop('limit', 100)), 100)
         offset = int(filter_dict.pop('offset', 0))
-        jobs = DownloaderJob.objects.filter(**filter_dict)[offset: offset + limit]
+        jobs = DownloaderJob.objects.filter(**filter_dict).order_by('-id')[offset: offset + limit]
         serializer = DownloaderJobSerializer(jobs, many=True)
         return Response(serializer.data)
 
@@ -742,7 +914,7 @@ class ProcessorJobList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         limit = max(int(filter_dict.pop('limit', 100)), 100)
         offset = int(filter_dict.pop('offset', 0))
-        jobs = ProcessorJob.objects.filter(**filter_dict)[offset: offset + limit]
+        jobs = ProcessorJob.objects.filter(**filter_dict).order_by('-id')[offset: offset + limit]
         serializer = ProcessorJobSerializer(jobs, many=True)
         return Response(serializer.data)
 
@@ -766,6 +938,8 @@ class Stats(APIView):
         data['processor_jobs'] = self._get_job_stats(ProcessorJob.objects, range_param)
         data['samples'] = self._get_object_stats(Sample.objects, range_param)
         data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
+        data['processed_samples'] = self._get_object_stats(Sample.processed_objects)
+        data['processed_experiments'] = self._get_object_stats(Experiment.processed_public_objects)
         data['input_data_size'] = self._get_input_data_size()
         data['output_data_size'] = self._get_output_data_size()
         data['active_volumes'] = list(get_active_volumes())
@@ -953,7 +1127,7 @@ class Stats(APIView):
 
         return result
 
-    def _get_object_stats(self, objects, range_param):
+    def _get_object_stats(self, objects, range_param = False):
         result = {
             'total': objects.count()
         }
@@ -1055,3 +1229,35 @@ class TranscriptomeIndexDetail(APIView):
             return Response(serializer.data)
         except OrganismIndex.DoesNotExist:
             raise Http404
+
+###
+# Compendia
+###
+
+class CompendiaDetail(APIView):
+    """
+    A very simple modified ComputedFile endpoint which only shows Compendia results
+    """
+
+    """List all processors."""
+    def get(self, request, format=None):
+
+        computed_files = ComputedFile.objects.filter(is_compendia=True, is_public=True, is_qn_target=False).order_by('-created_at')
+        serializer = CompendiaSerializer(computed_files, many=True)
+        return Response(serializer.data)
+
+
+###
+# QN Targets
+###
+
+class QNTargetsDetail(APIView):
+    """
+    Quantile Normalization Targets
+    """
+
+    """List all processors."""
+    def get(self, request, format=None):
+        computed_files = ComputedFile.objects.filter(is_public=True, is_qn_target=True)
+        serializer = QNTargetSerializer(computed_files, many=True)
+        return Response(serializer.data)
