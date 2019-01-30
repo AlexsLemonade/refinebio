@@ -1,6 +1,7 @@
 from elasticsearch_dsl import analyzer
 
 from django_elasticsearch_dsl import DocType, Index, fields 
+from elasticsearch_dsl.analysis import token_filter
 
 from .models import Sample, Experiment, Organism
 
@@ -10,10 +11,18 @@ experiment_index.settings(
     number_of_replicas=0
 )
 
+# via https://django-elasticsearch-dsl-drf.readthedocs.io/en/0.17.2/advanced_usage_examples.html?highlight=ngram#id8
+# via https://github.com/barseghyanartur/django-elasticsearch-dsl-drf/issues/110
+edge_ngram_completion_filter = token_filter(
+    'edge_ngram_completion_filter',
+    type="edge_ngram",
+    min_gram=4,
+    max_gram=12
+)
 html_strip = analyzer(
     'html_strip',
     tokenizer="standard",
-    filter=["standard", "lowercase", "stop", "snowball"],
+    filter=["standard", "lowercase", "stop", "snowball", edge_ngram_completion_filter],
     char_filter=["html_strip"]
 )
 standard = analyzer(
