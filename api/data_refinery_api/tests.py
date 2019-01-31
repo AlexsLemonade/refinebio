@@ -30,6 +30,7 @@ from data_refinery_common.utils import get_env_variable
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
+    ComputationalResultAnnotation,
     Dataset,
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -526,6 +527,11 @@ class APITestCases(APITestCase):
         cr = ComputationalResult()
         cr.save()
 
+        cra = ComputationalResultAnnotation()
+        cra.result = cr
+        cra.data = {"organism": "Ailuropoda melanoleuca"}
+        cra.save()
+
         qni = ComputedFile()
         qni.is_qn_target = True
         qni.s3_bucket = "fake_qni_bucket"
@@ -551,6 +557,9 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('qn-targets'))
         self.assertEqual(len(response.json()), 1)
         self.assertEqual(response.json()[0]['s3_url'], 'https://s3.amazonaws.com/fake_qni_bucket/zazaza_homo_sapiens_1234.tsv')
+
+        response = self.client.get(reverse('computed-files'))
+        self.assertEqual(len(response.json()), 2)
 
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):

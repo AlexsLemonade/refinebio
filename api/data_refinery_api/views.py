@@ -55,6 +55,7 @@ from data_refinery_api.serializers import (
     SampleSerializer,
     CompendiaSerializer,
     QNTargetSerializer,
+    ComputedFileListSerializer,
 
     # Job
     DownloaderJobSerializer,
@@ -165,9 +166,16 @@ class ExperimentDocumentView(DocumentViewSet):
     # Is this exhaustive enough?
     search_fields = (
         'title',
+        'publication_title',
         'description',
         'publication_authors',
         'submitter_institution',
+        'accession_code',
+        'alternate_accession_code',
+        'publication_doi',
+        'pubmed_id',
+        'sample_metadata_fields',
+        'platform_names'
     )
 
     # Define filtering fields
@@ -181,7 +189,7 @@ class ExperimentDocumentView(DocumentViewSet):
         },
         'technology': 'technology',
         'has_publication': 'has_publication',
-        'platform': 'platform_names',
+        'platform': 'platform_accesion_codes',
         'organism': 'organism_names'
     }
 
@@ -1260,4 +1268,20 @@ class QNTargetsDetail(APIView):
     def get(self, request, format=None):
         computed_files = ComputedFile.objects.filter(is_public=True, is_qn_target=True)
         serializer = QNTargetSerializer(computed_files, many=True)
+        return Response(serializer.data)
+
+##
+# Computed Files
+##
+
+class ComputedFilesList(PaginatedAPIView):
+    """
+    """
+
+    def get(self, request, format=None):
+        filter_dict = request.query_params.dict()
+        limit = max(int(filter_dict.pop('limit', 100)), 100)
+        offset = int(filter_dict.pop('offset', 0))
+        jobs = ComputedFile.objects.filter(**filter_dict).order_by('-id')[offset:(offset + limit)]
+        serializer = ComputedFileListSerializer(jobs, many=True)
         return Response(serializer.data)

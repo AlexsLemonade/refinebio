@@ -329,6 +329,13 @@ def _quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict
             dataset_data=job_context['dataset'].data,
             processor_job_id=job_context["job"].id,
         )
+        job_context['dataset'].success = False
+        job_context['job'].failure_reason = "Could not find QN target for Organism: " + str(organism)
+        job_context['dataset'].failure_reason = "Could not find QN target for Organism: " + str(organism)
+        job_context['dataset'].save()
+        job_context['job'].success = False
+        job_context['failure_reason'] = "Could not find QN target for Organism: " + str(organism)
+        return job_context
     else:
         qn_target_path = qn_target.sync_from_s3()
         qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None,
@@ -657,7 +664,11 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     job_context['merged_no_qn'] = merged
                     job_context['organism'] = computed_file.samples.first().organism
                     job_context = _quantile_normalize(job_context)
-                    merged = job_context['merged_qn']
+                    merged = job_context.get('merged_qn', None)
+                    # We probably don't have an QN target or there is another error,
+                    # so let's fail gracefully.
+                    if merged is not None:
+                        return job_context
                 except Exception as e:
                     logger.exception("Problem occured during quantile normalization",
                         dataset_id=job_context['dataset'].id,

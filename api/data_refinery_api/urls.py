@@ -30,6 +30,7 @@ from data_refinery_api.views import (
     TranscriptomeIndexDetail,
     QNTargetsDetail,
     CompendiaDetail,
+    ComputedFilesList
 )
 
 # This provides _public_ access to the /admin interface!
@@ -147,6 +148,8 @@ urlpatterns = [
         name="compendia"),
     url(r'^qn_targets', QNTargetsDetail.as_view(),
         name="qn-targets"),
+    url(r'^computed_files', ComputedFilesList.as_view(),
+        name="computed-files"),
 
     # Admin
     url(r'^admin/', admin.site.urls),
