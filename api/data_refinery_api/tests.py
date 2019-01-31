@@ -30,6 +30,7 @@ from data_refinery_common.utils import get_env_variable
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
+    ComputationalResultAnnotation,
     Dataset,
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -525,6 +526,11 @@ class APITestCases(APITestCase):
 
         cr = ComputationalResult()
         cr.save()
+
+        cra = ComputationalResultAnnotation()
+        cra.result = cr
+        cra.data = {"organism": "Ailuropoda melanoleuca"}
+        cra.save()
 
         qni = ComputedFile()
         qni.is_qn_target = True
