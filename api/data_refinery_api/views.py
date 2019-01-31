@@ -181,7 +181,7 @@ class ExperimentDocumentView(DocumentViewSet):
         },
         'technology': 'technology',
         'has_publication': 'has_publication',
-        'platform': 'platform_names',
+        'platform': 'platform_accesion_codes',
         'organism': 'organism_names'
     }
 
