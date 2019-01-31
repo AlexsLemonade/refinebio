@@ -667,7 +667,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     merged = job_context.get('merged_qn', None)
                     # We probably don't have an QN target or there is another error,
                     # so let's fail gracefully.
-                    if not merged:
+                    if merged is not None:
                         return job_context
                 except Exception as e:
                     logger.exception("Problem occured during quantile normalization",
