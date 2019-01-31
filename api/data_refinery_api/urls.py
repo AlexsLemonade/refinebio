@@ -30,6 +30,7 @@ from data_refinery_api.views import (
     TranscriptomeIndexDetail,
     QNTargetsDetail,
     CompendiaDetail,
+    ComputedFilesList
 )
 
 # This provides _public_ access to the /admin interface!

@@ -55,6 +55,7 @@ from data_refinery_api.serializers import (
     SampleSerializer,
     CompendiaSerializer,
     QNTargetSerializer,
+    ComputedFileListSerializer,
 
     # Job
     DownloaderJobSerializer,
@@ -1282,5 +1283,5 @@ class ComputedFilesList(PaginatedAPIView):
         limit = max(int(filter_dict.pop('limit', 100)), 100)
         offset = int(filter_dict.pop('offset', 0))
         jobs = ComputedFile.objects.filter(**filter_dict).order_by('-id')[offset:(offset + limit)]
-        serializer = SurveyJobSerializer(jobs, many=True)
+        serializer = ComputedFileListSerializer(jobs, many=True)
         return Response(serializer.data)

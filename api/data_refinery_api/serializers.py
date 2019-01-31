@@ -70,6 +70,19 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
 # Results
 ##
 
+class DetailedExperimentSampleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Sample
+        fields = (
+                    'accession_code',
+                    'platform_name',
+                    'pretty_platform',
+                    'technology',
+                    'is_processed',
+                )
+
+
 class ComputationalResultAnnotationSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -150,6 +163,31 @@ class QNTargetSerializer(serializers.ModelSerializer):
                     'filename',
                     'size_in_bytes',
                     'is_qn_target',
+                    'sha1',
+                    's3_bucket',
+                    's3_key',
+                    's3_url',
+                    'created_at',
+                    'last_modified',
+                    'result'
+                )
+
+class ComputedFileListSerializer(serializers.ModelSerializer):
+    result = ComputationalResultNoFilesSerializer(many=False)
+    samples = DetailedExperimentSampleSerializer(many=True)
+
+    class Meta:
+        model = ComputedFile
+        fields = (
+                    'id',
+                    'filename',
+                    'samples',
+                    'size_in_bytes',
+                    'is_qn_target',
+                    'is_smashable',
+                    'is_qc',
+                    'is_compendia',
+                    'compendia_version',
                     'sha1',
                     's3_bucket',
                     's3_key',
@@ -298,18 +336,6 @@ class ExperimentAnnotationSerializer(serializers.ModelSerializer):
                     'is_ccdl',
                     'created_at',
                     'last_modified',
-                )
-
-class DetailedExperimentSampleSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Sample
-        fields = (
-                    'accession_code',
-                    'platform_name',
-                    'pretty_platform',
-                    'technology',
-                    'is_processed',
                 )
 
 class DetailedExperimentSerializer(serializers.ModelSerializer):
