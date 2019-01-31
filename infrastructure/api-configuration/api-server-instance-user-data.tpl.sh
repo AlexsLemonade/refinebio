@@ -122,8 +122,10 @@ docker run \
        --name=dr_api \
        -it -d ${dockerhub_repo}/${api_docker_image} /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
 
-# Let's reindex now too
-docker exec -it dr_api python3 manage.py search_index --rebuild -f
+# Nuke and rebuild the search index. It shouldn't take too long.
+docker exec -it dr_api python3 manage.py search_index --delete -f;
+docker exec -it dr_api python3 manage.py search_index --rebuild -f;
+docker exec -it dr_api python3 manage.py search_index --populate -f;
 
 # Let's use this instance to call the populate command every twenty minutes.
 crontab -l > tempcron
@@ -132,9 +134,6 @@ echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
 # install new cron file
 crontab tempcron
 rm tempcron
-
-# Rebuild the search index. Hopefully this doesn't take too long.
-docker exec -it dr_api python3 manage.py search_index --rebuild -f
 
 # Don't leave secrets lying around.
 rm -f environment

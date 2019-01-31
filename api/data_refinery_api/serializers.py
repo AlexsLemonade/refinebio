@@ -98,22 +98,6 @@ class ComputedFileSerializer(serializers.ModelSerializer):
                     'last_modified'
                 )
 
-class QNTargetSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ComputedFile
-        fields = (
-                    'id',
-                    'filename',
-                    'size_in_bytes',
-                    'is_qn_target',
-                    'sha1',
-                    's3_bucket',
-                    's3_key',
-                    's3_url',
-                    'created_at',
-                    'last_modified'
-                )
-
 class ComputationalResultSerializer(serializers.ModelSerializer):
     annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
     files = ComputedFileSerializer(many=True, source='computedfile_set')
@@ -136,6 +120,44 @@ class ComputationalResultSerializer(serializers.ModelSerializer):
                     'last_modified'
                 )
 
+class ComputationalResultNoFilesSerializer(serializers.ModelSerializer):
+    annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
+    processor = ProcessorSerializer(many=False)
+    organism_index = OrganismIndexSerializer(many=False)
+
+    class Meta:
+        model = ComputationalResult
+        fields = (
+                    'id',
+                    'commands',
+                    'processor',
+                    'is_ccdl',
+                    'annotations',
+                    'organism_index',
+                    'time_start',
+                    'time_end',
+                    'created_at',
+                    'last_modified'
+                )
+
+class QNTargetSerializer(serializers.ModelSerializer):
+    result = ComputationalResultNoFilesSerializer(many=False)
+
+    class Meta:
+        model = ComputedFile
+        fields = (
+                    'id',
+                    'filename',
+                    'size_in_bytes',
+                    'is_qn_target',
+                    'sha1',
+                    's3_bucket',
+                    's3_key',
+                    's3_url',
+                    'created_at',
+                    'last_modified',
+                    'result'
+                )
 
 ##
 # Samples
@@ -665,6 +687,7 @@ class ExperimentDocumentSerializer(serializers.Serializer):
     publication_authors = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
     sample_metadata_fields = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
     platform_names = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
+    platform_accession_codes = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
     organism_names = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
     pubmed_id = serializers.CharField(read_only=True)
     num_total_samples = serializers.IntegerField(read_only=True)
