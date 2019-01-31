@@ -558,6 +558,9 @@ class APITestCases(APITestCase):
         self.assertEqual(len(response.json()), 1)
         self.assertEqual(response.json()[0]['s3_url'], 'https://s3.amazonaws.com/fake_qni_bucket/zazaza_homo_sapiens_1234.tsv')
 
+        response = self.client.get(reverse('computed-files'))
+        self.assertEqual(len(response.json()), 2)
+
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
 
