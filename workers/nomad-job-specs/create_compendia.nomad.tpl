@@ -74,8 +74,6 @@ job "CREATE_COMPENDIA" {
         max_file_size = 1
       }
 
-      ${{SMASHER_CONSTRAINT}}
-
       config {
         image = "${{DOCKERHUB_REPO}}/${{COMPENDIA_DOCKER_IMAGE}}"
         force_pull = false
