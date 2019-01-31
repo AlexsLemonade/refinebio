@@ -1261,3 +1261,19 @@ class QNTargetsDetail(APIView):
         computed_files = ComputedFile.objects.filter(is_public=True, is_qn_target=True)
         serializer = QNTargetSerializer(computed_files, many=True)
         return Response(serializer.data)
+
+##
+# Computed Files
+##
+
+class ComputedFilesList(PaginatedAPIView):
+    """
+    """
+
+    def get(self, request, format=None):
+        filter_dict = request.query_params.dict()
+        limit = max(int(filter_dict.pop('limit', 100)), 100)
+        offset = int(filter_dict.pop('offset', 0))
+        jobs = ComputedFile.objects.filter(**filter_dict).order_by('-id')[offset:(offset + limit)]
+        serializer = SurveyJobSerializer(jobs, many=True)
+        return Response(serializer.data)

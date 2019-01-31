@@ -147,6 +147,8 @@ urlpatterns = [
         name="compendia"),
     url(r'^qn_targets', QNTargetsDetail.as_view(),
         name="qn-targets"),
+    url(r'^computed_files', ComputedFilesList.as_view(),
+        name="computed-files"),
 
     # Admin
     url(r'^admin/', admin.site.urls),

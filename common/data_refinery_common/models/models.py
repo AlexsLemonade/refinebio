@@ -773,7 +773,11 @@ class ComputedFile(models.Model):
                     )
             self.save()
         except Exception as e:
-            logger.exception(e, computed_file_id=self.pk)
+            logger.exception(e, 
+                computed_file_id=self.pk,
+                s3_key=self.s3_key,
+                s3_bucket=self.s3_bucket
+            )
             return False
 
         return True
