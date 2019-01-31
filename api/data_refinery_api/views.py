@@ -165,9 +165,16 @@ class ExperimentDocumentView(DocumentViewSet):
     # Is this exhaustive enough?
     search_fields = (
         'title',
+        'publication_title',
         'description',
         'publication_authors',
         'submitter_institution',
+        'accession_code',
+        'alternate_accession_code',
+        'publication_doi',
+        'pubmed_id',
+        'sample_metadata_fields',
+        'platform_names'
     )
 
     # Define filtering fields
