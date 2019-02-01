@@ -79,7 +79,15 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
             # until we've checked all the files before calling it a
             # failure.
             try:
-                archive_file = OriginalFile.objects.filter(filename=archive_filename).first()
+                archive_file = OriginalFile.objects.filter(filename=archive_filename)
+                if archive_file.count() > 0:
+                    archive_file = archive_file.first()
+                else:
+                    # We might need to match these up based on
+                    # source_filenames rather than filenames so just
+                    # try them both.
+                    archive_file = OriginalFile.objects.filter(source_filename=archive_filename).first()
+
                 original_downloader_job = DownloaderJobOriginalFileAssociation.objects.filter(
                     original_file=archive_file
                 ).latest('id').downloader_job
