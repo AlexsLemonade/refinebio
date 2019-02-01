@@ -691,7 +691,7 @@ class OriginalFile(models.Model):
         self.is_downloaded = False
         self.save()
 
-    def needs_downloading(self) -> bool:
+    def needs_downloading(self, pipeline_applied=None) -> bool:
         """Determine if a file needs to be downloaded.
 
         This is true if the file has already been downloaded and lost
@@ -715,7 +715,18 @@ class OriginalFile(models.Model):
         if unstarted_downloader_jobs.count() > 0:
             return False
 
-        successful_processor_jobs = self.processor_jobs.filter(success=True)
+        # Transcriptome files are used by two jobs, one for long and
+        # one for short. So one of them could have completed
+        # successfully before the file disappeared, therefore check
+        # the pipeline_applied to make sure we're looking at the same
+        # index_length.
+        if pipeline_applied:
+            successful_processor_jobs = self.processor_jobs.filter(
+                success=True,
+                pipeline_applied=pipeline_applied
+            )
+        else:
+            successful_processor_jobs = self.processor_jobs.filter(success=True)
 
         # Finally, if there is a successful processor job, then the file
         # has been processed and doesn't need to be processed again.

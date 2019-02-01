@@ -111,10 +111,13 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
                 original_file=archive_file
             )
     else:
-        for original_file in undownloaded_files:
+        # We can't just associate the undownloaded files, because
+        # there's a chance that there is a file which actually is
+        # downloaded that also needs to be associated with the job.
+        for original_file in original_downloader_job.original_files.all():
             DownloaderJobOriginalFileAssociation.objects.get_or_create(
                 downloader_job=new_job,
-                original_file=undownloaded_file
+                original_file=original_file
             )
 
     return True
