@@ -604,57 +604,63 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             old_len_merged = len(merged)
             new_len_merged = len(merged)
             merged_backup = merged
-            while i < len(all_frames):
-                frame = all_frames[i]
-                i = i + 1
 
-                # I'm not sure where these are sneaking in from, but we don't want them.
-                # Related: https://github.com/AlexsLemonade/refinebio/issues/390
-                breaker = False
-                for column in frame.columns:
-                    if column in merged.columns:
-                        breaker = True
+            if how == "inner":
+                while i < len(all_frames):
+                    frame = all_frames[i]
+                    i = i + 1
 
-                if breaker:
-                    logger.warning("Column repeated for smash job!",
-                                   input_files=str(input_files),
-                                   dataset_id=job_context["dataset"].id,
-                                   processor_job_id=job_context["job"].id,
-                                   column=column,
-                                   frame=frame
-                    )
-                    continue
+                    if i % 1000 == 0:
+                        logger.info("Smashing keyframe",
+                            i=i
+                        )
 
-                # This is the inner join, the main "Smash" operation
-                if how == "inner":
+                    # I'm not sure where these are sneaking in from, but we don't want them.
+                    # Related: https://github.com/AlexsLemonade/refinebio/issues/390
+                    breaker = False
+                    for column in frame.columns:
+                        if column in merged.columns:
+                            breaker = True
+
+                    if breaker:
+                        logger.warning("Column repeated for smash job!",
+                                       input_files=str(input_files),
+                                       dataset_id=job_context["dataset"].id,
+                                       processor_job_id=job_context["job"].id,
+                                       column=column,
+                                       frame=frame
+                        )
+                        continue
+
+                    # This is the inner join, the main "Smash" operation
                     merged = merged.merge(frame, how='inner', left_index=True, right_index=True)
-                else:
-                    merged = merged.merge(frame, how='outer', left_index=True, right_index=True)
 
-                new_len_merged = len(merged)
-                if new_len_merged < old_len_merged:
-                    logger.warning("Dropped rows while smashing!",
-                        dataset_id=job_context["dataset"].id,
-                        old_len_merged=old_len_merged,
-                        new_len_merged=new_len_merged
-                    )
-                if new_len_merged == 0:
-                    logger.warning("Skipping a bad merge frame!",
-                        dataset_id=job_context["dataset"].id,
-                        old_len_merged=old_len_merged,
-                        new_len_merged=new_len_merged,
-                        bad_frame_number=i,
-                    )
-                    merged = merged_backup
                     new_len_merged = len(merged)
-                    try:
-                        unsmashable_files.append(frame.columns[0])
-                    except Exception:
-                        # Something is really, really wrong with this frame.
-                        pass
+                    if new_len_merged < old_len_merged:
+                        logger.warning("Dropped rows while smashing!",
+                            dataset_id=job_context["dataset"].id,
+                            old_len_merged=old_len_merged,
+                            new_len_merged=new_len_merged
+                        )
+                    if new_len_merged == 0:
+                        logger.warning("Skipping a bad merge frame!",
+                            dataset_id=job_context["dataset"].id,
+                            old_len_merged=old_len_merged,
+                            new_len_merged=new_len_merged,
+                            bad_frame_number=i,
+                        )
+                        merged = merged_backup
+                        new_len_merged = len(merged)
+                        try:
+                            unsmashable_files.append(frame.columns[0])
+                        except Exception:
+                            # Something is really, really wrong with this frame.
+                            pass
 
-                old_len_merged = len(merged)
-                merged_backup = merged
+                    old_len_merged = len(merged)
+                    merged_backup = merged
+            else:
+                merged = pd.concat(all_frames, axis=1, keys=None, join='outer', copy=False)
 
             job_context['original_merged'] = merged
 

@@ -35,7 +35,7 @@ def _prepare_input(job_context: Dict) -> Dict:
     # I'm not crazy about this yet. Maybe refactor later,
     # but I need the data now.
     job_context = smasher._prepare_files(job_context)
-    job_context = smasher._smash(job_context)
+    job_context = smasher._smash(job_context, how="outer")
 
     if not 'final_frame' in job_context.keys():
         logger.error("Unable to prepare files for creating QN target.",
