@@ -176,6 +176,9 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
+        # Install Nomad
+      - run: sudo ./install_nomad.sh
+
         # Start Nomad, build images, and register jobs.
       - run:
           command: sudo -E ./run_nomad.sh -e test
