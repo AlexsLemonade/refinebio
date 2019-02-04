@@ -70,6 +70,19 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
 # Results
 ##
 
+class DetailedExperimentSampleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Sample
+        fields = (
+                    'accession_code',
+                    'platform_name',
+                    'pretty_platform',
+                    'technology',
+                    'is_processed',
+                )
+
+
 class ComputationalResultAnnotationSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -98,22 +111,6 @@ class ComputedFileSerializer(serializers.ModelSerializer):
                     'last_modified'
                 )
 
-class QNTargetSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ComputedFile
-        fields = (
-                    'id',
-                    'filename',
-                    'size_in_bytes',
-                    'is_qn_target',
-                    'sha1',
-                    's3_bucket',
-                    's3_key',
-                    's3_url',
-                    'created_at',
-                    'last_modified'
-                )
-
 class ComputationalResultSerializer(serializers.ModelSerializer):
     annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
     files = ComputedFileSerializer(many=True, source='computedfile_set')
@@ -136,6 +133,69 @@ class ComputationalResultSerializer(serializers.ModelSerializer):
                     'last_modified'
                 )
 
+class ComputationalResultNoFilesSerializer(serializers.ModelSerializer):
+    annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
+    processor = ProcessorSerializer(many=False)
+    organism_index = OrganismIndexSerializer(many=False)
+
+    class Meta:
+        model = ComputationalResult
+        fields = (
+                    'id',
+                    'commands',
+                    'processor',
+                    'is_ccdl',
+                    'annotations',
+                    'organism_index',
+                    'time_start',
+                    'time_end',
+                    'created_at',
+                    'last_modified'
+                )
+
+class QNTargetSerializer(serializers.ModelSerializer):
+    result = ComputationalResultNoFilesSerializer(many=False)
+
+    class Meta:
+        model = ComputedFile
+        fields = (
+                    'id',
+                    'filename',
+                    'size_in_bytes',
+                    'is_qn_target',
+                    'sha1',
+                    's3_bucket',
+                    's3_key',
+                    's3_url',
+                    'created_at',
+                    'last_modified',
+                    'result'
+                )
+
+class ComputedFileListSerializer(serializers.ModelSerializer):
+    result = ComputationalResultNoFilesSerializer(many=False)
+    samples = DetailedExperimentSampleSerializer(many=True)
+
+    class Meta:
+        model = ComputedFile
+        fields = (
+                    'id',
+                    'filename',
+                    'samples',
+                    'size_in_bytes',
+                    'is_qn_target',
+                    'is_smashable',
+                    'is_qc',
+                    'is_compendia',
+                    'compendia_version',
+                    'sha1',
+                    's3_bucket',
+                    's3_key',
+                    's3_url',
+                    'created_at',
+                    'last_modified',
+                    'result'
+                )
 
 ##
 # Samples
@@ -276,18 +336,6 @@ class ExperimentAnnotationSerializer(serializers.ModelSerializer):
                     'is_ccdl',
                     'created_at',
                     'last_modified',
-                )
-
-class DetailedExperimentSampleSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Sample
-        fields = (
-                    'accession_code',
-                    'platform_name',
-                    'pretty_platform',
-                    'technology',
-                    'is_processed',
                 )
 
 class DetailedExperimentSerializer(serializers.ModelSerializer):
@@ -620,6 +668,26 @@ class APITokenSerializer(serializers.ModelSerializer):
                         }
                     }
 
+class CompendiaSerializer(serializers.ModelSerializer):
+    organism_name = serializers.CharField(source='compendia_organism.name', read_only=True)
+
+    class Meta:
+        model = ComputedFile
+        fields = (
+                    'id',
+                    'filename',
+                    'size_in_bytes',
+                    'is_compendia',
+                    'compendia_version',
+                    'organism_name',
+                    'sha1',
+                    's3_bucket',
+                    's3_key',
+                    's3_url',
+                    'created_at',
+                    'last_modified'
+                )
+
 ##
 # ElasticSearch Document Serializers
 ##
@@ -645,6 +713,7 @@ class ExperimentDocumentSerializer(serializers.Serializer):
     publication_authors = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
     sample_metadata_fields = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
     platform_names = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
+    platform_accession_codes = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
     organism_names = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
     pubmed_id = serializers.CharField(read_only=True)
     num_total_samples = serializers.IntegerField(read_only=True)

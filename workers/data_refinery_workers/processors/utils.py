@@ -270,7 +270,7 @@ def start_job(job_context: Dict):
     # Janitors have no requirement
     if job.pipeline_applied not in ["JANITOR"]:
         # Some jobs take OriginalFiles, other take Datasets
-        if job.pipeline_applied not in ["SMASHER", "QN_REFERENCE"]:
+        if job.pipeline_applied not in ["SMASHER", "QN_REFERENCE", "COMPENDIA"]:
             job_context = prepare_original_files(job_context)
             if not job_context.get("success", True):
                 return job_context
@@ -300,7 +300,7 @@ def end_job(job_context: Dict, abort=False):
         success = True
 
     if not abort:
-        if job_context.get("success", False) and not (job_context["job"].pipeline_applied in ["SMASHER", "QN_REFERENCE"]):
+        if job_context.get("success", False) and not (job_context["job"].pipeline_applied in ["SMASHER", "QN_REFERENCE", "COMPENDIA"]):
 
             # Salmon requires the final `tximport` step to be fully `is_processed`.
             mark_as_processed = True
@@ -457,6 +457,7 @@ class PipelineEnum(Enum):
     TX_INDEX = "Transcriptome Index"
     QN_REFERENCE = "Quantile Normalization Reference"
     JANITOR = "Janitor"
+    COMPENDIA = "Compendia"
 
 
 @unique
@@ -536,6 +537,12 @@ class ProcessorEnum(Enum):
         "name": "Quantile Normalization Reference",
         "docker_img": "dr_smasher",
         "yml_file": "qn.yml"
+    }
+
+    COMPENDIA = {
+        "name": "Compendia Creation",
+        "docker_img": "dr_compendia",
+        "yml_file": "compendia.yml"
     }
 
     @classmethod

@@ -287,6 +287,7 @@ class Experiment(models.Model):
     sample_metadata_fields = ArrayField(models.TextField(), default=list)
     organism_names = ArrayField(models.TextField(), default=list)
     platform_names = ArrayField(models.TextField(), default=list)
+    platform_accession_codes = ArrayField(models.TextField(), default=list)
 
     # Common Properties
     is_public = models.BooleanField(default=True)
@@ -367,6 +368,7 @@ class Experiment(models.Model):
 
     def update_platform_names(self):
         self.platform_names = self.get_platform_names()
+        self.platform_accession_codes = self.get_platform_accession_codes()
 
     def get_sample_technologies(self):
         """ Get a list of unique technologies for all of the associated samples
@@ -382,6 +384,11 @@ class Experiment(models.Model):
         """ Get a list of unique platforms for all of the associated samples
         """
         return list(set([sample.platform_name for sample in self.samples.all()]))
+
+    def get_platform_accession_codes(self):
+        """ Get a list of unique platforms for all of the associated samples
+        """
+        return list(set([sample.platform_accession_code for sample in self.samples.all()]))
 
     @property
     def platforms(self):
@@ -768,6 +775,15 @@ class ComputedFile(models.Model):
     is_qc = models.BooleanField(default=False)
     is_qn_target = models.BooleanField(default=False)
 
+    # Compendia details
+    is_compendia = models.BooleanField(default=False)
+    compendia_organism = models.ForeignKey(Organism,
+                                        blank=True,
+                                        null=True, 
+                                        on_delete=models.CASCADE
+                                    )
+    compendia_version = models.IntegerField(blank=True, null=True)
+
     # AWS
     s3_bucket = models.CharField(max_length=255, blank=True, null=True)
     s3_key = models.CharField(max_length=255, blank=True, null=True)
@@ -806,7 +822,11 @@ class ComputedFile(models.Model):
                     )
             self.save()
         except Exception as e:
-            logger.exception(e, computed_file_id=self.pk)
+            logger.exception(e, 
+                computed_file_id=self.pk,
+                s3_key=self.s3_key,
+                s3_bucket=self.s3_bucket
+            )
             return False
 
         return True

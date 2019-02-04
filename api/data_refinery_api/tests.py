@@ -1,5 +1,6 @@
 import json
 import random
+import time
 
 from django.contrib.auth.models import User
 from django.http import HttpResponseForbidden, HttpResponseServerError
@@ -29,6 +30,7 @@ from data_refinery_common.utils import get_env_variable
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
+    ComputationalResultAnnotation,
     Dataset,
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -251,6 +253,60 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('samples'), {'experiment_accession_code': 'wrong-accession-code'})
         self.assertEqual(response.status_code, 404)
         
+    def test_compendia(self):
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
+        
+        result = ComputationalResult()
+        result.save()
+
+        hsc1 = ComputedFile()
+        hsc1.absolute_file_path = '/null/1.tsv'
+        hsc1.filename = '1.tsv'
+        hsc1.sha1 = "abc"
+        hsc1.size_in_bytes = 1
+        hsc1.is_smashable = False
+        hsc1.is_qn_target = False
+        hsc1.result = result
+        hsc1.is_compendia = True
+        hsc1.compendia_organism = homo_sapiens
+        hsc1.compendia_version = 1
+        hsc1.s3_bucket = "dr-compendia"
+        hsc1.s3_key = "hsc1.tsv"
+        hsc1.save()
+
+        hsc2 = ComputedFile()
+        hsc2.absolute_file_path = '/null/2.tsv'
+        hsc2.filename = '2.tsv'
+        hsc2.sha1 = "abc"
+        hsc2.size_in_bytes = 1
+        hsc2.is_smashable = False
+        hsc2.is_qn_target = False
+        hsc2.result = result
+        hsc2.is_compendia = True
+        hsc2.compendia_organism = homo_sapiens
+        hsc2.compendia_version = 2
+        hsc2.s3_bucket = "dr-compendia"
+        hsc2.s3_key = "hsc2.tsv"
+        hsc2.save()
+
+        drc1 = ComputedFile()
+        drc1.absolute_file_path = '/null/1.tsv'
+        drc1.filename = '1.tsv'
+        drc1.sha1 = "abc"
+        drc1.size_in_bytes = 1
+        drc1.is_smashable = False
+        drc1.is_qn_target = False
+        drc1.result = result
+        drc1.is_compendia = True
+        drc1.compendia_organism = danio_rerio
+        drc1.compendia_version = 1
+        drc1.s3_bucket = "dr-compendia"
+        drc1.s3_key = "drc2.tsv"
+        drc1.save()
+
+        response = self.client.get(reverse('compendia'))
+        self.assertEqual(3, len(response.json()))
 
     def test_search_and_filter(self):
 
@@ -471,6 +527,11 @@ class APITestCases(APITestCase):
         cr = ComputationalResult()
         cr.save()
 
+        cra = ComputationalResultAnnotation()
+        cra.result = cr
+        cra.data = {"organism": "Ailuropoda melanoleuca"}
+        cra.save()
+
         qni = ComputedFile()
         qni.is_qn_target = True
         qni.s3_bucket = "fake_qni_bucket"
@@ -496,6 +557,9 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('qn-targets'))
         self.assertEqual(len(response.json()), 1)
         self.assertEqual(response.json()[0]['s3_url'], 'https://s3.amazonaws.com/fake_qni_bucket/zazaza_homo_sapiens_1234.tsv')
+
+        response = self.client.get(reverse('computed-files'))
+        self.assertEqual(len(response.json()), 2)
 
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
@@ -638,8 +702,11 @@ class APITestCases(APITestCase):
         """ Test the dataset stats endpoint """
 
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        time.sleep(30)
         gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS")
+        time.sleep(30)
         equus_ferus = Organism.get_object_for_name("EQUUS_FERUS")
+        time.sleep(30)
 
         ex = Experiment()
         ex.accession_code = "XYZ123"

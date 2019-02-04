@@ -28,7 +28,9 @@ from data_refinery_api.views import (
     DatasetStatsView,
     APITokenView,
     TranscriptomeIndexDetail,
-    QNTargetsDetail
+    QNTargetsDetail,
+    CompendiaDetail,
+    ComputedFilesList
 )
 
 # This provides _public_ access to the /admin interface!
@@ -142,8 +144,12 @@ urlpatterns = [
     # Transcriptome Indices and QN Targets
     url(r'^transcriptome_indices', TranscriptomeIndexDetail.as_view(),
         name="transcriptome-indices"),
+    url(r'^compendia', CompendiaDetail.as_view(),
+        name="compendia"),
     url(r'^qn_targets', QNTargetsDetail.as_view(),
         name="qn-targets"),
+    url(r'^computed_files', ComputedFilesList.as_view(),
+        name="computed-files"),
 
     # Admin
     url(r'^admin/', admin.site.urls),

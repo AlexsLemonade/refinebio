@@ -53,7 +53,9 @@ from data_refinery_api.serializers import (
     PlatformSerializer,
     ProcessorSerializer,
     SampleSerializer,
+    CompendiaSerializer,
     QNTargetSerializer,
+    ComputedFileListSerializer,
 
     # Job
     DownloaderJobSerializer,
@@ -164,9 +166,16 @@ class ExperimentDocumentView(DocumentViewSet):
     # Is this exhaustive enough?
     search_fields = (
         'title',
+        'publication_title',
         'description',
         'publication_authors',
         'submitter_institution',
+        'accession_code',
+        'alternate_accession_code',
+        'publication_doi',
+        'pubmed_id',
+        'sample_metadata_fields',
+        'platform_names'
     )
 
     # Define filtering fields
@@ -175,13 +184,21 @@ class ExperimentDocumentView(DocumentViewSet):
             'field': '_id',
             'lookups': [
                 LOOKUP_FILTER_RANGE,
-                LOOKUP_QUERY_IN,
+                LOOKUP_QUERY_IN
             ],
         },
         'technology': 'technology',
         'has_publication': 'has_publication',
-        'platform': 'platform_names',
-        'organism': 'organism_names'
+        'platform': 'platform_accesion_codes',
+        'organism': 'organism_names',
+        'num_processed_samples': {
+            'field': 'num_processed_samples',
+            'lookups': [
+                LOOKUP_FILTER_RANGE,
+                LOOKUP_QUERY_IN,
+                LOOKUP_QUERY_GT
+            ],
+        }
     }
 
     # Define ordering fields
@@ -1228,6 +1245,24 @@ class TranscriptomeIndexDetail(APIView):
             return Response(serializer.data)
         except OrganismIndex.DoesNotExist:
             raise Http404
+
+###
+# Compendia
+###
+
+class CompendiaDetail(APIView):
+    """
+    A very simple modified ComputedFile endpoint which only shows Compendia results
+    """
+
+    """List all processors."""
+    def get(self, request, format=None):
+
+        computed_files = ComputedFile.objects.filter(is_compendia=True, is_public=True, is_qn_target=False).order_by('-created_at')
+        serializer = CompendiaSerializer(computed_files, many=True)
+        return Response(serializer.data)
+
+
 ###
 # QN Targets
 ###
@@ -1241,4 +1276,20 @@ class QNTargetsDetail(APIView):
     def get(self, request, format=None):
         computed_files = ComputedFile.objects.filter(is_public=True, is_qn_target=True)
         serializer = QNTargetSerializer(computed_files, many=True)
+        return Response(serializer.data)
+
+##
+# Computed Files
+##
+
+class ComputedFilesList(PaginatedAPIView):
+    """
+    """
+
+    def get(self, request, format=None):
+        filter_dict = request.query_params.dict()
+        limit = max(int(filter_dict.pop('limit', 100)), 100)
+        offset = int(filter_dict.pop('offset', 0))
+        jobs = ComputedFile.objects.filter(**filter_dict).order_by('-id')[offset:(offset + limit)]
+        serializer = ComputedFileListSerializer(jobs, many=True)
         return Response(serializer.data)
