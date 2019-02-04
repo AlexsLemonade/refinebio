@@ -38,6 +38,10 @@ jobs:
       - run: docker push localhost:5000/dr_no_op
       - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
       - run: docker push localhost:5000/dr_downloaders
+      - run: ./prepare_image.sh -i transcriptome -s workers -d localhost:5000
+      - run: docker push localhost:5000/dr_transcriptome
+      - run: ./prepare_image.sh -i salmon -s workers -d localhost:5000
+      - run: docker push localhost:5000/dr_salmon
       - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
 
       # Run Downloader Tests
