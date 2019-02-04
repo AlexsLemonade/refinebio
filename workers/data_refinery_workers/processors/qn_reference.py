@@ -43,6 +43,7 @@ def _prepare_input(job_context: Dict) -> Dict:
     return job_context
 
 def _build_qn_target(job_context: Dict) -> Dict:
+    """ Iteratively creates a QN target file, method described here: https://github.com/AlexsLemonade/refinebio/pull/1013"""
 
     job_context['time_start'] = timezone.now()
 
@@ -58,11 +59,13 @@ def _build_qn_target(job_context: Dict) -> Dict:
     sum_frame = pd.DataFrame(data=sum_frame_input)
     sum_frame = sum_frame.set_index('index')
 
+    # Read and sum all of the inputs
     num_valid_inputs = 0
     for file in job_context['input_files']['ALL']:
         input_frame = pd.read_csv(file.get_synced_file_path(), sep='\t', header=0,
                                           index_col=0, error_bad_lines=False)
 
+        # If this input doesn't have the same geneset, we don't want it!
         if list(input_frame.index.values) != list(geneset):
             logger.error("Input frame doesn't match target geneset, skipping!",
                 bad_file=file,
@@ -70,15 +73,17 @@ def _build_qn_target(job_context: Dict) -> Dict:
                 bad_geneset=input_frame.index.values)
             continue
 
+        # Sort the input
         sample_name = list(input_frame.columns.values)[0]
         expressions = input_frame.sort_values(sample_name)
 
-        # Add it to the fame
+        # Add the sorted input to the sum frame
         sum_frame['sum'] = sum_frame['sum'] + expressions[sample_name].values
 
         # We'll divide by this later
         num_valid_inputs = num_valid_inputs + 1
 
+    # Divide our summation by the number of inputs and save the resulting object and metadata
     sum_frame['sum'] = sum_frame['sum'] / num_valid_inputs
     job_context['time_end'] = timezone.now()
     job_context['sum_frame'] = sum_frame
