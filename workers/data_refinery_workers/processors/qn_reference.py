@@ -52,7 +52,7 @@ def _build_qn_target(job_context: Dict) -> Dict:
                                           index_col=0, error_bad_lines=False)
 
     # Get the geneset
-    geneset = geneset_target_frame.index.values
+    geneset = set(geneset_target_frame.index.values)
 
     # Sequentially build the target
     sum_frame_input = {'index': geneset, 'sum': [0 for value in geneset]}
@@ -66,7 +66,7 @@ def _build_qn_target(job_context: Dict) -> Dict:
                                           index_col=0, error_bad_lines=False)
 
         # If this input doesn't have the same geneset, we don't want it!
-        if list(input_frame.index.values) != list(geneset):
+        if set(input_frame.index.values) != geneset:
             logger.error("Input frame doesn't match target geneset, skipping!",
                 bad_file=file,
                 target_geneset=geneset,
