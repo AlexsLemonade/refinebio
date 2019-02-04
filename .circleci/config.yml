@@ -38,10 +38,6 @@ jobs:
       - run: docker push localhost:5000/dr_no_op
       - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
       - run: docker push localhost:5000/dr_downloaders
-      - run: ./prepare_image.sh -i transcriptome -s workers -d localhost:5000
-      - run: docker push localhost:5000/dr_transcriptome
-      - run: ./prepare_image.sh -i salmon -s workers -d localhost:5000
-      - run: docker push localhost:5000/dr_salmon
       - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
 
       # Run Downloader Tests
@@ -54,7 +50,7 @@ jobs:
 
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
-      - run: ./foreman/run_tests.sh
+      - run: ./foreman/run_tests.sh --exclude-tag=salmon --exclude-tag=transcriptome
 
      # Run NO_OP tests
       - run: sudo chown -R circleci:circleci workers/test_volume/
@@ -78,10 +74,10 @@ jobs:
       - run:
           command: .circleci/filter_tests.sh -t qn
           no_output_timeout: 1h
-      
+
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
-          command: .circleci/filter_tests.sh -t compendia 
+          command: .circleci/filter_tests.sh -t compendia
           no_output_timeout: 1h
 
   common_tests:
@@ -132,6 +128,22 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
+        # Install Nomad
+      - run: sudo ./install_nomad.sh
+
+        # Start Nomad, build images, and register jobs.
+      - run:
+          command: sudo -E ./run_nomad.sh -e test
+
+      - run: ./prepare_image.sh -i salmon -s workers -d localhost:5000
+      - run: docker push localhost:5000/dr_salmon
+      - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
+      - run: docker push localhost:5000/dr_downloaders
+
+      # Run Salmon end-to-end tests
+      - run: mkdir -p test_volume && chmod -R a+rw test_volume
+      - run: ./foreman/run_tests.sh --tag=salmon
+
       # Update ES models
       - run: ./run_manage.sh search_index --rebuild -f;
 
@@ -164,7 +176,20 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
-      - run: ./prepare_image.sh -i transcriptome -s workers
+        # Start Nomad, build images, and register jobs.
+      - run:
+          command: sudo -E ./run_nomad.sh -e test
+
+      - run: ./prepare_image.sh -i transcriptome -s workers -d localhost:5000
+      - run: docker push localhost:5000/dr_transcriptome
+      - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
+      - run: docker push localhost:5000/dr_downloaders
+
+      # Run Transcriptome end-to-end tests
+      - run: mkdir -p test_volume && chmod -R a+rw test_volume
+      - run: ./foreman/run_tests.sh --tag=transcriptome
+
+      # - run: ./prepare_image.sh -i transcriptome -s workers
       - run: .circleci/filter_tests.sh -t transcriptome
 
       # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh

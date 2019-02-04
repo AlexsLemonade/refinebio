@@ -262,13 +262,8 @@ class RedownloadingTestCase(TransactionTestCase):
 
             self.assertTrue(survey_job.success)
 
-            # This experiment has 12 samples that are contained in the
+            # This experiment has multiple samples that are contained in the
             # same archive, so only one job is needed.
-            ### THIS ISN'T TRUE! TURNS OUT THAT WE CAN'T ACTUALLY FIND
-            ### THAT IN THE WILD, SO MAYBE IT DOESN'T ACTUALLY HAPPEN?
-            ### IF IT DOES IT'LL COME UP AND WE'LL HAVE AN
-            ### EXAMPLE. THEREFORE FINISH THIS TEST BY EXPECTING ONE
-            ### DOWNLOADER JOB PER SAMPLE/
             downloader_jobs = DownloaderJob.objects.all()
             self.assertEqual(downloader_jobs.count(), 1)
 
@@ -378,6 +373,7 @@ class RedownloadingTestCase(TransactionTestCase):
 
     # Commented out because Ensembl's FTP isn't working reliably.
     @tag("slow")
+    @tag("transcriptome")
     def test_transcriptome_redownloading(self):
         """Survey, download, then process a transcriptome index."""
         # Clear out pre-existing work dirs so there's no conflicts:
@@ -433,18 +429,12 @@ class RedownloadingTestCase(TransactionTestCase):
             start_time = timezone.now()
             processor_jobs = ProcessorJob.objects.all()
             for processor_job in processor_jobs:
-                # doomed_processor_job = og_file_to_delete.processor_jobs.all()[0]
-                # logger.info(
-                #     "Waiting on processor Nomad job %s to fail because it realized it is missing a file.",
-                #     doomed_processor_job.nomad_job_id
-                # )
-
                 # It's hard to guarantee that we'll be able to delete
                 # the files before the first job starts, but since
                 # they both don't start at the same time we'll
                 # definitely get it before the second one. This is
                 # actually kinda desirable for testing though because
-                # either we should be able to handle it either way.
+                # we should be able to handle it either way.
                 try:
                     wait_for_job(processor_job, ProcessorJob, start_time)
                 except:
@@ -511,6 +501,7 @@ class RedownloadingTestCase(TransactionTestCase):
             self.assertTrue(has_long)
 
     @tag("slow")
+    @tag("salmon")
     def test_sra_redownloading(self):
         """Survey, download, then process an experiment we know is SRA."""
         # Clear out pre-existing work dirs so there's no conflicts:
