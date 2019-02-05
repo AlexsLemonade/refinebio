@@ -772,21 +772,22 @@ class SampleList(PaginatedAPIView):
         if order_by:
             samples = samples.order_by(order_by)
 
+        # case insensitive search https://docs.djangoproject.com/en/2.1/ref/models/querysets/#icontains
         if filter_by:
-            samples = samples.filter(   Q(title__contains=filter_by) |
-                                        Q(sex__contains=filter_by) |
-                                        Q(age__contains=filter_by) |
-                                        Q(specimen_part__contains=filter_by) |
-                                        Q(genotype__contains=filter_by) |
-                                        Q(disease__contains=filter_by) |
-                                        Q(disease_stage__contains=filter_by) |
-                                        Q(cell_line__contains=filter_by) |
-                                        Q(treatment__contains=filter_by) |
-                                        Q(race__contains=filter_by) |
-                                        Q(subject__contains=filter_by) |
-                                        Q(compound__contains=filter_by) |
-                                        Q(time__contains=filter_by) |
-                                        Q(sampleannotation__data__contains=filter_by)
+            samples = samples.filter(   Q(title__icontains=filter_by) |
+                                        Q(sex__icontains=filter_by) |
+                                        Q(age__icontains=filter_by) |
+                                        Q(specimen_part__icontains=filter_by) |
+                                        Q(genotype__icontains=filter_by) |
+                                        Q(disease__icontains=filter_by) |
+                                        Q(disease_stage__icontains=filter_by) |
+                                        Q(cell_line__icontains=filter_by) |
+                                        Q(treatment__icontains=filter_by) |
+                                        Q(race__icontains=filter_by) |
+                                        Q(subject__icontains=filter_by) |
+                                        Q(compound__icontains=filter_by) |
+                                        Q(time__icontains=filter_by) |
+                                        Q(sampleannotation__data__icontains=filter_by)
                                     )
 
         page = self.paginate_queryset(samples)
