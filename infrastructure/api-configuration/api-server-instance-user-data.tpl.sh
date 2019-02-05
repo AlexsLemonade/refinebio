@@ -123,6 +123,7 @@ docker run \
        -it -d ${dockerhub_repo}/${api_docker_image} /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
 
 # Nuke and rebuild the search index. It shouldn't take too long.
+sleep 30
 docker exec -it dr_api python3 manage.py search_index --delete -f;
 docker exec -it dr_api python3 manage.py search_index --rebuild -f;
 docker exec -it dr_api python3 manage.py search_index --populate -f;
