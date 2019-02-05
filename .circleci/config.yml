@@ -49,6 +49,12 @@ jobs:
 
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
+
+      # The foreman includes the end-to-end tests, but some of these
+      # require docker images which are not built in this
+      # workflow. Therefore we exclude salmon and transcriptome and
+      # let those end-to-end tests get run in the workflows that
+      # include building those images.
       - run: ./foreman/run_tests.sh --exclude-tag=salmon --exclude-tag=transcriptome
 
       # Run NO_OP tests

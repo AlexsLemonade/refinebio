@@ -235,7 +235,6 @@ class RedownloadingTestCase(TransactionTestCase):
 
             self.assertEqual(len(successful_processor_jobs), 12)
 
-    # Commented out because GEO isn't giving files.
     @tag("slow")
     def test_geo_redownloading(self):
         """Survey, download, then process an experiment we know is NO_OP."""
@@ -371,7 +370,6 @@ class RedownloadingTestCase(TransactionTestCase):
 
             self.assertEqual(len(successful_processor_jobs), target_job_count)
 
-    # Commented out because Ensembl's FTP isn't working reliably.
     @tag("slow")
     @tag("transcriptome")
     def test_transcriptome_redownloading(self):
@@ -498,7 +496,7 @@ class RedownloadingTestCase(TransactionTestCase):
                     has_short = True
 
             self.assertTrue(has_long)
-            self.assertTrue(has_long)
+            self.assertTrue(has_short)
 
     @tag("slow")
     @tag("salmon")
