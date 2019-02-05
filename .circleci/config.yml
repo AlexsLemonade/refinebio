@@ -285,7 +285,7 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      - common_tests:
+      - common_smasher_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
@@ -315,7 +315,7 @@ workflows:
       - deploy:
           requires:
             - main_tests
-            - common_tests
+            - common_smasher_tests
             - salmon_and_api_tests
             - tx_illumina_tests
             - affy_agilent_tests
