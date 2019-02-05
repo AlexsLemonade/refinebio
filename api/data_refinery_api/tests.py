@@ -954,7 +954,7 @@ class ESTestCases(APITestCase):
         self.assertEqual(response.json()['count'], 1)
 
         # Positive filter result
-        response = self.client.get('/es/?search=soda&technology=MICROARRAY')
+        response = self.client.get('/es/?search=soda&technology=microarray')
         self.assertEqual(response.json()['count'], 1)
 
         # Negative filter result
