@@ -56,6 +56,16 @@ MIN_LOOP_TIME = timedelta(minutes=2)
 JANITOR_DISPATCH_TIME = timedelta(minutes=30)
 
 
+# TEMPORARY (while chasing down zebrafish data)
+# We want to limit the system to working on zebrafish data
+# temporarily, which means that we don't want the Foreman to requeue
+# anything that we haven't identitifed as being zebrafish data, so
+# there's a separate management command being used to pick what work
+# to focus on. So all the foreman needs to do is worry about jobs
+# queued after the beginning of the zebrafish sprint
+JOB_CREATED_AT_CUTOFF = datetime.date(2019, 2, 5)
+
+
 def read_config_list(config_file: str) -> List[str]:
     """
     Reads a file and returns a list with one item per line.
@@ -315,7 +325,9 @@ def retry_failed_downloader_jobs() -> None:
     """Handle downloader jobs that were marked as a failure."""
     failed_jobs = DownloaderJob.objects.filter(
         success=False,
-        retried=False
+        retried=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at_gt=JOB_CREATED_AT_CUTOFF
     ).prefetch_related(
         "original_files__samples"
     )
@@ -336,7 +348,9 @@ def retry_hung_downloader_jobs() -> None:
         retried=False,
         end_time=None,
         start_time__isnull=False,
-        no_retry=False
+        no_retry=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at_gt=JOB_CREATED_AT_CUTOFF
     ).prefetch_related(
         "original_files__samples"
     )
@@ -383,7 +397,9 @@ def retry_lost_downloader_jobs() -> None:
         retried=False,
         start_time=None,
         end_time=None,
-        no_retry=False
+        no_retry=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at_gt=JOB_CREATED_AT_CUTOFF
     ).prefetch_related(
         "original_files__samples"
     )
@@ -553,7 +569,9 @@ def retry_failed_processor_jobs() -> None:
     failed_jobs = ProcessorJob.objects.filter(
         success=False,
         retried=False,
-        volume_index__in=active_volumes
+        volume_index__in=active_volumes,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at_gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
     ).prefetch_related(
@@ -586,7 +604,9 @@ def retry_hung_processor_jobs() -> None:
         end_time=None,
         start_time__isnull=False,
         no_retry=False,
-        volume_index__in=active_volumes
+        volume_index__in=active_volumes,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at_gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
     ).prefetch_related(
@@ -647,7 +667,9 @@ def retry_lost_processor_jobs() -> None:
         start_time=None,
         end_time=None,
         no_retry=False,
-        volume_index__in=active_volumes
+        volume_index__in=active_volumes,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at_gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
     ).prefetch_related(
@@ -789,7 +811,12 @@ def handle_survey_jobs(jobs: List[SurveyJob]) -> None:
 
 def retry_failed_survey_jobs() -> None:
     """Handle survey jobs that were marked as a failure."""
-    failed_jobs = SurveyJob.objects.filter(success=False, retried=False).order_by('pk')
+    failed_jobs = SurveyJob.objects.filter(
+        success=False,
+        retried=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at_gt=JOB_CREATED_AT_CUTOFF
+    ).order_by('pk')
     if failed_jobs:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) survey jobs!",
@@ -805,7 +832,9 @@ def retry_hung_survey_jobs() -> None:
         retried=False,
         end_time=None,
         start_time__isnull=False,
-        no_retry=False
+        no_retry=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at_gt=JOB_CREATED_AT_CUTOFF
     ).order_by('pk')
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -848,7 +877,9 @@ def retry_lost_survey_jobs() -> None:
         retried=False,
         start_time=None,
         end_time=None,
-        no_retry=False
+        no_retry=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at_gt=JOB_CREATED_AT_CUTOFF
     ).order_by('pk')
 
     nomad_host = get_env_variable("NOMAD_HOST")
