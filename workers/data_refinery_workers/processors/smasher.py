@@ -479,22 +479,22 @@ def _smash(job_context: Dict, how="inner") -> Dict:
 
             for computed_file in input_files:
 
-                # Download the file to a job-specific location so it
-                # won't disappear while we're using it.
-                computed_file_path = job_context["work_dir"] + computed_file.filename
-                computed_file_path = computed_file.get_synced_file_path(path=computed_file_path)
-
-                # Bail appropriately if this isn't a real file.
-                if not computed_file_path or not os.path.exists(computed_file_path):
-                    unsmashable_files.append(computed_file_path)
-                    logger.error("Smasher received non-existent file path.",
-                        computed_file_path=computed_file_path,
-                        computed_file=computed_file,
-                        dataset=job_context['dataset'],
-                        )
-                    continue
-
                 try:
+                    # Download the file to a job-specific location so it
+                    # won't disappear while we're using it.
+                    computed_file_path = job_context["work_dir"] + computed_file.filename
+                    computed_file_path = computed_file.get_synced_file_path(path=computed_file_path)
+
+                    # Bail appropriately if this isn't a real file.
+                    if not computed_file_path or not os.path.exists(computed_file_path):
+                        unsmashable_files.append(computed_file_path)
+                        logger.error("Smasher received non-existent file path.",
+                            computed_file_path=computed_file_path,
+                            computed_file=computed_file,
+                            dataset=job_context['dataset'],
+                            )
+                        continue
+
                     data = _load_and_sanitize_file(computed_file_path)
 
                     if len(data.columns) > 2:

@@ -62,8 +62,15 @@ def _build_qn_target(job_context: Dict) -> Dict:
     # Read and sum all of the inputs
     num_valid_inputs = 0
     for file in job_context['input_files']['ALL']:
-        input_filepath = file.get_synced_file_path()
-        input_frame = smasher._load_and_sanitize_file(input_filepath)
+        try:
+            input_filepath = file.get_synced_file_path()
+            input_frame = smasher._load_and_sanitize_file(input_filepath)
+        except Exception as e:
+            logger.exception("No file loaded for input file",
+                bad_file=file,
+                num_valid_inputs_so_far=num_valid_inputs
+                )
+            continue
 
         # If this input doesn't have the same geneset, we don't want it!
         if set(input_frame.index.values) != geneset:
