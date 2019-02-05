@@ -69,8 +69,10 @@ def _build_qn_target(job_context: Dict) -> Dict:
         if set(input_frame.index.values) != geneset:
             logger.error("Input frame doesn't match target geneset, skipping!",
                 bad_file=file,
-                target_geneset=geneset,
-                bad_geneset=input_frame.index.values)
+                target_geneset_len=len(geneset),
+                bad_geneset_len=len(input_frame.index.values),
+                difference=list(geneset ^ set(input_frame.index.values))
+                )
             continue
 
         # Sort the input
