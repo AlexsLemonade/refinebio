@@ -8,7 +8,8 @@ from .models import Sample, Experiment, Organism
 experiment_index = Index('experiments')
 experiment_index.settings(
     number_of_shards=1,
-    number_of_replicas=0
+    number_of_replicas=0,
+    max_result_window=9999999
 )
 
 # via https://django-elasticsearch-dsl-drf.readthedocs.io/en/0.17.2/advanced_usage_examples.html?highlight=ngram#id8
@@ -88,6 +89,7 @@ class ExperimentDocument(DocType):
     pubmed_id = fields.TextField()
     num_total_samples = fields.IntegerField()
     num_processed_samples = fields.IntegerField()
+    source_first_published = fields.DateField()
 
     # FK/M2M
     # We actually don't use any ForeignKeys in our Experiment document,

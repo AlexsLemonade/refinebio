@@ -140,6 +140,7 @@ class ExperimentDocumentView(DocumentViewSet):
         ?search=medulloblastoma
         ?id=1
         ?search=medulloblastoma&technology=microarray&has_publication=true
+        ?ordering=source_first_published
 
     Full examples can be found in the Django-ES-DSL-DRF docs:
         https://django-elasticsearch-dsl-drf.readthedocs.io/en/0.17.1/filtering_usage_examples.html#filtering
@@ -207,11 +208,12 @@ class ExperimentDocumentView(DocumentViewSet):
         'title': 'title.raw',
         'description': 'description.raw',
         'num_total_samples': 'num_total_samples',
-        'num_processed_samples': 'num_processed_samples'
+        'num_processed_samples': 'num_processed_samples',
+        'source_first_published': 'source_first_published'
     }
 
     # Specify default ordering
-    ordering = ('-num_total_samples', 'id', 'title', 'description')
+    ordering = ('-num_total_samples', 'id', 'title', 'description', '-source_first_published')
 
     # Facets (aka Aggregations) provide statistics about the query result set in the API response.
     # More information here: https://github.com/barseghyanartur/django-elasticsearch-dsl-drf/blob/03a3aa716db31868ca3a71340513a993741a4177/src/django_elasticsearch_dsl_drf/filter_backends/faceted_search.py#L24
@@ -770,21 +772,22 @@ class SampleList(PaginatedAPIView):
         if order_by:
             samples = samples.order_by(order_by)
 
+        # case insensitive search https://docs.djangoproject.com/en/2.1/ref/models/querysets/#icontains
         if filter_by:
-            samples = samples.filter(   Q(title__contains=filter_by) |
-                                        Q(sex__contains=filter_by) |
-                                        Q(age__contains=filter_by) |
-                                        Q(specimen_part__contains=filter_by) |
-                                        Q(genotype__contains=filter_by) |
-                                        Q(disease__contains=filter_by) |
-                                        Q(disease_stage__contains=filter_by) |
-                                        Q(cell_line__contains=filter_by) |
-                                        Q(treatment__contains=filter_by) |
-                                        Q(race__contains=filter_by) |
-                                        Q(subject__contains=filter_by) |
-                                        Q(compound__contains=filter_by) |
-                                        Q(time__contains=filter_by) |
-                                        Q(sampleannotation__data__contains=filter_by)
+            samples = samples.filter(   Q(title__icontains=filter_by) |
+                                        Q(sex__icontains=filter_by) |
+                                        Q(age__icontains=filter_by) |
+                                        Q(specimen_part__icontains=filter_by) |
+                                        Q(genotype__icontains=filter_by) |
+                                        Q(disease__icontains=filter_by) |
+                                        Q(disease_stage__icontains=filter_by) |
+                                        Q(cell_line__icontains=filter_by) |
+                                        Q(treatment__icontains=filter_by) |
+                                        Q(race__icontains=filter_by) |
+                                        Q(subject__icontains=filter_by) |
+                                        Q(compound__icontains=filter_by) |
+                                        Q(time__icontains=filter_by) |
+                                        Q(sampleannotation__data__icontains=filter_by)
                                     )
 
         page = self.paginate_queryset(samples)

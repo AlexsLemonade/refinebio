@@ -86,13 +86,12 @@ class QNRefTestCase(TestCase):
 
         final_context = qn_reference.create_qn_reference(job.pk)
         self.assertTrue(final_context['success'])
-        self.assertTrue(final_context['result_verified'])
 
         self.assertTrue(os.path.exists(final_context['target_file']))
-        self.assertEqual(os.path.getsize(final_context['target_file']), 519)
+        self.assertEqual(os.path.getsize(final_context['target_file']), 556)
 
         target = utils.get_most_recent_qn_target_for_organism(homo_sapiens)
-        self.assertEqual(target.sha1, 'a38ae13de860e47e0251dd02d1a8e88f576d83ad')
+        self.assertEqual(target.sha1, '636d72d5cbf4b9785b0bd271a1430b615feaa7ea')
 
         ###
         # Smasher with QN
@@ -118,7 +117,7 @@ class QNRefTestCase(TestCase):
         final_context = smasher.smash(pj.pk, upload=False)
         self.assertTrue(final_context['success'])
 
-        self.assertEqual(final_context['merged_qn']['1'][0], -0.437948852881293)
+        self.assertEqual(final_context['merged_qn']['1'][0], -0.4379488528812934)
         self.assertEqual(final_context['original_merged']['1'][0], -0.576210936113982)
 
         ## 
