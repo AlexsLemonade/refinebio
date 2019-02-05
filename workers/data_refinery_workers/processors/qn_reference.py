@@ -71,7 +71,8 @@ def _build_qn_target(job_context: Dict) -> Dict:
                 bad_file=file,
                 target_geneset_len=len(geneset),
                 bad_geneset_len=len(input_frame.index.values),
-                difference=list(geneset ^ set(input_frame.index.values))
+                difference=list(geneset ^ set(input_frame.index.values)),
+                num_valid_inputs_so_far=num_valid_inputs
                 )
             continue
 
