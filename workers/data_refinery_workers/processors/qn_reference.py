@@ -48,8 +48,8 @@ def _build_qn_target(job_context: Dict) -> Dict:
     job_context['time_start'] = timezone.now()
 
     # Get the gene list from the first input
-    geneset_target_frame = pd.read_csv(job_context['input_files']['ALL'][0].get_synced_file_path(), sep='\t', header=0,
-                                          index_col=0, error_bad_lines=False)
+    computed_file_path = job_context['input_files']['ALL'][0].get_synced_file_path()
+    geneset_target_frame = smasher._load_and_sanitize_file(computed_file_path)
 
     # Get the geneset
     geneset = set(geneset_target_frame.index.values)

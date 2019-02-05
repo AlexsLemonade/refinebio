@@ -495,14 +495,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     continue
 
                 try:
-                    data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0, error_bad_lines=False)
-
-                    # Strip any funky whitespace
-                    data.columns = data.columns.str.strip()
-                    data = data.dropna(axis='columns', how='all')
-
-                    # Make sure the index type is correct
-                    data.index = data.index.map(str)
+                    data = _load_and_sanitize_file(computed_file_path)
 
                     if len(data.columns) > 2:
                         # Most of the time, >1 is actually bad, but we also need to support
@@ -527,33 +520,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     if (not computed_file_path.endswith("lengthScaledTPM.tsv")) and (data.max() > 100).any():
                         logger.info("Detected non-log2 microarray data.", file=computed_file)
                         data = np.log2(data)
-
-                    # Ensure that we don't have any dangling Brainarray-generated probe symbols.
-                    # BA likes to leave '_at', signifying probe identifiers,
-                    # on their converted, non-probe identifiers. It makes no sense.
-                    # So, we chop them off and don't worry about it.
-                    data.index = data.index.str.replace('_at', '')
-
-                    # Remove any lingering Affymetrix control probes ("AFFX-")
-                    data = data[~data.index.str.contains('AFFX-')]
-
-                    # If there are any _versioned_ gene identifiers, remove that
-                    # version information. We're using the latest brainarray for everything anyway.
-                    # Jackie says this is okay.
-                    # She also says that in the future, we may only want to do this
-                    # for cross-technology smashes.
-
-                    # This regex needs to be able to handle EGIDs in the form:
-                    #       ENSGXXXXYYYZZZZ.6
-                    # and
-                    #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg.7__3016__AT5G35080.1;db=core)
-                    data.index = data.index.str.replace(r"(\.[^.]*)$", '')
-
-                    # Squish duplicated rows together.
-                    # XXX/TODO: Is mean the appropriate method here?
-                    #           We can make this an option in future.
-                    # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
-                    data = data.groupby(data.index, sort=False).mean()
 
                     # Explicitly title this dataframe
                     try:
@@ -785,6 +751,47 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         archive_location=job_context["output_file"])
 
     return job_context
+
+def _load_and_sanitize_file(computed_file_path):
+    """ Read and sanitize a computed file """
+
+    data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0, error_bad_lines=False)
+
+    # Strip any funky whitespace
+    data.columns = data.columns.str.strip()
+    data = data.dropna(axis='columns', how='all')
+
+    # Make sure the index type is correct
+    data.index = data.index.map(str)
+
+    # Ensure that we don't have any dangling Brainarray-generated probe symbols.
+    # BA likes to leave '_at', signifying probe identifiers,
+    # on their converted, non-probe identifiers. It makes no sense.
+    # So, we chop them off and don't worry about it.
+    data.index = data.index.str.replace('_at', '')
+
+    # Remove any lingering Affymetrix control probes ("AFFX-")
+    data = data[~data.index.str.contains('AFFX-')]
+
+    # If there are any _versioned_ gene identifiers, remove that
+    # version information. We're using the latest brainarray for everything anyway.
+    # Jackie says this is okay.
+    # She also says that in the future, we may only want to do this
+    # for cross-technology smashes.
+
+    # This regex needs to be able to handle EGIDs in the form:
+    #       ENSGXXXXYYYZZZZ.6
+    # and
+    #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg.7__3016__AT5G35080.1;db=core)
+    data.index = data.index.str.replace(r"(\.[^.]*)$", '')
+
+    # Squish duplicated rows together.
+    # XXX/TODO: Is mean the appropriate method here?
+    #           We can make this an option in future.
+    # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
+    data = data.groupby(data.index, sort=False).mean()
+
+    return data
 
 def _upload(job_context: Dict) -> Dict:
     """ Uploads the result file to S3 and notifies user. """
