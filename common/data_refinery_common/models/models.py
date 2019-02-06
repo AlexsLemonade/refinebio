@@ -737,7 +737,6 @@ class OriginalFile(models.Model):
 
         # Finally, if there is a successful processor job, then the file
         # has been processed and doesn't need to be processed again.
-        # XXX: if we ever want to reprocess everything, this will be problematic.
         return successful_processor_jobs.count() == 0
 
 
@@ -779,7 +778,7 @@ class ComputedFile(models.Model):
     is_compendia = models.BooleanField(default=False)
     compendia_organism = models.ForeignKey(Organism,
                                         blank=True,
-                                        null=True, 
+                                        null=True,
                                         on_delete=models.CASCADE
                                     )
     compendia_version = models.IntegerField(blank=True, null=True)
@@ -822,7 +821,7 @@ class ComputedFile(models.Model):
                     )
             self.save()
         except Exception as e:
-            logger.exception(e, 
+            logger.exception(e,
                 computed_file_id=self.pk,
                 s3_key=self.s3_key,
                 s3_bucket=self.s3_bucket

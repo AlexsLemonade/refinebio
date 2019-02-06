@@ -97,11 +97,23 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
                 pass
 
     if not original_downloader_job:
+        logger.error(
+            "Could not find the original downloader job for these files.",
+            undownloaded_file=undownloaded_files
+        )
+        return False
+    elif original_downloader_job.was_recreated:
+        logger.warn(
+            "Downloader job has already been recreated once, not doing it again.",
+            original_downloader_job=original_downloader_job,
+            undownloaded_files=undownloaded_files
+        )
         return False
 
     new_job = DownloaderJob()
     new_job.downloader_task = original_downloader_job.downloader_task
     new_job.accession_code = original_downloader_job.accession_code
+    new_job.was_recreated = True
     new_job.save()
 
     if archive_file:
