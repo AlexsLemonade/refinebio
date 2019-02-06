@@ -39,7 +39,7 @@ class QNRefTestCase(TestCase):
         experiment.accession_code = "12345"
         experiment.save()
 
-        for code in ['1', '2', '3', '4', '5']:
+        for code in ['1', '2', '3', '4', '5', '6']:
             sample = Sample()
             sample.accession_code = code
             sample.title = code
@@ -73,7 +73,7 @@ class QNRefTestCase(TestCase):
 
         
         dataset = Dataset()
-        dataset.data = {"12345": ["1", "2", "3", "4", "5"]}
+        dataset.data = {"12345": ["1", "2", "3", "4", "5", "6"]}
         dataset.aggregate_by = "ALL"
         dataset.scale_by = "NONE"
         dataset.quantile_normalize = False # We don't QN because we're creating the target now
