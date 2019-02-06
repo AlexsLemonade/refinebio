@@ -482,6 +482,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 try:
                     # Download the file to a job-specific location so it
                     # won't disappear while we're using it.
+
                     computed_file_path = job_context["work_dir"] + computed_file.filename
                     computed_file_path = computed_file.get_synced_file_path(path=computed_file_path)
 
@@ -551,7 +552,8 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                         )
                 finally:
                     # Delete before archiving the work dir
-                    os.remove(computed_file_path)
+                    if computed_file_path:
+                        os.remove(computed_file_path)
 
             job_context['all_frames'] = all_frames
 
