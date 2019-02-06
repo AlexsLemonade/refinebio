@@ -8,7 +8,8 @@ from .models import Sample, Experiment, Organism
 experiment_index = Index('experiments')
 experiment_index.settings(
     number_of_shards=1,
-    number_of_replicas=0
+    number_of_replicas=0,
+    max_result_window=9999999
 )
 
 # via https://django-elasticsearch-dsl-drf.readthedocs.io/en/0.17.2/advanced_usage_examples.html?highlight=ngram#id8
@@ -23,6 +24,12 @@ html_strip = analyzer(
     'html_strip',
     tokenizer="standard",
     filter=["standard", "lowercase", "stop", "snowball", edge_ngram_completion_filter],
+    char_filter=["html_strip"]
+)
+html_strip_no_ngram = analyzer(
+    'html_strip_no_ngram',
+    tokenizer="standard",
+    filter=["standard", "lowercase", "stop", "snowball"],
     char_filter=["html_strip"]
 )
 standard = analyzer(
@@ -58,12 +65,12 @@ class ExperimentDocument(DocType):
         fields={'raw': fields.KeywordField()}
     )
     technology = fields.TextField(
-        analyzer=standard,
+        analyzer=html_strip_no_ngram,
         fielddata=True,
         fields={'raw': fields.KeywordField()}
     )
     organism_names = fields.TextField(
-        analyzer=html_strip,
+        analyzer=html_strip_no_ngram,
         fielddata=True,
         fields={'raw': fields.KeywordField()}
     )
@@ -88,6 +95,7 @@ class ExperimentDocument(DocType):
     pubmed_id = fields.TextField()
     num_total_samples = fields.IntegerField()
     num_processed_samples = fields.IntegerField()
+    source_first_published = fields.DateField()
 
     # FK/M2M
     # We actually don't use any ForeignKeys in our Experiment document,
