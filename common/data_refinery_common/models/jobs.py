@@ -199,7 +199,7 @@ class DownloaderJob(models.Model):
     # If the job was recreated because the data it downloaded got
     # lost, deleted, or corrupted then this field will be true.
     # This helps prevent an infinite loop of DownloaderJob recreation.
-    was_recreated = = models.BooleanField(default=False)
+    was_recreated = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
