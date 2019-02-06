@@ -57,9 +57,7 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
     archive_file = None
     for undownloaded_file in undownloaded_files:
         try:
-            original_downloader_job = DownloaderJobOriginalFileAssociation.objects.filter(
-                original_file=undownloaded_file
-            ).latest('id').downloader_job
+            original_downloader_job = undownloaded_file.downloader_jobs.latest('id')
 
             # Found the job so we don't need to keep going.
             break

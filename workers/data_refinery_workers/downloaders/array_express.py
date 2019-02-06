@@ -136,8 +136,8 @@ def download_array_express(job_id: int) -> None:
                 original_file.absolute_file_path = og_file['absolute_path']
                 original_file.filename = og_file['absolute_path'].split('/')[-1]
                 original_file.calculate_size()
-                original_file.save()
                 original_file.calculate_sha1()
+                original_file.save()
                 og_files.append(original_file)
             else:
                 # Clear out the files we don't actually need.
