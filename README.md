@@ -791,3 +791,4 @@ Once `doctoc` is installed the table of contents can be re-generated with: `doct
 ## License
 
 BSD 3-Clause License.
+
