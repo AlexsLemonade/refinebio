@@ -1,16 +1,13 @@
 # Turn warnings into errors because biocLite throws warnings instead
 # of error if it fails to install something.
 options(warn=2)
-options(repos=structure(c(CRAN="https://cloud.r-project.org")))
+options(repos=structure(c(CRAN="https://cran.revolutionanalytics.com")))
 options(Ncpus=parallel::detectCores())
-
-# Install dev packages
-install.packages("devtools")
 
 # Bioconductor packages, installed by devtools::install_url()
 
-# devtools::install_url() requires biocLite.R
-source('https://bioconductor.org/biocLite.R')
+# devtools::install_url() requires BiocInstaller
+install.packages('https://bioconductor.org/packages/3.6/bioc/src/contrib/BiocInstaller_1.28.0.tar.gz')
 
 # Helper function that installs a list of packages based on input URL
 install_with_url <- function(main_url, packages) {

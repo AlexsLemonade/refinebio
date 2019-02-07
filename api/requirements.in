@@ -1,9 +1,9 @@
 coverage
-django
+django>=2.1.5
 psycopg2-binary
 boto3
-requests
-python-nomad
+requests>=2.20.0
+python-nomad>=1.0.2
 djangorestframework
 djangorestframework-hstore
 django-cors-headers

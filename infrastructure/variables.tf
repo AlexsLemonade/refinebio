@@ -71,6 +71,10 @@ variable "running_in_cloud" {
   default = "True"
 }
 
+variable "log_level" {
+  default = "WARN"
+}
+
 variable "dockerhub_repo" {
   default = "ccdlstaging"
 }
@@ -115,8 +119,16 @@ variable "client_instance_type" {
   default = "m5.4xlarge"
 }
 
+variable "smasher_instance_type" {
+  default = "t3.xlarge"
+}
+
 variable "spot_price" {
-  default = "0.310"
+  default = "4.10"
+}
+
+variable "spot_fleet_capacity" {
+  default = "100"
 }
 
 variable "max_clients" {
@@ -149,11 +161,15 @@ variable "api_instance_type" {
 }
 
 variable "foreman_instance_type" {
-  default = "t2.micro"
+  default = "m5.large"
 }
 
 variable "volume_size_in_gb" {
   default = "9000"
+}
+
+variable "max_downloader_jobs_per_node" {
+  default = 8
 }
 
 variable "mailchimp_user" {
@@ -201,8 +217,14 @@ output "environment_variables" {
       value = "${var.database_hidden_port}"},
     {name = "DATABASE_TIMEOUT"
       value = "${var.database_timeout}"},
+    {name = "ELASTICSEARCH_HOST"
+      value = "${aws_elasticsearch_domain.es.endpoint}"},
+    {name = "ELASTICSEARCH_PORT"
+      value = "80"},
     {name = "RUNNING_IN_CLOUD"
       value = "${var.running_in_cloud}"},
+    {name = "LOG_LEVEL"
+      value = "${var.log_level}"},
     {name = "USE_S3"
       value = "${var.use_s3}"},
     {name = "RAVEN_DSN"
@@ -215,6 +237,8 @@ output "environment_variables" {
       value = "${aws_s3_bucket.data_refinery_results_bucket.id}"},
     {name = "S3_TRANSCRIPTOME_INDEX_BUCKET_NAME"
       value = "${aws_s3_bucket.data_refinery_transcriptome_index_bucket.id}"},
+    {name = "S3_COMPENDIA_BUCKET_NAME"
+      value = "${aws_s3_bucket.data_refinery_compendia_bucket.id}"},
     {name = "LOCAL_ROOT_DIR"
       value = "${var.local_root_dir}"},
     {name = "DOCKERHUB_REPO"
@@ -250,6 +274,8 @@ output "environment_variables" {
     {name = "MAILCHIMP_LIST_ID"
       value = "${var.mailchimp_list_id}"},
     {name = "MAX_CLIENTS"
-      value = "${var.max_clients}"}
+      value = "${var.max_clients}"},
+    {name = "MAX_DOWNLOADER_JOBS_PER_NODE"
+      value = "${var.max_downloader_jobs_per_node}"}
   ]
 }

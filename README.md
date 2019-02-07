@@ -4,6 +4,11 @@
 Refine.bio harmonizes petabytes of publicly available biological data into
 ready-to-use datasets for cancer researchers and AI/ML scientists.
 
+This README file is about building and running the refine.bio project source code.
+
+If you're interested in simply using the service, you should [go to the website](https://www.refine.bio) or
+[read the documentation](http://docs.refine.bio).
+
 Refine.bio currently has four sub-projects contained within this repo:
 - [common](./common) Contains code needed by both `foreman` and `workers`.
 - [foreman](./foreman) Discovers data to download/process and manages jobs.
@@ -20,14 +25,18 @@ Refine.bio currently has four sub-projects contained within this repo:
     - [Linux](#linux)
     - [Mac](#mac)
     - [Virtual Environment](#virtual-environment)
-    - [Common Dependecies](#common-dependecies)
     - [Services](#services)
-      - [Nomad](#nomad)
       - [Postgres](#postgres)
+      - [Nomad](#nomad)
+    - [Common Dependecies](#common-dependecies)
   - [Testing](#testing)
-  - [Development Helpers](#development-helpers)
+    - [API](#api)
+    - [Common](#common)
+    - [Foreman](#foreman)
+    - [Workers](#workers)
   - [Style](#style)
   - [Gotchas](#gotchas)
+    - [R](#r)
 - [Running Locally](#running-locally)
   - [Surveyor Jobs](#surveyor-jobs)
     - [Sequence Read Archive](#sequence-read-archive)
@@ -36,19 +45,17 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Processor Jobs](#processor-jobs)
   - [Creating Quantile Normalization Reference Targets](#creating-quantile-normalization-reference-targets)
   - [Checking on Local Jobs](#checking-on-local-jobs)
-  - [Testing](#testing-1)
-    - [API](#api)
-    - [Common](#common)
-    - [Foreman](#foreman)
-    - [Workers](#workers)
-  - [Development Helpers](#development-helpers-1)
-  - [Style](#style-1)
-- [Production Deployment](#production-deployment)
-  - [Terraform](#terraform)
+  - [Development Helpers](#development-helpers)
+- [Cloud Deployment](#cloud-deployment)
+  - [Docker Images](#docker-images)
   - [Autoscaling and Setting Spot Prices](#autoscaling-and-setting-spot-prices)
+  - [Terraform](#terraform)
   - [Running Jobs](#running-jobs)
   - [Log Consumption](#log-consumption)
+  - [Dumping and Restoring Database Backups](#dumping-and-restoring-database-backups)
+  - [Tearing Down](#tearing-down)
 - [Support](#support)
+- [Meta-README](#meta-readme)
 - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -76,18 +83,19 @@ unsupported by this project.
 #### Linux
 
 The following services will need to be installed:
-- [Python3 and Pip]: `sudo apt-get -y install python3-pip`
+- Python3 and Pip: `sudo apt-get -y install python3-pip`
 - [Docker](https://www.docker.com/community-edition): Be sure to follow the
 [post installation steps]
 (https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
 so Docker does not need sudo permissions.
 - [Terraform](https://www.terraform.io/)
 - [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./install_nomad.sh`.
+- [pip3](https://pip.pypa.io/en/stable/) can be installed on Linux clients with `sudo apt-get install python3-pip`
 - [git-crypt](https://www.agwa.name/projects/git-crypt/)
 - [jq](https://stedolan.github.io/jq/)
 - [iproute2](https://wiki.linuxfoundation.org/networking/iproute2)
 
-Instructions for installing Docker and Nomad can be found by
+Instructions for installing Docker, Terraform, and Nomad can be found by
 following the link for each service. git-crypt, jq, and iproute2 can be installed via
 `sudo apt-get install git-crypt jq iproute2`.
 
@@ -105,17 +113,18 @@ This sets pip to install all packages in your user directory so sudo is not requ
 #### Mac
 
 The following services will need to be installed:
+- [Homebrew](https://brew.sh/)
 - [Docker for Mac](https://www.docker.com/docker-mac)
 - [Terraform](https://www.terraform.io/)
-- [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries)
-- [Homebrew](https://brew.sh/)
+- [Nomad](https://www.nomad.io/)
 - [git-crypt](https://www.agwa.name/projects/git-crypt/)
 - [iproute2mac](https://github.com/brona/iproute2mac)
 - [jq](https://stedolan.github.io/jq/)
 
-Instructions for installing Docker, Nomad, and Homebrew can be found by
-following the link for those services. The others on that list can
-be installed by running: `brew install iproute2mac git-crypt terraform jq`.
+Instructions for installing [Docker](https://www.docker.com/docker-mac) and [Homebrew](https://brew.sh/) can be found by
+on their respective homepages.
+
+Once Homebrew is installed, the other required applications can be installed by running: `brew install iproute2mac git-crypt nomad terraform jq`.
 
 Many of the computational processes running are very memory intensive. You will need
 to [raise the amount of virtual memory available to
@@ -130,41 +139,11 @@ repo. Sub-projects each have their own environments managed by their
 containers. When returning to this project you should run
 `source dr_env/bin/activate` to reactivate the virtualenv.
 
-#### Common Dependecies
-
-The [common](./common) sub-project contains common code which is
-depended upon by the other sub-projects. So before anything else you
-should prepare the distribution directory `common/dist` with this
-command:
-
-```bash
-(cd common && python setup.py sdist)
-```
-
 #### Services
 
 `refinebio` also depends on Postgres and Nomad. Postgres can be
 run in a local Docker container, but Nomad must be run on your
 development machine.
-
-##### Nomad
-
-Similarly, you will need to run a local
-[Nomad](https://www.nomadproject.io/) service in development
-mode. Assuming you have followed the [installation instructions](#installation), you
-can do so with:
-
-```bash
-sudo -E ./run_nomad.sh
-```
-
-(_Note:_ This step may take some time because it downloads lots of files.)
-
-Nomad is an orchestration tool which Refine.bio uses to run
-`Downloader` and `Processor` jobs. Jobs are queued by sending a message to
-the Nomad agent, which will then launch a Docker container which runs
-the job. If address conflicts emerge, old Docker containers can be purged
-with `docker container prune -f`.
 
 ##### Postgres
 
@@ -180,21 +159,67 @@ Then, to initialize the database, run:
 ./common/install_db_docker.sh
 ```
 
-Finally, to make the migrations to the database, use:
-
-```bash
-./common/make_migrations.sh
-```
-
-Note: there is a small chance this might fail with a `can't stat`, error. If this happens, you have
-to manually change permissions on the volumes directory with `sudo chmod -R 740 volumes_postgres`
-then re-run the migrations.
-
 If you need to access a `psql` shell for inspecting the database, you can use:
 
 ```bash
 ./run_psql_shell.sh
 ```
+
+or if you have `psql` installed this command will give you a better shell experience:
+
+```
+source common.sh && PGPASSWORD=mysecretpassword psql -h $(get_docker_db_ip_address) -U postgres -d data_refinery
+```
+
+##### Nomad
+
+Similarly, you will need to run a local [Nomad](https://www.nomadproject.io/) service in development mode.
+
+However if you run Linux and you have followed the [installation instructions](#installation), you
+can run Nomad with:
+
+```bash
+sudo -E ./run_nomad.sh
+```
+
+(_Note:_ This step may take some time because it downloads lots of files.)
+
+Nomad is an orchestration tool which Refine.bio uses to run
+`Surveyor`, `Downloader`, `Processor` jobs. Jobs are queued by sending a message to
+the Nomad agent, which will then launch a Docker container which runs
+the job. If address conflicts emerge, old Docker containers can be purged
+with `docker container prune -f`.
+
+##### ElasticSearch
+
+One of the API endpoints is powered by ElasticSearch. ElasticSearch must be running for this functionality to work. A local ElasticSearch instance in a Docker container can be executed with:
+
+```bash
+./run_es.sh
+```
+
+And then the ES Indexes (akin to Postgres 'databases') can be created with:
+
+```bash
+./run_manage.sh search_index --rebuild -f;
+```
+
+#### Common Dependecies
+
+The [common](./common) sub-project contains common code which is
+depended upon by the other sub-projects. So before anything else you
+should prepare the distribution directory `common/dist` with this
+script:
+
+```bash
+./update_models.sh
+```
+
+(_Note:_ This step requires the postgres container to be running and initialized.)
+
+Note: there is a small chance this might fail with a `can't stat`, error. If this happens, you have
+to manually change permissions on the volumes directory with `sudo chmod -R 740 volumes_postgres`
+then re-run the migrations.
 
 ### Testing
 
@@ -212,20 +237,58 @@ To run the entire test suite:
 ./run_all_tests.sh
 ```
 
-(_Note:_ Running all the tests can take some time because it downloads a lot of files)
+(_Note:_ Running all the tests can take some time, especially the first time because it downloads a lot of files.)
 
 These tests will also be run continuosly for each commit via CircleCI.
 
-### Development Helpers
+For more granular testing, you can just run the tests for specific parts of the system.
 
-It can be useful to have an interactive Python interpreter running within the
-context of the Docker container. The `run_shell.sh` script has been provided
-for this purpose. It is in the top level directory so that if you wish to
-reference it in any integrations its location will be constant. However, it
-is configured by default for the Foreman project. The interpreter will
-have all the environment variables, dependencies, and Django configurations
-for the Foreman project. There are instructions within the script describing
-how to change this to another project.
+#### API
+To just run the API tests:
+
+```bash
+./api/run_tests.sh
+```
+
+#### Common
+To just run the common tests:
+
+```bash
+./common/run_tests.sh
+```
+
+#### Foreman
+To just run the foreman tests:
+
+```bash
+./foreman/run_tests.sh
+```
+
+#### Workers
+To just run the workers tests:
+
+```bash
+./workers/run_tests.sh
+```
+
+If you only want to run tests with a specific tag, you can do that too. For
+example, to run just the salmon tests:
+
+```bash
+./workers/run_tests.sh -t salmon
+```
+
+All of our worker tests are tagged, generally based on the Docker image required to run them.
+Possible values for worker test tags are:
+- affymetrix
+- agilent
+- downloaders
+- illumina
+- no_op
+- qn (short for quantile normalization)
+- salmon
+- smasher
+- transcriptome
 
 ### Style
 
@@ -246,13 +309,27 @@ linter.
 During development, you make encounter some occasional strangeness. Here's
 some things to watch out for:
 
-  - If builds are failing, increase the size of Docker's memory allocation.
+  - Since we use multiple Docker instances, don't forget to `./update_models`
+  - If builds are failing, increase the size of Docker's memory allocation. (Mac only.)
   - If Docker images are failing mysteriously during creation, it may
 be the result of Docker's `Docker.qcow2` or `Docker.raw` file filling. You
 can prune old images with `docker system prune -a`.
   - If it's killed abruptly, the containerized Postgres images can be
   left in an unrecoverable state. Annoying.
-  - Since we use multiple Docker instances, don't forget to `./update_models`
+
+#### R
+
+We have created some utilities to help us keep R stable, reliable, and from periodically causing build errors related to version incompatibilites.
+The primary goal of these is to pin the version for every R package that we have.
+The R package `devtools` is useful for this, but in order to be able to install a specific version of it, we've created the R script `common/install_devtools.R`.
+
+There is annother gotcha to be aware of should you ever need to modify versions of R or its packages.
+In Dockerfiles for images that need the R language, we install apt packages that look like `r-base-core=3.4.2-1xenial1`.
+It's unclear why the version for these is so weird, but it was determined by visiting the package list here: https://cran.revolutionanalytics.com/bin/linux/ubuntu/xenial/
+If it needs to be updated then a version should be selected from that list.
+
+Additionally there are two apt packages, r-base and r-base-core, which seem to be very similar except that r-base-core is slimmed down some by not including some additional packages.
+For a while we were using r-base, but we switched to r-base-core when we pinned the version of the R language because the r-base package caused an apt error.
 
 ## Running Locally
 
@@ -285,11 +362,41 @@ data repositories (e.g., Sequencing Read Archive,
 ./foreman/run_surveyor.sh survey_all --accession <ACCESSION_CODE>
 ```
 
+Example for a GEO experiment:
+
+```bash
+./foreman/run_surveyor.sh survey_all --accession GSE85217
+```
+
 Example for an ArrayExpress experiment:
 
 ```bash
-./foreman/run_surveyor.sh survey_all --accession E-MTAB-3050
+./foreman/run_surveyor.sh survey_all --accession E-MTAB-3050 # AFFY
+./foreman/run_surveyor.sh survey_all --accession E-GEOD-3303 # NO_OP
 ```
+
+Transcriptome indices are a bit special.
+For species within the "main" Ensembl division, the species name can be provided like so:
+
+```bash
+./foreman/run_surveyor.sh survey_all --accession "Homo sapiens"
+```
+
+However for species that are in other divisions, the division must follow the species name after a comma like so:
+
+```bash
+./foreman/run_surveyor.sh survey_all --accession "Caenorhabditis elegans, EnsemblMetazoa"
+```
+The possible divisions that can be specified are:
+* Ensembl (this is the "main" division and is the default)
+* EnsemblPlants
+* EnsemblFungi
+* EnsemblBacteria
+* EnsemblProtists
+* EnsemblMetazoa
+
+If you are unsure what division a species falls into, unfortunately the only way to tell is go to check ensembl.com.
+(Although googling the species name + "ensembl" may work pretty well.)
 
 You can also supply a newline-deliminated file to `survey_all` which will
 dispatch survey jobs based on accession codes like so:
@@ -297,6 +404,14 @@ dispatch survey jobs based on accession codes like so:
 ```bash
 ./foreman/run_surveyor.sh survey_all --file MY_BIG_LIST_OF_CODES.txt
 ```
+
+The main foreman job loop can be started with:
+
+```bash
+./foreman/run_surveyor.sh retry_jobs
+```
+
+This must actually be running for jobs to move forward through the pipeline.
 
 #### Sequence Read Archive
 
@@ -350,6 +465,12 @@ For example:
 ./workers/tester.sh run_downloader_job --job-name=SRA --job-id=12345
 ```
 
+or
+
+```bash
+./workers/tester.sh run_downloader_job --job-name=ARRAY_EXPRESS --job-id=1
+```
+
 Or for more information run:
 ```bash
 ./workers/tester.sh -h
@@ -370,6 +491,12 @@ For example
 ./workers/tester.sh -i affymetrix run_processor_job --job-name=AFFY_TO_PCL --job-id=54321
 ```
 
+or
+
+```bash
+./workers/tester.sh -i no_op run_processor_job --job-name=NO_OP --job-id=1
+```
+
 Or for more information run:
 ```bash
 ./workers/tester.sh -h
@@ -380,19 +507,8 @@ Or for more information run:
 If you want to quantile normalize combined outputs, you'll first need to create a reference target for a given organism. This can be done in a production environment with the following:
 
 ```bash
-docker run --env-file prod_env --volume /var/ebs/:/home/user/data_store -t ccdl/dr_smasher:latest python3 manage.py create_qn_target --organism DANIO_RERIO
+nomad job dispatch -meta ORGANISM=DANIO_RERIO CREATE_QN_TARGET
 ```
-
-Where the prod_env file has been temporarily copied to the host with:
-
-```bash
-scp -i data-refinery-key.pem prod_env ubuntu@<host_address>:/home/ubuntu/prod_env
-```
-
-However two keys in the prod_env file are incorrect.
-These are the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` values, which are named `AWS_ACCESS_KEY_ID_CLIENT` and `AWS_SECRET_ACCESS_KEY`_CLIENT.
-(This difference is introduced intentionally to avoid conflicting with the environment variables of the developer at deploy time.)
-Therefore, all that needs to be done is to delete the `_CLIENT` part of the keys.
 
 ### Checking on Local Jobs
 
@@ -457,53 +573,6 @@ nomad logs -verbose b30e4edd
 This command will output both the stderr and stdout logs from the container
 which ran that allocation. The allocation is really a Refine.bio job.
 
-### Testing
-
-To run the entire test suite:
-
-```bash
-./run_all_tests.sh
-```
-
-These tests will also be run continuosly for each commit via CircleCI.
-
-For more granular testing, you can just run the tests for specific parts of the system.
-
-#### API
-To just run the API tests:
-
-```bash
-./api/run_tests.sh
-```
-
-#### Common
-To just run the common tests:
-
-```bash
-./common/run_tests.sh
-```
-
-#### Foreman
-To just run the foreman tests:
-
-```bash
-./foreman/run_tests.sh
-```
-
-#### Workers
-To just run the workers tests:
-
-```bash
-./workers/run_tests.sh
-```
-
-If you only want to run tests with a specific tag, you can do that too. For
-example, to run just the salmon tests:
-
-```bash
-./workers/run_tests.sh -t salmon
-```
-
 
 ### Development Helpers
 
@@ -516,63 +585,55 @@ have all the environment variables, dependencies, and Django configurations
 for the Foreman project. There are instructions within the script describing
 how to change this to another project.
 
-### Style
-
-R files in this repo follow
-[Google's R Style Guide](https://google.github.io/styleguide/Rguide.xml).
-Python Files in this repo follow
-[PEP 8](https://www.python.org/dev/peps/pep-0008/). All files (including
-Python and R) have a line length limit of 100 characters.
-
-A `setup.cfg` file has been included in the root of this repo which specifies
-the line length limit for the autopep8 and flake8 linters. If you run either
-linter within the project's directory tree, it will enforce a line length limit
-of 100 instead of 80. This will also be true for editors which rely on either
-linter.
-
-## Production Deployment
+## Cloud Deployment
 
 Refine.bio requires an active, credentialed AWS account with appropriate permissions to create network infrastructure, users, compute instances and databases.
 
-### Terraform
+Deploys are automated to run via CirlceCI whenever a signed tag starting with a `v` is pushed to either the `dev` or `master` branches (v as in version, i.e. v1.0.0).
+Tags intended to trigger a staging deploy MUST end with `-dev`, i.e. `v1.0.0-dev`.
+CircleCI runs a deploy on a dedicated AWS instance so that the Docker cache can be preserved between runs.
+Instructions for setting up that instance can be found in the infrastructure/deploy_box_instance_data.sh script.
 
-Once you have Terraform installed and your AWS account credentials installed, you can plan your terraform deployment like so (from the `infrastructure` directory):
+To trigger a new deploy, first see what tags already exist with `git tag --list`
+We have two different version counters, one for `dev` and one for `master` so a list including things like:
+* v1.1.2
+* v1.1.2-dev
+* v1.1.3
+* v1.1.3-dev
 
+However you may see that the `dev` counter is way ahead, because we often need more than one staging deploy to be ready for a production deploy.
+This is okay, just find the latest version of the type you want to deploy and increment that to get your version.
+For example, if you wanted to deploy to staging and the above versions were the largest that `git tag --list` output, you would increment `v1.1.3-dev` to get `v1.1.4-dev`.
+
+Once you know which version you want to deploy, say `v1.1.4-dev`, you can trigger the deploy with these commands:
 ```bash
-TF_VAR_user=myusername TF_VAR_stage=dev TF_VAR_region=us-east-1 terraform plan
+git checkout dev
+git pull origin dev
+git tag -s v1.1.4-dev
+git push origin v1.1.4-dev
 ```
 
-If that worked fine, then to deploy:
+`git tag -s v1.1.4-dev` will prompt you to write a tag message; please try to make it descriptive.
 
-```bash
-TF_VAR_user=myusername TF_VAR_stage=dev TF_VAR_region=us-east-1 ./deploy.sh
-```
+We use semantic versioning for this project so the last number should correspond to bug fixes and patches, the second middle number should correspond to minor changes that don't break backwards compatibility, and the first number should correspond to major changes that break backwards compatibility.
+Please try to keep the `dev` and `master` versions in sync for major and minor versions so only the patch version gets out of sync between the two.
 
-This will spin up the whole system. It will usually take about 15 minutes, most of which is spent waiting for the Postgres instance to start.
+### Docker Images
 
-To see what's been created at any time, you can:
-```
-terraform state list
-```
+Refine.bio uses a number of different Docker images to run different pieces of the system.
+By default, refine.bio will pull images from the Dockerhub repo `ccdlstaging`.
+If you would like to use images you have built and pushed to Dockerhub yourself you can pass the `-d` option to the `deploy.sh` script.
 
-If you want to change a single entity in the state, you can use
+To make building and pushing your own images easier, the `update_my_docker_images.sh` has been provided.
+The `-d` option will allow you to specify which repo you'd like to push to.
+If the Dockerhub repo requires you to be logged in, you should do so before running the script using `docker login`.
+The -v option allows you to specify the version, which will both end up on the Docker images you're building as the SYSTEM_VERSION environment variable and also will be the docker tag for the image.
 
-```
-terraform taint <your-entity-from-state-list>; tf plan; tf apply;
-```
+`update_my_docker_images.sh` will not build the dr_affymetrix image, because this image requires a lot of resources and time to build.
+It can instead be built with `./prepare_image.sh -i affymetrix -d <YOUR_DOCKERHUB_REPO`.
+WARNING: The affymetrix image installs a lot of data-as-R-packages and needs a lot of disk space to build the image.
+It's not recommended to build the image with less than 60GB of free space on the disk that Docker runs on.
 
-To tear down the entire system:
-
-```
-terraform destroy
-```
-
-For convenience, a `deploy.sh` script is also provided, which will perform additional
-steps to configure (such as setting up Nomad job specifications and performing database migrations) and prepare the entire system. It can be used simply (from the `infrastructure` directory), like so:
-
-```
-./deploy.sh -e dev
-```
 
 ### Autoscaling and Setting Spot Prices
 
@@ -589,6 +650,37 @@ Then set your `TF_VAR_client_instance_type`, `TF_VAR_spot_price` and
 `TF_VAR_scale_up_threshold` and `TF_VAR_scale_down_threshold` define the queue
 lengths which trigger the scaling alarms, though you probably won't need to
 tweak these as much.
+
+
+### Terraform
+
+Once you have Terraform installed and your AWS account credentials installed, you're ready to deploy. The correct way to deploy to the cloud is by running the `deploy.sh` script. This script will perform additional
+configuration steps, such as setting environment variables, setting up Nomad job specifications, and performing database migrations. It can be used from the `infrastructure` directory like so:
+
+```bash
+./deploy.sh -u myusername -e dev -r us-east-1 -v v1.0.0 -d my-dockerhub-repo
+```
+
+This will spin up the whole system. It will usually take about 15 minutes, most of which is spent waiting for the Postgres instance to start.
+The command above would spin up a development stack in the `us-east-1` region where all the resources' names would end with `-myusername-dev`.
+All of the images used in that stack would come from `my-dockerhub-repo` and would be tagged with `v1.0.0`.
+
+The `-e` specifies the environment you would like to spin up. You may specify, `dev`, `staging`, or `prod`. `dev` is meant for individuals to test infrastructure changes or to run large tests. `staging` is to test the overall system before re-deploying to `prod`.
+
+
+To see what's been created at any time, you can:
+```
+terraform state list
+```
+
+If you want to change a single entity in the state, you can use
+
+```
+terraform taint <your-entity-from-state-list>
+```
+
+And then rerun `deploy.sh` with the same parameters you originally ran it with.
+
 
 ### Running Jobs
 
@@ -655,6 +747,34 @@ awslogs get data-refinery-log-group-myusername-dev log-stream-api-nginx-access-*
 
 will show all of the API access logs made by Nginx.
 
+### Dumping and Restoring Database Backups
+
+Automatic snapshots are created automatically by RDS. Manual database dumps can be created by priveledged users with [these instructions](https://gist.github.com/syafiqfaiz/5273cd41df6f08fdedeb96e12af70e3b). Postgres versions on the host (I suggest the PGBouncer instance) must match the RDS instance version:
+
+```bash
+sudo add-apt-repository "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -sc)-pgdg main"
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install postgresql-9.6
+```
+
+Archival dumps can also be provided upon request.
+
+Dumps can be restored locally by copying the `backup.sql` file to the `volumes_postgres` directory, then executing:
+
+```bash
+docker exec -it drdb /bin/bash
+psql --user postgres -d data_refinery -f /var/lib/postgresql/data/backup.sql
+```
+
+This can take a long time (>30 minutes)!
+
+### Tearing Down
+
+A stack that has been spun up via `deploy.sh -u myusername -e dev` can be taken down with `destroy_terraform.sh  -u myusername -e dev`.
+The same username and environment must be passed into `destroy_terraform.sh` as were used to run `deploy.sh` either via the -e and -u options or by specifying `TF_VAR_stage` or `TF_VAR_user` so that the script knows which to take down.
+Note that this will prompt you for confirmation before actually destroying all of your cloud resources.
+
 ## Support
 
 Refine.bio is supported by
@@ -662,6 +782,13 @@ Refine.bio is supported by
 with some initial development supported by the Gordon and Betty Moore
 Foundation via GBMF 4552 to Casey Greene.
 
+## Meta-README
+
+The table of contents for this README is generated using `doctoc`.
+`doctoc` can be installed with: `sudo npm install -g doctoc`
+Once `doctoc` is installed the table of contents can be re-generated with: `doctoc README.md`
+
 ## License
 
 BSD 3-Clause License.
+

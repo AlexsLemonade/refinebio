@@ -27,6 +27,8 @@ job "AFFY_TO_PCL_${{INDEX}}_${{RAM}}" {
     task "affy_to_pcl" {
       driver = "docker"
 
+      kill_timeout = "30s"
+
       # This env will be passed into the container for the job.
       env {
         ${{AWS_CREDS}}
@@ -50,8 +52,13 @@ job "AFFY_TO_PCL_${{INDEX}}_${{RAM}}" {
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
         EBS_INDEX = "${{INDEX}}"
 
+        ELASTICSEARCH_HOST = "${{ELASTICSEARCH_HOST}}"
+        ELASTICSEARCH_PORT = "${{ELASTICSEARCH_PORT}}"
+
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
+
+        LOG_LEVEL = "${{LOG_LEVEL}}"
       }
 
       # The resources the job will require.

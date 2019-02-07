@@ -1,11 +1,8 @@
 # Turn warnings into errors because biocLite throws warnings instead
 # of error if it fails to install something.
 options(warn=2)
-options(repos=structure(c(CRAN="https://cloud.r-project.org")))
+options(repos=structure(c(CRAN="https://cran.revolutionanalytics.com")))
 options(Ncpus=parallel::detectCores())
-
-# Install dev packages
-install.packages("devtools")
 
 # Use devtools::install_version() to install packages in cran.
 devtools::install_version('ff', version='2.2-13')
@@ -18,8 +15,8 @@ devtools::install_version('pkgconfig', version='2.0.1')
 
 # Bioconductor packages, installed by devtools::install_url()
 
-# devtools::install_url() requires biocLite.R
-source('https://bioconductor.org/biocLite.R')
+# devtools::install_url() requires BiocInstaller
+install.packages('https://bioconductor.org/packages/3.6/bioc/src/contrib/BiocInstaller_1.28.0.tar.gz')
 
 # Helper function that installs a list of packages based on input URL
 install_with_url <- function(main_url, packages) {
@@ -226,3 +223,7 @@ pd_annotation_pkgs <- c(
   'pd.zebrafish_3.12.0.tar.gz'
 )
 install_with_url(annotation_url, pd_annotation_pkgs)
+
+# Load this libraries because apparently just installing it isn't
+# enough to verify that the correct versions of dependencies are installed.
+library('foreach')

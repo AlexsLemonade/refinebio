@@ -1,5 +1,6 @@
 import json
 import random
+import time
 
 from django.contrib.auth.models import User
 from django.http import HttpResponseForbidden, HttpResponseServerError
@@ -13,6 +14,7 @@ from data_refinery_api.serializers import (
     DetailedSampleSerializer,
     ExperimentSerializer,
     InstitutionSerializer,
+    OrganismIndexSerializer,
     OrganismSerializer,
     PlatformSerializer,
     SampleSerializer,
@@ -24,8 +26,11 @@ from data_refinery_api.serializers import (
     SurveyJobSerializer,
 )
 from data_refinery_api.views import ExperimentList
+from data_refinery_common.utils import get_env_variable
 from data_refinery_common.models import (
     ComputationalResult,
+    ComputedFile,
+    ComputationalResultAnnotation,
     Dataset,
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -34,6 +39,7 @@ from data_refinery_common.models import (
     ExperimentOrganismAssociation,
     ExperimentSampleAssociation,
     Organism,
+    OrganismIndex,
     OriginalFile,
     OriginalFileSampleAssociation,
     Processor,
@@ -42,6 +48,9 @@ from data_refinery_common.models import (
     Sample,
     SampleAnnotation,
     SampleResultAssociation,
+)
+from data_refinery_common.models.documents import (
+    ExperimentDocument
 )
 
 class APITestCases(APITestCase):
@@ -52,7 +61,19 @@ class APITestCases(APITestCase):
         # self.user = User.objects.create(username="mike")
 
         experiment = Experiment()
+        experiment.accession_code = "GSE000"
+        experiment.title = "NONONONO"
+        experiment.description = "Boooooourns. Wasabi."
+        experiment.technology = "RNA-SEQ"
         experiment.save()
+
+        experiment = Experiment()
+        experiment.accession_code = "GSE123"
+        experiment.title = "Hey Ho Let's Go"
+        experiment.description = "This is a very exciting test experiment. Faygo soda. Blah blah blah."
+        experiment.technology = "MICROARRAY"
+        experiment.save()
+        self.experiment = experiment
 
         experiment_annotation = ExperimentAnnotation()
         experiment_annotation.data = {"hello": "world", "123": 456}
@@ -62,11 +83,13 @@ class APITestCases(APITestCase):
         sample = Sample()
         sample.title = "123"
         sample.accession_code = "123"
+        sample.is_processed = True
         sample.save()
 
         sample = Sample()
         sample.title = "789"
         sample.accession_code = "789"
+        sample.is_processed = True
         sample.save()
         self.sample = sample
 
@@ -122,9 +145,19 @@ class APITestCases(APITestCase):
 
         return
 
+    def tearDown(self):
+        """ Good bye """
+        Experiment.objects.all().delete()
+        ExperimentAnnotation.objects.all().delete()
+        Sample.objects.all().delete()
+        SampleAnnotation.objects.all().delete()
+        Sample.objects.all().delete()
+        SampleAnnotation.objects.all().delete()
+
     def test_all_endpoints(self):
         response = self.client.get(reverse('experiments'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['X-Source-Revision'], get_env_variable('SYSTEM_VERSION'))
 
         response = self.client.get(reverse('experiments'), kwargs={'page': 1})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -210,12 +243,77 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['results'][0]['title'], '123')
 
+    def test_fetching_experiment_samples(self):
+        response = self.client.get(reverse('samples'), {'experiment_accession_code': self.experiment.accession_code})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()['results']), 1)
+        self.assertEqual(response.json()['results'][0]['accession_code'], '789')
+
+        # Expect 404 if the experiment accession code isn't valid
+        response = self.client.get(reverse('samples'), {'experiment_accession_code': 'wrong-accession-code'})
+        self.assertEqual(response.status_code, 404)
+        
+    def test_compendia(self):
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
+        
+        result = ComputationalResult()
+        result.save()
+
+        hsc1 = ComputedFile()
+        hsc1.absolute_file_path = '/null/1.tsv'
+        hsc1.filename = '1.tsv'
+        hsc1.sha1 = "abc"
+        hsc1.size_in_bytes = 1
+        hsc1.is_smashable = False
+        hsc1.is_qn_target = False
+        hsc1.result = result
+        hsc1.is_compendia = True
+        hsc1.compendia_organism = homo_sapiens
+        hsc1.compendia_version = 1
+        hsc1.s3_bucket = "dr-compendia"
+        hsc1.s3_key = "hsc1.tsv"
+        hsc1.save()
+
+        hsc2 = ComputedFile()
+        hsc2.absolute_file_path = '/null/2.tsv'
+        hsc2.filename = '2.tsv'
+        hsc2.sha1 = "abc"
+        hsc2.size_in_bytes = 1
+        hsc2.is_smashable = False
+        hsc2.is_qn_target = False
+        hsc2.result = result
+        hsc2.is_compendia = True
+        hsc2.compendia_organism = homo_sapiens
+        hsc2.compendia_version = 2
+        hsc2.s3_bucket = "dr-compendia"
+        hsc2.s3_key = "hsc2.tsv"
+        hsc2.save()
+
+        drc1 = ComputedFile()
+        drc1.absolute_file_path = '/null/1.tsv'
+        drc1.filename = '1.tsv'
+        drc1.sha1 = "abc"
+        drc1.size_in_bytes = 1
+        drc1.is_smashable = False
+        drc1.is_qn_target = False
+        drc1.result = result
+        drc1.is_compendia = True
+        drc1.compendia_organism = danio_rerio
+        drc1.compendia_version = 1
+        drc1.s3_bucket = "dr-compendia"
+        drc1.s3_key = "drc2.tsv"
+        drc1.save()
+
+        response = self.client.get(reverse('compendia'))
+        self.assertEqual(3, len(response.json()))
 
     def test_search_and_filter(self):
 
         sample = Sample()
         sample.accession_code = "XXXXXXXXXXXXXXX"
         sample.is_processed = True
+        sample.technology = "RNA-SEQ"
         sample.save()
 
         # Our Docker image doesn't have the standard dict. >=[
@@ -261,6 +359,7 @@ class APITestCases(APITestCase):
         ex2.description = "SOWILLTHIS"
         ex2.technology = "RNA-SEQ"
         ex2.submitter_institution = "Funkytown"
+        ex2.has_publication = True
         experiments.append(ex2)
 
         ex3 = Experiment()
@@ -271,11 +370,33 @@ class APITestCases(APITestCase):
         ex3.submitter_institution = "Utopia"
         experiments.append(ex3)
 
+        # Use an E-GEOD-XXXX accession so we can test the E-GEOD -> GSE alternate accession.
+        ex4 = Experiment()
+        ex4.accession_code = "E-GEOD-1234"
+        ex4.title = "IGNORED"
+        ex4.description = "IGNORED"
+        ex4.technology = "MICROARRAY"
+        ex4.submitter_institution = "IGNORED"
+        # Bulk create won't call the save method.
+        ex4.save()
+
+        # Use an GSEXXX accession so we can test the GSE -> E-GEOD alternate accession.
+        ex5 = Experiment()
+        ex5.accession_code = "GSE5678"
+        ex5.title = "IGNORED"
+        ex5.description = "IGNORED"
+        ex5.technology = "RNA-SEQ"
+        ex5.submitter_institution = "IGNORED"
+        ex5.has_publication = True
+        # Bulk create won't call the save method.
+        ex5.save()
+
         sample1 = Sample()
         sample1.title = "1123"
         sample1.accession_code = "1123"
         sample1.platform_name = "AFFY"
         sample1.is_processed = True
+        sample1.technology = "RNA-SEQ"
         sample1.save()
 
         sample2 = Sample()
@@ -284,6 +405,7 @@ class APITestCases(APITestCase):
         sample2.platform_name = "ILLUMINA"
         sample2.organism = homo_sapiens
         sample2.is_processed = True
+        sample1.technology = "MICROARRAY"
         sample2.save()
 
         Experiment.objects.bulk_create(experiments)
@@ -294,6 +416,14 @@ class APITestCases(APITestCase):
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = ex3
+        experiment_sample_association.save()
+        experiment_sample_association = ExperimentSampleAssociation()
+        experiment_sample_association.sample = sample
+        experiment_sample_association.experiment = ex4
+        experiment_sample_association.save()
+        experiment_sample_association = ExperimentSampleAssociation()
+        experiment_sample_association.sample = sample
+        experiment_sample_association.experiment = ex5
         experiment_sample_association.save()
 
         xa = ExperimentAnnotation()
@@ -328,14 +458,19 @@ class APITestCases(APITestCase):
 
         # Test all
         response = self.client.get(reverse('search'))
-        self.assertEqual(response.json()['count'], LOTS + 2)
+        self.assertEqual(response.json()['count'], LOTS + 5)
 
         # Test search
         response = self.client.get(reverse('search'), {'search': 'THISWILLBEINASEARCHRESULT'})
         self.assertEqual(response.json()['count'], 3)
 
-        response = self.client.get(reverse('search'), {'search': 'TEMPURA'})
-        self.assertEqual(response.json()['count'], 1)
+        # Test filter
+        response = self.client.get(reverse('search'), {'search': 'FINDME', 'has_publication': True})
+        for result in response.json()['results']:
+            self.assertTrue(result['has_publication'])
+        response = self.client.get(reverse('search'), {'search': 'FINDME', 'has_publication': False})
+        for result in response.json()['results']:
+            self.assertFalse(result['has_publication'])
 
         # Test search and filter
         response = self.client.get(reverse('search'),
@@ -343,12 +478,22 @@ class APITestCases(APITestCase):
                                     'technology': 'MICROARRAY'})
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME_TEMPURA')
-        self.assertEqual(len(response.json()['results'][0]['platforms']), 2)
-        self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(ex.platforms))
-        self.assertEqual(sorted(response.json()['results'][0]['platforms']), sorted(['AFFY', 'ILLUMINA']))
+        # filter contain values for the top search query
         self.assertEqual(response.json()['filters']['technology'], {'FAKE-TECH': 1, 'MICROARRAY': 2, 'RNA-SEQ': 1})
-        self.assertEqual(response.json()['filters']['publication'], {})
+        self.assertEqual(response.json()['filters']['publication'], {'has_publication': 1})
         self.assertEqual(response.json()['filters']['organism'], {'Extra-Terrestrial-1982': 1, 'HOMO_SAPIENS': 3})
+
+        # Test search and interactive filtering
+        response = self.client.get(reverse('search'),
+                                   {'search': 'THISWILLBEINASEARCHRESULT',
+                                    'technology': 'MICROARRAY',
+                                    'filter_order': 'technology'})
+        self.assertEqual(response.json()['count'], 1)
+        self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME_TEMPURA')
+        self.assertEqual(response.json()['filters']['technology'], {'FAKE-TECH': 1, 'MICROARRAY': 2, 'RNA-SEQ': 1})
+        self.assertEqual(response.json()['filters']['publication'], {}) # FINDME_TEMPURA is the only result and doesn't have any publication
+        # organism filter number should reflect the single result: two samples HOMO_SAPIENS
+        self.assertEqual(response.json()['filters']['organism'], {'HOMO_SAPIENS': 2})
 
         response = self.client.get(reverse('search'),
                                    {'search': 'THISWILLBEINASEARCHRESULT',
@@ -363,7 +508,58 @@ class APITestCases(APITestCase):
         # This has to be done manually due to dicts requring distinct keys
         response = self.client.get(reverse('search') + "?search=THISWILLBEINASEARCHRESULT&technology=MICROARRAY&technology=FAKE-TECH")
         self.assertEqual(response.json()['count'], 2)
-        self.assertEqual(response.json()['results'][0]['processed_samples'], ['1123', '3345'])
+
+        # Test ordering
+        response = self.client.get(reverse('search') + "?search=SEARCH&ordering=id")
+        response2 = self.client.get(reverse('search') + "?search=SEARCH&ordering=-id")
+        self.assertNotEqual(response.json()['results'][0]['id'], response2.json()['results'][0]['id'])
+        self.assertTrue(response2.json()['results'][0]['id'] > response.json()['results'][0]['id'])
+
+        # Test Searching on Alternate Accession Codes
+        response = self.client.get(reverse('search'), {'search': 'GSE1234'})
+        self.assertEqual(response.json()['count'], 1)
+        self.assertEqual(response.json()['results'][0]['accession_code'], "E-GEOD-1234")
+
+        response = self.client.get(reverse('search'), {'search': 'E-GEOD-5678'})
+        self.assertEqual(response.json()['count'], 1)
+        self.assertEqual(response.json()['results'][0]['accession_code'], "GSE5678")
+
+        cr = ComputationalResult()
+        cr.save()
+
+        cra = ComputationalResultAnnotation()
+        cra.result = cr
+        cra.data = {"organism": "Ailuropoda melanoleuca"}
+        cra.save()
+
+        qni = ComputedFile()
+        qni.is_qn_target = True
+        qni.s3_bucket = "fake_qni_bucket"
+        qni.s3_key = "zazaza_homo_sapiens_1234.tsv"
+        qni.filename = "homo_sapiens_1234.tsv"
+        qni.is_public = True
+        qni.size_in_bytes = 56789
+        qni.sha1 = "c0a88d0bb020dadee3b707e647f7290368c235ba"
+        qni.result = cr
+        qni.save()
+
+        qni = ComputedFile()
+        qni.is_qn_target = False
+        qni.s3_bucket = "X"
+        qni.s3_key = "X.tsv"
+        qni.filename = "XXXXXXXXXXXXXXX.tsv"
+        qni.is_public = True
+        qni.size_in_bytes = 1
+        qni.sha1 = "123"
+        qni.result = cr
+        qni.save()
+
+        response = self.client.get(reverse('qn-targets'))
+        self.assertEqual(len(response.json()), 1)
+        self.assertEqual(response.json()[0]['s3_url'], 'https://s3.amazonaws.com/fake_qni_bucket/zazaza_homo_sapiens_1234.tsv')
+
+        response = self.client.get(reverse('computed-files'))
+        self.assertEqual(len(response.json()), 2)
 
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
@@ -404,6 +600,17 @@ class APITestCases(APITestCase):
                                     content_type="application/json")
 
         self.assertEqual(response.status_code, 400)
+
+        # Update, just an experiment accession
+        jdata = json.dumps({'data': {"GSE123": ["ALL"]}})
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id}),
+                                   jdata,
+                                   content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['id'], good_id)
+        # We are not entirely RESTful here, that's okay.
+        self.assertNotEqual(response.json()['data'], json.loads(jdata)['data'])
+        self.assertEqual(response.json()['data']["GSE123"], ["789"])
 
         # Update
         jdata = json.dumps({'data': {"A": ["C"]}})
@@ -486,7 +693,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.json()['count'], 1)
 
         qs = Experiment.processed_public_objects
-        self.assertEqual(experiment.get_processed_samples().count(), 1)
+        self.assertEqual(len(experiment.processed_samples), 1)
 
         experiment.delete()
         sample.delete()
@@ -496,8 +703,11 @@ class APITestCases(APITestCase):
         """ Test the dataset stats endpoint """
 
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        time.sleep(30)
         gallus_gallus = Organism.get_object_for_name("GALLUS_GALLUS")
+        time.sleep(30)
         equus_ferus = Organism.get_object_for_name("EQUUS_FERUS")
+        time.sleep(30)
 
         ex = Experiment()
         ex.accession_code = "XYZ123"
@@ -635,6 +845,122 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 500)
         mock_client.captureMessage.assert_called()
 
+class ESTestCases(APITestCase):
+
+    def test_es_endpoint(self):
+        """ Test basic ES functionality 
+
+        This is pretty tricky because ES doesn't know that we're creating
+        test objects.
+        """
+
+        # First, we purge.
+        Experiment.objects.all().delete()
+
+        experiment = Experiment()
+        experiment.accession_code = "GSE000-X"
+        experiment.title = "NONONONO"
+        experiment.description = "Boooooourns. Wasabi."
+        experiment.technology = "RNA-SEQ"
+        experiment.save()
+
+        experiment = Experiment()
+        experiment.accession_code = "GSE123-X"
+        experiment.title = "Hey Ho Let's Go"
+        experiment.description = "This is a very exciting test experiment. Faygo soda. Blah blah blah."
+        experiment.technology = "MICROARRAY"
+        experiment.save()
+        self.experiment = experiment
+
+        experiment_annotation = ExperimentAnnotation()
+        experiment_annotation.data = {"hello": "world", "123": 456}
+        experiment_annotation.experiment = experiment
+        experiment_annotation.save()
+
+        sample = Sample()
+        sample.title = "123"
+        sample.accession_code = "123"
+        sample.save()
+
+        sample = Sample()
+        sample.title = "789"
+        sample.accession_code = "789"
+        sample.save()
+        self.sample = sample
+
+        sample_annotation = SampleAnnotation()
+        sample_annotation.data = {"goodbye": "world", "789": 123}
+        sample_annotation.sample = sample
+        sample_annotation.save()
+
+        original_file = OriginalFile()
+        original_file.save()
+
+        original_file_sample_association = OriginalFileSampleAssociation()
+        original_file_sample_association.sample = sample
+        original_file_sample_association.original_file = original_file
+        original_file_sample_association.save()
+
+        downloader_job = DownloaderJob()
+        downloader_job.save()
+
+        download_assoc = DownloaderJobOriginalFileAssociation()
+        download_assoc.original_file = original_file
+        download_assoc.downloader_job = downloader_job
+        download_assoc.save()
+
+        processor_job = ProcessorJob()
+        processor_job.save()
+
+        processor_assoc = ProcessorJobOriginalFileAssociation()
+        processor_assoc.original_file = original_file
+        processor_assoc.processor_job = processor_job
+        processor_assoc.save()
+
+        experiment_sample_association = ExperimentSampleAssociation()
+        experiment_sample_association.sample = sample
+        experiment_sample_association.experiment = experiment
+        experiment_sample_association.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        # TODO: Use `reverse` when not using the DefaultRouter
+        response = self.client.get('/es/')
+
+        """ Test basic ES functionality """
+        es_search_result = ExperimentDocument.search().filter("term", description="soda")
+        es_search_result_qs = es_search_result.to_queryset()
+        self.assertEqual(len(es_search_result_qs), 1)
+
+        # Sanity
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 2)
+
+        # Basic Search
+        response = self.client.get('/es/?search=soda')
+        self.assertEqual(response.json()['count'], 1)
+
+        # Positive filter result
+        response = self.client.get('/es/?search=soda&technology=microarray')
+        self.assertEqual(response.json()['count'], 1)
+
+        # Negative filter result
+        response = self.client.get('/es/?search=soda&technology=rna')
+        self.assertEqual(response.json()['count'], 0)
 
 class ProcessorTestCases(APITestCase):
     def setUp(self):
@@ -694,15 +1020,26 @@ class ProcessorTestCases(APITestCase):
         self.assertEqual(processors[1]['environment']['cmd_line']['salmontools --version'],
                          'Salmon Tools 0.1.0')
 
-    def test_processor_in_sample(self):
+    def test_processor_and_organism_in_sample(self):
         sample = Sample.objects.create(title="fake sample")
-        result = ComputationalResult.objects.create(processor=self.salmon_quant_proc)
+        organism = Organism.get_object_for_name("HOMO_SAPIENS")
+        transcriptome_result = ComputationalResult.objects.create()
+        organism_index = OrganismIndex.objects.create(organism=organism,
+                                                      result=transcriptome_result,
+                                                      index_type="TRANSCRIPTOME_LONG")
+        result = ComputationalResult.objects.create(processor=self.salmon_quant_proc,
+                                                    organism_index=organism_index)
         sra = SampleResultAssociation.objects.create(sample=sample, result=result)
 
         response = self.client.get(reverse('samples_detail',
                                            kwargs={'pk': sample.id}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
         processor = response.json()['results'][0]['processor']
         self.assertEqual(processor['name'], self.salmon_quant_proc.name)
         self.assertEqual(processor['environment']['os_pkg']['python3'],
                          self.salmon_quant_proc.environment['os_pkg']['python3'])
+
+        organism_index = response.json()['results'][0]['organism_index']
+        self.assertEqual(organism_index["result"], transcriptome_result.id)
+        self.assertEqual(organism_index["index_type"], "TRANSCRIPTOME_LONG")

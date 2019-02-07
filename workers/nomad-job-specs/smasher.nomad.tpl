@@ -27,6 +27,8 @@ job "SMASHER" {
     task "smasher" {
       driver = "docker"
 
+      kill_timeout = "30s"
+
       # This env will be passed into the container for the job.
       env {
         ${{AWS_CREDS}}
@@ -51,8 +53,13 @@ job "SMASHER" {
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
         EBS_INDEX = "${{INDEX}}"
 
+        ELASTICSEARCH_HOST = "${{ELASTICSEARCH_HOST}}"
+        ELASTICSEARCH_PORT = "${{ELASTICSEARCH_PORT}}"
+
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
+
+        LOG_LEVEL = "${{LOG_LEVEL}}"
       }
 
       # The resources the job will require.
@@ -60,13 +67,15 @@ job "SMASHER" {
         # CPU is in AWS's CPU units.
         cpu = 1024
         # Memory is in MB of RAM.
-        memory = 4096
+        memory = 12288
       }
 
       logs {
         max_files = 1
         max_file_size = 1
       }
+
+      ${{SMASHER_CONSTRAINT}}
 
       config {
         image = "${{DOCKERHUB_REPO}}/${{SMASHER_DOCKER_IMAGE}}"

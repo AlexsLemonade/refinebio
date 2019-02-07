@@ -42,13 +42,18 @@ job "SURVEYOR_DISPATCHER" {
         RAVEN_DSN="${{RAVEN_DSN}}"
         RAVEN_DSN_API="${{RAVEN_DSN_API}}"
 
-        RUNNING_IN_CLOUD = "False"
+        RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
 
         USE_S3 = "${{USE_S3}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
+
+        ELASTICSEARCH_HOST = "${{ELASTICSEARCH_HOST}}"
+        ELASTICSEARCH_PORT = "${{ELASTICSEARCH_PORT}}"
+
+        LOG_LEVEL = "${{LOG_LEVEL}}"
       }
 
       # The resources the job will require.
@@ -62,6 +67,13 @@ job "SURVEYOR_DISPATCHER" {
       logs {
         max_files = 1
         max_file_size = 1
+      }
+
+      # Don't run on the smasher instance, it's too small and should be running smasher jobs.
+      constraint {
+        attribute = "${meta.is_smasher}"
+        operator = "!="
+        value = "true"
       }
 
       config {

@@ -22,16 +22,19 @@ print_options() {
     echo "                     path to another directory (trailing / must be included)."
 }
 
-while getopts ":p:e:o:h" opt; do
+while getopts ":p:e:o:v:h" opt; do
     case $opt in
     p)
-        project=$OPTARG
+        export project=$OPTARG
         ;;
     e)
-        env=$OPTARG
+        export env=$OPTARG
         ;;
     o)
-        output_dir=$OPTARG
+        export output_dir=$OPTARG
+        ;;
+    v)
+        export system_version=$OPTARG
         ;;
     h)
         print_description
@@ -53,7 +56,7 @@ while getopts ":p:e:o:h" opt; do
 done
 
 if [[ $project != "workers" && $project != "surveyor" && $project != "foreman" && $project != "api" ]]; then
-    echo 'Error: must specify project as either "api", "workers", or "foreman" with -p.'
+    echo 'Error: must specify project as either "api", "workers", "surveyor", or "foreman" with -p.'
     exit 1
 fi
 
@@ -63,6 +66,10 @@ fi
 
 if [[ -z $MAX_CLIENTS ]]; then
     MAX_CLIENTS="1"
+fi
+
+if [[ -z $system_version ]]; then
+    system_version="latest"
 fi
 
 # Default docker repo.
@@ -78,28 +85,31 @@ if [[ -z $DOCKERHUB_REPO ]]; then
     fi
 fi
 if [[ -z $FOREMAN_DOCKER_IMAGE ]]; then
-    export FOREMAN_DOCKER_IMAGE=dr_foreman:latest
+    export FOREMAN_DOCKER_IMAGE=dr_foreman:$system_version
 fi
 if [[ -z $DOWNLOADERS_DOCKER_IMAGE ]]; then
-    export DOWNLOADERS_DOCKER_IMAGE=dr_downloaders:latest
+    export DOWNLOADERS_DOCKER_IMAGE=dr_downloaders:$system_version
 fi
 if [[ -z $TRANSCRIPTOME_DOCKER_IMAGE ]]; then
-    export TRANSCRIPTOME_DOCKER_IMAGE=dr_transcriptome:latest
+    export TRANSCRIPTOME_DOCKER_IMAGE=dr_transcriptome:$system_version
 fi
 if [[ -z $SALMON_DOCKER_IMAGE ]]; then
-    export SALMON_DOCKER_IMAGE=dr_salmon:latest
+    export SALMON_DOCKER_IMAGE=dr_salmon:$system_version
 fi
 if [[ -z $SMASHER_DOCKER_IMAGE ]]; then
-    export SMASHER_DOCKER_IMAGE=dr_smasher:latest
+    export SMASHER_DOCKER_IMAGE=dr_smasher:$system_version
 fi
 if [[ -z $AFFYMETRIX_DOCKER_IMAGE ]]; then
-    export AFFYMETRIX_DOCKER_IMAGE=dr_affymetrix:latest
+    export AFFYMETRIX_DOCKER_IMAGE=dr_affymetrix:$system_version
 fi
 if [[ -z $ILLUMINA_DOCKER_IMAGE ]]; then
-    export ILLUMINA_DOCKER_IMAGE=dr_illumina:latest
+    export ILLUMINA_DOCKER_IMAGE=dr_illumina:$system_version
 fi
 if [[ -z $NO_OP_DOCKER_IMAGE ]]; then
-    export NO_OP_DOCKER_IMAGE=dr_no_op:latest
+    export NO_OP_DOCKER_IMAGE=dr_no_op:$system_version
+fi
+if [[ -z $COMPENDIA_DOCKER_IMAGE ]]; then
+    export COMPENDIA_DOCKER_IMAGE=dr_compendia:$system_version
 fi
 
 
@@ -146,7 +156,9 @@ if [[ $env != "prod" && $env != "staging" && $env != "dev" ]]; then
         extra_hosts = [\"database:$DB_HOST_IP\",
                        \"nomad:$NOMAD_HOST_IP\"]
 "
-    export AWS_CREDS=""
+    export AWS_CREDS="
+    AWS_ACCESS_KEY_ID = \"$AWS_ACCESS_KEY_ID\"
+    AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY\""
     export LOGGING_CONFIG=""
     environment_file="environments/$env"
 else
@@ -196,8 +208,18 @@ export_log_conf (){
             awslogs-stream = \"log-stream-$1-docker-$USER-$STAGE\"
           }
         }"
+
+        # Only constrain smasher jobs in the cloud so that
+        # local/test can still run smasher jobs.
+        export SMASHER_CONSTRAINT="
+        constraint {
+          attribute = \"\${meta.is_smasher}\"
+          operator = \"=\"
+          value = \"true\"
+        }"
     else
         export LOGGING_CONFIG=""
+        export SMASHER_CONSTRAINT=""
     fi
 }
 
@@ -217,7 +239,7 @@ if [[ $project == "workers" ]]; then
                        > "$output_dir/$output_file$TEST_POSTFIX" \
                        2> /dev/null
             echo "Made $output_dir/$output_file$TEST_POSTFIX"
-        elif [ $output_file == "smasher.nomad" ]; then
+        elif [ $output_file == "smasher.nomad" ] || [ $output_file == "create_qn_target.nomad" ] || [ $output_file == "create_compendia.nomad" ]; then
             export_log_conf "processor"
             cat nomad-job-specs/$template \
                 | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
@@ -227,7 +249,7 @@ if [[ $project == "workers" ]]; then
         else
             export_log_conf "processor"
             # rams=(1024 2048 3072 4096 5120 6144 7168 8192 9216 10240 11264 12288 13312)
-            rams=(2048 3072 4096 8192 12288)
+            rams=(2048 3072 4096 8192 12288 16384 32768)
             for r in "${rams[@]}"
             do
                 for ((j=0; j<MAX_CLIENTS; j++));
@@ -244,20 +266,38 @@ if [[ $project == "workers" ]]; then
                 done
             done
         fi
-
     done
 elif [[ $project == "surveyor" ]]; then
-    # surveyor sub-project
-    export_log_conf "surveyor"
-    cat nomad-job-specs/surveyor.nomad.tpl \
-        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"/surveyor.nomad"$TEST_POSTFIX" \
-               2> /dev/null
 
-    cat nomad-job-specs/surveyor_dispatcher.nomad.tpl \
-        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"/surveyor_dispatcher.nomad"$TEST_POSTFIX" \
-               2> /dev/null
+    # Iterate over all the template files in the directory.
+    for template in $(ls -1 nomad-job-specs | grep \.tpl); do
+        # Strip off the trailing .tpl for once we've formatted it.
+        output_file=${template/.tpl/}
+
+        # Downloader logs go to a separate log stream.
+        if [ $output_file == "surveyor_dispatcher.nomad" ]; then
+            export_log_conf "surveyor_dispatcher"
+            cat nomad-job-specs/$template \
+                | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                       > "$output_dir/$output_file$TEST_POSTFIX" \
+                       2> /dev/null
+            echo "Made $output_dir/$output_file$TEST_POSTFIX"
+        else
+            export_log_conf "surveyor"
+            rams=(256 4096 16384)
+            for r in "${rams[@]}"
+            do
+                export RAM_POSTFIX="_$r.nomad"
+                export RAM="$r"
+                cat nomad-job-specs/$template \
+                    | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                           > "$output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX" \
+                           2> /dev/null
+                echo "Made $output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX"
+            done
+        fi
+    done
+
 elif [[ $project == "foreman" ]]; then
     # foreman sub-project
     export_log_conf "foreman"

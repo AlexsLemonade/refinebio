@@ -6,19 +6,15 @@ jobs:
     working_directory: ~/refinebio
     machine:
       docker_layer_caching: true
-      pre:
-        - sudo rm -rf /usr/local/android-sdk-linux
-        - sudo rm -rf /usr/local/go
-        - sudo rm -rf /usr/local/android-ndk
-        - sudo rm -rf /home/ubuntu/nvm
-        - sudo rm -rf /home/ubuntu/.android
-        - sudo rm -rf /home/ubuntu/.phpenv
-        - sudo rm -rf /home/ubuntu/.rvm
     steps:
       - checkout
 
+      # Clean up stuff circle provides that we don't need.
+      - run: sudo ./.circleci/cleanup_instance.sh
+
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
+      - run: ./run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
@@ -28,6 +24,9 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
+      # Update ES models
+      - run: ./run_manage.sh search_index --rebuild -f;
+
         # Install Nomad
       - run: sudo ./install_nomad.sh
 
@@ -36,8 +35,9 @@ jobs:
           command: sudo -E ./run_nomad.sh -e test
 
       - run: ./prepare_image.sh -i no_op -s workers -d localhost:5000
+      - run: docker push localhost:5000/dr_no_op
       - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
-      - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
+      - run: docker push localhost:5000/dr_downloaders
 
       # Run Downloader Tests
       # Running these in the same job as the common tests is good
@@ -45,46 +45,41 @@ jobs:
       # build time is saved by only building those layers once.
       - run:
           command: .circleci/filter_tests.sh -t downloaders
-          no_output_timeout: 36000
+          no_output_timeout: 1h
 
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
-      - run: ./foreman/run_tests.sh
 
-     # Run NO_OP tests
+      # The foreman includes the end-to-end tests, but some of these
+      # require docker images which are not built in this
+      # workflow. Therefore we exclude salmon and transcriptome and
+      # let those end-to-end tests get run in the workflows that
+      # include building those images.
+      - run: ./foreman/run_tests.sh --exclude-tag=salmon --exclude-tag=transcriptome
+
+      # Run NO_OP tests
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run: .circleci/filter_tests.sh -t no_op
-
-      # Run Smasher tests.
-      - run: sudo chown -R circleci:circleci workers/test_volume/
-      - run:
-          command: .circleci/filter_tests.sh -t smasher
-          # Smashing can apparently take a long time on CI
-          no_output_timeout: 36000
 
       # Run QN tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run:
           command: .circleci/filter_tests.sh -t qn
-          no_output_timeout: 36000
+          no_output_timeout: 1h
 
-  # This tests workers tests tagged as 'affymetrix' or 'agilient' since they share the same image
-  affymetrix_common_agilent_tests:
+  common_smasher_tests:
     working_directory: ~/refinebio
     machine:
-      pre:
-        - sudo rm -rf /usr/local/android-sdk-linux
-        - sudo rm -rf /usr/local/go
-        - sudo rm -rf /usr/local/android-ndk
-        - sudo rm -rf /home/ubuntu/nvm
-        - sudo rm -rf /home/ubuntu/.android
-        - sudo rm -rf /home/ubuntu/.phpenv
-        - sudo rm -rf /home/ubuntu/.rvm
+      docker_layer_caching: true
     steps:
       - checkout
 
+      # Clean up stuff circle provides that we don't need.
+      - run: sudo ./.circleci/cleanup_instance.sh
+
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
+      - run: ./run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
@@ -97,36 +92,42 @@ jobs:
       # Run Common Tests.
       - run: ./common/run_tests.sh
 
-      - run:
-          command: .circleci/filter_tests.sh -t affymetrix
-          # This takes a while because the affymetrix image is huge
-          no_output_timeout: 36000
+      - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
 
-      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
-      # from making sure all the files in workers/test_volume have read/write permissions.
+      # Run Smasher tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run:
+          command: .circleci/filter_tests.sh -t smasher
+          # Smashing can apparently take a long time on CI
+          no_output_timeout: 1h
 
-      # This doesn't take as long because the image has already been pulled.
-      - run: .circleci/filter_tests.sh -t agilent
+      # Run Janitor tests.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run:
+          command: .circleci/filter_tests.sh -t janitor
+          no_output_timeout: 1h
+
+      # Run Compendia tests.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run:
+          command: .circleci/filter_tests.sh -t compendia
+          no_output_timeout: 1h
+
 
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
     working_directory: ~/refinebio
     machine:
       docker_layer_caching: true
-      pre:
-        - sudo rm -rf /usr/local/android-sdk-linux
-        - sudo rm -rf /usr/local/go
-        - sudo rm -rf /usr/local/android-ndk
-        - sudo rm -rf /home/ubuntu/nvm
-        - sudo rm -rf /home/ubuntu/.android
-        - sudo rm -rf /home/ubuntu/.phpenv
-        - sudo rm -rf /home/ubuntu/.rvm
     steps:
       - checkout
 
+      # Clean up stuff circle provides that we don't need.
+      - run: sudo ./.circleci/cleanup_instance.sh
+
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
+      - run: ./run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
@@ -136,6 +137,9 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
+      # Update ES models
+      - run: ./run_manage.sh search_index --rebuild -f;
+
       # Run API Tests.
       - run: ./api/run_tests.sh
 
@@ -143,25 +147,19 @@ jobs:
           command: .circleci/filter_tests.sh -t salmon
           no_output_timeout: 1h
 
-  # This tests workers tests tagged as 'transcriptome' and 'downloaders'
-  # These are grouped together because together they take less time than affy or salmon.
-  transcriptome_and_illumina_tests:
+  tx_illumina_tests:
     working_directory: ~/refinebio
     machine:
       docker_layer_caching: true
-      pre:
-        - sudo rm -rf /usr/local/android-sdk-linux
-        - sudo rm -rf /usr/local/go
-        - sudo rm -rf /usr/local/android-ndk
-        - sudo rm -rf /home/ubuntu/nvm
-        - sudo rm -rf /home/ubuntu/.android
-        - sudo rm -rf /home/ubuntu/.phpenv
-        - sudo rm -rf /home/ubuntu/.rvm
     steps:
       - checkout
 
+      # Clean up stuff circle provides that we don't need.
+      - run: sudo ./.circleci/cleanup_instance.sh
+
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
+      - run: ./run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
@@ -181,24 +179,60 @@ jobs:
       # Run Illumina tests.
       - run: .circleci/filter_tests.sh -t illumina
 
+      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
+      # from making sure all the files in workers/test_volume have read/write permissions.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
 
-  deploy:
-    machine:
-      pre:
-        - sudo rm -rf /usr/local/android-sdk-linux
-        - sudo rm -rf /usr/local/go
-        - sudo rm -rf /usr/local/android-ndk
-        - sudo rm -rf /home/ubuntu/nvm
-        - sudo rm -rf /home/ubuntu/.android
-        - sudo rm -rf /home/ubuntu/.phpenv
-        - sudo rm -rf /home/ubuntu/.rvm
+      # We've been running out of space while downloading the Affy
+      # image, so clear out other images to ensure enough space for it.
+      - run: docker rm $(docker ps -qa --no-trunc --filter "status=exited") || true
+      - run: docker image rm ccdlstaging/dr_transcriptome
+      - run: docker image rm ccdlstaging/dr_illumina
+
+  affy_agilent_tests:
+    machine: true
     working_directory: ~/refinebio
     steps:
       - checkout
-      - run: bash .circleci/git_decrypt.sh
-      - run: bash .circleci/update_docker_img.sh
-      - run: bash .circleci/run_terraform.sh
-      - run: bash .circleci/slackpost.sh robots deploybot
+
+      # Clean up stuff circle provides that we don't need.
+      - run: sudo ./.circleci/cleanup_instance.sh
+
+      # Setup Postgres in a Container
+      - run: ./run_postgres.sh
+      - run: ./run_es.sh
+      # Let Postgres start up.
+      - run: sleep 30
+      # Finish setting up Postgres now that it's running.
+      - run: ./common/install_db_docker.sh
+
+      # Install our application. Provides the data_refinery_common package for the other images.
+      - run: chmod -R a+wr common
+      - run: ./update_models.sh
+
+      - run:
+          command: .circleci/filter_tests.sh -t affymetrix
+          # This takes a while because the affymetrix image is huge
+          no_output_timeout: 1h
+
+      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
+      # from making sure all the files in workers/test_volume have read/write permissions.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+
+      # This doesn't take as long because the image has already been pulled.
+      - run: .circleci/filter_tests.sh -t agilent
+
+  deploy:
+    machine: true
+    working_directory: ~/refinebio
+    steps:
+      - checkout
+      - run: ./.circleci/install_git_decrypt.sh
+      - run: ./.circleci/git_decrypt.sh
+      - run:
+          command: ./.circleci/remote_deploy.sh
+          no_output_timeout: 4h # Building images and createing postgres instances can take a while.
+      - run: ./.circleci/slackpost.sh robots deploybot
 
 workflows:
   version: 2
@@ -213,7 +247,7 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      - affymetrix_common_agilent_tests:
+      - common_smasher_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
@@ -225,7 +259,13 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      - transcriptome_and_illumina_tests:
+      - tx_illumina_tests:
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
+      - affy_agilent_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
@@ -237,12 +277,22 @@ workflows:
       - deploy:
           requires:
             - main_tests
-            - affymetrix_common_agilent_tests
+            - common_smasher_tests
             - salmon_and_api_tests
-            - transcriptome_and_illumina_tests
+            - tx_illumina_tests
+            - affy_agilent_tests
           filters:
             # No branch commit will ever trigger this job.
             branches:
               ignore: /.*/
             tags:
               only: /v.*/
+
+  hotfix-deploy:
+    jobs:
+      - deploy:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v.*-hotfix/

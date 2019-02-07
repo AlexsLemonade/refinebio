@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-# Load docker_img_exists function
+# Load docker_img_exists function and $CCDL_WORKER_IMAGES
 source ~/refinebio/common.sh
 
 # Circle won't set the branch name for us, so do it ourselves.
-branch=$(get_master_or_dev)
+branch=$(get_master_or_dev $CIRCLE_TAG)
 
 if [[ $branch == "master" ]]; then
     DOCKERHUB_REPO=ccdl
@@ -18,21 +18,18 @@ fi
 
 echo $CIRCLE_TAG > ~/refinebio/common/version
 
-# Docker images that we want to protect from accidental overwriting in "ccdl" account.
-CCDL_WORKER_IMGS="smasher illumina affymetrix salmon transcriptome no_op downloaders"
-
 # Create ~/refinebio/common/dist/data-refinery-common-*.tar.gz, which is
 # required by the workers and data_refinery_foreman images.
 ## Remove old common distributions if they exist
 rm -f ~/refinebio/common/dist/*
-cd ~/refinebio/common && python setup.py sdist
+cd ~/refinebio/common && python3 setup.py sdist
 
 # Log into DockerHub
 docker login -u $DOCKER_ID -p $DOCKER_PASSWD
 
 cd ~/refinebio
-for IMG in $CCDL_WORKER_IMGS; do
-    image_name="$DOCKERHUB_REPO/dr_$IMG"
+for IMAGE in $CCDL_WORKER_IMAGES; do
+    image_name="$DOCKERHUB_REPO/dr_$IMAGE"
     if docker_img_exists $image_name $CIRCLE_TAG; then
         echo "Docker image exists, skipping: $image_name:$CIRCLE_TAG"
     else
@@ -40,7 +37,7 @@ for IMG in $CCDL_WORKER_IMGS; do
         # Build and push image. We use the CIRCLE_TAG as the system version.
         docker build \
                -t $image_name:$CIRCLE_TAG \
-               -f workers/dockerfiles/Dockerfile.$IMG \
+               -f workers/dockerfiles/Dockerfile.$IMAGE \
                --build-arg SYSTEM_VERSION=$CIRCLE_TAG .
         docker push $image_name:$CIRCLE_TAG
         # Update latest version

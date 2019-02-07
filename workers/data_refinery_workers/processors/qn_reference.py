@@ -35,23 +35,77 @@ def _prepare_input(job_context: Dict) -> Dict:
     # I'm not crazy about this yet. Maybe refactor later,
     # but I need the data now.
     job_context = smasher._prepare_files(job_context)
-    job_context = smasher._smash(job_context)
-
-    if not 'final_frame' in job_context.keys():
-        logger.error("Unable to prepare files for creating QN target.",
-            job_id=job_context['job'].id)
-        job_context["job"].failure_reason = "Couldn't prepare files creating QN target (no final_frame)."
-        job_context['success'] = False
-        return job_context
 
     # work_dir is already created by smasher._prepare_files
     outfile_base = job_context['work_dir'] + str(time.time()).split('.')[0]
-    outfile = outfile_base + '.tsv'
-    job_context['final_frame'].to_csv(outfile, sep='\t', encoding='utf-8')
-    job_context['smashed_file'] = outfile
     job_context['target_file'] = outfile_base + '_target.tsv'
 
     return job_context
+
+def _build_qn_target(job_context: Dict) -> Dict:
+    """ Iteratively creates a QN target file, method described here: https://github.com/AlexsLemonade/refinebio/pull/1013"""
+
+    job_context['time_start'] = timezone.now()
+
+    # Get the gene list from the first input
+    computed_file_path = job_context['input_files']['ALL'][0].get_synced_file_path()
+    geneset_target_frame = smasher._load_and_sanitize_file(computed_file_path)
+
+    # Get the geneset
+    geneset = set(geneset_target_frame.index.values)
+
+    # Sequentially build the target
+    sum_frame_input = {'index': geneset, 'sum': [0 for value in geneset]}
+    sum_frame = pd.DataFrame(data=sum_frame_input)
+    sum_frame = sum_frame.set_index('index')
+
+    # Read and sum all of the inputs
+    num_valid_inputs = 0
+    for file in job_context['input_files']['ALL']:
+        try:
+            input_filepath = file.get_synced_file_path()
+            input_frame = smasher._load_and_sanitize_file(input_filepath)
+        except Exception as e:
+            logger.exception("No file loaded for input file",
+                bad_file=file,
+                num_valid_inputs_so_far=num_valid_inputs
+                )
+            continue
+
+        # If this input doesn't have the same geneset, we don't want it!
+        if set(input_frame.index.values) != geneset:
+            logger.error("Input frame doesn't match target geneset, skipping!",
+                bad_file=file,
+                target_geneset_len=len(geneset),
+                bad_geneset_len=len(input_frame.index.values),
+                difference=list(geneset ^ set(input_frame.index.values)),
+                num_valid_inputs_so_far=num_valid_inputs
+                )
+            continue
+
+        # Sort the input
+        sample_name = list(input_frame.columns.values)[0]
+        expressions = input_frame.sort_values(sample_name)
+
+        # Add the sorted input to the sum frame
+        sum_frame['sum'] = sum_frame['sum'] + expressions[sample_name].values
+
+        # We'll divide by this later
+        num_valid_inputs = num_valid_inputs + 1
+
+    # Divide our summation by the number of inputs and save the resulting object and metadata
+    sum_frame['sum'] = sum_frame['sum'] / num_valid_inputs
+    job_context['time_end'] = timezone.now()
+    job_context['sum_frame'] = sum_frame
+    job_context['num_valid_inputs'] = num_valid_inputs
+    job_context['geneset'] = list(geneset)
+
+    # Write the file
+    sum_frame.to_csv(job_context['target_file'], index=False, header=False, sep='\t', encoding='utf-8')
+    job_context['formatted_command'] = "qn_reference.py"
+
+    return job_context
+
 
 def _quantile_normalize(job_context: Dict) -> Dict:
     """Run the R script we have to create the reference for QN.
@@ -92,7 +146,6 @@ def _verify_result(job_context: Dict) -> Dict:
     from rpy2.robjects.packages import importr
 
     qn_target_frame = pd.read_csv(job_context['target_file'], sep='\t', header=None, index_col=None, error_bad_lines=False)
-    smashed_frame = job_context['final_frame']
 
     pandas2ri.activate()
     preprocessCore = importr('preprocessCore')
@@ -146,7 +199,9 @@ def _create_result_objects(job_context: Dict) -> Dict:
         "organism_id": job_context['samples']['ALL'][0].organism_id,
         "is_qn": True,
         "platform_accession_code": job_context['samples']['ALL'][0].platform_accession_code,
-        "samples": [sample.accession_code for sample in job_context["samples"]["ALL"]]
+        "samples": [sample.accession_code for sample in job_context["samples"]["ALL"]],
+        "geneset": str(job_context["geneset"]),
+        "num_valid_inputs": job_context["num_valid_inputs"]
     }
     annotation.save()
 
@@ -154,6 +209,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     # https://github.com/AlexsLemonade/refinebio/issues/586
     job_context['result'] = result
     job_context['computed_files'] = [computed_file]
+    job_context['annotation'] = annotation
     job_context['success'] = True
     return job_context
 
@@ -162,8 +218,8 @@ def create_qn_reference(job_id: int) -> None:
     job_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _prepare_input,
-                        _quantile_normalize,
-                        _verify_result,
+                        _build_qn_target,
+                        # _verify_result,
                         _create_result_objects,
                         utils.end_job])
     return job_context

@@ -54,6 +54,9 @@ class Command(BaseCommand):
         elif job_type is ProcessorPipeline.NO_OP:
             from data_refinery_workers.processors.no_op import no_op_processor
             no_op_processor(options["job_id"])
+        elif job_type is ProcessorPipeline.JANITOR:
+            from data_refinery_workers.processors.janitor import run_janitor
+            run_janitor(options["job_id"])
         else:
             logger.error(("A valid job name was specified for job %s with id %d but "
                           "no processor function is known to run it."),

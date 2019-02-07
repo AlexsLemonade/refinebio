@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# These are lists of docker images that we use. The actual names end
+# up being <DOCKERHUB_REPO>/dr_<IMAGE_NAME> but this is useful for scripting.
+export ALL_CCDL_IMAGES="smasher compendia illumina affymetrix salmon transcriptome no_op downloaders foreman api"
+# Sometimes we only want to work with the worker images.
+export CCDL_WORKER_IMAGES="smasher compendia illumina affymetrix salmon transcriptome no_op downloaders"
+
 get_ip_address () {
     if [ `uname` == "Linux" ]; then
         echo $(ip route get 8.8.8.8 | grep -oE 'src ([0-9]{1,3}\.){3}[0-9]{1,3}' | awk '{print $2; exit}')
@@ -10,6 +16,10 @@ get_ip_address () {
 
 get_docker_db_ip_address () {
     docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' drdb 2> /dev/null
+}
+
+get_docker_es_ip_address () {
+    docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' dres 2> /dev/null
 }
 
 # `coverage report -m` will always have an exit code of 0 which makes
@@ -38,15 +48,22 @@ function docker_img_exists() {
 # can end up on multiple branches. So we first check to see if we're
 # on master, then on dev, then error out because we should only deploy master or dev.
 get_master_or_dev() {
-    master_check=$(git log --decorate=full | head -1 | grep origin/master || true)
-    dev_check=$(git log --decorate=full | head -1 | grep origin/dev || true)
+    # Takes the version that is being deployed as its only parameter
+    version=$1
 
-    if [[ ! -z $master_check ]]; then
-        echo "master"
-    elif [[ ! -z $dev_check ]]; then
-        echo "dev"
+    if [[ -z $version ]]; then
+        echo "You must pass the version to get_master_or_dev."
     else
-        echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"
-        exit 1
+        master_check=$(git log origin/master --decorate=full | grep "$version" || true)
+        dev_check=$(git log origin/dev --decorate=full | grep "$version" || true)
+
+        # All dev versions should end with '-dev' and all master versions should not.
+        if [[ ! -z $master_check ]] && [[ $version != *-dev ]]; then
+            echo "master"
+        elif [[ ! -z $dev_check ]] && [[ $version == *-dev ]]; then
+            echo "dev"
+        else
+            echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"
+        fi
     fi
 }

@@ -1,12 +1,18 @@
-from typing import Dict
+from typing import Dict, Set
 from urllib.parse import urlparse
 import csv
+import nomad
+import io
 import os
 import re
 import requests
 
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from retrying import retry
+
+import hashlib
+from functools import partial
 
 # Found: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html
 METADATA_URL = "http://169.254.169.254/latest/meta-data"
@@ -14,7 +20,6 @@ INSTANCE_ID = None
 SUPPORTED_MICROARRAY_PLATFORMS = None
 SUPPORTED_RNASEQ_PLATFORMS = None
 READABLE_PLATFORM_NAMES = None
-
 
 def get_env_variable(var_name: str, default: str=None) -> str:
     """ Get an environment variable or return a default value """
@@ -42,7 +47,7 @@ def get_instance_id() -> str:
     """Returns the AWS instance id where this is running or "local"."""
     global INSTANCE_ID
     if INSTANCE_ID is None:
-        if get_env_variable("RUNNING_IN_CLOUD") == "True":
+        if settings.RUNNING_IN_CLOUD:
             @retry(stop_max_attempt_number=3)
             def retrieve_instance_id():
                 return requests.get(os.path.join(METADATA_URL, "instance-id")).text
@@ -59,21 +64,50 @@ def get_worker_id() -> str:
     return get_instance_id() + "/" + current_process().name
 
 
-def get_volume_index(default="0", path='/home/user/data_store/VOLUME_INDEX') -> str:
+def get_volume_index(path='/home/user/data_store/VOLUME_INDEX') -> str:
     """ Reads the contents of the VOLUME_INDEX file, else returns default """
+
+    if settings.RUNNING_IN_CLOUD:
+        default = "-1"
+    else:
+        default = "0"
 
     try:
         with open(path, 'r') as f:
             v_id = f.read().strip()
             return v_id
     except Exception as e:
-        # Logger needs util, so we do this at runtime
-        from data_refinery_common.logging import get_and_configure_logger
-        logger = get_and_configure_logger(__name__)
-        logger.info("Could not read volume index file, using default", default=default)
+        # Our configured logger needs util, so we use the standard logging library for just this.
+        import logging
+        logger = logging.getLogger(__name__)
         logger.info(str(e))
+        logger.info("Could not read volume index file, using default: " + str(default))
 
     return default
+
+
+def get_active_volumes() -> Set[str]:
+    """Returns a Set of indices for volumes that are currently mounted.
+
+    These can be used to determine which jobs would actually be able
+    to be placed if they were queued up.
+    """
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
+
+    volumes = set()
+    try:
+        for node in nomad_client.nodes.get_nodes():
+            node_detail = nomad_client.node.get_node(node["ID"])
+            if 'Status' in node_detail and node_detail['Status'] == 'ready' \
+               and 'Meta' in node_detail and 'volume_index' in node_detail['Meta']:
+                volumes.add(node_detail['Meta']['volume_index'])
+    except nomad.api.exceptions.BaseNomadException:
+        # Nomad is down, return the empty set.
+        pass
+
+    return volumes
 
 
 def get_supported_microarray_platforms(platforms_csv: str="config/supported_microarray_platforms.csv"
@@ -209,3 +243,15 @@ def get_s3_url(s3_bucket: str, s3_key: str) -> str:
     Calculates the s3 URL for a file from the bucket name and the file key.
     """
     return "%s.s3.amazonaws.com/%s" % (s3_bucket, s3_key)
+
+def calculate_file_size(absolute_file_path):
+    return os.path.getsize(absolute_file_path)
+
+def calculate_sha1(absolute_file_path):
+    hash_object = hashlib.sha1()
+    with open(absolute_file_path, mode='rb') as open_file:
+        for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
+            hash_object.update(buf)
+
+    return hash_object.hexdigest()
+

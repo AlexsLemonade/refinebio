@@ -1,4 +1,5 @@
-import copy
+import datetime
+import os
 from typing import List
 from unittest.mock import patch, call
 from django.test import TestCase, tag
@@ -13,6 +14,7 @@ from data_refinery_common.models import (
 )
 from data_refinery_workers.downloaders import array_express, utils
 from data_refinery_common.job_lookup import ProcessorPipeline
+from data_refinery_common.utils import get_instance_id
 
 
 class DownloadArrayExpressTestCase(TestCase):
@@ -103,3 +105,67 @@ class DownloadArrayExpressTestCase(TestCase):
         array_express.download_array_express(dlj2.id)
 
         self.assertEqual(ProcessorJob.objects.all().count(), 2)
+
+    @tag('downloaders')
+    def test_dharma(self):
+
+        dlj1 = DownloaderJob()
+        dlj1.accession_code = 'D1'
+        dlj1.worker_id = get_instance_id()
+        dlj1.start_time = datetime.datetime.now()
+        dlj1.save()
+
+        dlj2 = DownloaderJob()
+        dlj2.accession_code = 'D2'
+        dlj2.worker_id = get_instance_id()
+        dlj2.start_time = datetime.datetime.now()
+        dlj2.save()
+
+        dlj3 = DownloaderJob()
+        dlj3.accession_code = 'D3'
+        dlj3.worker_id = get_instance_id()
+        dlj3.save()
+
+        original_file = OriginalFile()
+        original_file.source_url = "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MEXP/E-MEXP-433/E-MEXP-433.raw.1.zip"
+        original_file.source_filename = "Waldhof_020604_R30_01-2753_U133A.CEL"
+        original_file.save()
+
+        assoc = DownloaderJobOriginalFileAssociation()
+        assoc.original_file = original_file
+        assoc.downloader_job = dlj3
+        assoc.save()
+
+        sample = Sample()
+        sample.accession_code = 'Blahblahblah'
+        sample.technology = "MICROARRAY"
+        sample.manufacturer = "AFFYMETRIX"
+        sample.has_raw = True
+        sample.platform_accession_code = "hgu133a"
+        sample.save()
+
+        OriginalFileSampleAssociation.objects.get_or_create(sample=sample, original_file=original_file)
+
+        exited = False
+        try:
+            utils.start_job(dlj3.id, max_downloader_jobs_per_node=2, force_harakiri=True)
+        except SystemExit as e:
+            # This is supposed to happen!
+            self.assertTrue(True)
+            exited = True
+        except Exception as e:
+            # This isn't!
+            self.assertTrue(False)
+        self.assertTrue(exited)
+
+        exited = False
+        try:
+            utils.start_job(dlj3.id, max_downloader_jobs_per_node=15, force_harakiri=True)
+        except SystemExit as e:
+            # This is not supposed to happen!
+            self.assertTrue(False)
+            exited = True
+        except Exception as e:
+            # This is!
+            self.assertTrue(True)
+        self.assertFalse(exited)

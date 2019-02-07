@@ -89,11 +89,55 @@ echo "
     maxage 3
 }" >> /etc/logrotate.conf
 
+# Install our environment variables
+cat <<"EOF" > environment
+${api_environment}
+EOF
+
 chown -R ubuntu /home/ubuntu
 
 STATIC_VOLUMES=/tmp/volumes_static
 mkdir -p /tmp/volumes_static
 chmod a+rwx /tmp/volumes_static
+
+# Pull the API image.
+docker pull ${dockerhub_repo}/${api_docker_image}
+
+# These database values are created after TF
+# is run, so we have to pass them in programatically
+docker run \
+       --env-file environment \
+       -e DATABASE_HOST=${database_host} \
+       -e DATABASE_NAME=${database_name} \
+       -e DATABASE_USER=${database_user} \
+       -e DATABASE_PASSWORD=${database_password} \
+       -e ELASTICSEARCH_HOST=${elasticsearch_host} \
+       -e ELASTICSEARCH_PORT=${elasticsearch_port} \
+       -v "$STATIC_VOLUMES":/tmp/www/static \
+       --log-driver=awslogs \
+       --log-opt awslogs-region=${region} \
+       --log-opt awslogs-group=${log_group} \
+       --log-opt awslogs-stream=${log_stream} \
+       -p 8081:8081 \
+       --name=dr_api \
+       -it -d ${dockerhub_repo}/${api_docker_image} /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
+
+# Nuke and rebuild the search index. It shouldn't take too long.
+sleep 30
+docker exec dr_api python3 manage.py search_index --delete -f;
+docker exec dr_api python3 manage.py search_index --rebuild -f;
+docker exec dr_api python3 manage.py search_index --populate -f;
+
+# Let's use this instance to call the populate command every twenty minutes.
+crontab -l > tempcron
+# echo new cron into cron file
+echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/20 * * * * docker exec -it dr_api python3 manage.py search_index --populate -f" >> tempcron
+# install new cron file
+crontab tempcron
+rm tempcron
+
+# Don't leave secrets lying around.
+rm -f environment
 
 # Delete the cloudinit and syslog in production.
 export STAGE=${stage}

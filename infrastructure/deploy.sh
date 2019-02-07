@@ -10,22 +10,41 @@ print_description() {
 }
 
 print_options() {
-    echo 'There is only one argument for this script, -e, and it is not optional.'
-    echo '-e specifies the environment you would like to deploy to. Its valid values are:'
-    echo '"-e prod" will deploy the production stack. This should only be used from a CD machine.'
-    echo '"-e staging" will deploy the staging stack. This should only be used from a CD machine.'
-    echo '"-e dev" will deploy a dev stack which will namespace all of its resources with the value'
-    echo 'of $TF_VAR_username. '
-    echo 'DO NOT DEPLOY without setting that $TF_VAR_username or modifying the value in variables.tf!'
+    echo 'This script accepts the following arguments: -e, -v, -u, -r, and -h.'
+    echo '-h prints this help message and exits.'
+    echo '-e specifies the environment you would like to deploy to and is not optional. Its valid values are:'
+    echo '   "-e prod" will deploy the production stack. This should only be used from a CD machine.'
+    echo '   "-e staging" will deploy the staging stack. This should only be used from a CD machine.'
+    echo '   "-e dev" will deploy a dev stack which is appropriate for a single developer to use to test.'
+    echo '-d May be used to override the Dockerhub repo where the images will be pulled from.'
+    echo '   This may also be specified by setting the TF_VAR_dockerhub_repo environment variable.'
+    echo '   If unset, defaults to the value in `infrastructure/environments/$env`, which is "ccdlstaging"'
+    echo '   for dev and staging environments and "ccdl" for prod.'
+    echo '   This option is useful for testing code changes. Images with the code to be tested can be pushed'
+    echo '   to your private Dockerhub repo and then the system will find them.'
+    echo '-v specifies the version of the system which is being deployed and is not optional.'
+    echo "-u specifies the username of the deployer. Should be the developer's name in development stacks."
+    echo '   This option may be omitted, in which case the TF_VAR_user variable MUST be set instead.'
+    echo '-r specifies the AWS region to deploy the stack to. Defaults to us-east-1.'
 }
 
-while getopts ":e:v:h" opt; do
+while getopts ":e:d:v:u:r:h" opt; do
     case $opt in
     e)
-        env=$OPTARG
+        export env=$OPTARG
+        export TF_VAR_stage=$OPTARG
+        ;;
+    d)
+        export TF_VAR_dockerhub_repo=$OPTARG
         ;;
     v)
-        SYSTEM_VERSION=$OPTARG
+        export SYSTEM_VERSION=$OPTARG
+        ;;
+    u)
+        export TF_VAR_user=$OPTARG
+        ;;
+    r)
+        export TF_VAR_region=$OPTARG
         ;;
     h)
         print_description
@@ -51,9 +70,18 @@ if [[ $env != "dev" && $env != "staging" && $env != "prod" ]]; then
     exit 1
 fi
 
+if [[ -z $TF_VAR_user ]]; then
+    echo 'Error: must specify the username by either providing the -u argument or setting TF_VAR_user.'
+    exit 1
+fi
+
 if [[ -z $SYSTEM_VERSION ]]; then
     echo 'Error: must specify the system version with -v.'
     exit 1
+fi
+
+if [[ -z $TF_VAR_region ]]; then
+    TF_VAR_region=us-east-1
 fi
 
 # This function checks what the status of the Nomad agent is.
@@ -77,19 +105,18 @@ format_environment_variables () {
   done
 }
 
-# Make our IP address known to terraform.
+# Load $ALL_CCDL_IMAGES and helper functions
 source ../common.sh
+# Make our IP address known to terraform.
 export TF_VAR_host_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
 
-# Set the environment variables that dictate which Docker images are used.
-CCDL_IMGS="smasher illumina affymetrix salmon transcriptome no_op downloaders foreman api"
-
-for IMG in $CCDL_IMGS; do
+for IMAGE in $ALL_CCDL_IMAGES; do
     # For each image we need to set the env var that is used by our
     # scripts and the env var that gets picked up by terraform because
     # it is preceeded with TF_VAR.
-    export ${IMG^^}_DOCKER_IMAGE=dr_$IMG:$SYSTEM_VERSION
-    export TF_VAR_${IMG}_docker_image=dr_$IMG:$SYSTEM_VERSION
+    IMAGE_UPPER=$IMAGE | tr a-z A-Z
+    export ${IMAGE_UPPER}_DOCKER_IMAGE=dr_$IMAGE:$SYSTEM_VERSION
+    export TF_VAR_${IMAGE}_docker_image=dr_$IMAGE:$SYSTEM_VERSION
 done
 
 # Copy ingress config to top level so it can be applied.
@@ -112,7 +139,12 @@ if [[ ! -f terraform.tfstate ]]; then
     # Until terraform plan supports -var-file the plan is wrong.
     # terraform plan
 
-    terraform apply -var-file=environments/$env.tfvars -auto-approve > /dev/null
+    if [[ ! -z $CIRCLE_BUILD_NUM ]]; then
+        # Make sure we can't expose secrets in circleci
+        terraform apply -var-file=environments/$env.tfvars -auto-approve > /dev/null
+    else
+        terraform apply -var-file=environments/$env.tfvars -auto-approve
+    fi
 fi
 
 # We have to do this once before the initial deploy..
@@ -130,7 +162,12 @@ if [[ -z $ran_init_build ]]; then
     # Until terraform plan supports -var-file the plan is wrong.
     # terraform plan
 
-    terraform apply -var-file=environments/$env.tfvars -auto-approve > /dev/null
+    if [[ ! -z $CIRCLE_BUILD_NUM ]]; then
+        # Make sure we can't expose secrets in circleci
+        terraform apply -var-file=environments/$env.tfvars -auto-approve > /dev/null
+    else
+        terraform apply -var-file=environments/$env.tfvars -auto-approve
+    fi
 fi
 
 # Find address of Nomad server.
@@ -169,6 +206,7 @@ wait $(jobs -p)
 # apply migrations.
 echo "Killing dispatch jobs.. (this also takes a while..)"
 if [[ $(nomad status) != "No running jobs" ]]; then
+    counter=0
     for job in $(nomad status | awk {'print $1'} || grep /)
     do
         # Skip the header row for jobs.
@@ -176,11 +214,19 @@ if [[ $(nomad status) != "No running jobs" ]]; then
             # '|| true' so that if a job is garbage collected before we can remove it the error
             # doesn't interrupt our deploy.
             nomad stop -purge -detach $job > /dev/null || true &
+            counter=$((counter+1))
+        fi
+
+        # Wait for all the jobs to stop every 100 so we don't knock
+        # over the deploy box if there are 1000's.
+        if [[ "$counter" -gt 100 ]]; then
+            wait $(jobs -p)
+            counter=0
         fi
     done
 fi
 
-# Wait for these jobs to all die.
+# Wait for any remaining jobs to all die.
 wait $(jobs -p)
 
 # Make sure that prod_env is empty since we are only appending to it.
@@ -240,40 +286,61 @@ terraform taint aws_instance.foreman_server_1
 # access for Circle.
 echo "Removing ingress.."
 rm ci_ingress.tf
-terraform apply -var-file=environments/$env.tfvars -auto-approve > /dev/null
+
+if [[ ! -z $CIRCLE_BUILD_NUM ]]; then
+    # Make sure we can't expose secrets in circleci
+    terraform apply -var-file=environments/$env.tfvars -auto-approve > /dev/null
+else
+    terraform apply -var-file=environments/$env.tfvars -auto-approve
+fi
 
 # We try to avoid rebuilding the API server because we can only run certbot
 # 5 times a week. Therefore we pull the newest image and restart the API
 # this way rather than by tainting the server like we do for foreman.
 chmod 600 data-refinery-key.pem
 API_IP_ADDRESS=$(terraform output -json api_server_1_ip | jq -c '.value' | tr -d '"')
-echo "Restarting API with latest image."
 
 # To check to see if the docker container needs to be stopped before
 # it can be started, grep for the name of the container. However if
 # it's not found then grep will return a non-zero exit code so in that
 # case return an empty string.
 container_running=$(ssh -o StrictHostKeyChecking=no \
+                        -o ServerAliveInterval=15 \
+                        -o ConnectTimeout=5 \
                         -i data-refinery-key.pem \
-                        ubuntu@$API_IP_ADDRESS  "docker ps" | grep dr_api || echo "")
+                        ubuntu@$API_IP_ADDRESS  "docker ps -a" | grep dr_api || echo "")
 
-ssh -o StrictHostKeyChecking=no \
-    -i data-refinery-key.pem \
-    ubuntu@$API_IP_ADDRESS  "docker pull $DOCKERHUB_REPO/$API_DOCKER_IMAGE"
+# If $container_running is empty, then it's because the container isn't running.
+# If the container isn't running, then it's because the instance is spinning up.
+# The container will be started by the API's init script, so no need to do anything more.
 
+# However if $container_running isn't empty then we need to stop and restart it.
 if [[ ! -z $container_running ]]; then
+    echo "Restarting API with latest image."
+
     ssh -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
+        -i data-refinery-key.pem \
+        ubuntu@$API_IP_ADDRESS  "docker pull $DOCKERHUB_REPO/$API_DOCKER_IMAGE"
+
+    ssh -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
         -i data-refinery-key.pem \
         ubuntu@$API_IP_ADDRESS "docker rm -f dr_api"
-fi
 
-scp -o StrictHostKeyChecking=no \
-    -i data-refinery-key.pem \
-    api-configuration/environment ubuntu@$API_IP_ADDRESS:/home/ubuntu/environment
+    scp -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
+        -i data-refinery-key.pem \
+        api-configuration/environment ubuntu@$API_IP_ADDRESS:/home/ubuntu/environment
 
-ssh -o StrictHostKeyChecking=no \
-    -i data-refinery-key.pem \
-    ubuntu@$API_IP_ADDRESS "docker run \
+    ssh -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
+        -i data-refinery-key.pem \
+        ubuntu@$API_IP_ADDRESS "docker run \
        --env-file environment \
        -e DATABASE_HOST=$DATABASE_HOST \
        -e DATABASE_NAME=$DATABASE_NAME \
@@ -288,5 +355,12 @@ ssh -o StrictHostKeyChecking=no \
        --name=dr_api \
        -it -d $DOCKERHUB_REPO/$API_DOCKER_IMAGE /bin/sh -c /home/user/collect_and_run_uwsgi.sh"
 
+    # Don't leave secrets lying around.
+    ssh -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
+        -i data-refinery-key.pem \
+        ubuntu@$API_IP_ADDRESS "rm -f environment"
+fi
 
 echo "Deploy completed successfully."

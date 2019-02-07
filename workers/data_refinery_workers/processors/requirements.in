@@ -1,9 +1,10 @@
-django
-requests
+django>=2.1.5
+requests>=2.20.0
 psycopg2-binary
 boto3
 retrying
-python-nomad
+python-nomad>=1.0.2
+pyyaml>=4.2b1
 coveralls
 multiqc
 numpy
@@ -12,3 +13,5 @@ matplotlib
 pandas
 scikit-learn
 sympy
+elasticsearch-dsl
+django-elasticsearch-dsl

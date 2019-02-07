@@ -1,4 +1,10 @@
+import datetime
+import psutil
+import signal
+import sys
+
 from django.db import transaction
+from django.conf import settings
 from django.utils import timezone
 from retrying import retry
 from typing import List, Dict
@@ -19,15 +25,46 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.utils import get_instance_id, get_env_variable
 
-
 logger = get_and_configure_logger(__name__)
 # Let this fail if SYSTEM_VERSION is unset.
 SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
 # TODO: extend this list.
 BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
+CURRENT_JOB = None
 
+def get_max_jobs_for_current_node():
+    """ Determine the maximum number of Downloader jobs that this node should sustain,
+    based on total system RAM made available to this container """
 
-def start_job(job_id: int) -> DownloaderJob:
+    total_vm = psutil.virtual_memory().total
+    gb = int(total_vm / 1000000000)
+    logger.info("Detected " + str(gb) + "GB of RAM.")
+
+    # We basically want to hit 2GB/s total across 10 x1.32larges. Each job hits 18MB/s.
+    # So it'd take 111 jobs across 10 boxes to hit our limit, so let's set our GB per to 12,
+    # which should pack well enough and give us a slight buffer.
+    max_jobs = (gb/12)
+
+    # However this will make sure we can still run a few jobs in local environments and in CI.
+    if max_jobs < 5:
+        max_jobs = 5
+
+    return max_jobs
+
+MAX_DOWNLOADER_JOBS_PER_NODE = get_max_jobs_for_current_node()
+
+def signal_handler(sig, frame):
+    """Signal Handler, works for both SIGTERM and SIGINT"""
+    global CURRENT_JOB
+    if not CURRENT_JOB:
+        sys.exit(0)
+    else:
+        CURRENT_JOB.start_time = None
+        CURRENT_JOB.num_retries = CURRENT_JOB.num_retries - 1
+        CURRENT_JOB.save()
+        sys.exit(0)
+
+def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_NODE, force_harakiri=False) -> DownloaderJob:
     """Record in the database that this job is being started.
 
     Retrieves the job from the database and returns it after marking
@@ -40,15 +77,48 @@ def start_job(job_id: int) -> DownloaderJob:
         logger.error("Cannot find downloader job record.", downloader_job=job_id)
         raise
 
+    worker_id = get_instance_id()
+    num_downloader_jobs_currently_running = DownloaderJob.objects.filter(
+                                worker_id=worker_id,
+                                start_time__isnull=False,
+                                end_time__isnull=True,
+                                success__isnull=True,
+                                retried=False
+                            ).count()
+
+    # Death and rebirth.
+    if settings.RUNNING_IN_CLOUD or force_harakiri:
+        if num_downloader_jobs_currently_running >= int(max_downloader_jobs_per_node):
+            # Wait for the death window
+            while True:
+                seconds = datetime.datetime.now().second
+                # Mass harakiri happens every 15 seconds.
+                if seconds % 15 == 0:
+                    job.start_time = None
+                    job.num_retries = job.num_retries - 1
+                    job.save()
+
+                    # What is dead may never die!
+                    sys.exit(0)
+
     # This job should not have been started.
     if job.start_time is not None:
         logger.error("This downloader job has already been started!!!", downloader_job=job.id)
         raise Exception("downloaders.start_job called on a job that has already been started!")
 
-    job.worker_id = get_instance_id()
+    # Set up the SIGTERM handler so we can appropriately handle being interrupted.
+    # (`docker stop` uses SIGTERM, not SIGINT.)
+    # (however, Nomad sends an SIGINT so catch both.)
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+
+    job.worker_id = worker_id
     job.worker_version = SYSTEM_VERSION
     job.start_time = timezone.now()
     job.save()
+
+    global CURRENT_JOB
+    CURRENT_JOB = job
 
     return job
 
@@ -148,6 +218,10 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
     Create a processor job and queue a processor task for sample related to an experiment.
 
     """
+
+    # If there's no original files then we've created all the jobs we need to!
+    if len(original_files) == 0:
+        return
 
     # For anything that has raw data there should only be one Sample per OriginalFile
     sample_object = original_files[0].samples.first()

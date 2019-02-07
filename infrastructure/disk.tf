@@ -92,6 +92,18 @@ resource "aws_s3_bucket" "data_refinery_transcriptome_index_bucket" {
   }
 }
 
+resource "aws_s3_bucket" "data_refinery_compendia_bucket" {
+  bucket = "data-refinery-s3-compendia-${var.user}-${var.stage}"
+  acl    = "public-read"
+  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
+
+  tags {
+    Name        = "data-refinery-s3-compendia-${var.user}-${var.stage}"
+    Environment = "${var.stage}"
+  }
+}
+
+
 resource "aws_s3_bucket" "data-refinery-static-access-logs" {
   bucket = "data-refinery-static-access-logs-${var.user}-${var.stage}"
 

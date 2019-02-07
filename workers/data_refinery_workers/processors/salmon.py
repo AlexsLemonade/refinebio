@@ -2,6 +2,7 @@ import boto3
 import glob
 import io
 import json
+import multiprocessing
 import os
 import re
 import shutil
@@ -59,10 +60,51 @@ def _prepare_files(job_context: Dict) -> Dict:
     """
     logger.debug("Preparing files..")
 
+    # Create a directory specific to this processor job combo.
+    # (A single sample could belong to multiple experiments, meaning
+    # that it could be run more than once, potentially even at the
+    # same time.)
+    job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR,
+                                           job_context["job_dir_prefix"]) + "/"
+    job_context["temp_dir"] = job_context["work_dir"] + "temp/"
+    os.makedirs(job_context["work_dir"], exist_ok=True)
+    os.makedirs(job_context["temp_dir"], exist_ok=True)
+    # If we want to be really fancy here, we can do something like:
+    # `$ mount -o size=16G -t tmpfs none job_context["temp_dir"]`
+    # As fasterq-dump is slow due to disk thrashing.
+
     original_files = job_context["original_files"]
     job_context["input_file_path"] = original_files[0].absolute_file_path
+    if not os.path.exists(job_context["input_file_path"]):
+        logger.error("Was told to process a non-existent file - why did this happen?",
+            input_file_path=job_context["input_file_path"],
+            processor_job=job_context["job_id"]
+        )
+        job_context["job"].failure_reason = "Missing input file: " + str(job_context["input_file_path"])
+        job_context["success"] = False
+        return job_context
+
     if len(original_files) == 2:
         job_context["input_file_path_2"] = original_files[1].absolute_file_path
+        if not os.path.exists(job_context["input_file_path_2"]):
+            logger.error("Was told to process a non-existent file2 - why did this happen?",
+                input_file_path=job_context["input_file_path_2"],
+                processor_job=job_context["job_id"]
+            )
+            job_context["job"].failure_reason = "Missing input file2: " + str(job_context["input_file_path_2"])
+            job_context["success"] = False
+            return job_context
+
+    # Copy the .sra file so fasterq-dump can't corrupt it.
+    if job_context["input_file_path"][-4:].upper() == ".SRA":
+        new_input_file_path = os.path.join(job_context["work_dir"], original_files[0].filename)
+        shutil.copyfile(job_context["input_file_path"], new_input_file_path)
+        job_context['input_file_path'] = new_input_file_path
+
+    if job_context.get("input_file_path_2", False):
+        new_input_file_path = os.path.join(job_context["work_dir"], original_files[1].filename)
+        shutil.copyfile(job_context["input_file_path_2"], new_input_file_path)
+        job_context['input_file_path_2'] = new_input_file_path
 
     # There should only ever be one per Salmon run
     sample = job_context['original_files'][0].samples.first()
@@ -71,15 +113,6 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context['samples'] = [] # This will only be populated in the `tximport` job
     job_context['organism'] = job_context['sample'].organism
     job_context["success"] = True
-
-    # Create a directory specific to this processor job combo.
-    # (A single sample could belong to multiple experiments, meaning
-    # that it could be run more than once, potentially even at the
-    # same time.)
-    job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR,
-                                           job_context["job_dir_prefix"]) + "/"
-    job_context["temp_dir"] = job_context["work_dir"] + "temp/"
-    os.makedirs(job_context["temp_dir"], exist_ok=True)
 
     job_context["output_directory"] = job_context["work_dir"] + sample.accession_code + "_output/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
@@ -124,13 +157,24 @@ def _extract_sra(job_context: Dict) -> Dict:
     shutil.copyfile(job_context["input_file_path"], job_context['work_file'])
 
     time_start = timezone.now()
+    # This can be improved with: " -e " + str(multiprocessing.cpu_count())
+    # but it seems to cause time to increase if there are too many jobs calling it at once.
     formatted_command = "fasterq-dump " + job_context['work_file'] + " -O " + job_context['work_dir'] + " --temp " + job_context["temp_dir"]
     logger.debug("Running fasterq-dump using the following shell command: %s",
                  formatted_command,
                  processor_job=job_context["job_id"])
-    completed_command = subprocess.run(formatted_command.split(),
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
+    try:
+        completed_command = subprocess.run(formatted_command.split(),
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE,
+                                           timeout=1200)
+    except subprocess.TimeoutExpired as e:
+        logger.exception("Shell call to fasterq-dump failed with timeout",
+                     processor_job=job_context["job_id"],
+                     file=job_context["input_file_path"])
+        job_context["job"].failure_reason = str(e)
+        job_context["success"] = False
+        return job_context
 
     stderr = completed_command.stderr.decode().strip()
     stdout = completed_command.stderr.decode().strip()
@@ -269,9 +313,10 @@ def _find_or_download_index(job_context: Dict) -> Dict:
     if not index_object:
         logger.error("Could not run Salmon processor without index for organism",
             organism=job_context['organism'],
-            processor_job=job_context["job_id"]
+            processor_job=job_context["job_id"],
+            index_type=index_type
         )
-        job_context["job"].failure_reason = "Missing transcriptome index."
+        job_context["job"].failure_reason = "Missing transcriptome index. (" + index_type + ")"
         job_context["success"] = False
         return job_context
 
@@ -285,6 +330,12 @@ def _find_or_download_index(job_context: Dict) -> Dict:
         # location. Therefore check to see if it's happened before we
         # complete each step.
         version_info_path = job_context["index_directory"] + "/versionInfo.json"
+
+        # Something very bad happened and now there are corrupt indexes installed. Nuke 'em. 
+        if os.path.exists(version_info_path) and (os.path.getsize(version_info_path) == 0):
+            logger.error("We have to nuke a zero-valued index directory: " + version_info_path)
+            shutil.rmtree(job_context["index_directory"], ignore_errors=True)
+            os.makedirs(job_context["index_directory"], exist_ok=True)
 
         index_tarball = None
         if not os.path.exists(version_info_path):
@@ -303,10 +354,6 @@ def _find_or_download_index(job_context: Dict) -> Dict:
             os.makedirs(index_hard_dir)
             with tarfile.open(index_tarball, "r:gz") as index_archive:
                 index_archive.extractall(index_hard_dir)
-
-        if index_tarball:
-            # Cleanup the tarball now that it's been extracted.
-            os.remove(index_tarball)
 
         if not os.path.exists(version_info_path):
             # Index is still not installed yet, so symlink the files we
@@ -330,17 +377,18 @@ def _find_or_download_index(job_context: Dict) -> Dict:
             for subfile in index_files:
                 os.symlink(index_hard_dir + subfile, job_context["index_directory"] + "/" + subfile)
         elif index_hard_dir:
-            # Cleanup the extracted directory, it's not needed.
-            shutil.rmtree(index_hard_dir)
+            # We have failed the race.
+            logger.error("We have failed the index extraction race! Removing dead trees.")
+            shutil.rmtree(index_hard_dir, ignore_errors=True)
     except Exception as e:
-        # Make sure we don't leave an empty index directory lying around.
-        shutil.rmtree(job_context["index_directory"], ignore_errors=True)
-
         error_template = "Failed to download or extract transcriptome index for organism {0}: {1}"
         error_message = error_template.format(str(job_context['organism']), str(e))
         logger.error(error_message, processor_job=job_context["job_id"])
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
+
+        # Make sure we don't leave an empty index directory lying around.
+        shutil.rmtree(index_hard_dir, ignore_errors=True)
         return job_context
 
     # The index tarball contains a directory named index, so add that

@@ -55,8 +55,34 @@ EOF
 chmod +x install_nomad.sh
 ./install_nomad.sh
 
-# Start the Nomad agent in server mode.
-nohup nomad agent -config server.hcl > /var/log/nomad_server.log &
+# Start the Nomad agent in server mode via Monit
+apt-get -y install monit htop
+
+echo "
+#!/bin/sh
+nomad status
+exit \$?
+" >> /home/ubuntu/nomad_status.sh
+chmod +x /home/ubuntu/nomad_status.sh
+
+echo "
+#!/bin/sh
+killall nomad
+sleep 120
+nomad agent -config /home/ubuntu/server.hcl > /var/log/nomad_server.log &
+" >> /home/ubuntu/kill_restart_nomad.sh
+chmod +x /home/ubuntu/kill_restart_nomad.sh
+/home/ubuntu/kill_restart_nomad.sh
+
+echo '
+check program nomad with path "/bin/bash /home/ubuntu/nomad_status.sh" as uid 0 and with gid 0
+    start program = "/home/ubuntu/kill_restart_nomad.sh" as uid 0 and with gid 0
+    if status != 0
+        then restart
+set daemon 300
+' >> /etc/monit/monitrc
+
+service monit restart
 
 # Give the Nomad server time to start up.
 sleep 30
@@ -71,11 +97,3 @@ for nomad_job_spec in $nomad_job_specs; do
     echo "registering $nomad_job_spec"
     nomad run -address http://$IP_ADDRESS:4646 $nomad_job_spec
 done
-
-# Delete the cloudinit and syslog in production.
-export STAGE=${stage}
-if [[ $STAGE = *"prod"* ]]; then
-    rm /var/log/cloud-init.log
-    rm /var/log/cloud-init-output.log
-    rm /var/log/syslog
-fi

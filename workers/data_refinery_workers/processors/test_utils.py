@@ -13,6 +13,7 @@ from data_refinery_common.models import (
     OriginalFileSampleAssociation,
     Organism
 )
+from django.utils import timezone
 from data_refinery_workers.processors import utils
 
 
@@ -47,6 +48,7 @@ def prepare_job():
 
     return pj
 
+
 class StartJobTestCase(TestCase):
     def test_success(self):
 
@@ -69,6 +71,23 @@ class StartJobTestCase(TestCase):
 
         job_context = utils.start_job({"job": processor_job})
         self.assertFalse(job_context["success"])
+
+    def test_bad_restart(self):
+
+        with self.settings(RUNNING_IN_CLOUD=True):
+            job = ProcessorJob()
+            job.start_time = timezone.now()
+            job.success = True
+            job.save()
+            job_context = utils.start_job({"job": job})
+
+            job = ProcessorJob()
+            job.start_time = timezone.now()
+            job.success = False
+            job.save()
+            job_context = utils.start_job({"job": job})
+
+            self.assertRaises(utils.start_job({"job": job}))
 
 class RunPipelineTestCase(TestCase):
     def test_no_job(self):

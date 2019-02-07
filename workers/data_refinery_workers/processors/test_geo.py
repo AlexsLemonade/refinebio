@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from contextlib import closing
 from django.test import TestCase, tag
@@ -26,6 +27,7 @@ def prepare_illumina_job(species="Homo sapiens"):
     og_file.source_filename = "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427%5Fnon%2Dnormalized%2Etxt.gz"
     og_file.filename = "GSE22427_non-normalized.txt"
     og_file.absolute_file_path = "/home/user/data_store/raw/TEST/ILLUMINA/GSE22427_non-normalized.txt"
+    og_file.is_downloaded = True
     og_file.save()
 
     assoc1 = ProcessorJobOriginalFileAssociation()
@@ -68,7 +70,7 @@ def prepare_illumina_job(species="Homo sapiens"):
     sample = Sample.objects.get(title="LV-T350A&si-EZH2-3")
     sample.title = "ignoreme_for_description"
     sample.accession_code = "ignoreme_for_description"
-    sample.save() 
+    sample.save()
 
     return pj
 
@@ -81,6 +83,7 @@ def prepare_agilent_twocolor_job():
     og_file.source_filename = "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE22900&format=file"
     og_file.filename = "GSM466597_95899_agilent.txt"
     og_file.absolute_file_path = "/home/user/data_store/raw/TEST/AGILENT_TWOCOLOR/GSM466597_95899_agilent.txt"
+    og_file.is_downloaded = True
     og_file.save()
 
     assoc1 = ProcessorJobOriginalFileAssociation()
@@ -104,6 +107,9 @@ class IlluminaToPCLTestCase(TestCase):
             self.assertTrue(os.path.exists(smashme.absolute_file_path))
             os.remove(smashme.absolute_file_path)
 
+        # Cleanup after the job since it won't since we aren't running in cloud.
+        shutil.rmtree(final_context["work_dir"], ignore_errors=True)
+
     @tag("illumina")
     def test_bad_illumina_detection(self):
         """ With the wrong species, this will fail the platform detection threshold. """
@@ -111,6 +117,9 @@ class IlluminaToPCLTestCase(TestCase):
         job = prepare_illumina_job('RATTUS_NORVEGICUS')
         final_context = illumina.illumina_to_pcl(job.pk)
         self.assertTrue(final_context['abort'])
+
+        # Cleanup after the job since it won't since we aren't running in cloud.
+        shutil.rmtree(final_context["work_dir"], ignore_errors=True)
 
     @tag("illumina")
     def test_good_detection(self):
@@ -125,6 +134,7 @@ class IlluminaToPCLTestCase(TestCase):
         og_file.source_filename = "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE54nnn/GSE54661/suppl/GSE54661%5Fnon%5Fnormalized%2Etxt%2Egz"
         og_file.filename = "GSE54661_non_normalized.txt"
         og_file.absolute_file_path = "/home/user/data_store/raw/TEST/ILLUMINA/GSE54661_non_normalized.txt"
+        og_file.is_downloaded = True
         og_file.save()
 
         assoc1 = ProcessorJobOriginalFileAssociation()
@@ -148,6 +158,9 @@ class IlluminaToPCLTestCase(TestCase):
 
         for key in final_context['samples'][0].sampleannotation_set.all()[0].data.keys():
             self.assertTrue(key in ['detected_platform', 'detection_percentage', 'mapped_percentage'])
+
+        # Cleanup after the job since it won't since we aren't running in cloud.
+        shutil.rmtree(final_context["work_dir"], ignore_errors=True)
 
 class AgilentTwoColorTestCase(TestCase):
 

@@ -123,14 +123,25 @@ def download_array_express(job_id: int) -> None:
         try:
             original_file = OriginalFile.objects.get(
                 source_filename=og_file['filename'], source_url=original_file.source_url)
-            original_file.is_downloaded = True
-            original_file.is_archive = False
-            original_file.absolute_file_path = og_file['absolute_path']
-            original_file.filename = og_file['absolute_path'].split('/')[-1]
-            original_file.calculate_size()
-            original_file.save()
-            original_file.calculate_sha1()
-            og_files.append(original_file)
+
+            # Sometimes a file needs to be redownloaded and processed,
+            # but if a file is part of an archive and then we requeue
+            # all of the files to be processed, we might end up
+            # reprocessing files. Therefore make sure that they
+            # actually needed to be downloaded before marking them as
+            # downloaded and queuing processor jobs.
+            if original_file.needs_downloading():
+                original_file.is_downloaded = True
+                original_file.is_archive = False
+                original_file.absolute_file_path = og_file['absolute_path']
+                original_file.filename = og_file['absolute_path'].split('/')[-1]
+                original_file.calculate_size()
+                original_file.calculate_sha1()
+                original_file.save()
+                og_files.append(original_file)
+            else:
+                # Clear out the files we don't actually need.
+                os.remove(og_file['absolute_path'])
         except Exception:
             # The suspicion is that there are extra files related to
             # another experiment, that we don't want associated with

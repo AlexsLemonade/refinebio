@@ -19,19 +19,69 @@ EOF
 
 # These database values are created after TF
 # is run, so we have to pass them in programatically
+echo "
+#!/bin/sh
+docker kill \$(docker ps -q) || true
+docker run \\
+       --env-file /home/ubuntu/environment \\
+       -e DATABASE_HOST=${database_host} \\
+       -e DATABASE_NAME=${database_name} \\
+       -e DATABASE_USER=${database_user} \\
+       -e DATABASE_PASSWORD=${database_password} \\
+       -v /tmp:/tmp \\
+       --add-host=nomad:${nomad_lead_server_ip} \\
+       --log-driver=awslogs \\
+       --log-opt awslogs-region=${region} \\
+       --log-opt awslogs-group=${log_group} \\
+       --log-opt awslogs-stream=log-stream-foreman-${user}-${stage} \\
+       --name=dr_foreman \\
+       -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py retry_jobs
+" >> /home/ubuntu/run_foreman.sh
+chmod +x /home/ubuntu/run_foreman.sh
+/home/ubuntu/run_foreman.sh
+
+# Start the Nomad agent in server mode via Monit
+apt-get -y update
+apt-get -y install monit htop
+
+date +%s > /tmp/foreman_last_time
+chown ubuntu:ubuntu /tmp/foreman_last_time
+echo '
+#!/bin/sh
+lasttime=$(</tmp/foreman_last_time);
+nowtime=`date +%s`;
+((difftime = $nowtime - $lasttime));
+if (( $difftime > 1800 )); then
+  exit 1;
+fi
+exit 0;
+' >> /home/ubuntu/foreman_status.sh
+chmod +x /home/ubuntu/foreman_status.sh
+
+echo '
+check program foreman with path "/bin/bash /home/ubuntu/foreman_status.sh" as uid 0 and with gid 0
+    start program = "/bin/bash /home/ubuntu/run_foreman.sh" as uid 0 and with gid 0
+    if status != 0
+        then restart
+set daemon 900
+' >> /etc/monit/monitrc
+
+service monit restart
+
 docker run \
-       --env-file environment \
+       --env-file /home/ubuntu/environment \
        -e DATABASE_HOST=${database_host} \
        -e DATABASE_NAME=${database_name} \
        -e DATABASE_USER=${database_user} \
        -e DATABASE_PASSWORD=${database_password} \
-       --add-host=nomad:${nomad_lead_server_ip}\
+       -v /tmp:/tmp \
+       --add-host=nomad:${nomad_lead_server_ip} \
        --log-driver=awslogs \
        --log-opt awslogs-region=${region} \
        --log-opt awslogs-group=${log_group} \
        --log-opt awslogs-stream=log-stream-foreman-${user}-${stage} \
-       -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py retry_jobs
-
+       --name=job_filler \
+       -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py create_missing_processor_jobs
 
 # Delete the cloudinit and syslog in production.
 export STAGE=${stage}

@@ -1,3 +1,4 @@
+from django.db.models import Count, Prefetch, Q
 from rest_framework import serializers
 from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
 from data_refinery_common.models import (
@@ -5,6 +6,8 @@ from data_refinery_common.models import (
     ExperimentAnnotation,
     Sample,
     SampleAnnotation,
+    ExperimentSampleAssociation,
+    ExperimentOrganismAssociation,
     Organism,
     OrganismIndex,
     OriginalFile,
@@ -15,6 +18,7 @@ from data_refinery_common.models import (
     Dataset,
     APIToken
 )
+from collections import defaultdict
 
 ##
 # Organism
@@ -53,16 +57,31 @@ class OrganismIndexSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrganismIndex
         fields = (
+                    'index_type',
                     's3_url',
                     'source_version',
                     'assembly_name',
                     'salmon_version',
+                    'result',
                     'last_modified',
                 )
 
 ##
 # Results
 ##
+
+class DetailedExperimentSampleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Sample
+        fields = (
+                    'accession_code',
+                    'platform_name',
+                    'pretty_platform',
+                    'technology',
+                    'is_processed',
+                )
+
 
 class ComputationalResultAnnotationSerializer(serializers.ModelSerializer):
 
@@ -96,6 +115,7 @@ class ComputationalResultSerializer(serializers.ModelSerializer):
     annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
     files = ComputedFileSerializer(many=True, source='computedfile_set')
     processor = ProcessorSerializer(many=False)
+    organism_index = OrganismIndexSerializer(many=False)
 
     class Meta:
         model = ComputationalResult
@@ -113,6 +133,69 @@ class ComputationalResultSerializer(serializers.ModelSerializer):
                     'last_modified'
                 )
 
+class ComputationalResultNoFilesSerializer(serializers.ModelSerializer):
+    annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
+    processor = ProcessorSerializer(many=False)
+    organism_index = OrganismIndexSerializer(many=False)
+
+    class Meta:
+        model = ComputationalResult
+        fields = (
+                    'id',
+                    'commands',
+                    'processor',
+                    'is_ccdl',
+                    'annotations',
+                    'organism_index',
+                    'time_start',
+                    'time_end',
+                    'created_at',
+                    'last_modified'
+                )
+
+class QNTargetSerializer(serializers.ModelSerializer):
+    result = ComputationalResultNoFilesSerializer(many=False)
+
+    class Meta:
+        model = ComputedFile
+        fields = (
+                    'id',
+                    'filename',
+                    'size_in_bytes',
+                    'is_qn_target',
+                    'sha1',
+                    's3_bucket',
+                    's3_key',
+                    's3_url',
+                    'created_at',
+                    'last_modified',
+                    'result'
+                )
+
+class ComputedFileListSerializer(serializers.ModelSerializer):
+    result = ComputationalResultNoFilesSerializer(many=False)
+    samples = DetailedExperimentSampleSerializer(many=True)
+
+    class Meta:
+        model = ComputedFile
+        fields = (
+                    'id',
+                    'filename',
+                    'samples',
+                    'size_in_bytes',
+                    'is_qn_target',
+                    'is_smashable',
+                    'is_qc',
+                    'is_compendia',
+                    'compendia_version',
+                    'sha1',
+                    's3_bucket',
+                    's3_key',
+                    's3_url',
+                    'created_at',
+                    'last_modified',
+                    'result'
+                )
 
 ##
 # Samples
@@ -196,12 +279,15 @@ class DetailedSampleSerializer(serializers.ModelSerializer):
 ##
 
 class ExperimentSerializer(serializers.ModelSerializer):
-    organisms = serializers.StringRelatedField(many=True)
+    organisms = serializers.StringRelatedField(many=True, read_only=True)
     platforms = serializers.ReadOnlyField()
-    samples = serializers.StringRelatedField(many=True)
     processed_samples = serializers.StringRelatedField(many=True)
-    pretty_platforms = serializers.ReadOnlyField()
+    total_samples_count = serializers.IntegerField(
+                        read_only=True
+                    )
     sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
+    technologies = serializers.ReadOnlyField(source='get_sample_technologies')
+    pretty_platforms = serializers.ReadOnlyField()
 
     class Meta:
         model = Experiment
@@ -210,6 +296,7 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'title',
                     'description',
                     'accession_code',
+                    'alternate_accession_code',
                     'source_database',
                     'source_url',
                     'platforms',
@@ -220,13 +307,27 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'publication_doi',
                     'publication_authors',
                     'pubmed_id',
-                    'samples',
+                    'total_samples_count',
                     'organisms',
                     'submitter_institution',
                     'created_at',
                     'last_modified',
+                    'source_first_published',
+                    'source_last_modified',
                     'sample_metadata',
+                    'technologies'
                 )
+
+    def setup_eager_loading(queryset):
+        """ Perform necessary eager loading of data. """
+        queryset = queryset.prefetch_related('samples').prefetch_related('organisms')
+
+        # Multiple count annotations
+        queryset = queryset.annotate(
+            total_samples_count=Count('samples', unique=True),
+            processed_samples_count=Count('samples', filter=Q(samples__is_processed=True)))
+
+        return queryset
 
 class ExperimentAnnotationSerializer(serializers.ModelSerializer):
 
@@ -241,7 +342,7 @@ class ExperimentAnnotationSerializer(serializers.ModelSerializer):
 
 class DetailedExperimentSerializer(serializers.ModelSerializer):
     annotations = ExperimentAnnotationSerializer(many=True, source='experimentannotation_set')
-    samples = SampleSerializer(many=True)
+    samples = DetailedExperimentSampleSerializer(many=True)
     organisms = OrganismSerializer(many=True)
     sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
 
@@ -338,6 +439,7 @@ class DownloaderJobSerializer(serializers.ModelSerializer):
                     'downloader_task',
                     'num_retries',
                     'retried',
+                    'was_recreated',
                     'worker_id',
                     'worker_version',
                     'failure_reason',
@@ -417,9 +519,40 @@ class CreateDatasetSerializer(serializers.ModelSerializer):
             raise
         return data
 
-class DatasetSerializer(serializers.ModelSerializer):
+class DatasetDetailsExperimentSerializer(serializers.ModelSerializer):
+    """ This serializer contains all of the information about an experiment needed for the download
+    page
+    """
+    organisms = serializers.StringRelatedField(many=True)
+    sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
+    pretty_platforms = serializers.ReadOnlyField()
 
+    class Meta:
+        model = Experiment
+        fields = (
+                    'title',
+                    'accession_code',
+                    'pretty_platforms',
+                    'organisms',
+                    'sample_metadata',
+                )
+
+class DatasetSerializer(serializers.ModelSerializer):
     start = serializers.NullBooleanField(required=False)
+    experiments = serializers.SerializerMethodField(read_only=True)
+    organism_samples = serializers.SerializerMethodField(read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        super(DatasetSerializer, self).__init__(*args, **kwargs)
+
+        # only inclue the fields `experiments` and `organism_samples` when the param `?details=true`
+        # is provided. This is used on the frontend to render the downloads page
+        # thanks to https://django.cowhite.com/blog/dynamically-includeexclude-fields-to-django-rest-framwork-serializers-based-on-user-requests/
+        if 'context' in kwargs:
+            if 'request' in kwargs['context']:
+                if 'details' not in kwargs['context']['request'].query_params:
+                    self.fields.pop('experiments')
+                    self.fields.pop('organism_samples')
 
     class Meta:
         model = Dataset
@@ -435,9 +568,15 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'expires_on',
                     's3_bucket',
                     's3_key',
+                    'success',
+                    'failure_reason',
                     'created_at',
                     'last_modified',
-                    'start'
+                    'start',
+                    'size_in_bytes',
+                    'sha1',
+                    'experiments',
+                    'organism_samples'
             )
         extra_kwargs = {
                         'id': {
@@ -461,10 +600,22 @@ class DatasetSerializer(serializers.ModelSerializer):
                         's3_key': {
                             'read_only': True,
                         },
+                        'success': {
+                            'read_only': True,
+                        },
+                        'failure_reason': {
+                            'read_only': True,
+                        },
                         'created_at': {
                             'read_only': True,
                         },
                         'last_modified': {
+                            'read_only': True,
+                        },
+                        'size_in_bytes': {
+                            'read_only': True,
+                        },
+                        'sha1': {
                             'read_only': True,
                         }
                     }
@@ -479,64 +630,26 @@ class DatasetSerializer(serializers.ModelSerializer):
             raise
         return data
 
-class DatasetDetailsSampleSerializer(serializers.ModelSerializer):
-    """ This serializer contains all of the information about a sample needed for the download page
-    """
-    organism = OrganismSerializer(many=False)
+    def get_organism_samples(self, obj):
+        """
+        Groups the sample accession codes inside a dataset by their organisms, eg:
+        { HOMO_SAPIENS: [S1, S2], DANIO: [S3] }
+        Useful to avoid sending sample information on the downloads page
+        """
+        samples = obj.get_samples().prefetch_related('organism') \
+                     .values('organism__name', 'accession_code') \
+                     .order_by('organism__name', 'accession_code')
 
-    class Meta:
-        model = Sample
-        fields = (
-                    'accession_code',
-                    'organism',
-                )
+        result = defaultdict(list)
+        for sample in samples:
+            result[sample['organism__name']].append(sample['accession_code'])
 
-class DatasetDetailsExperimentSerializer(serializers.ModelSerializer):
-    """ This serializer contains all of the information about an experiment needed for the download
-    page
-    """
-    organisms = serializers.StringRelatedField(many=True)
-    samples = serializers.StringRelatedField(many=True)
-    sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
-    pretty_platforms = serializers.ReadOnlyField()
+        return result
 
-    class Meta:
-        model = Experiment
-        fields = (
-                    'id',
-                    'title',
-                    'accession_code',
-                    'pretty_platforms',
-                    'samples',
-                    'organisms',
-                    'sample_metadata',
-                )
-
-class DatasetDetailsSerializer(serializers.ModelSerializer):
-    """ This serializer contains all of the information about a dataset needed for the download page
-    """
-    samples = DatasetDetailsSampleSerializer(read_only=True, many=True, source='get_samples')
-    experiments = DatasetDetailsExperimentSerializer(read_only=True, many=True, source='get_experiments')
-
-    class Meta:
-        model = Dataset
-        fields = (
-                    'data',
-                    'aggregate_by',
-                    'scale_by',
-                    'is_processing',
-                    'is_processed',
-                    'experiments',
-                    'samples'
-            )
-        extra_kwargs = {
-                        'is_processing': {
-                            'read_only': True,
-                        },
-                        'is_processed': {
-                            'read_only': True,
-                        },
-                    }
+    def get_experiments(self, obj):
+        """ Call `get_experiments` in the model but add some `prefetch_related` calls """
+        experiments = obj.get_experiments().prefetch_related('samples').prefetch_related('organisms')
+        return DatasetDetailsExperimentSerializer(experiments, many=True).data
 
 class APITokenSerializer(serializers.ModelSerializer):
 
@@ -558,3 +671,59 @@ class APITokenSerializer(serializers.ModelSerializer):
                             'read_only': True
                         }
                     }
+
+class CompendiaSerializer(serializers.ModelSerializer):
+    organism_name = serializers.CharField(source='compendia_organism.name', read_only=True)
+
+    class Meta:
+        model = ComputedFile
+        fields = (
+                    'id',
+                    'filename',
+                    'size_in_bytes',
+                    'is_compendia',
+                    'compendia_version',
+                    'organism_name',
+                    'sha1',
+                    's3_bucket',
+                    's3_key',
+                    's3_url',
+                    'created_at',
+                    'last_modified'
+                )
+
+##
+# ElasticSearch Document Serializers
+##
+
+class ExperimentDocumentSerializer(serializers.Serializer):
+    """Serializer for the Experiment document."""
+
+    # PK
+    id = serializers.IntegerField(read_only=True)
+
+    #  Complex (Keyword)
+    title = serializers.CharField(read_only=True)
+    publication_title = serializers.CharField(read_only=True)
+    description = serializers.CharField(read_only=True)
+
+    # Simple
+    technology = serializers.CharField(read_only=True)
+    accession_code = serializers.CharField(read_only=True)
+    alternate_accession_code = serializers.CharField(read_only=True)
+    submitter_institution = serializers.CharField(read_only=True)
+    has_publication = serializers.BooleanField(read_only=True)
+    publication_doi = serializers.CharField(read_only=True)
+    publication_authors = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
+    sample_metadata_fields = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
+    platform_names = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
+    platform_accession_codes = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
+    organism_names = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
+    pubmed_id = serializers.CharField(read_only=True)
+    num_total_samples = serializers.IntegerField(read_only=True)
+    num_processed_samples = serializers.IntegerField(read_only=True)
+    source_first_published = serializers.DateField(read_only=True)
+
+    # FK/M2M
+    # We don't use any ForgeinKey serializers right now, but if we did, we'd do it like this:
+    # organisms = OrganismSerializer(many=True)
