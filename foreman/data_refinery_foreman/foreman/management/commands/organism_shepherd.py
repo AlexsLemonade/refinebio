@@ -33,7 +33,7 @@ from data_refinery_common.utils import get_env_variable
 logger = get_and_configure_logger(__name__)
 
 
-MAX_JOBS_FOR_THIS_MODE = 1000
+MAX_JOBS_FOR_THIS_MODE = 2000
 
 
 def build_completion_list(organism: Organism) -> List[Dict]:
