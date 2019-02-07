@@ -594,7 +594,7 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                         except Exception:
                             city = ""
 
-                        new_user_text = "New user " + supplied_email_address + " from " + city + " downloaded a dataset! (" + str(old_object.id) + ")"
+                        new_user_text = "New user " + supplied_email_address + " from " + city + " [" + remote_ip + "] downloaded a dataset! (" + str(old_object.id) + ")"
                         webhook_url = "https://hooks.slack.com/services/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"
                         slack_json = {
                             "channel": "ccdl-general", # Move to robots when we get sick of these
