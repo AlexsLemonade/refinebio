@@ -592,7 +592,7 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                             remote_ip = get_client_ip(self.request)
                             city = requests.get('https://ipapi.co/' + remote_ip + '/json/', timeout=10).json()['city']
                         except Exception:
-                            city = ""
+                            city = "COULD_NOT_DETERMINE"
 
                         new_user_text = "New user " + supplied_email_address + " from " + city + " [" + remote_ip + "] downloaded a dataset! (" + str(old_object.id) + ")"
                         webhook_url = "https://hooks.slack.com/services/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"
