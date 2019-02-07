@@ -61,7 +61,7 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
 
             # Found the job so we don't need to keep going.
             break
-        except DownloaderJobOriginalFileAssociation.DoesNotExist:
+        except DownloaderJob.DoesNotExist:
             # If there's no association between this file and any
             # downloader jobs, it's most likely because the original
             # file was created after extracting a archive containing
