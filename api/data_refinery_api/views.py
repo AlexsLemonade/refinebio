@@ -589,7 +589,7 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 if settings.RUNNING_IN_CLOUD:
                     try:
                         try:
-                            remote_ip = get_client_ip(request)
+                            remote_ip = get_client_ip(self.request)
                             city = requests.get('https://ipapi.co/' + remote_ip + '/json/', timeout=10).json()['city']
                         except Exception:
                             city = ""
