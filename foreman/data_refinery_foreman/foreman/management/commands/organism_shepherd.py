@@ -6,6 +6,7 @@ those jobs it detects as failed.
 """
 
 import sys
+import time
 from typing import Dict, List
 
 from django.core.management.base import BaseCommand
@@ -244,6 +245,6 @@ class Command(BaseCommand):
             # Wait 10 minutes in between queuing additional work to
             # give it time to actually get done.
             if len(prioritized_job_list) > 0:
-                sleep(600)
+                time.sleep(600)
 
         logger.info("Successfully requeued all jobs for unprocessed %s samples.", organism_name)
