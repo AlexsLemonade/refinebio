@@ -117,7 +117,6 @@ jobs:
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
     working_directory: ~/refinebio
-    # resource_class: xlarge
     machine:
       docker_layer_caching: true
     steps:
@@ -137,28 +136,6 @@ jobs:
       # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
       - run: ./update_models.sh
-
-
-      ######################################################################
-      # Currently unable to be run in CircleCI because of RAM requirements.
-      ######################################################################
-      # # Install Nomad
-      # - run: sudo ./install_nomad.sh
-
-      #   # Start Nomad, build images, and register jobs.
-      # - run:
-      #     command: sudo -E ./run_nomad.sh -e test
-
-      # - run: ./prepare_image.sh -i salmon -s workers -d localhost:5000
-      # - run: docker push localhost:5000/dr_salmon
-      # - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
-      # - run: docker push localhost:5000/dr_downloaders
-
-      # # Run Salmon end-to-end tests
-      # - run: mkdir -p test_volume && chmod -R a+rw test_volume
-      # - run: ./foreman/run_tests.sh --tag=salmon
-      ######################################################################
-
 
       # Update ES models
       - run: ./run_manage.sh search_index --rebuild -f;
@@ -172,7 +149,6 @@ jobs:
 
   tx_illumina_tests:
     working_directory: ~/refinebio
-    # resource_class: xlarge
     machine:
       docker_layer_caching: true
     steps:
@@ -193,27 +169,7 @@ jobs:
       - run: chmod -R a+wr common
       - run: ./update_models.sh
 
-      ######################################################################
-      # Currently unable to be run in CircleCI because of RAM requirements.
-      ######################################################################
-      # # Install Nomad
-      # - run: sudo ./install_nomad.sh
-
-      # # Start Nomad, build images, and register jobs.
-      # - run:
-      #     command: sudo -E ./run_nomad.sh -e test
-
-      # - run: ./prepare_image.sh -i transcriptome -s workers -d localhost:5000
-      # - run: docker push localhost:5000/dr_transcriptome
-      # - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
-      # - run: docker push localhost:5000/dr_downloaders
-
-      # # Run Transcriptome end-to-end tests
-      # - run: mkdir -p test_volume && chmod -R a+rw test_volume
-      # - run: ./foreman/run_tests.sh --tag=transcriptome
-      ######################################################################
-
-      # - run: ./prepare_image.sh -i transcriptome -s workers
+      - run: ./prepare_image.sh -i transcriptome -s workers
       - run: .circleci/filter_tests.sh -t transcriptome
 
       # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
