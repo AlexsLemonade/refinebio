@@ -139,7 +139,7 @@ def requeue_job(job):
     # them retried will give me a chance to actually take a look at
     # what is happening to to them.
     num_retries = 2
-    if type(job).__name__ == "ProcessorJob":
+    if isinstance(job, ProcessorJob):
         new_job = ProcessorJob(
             num_retries=num_retries,
             pipeline_applied=job.pipeline_applied,
@@ -155,7 +155,7 @@ def requeue_job(job):
             )
 
         job_type = ProcessorPipeline[job.pipeline_applied]
-    elif type(job).__name__ == "DownloaderJob":
+    elif isinstance(job, DownloaderJob):
         new_job = DownloaderJob(
             num_retries=num_retries,
             downloader_task=job.downloader_task,
@@ -171,7 +171,7 @@ def requeue_job(job):
 
         job_type = Downloaders[job.downloader_task]
     else:
-        raise(ValueError("Told to requeue a job that's not a ProcessorJob nor DownloaderJob!"))
+        raise ValueError("Told to requeue a job that's not a ProcessorJob nor DownloaderJob!")
 
     try:
         if send_job(job_type, job=new_job, is_dispatch=True):
