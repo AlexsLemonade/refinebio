@@ -698,6 +698,47 @@ class OriginalFile(models.Model):
         self.is_downloaded = False
         self.save()
 
+    def needs_downloading(self, pipeline_applied=None) -> bool:
+        """Determine if a file needs to be downloaded.
+
+        This is true if the file has already been downloaded and lost
+        without getting processed.
+        """
+        # If the file is downloaded and the file actually exists on disk,
+        # then it doens't need to be downloaded.
+        if self.is_downloaded \
+           and self.absolute_file_path \
+           and os.path.exists(self.absolute_file_path):
+            return False
+
+        unstarted_downloader_jobs = self.downloader_jobs.filter(
+            start_time__isnull=True,
+            success__isnull=True,
+            retried=False
+        )
+
+        # If the file has a downloader job that hasn't even started yet,
+        # then it doesn't need another.
+        if unstarted_downloader_jobs.count() > 0:
+            return False
+
+        # Transcriptome files are used by two jobs, one for long and
+        # one for short. So one of them could have completed
+        # successfully before the file disappeared, therefore check
+        # the pipeline_applied to make sure we're looking at the same
+        # index_length.
+        if pipeline_applied:
+            successful_processor_jobs = self.processor_jobs.filter(
+                success=True,
+                pipeline_applied=pipeline_applied
+            )
+        else:
+            successful_processor_jobs = self.processor_jobs.filter(success=True)
+
+        # Finally, if there is a successful processor job, then the file
+        # has been processed and doesn't need to be processed again.
+        return successful_processor_jobs.count() == 0
+
 
 class ComputedFile(models.Model):
     """ A representation of a file created by a data-refinery process """
@@ -737,7 +778,7 @@ class ComputedFile(models.Model):
     is_compendia = models.BooleanField(default=False)
     compendia_organism = models.ForeignKey(Organism,
                                         blank=True,
-                                        null=True, 
+                                        null=True,
                                         on_delete=models.CASCADE
                                     )
     compendia_version = models.IntegerField(blank=True, null=True)
@@ -780,7 +821,7 @@ class ComputedFile(models.Model):
                     )
             self.save()
         except Exception as e:
-            logger.exception(e, 
+            logger.exception(e,
                 computed_file_id=self.pk,
                 s3_key=self.s3_key,
                 s3_bucket=self.s3_bucket

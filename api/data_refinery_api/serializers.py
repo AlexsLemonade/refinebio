@@ -18,7 +18,7 @@ from data_refinery_common.models import (
     Dataset,
     APIToken
 )
-from collections import defaultdict 
+from collections import defaultdict
 
 ##
 # Organism
@@ -439,6 +439,7 @@ class DownloaderJobSerializer(serializers.ModelSerializer):
                     'downloader_task',
                     'num_retries',
                     'retried',
+                    'was_recreated',
                     'worker_id',
                     'worker_version',
                     'failure_reason',
@@ -543,7 +544,7 @@ class DatasetSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(DatasetSerializer, self).__init__(*args, **kwargs)
 
-        # only inclue the fields `experiments` and `organism_samples` when the param `?details=true` 
+        # only inclue the fields `experiments` and `organism_samples` when the param `?details=true`
         # is provided. This is used on the frontend to render the downloads page
         # thanks to https://django.cowhite.com/blog/dynamically-includeexclude-fields-to-django-rest-framwork-serializers-based-on-user-requests/
         if 'context' in kwargs:
