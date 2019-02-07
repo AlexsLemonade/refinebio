@@ -92,7 +92,10 @@ from data_refinery_common.models.documents import (
     ExperimentDocument
 )
 from data_refinery_common.utils import get_env_variable, get_active_volumes
+from data_refinery_common.logging import get_and_configure_logger
 from .serializers import ExperimentDocumentSerializer
+
+logger = get_and_configure_logger(__name__)
 
 ##
 # Variables
