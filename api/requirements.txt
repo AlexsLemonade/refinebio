@@ -22,6 +22,7 @@ idna==2.7                 # via requests
 itypes==1.1.0             # via coreapi
 jinja2==2.10              # via coreschema
 jmespath==0.9.3           # via boto3, botocore
+mailchimp3==3.0.5
 markupsafe==1.0           # via jinja2
 psycopg2-binary==2.7.5
 psycopg2==2.7.5           # via djangorestframework-hstore

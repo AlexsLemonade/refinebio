@@ -172,6 +172,18 @@ variable "max_downloader_jobs_per_node" {
   default = 8
 }
 
+variable "mailchimp_user" {
+  default = ""
+}
+
+variable "mailchimp_api_key" {
+  default = ""
+}
+
+variable "mailchimp_list_id" {
+  default = ""
+}
+
 # Output our production environment variables.
 output "environment_variables" {
   value = [
@@ -255,6 +267,12 @@ output "environment_variables" {
       value = "${aws_instance.nomad_server_1.public_ip}"},
     {name = "NOMAD_PORT"
       value = "4646"},
+    {name = "MAILCHIMP_USER"
+      value = "${var.mailchimp_user}"},
+    {name = "MAILCHIMP_API_KEY"
+      value = "${var.mailchimp_api_key}"},
+    {name = "MAILCHIMP_LIST_ID"
+      value = "${var.mailchimp_list_id}"},
     {name = "MAX_CLIENTS"
       value = "${var.max_clients}"},
     {name = "MAX_DOWNLOADER_JOBS_PER_NODE"

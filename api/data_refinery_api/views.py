@@ -1,5 +1,6 @@
 from datetime import timedelta, datetime
 import requests
+import mailchimp3
 import nomad
 from typing import Dict
 
@@ -91,8 +92,19 @@ from data_refinery_common.models.documents import (
     ExperimentDocument
 )
 from data_refinery_common.utils import get_env_variable, get_active_volumes
+from data_refinery_common.logging import get_and_configure_logger
 from .serializers import ExperimentDocumentSerializer
 
+logger = get_and_configure_logger(__name__)
+
+##
+# Variables
+##
+
+RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD")
+MAILCHIMP_USER = get_env_variable("MAILCHIMP_USER")
+MAILCHIMP_API_KEY = get_env_variable("MAILCHIMP_API_KEY")
+MAILCHIMP_LIST_ID = get_env_variable("MAILCHIMP_LIST_ID")
 
 ##
 # Custom Views
@@ -546,6 +558,23 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             # We could be more aggressive with requirements checking here, but
             # there could be use cases where you don't want to supply an email.
             supplied_email_address = self.request.data.get('email_address', None)
+            email_ccdl_ok = self.request.data.get('email_ccdl_ok', False)
+            if supplied_email_address and MAILCHIMP_API_KEY and RUNNING_IN_CLOUD and email_ccdl_ok:
+                try:
+                    client = mailchimp3.MailChimp(mc_api=MAILCHIMP_API_KEY, mc_user=MAILCHIMP_USER)
+                    data = {
+                        "email_address": supplied_email_address,
+                        "status": "subscribed"
+                    }
+                    client.lists.members.create(MAILCHIMP_LIST_ID, data)
+                except mailchimp3.mailchimpclient.MailChimpError as mc_e:
+                    pass # This is likely an user-already-on-list error. It's okay.
+                except Exception as e:
+                    # Something outside of our control has gone wrong. It's okay.
+                    logger.exception("Unexpected failure trying to add user to MailChimp list.",
+                            supplied_email_address=supplied_email_address,
+                            mc_user=MAILCHIMP_USER
+                        )
 
             if not already_processing:
                 # Create and dispatch the new job.
@@ -566,6 +595,10 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                     if obj.email_address != supplied_email_address:
                         obj.email_address = supplied_email_address
                         obj.save()
+                if email_ccdl_ok:
+                    obj.email_ccdl_ok = email_ccdl_ok
+                    obj.save()
+
                 try:
                     # Hidden method of non-dispatching for testing purposes.
                     if not self.request.data.get('no_send_job', False):

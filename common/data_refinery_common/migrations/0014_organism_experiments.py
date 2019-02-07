@@ -16,3 +16,4 @@ class Migration(migrations.Migration):
             field=models.ManyToManyField(through='data_refinery_common.ExperimentOrganismAssociation', to='data_refinery_common.Experiment'),
         ),
     ]
+
