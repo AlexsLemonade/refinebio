@@ -71,7 +71,9 @@ source ~/refinebio/common.sh
 # Circle won't set the branch name for us, so do it ourselves.
 branch=$(get_master_or_dev $CIRCLE_TAG)
 
-if [[ "$branch" == "master" ]]; then
+if [[ "$CIRCLE_TAG" == *"-hotfix" && "$branch" == "dev" ]]; then
+    DOCKERHUB_REPO=ccdl
+elif [[ "$branch" == "master" ]]; then
     DOCKERHUB_REPO=ccdl
 elif [[ "$branch" == "dev" ]]; then
     DOCKERHUB_REPO=ccdlstaging

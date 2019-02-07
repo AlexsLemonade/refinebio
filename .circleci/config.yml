@@ -278,3 +278,12 @@ workflows:
               ignore: /.*/
             tags:
               only: /v.*/
+
+  hotfix-deploy:
+    jobs:
+      - deploy:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v.*-hotfix/

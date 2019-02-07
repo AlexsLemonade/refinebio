@@ -61,6 +61,8 @@ cd ~/refinebio/infrastructure
 source ~/refinebio/common.sh
 branch=$(get_master_or_dev $CIRCLE_TAG)
 
+if [[ "$CIRCLE_TAG" == *"-hotfix" && $branch == "dev" ]]; then
+    ENVIRONMENT=prod
 if [[ $branch == "master" ]]; then
     ENVIRONMENT=prod
 elif [[ $branch == "dev" ]]; then
