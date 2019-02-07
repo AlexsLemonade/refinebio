@@ -157,11 +157,21 @@ class Sample(models.Model):
     # that in type hints because it hasn't been declared yet.
     def get_processor_jobs(self) -> Set:
         processor_jobs = set()
-        for original_file in self.original_files.all():
+        for original_file in self.original_files.prefetch_related("processor_jobs").all():
             for processor_job in original_file.processor_jobs.all():
                 processor_jobs.add(processor_job)
 
         return processor_jobs
+
+    # Returns a set of DownloaderJob objects but we cannot specify
+    # that in type hints because it hasn't been declared yet.
+    def get_downloader_jobs(self) -> Set:
+        downloader_jobs = set()
+        for original_file in self.original_files.prefetch_related("downloader_jobs").all():
+            for downloader_job in original_file.downloader_jobs.all():
+                downloader_jobs.add(downloader_job)
+
+        return downloader_jobs
 
     def get_result_files(self):
         """ Get all of the ComputedFile objects associated with this Sample """
