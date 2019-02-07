@@ -73,7 +73,6 @@ def _prepare_files(job_context: Dict) -> Dict:
         # Delay failing this pipeline until the failure notify has been sent
         job_context['dataset'].failure_reason = error_message
         job_context['dataset'].success = False
-        job_context['dataset'].is_processing = False
         job_context['dataset'].save()
         job_context['job'].success = False
         job_context["job"].failure_reason = "Couldn't get any files to smash for Smash job - empty all_sample_files"
@@ -630,121 +629,14 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             # Quantile Normalization
             if job_context['dataset'].quantile_normalize:
                 try:
-                    # Prepare our QN target file
-                    organism = computed_file.samples.first().organism
-                    qn_target = utils.get_most_recent_qn_target_for_organism(organism)
-
-                    if not qn_target:
-                        logger.error("Could not find QN target for Organism!",
-                            organism=organism,
-                            dataset_id=job_context['dataset'].id,
-                            dataset_data=job_context['dataset'].data,
-                            processor_job_id=job_context["job"].id,
-                        )
-                        job_context['dataset'].success = False
-                        job_context['dataset'].is_processing = False
-                        job_context['job'].failure_reason = "Could not find QN target for Organism!"
-                        job_context['dataset'].failure_reason = "Could not find QN target for Organism!"
-                        job_context['dataset'].save()
-                        # Delay failing this pipeline until the failure notify has been sent
-                        job_context['job'].success = False
-                        job_context['failure_reason'] = str(e)
+                    job_context['merged_no_qn'] = merged
+                    job_context['organism'] = computed_file.samples.first().organism
+                    job_context = _quantile_normalize(job_context)
+                    merged = job_context.get('merged_qn', None)
+                    # We probably don't have an QN target or there is another error,
+                    # so let's fail gracefully.
+                    if merged is not None:
                         return job_context
-                    else:
-                        qn_target_path = qn_target.sync_from_s3()
-                        qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None,
-                                                      index_col=None, error_bad_lines=False)
-
-                        # Prepare our RPy2 bridge
-                        pandas2ri.activate()
-                        preprocessCore = importr('preprocessCore')
-                        as_numeric = rlang("as.numeric")
-                        data_matrix = rlang('data.matrix')
-
-                        # Convert the smashed frames to an R numeric Matrix
-                        # and the target Dataframe into an R numeric Vector
-                        target_vector = as_numeric(qn_target_frame[0])
-                        merged_matrix = data_matrix(merged)
-
-                        # Perform the Actual QN
-                        reso = preprocessCore.normalize_quantiles_use_target(
-                                                            x=merged_matrix,
-                                                            target=target_vector,
-                                                            copy=True
-                                                        )
-
-                        # Verify this QN, related: https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
-                        set_seed = rlang("set.seed")
-                        combn = rlang("combn")
-                        ncol = rlang("ncol")
-                        ks_test = rlang("ks.test")
-                        which = rlang("which")
-
-                        set_seed(123)
-
-                        n = ncol(reso)[0]
-                        m = 2
-                        if n < m:
-                            raise Exception("Found fewer columns than required for QN combinatorial - bad smash?")
-                        combos = combn(ncol(reso), 2)
-
-                        # Convert to NP, Shuffle, Return to R
-                        ar = np.array(combos)
-                        np.random.shuffle(np.transpose(ar))
-                        nr, nc = ar.shape
-                        combos = ro.r.matrix(ar, nrow=nr, ncol=nc)
-
-                        # adapted from
-                        # https://stackoverflow.com/questions/9661469/r-t-test-over-all-columns
-                        # apply KS test to randomly selected pairs of columns (samples)
-                        for i in range(1, min(ncol(combos)[0], 100)):
-                            value1 = combos.rx(1, i)[0]
-                            value2 = combos.rx(2, i)[0]
-
-                            test_a = reso.rx(True, value1)
-                            test_b = reso.rx(True, value2)
-
-                            # RNA-seq has a lot of zeroes in it, which
-                            # breaks the ks_test. Therefore we want to
-                            # filter them out. To do this we drop the
-                            # lowest half of the values. If there's
-                            # still zeroes in there, then that's
-                            # probably too many zeroes so it's okay to
-                            # fail.
-                            median_a = np.median(test_a)
-                            median_b = np.median(test_b)
-
-                            # `which` returns indices which are
-                            # 1-indexed. Python accesses lists with
-                            # zero-indexes, even if that list is
-                            # actually an R vector. Therefore subtract
-                            # 1 to account for the difference.
-                            test_a = [test_a[i-1] for i in which(test_a > median_a)]
-                            test_b = [test_b[i-1] for i in which(test_b > median_b)]
-
-                            # The python list comprehension gives us a
-                            # python list, but ks_test wants an R
-                            # vector so let's go back.
-                            test_a = as_numeric(test_a)
-                            test_b = as_numeric(test_b)
-
-                            ks_res = ks_test(test_a, test_b)
-                            statistic = ks_res.rx('statistic')[0][0]
-                            pvalue = ks_res.rx('p.value')[0][0]
-
-                            # We're unsure of how strigent to be about
-                            # the pvalue just yet, so we're extra lax
-                            # rather than failing tons of tests. This may need tuning.
-                            if statistic > 0.001 or pvalue < 0.8:
-                                raise Exception("Failed Kolmogorov Smirnov test! Stat: " +
-                                                str(statistic) + ", PVal: " + str(pvalue))
-
-                        # And finally convert back to Pandas
-                        ar = np.array(reso)
-                        new_merged = pd.DataFrame(ar, columns=merged.columns, index=merged.index)
-                        job_context['merged_no_qn'] = merged
-                        job_context['merged_qn'] = new_merged
-                        merged = new_merged
                 except Exception as e:
                     logger.exception("Problem occured during quantile normalization",
                         dataset_id=job_context['dataset'].id,
@@ -752,7 +644,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                         processor_job_id=job_context["job"].id,
                     )
                     job_context['dataset'].success = False
-                    job_context['dataset'].is_processing = False
                     job_context['job'].failure_reason = "Failure reason: " + str(e)
                     job_context['dataset'].failure_reason = "Failure reason: " + str(e)
                     job_context['dataset'].save()
@@ -845,7 +736,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                         processor_job_id=job_context['job_id'],
                         input_files=job_context['input_files'])
         job_context['dataset'].success = False
-        job_context['dataset'].is_processing = False
         job_context['job'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].save()
@@ -950,12 +840,6 @@ def _upload(job_context: Dict) -> Dict:
         logger.exception("Failed to upload smash result file.", file=job_context["output_file"])
         job_context['job'].success = False
         job_context['job'].failure_reason = str(e)
-
-        job_context['dataset'].success = False
-        job_context['dataset'].is_processing = False
-        job_context['dataset'].failure_reason = "Failed to upload result file."
-        job_context['dataset'].save()
-
         # Delay failing this pipeline until the failure notify has been sent
         # job_context['success'] = False
 
