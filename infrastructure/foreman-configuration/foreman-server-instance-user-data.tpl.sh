@@ -28,6 +28,8 @@ docker run \\
        -e DATABASE_NAME=${database_name} \\
        -e DATABASE_USER=${database_user} \\
        -e DATABASE_PASSWORD=${database_password} \\
+       -e ELASTICSEARCH_HOST=${elasticsearch_host} \\
+       -e ELASTICSEARCH_PORT=80 \\
        -v /tmp:/tmp \\
        --add-host=nomad:${nomad_lead_server_ip} \\
        --log-driver=awslogs \\
