@@ -184,6 +184,10 @@ variable "mailchimp_list_id" {
   default = ""
 }
 
+variable "elasticsearch_port" {
+  default = "80"
+}
+
 # Output our production environment variables.
 output "environment_variables" {
   value = [
@@ -220,7 +224,7 @@ output "environment_variables" {
     {name = "ELASTICSEARCH_HOST"
       value = "${aws_elasticsearch_domain.es.endpoint}"},
     {name = "ELASTICSEARCH_PORT"
-      value = "80"},
+      value = "${var.elasticsearch_port}"},
     {name = "RUNNING_IN_CLOUD"
       value = "${var.running_in_cloud}"},
     {name = "LOG_LEVEL"

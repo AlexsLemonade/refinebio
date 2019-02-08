@@ -6,6 +6,7 @@ those jobs it detects as failed.
 """
 
 import sys
+import time
 from typing import Dict, List
 
 from django.core.management.base import BaseCommand
@@ -32,7 +33,7 @@ from data_refinery_common.utils import get_env_variable
 logger = get_and_configure_logger(__name__)
 
 
-MAX_JOBS_FOR_THIS_MODE = 1000
+MAX_JOBS_FOR_THIS_MODE = 2000
 
 
 def build_completion_list(organism: Organism) -> List[Dict]:
@@ -104,6 +105,7 @@ def build_prioritized_jobs_list(organism: Organism) -> List:
 
         for sample in unprocessed_samples:
             processor_jobs = list(sample.get_processor_jobs())
+            downloader_jobs = list(sample.get_downloader_jobs())
             if processor_jobs:
                 # We want to requeue the most recently created
                 # processor job, so sort by id since they are
@@ -113,8 +115,7 @@ def build_prioritized_jobs_list(organism: Organism) -> List:
                     key=lambda x: x.id
                 )
                 prioritized_job_list.append(processor_jobs[0])
-            else:
-                downloader_jobs = list(sample.get_downloader_jobs())
+            elif downloader_jobs:
                 downloader_jobs.sort(
                     reverse=True,
                     key=lambda x: x.id
@@ -197,11 +198,20 @@ def requeue_job(job):
 
 
 class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--organism-name",
+            type=str,
+            help=("The name of the organism you would like to shepherd to completion. "
+                  "Must be in all caps and any spaces should be replaced with an underscore. "
+                  "I should make this less strict.")
+        )
+
     def handle(self, *args, **options):
         """Requeues all unprocessed RNA-Seq samples for an organism.
         """
         if options["organism_name"] is None:
-            logger.error("You must specify an organism_name.")
+            logger.error("You must specify an organism-name.")
             sys.exit(1)
         else:
             organism_name = options["organism_name"]
@@ -235,6 +245,6 @@ class Command(BaseCommand):
             # Wait 10 minutes in between queuing additional work to
             # give it time to actually get done.
             if len(prioritized_job_list) > 0:
-                sleep(600)
+                time.sleep(600)
 
         logger.info("Successfully requeued all jobs for unprocessed %s samples.", organism_name)

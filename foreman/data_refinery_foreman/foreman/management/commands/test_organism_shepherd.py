@@ -1,9 +1,10 @@
 import json
 import datetime
 
-from unittest.mock import MagicMock, Mock, patch, call
+from django.core.management import call_command
 from django.test import TransactionTestCase
 from django.utils import timezone
+from unittest.mock import MagicMock, Mock, patch, call
 
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.models import (
@@ -20,7 +21,6 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
 )
-from data_refinery_foreman.foreman.management.commands.organism_shepherd import Command
 
 class OrganismShepherdTestCase(TransactionTestCase):
     @patch('data_refinery_foreman.foreman.management.commands.organism_shepherd.send_job')
@@ -183,8 +183,9 @@ class OrganismShepherdTestCase(TransactionTestCase):
         assoc.save()
 
         # Setup is done, actually run the command.
-        command = Command()
-        command.handle(organism_name="DANIO_RERIO")
+        args = []
+        options = {"organism_name": "DANIO_RERIO"}
+        call_command("organism_shepherd", *args, **options)
 
         # Verify that the jobs were called in the correct order.
         mock_calls = mock_send_job.mock_calls

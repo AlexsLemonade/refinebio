@@ -19,6 +19,7 @@ def prepare_ba_job():
     og_file.source_filename = "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-59071/E-GEOD-59071.raw.3.zip"
     og_file.filename = "GSM1426071_CD_colon_active_1.CEL"
     og_file.absolute_file_path = "/home/user/data_store/raw/TEST/CEL/GSM1426071_CD_colon_active_1.CEL"
+    og_file.is_downloaded = True
     og_file.save()
 
     assoc1 = ProcessorJobOriginalFileAssociation()
@@ -37,6 +38,7 @@ def prepare_non_ba_job():
     og_file.source_filename = "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM45nnn/GSM45588/suppl/GSM45588.CEL.gz"
     og_file.filename = "GSM45588.CEL"
     og_file.absolute_file_path = "/home/user/data_store/raw/TEST/CEL/GSM45588.CEL"
+    og_file.is_downloaded = True
     og_file.save()
 
     assoc1 = ProcessorJobOriginalFileAssociation()
