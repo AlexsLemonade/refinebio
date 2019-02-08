@@ -33,12 +33,14 @@ def prepare_job(length):
     og_file.source_filename = "aegilops_tauschii_" + length + ".fa.gz"
     og_file.filename = "aegilops_tauschii_" + length + ".fa.gz"
     og_file.absolute_file_path = "/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/AEGILOPS_TAUSCHII/aegilops_tauschii_short.fa.gz"
+    og_file.is_downloaded = True
     og_file.save()
 
     og_file2 = OriginalFile()
     og_file2.source_filename = "aegilops_tauschii_" + length + ".gtf.gz"
     og_file2.filename = "aegilops_tauschii_" + length + ".gtf.gz"
     og_file2.absolute_file_path = "/home/user/data_store/raw/TEST/TRANSCRIPTOME_INDEX/AEGILOPS_TAUSCHII/aegilops_tauschii_short.gtf.gz"
+    og_file2.is_downloaded = True
     og_file2.save()
 
     og_file_samp_assoc = OriginalFileSampleAssociation()

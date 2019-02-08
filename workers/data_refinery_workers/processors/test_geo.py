@@ -27,6 +27,7 @@ def prepare_illumina_job(species="Homo sapiens"):
     og_file.source_filename = "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427%5Fnon%2Dnormalized%2Etxt.gz"
     og_file.filename = "GSE22427_non-normalized.txt"
     og_file.absolute_file_path = "/home/user/data_store/raw/TEST/ILLUMINA/GSE22427_non-normalized.txt"
+    og_file.is_downloaded = True
     og_file.save()
 
     assoc1 = ProcessorJobOriginalFileAssociation()
@@ -82,6 +83,7 @@ def prepare_agilent_twocolor_job():
     og_file.source_filename = "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE22900&format=file"
     og_file.filename = "GSM466597_95899_agilent.txt"
     og_file.absolute_file_path = "/home/user/data_store/raw/TEST/AGILENT_TWOCOLOR/GSM466597_95899_agilent.txt"
+    og_file.is_downloaded = True
     og_file.save()
 
     assoc1 = ProcessorJobOriginalFileAssociation()
@@ -132,6 +134,7 @@ class IlluminaToPCLTestCase(TestCase):
         og_file.source_filename = "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE54nnn/GSE54661/suppl/GSE54661%5Fnon%5Fnormalized%2Etxt%2Egz"
         og_file.filename = "GSE54661_non_normalized.txt"
         og_file.absolute_file_path = "/home/user/data_store/raw/TEST/ILLUMINA/GSE54661_non_normalized.txt"
+        og_file.is_downloaded = True
         og_file.save()
 
         assoc1 = ProcessorJobOriginalFileAssociation()

@@ -7,7 +7,7 @@ from nomad import Nomad
 from nomad.api.exceptions import URLNotFoundNomadException
 from typing import List, Set
 from functools import wraps
-from datetime import datetime, timedelta
+import datetime
 from django.conf import settings
 from django.utils import timezone
 from django.db import transaction
@@ -49,11 +49,21 @@ DEFAULT_MAX_JOBS = 20000
 # loop. We could loop much less frequently than every two minutes if
 # the work we do takes longer than 2 minutes, but this will prevent
 # excessive spinning.
-MIN_LOOP_TIME = timedelta(minutes=2)
+MIN_LOOP_TIME = datetime.timedelta(minutes=2)
 
 # How frequently we dispatch Janitor jobs and clean unplaceable jobs
 # out of the Nomad queue.
-JANITOR_DISPATCH_TIME = timedelta(minutes=30)
+JANITOR_DISPATCH_TIME = datetime.timedelta(minutes=30)
+
+
+# TEMPORARY (while chasing down zebrafish data)
+# We want to limit the system to working on zebrafish data
+# temporarily, which means that we don't want the Foreman to requeue
+# anything that we haven't identitifed as being zebrafish data, so
+# there's a separate management command being used to pick what work
+# to focus on. So all the foreman needs to do is worry about jobs
+# queued after the beginning of the zebrafish sprint
+JOB_CREATED_AT_CUTOFF = datetime.date(2019, 2, 5)
 
 
 def read_config_list(config_file: str) -> List[str]:
@@ -315,7 +325,9 @@ def retry_failed_downloader_jobs() -> None:
     """Handle downloader jobs that were marked as a failure."""
     failed_jobs = DownloaderJob.objects.filter(
         success=False,
-        retried=False
+        retried=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).prefetch_related(
         "original_files__samples"
     )
@@ -336,7 +348,9 @@ def retry_hung_downloader_jobs() -> None:
         retried=False,
         end_time=None,
         start_time__isnull=False,
-        no_retry=False
+        no_retry=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).prefetch_related(
         "original_files__samples"
     )
@@ -383,7 +397,9 @@ def retry_lost_downloader_jobs() -> None:
         retried=False,
         start_time=None,
         end_time=None,
-        no_retry=False
+        no_retry=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).prefetch_related(
         "original_files__samples"
     )
@@ -407,12 +423,7 @@ def retry_lost_downloader_jobs() -> None:
                     )
                     lost_jobs.append(job)
             else:
-                # If there is no nomad_job_id field set, we could be
-                # in the small window where the job was created but
-                # hasn't yet gotten a chance to be queued.
-                # If this job really should be restarted we'll get it in the next loop.
-                if timezone.now() - job.created_at > MIN_LOOP_TIME:
-                    lost_jobs.append(job)
+                lost_jobs.append(job)
         except socket.timeout:
             logger.info("Timeout connecting to Nomad - is Nomad down?", job_id=job.id)
         except URLNotFoundNomadException:
@@ -553,7 +564,9 @@ def retry_failed_processor_jobs() -> None:
     failed_jobs = ProcessorJob.objects.filter(
         success=False,
         retried=False,
-        volume_index__in=active_volumes
+        volume_index__in=active_volumes,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
     ).prefetch_related(
@@ -586,7 +599,9 @@ def retry_hung_processor_jobs() -> None:
         end_time=None,
         start_time__isnull=False,
         no_retry=False,
-        volume_index__in=active_volumes
+        volume_index__in=active_volumes,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
     ).prefetch_related(
@@ -647,7 +662,9 @@ def retry_lost_processor_jobs() -> None:
         start_time=None,
         end_time=None,
         no_retry=False,
-        volume_index__in=active_volumes
+        volume_index__in=active_volumes,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
     ).prefetch_related(
@@ -789,7 +806,12 @@ def handle_survey_jobs(jobs: List[SurveyJob]) -> None:
 
 def retry_failed_survey_jobs() -> None:
     """Handle survey jobs that were marked as a failure."""
-    failed_jobs = SurveyJob.objects.filter(success=False, retried=False).order_by('pk')
+    failed_jobs = SurveyJob.objects.filter(
+        success=False,
+        retried=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
+    ).order_by('pk')
     if failed_jobs:
         logger.info(
             "Handling failed (explicitly-marked-as-failure) survey jobs!",
@@ -805,7 +827,9 @@ def retry_hung_survey_jobs() -> None:
         retried=False,
         end_time=None,
         start_time__isnull=False,
-        no_retry=False
+        no_retry=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).order_by('pk')
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -848,7 +872,9 @@ def retry_lost_survey_jobs() -> None:
         retried=False,
         start_time=None,
         end_time=None,
-        no_retry=False
+        no_retry=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).order_by('pk')
 
     nomad_host = get_env_variable("NOMAD_HOST")

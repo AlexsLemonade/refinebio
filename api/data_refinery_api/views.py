@@ -1,4 +1,6 @@
 from datetime import timedelta, datetime
+import requests
+import mailchimp3
 import nomad
 from typing import Dict
 
@@ -90,8 +92,19 @@ from data_refinery_common.models.documents import (
     ExperimentDocument
 )
 from data_refinery_common.utils import get_env_variable, get_active_volumes
+from data_refinery_common.logging import get_and_configure_logger
 from .serializers import ExperimentDocumentSerializer
 
+logger = get_and_configure_logger(__name__)
+
+##
+# Variables
+##
+
+RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD")
+MAILCHIMP_USER = get_env_variable("MAILCHIMP_USER")
+MAILCHIMP_API_KEY = get_env_variable("MAILCHIMP_API_KEY")
+MAILCHIMP_LIST_ID = get_env_variable("MAILCHIMP_LIST_ID")
 
 ##
 # Custom Views
@@ -545,6 +558,23 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             # We could be more aggressive with requirements checking here, but
             # there could be use cases where you don't want to supply an email.
             supplied_email_address = self.request.data.get('email_address', None)
+            email_ccdl_ok = self.request.data.get('email_ccdl_ok', False)
+            if supplied_email_address and MAILCHIMP_API_KEY and RUNNING_IN_CLOUD and email_ccdl_ok:
+                try:
+                    client = mailchimp3.MailChimp(mc_api=MAILCHIMP_API_KEY, mc_user=MAILCHIMP_USER)
+                    data = {
+                        "email_address": supplied_email_address,
+                        "status": "subscribed"
+                    }
+                    client.lists.members.create(MAILCHIMP_LIST_ID, data)
+                except mailchimp3.mailchimpclient.MailChimpError as mc_e:
+                    pass # This is likely an user-already-on-list error. It's okay.
+                except Exception as e:
+                    # Something outside of our control has gone wrong. It's okay.
+                    logger.exception("Unexpected failure trying to add user to MailChimp list.",
+                            supplied_email_address=supplied_email_address,
+                            mc_user=MAILCHIMP_USER
+                        )
 
             if not already_processing:
                 # Create and dispatch the new job.
@@ -565,6 +595,10 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                     if obj.email_address != supplied_email_address:
                         obj.email_address = supplied_email_address
                         obj.save()
+                if email_ccdl_ok:
+                    obj.email_ccdl_ok = email_ccdl_ok
+                    obj.save()
+
                 try:
                     # Hidden method of non-dispatching for testing purposes.
                     if not self.request.data.get('no_send_job', False):
@@ -584,6 +618,38 @@ class DatasetView(generics.RetrieveUpdateAPIView):
 
                 serializer.validated_data['is_processing'] = True
                 obj = serializer.save()
+
+                if settings.RUNNING_IN_CLOUD:
+                    try:
+                        try:
+                            remote_ip = get_client_ip(self.request)
+                            city = requests.get('https://ipapi.co/' + remote_ip + '/json/', timeout=10).json()['city']
+                        except Exception:
+                            city = "COULD_NOT_DETERMINE"
+
+                        new_user_text = "New user " + supplied_email_address + " from " + city + " [" + remote_ip + "] downloaded a dataset! (" + str(old_object.id) + ")"
+                        webhook_url = "https://hooks.slack.com/services/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"
+                        slack_json = {
+                            "channel": "ccdl-general", # Move to robots when we get sick of these
+                            "username": "EngagementBot",
+                            "icon_emoji": ":halal:",
+                            "attachments":[
+                                {   "color": "good",
+                                    "text": new_user_text
+                                }
+                            ]
+                        }
+                        response = requests.post(
+                            webhook_url,
+                            json=slack_json,
+                            headers={'Content-Type': 'application/json'},
+                            timeout=10
+                        )
+                    except Exception as e:
+                        # It doens't really matter if this didn't work
+                        logger.error(e)
+                        pass
+
                 return obj
 
         # Don't allow critical data updates to jobs that have already been submitted,
@@ -1296,3 +1362,15 @@ class ComputedFilesList(PaginatedAPIView):
         jobs = ComputedFile.objects.filter(**filter_dict).order_by('-id')[offset:(offset + limit)]
         serializer = ComputedFileListSerializer(jobs, many=True)
         return Response(serializer.data)
+
+##
+# Util
+##
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR', '')
+    return ip

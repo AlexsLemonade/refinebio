@@ -423,7 +423,11 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 # Ex: E-GEOD-9656
                 if sub_file_mod['type'] == "data" and sub_file_mod['comment'].get('value', None) != None:
                     has_raw = True
-                if 'raw' in sub_file_mod['comment'].get('value', ''):
+
+                # 'value' can be None, convert to an empty string to
+                # make it easier to use.
+                comment_value = sub_file_mod['comment'].get('value', '')  or ''
+                if 'raw' in comment_value:
                     has_raw = True
 
             skip_sample = False

@@ -9,3 +9,4 @@ djangorestframework-hstore
 django-cors-headers
 django-filter
 coreapi
+mailchimp3
