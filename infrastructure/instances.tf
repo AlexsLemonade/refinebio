@@ -795,6 +795,7 @@ data "template_file" "foreman_server_script_smusher" {
     database_password = "${var.database_password}"
     database_name = "${aws_db_instance.postgres_db.name}"
     elasticsearch_host = "${aws_elasticsearch_domain.es.endpoint}"
+    elasticsearch_port = "${var.elasticsearch_port}"
     log_group = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
   }
 }

@@ -346,6 +346,8 @@ if [[ ! -z $container_running ]]; then
        -e DATABASE_NAME=$DATABASE_NAME \
        -e DATABASE_USER=$DATABASE_USER \
        -e DATABASE_PASSWORD=$DATABASE_PASSWORD \
+       -e ELASTICSEARCH_HOST=$ELASTICSEARCH_HOST \
+       -e ELASTICSEARCH_PORT=$ELASTICSEARCH_PORT \
        -v /tmp/volumes_static:/tmp/www/static \
        --log-driver=awslogs \
        --log-opt awslogs-region=$REGION \
