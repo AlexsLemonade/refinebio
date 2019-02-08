@@ -60,10 +60,10 @@ get_master_or_dev() {
         # All dev versions should end with '-dev' and all master versions should not.
         if [[ ! -z $master_check ]] && [[ $version != *-dev ]]; then
             echo "master"
-        elif [[ ! -z $dev_check ]] && [[ $version == *-dev ]]; then
+        elif [[ ! -z $dev_check ]] ; then
             echo "dev"
         else
-            echo "Why in the world was update_docker_img.sh called from a branch other than dev or master?!?!?"
+            echo "unknown"
         fi
     fi
 }
