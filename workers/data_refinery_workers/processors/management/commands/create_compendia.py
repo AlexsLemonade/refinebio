@@ -16,6 +16,7 @@ from data_refinery_common.models import (
     OrganismIndex,
     ExperimentSampleAssociation
 )
+from data_refinery_workers.processors import create_compendia
 
 logger = get_and_configure_logger(__name__)
 
