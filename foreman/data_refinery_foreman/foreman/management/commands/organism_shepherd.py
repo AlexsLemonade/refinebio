@@ -139,13 +139,13 @@ def requeue_job(job):
     # already, so there may be a good reason. Not immediately having
     # them retried will give me a chance to actually take a look at
     # what is happening to to them.
-    num_retries = 2
+    num_retries = 1
     if isinstance(job, ProcessorJob):
         new_job = ProcessorJob(
             num_retries=num_retries,
             pipeline_applied=job.pipeline_applied,
             ram_amount=job.ram_amount,
-            volume_index=job.volume_index
+            volume_index=0
         )
         new_job.save()
 
