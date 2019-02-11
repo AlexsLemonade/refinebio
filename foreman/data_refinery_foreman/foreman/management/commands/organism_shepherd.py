@@ -106,7 +106,7 @@ def build_prioritized_jobs_list(organism: Organism) -> List:
             "Experiment %s has %d / %d samples processed.",
             experiment_stats_dict["experiment"],
             len(unprocessed_samples),
-            len(experiment_stats_dict["processed"])
+            (len(unprocessed_samples) + len(experiment_stats_dict["processed"]))
         )
 
         for sample in unprocessed_samples:
