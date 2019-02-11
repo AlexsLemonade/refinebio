@@ -128,7 +128,7 @@ variable "spot_price" {
 }
 
 variable "spot_fleet_capacity" {
-  default = "100"
+  default = "0"
 }
 
 variable "max_clients" {
