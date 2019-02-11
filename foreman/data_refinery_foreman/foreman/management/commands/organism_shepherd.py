@@ -151,7 +151,7 @@ def requeue_job(job):
             num_retries=num_retries,
             pipeline_applied=job.pipeline_applied,
             ram_amount=job.ram_amount,
-            volume_index=0
+            volume_index="0"
         )
         new_job.save()
 
