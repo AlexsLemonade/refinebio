@@ -56,6 +56,7 @@ class OrganismShepherdTestCase(TransactionTestCase):
 
         # Experiment that is 0% complete.
         zero_percent_experiment = Experiment(accession_code='ERP037000')
+        zero_percent_experiment.technology = 'RNA-SEQ'
         zero_percent_experiment.save()
 
         organism_assoc = ExperimentOrganismAssociation.objects.create(
@@ -101,6 +102,7 @@ class OrganismShepherdTestCase(TransactionTestCase):
 
         # Experiment that is 50% complete.
         fify_percent_experiment = Experiment(accession_code='ERP036000')
+        fify_percent_experiment.technology = 'RNA-SEQ'
         fify_percent_experiment.save()
 
         organism_assoc = ExperimentOrganismAssociation.objects.create(
