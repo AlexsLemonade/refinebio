@@ -635,7 +635,20 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     merged = job_context.get('merged_qn', None)
                     # We probably don't have an QN target or there is another error,
                     # so let's fail gracefully.
-                    if merged is not None:
+                    if merged is None:
+                        e = "Problem occured during quantile normalization: No merged_qn"
+                        logger.error(e,
+                            dataset_id=job_context['dataset'].id,
+                            dataset_data=job_context['dataset'].data,
+                            processor_job_id=job_context["job"].id,
+                        )
+                        job_context['dataset'].success = False
+                        job_context['job'].failure_reason = "Failure reason: " + str(e)
+                        job_context['dataset'].failure_reason = "Failure reason: " + str(e)
+                        job_context['dataset'].save()
+                        # Delay failing this pipeline until the failure notify has been sent
+                        job_context['job'].success = False
+                        job_context['failure_reason'] = str(e)
                         return job_context
                 except Exception as e:
                     logger.exception("Problem occured during quantile normalization",
@@ -800,6 +813,7 @@ def _upload(job_context: Dict) -> Dict:
 
     # There has been a failure already, don't try to upload anything.
     if not job_context.get("output_file", None):
+        logger.error("Was told to upload a smash result without an output_file.")
         return job_context
 
     try:
@@ -839,7 +853,7 @@ def _upload(job_context: Dict) -> Dict:
     except Exception as e:
         logger.exception("Failed to upload smash result file.", file=job_context["output_file"])
         job_context['job'].success = False
-        job_context['job'].failure_reason = str(e)
+        job_context['job'].failure_reason = "Failure reason: " + str(e)
         # Delay failing this pipeline until the failure notify has been sent
         # job_context['success'] = False
 
