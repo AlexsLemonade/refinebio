@@ -108,6 +108,11 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
                              " because it was able to have a processor job created for it..."),
                             sample=sample_object.id,
                             original_file=original_file.id)
+            else:
+                # determine_downloader_task returns an enum object,
+                # but we wanna set this on the DownloaderJob object so
+                # we want the actual value.
+                downloader_task = downloader_task.value
 
             accession_code = sample_object.accession_code
             original_files = sample_object.original_files.all()
