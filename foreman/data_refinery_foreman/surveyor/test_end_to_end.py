@@ -49,10 +49,16 @@ def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int=None
     """Monitors the `job_class` table for when `job` is done."""
     loop_time = loop_time if loop_time else LOOP_TIME
     job = job_class.objects.filter(id=job.id).get()
+    last_log_time = timezone.now()
     while job.success is None and timezone.now() - start_time < MAX_WAIT_TIME:
-        logger.info("Still polling the %s.",
-                    job_class.__name__)
-        time.sleep(LOOP_TIME)
+        time.sleep(loop_time)
+
+        # Don't log statuses more often than every 5 seconds.
+        if timezone.now() - last_log_time > timedelta(seconds=5):
+            logger.info("Still polling the %s.",
+                        job_class.__name__)
+            last_log_time = timezone.now()
+
         job = job_class.objects.filter(id=job.id).get()
 
     if timezone.now() - start_time > MAX_WAIT_TIME:
@@ -540,13 +546,17 @@ class RedownloadingTestCase(TransactionTestCase):
                 # possible, so pass a short loop time and let the waiting
                 # loop spin really fast so we lose as little time as
                 # possible.
-                downloader_job = wait_for_job(downloader_jobs[0], DownloaderJob, start_time, .1)
+                downloader_job = wait_for_job(downloader_job, DownloaderJob, start_time, .1)
                 self.assertTrue(downloader_job.success)
                 if not file_deleted:
                     for original_file in OriginalFile.objects.filter(is_downloaded=True):
                         if not original_file.is_archive:
                             original_file.delete_local_file()
                             file_deleted = True
+
+                            # And then to make sure that we can handle
+                            # cases where the downloader job is missing:
+                            downloader_job.delete()
                             break
 
             # There's a chance that the processor job with a missing
@@ -567,9 +577,10 @@ class RedownloadingTestCase(TransactionTestCase):
                 wait_for_job(doomed_processor_job, ProcessorJob, start_time)
 
             # The processor job that had a missing file will have
-            # recreated its DownloaderJob, which means there should now be 5.
+            # recreated its DownloaderJob, which means there should
+            # now be 5, but we also deleted on on purpose so there's 4.
             downloader_jobs = DownloaderJob.objects.all().order_by('-id')
-            self.assertEqual(downloader_jobs.count(), 5)
+            self.assertEqual(downloader_jobs.count(), 4)
 
             # However DownloaderJobs don't get queued immediately, so
             # we have to run a foreman function to make it happen:

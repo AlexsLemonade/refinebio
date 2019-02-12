@@ -12,6 +12,7 @@ from django.utils import timezone
 from enum import Enum, unique
 from typing import List, Dict, Callable
 
+from data_refinery_common import job_lookup
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
@@ -53,6 +54,9 @@ def signal_handler(sig, frame):
 
 def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
     """Creates a downloader job to download `undownloaded_files`."""
+    if not undownloaded_files:
+        return False
+
     original_downloader_job = None
     archive_file = None
     for undownloaded_file in undownloaded_files:
@@ -95,11 +99,24 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
                 pass
 
     if not original_downloader_job:
-        logger.error(
-            "Could not find the original downloader job for these files.",
-            undownloaded_file=undownloaded_files
-        )
-        return False
+        sample_object = list(undownloaded_files)[0].samples.first()
+        if sample_object:
+            downloader_task = job_lookup.determine_downloader_task(sample_object)
+
+            if downloader_task == job_lookup.Downloaders.NONE:
+                logger.warn(("No valid downloader task found for sample, which is weird"
+                             " because it was able to have a processor job created for it..."),
+                            sample=sample_object.id,
+                            original_file=original_file.id)
+
+            accession_code = sample_object.accession_code
+            original_files = sample_object.original_files.all()
+        else:
+            logger.error(
+                "Could not find the original DownloaderJob or Sample for these files.",
+                undownloaded_file=undownloaded_files
+            )
+            return False
     elif original_downloader_job.was_recreated:
         logger.warn(
             "Downloader job has already been recreated once, not doing it again.",
@@ -107,10 +124,14 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
             undownloaded_files=undownloaded_files
         )
         return False
+    else:
+        downloader_task = original_downloader_job.downloader_task
+        accession_code = original_downloader_job.accession_code
+        original_files = original_downloader_job.original_files.all()
 
     new_job = DownloaderJob()
-    new_job.downloader_task = original_downloader_job.downloader_task
-    new_job.accession_code = original_downloader_job.accession_code
+    new_job.downloader_task = downloader_task
+    new_job.accession_code = accession_code
     new_job.was_recreated = True
     new_job.save()
 
@@ -132,7 +153,7 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
         # We can't just associate the undownloaded files, because
         # there's a chance that there is a file which actually is
         # downloaded that also needs to be associated with the job.
-        for original_file in original_downloader_job.original_files.all():
+        for original_file in original_files:
             DownloaderJobOriginalFileAssociation.objects.get_or_create(
                 downloader_job=new_job,
                 original_file=original_file
