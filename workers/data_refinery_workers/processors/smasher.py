@@ -544,6 +544,12 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     all_frames.append(data)
                     num_samples = num_samples + 1
 
+                    if (num_samples % 100) == 0:
+                        logger.info("Loaded " + str(num_samples) + " into frame.",
+                            dataset_id=job_context['dataset'].id,
+                            how=how
+                        )
+
                 except Exception as e:
                     unsmashable_files.append(computed_file_path)
                     logger.exception("Unable to smash file",
