@@ -157,11 +157,21 @@ class Sample(models.Model):
     # that in type hints because it hasn't been declared yet.
     def get_processor_jobs(self) -> Set:
         processor_jobs = set()
-        for original_file in self.original_files.all():
+        for original_file in self.original_files.prefetch_related("processor_jobs").all():
             for processor_job in original_file.processor_jobs.all():
                 processor_jobs.add(processor_job)
 
         return processor_jobs
+
+    # Returns a set of DownloaderJob objects but we cannot specify
+    # that in type hints because it hasn't been declared yet.
+    def get_downloader_jobs(self) -> Set:
+        downloader_jobs = set()
+        for original_file in self.original_files.prefetch_related("downloader_jobs").all():
+            for downloader_job in original_file.downloader_jobs.all():
+                downloader_jobs.add(downloader_job)
+
+        return downloader_jobs
 
     def get_result_files(self):
         """ Get all of the ComputedFile objects associated with this Sample """
@@ -698,6 +708,47 @@ class OriginalFile(models.Model):
         self.is_downloaded = False
         self.save()
 
+    def needs_downloading(self, pipeline_applied=None) -> bool:
+        """Determine if a file needs to be downloaded.
+
+        This is true if the file has already been downloaded and lost
+        without getting processed.
+        """
+        # If the file is downloaded and the file actually exists on disk,
+        # then it doens't need to be downloaded.
+        if self.is_downloaded \
+           and self.absolute_file_path \
+           and os.path.exists(self.absolute_file_path):
+            return False
+
+        unstarted_downloader_jobs = self.downloader_jobs.filter(
+            start_time__isnull=True,
+            success__isnull=True,
+            retried=False
+        )
+
+        # If the file has a downloader job that hasn't even started yet,
+        # then it doesn't need another.
+        if unstarted_downloader_jobs.count() > 0:
+            return False
+
+        # Transcriptome files are used by two jobs, one for long and
+        # one for short. So one of them could have completed
+        # successfully before the file disappeared, therefore check
+        # the pipeline_applied to make sure we're looking at the same
+        # index_length.
+        if pipeline_applied:
+            successful_processor_jobs = self.processor_jobs.filter(
+                success=True,
+                pipeline_applied=pipeline_applied
+            )
+        else:
+            successful_processor_jobs = self.processor_jobs.filter(success=True)
+
+        # Finally, if there is a successful processor job, then the file
+        # has been processed and doesn't need to be processed again.
+        return successful_processor_jobs.count() == 0
+
 
 class ComputedFile(models.Model):
     """ A representation of a file created by a data-refinery process """
@@ -737,7 +788,7 @@ class ComputedFile(models.Model):
     is_compendia = models.BooleanField(default=False)
     compendia_organism = models.ForeignKey(Organism,
                                         blank=True,
-                                        null=True, 
+                                        null=True,
                                         on_delete=models.CASCADE
                                     )
     compendia_version = models.IntegerField(blank=True, null=True)
@@ -780,7 +831,7 @@ class ComputedFile(models.Model):
                     )
             self.save()
         except Exception as e:
-            logger.exception(e, 
+            logger.exception(e,
                 computed_file_id=self.pk,
                 s3_key=self.s3_key,
                 s3_bucket=self.s3_bucket
@@ -939,6 +990,7 @@ class Dataset(models.Model):
 
     # Delivery properties
     email_address = models.CharField(max_length=255, blank=True, null=True)
+    email_ccdl_ok = models.BooleanField(default=False)
     email_sent = models.BooleanField(default=False)  # Result has been made
     expires_on = models.DateTimeField(blank=True, null=True)
 

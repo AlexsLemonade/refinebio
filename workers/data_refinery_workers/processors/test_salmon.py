@@ -90,12 +90,14 @@ def prepare_job():
     og_file.source_filename = "ERR1562482_1.fastq.gz"
     og_file.filename = "ERR1562482_1.fastq.gz"
     og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR1562482_1.fastq.gz"
+    og_file.is_downloaded = True
     og_file.save()
 
     og_file2 = OriginalFile()
     og_file2.source_filename = "ERR1562482_2.fastq.gz"
     og_file2.filename = "ERR1562482_2.fastq.gz"
     og_file2.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR1562482_2.fastq.gz"
+    og_file2.is_downloaded = True
     og_file2.save()
 
     og_file_samp_assoc = OriginalFileSampleAssociation()
@@ -139,6 +141,7 @@ def prepare_dotsra_job(filename="ERR1562482.sra"):
     og_file.source_filename = filename
     og_file.filename = filename
     og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/" + filename
+    og_file.is_downloaded = True
     og_file.save()
 
     og_file_samp_assoc = OriginalFileSampleAssociation()
@@ -223,7 +226,6 @@ class SalmonTestCase(TestCase):
         job_context = salmon.salmon(job.pk)
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertFalse(job.success)
-        shutil.rmtree(job_context["work_dir"])
 
     def check_salmon_quant(self, job_context, sample_dir):
         """Helper function that calls salmon._run_salmon and confirms

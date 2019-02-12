@@ -479,30 +479,24 @@ def _smash(job_context: Dict, how="inner") -> Dict:
 
             for computed_file in input_files:
 
-                # Download the file to a job-specific location so it
-                # won't disappear while we're using it.
-                computed_file_path = job_context["work_dir"] + computed_file.filename
-                computed_file_path = computed_file.get_synced_file_path(path=computed_file_path)
-
-                # Bail appropriately if this isn't a real file.
-                if not computed_file_path or not os.path.exists(computed_file_path):
-                    unsmashable_files.append(computed_file_path)
-                    logger.error("Smasher received non-existent file path.",
-                        computed_file_path=computed_file_path,
-                        computed_file=computed_file,
-                        dataset=job_context['dataset'],
-                        )
-                    continue
-
                 try:
-                    data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0, error_bad_lines=False)
+                    # Download the file to a job-specific location so it
+                    # won't disappear while we're using it.
 
-                    # Strip any funky whitespace
-                    data.columns = data.columns.str.strip()
-                    data = data.dropna(axis='columns', how='all')
+                    computed_file_path = job_context["work_dir"] + computed_file.filename
+                    computed_file_path = computed_file.get_synced_file_path(path=computed_file_path)
 
-                    # Make sure the index type is correct
-                    data.index = data.index.map(str)
+                    # Bail appropriately if this isn't a real file.
+                    if not computed_file_path or not os.path.exists(computed_file_path):
+                        unsmashable_files.append(computed_file_path)
+                        logger.error("Smasher received non-existent file path.",
+                            computed_file_path=computed_file_path,
+                            computed_file=computed_file,
+                            dataset=job_context['dataset'],
+                            )
+                        continue
+
+                    data = _load_and_sanitize_file(computed_file_path)
 
                     if len(data.columns) > 2:
                         # Most of the time, >1 is actually bad, but we also need to support
@@ -527,33 +521,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     if (not computed_file_path.endswith("lengthScaledTPM.tsv")) and (data.max() > 100).any():
                         logger.info("Detected non-log2 microarray data.", file=computed_file)
                         data = np.log2(data)
-
-                    # Ensure that we don't have any dangling Brainarray-generated probe symbols.
-                    # BA likes to leave '_at', signifying probe identifiers,
-                    # on their converted, non-probe identifiers. It makes no sense.
-                    # So, we chop them off and don't worry about it.
-                    data.index = data.index.str.replace('_at', '')
-
-                    # Remove any lingering Affymetrix control probes ("AFFX-")
-                    data = data[~data.index.str.contains('AFFX-')]
-
-                    # If there are any _versioned_ gene identifiers, remove that
-                    # version information. We're using the latest brainarray for everything anyway.
-                    # Jackie says this is okay.
-                    # She also says that in the future, we may only want to do this
-                    # for cross-technology smashes.
-
-                    # This regex needs to be able to handle EGIDs in the form:
-                    #       ENSGXXXXYYYZZZZ.6
-                    # and
-                    #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg.7__3016__AT5G35080.1;db=core)
-                    data.index = data.index.str.replace(r"(\.[^.]*)$", '')
-
-                    # Squish duplicated rows together.
-                    # XXX/TODO: Is mean the appropriate method here?
-                    #           We can make this an option in future.
-                    # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
-                    data = data.groupby(data.index, sort=False).mean()
 
                     # Explicitly title this dataframe
                     try:
@@ -585,7 +552,8 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                         )
                 finally:
                     # Delete before archiving the work dir
-                    os.remove(computed_file_path)
+                    if computed_file_path:
+                        os.remove(computed_file_path)
 
             job_context['all_frames'] = all_frames
 
@@ -673,7 +641,20 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     merged = job_context.get('merged_qn', None)
                     # We probably don't have an QN target or there is another error,
                     # so let's fail gracefully.
-                    if merged is not None:
+                    if merged is None:
+                        e = "Problem occured during quantile normalization: No merged_qn"
+                        logger.error(e,
+                            dataset_id=job_context['dataset'].id,
+                            dataset_data=job_context['dataset'].data,
+                            processor_job_id=job_context["job"].id,
+                        )
+                        job_context['dataset'].success = False
+                        job_context['job'].failure_reason = "Failure reason: " + str(e)
+                        job_context['dataset'].failure_reason = "Failure reason: " + str(e)
+                        job_context['dataset'].save()
+                        # Delay failing this pipeline until the failure notify has been sent
+                        job_context['job'].success = False
+                        job_context['failure_reason'] = str(e)
                         return job_context
                 except Exception as e:
                     logger.exception("Problem occured during quantile normalization",
@@ -792,11 +773,53 @@ def _smash(job_context: Dict, how="inner") -> Dict:
 
     return job_context
 
+def _load_and_sanitize_file(computed_file_path):
+    """ Read and sanitize a computed file """
+
+    data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0, error_bad_lines=False)
+
+    # Strip any funky whitespace
+    data.columns = data.columns.str.strip()
+    data = data.dropna(axis='columns', how='all')
+
+    # Make sure the index type is correct
+    data.index = data.index.map(str)
+
+    # Ensure that we don't have any dangling Brainarray-generated probe symbols.
+    # BA likes to leave '_at', signifying probe identifiers,
+    # on their converted, non-probe identifiers. It makes no sense.
+    # So, we chop them off and don't worry about it.
+    data.index = data.index.str.replace('_at', '')
+
+    # Remove any lingering Affymetrix control probes ("AFFX-")
+    data = data[~data.index.str.contains('AFFX-')]
+
+    # If there are any _versioned_ gene identifiers, remove that
+    # version information. We're using the latest brainarray for everything anyway.
+    # Jackie says this is okay.
+    # She also says that in the future, we may only want to do this
+    # for cross-technology smashes.
+
+    # This regex needs to be able to handle EGIDs in the form:
+    #       ENSGXXXXYYYZZZZ.6
+    # and
+    #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg.7__3016__AT5G35080.1;db=core)
+    data.index = data.index.str.replace(r"(\.[^.]*)$", '')
+
+    # Squish duplicated rows together.
+    # XXX/TODO: Is mean the appropriate method here?
+    #           We can make this an option in future.
+    # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
+    data = data.groupby(data.index, sort=False).mean()
+
+    return data
+
 def _upload(job_context: Dict) -> Dict:
     """ Uploads the result file to S3 and notifies user. """
 
     # There has been a failure already, don't try to upload anything.
     if not job_context.get("output_file", None):
+        logger.error("Was told to upload a smash result without an output_file.")
         return job_context
 
     try:
@@ -836,7 +859,7 @@ def _upload(job_context: Dict) -> Dict:
     except Exception as e:
         logger.exception("Failed to upload smash result file.", file=job_context["output_file"])
         job_context['job'].success = False
-        job_context['job'].failure_reason = str(e)
+        job_context['job'].failure_reason = "Failure reason: " + str(e)
         # Delay failing this pipeline until the failure notify has been sent
         # job_context['success'] = False
 

@@ -18,7 +18,7 @@ from data_refinery_common.models import (
     Dataset,
     APIToken
 )
-from collections import defaultdict 
+from collections import defaultdict
 
 ##
 # Organism
@@ -312,6 +312,8 @@ class ExperimentSerializer(serializers.ModelSerializer):
                     'submitter_institution',
                     'created_at',
                     'last_modified',
+                    'source_first_published',
+                    'source_last_modified',
                     'sample_metadata',
                     'technologies'
                 )
@@ -437,6 +439,7 @@ class DownloaderJobSerializer(serializers.ModelSerializer):
                     'downloader_task',
                     'num_retries',
                     'retried',
+                    'was_recreated',
                     'worker_id',
                     'worker_version',
                     'failure_reason',
@@ -502,7 +505,8 @@ class CreateDatasetSerializer(serializers.ModelSerializer):
         fields = (
                     'id',
                     'data',
-                    'email_address'
+                    'email_address',
+                    'email_ccdl_ok'
             )
 
     def validate(self, data):
@@ -541,7 +545,7 @@ class DatasetSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(DatasetSerializer, self).__init__(*args, **kwargs)
 
-        # only inclue the fields `experiments` and `organism_samples` when the param `?details=true` 
+        # only inclue the fields `experiments` and `organism_samples` when the param `?details=true`
         # is provided. This is used on the frontend to render the downloads page
         # thanks to https://django.cowhite.com/blog/dynamically-includeexclude-fields-to-django-rest-framwork-serializers-based-on-user-requests/
         if 'context' in kwargs:
@@ -718,6 +722,7 @@ class ExperimentDocumentSerializer(serializers.Serializer):
     pubmed_id = serializers.CharField(read_only=True)
     num_total_samples = serializers.IntegerField(read_only=True)
     num_processed_samples = serializers.IntegerField(read_only=True)
+    source_first_published = serializers.DateField(read_only=True)
 
     # FK/M2M
     # We don't use any ForgeinKey serializers right now, but if we did, we'd do it like this:
