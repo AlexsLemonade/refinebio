@@ -63,7 +63,7 @@ JANITOR_DISPATCH_TIME = datetime.timedelta(minutes=30)
 # there's a separate management command being used to pick what work
 # to focus on. So all the foreman needs to do is worry about jobs
 # queued after the beginning of the zebrafish sprint
-JOB_CREATED_AT_CUTOFF = datetime.date(2019, 2, 5)
+JOB_CREATED_AT_CUTOFF = datetime.datetime(2019, 2, 5, tzinfo=timezone.utc)
 
 
 def read_config_list(config_file: str) -> List[str]:
