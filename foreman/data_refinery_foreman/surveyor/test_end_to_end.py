@@ -49,10 +49,16 @@ def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int=None
     """Monitors the `job_class` table for when `job` is done."""
     loop_time = loop_time if loop_time else LOOP_TIME
     job = job_class.objects.filter(id=job.id).get()
+    last_log_time = timezone.now()
     while job.success is None and timezone.now() - start_time < MAX_WAIT_TIME:
-        logger.info("Still polling the %s.",
-                    job_class.__name__)
-        time.sleep(LOOP_TIME)
+        time.sleep(loop_time)
+
+        # Don't log statuses more often than every 5 seconds.
+        if timezone.now() - last_log_time > timedelta(seconds=5):
+            logger.info("Still polling the %s.",
+                        job_class.__name__)
+            last_log_time = timezone.now()
+
         job = job_class.objects.filter(id=job.id).get()
 
     if timezone.now() - start_time > MAX_WAIT_TIME:
