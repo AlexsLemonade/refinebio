@@ -297,6 +297,13 @@ def download_geo(job_id: int) -> None:
 
     file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
 
+    if file_assocs.count() == 0:
+        job.failure_reason = "No files associated with the job."
+        logger.error(
+            "Error occured while extracting tar file.", downloader_job=job_id)
+        utils.end_downloader_job(job, success=False)
+        return
+
     original_file = file_assocs[0].original_file
     url = original_file.source_url
     accession_code = job.accession_code
