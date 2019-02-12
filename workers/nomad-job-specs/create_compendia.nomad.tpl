@@ -67,9 +67,9 @@ job "CREATE_COMPENDIA" {
       # The resources the job will require.
       resources {
         # CPU is in AWS's CPU units.
-        cpu =   2000
+        cpu =   4000
         # Memory is in MB of RAM.
-        memory = 32000
+        memory = 180000
       }
 
       logs {
