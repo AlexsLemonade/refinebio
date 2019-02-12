@@ -145,6 +145,13 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
         # another file that came out of it could have already
         # recreated the DownloaderJob.
         if archive_file.needs_downloading():
+            if archive_file.is_downloaded:
+                # If it needs to be downloaded then it's not
+                # downloaded and the is_downloaded field should stop
+                # lying about that.
+                archive_file.is_downloaded = False
+                archive_file.save()
+
             DownloaderJobOriginalFileAssociation.objects.get_or_create(
                 downloader_job=new_job,
                 original_file=archive_file
@@ -178,6 +185,13 @@ def prepare_original_files(job_context):
     undownloaded_files = set()
     for original_file in original_files:
         if original_file.needs_downloading():
+            if original_file.is_downloaded:
+                # If it needs to be downloaded then it's not
+                # downloaded and the is_downloaded field should stop
+                # lying about that.
+                original_file.is_downloaded = False
+                original_file.save()
+
             undownloaded_files.add(original_file)
 
     if undownloaded_files:
