@@ -1201,46 +1201,6 @@ class AggregationTestCase(TestCase):
         os.remove(tsv_filename)
 
     @tag("smasher")
-    def test_all_precomendia(self):
-        """Experimental test for compendia-sized smashing"""
-
-        ds = Dataset.objects.create(aggregate_by='ALL')
-        job_context = {
-            'dataset': ds
-        }
-
-        input_path = "/home/user/data_store/PCL/SRR1731762_output_gene_lengthScaledTPM.tsv"
-        demo_frame1 = pd.read_csv(input_path, sep='\t', header=None,
-                                              index_col=0, error_bad_lines=False)
-
-        input_path2 = "/home/user/data_store/PCL/GSM1487313_liver.PCL"
-        demo_frame2 = pd.read_csv(input_path2, sep='\t', header=None,
-                                              index_col=0, error_bad_lines=False)
-
-        import time
-        frames = []
-        for i in range(25000):
-            frames.append(demo_frame1.copy())
-
-        # tlast = time.time()
-        # for i in range(100000):
-        #     tnow = time.time()
-        #     print(str(tnow-tlast) + ": " + str(i))
-        #     merged = merged.merge(demo_frame, how='outer', left_index=True, right_index=True)
-        #     tlast = tnow
-
-        print(str(time.time()))
-        merged = pd.concat(frames, axis=1, keys=None, join='outer', copy=False)
-        print(str(time.time()))
-
-        for i in range(25000):
-            frames.append(demo_frame2.copy())
-
-        import pdb
-        pdb.set_trace()
-
-
-    @tag("smasher")
     def test_experiment(self):
         """Check tsv file that is aggregated by experiment."""
 
