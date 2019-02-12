@@ -6,6 +6,8 @@ import sys
 import zipfile
 from io import StringIO
 
+import pandas as pd
+
 from django.core.management import call_command
 from django.test import TestCase, tag
 from data_refinery_common.models import (
