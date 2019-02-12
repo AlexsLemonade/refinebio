@@ -289,7 +289,7 @@ workflows:
               # From CirlceCI Docs:
               # If both only and ignore are specified the only is considered before ignore.
               only: /v.*/
-              igore: /v.*-hotfix/
+              ignore: /v.*-hotfix/
 
   hotfix-deploy:
     jobs:
