@@ -45,7 +45,8 @@ if [[ ${stage} == "staging" || ${stage} == "prod" ]]; then
     elif [[ ${stage} == "prod" ]]; then
         # The certbot challenge cannot be completed until the aws_lb_target_group_attachment resources are created.
         sleep 180
-        certbot --nginx -d api.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
+        RANDOM_API=$(( ( RANDOM % 8 ) + 2 )) # 2 to 9
+        certbot --nginx -d api.refine.bio -d api$RANDOM_API.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
     fi
 fi
 
