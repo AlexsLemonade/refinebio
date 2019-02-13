@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*- 
+
 import boto3
 import csv
 import os
@@ -249,8 +251,6 @@ def _write_tsv_json(job_context, metadata, smash_path):
     """Writes tsv files on disk.
     If the dataset is aggregated by species, also write species-level
     JSON file.
-
-
     """
 
     # Uniform TSV header per dataset
@@ -261,10 +261,12 @@ def _write_tsv_json(job_context, metadata, smash_path):
         tsv_paths = []
         for experiment_title, experiment_data in metadata['experiments'].items():
             experiment_dir = smash_path + experiment_title + '/'
+            experiment_dir = experiment_dir.encode('ascii', 'ignore')
             os.makedirs(experiment_dir, exist_ok=True)
-            tsv_path = experiment_dir + 'metadata_' + experiment_title + '.tsv'
+            tsv_path = experiment_dir.decode("utf-8") + 'metadata_' + experiment_title + '.tsv'
+            tsv_path = tsv_path.encode('ascii', 'ignore')
             tsv_paths.append(tsv_path)
-            with open(tsv_path, 'w') as tsv_file:
+            with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
                 dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
                 dw.writeheader()
                 for sample_title, sample_metadata in metadata['samples'].items():
@@ -281,7 +283,7 @@ def _write_tsv_json(job_context, metadata, smash_path):
             samples_in_species = []
             tsv_path = species_dir + "metadata_" + species + '.tsv'
             tsv_paths.append(tsv_path)
-            with open(tsv_path, 'w') as tsv_file:
+            with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
                 dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
                 dw.writeheader()
                 for sample_metadata in metadata['samples'].values():
@@ -297,7 +299,7 @@ def _write_tsv_json(job_context, metadata, smash_path):
                     'samples': samples_in_species
                 }
                 json_path = species_dir + "metadata_" + species + '.json'
-                with open(json_path, 'w') as json_file:
+                with open(json_path, 'w', encoding='utf-8') as json_file:
                     json.dump(species_metadata, json_file, indent=4, sort_keys=True)
         return tsv_paths
     # All Metadata
@@ -305,7 +307,7 @@ def _write_tsv_json(job_context, metadata, smash_path):
         all_dir = smash_path + "ALL/"
         os.makedirs(all_dir, exist_ok=True)
         tsv_path = all_dir + 'metadata_ALL.tsv' 
-        with open(tsv_path, 'w') as tsv_file:
+        with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
             dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
             dw.writeheader()
             for sample_metadata in metadata['samples'].values():
@@ -545,7 +547,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     num_samples = num_samples + 1
 
                     if (num_samples % 100) == 0:
-                        logger.info("Loaded " + str(num_samples) + " samples into frames.",
+                        logger.warning("Loaded " + str(num_samples) + " samples into frames.",
                             dataset_id=job_context['dataset'].id,
                             how=how
                         )
@@ -634,7 +636,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     old_len_merged = len(merged)
                     merged_backup = merged
             else:
-                merged = pd.concat(all_frames, axis=1, keys=None, join='outer', copy=False)
+                merged = pd.concat(all_frames, axis=1, keys=None, join='outer', copy=False, sort=True)
 
             job_context['original_merged'] = merged
 
@@ -742,14 +744,18 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         metadata['experiments'] = experiments
 
         # Write samples metadata to TSV
-        tsv_paths = _write_tsv_json(job_context, metadata, smash_path)
-        job_context['metadata_tsv_paths'] = tsv_paths
+        try:
+            tsv_paths = _write_tsv_json(job_context, metadata, smash_path)
+            job_context['metadata_tsv_paths'] = tsv_paths
+            # Metadata to JSON
+            metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+            with open(smash_path + 'aggregated_metadata.json', 'w', encoding='utf-8') as metadata_file:
+                json.dump(metadata, metadata_file, indent=4, sort_keys=True)
+        except Exception as e:
+            logger.exception("Failed to write metadata TSV!",
+                j_id = job_context['job'].id)
+            job_context['metadata_tsv_paths'] = None
         metadata['files'] = os.listdir(smash_path)
-
-        # Metadata to JSON
-        metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-        with open(smash_path + 'aggregated_metadata.json', 'w') as metadata_file:
-            json.dump(metadata, metadata_file, indent=4, sort_keys=True)
 
         # Finally, compress all files into a zip
         final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk)

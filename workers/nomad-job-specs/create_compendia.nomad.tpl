@@ -27,7 +27,7 @@ job "CREATE_COMPENDIA" {
       size = "10"
     }
 
-    task "create_qn_target" {
+    task "create_compendia" {
       driver = "docker"
 
       kill_timeout = "30s"

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*- 
+
 import csv
 import json
 import os
@@ -1224,6 +1226,70 @@ class AggregationTestCase(TestCase):
         os.remove(tsv_filename)
 
     @tag("smasher")
+    def test_unicode_writer(self):
+        self.unicode_metadata = {
+            'experiments': {
+                "E-GEOD-😎": {
+                    "accession_code": "E-GEOD-😎",
+                    "sample_titles": [ "😎", "undefined_sample" ]
+                }
+            },
+            'samples': {
+                "😎": {  # Sample #1 is an ArrayExpress sample
+                    "refinebio_😎": "😎",
+                    "refinebio_accession_code": "eyy",
+                    "refinebio_annotations": [
+                        # annotation #1
+                        {
+                            "😎😎": "😎😎",
+                            "detection_percentage": 98.44078,
+                            "mapped_percentage": 100.0
+                        }
+                    ]  # end of annotations
+                },  # end of sample #1
+            }  # end of "samples"
+        }
+        self.smash_path = "/tmp/"
+
+        job_context = {
+            'dataset': Dataset.objects.create(aggregate_by='ALL'),
+            'input_files': {
+            }
+        }
+        final_context = smasher._write_tsv_json(job_context, self.unicode_metadata, self.smash_path)
+        reso = final_context[0]
+        with open(reso, encoding='utf-8') as tsv_file: 
+            reader = csv.DictReader(tsv_file, delimiter='\t')
+            for row_num, row in enumerate(reader):
+                print(str(row).encode('utf-8'))
+
+        job_context = {
+            'dataset': Dataset.objects.create(aggregate_by='EXPERIMENT'),
+            'input_files': {
+            }
+        }
+        final_context = smasher._write_tsv_json(job_context, self.unicode_metadata, self.smash_path)
+        reso = final_context[0]
+        with open(reso, encoding='utf-8') as tsv_file: 
+            reader = csv.DictReader(tsv_file, delimiter='\t')
+            for row_num, row in enumerate(reader):
+                print(str(row).encode('utf-8'))
+
+        job_context = {
+            'dataset': Dataset.objects.create(aggregate_by='SPECIES'),
+            'input_files': {
+                'homo_sapiens': [], # only the key matters in this test
+                'fake_species': []  # only the key matters in this test
+            }
+        }
+        final_context = smasher._write_tsv_json(job_context, self.unicode_metadata, self.smash_path)
+        reso = final_context[0]
+        with open(reso, encoding='utf-8') as tsv_file: 
+            reader = csv.DictReader(tsv_file, delimiter='\t')
+            for row_num, row in enumerate(reader):
+                print(str(row).encode('utf-8'))
+
+    @tag("smasher")
     def test_species(self):
         """Check tsv file that is aggregated by species."""
 
@@ -1254,7 +1320,6 @@ class AggregationTestCase(TestCase):
         # Test json file of "homo_sapiens"
         json_filename = self.smash_path + "homo_sapiens/metadata_homo_sapiens.json"
         self.assertTrue(os.path.isfile(json_filename))
-
         with open(json_filename) as json_fp:
             species_metadada = json.load(json_fp)
         self.assertEqual(species_metadada['species'], 'homo_sapiens')
