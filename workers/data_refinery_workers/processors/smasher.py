@@ -251,8 +251,6 @@ def _write_tsv_json(job_context, metadata, smash_path):
     """Writes tsv files on disk.
     If the dataset is aggregated by species, also write species-level
     JSON file.
-
-
     """
 
     # Uniform TSV header per dataset
@@ -266,7 +264,7 @@ def _write_tsv_json(job_context, metadata, smash_path):
             os.makedirs(experiment_dir, exist_ok=True)
             tsv_path = experiment_dir + 'metadata_' + experiment_title + '.tsv'
             tsv_paths.append(tsv_path)
-            with open(tsv_path, 'w', encoding='utf-8-sig') as tsv_file:
+            with open(tsv_path, 'w') as tsv_file:
                 dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
                 dw.writeheader()
                 for sample_title, sample_metadata in metadata['samples'].items():
@@ -283,8 +281,8 @@ def _write_tsv_json(job_context, metadata, smash_path):
             samples_in_species = []
             tsv_path = species_dir + "metadata_" + species + '.tsv'
             tsv_paths.append(tsv_path)
-            with open(tsv_path, 'w', encoding='utf-8-sig') as tsv_file:
-                dw = csv.DictWriter(tsv_file, columns, delimiter='\t', encoding='utf8')
+            with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
+                dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
                 dw.writeheader()
                 for sample_metadata in metadata['samples'].values():
                     if sample_metadata.get('refinebio_organism', '') == species:
@@ -299,7 +297,7 @@ def _write_tsv_json(job_context, metadata, smash_path):
                     'samples': samples_in_species
                 }
                 json_path = species_dir + "metadata_" + species + '.json'
-                with open(json_path, 'w', encoding='utf-8-sig') as json_file:
+                with open(json_path, 'w', encoding='utf-8') as json_file:
                     json.dump(species_metadata, json_file, indent=4, sort_keys=True)
         return tsv_paths
     # All Metadata
@@ -307,7 +305,7 @@ def _write_tsv_json(job_context, metadata, smash_path):
         all_dir = smash_path + "ALL/"
         os.makedirs(all_dir, exist_ok=True)
         tsv_path = all_dir + 'metadata_ALL.tsv' 
-        with open(tsv_path, 'w', encoding='utf-8-sig') as tsv_file:
+        with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
             dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
             dw.writeheader()
             for sample_metadata in metadata['samples'].values():
@@ -750,7 +748,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
 
         # Metadata to JSON
         metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-        with open(smash_path + 'aggregated_metadata.json', 'w', encoding='utf-8-sig') as metadata_file:
+        with open(smash_path + 'aggregated_metadata.json', 'w', encoding='utf-8') as metadata_file:
             json.dump(metadata, metadata_file, indent=4, sort_keys=True)
 
         # Finally, compress all files into a zip

@@ -1254,8 +1254,7 @@ class AggregationTestCase(TestCase):
         # Test json file of "homo_sapiens"
         json_filename = self.smash_path + "homo_sapiens/metadata_homo_sapiens.json"
         self.assertTrue(os.path.isfile(json_filename))
-
-        with open(json_filename) as json_fp:
+        with open(json_filename, encoding='utf-8') as json_fp:
             species_metadada = json.load(json_fp)
         self.assertEqual(species_metadada['species'], 'homo_sapiens')
         self.assertEqual(len(species_metadada['samples']), 1)
