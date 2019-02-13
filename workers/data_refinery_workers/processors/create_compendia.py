@@ -121,7 +121,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # Cache our RNA-Seq zero values
     cached_zeroes = {}
     for column in log2_rnaseq_matrix.columns:
-        cached_zeroes[column] = np.where(log2_rnaseq_matrix[column] == 0)
+        cached_zeroes[column] = log2_rnaseq_matrix.index[np.where(log2_rnaseq_matrix[column] == 0)]
 
     # Set all zero values in log2_rnaseq_matrix to NA, but make sure to keep track of where these zeroes are
     log2_rnaseq_matrix[log2_rnaseq_matrix==0]=np.nan
@@ -148,7 +148,12 @@ def _perform_imputation(job_context: Dict) -> Dict:
         
         # Place the zero
         try:
-            np.put(row_col_filtered_combined_matrix_samples[column], zeroes, 0.0)
+            # This generates a warning, so use loc[] instead
+            #row_col_filtered_combined_matrix_samples[column].replace(zeroes, 0.0, inplace=True)
+            zeroes_list = zeroes.tolist()
+            new_index_list = row_col_filtered_combined_matrix_samples.index.tolist()
+            new_zeroes = list(set(new_index_list) & set(zeroes_list))
+            row_col_filtered_combined_matrix_samples[column].loc[new_zeroes] = 0.0
         except Exception as e:
             logger.exception("Error when replacing zero")
             continue

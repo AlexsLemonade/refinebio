@@ -547,7 +547,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     num_samples = num_samples + 1
 
                     if (num_samples % 100) == 0:
-                        logger.warn("Loaded " + str(num_samples) + " samples into frames.",
+                        logger.warning("Loaded " + str(num_samples) + " samples into frames.",
                             dataset_id=job_context['dataset'].id,
                             how=how
                         )
@@ -636,7 +636,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     old_len_merged = len(merged)
                     merged_backup = merged
             else:
-                merged = pd.concat(all_frames, axis=1, keys=None, join='outer', copy=False)
+                merged = pd.concat(all_frames, axis=1, keys=None, join='outer', copy=False, sort=True)
 
             job_context['original_merged'] = merged
 
