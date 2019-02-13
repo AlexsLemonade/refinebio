@@ -265,5 +265,5 @@ class CompendiaTestCase(TestCase):
         for file in final_context['computed_files']:
             self.assertTrue(os.path.exists(file.absolute_file_path))
 
-        # It's not worth asserting this until we're sure the behavior is correct
-        # self.assertEqual(final_context['merged_qn'].shape, (9045, 830))
+        # It's maybe not worth asserting this until we're sure the behavior is correct
+        self.assertEqual(final_context['merged_qn'].shape, (9045, 830))

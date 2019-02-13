@@ -8,6 +8,7 @@ import warnings
 
 import numpy as np
 import pandas as pd
+pd.set_option('mode.chained_assignment', None)
 from fancyimpute import KNN, BiScaler, SoftImpute, IterativeSVD
 
 from django.utils import timezone
