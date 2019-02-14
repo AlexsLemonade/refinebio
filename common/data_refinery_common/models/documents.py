@@ -32,6 +32,12 @@ html_strip_no_ngram = analyzer(
     filter=["standard", "lowercase", "stop", "snowball"],
     char_filter=["html_strip"]
 )
+html_strip_no_stop = analyzer(
+    'html_strip_no_stop',
+    tokenizer="whitespace",
+    filter=["standard", "lowercase"],
+    char_filter=["html_strip"]
+)
 standard = analyzer(
     'standard',
     tokenizer="keyword",
@@ -65,7 +71,7 @@ class ExperimentDocument(DocType):
         fields={'raw': fields.KeywordField()}
     )
     technology = fields.TextField(
-        analyzer=html_strip_no_ngram,
+        analyzer=html_strip_no_stop,
         fielddata=True,
         fields={'raw': fields.KeywordField()}
     )
