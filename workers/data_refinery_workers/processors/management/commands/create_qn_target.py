@@ -87,9 +87,10 @@ class Command(BaseCommand):
                 biggest_platform = options["platform"]
 
             sample_codes_results = Sample.processed_objects.filter(
-                platform_accession_code=biggest_platform, 
-                has_raw=True, 
-                technology="MICROARRAY", 
+                platform_accession_code=biggest_platform,
+                has_raw=True,
+                technology="MICROARRAY",
+                organism=organism,
                 is_processed=True).values('accession_code')
             sample_codes = [res['accession_code'] for res in sample_codes_results]
 
