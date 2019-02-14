@@ -115,12 +115,12 @@ EOF
 # Make the client.meta.volume_id is set to waht we just mounted
 sed -i "s/REPLACE_ME/$EBS_VOLUME_INDEX/" client.hcl
 
-# We want to leave enough RAM to run 4 SALMON jobs at once but not
-# enough to run 5.  Each SALMON job takes 32768MB of RAM, 32768 * 4 =
-# 131072, but that doesn't leave much margin for error. Therefore just
+# We want to leave enough RAM to run 3 SALMON jobs at once but not
+# enough to run 4.  Each SALMON job takes 32768MB of RAM, 32768 * 3 =
+# 98304, but that doesn't leave much margin for error. Therefore just
 # give it an extra 10GB of RAM since that won't be enough for an
 # entire other job to be queued, but keeps things from being so tight.
-TARGET_RAM=141072
+TARGET_RAM=108304
 # Make the client.meta.volume_id is set to waht we just mounted
 TOTAL_RAM=$(free -m | grep Mem | tr -s ' ' | cut -d\  -f2)
 RESERVED_RAM=$((TOTAL_RAM - TARGET_RAM))
