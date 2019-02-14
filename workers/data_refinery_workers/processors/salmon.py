@@ -167,7 +167,7 @@ def _extract_sra(job_context: Dict) -> Dict:
         completed_command = subprocess.run(formatted_command.split(),
                                            stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE,
-                                           timeout=1200)
+                                           timeout=2400)
     except subprocess.TimeoutExpired as e:
         logger.exception("Shell call to fasterq-dump failed with timeout",
                      processor_job=job_context["job_id"],
