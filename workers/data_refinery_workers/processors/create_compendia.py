@@ -30,7 +30,7 @@ from data_refinery_workers.processors import utils, smasher
 
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
-S3_COMPENDIA_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery-compendia")
+S3_COMPENDIA_BUCKET_NAME = get_env_variable("S3_COMPENDIA_BUCKET_NAME", "data-refinery-compendia")
 logger = get_and_configure_logger(__name__)
 
 
