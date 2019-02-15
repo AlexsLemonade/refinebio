@@ -244,7 +244,8 @@ class SalmonTestCase(TestCase):
         if "test_experiment" in sample_dir:
             job_context["index_directory"] = job_context["index_directory"].replace("SHORT", "LONG")
 
-        salmon._run_salmon(job_context)
+        job_context = salmon._run_salmon(job_context)
+        job_context = salmon._tximport(job_context)
         output_quant_filename = os.path.join(job_context['output_directory'], 'quant.sf')
         self.assertTrue(os.path.exists(output_quant_filename))
 

@@ -317,8 +317,10 @@ def start_job(job_context: Dict):
 
     logger.debug("Starting processor Job.", processor_job=job.id, pipeline=job.pipeline_applied)
 
-    # Janitors have no requirement
-    if job.pipeline_applied not in ["JANITOR"]:
+    # Janitor jobs don't operate on file objects.
+    # Tximport jobs don't need to download the original file, they
+    # just need it to know what experiment to process.
+    if job.pipeline_applied not in ["JANITOR", "TXIMPORT"]:
         # Some jobs take OriginalFiles, other take Datasets
         if job.pipeline_applied not in ["SMASHER", "QN_REFERENCE", "COMPENDIA"]:
             job_context = prepare_original_files(job_context)
@@ -504,6 +506,7 @@ class PipelineEnum(Enum):
     NO_OP = "No Op"
     SALMON = "Salmon"
     SMASHER = "Smasher"
+    TXIMPORT = 'Tximport'
     TX_INDEX = "Transcriptome Index"
     QN_REFERENCE = "Quantile Normalization Reference"
     JANITOR = "Janitor"

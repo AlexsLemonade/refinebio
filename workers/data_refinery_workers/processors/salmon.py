@@ -44,6 +44,26 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
 
+# Some experiments won't be entirely processed, but we'd still like to
+# make the samples we can process available. This means we need to run
+# tximport on the experiment before 100% of the samples are processed
+# individually.
+# This idea has been discussed here: https://github.com/AlexsLemonade/refinebio/issues/909
+
+# The consensus is that this is a good idea, but that we need a cutoff
+# to determine which experiments have enough data to have tximport run
+# on them early.  Candace ran an experiment to find these cutoff
+# values and recorded the results of this experiment here:
+# https://github.com/AlexsLemonade/tximport_partial_run_tests/pull/3
+
+# The gist of that discussion/experiment is that we need two cutoff
+# values, one for a minimum size experiment that can be processed
+# early and the percentage of completion necessary before we can
+# run tximport on the experiment. The values we decided on are:
+EARLY_TXIMPORT_MIN_SIZE = 20
+EARLY_TXIMPORT_MIN_PERCENT = .80
+
+
 def _set_job_prefix(job_context: Dict) -> Dict:
     """ Sets the `job_dir_prefix` value in the job context object."""
     job_context["job_dir_prefix"] = JOB_DIR_PREFIX + str(job_context["job_id"])
@@ -331,7 +351,7 @@ def _find_or_download_index(job_context: Dict) -> Dict:
         # complete each step.
         version_info_path = job_context["index_directory"] + "/versionInfo.json"
 
-        # Something very bad happened and now there are corrupt indexes installed. Nuke 'em. 
+        # Something very bad happened and now there are corrupt indexes installed. Nuke 'em.
         if os.path.exists(version_info_path) and (os.path.getsize(version_info_path) == 0):
             logger.error("We have to nuke a zero-valued index directory: " + version_info_path)
             shutil.rmtree(job_context["index_directory"], ignore_errors=True)
@@ -450,37 +470,8 @@ def _find_salmon_quant_results(experiment: Experiment):
     return results
 
 
-def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile]]:
-    """Return a mapping from experiments to a list of their quant files.
+def _run_tximport_for_experiment(job_context: Dict, experiment: Experiment, quant_files: List[ComputedFile]) -> Dict:
 
-    Checks all the experiments which contain a sample from the current
-    experiment. If any of them are fully processed (at least with
-    salmon-quant) then the return dict will include the experiment
-    mapping to a list of paths to the quant.sf file for each sample in
-    that experiment.
-    """
-    experiments_set = ExperimentSampleAssociation.objects.filter(
-        sample=job_context['sample']).values_list('experiment')
-    experiments = Experiment.objects.filter(pk__in=experiments_set)
-
-    quantified_experiments = {}
-    for experiment in experiments:
-        salmon_quant_results = _find_salmon_quant_results(experiment)
-
-        if len(salmon_quant_results) == experiment.samples.count():
-            quant_files = []
-            for result in salmon_quant_results:
-                quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])
-
-            quantified_experiments[experiment] = quant_files
-
-    return quantified_experiments
-
-
-def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[ComputedFile]) -> Dict:
-    """Run tximport R script based on input quant files and the path
-    of genes_to_transcripts.txt.
-    """
     # Download all the quant.sf fles for this experiment. Write all
     # their paths to a file so we can pass a path to that to
     # tximport.R rather than having to pass in one argument per
@@ -619,6 +610,61 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
     # for the end_job function.
     job_context['tximported'] = True
     job_context['individual_files'] = individual_files
+    return job_context
+
+
+def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile]]:
+    """Return a mapping from experiments to a list of their quant files.
+
+    Checks all the experiments which contain a sample from the current
+    experiment. If any of them are fully processed (at least with
+    salmon-quant) then the return dict will include the experiment
+    mapping to a list of paths to the quant.sf file for each sample in
+    that experiment.
+    """
+    experiments_set = ExperimentSampleAssociation.objects.filter(
+        sample=job_context['sample']).values_list('experiment')
+    experiments = Experiment.objects.filter(pk__in=experiments_set)
+
+    quantified_experiments = {}
+    for experiment in experiments:
+        salmon_quant_results = _find_salmon_quant_results(experiment)
+
+        num_quant_results = len(salmon_quant_results)
+        num_samples_in_experiment = experiment.samples.count()
+
+        # If an experiment is 100% complete we should always run tximport.
+        # Otherwise, if this tximport run was initiated manually we
+        # should use EARLY_TXIMPORT_MIN_SIZE and
+        # EARLY_TXIMPORT_MIN_PERCENT to determine if tximport should
+        # be run. See the definitions of those values for more
+        # context.
+        percent_complete = num_quant_results / num_samples_in_experiment
+           or ('is_tximport_only' in job_context \
+        if percent_complete == 1.0 \
+               and job_context['is_tximport_only'] \
+               and num_samples_in_experiment > EARLY_TXIMPORT_MIN_SIZE \
+               and percent_complete > EARLY_TXIMPORT_MIN_PERCENT):
+            quant_files = []
+            for result in salmon_quant_results:
+                quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])
+
+            quantified_experiments[experiment] = quant_files
+
+    return quantified_experiments
+
+
+def _tximport(job_context: Dict) -> Dict:
+    """Run tximport R script based on input quant files and the path
+    of genes_to_transcripts.txt.
+    """
+    tximport_inputs = _get_tximport_inputs(job_context)
+    for experiment, quant_files in tximport_inputs.items():
+        job_context = _run_tximport_for_experiment(job_context, experiment, quant_files)
+        # If `tximport` on any related experiment fails, exit immediately.
+        if not job_context["success"]:
+            return job_context
+
     return job_context
 
 
@@ -767,16 +813,6 @@ def _run_salmon(job_context: Dict) -> Dict:
             salmon_quant_archive.result = result
             salmon_quant_archive.save()
             job_context['computed_files'].append(salmon_quant_archive)
-
-            tximport_inputs = _get_tximport_inputs(job_context)
-
-        # tximport analysis is done outside of the transaction so that
-        # the mutex wouldn't hold the other jobs too long.
-        for experiment, quant_files in tximport_inputs.items():
-            _tximport(job_context, experiment, quant_files)
-            # If `tximport` on any related experiment fails, exit immediately.
-            if not job_context["success"]:
-                return job_context
 
         kv = ComputationalResultAnnotation()
         kv.data = {"index_length": job_context["index_length"]}
@@ -1006,7 +1042,7 @@ def salmon(job_id: int) -> None:
     """Main processor function for the Salmon Processor.
 
     Runs salmon quant command line tool, specifying either a long or
-    short read length. Also runs FastQC, MultiQC, and Salmontools.
+    short read length. Also runs FastQC, MultiQC, Salmontools, and Tximport.
     """
     pipeline = Pipeline(name=utils.PipelineEnum.SALMON.value)
     final_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
@@ -1020,6 +1056,7 @@ def salmon(job_id: int) -> None:
 
                         _run_fastqc,
                         _run_salmon,
+                        _tximport,
                         _run_salmontools,
                         _run_multiqc,
                         utils.end_job])
