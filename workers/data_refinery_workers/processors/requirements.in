@@ -15,3 +15,4 @@ scikit-learn
 sympy
 elasticsearch-dsl
 django-elasticsearch-dsl
+unicodecsv
