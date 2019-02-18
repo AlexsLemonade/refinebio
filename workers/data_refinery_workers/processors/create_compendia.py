@@ -138,6 +138,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     thresh = combined_matrix.shape[1] * .7 # (Rows, Columns)
     row_filtered_combined_matrix = combined_matrix.dropna(axis='index', thresh=thresh) # Everything below `thresh` is dropped
 
+    # Visualize Row Filtered
     output_path = job_context['output_dir'] + "row_filtered_" + str(time.time()) + ".png"
     visualized_rowfilter = visualize.visualize(row_filtered_combined_matrix.copy(), output_path)
 
@@ -146,6 +147,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     col_thresh = row_filtered_combined_matrix.shape[0] * .5
     row_col_filtered_combined_matrix_samples = row_filtered_combined_matrix.dropna(axis='columns', thresh=col_thresh)
 
+    # Visualize Row and Column Filtered
     output_path = job_context['output_dir'] + "row_col_filtered_" + str(time.time()) + ".png"
     visualized_rowcolfilter = visualize.visualize(row_col_filtered_combined_matrix_samples.copy(), output_path)
 
@@ -206,6 +208,8 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # Perform the Quantile Normalization
     job_context = smasher._quantile_normalize(job_context, ks_check=False)
+
+    # Visualize Final Compendia
     output_path = job_context['output_dir'] + "compendia_with_qn_" + str(time.time()) + ".png"
     visualized_merged_qn = visualize.visualize(job_context['merged_qn'].copy(), output_path)
 
