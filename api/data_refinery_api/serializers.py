@@ -95,25 +95,8 @@ class ComputationalResultAnnotationSerializer(serializers.ModelSerializer):
                     'last_modified'
                 )
 
-class ComputedFileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ComputedFile
-        fields = (
-                    'id',
-                    'filename',
-                    'size_in_bytes',
-                    'is_smashable',
-                    'is_qc',
-                    'sha1',
-                    's3_bucket',
-                    's3_key',
-                    'created_at',
-                    'last_modified'
-                )
-
 class ComputationalResultSerializer(serializers.ModelSerializer):
     annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
-    files = ComputedFileSerializer(many=True, source='computedfile_set')
     processor = ProcessorSerializer(many=False)
     organism_index = OrganismIndexSerializer(many=False)
 
@@ -125,7 +108,6 @@ class ComputationalResultSerializer(serializers.ModelSerializer):
                     'processor',
                     'is_ccdl',
                     'annotations',
-                    'files',
                     'organism_index',
                     'time_start',
                     'time_end',
