@@ -60,7 +60,7 @@ S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 # values, one for a minimum size experiment that can be processed
 # early and the percentage of completion necessary before we can
 # run tximport on the experiment. The values we decided on are:
-EARLY_TXIMPORT_MIN_SIZE = 20
+EARLY_TXIMPORT_MIN_SIZE = 25
 EARLY_TXIMPORT_MIN_PERCENT = .80
 
 
@@ -470,7 +470,10 @@ def _find_salmon_quant_results(experiment: Experiment):
     return results
 
 
-def _run_tximport_for_experiment(job_context: Dict, experiment: Experiment, quant_files: List[ComputedFile]) -> Dict:
+def _run_tximport_for_experiment(
+        job_context: Dict,
+        experiment: Experiment,
+        quant_files: List[ComputedFile]) -> Dict:
 
     # Download all the quant.sf fles for this experiment. Write all
     # their paths to a file so we can pass a path to that to
@@ -596,15 +599,6 @@ def _run_tximport_for_experiment(job_context: Dict, experiment: Experiment, quan
         individual_files.append(computed_file)
         job_context['samples'].append(sample)
 
-    # Clean up quant.sf files that were created just for this.
-    for quant_file in quant_files:
-        quant_file.delete_s3_file()
-
-        # It's only okay to delete the local file because the full
-        # output directory has already been zipped up.
-        quant_file.delete_local_file()
-        quant_file.delete()
-
     # Salmon-processed samples aren't marked as is_processed
     # until they are fully tximported, this value sets that
     # for the end_job function.
@@ -633,18 +627,38 @@ def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFil
         num_quant_results = len(salmon_quant_results)
         num_samples_in_experiment = experiment.samples.count()
 
-        # If an experiment is 100% complete we should always run tximport.
-        # Otherwise, if this tximport run was initiated manually we
-        # should use EARLY_TXIMPORT_MIN_SIZE and
-        # EARLY_TXIMPORT_MIN_PERCENT to determine if tximport should
-        # be run. See the definitions of those values for more
-        # context.
+        # If an experiment is 100% complete we should always run
+        # tximport.  Otherwise, if this is a tximport job we should
+        # use EARLY_TXIMPORT_MIN_SIZE and EARLY_TXIMPORT_MIN_PERCENT
+        # to determine if tximport should be run. See the definitions
+        # of those values for more context.
+        should_run_tximport = False
         percent_complete = num_quant_results / num_samples_in_experiment
-           or ('is_tximport_only' in job_context \
-        if percent_complete == 1.0 \
-               and job_context['is_tximport_only'] \
-               and num_samples_in_experiment > EARLY_TXIMPORT_MIN_SIZE \
-               and percent_complete > EARLY_TXIMPORT_MIN_PERCENT):
+        if 'is_tximport_only' in job_context and job_context['is_tximport_only']:
+            if num_samples_in_experiment < EARLY_TXIMPORT_MIN_SIZE:
+                logger.warn(
+                    ("This is a Tximport job but there aren't enough samples"
+                     " in the experiment so I'm not running it."),
+                    processor_job=job_context["job_id"],
+                    experiment=experiment.accession_code
+                )
+            elif percent_complete < EARLY_TXIMPORT_MIN_PERCENT:
+                logger.warn(
+                    ("This is a Tximport job but a high enough percentage of samples"
+                     " in the experiment have not been processed yet so I'm not running it."),
+                )
+            else:
+                logger.info(
+                    ("This is a Tximport job and the minimum thresholds"
+                     " have been met so tximport will be run"),
+                    processor_job=job_context["job_id"],
+                    experiment=experiment.accession_code
+                )
+                should_run_tximport = True
+        elif percent_complete == 1.0:
+            should_run_tximport = True
+
+        if should_run_tximport:
             quant_files = []
             for result in salmon_quant_results:
                 quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])

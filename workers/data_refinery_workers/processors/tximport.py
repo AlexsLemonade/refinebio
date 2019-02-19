@@ -80,18 +80,16 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["computed_files"] = []
     job_context["smashable_files"] = []
 
-    archive_file = ComputedFiles.objects.filter(
+    archive_file = ComputedFile.objects.filter(
         result_id__in=sample.results.values('id'),
         filename__startswith='result-',
         filename__endswith='.tar.gz'
     ).latest('last_modified')
 
-    archive_path = archive_file.get_synced_path()
+    archive_path = archive_file.get_synced_file_path()
 
     with tarfile.open(archive_path, "r:gz") as tar:
         tar.extractall(job_context["temp_dir"])
-
-    job_context["genes_to_transcripts_path"] = job_context["temp_dir"] + "genes_to_transcripts.txt"
 
     return job_context
 
@@ -107,6 +105,7 @@ def tximport(job_id: int) -> None:
                        [utils.start_job,
                         _set_job_prefix,
                         _prepare_files,
+                        salmon._find_or_download_index,
                         salmon._tximport,
                         utils.end_job])
     return final_context
