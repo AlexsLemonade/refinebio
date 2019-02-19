@@ -214,7 +214,6 @@ class SalmonTestCase(TestCase):
         job_context = salmon.salmon(job.pk)
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertFalse(job.success)
-        shutil.rmtree(job_context["work_dir"], ignore_errors=True)
 
     def check_salmon_quant(self, job_context, sample_dir):
         """Helper function that calls salmon._run_salmon and confirms
