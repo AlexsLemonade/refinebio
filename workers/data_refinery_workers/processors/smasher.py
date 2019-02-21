@@ -534,11 +534,13 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                         # This sample might have multiple channels, or something else.
                         # Don't mess with it.
                         logger.exception("Smasher found multi-channel column (probably) - skipping!")
+                        unsmashable_files.append(computed_file_path)
                         continue
                     except Exception as e:
                         # Okay, somebody probably forgot to create a SampleComputedFileAssociation
                         # Don't mess with it.
                         logger.exception("Smasher found very bad column title - skipping!")
+                        unsmashable_files.append(computed_file_path)
                         continue
 
                     if computed_file_path.endswith("lengthScaledTPM.tsv"):
