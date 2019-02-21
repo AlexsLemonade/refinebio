@@ -510,6 +510,34 @@ If you want to quantile normalize combined outputs, you'll first need to create 
 nomad job dispatch -meta ORGANISM=DANIO_RERIO CREATE_QN_TARGET
 ```
 
+### Creating Compendia
+
+Creating species-wide compendia for a given species can be done in a production environment with the following:
+
+```bash
+nomad job dispatch -meta ORGANISM=DANIO_RERIO CREATE_COMPENDIA
+```
+
+or for all organisms with sufficient data:
+
+```bash
+nomad job dispatch -meta ORGANISM= CREATE_COMPENDIA
+```
+
+
+### Running Tximport Early
+
+Normally we wait until ever sample in an experiment has had Salmon run on it before we run Tximport.
+However Salmon won't work on every sample, so some experiments are doomed to never make it to 100% completion.
+Tximport can be run on such an experiment with:
+
+```bash
+nomad job dispatch -meta EXPERIMENT_ACCESSION=SRP009841 TXIMPORT
+```
+
+Note that if the experiment does not have at least 25 samples with at least 80% of them processed, this will do nothing.
+
+
 ### Checking on Local Jobs
 
 _Note:_ The following instructions assume you have set the environment

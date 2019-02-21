@@ -35,6 +35,7 @@ workers/test_volume/*
 !workers/test_volume/salmon_tests
 workers/test_volume/salmon_tests/*
 !workers/test_volume/salmon_tests/SRP095529/
+!workers/test_volume/salmon_tests/ZEBRAFISH_INDEX
 
 
 # Byte-compiled / optimized / DLL files

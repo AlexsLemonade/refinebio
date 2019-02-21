@@ -479,7 +479,7 @@ resource "aws_spot_fleet_request" "cheap_ram" {
     key_name = "${aws_key_pair.data_refinery.key_name}"
 
     root_block_device {
-      volume_size = 100 
+      volume_size = 100
       volume_type = "gp2"
     }
 
@@ -509,7 +509,7 @@ resource "aws_spot_fleet_request" "cheap_ram" {
     key_name = "${aws_key_pair.data_refinery.key_name}"
 
     root_block_device {
-      volume_size = 100 
+      volume_size = 100
       volume_type = "gp2"
     }
 
