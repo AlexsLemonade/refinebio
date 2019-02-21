@@ -221,7 +221,9 @@ class SmasherTestCase(TestCase):
             print('###')
 
             final_context = smasher.smash(job.pk, upload=False)
-            final_frame = final_context['final_frame']
+            final_frame = final_context.get('final_frame')
+            if not final_frame:
+                continue
 
             # Sanity test that these frames can be computed upon
             final_frame.mean(axis=1)
@@ -256,7 +258,9 @@ class SmasherTestCase(TestCase):
             print('###')
 
             final_context = smasher.smash(job.pk, upload=False)
-            final_frame = final_context['final_frame']
+            final_frame = final_context.get('final_frame')
+            if not final_frame:
+                continue
 
             # Sanity test that these frames can be computed upon
             final_frame.mean(axis=1)
@@ -290,7 +294,9 @@ class SmasherTestCase(TestCase):
             print('###')
 
             final_context = smasher.smash(job.pk, upload=False)
-            final_frame = final_context['final_frame']
+            final_frame = final_context.get('final_frame')
+            if not final_frame:
+                continue
 
             # Sanity test that these frames can be computed upon
             final_frame.mean(axis=1)
@@ -519,7 +525,7 @@ class SmasherTestCase(TestCase):
         print(ds.failure_reason)
         print(final_context['dataset'].failure_reason)
 
-        self.assertEqual(final_context['unsmashable_files'], ['GSM1238108'])
+        self.assertEqual(final_context['unsmashable_files'], ['GSM1237810_T09-1084.PCL'])
 
     @tag("smasher")
     def test_no_smash_dupe(self):

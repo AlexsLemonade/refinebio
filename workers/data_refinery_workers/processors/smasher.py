@@ -473,6 +473,8 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         )
 
         job_context['technologies'] = {'microarray': [], 'rnaseq': []}
+        job_context['original_merged'] = pd.DataFrame()
+
         # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context['input_files'].items():
 
@@ -533,14 +535,18 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     except ValueError as e:
                         # This sample might have multiple channels, or something else.
                         # Don't mess with it.
-                        logger.exception("Smasher found multi-channel column (probably) - skipping!")
-                        unsmashable_files.append(computed_file_path)
+                        logger.exception("Smasher found multi-channel column (probably) - skipping!",
+                            computed_file_path=computed_file_path
+                        )
+                        unsmashable_files.append(computed_file.filename)
                         continue
                     except Exception as e:
                         # Okay, somebody probably forgot to create a SampleComputedFileAssociation
                         # Don't mess with it.
-                        logger.exception("Smasher found very bad column title - skipping!")
-                        unsmashable_files.append(computed_file_path)
+                        logger.exception("Smasher found very bad column title - skipping!",
+                            computed_file_path=computed_file_path
+                        )
+                        unsmashable_files.append(computed_file.filename)
                         continue
 
                     if computed_file_path.endswith("lengthScaledTPM.tsv"):
