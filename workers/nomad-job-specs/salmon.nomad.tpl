@@ -102,7 +102,7 @@ job "SALMON_${{INDEX}}_${{RAM}}" {
             target = "/home/user/data_store_tmpfs"
             readonly = false
             tmpfs_options {
-              size = 17179869184 # size in bytes
+              size = 17179869184 # size in bytes (17GB)
             }
           }
         ]
