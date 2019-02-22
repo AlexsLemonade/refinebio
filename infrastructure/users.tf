@@ -66,6 +66,13 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
               "ec2:AttachVolume"
             ],
             "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action":[
+              "es:*"
+            ],
+            "Resource": "*"
         }
     ]
 }

@@ -45,7 +45,8 @@ if [[ ${stage} == "staging" || ${stage} == "prod" ]]; then
     elif [[ ${stage} == "prod" ]]; then
         # The certbot challenge cannot be completed until the aws_lb_target_group_attachment resources are created.
         sleep 180
-        certbot --nginx -d api.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
+        RANDOM_API=$(( ( RANDOM % 8 ) + 2 )) # 2 to 9
+        certbot --nginx -d api.refine.bio -d api$RANDOM_API.refine.bio -n --agree-tos --redirect -m g3w4k4t5n3s7p7v8@alexslemonade.slack.com
     fi
 fi
 
@@ -111,6 +112,8 @@ docker run \
        -e DATABASE_NAME=${database_name} \
        -e DATABASE_USER=${database_user} \
        -e DATABASE_PASSWORD=${database_password} \
+       -e ELASTICSEARCH_HOST=${elasticsearch_host} \
+       -e ELASTICSEARCH_PORT=${elasticsearch_port} \
        -v "$STATIC_VOLUMES":/tmp/www/static \
        --log-driver=awslogs \
        --log-opt awslogs-region=${region} \
@@ -119,6 +122,20 @@ docker run \
        -p 8081:8081 \
        --name=dr_api \
        -it -d ${dockerhub_repo}/${api_docker_image} /bin/sh -c "/home/user/collect_and_run_uwsgi.sh"
+
+# Nuke and rebuild the search index. It shouldn't take too long.
+sleep 30
+docker exec dr_api python3 manage.py search_index --delete -f;
+docker exec dr_api python3 manage.py search_index --rebuild -f;
+docker exec dr_api python3 manage.py search_index --populate -f;
+
+# Let's use this instance to call the populate command every twenty minutes.
+crontab -l > tempcron
+# echo new cron into cron file
+echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/20 * * * * docker exec -it dr_api python3 manage.py search_index --populate -f" >> tempcron
+# install new cron file
+crontab tempcron
+rm tempcron
 
 # Don't leave secrets lying around.
 rm -f environment

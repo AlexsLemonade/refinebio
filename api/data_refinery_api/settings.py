@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
+import sys
 from django.core.exceptions import ImproperlyConfigured
 
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully
@@ -30,6 +31,7 @@ DEBUG = get_env_variable('DJANGO_DEBUG') == "True"
 
 # XXX: Should be closed down when we figure out domain endpoints
 ALLOWED_HOSTS = ['*']
+CORS_ORIGIN_ALLOW_ALL = True
 
 # Application definition
 
@@ -50,6 +52,8 @@ INSTALLED_APPS = [
     'django_filters',
     'corsheaders',
     'raven.contrib.django.raven_compat',
+    'django_elasticsearch_dsl',
+    'django_elasticsearch_dsl_drf',
 
     # Local
     'data_refinery_common',
@@ -57,6 +61,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+
     'data_refinery_api.middleware.RevisionMiddleware',
     'data_refinery_api.middleware.SentryCatchBadRequestMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -86,6 +91,9 @@ TEMPLATES = [
         },
     },
 ]
+
+# Uncomment this line to use Django Debug Toolbar inside Docker
+#INTERNAL_IPS = type(str('c'), (), {'__contains__': lambda *a: True})()
 
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
@@ -183,9 +191,28 @@ else:
 
 RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD') == "True"
 
+# Elastic Search
+ELASTICSEARCH_DSL = {
+    'default': {
+        'hosts': get_env_variable('ELASTICSEARCH_HOST') + ":" + get_env_variable('ELASTICSEARCH_PORT') 
+    }
+}
+
+if 'test' in sys.argv:
+    ELASTICSEARCH_INDEX_NAMES = {
+            'data_refinery_common.models.documents': 'experiments_test',
+        }
+else:
+    ELASTICSEARCH_INDEX_NAMES = {
+        'data_refinery_common.models.documents': 'experiments',
+    }
+    ELASTICSEARCH_DSL_AUTOSYNC = False
+
+# DRF
 # XXX: Add this in Production!
 # REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = 'rest_framework.renderers.JSONRenderer'
 
+# ToS
 TERMS_AND_CONDITIONS = """Welcome to the Alex’s Lemonade Childhood Cancer Data Lab, which is supported by Alex’s Lemonade Stand Foundation ("we," "our," or "us"). These Terms of Use (these "Terms") are a binding legal agreement between you and us regarding your access to and use of the websites located at https://www.ccdatalab.org, https://cognoma.org, http://www.refine.bio or any subdomains thereof and any embedded or associated software, applications, data or other content, provided or managed by us in connection with such websites (collectively, as may be updated, modified or replaced from time to time, the "CCDL").
 
 Please read these Terms carefully. By accessing, registering for, downloading, installing or using the CCDL, or any software, applications, data or other content available on or through the CCDL (collectively, "Content" and any such data, "Data"), you agree to be bound by these Terms and to use the CCDL, including any Content, in accordance with these Terms. If you are using the CCDL on behalf of an entity, you represent and warrant that you have the legal authority to bind such entity to these Terms.

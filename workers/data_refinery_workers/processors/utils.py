@@ -12,11 +12,14 @@ from django.utils import timezone
 from enum import Enum, unique
 from typing import List, Dict, Callable
 
+from data_refinery_common import job_lookup
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
     Dataset,
+    DownloaderJob,
+    DownloaderJobOriginalFileAssociation,
     OriginalFile,
     OriginalFileSampleAssociation,
     Pipeline,
@@ -48,6 +51,129 @@ def signal_handler(sig, frame):
         CURRENT_JOB.save()
         sys.exit(0)
 
+
+def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
+    """Creates a downloader job to download `undownloaded_files`."""
+    if not undownloaded_files:
+        return False
+
+    original_downloader_job = None
+    archive_file = None
+    for undownloaded_file in undownloaded_files:
+        try:
+            original_downloader_job = undownloaded_file.downloader_jobs.latest('id')
+
+            # Found the job so we don't need to keep going.
+            break
+        except DownloaderJob.DoesNotExist:
+            # If there's no association between this file and any
+            # downloader jobs, it's most likely because the original
+            # file was created after extracting a archive containing
+            # multiple files worth of data.
+            # The way to handle this is to find that archive and
+            # recreate a downloader job FOR THAT. That archive will
+            # have the same filename as the file at the end of the
+            # 'source_url' field, because that source URL is pointing
+            # to the archive we need.
+            archive_filename = undownloaded_file.source_url.split("/")[-1]
+
+            # This file or its job might not exist, but we'll wait
+            # until we've checked all the files before calling it a
+            # failure.
+            try:
+                archive_file = OriginalFile.objects.filter(filename=archive_filename)
+                if archive_file.count() > 0:
+                    archive_file = archive_file.first()
+                else:
+                    # We might need to match these up based on
+                    # source_filenames rather than filenames so just
+                    # try them both.
+                    archive_file = OriginalFile.objects.filter(source_filename=archive_filename).first()
+
+                original_downloader_job = DownloaderJobOriginalFileAssociation.objects.filter(
+                    original_file=archive_file
+                ).latest('id').downloader_job
+                # Found the job so we don't need to keep going.
+                break
+            except:
+                pass
+
+    if not original_downloader_job:
+        sample_object = list(undownloaded_files)[0].samples.first()
+        if sample_object:
+            downloader_task = job_lookup.determine_downloader_task(sample_object)
+
+            if downloader_task == job_lookup.Downloaders.NONE:
+                logger.warn(("No valid downloader task found for sample, which is weird"
+                             " because it was able to have a processor job created for it..."),
+                            sample=sample_object.id,
+                            original_file=original_file.id)
+            else:
+                # determine_downloader_task returns an enum object,
+                # but we wanna set this on the DownloaderJob object so
+                # we want the actual value.
+                downloader_task = downloader_task.value
+
+            accession_code = sample_object.accession_code
+            original_files = sample_object.original_files.all()
+        else:
+            logger.error(
+                "Could not find the original DownloaderJob or Sample for these files.",
+                undownloaded_file=undownloaded_files
+            )
+            return False
+    elif original_downloader_job.was_recreated:
+        logger.warn(
+            "Downloader job has already been recreated once, not doing it again.",
+            original_downloader_job=original_downloader_job,
+            undownloaded_files=undownloaded_files
+        )
+        return False
+    else:
+        downloader_task = original_downloader_job.downloader_task
+        accession_code = original_downloader_job.accession_code
+        original_files = original_downloader_job.original_files.all()
+
+    new_job = DownloaderJob()
+    new_job.downloader_task = downloader_task
+    new_job.accession_code = accession_code
+    new_job.was_recreated = True
+    new_job.save()
+
+    if archive_file:
+        # If this downloader job is for an archive file, then the
+        # files that were passed into this function aren't what need
+        # to be directly downloaded, they were extracted out of this
+        # archive. The DownloaderJob will re-extract them and set up
+        # the associations for the new ProcessorJob.
+        # So double check that it still needs downloading because
+        # another file that came out of it could have already
+        # recreated the DownloaderJob.
+        if archive_file.needs_downloading():
+            if archive_file.is_downloaded:
+                # If it needs to be downloaded then it's not
+                # downloaded and the is_downloaded field should stop
+                # lying about that.
+                archive_file.is_downloaded = False
+                archive_file.save()
+
+            DownloaderJobOriginalFileAssociation.objects.get_or_create(
+                downloader_job=new_job,
+                original_file=archive_file
+            )
+    else:
+        # We can't just associate the undownloaded files, because
+        # there's a chance that there is a file which actually is
+        # downloaded that also needs to be associated with the job.
+        for original_file in original_files:
+            DownloaderJobOriginalFileAssociation.objects.get_or_create(
+                downloader_job=new_job,
+                original_file=original_file
+            )
+
+    return True
+
+
 def prepare_original_files(job_context):
     """ Provision in the Job context for OriginalFile-driven processors
     """
@@ -61,6 +187,44 @@ def prepare_original_files(job_context):
         job.failure_reason = "No files were found for the job."
         return job_context
 
+    undownloaded_files = set()
+    for original_file in original_files:
+        if original_file.needs_downloading():
+            if original_file.is_downloaded:
+                # If it needs to be downloaded then it's not
+                # downloaded and the is_downloaded field should stop
+                # lying about that.
+                original_file.is_downloaded = False
+                original_file.save()
+
+            undownloaded_files.add(original_file)
+
+    if undownloaded_files:
+        logger.info(
+            ("One or more files found which were missing or not downloaded."
+             " Creating downloader jobs for them and deleting this job."),
+            processor_job=job.id,
+            missing_files=list(undownloaded_files)
+        )
+
+        if not create_downloader_job(undownloaded_files):
+            failure_reason = "Missing file for processor job but unable to recreate downloader jobs!"
+            logger.error(failure_reason, processor_job=job.id)
+            job_context["success"] = False
+            job.failure_reason = failure_reason
+            return job_context
+
+        # If we can't process the data because it's not on the disk we
+        # can't mark the job as a success since it obviously didn't
+        # succeed. However if we mark it as a failure the job could be
+        # retried triggering yet another DownloaderJob to be created
+        # to re-download the data. Therefore the best option is to
+        # delete this job.
+        job.delete()
+        job_context["delete_self"] = True
+
+        return job_context
+
     job_context["original_files"] = original_files
     original_file = job_context['original_files'][0]
     assocs = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
@@ -69,6 +233,7 @@ def prepare_original_files(job_context):
     job_context["computed_files"] = []
 
     return job_context
+
 
 def prepare_dataset(job_context):
     """ Provision in the Job context for Dataset-driven processors
@@ -115,6 +280,24 @@ def start_job(job_context: Dict):
 
     # This job should not have been started.
     if job.start_time is not None and settings.RUNNING_IN_CLOUD:
+
+        if job.success:
+            logger.error("ProcessorJob has already completed succesfully - why are we here again? Bad Nomad!",
+                job_id=job.id
+            )
+            job_context["original_files"] = []
+            job_context["computed_files"] = []
+            job_context['abort'] = True
+            return job_context
+        if job.success == False:
+            logger.error("ProcessorJob has already completed with a fail - why are we here again? Bad Nomad!",
+                job_id=job.id
+            )
+            job_context["original_files"] = []
+            job_context["computed_files"] = []
+            job_context['abort'] = True
+            return job_context
+
         logger.error("This processor job has already been started!!!", processor_job=job.id)
         raise Exception("processors.start_job called on job %s that has already been started!" % str(job.id))
 
@@ -137,7 +320,7 @@ def start_job(job_context: Dict):
     # Janitors have no requirement
     if job.pipeline_applied not in ["JANITOR"]:
         # Some jobs take OriginalFiles, other take Datasets
-        if job.pipeline_applied not in ["SMASHER", "QN_REFERENCE"]:
+        if job.pipeline_applied not in ["SMASHER", "QN_REFERENCE", "COMPENDIA"]:
             job_context = prepare_original_files(job_context)
             if not job_context.get("success", True):
                 return job_context
@@ -167,7 +350,7 @@ def end_job(job_context: Dict, abort=False):
         success = True
 
     if not abort:
-        if job_context.get("success", False) and not (job_context["job"].pipeline_applied in ["SMASHER", "QN_REFERENCE"]):
+        if job_context.get("success", False) and not (job_context["job"].pipeline_applied in ["SMASHER", "QN_REFERENCE", "COMPENDIA"]):
 
             # Salmon requires the final `tximport` step to be fully `is_processed`.
             mark_as_processed = True
@@ -176,15 +359,22 @@ def end_job(job_context: Dict, abort=False):
 
             if mark_as_processed:
                 # This handles most of our cases
+                unique_experiments = []
                 for sample in job_context.get("samples", []):
                     sample.is_processed = True
                     sample.save()
+                    if sample.experiments.all().count() > 0:
+                        unique_experiments = list(set(unique_experiments + sample.experiments.all()[::1]))
 
                 # Explicitly for the single-salmon scenario
                 if 'sample' in job_context:
                     sample = job_context['sample']
                     sample.is_processed = True
                     sample.save()
+
+                for experiment in unique_experiments:
+                    experiment.update_num_samples()
+                    experiment.save()
 
     # If we are aborting, it's because we want to do something
     # different, so leave the original files so that "something
@@ -293,6 +483,11 @@ def run_pipeline(start_value: Dict, pipeline: List[Callable]):
                          failure_reason=last_result["job"].failure_reason)
             return end_job(last_result)
 
+        # We don't want to run end_job at all if the job has deleted
+        # itself, which happens if the data for the job was missing.
+        if last_result.get("delete_self", False):
+            break
+
         if last_result.get("abort", False):
             return end_job(last_result, abort=True)
 
@@ -312,6 +507,7 @@ class PipelineEnum(Enum):
     TX_INDEX = "Transcriptome Index"
     QN_REFERENCE = "Quantile Normalization Reference"
     JANITOR = "Janitor"
+    COMPENDIA = "Compendia"
 
 
 @unique
@@ -391,6 +587,12 @@ class ProcessorEnum(Enum):
         "name": "Quantile Normalization Reference",
         "docker_img": "dr_smasher",
         "yml_file": "qn.yml"
+    }
+
+    COMPENDIA = {
+        "name": "Compendia Creation",
+        "docker_img": "dr_compendia",
+        "yml_file": "compendia.yml"
     }
 
     @classmethod

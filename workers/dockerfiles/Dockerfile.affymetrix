@@ -6,14 +6,14 @@ RUN add-apt-repository ppa:apt-fast/stable
 RUN apt-get update -qq
 RUN apt-get -y install apt-fast
 
-# Much of this dockerfile is based off of the rpy2 docker image found:
-# https://hub.docker.com/r/rpy2/rpy2/~/dockerfile/
+# The packages related to R are somewhat weird, see the README for more details.
 
 COPY workers/CRAN.gpg .
 RUN \
   apt-fast update -qq && \
+  apt-get install -y apt-transport-https && \
   apt-fast install -y lsb-release && \
-  echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
+  echo "deb https://cran.revolutionanalytics.com/bin/linux/ubuntu $(lsb_release -sc)/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
   apt-key add CRAN.gpg && \
   apt-fast update -qq && \
@@ -26,8 +26,8 @@ RUN \
   lsb-release \
   python3 \
   python3-pip \
-  r-base \
-  r-base-dev \
+  r-base-core=3.4.2-1xenial1 \
+  r-base-dev=3.4.2-1xenial1 \
   libpq-dev \
   libxml2-dev \
   libssl-dev \

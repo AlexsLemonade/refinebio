@@ -119,9 +119,8 @@ variable "client_instance_type" {
   default = "m5.4xlarge"
 }
 
-# Has 8 GB, which should be enough to run 2 smasher jobs at once.
 variable "smasher_instance_type" {
-  default = "t3.large"
+  default = "m5.12xlarge"
 }
 
 variable "spot_price" {
@@ -129,7 +128,7 @@ variable "spot_price" {
 }
 
 variable "spot_fleet_capacity" {
-  default = "100"
+  default = "0"
 }
 
 variable "max_clients" {
@@ -173,6 +172,22 @@ variable "max_downloader_jobs_per_node" {
   default = 8
 }
 
+variable "mailchimp_user" {
+  default = ""
+}
+
+variable "mailchimp_api_key" {
+  default = ""
+}
+
+variable "mailchimp_list_id" {
+  default = ""
+}
+
+variable "elasticsearch_port" {
+  default = "80"
+}
+
 # Output our production environment variables.
 output "environment_variables" {
   value = [
@@ -206,6 +221,10 @@ output "environment_variables" {
       value = "${var.database_hidden_port}"},
     {name = "DATABASE_TIMEOUT"
       value = "${var.database_timeout}"},
+    {name = "ELASTICSEARCH_HOST"
+      value = "${aws_elasticsearch_domain.es.endpoint}"},
+    {name = "ELASTICSEARCH_PORT"
+      value = "${var.elasticsearch_port}"},
     {name = "RUNNING_IN_CLOUD"
       value = "${var.running_in_cloud}"},
     {name = "LOG_LEVEL"
@@ -222,6 +241,8 @@ output "environment_variables" {
       value = "${aws_s3_bucket.data_refinery_results_bucket.id}"},
     {name = "S3_TRANSCRIPTOME_INDEX_BUCKET_NAME"
       value = "${aws_s3_bucket.data_refinery_transcriptome_index_bucket.id}"},
+    {name = "S3_COMPENDIA_BUCKET_NAME"
+      value = "${aws_s3_bucket.data_refinery_compendia_bucket.id}"},
     {name = "LOCAL_ROOT_DIR"
       value = "${var.local_root_dir}"},
     {name = "DOCKERHUB_REPO"
@@ -250,6 +271,12 @@ output "environment_variables" {
       value = "${aws_instance.nomad_server_1.public_ip}"},
     {name = "NOMAD_PORT"
       value = "4646"},
+    {name = "MAILCHIMP_USER"
+      value = "${var.mailchimp_user}"},
+    {name = "MAILCHIMP_API_KEY"
+      value = "${var.mailchimp_api_key}"},
+    {name = "MAILCHIMP_LIST_ID"
+      value = "${var.mailchimp_list_id}"},
     {name = "MAX_CLIENTS"
       value = "${var.max_clients}"},
     {name = "MAX_DOWNLOADER_JOBS_PER_NODE"

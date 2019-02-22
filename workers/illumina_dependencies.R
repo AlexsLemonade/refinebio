@@ -7,7 +7,7 @@ devtools::install_version('data.table', version='1.11.0')
 devtools::install_version('optparse', version='1.4.4')
 devtools::install_version('lazyeval', version='0.2.1')
 devtools::install_version('tidyverse', version='1.2.1')
-devtools::install_version('rlang', version='0.3.0')
+devtools::install_version('rlang', version='0.3.1')
 
 # devtools::install_url() requires BiocInstaller
 install.packages('https://bioconductor.org/packages/3.6/bioc/src/contrib/BiocInstaller_1.28.0.tar.gz')

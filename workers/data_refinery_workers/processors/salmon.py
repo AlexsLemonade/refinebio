@@ -82,6 +82,25 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     if len(original_files) == 2:
         job_context["input_file_path_2"] = original_files[1].absolute_file_path
+        if not os.path.exists(job_context["input_file_path_2"]):
+            logger.error("Was told to process a non-existent file2 - why did this happen?",
+                input_file_path=job_context["input_file_path_2"],
+                processor_job=job_context["job_id"]
+            )
+            job_context["job"].failure_reason = "Missing input file2: " + str(job_context["input_file_path_2"])
+            job_context["success"] = False
+            return job_context
+
+    # Copy the .sra file so fasterq-dump can't corrupt it.
+    if job_context["input_file_path"][-4:].upper() == ".SRA":
+        new_input_file_path = os.path.join(job_context["work_dir"], original_files[0].filename)
+        shutil.copyfile(job_context["input_file_path"], new_input_file_path)
+        job_context['input_file_path'] = new_input_file_path
+
+    if job_context.get("input_file_path_2", False):
+        new_input_file_path = os.path.join(job_context["work_dir"], original_files[1].filename)
+        shutil.copyfile(job_context["input_file_path_2"], new_input_file_path)
+        job_context['input_file_path_2'] = new_input_file_path
 
     # Copy the .sra file so fasterq-dump can't corrupt it.
     if job_context["input_file_path"][-4:] == ".sra":
@@ -159,7 +178,7 @@ def _extract_sra(job_context: Dict) -> Dict:
         completed_command = subprocess.run(formatted_command.split(),
                                            stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE,
-                                           timeout=1200)
+                                           timeout=2400)
     except subprocess.TimeoutExpired as e:
         logger.exception("Shell call to fasterq-dump failed with timeout",
                      processor_job=job_context["job_id"],
@@ -1012,7 +1031,7 @@ def salmon(job_id: int) -> None:
 
                         _run_fastqc,
                         _run_salmon,
-                        # _run_salmontools,
+                        _run_salmontools,
                         _run_multiqc,
                         utils.end_job])
     return final_context

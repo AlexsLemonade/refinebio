@@ -25,7 +25,14 @@ mkdir -p /var/ebs/
 
 fetch_and_mount_volume () {
     INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
-    EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=${user}" "Name=tag:Stage,Values=${stage}" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=${region}a" --region ${region} | jq '.Volumes[0].VolumeId' | tr -d '"'`
+
+    # Try to mount volume 0 first, so we have one volume we know is always mounted!
+    if aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=prod" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | grep 'VolumeID'; then
+        EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=prod" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
+    else
+        EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=prod" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
+    fi
+
     aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device "/dev/sdf" --region ${region}
 }
 
@@ -108,6 +115,17 @@ EOF
 # Make the client.meta.volume_id is set to waht we just mounted
 sed -i "s/REPLACE_ME/$EBS_VOLUME_INDEX/" client.hcl
 
+# We want to leave enough RAM to run 3 SALMON jobs at once but not
+# enough to run 4.  Each SALMON job takes 32768MB of RAM, 32768 * 3 =
+# 98304, but that doesn't leave much margin for error. Therefore just
+# give it an extra 10GB of RAM since that won't be enough for an
+# entire other job to be queued, but keeps things from being so tight.
+TARGET_RAM=108304
+# Make the client.meta.volume_id is set to waht we just mounted
+TOTAL_RAM=$(free -m | grep Mem | tr -s ' ' | cut -d\  -f2)
+RESERVED_RAM=$((TOTAL_RAM - TARGET_RAM))
+sed -i "s/CHANGE_ME/$RESERVED_RAM/" client.hcl
+
 # Create a directory for docker to use as a volume.
 mkdir /home/ubuntu/docker_volume
 chmod a+rwx /home/ubuntu/docker_volume
@@ -122,7 +140,7 @@ nomad agent -config client.hcl > /var/log/nomad_client.log &
 # Set up the Docker hung process killer
 cat <<EOF >/home/ubuntu/killer.py
 # Call like:
-# docker ps --format 'table {{.Names}}|{{.RunningFor}}' | python killer.py
+# docker ps --format 'table {{.Names}}|{{.RunningFor}}' | grep -v qn | grep -v compendia | python killer.py
 
 import os
 import sys
@@ -148,7 +166,7 @@ EOF
 # Create the CW metric job in a crontab
 # write out current crontab
 crontab -l > tempcron
-echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/5 * * * * docker ps --format 'table {{.Names}}|{{.RunningFor}}' | python /home/ubuntu/killer.py" >> tempcron
+echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/5 * * * * docker ps --format 'table {{.Names}}|{{.RunningFor}}' | grep -v qn | grep -v compendia | python /home/ubuntu/killer.py" >> tempcron
 # install new cron file
 crontab tempcron
 rm tempcron

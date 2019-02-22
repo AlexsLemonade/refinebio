@@ -7,7 +7,7 @@ from nomad import Nomad
 from nomad.api.exceptions import URLNotFoundNomadException
 from typing import List, Set
 from functools import wraps
-from datetime import datetime, timedelta
+import datetime
 from django.conf import settings
 from django.utils import timezone
 from django.db import transaction
@@ -49,11 +49,21 @@ DEFAULT_MAX_JOBS = 20000
 # loop. We could loop much less frequently than every two minutes if
 # the work we do takes longer than 2 minutes, but this will prevent
 # excessive spinning.
-MIN_LOOP_TIME = timedelta(minutes=2)
+MIN_LOOP_TIME = datetime.timedelta(minutes=2)
 
 # How frequently we dispatch Janitor jobs and clean unplaceable jobs
 # out of the Nomad queue.
-JANITOR_DISPATCH_TIME = timedelta(minutes=30)
+JANITOR_DISPATCH_TIME = datetime.timedelta(minutes=30)
+
+
+# TEMPORARY (while chasing down zebrafish data)
+# We want to limit the system to working on zebrafish data
+# temporarily, which means that we don't want the Foreman to requeue
+# anything that we haven't identitifed as being zebrafish data, so
+# there's a separate management command being used to pick what work
+# to focus on. So all the foreman needs to do is worry about jobs
+# queued after the beginning of the zebrafish sprint
+JOB_CREATED_AT_CUTOFF = datetime.datetime(2019, 2, 5, tzinfo=timezone.utc)
 
 
 def read_config_list(config_file: str) -> List[str]:
@@ -118,7 +128,7 @@ def prioritize_salmon_jobs(jobs: List) -> List:
     prioritized_jobs = []
     for job in jobs:
         try:
-            if not does_processor_job_have_samples(job):
+            if type(job) == ProcessorJob and not does_processor_job_have_samples(job):
                 continue
 
             # Salmon jobs are specifc to one sample.
@@ -175,7 +185,7 @@ def prioritize_zebrafish_jobs(jobs: List) -> List:
     zebrafish_jobs = []
     for job in jobs:
         try:
-            if not does_processor_job_have_samples(job):
+            if type(job) == ProcessorJob and not does_processor_job_have_samples(job):
                 continue
 
             # There aren't cross-species jobs, so just checking one sample's organism will be sufficient.
@@ -200,7 +210,7 @@ def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
     prioritized_jobs = []
     for job in jobs:
         try:
-            if not does_processor_job_have_samples(job):
+            if type(job) == ProcessorJob and not does_processor_job_have_samples(job):
                 continue
 
             # All samples in a job correspond to the same experiment, so just check one sample.
@@ -233,8 +243,6 @@ def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
 # Downloaders
 ##
 
-
-@transaction.atomic
 def requeue_downloader_job(last_job: DownloaderJob) -> None:
     """Queues a new downloader job.
 
@@ -291,10 +299,10 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
     # that are close to completion.
     # Each function moves the jobs it prioritizes to the front of the
     # list, so apply them in backwards order.
-    jobs = prioritize_salmon_jobs(jobs)
-    jobs = prioritize_jobs_by_accession(jobs, PEDIATRIC_ACCESSION_LIST)
-    jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
-    jobs = prioritize_zebrafish_jobs(jobs)
+    # jobs = prioritize_salmon_jobs(jobs)
+    # jobs = prioritize_jobs_by_accession(jobs, PEDIATRIC_ACCESSION_LIST)
+    # jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
+    # jobs = prioritize_zebrafish_jobs(jobs)
 
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
@@ -317,7 +325,9 @@ def retry_failed_downloader_jobs() -> None:
     """Handle downloader jobs that were marked as a failure."""
     failed_jobs = DownloaderJob.objects.filter(
         success=False,
-        retried=False
+        retried=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).prefetch_related(
         "original_files__samples"
     )
@@ -325,7 +335,7 @@ def retry_failed_downloader_jobs() -> None:
 
     if failed_jobs_list:
         logger.info(
-            "Handling failed (explicitly-marked-as-failure) jobs!",
+            "Handling failed (explicitly-marked-as-failure) downloader jobs!",
             jobs_count=len(failed_jobs_list)
         )
         handle_downloader_jobs(failed_jobs_list)
@@ -338,7 +348,9 @@ def retry_hung_downloader_jobs() -> None:
         retried=False,
         end_time=None,
         start_time__isnull=False,
-        no_retry=False
+        no_retry=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).prefetch_related(
         "original_files__samples"
     )
@@ -360,9 +372,14 @@ def retry_hung_downloader_jobs() -> None:
         except nomad.api.exceptions.BaseNomadException:
             raise
         except Exception:
-            logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
+            logger.exception("Couldn't query Nomad about Downloader Job.", downloader_job=job.id)
 
-    handle_downloader_jobs(hung_jobs)
+    if hung_jobs:
+        logger.info(
+            "Handling hung (started-but-never-finished) downloader jobs!",
+            jobs_count=len(hung_jobs)
+        )
+        handle_downloader_jobs(hung_jobs)
 
 
 def retry_lost_downloader_jobs() -> None:
@@ -380,7 +397,9 @@ def retry_lost_downloader_jobs() -> None:
         retried=False,
         start_time=None,
         end_time=None,
-        no_retry=False
+        no_retry=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).prefetch_related(
         "original_files__samples"
     )
@@ -404,12 +423,7 @@ def retry_lost_downloader_jobs() -> None:
                     )
                     lost_jobs.append(job)
             else:
-                # If there is no nomad_job_id field set, we could be
-                # in the small window where the job was created but
-                # hasn't yet gotten a chance to be queued.
-                # If this job really should be restarted we'll get it in the next loop.
-                if timezone.now() - job.created_at > MIN_LOOP_TIME:
-                    lost_jobs.append(job)
+                lost_jobs.append(job)
         except socket.timeout:
             logger.info("Timeout connecting to Nomad - is Nomad down?", job_id=job.id)
         except URLNotFoundNomadException:
@@ -421,17 +435,20 @@ def retry_lost_downloader_jobs() -> None:
         except nomad.api.exceptions.BaseNomadException:
             raise
         except Exception:
-            logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
+            logger.exception("Couldn't query Nomad about Downloader Job.", downloader_job=job.id)
 
-    handle_downloader_jobs(lost_jobs)
+    if lost_jobs:
+        logger.info(
+            "Handling lost (never-started) downloader jobs!",
+            len_jobs=len(lost_jobs)
+        )
+        handle_downloader_jobs(lost_jobs)
 
 
 ##
 # Processors
 ##
 
-
-@transaction.atomic
 def requeue_processor_job(last_job: ProcessorJob) -> None:
     """Queues a new processor job.
 
@@ -511,10 +528,10 @@ def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
     # that are close to completion.
     # Each function moves the jobs it prioritizes to the front of the
     # list, so apply them in backwards order.
-    jobs = prioritize_salmon_jobs(jobs)
-    jobs = prioritize_jobs_by_accession(jobs, PEDIATRIC_ACCESSION_LIST)
-    jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
-    jobs = prioritize_zebrafish_jobs(jobs)
+    # jobs = prioritize_salmon_jobs(jobs)
+    # jobs = prioritize_jobs_by_accession(jobs, PEDIATRIC_ACCESSION_LIST)
+    # jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
+    # jobs = prioritize_zebrafish_jobs(jobs)
 
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
@@ -547,7 +564,9 @@ def retry_failed_processor_jobs() -> None:
     failed_jobs = ProcessorJob.objects.filter(
         success=False,
         retried=False,
-        volume_index__in=active_volumes
+        volume_index__in=active_volumes,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
     ).prefetch_related(
@@ -558,7 +577,7 @@ def retry_failed_processor_jobs() -> None:
 
     if failed_jobs_list:
         logger.info(
-            "Handling failed (explicitly-marked-as-failure) jobs!",
+            "Handling failed (explicitly-marked-as-failure) processor jobs!",
             len_jobs=len(failed_jobs_list)
         )
         handle_processor_jobs(failed_jobs_list)
@@ -580,7 +599,9 @@ def retry_hung_processor_jobs() -> None:
         end_time=None,
         start_time__isnull=False,
         no_retry=False,
-        volume_index__in=active_volumes
+        volume_index__in=active_volumes,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
     ).prefetch_related(
@@ -619,7 +640,7 @@ def retry_hung_processor_jobs() -> None:
 
     if hung_jobs:
         logger.info(
-            "Handling hung (started-but-never-finished) jobs!",
+            "Handling hung (started-but-never-finished) processor jobs!",
             len_jobs=len(hung_jobs)
         )
         handle_processor_jobs(hung_jobs)
@@ -641,7 +662,9 @@ def retry_lost_processor_jobs() -> None:
         start_time=None,
         end_time=None,
         no_retry=False,
-        volume_index__in=active_volumes
+        volume_index__in=active_volumes,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
     ).prefetch_related(
@@ -686,7 +709,7 @@ def retry_lost_processor_jobs() -> None:
 
     if lost_jobs:
         logger.info(
-            "Handling lost (never-started) jobs!",
+            "Handling lost (never-started) processor jobs!",
             len_jobs=len(lost_jobs)
         )
         handle_processor_jobs(lost_jobs)
@@ -695,7 +718,6 @@ def retry_lost_processor_jobs() -> None:
 # Surveyors
 ##
 
-@transaction.atomic
 def requeue_survey_job(last_job: SurveyJob) -> None:
     """Queues a new survey job.
 
@@ -784,10 +806,15 @@ def handle_survey_jobs(jobs: List[SurveyJob]) -> None:
 
 def retry_failed_survey_jobs() -> None:
     """Handle survey jobs that were marked as a failure."""
-    failed_jobs = SurveyJob.objects.filter(success=False, retried=False).order_by('pk')
+    failed_jobs = SurveyJob.objects.filter(
+        success=False,
+        retried=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
+    ).order_by('pk')
     if failed_jobs:
         logger.info(
-            "Handling failed (explicitly-marked-as-failure) jobs!",
+            "Handling failed (explicitly-marked-as-failure) survey jobs!",
             len_jobs=len(failed_jobs)
         )
         handle_survey_jobs(failed_jobs)
@@ -800,7 +827,9 @@ def retry_hung_survey_jobs() -> None:
         retried=False,
         end_time=None,
         start_time__isnull=False,
-        no_retry=False
+        no_retry=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).order_by('pk')
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -830,7 +859,7 @@ def retry_hung_survey_jobs() -> None:
 
     if hung_jobs:
         logger.info(
-            "Handling hung (started-but-never-finished) jobs!",
+            "Handling hung (started-but-never-finished) survey jobs!",
             len_jobs=len(hung_jobs)
         )
         handle_survey_jobs(hung_jobs)
@@ -843,7 +872,9 @@ def retry_lost_survey_jobs() -> None:
         retried=False,
         start_time=None,
         end_time=None,
-        no_retry=False
+        no_retry=False,
+        # TEMPORARY (while chasing down zebrafish data):
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).order_by('pk')
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -883,7 +914,7 @@ def retry_lost_survey_jobs() -> None:
 
     if lost_jobs:
         logger.info(
-            "Handling lost (never-started) jobs!",
+            "Handling lost (never-started) survey jobs!",
             len_jobs=len(lost_jobs)
         )
         handle_survey_jobs(lost_jobs)
@@ -982,7 +1013,6 @@ def cleanup_the_queue():
                 except:
                     # If we can't do this for some reason, we'll get it next loop.
                     pass
-
 
 
 ##

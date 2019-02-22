@@ -53,6 +53,9 @@ job "SMASHER" {
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
         EBS_INDEX = "${{INDEX}}"
 
+        ELASTICSEARCH_HOST = "${{ELASTICSEARCH_HOST}}"
+        ELASTICSEARCH_PORT = "${{ELASTICSEARCH_PORT}}"
+
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
 
@@ -64,7 +67,7 @@ job "SMASHER" {
         # CPU is in AWS's CPU units.
         cpu = 1024
         # Memory is in MB of RAM.
-        memory = 4096
+        memory = 12288
       }
 
       logs {
