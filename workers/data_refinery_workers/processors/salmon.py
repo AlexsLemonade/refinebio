@@ -336,7 +336,7 @@ def _find_or_download_index(job_context: Dict) -> Dict:
         # complete each step.
         version_info_path = job_context["index_directory"] + "/versionInfo.json"
 
-        # Something very bad happened and now there are corrupt indexes installed. Nuke 'em. 
+        # Something very bad happened and now there are corrupt indexes installed. Nuke 'em.
         if os.path.exists(version_info_path) and (os.path.getsize(version_info_path) == 0):
             logger.error("We have to nuke a zero-valued index directory: " + version_info_path)
             shutil.rmtree(job_context["index_directory"], ignore_errors=True)

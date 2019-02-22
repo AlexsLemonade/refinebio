@@ -107,6 +107,7 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
                 logger.warn(("No valid downloader task found for sample, which is weird"
                              " because it was able to have a processor job created for it..."),
                             sample=sample_object.id)
+                return False
             else:
                 # determine_downloader_task returns an enum object,
                 # but we wanna set this on the DownloaderJob object so
