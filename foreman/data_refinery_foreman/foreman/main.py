@@ -56,6 +56,15 @@ MIN_LOOP_TIME = datetime.timedelta(minutes=2)
 JANITOR_DISPATCH_TIME = datetime.timedelta(minutes=30)
 
 
+# This time is currently set so far in the past that it's not doing
+# anything. However, should we ever want to suspend work on the
+# whatever we already have in our queues/database (perhaps to be able
+# to force "important work" to get done), setting this to a recent
+# date will prevent the Foreman from queuing/requeuing jobs created
+# before this cutoff.
+JOB_CREATED_AT_CUTOFF = datetime.datetime(2017, 2, 5, tzinfo=timezone.utc)
+
+
 def read_config_list(config_file: str) -> List[str]:
     """
     Reads a file and returns a list with one item per line.
@@ -315,7 +324,8 @@ def retry_failed_downloader_jobs() -> None:
     """Handle downloader jobs that were marked as a failure."""
     failed_jobs = DownloaderJob.objects.filter(
         success=False,
-        retried=False
+        retried=False,
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).prefetch_related(
         "original_files__samples"
     )
@@ -336,7 +346,8 @@ def retry_hung_downloader_jobs() -> None:
         retried=False,
         end_time=None,
         start_time__isnull=False,
-        no_retry=False
+        no_retry=False,
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).prefetch_related(
         "original_files__samples"
     )
@@ -383,7 +394,8 @@ def retry_lost_downloader_jobs() -> None:
         retried=False,
         start_time=None,
         end_time=None,
-        no_retry=False
+        no_retry=False,
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).prefetch_related(
         "original_files__samples"
     )
@@ -548,7 +560,8 @@ def retry_failed_processor_jobs() -> None:
     failed_jobs = ProcessorJob.objects.filter(
         success=False,
         retried=False,
-        volume_index__in=active_volumes
+        volume_index__in=active_volumes,
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
     ).prefetch_related(
@@ -581,7 +594,8 @@ def retry_hung_processor_jobs() -> None:
         end_time=None,
         start_time__isnull=False,
         no_retry=False,
-        volume_index__in=active_volumes
+        volume_index__in=active_volumes,
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
     ).prefetch_related(
@@ -642,7 +656,8 @@ def retry_lost_processor_jobs() -> None:
         start_time=None,
         end_time=None,
         no_retry=False,
-        volume_index__in=active_volumes
+        volume_index__in=active_volumes,
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
     ).prefetch_related(
@@ -786,7 +801,8 @@ def retry_failed_survey_jobs() -> None:
     """Handle survey jobs that were marked as a failure."""
     failed_jobs = SurveyJob.objects.filter(
         success=False,
-        retried=False
+        retried=False,
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).order_by('pk')
     if failed_jobs:
         logger.info(
@@ -803,7 +819,8 @@ def retry_hung_survey_jobs() -> None:
         retried=False,
         end_time=None,
         start_time__isnull=False,
-        no_retry=False
+        no_retry=False,
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).order_by('pk')
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -846,7 +863,8 @@ def retry_lost_survey_jobs() -> None:
         retried=False,
         start_time=None,
         end_time=None,
-        no_retry=False
+        no_retry=False,
+        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).order_by('pk')
 
     nomad_host = get_env_variable("NOMAD_HOST")
