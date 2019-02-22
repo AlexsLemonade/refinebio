@@ -222,33 +222,6 @@ class ForemanTestCase(TestCase):
         self.assertEqual(retried_job.num_retries, 1)
 
     @patch('data_refinery_foreman.foreman.main.send_job')
-    @patch('data_refinery_foreman.foreman.main.Nomad')
-    def test_not_retrying_old_downloader_jobs(self, mock_nomad, mock_send_job):
-        """Makes sure temporary logic to limit the Foreman's scope works."""
-        mock_send_job.return_value = True
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
-
-        job = self.create_downloader_job()
-        job.created_at = datetime.date(2019, 2, 3)
-        job.save()
-
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
-        main.retry_lost_downloader_jobs()
-        self.assertEqual(len(mock_send_job.mock_calls), 0)
-
-        jobs = DownloaderJob.objects.order_by('id')
-        self.assertEqual(1, DownloaderJob.objects.all().count())
-
-    @patch('data_refinery_foreman.foreman.main.send_job')
     def test_retrying_lost_downloader_jobs_time(self, mock_send_job):
         mock_send_job.return_value = True
 
@@ -559,33 +532,6 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
-    @patch('data_refinery_foreman.foreman.main.send_job')
-    @patch('data_refinery_foreman.foreman.main.Nomad')
-    def test_not_retrying_old_processor_jobs(self, mock_nomad, mock_send_job):
-        """Makes sure temporary logic to limit the Foreman's scope works."""
-        mock_send_job.return_value = True
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
-
-        job = self.create_processor_job()
-        job.created_at = datetime.date(2019, 2, 3)
-        job.save()
-
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
-        main.retry_lost_processor_jobs()
-        self.assertEqual(len(mock_send_job.mock_calls), 0)
-
-        jobs = ProcessorJob.objects.order_by('id')
-        self.assertEqual(1, ProcessorJob.objects.all().count())
-
     @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
     @patch('data_refinery_foreman.foreman.main.Nomad')
@@ -858,33 +804,6 @@ class ForemanTestCase(TestCase):
 
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
-
-    @patch('data_refinery_foreman.foreman.main.send_job')
-    @patch('data_refinery_foreman.foreman.main.Nomad')
-    def test_not_retrying_old_survey_jobs(self, mock_nomad, mock_send_job):
-        """Makes sure temporary logic to limit the Foreman's scope works."""
-        mock_send_job.return_value = True
-
-        def mock_init_nomad(host, port=0, timeout=0):
-            ret_value = MagicMock()
-            ret_value.job = MagicMock()
-            ret_value.job.get_job = MagicMock()
-            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
-            return ret_value
-
-        mock_nomad.side_effect = mock_init_nomad
-
-        job = self.create_survey_job()
-        job.created_at = datetime.date(2019, 2, 3)
-        job.save()
-
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
-        main.retry_lost_survey_jobs()
-        self.assertEqual(len(mock_send_job.mock_calls), 0)
-
-        jobs = SurveyJob.objects.order_by('id')
-        self.assertEqual(1, SurveyJob.objects.all().count())
 
     @patch('data_refinery_foreman.foreman.main.send_job')
     @patch('data_refinery_foreman.foreman.main.Nomad')
