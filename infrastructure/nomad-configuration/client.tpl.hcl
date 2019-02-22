@@ -15,10 +15,6 @@ client {
     volume_index = "REPLACE_ME"
     is_smasher = "false"
   }
-
-  reserved {
-    memory = "CHANGE_ME"
-  }
 }
 
 consul {
