@@ -139,7 +139,7 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
     # Disable GEO downloader job recreation until we resolve:
     # https://github.com/AlexsLemonade/refinebio/issues/1068
     if sample_object.source_database == "GEO":
-        logger.info("Not recreating a downloader job for a sample coming from GEO.",
+        logger.warn("Not recreating a downloader job for a sample coming from GEO.",
                     sample=sample_object,
                     original_files=original_files)
         return False
