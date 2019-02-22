@@ -28,6 +28,7 @@ Refine.bio currently has four sub-projects contained within this repo:
     - [Services](#services)
       - [Postgres](#postgres)
       - [Nomad](#nomad)
+      - [ElasticSearch](#elasticsearch)
     - [Common Dependecies](#common-dependecies)
   - [Testing](#testing)
     - [API](#api)
@@ -44,6 +45,8 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Downloader Jobs](#downloader-jobs)
   - [Processor Jobs](#processor-jobs)
   - [Creating Quantile Normalization Reference Targets](#creating-quantile-normalization-reference-targets)
+  - [Creating Compendia](#creating-compendia)
+  - [Running Tximport Early](#running-tximport-early)
   - [Checking on Local Jobs](#checking-on-local-jobs)
   - [Development Helpers](#development-helpers)
 - [Cloud Deployment](#cloud-deployment)
@@ -819,4 +822,3 @@ Once `doctoc` is installed the table of contents can be re-generated with: `doct
 ## License
 
 BSD 3-Clause License.
-
