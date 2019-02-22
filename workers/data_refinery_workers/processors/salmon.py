@@ -102,12 +102,6 @@ def _prepare_files(job_context: Dict) -> Dict:
         shutil.copyfile(job_context["input_file_path_2"], new_input_file_path)
         job_context['input_file_path_2'] = new_input_file_path
 
-    # Copy the .sra file so fasterq-dump can't corrupt it.
-    if job_context["input_file_path"][-4:] == ".sra":
-        new_input_file_path = os.path.join(job_context["work_dir"], original_files[0].filename)
-        shutil.copyfile(job_context["input_file_path"], new_input_file_path)
-        job_context['input_file_path'] = new_input_file_path
-
     # There should only ever be one per Salmon run
     sample = job_context['original_files'][0].samples.first()
     job_context['sample_accession_code'] = sample.accession_code
