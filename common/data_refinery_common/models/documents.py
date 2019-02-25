@@ -22,8 +22,8 @@ edge_ngram_completion_filter = token_filter(
 )
 html_strip = analyzer(
     'html_strip',
-    tokenizer="standard",
-    filter=["standard", "lowercase", "stop", "snowball", edge_ngram_completion_filter],
+    tokenizer="whitespace",
+    filter=[edge_ngram_completion_filter, "standard", "lowercase", "stop", "snowball"],
     char_filter=["html_strip"]
 )
 html_strip_no_ngram = analyzer(
@@ -38,8 +38,8 @@ html_strip_no_stop = analyzer(
     filter=["standard", "lowercase"],
     char_filter=["html_strip"]
 )
-standard = analyzer(
-    'standard',
+standard_keyword = analyzer(
+    'standard_keyword',
     tokenizer="keyword",
     filter=[],
 )
@@ -81,12 +81,12 @@ class ExperimentDocument(DocType):
         fields={'raw': fields.KeywordField()}
     )
     platform_names = fields.TextField(
-        analyzer=standard,
+        analyzer=standard_keyword,
         fielddata=True,
         fields={'raw': fields.TextField()}
     )
     platform_accession_codes = fields.TextField(
-        analyzer=standard,
+        analyzer=standard_keyword,
         fielddata=True,
         fields={'raw': fields.TextField()}
     )
