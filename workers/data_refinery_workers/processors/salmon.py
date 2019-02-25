@@ -86,15 +86,11 @@ def _prepare_files(job_context: Dict) -> Dict:
     # same time.)
     job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR,
                                            job_context["job_dir_prefix"]) + "/"
-    job_context["temp_dir"] = job_context["work_dir"] + "temp/"
     os.makedirs(job_context["work_dir"], exist_ok=True)
-    os.makedirs(job_context["temp_dir"], exist_ok=True)
-    # If we want to be really fancy here, we can do something like:
-    # `$ mount -o size=16G -t tmpfs none job_context["temp_dir"]`
-    # As fasterq-dump is slow due to disk thrashing.
 
     original_files = job_context["original_files"]
     job_context["input_file_path"] = original_files[0].absolute_file_path
+
     if not os.path.exists(job_context["input_file_path"]):
         logger.error("Was told to process a non-existent file - why did this happen?",
             input_file_path=job_context["input_file_path"],
@@ -133,6 +129,12 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context['samples'] = [] # This will only be populated in the `tximport` job
     job_context['organism'] = job_context['sample'].organism
     job_context["success"] = True
+
+    # Since 0.9, Nomad can access Docker's tmpfs features,
+    # which allows us to avoid fasterq-dump's disk thrashing.
+    job_context["temp_dir"] = "/home/user/data_store_tmpfs"
+    # Should be created by Docker already, but do it anyway.
+    os.makedirs(job_context["temp_dir"], exist_ok=True)
 
     job_context["output_directory"] = job_context["work_dir"] + sample.accession_code + "_output/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
@@ -179,7 +181,10 @@ def _extract_sra(job_context: Dict) -> Dict:
     time_start = timezone.now()
     # This can be improved with: " -e " + str(multiprocessing.cpu_count())
     # but it seems to cause time to increase if there are too many jobs calling it at once.
-    formatted_command = "fasterq-dump " + job_context['work_file'] + " -O " + job_context['work_dir'] + " --temp " + job_context["temp_dir"]
+    formatted_command = "fasterq-dump " + job_context['work_file'] + \
+                        " -O " +  job_context['work_dir'] + \
+                        " --temp " + job_context["temp_dir"]
+
     logger.debug("Running fasterq-dump using the following shell command: %s",
                  formatted_command,
                  processor_job=job_context["job_id"])

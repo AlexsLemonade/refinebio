@@ -283,6 +283,7 @@ class SalmonTestCase(TestCase):
 
         job_context = salmon._prepare_files({"job_dir_prefix": "TEST",
                                              "job_id": "TEST",
+                                             "job": ProcessorJob(),
                                              'pipeline': Pipeline(name="Salmon"),
                                              'computed_files': [],
                                              "original_files": [og_read_1, og_read_2]})
@@ -534,7 +535,9 @@ class DetermineIndexLengthTestCase(TestCase):
         job, files = prepare_job()
 
         job_context = salmon._set_job_prefix({'original_files': [files[0]],
-                                              'job_id': job})
+                                              'job_id': job.id,
+                                              'job': job
+                                              })
         job_context = salmon._prepare_files(job_context)
         results = salmon._determine_index_length(job_context)
 
@@ -547,7 +550,9 @@ class DetermineIndexLengthTestCase(TestCase):
         job, files = prepare_job()
 
         job_context = salmon._set_job_prefix({'original_files': files,
-                                              'job_id': job})
+                                              'job_id': job.id,
+                                              'job': job
+                                              })
         job_context = salmon._prepare_files(job_context)
         results = salmon._determine_index_length(job_context)
 
