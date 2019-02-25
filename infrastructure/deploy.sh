@@ -187,7 +187,7 @@ while [[ $diff < 900 && $nomad_status != "200" ]]; do
     let "diff = $(date +%s) - $start_time"
 done
 
-if [[ $nomad_status != "200" ]]; do
+if [[ $nomad_status != "200" ]]; then
     echo "Nomad didn't start, aborting deploy."
     echo "Either the timeout needs to be raised or there's something else broken."
     exit 1
