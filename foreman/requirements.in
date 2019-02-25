@@ -1,4 +1,8 @@
-django>=2.1.5
+django>=2.1.7
+elasticsearch>=6.2.0
+elasticsearch-dsl>=6.1.0
+django-elasticsearch-dsl
+django-elasticsearch-dsl-drf
 psycopg2-binary
 requests>=2.20.0
 retrying
