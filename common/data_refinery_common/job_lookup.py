@@ -147,7 +147,7 @@ def determine_processor_pipeline(sample_object: Sample, original_file=None) -> P
         manufacturer Otherwise it's SALMON-time.
     """
     if original_file:
-        if original_file.filename[-4:].upper() == ".CEL":
+        if original_file.is_CEL_file():
             return ProcessorPipeline.AFFY_TO_PCL
         if is_file_rnaseq(original_file.filename):
             return ProcessorPipeline.SALMON

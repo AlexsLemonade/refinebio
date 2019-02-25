@@ -749,6 +749,10 @@ class OriginalFile(models.Model):
         # has been processed and doesn't need to be processed again.
         return successful_processor_jobs.count() == 0
 
+    def is_CEL_file(self) -> bool:
+        """Return true if original_file is a CEL file."""
+        return self.filename[-4:].upper() == ".CEL"
+
 
 class ComputedFile(models.Model):
     """ A representation of a file created by a data-refinery process """

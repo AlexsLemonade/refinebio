@@ -371,6 +371,12 @@ class GeoSurveyor(ExternalSourceSurveyor):
                             sample = sample_object
                         )
 
+                    if original_file.is_CEL_file():
+                        # Only Affymetrix Microarrays produce .CEL files
+                        sample_object.technology = 'MICROARRAY'
+                        sample_object.manufacturer = 'AFFYMETRTIX'
+                        sample_object.save()
+
                 ExperimentSampleAssociation.objects.get_or_create(
                     experiment=experiment_object, sample=sample_object)
 

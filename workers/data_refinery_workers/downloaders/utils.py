@@ -165,7 +165,7 @@ def delete_if_blacklisted(original_file: OriginalFile) -> OriginalFile:
         original_file.save()
         return None
 
-    return OriginalFile
+    return original_file
 
 
 def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
@@ -178,6 +178,16 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
 
         if not delete_if_blacklisted(original_file):
             continue
+
+        # Fix for: https://github.com/AlexsLemonade/refinebio/issues/968
+        # Basically, we incorrectly detected technology/manufacturers
+        # for many Affymetrix samples and this is a good place to fix
+        # some of them.
+        if original_file.is_CEL_file():
+            # Only Affymetrix Microarrays produce .CEL files
+            sample_object.technology = 'MICROARRAY'
+            sample_object.manufacturer = 'AFFYMETRTIX'
+            sample_object.save()
 
         pipeline_to_apply = determine_processor_pipeline(sample_object, original_file)
 
