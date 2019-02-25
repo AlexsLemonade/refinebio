@@ -70,7 +70,7 @@ RUN pip3 install -r requirements.txt
 
 # Install this one here instead of via requirements.txt because not
 # all processors need it.
-RUN pip3 install rpy2
+RUN pip3 install rpy2==2.9.5
 
 ARG SYSTEM_VERSION
 
