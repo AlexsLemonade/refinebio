@@ -99,4 +99,6 @@ docker run \
        --env AWS_SECRET_ACCESS_KEY \
        --entrypoint ./manage.py \
        --volume $volume_directory:/home/user/data_store \
+       --mount type=tmpfs,destination=/home/user/data_store_tmpfs \
+       --link drdb:postgres \
        $image_name "${@: -3}" "${@: -2}" "${@: -1}"

@@ -234,10 +234,21 @@ class SampleAnnotationSerializer(serializers.ModelSerializer):
                     'last_modified',
                 )
 
+class DetailedSamplesComputationalResultSerializer(serializers.ModelSerializer):
+    processor = ProcessorSerializer(many=False)
+    organism_index = OrganismIndexSerializer(many=False)
+
+    class Meta:
+        model = ComputationalResult
+        fields = (
+                    'processor',
+                    'organism_index',
+                )
+
 class DetailedSampleSerializer(serializers.ModelSerializer):
     annotations = SampleAnnotationSerializer(many=True, source='sampleannotation_set')
     organism = OrganismSerializer(many=False)
-    results = ComputationalResultSerializer(many=True)
+    results = DetailedSamplesComputationalResultSerializer(many=True)
 
     class Meta:
         model = Sample
