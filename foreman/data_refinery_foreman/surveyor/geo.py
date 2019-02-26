@@ -309,8 +309,13 @@ class GeoSurveyor(ExternalSourceSurveyor):
                                                                             sample_accession_code)
 
                 sample_object.save()
-                created_samples.append(sample_object)
                 logger.debug("Created Sample: " + str(sample_object))
+
+                # It's okay to survey RNA-Seq samples from GEO, but we
+                # don't actually want to download/process any RNA-Seq
+                # data unless it comes from SRA.
+                if sample_object.technology != 'RNA-SEQ':
+                    created_samples.append(sample_object)
 
                 # Now that we've determined the technology at the
                 # sample level, we can set it at the experiment level,

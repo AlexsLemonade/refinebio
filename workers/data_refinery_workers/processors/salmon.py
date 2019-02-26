@@ -108,6 +108,23 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     # There should only ever be one per Salmon run
     sample = job_context['original_files'][0].samples.first()
+
+    # This check was added to ensure that we don't process any RNA-Seq
+    # samples from GEO, but for the time being we really don't want to
+    # run salmon on anything that's not from SRA. See
+    # https://github.com/AlexsLemonade/refinebio/issues/966 for more
+    # information.
+    if sample.technology != 'RNA-SEQ' or sample.source_database != 'SRA':
+        failure_reason = ("The sample for this job either was not RNA-Seq or was not from the "
+                          "SRA database.")
+        job_context['failure_reason'] = failure_reason
+        logger.error(failure_reason, sample=sample, processor_job=job_context["job_id"])
+
+        # No need to retry and fail more than once for this reason.
+        job_context["success"] = False
+        job_context["job"].no_retry = True
+        return job_context
+
     job_context['sample_accession_code'] = sample.accession_code
     job_context['sample'] = sample
     job_context['samples'] = [] # This will only be populated in the `tximport` job
@@ -331,7 +348,7 @@ def _find_or_download_index(job_context: Dict) -> Dict:
         # complete each step.
         version_info_path = job_context["index_directory"] + "/versionInfo.json"
 
-        # Something very bad happened and now there are corrupt indexes installed. Nuke 'em. 
+        # Something very bad happened and now there are corrupt indexes installed. Nuke 'em.
         if os.path.exists(version_info_path) and (os.path.getsize(version_info_path) == 0):
             logger.error("We have to nuke a zero-valued index directory: " + version_info_path)
             shutil.rmtree(job_context["index_directory"], ignore_errors=True)
@@ -465,9 +482,14 @@ def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFil
 
     quantified_experiments = {}
     for experiment in experiments:
+        # We only want to consider samples that we actually can run salmon on.
+        eligible_samples = experiment.samples.filter(source_database='SRA', technology='RNA-SEQ')
+        if eligible_samples.count() == 0:
+            continue
+
         salmon_quant_results = _find_salmon_quant_results(experiment)
 
-        if len(salmon_quant_results) == experiment.samples.count():
+        if len(salmon_quant_results) == eligible_samples.count():
             quant_files = []
             for result in salmon_quant_results:
                 quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])

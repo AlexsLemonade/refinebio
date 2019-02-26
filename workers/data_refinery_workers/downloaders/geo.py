@@ -311,6 +311,22 @@ def download_geo(job_id: int) -> None:
     sample_assocs = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
     related_samples = Sample.objects.filter(id__in=sample_assocs.values('sample_id'))
 
+    # Make sure that we aren't downloading RNA-Seq data. That should
+    # only come from ENA/SRA:
+    # https://github.com/AlexsLemonade/refinebio/issues/966
+    for sample in related_samples:
+        if sample.technology == "RNA-SEQ":
+            job.failure_reason = "GEO Downloader found an RNA-Seq sample. These should not come from GEO."
+            logger.error(
+                job.failure_reason,
+                sample=sample,
+                original_file=original_file,
+                downloader_job=job
+            )
+            job.no_retry = True
+            utils.end_downloader_job(job, success=False)
+            return
+
     # First, download the sample archive URL.
     # Then, unpack all the ones downloaded.
     # Then create processor jobs!
