@@ -845,6 +845,45 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 500)
         mock_client.captureMessage.assert_called()
 
+    def test_qn_endpoints(self):
+
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
+        homo_sapiens.save()
+        danio_rerio.save()
+
+        result = ComputationalResult()
+        result.commands.append("create_qn_target.py")
+        result.is_ccdl = True
+        result.is_public = True
+        processor_key = "QN_REFERENCE"
+        result.processor = None
+        result.save()
+
+        cra = ComputationalResultAnnotation()
+        cra.result = result
+        cra.data = {
+            "organism_id": danio_rerio.id, # Danio
+            "is_qn": True,
+            "platform_accession_code": 'zebrafish',
+            "samples": [],
+            "geneset": str(["RWWJ000001", "RWWJ000002"]),
+        }
+        cra.save()
+        cra = ComputationalResultAnnotation()
+        cra.result = result
+        cra.data = {
+            "organism_id": homo_sapiens.id, # IDK
+            "is_qn": True,
+            "platform_accession_code": 'zebrafishplusone',
+            "samples": [],
+            "geneset": str(["RWWJ000003", "RWWJ000004"]),
+        }
+        cra.save()
+
+        response = self.client.get(reverse('qn-targets-available'))
+        self.assertEqual(len(response.json()), 2)
+
 class ESTestCases(APITestCase):
 
     def test_es_endpoint(self):
