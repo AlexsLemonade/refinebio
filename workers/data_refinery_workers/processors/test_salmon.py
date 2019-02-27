@@ -295,10 +295,14 @@ class SalmonTestCase(TestCase):
         # test_sample record
         sample_accession = 'test_sample'
         test_sample = Sample.objects.create(accession_code=sample_accession,
-                                            organism=c_elegans)
+                                            organism=c_elegans,
+                                            source_database='SRA',
+                                            technology='RNA-SEQ')
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=test_sample)
         # fake_sample record (created to prevent tximport step in this experiment)
-        fake_sample = Sample.objects.create(accession_code='fake_sample')
+        fake_sample = Sample.objects.create(accession_code='fake_sample',
+                                            source_database='SRA',
+                                            technology='RNA-SEQ')
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=fake_sample)
 
         experiment_dir = '/home/user/data_store/salmon_tests/test_experiment'
@@ -352,7 +356,9 @@ class SalmonTestCase(TestCase):
         ## Sample 1
         sample1_accession = 'SRR1206053'
         sample1 = Sample.objects.create(accession_code=sample1_accession,
-                                        organism=c_elegans)
+                                        organism=c_elegans,
+                                        source_database='SRA',
+                                        technology='RNA-SEQ')
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample1)
 
         experiment_dir = "/home/user/data_store/salmon_tests/PRJNA242809"
@@ -367,7 +373,9 @@ class SalmonTestCase(TestCase):
         ## Sample 2
         sample2_accession = 'SRR1206054'
         sample2 = Sample.objects.create(accession_code=sample2_accession,
-                                        organism=c_elegans)
+                                        organism=c_elegans,
+                                        source_database='SRA',
+                                        technology='RNA-SEQ')
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample2)
 
         og_file_2 = OriginalFile()
