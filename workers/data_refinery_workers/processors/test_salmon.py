@@ -83,6 +83,8 @@ def prepare_job():
     samp = Sample()
     samp.accession_code = "SALMON" # So the test files go to the right place
     samp.organism = c_elegans
+    samp.source_database = 'SRA'
+    samp.technology = 'RNA-SEQ'
     samp.save()
 
     prepare_organism_indices()
@@ -134,6 +136,8 @@ def prepare_dotsra_job(filename="ERR1562482.sra"):
     samp = Sample()
     samp.accession_code = "SALMON" # So the test files go to the right place
     samp.organism = c_elegans
+    samp.source_database = 'SRA'
+    samp.technology = 'RNA-SEQ'
     samp.save()
 
     prepare_organism_indices()
