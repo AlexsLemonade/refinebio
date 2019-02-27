@@ -351,7 +351,7 @@ class SearchAndFilter(generics.ListAPIView):
     Ex: search/?search=human&has_publication=True
 
     Interactive filtering allows users to explore results more easily. It can be enabled using the parameter `filter_order`.
-    The filter names should be sent sepparated by commas and depending on the order in which the filters are applied the 
+    The filter names should be sent sepparated by commas and depending on the order in which the filters are applied the
     number of samples per filter will be different.
 
     """
@@ -787,7 +787,7 @@ class SampleList(PaginatedAPIView):
     List all Samples.
 
     Pass in a list of pk to an ids query parameter to filter by id.
-    
+
     Also accepts:
         - `dataset_id` field instead of a list of accession codes
         - `experiment_accession_code` to return the samples associated with a given experiment
@@ -1306,9 +1306,10 @@ class TranscriptomeIndexDetail(APIView):
         # Get the correct organism index object, serialize it, and return it
         transcription_length = "TRANSCRIPTOME_" + params["length"].upper()
         try:
+            organism = Organism.objects.get(name=params["organism"].upper())
             organism_index = (OrganismIndex.public_objects.exclude(s3_url__exact="")
-                              .distinct("organism__name", "index_type")
-                              .get(organism__name=params["organism"].upper(),
+                              .distinct("organism", "index_type")
+                              .get(organism=organism,
                                    index_type=transcription_length))
             serializer = OrganismIndexSerializer(organism_index)
             return Response(serializer.data)

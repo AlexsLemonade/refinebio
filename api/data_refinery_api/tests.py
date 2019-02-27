@@ -143,6 +143,28 @@ class APITestCases(APITestCase):
         sra.result = result
         sra.save()
 
+        zebrafish = Organism(name="DANIO_RERIO", taxonomy_id=1337, is_scientific_name=True)
+        zebrafish.save()
+
+        processor = Processor()
+        processor.name = "Salmon Quant"
+        processor.version = "v9.9.9"
+        processor.docker_image = "dr_salmon"
+        processor.environment = '{"some": "environment"}'
+        processor.save()
+
+        computational_result_short = ComputationalResult(processor=processor)
+        computational_result_short.save()
+
+        organism_index = OrganismIndex()
+        organism_index.index_type = "TRANSCRIPTOME_SHORT"
+        organism_index.organism = zebrafish
+        organism_index.result = computational_result_short
+        organism_index.absolute_directory_path = "/home/user/data_store/salmon_tests/TRANSCRIPTOME_INDEX/SHORT"
+        organism_index.is_public = True
+        organism_index.s3_url = "not_blank"
+        organism_index.save()
+
         return
 
     def tearDown(self):
@@ -252,11 +274,21 @@ class APITestCases(APITestCase):
         # Expect 404 if the experiment accession code isn't valid
         response = self.client.get(reverse('samples'), {'experiment_accession_code': 'wrong-accession-code'})
         self.assertEqual(response.status_code, 404)
-        
+
+    def test_fetching_organism_index(self):
+        response = self.client.get(reverse('transcriptome-indices'),
+                                   {'organism': 'DANIO_RERIO', 'length': 'SHORT'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()['index_type'], 'TRANSCRIPTOME_SHORT')
+
+        # Expect 404 if the experiment accession code isn't valid
+        response = self.client.get(reverse('samples'), {'experiment_accession_code': 'wrong-accession-code'})
+        self.assertEqual(response.status_code, 404)
+
     def test_compendia(self):
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
         danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
-        
+
         result = ComputationalResult()
         result.save()
 
@@ -848,7 +880,7 @@ class APITestCases(APITestCase):
 class ESTestCases(APITestCase):
 
     def test_es_endpoint(self):
-        """ Test basic ES functionality 
+        """ Test basic ES functionality
 
         This is pretty tricky because ES doesn't know that we're creating
         test objects.
