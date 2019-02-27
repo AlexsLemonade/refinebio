@@ -122,28 +122,32 @@ class SurveyTestCase(TransactionTestCase):
 
     @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_geo_survey_superseries(self, mock_send_task):
-        """ Run the GEO surveyor and make sure we get some files to DL!
+        """Run the GEO surveyor and make sure we get some files to DL!
 
-        For a Super Series.
+        For a Super Series. But also that we don't queue downloader
+        jobs for RNA-Seq samples coming from GEO.
         """
-        self.prep_test("GSE54334")
+        self.prep_test("GSE103217")
 
         geo_surveyor = GeoSurveyor(self.survey_job)
         geo_surveyor.survey()
 
-        self.assertEqual(7, Sample.objects.all().count())
+        # 28 total samples
+        self.assertEqual(28, Sample.objects.all().count())
 
-        sample_object = Sample.objects.first()
-        self.assertEqual(sample_object.platform_name, "Illumina HiSeq 2500")
-        self.assertEqual(sample_object.platform_accession_code, "Illumina HiSeq 2500")
-        self.assertEqual(sample_object.technology, "RNA-SEQ")
-
+        # 10 of which are microarray and therefore need downloader jobs
+        microarray_samples = Sample.objects.filter(technology='MICROARRAY')
+        self.assertEqual(10, microarray_samples.count())
         downloader_jobs = DownloaderJob.objects.all()
-        self.assertEqual(1, downloader_jobs.count())
+        self.assertEqual(10, downloader_jobs.count())
+
+        # And 18 of which are RNA-Seq so they won't have downloader jobs.
+        rna_seq_samples = Sample.objects.filter(technology='RNA-SEQ')
+        self.assertEqual(18, rna_seq_samples.count())
 
         # Make sure there aren't extra OriginalFiles
         original_files = OriginalFile.objects.all()
-        self.assertEqual(1, original_files.count())
+        self.assertEqual(10, original_files.count())
 
     def test_get_pubmed_id_title(self):
         """ We scrape PMIDs now. """

@@ -25,6 +25,7 @@ from data_refinery_common.models import (
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
     Sample,
+    SampleResultAssociation,
     SurveyJob,
 )
 from data_refinery_workers.processors import salmon, utils
@@ -201,6 +202,28 @@ class SalmonTestCase(TestCase):
         self.assertEqual(organism_index.index_type, "TRANSCRIPTOME_SHORT")
 
     @tag('salmon')
+    def test_no_salmon_on_geo(self):
+        """Test that salmon won't be run on data coming from GEO."""
+        # Ensure any computed files from previous tests are removed.
+        try:
+            os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
+        except FileNotFoundError:
+            pass
+
+        job, files = prepare_job()
+        sample_object = Sample.objects.first()
+        sample_object.source_database = 'GEO'
+        sample_object.save()
+
+        job_context = salmon.salmon(job.pk)
+        job = ProcessorJob.objects.get(id=job.pk)
+        self.assertFalse(job.success)
+        self.assertEqual(job.failure_reason,
+                         ("The sample for this job either was not RNA-Seq or was not from the "
+                          "SRA database."))
+        self.assertTrue(job.no_retry)
+
+    @tag('salmon')
     def test_salmon_dotsra(self):
         """Test the whole pipeline."""
         # Ensure any computed files from previous tests are removed.
@@ -303,7 +326,7 @@ class SalmonTestCase(TestCase):
 
         # Confirm that this experiment is not ready for tximport yet,
         # because `salmon quant` is not run on 'fake_sample'.
-        experiments_ready = salmon._get_tximport_inputs(job_context)
+        experiments_ready = salmon.get_tximport_inputs(job_context)
         self.assertEqual(len(experiments_ready), 0)
 
     @tag('salmon')
@@ -361,7 +384,7 @@ class SalmonTestCase(TestCase):
         # Check quant.sf in `salmon quant` output dir of sample1
         self.check_salmon_quant(job1_context, sample1_dir)
         # Confirm that this experiment is not ready for tximport yet.
-        experiments_ready = salmon._get_tximport_inputs(job1_context)
+        experiments_ready = salmon.get_tximport_inputs(job1_context)
         self.assertEqual(len(experiments_ready), 0)
         # This job should not have produced any tximport output
         # because the other sample isn't ready yet.
@@ -410,6 +433,67 @@ class SalmonTestCase(TestCase):
         self.assertTrue(len(job2_context['individual_files']), 2)
         for file in job2_context['individual_files']:
             self.assertTrue(os.path.isfile(file.absolute_file_path))
+
+    @tag("salmon")
+    def test_get_tximport_inputs(self):
+        """"Tests that tximport only considers RNA-Seq samples from GEO.
+        """
+        # Create one experiment and two related samples, based on:
+        #   https://www.ncbi.nlm.nih.gov/sra/?term=SRP040623
+        # (We don't need any original files because
+        # get_tximport_inputs doesn't consider them.)
+        experiment_accession = 'PRJNA242809'
+        experiment = Experiment.objects.create(accession_code=experiment_accession)
+
+        c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+
+        ## Sample 1
+        sample1_accession = 'SRR1206053'
+        sample1 = Sample.objects.create(accession_code=sample1_accession,
+                                        organism=c_elegans)
+        sample1.source_database = 'GEO'
+        sample1.technology = 'RNA-SEQ'
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample1)
+
+        ## Sample 2
+        sample2_accession = 'SRR1206054'
+        sample2 = Sample.objects.create(accession_code=sample2_accession,
+                                        organism=c_elegans)
+        sample2.source_database = 'GEO'
+        sample2.technology = 'RNA-SEQ'
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample2)
+
+        computational_result1 = ComputationalResult(processor=utils.find_processor('SALMON_QUANT'))
+        computational_result1.save()
+
+        sample_result_assoc = SampleResultAssociation(sample=sample1, result=computational_result1)
+        sample_result_assoc.save()
+
+        comp_file = ComputedFile()
+        # This path will not be used because we already have the files extracted.
+        comp_file.absolute_file_path = "/doesnt/matter"
+        comp_file.result = computational_result1
+        comp_file.size_in_bytes=1337
+        comp_file.sha1="ABC"
+        comp_file.save()
+
+        computational_result2 = ComputationalResult(processor=utils.find_processor('SALMON_QUANT'))
+        computational_result2.save()
+
+        sample_result_assoc = SampleResultAssociation(sample=sample2, result=computational_result2)
+        sample_result_assoc.save()
+
+        comp_file = ComputedFile()
+        # This path will not be used because we already have the files extracted.
+        comp_file.absolute_file_path = "/doesnt/matter"
+        comp_file.result = computational_result2
+        comp_file.size_in_bytes=1337
+        comp_file.sha1="ABC"
+        comp_file.save()
+
+        quantified_experiments = salmon.get_tximport_inputs({"sample": sample1})
+
+        self.assertEqual({}, quantified_experiments)
 
     @tag("salmon")
     def test_fastqc(self):

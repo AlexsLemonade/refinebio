@@ -751,7 +751,9 @@ class OriginalFile(models.Model):
 
     def is_CEL_file(self) -> bool:
         """Return true if original_file is a CEL file."""
-        return self.filename[-4:].upper() == ".CEL"
+        upper_name = self.source_filename.upper()
+        return (len(upper_name) > 4 and upper_name[-4:] == ".CEL") \
+            or (len(upper_name) > 7 and upper_name[-7:] == ".CEL.GZ")
 
 
 class ComputedFile(models.Model):

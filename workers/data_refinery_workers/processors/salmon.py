@@ -95,17 +95,6 @@ def _prepare_files(job_context: Dict) -> Dict:
             job_context["success"] = False
             return job_context
 
-    # Copy the .sra file so fasterq-dump can't corrupt it.
-    if job_context["input_file_path"][-4:].upper() == ".SRA":
-        new_input_file_path = os.path.join(job_context["work_dir"], original_files[0].filename)
-        shutil.copyfile(job_context["input_file_path"], new_input_file_path)
-        job_context['input_file_path'] = new_input_file_path
-
-    if job_context.get("input_file_path_2", False):
-        new_input_file_path = os.path.join(job_context["work_dir"], original_files[1].filename)
-        shutil.copyfile(job_context["input_file_path_2"], new_input_file_path)
-        job_context['input_file_path_2'] = new_input_file_path
-
     # There should only ever be one per Salmon run
     sample = job_context['original_files'][0].samples.first()
 
@@ -122,8 +111,20 @@ def _prepare_files(job_context: Dict) -> Dict:
 
         # No need to retry and fail more than once for this reason.
         job_context["success"] = False
+        job_context["job"].failure_reason = failure_reason
         job_context["job"].no_retry = True
         return job_context
+
+    # Copy the .sra file so fasterq-dump can't corrupt it.
+    if job_context["input_file_path"][-4:].upper() == ".SRA":
+        new_input_file_path = os.path.join(job_context["work_dir"], original_files[0].filename)
+        shutil.copyfile(job_context["input_file_path"], new_input_file_path)
+        job_context['input_file_path'] = new_input_file_path
+
+    if job_context.get("input_file_path_2", False):
+        new_input_file_path = os.path.join(job_context["work_dir"], original_files[1].filename)
+        shutil.copyfile(job_context["input_file_path_2"], new_input_file_path)
+        job_context['input_file_path_2'] = new_input_file_path
 
     job_context['sample_accession_code'] = sample.accession_code
     job_context['sample'] = sample
@@ -467,7 +468,7 @@ def _find_salmon_quant_results(experiment: Experiment):
     return results
 
 
-def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile]]:
+def get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile]]:
     """Return a mapping from experiments to a list of their quant files.
 
     Checks all the experiments which contain a sample from the current
@@ -790,7 +791,7 @@ def _run_salmon(job_context: Dict) -> Dict:
             salmon_quant_archive.save()
             job_context['computed_files'].append(salmon_quant_archive)
 
-            tximport_inputs = _get_tximport_inputs(job_context)
+            tximport_inputs = get_tximport_inputs(job_context)
 
         # tximport analysis is done outside of the transaction so that
         # the mutex wouldn't hold the other jobs too long.
