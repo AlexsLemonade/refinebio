@@ -97,9 +97,11 @@ class SurveyTestCase(TransactionTestCase):
 
     @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_geo_survey_rnaseq(self, mock_send_task):
-        """ Run the GEO surveyor and make sure we get some files to DL!
+        """Run the GEO surveyor and make sure we discover the experiment/samples.
 
-        For an Illumina RNASeq platform.
+        For an Illumina RNASeq platform. However it shouldn't actually
+        queue any downloader jobs because its RNA-Seq data coming from
+        GEO.
         """
         self.prep_test("GSE99264")
 
@@ -114,7 +116,7 @@ class SurveyTestCase(TransactionTestCase):
         self.assertEqual(sample_object.technology, "RNA-SEQ")
 
         downloader_jobs = DownloaderJob.objects.all()
-        self.assertEqual(1, downloader_jobs.count())
+        self.assertEqual(0, downloader_jobs.count())
 
         # Make sure there aren't extra OriginalFiles
         original_files = OriginalFile.objects.all()
