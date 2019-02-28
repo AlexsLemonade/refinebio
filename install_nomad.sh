@@ -10,12 +10,11 @@
 curl https://keybase.io/hashicorp/pgp_keys.asc | gpg --import
 
 # Download the binary and signature files.
-export RELEASE_VERSION=0.9.0-beta3
+export RELEASE_VERSION=0.8.3
 export RELEASE_PLATFORM=`uname | tr '[:upper:]' '[:lower:]'`
 if [[ "$RELEASE_PLATFORM" = "darwin" ]]; then
 	function sha256sum() { shasum -a 256 "$@" ; } && export -f sha256sum
 fi
-
 
 curl -0s https://releases.hashicorp.com/nomad/${RELEASE_VERSION}/nomad_${RELEASE_VERSION}_${RELEASE_PLATFORM}_amd64.zip > nomad_${RELEASE_VERSION}_${RELEASE_PLATFORM}_amd64.zip
 curl -0s https://releases.hashicorp.com/nomad/${RELEASE_VERSION}/nomad_${RELEASE_VERSION}_SHA256SUMS > nomad_${RELEASE_VERSION}_SHA256SUMS
