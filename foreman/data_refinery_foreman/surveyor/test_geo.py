@@ -118,10 +118,6 @@ class SurveyTestCase(TransactionTestCase):
         downloader_jobs = DownloaderJob.objects.all()
         self.assertEqual(0, downloader_jobs.count())
 
-        # Make sure there aren't extra OriginalFiles
-        original_files = OriginalFile.objects.all()
-        self.assertEqual(1, original_files.count())
-
     @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_geo_survey_superseries(self, mock_send_task):
         """Run the GEO surveyor and make sure we get some files to DL!
