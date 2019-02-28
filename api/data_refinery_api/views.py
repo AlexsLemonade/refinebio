@@ -1027,18 +1027,18 @@ class Stats(APIView):
         data['processed_samples']['last_hour'] = self._samples_processed_last_hour()
 
         data['processed_samples']['technology'] = {}
-        techs = Experiment.processed_public_objects.values('technology').annotate(count=Count('sample__id', distinct=True))
+        techs = Sample.processed_objects.values('technology').annotate(count=Count('technology'))
         for tech in techs:
             if not tech['technology'] or not tech['technology'].strip():
                 continue
             data['processed_samples']['technology'][tech['technology']] = tech['count']
 
         data['processed_samples']['organism'] = {} 
-        organisms = Experiment.processed_public_objects.values('organisms__name').annotate(count=Count('sample__id', distinct=True))
+        organisms = Sample.processed_objects.values('organism__name').annotate(count=Count('organism__name'))
         for organism in organisms:
-            if not organism['organisms__name']:
+            if not organism['organism__name']:
                 continue
-            data['processed_samples']['organism'][organism['organisms__name']] = organism['count']
+            data['processed_samples']['organism'][organism['organism__name']] = organism['count']
 
         data['processed_experiments'] = self._get_object_stats(Experiment.processed_public_objects)
         data['input_data_size'] = self._get_input_data_size()
@@ -1194,7 +1194,7 @@ class Stats(APIView):
 
     def _get_input_data_size(self):
         total_size = OriginalFile.objects.filter(
-            sample__is_processed=True
+            sample__is_processed=True # <-- SLOW
         ).aggregate(
             Sum('size_in_bytes')
         )
@@ -1286,7 +1286,7 @@ class Stats(APIView):
     def _created_timeline(self, objects, range_param):
         results = []
         for start, end in self._get_time_intervals(range_param):
-            total = objects.filter(created_at__gte=start, created_at__lte=end).count()
+            total = objects.filter(created_at__range=(start, end)).count()
             stats = {
                 'start': start,
                 'end': end,
