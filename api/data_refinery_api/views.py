@@ -1042,9 +1042,11 @@ class Stats(APIView):
             data['processed_samples']['organism'][organism['organism__name']] = organism['count']
 
         data['processed_experiments'] = self._get_object_stats(Experiment.processed_public_objects)
-        data['input_data_size'] = self._get_input_data_size()
-        data['output_data_size'] = self._get_output_data_size()
         data['active_volumes'] = list(get_active_volumes())
+
+        if range_param:
+            data['input_data_size'] = self._get_input_data_size()
+            data['output_data_size'] = self._get_output_data_size()
 
         try:
             nomad_stats = self._get_nomad_jobs_breakdown()
@@ -1062,7 +1064,8 @@ class Stats(APIView):
 
     def _samples_processed_last_hour(self):
         current_date = datetime.now(tz=timezone.utc)
-        return Sample.processed_objects.filter(created_at__gte=current_date - timedelta(hours=1), created_at__lte=current_date).count()
+        start = current_date - timedelta(hours=1)
+        return Sample.processed_objects.filter(created_at__range=(start, current_date)).count()
 
     def _aggregate_nomad_jobs_by_type(self, jobs: Dict):
         """Aggregates the pending and running job counts for each Nomad job type.
@@ -1228,7 +1231,14 @@ class Stats(APIView):
             result['average_time'] = result['average_time'].total_seconds()
 
         if range_param:
-            result['timeline'] = self._jobs_timeline(jobs, range_param)
+            result['timeline'] = self._get_intervals(jobs, range_param) \
+                                     .annotate(
+                                         total=Count('id'),
+                                         completed=Count('id', filter=Q(success=True)),
+                                         pending=Count('id', filter=Q(start_time__isnull=True)),
+                                         failed=Count('id', filter=Q(success=False)),
+                                         open=Count('id', filter=Q(success__isnull=True)),
+                                     )
 
         return result
 
@@ -1236,72 +1246,34 @@ class Stats(APIView):
         result = {
             'total': objects.count()
         }
-        
+
         if range_param:
-            range_to_trunc = {
-                'day': 'hour',
-                'week': 'day',
-                'month': 'day',
-                'year': 'month'
-            }
-            current_date = datetime.now(tz=timezone.utc)            
-            range_to_startdate = {
-                'day': current_date - timedelta(days=1),
-                'week': current_date - timedelta(weeks=1),
-                'month': current_date - timedelta(days=30),
-                'year': current_date - timedelta(days=365)
-            }
-            # trucate the `created_at` field by hour, day or month depending on the `range` param
-            # and annotate each object with that. This will allow us to count the number of objects
-            # on each interval with a single query
-            # ref https://stackoverflow.com/a/38359913/763705
-            result['timeline'] = objects.annotate(start=Trunc('created_at', range_to_trunc.get(range_param), output_field=DateTimeField())) \
-                                        .values('start') \
-                                        .filter(start__gte=range_to_startdate.get(range_param)) \
-                                        .annotate(total=Count('id'))
+            result['timeline'] = self._get_intervals(objects, range_param).annotate(total=Count('id'))
+
         return result
 
-    def _get_time_intervals(self, range_param):
-        interval_timedelta = {
-            'day': timedelta(days=1),
-            'week': timedelta(weeks=1),
-            'month': timedelta(weeks=4),
-            'year': timedelta(weeks=52)
+    def _get_intervals(self, objects, range_param):
+        range_to_trunc = {
+            'day': 'hour',
+            'week': 'day',
+            'month': 'day',
+            'year': 'month'
         }
-        interval_timestep = {
-            'day': timedelta(hours=1),
-            'week': timedelta(days=1),
-            'month': timedelta(days=2),
-            'year': timedelta(weeks=4)
-        }
-
-        current_date = datetime.now(tz=timezone.utc)
-        time_step = interval_timestep.get(range_param)
-        start_date = current_date - interval_timedelta.get(range_param)
-
-        intervals = [(current_date - time_step*(i+1), current_date - time_step*i)
-                     for i in range(100) if current_date - time_step*(i+1) > start_date]
-        return intervals[::-1]
-
-    def _get_job_interval(self, jobs, start, end):
-        filtered_jobs = jobs.filter(created_at__gte=start, created_at__lte=end)
-        pending = filtered_jobs and jobs.filter(start_time__isnull=True)
-        failed = filtered_jobs and jobs.filter(success=False)
-        completed = filtered_jobs and jobs.filter(success=True)
-        open = filtered_jobs and jobs.filter(success__isnull=True)
-
-        return {
-            'start': start,
-            'end': end,
-            'total': filtered_jobs.count(),
-            'completed': completed.count(),
-            'pending': pending.count(),
-            'failed': failed.count(),
-            'open': open.count()
+        current_date = datetime.now(tz=timezone.utc)            
+        range_to_start_date = {
+            'day': current_date - timedelta(days=1),
+            'week': current_date - timedelta(weeks=1),
+            'month': current_date - timedelta(days=30),
+            'year': current_date - timedelta(days=365)
         }
 
-    def _jobs_timeline(self, jobs, range_param):
-        return [self._get_job_interval(jobs, start, end) for (start, end) in self._get_time_intervals(range_param)]
+        # trucate the `created_at` field by hour, day or month depending on the `range` param
+        # and annotate each object with that. This will allow us to count the number of objects
+        # on each interval with a single query
+        # ref https://stackoverflow.com/a/38359913/763705
+        return objects.annotate(start=Trunc('created_at', range_to_trunc.get(range_param), output_field=DateTimeField())) \
+                      .values('start') \
+                      .filter(start__gte=range_to_start_date.get(range_param)) 
 
 ###
 # Transcriptome Indices
