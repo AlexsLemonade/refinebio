@@ -215,6 +215,18 @@ class SalmonTestCase(TestCase):
             pass
 
         job, files = prepare_job()
+
+        # We're expecting this processor job to fail, and when it does
+        # it should clean up the original files that were for the
+        # job. However we want to use these files in other tests, so
+        # copy them so we can delete them without deleting the
+        # originals.
+        for original_file in OriginalFile.objects.all():
+            new_path = original_file.absolute_file_path + "_copy"
+            shutil.copyfile(original_file.absolute_file_path, new_path)
+            original_file.absolute_file_path = new_path
+            original_file.save()
+
         sample_object = Sample.objects.first()
         sample_object.source_database = 'GEO'
         sample_object.save()
@@ -226,6 +238,11 @@ class SalmonTestCase(TestCase):
                          ("The sample for this job either was not RNA-Seq or was not from the "
                           "SRA database."))
         self.assertTrue(job.no_retry)
+
+        # Make sure the data got cleaned up, since the Janitor isn't
+        # going to do it.
+        for original_file in OriginalFile.objects.all():
+            self.assertFalse(os.path.exists(original_file.absolute_file_path))
 
     @tag('salmon')
     def test_salmon_dotsra(self):

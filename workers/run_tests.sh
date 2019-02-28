@@ -479,6 +479,7 @@ for image in ${worker_images[*]}; do
                --env AWS_ACCESS_KEY_ID \
                --env AWS_SECRET_ACCESS_KEY \
                --volume $volume_directory:/home/user/data_store \
+               --memory=5G \
                -it $image_name bash -c "$test_command"
     fi
 done
