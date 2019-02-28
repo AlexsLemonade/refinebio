@@ -5,7 +5,8 @@ import nomad
 from typing import Dict
 
 from django.conf import settings
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Prefetch, DateTimeField
+from django.db.models.functions import Trunc
 from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
@@ -1021,9 +1022,9 @@ class Stats(APIView):
         data['survey_jobs'] = self._get_job_stats(SurveyJob.objects, range_param)
         data['downloader_jobs'] = self._get_job_stats(DownloaderJob.objects, range_param)
         data['processor_jobs'] = self._get_job_stats(ProcessorJob.objects, range_param)
-        data['samples'] = self._get_object_stats(Sample.objects, range_param)
+        data['samples'] = self._get_object_stats(Sample.objects)
         data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
-        data['processed_samples'] = self._get_object_stats(Sample.processed_objects)
+        data['processed_samples'] = self._get_object_stats(Sample.processed_objects, range_param)
         data['processed_samples']['last_hour'] = self._samples_processed_last_hour()
 
         data['processed_samples']['technology'] = {}
@@ -1235,10 +1236,29 @@ class Stats(APIView):
         result = {
             'total': objects.count()
         }
-
+        
         if range_param:
-            result['timeline'] = self._created_timeline(objects, range_param)
-
+            range_to_trunc = {
+                'day': 'hour',
+                'week': 'day',
+                'month': 'day',
+                'year': 'month'
+            }
+            current_date = datetime.now(tz=timezone.utc)            
+            range_to_startdate = {
+                'day': current_date - timedelta(days=1),
+                'week': current_date - timedelta(weeks=1),
+                'month': current_date - timedelta(days=30),
+                'year': current_date - timedelta(days=365)
+            }
+            # trucate the `created_at` field by hour, day or month depending on the `range` param
+            # and annotate each object with that. This will allow us to count the number of objects
+            # on each interval with a single query
+            # ref https://stackoverflow.com/a/38359913/763705
+            result['timeline'] = objects.annotate(start=Trunc('created_at', range_to_trunc.get(range_param), output_field=DateTimeField())) \
+                                        .values('start') \
+                                        .filter(start__gte=range_to_startdate.get(range_param)) \
+                                        .annotate(total=Count('id'))
         return result
 
     def _get_time_intervals(self, range_param):
@@ -1282,18 +1302,6 @@ class Stats(APIView):
 
     def _jobs_timeline(self, jobs, range_param):
         return [self._get_job_interval(jobs, start, end) for (start, end) in self._get_time_intervals(range_param)]
-
-    def _created_timeline(self, objects, range_param):
-        results = []
-        for start, end in self._get_time_intervals(range_param):
-            total = objects.filter(created_at__range=(start, end)).count()
-            stats = {
-                'start': start,
-                'end': end,
-                'total': total
-            }
-            results.append(stats)
-        return results
 
 ###
 # Transcriptome Indices
