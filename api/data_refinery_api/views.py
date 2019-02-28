@@ -1024,6 +1024,22 @@ class Stats(APIView):
         data['samples'] = self._get_object_stats(Sample.objects, range_param)
         data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
         data['processed_samples'] = self._get_object_stats(Sample.processed_objects)
+        data['processed_samples']['last_hour'] = self._samples_processed_last_hour()
+
+        data['processed_samples']['technology'] = {}
+        techs = Experiment.processed_public_objects.values('technology').annotate(count=Count('sample__id', distinct=True))
+        for tech in techs:
+            if not tech['technology'] or not tech['technology'].strip():
+                continue
+            data['processed_samples']['technology'][tech['technology']] = tech['count']
+
+        data['processed_samples']['organism'] = {} 
+        organisms = Experiment.processed_public_objects.values('organisms__name').annotate(count=Count('sample__id', distinct=True))
+        for organism in organisms:
+            if not organism['organisms__name']:
+                continue
+            data['processed_samples']['organism'][organism['organisms__name']] = organism['count']
+
         data['processed_experiments'] = self._get_object_stats(Experiment.processed_public_objects)
         data['input_data_size'] = self._get_input_data_size()
         data['output_data_size'] = self._get_output_data_size()
@@ -1042,6 +1058,10 @@ class Stats(APIView):
             pass
 
         return Response(data)
+
+    def _samples_processed_last_hour(self):
+        current_date = datetime.now(tz=timezone.utc)
+        return Sample.processed_objects.filter(created_at__gte=current_date - timedelta(hours=1), created_at__lte=current_date).count()
 
     def _aggregate_nomad_jobs_by_type(self, jobs: Dict):
         """Aggregates the pending and running job counts for each Nomad job type.
@@ -1171,7 +1191,6 @@ class Stats(APIView):
             "nomad_pending_jobs_by_volume": nomad_pending_jobs_by_volume,
             "nomad_running_jobs_by_volume": nomad_running_jobs_by_volume
         }
-
 
     def _get_input_data_size(self):
         total_size = OriginalFile.objects.filter(
