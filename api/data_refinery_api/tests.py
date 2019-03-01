@@ -126,6 +126,9 @@ class APITestCases(APITestCase):
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = experiment
         experiment_sample_association.save()
+        experiment.num_total_samples = 1
+        experiment.num_processed_samples = 1
+        experiment.save()
 
         result = ComputationalResult()
         result.save()
@@ -363,6 +366,11 @@ class APITestCases(APITestCase):
             ex.description = " ".join(random.choice(words) for i in range(100))
             ex.technology = random.choice(["RNA-SEQ", "MICROARRAY"])
             ex.submitter_institution = random.choice(["Funkytown", "Monkeytown"])
+
+            # cached values
+            ex.num_total_samples = 1
+            ex.num_processed_samples = 1
+
             experiments.append(ex)
 
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
@@ -445,18 +453,33 @@ class APITestCases(APITestCase):
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = ex2
         experiment_sample_association.save()
+        ex2.num_total_samples = 1
+        ex2.num_processed_samples = 1
+        ex2.save()
+
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = ex3
         experiment_sample_association.save()
+        ex3.num_total_samples = 1
+        ex3.num_processed_samples = 1
+        ex3.save()
+
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = ex4
         experiment_sample_association.save()
+        ex4.num_total_samples = 1
+        ex4.num_processed_samples = 1
+        ex4.save()
+
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = ex5
         experiment_sample_association.save()
+        ex5.num_total_samples = 1
+        ex5.num_processed_samples = 1
+        ex5.save()
 
         xa = ExperimentAnnotation()
         xa.data = {'name': 'Clark Kent'}
@@ -487,6 +510,10 @@ class APITestCases(APITestCase):
         experiment_sample_association.sample = sample2
         experiment_sample_association.experiment = ex
         experiment_sample_association.save()
+
+        ex.num_total_samples = 2 # sample1 and sample2
+        ex.num_processed_samples = 2 # both processed
+        ex.save()
 
         # Test all
         response = self.client.get(reverse('search'))
@@ -720,6 +747,11 @@ class APITestCases(APITestCase):
         experiment_sample2_association.sample = sample2
         experiment_sample2_association.experiment = experiment
         experiment_sample2_association.save()
+
+        # update cached values
+        experiment.num_total_samples = 2
+        experiment.num_processed_samples = 1
+        experiment.save()
 
         response = self.client.get(reverse('search'), {'search': "GSX12345"})
         self.assertEqual(response.json()['count'], 1)
