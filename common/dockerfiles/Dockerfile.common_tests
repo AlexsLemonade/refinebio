@@ -57,7 +57,7 @@ RUN pip3 install -r requirements.txt
 
 # Install this rpy2 here instead of via requirements.txt because
 # pip-compile throws an error for it.
-RUN pip3 install rpy2
+RUN pip3 install rpy2==2.9.5
 
 COPY common/ .
 

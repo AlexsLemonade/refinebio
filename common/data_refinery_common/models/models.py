@@ -243,8 +243,7 @@ class ProcessedPublicObjectsManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(
             is_public=True,
-            samples__is_processed=True,
-            samples__is_public=True).distinct()
+            num_processed_samples__gt=0)
 
 
 class Experiment(models.Model):

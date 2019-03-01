@@ -698,12 +698,6 @@ or to start a job with a file located in S3:
 nomad job dispatch -meta FILE=s3://data-refinery-test-assets/NEUROBLASTOMA.txt SURVEYOR_DISPATCHER
 ```
 
-or just by a single accession:
-
-```
-nomad job dispatch -meta ACCESSION=E-MTAB-3050 SURVEYOR
-```
-
 ### Log Consumption
 
 All of the different Refine.bio subservices log to the same AWS CloudWatch Log
