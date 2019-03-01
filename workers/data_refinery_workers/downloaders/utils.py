@@ -183,7 +183,7 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
         # Basically, we incorrectly detected technology/manufacturers
         # for many Affymetrix samples and this is a good place to fix
         # some of them.
-        if original_file.is_CEL_file():
+        if original_file.is_affy_data():
             # Only Affymetrix Microarrays produce .CEL files
             sample_object.technology = 'MICROARRAY'
             sample_object.manufacturer = 'AFFYMETRTIX'

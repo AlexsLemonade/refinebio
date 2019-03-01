@@ -365,7 +365,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                             sample = sample_object
                         )
 
-                    if original_file.is_CEL_file():
+                    if original_file.is_affy_data():
                         # Only Affymetrix Microarrays produce .CEL files
                         sample_object.technology = 'MICROARRAY'
                         sample_object.manufacturer = 'AFFYMETRTIX'
@@ -379,10 +379,10 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
                 # Now that we've determined the technology at the
                 # sample level, we can set it at the experiment level,
-                # just gotta make sure to only do it once.
-                # XXX: Do we want to remove this field? It's not going
-                # to be accurate in cases where an experiment has both
-                # technologies.
+                # just gotta make sure to only do it once. There can
+                # be more than one technology, this should be changed
+                # as part of:
+                # https://github.com/AlexsLemonade/refinebio/issues/1099
                 if not experiment_object.technology:
                     experiment_object.technology = sample_object.technology
                     experiment_object.save()
