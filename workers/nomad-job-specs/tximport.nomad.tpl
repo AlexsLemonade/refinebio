@@ -64,9 +64,9 @@ job "TXIMPORT" {
       # The resources the job will require.
       resources {
         # CPU is in AWS's CPU units.
-        cpu = 1024
+        cpu = 2048
         # Memory is in MB of RAM.
-        memory = 3276 #8
+        memory = 32768
       }
 
       logs {
