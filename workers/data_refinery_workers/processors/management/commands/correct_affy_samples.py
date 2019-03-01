@@ -21,7 +21,7 @@ logger = get_and_configure_logger(__name__)
 
 
 def _download_file(download_url: str, file_path: str) -> None:
-    """ Download a file from GEO.
+    """Download a file from GEO.
     """
     # Ensure directory exists
     os.makedirs(file_path.rsplit('/', 1)[0], exist_ok=True)
@@ -69,7 +69,7 @@ def _create_ensg_pkg_map() -> Dict:
 
 
 def _determine_brainarray_package(input_file: str) -> Dict:
-    """
+    """Uses the R package affy.io to read the .CEL file and determine its platform.
     """
     try:
         header = ro.r['::']('affyio', 'read.celfile.header')(input_file)
@@ -99,7 +99,10 @@ def _determine_brainarray_package(input_file: str) -> Dict:
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        """"""
+        """Main function for this command.
+
+        Basically does what is described at the top of this file.
+        """
         for sample in Sample.objects.filter(technology='RNA-SEQ', source_database='GEO'):
             for original_file in sample.original_files.all():
                 if original_file.is_CEL_file() :
