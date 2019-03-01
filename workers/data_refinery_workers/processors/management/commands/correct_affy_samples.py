@@ -1,85 +1,28 @@
-"""
+"""Tries to find and correct mislabelled Affymetrix samples.
+
+See https://github.com/AlexsLemonade/refinebio/issues/968 for more
+context, but essentially we had a bug in the surveyor where if a GEO
+superseries had an RNA-Seq sample in it, then all the samples would be
+labelled as RNA-SEQ, including samples that were actually
+Microarray. This command will correct any such Affymetrix samples by
+checking their filenames to see if they are .CEL files. If they are
+the file is downloaded and we use affy.io to read the header and
+determine the platform accesion code and name.
 """
 
+from typing import Dict
+
 from django.core.management.base import BaseCommand
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import *
 
 
-# There's no image with both aspera and the R deps needed to detect
-# package, so just don't use aspera.
-# def _download_file_aspera(download_url: str,
-#                           target_file_path: str,
-#                           attempt=0) -> bool:
-#     """ Download a file to a location using Aspera by shelling out to the `ascp` client. """
-
-#     try:
-#         logger.debug("Downloading file from %s to %s via Aspera.",
-#                      download_url,
-#                      target_file_path)
-
-#         ascp = ".aspera/cli/bin/ascp"
-#         key = ".aspera/cli/etc/asperaweb_id_dsa.openssh"
-#         url = download_url
-#         user = "anonftp"
-#         ftp = "ftp-trace.ncbi.nlm.nih.gov"
-#         if url.startswith("ftp://"):
-#             url = url.replace("ftp://", "")
-#         url = url.replace(ftp, "").replace('ftp.ncbi.nlm.nih.gov', '')
-
-#         # Resume level 1, use encryption, unlimited speed
-#         command_str = "{} -i {} -k1 -T {}@{}:{} {}".format(ascp, key, user, ftp, url, target_file_path)
-#         formatted_command = command_str.format(src=download_url,
-#                                                dest=target_file_path)
-#         completed_command = subprocess.run(formatted_command.split(),
-#                                            stdout=subprocess.PIPE,
-#                                            stderr=subprocess.PIPE)
-
-#         # Something went wrong! Else, just fall through to returning True.
-#         if completed_command.returncode != 0:
-
-#             stderr = completed_command.stderr.decode().strip()
-#             logger.debug("Shell call of `%s` to ascp failed with error message: %s",
-#                          formatted_command,
-#                          stderr)
-
-#             # Sometimes, GEO fails mysteriously.
-#             # Wait a few minutes and try again.
-#             if attempt >= 5:
-#                 logger.error("All attempts to download accession via ascp failed: %s\nCommand was: %s",
-#                              stderr,
-#                              formatted_command)
-#                 return False
-#             else:
-#                 time.sleep(30)
-#                 return _download_file_aspera(download_url,
-#                                              target_file_path,
-#                                              attempt + 1
-#                                              )
-#     except Exception:
-#         logger.exception("Exception caught while downloading file from the URL via Aspera: %s",
-#                          download_url)
-#         return False
-
-#     # If Aspera has given a zero-byte file for some reason, let's back off and retry.
-#     if os.path.getsize(target_file_path) < 1:
-#         os.remove(target_file_path)
-#         if attempt > 5:
-#             return False
-
-#         logger.error("Got zero byte ascp download for target, retrying.",
-#                      target_url=download_url)
-#         time.sleep(10)
-#         return _download_file_aspera(download_url,
-#                                      target_file_path,
-#                                      attempt + 1
-#                                      )
-#     return True
+logger = get_and_configure_logger(__name__)
 
 
 def _download_file(download_url: str, file_path: str) -> None:
     """ Download a file from GEO.
     """
-
     # Ensure directory exists
     os.makedirs(file_path.rsplit('/', 1)[0], exist_ok=True)
 
@@ -166,9 +109,9 @@ class Command(BaseCommand):
                         download_success = _download_file(original_file.source_url,
                                                           input_file_path)
                     except:
-                        logger.info("Failed to download %s from %s",
-                                    original_file.source_url,
-                                    original_file.source_filename)
+                        logger.exception("Failed to download %s from %s",
+                                    input_file_path,
+                                    original_file.source_url)
 
                     if download_success:
                         brainarray_package = None
