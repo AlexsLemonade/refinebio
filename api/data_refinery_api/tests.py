@@ -126,6 +126,9 @@ class APITestCases(APITestCase):
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = experiment
         experiment_sample_association.save()
+        experiment.num_total_samples = 1
+        experiment.num_processed_samples = 1
+        experiment.save()
 
         result = ComputationalResult()
         result.save()
@@ -142,6 +145,28 @@ class APITestCases(APITestCase):
         sra.sample = sample
         sra.result = result
         sra.save()
+
+        zebrafish = Organism(name="DANIO_RERIO", taxonomy_id=1337, is_scientific_name=True)
+        zebrafish.save()
+
+        processor = Processor()
+        processor.name = "Salmon Quant"
+        processor.version = "v9.9.9"
+        processor.docker_image = "dr_salmon"
+        processor.environment = '{"some": "environment"}'
+        processor.save()
+
+        computational_result_short = ComputationalResult(processor=processor)
+        computational_result_short.save()
+
+        organism_index = OrganismIndex()
+        organism_index.index_type = "TRANSCRIPTOME_SHORT"
+        organism_index.organism = zebrafish
+        organism_index.result = computational_result_short
+        organism_index.absolute_directory_path = "/home/user/data_store/salmon_tests/TRANSCRIPTOME_INDEX/SHORT"
+        organism_index.is_public = True
+        organism_index.s3_url = "not_blank"
+        organism_index.save()
 
         return
 
@@ -252,11 +277,21 @@ class APITestCases(APITestCase):
         # Expect 404 if the experiment accession code isn't valid
         response = self.client.get(reverse('samples'), {'experiment_accession_code': 'wrong-accession-code'})
         self.assertEqual(response.status_code, 404)
-        
+
+    def test_fetching_organism_index(self):
+        response = self.client.get(reverse('transcriptome-indices'),
+                                   {'organism': 'DANIO_RERIO', 'length': 'SHORT'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()['index_type'], 'TRANSCRIPTOME_SHORT')
+
+        # Expect 404 if the experiment accession code isn't valid
+        response = self.client.get(reverse('samples'), {'experiment_accession_code': 'wrong-accession-code'})
+        self.assertEqual(response.status_code, 404)
+
     def test_compendia(self):
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
         danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
-        
+
         result = ComputationalResult()
         result.save()
 
@@ -331,6 +366,11 @@ class APITestCases(APITestCase):
             ex.description = " ".join(random.choice(words) for i in range(100))
             ex.technology = random.choice(["RNA-SEQ", "MICROARRAY"])
             ex.submitter_institution = random.choice(["Funkytown", "Monkeytown"])
+
+            # cached values
+            ex.num_total_samples = 1
+            ex.num_processed_samples = 1
+
             experiments.append(ex)
 
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
@@ -413,18 +453,33 @@ class APITestCases(APITestCase):
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = ex2
         experiment_sample_association.save()
+        ex2.num_total_samples = 1
+        ex2.num_processed_samples = 1
+        ex2.save()
+
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = ex3
         experiment_sample_association.save()
+        ex3.num_total_samples = 1
+        ex3.num_processed_samples = 1
+        ex3.save()
+
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = ex4
         experiment_sample_association.save()
+        ex4.num_total_samples = 1
+        ex4.num_processed_samples = 1
+        ex4.save()
+
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = ex5
         experiment_sample_association.save()
+        ex5.num_total_samples = 1
+        ex5.num_processed_samples = 1
+        ex5.save()
 
         xa = ExperimentAnnotation()
         xa.data = {'name': 'Clark Kent'}
@@ -455,6 +510,10 @@ class APITestCases(APITestCase):
         experiment_sample_association.sample = sample2
         experiment_sample_association.experiment = ex
         experiment_sample_association.save()
+
+        ex.num_total_samples = 2 # sample1 and sample2
+        ex.num_processed_samples = 2 # both processed
+        ex.save()
 
         # Test all
         response = self.client.get(reverse('search'))
@@ -689,6 +748,11 @@ class APITestCases(APITestCase):
         experiment_sample2_association.experiment = experiment
         experiment_sample2_association.save()
 
+        # update cached values
+        experiment.num_total_samples = 2
+        experiment.num_processed_samples = 1
+        experiment.save()
+
         response = self.client.get(reverse('search'), {'search': "GSX12345"})
         self.assertEqual(response.json()['count'], 1)
 
@@ -848,7 +912,7 @@ class APITestCases(APITestCase):
 class ESTestCases(APITestCase):
 
     def test_es_endpoint(self):
-        """ Test basic ES functionality 
+        """ Test basic ES functionality
 
         This is pretty tricky because ES doesn't know that we're creating
         test objects.
