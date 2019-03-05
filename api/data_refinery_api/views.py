@@ -1279,6 +1279,23 @@ class Stats(APIView):
 # Transcriptome Indices
 ###
 
+class TranscriptomeIndexList(APIView):
+    """
+    List all available TX indices.
+    """
+
+    def get(self, request, format=None):
+        """
+        """
+        try:
+            organism_index = (OrganismIndex.public_objects.exclude(s3_url__exact="")
+                              .distinct("organism", "index_type")
+                              )
+            serializer = OrganismIndexSerializer(organism_index, many=True)
+            return Response(serializer.data)
+        except OrganismIndex.DoesNotExist:
+            raise Http404
+
 class TranscriptomeIndexDetail(APIView):
     """
     Retrieve the S3 URL and index metadata associated with an OrganismIndex.

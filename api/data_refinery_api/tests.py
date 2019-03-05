@@ -250,6 +250,9 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('token'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+        response = self.client.get(reverse('all-transcriptome-indexes'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     def test_sample_pagination(self):
 
         response = self.client.get(reverse('samples'))
@@ -283,6 +286,9 @@ class APITestCases(APITestCase):
                                    {'organism': 'DANIO_RERIO', 'length': 'SHORT'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['index_type'], 'TRANSCRIPTOME_SHORT')
+
+        response = self.client.get(reverse('all-transcriptome-indices'))
+        self.assertEqual(response.json()[0]['s3_url'], 'not_blank')
 
         # Expect 404 if the experiment accession code isn't valid
         response = self.client.get(reverse('samples'), {'experiment_accession_code': 'wrong-accession-code'})
