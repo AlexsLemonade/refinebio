@@ -1044,6 +1044,16 @@ class Stats(APIView):
         data['processed_experiments'] = self._get_object_stats(Experiment.processed_public_objects)
         data['active_volumes'] = list(get_active_volumes())
 
+        data['dataset'] = Dataset.objects.all().aggregate(
+            total=Count('id'),
+            aggregated_by_experiment=Count('id', filter=Q(aggregate_by='EXPERIMENT')),
+            aggregated_by_species=Count('id', filter=Q(aggregate_by='SAMPLES')),
+            scale_by_none=Count('id', filter=Q(scale_by='NONE')),
+            scale_by_minmax=Count('id', filter=Q(scale_by='MINMAX')),
+            scale_by_standard=Count('id', filter=Q(scale_by='STANDARD')),
+            scale_by_robust=Count('id', filter=Q(scale_by='ROBUST')),
+        )
+
         if range_param:
             data['input_data_size'] = self._get_input_data_size()
             data['output_data_size'] = self._get_output_data_size()
