@@ -47,6 +47,7 @@ from rest_framework.views import APIView
 
 from data_refinery_api.serializers import (
     ComputationalResultSerializer,
+    ComputationalResultWithUrlSerializer,
     DetailedExperimentSerializer,
     DetailedSampleSerializer,
     ExperimentSerializer,
@@ -102,7 +103,6 @@ logger = get_and_configure_logger(__name__)
 # Variables
 ##
 
-RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD")
 MAILCHIMP_USER = get_env_variable("MAILCHIMP_USER")
 MAILCHIMP_API_KEY = get_env_variable("MAILCHIMP_API_KEY")
 MAILCHIMP_LIST_ID = get_env_variable("MAILCHIMP_LIST_ID")
@@ -560,7 +560,8 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             # there could be use cases where you don't want to supply an email.
             supplied_email_address = self.request.data.get('email_address', None)
             email_ccdl_ok = self.request.data.get('email_ccdl_ok', False)
-            if supplied_email_address and MAILCHIMP_API_KEY and RUNNING_IN_CLOUD and email_ccdl_ok:
+            if supplied_email_address and MAILCHIMP_API_KEY \
+               and settings.RUNNING_IN_CLOUD and email_ccdl_ok:
                 try:
                     client = mailchimp3.MailChimp(mc_api=MAILCHIMP_API_KEY, mc_user=MAILCHIMP_USER)
                     data = {
@@ -725,7 +726,9 @@ class APITokenView(APIView):
     def post(self, request, id=None):
         """ Given a token's ID, activate it."""
 
-        id = request.data.get('id', None)
+        if not id:
+            id = request.data.get('id', None)
+
         activated_token = get_object_or_404(APIToken, id=id)
         activated_token.is_activated = request.data.get('is_activated', False)
         activated_token.save()
@@ -910,12 +913,21 @@ class ResultsList(PaginatedAPIView):
         filter_dict.pop('offset', None)
         results = ComputationalResult.public_objects.filter(**filter_dict)
 
+        token_id = self.request.META.get('HTTP_API_KEY', None)
+
+        try:
+            token = APIToken.objects.get(id=token_id, is_activated=True)
+            serializer_class = ComputationalResultWithUrlSerializer
+        except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            serializer_class = ComputationalResultSerializer
+
+
         page = self.paginate_queryset(results)
         if page is not None:
-            serializer = ComputationalResultSerializer(page, many=True)
+            serializer = serializer_class(page, many=True)
             return self.get_paginated_response(serializer.data)
         else:
-            serializer = ComputationalResultSerializer(results, many=True)
+            serializer = serializer_class(results, many=True)
             return Response(serializer.data)
 
 
@@ -1034,7 +1046,7 @@ class Stats(APIView):
                 continue
             data['processed_samples']['technology'][tech['technology']] = tech['count']
 
-        data['processed_samples']['organism'] = {} 
+        data['processed_samples']['organism'] = {}
         organisms = Sample.processed_objects.values('organism__name').annotate(count=Count('organism__name'))
         for organism in organisms:
             if not organism['organism__name']:
@@ -1215,7 +1227,7 @@ class Stats(APIView):
 
     def _get_job_stats(self, jobs, range_param):
         result = jobs.aggregate(
-            total=Count('id'), 
+            total=Count('id'),
             pending=Count('id', filter=Q(start_time__isnull=True)),
             completed=Count('id', filter=Q(end_time__isnull=False)),
             successful=Count('id', filter=Q(success=True)),
@@ -1259,7 +1271,7 @@ class Stats(APIView):
             'month': 'day',
             'year': 'month'
         }
-        current_date = datetime.now(tz=timezone.utc)            
+        current_date = datetime.now(tz=timezone.utc)
         range_to_start_date = {
             'day': current_date - timedelta(days=1),
             'week': current_date - timedelta(weeks=1),
@@ -1273,7 +1285,7 @@ class Stats(APIView):
         # ref https://stackoverflow.com/a/38359913/763705
         return objects.annotate(start=Trunc('created_at', range_to_trunc.get(range_param), output_field=DateTimeField())) \
                       .values('start') \
-                      .filter(start__gte=range_to_start_date.get(range_param)) 
+                      .filter(start__gte=range_to_start_date.get(range_param))
 
 ###
 # Transcriptome Indices

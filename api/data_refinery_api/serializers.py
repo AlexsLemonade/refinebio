@@ -1,4 +1,8 @@
+import boto3
+import requests
+
 from django.db.models import Count, Prefetch, Q
+from django.conf import settings
 from rest_framework import serializers
 from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
 from data_refinery_common.models import (
@@ -19,6 +23,10 @@ from data_refinery_common.models import (
     APIToken
 )
 from collections import defaultdict
+
+
+s3 = boto3.client('s3')
+
 
 ##
 # Organism
@@ -95,7 +103,9 @@ class ComputationalResultAnnotationSerializer(serializers.ModelSerializer):
                     'last_modified'
                 )
 
+
 class ComputedFileSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = ComputedFile
         fields = (
@@ -111,11 +121,45 @@ class ComputedFileSerializer(serializers.ModelSerializer):
                     'last_modified'
                 )
 
+
+class ComputedFileWithUrlSerializer(serializers.ModelSerializer):
+
+    download_url = serializers.SerializerMethodField()
+
+    def get_download_url(self, computed_file):
+        if settings.RUNNING_IN_CLOUD and computed_file.s3_bucket and computed_file.s3_key:
+            return s3.generate_presigned_url(
+                ClientMethod='get_object',
+                Params={
+                    'Bucket': computed_file.s3_bucket,
+                    'Key': computed_file.s3_key
+                }
+            )
+        else:
+            return None
+
+    class Meta:
+        model = ComputedFile
+        fields = (
+                    'id',
+                    'filename',
+                    'size_in_bytes',
+                    'is_smashable',
+                    'is_qc',
+                    'sha1',
+                    's3_bucket',
+                    's3_key',
+                    'download_url',
+                    'created_at',
+                    'last_modified'
+                )
+
+
 class ComputationalResultSerializer(serializers.ModelSerializer):
     annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
-    files = ComputedFileSerializer(many=True, source='computedfile_set')
     processor = ProcessorSerializer(many=False)
     organism_index = OrganismIndexSerializer(many=False)
+    files = ComputedFileSerializer(many=True, source='computedfile_set')
 
     class Meta:
         model = ComputationalResult
@@ -132,6 +176,11 @@ class ComputationalResultSerializer(serializers.ModelSerializer):
                     'created_at',
                     'last_modified'
                 )
+
+
+class ComputationalResultWithUrlSerializer(ComputationalResultSerializer):
+    files = ComputedFileWithUrlSerializer(many=True, source='computedfile_set')
+
 
 class ComputationalResultNoFilesSerializer(serializers.ModelSerializer):
     annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
