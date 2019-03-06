@@ -27,6 +27,8 @@ job "NO_OP_${{INDEX}}_${{RAM}}" {
     task "no_op" {
       driver = "docker"
 
+      kill_timeout = "30s"
+
       # This env will be passed into the container for the job.
       env {
         ${{AWS_CREDS}}
@@ -45,6 +47,9 @@ job "NO_OP_${{INDEX}}_${{RAM}}" {
 
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
+
+        ELASTICSEARCH_HOST = "${{ELASTICSEARCH_HOST}}"
+        ELASTICSEARCH_PORT = "${{ELASTICSEARCH_PORT}}"
 
         RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
 

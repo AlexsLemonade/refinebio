@@ -8,12 +8,13 @@ data_dir = "/tmp/nomad_client1"
 
 # Enable the client
 client {
-    enabled = true
-    servers = ["${nomad_lead_server_ip}:4647"]
+  enabled = true
+  servers = ["${nomad_lead_server_ip}:4647"]
 
-    meta {
-      volume_index = "REPLACE_ME"
-    }
+  meta {
+    volume_index = "REPLACE_ME"
+    is_smasher = "false"
+  }
 }
 
 consul {

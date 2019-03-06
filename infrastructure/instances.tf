@@ -87,7 +87,7 @@ resource "aws_instance" "nomad_server_1" {
   # I think these are the defaults provided in terraform examples.
   root_block_device = {
     volume_type = "gp2"
-    volume_size = 100
+    volume_size = 10
   }
 }
 
@@ -225,12 +225,22 @@ data "template_file" "nomad_client_script_smusher" {
   }
 }
 
+# The Smasher Instance needs to be aware of the Nomad Server's IP address,
+# so we template it into its configuration.
+data "template_file" "nomad_client_smasher_config" {
+  template = "${file("nomad-configuration/smasher-client.tpl.hcl")}"
+
+  vars {
+    nomad_lead_server_ip = "${aws_instance.nomad_server_1.private_ip}"
+  }
+}
+
 data "template_file" "nomad_client_script_smasher_smusher" {
   template = "${file("nomad-configuration/client-smasher-instance-user-data.tpl.sh")}"
 
   vars {
     install_nomad_script = "${data.local_file.install_nomad_script.content}"
-    nomad_client_config = "${data.template_file.nomad_client_config.rendered}"
+    nomad_client_smasher_config = "${data.template_file.nomad_client_smasher_config.rendered}"
     user = "${var.user}"
     stage = "${var.stage}"
     region = "${var.region}"
@@ -239,6 +249,38 @@ data "template_file" "nomad_client_script_smasher_smusher" {
     database_user = "${var.database_user}"
     database_password = "${var.database_password}"
     database_name = "${aws_db_instance.postgres_db.name}"
+  }
+}
+
+resource "aws_instance" "smasher_instance" {
+  ami = "${data.aws_ami.ubuntu.id}"
+  instance_type = "${var.smasher_instance_type}"
+  availability_zone = "${var.region}b"
+  vpc_security_group_ids = ["${aws_security_group.data_refinery_worker.id}"]
+  iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
+  subnet_id = "${aws_subnet.data_refinery_1b.id}"
+
+  tags = {
+    Name = "smasher-instance-${var.user}-${var.stage}"
+  }
+
+  depends_on = [
+              "aws_internet_gateway.data_refinery",
+              "aws_instance.nomad_server_1",
+              "aws_instance.pg_bouncer"
+  ]
+
+  key_name = "${aws_key_pair.data_refinery.key_name}"
+
+  # Our instance-user-data.sh script is built by Terraform at
+  # apply-time so that it can put additional files onto the
+  # instance. For more information see the definition of this resource.
+  user_data = "${data.template_file.nomad_client_script_smasher_smusher.rendered}"
+
+  # Should be more than enough to store 2 jobs worth of data at a time.
+  root_block_device = {
+    volume_type = "gp2"
+    volume_size = 100
   }
 }
 
@@ -288,7 +330,7 @@ resource "aws_spot_fleet_request" "cheap_ram" {
     key_name = "${aws_key_pair.data_refinery.key_name}"
 
     root_block_device {
-      volume_size = 20
+      volume_size = 100
       volume_type = "gp2"
     }
 
@@ -317,7 +359,7 @@ resource "aws_spot_fleet_request" "cheap_ram" {
     key_name = "${aws_key_pair.data_refinery.key_name}"
 
     root_block_device {
-      volume_size = 20
+      volume_size = 100
       volume_type = "gp2"
     }
 
@@ -347,72 +389,12 @@ resource "aws_spot_fleet_request" "cheap_ram" {
     key_name = "${aws_key_pair.data_refinery.key_name}"
 
     root_block_device {
-      volume_size = 20
+      volume_size = 100
       volume_type = "gp2"
     }
 
     tags {
         Name = "Spot Fleet Launch Specification x1e.8xlarge ${var.user}-${var.stage}"
-        User = "${var.user}"
-        Stage = "${var.stage}"
-    }
-
-  }
-
-  ##
-  # x1e.16xlarge
-  ##
-  launch_specification {
-
-    # Client Specific
-    instance_type             = "x1e.16xlarge"
-    weighted_capacity         = 20 # via https://aws.amazon.com/ec2/instance-types/
-    spot_price                = "${var.spot_price}"
-    ami                       = "${data.aws_ami.ubuntu.id}"
-    iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
-    user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
-    vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
-    subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
-    availability_zone         = "${var.region}a"
-    key_name = "${aws_key_pair.data_refinery.key_name}"
-
-    root_block_device {
-      volume_size = 20
-      volume_type = "gp2"
-    }
-
-    tags {
-        Name = "Spot Fleet Launch Specification x1e.16xlarge ${var.user}-${var.stage}"
-        User = "${var.user}"
-        Stage = "${var.stage}"
-    }
-
-  }
-
-  ##
-  # x1e.32xlarge
-  ##
-  launch_specification {
-
-    # Client Specific
-    instance_type             = "x1e.32xlarge"
-    weighted_capacity         = 40 # via https://aws.amazon.com/ec2/instance-types/
-    spot_price                = "${var.spot_price}"
-    ami                       = "${data.aws_ami.ubuntu.id}"
-    iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
-    user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
-    vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
-    subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
-    availability_zone         = "${var.region}a"
-    key_name = "${aws_key_pair.data_refinery.key_name}"
-
-    root_block_device {
-      volume_size = 20
-      volume_type = "gp2"
-    }
-
-    tags {
-        Name = "Spot Fleet Launch Specification x1e.32xlarge ${var.user}-${var.stage}"
         User = "${var.user}"
         Stage = "${var.stage}"
     }
@@ -437,12 +419,102 @@ resource "aws_spot_fleet_request" "cheap_ram" {
     key_name = "${aws_key_pair.data_refinery.key_name}"
 
     root_block_device {
-      volume_size = 20
+      volume_size = 100
       volume_type = "gp2"
     }
 
     tags {
         Name = "Spot Fleet Launch Specification r5d.24xlarge ${var.user}-${var.stage}"
+        User = "${var.user}"
+        Stage = "${var.stage}"
+    }
+
+  }
+
+  ##
+  # r5a.24xlarge
+  ##
+  launch_specification {
+
+    # Client Specific
+    instance_type             = "r5a.24xlarge"
+    weighted_capacity         = 8 # Really, more like 1.4 # via https://aws.amazon.com/ec2/instance-types/
+    spot_price                = "${var.spot_price}"
+    ami                       = "${data.aws_ami.ubuntu.id}"
+    iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
+    user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
+    vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
+    subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
+    availability_zone         = "${var.region}a"
+    key_name = "${aws_key_pair.data_refinery.key_name}"
+
+    root_block_device {
+      volume_size = 100
+      volume_type = "gp2"
+    }
+
+    tags {
+        Name = "Spot Fleet Launch Specification r5a.24xlarge ${var.user}-${var.stage}"
+        User = "${var.user}"
+        Stage = "${var.stage}"
+    }
+
+  }
+
+  ##
+  # r4.16xlarge
+  ##
+  launch_specification {
+
+    # Client Specific
+    instance_type             = "r4.16xlarge"
+    weighted_capacity         = 4
+    spot_price                = "${var.spot_price}"
+    ami                       = "${data.aws_ami.ubuntu.id}"
+    iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
+    user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
+    vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
+    subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
+    availability_zone         = "${var.region}a"
+    key_name = "${aws_key_pair.data_refinery.key_name}"
+
+    root_block_device {
+      volume_size = 100
+      volume_type = "gp2"
+    }
+
+    tags {
+        Name = "Spot Fleet Launch Specification r4.16xlarge ${var.user}-${var.stage}"
+        User = "${var.user}"
+        Stage = "${var.stage}"
+    }
+
+  }
+
+  ##
+  # m5a.24xlarge
+  ##
+  launch_specification {
+
+    # Client Specific
+    instance_type             = "m5a.24xlarge"
+    weighted_capacity         = 4
+    spot_price                = "${var.spot_price}"
+    ami                       = "${data.aws_ami.ubuntu.id}"
+    iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
+    user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
+    vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
+    subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
+    availability_zone         = "${var.region}a"
+    key_name = "${aws_key_pair.data_refinery.key_name}"
+
+    root_block_device {
+      volume_size = 100
+      volume_type = "gp2"
+    }
+
+    tags {
+        Name = "Spot Fleet Launch Specification m5a.24xlarge ${var.user}-${var.stage}"
         User = "${var.user}"
         Stage = "${var.stage}"
     }
@@ -549,6 +621,77 @@ data "template_file" "pg_bouncer_script_smusher" {
 }
 
 ##
+# ElasticSearch
+##
+
+# This only needs to be run one time per account.
+# Run it zero times, it won't work. Run it more than one time, it won't work.
+# TF needs away to manage these.
+
+# Related: https://github.com/terraform-providers/terraform-provider-aws/issues/5218
+# Related: https://github.com/cloudposse/terraform-aws-elasticsearch/issues/5
+# resource "aws_iam_service_linked_role" "es" {
+#   aws_service_name = "es.amazonaws.com"
+# }
+
+data "aws_caller_identity" "current" {}
+resource "aws_elasticsearch_domain" "es" {
+  domain_name = "es-${var.user}-${var.stage}"
+  elasticsearch_version = "6.3"
+
+  # TODO: Figure out the power/cost balance of this type.
+  # Prices are here: https://aws.amazon.com/elasticsearch-service/pricing/
+  cluster_config {
+      instance_type = "t2.medium.elasticsearch"
+  }
+
+  vpc_options {
+      subnet_ids = [
+          "${aws_subnet.data_refinery_1a.id}"
+      ]
+      security_group_ids = [
+          "${aws_security_group.data_refinery_es.id}"
+      ]
+  }
+
+  ebs_options {
+      ebs_enabled = true
+    # This depends on the instance type, else you'll get this error:
+    #   * aws_elasticsearch_domain.es: LimitExceededException: Volume size must be between 10 and 35 for t2.medium.elasticsearch instance type and elasticsearch version 6.3
+    volume_size = 10
+  }
+
+  access_policies = <<CONFIG
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "es:*",
+      "Resource": "arn:aws:es:us-east-1:${data.aws_caller_identity.current.account_id}:domain/es-${var.user}-${var.stage}/*"
+    }
+  ]
+}
+  CONFIG
+
+  snapshot_options {
+      automated_snapshot_start_hour = 23
+  }
+
+  tags {
+      Domain = "es-${var.user}-${var.stage}"
+      Name = "es-${var.user}-${var.stage}"
+  }
+}
+
+output "elasticsearch_endpoint" {
+  value = "${aws_elasticsearch_domain.es.endpoint}"
+}
+
+##
 # API Webserver
 ##
 
@@ -577,9 +720,20 @@ data "template_file" "api_server_script_smusher" {
     database_user = "${var.database_user}"
     database_password = "${var.database_password}"
     database_name = "${aws_db_instance.postgres_db.name}"
+    elasticsearch_host = "${aws_elasticsearch_domain.es.endpoint}"
+    elasticsearch_port = "80" # AWS doesn't support the data transfer protocol on 9200 >:[
     log_group = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
     log_stream = "${aws_cloudwatch_log_stream.log_stream_api.name}"
   }
+
+  depends_on = [
+    "aws_db_instance.postgres_db",
+    "aws_elasticsearch_domain.es",
+    "aws_instance.pg_bouncer",
+    "aws_security_group_rule.data_refinery_api_http",
+    "aws_security_group_rule.data_refinery_api_outbound"
+  ]
+
 }
 
 resource "aws_instance" "api_server_1" {
@@ -591,6 +745,7 @@ resource "aws_instance" "api_server_1" {
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = [
     "aws_db_instance.postgres_db",
+    "aws_elasticsearch_domain.es",
     "aws_instance.pg_bouncer",
     "aws_security_group_rule.data_refinery_api_http",
     "aws_security_group_rule.data_refinery_api_outbound"
@@ -639,6 +794,8 @@ data "template_file" "foreman_server_script_smusher" {
     database_user = "${var.database_user}"
     database_password = "${var.database_password}"
     database_name = "${aws_db_instance.postgres_db.name}"
+    elasticsearch_host = "${aws_elasticsearch_domain.es.endpoint}"
+    elasticsearch_port = "${var.elasticsearch_port}"
     log_group = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
   }
 }
@@ -650,7 +807,7 @@ resource "aws_instance" "foreman_server_1" {
   vpc_security_group_ids = ["${aws_security_group.data_refinery_foreman.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
-  depends_on = ["aws_db_instance.postgres_db", "aws_instance.pg_bouncer"]
+  depends_on = ["aws_db_instance.postgres_db", "aws_instance.pg_bouncer", "aws_elasticsearch_domain.es"]
   user_data = "${data.template_file.foreman_server_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"
 

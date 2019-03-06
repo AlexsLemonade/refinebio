@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*- 
+
 import boto3
 import csv
 import os
@@ -29,13 +31,13 @@ from data_refinery_common.models import (
     Pipeline,
     SampleResultAssociation,
 )
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable, calculate_file_size, calculate_sha1
 from data_refinery_workers.processors import utils
+from urllib.parse import quote
 
 
 RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-bucket")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
-RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD", "False")
 BODY_HTML = Path('data_refinery_workers/processors/smasher_email.min.html').read_text().replace('\n', '')
 BODY_ERROR_HTML = Path('data_refinery_workers/processors/smasher_email_error.min.html').read_text().replace('\n', '')
 logger = get_and_configure_logger(__name__)
@@ -54,6 +56,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         smashable_files = []
         for sample in samples:
             smashable_file = sample.get_most_recent_smashable_result_file()
+
             if smashable_file is not None:
                 smashable_files = smashable_files + [smashable_file]
         smashable_files = list(set(smashable_files))
@@ -253,23 +256,34 @@ def _write_tsv_json(job_context, metadata, smash_path):
     # Uniform TSV header per dataset
     columns = _get_tsv_columns(metadata['samples'])
 
+    # Per-Experiment Metadata
     if job_context["dataset"].aggregate_by == "EXPERIMENT":
+        tsv_paths = []
         for experiment_title, experiment_data in metadata['experiments'].items():
             experiment_dir = smash_path + experiment_title + '/'
+            experiment_dir = experiment_dir.encode('ascii', 'ignore')
             os.makedirs(experiment_dir, exist_ok=True)
-            with open(experiment_dir + 'metadata_' + experiment_title + '.tsv', 'w') as tsv_file:
+            tsv_path = experiment_dir.decode("utf-8") + 'metadata_' + experiment_title + '.tsv'
+            tsv_path = tsv_path.encode('ascii', 'ignore')
+            tsv_paths.append(tsv_path)
+            with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
                 dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
                 dw.writeheader()
                 for sample_title, sample_metadata in metadata['samples'].items():
                     if sample_title in experiment_data['sample_titles']:
                         row_data = _get_tsv_row_data(sample_metadata)
                         dw.writerow(row_data)
+        return tsv_paths
+    # Per-Species Metadata
     elif job_context["dataset"].aggregate_by == "SPECIES":
+        tsv_paths = []
         for species in job_context['input_files'].keys():
             species_dir = smash_path + species + '/'
             os.makedirs(species_dir, exist_ok=True)
             samples_in_species = []
-            with open(species_dir + "metadata_" + species + '.tsv', 'w') as tsv_file:
+            tsv_path = species_dir + "metadata_" + species + '.tsv'
+            tsv_paths.append(tsv_path)
+            with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
                 dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
                 dw.writeheader()
                 for sample_metadata in metadata['samples'].values():
@@ -284,20 +298,147 @@ def _write_tsv_json(job_context, metadata, smash_path):
                     'species': species,
                     'samples': samples_in_species
                 }
-                with open(species_dir + "metadata_" + species + '.json', 'w') as json_file:
+                json_path = species_dir + "metadata_" + species + '.json'
+                with open(json_path, 'w', encoding='utf-8') as json_file:
                     json.dump(species_metadata, json_file, indent=4, sort_keys=True)
+        return tsv_paths
+    # All Metadata
     else:
         all_dir = smash_path + "ALL/"
         os.makedirs(all_dir, exist_ok=True)
-        with open(all_dir + 'metadata_ALL.tsv', 'w') as tsv_file:
+        tsv_path = all_dir + 'metadata_ALL.tsv' 
+        with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
             dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
             dw.writeheader()
             for sample_metadata in metadata['samples'].values():
                 row_data = _get_tsv_row_data(sample_metadata)
                 dw.writerow(row_data)
+        return [tsv_path]
 
+def _quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
+    """
+    Apply quantile normalization.
 
-def _smash(job_context: Dict) -> Dict:
+    """
+    # Prepare our QN target file
+    organism = job_context['organism']
+    qn_target = utils.get_most_recent_qn_target_for_organism(organism)
+
+    if not qn_target:
+        logger.error("Could not find QN target for Organism!",
+            organism=organism,
+            dataset_id=job_context['dataset'].id,
+            dataset_data=job_context['dataset'].data,
+            processor_job_id=job_context["job"].id,
+        )
+        job_context['dataset'].success = False
+        job_context['job'].failure_reason = "Could not find QN target for Organism: " + str(organism)
+        job_context['dataset'].failure_reason = "Could not find QN target for Organism: " + str(organism)
+        job_context['dataset'].save()
+        job_context['job'].success = False
+        job_context['failure_reason'] = "Could not find QN target for Organism: " + str(organism)
+        return job_context
+    else:
+        qn_target_path = qn_target.sync_from_s3()
+        qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None,
+                                      index_col=None, error_bad_lines=False)
+
+        # Prepare our RPy2 bridge
+        pandas2ri.activate()
+        preprocessCore = importr('preprocessCore')
+        as_numeric = rlang("as.numeric")
+        data_matrix = rlang('data.matrix')
+
+        # Convert the smashed frames to an R numeric Matrix
+        # and the target Dataframe into an R numeric Vector
+        target_vector = as_numeric(qn_target_frame[0])
+        merged_matrix = data_matrix(job_context['merged_no_qn'])
+
+        # Perform the Actual QN
+        reso = preprocessCore.normalize_quantiles_use_target(
+                                            x=merged_matrix,
+                                            target=target_vector,
+                                            copy=True
+                                        )
+
+        # Verify this QN, related: https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
+        set_seed = rlang("set.seed")
+        combn = rlang("combn")
+        ncol = rlang("ncol")
+        ks_test = rlang("ks.test")
+        which = rlang("which")
+
+        set_seed(123)
+
+        n = ncol(reso)[0]
+        m = 2
+        if n < m:
+            raise Exception("Found fewer columns than required for QN combinatorial - bad smash?")
+        combos = combn(ncol(reso), 2)
+
+        # Convert to NP, Shuffle, Return to R
+        ar = np.array(combos)
+        np.random.shuffle(np.transpose(ar))
+        nr, nc = ar.shape
+        combos = ro.r.matrix(ar, nrow=nr, ncol=nc)
+
+        # adapted from
+        # https://stackoverflow.com/questions/9661469/r-t-test-over-all-columns
+        # apply KS test to randomly selected pairs of columns (samples)
+        for i in range(1, min(ncol(combos)[0], 100)):
+            value1 = combos.rx(1, i)[0]
+            value2 = combos.rx(2, i)[0]
+
+            test_a = reso.rx(True, value1)
+            test_b = reso.rx(True, value2)
+
+            # RNA-seq has a lot of zeroes in it, which
+            # breaks the ks_test. Therefore we want to
+            # filter them out. To do this we drop the
+            # lowest half of the values. If there's
+            # still zeroes in there, then that's
+            # probably too many zeroes so it's okay to
+            # fail.
+            median_a = np.median(test_a)
+            median_b = np.median(test_b)
+
+            # `which` returns indices which are
+            # 1-indexed. Python accesses lists with
+            # zero-indexes, even if that list is
+            # actually an R vector. Therefore subtract
+            # 1 to account for the difference.
+            test_a = [test_a[i-1] for i in which(test_a > median_a)]
+            test_b = [test_b[i-1] for i in which(test_b > median_b)]
+
+            # The python list comprehension gives us a
+            # python list, but ks_test wants an R
+            # vector so let's go back.
+            test_a = as_numeric(test_a)
+            test_b = as_numeric(test_b)
+
+            ks_res = ks_test(test_a, test_b)
+            statistic = ks_res.rx('statistic')[0][0]
+            pvalue = ks_res.rx('p.value')[0][0]
+
+            job_context['ks_statistic'] = statistic
+            job_context['ks_pvalue'] = pvalue
+
+            # We're unsure of how strigent to be about
+            # the pvalue just yet, so we're extra lax
+            # rather than failing tons of tests. This may need tuning.
+            if ks_check:
+                if statistic > ks_stat or pvalue < 0.8:
+                    raise Exception("Failed Kolmogorov Smirnov test! Stat: " +
+                                    str(statistic) + ", PVal: " + str(pvalue))
+
+        # And finally convert back to Pandas
+        ar = np.array(reso)
+        new_merged = pd.DataFrame(ar, columns=job_context['merged_no_qn'].columns, index=job_context['merged_no_qn'].index)
+        job_context['merged_qn'] = new_merged
+        merged = new_merged
+    return job_context   
+
+def _smash(job_context: Dict, how="inner") -> Dict:
     """
     Smash all of the samples together!
 
@@ -331,6 +472,7 @@ def _smash(job_context: Dict) -> Dict:
                      dataset_data=job_context['dataset'].data,
         )
 
+        job_context['technologies'] = {'microarray': [], 'rnaseq': []}
         # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context['input_files'].items():
 
@@ -339,24 +481,24 @@ def _smash(job_context: Dict) -> Dict:
 
             for computed_file in input_files:
 
-                # Download the file to a job-specific location so it
-                # won't disappear while we're using it.
-                computed_file_path = job_context["work_dir"] + computed_file.filename
-                computed_file_path = computed_file.get_synced_file_path(path=computed_file_path)
-
-                # Bail appropriately if this isn't a real file.
-                if not computed_file_path or not os.path.exists(computed_file_path):
-                    raise ValueError("Smasher received non-existent file path.")
-
                 try:
-                    data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0, error_bad_lines=False)
+                    # Download the file to a job-specific location so it
+                    # won't disappear while we're using it.
 
-                    # Strip any funky whitespace
-                    data.columns = data.columns.str.strip()
-                    data = data.dropna(axis='columns', how='all')
+                    computed_file_path = job_context["work_dir"] + computed_file.filename
+                    computed_file_path = computed_file.get_synced_file_path(path=computed_file_path)
 
-                    # Make sure the index type is correct
-                    data.index = data.index.map(str)
+                    # Bail appropriately if this isn't a real file.
+                    if not computed_file_path or not os.path.exists(computed_file_path):
+                        unsmashable_files.append(computed_file_path)
+                        logger.error("Smasher received non-existent file path.",
+                            computed_file_path=computed_file_path,
+                            computed_file=computed_file,
+                            dataset=job_context['dataset'],
+                            )
+                        continue
+
+                    data = _load_and_sanitize_file(computed_file_path)
 
                     if len(data.columns) > 2:
                         # Most of the time, >1 is actually bad, but we also need to support
@@ -382,33 +524,6 @@ def _smash(job_context: Dict) -> Dict:
                         logger.info("Detected non-log2 microarray data.", file=computed_file)
                         data = np.log2(data)
 
-                    # Ensure that we don't have any dangling Brainarray-generated probe symbols.
-                    # BA likes to leave '_at', signifying probe identifiers,
-                    # on their converted, non-probe identifiers. It makes no sense.
-                    # So, we chop them off and don't worry about it.
-                    data.index = data.index.str.replace('_at', '')
-
-                    # Remove any lingering Affymetrix control probes ("AFFX-")
-                    data = data[~data.index.str.contains('AFFX-')]
-
-                    # If there are any _versioned_ gene identifiers, remove that
-                    # version information. We're using the latest brainarray for everything anyway.
-                    # Jackie says this is okay.
-                    # She also says that in the future, we may only want to do this
-                    # for cross-technology smashes.
-
-                    # This regex needs to be able to handle EGIDs in the form:
-                    #       ENSGXXXXYYYZZZZ.6
-                    # and
-                    #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg.7__3016__AT5G35080.1;db=core)
-                    data.index = data.index.str.replace(r"(\.[^.]*)$", '')
-
-                    # Squish duplicated rows together.
-                    # XXX/TODO: Is mean the appropriate method here?
-                    #           We can make this an option in future.
-                    # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
-                    data = data.groupby(data.index, sort=False).mean()
-
                     # Explicitly title this dataframe
                     try:
                         # Unfortuantely, we can't use this as `title` can cause a collision
@@ -423,8 +538,19 @@ def _smash(job_context: Dict) -> Dict:
                         # Okay, somebody probably forgot to create a SampleComputedFileAssociation
                         data.columns = [computed_file.filename]
 
+                    if computed_file_path.endswith("lengthScaledTPM.tsv"):
+                        job_context['technologies']['rnaseq'].append(data.columns)
+                    else:
+                        job_context['technologies']['microarray'].append(data.columns)
+
                     all_frames.append(data)
                     num_samples = num_samples + 1
+
+                    if (num_samples % 100) == 0:
+                        logger.warning("Loaded " + str(num_samples) + " samples into frames.",
+                            dataset_id=job_context['dataset'].id,
+                            how=how
+                        )
 
                 except Exception as e:
                     unsmashable_files.append(computed_file_path)
@@ -434,7 +560,8 @@ def _smash(job_context: Dict) -> Dict:
                         )
                 finally:
                     # Delete before archiving the work dir
-                    os.remove(computed_file_path)
+                    if computed_file_path:
+                        os.remove(computed_file_path)
 
             job_context['all_frames'] = all_frames
 
@@ -446,143 +573,97 @@ def _smash(job_context: Dict) -> Dict:
                 continue
 
             # Merge all of the frames we've gathered into a single big frame, skipping duplicates.
+            # TODO: If the very first frame is the wrong platform, are we boned?
             merged = all_frames[0]
             i = 1
-            while i < len(all_frames):
-                frame = all_frames[i]
-                i = i + 1
 
-                # I'm not sure where these are sneaking in from, but we don't want them.
-                # Related: https://github.com/AlexsLemonade/refinebio/issues/390
-                breaker = False
-                for column in frame.columns:
-                    if column in merged.columns:
-                        breaker = True
+            old_len_merged = len(merged)
+            new_len_merged = len(merged)
+            merged_backup = merged
 
-                if breaker:
-                    logger.warning("Column repeated for smash job!",
-                                   input_files=str(input_files),
-                                   dataset_id=job_context["dataset"].id,
-                                   processor_job_id=job_context["job"].id,
-                                   column=column,
-                                   frame=frame
-                    )
-                    continue
+            if how == "inner":
+                while i < len(all_frames):
+                    frame = all_frames[i]
+                    i = i + 1
 
-                # This is the inner join, the main "Smash" operation
-                merged = merged.merge(frame, left_index=True, right_index=True)
+                    if i % 1000 == 0:
+                        logger.info("Smashing keyframe",
+                            i=i
+                        )
+
+                    # I'm not sure where these are sneaking in from, but we don't want them.
+                    # Related: https://github.com/AlexsLemonade/refinebio/issues/390
+                    breaker = False
+                    for column in frame.columns:
+                        if column in merged.columns:
+                            breaker = True
+
+                    if breaker:
+                        logger.warning("Column repeated for smash job!",
+                                       input_files=str(input_files),
+                                       dataset_id=job_context["dataset"].id,
+                                       processor_job_id=job_context["job"].id,
+                                       column=column,
+                                       frame=frame
+                        )
+                        continue
+
+                    # This is the inner join, the main "Smash" operation
+                    merged = merged.merge(frame, how='inner', left_index=True, right_index=True)
+
+                    new_len_merged = len(merged)
+                    if new_len_merged < old_len_merged:
+                        logger.warning("Dropped rows while smashing!",
+                            dataset_id=job_context["dataset"].id,
+                            old_len_merged=old_len_merged,
+                            new_len_merged=new_len_merged
+                        )
+                    if new_len_merged == 0:
+                        logger.warning("Skipping a bad merge frame!",
+                            dataset_id=job_context["dataset"].id,
+                            old_len_merged=old_len_merged,
+                            new_len_merged=new_len_merged,
+                            bad_frame_number=i,
+                        )
+                        merged = merged_backup
+                        new_len_merged = len(merged)
+                        try:
+                            unsmashable_files.append(frame.columns[0])
+                        except Exception:
+                            # Something is really, really wrong with this frame.
+                            pass
+
+                    old_len_merged = len(merged)
+                    merged_backup = merged
+            else:
+                merged = pd.concat(all_frames, axis=1, keys=None, join='outer', copy=False, sort=True)
 
             job_context['original_merged'] = merged
 
             # Quantile Normalization
             if job_context['dataset'].quantile_normalize:
                 try:
-                    # Prepare our QN target file
-                    organism = computed_file.samples.first().organism
-                    qn_target = utils.get_most_recent_qn_target_for_organism(organism)
-
-                    if not qn_target:
-                        logger.error("Could not find QN target for Organism!",
-                            organism=organism,
+                    job_context['merged_no_qn'] = merged
+                    job_context['organism'] = computed_file.samples.first().organism
+                    job_context = _quantile_normalize(job_context)
+                    merged = job_context.get('merged_qn', None)
+                    # We probably don't have an QN target or there is another error,
+                    # so let's fail gracefully.
+                    if merged is None:
+                        e = "Problem occured during quantile normalization: No merged_qn"
+                        logger.error(e,
                             dataset_id=job_context['dataset'].id,
                             dataset_data=job_context['dataset'].data,
                             processor_job_id=job_context["job"].id,
                         )
-                    else:
-                        qn_target_path = qn_target.sync_from_s3()
-                        qn_target_frame = pd.read_csv(qn_target_path, sep='\t', header=None,
-                                                      index_col=None, error_bad_lines=False)
-
-                        # Prepare our RPy2 bridge
-                        pandas2ri.activate()
-                        preprocessCore = importr('preprocessCore')
-                        as_numeric = rlang("as.numeric")
-                        data_matrix = rlang('data.matrix')
-
-                        # Convert the smashed frames to an R numeric Matrix
-                        # and the target Dataframe into an R numeric Vector
-                        target_vector = as_numeric(qn_target_frame[0])
-                        merged_matrix = data_matrix(merged)
-
-                        # Perform the Actual QN
-                        reso = preprocessCore.normalize_quantiles_use_target(
-                                                            x=merged_matrix,
-                                                            target=target_vector,
-                                                            copy=True
-                                                        )
-
-                        # Verify this QN, related: https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
-                        set_seed = rlang("set.seed")
-                        combn = rlang("combn")
-                        ncol = rlang("ncol")
-                        ks_test = rlang("ks.test")
-                        which = rlang("which")
-
-                        set_seed(123)
-
-                        n = ncol(reso)[0]
-                        m = 2
-                        if n < m:
-                            raise Exception("Found fewer columns than required for QN combinatorial - bad smash?")
-                        combos = combn(ncol(reso), 2)
-
-                        # Convert to NP, Shuffle, Return to R
-                        ar = np.array(combos)
-                        np.random.shuffle(np.transpose(ar))
-                        nr, nc = ar.shape
-                        combos = ro.r.matrix(ar, nrow=nr, ncol=nc)
-
-                        # adapted from
-                        # https://stackoverflow.com/questions/9661469/r-t-test-over-all-columns
-                        # apply KS test to randomly selected pairs of columns (samples)
-                        for i in range(1, min(ncol(combos)[0], 100)):
-                            value1 = combos.rx(1, i)[0]
-                            value2 = combos.rx(2, i)[0]
-
-                            test_a = reso.rx(True, value1)
-                            test_b = reso.rx(True, value2)
-
-                            # RNA-seq has a lot of zeroes in it, which
-                            # breaks the ks_test. Therefore we want to
-                            # filter them out. To do this we drop the
-                            # lowest half of the values. If there's
-                            # still zeroes in there, then that's
-                            # probably too many zeroes so it's okay to
-                            # fail.
-                            median_a = np.median(test_a)
-                            median_b = np.median(test_b)
-
-                            # `which` returns indices which are
-                            # 1-indexed. Python accesses lists with
-                            # zero-indexes, even if that list is
-                            # actually an R vector. Therefore subtract
-                            # 1 to account for the difference.
-                            test_a = [test_a[i-1] for i in which(test_a > median_a)]
-                            test_b = [test_b[i-1] for i in which(test_b > median_b)]
-
-                            # The python list comprehension gives us a
-                            # python list, but ks_test wants an R
-                            # vector so let's go back.
-                            test_a = as_numeric(test_a)
-                            test_b = as_numeric(test_b)
-
-                            ks_res = ks_test(test_a, test_b)
-                            statistic = ks_res.rx('statistic')[0][0]
-                            pvalue = ks_res.rx('p.value')[0][0]
-
-                            # We're unsure of how strigent to be about
-                            # the pvalue just yet, so we're extra lax
-                            # rather than failing tons of tests. This may need tuning.
-                            if statistic > 0.001 or pvalue < 0.8:
-                                raise Exception("Failed Kolmogorov Smirnov test! Stat: " +
-                                                str(statistic) + ", PVal: " + str(pvalue))
-
-                        # And finally convert back to Pandas
-                        ar = np.array(reso)
-                        new_merged = pd.DataFrame(ar, columns=merged.columns, index=merged.index)
-                        job_context['merged_no_qn'] = merged
-                        job_context['merged_qn'] = new_merged
-                        merged = new_merged
+                        job_context['dataset'].success = False
+                        job_context['job'].failure_reason = "Failure reason: " + str(e)
+                        job_context['dataset'].failure_reason = "Failure reason: " + str(e)
+                        job_context['dataset'].save()
+                        # Delay failing this pipeline until the failure notify has been sent
+                        job_context['job'].success = False
+                        job_context['failure_reason'] = str(e)
+                        return job_context
                 except Exception as e:
                     logger.exception("Problem occured during quantile normalization",
                         dataset_id=job_context['dataset'].id,
@@ -597,6 +678,7 @@ def _smash(job_context: Dict) -> Dict:
                     job_context['job'].success = False
                     job_context['failure_reason'] = str(e)
                     return job_context
+            # End QN
 
             # Transpose before scaling
             # Do this even if we don't want to scale in case transpose
@@ -632,6 +714,7 @@ def _smash(job_context: Dict) -> Dict:
             outfile_dir = smash_path + key + "/"
             os.makedirs(outfile_dir, exist_ok=True)
             outfile = outfile_dir + key + ".tsv"
+            job_context['smash_outfile'] = outfile
             untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
 
         # Copy LICENSE.txt and README.md files
@@ -661,14 +744,18 @@ def _smash(job_context: Dict) -> Dict:
         metadata['experiments'] = experiments
 
         # Write samples metadata to TSV
-        _write_tsv_json(job_context, metadata, smash_path)
-
+        try:
+            tsv_paths = _write_tsv_json(job_context, metadata, smash_path)
+            job_context['metadata_tsv_paths'] = tsv_paths
+            # Metadata to JSON
+            metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+            with open(smash_path + 'aggregated_metadata.json', 'w', encoding='utf-8') as metadata_file:
+                json.dump(metadata, metadata_file, indent=4, sort_keys=True)
+        except Exception as e:
+            logger.exception("Failed to write metadata TSV!",
+                j_id = job_context['job'].id)
+            job_context['metadata_tsv_paths'] = None
         metadata['files'] = os.listdir(smash_path)
-
-        # Metadata to JSON
-        metadata['created_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
-        with open(smash_path + 'aggregated_metadata.json', 'w') as metadata_file:
-            json.dump(metadata, metadata_file, indent=4, sort_keys=True)
 
         # Finally, compress all files into a zip
         final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk)
@@ -689,6 +776,7 @@ def _smash(job_context: Dict) -> Dict:
         return job_context
 
     job_context['metadata'] = metadata
+    job_context['unsmashable_files'] = unsmashable_files
     job_context['dataset'].success = True
     job_context['dataset'].save()
 
@@ -697,15 +785,57 @@ def _smash(job_context: Dict) -> Dict:
 
     return job_context
 
+def _load_and_sanitize_file(computed_file_path):
+    """ Read and sanitize a computed file """
+
+    data = pd.read_csv(computed_file_path, sep='\t', header=0, index_col=0, error_bad_lines=False)
+
+    # Strip any funky whitespace
+    data.columns = data.columns.str.strip()
+    data = data.dropna(axis='columns', how='all')
+
+    # Make sure the index type is correct
+    data.index = data.index.map(str)
+
+    # Ensure that we don't have any dangling Brainarray-generated probe symbols.
+    # BA likes to leave '_at', signifying probe identifiers,
+    # on their converted, non-probe identifiers. It makes no sense.
+    # So, we chop them off and don't worry about it.
+    data.index = data.index.str.replace('_at', '')
+
+    # Remove any lingering Affymetrix control probes ("AFFX-")
+    data = data[~data.index.str.contains('AFFX-')]
+
+    # If there are any _versioned_ gene identifiers, remove that
+    # version information. We're using the latest brainarray for everything anyway.
+    # Jackie says this is okay.
+    # She also says that in the future, we may only want to do this
+    # for cross-technology smashes.
+
+    # This regex needs to be able to handle EGIDs in the form:
+    #       ENSGXXXXYYYZZZZ.6
+    # and
+    #       fgenesh2_kg.7__3016__AT5G35080.1 (via http://plants.ensembl.org/Arabidopsis_lyrata/Gene/Summary?g=fgenesh2_kg.7__3016__AT5G35080.1;r=7:17949732-17952000;t=fgenesh2_kg.7__3016__AT5G35080.1;db=core)
+    data.index = data.index.str.replace(r"(\.[^.]*)$", '')
+
+    # Squish duplicated rows together.
+    # XXX/TODO: Is mean the appropriate method here?
+    #           We can make this an option in future.
+    # Discussion here: https://github.com/AlexsLemonade/refinebio/issues/186#issuecomment-395516419
+    data = data.groupby(data.index, sort=False).mean()
+
+    return data
+
 def _upload(job_context: Dict) -> Dict:
     """ Uploads the result file to S3 and notifies user. """
 
     # There has been a failure already, don't try to upload anything.
     if not job_context.get("output_file", None):
+        logger.error("Was told to upload a smash result without an output_file.")
         return job_context
 
     try:
-        if job_context.get("upload", True) and RUNNING_IN_CLOUD:
+        if job_context.get("upload", True) and settings.RUNNING_IN_CLOUD:
             s3_client = boto3.client('s3')
 
             # Note that file expiry is handled by the S3 object lifecycle,
@@ -727,6 +857,9 @@ def _upload(job_context: Dict) -> Dict:
 
             job_context["dataset"].s3_bucket = RESULTS_BUCKET
             job_context["dataset"].s3_key = job_context["output_file"].split('/')[-1]
+            job_context["dataset"].size_in_bytes = calculate_file_size(job_context["output_file"])
+            job_context["dataset"].sha1 = calculate_sha1(job_context["output_file"])
+
             job_context["dataset"].save()
 
             # File is uploaded, we can delete the local.
@@ -738,7 +871,7 @@ def _upload(job_context: Dict) -> Dict:
     except Exception as e:
         logger.exception("Failed to upload smash result file.", file=job_context["output_file"])
         job_context['job'].success = False
-        job_context['job'].failure_reason = str(e)
+        job_context['job'].failure_reason = "Failure reason: " + str(e)
         # Delay failing this pipeline until the failure notify has been sent
         # job_context['success'] = False
 
@@ -759,17 +892,31 @@ def _notify(job_context: Dict) -> Dict:
             AWS_REGION = "us-east-1"
             CHARSET = "UTF-8"
 
+            # Link to the dataset page, where the user can re-try the download job
+            dataset_url = 'https://www.refine.bio/dataset/' + str(job_context['dataset'].id)
+
             if job_context['job'].failure_reason not in ['', None]:
                 SUBJECT = "There was a problem processing your refine.bio dataset :("
                 BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(job_context['dataset'].id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
-                # Link to the dataset page, where the user can re-try the download job
-                dataset_url = 'https://www.refine.bio/dataset/' + str(job_context['dataset'].id)
-                FORMATTED_HTML = BODY_ERROR_HTML.replace('REPLACE_DATASET_URL', dataset_url).replace('REPLACE_ERROR_TEXT', job_context['job'].failure_reason)
+                
+                ERROR_EMAIL_TITLE = quote('I can\'t download my dataset')
+                ERROR_EMAIL_BODY = quote("""
+                [What browser are you using?]
+                [Add details of the issue you are facing]
+
+                ---
+                """ + str(job_context['dataset'].id))
+                
+                FORMATTED_HTML = BODY_ERROR_HTML.replace('REPLACE_DATASET_URL', dataset_url)\
+                                                .replace('REPLACE_ERROR_TEXT', job_context['job'].failure_reason)\
+                                                .replace('REPLACE_NEW_ISSUE', 'https://github.com/AlexsLemonade/refinebio/issues/new?title={0}&body={1}&labels=bug'.format(ERROR_EMAIL_TITLE, ERROR_EMAIL_BODY))\
+                                                .replace('REPLACE_MAILTO', 'mailto:ccdl@alexslemonade.org?subject={0}&body={1}'.format(ERROR_EMAIL_TITLE, ERROR_EMAIL_BODY))
                 job_context['success'] = False
             else:
                 SUBJECT = "Your refine.bio Dataset is Ready!"
                 BODY_TEXT = "Hot off the presses:\n\n" + job_context["result_url"] + "\n\nLove!,\nThe refine.bio Team"
-                FORMATTED_HTML = BODY_HTML.replace('REPLACEME', job_context["result_url"])
+                FORMATTED_HTML = BODY_HTML.replace('REPLACE_DOWNLOAD_URL', job_context["result_url"])\
+                                          .replace('REPLACE_DATASET_URL', dataset_url)
 
             # Try to send the email.
             try:

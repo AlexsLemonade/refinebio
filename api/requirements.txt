@@ -14,7 +14,7 @@ coverage==4.5.1
 django-cors-headers==2.4.0
 django-filter==2.0.0
 django-hstore==1.4.2      # via djangorestframework-hstore
-django==2.1.2
+django==2.1.5
 djangorestframework-hstore==1.3
 djangorestframework==3.8.2
 docutils==0.14            # via botocore
@@ -22,14 +22,21 @@ idna==2.7                 # via requests
 itypes==1.1.0             # via coreapi
 jinja2==2.10              # via coreschema
 jmespath==0.9.3           # via boto3, botocore
+mailchimp3==3.0.5
 markupsafe==1.0           # via jinja2
 psycopg2-binary==2.7.5
 psycopg2==2.7.5           # via djangorestframework-hstore
 python-dateutil==2.7.3    # via botocore
-python-nomad==0.9.0
+python-nomad==1.1.0
 pytz==2018.5              # via django
 requests==2.20.0
 s3transfer==0.1.13        # via boto3
 six==1.11.0               # via python-dateutil
 uritemplate==3.0.0        # via coreapi
 urllib3==1.23             # via botocore, requests
+
+# For ElasticSearch support:
+django-elasticsearch-dsl==0.5.1
+django-elasticsearch-dsl-drf==0.17.1
+elasticsearch==6.2.0
+elasticsearch-dsl==6.1.0

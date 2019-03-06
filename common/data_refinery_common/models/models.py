@@ -10,6 +10,7 @@ from botocore.client import Config
 
 from datetime import datetime
 from functools import partial
+from typing import Dict, Set
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
@@ -19,7 +20,7 @@ from django.utils import timezone
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.organism import Organism
-from data_refinery_common.utils import get_env_variable, get_s3_url
+from data_refinery_common.utils import get_env_variable, get_s3_url, calculate_file_size, calculate_sha1
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.
@@ -79,6 +80,7 @@ class Sample(models.Model):
     results = models.ManyToManyField('ComputationalResult', through='SampleResultAssociation')
     original_files = models.ManyToManyField('OriginalFile', through='OriginalFileSampleAssociation')
     computed_files = models.ManyToManyField('ComputedFile', through='SampleComputedFileAssociation')
+    experiments = models.ManyToManyField('Experiment', through='ExperimentSampleAssociation')
 
     # Historical Properties
     source_database = models.CharField(max_length=255, blank=False)
@@ -151,6 +153,26 @@ class Sample(models.Model):
 
         return metadata
 
+    # Returns a set of ProcessorJob objects but we cannot specify
+    # that in type hints because it hasn't been declared yet.
+    def get_processor_jobs(self) -> Set:
+        processor_jobs = set()
+        for original_file in self.original_files.prefetch_related("processor_jobs").all():
+            for processor_job in original_file.processor_jobs.all():
+                processor_jobs.add(processor_job)
+
+        return processor_jobs
+
+    # Returns a set of DownloaderJob objects but we cannot specify
+    # that in type hints because it hasn't been declared yet.
+    def get_downloader_jobs(self) -> Set:
+        downloader_jobs = set()
+        for original_file in self.original_files.prefetch_related("downloader_jobs").all():
+            for downloader_job in original_file.downloader_jobs.all():
+                downloader_jobs.add(downloader_job)
+
+        return downloader_jobs
+
     def get_result_files(self):
         """ Get all of the ComputedFile objects associated with this Sample """
         return self.computed_files.all()
@@ -221,8 +243,7 @@ class ProcessedPublicObjectsManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(
             is_public=True,
-            samples__is_processed=True,
-            samples__is_public=True).distinct()
+            num_processed_samples__gt=0)
 
 
 class Experiment(models.Model):
@@ -269,6 +290,14 @@ class Experiment(models.Model):
     source_first_published = models.DateTimeField(null=True)
     source_last_modified = models.DateTimeField(null=True)
 
+    # Cached Computed Properties
+    num_total_samples = models.IntegerField(default=0)
+    num_processed_samples = models.IntegerField(default=0)
+    sample_metadata_fields = ArrayField(models.TextField(), default=list)
+    organism_names = ArrayField(models.TextField(), default=list)
+    platform_names = ArrayField(models.TextField(), default=list)
+    platform_accession_codes = ArrayField(models.TextField(), default=list)
+
     # Common Properties
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
@@ -288,6 +317,12 @@ class Experiment(models.Model):
                 self.alternate_accession_code = 'GSE' + self.accession_code[7:]
 
         return super(Experiment, self).save(*args, **kwargs)
+
+    def update_num_samples(self):
+        """ Update our cache values """
+        self.num_total_samples = self.samples.count()
+        self.num_processed_samples = self.samples.filter(is_processed=True).count()
+        self.save()
 
     def to_metadata_dict(self):
         """ Render this Experiment as a dict """
@@ -325,38 +360,58 @@ class Experiment(models.Model):
 
         possible_fields = ['sex', 'age', 'specimen_part', 'genotype', 'disease', 'disease_stage',
                            'cell_line', 'treatment', 'race', 'subject', 'compound', 'time']
-
+        samples = self.samples.all()
         for field in possible_fields:
-            filter = {"age__isnull": True} if field == 'age' else {'%s__exact' % field: ''}
-            if len(self.samples.exclude(**filter)) > 0:
-                fields.append(field)
+            for sample in samples:
+                if getattr(sample, field) != None and getattr(sample, field) != '':
+                    fields.append(field)
+                    break
+
         return fields
+
+    def update_sample_metadata_fields(self):
+        self.sample_metadata_fields = self.get_sample_metadata_fields()
+
+    def update_organism_names(self):
+        self.organism_names = self.get_organism_names()
+
+    def update_platform_names(self):
+        self.platform_names = self.get_platform_names()
+        self.platform_accession_codes = self.get_platform_accession_codes()
 
     def get_sample_technologies(self):
         """ Get a list of unique technologies for all of the associated samples
         """
-        tech_values_qs = self.samples.all().values('technology')
-        tech_values = [t['technology'] for t in tech_values_qs]
-        unique_tech_values = list(set(tech_values))
-        technologies = list(filter(None, unique_tech_values))
-        return technologies
+        return list(set([sample.technology for sample in self.samples.all()]))
+
+    def get_organism_names(self):
+        """ Get a list of unique technologies for all of the associated samples
+        """
+        return list(set([organism.name for organism in self.organisms.all()]))
+
+    def get_platform_names(self):
+        """ Get a list of unique platforms for all of the associated samples
+        """
+        return list(set([sample.platform_name for sample in self.samples.all()]))
+
+    def get_platform_accession_codes(self):
+        """ Get a list of unique platforms for all of the associated samples
+        """
+        return list(set([sample.platform_accession_code for sample in self.samples.all()]))
 
     @property
     def platforms(self):
         """ Returns a list of related pipelines """
-        return [p for p in self.samples.values_list('platform_name', flat=True).distinct()]
+        return list(set([sample.platform_name for sample in self.samples.all()]))
 
     @property
     def pretty_platforms(self):
         """ Returns a prettified list of related pipelines """
-        return list(set([p.pretty_platform for p in self.samples.exclude(platform_name__exact='')]))
-
-    def get_processed_samples(self):
-        return self.samples.filter(is_processed=True)
+        return list(set([sample.pretty_platform for sample in self.samples.all()]))
 
     @property
     def processed_samples(self):
-        return self.samples.filter(is_processed=True)
+        return list([sample.accession_code for sample in self.samples.all() if sample.is_processed == True])
 
 class ExperimentAnnotation(models.Model):
     """ Semi-standard information associated with an Experiment """
@@ -435,6 +490,8 @@ class ComputationalResult(models.Model):
 
     commands = ArrayField(models.TextField(), default=list)
     processor = models.ForeignKey(Processor, blank=True, null=True, on_delete=models.CASCADE)
+
+    samples = models.ManyToManyField('Sample', through='SampleResultAssociation')
 
     # The Organism Index used to process the sample.
     organism_index = models.ForeignKey('OrganismIndex', blank=True, null=True, on_delete=models.SET_NULL)
@@ -589,6 +646,8 @@ class OriginalFile(models.Model):
 
     # Relations
     samples = models.ManyToManyField('Sample', through='OriginalFileSampleAssociation')
+    processor_jobs = models.ManyToManyField('data_refinery_common.ProcessorJob', through='ProcessorJobOriginalFileAssociation')
+    downloader_jobs = models.ManyToManyField('data_refinery_common.DownloaderJob', through='DownloaderJobOriginalFileAssociation')
 
     # Historical Properties
     source_url = models.TextField()
@@ -617,19 +676,13 @@ class OriginalFile(models.Model):
     def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
-
-        hash_object = hashlib.sha1()
-        with open(self.absolute_file_path, mode='rb') as open_file:
-            for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
-                hash_object.update(buf)
-
-        self.sha1 = hash_object.hexdigest()
+        self.sha1 = calculate_sha1(self.absolute_file_path)
         return self.sha1
 
     def calculate_size(self) -> None:
         """ Calculate the number of bytes in a given file.
         """
-        self.size_in_bytes = os.path.getsize(self.absolute_file_path)
+        self.size_in_bytes = calculate_file_size(self.absolute_file_path)
         return self.size_in_bytes
 
     def get_display_name(self):
@@ -641,9 +694,6 @@ class OriginalFile(models.Model):
 
     def delete_local_file(self):
         """ Deletes this file from the local file system."""
-        if not settings.RUNNING_IN_CLOUD:
-            return
-
         try:
             os.remove(self.absolute_file_path)
         except OSError:
@@ -656,6 +706,47 @@ class OriginalFile(models.Model):
             )
         self.is_downloaded = False
         self.save()
+
+    def needs_downloading(self, pipeline_applied=None) -> bool:
+        """Determine if a file needs to be downloaded.
+
+        This is true if the file has already been downloaded and lost
+        without getting processed.
+        """
+        # If the file is downloaded and the file actually exists on disk,
+        # then it doens't need to be downloaded.
+        if self.is_downloaded \
+           and self.absolute_file_path \
+           and os.path.exists(self.absolute_file_path):
+            return False
+
+        unstarted_downloader_jobs = self.downloader_jobs.filter(
+            start_time__isnull=True,
+            success__isnull=True,
+            retried=False
+        )
+
+        # If the file has a downloader job that hasn't even started yet,
+        # then it doesn't need another.
+        if unstarted_downloader_jobs.count() > 0:
+            return False
+
+        # Transcriptome files are used by two jobs, one for long and
+        # one for short. So one of them could have completed
+        # successfully before the file disappeared, therefore check
+        # the pipeline_applied to make sure we're looking at the same
+        # index_length.
+        if pipeline_applied:
+            successful_processor_jobs = self.processor_jobs.filter(
+                success=True,
+                pipeline_applied=pipeline_applied
+            )
+        else:
+            successful_processor_jobs = self.processor_jobs.filter(success=True)
+
+        # Finally, if there is a successful processor job, then the file
+        # has been processed and doesn't need to be processed again.
+        return successful_processor_jobs.count() == 0
 
 
 class ComputedFile(models.Model):
@@ -691,6 +782,15 @@ class ComputedFile(models.Model):
     is_smashable = models.BooleanField(default=False)
     is_qc = models.BooleanField(default=False)
     is_qn_target = models.BooleanField(default=False)
+
+    # Compendia details
+    is_compendia = models.BooleanField(default=False)
+    compendia_organism = models.ForeignKey(Organism,
+                                        blank=True,
+                                        null=True,
+                                        on_delete=models.CASCADE
+                                    )
+    compendia_version = models.IntegerField(blank=True, null=True)
 
     # AWS
     s3_bucket = models.CharField(max_length=255, blank=True, null=True)
@@ -730,7 +830,11 @@ class ComputedFile(models.Model):
                     )
             self.save()
         except Exception as e:
-            logger.exception(e, computed_file_id=self.pk)
+            logger.exception(e,
+                computed_file_id=self.pk,
+                s3_key=self.s3_key,
+                s3_bucket=self.s3_bucket
+            )
             return False
 
         return True
@@ -764,6 +868,13 @@ class ComputedFile(models.Model):
                         self.s3_key,
                         path
                     )
+
+            # Veryify sync integrity
+            synced_sha1 = calculate_sha1(path)
+
+            if self.sha1 != synced_sha1:
+                raise AssertionError("SHA1 of downloaded ComputedFile doesn't match database SHA1!")
+
             return path
         except Exception as e:
             logger.exception(e, computed_file_id=self.pk)
@@ -772,18 +883,13 @@ class ComputedFile(models.Model):
     def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
-        hash_object = hashlib.sha1()
-        with open(self.absolute_file_path, mode='rb') as open_file:
-            for buf in iter(partial(open_file.read, io.DEFAULT_BUFFER_SIZE), b''):
-                hash_object.update(buf)
-
-        self.sha1 = hash_object.hexdigest()
+        self.sha1 = calculate_sha1(self.absolute_file_path)
         return self.sha1
 
     def calculate_size(self) -> None:
         """ Calculate the number of bytes in a given file.
         """
-        self.size_in_bytes = os.path.getsize(self.absolute_file_path)
+        self.size_in_bytes = calculate_file_size(self.absolute_file_path)
         return self.size_in_bytes
 
     def delete_local_file(self, force=False):
@@ -831,7 +937,12 @@ class ComputedFile(models.Model):
             else:
                 return self.sync_from_s3(force)
 
+    @property
     def s3_url(self):
+        """ Render the resulting S3 URL """
+        return self.get_s3_url()
+
+    def get_s3_url(self):
         """ Render the resulting S3 URL """
         if (self.s3_key) and (self.s3_bucket):
             return "https://s3.amazonaws.com/" + self.s3_bucket + "/" + self.s3_key
@@ -878,12 +989,16 @@ class Dataset(models.Model):
 
     # Delivery properties
     email_address = models.CharField(max_length=255, blank=True, null=True)
+    email_ccdl_ok = models.BooleanField(default=False)
     email_sent = models.BooleanField(default=False)  # Result has been made
     expires_on = models.DateTimeField(blank=True, null=True)
 
     # Deliverables
     s3_bucket = models.CharField(max_length=255)
     s3_key = models.CharField(max_length=255)
+
+    size_in_bytes = models.BigIntegerField(blank=True, null=True, default=0)
+    sha1 = models.CharField(max_length=64, null=True, default='')
 
     # Common Properties
     created_at = models.DateTimeField(editable=False, default=timezone.now)
@@ -899,7 +1014,6 @@ class Dataset(models.Model):
 
     def get_samples(self):
         """ Retuns all of the Sample objects in this Dataset """
-
         all_samples = []
         for sample_list in self.data.values():
             all_samples = all_samples + sample_list
@@ -909,12 +1023,7 @@ class Dataset(models.Model):
 
     def get_experiments(self):
         """ Retuns all of the Experiments objects in this Dataset """
-
-        all_experiments = []
-        for experiment in self.data.keys():
-            all_experiments.append(experiment)
-        all_experiments = list(set(all_experiments))
-
+        all_experiments = self.data.keys()
         return Experiment.objects.filter(accession_code__in=all_experiments)
 
     def get_samples_by_experiment(self):
@@ -1087,3 +1196,14 @@ class SampleComputedFileAssociation(models.Model):
     class Meta:
         db_table = "sample_computed_file_associations"
         unique_together = ('sample', 'computed_file')
+
+
+class ExperimentResultAssociation(models.Model):
+
+    experiment = models.ForeignKey(Experiment, blank=False, null=False, on_delete=models.CASCADE)
+    result = models.ForeignKey(
+        ComputationalResult, blank=False, null=False, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "experiment_result_associations"
+        unique_together = ('result', 'experiment')

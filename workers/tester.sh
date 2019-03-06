@@ -84,6 +84,7 @@ volume_directory="$script_directory/volume"
 source common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
+ES_HOST_IP=$(get_docker_es_ip_address)
 
 export AWS_ACCESS_KEY_ID=`~/bin/aws configure get default.aws_access_key_id`
 export AWS_SECRET_ACCESS_KEY=`~/bin/aws configure get default.aws_secret_access_key`
@@ -92,10 +93,12 @@ docker run \
 	   -it \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
+       --add-host=elasticsearch:$ES_HOST_IP \
        --env-file workers/environments/local \
        --env AWS_ACCESS_KEY_ID \
        --env AWS_SECRET_ACCESS_KEY \
        --entrypoint ./manage.py \
        --volume $volume_directory:/home/user/data_store \
+       --mount type=tmpfs,destination=/home/user/data_store_tmpfs \
        --link drdb:postgres \
        $image_name "${@: -3}" "${@: -2}" "${@: -1}"

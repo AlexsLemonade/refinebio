@@ -1,6 +1,7 @@
 from django.conf.urls import url, include
 from django.conf import settings
 from django.contrib import admin
+from django.urls import include, path
 from rest_framework.documentation import include_docs_urls
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -26,7 +27,10 @@ from data_refinery_api.views import (
     DatasetView,
     DatasetStatsView,
     APITokenView,
-    TranscriptomeIndexDetail
+    TranscriptomeIndexDetail,
+    QNTargetsDetail,
+    CompendiaDetail,
+    ComputedFilesList
 )
 
 # This provides _public_ access to the /admin interface!
@@ -85,7 +89,26 @@ class DatasetRoot(APIView):
             'create': reverse('create_dataset', request=request)
         })
 
+##
+# ES
+##
+from django.conf.urls import url, include
+from rest_framework.routers import DefaultRouter
+from data_refinery_api.views import ExperimentDocumentView
+
+# TODO:
+# Move this to a custom router 
+# so we can use 'name' 
+# https://www.django-rest-framework.org/api-guide/routers/
+router = DefaultRouter()
+router.register(r'',
+                    ExperimentDocumentView,
+                    base_name='esearch',
+                    )
+router.include_format_suffixes = False
+
 urlpatterns = [
+
     # Primary search and filter interface
     url(r'^search/$', SearchAndFilter.as_view(), name="search"),
 
@@ -117,15 +140,25 @@ urlpatterns = [
     # Dashboard Driver
     url(r'^stats/$', Stats.as_view(), name="stats"),
 
-    # Transcriptome Indices
+    # Not-publically listed APIs
+    # Transcriptome Indices and QN Targets
     url(r'^transcriptome_indices', TranscriptomeIndexDetail.as_view(),
         name="transcriptome-indices"),
+    url(r'^compendia', CompendiaDetail.as_view(),
+        name="compendia"),
+    url(r'^qn_targets', QNTargetsDetail.as_view(),
+        name="qn-targets"),
+    url(r'^computed_files', ComputedFilesList.as_view(),
+        name="computed-files"),
 
     # Admin
     url(r'^admin/', admin.site.urls),
 
     # Core API schema docs
     url(r'^docs/', include_docs_urls(title='Refine.bio API'), name="docs_schema"),
+
+    # ES
+    url(r'^es/', include(router.urls), name="esearch"),
 
     # Root
     url(r'^$', APIRoot.as_view(), name="api_root"),

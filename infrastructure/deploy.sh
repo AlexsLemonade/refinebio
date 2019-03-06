@@ -105,20 +105,18 @@ format_environment_variables () {
   done
 }
 
-# Make our IP address known to terraform.
+# Load $ALL_CCDL_IMAGES and helper functions
 source ../common.sh
+# Make our IP address known to terraform.
 export TF_VAR_host_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
 
-# Set the environment variables that dictate which Docker images are used.
-CCDL_IMGS="smasher illumina affymetrix salmon transcriptome no_op downloaders foreman api"
-
-for IMG in $CCDL_IMGS; do
+for IMAGE in $ALL_CCDL_IMAGES; do
     # For each image we need to set the env var that is used by our
     # scripts and the env var that gets picked up by terraform because
     # it is preceeded with TF_VAR.
-    IMG_UPPER=$IMG | tr a-z A-Z
-    export ${IMG_UPPER}_DOCKER_IMAGE=dr_$IMG:$SYSTEM_VERSION
-    export TF_VAR_${IMG}_docker_image=dr_$IMG:$SYSTEM_VERSION
+    IMAGE_UPPER=$IMAGE | tr a-z A-Z
+    export ${IMAGE_UPPER}_DOCKER_IMAGE=dr_$IMAGE:$SYSTEM_VERSION
+    export TF_VAR_${IMAGE}_docker_image=dr_$IMAGE:$SYSTEM_VERSION
 done
 
 # Copy ingress config to top level so it can be applied.
@@ -183,11 +181,17 @@ echo "Confirming Nomad cluster.."
 start_time=$(date +%s)
 diff=0
 nomad_status=$(check_nomad_status)
-while [[ $diff < 300 && $nomad_status != "200" ]]; do
+while [[ $diff < 900 && $nomad_status != "200" ]]; do
     sleep 1
     nomad_status=$(check_nomad_status)
     let "diff = $(date +%s) - $start_time"
 done
+
+if [[ $nomad_status != "200" ]]; then
+    echo "Nomad didn't start, aborting deploy."
+    echo "Either the timeout needs to be raised or there's something else broken."
+    exit 1
+fi
 
 # Kill Base Nomad Jobs so no new jobs can be queued.
 echo "Killing base jobs.. (this takes a while..)"
@@ -208,6 +212,7 @@ wait $(jobs -p)
 # apply migrations.
 echo "Killing dispatch jobs.. (this also takes a while..)"
 if [[ $(nomad status) != "No running jobs" ]]; then
+    counter=0
     for job in $(nomad status | awk {'print $1'} || grep /)
     do
         # Skip the header row for jobs.
@@ -215,11 +220,19 @@ if [[ $(nomad status) != "No running jobs" ]]; then
             # '|| true' so that if a job is garbage collected before we can remove it the error
             # doesn't interrupt our deploy.
             nomad stop -purge -detach $job > /dev/null || true &
+            counter=$((counter+1))
+        fi
+
+        # Wait for all the jobs to stop every 100 so we don't knock
+        # over the deploy box if there are 1000's.
+        if [[ "$counter" -gt 100 ]]; then
+            wait $(jobs -p)
+            counter=0
         fi
     done
 fi
 
-# Wait for these jobs to all die.
+# Wait for any remaining jobs to all die.
 wait $(jobs -p)
 
 # Make sure that prod_env is empty since we are only appending to it.
@@ -298,29 +311,40 @@ API_IP_ADDRESS=$(terraform output -json api_server_1_ip | jq -c '.value' | tr -d
 # it's not found then grep will return a non-zero exit code so in that
 # case return an empty string.
 container_running=$(ssh -o StrictHostKeyChecking=no \
+                        -o ServerAliveInterval=15 \
+                        -o ConnectTimeout=5 \
                         -i data-refinery-key.pem \
                         ubuntu@$API_IP_ADDRESS  "docker ps -a" | grep dr_api || echo "")
 
 # If $container_running is empty, then it's because the container isn't running.
 # If the container isn't running, then it's because the instance is spinning up.
 # The container will be started by the API's init script, so no need to do anything more.
+
 # However if $container_running isn't empty then we need to stop and restart it.
 if [[ ! -z $container_running ]]; then
     echo "Restarting API with latest image."
 
     ssh -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
         -i data-refinery-key.pem \
         ubuntu@$API_IP_ADDRESS  "docker pull $DOCKERHUB_REPO/$API_DOCKER_IMAGE"
 
     ssh -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
         -i data-refinery-key.pem \
         ubuntu@$API_IP_ADDRESS "docker rm -f dr_api"
 
     scp -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
         -i data-refinery-key.pem \
         api-configuration/environment ubuntu@$API_IP_ADDRESS:/home/ubuntu/environment
 
     ssh -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
         -i data-refinery-key.pem \
         ubuntu@$API_IP_ADDRESS "docker run \
        --env-file environment \
@@ -328,6 +352,8 @@ if [[ ! -z $container_running ]]; then
        -e DATABASE_NAME=$DATABASE_NAME \
        -e DATABASE_USER=$DATABASE_USER \
        -e DATABASE_PASSWORD=$DATABASE_PASSWORD \
+       -e ELASTICSEARCH_HOST=$ELASTICSEARCH_HOST \
+       -e ELASTICSEARCH_PORT=$ELASTICSEARCH_PORT \
        -v /tmp/volumes_static:/tmp/www/static \
        --log-driver=awslogs \
        --log-opt awslogs-region=$REGION \
@@ -339,6 +365,8 @@ if [[ ! -z $container_running ]]; then
 
     # Don't leave secrets lying around.
     ssh -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
         -i data-refinery-key.pem \
         ubuntu@$API_IP_ADDRESS "rm -f environment"
 fi

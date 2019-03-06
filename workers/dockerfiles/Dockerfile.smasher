@@ -6,11 +6,14 @@ RUN add-apt-repository ppa:apt-fast/stable
 RUN apt-get update -qq
 RUN apt-get -y install apt-fast
 
+# The packages related to R are somewhat weird, see the README for more details.
+
 COPY workers/CRAN.gpg .
 RUN \
   apt-fast update -qq && \
+  apt-get install -y apt-transport-https && \
   apt-fast install -y lsb-release && \
-  echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
+  echo "deb https://cran.revolutionanalytics.com/bin/linux/ubuntu $(lsb_release -sc)/" \
       >> /etc/apt/sources.list.d/added_repos.list && \
   apt-key add CRAN.gpg && \
   apt-fast update -qq && \
@@ -21,8 +24,8 @@ RUN \
   python3-pip \
   libcurl4-openssl-dev \
   libpq-dev \
-  r-base \
-  r-base-dev \
+  r-base-core=3.4.2-1xenial1 \
+  r-base-dev=3.4.2-1xenial1 \
   libpq-dev \
   libxml2-dev \
   libssl-dev \
@@ -49,7 +52,7 @@ RUN Rscript qn_dependencies.R
 RUN pip3 install --upgrade pip
 
 # Smasher-specific requirements
-RUN pip3 install numpy scipy matplotlib pandas==0.23.1 scikit-learn sympy nose rpy2 tzlocal
+RUN pip3 install numpy scipy matplotlib pandas==0.23.1 scikit-learn sympy nose rpy2==2.9.5 tzlocal
 # End smasher-specific
 
 COPY config/ config/
@@ -57,7 +60,7 @@ COPY .boto .boto
 
 COPY workers/data_refinery_workers/processors/requirements.txt .
 
-RUN  pip3 --no-cache-dir install -r requirements.txt
+RUN  pip3 install -r requirements.txt
 
 COPY common/dist/data-refinery-common-* common/
 

@@ -38,7 +38,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         # All files for the job are in the same directory.
         job_context["work_dir"] = LOCAL_ROOT_DIR + "/" + "processor_job_" + str(job_context["job_id"]) + "/"
         try:
-            os.makedirs(job_context["work_dir"])
+            os.makedirs(job_context["work_dir"], exist_ok=True)
         except Exception as e:
             logger.exception("Could not create work directory for processor job.",
                              job_context=job_context)
@@ -66,7 +66,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 
             job_context["job"].failure_reason = str(e)
             job_context["job"].no_retry = True
-            job_context["success"] = True
+            job_context["success"] = False
             return job_context
 
         # We want to make sure that all of our columns for conversion and smashing
@@ -138,6 +138,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         job_context["internal_accession"] = get_internal_microarray_accession(job_context["platform"])
         if not job_context["internal_accession"]:
             logger.error("Failed to find internal accession for code", code=job_context["platform"])
+            job_context["job"].failure_reason = "Failed to find internal accession for code" + job_context["platform"]
             job_context['success'] = False
             job_context["job"].no_retry = True
     except Exception as e:
@@ -159,6 +160,14 @@ def _convert_genes(job_context: Dict) -> Dict:
 
 def _convert_affy_genes(job_context: Dict) -> Dict:
     """ Convert to Ensembl genes if we can"""
+
+    if 'internal_accession' not in job_context or not job_context['internal_accession']:
+        error_msg = "Told to convert AFFY genes without an internal_accession - how did this happen?"
+        logger.error(error_msg, job_context=job_context)
+        job_context["job"].failure_reason = str(error_msg)
+        job_context['success'] = False
+        job_context["job"].no_retry = True
+        return job_context
 
     gene_index_path = "/home/user/gene_indexes/" + job_context["internal_accession"] + ".tsv.gz"
     if not os.path.exists(gene_index_path):
@@ -205,7 +214,7 @@ def _convert_affy_genes(job_context: Dict) -> Dict:
     is_good_quality = check_output_quality(job_context['output_file_path'])
     if not is_good_quality:
         job_context["success"] = False
-        job_context["job"].failure_reason = "NO_OP output failed quality control check."
+        job_context["job"].failure_reason = "NO_OP output failed quality control check. (" + job_context['output_file_path'] + ")"
         job_context["job"].no_retry = True
         return job_context
     else:

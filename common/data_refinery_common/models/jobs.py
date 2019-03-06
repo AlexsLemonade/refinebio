@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Set
 
 from django.db import transaction
 from django.db import models
@@ -127,10 +127,18 @@ class ProcessorJob(models.Model):
     failure_reason = models.TextField(null=True)
 
     # If the job is retried, this is the id of the new job
-    retried_job = models.ForeignKey('self', on_delete=models.PROTECT, null=True)
+    retried_job = models.ForeignKey('self', on_delete=models.SET_NULL, null=True)
 
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
+
+    def get_samples(self) -> Set[Sample]:
+        samples = set()
+        for original_file in self.original_files.all():
+            for sample in original_file.samples.all():
+                samples.add(sample)
+
+        return samples
 
     def save(self, *args, **kwargs):
         """ On save, update timestamps """
@@ -188,8 +196,21 @@ class DownloaderJob(models.Model):
     # If the job is retried, this is the id of the new job
     retried_job = models.ForeignKey('self', on_delete=models.PROTECT, null=True)
 
+    # If the job was recreated because the data it downloaded got
+    # lost, deleted, or corrupted then this field will be true.
+    # This helps prevent an infinite loop of DownloaderJob recreation.
+    was_recreated = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
+
+    def get_samples(self) -> Set[Sample]:
+        samples = set()
+        for original_file in self.original_files.all():
+            for sample in original_file.samples.all():
+                samples.add(sample)
+
+        return samples
 
     def save(self, *args, **kwargs):
         """ On save, update timestamps """

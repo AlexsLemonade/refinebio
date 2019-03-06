@@ -27,6 +27,8 @@ job "JANITOR_${{INDEX}}_${{RAM}}" {
     task "janitor" {
       driver = "docker"
 
+      kill_timeout = "30s"
+
       # This env will be passed into the container for the job.
       env {
         ${{AWS_CREDS}}
@@ -47,6 +49,9 @@ job "JANITOR_${{INDEX}}_${{RAM}}" {
         NOMAD_PORT = "${{NOMAD_PORT}}"
 
         RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
+
+        ELASTICSEARCH_HOST = "${{ELASTICSEARCH_HOST}}"
+        ELASTICSEARCH_PORT = "${{ELASTICSEARCH_PORT}}"
 
         USE_S3 = "${{USE_S3}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"

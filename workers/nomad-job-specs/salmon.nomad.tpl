@@ -27,6 +27,8 @@ job "SALMON_${{INDEX}}_${{RAM}}" {
     task "salmon" {
       driver = "docker"
 
+      kill_timeout = "30s"
+
       # This env will be passed into the container for the job.
       env {
         ${{AWS_CREDS}}
@@ -52,6 +54,9 @@ job "SALMON_${{INDEX}}_${{RAM}}" {
 
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
+
+        ELASTICSEARCH_HOST = "${{ELASTICSEARCH_HOST}}"
+        ELASTICSEARCH_PORT = "${{ELASTICSEARCH_PORT}}"
 
         LOG_LEVEL = "${{LOG_LEVEL}}"
       }
@@ -90,6 +95,17 @@ job "SALMON_${{INDEX}}_${{RAM}}" {
         ${{EXTRA_HOSTS}}
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]
         ${{LOGGING_CONFIG}}
+
+        mounts = [
+          {
+            type = "tmpfs"
+            target = "/home/user/data_store_tmpfs"
+            readonly = false
+            tmpfs_options {
+              size = 17179869184 # size in bytes (17GB)
+            }
+          }
+        ]
       }
     }
   }

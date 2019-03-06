@@ -2,7 +2,7 @@
 # related to networking.
 
 provider "aws" {
-  version = "1.31.0"
+  version = "1.37.0"
   region = "${var.region}"
 }
 
@@ -174,7 +174,12 @@ locals {
 # this since we're using cloudfront. The cert for the API is created
 # an installed by certbot.
 resource "aws_acm_certificate" "ssl-cert" {
-  domain_name = "${ var.stage == "prod" ? "" : local.stage_with_dot }refine.bio"
+  # We don't need this resource for dev stacks.
+  # Apparently `count` is the officially recommended way to conditionally enable or disable a resource:
+  # https://github.com/hashicorp/terraform/issues/1604#issuecomment-266070770
+  count = "${var.stage == "dev" ? 0 : 1}"
+
+  domain_name = "${ var.stage == "prod" ? "www." : local.stage_with_dot }refine.bio"
   validation_method = "DNS"
 
   tags {
@@ -183,11 +188,21 @@ resource "aws_acm_certificate" "ssl-cert" {
 }
 
 resource "aws_acm_certificate_validation" "ssl-cert" {
+  # We don't need this resource for dev stacks.
+  # Apparently `count` is the officially recommended way to conditionally enable or disable a resource:
+  # https://github.com/hashicorp/terraform/issues/1604#issuecomment-266070770
+  count = "${var.stage == "dev" ? 0 : 1}"
+
   certificate_arn = "${aws_acm_certificate.ssl-cert.arn}"
 }
 
 resource "aws_cloudfront_distribution" "static-distribution" {
-  aliases = ["${var.static_bucket_prefix == "dev" ? var.user : var.static_bucket_prefix}${var.static_bucket_root}"]
+  # We don't need this resource for dev stacks.
+  # Apparently `count` is the officially recommended way to conditionally enable or disable a resource:
+  # https://github.com/hashicorp/terraform/issues/1604#issuecomment-266070770
+  count = "${var.stage == "dev" ? 0 : 1}"
+
+  aliases = ["${aws_acm_certificate.ssl-cert.domain_name}"]
 
   origin {
     domain_name = "${aws_s3_bucket.data-refinery-static.website_endpoint}"
@@ -211,6 +226,12 @@ resource "aws_cloudfront_distribution" "static-distribution" {
 
   # This makes refreshing pages in nested paths work:
   # https://stackoverflow.com/a/35673266/6095378
+  custom_error_response {
+    error_caching_min_ttl = 0
+    error_code = 404
+    response_code = 200
+    response_page_path = "/index.html"
+  }
   custom_error_response {
     error_caching_min_ttl = 0
     error_code = 403
@@ -244,6 +265,9 @@ resource "aws_cloudfront_distribution" "static-distribution" {
     min_ttl = 0
     default_ttl = 0
     max_ttl = 0
+
+    # https://www.terraform.io/docs/providers/aws/r/cloudfront_distribution.html#compress
+    compress = true
   }
 
   restrictions {

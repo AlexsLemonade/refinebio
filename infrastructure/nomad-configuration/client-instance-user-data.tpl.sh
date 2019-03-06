@@ -16,7 +16,7 @@
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get upgrade -y
-apt-get install --yes jq iotop dstat speedometer awscli docker.io chrony
+apt-get install --yes jq iotop dstat speedometer awscli docker.io chrony htop
 
 ulimit -n 65536
 
@@ -25,7 +25,14 @@ mkdir -p /var/ebs/
 
 fetch_and_mount_volume () {
     INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
-    EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=${user}" "Name=tag:Stage,Values=${stage}" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=${region}a" --region ${region} | jq '.Volumes[0].VolumeId' | tr -d '"'`
+
+    # Try to mount volume 0 first, so we have one volume we know is always mounted!
+    if aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=prod" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | grep 'VolumeID'; then
+        EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=prod" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
+    else
+        EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=prod" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
+    fi
+
     aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device "/dev/sdf" --region ${region}
 }
 
@@ -90,7 +97,7 @@ echo "
 # Cannot specify bip option in config file because it is hardcoded in
 # the startup command because docker is run by clowns.
 service docker stop
-nohup /usr/bin/dockerd -s overlay2 --bip=172.17.77.1/22 --log-driver=json-file --log-opt max-size=100m --log-opt max-file=3 > /dev/null &
+nohup /usr/bin/dockerd -s overlay2 --bip=172.17.77.1/22 --log-driver=json-file --log-opt max-size=100m --log-opt max-file=3 > /var/log/docker_daemon.log &
 
 # Output the files we need to start up Nomad and register jobs:
 # (Note that the lines starting with "$" are where
@@ -118,6 +125,40 @@ chmod +x install_nomad.sh
 
 # Start the Nomad agent in client mode.
 nomad agent -config client.hcl > /var/log/nomad_client.log &
+
+# Set up the Docker hung process killer
+cat <<EOF >/home/ubuntu/killer.py
+# Call like:
+# docker ps --format 'table {{.Names}}|{{.RunningFor}}' | grep -v qn | grep -v compendia | python killer.py
+
+import os
+import sys
+
+dockerps = sys.stdin.read()
+
+for item in dockerps.split('\n'):
+    # skip the first
+    if 'NAMES' in item:
+        continue
+    if item == '':
+        continue
+
+    cid, time = item.split('|')
+    if 'hours' not in time:
+        continue
+
+    num_hours = int(time.split(' ')[0])
+    if num_hours > 1:
+        print("Killing " + cid)
+        os.system('docker kill ' + cid)
+EOF
+# Create the CW metric job in a crontab
+# write out current crontab
+crontab -l > tempcron
+echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/5 * * * * docker ps --format 'table {{.Names}}|{{.RunningFor}}' | grep -v qn | grep -v compendia | python /home/ubuntu/killer.py" >> tempcron
+# install new cron file
+crontab tempcron
+rm tempcron
 
 # Set up the AWS NTP
 # via https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-time.html#configure_ntp

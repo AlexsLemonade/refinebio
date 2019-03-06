@@ -36,6 +36,7 @@ class NOOPTestCase(TestCase):
         og_file.source_filename = "https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-51013/"
         og_file.filename = "GSM1234847_sample_table.txt"
         og_file.absolute_file_path = "/home/user/data_store/raw/TEST/NO_OP/GSM1234847_sample_table.txt"
+        og_file.is_downloaded = True
         og_file.save()
 
         sample = Sample()
@@ -62,6 +63,7 @@ class NOOPTestCase(TestCase):
         og_file.source_filename = "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE10nnn/GSE10188/miniml/GSE10188_family.xml.tgz"
         og_file.filename = "GSM269747-tbl-1.txt"
         og_file.absolute_file_path = "/home/user/data_store/raw/TEST/NO_OP/GSM269747-tbl-1.txt"
+        og_file.is_downloaded = True
         og_file.save()
 
         sample = Sample()
@@ -103,6 +105,7 @@ class NOOPTestCase(TestCase):
         og_file.source_filename = "https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-22433/"
         og_file.filename = "GSM557500_sample_table.txt"
         og_file.absolute_file_path = "/home/user/data_store/raw/TEST/NO_OP/GSM557500_sample_table.txt"
+        og_file.is_downloaded = True
         og_file.save()
 
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
@@ -148,6 +151,7 @@ class NOOPTestCase(TestCase):
         og_file.source_filename = "https://github.com/AlexsLemonade/refinebio/files/2255178/GSM1089291-tbl-1.txt"
         og_file.filename = "GSM1089291-tbl-1.txt"
         og_file.absolute_file_path = "/home/user/data_store/raw/TEST/NO_OP/GSM1089291-tbl-1.txt"
+        og_file.is_downloaded = True
         og_file.save()
 
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
@@ -196,6 +200,7 @@ class NOOPTestCase(TestCase):
         og_file.source_filename = "https://github.com/AlexsLemonade/refinebio/files/2255178/GSM1089291-tbl-1-modified.txt"
         og_file.filename = "GSM1089291-tbl-1-modified.txt"
         og_file.absolute_file_path = "/home/user/data_store/raw/TEST/NO_OP/GSM1089291-tbl-1-modified.txt"
+        og_file.is_downloaded = True
         og_file.save()
 
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")

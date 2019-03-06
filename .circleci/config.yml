@@ -10,10 +10,11 @@ jobs:
       - checkout
 
       # Clean up stuff circle provides that we don't need.
-      - run: sudo bash .circleci/cleanup_instance.sh
+      - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
+      - run: ./run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
@@ -22,6 +23,9 @@ jobs:
       # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
       - run: ./update_models.sh
+
+      # Update ES models
+      - run: ./run_manage.sh search_index --rebuild -f;
 
         # Install Nomad
       - run: sudo ./install_nomad.sh
@@ -34,7 +38,6 @@ jobs:
       - run: docker push localhost:5000/dr_no_op
       - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
       - run: docker push localhost:5000/dr_downloaders
-      - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
 
       # Run Downloader Tests
       # Running these in the same job as the common tests is good
@@ -46,24 +49,17 @@ jobs:
 
       # Run Foreman Tests
       - run: mkdir -p test_volume && chmod -R a+rw test_volume
-      - run: ./foreman/run_tests.sh
 
-     # Run NO_OP tests
+      # The foreman includes the end-to-end tests, but some of these
+      # require docker images which are not built in this
+      # workflow. Therefore we exclude salmon and transcriptome and
+      # let those end-to-end tests get run in the workflows that
+      # include building those images.
+      - run: ./foreman/run_tests.sh --exclude-tag=salmon --exclude-tag=transcriptome
+
+      # Run NO_OP tests
       - run: sudo chown -R circleci:circleci workers/test_volume/
       - run: .circleci/filter_tests.sh -t no_op
-
-      # Run Smasher tests.
-      - run: sudo chown -R circleci:circleci workers/test_volume/
-      - run:
-          command: .circleci/filter_tests.sh -t smasher
-          # Smashing can apparently take a long time on CI
-          no_output_timeout: 1h
-
-      # Run Smasher tests.
-      - run: sudo chown -R circleci:circleci workers/test_volume/
-      - run:
-          command: .circleci/filter_tests.sh -t janitor
-          no_output_timeout: 1h
 
       # Run QN tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
@@ -71,7 +67,7 @@ jobs:
           command: .circleci/filter_tests.sh -t qn
           no_output_timeout: 1h
 
-  common_tests:
+  common_smasher_tests:
     working_directory: ~/refinebio
     machine:
       docker_layer_caching: true
@@ -79,10 +75,11 @@ jobs:
       - checkout
 
       # Clean up stuff circle provides that we don't need.
-      - run: sudo bash .circleci/cleanup_instance.sh
+      - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
+      - run: ./run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
@@ -95,6 +92,28 @@ jobs:
       # Run Common Tests.
       - run: ./common/run_tests.sh
 
+      - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
+
+      # Run Smasher tests.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run:
+          command: .circleci/filter_tests.sh -t smasher
+          # Smashing can apparently take a long time on CI
+          no_output_timeout: 1h
+
+      # Run Janitor tests.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run:
+          command: .circleci/filter_tests.sh -t janitor
+          no_output_timeout: 1h
+
+      # Run Compendia tests.
+      - run: sudo chown -R circleci:circleci workers/test_volume/
+      - run:
+          command: .circleci/filter_tests.sh -t compendia
+          no_output_timeout: 1h
+
+
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
     working_directory: ~/refinebio
@@ -104,10 +123,11 @@ jobs:
       - checkout
 
       # Clean up stuff circle provides that we don't need.
-      - run: sudo bash .circleci/cleanup_instance.sh
+      - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
+      - run: ./run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
@@ -116,6 +136,9 @@ jobs:
       # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
       - run: ./update_models.sh
+
+      # Update ES models
+      - run: ./run_manage.sh search_index --rebuild -f;
 
       # Run API Tests.
       - run: ./api/run_tests.sh
@@ -132,10 +155,11 @@ jobs:
       - checkout
 
       # Clean up stuff circle provides that we don't need.
-      - run: sudo bash .circleci/cleanup_instance.sh
+      - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
+      - run: ./run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
@@ -172,10 +196,11 @@ jobs:
       - checkout
 
       # Clean up stuff circle provides that we don't need.
-      - run: sudo bash .circleci/cleanup_instance.sh
+      - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
       - run: ./run_postgres.sh
+      - run: ./run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
@@ -202,12 +227,12 @@ jobs:
     working_directory: ~/refinebio
     steps:
       - checkout
-      - run: bash .circleci/install_git_decrypt.sh
-      - run: bash .circleci/git_decrypt.sh
+      - run: ./.circleci/install_git_decrypt.sh
+      - run: ./.circleci/git_decrypt.sh
       - run:
-          command: bash .circleci/remote_deploy.sh
+          command: ./.circleci/remote_deploy.sh
           no_output_timeout: 4h # Building images and createing postgres instances can take a while.
-      - run: bash .circleci/slackpost.sh robots deploybot
+      - run: ./.circleci/slackpost.sh robots deploybot
 
 workflows:
   version: 2
@@ -222,7 +247,7 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
-      - common_tests:
+      - common_smasher_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
             # "test" job, an explicit "tags" filter is required here.
@@ -252,7 +277,7 @@ workflows:
       - deploy:
           requires:
             - main_tests
-            - common_tests
+            - common_smasher_tests
             - salmon_and_api_tests
             - tx_illumina_tests
             - affy_agilent_tests
@@ -261,4 +286,16 @@ workflows:
             branches:
               ignore: /.*/
             tags:
+              # From CirlceCI Docs:
+              # If both only and ignore are specified the only is considered before ignore.
               only: /v.*/
+              ignore: /v.*-hotfix/
+
+  hotfix-deploy:
+    jobs:
+      - deploy:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v.*-hotfix/

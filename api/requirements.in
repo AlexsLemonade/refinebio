@@ -1,11 +1,12 @@
 coverage
-django
+django>=2.1.5
 psycopg2-binary
 boto3
 requests>=2.20.0
-python-nomad
+python-nomad>=1.0.2
 djangorestframework
 djangorestframework-hstore
 django-cors-headers
 django-filter
 coreapi
+mailchimp3

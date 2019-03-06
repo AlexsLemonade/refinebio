@@ -8,6 +8,7 @@ import subprocess
 
 from contextlib import closing
 from django.test import TestCase, tag
+from typing import Dict, List
 from unittest.mock import MagicMock
 
 from data_refinery_common.utils import get_env_variable
@@ -25,15 +26,17 @@ from data_refinery_common.models import (
     ProcessorJob,
     ProcessorJobOriginalFileAssociation,
     Sample,
+    SampleComputedFileAssociation,
+    SampleResultAssociation,
     SurveyJob,
 )
-from data_refinery_workers.processors import salmon, utils
+from data_refinery_workers.processors import salmon, tximport, utils
 
 
 def prepare_organism_indices():
     c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
 
-    # This is a lie, but this image doesn't have the dependencies for TX_IMPORT
+    # This is a lie, but this image doesn't have the dependencies for TRANSCRIPTOME_INDEX
     computational_result_short = ComputationalResult(processor=utils.find_processor('SALMON_QUANT'))
     computational_result_short.save()
 
@@ -56,21 +59,6 @@ def prepare_organism_indices():
     computational_result_long = ComputationalResult(processor=utils.find_processor('SALMON_QUANT'))
     computational_result_long.save()
 
-    organism_index = OrganismIndex()
-    organism_index.index_type = "TRANSCRIPTOME_LONG"
-    organism_index.organism = c_elegans
-    organism_index.result = computational_result_long
-    organism_index.absolute_directory_path = "/home/user/data_store/salmon_tests/TRANSCRIPTOME_INDEX/LONG"
-    organism_index.save()
-
-    comp_file = ComputedFile()
-    # This path will not be used because we already have the files extracted.
-    comp_file.absolute_file_path = "/home/user/data_store/salmon_tests/TRANSCRIPTOME_INDEX/LONG/celgans_long.tar.gz"
-    comp_file.result = computational_result_long
-    comp_file.size_in_bytes=1337
-    comp_file.sha1="ABC"
-    comp_file.save()
-
 
 def prepare_job():
     pj = ProcessorJob()
@@ -90,12 +78,14 @@ def prepare_job():
     og_file.source_filename = "ERR1562482_1.fastq.gz"
     og_file.filename = "ERR1562482_1.fastq.gz"
     og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR1562482_1.fastq.gz"
+    og_file.is_downloaded = True
     og_file.save()
 
     og_file2 = OriginalFile()
     og_file2.source_filename = "ERR1562482_2.fastq.gz"
     og_file2.filename = "ERR1562482_2.fastq.gz"
     og_file2.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR1562482_2.fastq.gz"
+    og_file2.is_downloaded = True
     og_file2.save()
 
     og_file_samp_assoc = OriginalFileSampleAssociation()
@@ -139,6 +129,7 @@ def prepare_dotsra_job(filename="ERR1562482.sra"):
     og_file.source_filename = filename
     og_file.filename = filename
     og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/" + filename
+    og_file.is_downloaded = True
     og_file.save()
 
     og_file_samp_assoc = OriginalFileSampleAssociation()
@@ -210,7 +201,7 @@ class SalmonTestCase(TestCase):
         job_context = salmon.salmon(job.pk)
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertTrue(job.success)
-        shutil.rmtree(job_context["work_dir"])
+        shutil.rmtree(job_context["work_dir"], ignore_errors=True)
 
     @tag('salmon')
     def test_salmon_dotsra_bad(self):
@@ -223,7 +214,6 @@ class SalmonTestCase(TestCase):
         job_context = salmon.salmon(job.pk)
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertFalse(job.success)
-        shutil.rmtree(job_context["work_dir"])
 
     def check_salmon_quant(self, job_context, sample_dir):
         """Helper function that calls salmon._run_salmon and confirms
@@ -243,6 +233,7 @@ class SalmonTestCase(TestCase):
             job_context["index_directory"] = job_context["index_directory"].replace("SHORT", "LONG")
 
         salmon._run_salmon(job_context)
+        salmon._tximport(job_context)
         output_quant_filename = os.path.join(job_context['output_directory'], 'quant.sf')
         self.assertTrue(os.path.exists(output_quant_filename))
 
@@ -292,6 +283,7 @@ class SalmonTestCase(TestCase):
 
         job_context = salmon._prepare_files({"job_dir_prefix": "TEST",
                                              "job_id": "TEST",
+                                             "job": ProcessorJob(),
                                              'pipeline': Pipeline(name="Salmon"),
                                              'computed_files': [],
                                              "original_files": [og_read_1, og_read_2]})
@@ -453,78 +445,84 @@ class SalmonTestCase(TestCase):
         self.assertFalse(fail['success'])
 
 
-# class SalmonToolsTestCase(TestCase):
-#     """Test SalmonTools command."""
+class SalmonToolsTestCase(TestCase):
+    """Test SalmonTools command."""
 
-#     def setUp(self):
-#         self.test_dir = '/home/user/data_store/salmontools/'
+    def setUp(self):
+        self.test_dir = '/home/user/data_store/salmontools/'
 
-#     @tag('salmon')
-#     def test_double_reads(self):
-#         """Test outputs when the sample has both left and right reads."""
-#         job_context = {
-#             'job_id': 123,
-#             'job': ProcessorJob(),
-#             'pipeline': Pipeline(name="Salmon"),
-#             'input_file_path': self.test_dir + 'double_input/reads_1.fastq',
-#             'input_file_path_2': self.test_dir + 'double_input/reads_2.fastq',
-#             'salmontools_directory': self.test_dir + 'double_salmontools/',
-#             'salmontools_archive': self.test_dir + 'salmontools-result.tar.gz',
-#             'output_directory': self.test_dir + 'double_output/',
-#             'computed_files': []
-#         }
-#         os.makedirs(job_context["salmontools_directory"], exist_ok=True)
+    @tag('salmon')
+    def test_double_reads(self):
+        """Test outputs when the sample has both left and right reads."""
+        job_context = {
+            'job_id': 123,
+            'job': ProcessorJob(),
+            'pipeline': Pipeline(name="Salmon"),
+            'input_file_path': self.test_dir + 'double_input/reads_1.fastq',
+            'input_file_path_2': self.test_dir + 'double_input/reads_2.fastq',
+            'salmontools_directory': self.test_dir + 'double_salmontools/',
+            'salmontools_archive': self.test_dir + 'salmontools-result.tar.gz',
+            'output_directory': self.test_dir + 'double_output/',
+            'computed_files': []
+        }
+        os.makedirs(job_context["salmontools_directory"], exist_ok=True)
 
-#         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
-#         sample = Sample()
-#         sample.organism = homo_sapiens
-#         sample.save()
-#         job_context["sample"] = sample
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        sample = Sample()
+        sample.organism = homo_sapiens
+        sample.save()
+        job_context["sample"] = sample
 
-#         salmon._run_salmontools(job_context)
+        salmon._run_salmontools(job_context)
 
-#         # Confirm job status
-#         self.assertTrue(job_context["success"])
+        # Confirm job status
+        self.assertTrue(job_context["success"])
 
-#         # Check two output files
-#         output_file1 = job_context['salmontools_directory'] + 'unmapped_by_salmon_1.fa'
-#         expected_output_file1 = self.test_dir + 'expected_double_output/unmapped_by_salmon_1.fa'
-#         self.assertTrue(identical_checksum(output_file1, expected_output_file1))
+        # Unpack result for checking
+        os.system('gunzip ' + job_context['salmontools_directory'] + "*.gz")
 
-#         output_file2 = job_context['salmontools_directory'] + 'unmapped_by_salmon_2.fa'
-#         expected_output_file2 = self.test_dir + 'expected_double_output/unmapped_by_salmon_2.fa'
-#         self.assertTrue(identical_checksum(output_file2, expected_output_file2))
+        # Check two output files
+        output_file1 = job_context['salmontools_directory'] + 'unmapped_by_salmon_1.fa'
+        expected_output_file1 = self.test_dir + 'expected_double_output/unmapped_by_salmon_1.fa'
+        self.assertTrue(identical_checksum(output_file1, expected_output_file1))
 
-#     @tag('salmon')
-#     def test_single_read(self):
-#         """Test outputs when the sample has one read only."""
-#         job_context = {
-#             'job_id': 456,
-#             'job': ProcessorJob(),
-#             'pipeline': Pipeline(name="Salmon"),
-#             'input_file_path': self.test_dir + 'single_input/single_read.fastq',
-#             'output_directory': self.test_dir + 'single_output/',
-#             'salmontools_directory': self.test_dir + 'single_salmontools/',
-#             'salmontools_archive': self.test_dir + 'salmontools-result.tar.gz',
-#             'computed_files': []
-#         }
-#         os.makedirs(job_context["salmontools_directory"], exist_ok=True)
+        output_file2 = job_context['salmontools_directory'] + 'unmapped_by_salmon_2.fa'
+        expected_output_file2 = self.test_dir + 'expected_double_output/unmapped_by_salmon_2.fa'
+        self.assertTrue(identical_checksum(output_file2, expected_output_file2))
 
-#         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
-#         sample = Sample()
-#         sample.organism = homo_sapiens
-#         sample.save()
-#         job_context["sample"] = sample
+    @tag('salmon')
+    def test_single_read(self):
+        """Test outputs when the sample has one read only."""
+        job_context = {
+            'job_id': 456,
+            'job': ProcessorJob(),
+            'pipeline': Pipeline(name="Salmon"),
+            'input_file_path': self.test_dir + 'single_input/single_read.fastq',
+            'output_directory': self.test_dir + 'single_output/',
+            'salmontools_directory': self.test_dir + 'single_salmontools/',
+            'salmontools_archive': self.test_dir + 'salmontools-result.tar.gz',
+            'computed_files': []
+        }
+        os.makedirs(job_context["salmontools_directory"], exist_ok=True)
 
-#         salmon._run_salmontools(job_context)
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        sample = Sample()
+        sample.organism = homo_sapiens
+        sample.save()
+        job_context["sample"] = sample
 
-#         # Confirm job status
-#         self.assertTrue(job_context["success"])
+        salmon._run_salmontools(job_context)
 
-#         # Check output file
-#         output_file = job_context['salmontools_directory'] + 'unmapped_by_salmon.fa'
-#         expected_output_file = self.test_dir + 'expected_single_output/unmapped_by_salmon.fa'
-#         self.assertTrue(identical_checksum(output_file, expected_output_file))
+        # Confirm job status
+        self.assertTrue(job_context["success"])
+
+        # Unpack result for checking
+        os.system('gunzip ' + job_context['salmontools_directory'] + "*.gz")
+
+        # Check output file
+        output_file = job_context['salmontools_directory'] + 'unmapped_by_salmon.fa'
+        expected_output_file = self.test_dir + 'expected_single_output/unmapped_by_salmon.fa'
+        self.assertTrue(identical_checksum(output_file, expected_output_file))
 
 class DetermineIndexLengthTestCase(TestCase):
     """Test salmon._determine_index_length function, which gets the salmon index length of a sample.
@@ -537,7 +535,9 @@ class DetermineIndexLengthTestCase(TestCase):
         job, files = prepare_job()
 
         job_context = salmon._set_job_prefix({'original_files': [files[0]],
-                                              'job_id': job})
+                                              'job_id': job.id,
+                                              'job': job
+                                              })
         job_context = salmon._prepare_files(job_context)
         results = salmon._determine_index_length(job_context)
 
@@ -550,7 +550,9 @@ class DetermineIndexLengthTestCase(TestCase):
         job, files = prepare_job()
 
         job_context = salmon._set_job_prefix({'original_files': files,
-                                              'job_id': job})
+                                              'job_id': job.id,
+                                              'job': job
+                                              })
         job_context = salmon._prepare_files(job_context)
         results = salmon._determine_index_length(job_context)
 
@@ -697,3 +699,323 @@ class RuntimeProcessorTest(TestCase):
 
         # Change yml filename back
         utils.ProcessorEnum['SALMONTOOLS'].value['yml_file'] = original_yml_file
+
+
+def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_accessions: List[str]) -> Dict:
+    """Create an experiment and associated objects and run tximport on it.
+
+    Creates a sample for each accession contained in either input
+    list. The samples in complete_accessions will be simlulated as
+    already having salmon quant run on them. The samples in
+    incomplete_accessions won't.
+    """
+    # Create the experiment
+    experiment_accession = 'SRP095529'
+    data_dir = '/home/user/data_store/salmon_tests/'
+    experiment_dir = data_dir + experiment_accession
+    experiment = Experiment.objects.create(accession_code=experiment_accession)
+
+    zebrafish = Organism.get_object_for_name("DANIO_RERIO")
+
+    # This is a lie, but this image doesn't have the dependencies for TRANSCRIPTOME_INDEX
+    computational_result_short = ComputationalResult(processor=utils.find_processor('SALMON_QUANT'))
+    computational_result_short.save()
+
+    organism_index = OrganismIndex()
+    organism_index.index_type = "TRANSCRIPTOME_SHORT"
+    organism_index.organism = zebrafish
+    organism_index.result = computational_result_short
+    organism_index.absolute_directory_path = "/home/user/data_store/salmon_tests/ZEBRAFISH_INDEX/SHORT"
+    organism_index.save()
+
+    comp_file = ComputedFile()
+    # This path will not be used because we already have the files extracted.
+    comp_file.absolute_file_path = "/home/user/data_store/salmon_tests/ZEBRAFISH_INDEX/SHORT/zebrafish_short.tar.gz"
+    comp_file.result = computational_result_short
+    comp_file.size_in_bytes=1337
+    comp_file.sha1="ABC"
+    comp_file.save()
+
+    for accession_code in incomplete_accessions:
+        last_sample = Sample.objects.create(accession_code=accession_code, organism=zebrafish)
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=last_sample)
+
+    # Create tximport result and files
+    quant_processor = utils.find_processor("SALMON_QUANT")
+    tximport_processor = utils.find_processor("TXIMPORT")
+
+    # Create the already processed samples along with their
+    # ComputationalResults and ComputedFiles. They don't need
+    # original files for this test because we aren't going to run
+    # salmon quant on them.
+    for accession_code in complete_accessions:
+        sample = Sample.objects.create(accession_code=accession_code, organism=zebrafish)
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
+
+        if accession_code == "SRR5125622":
+            current_sample = sample
+
+        # Create and associate quant result and files.
+        quant_result = ComputationalResult()
+        quant_result.is_ccdl = True
+        quant_result.processor = quant_processor
+        quant_result.save()
+
+        # In prod the filename pattern will involve the timestamp
+        # but here we're using the accession code so we can find
+        # the archive file for the current sample.
+        archive_filename = "result-" + accession_code + ".tar.gz"
+        archive_file = ComputedFile()
+        archive_file.filename = archive_filename
+        archive_file.absolute_file_path = os.path.join(experiment_dir, archive_filename)
+        archive_file.is_public = False
+        archive_file.is_smashable = False
+        archive_file.is_qc = False
+        archive_file.result = quant_result
+        archive_file.size_in_bytes = 12345
+        archive_file.save()
+
+        quant_file = ComputedFile()
+        quant_file.filename = "quant.sf"
+        quant_file.absolute_file_path = experiment_dir + "/quant_files/" + accession_code + "_output/quant.sf"
+        quant_file.is_public = False
+        quant_file.is_smashable = False
+        quant_file.is_qc = False
+        quant_file.result = quant_result
+        quant_file.size_in_bytes = 12345
+        quant_file.save()
+
+        SampleResultAssociation.objects.get_or_create(
+            sample=sample,
+            result=quant_result
+        )
+
+    # Processor jobs need at least one original file associated with
+    # them so they know what they're processing.
+    current_og = OriginalFile()
+    current_og.absolute_file_path = os.path.join(experiment_dir, 'SRR5125622.fastq.gz')
+    current_og.filename = "SRR5125622.fastq.gz"
+    current_og.save()
+
+    OriginalFileSampleAssociation.objects.create(original_file=current_og, sample=current_sample).save()
+
+    pj = ProcessorJob()
+    pj.pipeline_applied = "TXIMPORT"
+    pj.save()
+
+    assoc1 = ProcessorJobOriginalFileAssociation()
+    assoc1.original_file = current_og
+    assoc1.processor_job = pj
+    assoc1.save()
+
+    # Prep our job context
+    job_context = tximport._prepare_files({"job_dir_prefix": "TEST3",
+                                           "job_id": "TEST3",
+                                           "job": pj,
+                                           "index_directory": organism_index.absolute_directory_path,
+                                           "pipeline": Pipeline(name="Salmon"),
+                                           "computed_files": [],
+                                           "original_files": [current_og]})
+
+    # We don't have the raw file to run _determine_index_length so
+    # just pick one, it doesn't matter that much because we aren't
+    # checking the output data.
+    job_context["index_length"] = "short"
+    job_context = salmon._find_or_download_index(job_context)
+
+    # Actually run salmon on the second to last sample in the experiment.
+    job_context = salmon._tximport(job_context)
+
+    return job_context
+
+
+class EarlyTximportTestCase(TestCase):
+    """Tests that running tximport early works when it should be triggered.
+
+    Some experiments are going to have samples that can't be
+    processed. This means that tximport can't run on those unless we
+    tell it to. We have a tximport only job to do this, but it should
+    only be run on experiments with at least 25 samples where at least
+    80% of the samples have been processed. We therefore run the
+    tximport job on an experiment that is ready for it, one that has
+    too few samples, and one that has too low of a copmpletion
+    percent.
+    """
+    @tag('salmon')
+    def test_early_tximport(self):
+        """Tests that running tximport early works correctly.
+
+        Makes sure that when we should in fact run tximport early that
+        we do so, it works, and that it works even if there already is
+        an existing tximport result for the experiment.
+
+        So we run tximport on an experiment with 5 samples that aren't
+        yet processed and 20 samples that are. By having 20/25 samples
+        complete, we're just past both the numerical and percent
+        cutoffs.
+        """
+        # Accessions SRR5125616-SRR5125620 don't exist in SRA, but we
+        # don't actually want to process them so it's okay.
+        incomplete_accessions = [
+            "SRR5125616",
+            "SRR5125617",
+            "SRR5125618",
+            "SRR5125619",
+            "SRR5125620",
+        ]
+
+        complete_accessions = [
+            "SRR5125621",
+            "SRR5125622",
+            "SRR5125623",
+            "SRR5125624",
+            "SRR5125625",
+            "SRR5125626",
+            "SRR5125627",
+            "SRR5125628",
+            "SRR5125629",
+            "SRR5125630",
+            "SRR5125631",
+            "SRR5125632",
+            "SRR5125633",
+            "SRR5125634",
+            "SRR5125635",
+            "SRR5125636",
+            "SRR5125637",
+            "SRR5125638",
+            "SRR5125639",
+            "SRR5125640",
+        ]
+
+        job_context = run_tximport_at_progress_point(complete_accessions, incomplete_accessions)
+
+        self.assertTrue("tximported" in job_context)
+
+        rds_file= ComputedFile.objects.get(filename="txi_out.RDS")
+
+        for accession_code in complete_accessions:
+            # Check to make sure that all the associations were madep
+            # correctly. These queries will fail if they weren't.
+            tpm_file = ComputedFile.objects.get(filename=accession_code+"_output_gene_lengthScaledTPM.tsv")
+            sample = tpm_file.samples.first()
+            SampleComputedFileAssociation.objects.get(sample=sample, computed_file=tpm_file)
+            SampleComputedFileAssociation.objects.get(sample=sample, computed_file=rds_file)
+
+        # Make sure that these samples actually were ignored.
+        for accession_code in incomplete_accessions:
+            sample = Sample.objects.get(accession_code=accession_code)
+            self.assertEqual(sample.computed_files.count(), 0)
+
+    @tag("salmon")
+    def test_tximport_percent_cutoff(self):
+        """Tests logic for determining if tximport should be run early.
+
+        This test is verifying that tximport won't run if the
+        experiment has too few samples in it to be elegible.
+
+        So we run tximport on an experiment with 6 samples that aren't
+        yet processed and 20 samples that are. By having 20/26 samples
+        complete, we're past the numerical cutoff, but not past the
+        percent cutoff.
+        """
+        # Accessions SRR5125615-SRR5125620 don't exist in SRA, but we
+        # don't actually want to process them so it's okay.
+        incomplete_accessions = [
+            "SRR5125615",
+            "SRR5125616",
+            "SRR5125617",
+            "SRR5125618",
+            "SRR5125619",
+            "SRR5125620",
+        ]
+
+        complete_accessions = [
+            "SRR5125621",
+            "SRR5125622",
+            "SRR5125623",
+            "SRR5125624",
+            "SRR5125625",
+            "SRR5125626",
+            "SRR5125627",
+            "SRR5125628",
+            "SRR5125629",
+            "SRR5125630",
+            "SRR5125631",
+            "SRR5125632",
+            "SRR5125633",
+            "SRR5125634",
+            "SRR5125635",
+            "SRR5125636",
+            "SRR5125637",
+            "SRR5125638",
+            "SRR5125639",
+            "SRR5125640",
+        ]
+
+        job_context = run_tximport_at_progress_point(complete_accessions, incomplete_accessions)
+
+        # Confirm that this experiment is not ready for tximport yet,
+        # because `salmon quant` is not run on 'fake_sample' and it
+        # doens't have enough samples to have tximport run early.
+        self.assertFalse("tximported" in job_context)
+
+        # Make sure that these samples actually were ignored.
+        for accession_code in incomplete_accessions:
+            sample = Sample.objects.get(accession_code=accession_code)
+            self.assertEqual(sample.computed_files.count(), 0)
+
+    @tag("salmon")
+    def test_tximport_numerical_cutoff(self):
+        """Tests logic for determining if tximport should be run early.
+
+        This test is verifying that tximport won't run if the
+        experiment has too few samples in it to be elegible.
+
+        So we run tximport on an experiment with 5 samples that aren't
+        yet processed and 19 that are. By having 19/24 samples
+        complete, we're past the percent cutoff, but not past the
+        numerical cutoff.
+        """
+        # Accessions SRR5125616-SRR5125620 don't exist in SRA, but we
+        # don't actually want to process them so it's okay.
+        incomplete_accessions = [
+            "SRR5125616",
+            "SRR5125617",
+            "SRR5125618",
+            "SRR5125619",
+            "SRR5125620",
+        ]
+
+        complete_accessions = [
+            "SRR5125622",
+            "SRR5125623",
+            "SRR5125624",
+            "SRR5125625",
+            "SRR5125626",
+            "SRR5125627",
+            "SRR5125628",
+            "SRR5125629",
+            "SRR5125630",
+            "SRR5125631",
+            "SRR5125632",
+            "SRR5125633",
+            "SRR5125634",
+            "SRR5125635",
+            "SRR5125636",
+            "SRR5125637",
+            "SRR5125638",
+            "SRR5125639",
+            "SRR5125640",
+        ]
+
+        job_context = run_tximport_at_progress_point(complete_accessions, incomplete_accessions)
+
+        # Confirm that this experiment is not ready for tximport yet,
+        # because `salmon quant` is not run on 'fake_sample' and it
+        # doens't have enough samples to have tximport run early.
+        self.assertFalse("tximported" in job_context)
+
+        # Make sure that these samples actually were ignored.
+        for accession_code in incomplete_accessions:
+            sample = Sample.objects.get(accession_code=accession_code)
+            self.assertEqual(sample.computed_files.count(), 0)

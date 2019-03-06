@@ -8,7 +8,7 @@ import warnings
 
 from django.utils import timezone
 from nomad import Nomad
-from nomad.api.exceptions import BaseNomadException
+from nomad.api.exceptions import BaseNomadException, URLNotFoundNomadException
 from typing import Dict
 
 from data_refinery_common.logging import get_and_configure_logger
@@ -18,6 +18,7 @@ from data_refinery_common.models import (
     ComputedFile,
     Pipeline,
     Processor,
+    Sample,
     SampleComputedFileAssociation,
     SampleResultAssociation,
     ProcessorJob
@@ -39,6 +40,8 @@ def _find_and_remove_expired_jobs(job_context):
     job_context['deleted_items'] = []
 
     for item in os.listdir(LOCAL_ROOT_DIR):
+
+        # Processor job working directories
         if 'processor_job_' in item:
 
             # TX Index jobs are the only ones who are allowed to hang around
@@ -59,26 +62,62 @@ def _find_and_remove_expired_jobs(job_context):
                     # This job is running, don't delete  the working directory.
                     if job_status == "running":
                         continue
+                except URLNotFoundNomadException as e:
+                    # Nomad has no record of this job, meaning it has likely been GC'd after death.
+                    # It can be purged.
+                    pass
                 except BaseNomadException as e:
                     # If we can't currently access Nomad,
                     # just continue until we can again.
                     continue
                 except Exception as e:
                     # This job is likely vanished. No need for this directory.
-                    pass
-            except Exception:
-                # If we don't have a record of the job, we don't need the directory.
+                    # Or, possibly, another Nomad error outside of BaseNomadException.
+                    logger.exception("Janitor found vanished job for " + item + " - why?")
+                    continue
+            except ProcessorJob.DoesNotExist:
+                # This job has vanished from the DB - clean it up!
+                logger.error("Janitor found no record of " + item + " - why?")
                 pass
-
+            except Exception:
+                # We're unable to connect to the DB right now (or something), so hold onto it for right now.
+                logger.exception("Problem finding job record for " + item + " - why?")
+                continue
 
             # Delete it!
             try:
                 to_delete = LOCAL_ROOT_DIR + '/' + item
+                logger.info("Janitor deleting " + to_delete, contents=str(os.listdir(to_delete)))
                 shutil.rmtree(to_delete)
                 job_context['deleted_items'].append(to_delete)
             except Exception as e:
                 # This job is likely vanished. No need for this directory.
                 pass
+
+        # There may be successful processors
+        if 'SRP' in item or 'ERP' in item or 'DRR' in item:
+            sub_path = os.path.join(LOCAL_ROOT_DIR, item)
+            for sub_item in os.listdir(sub_path):
+                try:
+                    sample = Sample.objects.get(accession_code=sub_item)
+                    if sample.computed_files.count() == 0:
+                        # This doesn't have any associated computed files - leave it be.
+                        continue
+                except Sample.DoesNotExist:
+                    # Interesting. This shouldn't happen at all.
+                    continue
+                except Exception:
+                    # We can't contact the DB right now, skip deletion.
+                    continue
+
+                try:
+                    sub_item_path = os.path.join(sub_path, sub_item)
+                    logger.info("Janitor deleting " + sub_item_path, contents=str(os.listdir(sub_item_path)))
+                    shutil.rmtree(sub_item_path)
+                    job_context['deleted_items'].append(sub_item_path)
+                except Exception as e:
+                    # This job is likely vanished. No need for this directory.
+                    pass
 
     job_context['success'] = True
     return job_context

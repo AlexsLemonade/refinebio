@@ -33,6 +33,8 @@ job "DOWNLOADER" {
     task "downloader" {
       driver = "docker"
 
+      kill_timeout = "30s"
+
       # This env will be passed into the container for the job.
       env {
         ${{AWS_CREDS}}
@@ -51,6 +53,9 @@ job "DOWNLOADER" {
 
         NOMAD_HOST = "${{NOMAD_HOST}}"
         NOMAD_PORT = "${{NOMAD_PORT}}"
+
+        ELASTICSEARCH_HOST = "${{ELASTICSEARCH_HOST}}"
+        ELASTICSEARCH_PORT = "${{ELASTICSEARCH_PORT}}"
 
         RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
 
@@ -73,6 +78,13 @@ job "DOWNLOADER" {
       logs {
         max_files = 1
         max_file_size = 1
+      }
+
+      # Don't run on the smasher instance, it's too small and should be running smasher jobs.
+      constraint {
+        attribute = "${meta.is_smasher}"
+        operator = "!="
+        value = "true"
       }
 
       config {

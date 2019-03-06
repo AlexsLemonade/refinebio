@@ -1,0 +1,101 @@
+FROM miserlou/python3base:latest
+
+# This is very similar to the `smasher` image, 
+# but comes from a base image with OpenBLAS, needed for fast impuation,
+# and some of the other libraries required for fancyimpute.
+
+RUN apt-get update -qq
+RUN apt-get install -y software-properties-common
+RUN add-apt-repository ppa:apt-fast/stable
+RUN apt-get update -qq
+# via https://github.com/ilikenwf/apt-fast/issues/85#issuecomment-261640099
+RUN echo debconf apt-fast/maxdownloads string 16 | debconf-set-selections
+RUN echo debconf apt-fast/dlflag boolean true | debconf-set-selections
+RUN echo debconf apt-fast/aptmanager string apt-get | debconf-set-selections
+RUN _APTMGR=apt-get apt-get install -y apt-fast
+
+RUN export DEBIAN_FRONTEND=noninteractive; \
+    export DEBCONF_NONINTERACTIVE_SEEN=true; \
+    echo 'tzdata tzdata/Areas select Etc' | debconf-set-selections; \
+    echo 'tzdata tzdata/Zones/Etc select UTC' | debconf-set-selections; \
+    apt-get update -qqy \
+ && apt-get install -qqy --no-install-recommends \
+        tzdata \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY workers/CRAN.gpg .
+RUN \
+  apt-fast update -qq && \
+  apt-fast install -y lsb-release && \
+  echo "deb http://archive.linux.duke.edu/cran/bin/linux/ubuntu $(lsb_release -sc)/" \
+      >> /etc/apt/sources.list.d/added_repos.list && \
+  apt-key add CRAN.gpg && \
+  apt-fast update -qq && \
+  apt-fast install -y \
+  ed \
+  git \
+  python3 \
+  python3-pip \
+  libcurl4-openssl-dev \
+  libpq-dev \
+  r-base \
+  r-base-dev \
+  libpq-dev \
+  libxml2-dev \
+  libssl-dev \
+  libcurl4-openssl-dev \
+  curl \
+  wget && \
+  rm -rf /var/lib/apt/lists/*
+RUN rm CRAN.gpg
+
+RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
+WORKDIR /home/user
+
+# We need a few special packages for QN
+ENV R_LIBS "/usr/local/lib/R/site-library"
+
+COPY common/install_devtools.R .
+
+RUN Rscript install_devtools.R
+
+COPY workers/qn_dependencies.R .
+RUN Rscript qn_dependencies.R
+# End QN-specific
+
+RUN pip3 install --upgrade pip
+
+# Smasher-specific requirements
+RUN pip3 install numpy scipy matplotlib pandas==0.23.1 scikit-learn sympy nose rpy2===2.9.5 tzlocal
+# End smasher-specific
+
+# Impute-specific requirements
+RUN pip3 install fancyimpute
+# End smasher-specific
+
+COPY config/ config/
+COPY .boto .boto
+
+COPY workers/data_refinery_workers/processors/requirements.txt .
+
+RUN  pip3 --no-cache-dir install -r requirements.txt
+RUN pip3 install numpy==1.16.0 # Fix a downgrade
+
+COPY common/dist/data-refinery-common-* common/
+
+# Get the latest version from the dist directory.
+RUN pip3 install common/$(ls common -1 | sort --version-sort | tail -1)
+
+# Clear our the pip3 cache
+RUN rm -rf /root/.cache
+
+ARG SYSTEM_VERSION
+
+ENV SYSTEM_VERSION $SYSTEM_VERSION
+
+USER user
+
+COPY workers/ .
+
+ENTRYPOINT []

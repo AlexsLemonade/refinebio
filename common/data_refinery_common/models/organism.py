@@ -97,6 +97,8 @@ class Organism(models.Model):
     created_at = models.DateTimeField(editable=False, default=timezone.now)
     last_modified = models.DateTimeField(default=timezone.now)
 
+    experiments = models.ManyToManyField('Experiment', through='ExperimentOrganismAssociation')
+
     def save(self, *args, **kwargs):
         """ On save, update timestamps """
         current_time = timezone.now()

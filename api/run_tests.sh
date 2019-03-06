@@ -25,10 +25,11 @@ fi
 source common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
+ES_HOST_IP=$(get_docker_es_ip_address)
 
 docker run \
        --add-host=database:$DB_HOST_IP \
        --add-host=nomad:$HOST_IP \
+       --add-host=elasticsearch:$ES_HOST_IP \
        --env-file api/environments/test \
-       --link drdb:postgres \
        -it ccdlstaging/dr_api_local bash -c "$(run_tests_with_coverage $@)"
