@@ -1053,6 +1053,16 @@ class Stats(APIView):
             scale_by_standard=Count('id', filter=Q(scale_by='STANDARD')),
             scale_by_robust=Count('id', filter=Q(scale_by='ROBUST')),
         )
+        # We don't save the dates when datasets are processed, but we can use
+        # `last_modified`, since datasets aren't modified again after they are processed
+        data['dataset']['timeline'] = self._get_intervals(
+            Dataset.objects.all().filter(is_processed=True),
+            range_param,
+            'last_modified'
+        ).annotate(
+            total=Count('id'),
+            total_size=Sum('size_in_bytes')
+        )
 
         if range_param:
             data['input_data_size'] = self._get_input_data_size()
@@ -1262,7 +1272,7 @@ class Stats(APIView):
 
         return result
 
-    def _get_intervals(self, objects, range_param):
+    def _get_intervals(self, objects, range_param, field = 'created_at'):
         range_to_trunc = {
             'day': 'hour',
             'week': 'day',
@@ -1281,7 +1291,7 @@ class Stats(APIView):
         # and annotate each object with that. This will allow us to count the number of objects
         # on each interval with a single query
         # ref https://stackoverflow.com/a/38359913/763705
-        return objects.annotate(start=Trunc('created_at', range_to_trunc.get(range_param), output_field=DateTimeField())) \
+        return objects.annotate(start=Trunc(field, range_to_trunc.get(range_param), output_field=DateTimeField())) \
                       .values('start') \
                       .filter(start__gte=range_to_start_date.get(range_param)) 
 
