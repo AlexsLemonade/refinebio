@@ -759,7 +759,7 @@ def _run_salmon(job_context: Dict) -> Dict:
             beta = job_context["work_dir"] + "beta"
             os.mkfifo(beta)
 
-            dump_str = "fastq-dump --stdout --split-files -I {input_sra_file} tee >(grep '@.*\.1\s' -A3 --no-group-separator > {fifo_alpha}) >(grep '@.*\.2\s' -A3 --no-group-separator > {fifo_beta}) >/dev/null"
+            dump_str = "fastq-dump --stdout --split-files -I {input_sra_file} | tee >(grep '@.*\.1\s' -A3 --no-group-separator > {fifo_alpha}) >(grep '@.*\.2\s' -A3 --no-group-separator > {fifo_beta}) >/dev/null&"
             formatted_dump_command = dump_str.format(input_sra_file=job_context["sra_input_file_path"],
                                                    fifo_alpha=alpha,
                                                    fifo_beta=beta)
