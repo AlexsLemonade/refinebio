@@ -749,8 +749,8 @@ class OriginalFile(models.Model):
         # has been processed and doesn't need to be processed again.
         return successful_processor_jobs.count() == 0
 
-    def is_CEL_file(self) -> bool:
-        """Return true if original_file is a CEL file."""
+    def is_affy_data(self) -> bool:
+        """Return true if original_file is a CEL file or a gzipped CEL file."""
         upper_name = self.source_filename.upper()
         return (len(upper_name) > 4 and upper_name[-4:] == ".CEL") \
             or (len(upper_name) > 7 and upper_name[-7:] == ".CEL.GZ")

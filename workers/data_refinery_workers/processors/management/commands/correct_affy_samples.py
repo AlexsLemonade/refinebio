@@ -52,7 +52,7 @@ def _download_file(download_url: str, file_path: str) -> None:
     except Exception:
         logger.exception("Exception caught while downloading file %s from %s",
                          file_path, download_url)
-        raise
+        return False
     finally:
         target_file.close()
 
@@ -99,16 +99,10 @@ class Command(BaseCommand):
         os.makedirs(work_dir, exist_ok=True)
         for sample in Sample.objects.filter(technology='RNA-SEQ', source_database='GEO'):
             for original_file in sample.original_files.all():
-                if original_file.is_CEL_file() :
+                if original_file.is_affy_data() :
                     input_file_path = work_dir + original_file.source_filename
-                    download_success = False
-                    try:
-                        download_success = _download_file(original_file.source_url,
-                                                          input_file_path)
-                    except:
-                        logger.exception("Failed to download %s from %s",
-                                    input_file_path,
-                                    original_file.source_url)
+                    download_success = _download_file(original_file.source_url,
+                                                      input_file_path)
 
                     if download_success:
                         try:
