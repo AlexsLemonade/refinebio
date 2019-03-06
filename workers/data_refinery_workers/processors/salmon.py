@@ -737,7 +737,7 @@ def _run_salmon(job_context: Dict) -> Dict:
         # Single reads
         if job_context['sra_num_reads'] == 1:
 
-            fifo = job_context["work_dir"] + "barney"
+            fifo = "/tmp/barney"
             os.mkfifo(fifo)
 
             dump_str = "fastq-dump --stdout {input_sra_file} > {fifo} &"
@@ -754,17 +754,25 @@ def _run_salmon(job_context: Dict) -> Dict:
                                                    output_directory=job_context["output_directory"])
         # Paired are trickier
         else:
-            alpha = job_context["work_dir"] + "alpha"
+
+            # Okay, for some reason I can't explain, this only works in the temp directory,
+            # otherwise the `tee` part will only output to one or the other of the streams (non-deterministically),
+            # but not both. This doesn't appear to happen if the fifos are in tmp.
+            alpha = "/tmp/alpha"
             os.mkfifo(alpha)
-            beta = job_context["work_dir"] + "beta"
+            beta = "/tmp/beta"
             os.mkfifo(beta)
 
-            dump_str = "fastq-dump --stdout --split-files -I {input_sra_file} | tee >(grep '@.*\.1\s' -A3 --no-group-separator > {fifo_alpha}) >(grep '@.*\.2\s' -A3 --no-group-separator > {fifo_beta}) >/dev/null&"
+            dump_str = "fastq-dump --stdout --split-files -I {input_sra_file} | tee >(grep '@.*\.1\s' -A3 --no-group-separator > {fifo_alpha}) >(grep '@.*\.2\s' -A3 --no-group-separator > {fifo_beta}) > /dev/null &"
             formatted_dump_command = dump_str.format(input_sra_file=job_context["sra_input_file_path"],
                                                    fifo_alpha=alpha,
                                                    fifo_beta=beta)
-            dump_po = subprocess.Popen(formatted_dump_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    
+            dump_po = subprocess.Popen(formatted_dump_command, 
+                                        shell=True, 
+                                        executable='/bin/bash',
+                                        stdout=subprocess.PIPE, 
+                                        stderr=subprocess.STDOUT)
+
             command_str = ( "salmon --no-version-check quant -l A -i {index} "
                             "-1 {fifo_alpha} -2 {fifo_beta} -p 16 -o {output_directory} --seqBias --dumpEq --writeUnmappedNames"
                          )
