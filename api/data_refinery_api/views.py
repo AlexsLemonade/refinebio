@@ -1043,26 +1043,7 @@ class Stats(APIView):
 
         data['processed_experiments'] = self._get_object_stats(Experiment.processed_public_objects)
         data['active_volumes'] = list(get_active_volumes())
-
-        data['dataset'] = Dataset.objects.all().aggregate(
-            total=Count('id'),
-            aggregated_by_experiment=Count('id', filter=Q(aggregate_by='EXPERIMENT')),
-            aggregated_by_species=Count('id', filter=Q(aggregate_by='SAMPLES')),
-            scale_by_none=Count('id', filter=Q(scale_by='NONE')),
-            scale_by_minmax=Count('id', filter=Q(scale_by='MINMAX')),
-            scale_by_standard=Count('id', filter=Q(scale_by='STANDARD')),
-            scale_by_robust=Count('id', filter=Q(scale_by='ROBUST')),
-        )
-        # We don't save the dates when datasets are processed, but we can use
-        # `last_modified`, since datasets aren't modified again after they are processed
-        data['dataset']['timeline'] = self._get_intervals(
-            Dataset.objects.all().filter(is_processed=True),
-            range_param,
-            'last_modified'
-        ).annotate(
-            total=Count('id'),
-            total_size=Sum('size_in_bytes')
-        )
+        data['dataset'] = self._dataset(range_param)
 
         if range_param:
             data['input_data_size'] = self._get_input_data_size()
@@ -1081,6 +1062,29 @@ class Stats(APIView):
             pass
 
         return Response(data)
+
+    def _dataset(self, range_param):
+        result = Dataset.objects.all().aggregate(
+            total=Count('id'),
+            aggregated_by_experiment=Count('id', filter=Q(aggregate_by='EXPERIMENT')),
+            aggregated_by_species=Count('id', filter=Q(aggregate_by='SAMPLES')),
+            scale_by_none=Count('id', filter=Q(scale_by='NONE')),
+            scale_by_minmax=Count('id', filter=Q(scale_by='MINMAX')),
+            scale_by_standard=Count('id', filter=Q(scale_by='STANDARD')),
+            scale_by_robust=Count('id', filter=Q(scale_by='ROBUST')),
+        )
+        if range_param:
+            # We don't save the dates when datasets are processed, but we can use
+            # `last_modified`, since datasets aren't modified again after they are processed
+            result['timeline'] = self._get_intervals(
+                Dataset.objects.all().filter(is_processed=True),
+                range_param,
+                'last_modified'
+            ).annotate(
+                total=Count('id'),
+                total_size=Sum('size_in_bytes')
+            )
+        return result
 
     def _samples_processed_last_hour(self):
         current_date = datetime.now(tz=timezone.utc)
