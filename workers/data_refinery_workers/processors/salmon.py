@@ -734,6 +734,7 @@ def _run_salmon(job_context: Dict) -> Dict:
     # them to disk.
     if job_context.get('sra_input_file_path', None):
 
+        # Single reads
         if job_context['sra_num_reads'] == 1:
 
             fifo = job_context["work_dir"] + "barney"
@@ -751,9 +752,8 @@ def _run_salmon(job_context: Dict) -> Dict:
                                                    input_sra_file=job_context["sra_input_file_path"],
                                                    fifo=fifo,
                                                    output_directory=job_context["output_directory"])
-
+        # Paired are trickier
         else:
-
             alpha = job_context["work_dir"] + "alpha"
             os.mkfifo(fifo)
             alpha = job_context["work_dir"] + "beta"
@@ -773,8 +773,6 @@ def _run_salmon(job_context: Dict) -> Dict:
                                                    fifo_alpha=alpha,
                                                    fifo_beta=beta,
                                                    output_directory=job_context["output_directory"])
-            import pdb
-            pdb.set_trace()
 
     else:
         if "input_file_path_2" in job_context:
