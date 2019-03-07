@@ -550,7 +550,11 @@ class DatasetView(generics.RetrieveUpdateAPIView):
         if new_data.get('start'):
 
             # Make sure we have a valid activated token.
-            token_id = self.request.data.get('token_id')
+            token_id = self.request.data.get('token_id', None)
+
+            if not token_id:
+                token_id = self.request.META.get('HTTP_API_KEY', None)
+
             try:
                 token = APIToken.objects.get(id=token_id, is_activated=True)
             except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
@@ -1340,7 +1344,15 @@ class CompendiaDetail(APIView):
     def get(self, request, format=None):
 
         computed_files = ComputedFile.objects.filter(is_compendia=True, is_public=True, is_qn_target=False).order_by('-created_at')
-        serializer = CompendiaSerializer(computed_files, many=True)
+
+        token_id = self.request.META.get('HTTP_API_KEY', None)
+
+        try:
+            token = APIToken.objects.get(id=token_id, is_activated=True)
+            serializer = CompendiaWithUrlSerializer(computed_files, many=True)
+        except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            serializer = CompendiaSerializer(computed_files, many=True)
+
         return Response(serializer.data)
 
 
@@ -1371,8 +1383,8 @@ class ComputedFilesList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         limit = max(int(filter_dict.pop('limit', 100)), 100)
         offset = int(filter_dict.pop('offset', 0))
-        jobs = ComputedFile.objects.filter(**filter_dict).order_by('-id')[offset:(offset + limit)]
-        serializer = ComputedFileListSerializer(jobs, many=True)
+        files = ComputedFile.objects.filter(**filter_dict).order_by('-id')[offset:(offset + limit)]
+        serializer = ComputedFileListSerializer(files, many=True)
         return Response(serializer.data)
 
 ##

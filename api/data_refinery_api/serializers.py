@@ -124,20 +124,6 @@ class ComputedFileSerializer(serializers.ModelSerializer):
 
 class ComputedFileWithUrlSerializer(serializers.ModelSerializer):
 
-    download_url = serializers.SerializerMethodField()
-
-    def get_download_url(self, computed_file):
-        if settings.RUNNING_IN_CLOUD and computed_file.s3_bucket and computed_file.s3_key:
-            return s3.generate_presigned_url(
-                ClientMethod='get_object',
-                Params={
-                    'Bucket': computed_file.s3_bucket,
-                    'Key': computed_file.s3_key
-                }
-            )
-        else:
-            return None
-
     class Meta:
         model = ComputedFile
         fields = (
@@ -732,6 +718,7 @@ class APITokenSerializer(serializers.ModelSerializer):
                         }
                     }
 
+
 class CompendiaSerializer(serializers.ModelSerializer):
     organism_name = serializers.CharField(source='compendia_organism.name', read_only=True)
 
@@ -751,6 +738,29 @@ class CompendiaSerializer(serializers.ModelSerializer):
                     'created_at',
                     'last_modified'
                 )
+
+
+class CompendiaWithUrlSerializer(serializers.ModelSerializer):
+    organism_name = serializers.CharField(source='compendia_organism.name', read_only=True)
+
+    class Meta:
+        model = ComputedFile
+        fields = (
+                    'id',
+                    'filename',
+                    'size_in_bytes',
+                    'is_compendia',
+                    'compendia_version',
+                    'organism_name',
+                    'sha1',
+                    's3_bucket',
+                    's3_key',
+                    's3_url',
+                    'download_url',
+                    'created_at',
+                    'last_modified'
+                )
+
 
 ##
 # ElasticSearch Document Serializers
