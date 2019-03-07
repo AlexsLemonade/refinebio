@@ -716,6 +716,23 @@ class APITestCases(APITestCase):
         self.assertEqual(ds.email_address, 'trust@verify.com')
         self.assertTrue(ds.email_ccdl_ok)
 
+        # Reset the dataset so we can test providing an API token via
+        # HTTP Header.
+        dataset = Dataset.objects.get(id=good_id)
+        dataset.is_processing = False
+        dataset.email_address = None
+        dataset.email_ccdl_ok = False
+        dataset.save()
+
+        jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True, 'email_address': 'trust@verify.com', 'email_ccdl_ok': True } )
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json", HTTP_API_KEY=token_id)
+
+        self.assertEqual(response.json()["is_processing"], True)
+
+        ds = Dataset.objects.get(id=response.json()['id'])
+        self.assertEqual(ds.email_address, 'trust@verify.com')
+        self.assertTrue(ds.email_ccdl_ok)
+
     def test_processed_samples_only(self):
         """ Don't return unprocessed samples """
         experiment = Experiment()
