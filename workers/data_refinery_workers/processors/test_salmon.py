@@ -488,7 +488,6 @@ class SalmonTestCase(TestCase):
         sample_result_assoc.save()
 
         comp_file = ComputedFile()
-        # This path will not be used because we already have the files extracted.
         comp_file.absolute_file_path = "/doesnt/matter"
         comp_file.result = computational_result1
         comp_file.size_in_bytes=1337
@@ -502,7 +501,6 @@ class SalmonTestCase(TestCase):
         sample_result_assoc.save()
 
         comp_file = ComputedFile()
-        # This path will not be used because we already have the files extracted.
         comp_file.absolute_file_path = "/doesnt/matter"
         comp_file.result = computational_result2
         comp_file.size_in_bytes=1337

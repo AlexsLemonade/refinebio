@@ -645,10 +645,14 @@ def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFil
 
     quantified_experiments = {}
     for experiment in experiments:
-        salmon_quant_results = _find_salmon_quant_results(experiment)
+        # We only want to consider samples that we actually can run salmon on.
+        eligible_samples = experiment.samples.filter(source_database='SRA', technology='RNA-SEQ')
+        num_eligible_samples = eligible_samples.count()
+        if num_eligible_samples == 0:
+            continue
 
+        salmon_quant_results = _find_salmon_quant_results(experiment)
         num_quant_results = len(salmon_quant_results)
-        num_samples_in_experiment = experiment.samples.count()
 
         # If an experiment is 100% complete we should always run
         # tximport.  Otherwise, if this is a tximport job we should
@@ -656,9 +660,9 @@ def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFil
         # to determine if tximport should be run. See the definitions
         # of those values for more context.
         should_run_tximport = False
-        percent_complete = num_quant_results / num_samples_in_experiment
+        percent_complete = num_quant_results / num_eligible_samples
         if 'is_tximport_only' in job_context and job_context['is_tximport_only']:
-            if num_samples_in_experiment < EARLY_TXIMPORT_MIN_SIZE:
+            if num_eligible_samples < EARLY_TXIMPORT_MIN_SIZE:
                 logger.warn(
                     ("This is a Tximport job but there aren't enough samples"
                      " in the experiment so I'm not running it."),
