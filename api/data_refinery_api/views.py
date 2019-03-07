@@ -1025,7 +1025,7 @@ class Stats(APIView):
         data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
 
         # processed and unprocessed samples stats
-        data['samples'] = self._get_object_stats(Sample.objects.filter(is_processed=False), range_param)
+        data['unprocessed_samples'] = self._get_object_stats(Sample.objects.filter(is_processed=False), range_param)
         data['processed_samples'] = self._get_object_stats(Sample.processed_objects, range_param)
         data['processed_samples']['last_hour'] = self._samples_processed_last_hour()
 
@@ -1066,6 +1066,7 @@ class Stats(APIView):
         return Response(data)
 
     def _get_dataset_stats(self, range_param):
+        """Returns stats for processed datasets"""
         processed_datasets = Dataset.objects.filter(is_processed=True)
         result = processed_datasets.aggregate(
             total=Count('id'),
