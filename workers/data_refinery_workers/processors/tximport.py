@@ -106,6 +106,6 @@ def tximport(job_id: int) -> None:
                         _set_job_prefix,
                         _prepare_files,
                         salmon._find_or_download_index,
-                        salmon._tximport,
+                        salmon.tximport,
                         utils.end_job])
     return final_context

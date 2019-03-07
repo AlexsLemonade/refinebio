@@ -691,7 +691,7 @@ def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFil
     return quantified_experiments
 
 
-def _tximport(job_context: Dict) -> Dict:
+def tximport(job_context: Dict) -> Dict:
     """Run tximport R script based on input quant files and the path
     of genes_to_transcripts.txt.
     """
@@ -1093,7 +1093,7 @@ def salmon(job_id: int) -> None:
 
                         _run_fastqc,
                         _run_salmon,
-                        _tximport,
+                        tximport,
                         _run_salmontools,
                         _run_multiqc,
                         utils.end_job])
