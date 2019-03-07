@@ -1045,7 +1045,7 @@ class Stats(APIView):
 
         data['processed_experiments'] = self._get_object_stats(Experiment.processed_public_objects)
         data['active_volumes'] = list(get_active_volumes())
-        data['dataset'] = self._dataset(range_param)
+        data['dataset'] = self._get_dataset_stats(range_param)
 
         if range_param:
             data['input_data_size'] = self._get_input_data_size()
@@ -1065,8 +1065,9 @@ class Stats(APIView):
 
         return Response(data)
 
-    def _dataset(self, range_param):
-        result = Dataset.objects.all().aggregate(
+    def _get_dataset_stats(self, range_param):
+        processed_datasets = Dataset.objects.filter(is_processed=True)
+        result = processed_datasets.aggregate(
             total=Count('id'),
             aggregated_by_experiment=Count('id', filter=Q(aggregate_by='EXPERIMENT')),
             aggregated_by_species=Count('id', filter=Q(aggregate_by='SAMPLES')),
@@ -1079,7 +1080,7 @@ class Stats(APIView):
             # We don't save the dates when datasets are processed, but we can use
             # `last_modified`, since datasets aren't modified again after they are processed
             result['timeline'] = self._get_intervals(
-                Dataset.objects.all().filter(is_processed=True),
+                processed_datasets,
                 range_param,
                 'last_modified'
             ).annotate(
