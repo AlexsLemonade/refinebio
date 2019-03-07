@@ -341,7 +341,31 @@ class APITestCases(APITestCase):
         drc1.save()
 
         response = self.client.get(reverse('compendia'))
-        self.assertEqual(3, len(response.json()))
+        response_json = response.json()
+        self.assertEqual(3, len(response_json))
+        # Prove that the download_url field is missing and not None.
+        self.assertEqual('NotPresent', response_json[0].get('download_url', 'NotPresent'))
+
+        # We don't actually want AWS to generate a temporary URL for
+        # us, and it won't unless we're running in the cloud, but if
+        # we provide an API Token and use the WithUrl serializer then
+        # it will set the download_url field to None rather than
+        # generate one.
+
+        # Get a token first
+        response = self.client.get(reverse('token'),
+                                    content_type="application/json")
+        token = response.json()
+        token['is_activated'] = True
+        token_id = token['id']
+        response = self.client.post(reverse('token'),
+                                    json.dumps(token),
+                                    content_type="application/json")
+
+        response = self.client.get(reverse('compendia'), HTTP_API_KEY=token_id)
+        response_json = response.json()
+        self.assertEqual(3, len(response_json))
+        self.assertIsNone(response_json[0]['download_url'])
 
     def test_search_and_filter(self):
 

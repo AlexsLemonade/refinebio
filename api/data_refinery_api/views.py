@@ -58,6 +58,7 @@ from data_refinery_api.serializers import (
     ProcessorSerializer,
     SampleSerializer,
     CompendiaSerializer,
+    CompendiaWithUrlSerializer,
     QNTargetSerializer,
     ComputedFileListSerializer,
 
