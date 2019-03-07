@@ -847,7 +847,12 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     comp_file.save()
 
     for accession_code in incomplete_accessions:
-        last_sample = Sample.objects.create(accession_code=accession_code, organism=zebrafish)
+        last_sample = Sample.objects.create(
+            accession_code=accession_code,
+            organism=zebrafish,
+            source_database='SRA',
+            technology='RNA-SEQ'
+        )
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=last_sample)
 
     # Create tximport result and files
@@ -859,7 +864,12 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     # original files for this test because we aren't going to run
     # salmon quant on them.
     for accession_code in complete_accessions:
-        sample = Sample.objects.create(accession_code=accession_code, organism=zebrafish)
+        sample = Sample.objects.create(
+            accession_code=accession_code,
+            organism=zebrafish,
+            source_database='SRA',
+            technology='RNA-SEQ'
+        )
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
 
         if accession_code == "SRR5125622":
