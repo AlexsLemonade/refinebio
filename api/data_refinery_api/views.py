@@ -1022,8 +1022,10 @@ class Stats(APIView):
         data['survey_jobs'] = self._get_job_stats(SurveyJob.objects, range_param)
         data['downloader_jobs'] = self._get_job_stats(DownloaderJob.objects, range_param)
         data['processor_jobs'] = self._get_job_stats(ProcessorJob.objects, range_param)
-        data['samples'] = self._get_object_stats(Sample.objects)
         data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
+
+        # processed and unprocessed samples stats
+        data['samples'] = self._get_object_stats(Sample.objects.filter(is_processed=False), range_param)
         data['processed_samples'] = self._get_object_stats(Sample.processed_objects, range_param)
         data['processed_samples']['last_hour'] = self._samples_processed_last_hour()
 
