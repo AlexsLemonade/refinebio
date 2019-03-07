@@ -243,8 +243,7 @@ class ProcessedPublicObjectsManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(
             is_public=True,
-            samples__is_processed=True,
-            samples__is_public=True).distinct()
+            num_processed_samples__gt=0)
 
 
 class Experiment(models.Model):
@@ -750,7 +749,7 @@ class OriginalFile(models.Model):
         return successful_processor_jobs.count() == 0
 
     def is_affy_data(self) -> bool:
-        """Return true if original_file is a CEL file or gzipped CEL file.
+        """Return true if original_file is a CEL file or a gzipped CEL file.
         """
         upper_name = self.source_filename.upper()
         return (len(upper_name) > 4 and upper_name[-4:] == ".CEL") \

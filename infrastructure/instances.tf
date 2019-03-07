@@ -807,7 +807,7 @@ resource "aws_instance" "foreman_server_1" {
   vpc_security_group_ids = ["${aws_security_group.data_refinery_foreman.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
-  depends_on = ["aws_db_instance.postgres_db", "aws_instance.pg_bouncer"]
+  depends_on = ["aws_db_instance.postgres_db", "aws_instance.pg_bouncer", "aws_elasticsearch_domain.es"]
   user_data = "${data.template_file.foreman_server_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
