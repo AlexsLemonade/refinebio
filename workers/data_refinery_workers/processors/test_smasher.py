@@ -69,7 +69,7 @@ def prepare_job():
     esa.save()
 
     computed_file = ComputedFile()
-    computed_file.filename = "GSM1237810_T09-1084.PCL"
+    computed_file.filename = "SRP149598_gene_lengthScaledTPM.tsv"
     computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
     computed_file.result = result
     computed_file.size_in_bytes = 123
@@ -103,7 +103,7 @@ def prepare_job():
     sra.save()
 
     computed_file = ComputedFile()
-    computed_file.filename = "GSM1237812_S97-PURE.PCL"
+    computed_file.filename = "GSM1487313_liver.PCL"
     computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
     computed_file.result = result
     computed_file.size_in_bytes = 123
@@ -222,8 +222,6 @@ class SmasherTestCase(TestCase):
 
             final_context = smasher.smash(job.pk, upload=False)
             final_frame = final_context.get('final_frame')
-            if not final_frame:
-                continue
 
             # Sanity test that these frames can be computed upon
             final_frame.mean(axis=1)
@@ -259,8 +257,6 @@ class SmasherTestCase(TestCase):
 
             final_context = smasher.smash(job.pk, upload=False)
             final_frame = final_context.get('final_frame')
-            if not final_frame:
-                continue
 
             # Sanity test that these frames can be computed upon
             final_frame.mean(axis=1)
@@ -295,8 +291,6 @@ class SmasherTestCase(TestCase):
 
             final_context = smasher.smash(job.pk, upload=False)
             final_frame = final_context.get('final_frame')
-            if not final_frame:
-                continue
 
             # Sanity test that these frames can be computed upon
             final_frame.mean(axis=1)
