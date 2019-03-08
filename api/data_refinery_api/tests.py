@@ -84,12 +84,14 @@ class APITestCases(APITestCase):
         sample.title = "123"
         sample.accession_code = "123"
         sample.is_processed = True
+        sample.organism = Organism.get_object_for_name("AILUROPODA_MELANOLEUCA")
         sample.save()
 
         sample = Sample()
         sample.title = "789"
         sample.accession_code = "789"
         sample.is_processed = True
+        sample.organism = Organism.get_object_for_name("AILUROPODA_MELANOLEUCA")
         sample.save()
         self.sample = sample
 
@@ -600,6 +602,33 @@ class APITestCases(APITestCase):
                                     content_type="application/json")
 
         self.assertEqual(response.status_code, 400)
+
+        cra = ComputationalResultAnnotation()
+        cra.result = cr
+        cra.data = {"organism": "Ailuropoda melanoleuca"}
+        cra.save()
+
+        qni = ComputedFile()
+        qni.is_qn_target = True
+        qni.s3_bucket = "fake_qni_bucket"
+        qni.s3_key = "zazaza_homo_sapiens_1234.tsv"
+        qni.filename = "homo_sapiens_1234.tsv"
+        qni.is_public = True
+        qni.size_in_bytes = 56789
+        qni.sha1 = "c0a88d0bb020dadee3b707e647f7290368c235ba"
+        qni.result = cr
+        qni.save()
+
+        qni = ComputedFile()
+        qni.is_qn_target = False
+        qni.s3_bucket = "X"
+        qni.s3_key = "X.tsv"
+        qni.filename = "XXXXXXXXXXXXXXX.tsv"
+        qni.is_public = True
+        qni.size_in_bytes = 1
+        qni.sha1 = "123"
+        qni.result = cr
+        qni.save()
 
         # Update, just an experiment accession
         jdata = json.dumps({'data': {"GSE123": ["ALL"]}})
