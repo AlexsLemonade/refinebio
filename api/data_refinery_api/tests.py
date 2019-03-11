@@ -603,6 +603,9 @@ class APITestCases(APITestCase):
 
         self.assertEqual(response.status_code, 400)
 
+        cr = ComputationalResult()
+        cr.save()
+
         cra = ComputationalResultAnnotation()
         cra.result = cr
         cra.data = {"organism": "Ailuropoda melanoleuca"}
