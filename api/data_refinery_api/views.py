@@ -536,17 +536,15 @@ class DatasetView(generics.RetrieveUpdateAPIView):
         already_processing = old_object.is_processing
         new_data = serializer.validated_data
 
+        qn_organisms = Organism.get_objects_with_qn_targets()
+
         # We convert 'ALL' into the actual accession codes given
         for key in new_data['data'].keys():
             accessions = new_data['data'][key]
             if accessions == ["ALL"]:
                 experiment = get_object_or_404(Experiment, accession_code=key)
 
-                # QN organisms
-                organism_ids = list(ComputationalResultAnnotation.objects.filter(data__is_qn=True).values_list('data__organism_id', flat=True).order_by('data__organism_id'))
-                organisms = Organism.objects.filter(id__in=organism_ids)
-
-                sample_codes = list(experiment.samples.filter(is_processed=True, organism__in=organisms).values_list('accession_code', flat=True))
+                sample_codes = list(experiment.samples.filter(is_processed=True, organism__in=qn_organisms).values_list('accession_code', flat=True))
                 new_data['data'][key] = sample_codes
 
         if old_object.is_processed:

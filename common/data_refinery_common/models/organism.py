@@ -4,6 +4,7 @@ from xml.etree import ElementTree
 from django.db import models
 from django.utils import timezone
 
+
 from data_refinery_common.models.base_models import TimeTrackedModel
 
 
@@ -146,7 +147,7 @@ class Organism(models.Model):
         return organism.taxonomy_id
 
     @classmethod
-    def get_object_for_name(cls, name: str) -> id:
+    def get_object_for_name(cls, name: str):
         name = name.upper()
         name = name.replace(' ', '_')
         try:
@@ -168,6 +169,14 @@ class Organism(models.Model):
 
         return organism
 
+    @classmethod
+    def get_objects_with_qn_targets(cls):
+        """ Return a list of Organisms who already have valid QN targets associated with them. 
+        """
+        from data_refinery_common.models import ComputationalResultAnnotation
+        organism_ids = list(ComputationalResultAnnotation.objects.filter(data__is_qn=True).values_list('data__organism_id', flat=True).order_by('data__organism_id'))
+        organisms = Organism.objects.filter(id__in=organism_ids)
+        return organisms
 
     class Meta:
         db_table = "organisms"
