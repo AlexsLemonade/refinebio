@@ -1022,8 +1022,10 @@ class Stats(APIView):
         data['survey_jobs'] = self._get_job_stats(SurveyJob.objects, range_param)
         data['downloader_jobs'] = self._get_job_stats(DownloaderJob.objects, range_param)
         data['processor_jobs'] = self._get_job_stats(ProcessorJob.objects, range_param)
-        data['samples'] = self._get_object_stats(Sample.objects)
         data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
+
+        # processed and unprocessed samples stats
+        data['unprocessed_samples'] = self._get_object_stats(Sample.objects.filter(is_processed=False), range_param)
         data['processed_samples'] = self._get_object_stats(Sample.processed_objects, range_param)
         data['processed_samples']['last_hour'] = self._samples_processed_last_hour()
 
@@ -1043,6 +1045,7 @@ class Stats(APIView):
 
         data['processed_experiments'] = self._get_object_stats(Experiment.processed_public_objects)
         data['active_volumes'] = list(get_active_volumes())
+        data['dataset'] = self._get_dataset_stats(range_param)
 
         if range_param:
             data['input_data_size'] = self._get_input_data_size()
@@ -1061,6 +1064,31 @@ class Stats(APIView):
             pass
 
         return Response(data)
+
+    def _get_dataset_stats(self, range_param):
+        """Returns stats for processed datasets"""
+        processed_datasets = Dataset.objects.filter(is_processed=True)
+        result = processed_datasets.aggregate(
+            total=Count('id'),
+            aggregated_by_experiment=Count('id', filter=Q(aggregate_by='EXPERIMENT')),
+            aggregated_by_species=Count('id', filter=Q(aggregate_by='SAMPLES')),
+            scale_by_none=Count('id', filter=Q(scale_by='NONE')),
+            scale_by_minmax=Count('id', filter=Q(scale_by='MINMAX')),
+            scale_by_standard=Count('id', filter=Q(scale_by='STANDARD')),
+            scale_by_robust=Count('id', filter=Q(scale_by='ROBUST')),
+        )
+        if range_param:
+            # We don't save the dates when datasets are processed, but we can use
+            # `last_modified`, since datasets aren't modified again after they are processed
+            result['timeline'] = self._get_intervals(
+                processed_datasets,
+                range_param,
+                'last_modified'
+            ).annotate(
+                total=Count('id'),
+                total_size=Sum('size_in_bytes')
+            )
+        return result
 
     def _samples_processed_last_hour(self):
         current_date = datetime.now(tz=timezone.utc)
@@ -1252,7 +1280,7 @@ class Stats(APIView):
 
         return result
 
-    def _get_intervals(self, objects, range_param):
+    def _get_intervals(self, objects, range_param, field = 'created_at'):
         range_to_trunc = {
             'day': 'hour',
             'week': 'day',
@@ -1271,7 +1299,7 @@ class Stats(APIView):
         # and annotate each object with that. This will allow us to count the number of objects
         # on each interval with a single query
         # ref https://stackoverflow.com/a/38359913/763705
-        return objects.annotate(start=Trunc('created_at', range_to_trunc.get(range_param), output_field=DateTimeField())) \
+        return objects.annotate(start=Trunc(field, range_to_trunc.get(range_param), output_field=DateTimeField())) \
                       .values('start') \
                       .filter(start__gte=range_to_start_date.get(range_param)) 
 
