@@ -549,6 +549,7 @@ resource "aws_db_instance" "postgres_db" {
   storage_type = "gp2"
   engine = "postgres"
   engine_version = "9.6.11"
+  auto_minor_version_upgrade = false
   instance_class = "db.${var.database_instance_type}"
   name = "data_refinery"
   port = "${var.database_hidden_port}"
