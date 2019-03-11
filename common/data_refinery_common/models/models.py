@@ -956,7 +956,7 @@ class ComputedFile(models.Model):
 
     def create_download_url(self):
         """ Create a temporary URL from which the file can be downloaded."""
-        if self.s3_bucket and self.s3_key:
+        if settings.RUNNING_IN_CLOUD and self.s3_bucket and self.s3_key:
             return S3.generate_presigned_url(
                 ClientMethod='get_object',
                 Params={
