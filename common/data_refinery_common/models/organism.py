@@ -8,10 +8,8 @@ from django.utils import timezone
 from data_refinery_common.models.base_models import TimeTrackedModel
 
 
-# Import and set logger
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from data_refinery_common.logging import get_and_configure_logger
+logger = get_and_configure_logger(__name__)
 
 
 NCBI_ROOT_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
@@ -32,8 +30,12 @@ def get_scientific_name(taxonomy_id: int) -> str:
     parameters = {"db": TAXONOMY_DATABASE, "id": str(taxonomy_id)}
     response = requests.get(EFETCH_URL, parameters)
 
-    root = ElementTree.fromstring(response.text)
-    taxon_list = root.findall("Taxon")
+    try:
+        root = ElementTree.fromstring(response.text)
+        id_list = root.findall("Taxon")
+    except Exception as e:
+        logger.error("Bad response from eUtils.", text=response.text)
+        raise
 
     if len(taxon_list) == 0:
         logger.error("No names returned by ncbi.nlm.nih.gov for organism "
@@ -48,8 +50,12 @@ def get_taxonomy_id(organism_name: str) -> int:
     parameters = {"db": TAXONOMY_DATABASE, "term": organism_name}
     response = requests.get(ESEARCH_URL, parameters)
 
-    root = ElementTree.fromstring(response.text)
-    id_list = root.find("IdList").findall("Id")
+    try:
+        root = ElementTree.fromstring(response.text)
+        id_list = root.find("IdList").findall("Id")
+    except Exception as e:
+        logger.error("Bad response from eUtils.", text=response.text)
+        raise
 
     if len(id_list) == 0:
         logger.error("Unable to retrieve NCBI taxonomy ID number for organism "
@@ -68,8 +74,12 @@ def get_taxonomy_id_scientific(organism_name: str) -> int:
     parameters = {"db": TAXONOMY_DATABASE, "field": "scin", "term": organism_name}
     response = requests.get(ESEARCH_URL, parameters)
 
-    root = ElementTree.fromstring(response.text)
-    id_list = root.find("IdList").findall("Id")
+    try:
+        root = ElementTree.fromstring(response.text)
+        id_list = root.find("IdList").findall("Id")
+    except Exception as e:
+        logger.error("Bad response from eUtils.", text=response.text)
+        raise
 
     if len(id_list) == 0:
         raise UnscientificNameError
