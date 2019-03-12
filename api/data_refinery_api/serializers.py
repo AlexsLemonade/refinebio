@@ -1,4 +1,8 @@
+import boto3
+import requests
+
 from django.db.models import Count, Prefetch, Q
+from django.conf import settings
 from rest_framework import serializers
 from data_refinery_common.models import ProcessorJob, DownloaderJob, SurveyJob
 from data_refinery_common.models import (
@@ -19,6 +23,10 @@ from data_refinery_common.models import (
     APIToken
 )
 from collections import defaultdict
+
+
+s3 = boto3.client('s3')
+
 
 ##
 # Organism
@@ -95,7 +103,9 @@ class ComputationalResultAnnotationSerializer(serializers.ModelSerializer):
                     'last_modified'
                 )
 
+
 class ComputedFileSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = ComputedFile
         fields = (
@@ -111,11 +121,31 @@ class ComputedFileSerializer(serializers.ModelSerializer):
                     'last_modified'
                 )
 
+
+class ComputedFileWithUrlSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ComputedFile
+        fields = (
+                    'id',
+                    'filename',
+                    'size_in_bytes',
+                    'is_smashable',
+                    'is_qc',
+                    'sha1',
+                    's3_bucket',
+                    's3_key',
+                    'download_url',
+                    'created_at',
+                    'last_modified'
+                )
+
+
 class ComputationalResultSerializer(serializers.ModelSerializer):
     annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
-    files = ComputedFileSerializer(many=True, source='computedfile_set')
     processor = ProcessorSerializer(many=False)
     organism_index = OrganismIndexSerializer(many=False)
+    files = ComputedFileSerializer(many=True, source='computedfile_set')
 
     class Meta:
         model = ComputationalResult
@@ -132,6 +162,11 @@ class ComputationalResultSerializer(serializers.ModelSerializer):
                     'created_at',
                     'last_modified'
                 )
+
+
+class ComputationalResultWithUrlSerializer(ComputationalResultSerializer):
+    files = ComputedFileWithUrlSerializer(many=True, source='computedfile_set')
+
 
 class ComputationalResultNoFilesSerializer(serializers.ModelSerializer):
     annotations = ComputationalResultAnnotationSerializer(many=True, source='computationalresultannotation_set')
@@ -662,6 +697,35 @@ class DatasetSerializer(serializers.ModelSerializer):
         experiments = obj.get_experiments().prefetch_related('samples').prefetch_related('organisms')
         return DatasetDetailsExperimentSerializer(experiments, many=True).data
 
+
+class DatasetWithUrlSerializer(DatasetSerializer):
+
+    class Meta:
+        model = Dataset
+        fields = (
+                    'id',
+                    'data',
+                    'aggregate_by',
+                    'scale_by',
+                    'is_processing',
+                    'is_processed',
+                    'is_available',
+                    'has_email',
+                    'expires_on',
+                    's3_bucket',
+                    's3_key',
+                    'download_url',
+                    'success',
+                    'failure_reason',
+                    'created_at',
+                    'last_modified',
+                    'start',
+                    'size_in_bytes',
+                    'sha1',
+                    'experiments',
+                    'organism_samples'
+            )
+
 class APITokenSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -683,6 +747,7 @@ class APITokenSerializer(serializers.ModelSerializer):
                         }
                     }
 
+
 class CompendiaSerializer(serializers.ModelSerializer):
     organism_name = serializers.CharField(source='compendia_organism.name', read_only=True)
 
@@ -702,6 +767,29 @@ class CompendiaSerializer(serializers.ModelSerializer):
                     'created_at',
                     'last_modified'
                 )
+
+
+class CompendiaWithUrlSerializer(serializers.ModelSerializer):
+    organism_name = serializers.CharField(source='compendia_organism.name', read_only=True)
+
+    class Meta:
+        model = ComputedFile
+        fields = (
+                    'id',
+                    'filename',
+                    'size_in_bytes',
+                    'is_compendia',
+                    'compendia_version',
+                    'organism_name',
+                    'sha1',
+                    's3_bucket',
+                    's3_key',
+                    's3_url',
+                    'download_url',
+                    'created_at',
+                    'last_modified'
+                )
+
 
 ##
 # ElasticSearch Document Serializers
