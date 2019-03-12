@@ -1320,28 +1320,35 @@ class TranscriptomeIndexDetail(APIView):
         """
         params = request.query_params
 
-        # Verify that the required params are present
-        errors = dict()
-        if "organism" not in params:
-            errors["organism"] = "You must specify the organism of the index you want"
-        if "length" not in params:
-            errors["length"] = "You must specify the length of the transcriptome index"
-
-        if len(errors) > 0:
-            raise ValidationError(errors)
-
-        # Get the correct organism index object, serialize it, and return it
-        transcription_length = "TRANSCRIPTOME_" + params["length"].upper()
-        try:
-            organism = Organism.objects.get(name=params["organism"].upper())
-            organism_index = (OrganismIndex.public_objects.exclude(s3_url__exact="")
-                              .distinct("organism", "index_type")
-                              .get(organism=organism,
-                                   index_type=transcription_length))
-            serializer = OrganismIndexSerializer(organism_index)
+        if 'all' in params.keys():
+            # Show all available indexes
+            organism = Organism.objects.all()
+            organism_index = OrganismIndex.objects.distinct("organism", "index_type")
+            serializer = OrganismIndexSerializer(organism_index, many=True)
             return Response(serializer.data)
-        except OrganismIndex.DoesNotExist:
-            raise Http404
+        else:
+            # Verify that the required params are present
+            errors = dict()
+            if "organism" not in params:
+                errors["organism"] = "You must specify the organism of the index you want"
+            if "length" not in params:
+                errors["length"] = "You must specify the length of the transcriptome index"
+
+            if len(errors) > 0:
+                raise ValidationError(errors)
+
+            # Get the correct organism index object, serialize it, and return it
+            transcription_length = "TRANSCRIPTOME_" + params["length"].upper()
+            try:
+                organism = Organism.objects.get(name=params["organism"].upper())
+                organism_index = (OrganismIndex.objects.exclude(s3_url__exact="")
+                                  .distinct("organism", "index_type")
+                                  .get(organism=organism,
+                                       index_type=transcription_length))
+                serializer = OrganismIndexSerializer(organism_index)
+                return Response(serializer.data)
+            except OrganismIndex.DoesNotExist:
+                raise Http404
 
 ###
 # Compendia
