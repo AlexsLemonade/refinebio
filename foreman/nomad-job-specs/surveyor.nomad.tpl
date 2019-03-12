@@ -2,6 +2,7 @@ job "SURVEYOR_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
+  priority = 30
 
   parameterized {
     payload       = "forbidden"
