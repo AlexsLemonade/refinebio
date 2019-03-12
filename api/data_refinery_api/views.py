@@ -1052,17 +1052,13 @@ class Stats(APIView):
             data['input_data_size'] = self._get_input_data_size()
             data['output_data_size'] = self._get_output_data_size()
 
-        try:
-            nomad_stats = self._get_nomad_jobs_breakdown()
-            data['nomad_running_jobs'] = nomad_stats["nomad_running_jobs"]
-            data['nomad_pending_jobs'] = nomad_stats["nomad_pending_jobs"]
-            data['nomad_running_jobs_by_type'] = nomad_stats["nomad_running_jobs_by_type"]
-            data['nomad_pending_jobs_by_type'] = nomad_stats["nomad_pending_jobs_by_type"]
-            data['nomad_running_jobs_by_volume'] = nomad_stats["nomad_running_jobs_by_volume"]
-            data['nomad_pending_jobs_by_volume'] = nomad_stats["nomad_pending_jobs_by_volume"]
-        except nomad.api.exceptions.BaseNomadException:
-            # Nomad is not available right now, so exclude these.
-            pass
+        nomad_stats = self._get_nomad_jobs_breakdown()
+        data['nomad_running_jobs'] = nomad_stats["nomad_running_jobs"]
+        data['nomad_pending_jobs'] = nomad_stats["nomad_pending_jobs"]
+        data['nomad_running_jobs_by_type'] = nomad_stats["nomad_running_jobs_by_type"]
+        data['nomad_pending_jobs_by_type'] = nomad_stats["nomad_pending_jobs_by_type"]
+        data['nomad_running_jobs_by_volume'] = nomad_stats["nomad_running_jobs_by_volume"]
+        data['nomad_pending_jobs_by_volume'] = nomad_stats["nomad_pending_jobs_by_volume"]
 
         return Response(data)
 
@@ -1127,17 +1123,26 @@ class Stats(APIView):
         if job["ID"].startswith("SURVEYOR"):
             return "SURVEYOR", False
 
+        # example SALMON_1_2323
         name_match = match(r"(?P<type>\w+)_(?P<volume_id>\d+)_\d+$", job["ID"])
         if not name_match: return False, False
         
         return name_match.group('type'), name_match.group('volume_id')
 
-    def _get_nomad_jobs_breakdown(self):
-        nomad_host = get_env_variable("NOMAD_HOST")
-        nomad_port = get_env_variable("NOMAD_PORT", "4646")
-        nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
+    def _get_nomad_jobs(self):
+        """Calls nomad service and return all jobs"""
+        try:
+            nomad_host = get_env_variable("NOMAD_HOST")
+            nomad_port = get_env_variable("NOMAD_PORT", "4646")
+            nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
+            return nomad_client.jobs.get_jobs()
 
-        jobs = nomad_client.jobs.get_jobs()
+        except nomad.api.exceptions.BaseNomadException:
+            # Nomad is not available right now
+            return []
+
+    def _get_nomad_jobs_breakdown(self):
+        jobs = self._get_nomad_jobs()
         parameterized_jobs = [job for job in jobs if job['ParameterizedJob']]
 
         aggregated_jobs_by_type = groupby(parameterized_jobs, lambda job: self._get_job_details(job)[0])
