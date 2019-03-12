@@ -3,7 +3,8 @@ import requests
 import mailchimp3
 import nomad
 from typing import Dict
-
+from itertools import groupby
+from re import match
 from django.conf import settings
 from django.db.models import Count, Prefetch, DateTimeField
 from django.db.models.functions import Trunc
@@ -1082,17 +1083,13 @@ class Stats(APIView):
             data['input_data_size'] = self._get_input_data_size()
             data['output_data_size'] = self._get_output_data_size()
 
-        try:
-            nomad_stats = self._get_nomad_jobs_breakdown()
-            data['nomad_running_jobs'] = nomad_stats["nomad_running_jobs"]
-            data['nomad_pending_jobs'] = nomad_stats["nomad_pending_jobs"]
-            data['nomad_running_jobs_by_type'] = nomad_stats["nomad_running_jobs_by_type"]
-            data['nomad_pending_jobs_by_type'] = nomad_stats["nomad_pending_jobs_by_type"]
-            data['nomad_running_jobs_by_volume'] = nomad_stats["nomad_running_jobs_by_volume"]
-            data['nomad_pending_jobs_by_volume'] = nomad_stats["nomad_pending_jobs_by_volume"]
-        except nomad.api.exceptions.BaseNomadException:
-            # Nomad is not available right now, so exclude these.
-            pass
+        nomad_stats = self._get_nomad_jobs_breakdown()
+        data['nomad_running_jobs'] = nomad_stats["nomad_running_jobs"]
+        data['nomad_pending_jobs'] = nomad_stats["nomad_pending_jobs"]
+        data['nomad_running_jobs_by_type'] = nomad_stats["nomad_running_jobs_by_type"]
+        data['nomad_pending_jobs_by_type'] = nomad_stats["nomad_pending_jobs_by_type"]
+        data['nomad_running_jobs_by_volume'] = nomad_stats["nomad_running_jobs_by_volume"]
+        data['nomad_pending_jobs_by_volume'] = nomad_stats["nomad_pending_jobs_by_volume"]
 
         return Response(data)
 
@@ -1126,112 +1123,61 @@ class Stats(APIView):
         start = current_date - timedelta(hours=1)
         return Sample.processed_objects.filter(created_at__range=(start, current_date)).count()
 
-    def _aggregate_nomad_jobs_by_type(self, jobs: Dict):
-        """Aggregates the pending and running job counts for each Nomad job type.
+    def _aggregate_nomad_jobs(self, aggregated_jobs):
+        """Aggregates the job counts.
 
         This is accomplished by using the stats that each
         parameterized job has about its children jobs.
 
         `jobs` should be a response from the Nomad API's jobs endpoint.
         """
-        job_types = set()
-        for job in jobs:
-            # Surveyor jobs don't have ids and RAM, so handle them specially.
-            if job["ID"].startswith("SURVEYOR"):
-                job_types.add("SURVEYOR")
-            elif job["ID"] == "SMASHER" or job["ID"] == "DOWNLOADER":
-                job_types.add(job["ID"])
-            else:
-                # Strips out the last two underscores like so:
-                # SALMON_1_16384 -> SALMON
-                job_type = "_".join(job["ID"].split("_")[0:-2])
-                job_types.add(job_type)
-
-        nomad_running_jobs_by_type = {}
-        nomad_pending_jobs_by_type = {}
-        for job_type in job_types:
-            # This will count SURVEYOR_DISPATCHER jobs as SURVEYOR
-            # jobs, but I think that's fine since we barely ever run
-            # SURVEYOR_DISPATCHER jobs and won't need to monitor them
-            # through the dashboard.
-            same_jobs = [job for job in jobs if job["ID"].startswith(job_type)]
-
+        nomad_running_jobs = {}
+        nomad_pending_jobs = {}
+        for (aggregate_key, group) in aggregated_jobs:
+            if not aggregate_key: continue
             aggregated_pending = 0
             aggregated_running = 0
-            for job in same_jobs:
+            for job in group:
                 children = job["JobSummary"]["Children"]
                 aggregated_pending = aggregated_pending + children["Pending"]
                 aggregated_running = aggregated_running + children["Running"]
 
-            nomad_pending_jobs_by_type[job_type] = aggregated_pending
-            nomad_running_jobs_by_type[job_type] = aggregated_running
+            nomad_pending_jobs[aggregate_key] = aggregated_pending
+            nomad_running_jobs[aggregate_key] = aggregated_running
 
-        return nomad_pending_jobs_by_type, nomad_running_jobs_by_type
+        return nomad_pending_jobs, nomad_running_jobs
 
-    def _aggregate_nomad_jobs_by_volume(self, jobs: Dict):
-        """Aggregates the job counts for each EBS volume.
+    def _get_job_details(self, job):
+        """Given a Nomad Job, as returned by the API, returns the type and volume id that should be used
+        when aggregating for the stats endpoint"""
+        # Surveyor jobs don't have ids and RAM, so handle them specially.
+        if job["ID"].startswith("SURVEYOR"):
+            return "SURVEYOR", False
 
-        This is accomplished by using the stats that each
-        parameterized job has about its children jobs.
+        # example SALMON_1_2323
+        name_match = match(r"(?P<type>\w+)_(?P<volume_id>\d+)_\d+$", job["ID"])
+        if not name_match: return False, False
+        
+        return name_match.group('type'), name_match.group('volume_id')
 
-        `jobs` should be a response from the Nomad API's jobs endpoint.
-        """
-        volume_ids = set()
-        for job in jobs:
-            # These job types don't have volume indices, so we just won't count them.
-            if not job["ID"].startswith("SURVEYOR") \
-               and job["ID"] != "SMASHER" \
-               and job["ID"] != "DOWNLOADER":
-                # Strips out the volume ID like so:
-                # SALMON_1_16384 -> 1
-                volume_id = "_".join(job["ID"].split("_")[-2])
-                volume_ids.add(volume_id)
+    def _get_nomad_jobs(self):
+        """Calls nomad service and return all jobs"""
+        try:
+            nomad_host = get_env_variable("NOMAD_HOST")
+            nomad_port = get_env_variable("NOMAD_PORT", "4646")
+            nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
+            return nomad_client.jobs.get_jobs()
 
-        nomad_running_jobs_by_volume = {}
-        nomad_pending_jobs_by_volume = {}
-        for volume_id in volume_ids:
-            if job["ID"].startswith("SURVEYOR") \
-               or job["ID"] == "SMASHER" \
-               or job["ID"] == "DOWNLOADER":
-                continue
-
-            def job_has_same_volume(job: Dict) -> bool:
-                """Returns true if the job is on the same volume as this iteration of the loop.
-
-                These job types don't have volume indices, so we just
-                won't count them. We theoretically could try, but it
-                really would be more trouble than it's worth and this
-                endpoint is already going to have a hard time returning
-                a response in time.
-                """
-                return not job["ID"].startswith("SURVEYOR") \
-                    and job["ID"] != "SMASHER" \
-                    and job["ID"] != "DOWNLOADER" \
-                    and job["ID"].split("_")[-2] == volume_id
-
-            jobs_with_same_volume = [job for job in jobs if job_has_same_volume(job)]
-
-            aggregated_pending = 0
-            aggregated_running = 0
-            for job in jobs_with_same_volume:
-                children = job["JobSummary"]["Children"]
-                aggregated_pending = aggregated_pending + children["Pending"]
-                aggregated_running = aggregated_running + children["Running"]
-
-            nomad_pending_jobs_by_volume["volume_" + str(volume_id)] = aggregated_pending
-            nomad_running_jobs_by_volume["volume_" + str(volume_id)] = aggregated_running
-
-        return nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume
+        except nomad.api.exceptions.BaseNomadException:
+            # Nomad is not available right now
+            return []
 
     def _get_nomad_jobs_breakdown(self):
-        nomad_host = get_env_variable("NOMAD_HOST")
-        nomad_port = get_env_variable("NOMAD_PORT", "4646")
-        nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
-
-        jobs = nomad_client.jobs.get_jobs()
+        jobs = self._get_nomad_jobs()
         parameterized_jobs = [job for job in jobs if job['ParameterizedJob']]
 
-        nomad_pending_jobs_by_type, nomad_running_jobs_by_type = self._aggregate_nomad_jobs_by_type(parameterized_jobs)
+        aggregated_jobs_by_type = groupby(parameterized_jobs, lambda job: self._get_job_details(job)[0])
+        nomad_pending_jobs_by_type, nomad_running_jobs_by_type = self._aggregate_nomad_jobs(aggregated_jobs_by_type)
 
         # To get the total jobs for running and pending, the easiest
         # AND the most efficient way is to sum up the stats we've
@@ -1244,7 +1190,8 @@ class Stats(APIView):
         for job_type, num_jobs in nomad_pending_jobs_by_type.items():
             nomad_pending_jobs = nomad_pending_jobs + num_jobs
 
-        nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume = self._aggregate_nomad_jobs_by_volume(parameterized_jobs)
+        aggregated_jobs_by_volume = groupby(parameterized_jobs, lambda job: self._get_job_details(job)[1])
+        nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume = self._aggregate_nomad_jobs(aggregated_jobs_by_volume)
 
         return {
             "nomad_pending_jobs": nomad_pending_jobs,

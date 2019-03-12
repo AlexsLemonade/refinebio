@@ -25,7 +25,7 @@ from data_refinery_api.serializers import (
     ProcessorSerializer,
     SurveyJobSerializer,
 )
-from data_refinery_api.views import ExperimentList
+from data_refinery_api.views import ExperimentList, Stats
 from data_refinery_common.utils import get_env_variable
 from data_refinery_common.models import (
     ComputationalResult,
@@ -949,6 +949,113 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('experiments'))
         self.assertEqual(response.status_code, 500)
         mock_client.captureMessage.assert_called()
+
+class StatsTestCases(APITestCase):
+    @patch.object(Stats, '_get_nomad_jobs')
+    def test_nomad_stats_empty(self, mock_get_nomad_jobs):
+        mock_get_nomad_jobs.return_value = []
+        response = self.client.get(reverse('stats'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['nomad_running_jobs'], 0)
+        self.assertEqual(response.json()['nomad_pending_jobs'], 0)
+
+    @patch.object(Stats, '_get_nomad_jobs')
+    def test_nomad_stats(self, mock_get_nomad_jobs):
+        mock_get_nomad_jobs.return_value = StatsTestCases.MOCK_NOMAD_RESPONSE
+        response = self.client.get(reverse('stats'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['nomad_running_jobs'], 2)
+        self.assertEqual(response.json()['nomad_pending_jobs'], 0)
+        self.assertEqual(response.json()['nomad_running_jobs_by_type']['SALMON'], 2)
+        self.assertEqual(response.json()['nomad_running_jobs_by_volume']['1'], 1)
+        self.assertEqual(response.json()['nomad_running_jobs_by_volume']['2'], 1)
+
+    MOCK_NOMAD_RESPONSE = [
+        {
+            'CreateIndex': 5145, 
+            'ID': 'TXIMPORT', 
+            'JobModifyIndex': 5145, 
+            'JobSummary': {
+            'Children': {
+                'Dead': 0, 
+                'Pending': 0, 
+                'Running': 0
+            }, 
+            'CreateIndex': 5145,
+            'JobID': 'TXIMPORT',
+            'ModifyIndex': 5145,
+            'Namespace': 'default',
+            'Summary': {}
+            }, 
+            'ModifyIndex': 5145, 
+            'Name': 'TXIMPORT', 
+            'ParameterizedJob': True, 
+            'ParentID': '', 
+            'Periodic': False, 
+            'Priority': 50, 
+            'Status': 'running', 
+            'StatusDescription': '', 
+            'Stop': False, 
+            'SubmitTime': 1552322030836469355, 
+            'Type': 'batch'
+        },
+        {
+            'CreateIndex': 5145, 
+            'ID': 'SALMON_1_2323', 
+            'JobModifyIndex': 5145, 
+            'JobSummary': {
+            'Children': {
+                'Dead': 0, 
+                'Pending': 0, 
+                'Running': 1
+            }, 
+            'CreateIndex': 5145, 
+            'JobID': 'SALMON_1_2323', 
+            'ModifyIndex': 5145, 
+            'Namespace': 'default', 
+            'Summary': {}
+            }, 
+            'ModifyIndex': 5145, 
+            'Name': 'SALMON_1_2323', 
+            'ParameterizedJob': True, 
+            'ParentID': '', 
+            'Periodic': False, 
+            'Priority': 50, 
+            'Status': 'running', 
+            'StatusDescription': '', 
+            'Stop': False, 
+            'SubmitTime': 1552322030836469355, 
+            'Type': 'batch'
+        },
+        {
+            'CreateIndex': 5145, 
+            'ID': 'SALMON_2_2323', 
+            'JobModifyIndex': 5145, 
+            'JobSummary': {
+            'Children': {
+                'Dead': 0, 
+                'Pending': 0, 
+                'Running': 1
+            }, 
+            'CreateIndex': 5145, 
+            'JobID': 'SALMON_1_2323', 
+            'ModifyIndex': 5145, 
+            'Namespace': 'default', 
+            'Summary': {}
+            }, 
+            'ModifyIndex': 5145, 
+            'Name': 'SALMON_1_2323', 
+            'ParameterizedJob': True, 
+            'ParentID': '', 
+            'Periodic': False, 
+            'Priority': 50, 
+            'Status': 'running', 
+            'StatusDescription': '', 
+            'Stop': False, 
+            'SubmitTime': 1552322030836469355, 
+            'Type': 'batch'
+        }
+    ]
 
 class ESTestCases(APITestCase):
 
