@@ -21,6 +21,9 @@ from data_refinery_common.models import (
 )
 from test.support import EnvironmentVarGuard # Python >=3
 
+# For use in tests that test the JOB_CREATED_AT_CUTOFF functionality.
+DAY_BEFORE_JOB_CUTOFF = main.JOB_CREATED_AT_CUTOFF - datetime.timedelta(days=1)
+
 class ForemanTestCase(TestCase):
     def create_downloader_job(self):
         job = DownloaderJob(downloader_task="SRA",
@@ -237,7 +240,7 @@ class ForemanTestCase(TestCase):
         mock_nomad.side_effect = mock_init_nomad
 
         job = self.create_downloader_job()
-        job.created_at = datetime.date(2019, 2, 3)
+        job.created_at = DAY_BEFORE_JOB_CUTOFF
         job.save()
 
         # Just run it once, not forever so get the function that is
@@ -575,7 +578,7 @@ class ForemanTestCase(TestCase):
         mock_nomad.side_effect = mock_init_nomad
 
         job = self.create_processor_job()
-        job.created_at = datetime.date(2019, 2, 3)
+        job.created_at = DAY_BEFORE_JOB_CUTOFF
         job.save()
 
         # Just run it once, not forever so get the function that is
@@ -875,7 +878,7 @@ class ForemanTestCase(TestCase):
         mock_nomad.side_effect = mock_init_nomad
 
         job = self.create_survey_job()
-        job.created_at = datetime.date(2019, 2, 3)
+        job.created_at = DAY_BEFORE_JOB_CUTOFF
         job.save()
 
         # Just run it once, not forever so get the function that is

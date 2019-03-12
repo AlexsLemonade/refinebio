@@ -33,7 +33,7 @@ from data_refinery_common.utils import get_env_variable
 logger = get_and_configure_logger(__name__)
 
 
-MAX_JOBS_FOR_THIS_MODE = 2000
+MAX_JOBS_FOR_THIS_MODE = 3000
 
 
 def build_completion_list(organism: Organism) -> List[Dict]:
@@ -44,7 +44,7 @@ def build_completion_list(organism: Organism) -> List[Dict]:
     samples, and the number of unprocessed samples under the keys:
     experiment, processed, and unprocessed respectively.
     """
-    experiments = organism.experiments.all()
+    experiments = organism.experiments.filter(technology='RNA-SEQ')
 
     completion_list = []
     for experiment in experiments:
@@ -102,6 +102,12 @@ def build_prioritized_jobs_list(organism: Organism) -> List:
     prioritized_job_list = []
     for experiment_stats_dict in completion_list:
         unprocessed_samples = experiment_stats_dict["unprocessed"]
+        logger.info(
+            "Experiment %s has %d / %d samples processed.",
+            experiment_stats_dict["experiment"],
+            len(unprocessed_samples),
+            (len(unprocessed_samples) + len(experiment_stats_dict["processed"]))
+        )
 
         for sample in unprocessed_samples:
             processor_jobs = list(sample.get_processor_jobs())
@@ -139,13 +145,13 @@ def requeue_job(job):
     # already, so there may be a good reason. Not immediately having
     # them retried will give me a chance to actually take a look at
     # what is happening to to them.
-    num_retries = 2
+    num_retries = 1
     if isinstance(job, ProcessorJob):
         new_job = ProcessorJob(
             num_retries=num_retries,
             pipeline_applied=job.pipeline_applied,
             ram_amount=job.ram_amount,
-            volume_index=job.volume_index
+            volume_index="0"
         )
         new_job.save()
 
@@ -181,15 +187,26 @@ def requeue_job(job):
             job.retried_job = new_job
             job.save()
         else:
+            logger.error(
+                ("Failed to requeue %s which had ID %d with a new %s "
+                 "with ID %d because send_job returned false."),
+                type(job).__name__,
+                job.id,
+                type(job).__name__,
+                new_job.id
+            )
             # Can't communicate with nomad just now, leave the job for a later loop.
             new_job.delete()
             return False
     except:
-        logger.error("Failed to requeue %s which had ID %d with a new %s with ID %d.",
-                     type(job).__name__,
-                     job.id,
-                     type(job).__name__,
-                     new_job.id)
+        logger.exception(
+            ("Failed to requeue %s which had ID %d with a new %s "
+             "with ID %d because send_job raised an exception."),
+            type(job).__name__,
+            job.id,
+            type(job).__name__,
+            new_job.id
+        )
         # Can't communicate with nomad just now, leave the job for a later loop.
         new_job.delete()
         return False
@@ -239,12 +256,13 @@ class Command(BaseCommand):
             num_short_from_max = MAX_JOBS_FOR_THIS_MODE - len_all_jobs
             if num_short_from_max > 0:
                 for i in range(num_short_from_max):
-                    if len(prioritized_job_list) > 0 and requeue_job(prioritized_job_list[0]):
-                        prioritized_job_list.pop(0)
+                    if len(prioritized_job_list) > 0:
+                        requeue_job(prioritized_job_list.pop(0))
 
             # Wait 10 minutes in between queuing additional work to
             # give it time to actually get done.
             if len(prioritized_job_list) > 0:
+                logger.info("Sleeping for 5 minutes while jobs get done.")
                 time.sleep(600)
 
         logger.info("Successfully requeued all jobs for unprocessed %s samples.", organism_name)

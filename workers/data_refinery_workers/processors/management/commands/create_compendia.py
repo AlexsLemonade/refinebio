@@ -16,6 +16,7 @@ from data_refinery_common.models import (
     OrganismIndex,
     ExperimentSampleAssociation
 )
+from data_refinery_workers.processors import create_compendia
 
 logger = get_and_configure_logger(__name__)
 
@@ -45,7 +46,7 @@ class Command(BaseCommand):
             data = {}
             experiments = Experiment.objects.filter(id__in=(ExperimentOrganismAssociation.objects.filter(organism=organism)).values('experiment'))
             for experiment in experiments:
-                data[experiment.accession_code] = list(experiment.samples.values_list('accession_code', flat=True))
+                data[experiment.accession_code] = list(experiment.samples.filter(organism=organism).values_list('accession_code', flat=True))
 
             job = ProcessorJob()
             job.pipeline_applied = "COMPENDIA"

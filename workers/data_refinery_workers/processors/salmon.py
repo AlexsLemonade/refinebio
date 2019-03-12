@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import tarfile
+import untangle
 
 from botocore.client import Config
 from django.conf import settings
@@ -44,6 +45,26 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
 
+# Some experiments won't be entirely processed, but we'd still like to
+# make the samples we can process available. This means we need to run
+# tximport on the experiment before 100% of the samples are processed
+# individually.
+# This idea has been discussed here: https://github.com/AlexsLemonade/refinebio/issues/909
+
+# The consensus is that this is a good idea, but that we need a cutoff
+# to determine which experiments have enough data to have tximport run
+# on them early.  Candace ran an experiment to find these cutoff
+# values and recorded the results of this experiment here:
+# https://github.com/AlexsLemonade/tximport_partial_run_tests/pull/3
+
+# The gist of that discussion/experiment is that we need two cutoff
+# values, one for a minimum size experiment that can be processed
+# early and the percentage of completion necessary before we can
+# run tximport on the experiment. The values we decided on are:
+EARLY_TXIMPORT_MIN_SIZE = 25
+EARLY_TXIMPORT_MIN_PERCENT = .80
+
+
 def _set_job_prefix(job_context: Dict) -> Dict:
     """ Sets the `job_dir_prefix` value in the job context object."""
     job_context["job_dir_prefix"] = JOB_DIR_PREFIX + str(job_context["job_id"])
@@ -66,15 +87,11 @@ def _prepare_files(job_context: Dict) -> Dict:
     # same time.)
     job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR,
                                            job_context["job_dir_prefix"]) + "/"
-    job_context["temp_dir"] = job_context["work_dir"] + "temp/"
     os.makedirs(job_context["work_dir"], exist_ok=True)
-    os.makedirs(job_context["temp_dir"], exist_ok=True)
-    # If we want to be really fancy here, we can do something like:
-    # `$ mount -o size=16G -t tmpfs none job_context["temp_dir"]`
-    # As fasterq-dump is slow due to disk thrashing.
 
     original_files = job_context["original_files"]
     job_context["input_file_path"] = original_files[0].absolute_file_path
+
     if not os.path.exists(job_context["input_file_path"]):
         logger.error("Was told to process a non-existent file - why did this happen?",
             input_file_path=job_context["input_file_path"],
@@ -100,6 +117,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         new_input_file_path = os.path.join(job_context["work_dir"], original_files[0].filename)
         shutil.copyfile(job_context["input_file_path"], new_input_file_path)
         job_context['input_file_path'] = new_input_file_path
+        job_context['sra_input_file_path'] = new_input_file_path
 
     if job_context.get("input_file_path_2", False):
         new_input_file_path = os.path.join(job_context["work_dir"], original_files[1].filename)
@@ -113,6 +131,12 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context['samples'] = [] # This will only be populated in the `tximport` job
     job_context['organism'] = job_context['sample'].organism
     job_context["success"] = True
+
+    # Since 0.9, Nomad can access Docker's tmpfs features,
+    # which allows us to avoid fasterq-dump's disk thrashing.
+    job_context["temp_dir"] = "/home/user/data_store_tmpfs"
+    # Should be created by Docker already, but do it anyway.
+    os.makedirs(job_context["temp_dir"], exist_ok=True)
 
     job_context["output_directory"] = job_context["work_dir"] + sample.accession_code + "_output/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
@@ -159,7 +183,10 @@ def _extract_sra(job_context: Dict) -> Dict:
     time_start = timezone.now()
     # This can be improved with: " -e " + str(multiprocessing.cpu_count())
     # but it seems to cause time to increase if there are too many jobs calling it at once.
-    formatted_command = "fasterq-dump " + job_context['work_file'] + " -O " + job_context['work_dir'] + " --temp " + job_context["temp_dir"]
+    formatted_command = "fasterq-dump " + job_context['work_file'] + \
+                        " -O " +  job_context['work_dir'] + \
+                        " --temp " + job_context["temp_dir"]
+
     logger.debug("Running fasterq-dump using the following shell command: %s",
                  formatted_command,
                  processor_job=job_context["job_id"])
@@ -167,7 +194,7 @@ def _extract_sra(job_context: Dict) -> Dict:
         completed_command = subprocess.run(formatted_command.split(),
                                            stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE,
-                                           timeout=1200)
+                                           timeout=2400)
     except subprocess.TimeoutExpired as e:
         logger.exception("Shell call to fasterq-dump failed with timeout",
                      processor_job=job_context["job_id"],
@@ -223,6 +250,38 @@ def _extract_sra(job_context: Dict) -> Dict:
 
     return job_context
 
+def _determine_index_length_sra(job_context: Dict) -> Dict:
+    """
+    Use the sra-stat tool to determine length
+    ex:
+        sra-stat -x --statistics ERR1562482.sra
+
+    """
+
+    command_str = ("sra-stat -x --statistics {sra_file}")
+    formatted_command = command_str.format(sra_file=job_context["sra_input_file_path"])
+
+    logger.debug("Running sra-stat using the following shell command: %s",
+                 formatted_command,
+                 processor_job=job_context["job_id"])
+    completed_command = subprocess.run(formatted_command.split(),
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+    respo = completed_command.stdout.decode().strip()
+
+    stats = untangle.parse(respo)
+    bases_count = int(stats.Run.Bases['count'])
+    reads_count = (int(stats.Run.Statistics['nspots']) * int(stats.Run.Statistics['nreads']))
+    job_context['sra_num_reads'] = int(stats.Run.Statistics['nreads'])
+    job_context["index_length_raw"] = int(bases_count / reads_count)
+
+    if job_context["index_length_raw"] > 75:
+        job_context["index_length"] = "long"
+    else:
+        job_context["index_length"] = "short"
+
+    return job_context
+
 def _determine_index_length(job_context: Dict) -> Dict:
     """Determines whether to use the long or short salmon index.
 
@@ -231,6 +290,10 @@ def _determine_index_length(job_context: Dict) -> Dict:
     index is appropriate. For more information on index length see the
     _create_index function of the transcriptome_index processor.
     """
+
+    if job_context.get('sra_input_file_path', None):
+        return _determine_index_length_sra(job_context)
+
     logger.debug("Determining index length..")
     total_base_pairs = 0
     number_of_reads = 0
@@ -331,7 +394,7 @@ def _find_or_download_index(job_context: Dict) -> Dict:
         # complete each step.
         version_info_path = job_context["index_directory"] + "/versionInfo.json"
 
-        # Something very bad happened and now there are corrupt indexes installed. Nuke 'em. 
+        # Something very bad happened and now there are corrupt indexes installed. Nuke 'em.
         if os.path.exists(version_info_path) and (os.path.getsize(version_info_path) == 0):
             logger.error("We have to nuke a zero-valued index directory: " + version_info_path)
             shutil.rmtree(job_context["index_directory"], ignore_errors=True)
@@ -450,37 +513,11 @@ def _find_salmon_quant_results(experiment: Experiment):
     return results
 
 
-def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile]]:
-    """Return a mapping from experiments to a list of their quant files.
+def _run_tximport_for_experiment(
+        job_context: Dict,
+        experiment: Experiment,
+        quant_files: List[ComputedFile]) -> Dict:
 
-    Checks all the experiments which contain a sample from the current
-    experiment. If any of them are fully processed (at least with
-    salmon-quant) then the return dict will include the experiment
-    mapping to a list of paths to the quant.sf file for each sample in
-    that experiment.
-    """
-    experiments_set = ExperimentSampleAssociation.objects.filter(
-        sample=job_context['sample']).values_list('experiment')
-    experiments = Experiment.objects.filter(pk__in=experiments_set)
-
-    quantified_experiments = {}
-    for experiment in experiments:
-        salmon_quant_results = _find_salmon_quant_results(experiment)
-
-        if len(salmon_quant_results) == experiment.samples.count():
-            quant_files = []
-            for result in salmon_quant_results:
-                quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])
-
-            quantified_experiments[experiment] = quant_files
-
-    return quantified_experiments
-
-
-def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[ComputedFile]) -> Dict:
-    """Run tximport R script based on input quant files and the path
-    of genes_to_transcripts.txt.
-    """
     # Download all the quant.sf fles for this experiment. Write all
     # their paths to a file so we can pass a path to that to
     # tximport.R rather than having to pass in one argument per
@@ -605,15 +642,6 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
         individual_files.append(computed_file)
         job_context['samples'].append(sample)
 
-    # Clean up quant.sf files that were created just for this.
-    for quant_file in quant_files:
-        quant_file.delete_s3_file()
-
-        # It's only okay to delete the local file because the full
-        # output directory has already been zipped up.
-        quant_file.delete_local_file()
-        quant_file.delete()
-
     # Salmon-processed samples aren't marked as is_processed
     # until they are fully tximported, this value sets that
     # for the end_job function.
@@ -622,33 +650,161 @@ def _tximport(job_context: Dict, experiment: Experiment, quant_files: List[Compu
     return job_context
 
 
+def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile]]:
+    """Return a mapping from experiments to a list of their quant files.
+
+    Checks all the experiments which contain a sample from the current
+    experiment. If any of them are fully processed (at least with
+    salmon-quant) then the return dict will include the experiment
+    mapping to a list of paths to the quant.sf file for each sample in
+    that experiment.
+    """
+    experiments_set = ExperimentSampleAssociation.objects.filter(
+        sample=job_context['sample']).values_list('experiment')
+    experiments = Experiment.objects.filter(pk__in=experiments_set)
+
+    quantified_experiments = {}
+    for experiment in experiments:
+        salmon_quant_results = _find_salmon_quant_results(experiment)
+
+        num_quant_results = len(salmon_quant_results)
+        num_samples_in_experiment = experiment.samples.count()
+
+        # If an experiment is 100% complete we should always run
+        # tximport.  Otherwise, if this is a tximport job we should
+        # use EARLY_TXIMPORT_MIN_SIZE and EARLY_TXIMPORT_MIN_PERCENT
+        # to determine if tximport should be run. See the definitions
+        # of those values for more context.
+        should_run_tximport = False
+        percent_complete = num_quant_results / num_samples_in_experiment
+        if 'is_tximport_only' in job_context and job_context['is_tximport_only']:
+            if num_samples_in_experiment < EARLY_TXIMPORT_MIN_SIZE:
+                logger.warn(
+                    ("This is a Tximport job but there aren't enough samples"
+                     " in the experiment so I'm not running it."),
+                    processor_job=job_context["job_id"],
+                    experiment=experiment.accession_code
+                )
+            elif percent_complete < EARLY_TXIMPORT_MIN_PERCENT:
+                logger.warn(
+                    ("This is a Tximport job but a high enough percentage of samples"
+                     " in the experiment have not been processed yet so I'm not running it."),
+                )
+            else:
+                logger.info(
+                    ("This is a Tximport job and the minimum thresholds"
+                     " have been met so tximport will be run"),
+                    processor_job=job_context["job_id"],
+                    experiment=experiment.accession_code
+                )
+                should_run_tximport = True
+        elif percent_complete == 1.0:
+            should_run_tximport = True
+
+        if should_run_tximport:
+            quant_files = []
+            for result in salmon_quant_results:
+                quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])
+
+            quantified_experiments[experiment] = quant_files
+
+    return quantified_experiments
+
+
+def _tximport(job_context: Dict) -> Dict:
+    """Run tximport R script based on input quant files and the path
+    of genes_to_transcripts.txt.
+    """
+    tximport_inputs = _get_tximport_inputs(job_context)
+    for experiment, quant_files in tximport_inputs.items():
+        job_context = _run_tximport_for_experiment(job_context, experiment, quant_files)
+        # If `tximport` on any related experiment fails, exit immediately.
+        if not job_context["success"]:
+            return job_context
+
+    return job_context
+
+
 def _run_salmon(job_context: Dict) -> Dict:
     """Runs Salmon Quant."""
     logger.debug("Running Salmon..")
 
     # Salmon needs to be run differently for different sample types.
-    if "input_file_path_2" in job_context:
-        second_read_str = " -2 {}".format(job_context["input_file_path_2"])
+    # SRA files also get processed differently as we don't want to use fasterq-dump to extract
+    # them to disk.
+    if job_context.get('sra_input_file_path', None):
 
-        # Rob recommends 16 threads/process, which fits snugly on an x1 at 8GB RAM per Salmon container:
-        # (2 threads/core * 16 cores/socket * 64 vCPU) / (1TB/8GB) = ~17
-        command_str = ("salmon --no-version-check quant -l A --biasSpeedSamp 5 -i {index}"
-                       " -1 {input_one}{second_read_str} -p 16 -o {output_directory}"
-                       " --seqBias --gcBias --dumpEq --writeUnmappedNames")
+        # Single reads
+        if job_context['sra_num_reads'] == 1:
 
-        formatted_command = command_str.format(index=job_context["index_directory"],
-                                               input_one=job_context["input_file_path"],
-                                               second_read_str=second_read_str,
-                                               output_directory=job_context["output_directory"])
+            fifo = "/tmp/barney"
+            os.mkfifo(fifo)
+
+            dump_str = "fastq-dump --stdout {input_sra_file} > {fifo} &"
+            formatted_dump_command = dump_str.format(input_sra_file=job_context["sra_input_file_path"],
+                                                   fifo=fifo)
+            dump_po = subprocess.Popen(formatted_dump_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+            command_str = ( "salmon --no-version-check quant -l A -i {index} "
+                            "-r {fifo} -p 16 -o {output_directory} --seqBias --dumpEq --writeUnmappedNames"
+                         )
+            formatted_command = command_str.format(index=job_context["index_directory"],
+                                                   input_sra_file=job_context["sra_input_file_path"],
+                                                   fifo=fifo,
+                                                   output_directory=job_context["output_directory"])
+        # Paired are trickier
+        else:
+
+            # Okay, for some reason I can't explain, this only works in the temp directory,
+            # otherwise the `tee` part will only output to one or the other of the streams (non-deterministically),
+            # but not both. This doesn't appear to happen if the fifos are in tmp.
+            alpha = "/tmp/alpha"
+            os.mkfifo(alpha)
+            beta = "/tmp/beta"
+            os.mkfifo(beta)
+
+            dump_str = "fastq-dump --stdout --split-files -I {input_sra_file} | tee >(grep '@.*\.1\s' -A3 --no-group-separator > {fifo_alpha}) >(grep '@.*\.2\s' -A3 --no-group-separator > {fifo_beta}) > /dev/null &"
+            formatted_dump_command = dump_str.format(input_sra_file=job_context["sra_input_file_path"],
+                                                   fifo_alpha=alpha,
+                                                   fifo_beta=beta)
+            dump_po = subprocess.Popen(formatted_dump_command, 
+                                        shell=True, 
+                                        executable='/bin/bash',
+                                        stdout=subprocess.PIPE, 
+                                        stderr=subprocess.STDOUT)
+
+            command_str = ( "salmon --no-version-check quant -l A -i {index} "
+                            "-1 {fifo_alpha} -2 {fifo_beta} -p 16 -o {output_directory} --seqBias --dumpEq --writeUnmappedNames"
+                         )
+            formatted_command = command_str.format(index=job_context["index_directory"],
+                                                   input_sra_file=job_context["sra_input_file_path"],
+                                                   fifo_alpha=alpha,
+                                                   fifo_beta=beta,
+                                                   output_directory=job_context["output_directory"])
+
     else:
-        # Related: https://github.com/COMBINE-lab/salmon/issues/83
-        command_str = ("salmon --no-version-check quant -l A -i {index}"
-                       " -r {input_one} -p 16 -o {output_directory}"
-                       " --seqBias --dumpEq --writeUnmappedNames")
+        if "input_file_path_2" in job_context:
+            second_read_str = " -2 {}".format(job_context["input_file_path_2"])
 
-        formatted_command = command_str.format(index=job_context["index_directory"],
-                                               input_one=job_context["input_file_path"],
-                                               output_directory=job_context["output_directory"])
+            # Rob recommends 16 threads/process, which fits snugly on an x1 at 8GB RAM per Salmon container:
+            # (2 threads/core * 16 cores/socket * 64 vCPU) / (1TB/8GB) = ~17
+            command_str = ("salmon --no-version-check quant -l A --biasSpeedSamp 5 -i {index}"
+                           " -1 {input_one}{second_read_str} -p 16 -o {output_directory}"
+                           " --seqBias --gcBias --dumpEq --writeUnmappedNames")
+
+            formatted_command = command_str.format(index=job_context["index_directory"],
+                                                   input_one=job_context["input_file_path"],
+                                                   second_read_str=second_read_str,
+                                                   output_directory=job_context["output_directory"])
+        else:
+            # Related: https://github.com/COMBINE-lab/salmon/issues/83
+            command_str = ("salmon --no-version-check quant -l A -i {index}"
+                           " -r {input_one} -p 16 -o {output_directory}"
+                           " --seqBias --dumpEq --writeUnmappedNames")
+
+            formatted_command = command_str.format(index=job_context["index_directory"],
+                                                   input_one=job_context["input_file_path"],
+                                                   output_directory=job_context["output_directory"])
 
     logger.debug("Running Salmon Quant using the following shell command: %s",
                  formatted_command,
@@ -767,16 +923,6 @@ def _run_salmon(job_context: Dict) -> Dict:
             salmon_quant_archive.result = result
             salmon_quant_archive.save()
             job_context['computed_files'].append(salmon_quant_archive)
-
-            tximport_inputs = _get_tximport_inputs(job_context)
-
-        # tximport analysis is done outside of the transaction so that
-        # the mutex wouldn't hold the other jobs too long.
-        for experiment, quant_files in tximport_inputs.items():
-            _tximport(job_context, experiment, quant_files)
-            # If `tximport` on any related experiment fails, exit immediately.
-            if not job_context["success"]:
-                return job_context
 
         kv = ComputationalResultAnnotation()
         kv.data = {"index_length": job_context["index_length"]}
@@ -1006,20 +1152,27 @@ def salmon(job_id: int) -> None:
     """Main processor function for the Salmon Processor.
 
     Runs salmon quant command line tool, specifying either a long or
-    short read length. Also runs FastQC, MultiQC, and Salmontools.
+    short read length. Also runs FastQC, MultiQC, Salmontools, and Tximport.
     """
     pipeline = Pipeline(name=utils.PipelineEnum.SALMON.value)
     final_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _set_job_prefix,
                         _prepare_files,
-                        _extract_sra,
+
+                        # We're going to be using SRA files "directly",
+                        # so we don't extract them to disk anymore.
+                        #_extract_sra,
 
                         _determine_index_length,
                         _find_or_download_index,
 
-                        _run_fastqc,
+                        # We aren't using FastQC anymore since
+                        # we're skipping fastq files entirely.
+                        # _run_fastqc,
+
                         _run_salmon,
+                        _tximport,
                         _run_salmontools,
                         _run_multiqc,
                         utils.end_job])

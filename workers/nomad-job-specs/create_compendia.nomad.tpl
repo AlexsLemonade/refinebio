@@ -27,7 +27,7 @@ job "CREATE_COMPENDIA" {
       size = "10"
     }
 
-    task "create_qn_target" {
+    task "create_compendia" {
       driver = "docker"
 
       kill_timeout = "30s"
@@ -67,15 +67,17 @@ job "CREATE_COMPENDIA" {
       # The resources the job will require.
       resources {
         # CPU is in AWS's CPU units.
-        cpu = 1024
+        cpu =   4000
         # Memory is in MB of RAM.
-        memory = 16384
+        memory = 180000
       }
 
       logs {
         max_files = 1
         max_file_size = 1
       }
+
+      ${{SMASHER_CONSTRAINT}}
 
       config {
         image = "${{DOCKERHUB_REPO}}/${{COMPENDIA_DOCKER_IMAGE}}"

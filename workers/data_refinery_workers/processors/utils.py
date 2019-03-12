@@ -12,6 +12,7 @@ from django.utils import timezone
 from enum import Enum, unique
 from typing import List, Dict, Callable
 
+from data_refinery_common import job_lookup
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
@@ -53,6 +54,9 @@ def signal_handler(sig, frame):
 
 def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
     """Creates a downloader job to download `undownloaded_files`."""
+    if not undownloaded_files:
+        return False
+
     original_downloader_job = None
     archive_file = None
     for undownloaded_file in undownloaded_files:
@@ -95,11 +99,29 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
                 pass
 
     if not original_downloader_job:
-        logger.error(
-            "Could not find the original downloader job for these files.",
-            undownloaded_file=undownloaded_files
-        )
-        return False
+        sample_object = list(undownloaded_files)[0].samples.first()
+        if sample_object:
+            downloader_task = job_lookup.determine_downloader_task(sample_object)
+
+            if downloader_task == job_lookup.Downloaders.NONE:
+                logger.warn(("No valid downloader task found for sample, which is weird"
+                             " because it was able to have a processor job created for it..."),
+                            sample=sample_object.id)
+                return False
+            else:
+                # determine_downloader_task returns an enum object,
+                # but we wanna set this on the DownloaderJob object so
+                # we want the actual value.
+                downloader_task = downloader_task.value
+
+            accession_code = sample_object.accession_code
+            original_files = sample_object.original_files.all()
+        else:
+            logger.error(
+                "Could not find the original DownloaderJob or Sample for these files.",
+                undownloaded_file=undownloaded_files
+            )
+            return False
     elif original_downloader_job.was_recreated:
         logger.warn(
             "Downloader job has already been recreated once, not doing it again.",
@@ -107,10 +129,24 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
             undownloaded_files=undownloaded_files
         )
         return False
+    else:
+        downloader_task = original_downloader_job.downloader_task
+        accession_code = original_downloader_job.accession_code
+        original_files = original_downloader_job.original_files.all()
+
+        sample_object = original_files[0].samples.first()
+
+    # Disable GEO downloader job recreation until we resolve:
+    # https://github.com/AlexsLemonade/refinebio/issues/1068
+    if sample_object.source_database == "GEO":
+        logger.warn("Not recreating a downloader job for a sample coming from GEO.",
+                    sample=sample_object,
+                    original_files=original_files)
+        return False
 
     new_job = DownloaderJob()
-    new_job.downloader_task = original_downloader_job.downloader_task
-    new_job.accession_code = original_downloader_job.accession_code
+    new_job.downloader_task = downloader_task
+    new_job.accession_code = accession_code
     new_job.was_recreated = True
     new_job.save()
 
@@ -124,6 +160,13 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
         # another file that came out of it could have already
         # recreated the DownloaderJob.
         if archive_file.needs_downloading():
+            if archive_file.is_downloaded:
+                # If it needs to be downloaded then it's not
+                # downloaded and the is_downloaded field should stop
+                # lying about that.
+                archive_file.is_downloaded = False
+                archive_file.save()
+
             DownloaderJobOriginalFileAssociation.objects.get_or_create(
                 downloader_job=new_job,
                 original_file=archive_file
@@ -132,7 +175,7 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
         # We can't just associate the undownloaded files, because
         # there's a chance that there is a file which actually is
         # downloaded that also needs to be associated with the job.
-        for original_file in original_downloader_job.original_files.all():
+        for original_file in original_files:
             DownloaderJobOriginalFileAssociation.objects.get_or_create(
                 downloader_job=new_job,
                 original_file=original_file
@@ -157,6 +200,13 @@ def prepare_original_files(job_context):
     undownloaded_files = set()
     for original_file in original_files:
         if original_file.needs_downloading():
+            if original_file.is_downloaded:
+                # If it needs to be downloaded then it's not
+                # downloaded and the is_downloaded field should stop
+                # lying about that.
+                original_file.is_downloaded = False
+                original_file.save()
+
             undownloaded_files.add(original_file)
 
     if undownloaded_files:
@@ -277,8 +327,10 @@ def start_job(job_context: Dict):
 
     logger.debug("Starting processor Job.", processor_job=job.id, pipeline=job.pipeline_applied)
 
-    # Janitors have no requirement
-    if job.pipeline_applied not in ["JANITOR"]:
+    # Janitor jobs don't operate on file objects.
+    # Tximport jobs don't need to download the original file, they
+    # just need it to know what experiment to process.
+    if job.pipeline_applied not in ["JANITOR", "TXIMPORT"]:
         # Some jobs take OriginalFiles, other take Datasets
         if job.pipeline_applied not in ["SMASHER", "QN_REFERENCE", "COMPENDIA"]:
             job_context = prepare_original_files(job_context)
@@ -464,6 +516,7 @@ class PipelineEnum(Enum):
     NO_OP = "No Op"
     SALMON = "Salmon"
     SMASHER = "Smasher"
+    TXIMPORT = 'Tximport'
     TX_INDEX = "Transcriptome Index"
     QN_REFERENCE = "Quantile Normalization Reference"
     JANITOR = "Janitor"

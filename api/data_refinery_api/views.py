@@ -3,9 +3,11 @@ import requests
 import mailchimp3
 import nomad
 from typing import Dict
-
+from itertools import groupby
+from re import match
 from django.conf import settings
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Prefetch, DateTimeField
+from django.db.models.functions import Trunc
 from django.db.models.aggregates import Avg, Sum
 from django.db.models.expressions import F, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
@@ -46,6 +48,7 @@ from rest_framework.views import APIView
 
 from data_refinery_api.serializers import (
     ComputationalResultSerializer,
+    ComputationalResultWithUrlSerializer,
     DetailedExperimentSerializer,
     DetailedSampleSerializer,
     ExperimentSerializer,
@@ -56,6 +59,7 @@ from data_refinery_api.serializers import (
     ProcessorSerializer,
     SampleSerializer,
     CompendiaSerializer,
+    CompendiaWithUrlSerializer,
     QNTargetSerializer,
     ComputedFileListSerializer,
 
@@ -68,6 +72,7 @@ from data_refinery_api.serializers import (
     APITokenSerializer,
     CreateDatasetSerializer,
     DatasetSerializer,
+    DatasetWithUrlSerializer,
 )
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.message_queue import send_job
@@ -101,7 +106,6 @@ logger = get_and_configure_logger(__name__)
 # Variables
 ##
 
-RUNNING_IN_CLOUD = get_env_variable("RUNNING_IN_CLOUD")
 MAILCHIMP_USER = get_env_variable("MAILCHIMP_USER")
 MAILCHIMP_API_KEY = get_env_variable("MAILCHIMP_API_KEY")
 MAILCHIMP_LIST_ID = get_env_variable("MAILCHIMP_LIST_ID")
@@ -203,7 +207,7 @@ class ExperimentDocumentView(DocumentViewSet):
         },
         'technology': 'technology',
         'has_publication': 'has_publication',
-        'platform': 'platform_accesion_codes',
+        'platform': 'platform_accession_codes',
         'organism': 'organism_names',
         'num_processed_samples': {
             'field': 'num_processed_samples',
@@ -351,7 +355,7 @@ class SearchAndFilter(generics.ListAPIView):
     Ex: search/?search=human&has_publication=True
 
     Interactive filtering allows users to explore results more easily. It can be enabled using the parameter `filter_order`.
-    The filter names should be sent sepparated by commas and depending on the order in which the filters are applied the 
+    The filter names should be sent sepparated by commas and depending on the order in which the filters are applied the
     number of samples per filter will be different.
 
     """
@@ -527,6 +531,19 @@ class DatasetView(generics.RetrieveUpdateAPIView):
     serializer_class = DatasetSerializer
     lookup_field = 'id'
 
+    def get(self, request, id=None, format=None):
+        dataset = get_object_or_404(Dataset, id=id)
+
+        token_id = self.request.META.get('HTTP_API_KEY', None)
+
+        try:
+            token = APIToken.objects.get(id=token_id, is_activated=True)
+            serializer = DatasetWithUrlSerializer(dataset)
+        except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            serializer = DatasetSerializer(dataset)
+
+        return Response(serializer.data)
+
     def perform_update(self, serializer):
         """ If `start` is set, fire off the job. Disables dataset data updates after that. """
         old_object = self.get_object()
@@ -549,7 +566,11 @@ class DatasetView(generics.RetrieveUpdateAPIView):
         if new_data.get('start'):
 
             # Make sure we have a valid activated token.
-            token_id = self.request.data.get('token_id')
+            token_id = self.request.data.get('token_id', None)
+
+            if not token_id:
+                token_id = self.request.META.get('HTTP_API_KEY', None)
+
             try:
                 token = APIToken.objects.get(id=token_id, is_activated=True)
             except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
@@ -559,7 +580,8 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             # there could be use cases where you don't want to supply an email.
             supplied_email_address = self.request.data.get('email_address', None)
             email_ccdl_ok = self.request.data.get('email_ccdl_ok', False)
-            if supplied_email_address and MAILCHIMP_API_KEY and RUNNING_IN_CLOUD and email_ccdl_ok:
+            if supplied_email_address and MAILCHIMP_API_KEY \
+               and settings.RUNNING_IN_CLOUD and email_ccdl_ok:
                 try:
                     client = mailchimp3.MailChimp(mc_api=MAILCHIMP_API_KEY, mc_user=MAILCHIMP_USER)
                     data = {
@@ -724,7 +746,9 @@ class APITokenView(APIView):
     def post(self, request, id=None):
         """ Given a token's ID, activate it."""
 
-        id = request.data.get('id', None)
+        if not id:
+            id = request.data.get('id', None)
+
         activated_token = get_object_or_404(APIToken, id=id)
         activated_token.is_activated = request.data.get('is_activated', False)
         activated_token.save()
@@ -787,7 +811,7 @@ class SampleList(PaginatedAPIView):
     List all Samples.
 
     Pass in a list of pk to an ids query parameter to filter by id.
-    
+
     Also accepts:
         - `dataset_id` field instead of a list of accession codes
         - `experiment_accession_code` to return the samples associated with a given experiment
@@ -909,12 +933,21 @@ class ResultsList(PaginatedAPIView):
         filter_dict.pop('offset', None)
         results = ComputationalResult.public_objects.filter(**filter_dict)
 
+        token_id = self.request.META.get('HTTP_API_KEY', None)
+
+        try:
+            token = APIToken.objects.get(id=token_id, is_activated=True)
+            serializer_class = ComputationalResultWithUrlSerializer
+        except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            serializer_class = ComputationalResultSerializer
+
+
         page = self.paginate_queryset(results)
         if page is not None:
-            serializer = ComputationalResultSerializer(page, many=True)
+            serializer = serializer_class(page, many=True)
             return self.get_paginated_response(serializer.data)
         else:
-            serializer = ComputationalResultSerializer(results, many=True)
+            serializer = serializer_class(results, many=True)
             return Response(serializer.data)
 
 
@@ -1021,134 +1054,130 @@ class Stats(APIView):
         data['survey_jobs'] = self._get_job_stats(SurveyJob.objects, range_param)
         data['downloader_jobs'] = self._get_job_stats(DownloaderJob.objects, range_param)
         data['processor_jobs'] = self._get_job_stats(ProcessorJob.objects, range_param)
-        data['samples'] = self._get_object_stats(Sample.objects, range_param)
         data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
-        data['processed_samples'] = self._get_object_stats(Sample.processed_objects)
-        data['processed_experiments'] = self._get_object_stats(Experiment.processed_public_objects)
-        data['input_data_size'] = self._get_input_data_size()
-        data['output_data_size'] = self._get_output_data_size()
-        data['active_volumes'] = list(get_active_volumes())
 
-        try:
-            nomad_stats = self._get_nomad_jobs_breakdown()
-            data['nomad_running_jobs'] = nomad_stats["nomad_running_jobs"]
-            data['nomad_pending_jobs'] = nomad_stats["nomad_pending_jobs"]
-            data['nomad_running_jobs_by_type'] = nomad_stats["nomad_running_jobs_by_type"]
-            data['nomad_pending_jobs_by_type'] = nomad_stats["nomad_pending_jobs_by_type"]
-            data['nomad_running_jobs_by_volume'] = nomad_stats["nomad_running_jobs_by_volume"]
-            data['nomad_pending_jobs_by_volume'] = nomad_stats["nomad_pending_jobs_by_volume"]
-        except nomad.api.exceptions.BaseNomadException:
-            # Nomad is not available right now, so exclude these.
-            pass
+        # processed and unprocessed samples stats
+        data['unprocessed_samples'] = self._get_object_stats(Sample.objects.filter(is_processed=False), range_param)
+        data['processed_samples'] = self._get_object_stats(Sample.processed_objects, range_param)
+        data['processed_samples']['last_hour'] = self._samples_processed_last_hour()
+
+        data['processed_samples']['technology'] = {}
+        techs = Sample.processed_objects.values('technology').annotate(count=Count('technology'))
+        for tech in techs:
+            if not tech['technology'] or not tech['technology'].strip():
+                continue
+            data['processed_samples']['technology'][tech['technology']] = tech['count']
+
+        data['processed_samples']['organism'] = {}
+        organisms = Sample.processed_objects.values('organism__name').annotate(count=Count('organism__name'))
+        for organism in organisms:
+            if not organism['organism__name']:
+                continue
+            data['processed_samples']['organism'][organism['organism__name']] = organism['count']
+
+        data['processed_experiments'] = self._get_object_stats(Experiment.processed_public_objects)
+        data['active_volumes'] = list(get_active_volumes())
+        data['dataset'] = self._get_dataset_stats(range_param)
+
+        if range_param:
+            data['input_data_size'] = self._get_input_data_size()
+            data['output_data_size'] = self._get_output_data_size()
+
+        nomad_stats = self._get_nomad_jobs_breakdown()
+        data['nomad_running_jobs'] = nomad_stats["nomad_running_jobs"]
+        data['nomad_pending_jobs'] = nomad_stats["nomad_pending_jobs"]
+        data['nomad_running_jobs_by_type'] = nomad_stats["nomad_running_jobs_by_type"]
+        data['nomad_pending_jobs_by_type'] = nomad_stats["nomad_pending_jobs_by_type"]
+        data['nomad_running_jobs_by_volume'] = nomad_stats["nomad_running_jobs_by_volume"]
+        data['nomad_pending_jobs_by_volume'] = nomad_stats["nomad_pending_jobs_by_volume"]
 
         return Response(data)
 
-    def _aggregate_nomad_jobs_by_type(self, jobs: Dict):
-        """Aggregates the pending and running job counts for each Nomad job type.
+    def _get_dataset_stats(self, range_param):
+        """Returns stats for processed datasets"""
+        processed_datasets = Dataset.objects.filter(is_processed=True)
+        result = processed_datasets.aggregate(
+            total=Count('id'),
+            aggregated_by_experiment=Count('id', filter=Q(aggregate_by='EXPERIMENT')),
+            aggregated_by_species=Count('id', filter=Q(aggregate_by='SAMPLES')),
+            scale_by_none=Count('id', filter=Q(scale_by='NONE')),
+            scale_by_minmax=Count('id', filter=Q(scale_by='MINMAX')),
+            scale_by_standard=Count('id', filter=Q(scale_by='STANDARD')),
+            scale_by_robust=Count('id', filter=Q(scale_by='ROBUST')),
+        )
+        if range_param:
+            # We don't save the dates when datasets are processed, but we can use
+            # `last_modified`, since datasets aren't modified again after they are processed
+            result['timeline'] = self._get_intervals(
+                processed_datasets,
+                range_param,
+                'last_modified'
+            ).annotate(
+                total=Count('id'),
+                total_size=Sum('size_in_bytes')
+            )
+        return result
+
+    def _samples_processed_last_hour(self):
+        current_date = datetime.now(tz=timezone.utc)
+        start = current_date - timedelta(hours=1)
+        return Sample.processed_objects.filter(created_at__range=(start, current_date)).count()
+
+    def _aggregate_nomad_jobs(self, aggregated_jobs):
+        """Aggregates the job counts.
 
         This is accomplished by using the stats that each
         parameterized job has about its children jobs.
 
         `jobs` should be a response from the Nomad API's jobs endpoint.
         """
-        job_types = set()
-        for job in jobs:
-            # Surveyor jobs don't have ids and RAM, so handle them specially.
-            if job["ID"].startswith("SURVEYOR"):
-                job_types.add("SURVEYOR")
-            elif job["ID"] == "SMASHER" or job["ID"] == "DOWNLOADER":
-                job_types.add(job["ID"])
-            else:
-                # Strips out the last two underscores like so:
-                # SALMON_1_16384 -> SALMON
-                job_type = "_".join(job["ID"].split("_")[0:-2])
-                job_types.add(job_type)
-
-        nomad_running_jobs_by_type = {}
-        nomad_pending_jobs_by_type = {}
-        for job_type in job_types:
-            # This will count SURVEYOR_DISPATCHER jobs as SURVEYOR
-            # jobs, but I think that's fine since we barely ever run
-            # SURVEYOR_DISPATCHER jobs and won't need to monitor them
-            # through the dashboard.
-            same_jobs = [job for job in jobs if job["ID"].startswith(job_type)]
-
+        nomad_running_jobs = {}
+        nomad_pending_jobs = {}
+        for (aggregate_key, group) in aggregated_jobs:
+            if not aggregate_key: continue
             aggregated_pending = 0
             aggregated_running = 0
-            for job in same_jobs:
+            for job in group:
                 children = job["JobSummary"]["Children"]
                 aggregated_pending = aggregated_pending + children["Pending"]
                 aggregated_running = aggregated_running + children["Running"]
 
-            nomad_pending_jobs_by_type[job_type] = aggregated_pending
-            nomad_running_jobs_by_type[job_type] = aggregated_running
+            nomad_pending_jobs[aggregate_key] = aggregated_pending
+            nomad_running_jobs[aggregate_key] = aggregated_running
 
-        return nomad_pending_jobs_by_type, nomad_running_jobs_by_type
+        return nomad_pending_jobs, nomad_running_jobs
 
-    def _aggregate_nomad_jobs_by_volume(self, jobs: Dict):
-        """Aggregates the job counts for each EBS volume.
+    def _get_job_details(self, job):
+        """Given a Nomad Job, as returned by the API, returns the type and volume id that should be used
+        when aggregating for the stats endpoint"""
+        # Surveyor jobs don't have ids and RAM, so handle them specially.
+        if job["ID"].startswith("SURVEYOR"):
+            return "SURVEYOR", False
 
-        This is accomplished by using the stats that each
-        parameterized job has about its children jobs.
+        # example SALMON_1_2323
+        name_match = match(r"(?P<type>\w+)_(?P<volume_id>\d+)_\d+$", job["ID"])
+        if not name_match: return False, False
+        
+        return name_match.group('type'), name_match.group('volume_id')
 
-        `jobs` should be a response from the Nomad API's jobs endpoint.
-        """
-        volume_ids = set()
-        for job in jobs:
-            # These job types don't have volume indices, so we just won't count them.
-            if not job["ID"].startswith("SURVEYOR") \
-               and job["ID"] != "SMASHER" \
-               and job["ID"] != "DOWNLOADER":
-                # Strips out the volume ID like so:
-                # SALMON_1_16384 -> 1
-                volume_id = "_".join(job["ID"].split("_")[-2])
-                volume_ids.add(volume_id)
+    def _get_nomad_jobs(self):
+        """Calls nomad service and return all jobs"""
+        try:
+            nomad_host = get_env_variable("NOMAD_HOST")
+            nomad_port = get_env_variable("NOMAD_PORT", "4646")
+            nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
+            return nomad_client.jobs.get_jobs()
 
-        nomad_running_jobs_by_volume = {}
-        nomad_pending_jobs_by_volume = {}
-        for volume_id in volume_ids:
-            if job["ID"].startswith("SURVEYOR") \
-               or job["ID"] == "SMASHER" \
-               or job["ID"] == "DOWNLOADER":
-                continue
-
-            def job_has_same_volume(job: Dict) -> bool:
-                """Returns true if the job is on the same volume as this iteration of the loop.
-
-                These job types don't have volume indices, so we just
-                won't count them. We theoretically could try, but it
-                really would be more trouble than it's worth and this
-                endpoint is already going to have a hard time returning
-                a response in time.
-                """
-                return not job["ID"].startswith("SURVEYOR") \
-                    and job["ID"] != "SMASHER" \
-                    and job["ID"] != "DOWNLOADER" \
-                    and job["ID"].split("_")[-2] == volume_id
-
-            jobs_with_same_volume = [job for job in jobs if job_has_same_volume(job)]
-
-            aggregated_pending = 0
-            aggregated_running = 0
-            for job in jobs_with_same_volume:
-                children = job["JobSummary"]["Children"]
-                aggregated_pending = aggregated_pending + children["Pending"]
-                aggregated_running = aggregated_running + children["Running"]
-
-            nomad_pending_jobs_by_volume["volume_" + str(volume_id)] = aggregated_pending
-            nomad_running_jobs_by_volume["volume_" + str(volume_id)] = aggregated_running
-
-        return nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume
+        except nomad.api.exceptions.BaseNomadException:
+            # Nomad is not available right now
+            return []
 
     def _get_nomad_jobs_breakdown(self):
-        nomad_host = get_env_variable("NOMAD_HOST")
-        nomad_port = get_env_variable("NOMAD_PORT", "4646")
-        nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
-
-        jobs = nomad_client.jobs.get_jobs()
+        jobs = self._get_nomad_jobs()
         parameterized_jobs = [job for job in jobs if job['ParameterizedJob']]
 
-        nomad_pending_jobs_by_type, nomad_running_jobs_by_type = self._aggregate_nomad_jobs_by_type(parameterized_jobs)
+        aggregated_jobs_by_type = groupby(parameterized_jobs, lambda job: self._get_job_details(job)[0])
+        nomad_pending_jobs_by_type, nomad_running_jobs_by_type = self._aggregate_nomad_jobs(aggregated_jobs_by_type)
 
         # To get the total jobs for running and pending, the easiest
         # AND the most efficient way is to sum up the stats we've
@@ -1161,7 +1190,8 @@ class Stats(APIView):
         for job_type, num_jobs in nomad_pending_jobs_by_type.items():
             nomad_pending_jobs = nomad_pending_jobs + num_jobs
 
-        nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume = self._aggregate_nomad_jobs_by_volume(parameterized_jobs)
+        aggregated_jobs_by_volume = groupby(parameterized_jobs, lambda job: self._get_job_details(job)[1])
+        nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume = self._aggregate_nomad_jobs(aggregated_jobs_by_volume)
 
         return {
             "nomad_pending_jobs": nomad_pending_jobs,
@@ -1172,10 +1202,9 @@ class Stats(APIView):
             "nomad_running_jobs_by_volume": nomad_running_jobs_by_volume
         }
 
-
     def _get_input_data_size(self):
         total_size = OriginalFile.objects.filter(
-            sample__is_processed=True
+            sample__is_processed=True # <-- SLOW
         ).aggregate(
             Sum('size_in_bytes')
         )
@@ -1191,16 +1220,16 @@ class Stats(APIView):
         return total_size['size_in_bytes__sum'] if total_size['size_in_bytes__sum'] else 0
 
     def _get_job_stats(self, jobs, range_param):
-        result = {
-            'total': jobs.count(),
-            'pending': jobs.filter(start_time__isnull=True).count(),
-            'completed': jobs.filter(end_time__isnull=False).count(),
-            'successful': jobs.filter(success=True).count(),
-            'open': jobs.filter(start_time__isnull=False, end_time__isnull=True, success__isnull=True).count(),
-            # via https://stackoverflow.com/questions/32520655/get-average-of-difference-of-datetime-fields-in-django
-            'average_time': jobs.filter(start_time__isnull=False, end_time__isnull=False, success=True).aggregate(
+        result = jobs.aggregate(
+            total=Count('id'),
+            pending=Count('id', filter=Q(start_time__isnull=True)),
+            completed=Count('id', filter=Q(end_time__isnull=False)),
+            successful=Count('id', filter=Q(success=True)),
+            open=Count('id', filter=Q(start_time__isnull=False, end_time__isnull=True, success__isnull=True)),
+        )
+        # via https://stackoverflow.com/questions/32520655/get-average-of-difference-of-datetime-fields-in-django
+        result['average_time'] = jobs.filter(start_time__isnull=False, end_time__isnull=False, success=True).aggregate(
                 average_time=Avg(F('end_time') - F('start_time')))['average_time']
-        }
 
         if not result['average_time']:
             result['average_time'] = 0
@@ -1208,7 +1237,14 @@ class Stats(APIView):
             result['average_time'] = result['average_time'].total_seconds()
 
         if range_param:
-            result['timeline'] = self._jobs_timeline(jobs, range_param)
+            result['timeline'] = self._get_intervals(jobs, range_param) \
+                                     .annotate(
+                                         total=Count('id'),
+                                         completed=Count('id', filter=Q(success=True)),
+                                         pending=Count('id', filter=Q(start_time__isnull=True)),
+                                         failed=Count('id', filter=Q(success=False)),
+                                         open=Count('id', filter=Q(success__isnull=True)),
+                                     )
 
         return result
 
@@ -1218,63 +1254,32 @@ class Stats(APIView):
         }
 
         if range_param:
-            result['timeline'] = self._created_timeline(objects, range_param)
+            result['timeline'] = self._get_intervals(objects, range_param).annotate(total=Count('id'))
 
         return result
 
-    def _get_time_intervals(self, range_param):
-        interval_timedelta = {
-            'day': timedelta(days=1),
-            'week': timedelta(weeks=1),
-            'month': timedelta(weeks=4),
-            'year': timedelta(weeks=52)
+    def _get_intervals(self, objects, range_param, field = 'created_at'):
+        range_to_trunc = {
+            'day': 'hour',
+            'week': 'day',
+            'month': 'day',
+            'year': 'month'
         }
-        interval_timestep = {
-            'day': timedelta(hours=1),
-            'week': timedelta(days=1),
-            'month': timedelta(days=2),
-            'year': timedelta(weeks=4)
-        }
-
         current_date = datetime.now(tz=timezone.utc)
-        time_step = interval_timestep.get(range_param)
-        start_date = current_date - interval_timedelta.get(range_param)
-
-        intervals = [(current_date - time_step*(i+1), current_date - time_step*i)
-                     for i in range(100) if current_date - time_step*(i+1) > start_date]
-        return intervals[::-1]
-
-    def _get_job_interval(self, jobs, start, end):
-        filtered_jobs = jobs.filter(created_at__gte=start, created_at__lte=end)
-        pending = filtered_jobs and jobs.filter(start_time__isnull=True)
-        failed = filtered_jobs and jobs.filter(success=False)
-        completed = filtered_jobs and jobs.filter(success=True)
-        open = filtered_jobs and jobs.filter(success__isnull=True)
-
-        return {
-            'start': start,
-            'end': end,
-            'total': filtered_jobs.count(),
-            'completed': completed.count(),
-            'pending': pending.count(),
-            'failed': failed.count(),
-            'open': open.count()
+        range_to_start_date = {
+            'day': current_date - timedelta(days=1),
+            'week': current_date - timedelta(weeks=1),
+            'month': current_date - timedelta(days=30),
+            'year': current_date - timedelta(days=365)
         }
 
-    def _jobs_timeline(self, jobs, range_param):
-        return [self._get_job_interval(jobs, start, end) for (start, end) in self._get_time_intervals(range_param)]
-
-    def _created_timeline(self, objects, range_param):
-        results = []
-        for start, end in self._get_time_intervals(range_param):
-            total = objects.filter(created_at__gte=start, created_at__lte=end).count()
-            stats = {
-                'start': start,
-                'end': end,
-                'total': total
-            }
-            results.append(stats)
-        return results
+        # trucate the `created_at` field by hour, day or month depending on the `range` param
+        # and annotate each object with that. This will allow us to count the number of objects
+        # on each interval with a single query
+        # ref https://stackoverflow.com/a/38359913/763705
+        return objects.annotate(start=Trunc(field, range_to_trunc.get(range_param), output_field=DateTimeField())) \
+                      .values('start') \
+                      .filter(start__gte=range_to_start_date.get(range_param))
 
 ###
 # Transcriptome Indices
@@ -1293,27 +1298,35 @@ class TranscriptomeIndexDetail(APIView):
         """
         params = request.query_params
 
-        # Verify that the required params are present
-        errors = dict()
-        if "organism" not in params:
-            errors["organism"] = "You must specify the organism of the index you want"
-        if "length" not in params:
-            errors["length"] = "You must specify the length of the transcriptome index"
-
-        if len(errors) > 0:
-            raise ValidationError(errors)
-
-        # Get the correct organism index object, serialize it, and return it
-        transcription_length = "TRANSCRIPTOME_" + params["length"].upper()
-        try:
-            organism_index = (OrganismIndex.public_objects.exclude(s3_url__exact="")
-                              .distinct("organism__name", "index_type")
-                              .get(organism__name=params["organism"].upper(),
-                                   index_type=transcription_length))
-            serializer = OrganismIndexSerializer(organism_index)
+        if 'all' in params.keys():
+            # Show all available indexes
+            organism = Organism.objects.all()
+            organism_index = OrganismIndex.objects.distinct("organism", "index_type")
+            serializer = OrganismIndexSerializer(organism_index, many=True)
             return Response(serializer.data)
-        except OrganismIndex.DoesNotExist:
-            raise Http404
+        else:
+            # Verify that the required params are present
+            errors = dict()
+            if "organism" not in params:
+                errors["organism"] = "You must specify the organism of the index you want"
+            if "length" not in params:
+                errors["length"] = "You must specify the length of the transcriptome index"
+
+            if len(errors) > 0:
+                raise ValidationError(errors)
+
+            # Get the correct organism index object, serialize it, and return it
+            transcription_length = "TRANSCRIPTOME_" + params["length"].upper()
+            try:
+                organism = Organism.objects.get(name=params["organism"].upper())
+                organism_index = (OrganismIndex.objects.exclude(s3_url__exact="")
+                                  .distinct("organism", "index_type")
+                                  .get(organism=organism,
+                                       index_type=transcription_length))
+                serializer = OrganismIndexSerializer(organism_index)
+                return Response(serializer.data)
+            except OrganismIndex.DoesNotExist:
+                raise Http404
 
 ###
 # Compendia
@@ -1328,7 +1341,15 @@ class CompendiaDetail(APIView):
     def get(self, request, format=None):
 
         computed_files = ComputedFile.objects.filter(is_compendia=True, is_public=True, is_qn_target=False).order_by('-created_at')
-        serializer = CompendiaSerializer(computed_files, many=True)
+
+        token_id = self.request.META.get('HTTP_API_KEY', None)
+
+        try:
+            token = APIToken.objects.get(id=token_id, is_activated=True)
+            serializer = CompendiaWithUrlSerializer(computed_files, many=True)
+        except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            serializer = CompendiaSerializer(computed_files, many=True)
+
         return Response(serializer.data)
 
 
@@ -1359,8 +1380,8 @@ class ComputedFilesList(PaginatedAPIView):
         filter_dict = request.query_params.dict()
         limit = max(int(filter_dict.pop('limit', 100)), 100)
         offset = int(filter_dict.pop('offset', 0))
-        jobs = ComputedFile.objects.filter(**filter_dict).order_by('-id')[offset:(offset + limit)]
-        serializer = ComputedFileListSerializer(jobs, many=True)
+        files = ComputedFile.objects.filter(**filter_dict).order_by('-id')[offset:(offset + limit)]
+        serializer = ComputedFileListSerializer(files, many=True)
         return Response(serializer.data)
 
 ##

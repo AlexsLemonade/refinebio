@@ -181,11 +181,17 @@ echo "Confirming Nomad cluster.."
 start_time=$(date +%s)
 diff=0
 nomad_status=$(check_nomad_status)
-while [[ $diff < 300 && $nomad_status != "200" ]]; do
+while [[ $diff < 900 && $nomad_status != "200" ]]; do
     sleep 1
     nomad_status=$(check_nomad_status)
     let "diff = $(date +%s) - $start_time"
 done
+
+if [[ $nomad_status != "200" ]]; then
+    echo "Nomad didn't start, aborting deploy."
+    echo "Either the timeout needs to be raised or there's something else broken."
+    exit 1
+fi
 
 # Kill Base Nomad Jobs so no new jobs can be queued.
 echo "Killing base jobs.. (this takes a while..)"
@@ -346,6 +352,8 @@ if [[ ! -z $container_running ]]; then
        -e DATABASE_NAME=$DATABASE_NAME \
        -e DATABASE_USER=$DATABASE_USER \
        -e DATABASE_PASSWORD=$DATABASE_PASSWORD \
+       -e ELASTICSEARCH_HOST=$ELASTICSEARCH_HOST \
+       -e ELASTICSEARCH_PORT=$ELASTICSEARCH_PORT \
        -v /tmp/volumes_static:/tmp/www/static \
        --log-driver=awslogs \
        --log-opt awslogs-region=$REGION \

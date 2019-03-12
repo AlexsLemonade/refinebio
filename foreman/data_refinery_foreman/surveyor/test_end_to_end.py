@@ -49,10 +49,16 @@ def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int=None
     """Monitors the `job_class` table for when `job` is done."""
     loop_time = loop_time if loop_time else LOOP_TIME
     job = job_class.objects.filter(id=job.id).get()
+    last_log_time = timezone.now()
     while job.success is None and timezone.now() - start_time < MAX_WAIT_TIME:
-        logger.info("Still polling the %s.",
-                    job_class.__name__)
-        time.sleep(LOOP_TIME)
+        time.sleep(loop_time)
+
+        # Don't log statuses more often than every 5 seconds.
+        if timezone.now() - last_log_time > timedelta(seconds=5):
+            logger.info("Still polling the %s.",
+                        job_class.__name__)
+            last_log_time = timezone.now()
+
         job = job_class.objects.filter(id=job.id).get()
 
     if timezone.now() - start_time > MAX_WAIT_TIME:
@@ -235,140 +241,142 @@ class RedownloadingTestCase(TransactionTestCase):
 
             self.assertEqual(len(successful_processor_jobs), 12)
 
-    @tag("slow")
-    def test_geo_redownloading(self):
-        """Survey, download, then process an experiment we know is NO_OP."""
-        # Clear out pre-existing work dirs so there's no conflicts:
-        self.env = EnvironmentVarGuard()
-        self.env.set('RUNING_IN_CLOUD', 'False')
-        with self.env:
-            for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
-                shutil.rmtree(work_dir)
+    # Disabled until we properly resolve:
+    # https://github.com/AlexsLemonade/refinebio/issues/1068
+    # @tag("slow")
+    # def test_geo_redownloading(self):
+    #     """Survey, download, then process an experiment we know is NO_OP."""
+    #     # Clear out pre-existing work dirs so there's no conflicts:
+    #     self.env = EnvironmentVarGuard()
+    #     self.env.set('RUNING_IN_CLOUD', 'False')
+    #     with self.env:
+    #         for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
+    #             shutil.rmtree(work_dir)
 
-            # Make sure there are no already existing jobs we might poll for unsuccessfully.
-            DownloaderJobOriginalFileAssociation.objects.all().delete()
-            DownloaderJob.objects.all().delete()
-            ProcessorJobOriginalFileAssociation.objects.all().delete()
-            ProcessorJob.objects.all().delete()
+    #         # Make sure there are no already existing jobs we might poll for unsuccessfully.
+    #         DownloaderJobOriginalFileAssociation.objects.all().delete()
+    #         DownloaderJob.objects.all().delete()
+    #         ProcessorJobOriginalFileAssociation.objects.all().delete()
+    #         ProcessorJob.objects.all().delete()
 
-            # Prevent a call being made to NCBI's API to determine
-            # organism name/id.
-            organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
-            organism.save()
+    #         # Prevent a call being made to NCBI's API to determine
+    #         # organism name/id.
+    #         organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
+    #         organism.save()
 
-            accession_code = "GSE102571"
-            survey_job = surveyor.survey_experiment(accession_code, "GEO")
+    #         accession_code = "GSE102571"
+    #         survey_job = surveyor.survey_experiment(accession_code, "GEO")
 
-            self.assertTrue(survey_job.success)
+    #         self.assertTrue(survey_job.success)
 
-            # This experiment has multiple samples that are contained in the
-            # same archive, so only one job is needed.
-            downloader_jobs = DownloaderJob.objects.all()
-            self.assertEqual(downloader_jobs.count(), 1)
+    #         # This experiment has multiple samples that are contained in the
+    #         # same archive, so only one job is needed.
+    #         downloader_jobs = DownloaderJob.objects.all()
+    #         self.assertEqual(downloader_jobs.count(), 1)
 
-            logger.info(
-                "Survey Job finished, waiting for Downloader Job with Nomad ID %s to complete.",
-                downloader_jobs[0].nomad_job_id
-            )
-            # Now we're going to find of the extracted files to delete.
-            for original_file in OriginalFile.objects.all():
-                if not original_file.is_archive:
-                    og_file_to_delete = original_file
-                    break
-            start_time = timezone.now()
+    #         logger.info(
+    #             "Survey Job finished, waiting for Downloader Job with Nomad ID %s to complete.",
+    #             downloader_jobs[0].nomad_job_id
+    #         )
+    #         # Now we're going to find of the extracted files to delete.
+    #         for original_file in OriginalFile.objects.all():
+    #             if not original_file.is_archive:
+    #                 og_file_to_delete = original_file
+    #                 break
+    #         start_time = timezone.now()
 
-            # We're going to spin as fast as we can so we can delete
-            # the file in between when the downloader job finishes and
-            # the processor job starts.
-            file_deleted = False
-            while not file_deleted and timezone.now() - start_time < MAX_WAIT_TIME:
-                original_files = OriginalFile.objects.all()
-                if original_files.count() > 1:
-                    # Now we're going to find one of the extracted files to delete.
-                    for original_file in original_files:
-                        if not original_file.is_archive:
-                            og_file_to_delete = original_file
+    #         # We're going to spin as fast as we can so we can delete
+    #         # the file in between when the downloader job finishes and
+    #         # the processor job starts.
+    #         file_deleted = False
+    #         while not file_deleted and timezone.now() - start_time < MAX_WAIT_TIME:
+    #             original_files = OriginalFile.objects.all()
+    #             if original_files.count() > 1:
+    #                 # Now we're going to find one of the extracted files to delete.
+    #                 for original_file in original_files:
+    #                     if not original_file.is_archive:
+    #                         og_file_to_delete = original_file
 
-                            if og_file_to_delete.absolute_file_path \
-                               and os.path.exists(og_file_to_delete.absolute_file_path):
-                                os.remove(og_file_to_delete.absolute_file_path)
-                                file_deleted = True
-                                break
+    #                         if og_file_to_delete.absolute_file_path \
+    #                            and os.path.exists(og_file_to_delete.absolute_file_path):
+    #                             os.remove(og_file_to_delete.absolute_file_path)
+    #                             file_deleted = True
+    #                             break
 
-            downloader_job = wait_for_job(downloader_jobs[0], DownloaderJob, start_time, .01)
-            self.assertTrue(downloader_job.success)
+    #         downloader_job = wait_for_job(downloader_jobs[0], DownloaderJob, start_time, .01)
+    #         self.assertTrue(downloader_job.success)
 
-            # Apparently this experiment has a variable number of
-            # files because GEO processed experiments sometimes do...
-            # However this is okay because there's at least one file
-            # per sample, so each sample will get processed at least
-            # once and it's the best we can do with the state of GEO.
+    #         # Apparently this experiment has a variable number of
+    #         # files because GEO processed experiments sometimes do...
+    #         # However this is okay because there's at least one file
+    #         # per sample, so each sample will get processed at least
+    #         # once and it's the best we can do with the state of GEO.
 
-            # We're going to preserve this number, because once a job
-            # deletes itself and is respawned, we should be back up to
-            # this number.
-            target_job_count = ProcessorJob.objects.all().count()
-            try:
-                doomed_processor_job = og_file_to_delete.processor_jobs.all()[0]
-                self.assertGreater(target_job_count, 1)
-            except:
-                # The doomed job may delete itself before we can get
-                # it. This is fine, we just can't look at it.
-                doomed_processor_job = None
-                self.assertGreater(target_job_count, 0)
-                # Also, we'll want to end up with one more job than
-                # currently exists because it will be recreated by the
-                # recreated DownloaderJob.
-                target_job_count += 1
+    #         # We're going to preserve this number, because once a job
+    #         # deletes itself and is respawned, we should be back up to
+    #         # this number.
+    #         target_job_count = ProcessorJob.objects.all().count()
+    #         try:
+    #             doomed_processor_job = og_file_to_delete.processor_jobs.all()[0]
+    #             self.assertGreater(target_job_count, 1)
+    #         except:
+    #             # The doomed job may delete itself before we can get
+    #             # it. This is fine, we just can't look at it.
+    #             doomed_processor_job = None
+    #             self.assertGreater(target_job_count, 0)
+    #             # Also, we'll want to end up with one more job than
+    #             # currently exists because it will be recreated by the
+    #             # recreated DownloaderJob.
+    #             target_job_count += 1
 
-            if doomed_processor_job:
-                logger.info(
-                    "Waiting on processor Nomad job %s to fail because it realized it is missing a file.",
-                    doomed_processor_job.nomad_job_id
-                )
+    #         if doomed_processor_job:
+    #             logger.info(
+    #                 "Waiting on processor Nomad job %s to fail because it realized it is missing a file.",
+    #                 doomed_processor_job.nomad_job_id
+    #             )
 
-                start_time = timezone.now()
-                with self.assertRaises(ProcessorJob.DoesNotExist):
-                    wait_for_job(doomed_processor_job, ProcessorJob, start_time)
+    #             start_time = timezone.now()
+    #             with self.assertRaises(ProcessorJob.DoesNotExist):
+    #                 wait_for_job(doomed_processor_job, ProcessorJob, start_time)
 
-            # The processor job that had a missing file will have
-            # recreated its DownloaderJob, which means there should now be two.
-            downloader_jobs = DownloaderJob.objects.all().order_by('-id')
-            self.assertEqual(downloader_jobs.count(), 2)
+    #         # The processor job that had a missing file will have
+    #         # recreated its DownloaderJob, which means there should now be two.
+    #         downloader_jobs = DownloaderJob.objects.all().order_by('-id')
+    #         self.assertEqual(downloader_jobs.count(), 2)
 
-            # However DownloaderJobs don't get queued immediately, so
-            # we have to run a foreman function to make it happen:
-            retry_lost_downloader_jobs()
+    #         # However DownloaderJobs don't get queued immediately, so
+    #         # we have to run a foreman function to make it happen:
+    #         retry_lost_downloader_jobs()
 
-            # And we can check that the most recently created
-            # DownloaderJob was successful as well:
-            recreated_job = downloader_jobs[0]
-            recreated_job.refresh_from_db()
-            logger.info(
-                "Waiting on downloader Nomad job %s",
-                recreated_job.nomad_job_id
-            )
-            recreated_job = wait_for_job(recreated_job, DownloaderJob, start_time)
-            self.assertTrue(recreated_job.success)
+    #         # And we can check that the most recently created
+    #         # DownloaderJob was successful as well:
+    #         recreated_job = downloader_jobs[0]
+    #         recreated_job.refresh_from_db()
+    #         logger.info(
+    #             "Waiting on downloader Nomad job %s",
+    #             recreated_job.nomad_job_id
+    #         )
+    #         recreated_job = wait_for_job(recreated_job, DownloaderJob, start_time)
+    #         self.assertTrue(recreated_job.success)
 
-            # And finally we can make sure that all 12 of the
-            # processor jobs were successful, including the one that
-            # got recreated.
-            logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
-            successful_processor_jobs = []
-            processor_jobs = ProcessorJob.objects.all()
-            for processor_job in processor_jobs:
-                # One of the two calls to wait_for_job will fail
-                # because the job is going to delete itself when it
-                # finds that the file it wants to process is missing.
-                try:
-                    processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
-                    if processor_job.success:
-                        successful_processor_jobs.append(processor_job)
-                except:
-                    pass
+    #         # And finally we can make sure that all 12 of the
+    #         # processor jobs were successful, including the one that
+    #         # got recreated.
+    #         logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
+    #         successful_processor_jobs = []
+    #         processor_jobs = ProcessorJob.objects.all()
+    #         for processor_job in processor_jobs:
+    #             # One of the two calls to wait_for_job will fail
+    #             # because the job is going to delete itself when it
+    #             # finds that the file it wants to process is missing.
+    #             try:
+    #                 processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
+    #                 if processor_job.success:
+    #                     successful_processor_jobs.append(processor_job)
+    #             except:
+    #                 pass
 
-            self.assertEqual(len(successful_processor_jobs), target_job_count)
+    #         self.assertEqual(len(successful_processor_jobs), target_job_count)
 
     @tag("slow")
     @tag("transcriptome")
@@ -540,13 +548,17 @@ class RedownloadingTestCase(TransactionTestCase):
                 # possible, so pass a short loop time and let the waiting
                 # loop spin really fast so we lose as little time as
                 # possible.
-                downloader_job = wait_for_job(downloader_jobs[0], DownloaderJob, start_time, .1)
+                downloader_job = wait_for_job(downloader_job, DownloaderJob, start_time, .1)
                 self.assertTrue(downloader_job.success)
                 if not file_deleted:
                     for original_file in OriginalFile.objects.filter(is_downloaded=True):
                         if not original_file.is_archive:
                             original_file.delete_local_file()
                             file_deleted = True
+
+                            # And then to make sure that we can handle
+                            # cases where the downloader job is missing:
+                            downloader_job.delete()
                             break
 
             # There's a chance that the processor job with a missing
@@ -567,9 +579,10 @@ class RedownloadingTestCase(TransactionTestCase):
                 wait_for_job(doomed_processor_job, ProcessorJob, start_time)
 
             # The processor job that had a missing file will have
-            # recreated its DownloaderJob, which means there should now be 5.
+            # recreated its DownloaderJob, which means there should
+            # now be 5, but we also deleted on on purpose so there's 4.
             downloader_jobs = DownloaderJob.objects.all().order_by('-id')
-            self.assertEqual(downloader_jobs.count(), 5)
+            self.assertEqual(downloader_jobs.count(), 4)
 
             # However DownloaderJobs don't get queued immediately, so
             # we have to run a foreman function to make it happen:

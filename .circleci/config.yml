@@ -286,7 +286,10 @@ workflows:
             branches:
               ignore: /.*/
             tags:
+              # From CirlceCI Docs:
+              # If both only and ignore are specified the only is considered before ignore.
               only: /v.*/
+              ignore: /v.*-hotfix/
 
   hotfix-deploy:
     jobs:

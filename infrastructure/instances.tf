@@ -359,7 +359,7 @@ resource "aws_spot_fleet_request" "cheap_ram" {
     key_name = "${aws_key_pair.data_refinery.key_name}"
 
     root_block_device {
-      volume_size = 100 
+      volume_size = 100
       volume_type = "gp2"
     }
 
@@ -389,7 +389,7 @@ resource "aws_spot_fleet_request" "cheap_ram" {
     key_name = "${aws_key_pair.data_refinery.key_name}"
 
     root_block_device {
-      volume_size = 100 
+      volume_size = 100
       volume_type = "gp2"
     }
 
@@ -419,7 +419,7 @@ resource "aws_spot_fleet_request" "cheap_ram" {
     key_name = "${aws_key_pair.data_refinery.key_name}"
 
     root_block_device {
-      volume_size = 100 
+      volume_size = 100
       volume_type = "gp2"
     }
 
@@ -449,7 +449,7 @@ resource "aws_spot_fleet_request" "cheap_ram" {
     key_name = "${aws_key_pair.data_refinery.key_name}"
 
     root_block_device {
-      volume_size = 100 
+      volume_size = 100
       volume_type = "gp2"
     }
 
@@ -479,7 +479,7 @@ resource "aws_spot_fleet_request" "cheap_ram" {
     key_name = "${aws_key_pair.data_refinery.key_name}"
 
     root_block_device {
-      volume_size = 100 
+      volume_size = 100
       volume_type = "gp2"
     }
 
@@ -509,7 +509,7 @@ resource "aws_spot_fleet_request" "cheap_ram" {
     key_name = "${aws_key_pair.data_refinery.key_name}"
 
     root_block_device {
-      volume_size = 100 
+      volume_size = 100
       volume_type = "gp2"
     }
 
@@ -548,7 +548,8 @@ resource "aws_db_instance" "postgres_db" {
   allocated_storage = 100
   storage_type = "gp2"
   engine = "postgres"
-  engine_version = "9.6.6"
+  engine_version = "9.6.11"
+  auto_minor_version_upgrade = false
   instance_class = "db.${var.database_instance_type}"
   name = "data_refinery"
   port = "${var.database_hidden_port}"
@@ -795,6 +796,7 @@ data "template_file" "foreman_server_script_smusher" {
     database_password = "${var.database_password}"
     database_name = "${aws_db_instance.postgres_db.name}"
     elasticsearch_host = "${aws_elasticsearch_domain.es.endpoint}"
+    elasticsearch_port = "${var.elasticsearch_port}"
     log_group = "${aws_cloudwatch_log_group.data_refinery_log_group.name}"
   }
 }
@@ -806,7 +808,7 @@ resource "aws_instance" "foreman_server_1" {
   vpc_security_group_ids = ["${aws_security_group.data_refinery_foreman.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
-  depends_on = ["aws_db_instance.postgres_db", "aws_instance.pg_bouncer"]
+  depends_on = ["aws_db_instance.postgres_db", "aws_instance.pg_bouncer", "aws_elasticsearch_domain.es"]
   user_data = "${data.template_file.foreman_server_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"
 
