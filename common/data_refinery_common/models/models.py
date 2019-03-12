@@ -1085,6 +1085,25 @@ class Dataset(models.Model):
         else:
             return False
 
+    @property
+    def download_url(self):
+        """ A temporary URL from which the file can be downloaded. """
+        return self.create_download_url()
+
+    def create_download_url(self):
+        """ Create a temporary URL from which the file can be downloaded."""
+        if settings.RUNNING_IN_CLOUD and self.s3_bucket and self.s3_key:
+            return S3.generate_presigned_url(
+                ClientMethod='get_object',
+                Params={
+                    'Bucket': self.s3_bucket,
+                    'Key': self.s3_key
+                },
+                ExpiresIn=(60 * 60 * 24) # 1 day in seconds.
+            )
+        else:
+            return None
+
     def s3_url(self):
         """ Render the resulting S3 URL """
         if (self.s3_key) and (self.s3_bucket):

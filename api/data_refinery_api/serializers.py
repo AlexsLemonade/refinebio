@@ -697,6 +697,35 @@ class DatasetSerializer(serializers.ModelSerializer):
         experiments = obj.get_experiments().prefetch_related('samples').prefetch_related('organisms')
         return DatasetDetailsExperimentSerializer(experiments, many=True).data
 
+
+class DatasetWithUrlSerializer(DatasetSerializer):
+
+    class Meta:
+        model = Dataset
+        fields = (
+                    'id',
+                    'data',
+                    'aggregate_by',
+                    'scale_by',
+                    'is_processing',
+                    'is_processed',
+                    'is_available',
+                    'has_email',
+                    'expires_on',
+                    's3_bucket',
+                    's3_key',
+                    'download_url',
+                    'success',
+                    'failure_reason',
+                    'created_at',
+                    'last_modified',
+                    'start',
+                    'size_in_bytes',
+                    'sha1',
+                    'experiments',
+                    'organism_samples'
+            )
+
 class APITokenSerializer(serializers.ModelSerializer):
 
     class Meta:
