@@ -304,25 +304,54 @@ class SraSurveyor(ExternalSourceSurveyor):
             read_suffix=read_suffix)
 
     @staticmethod
+    def _get_fasp_sra_download(run_accession: str):
+        """Try getting the sra-download URL from CGI endpoint"""
+        #Ex: curl --data "acc=SRR6718414&accept-proto=fasp&version=2.0" https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi
+        cgi_url = "https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi"
+        data = "acc=" + run_accession + "&accept-proto=fasp&version=2.0"
+        try:
+            resp = requests.post(cgi_url, data=data)
+        except Exception as e:
+            logger.exception("Bad FASP CGI request", data=data)
+            return None
+
+        if resp.status_code != 200:
+            # This isn't on the new FASP servers
+            return None
+        else:
+            try:
+                # From: '#2.0\nsrapub|DRR002116|2324796808|2013-07-03T05:51:55Z|50964cfc69091cdbf92ea58aaaf0ac1c||fasp://dbtest@sra-download.ncbi.nlm.nih.gov:data/sracloud/traces/dra0/DRR/000002/DRR002116|200|ok\n'
+                # To:  'dbtest@sra-download.ncbi.nlm.nih.gov:data/sracloud/traces/dra0/DRR/000002/DRR002116'
+                sra_url = resp.text.split('\n')[1].split('|')[6].split('fasp://')[1]
+                return sra_url
+            except Exception as e:
+                logger.exception("Bad FASP CGI response", data=data, text=resp.text)
+                return None
+
+    @staticmethod
     def _build_ncbi_file_url(run_accession: str):
         """ Build the path to the hypothetical .sra file we want """
         accession = run_accession
         first_three = accession[:3]
         first_six = accession[:6]
 
-        # Load balancing via coin flip.
-        if random.choice([True, False]):
-            download_url = NCBI_DOWNLOAD_URL_TEMPLATE.format(
-                first_three=first_three,
-                first_six=first_six,
-                accession=accession
-            )
-        else:
-            download_url = NCBI_PRIVATE_DOWNLOAD_URL_TEMPLATE.format(
-                first_three=first_three,
-                first_six=first_six,
-                accession=accession
-            )
+        # Prefer the FASP-specific endpoints if possible..
+        download_url = SraSurveyor._get_fasp_sra_download(run_accession)
+
+        if not download_url:
+            # ..else, load balancing via coin flip.
+            if random.choice([True, False]):
+                download_url = NCBI_DOWNLOAD_URL_TEMPLATE.format(
+                    first_three=first_three,
+                    first_six=first_six,
+                    accession=accession
+                )
+            else:
+                download_url = NCBI_PRIVATE_DOWNLOAD_URL_TEMPLATE.format(
+                    first_three=first_three,
+                    first_six=first_six,
+                    accession=accession
+                )
 
         return download_url
 
