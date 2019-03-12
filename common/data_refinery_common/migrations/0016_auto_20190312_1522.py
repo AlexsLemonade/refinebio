@@ -20,7 +20,7 @@ def update_qn_bucket(apps, schema_editor):
     '''
     ComputedFile = apps.get_model('data_refinery_common', 'ComputedFile')
     for computed_file in ComputedFile.objects.filter(is_qn_target=True):
-        computed_file.s3_bucket =
+        computed_file.s3_bucket = S3_BUCKET_NAME
         computed_file.save()
 
 class Migration(migrations.Migration):
