@@ -241,6 +241,8 @@ output "environment_variables" {
       value = "${aws_s3_bucket.data_refinery_results_bucket.id}"},
     {name = "S3_TRANSCRIPTOME_INDEX_BUCKET_NAME"
       value = "${aws_s3_bucket.data_refinery_transcriptome_index_bucket.id}"},
+    {name = "S3_QN_TARGET_BUCKET_NAME"
+      value = "${aws_s3_bucket.data_refinery_qn_target_bucket.id}"},
     {name = "S3_COMPENDIA_BUCKET_NAME"
       value = "${aws_s3_bucket.data_refinery_compendia_bucket.id}"},
     {name = "LOCAL_ROOT_DIR"
