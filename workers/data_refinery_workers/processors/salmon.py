@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import tarfile
+import untangle
 
 from botocore.client import Config
 from django.conf import settings
@@ -136,6 +137,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         new_input_file_path = os.path.join(job_context["work_dir"], original_files[0].filename)
         shutil.copyfile(job_context["input_file_path"], new_input_file_path)
         job_context['input_file_path'] = new_input_file_path
+        job_context['sra_input_file_path'] = new_input_file_path
 
     if job_context.get("input_file_path_2", False):
         new_input_file_path = os.path.join(job_context["work_dir"], original_files[1].filename)
@@ -266,6 +268,38 @@ def _extract_sra(job_context: Dict) -> Dict:
 
     return job_context
 
+def _determine_index_length_sra(job_context: Dict) -> Dict:
+    """
+    Use the sra-stat tool to determine length
+    ex:
+        sra-stat -x --statistics ERR1562482.sra
+
+    """
+
+    command_str = ("sra-stat -x --statistics {sra_file}")
+    formatted_command = command_str.format(sra_file=job_context["sra_input_file_path"])
+
+    logger.debug("Running sra-stat using the following shell command: %s",
+                 formatted_command,
+                 processor_job=job_context["job_id"])
+    completed_command = subprocess.run(formatted_command.split(),
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+    respo = completed_command.stdout.decode().strip()
+
+    stats = untangle.parse(respo)
+    bases_count = int(stats.Run.Bases['count'])
+    reads_count = (int(stats.Run.Statistics['nspots']) * int(stats.Run.Statistics['nreads']))
+    job_context['sra_num_reads'] = int(stats.Run.Statistics['nreads'])
+    job_context["index_length_raw"] = int(bases_count / reads_count)
+
+    if job_context["index_length_raw"] > 75:
+        job_context["index_length"] = "long"
+    else:
+        job_context["index_length"] = "short"
+
+    return job_context
+
 def _determine_index_length(job_context: Dict) -> Dict:
     """Determines whether to use the long or short salmon index.
 
@@ -274,6 +308,10 @@ def _determine_index_length(job_context: Dict) -> Dict:
     index is appropriate. For more information on index length see the
     _create_index function of the transcriptome_index processor.
     """
+
+    if job_context.get('sra_input_file_path', None):
+        return _determine_index_length_sra(job_context)
+
     logger.debug("Determining index length..")
     total_base_pairs = 0
     number_of_reads = 0
@@ -714,28 +752,81 @@ def _run_salmon(job_context: Dict) -> Dict:
     logger.debug("Running Salmon..")
 
     # Salmon needs to be run differently for different sample types.
-    if "input_file_path_2" in job_context:
-        second_read_str = " -2 {}".format(job_context["input_file_path_2"])
+    # SRA files also get processed differently as we don't want to use fasterq-dump to extract
+    # them to disk.
+    if job_context.get('sra_input_file_path', None):
 
-        # Rob recommends 16 threads/process, which fits snugly on an x1 at 8GB RAM per Salmon container:
-        # (2 threads/core * 16 cores/socket * 64 vCPU) / (1TB/8GB) = ~17
-        command_str = ("salmon --no-version-check quant -l A --biasSpeedSamp 5 -i {index}"
-                       " -1 {input_one}{second_read_str} -p 16 -o {output_directory}"
-                       " --seqBias --gcBias --dumpEq --writeUnmappedNames")
+        # Single reads
+        if job_context['sra_num_reads'] == 1:
 
-        formatted_command = command_str.format(index=job_context["index_directory"],
-                                               input_one=job_context["input_file_path"],
-                                               second_read_str=second_read_str,
-                                               output_directory=job_context["output_directory"])
+            fifo = "/tmp/barney"
+            os.mkfifo(fifo)
+
+            dump_str = "fastq-dump --stdout {input_sra_file} > {fifo} &"
+            formatted_dump_command = dump_str.format(input_sra_file=job_context["sra_input_file_path"],
+                                                   fifo=fifo)
+            dump_po = subprocess.Popen(formatted_dump_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+            command_str = ( "salmon --no-version-check quant -l A -i {index} "
+                            "-r {fifo} -p 16 -o {output_directory} --seqBias --dumpEq --writeUnmappedNames"
+                         )
+            formatted_command = command_str.format(index=job_context["index_directory"],
+                                                   input_sra_file=job_context["sra_input_file_path"],
+                                                   fifo=fifo,
+                                                   output_directory=job_context["output_directory"])
+        # Paired are trickier
+        else:
+
+            # Okay, for some reason I can't explain, this only works in the temp directory,
+            # otherwise the `tee` part will only output to one or the other of the streams (non-deterministically),
+            # but not both. This doesn't appear to happen if the fifos are in tmp.
+            alpha = "/tmp/alpha"
+            os.mkfifo(alpha)
+            beta = "/tmp/beta"
+            os.mkfifo(beta)
+
+            dump_str = "fastq-dump --stdout --split-files -I {input_sra_file} | tee >(grep '@.*\.1\s' -A3 --no-group-separator > {fifo_alpha}) >(grep '@.*\.2\s' -A3 --no-group-separator > {fifo_beta}) > /dev/null &"
+            formatted_dump_command = dump_str.format(input_sra_file=job_context["sra_input_file_path"],
+                                                   fifo_alpha=alpha,
+                                                   fifo_beta=beta)
+            dump_po = subprocess.Popen(formatted_dump_command, 
+                                        shell=True, 
+                                        executable='/bin/bash',
+                                        stdout=subprocess.PIPE, 
+                                        stderr=subprocess.STDOUT)
+
+            command_str = ( "salmon --no-version-check quant -l A -i {index} "
+                            "-1 {fifo_alpha} -2 {fifo_beta} -p 16 -o {output_directory} --seqBias --dumpEq --writeUnmappedNames"
+                         )
+            formatted_command = command_str.format(index=job_context["index_directory"],
+                                                   input_sra_file=job_context["sra_input_file_path"],
+                                                   fifo_alpha=alpha,
+                                                   fifo_beta=beta,
+                                                   output_directory=job_context["output_directory"])
+
     else:
-        # Related: https://github.com/COMBINE-lab/salmon/issues/83
-        command_str = ("salmon --no-version-check quant -l A -i {index}"
-                       " -r {input_one} -p 16 -o {output_directory}"
-                       " --seqBias --dumpEq --writeUnmappedNames")
+        if "input_file_path_2" in job_context:
+            second_read_str = " -2 {}".format(job_context["input_file_path_2"])
 
-        formatted_command = command_str.format(index=job_context["index_directory"],
-                                               input_one=job_context["input_file_path"],
-                                               output_directory=job_context["output_directory"])
+            # Rob recommends 16 threads/process, which fits snugly on an x1 at 8GB RAM per Salmon container:
+            # (2 threads/core * 16 cores/socket * 64 vCPU) / (1TB/8GB) = ~17
+            command_str = ("salmon --no-version-check quant -l A --biasSpeedSamp 5 -i {index}"
+                           " -1 {input_one}{second_read_str} -p 16 -o {output_directory}"
+                           " --seqBias --gcBias --dumpEq --writeUnmappedNames")
+
+            formatted_command = command_str.format(index=job_context["index_directory"],
+                                                   input_one=job_context["input_file_path"],
+                                                   second_read_str=second_read_str,
+                                                   output_directory=job_context["output_directory"])
+        else:
+            # Related: https://github.com/COMBINE-lab/salmon/issues/83
+            command_str = ("salmon --no-version-check quant -l A -i {index}"
+                           " -r {input_one} -p 16 -o {output_directory}"
+                           " --seqBias --dumpEq --writeUnmappedNames")
+
+            formatted_command = command_str.format(index=job_context["index_directory"],
+                                                   input_one=job_context["input_file_path"],
+                                                   output_directory=job_context["output_directory"])
 
     logger.debug("Running Salmon Quant using the following shell command: %s",
                  formatted_command,
@@ -1090,12 +1181,18 @@ def salmon(job_id: int) -> None:
                        [utils.start_job,
                         _set_job_prefix,
                         _prepare_files,
-                        _extract_sra,
+
+                        # We're going to be using SRA files "directly",
+                        # so we don't extract them to disk anymore.
+                        #_extract_sra,
 
                         _determine_index_length,
                         _find_or_download_index,
 
-                        _run_fastqc,
+                        # We aren't using FastQC anymore since
+                        # we're skipping fastq files entirely.
+                        # _run_fastqc,
+
                         _run_salmon,
                         tximport,
                         _run_salmontools,

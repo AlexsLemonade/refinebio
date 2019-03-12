@@ -25,7 +25,7 @@ from data_refinery_api.serializers import (
     ProcessorSerializer,
     SurveyJobSerializer,
 )
-from data_refinery_api.views import ExperimentList
+from data_refinery_api.views import ExperimentList, Stats
 from data_refinery_common.utils import get_env_variable
 from data_refinery_common.models import (
     ComputationalResult,
@@ -341,7 +341,31 @@ class APITestCases(APITestCase):
         drc1.save()
 
         response = self.client.get(reverse('compendia'))
-        self.assertEqual(3, len(response.json()))
+        response_json = response.json()
+        self.assertEqual(3, len(response_json))
+        # Prove that the download_url field is missing and not None.
+        self.assertEqual('NotPresent', response_json[0].get('download_url', 'NotPresent'))
+
+        # We don't actually want AWS to generate a temporary URL for
+        # us, and it won't unless we're running in the cloud, but if
+        # we provide an API Token and use the WithUrl serializer then
+        # it will set the download_url field to None rather than
+        # generate one.
+
+        # Get a token first
+        response = self.client.get(reverse('token'),
+                                    content_type="application/json")
+        token = response.json()
+        token['is_activated'] = True
+        token_id = token['id']
+        response = self.client.post(reverse('token'),
+                                    json.dumps(token),
+                                    content_type="application/json")
+
+        response = self.client.get(reverse('compendia'), HTTP_API_KEY=token_id)
+        response_json = response.json()
+        self.assertEqual(3, len(response_json))
+        self.assertIsNone(response_json[0]['download_url'])
 
     def test_search_and_filter(self):
 
@@ -716,6 +740,23 @@ class APITestCases(APITestCase):
         self.assertEqual(ds.email_address, 'trust@verify.com')
         self.assertTrue(ds.email_ccdl_ok)
 
+        # Reset the dataset so we can test providing an API token via
+        # HTTP Header.
+        dataset = Dataset.objects.get(id=good_id)
+        dataset.is_processing = False
+        dataset.email_address = None
+        dataset.email_ccdl_ok = False
+        dataset.save()
+
+        jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True, 'email_address': 'trust@verify.com', 'email_ccdl_ok': True } )
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json", HTTP_API_KEY=token_id)
+
+        self.assertEqual(response.json()["is_processing"], True)
+
+        ds = Dataset.objects.get(id=response.json()['id'])
+        self.assertEqual(ds.email_address, 'trust@verify.com')
+        self.assertTrue(ds.email_ccdl_ok)
+
     def test_processed_samples_only(self):
         """ Don't return unprocessed samples """
         experiment = Experiment()
@@ -908,6 +949,113 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('experiments'))
         self.assertEqual(response.status_code, 500)
         mock_client.captureMessage.assert_called()
+
+class StatsTestCases(APITestCase):
+    @patch.object(Stats, '_get_nomad_jobs')
+    def test_nomad_stats_empty(self, mock_get_nomad_jobs):
+        mock_get_nomad_jobs.return_value = []
+        response = self.client.get(reverse('stats'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['nomad_running_jobs'], 0)
+        self.assertEqual(response.json()['nomad_pending_jobs'], 0)
+
+    @patch.object(Stats, '_get_nomad_jobs')
+    def test_nomad_stats(self, mock_get_nomad_jobs):
+        mock_get_nomad_jobs.return_value = StatsTestCases.MOCK_NOMAD_RESPONSE
+        response = self.client.get(reverse('stats'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['nomad_running_jobs'], 2)
+        self.assertEqual(response.json()['nomad_pending_jobs'], 0)
+        self.assertEqual(response.json()['nomad_running_jobs_by_type']['SALMON'], 2)
+        self.assertEqual(response.json()['nomad_running_jobs_by_volume']['1'], 1)
+        self.assertEqual(response.json()['nomad_running_jobs_by_volume']['2'], 1)
+
+    MOCK_NOMAD_RESPONSE = [
+        {
+            'CreateIndex': 5145, 
+            'ID': 'TXIMPORT', 
+            'JobModifyIndex': 5145, 
+            'JobSummary': {
+            'Children': {
+                'Dead': 0, 
+                'Pending': 0, 
+                'Running': 0
+            }, 
+            'CreateIndex': 5145,
+            'JobID': 'TXIMPORT',
+            'ModifyIndex': 5145,
+            'Namespace': 'default',
+            'Summary': {}
+            }, 
+            'ModifyIndex': 5145, 
+            'Name': 'TXIMPORT', 
+            'ParameterizedJob': True, 
+            'ParentID': '', 
+            'Periodic': False, 
+            'Priority': 50, 
+            'Status': 'running', 
+            'StatusDescription': '', 
+            'Stop': False, 
+            'SubmitTime': 1552322030836469355, 
+            'Type': 'batch'
+        },
+        {
+            'CreateIndex': 5145, 
+            'ID': 'SALMON_1_2323', 
+            'JobModifyIndex': 5145, 
+            'JobSummary': {
+            'Children': {
+                'Dead': 0, 
+                'Pending': 0, 
+                'Running': 1
+            }, 
+            'CreateIndex': 5145, 
+            'JobID': 'SALMON_1_2323', 
+            'ModifyIndex': 5145, 
+            'Namespace': 'default', 
+            'Summary': {}
+            }, 
+            'ModifyIndex': 5145, 
+            'Name': 'SALMON_1_2323', 
+            'ParameterizedJob': True, 
+            'ParentID': '', 
+            'Periodic': False, 
+            'Priority': 50, 
+            'Status': 'running', 
+            'StatusDescription': '', 
+            'Stop': False, 
+            'SubmitTime': 1552322030836469355, 
+            'Type': 'batch'
+        },
+        {
+            'CreateIndex': 5145, 
+            'ID': 'SALMON_2_2323', 
+            'JobModifyIndex': 5145, 
+            'JobSummary': {
+            'Children': {
+                'Dead': 0, 
+                'Pending': 0, 
+                'Running': 1
+            }, 
+            'CreateIndex': 5145, 
+            'JobID': 'SALMON_1_2323', 
+            'ModifyIndex': 5145, 
+            'Namespace': 'default', 
+            'Summary': {}
+            }, 
+            'ModifyIndex': 5145, 
+            'Name': 'SALMON_1_2323', 
+            'ParameterizedJob': True, 
+            'ParentID': '', 
+            'Periodic': False, 
+            'Priority': 50, 
+            'Status': 'running', 
+            'StatusDescription': '', 
+            'Stop': False, 
+            'SubmitTime': 1552322030836469355, 
+            'Type': 'batch'
+        }
+    ]
 
 class ESTestCases(APITestCase):
 
