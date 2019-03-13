@@ -1067,4 +1067,5 @@ def monitor_jobs():
         loop_time = timezone.now() - start_time
         if loop_time < MIN_LOOP_TIME:
             remaining_time = MIN_LOOP_TIME - loop_time
-            time.sleep(remaining_time.seconds)
+            if remaining_time.seconds > 0:
+                time.sleep(remaining_time.seconds)

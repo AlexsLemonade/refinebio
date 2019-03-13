@@ -32,7 +32,7 @@ def get_scientific_name(taxonomy_id: int) -> str:
 
     try:
         root = ElementTree.fromstring(response.text)
-        id_list = root.findall("Taxon")
+        taxon_list = root.findall("Taxon")
     except Exception as e:
         logger.error("Bad response from eUtils.", text=response.text)
         raise

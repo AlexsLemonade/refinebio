@@ -25,7 +25,7 @@ from data_refinery_api.serializers import (
     ProcessorSerializer,
     SurveyJobSerializer,
 )
-from data_refinery_api.views import ExperimentList
+from data_refinery_api.views import ExperimentList, Stats
 from data_refinery_common.utils import get_env_variable
 from data_refinery_common.models import (
     ComputationalResult,
@@ -128,6 +128,9 @@ class APITestCases(APITestCase):
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = experiment
         experiment_sample_association.save()
+        experiment.num_total_samples = 1
+        experiment.num_processed_samples = 1
+        experiment.save()
 
         result = ComputationalResult()
         result.save()
@@ -144,6 +147,28 @@ class APITestCases(APITestCase):
         sra.sample = sample
         sra.result = result
         sra.save()
+
+        zebrafish = Organism(name="DANIO_RERIO", taxonomy_id=1337, is_scientific_name=True)
+        zebrafish.save()
+
+        processor = Processor()
+        processor.name = "Salmon Quant"
+        processor.version = "v9.9.9"
+        processor.docker_image = "dr_salmon"
+        processor.environment = '{"some": "environment"}'
+        processor.save()
+
+        computational_result_short = ComputationalResult(processor=processor)
+        computational_result_short.save()
+
+        organism_index = OrganismIndex()
+        organism_index.index_type = "TRANSCRIPTOME_SHORT"
+        organism_index.organism = zebrafish
+        organism_index.result = computational_result_short
+        organism_index.absolute_directory_path = "/home/user/data_store/salmon_tests/TRANSCRIPTOME_INDEX/SHORT"
+        organism_index.is_public = True
+        organism_index.s3_url = "not_blank"
+        organism_index.save()
 
         return
 
@@ -254,11 +279,21 @@ class APITestCases(APITestCase):
         # Expect 404 if the experiment accession code isn't valid
         response = self.client.get(reverse('samples'), {'experiment_accession_code': 'wrong-accession-code'})
         self.assertEqual(response.status_code, 404)
-        
+
+    def test_fetching_organism_index(self):
+        response = self.client.get(reverse('transcriptome-indices'),
+                                   {'organism': 'DANIO_RERIO', 'length': 'SHORT'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()['index_type'], 'TRANSCRIPTOME_SHORT')
+
+        # Expect 404 if the experiment accession code isn't valid
+        response = self.client.get(reverse('samples'), {'experiment_accession_code': 'wrong-accession-code'})
+        self.assertEqual(response.status_code, 404)
+
     def test_compendia(self):
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
         danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
-        
+
         result = ComputationalResult()
         result.save()
 
@@ -308,7 +343,31 @@ class APITestCases(APITestCase):
         drc1.save()
 
         response = self.client.get(reverse('compendia'))
-        self.assertEqual(3, len(response.json()))
+        response_json = response.json()
+        self.assertEqual(3, len(response_json))
+        # Prove that the download_url field is missing and not None.
+        self.assertEqual('NotPresent', response_json[0].get('download_url', 'NotPresent'))
+
+        # We don't actually want AWS to generate a temporary URL for
+        # us, and it won't unless we're running in the cloud, but if
+        # we provide an API Token and use the WithUrl serializer then
+        # it will set the download_url field to None rather than
+        # generate one.
+
+        # Get a token first
+        response = self.client.get(reverse('token'),
+                                    content_type="application/json")
+        token = response.json()
+        token['is_activated'] = True
+        token_id = token['id']
+        response = self.client.post(reverse('token'),
+                                    json.dumps(token),
+                                    content_type="application/json")
+
+        response = self.client.get(reverse('compendia'), HTTP_API_KEY=token_id)
+        response_json = response.json()
+        self.assertEqual(3, len(response_json))
+        self.assertIsNone(response_json[0]['download_url'])
 
     def test_search_and_filter(self):
 
@@ -333,6 +392,11 @@ class APITestCases(APITestCase):
             ex.description = " ".join(random.choice(words) for i in range(100))
             ex.technology = random.choice(["RNA-SEQ", "MICROARRAY"])
             ex.submitter_institution = random.choice(["Funkytown", "Monkeytown"])
+
+            # cached values
+            ex.num_total_samples = 1
+            ex.num_processed_samples = 1
+
             experiments.append(ex)
 
         homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
@@ -415,18 +479,33 @@ class APITestCases(APITestCase):
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = ex2
         experiment_sample_association.save()
+        ex2.num_total_samples = 1
+        ex2.num_processed_samples = 1
+        ex2.save()
+
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = ex3
         experiment_sample_association.save()
+        ex3.num_total_samples = 1
+        ex3.num_processed_samples = 1
+        ex3.save()
+
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = ex4
         experiment_sample_association.save()
+        ex4.num_total_samples = 1
+        ex4.num_processed_samples = 1
+        ex4.save()
+
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = ex5
         experiment_sample_association.save()
+        ex5.num_total_samples = 1
+        ex5.num_processed_samples = 1
+        ex5.save()
 
         xa = ExperimentAnnotation()
         xa.data = {'name': 'Clark Kent'}
@@ -457,6 +536,10 @@ class APITestCases(APITestCase):
         experiment_sample_association.sample = sample2
         experiment_sample_association.experiment = ex
         experiment_sample_association.save()
+
+        ex.num_total_samples = 2 # sample1 and sample2
+        ex.num_processed_samples = 2 # both processed
+        ex.save()
 
         # Test all
         response = self.client.get(reverse('search'))
@@ -689,6 +772,23 @@ class APITestCases(APITestCase):
         self.assertEqual(ds.email_address, 'trust@verify.com')
         self.assertTrue(ds.email_ccdl_ok)
 
+        # Reset the dataset so we can test providing an API token via
+        # HTTP Header.
+        dataset = Dataset.objects.get(id=good_id)
+        dataset.is_processing = False
+        dataset.email_address = None
+        dataset.email_ccdl_ok = False
+        dataset.save()
+
+        jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True, 'email_address': 'trust@verify.com', 'email_ccdl_ok': True } )
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json", HTTP_API_KEY=token_id)
+
+        self.assertEqual(response.json()["is_processing"], True)
+
+        ds = Dataset.objects.get(id=response.json()['id'])
+        self.assertEqual(ds.email_address, 'trust@verify.com')
+        self.assertTrue(ds.email_ccdl_ok)
+
     def test_processed_samples_only(self):
         """ Don't return unprocessed samples """
         experiment = Experiment()
@@ -720,6 +820,11 @@ class APITestCases(APITestCase):
         experiment_sample2_association.sample = sample2
         experiment_sample2_association.experiment = experiment
         experiment_sample2_association.save()
+
+        # update cached values
+        experiment.num_total_samples = 2
+        experiment.num_processed_samples = 1
+        experiment.save()
 
         response = self.client.get(reverse('search'), {'search': "GSX12345"})
         self.assertEqual(response.json()['count'], 1)
@@ -916,10 +1021,117 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('qn-targets-available'))
         self.assertEqual(len(response.json()), 2)
 
+class StatsTestCases(APITestCase):
+    @patch.object(Stats, '_get_nomad_jobs')
+    def test_nomad_stats_empty(self, mock_get_nomad_jobs):
+        mock_get_nomad_jobs.return_value = []
+        response = self.client.get(reverse('stats'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['nomad_running_jobs'], 0)
+        self.assertEqual(response.json()['nomad_pending_jobs'], 0)
+
+    @patch.object(Stats, '_get_nomad_jobs')
+    def test_nomad_stats(self, mock_get_nomad_jobs):
+        mock_get_nomad_jobs.return_value = StatsTestCases.MOCK_NOMAD_RESPONSE
+        response = self.client.get(reverse('stats'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['nomad_running_jobs'], 2)
+        self.assertEqual(response.json()['nomad_pending_jobs'], 0)
+        self.assertEqual(response.json()['nomad_running_jobs_by_type']['SALMON'], 2)
+        self.assertEqual(response.json()['nomad_running_jobs_by_volume']['1'], 1)
+        self.assertEqual(response.json()['nomad_running_jobs_by_volume']['2'], 1)
+
+    MOCK_NOMAD_RESPONSE = [
+        {
+            'CreateIndex': 5145, 
+            'ID': 'TXIMPORT', 
+            'JobModifyIndex': 5145, 
+            'JobSummary': {
+            'Children': {
+                'Dead': 0, 
+                'Pending': 0, 
+                'Running': 0
+            }, 
+            'CreateIndex': 5145,
+            'JobID': 'TXIMPORT',
+            'ModifyIndex': 5145,
+            'Namespace': 'default',
+            'Summary': {}
+            }, 
+            'ModifyIndex': 5145, 
+            'Name': 'TXIMPORT', 
+            'ParameterizedJob': True, 
+            'ParentID': '', 
+            'Periodic': False, 
+            'Priority': 50, 
+            'Status': 'running', 
+            'StatusDescription': '', 
+            'Stop': False, 
+            'SubmitTime': 1552322030836469355, 
+            'Type': 'batch'
+        },
+        {
+            'CreateIndex': 5145, 
+            'ID': 'SALMON_1_2323', 
+            'JobModifyIndex': 5145, 
+            'JobSummary': {
+            'Children': {
+                'Dead': 0, 
+                'Pending': 0, 
+                'Running': 1
+            }, 
+            'CreateIndex': 5145, 
+            'JobID': 'SALMON_1_2323', 
+            'ModifyIndex': 5145, 
+            'Namespace': 'default', 
+            'Summary': {}
+            }, 
+            'ModifyIndex': 5145, 
+            'Name': 'SALMON_1_2323', 
+            'ParameterizedJob': True, 
+            'ParentID': '', 
+            'Periodic': False, 
+            'Priority': 50, 
+            'Status': 'running', 
+            'StatusDescription': '', 
+            'Stop': False, 
+            'SubmitTime': 1552322030836469355, 
+            'Type': 'batch'
+        },
+        {
+            'CreateIndex': 5145, 
+            'ID': 'SALMON_2_2323', 
+            'JobModifyIndex': 5145, 
+            'JobSummary': {
+            'Children': {
+                'Dead': 0, 
+                'Pending': 0, 
+                'Running': 1
+            }, 
+            'CreateIndex': 5145, 
+            'JobID': 'SALMON_1_2323', 
+            'ModifyIndex': 5145, 
+            'Namespace': 'default', 
+            'Summary': {}
+            }, 
+            'ModifyIndex': 5145, 
+            'Name': 'SALMON_1_2323', 
+            'ParameterizedJob': True, 
+            'ParentID': '', 
+            'Periodic': False, 
+            'Priority': 50, 
+            'Status': 'running', 
+            'StatusDescription': '', 
+            'Stop': False, 
+            'SubmitTime': 1552322030836469355, 
+            'Type': 'batch'
+        }
+    ]
+
 class ESTestCases(APITestCase):
 
     def test_es_endpoint(self):
-        """ Test basic ES functionality 
+        """ Test basic ES functionality
 
         This is pretty tricky because ES doesn't know that we're creating
         test objects.
