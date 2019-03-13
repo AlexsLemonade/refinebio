@@ -9,10 +9,12 @@ from data_refinery_common.models.base_models import TimeTrackedModel
 
 
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.utils import get_env_variable
 logger = get_and_configure_logger(__name__)
 
 
 NCBI_ROOT_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+NCBI_API_KEY = get_env_variable("NCBI_API_KEY", "3a1f8d818b0aa05d1aa3c334fa2cc9a17e09") # This is only used by eUtils and for organisms that aren't cached yet - it's harmless to share.
 ESEARCH_URL = NCBI_ROOT_URL + "esearch.fcgi"
 EFETCH_URL = NCBI_ROOT_URL + "efetch.fcgi"
 TAXONOMY_DATABASE = "taxonomy"
@@ -27,7 +29,7 @@ class InvalidNCBITaxonomyId(Exception):
 
 
 def get_scientific_name(taxonomy_id: int) -> str:
-    parameters = {"db": TAXONOMY_DATABASE, "id": str(taxonomy_id)}
+    parameters = {"db": TAXONOMY_DATABASE, "id": str(taxonomy_id), "api_key": NCBI_API_KEY}
     response = requests.get(EFETCH_URL, parameters)
 
     try:
@@ -47,7 +49,7 @@ def get_scientific_name(taxonomy_id: int) -> str:
 
 
 def get_taxonomy_id(organism_name: str) -> int:
-    parameters = {"db": TAXONOMY_DATABASE, "term": organism_name}
+    parameters = {"db": TAXONOMY_DATABASE, "term": organism_name, "api_key": NCBI_API_KEY}
     response = requests.get(ESEARCH_URL, parameters)
 
     try:
@@ -71,7 +73,7 @@ def get_taxonomy_id(organism_name: str) -> int:
 
 
 def get_taxonomy_id_scientific(organism_name: str) -> int:
-    parameters = {"db": TAXONOMY_DATABASE, "field": "scin", "term": organism_name}
+    parameters = {"db": TAXONOMY_DATABASE, "field": "scin", "term": organism_name, "api_key": NCBI_API_KEY}
     response = requests.get(ESEARCH_URL, parameters)
 
     try:
