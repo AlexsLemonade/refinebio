@@ -149,7 +149,6 @@ class PaginatedAPIView(APIView):
 # ElasticSearch
 ##
 from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
-from elasticsearch_dsl.query import Q
 from six import iteritems
 
 class FacetedSearchFilterBackendExtended(FacetedSearchFilterBackend):
