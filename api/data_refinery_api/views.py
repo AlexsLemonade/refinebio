@@ -162,10 +162,10 @@ class FacetedSearchFilterBackendExtended(FacetedSearchFilterBackend):
 
         (Maybe there's a way to do this with the options in `ExperimentDocumentView`)
         """
-        __facets = self.construct_facets(request, view)
-        for __field, __facet in iteritems(__facets):
-            agg = __facet['facet'].get_aggregation()
-            queryset.aggs.bucket(__field, agg)\
+        facets = self.construct_facets(request, view)
+        for field, facet in iteritems(facets):
+            agg = facet['facet'].get_aggregation()
+            queryset.aggs.bucket(field, agg)\
                 .metric('total_samples', 'sum', field='num_processed_samples')
         return queryset
 
