@@ -140,10 +140,7 @@ class SraSurveyor(ExternalSourceSurveyor):
                         SraSurveyor.gather_spot_metadata(metadata, grandchild)
             elif child.tag == "PLATFORM":
                 # This structure is extraneously nested.
-                # This is used as the platform_accession_code for SRA
-                # objects, which becomes part of file paths, so we
-                # don't want any spaces in it.
-                metadata["platform_instrument_model"] = child[0][0].text.replace(" ", "")
+                metadata["platform_instrument_model"] = child[0][0].text
 
     @staticmethod
     def parse_run_link(run_link: ET.ElementTree) -> (str, str):
@@ -481,8 +478,9 @@ class SraSurveyor(ExternalSourceSurveyor):
             sample_object.organism = organism
 
             sample_object.platform_name = metadata.get("platform_instrument_model", "UNKNOWN")
-            # No platform accession nonsense with RNASeq, just use the name:
-            sample_object.platform_accession_code = sample_object.platform_name
+            # The platform_name is human readable and contains spaces,
+            # accession codes shouldn't have spaces though:
+            sample_object.platform_accession_code = sample_object.platform_name.replace(" ", "")
             sample_object.technology = "RNA-SEQ"
             if "ILLUMINA" in sample_object.platform_name.upper() \
             or "NEXTSEQ" in sample_object.platform_name.upper():
