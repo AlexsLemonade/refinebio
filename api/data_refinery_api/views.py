@@ -1367,9 +1367,7 @@ class QNTargetsAvailable(APIView):
     """
     def get(self, request, format=None):
         
-
-        organism_ids = list(ComputationalResultAnnotation.objects.filter(data__is_qn=True).values_list('data__organism_id', flat=True).order_by('data__organism_id'))
-        organisms = Organism.objects.filter(id__in=organism_ids)
+        organisms = Organism.get_objects_with_qn_targets()
         serializer = OrganismSerializer(organisms, many=True)
 
         return Response(serializer.data)
