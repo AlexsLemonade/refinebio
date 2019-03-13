@@ -149,6 +149,27 @@ class PaginatedAPIView(APIView):
 # ElasticSearch
 ##
 from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
+from elasticsearch_dsl.query import Q
+from six import iteritems
+
+class FacetedSearchFilterBackendExtended(FacetedSearchFilterBackend):
+    def aggregate(self, request, queryset, view):
+        """Extends FacetedSearchFilterBackend to add sampple counts on each filter
+        https://github.com/barseghyanartur/django-elasticsearch-dsl-drf/blob/master/src/django_elasticsearch_dsl_drf/filter_backends/faceted_search.py#L19
+
+        All we need to add is one line when building the facets:
+
+        .metric('total_samples', 'sum', field='num_processed_samples')
+
+        (Maybe there's a way to do this with the options in `ExperimentDocumentView`)
+        """
+        __facets = self.construct_facets(request, view)
+        for __field, __facet in iteritems(__facets):
+            agg = __facet['facet'].get_aggregation()
+            queryset.aggs.bucket(__field, agg)\
+                .metric('total_samples', 'sum', field='num_processed_samples')
+        return queryset
+
 
 class ExperimentDocumentView(DocumentViewSet):
     """ElasticSearch powered experiment search.
@@ -175,7 +196,7 @@ class ExperimentDocumentView(DocumentViewSet):
         OrderingFilterBackend,
         DefaultOrderingFilterBackend,
         CompoundSearchFilterBackend,
-        FacetedSearchFilterBackend
+        FacetedSearchFilterBackendExtended
     ]
 
     # Primitive
