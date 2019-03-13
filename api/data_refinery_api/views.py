@@ -79,6 +79,7 @@ from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     APIToken,
     ComputationalResult,
+    ComputationalResultAnnotation,
     ComputedFile,
     Dataset,
     DownloaderJob,
@@ -552,12 +553,15 @@ class DatasetView(generics.RetrieveUpdateAPIView):
         already_processing = old_object.is_processing
         new_data = serializer.validated_data
 
+        qn_organisms = Organism.get_objects_with_qn_targets()
+
         # We convert 'ALL' into the actual accession codes given
         for key in new_data['data'].keys():
             accessions = new_data['data'][key]
             if accessions == ["ALL"]:
                 experiment = get_object_or_404(Experiment, accession_code=key)
-                sample_codes = list(experiment.samples.filter(is_processed=True).values_list('accession_code', flat=True))
+
+                sample_codes = list(experiment.samples.filter(is_processed=True, organism__in=qn_organisms).values_list('accession_code', flat=True))
                 new_data['data'][key] = sample_codes
 
         if old_object.is_processed:
@@ -1356,6 +1360,17 @@ class CompendiaDetail(APIView):
 ###
 # QN Targets
 ###
+
+class QNTargetsAvailable(APIView):
+    """
+    This is a list of all of the organisms which have available QN Targets
+    """
+    def get(self, request, format=None):
+        
+        organisms = Organism.get_objects_with_qn_targets()
+        serializer = OrganismSerializer(organisms, many=True)
+
+        return Response(serializer.data)
 
 class QNTargetsDetail(APIView):
     """

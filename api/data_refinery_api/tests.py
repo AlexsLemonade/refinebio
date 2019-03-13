@@ -84,12 +84,14 @@ class APITestCases(APITestCase):
         sample.title = "123"
         sample.accession_code = "123"
         sample.is_processed = True
+        sample.organism = Organism.get_object_for_name("AILUROPODA_MELANOLEUCA")
         sample.save()
 
         sample = Sample()
         sample.title = "789"
         sample.accession_code = "789"
         sample.is_processed = True
+        sample.organism = Organism.get_object_for_name("AILUROPODA_MELANOLEUCA")
         sample.save()
         self.sample = sample
 
@@ -684,6 +686,36 @@ class APITestCases(APITestCase):
 
         self.assertEqual(response.status_code, 400)
 
+        cr = ComputationalResult()
+        cr.save()
+
+        cra = ComputationalResultAnnotation()
+        cra.result = cr
+        cra.data = {"organism_id": self.sample.organism.id, "is_qn": True}
+        cra.save()
+
+        qni = ComputedFile()
+        qni.is_qn_target = True
+        qni.s3_bucket = "fake_qni_bucket"
+        qni.s3_key = "zazaza_homo_sapiens_1234.tsv"
+        qni.filename = "homo_sapiens_1234.tsv"
+        qni.is_public = True
+        qni.size_in_bytes = 56789
+        qni.sha1 = "c0a88d0bb020dadee3b707e647f7290368c235ba"
+        qni.result = cr
+        qni.save()
+
+        qni = ComputedFile()
+        qni.is_qn_target = False
+        qni.s3_bucket = "X"
+        qni.s3_key = "X.tsv"
+        qni.filename = "XXXXXXXXXXXXXXX.tsv"
+        qni.is_public = True
+        qni.size_in_bytes = 1
+        qni.sha1 = "123"
+        qni.result = cr
+        qni.save()
+
         # Update, just an experiment accession
         jdata = json.dumps({'data': {"GSE123": ["ALL"]}})
         response = self.client.put(reverse('dataset', kwargs={'id': good_id}),
@@ -949,6 +981,45 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('experiments'))
         self.assertEqual(response.status_code, 500)
         mock_client.captureMessage.assert_called()
+
+    def test_qn_endpoints(self):
+
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
+        homo_sapiens.save()
+        danio_rerio.save()
+
+        result = ComputationalResult()
+        result.commands.append("create_qn_target.py")
+        result.is_ccdl = True
+        result.is_public = True
+        processor_key = "QN_REFERENCE"
+        result.processor = None
+        result.save()
+
+        cra = ComputationalResultAnnotation()
+        cra.result = result
+        cra.data = {
+            "organism_id": danio_rerio.id, # Danio
+            "is_qn": True,
+            "platform_accession_code": 'zebrafish',
+            "samples": [],
+            "geneset": str(["RWWJ000001", "RWWJ000002"]),
+        }
+        cra.save()
+        cra = ComputationalResultAnnotation()
+        cra.result = result
+        cra.data = {
+            "organism_id": homo_sapiens.id, # IDK
+            "is_qn": True,
+            "platform_accession_code": 'zebrafishplusone',
+            "samples": [],
+            "geneset": str(["RWWJ000003", "RWWJ000004"]),
+        }
+        cra.save()
+
+        response = self.client.get(reverse('qn-targets-available'))
+        self.assertEqual(len(response.json()), 2)
 
 class StatsTestCases(APITestCase):
     @patch.object(Stats, '_get_nomad_jobs')
