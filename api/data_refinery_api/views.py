@@ -831,6 +831,7 @@ class SampleList(PaginatedAPIView):
         order_by = filter_dict.pop('order_by', None)
         ids = filter_dict.pop('ids', None)
         filter_by = filter_dict.pop('filter_by', None)
+        organism = filter_dict.pop('organism', None)
 
         if ids is not None:
             ids = [ int(x) for x in ids.split(',')]
@@ -851,6 +852,15 @@ class SampleList(PaginatedAPIView):
             dataset = get_object_or_404(Dataset, id=dataset_id)
             # Python doesn't provide a prettier way of doing this that I know about.
             filter_dict['accession_code__in'] = [item for sublist in dataset.data.values() for item in sublist]
+
+        # Accept Organism in both name and ID form
+        if organism:
+            try:
+                organism_id = int(organism)
+            except ValueError:
+                organism_object = Organism.get_object_for_name(organism)
+                organism_id = organism_object.id
+            filter_dict['organism'] = organism_id
 
         samples = Sample.public_objects \
             .prefetch_related('sampleannotation_set') \
