@@ -282,6 +282,9 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 # so don't add it to created_samples.
                 ExperimentSampleAssociation.objects.get_or_create(
                     experiment=experiment_object, sample=sample_object)
+
+                ExperimentOrganismAssociation.objects.get_or_create(
+                    experiment=experiment_object, organism=sample_object.organism)
             except Sample.DoesNotExist:
                 organism = Organism.get_object_for_name(sample.metadata['organism_ch1'][0].upper())
 
