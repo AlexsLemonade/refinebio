@@ -25,37 +25,37 @@ class DownloadSraTestCase(TestCase):
     def insert_objects(self):
         return
 
-    @tag('downloaders')
-    @tag('downloaders_sra')
-    @patch('data_refinery_workers.downloaders.utils.send_job')
-    def test_download_file(self, mock_send_job):
-        mock_send_job.return_value = None
+    # @tag('downloaders')
+    # @tag('downloaders_sra')
+    # @patch('data_refinery_workers.downloaders.utils.send_job')
+    # def test_download_file(self, mock_send_job):
+    #     mock_send_job.return_value = None
         
-        dlj = DownloaderJob()
-        dlj.accession_code = "ERR036"
-        dlj.save()
+    #     dlj = DownloaderJob()
+    #     dlj.accession_code = "ERR036"
+    #     dlj.save()
 
-        og = OriginalFile()
-        og.source_filename = "ERR036000.fastq.gz"
-        og.source_url = "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036000/ERR036000_1.fastq.gz"
-        og.is_archive = True
-        og.save()
+    #     og = OriginalFile()
+    #     og.source_filename = "ERR036000.fastq.gz"
+    #     og.source_url = "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR036/ERR036000/ERR036000_1.fastq.gz"
+    #     og.is_archive = True
+    #     og.save()
 
-        sample = Sample()
-        sample.accession_code = 'ERR036000'
-        sample.save()
+    #     sample = Sample()
+    #     sample.accession_code = 'ERR036000'
+    #     sample.save()
 
-        assoc = OriginalFileSampleAssociation()
-        assoc.sample = sample
-        assoc.original_file = og
-        assoc.save()
+    #     assoc = OriginalFileSampleAssociation()
+    #     assoc.sample = sample
+    #     assoc.original_file = og
+    #     assoc.save()
 
-        assoc = DownloaderJobOriginalFileAssociation()
-        assoc.downloader_job = dlj
-        assoc.original_file = og
-        assoc.save()
+    #     assoc = DownloaderJobOriginalFileAssociation()
+    #     assoc.downloader_job = dlj
+    #     assoc.original_file = og
+    #     assoc.save()
 
-        success = sra.download_sra(dlj.pk)
+    #     success = sra.download_sra(dlj.pk)
 
     @tag('downloaders')
     @tag('downloaders_sra')
