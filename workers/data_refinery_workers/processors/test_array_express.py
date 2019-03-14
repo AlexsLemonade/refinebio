@@ -56,7 +56,7 @@ class AffyToPCLTestCase(TestCase):
         """ """
         job = prepare_ba_job()
         # Make sure that a previous test didn't leave a directory around.
-        shutil.rmtree("/home/user/data_store/processor_job_" + str(job.id))
+        shutil.rmtree("/home/user/data_store/processor_job_" + str(job.id), ignore_errors=True)
         array_express.affy_to_pcl(job.pk)
 
         updated_job = ProcessorJob.objects.get(pk=job.pk)
@@ -73,7 +73,7 @@ class AffyToPCLTestCase(TestCase):
         """ """
         job = prepare_non_ba_job()
         # Make sure that a previous test didn't leave a directory around.
-        shutil.rmtree("/home/user/data_store/processor_job_" + str(job.id))
+        shutil.rmtree("/home/user/data_store/processor_job_" + str(job.id), ignore_errors=True)
         array_express.affy_to_pcl(job.pk)
 
         updated_job = ProcessorJob.objects.get(pk=job.pk)
