@@ -970,7 +970,7 @@ class ComputedFile(models.Model):
                     'Bucket': self.s3_bucket,
                     'Key': self.s3_key
                 },
-                ExpiresIn=(60 * 60 * 24) # 1 day in seconds.
+                ExpiresIn=(60 * 60 * 7 * 24) # 7 days in seconds.
             )
         else:
             return None
@@ -1106,7 +1106,7 @@ class Dataset(models.Model):
                     'Bucket': self.s3_bucket,
                     'Key': self.s3_key
                 },
-                ExpiresIn=(60 * 60 * 24) # 1 day in seconds.
+                ExpiresIn=(60 * 60 * 7 * 24) # 7 days in seconds.
             )
         else:
             return None
