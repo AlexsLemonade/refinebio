@@ -321,6 +321,32 @@ class ExperimentDocumentView(DocumentViewSet):
     }
     faceted_search_param = 'facet'
 
+    def list(self, request, *args, **kwargs):
+        """ Adds counts on certain filter fields to result JSON."""
+        response = super(ExperimentDocumentView, self).list(request, args, kwargs)
+        response.data['facets'] = self.transform_es_facets(response.data['facets'])
+        return response
+
+    def transform_es_facets(self, facets):
+        """Transforms Elastic Search facets into a set of objects where each one corresponds 
+        to a filter group. Example:
+
+        { technology: {rna-seq: 254, microarray: 8846, unknown: 0} }
+
+        Which means the users could attach `?technology=rna-seq` to the url and expect 254 
+        samples returned in the results.
+        """
+        result = {}
+        for field, facet in iteritems(facets):
+            filter_group = {}
+            for bucket in facet['buckets']:
+                if field == 'has_publication':
+                    filter_group[bucket['key_as_string']] = bucket['total_samples']['value']
+                else:
+                    filter_group[bucket['key']] = bucket['total_samples']['value']
+            result[field] = filter_group
+        return result
+
 ##
 # Search and Filter
 ##

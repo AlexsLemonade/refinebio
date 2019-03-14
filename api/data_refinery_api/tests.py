@@ -1153,6 +1153,7 @@ class ESTestCases(APITestCase):
         experiment.description = "This is a very exciting test experiment. Faygo soda. Blah blah blah."
         experiment.technology = "MICROARRAY"
         experiment.num_processed_samples = 1 # added below
+        experiment.num_total_samples = 1
         experiment.save()
         self.experiment = experiment
 
@@ -1236,20 +1237,21 @@ class ESTestCases(APITestCase):
         self.assertEqual(response.status_code, 200)
         print('$$ sanity', response.json())
         self.assertEqual(response.json()['count'], 2)
+        # test sample counts in filters
+        self.assertEqual(response.json()['facets']['has_publication']['false'], 1)
+        self.assertEqual(response.json()['facets']['technology']['microarray'], 1)
+        self.assertEqual(response.json()['facets']['technology']['rna-seq'], 0)
 
         # Basic Search
         response = self.client.get('/es/?search=soda')
-        print('$$ basic search', response.json())        
         self.assertEqual(response.json()['count'], 1)
 
         # Positive filter result
         response = self.client.get('/es/?search=soda&technology=microarray')
-        print('$$ Positive filter result', response.json())        
         self.assertEqual(response.json()['count'], 1)
 
         # Negative filter result
         response = self.client.get('/es/?search=soda&technology=rna')
-        print('$$ Negative filter result', response.json())        
         self.assertEqual(response.json()['count'], 0)
 
 class ProcessorTestCases(APITestCase):
