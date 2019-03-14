@@ -452,6 +452,8 @@ for image in ${worker_images[*]}; do
         if [[ $image == "agilent" || $image == "affymetrix" ]]; then
             # Agilent uses the same docker image as Affymetrix
             ./prepare_image.sh -p -i affymetrix -s workers
+            ./prepare_image.sh -i affymetrix_local -d ccdlstaging
+            docker tag ccdlstaging/dr_affymetrix_local:latest ccdlstaging/dr_affymetrix:latest
             image_name=ccdlstaging/dr_affymetrix
         elif [[ $tag == "qn" ]]; then
             ./prepare_image.sh -i smasher -s workers
