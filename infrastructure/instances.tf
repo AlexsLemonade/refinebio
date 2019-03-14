@@ -69,8 +69,7 @@ resource "aws_instance" "nomad_server_1" {
   subnet_id = "${aws_subnet.data_refinery_1b.id}"
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
-
-  disable_api_termination = "${var.stage == "prod" ? true : false}"
+  disable_api_termination = "false"
 
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
@@ -132,8 +131,7 @@ resource "aws_instance" "nomad_server_2" {
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
-
-  disable_api_termination = "${var.stage == "prod" ? true : false}"
+  disable_api_termination = "false"
 
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
@@ -169,8 +167,7 @@ resource "aws_instance" "nomad_server_3" {
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
-
-  disable_api_termination = "${var.stage == "prod" ? true : false}"
+  disable_api_termination = "false"
 
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
@@ -582,9 +579,7 @@ resource "aws_instance" "pg_bouncer" {
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_db_instance.postgres_db"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
-
-  # Don't delete production servers by mistake!
-  disable_api_termination = "${var.stage == "prod" ? true : false}"
+  disable_api_termination = "false"
 
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
