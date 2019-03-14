@@ -1235,7 +1235,6 @@ class ESTestCases(APITestCase):
 
         # Sanity
         self.assertEqual(response.status_code, 200)
-        print('$$ sanity', response.json())
         self.assertEqual(response.json()['count'], 2)
         # test sample counts in filters
         self.assertEqual(response.json()['facets']['has_publication']['false'], 1)
