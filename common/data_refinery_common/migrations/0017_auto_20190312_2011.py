@@ -33,6 +33,7 @@ def make_sample_platform_names_readable(apps, schema_editor):
             if munged_sample_platform in platform_mapping:
                 sample.platform_name = platform_mapping[munged_sample_platform]
                 sample.save()
+        print("Updating page " + str(page_idx))
 
 class Migration(migrations.Migration):
 
