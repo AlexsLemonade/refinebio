@@ -78,7 +78,7 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
     """Determines the right brainarray package to use for the file.
 
     Expects job_context to contain the key 'input_file_path'. Adds the
-    key 'brainarray_package' to job_context.
+    keys 'brainarray_package' and 'platform_accesion_code' to job_context.
     """
     input_file = job_context["input_file_path"]
     try:
@@ -108,6 +108,7 @@ def _determine_brainarray_package(job_context: Dict) -> Dict:
     package_name_without_version = package_name.replace("v1", "").replace("v2", "")
     chip_pkg_map = _create_ensg_pkg_map()
     job_context["brainarray_package"] = chip_pkg_map.get(package_name_without_version, None)
+    job_context["platform_accession_code"] = package_name_without_version
     return job_context
 
 
@@ -143,7 +144,7 @@ def _run_scan_upc(job_context: Dict) -> Dict:
                 # If we've detected the platform using affy, then this
                 # is the best source of truth we'll be able to get, so
                 # update the sample to match it.
-                platform_accesion_code = job_context["brainarray_package"]
+                platform_accession_code = job_context["platform_accession_code"]
                 platform_name = get_readable_affymetrix_names()[platform_accession_code]
 
                 for sample in job_context["samples"]:
