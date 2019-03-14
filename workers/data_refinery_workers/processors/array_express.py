@@ -143,7 +143,7 @@ def _run_scan_upc(job_context: Dict) -> Dict:
                 # If we've detected the platform using affy, then this
                 # is the best source of truth we'll be able to get, so
                 # update the sample to match it.
-                platform_accesion_code = job_context["brainarray_package"]
+                platform_accession_code = job_context["brainarray_package"]
                 platform_name = get_readable_affymetrix_names()[platform_accession_code]
 
                 for sample in job_context["samples"]:
