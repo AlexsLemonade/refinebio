@@ -1,4 +1,5 @@
 import os
+import shutil
 from django.test import TestCase, tag
 from data_refinery_common.models import (
     ProcessorJob,
@@ -54,6 +55,8 @@ class AffyToPCLTestCase(TestCase):
     def test_affy_to_pcl(self):
         """ """
         job = prepare_ba_job()
+        # Make sure that a previous test didn't leave a directory around.
+        shutil.rmtree("/home/user/data_store/processor_job_" + str(job.id))
         array_express.affy_to_pcl(job.pk)
 
         updated_job = ProcessorJob.objects.get(pk=job.pk)
@@ -69,6 +72,8 @@ class AffyToPCLTestCase(TestCase):
     def test_affy_to_pcl_no_brainarray(self):
         """ """
         job = prepare_non_ba_job()
+        # Make sure that a previous test didn't leave a directory around.
+        shutil.rmtree("/home/user/data_store/processor_job_" + str(job.id))
         array_express.affy_to_pcl(job.pk)
 
         updated_job = ProcessorJob.objects.get(pk=job.pk)
