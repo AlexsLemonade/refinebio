@@ -18,7 +18,7 @@ from data_refinery_common.models import (
     SampleResultAssociation,
 )
 
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable, get_readable_affymetrix_names
 from data_refinery_workers.processors import utils
 
 
@@ -140,6 +140,17 @@ def _run_scan_upc(job_context: Dict) -> Dict:
 
             # Related: https://github.com/AlexsLemonade/refinebio/issues/64
             if job_context["brainarray_package"]:
+                # If we've detected the platform using affy, then this
+                # is the best source of truth we'll be able to get, so
+                # update the sample to match it.
+                platform_accession_code = job_context["brainarray_package"]
+                platform_name = get_readable_affymetrix_names()[platform_accession_code]
+
+                for sample in job_context["samples"]:
+                    sample.platform_accession_code = platform_accession_code
+                    sample_object.platform_name = platform_name
+                    sample_object.save()
+
                 scan_upc(input_file,
                          job_context["output_file_path"],
                          probeSummaryPackage=job_context["brainarray_package"])

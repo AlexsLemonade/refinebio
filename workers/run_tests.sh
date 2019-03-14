@@ -413,7 +413,7 @@ if [[ -z $tag || $tag == "compendia" ]]; then
         cp "$micro_list_file" "$micro_list_dir/$micro_list_file"
         cd "$micro_list_dir"
         echo "Downloading Microarray Files!"
-        wget -i "$micro_list_file"
+        wget -q -i "$micro_list_file"
         cd -
     fi
     rnaseq_list_file="rnaseq.txt"
@@ -423,7 +423,7 @@ if [[ -z $tag || $tag == "compendia" ]]; then
         cp "$rnaseq_list_file" "$rnaseq_list_dir/$rnaseq_list_file"
         cd "$rnaseq_list_dir"
         echo "Downloading RNASEQ Files!"
-        wget -i "$rnaseq_list_file"
+        wget -q -i "$rnaseq_list_file"
         cd -
     fi
     qn_name="danio_target.tsv"
@@ -479,6 +479,7 @@ for image in ${worker_images[*]}; do
                --env AWS_ACCESS_KEY_ID \
                --env AWS_SECRET_ACCESS_KEY \
                --volume $volume_directory:/home/user/data_store \
+               --memory=5G \
                -it $image_name bash -c "$test_command"
     fi
 done

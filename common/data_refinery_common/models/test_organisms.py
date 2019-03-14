@@ -148,7 +148,7 @@ class OrganismModelTestCase(TestCase):
         self.assertEqual(taxonomy_id, 9606)
         mock_get.assert_called_once_with(
             ESEARCH_URL,
-            {"db": "taxonomy", "field": "scin", "term": "HOMO_SAPIENS"}
+            {"db": "taxonomy", 'api_key': '3a1f8d818b0aa05d1aa3c334fa2cc9a17e09', "field": "scin", "term": "HOMO_SAPIENS"}
         )
 
         # The first call should have stored the organism record in the
@@ -168,9 +168,9 @@ class OrganismModelTestCase(TestCase):
         self.assertEqual(taxonomy_id, 9606)
         mock_get.assert_has_calls([
             call(ESEARCH_URL,
-                 {"db": "taxonomy", "field": "scin", "term": "HUMAN"}),
+                 {"db": "taxonomy", 'api_key': '3a1f8d818b0aa05d1aa3c334fa2cc9a17e09', "field": "scin", "term": "HUMAN"}),
             call(ESEARCH_URL,
-                 {"db": "taxonomy", "term": "HUMAN"})])
+                 {"db": "taxonomy", 'api_key': '3a1f8d818b0aa05d1aa3c334fa2cc9a17e09', "term": "HUMAN"})])
 
         # The first call should have stored the organism record in the
         # database so this call should not make a request.
@@ -190,7 +190,7 @@ class OrganismModelTestCase(TestCase):
         self.assertEqual(organism_name, "HOMO_SAPIENS")
         mock_get.assert_called_once_with(
             EFETCH_URL,
-            {"db": "taxonomy", "id": "9606"}
+            {"db": "taxonomy", 'api_key': '3a1f8d818b0aa05d1aa3c334fa2cc9a17e09', "id": "9606"}
         )
 
         # The first call should have stored the organism record in the
@@ -226,9 +226,9 @@ class OrganismModelTestCase(TestCase):
         self.assertEqual(taxonomy_id, 0)
         mock_get.assert_has_calls([
             call(ESEARCH_URL,
-                 {"db": "taxonomy", "field": "scin", "term": "BLAH"}),
+                 {"db": "taxonomy", "field": "scin", 'api_key': '3a1f8d818b0aa05d1aa3c334fa2cc9a17e09', "term": "BLAH"}),
             call(ESEARCH_URL,
-                 {"db": "taxonomy", "term": "BLAH"})])
+                 {"db": "taxonomy", 'api_key': '3a1f8d818b0aa05d1aa3c334fa2cc9a17e09', "term": "BLAH"})])
 
         # The first call should have stored the organism record in the
         # database so this call should not make a request.

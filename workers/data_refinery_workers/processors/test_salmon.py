@@ -70,6 +70,8 @@ def prepare_job():
     samp = Sample()
     samp.accession_code = "SALMON" # So the test files go to the right place
     samp.organism = c_elegans
+    samp.source_database = 'SRA'
+    samp.technology = 'RNA-SEQ'
     samp.save()
 
     prepare_organism_indices()
@@ -121,6 +123,8 @@ def prepare_dotsra_job(filename="ERR1562482.sra"):
     samp = Sample()
     samp.accession_code = "SALMON" # So the test files go to the right place
     samp.organism = c_elegans
+    samp.source_database = 'SRA'
+    samp.technology = 'RNA-SEQ'
     samp.save()
 
     prepare_organism_indices()
@@ -189,6 +193,45 @@ class SalmonTestCase(TestCase):
         self.assertEqual(organism_index.index_type, "TRANSCRIPTOME_SHORT")
 
     @tag('salmon')
+    def test_no_salmon_on_geo(self):
+        """Test that salmon won't be run on data coming from GEO."""
+        # Ensure any computed files from previous tests are removed.
+        try:
+            os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
+        except FileNotFoundError:
+            pass
+
+        job, files = prepare_job()
+
+        # We're expecting this processor job to fail, and when it does
+        # it should clean up the original files that were for the
+        # job. However we want to use these files in other tests, so
+        # copy them so we can delete them without deleting the
+        # originals.
+        for original_file in OriginalFile.objects.all():
+            new_path = original_file.absolute_file_path + "_copy"
+            shutil.copyfile(original_file.absolute_file_path, new_path)
+            original_file.absolute_file_path = new_path
+            original_file.save()
+
+        sample_object = Sample.objects.first()
+        sample_object.source_database = 'GEO'
+        sample_object.save()
+
+        job_context = salmon.salmon(job.pk)
+        job = ProcessorJob.objects.get(id=job.pk)
+        self.assertFalse(job.success)
+        self.assertEqual(job.failure_reason,
+                         ("The sample for this job either was not RNA-Seq or was not from the "
+                          "SRA database."))
+        self.assertTrue(job.no_retry)
+
+        # Make sure the data got cleaned up, since the Janitor isn't
+        # going to do it.
+        for original_file in OriginalFile.objects.all():
+            self.assertFalse(os.path.exists(original_file.absolute_file_path))
+
+    @tag('salmon')
     def test_salmon_dotsra(self):
         """Test the whole pipeline."""
         # Ensure any computed files from previous tests are removed.
@@ -233,7 +276,7 @@ class SalmonTestCase(TestCase):
             job_context["index_directory"] = job_context["index_directory"].replace("SHORT", "LONG")
 
         salmon._run_salmon(job_context)
-        salmon._tximport(job_context)
+        salmon.tximport(job_context)
         output_quant_filename = os.path.join(job_context['output_directory'], 'quant.sf')
         self.assertTrue(os.path.exists(output_quant_filename))
 
@@ -257,10 +300,14 @@ class SalmonTestCase(TestCase):
         # test_sample record
         sample_accession = 'test_sample'
         test_sample = Sample.objects.create(accession_code=sample_accession,
-                                            organism=c_elegans)
+                                            organism=c_elegans,
+                                            source_database='SRA',
+                                            technology='RNA-SEQ')
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=test_sample)
         # fake_sample record (created to prevent tximport step in this experiment)
-        fake_sample = Sample.objects.create(accession_code='fake_sample')
+        fake_sample = Sample.objects.create(accession_code='fake_sample',
+                                            source_database='SRA',
+                                            technology='RNA-SEQ')
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=fake_sample)
 
         experiment_dir = '/home/user/data_store/salmon_tests/test_experiment'
@@ -314,7 +361,9 @@ class SalmonTestCase(TestCase):
         ## Sample 1
         sample1_accession = 'SRR1206053'
         sample1 = Sample.objects.create(accession_code=sample1_accession,
-                                        organism=c_elegans)
+                                        organism=c_elegans,
+                                        source_database='SRA',
+                                        technology='RNA-SEQ')
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample1)
 
         experiment_dir = "/home/user/data_store/salmon_tests/PRJNA242809"
@@ -329,7 +378,9 @@ class SalmonTestCase(TestCase):
         ## Sample 2
         sample2_accession = 'SRR1206054'
         sample2 = Sample.objects.create(accession_code=sample2_accession,
-                                        organism=c_elegans)
+                                        organism=c_elegans,
+                                        source_database='SRA',
+                                        technology='RNA-SEQ')
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample2)
 
         og_file_2 = OriginalFile()
@@ -400,6 +451,65 @@ class SalmonTestCase(TestCase):
         self.assertTrue(len(job2_context['individual_files']), 2)
         for file in job2_context['individual_files']:
             self.assertTrue(os.path.isfile(file.absolute_file_path))
+
+    @tag("salmon")
+    def test_get_tximport_inputs(self):
+        """"Tests that tximport only considers RNA-Seq samples from GEO.
+        """
+        # Create one experiment and two related samples, based on:
+        #   https://www.ncbi.nlm.nih.gov/sra/?term=SRP040623
+        # (We don't need any original files because
+        # _get_tximport_inputs doesn't consider them.)
+        experiment_accession = 'PRJNA242809'
+        experiment = Experiment.objects.create(accession_code=experiment_accession)
+
+        c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
+
+        ## Sample 1
+        sample1_accession = 'SRR1206053'
+        sample1 = Sample.objects.create(accession_code=sample1_accession,
+                                        organism=c_elegans)
+        sample1.source_database = 'GEO'
+        sample1.technology = 'RNA-SEQ'
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample1)
+
+        ## Sample 2
+        sample2_accession = 'SRR1206054'
+        sample2 = Sample.objects.create(accession_code=sample2_accession,
+                                        organism=c_elegans)
+        sample2.source_database = 'GEO'
+        sample2.technology = 'RNA-SEQ'
+        ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample2)
+
+        computational_result1 = ComputationalResult(processor=utils.find_processor('SALMON_QUANT'))
+        computational_result1.save()
+
+        sample_result_assoc = SampleResultAssociation(sample=sample1, result=computational_result1)
+        sample_result_assoc.save()
+
+        comp_file = ComputedFile()
+        comp_file.absolute_file_path = "/doesnt/matter"
+        comp_file.result = computational_result1
+        comp_file.size_in_bytes=1337
+        comp_file.sha1="ABC"
+        comp_file.save()
+
+        computational_result2 = ComputationalResult(processor=utils.find_processor('SALMON_QUANT'))
+        computational_result2.save()
+
+        sample_result_assoc = SampleResultAssociation(sample=sample2, result=computational_result2)
+        sample_result_assoc.save()
+
+        comp_file = ComputedFile()
+        comp_file.absolute_file_path = "/doesnt/matter"
+        comp_file.result = computational_result2
+        comp_file.size_in_bytes=1337
+        comp_file.sha1="ABC"
+        comp_file.save()
+
+        quantified_experiments = salmon._get_tximport_inputs({"sample": sample1})
+
+        self.assertEqual({}, quantified_experiments)
 
     @tag("salmon")
     def test_fastqc(self):
@@ -737,7 +847,12 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     comp_file.save()
 
     for accession_code in incomplete_accessions:
-        last_sample = Sample.objects.create(accession_code=accession_code, organism=zebrafish)
+        last_sample = Sample.objects.create(
+            accession_code=accession_code,
+            organism=zebrafish,
+            source_database='SRA',
+            technology='RNA-SEQ'
+        )
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=last_sample)
 
     # Create tximport result and files
@@ -749,7 +864,12 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     # original files for this test because we aren't going to run
     # salmon quant on them.
     for accession_code in complete_accessions:
-        sample = Sample.objects.create(accession_code=accession_code, organism=zebrafish)
+        sample = Sample.objects.create(
+            accession_code=accession_code,
+            organism=zebrafish,
+            source_database='SRA',
+            technology='RNA-SEQ'
+        )
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
 
         if accession_code == "SRR5125622":
@@ -824,7 +944,7 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     job_context = salmon._find_or_download_index(job_context)
 
     # Actually run salmon on the second to last sample in the experiment.
-    job_context = salmon._tximport(job_context)
+    job_context = salmon.tximport(job_context)
 
     return job_context
 
