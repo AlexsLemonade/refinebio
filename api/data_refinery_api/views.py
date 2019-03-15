@@ -1107,18 +1107,25 @@ class Stats(APIView):
 
         return Response(data)
 
+    EMAIL_USERNAME_BLACKLIST = ['arielsvn', 'miserlou', 'kurt.wheeler91', 'd.prasad']
+
     def _get_dataset_stats(self, range_param):
         """Returns stats for processed datasets"""
-        processed_datasets = Dataset.objects.filter(is_processed=True)
+        filter_query = Q()
+        for username in Stats.EMAIL_USERNAME_BLACKLIST:
+            filter_query = filter_query | Q(email_address__startswith=username)
+        filter_query = filter_query & Q(email_address__endswith='gmail.com')
+        processed_datasets = Dataset.objects.filter(is_processed=True).exclude(filter_query)
         result = processed_datasets.aggregate(
             total=Count('id'),
             aggregated_by_experiment=Count('id', filter=Q(aggregate_by='EXPERIMENT')),
-            aggregated_by_species=Count('id', filter=Q(aggregate_by='SAMPLES')),
+            aggregated_by_species=Count('id', filter=Q(aggregate_by='SPECIES')),
             scale_by_none=Count('id', filter=Q(scale_by='NONE')),
             scale_by_minmax=Count('id', filter=Q(scale_by='MINMAX')),
             scale_by_standard=Count('id', filter=Q(scale_by='STANDARD')),
             scale_by_robust=Count('id', filter=Q(scale_by='ROBUST')),
         )
+
         if range_param:
             # We don't save the dates when datasets are processed, but we can use
             # `last_modified`, since datasets aren't modified again after they are processed
@@ -1236,7 +1243,7 @@ class Stats(APIView):
     def _get_job_stats(self, jobs, range_param):
         result = jobs.aggregate(
             total=Count('id'),
-            pending=Count('id', filter=Q(start_time__isnull=True)),
+            pending=Count('id', filter=Q(start_time__isnull=True)), 
             completed=Count('id', filter=Q(end_time__isnull=False)),
             successful=Count('id', filter=Q(success=True)),
             open=Count('id', filter=Q(start_time__isnull=False, end_time__isnull=True, success__isnull=True)),
@@ -1255,7 +1262,7 @@ class Stats(APIView):
                                      .annotate(
                                          total=Count('id'),
                                          completed=Count('id', filter=Q(success=True)),
-                                         pending=Count('id', filter=Q(start_time__isnull=True)),
+                                         pending=Count('id', filter=Q(start_time__isnull=True)), # exclude success = false
                                          failed=Count('id', filter=Q(success=False)),
                                          open=Count('id', filter=Q(success__isnull=True)),
                                      )
