@@ -5,6 +5,7 @@ failures for both the DownloaderJobs and ProcessorJobs and requeue
 those jobs it detects as failed.
 """
 
+import random
 import sys
 import time
 from typing import Dict, List
@@ -27,13 +28,13 @@ from data_refinery_common.models import (
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable, get_active_volumes
 
 
 logger = get_and_configure_logger(__name__)
 
 
-MAX_JOBS_FOR_THIS_MODE = 3000
+MAX_JOBS_FOR_THIS_MODE = 10000
 
 
 def build_completion_list(organism: Organism) -> List[Dict]:
@@ -142,16 +143,18 @@ def requeue_job(job):
     """
     # All new jobs are going to be set at 2 retries so they only get
     # tried once. Presumably all of these have failed at least once
-    # already, so there may be a good reason. Not immediately having
-    # them retried will give me a chance to actually take a look at
-    # what is happening to to them.
+    # already, so there may be a good reason.
     num_retries = 1
     if isinstance(job, ProcessorJob):
+        # We don't want these jobs to sit in our queue because the
+        # volume we assigned isn't available, so only use active
+        # volumes. Also in order to spread them around do so randomly.
+        volume_index = random.choice(list(get_active_volumes()))
         new_job = ProcessorJob(
             num_retries=num_retries,
             pipeline_applied=job.pipeline_applied,
             ram_amount=job.ram_amount,
-            volume_index="0"
+            volume_index=volume_index
         )
         new_job.save()
 
