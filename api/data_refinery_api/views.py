@@ -1072,7 +1072,7 @@ class Stats(APIView):
 
         # processed and unprocessed samples stats
         data['unprocessed_samples'] = self._get_object_stats(Sample.objects.filter(is_processed=False), range_param)
-        data['processed_samples'] = self._get_object_stats(Sample.processed_objects, range_param)
+        data['processed_samples'] = self._get_object_stats(Sample.processed_objects, range_param, 'last_modified')
         data['processed_samples']['last_hour'] = self._samples_processed_last_hour()
 
         data['processed_samples']['technology'] = {}
@@ -1262,20 +1262,21 @@ class Stats(APIView):
                                      .annotate(
                                          total=Count('id'),
                                          completed=Count('id', filter=Q(success=True)),
-                                         pending=Count('id', filter=Q(start_time__isnull=True)), # exclude success = false
                                          failed=Count('id', filter=Q(success=False)),
-                                         open=Count('id', filter=Q(success__isnull=True)),
+                                         pending=Count('id', filter=Q(start_time__isnull=True, success__isnull=True)),
+                                         open=Count('id', filter=Q(start_time__isnull=False, success__isnull=True)),
                                      )
 
         return result
 
-    def _get_object_stats(self, objects, range_param = False):
+    def _get_object_stats(self, objects, range_param = False, field = 'created_at'):
         result = {
             'total': objects.count()
         }
 
         if range_param:
-            result['timeline'] = self._get_intervals(objects, range_param).annotate(total=Count('id'))
+            result['timeline'] = self._get_intervals(objects, range_param, field)\
+                                     .annotate(total=Count('id'))
 
         return result
 
