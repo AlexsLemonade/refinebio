@@ -707,23 +707,31 @@ def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFil
                 try:
                     quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])
                 except:
+
                     logger.exception(
                         "Salmon quant result found without quant.sf ComputedFile!",
                         processor_job=job_context["job_id"],
                         quant_result=result.id,
                         experiment=experiment.id
                     )
+                    job.failure_reason = (
+                        "Salmon quant result {} found without quant.sf"
+                        " ComputedFile in experiment {}!"
+                    ).format(str(result.id), str(experiment.id))
+                    job_context["success"] = False
 
             quantified_experiments[experiment] = quant_files
 
-    return quantified_experiments
+    job_context["tximport_inputs"] = quantified_experiments
+
+    return job_context
 
 
 def _tximport(job_context: Dict) -> Dict:
     """Run tximport R script based on input quant files and the path
     of genes_to_transcripts.txt.
     """
-    tximport_inputs = _get_tximport_inputs(job_context)
+    tximport_inputs = job_context["tximport_inputs"]
     for experiment, quant_files in tximport_inputs.items():
         job_context = _run_tximport_for_experiment(job_context, experiment, quant_files)
         # If `tximport` on any related experiment fails, exit immediately.
@@ -1180,6 +1188,7 @@ def salmon(job_id: int) -> None:
                         # _run_fastqc,
 
                         _run_salmon,
+                        _get_tximport_inputs,
                         _tximport,
                         _run_salmontools,
                         _run_multiqc,
