@@ -704,7 +704,15 @@ def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFil
         if should_run_tximport:
             quant_files = []
             for result in salmon_quant_results:
-                quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])
+                try:
+                    quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])
+                except:
+                    logger.exception(
+                        "Salmon quant result found without quant.sf ComputedFile!",
+                        processor_job=job_context["job_id"],
+                        quant_result=result.id,
+                        experiment=experiment.id
+                    )
 
             quantified_experiments[experiment] = quant_files
 
