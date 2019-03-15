@@ -668,7 +668,7 @@ def _run_tximport_for_experiment(
     return job_context
 
 
-def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile]]:
+def get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile]]:
     """Return a mapping from experiments to a list of their quant files.
 
     Checks all the experiments which contain a sample from the current
@@ -1210,7 +1210,7 @@ def salmon(job_id: int) -> None:
                         # _run_fastqc,
 
                         _run_salmon,
-                        _get_tximport_inputs,
+                        get_tximport_inputs,
                         tximport,
                         _run_salmontools,
                         _run_multiqc,

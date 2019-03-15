@@ -276,7 +276,7 @@ class SalmonTestCase(TestCase):
             job_context["index_directory"] = job_context["index_directory"].replace("SHORT", "LONG")
 
         job_context = salmon._run_salmon(job_context)
-        job_context = salmon._get_tximport_inputs(job_context)
+        job_context = salmon.get_tximport_inputs(job_context)
         job_context = salmon.tximport(job_context)
         output_quant_filename = os.path.join(job_context['output_directory'], 'quant.sf')
         self.assertTrue(os.path.exists(output_quant_filename))
@@ -341,7 +341,7 @@ class SalmonTestCase(TestCase):
 
         # Confirm that this experiment is not ready for tximport yet,
         # because `salmon quant` is not run on 'fake_sample'.
-        experiments_ready = salmon._get_tximport_inputs(job_context)['tximport_inputs']
+        experiments_ready = salmon.get_tximport_inputs(job_context)['tximport_inputs']
         self.assertEqual(len(experiments_ready), 0)
 
     @tag('salmon')
@@ -403,7 +403,7 @@ class SalmonTestCase(TestCase):
         # Check quant.sf in `salmon quant` output dir of sample1
         self.check_salmon_quant(job1_context, sample1_dir)
         # Confirm that this experiment is not ready for tximport yet.
-        experiments_ready = salmon._get_tximport_inputs(job1_context)['tximport_inputs']
+        experiments_ready = salmon.get_tximport_inputs(job1_context)['tximport_inputs']
         self.assertEqual(len(experiments_ready), 0)
         # This job should not have produced any tximport output
         # because the other sample isn't ready yet.
@@ -454,13 +454,13 @@ class SalmonTestCase(TestCase):
             self.assertTrue(os.path.isfile(file.absolute_file_path))
 
     @tag("salmon")
-    def test_get_tximport_inputs(self):
+    def testget_tximport_inputs(self):
         """"Tests that tximport only considers RNA-Seq samples from GEO.
         """
         # Create one experiment and two related samples, based on:
         #   https://www.ncbi.nlm.nih.gov/sra/?term=SRP040623
         # (We don't need any original files because
-        # _get_tximport_inputs doesn't consider them.)
+        # get_tximport_inputs doesn't consider them.)
         experiment_accession = 'PRJNA242809'
         experiment = Experiment.objects.create(accession_code=experiment_accession)
 
@@ -508,7 +508,7 @@ class SalmonTestCase(TestCase):
         comp_file.sha1="ABC"
         comp_file.save()
 
-        quantified_experiments = salmon._get_tximport_inputs({"sample": sample1})
+        quantified_experiments = salmon.get_tximport_inputs({"sample": sample1})
 
         self.assertEqual({}, quantified_experiments)
 
