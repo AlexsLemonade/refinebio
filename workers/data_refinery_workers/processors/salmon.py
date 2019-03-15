@@ -112,8 +112,28 @@ def _prepare_files(job_context: Dict) -> Dict:
             job_context["success"] = False
             return job_context
 
-    # Copy the .sra file so fasterq-dump can't corrupt it.
-    if job_context["input_file_path"][-4:].upper() == ".SRA":
+    # There should only ever be one per Salmon run
+    sample = job_context['original_files'][0].samples.first()
+
+    # This check was added to ensure that we don't process any RNA-Seq
+    # samples from GEO, but for the time being we really don't want to
+    # run salmon on anything that's not from SRA. See
+    # https://github.com/AlexsLemonade/refinebio/issues/966 for more
+    # information.
+    if sample.technology != 'RNA-SEQ' or sample.source_database != 'SRA':
+        failure_reason = ("The sample for this job either was not RNA-Seq or was not from the "
+                          "SRA database.")
+        job_context['failure_reason'] = failure_reason
+        logger.error(failure_reason, sample=sample, processor_job=job_context["job_id"])
+
+        # No need to retry and fail more than once for this reason.
+        job_context["success"] = False
+        job_context["job"].failure_reason = failure_reason
+        job_context["job"].no_retry = True
+        return job_context
+
+    # Detect that this is an SRA file from the source URL
+    if ('ncbi.nlm.nih.gov' in job_context['original_files'][0].source_url) or (job_context["input_file_path"][-4:].upper() == ".SRA"):
         new_input_file_path = os.path.join(job_context["work_dir"], original_files[0].filename)
         shutil.copyfile(job_context["input_file_path"], new_input_file_path)
         job_context['input_file_path'] = new_input_file_path
@@ -124,8 +144,6 @@ def _prepare_files(job_context: Dict) -> Dict:
         shutil.copyfile(job_context["input_file_path_2"], new_input_file_path)
         job_context['input_file_path_2'] = new_input_file_path
 
-    # There should only ever be one per Salmon run
-    sample = job_context['original_files'][0].samples.first()
     job_context['sample_accession_code'] = sample.accession_code
     job_context['sample'] = sample
     job_context['samples'] = [] # This will only be populated in the `tximport` job
@@ -665,10 +683,14 @@ def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFil
 
     quantified_experiments = {}
     for experiment in experiments:
-        salmon_quant_results = _find_salmon_quant_results(experiment)
+        # We only want to consider samples that we actually can run salmon on.
+        eligible_samples = experiment.samples.filter(source_database='SRA', technology='RNA-SEQ')
+        num_eligible_samples = eligible_samples.count()
+        if num_eligible_samples == 0:
+            continue
 
+        salmon_quant_results = _find_salmon_quant_results(experiment)
         num_quant_results = len(salmon_quant_results)
-        num_samples_in_experiment = experiment.samples.count()
 
         # If an experiment is 100% complete we should always run
         # tximport.  Otherwise, if this is a tximport job we should
@@ -676,9 +698,9 @@ def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFil
         # to determine if tximport should be run. See the definitions
         # of those values for more context.
         should_run_tximport = False
-        percent_complete = num_quant_results / num_samples_in_experiment
+        percent_complete = num_quant_results / num_eligible_samples
         if 'is_tximport_only' in job_context and job_context['is_tximport_only']:
-            if num_samples_in_experiment < EARLY_TXIMPORT_MIN_SIZE:
+            if num_eligible_samples < EARLY_TXIMPORT_MIN_SIZE:
                 logger.warn(
                     ("This is a Tximport job but there aren't enough samples"
                      " in the experiment so I'm not running it."),
@@ -727,7 +749,7 @@ def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFil
     return job_context
 
 
-def _tximport(job_context: Dict) -> Dict:
+def tximport(job_context: Dict) -> Dict:
     """Run tximport R script based on input quant files and the path
     of genes_to_transcripts.txt.
     """
@@ -783,10 +805,10 @@ def _run_salmon(job_context: Dict) -> Dict:
             formatted_dump_command = dump_str.format(input_sra_file=job_context["sra_input_file_path"],
                                                    fifo_alpha=alpha,
                                                    fifo_beta=beta)
-            dump_po = subprocess.Popen(formatted_dump_command, 
-                                        shell=True, 
+            dump_po = subprocess.Popen(formatted_dump_command,
+                                        shell=True,
                                         executable='/bin/bash',
-                                        stdout=subprocess.PIPE, 
+                                        stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
 
             command_str = ( "salmon --no-version-check quant -l A -i {index} "
@@ -1189,7 +1211,7 @@ def salmon(job_id: int) -> None:
 
                         _run_salmon,
                         _get_tximport_inputs,
-                        _tximport,
+                        tximport,
                         _run_salmontools,
                         _run_multiqc,
                         utils.end_job])

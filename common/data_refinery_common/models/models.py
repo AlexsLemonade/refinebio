@@ -749,7 +749,8 @@ class OriginalFile(models.Model):
         return successful_processor_jobs.count() == 0
 
     def is_affy_data(self) -> bool:
-        """Return true if original_file is a CEL file or a gzipped CEL file."""
+        """Return true if original_file is a CEL file or a gzipped CEL file.
+        """
         upper_name = self.source_filename.upper()
         return (len(upper_name) > 4 and upper_name[-4:] == ".CEL") \
             or (len(upper_name) > 7 and upper_name[-7:] == ".CEL.GZ")
@@ -969,7 +970,7 @@ class ComputedFile(models.Model):
                     'Bucket': self.s3_bucket,
                     'Key': self.s3_key
                 },
-                ExpiresIn=(60 * 60 * 24) # 1 day in seconds.
+                ExpiresIn=(60 * 60 * 7 * 24) # 7 days in seconds.
             )
         else:
             return None
@@ -1105,7 +1106,7 @@ class Dataset(models.Model):
                     'Bucket': self.s3_bucket,
                     'Key': self.s3_key
                 },
-                ExpiresIn=(60 * 60 * 24) # 1 day in seconds.
+                ExpiresIn=(60 * 60 * 7 * 24) # 7 days in seconds.
             )
         else:
             return None

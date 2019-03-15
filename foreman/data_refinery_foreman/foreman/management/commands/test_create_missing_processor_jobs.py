@@ -51,12 +51,15 @@ class SurveyTestCase(TransactionTestCase):
         # Microarray File/Samples/Jobs
         ma_og_doesnt_need_processor = OriginalFile()
         ma_og_doesnt_need_processor.filename = "processed.CEL"
+        ma_og_doesnt_need_processor.source_filename = "processed.CEL"
         ma_og_doesnt_need_processor.is_downloaded = True
         ma_og_doesnt_need_processor.is_archive = False
         ma_og_doesnt_need_processor.save()
 
         ma_sample_doesnt_need_processor = Sample()
         ma_sample_doesnt_need_processor.accession_code = "MA_doesnt_need_processor"
+        ma_sample_doesnt_need_processor.technology = "MICROARRAY"
+        ma_sample_doesnt_need_processor.source_database = "ARRAY_EXPRESS"
         ma_sample_doesnt_need_processor.save()
 
         OriginalFileSampleAssociation.objects.get_or_create(
@@ -78,7 +81,7 @@ class SurveyTestCase(TransactionTestCase):
         ma_processor_job = ProcessorJob()
         ma_processor_job.success = True
         ma_processor_job.worker_id = "worker_1"
-        ma_dl_job_doesnt_need_processor.volume_index = "1"
+        ma_processor_job.volume_index = "1"
         ma_processor_job.save()
 
         ProcessorJobOriginalFileAssociation.objects.get_or_create(
@@ -88,24 +91,29 @@ class SurveyTestCase(TransactionTestCase):
 
         ma_og_needs_processor_1 = OriginalFile()
         ma_og_needs_processor_1.filename = "something.CEL"
+        ma_og_needs_processor_1.source_filename = "something.CEL"
         ma_og_needs_processor_1.is_downloaded = True
         ma_og_needs_processor_1.is_archive = False
         ma_og_needs_processor_1.save()
 
         ma_og_needs_processor_2 = OriginalFile()
         ma_og_needs_processor_2.filename = "something_else.CEL"
+        ma_og_needs_processor_2.source_filename = "something_else.CEL"
         ma_og_needs_processor_2.is_downloaded = True
         ma_og_needs_processor_2.is_archive = False
         ma_og_needs_processor_2.save()
 
         ma_og_archive = OriginalFile()
         ma_og_archive.filename = "tarball.gz"
+        ma_og_archive.source_filename = "tarball.gz"
         ma_og_archive.is_downloaded = True
         ma_og_archive.is_archive = True
         ma_og_archive.save()
 
         ma_sample_needs_processor_1 = Sample()
         ma_sample_needs_processor_1.accession_code = "MA_needs_processor_1"
+        ma_sample_needs_processor_1.technology = "MICROARRAY"
+        ma_sample_needs_processor_1.source_database = "ARRAY_EXPRESS"
         ma_sample_needs_processor_1.save()
 
         OriginalFileSampleAssociation.objects.get_or_create(
@@ -119,6 +127,8 @@ class SurveyTestCase(TransactionTestCase):
 
         ma_sample_needs_processor_2 = Sample()
         ma_sample_needs_processor_2.accession_code = "MA_needs_processor_2"
+        ma_sample_needs_processor_2.technology = "MICROARRAY"
+        ma_sample_needs_processor_2.source_database = "ARRAY_EXPRESS"
         ma_sample_needs_processor_2.save()
 
         OriginalFileSampleAssociation.objects.get_or_create(
@@ -152,12 +162,15 @@ class SurveyTestCase(TransactionTestCase):
         # RNA-Seq File/Samples/Jobs
         rna_og_doesnt_need_processor = OriginalFile()
         rna_og_doesnt_need_processor.filename = "processed.fastq"
+        rna_og_doesnt_need_processor.source_filename = "processed.fastq"
         rna_og_doesnt_need_processor.is_downloaded = True
         rna_og_doesnt_need_processor.is_archive = False
         rna_og_doesnt_need_processor.save()
 
         rna_sample_doesnt_need_processor = Sample()
         rna_sample_doesnt_need_processor.accession_code = "RNA_doesnt_need_processor"
+        rna_sample_doesnt_need_processor.technology = "RNA-SEQ"
+        rna_sample_doesnt_need_processor.source_database = "SRA"
         rna_sample_doesnt_need_processor.save()
 
         OriginalFileSampleAssociation.objects.get_or_create(
@@ -190,12 +203,15 @@ class SurveyTestCase(TransactionTestCase):
 
         rna_og_needs_processor = OriginalFile()
         rna_og_needs_processor.filename = "something.fastq"
+        rna_og_needs_processor.source_filename = "something.fastq"
         rna_og_needs_processor.is_downloaded = True
         rna_og_needs_processor.is_archive = False
         rna_og_needs_processor.save()
 
         rna_sample_needs_processor = Sample()
         rna_sample_needs_processor.accession_code = "RNA_needs_processor"
+        rna_sample_needs_processor.technology = "RNA-SEQ"
+        rna_sample_needs_processor.source_database = "SRA"
         rna_sample_needs_processor.save()
 
         OriginalFileSampleAssociation.objects.get_or_create(

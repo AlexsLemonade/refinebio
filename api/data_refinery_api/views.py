@@ -79,6 +79,7 @@ from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     APIToken,
     ComputationalResult,
+    ComputationalResultAnnotation,
     ComputedFile,
     Dataset,
     DownloaderJob,
@@ -552,12 +553,15 @@ class DatasetView(generics.RetrieveUpdateAPIView):
         already_processing = old_object.is_processing
         new_data = serializer.validated_data
 
+        qn_organisms = Organism.get_objects_with_qn_targets()
+
         # We convert 'ALL' into the actual accession codes given
         for key in new_data['data'].keys():
             accessions = new_data['data'][key]
             if accessions == ["ALL"]:
                 experiment = get_object_or_404(Experiment, accession_code=key)
-                sample_codes = list(experiment.samples.filter(is_processed=True).values_list('accession_code', flat=True))
+
+                sample_codes = list(experiment.samples.filter(is_processed=True, organism__in=qn_organisms).values_list('accession_code', flat=True))
                 new_data['data'][key] = sample_codes
 
         if old_object.is_processed:
@@ -827,6 +831,7 @@ class SampleList(PaginatedAPIView):
         order_by = filter_dict.pop('order_by', None)
         ids = filter_dict.pop('ids', None)
         filter_by = filter_dict.pop('filter_by', None)
+        organism = filter_dict.pop('organism', None)
 
         if ids is not None:
             ids = [ int(x) for x in ids.split(',')]
@@ -847,6 +852,15 @@ class SampleList(PaginatedAPIView):
             dataset = get_object_or_404(Dataset, id=dataset_id)
             # Python doesn't provide a prettier way of doing this that I know about.
             filter_dict['accession_code__in'] = [item for sublist in dataset.data.values() for item in sublist]
+
+        # Accept Organism in both name and ID form
+        if organism:
+            try:
+                organism_id = int(organism)
+            except ValueError:
+                organism_object = Organism.get_object_for_name(organism)
+                organism_id = organism_object.id
+            filter_dict['organism'] = organism_id
 
         samples = Sample.public_objects \
             .prefetch_related('sampleannotation_set') \
@@ -1356,6 +1370,17 @@ class CompendiaDetail(APIView):
 ###
 # QN Targets
 ###
+
+class QNTargetsAvailable(APIView):
+    """
+    This is a list of all of the organisms which have available QN Targets
+    """
+    def get(self, request, format=None):
+        
+        organisms = Organism.get_objects_with_qn_targets()
+        serializer = OrganismSerializer(organisms, many=True)
+
+        return Response(serializer.data)
 
 class QNTargetsDetail(APIView):
     """

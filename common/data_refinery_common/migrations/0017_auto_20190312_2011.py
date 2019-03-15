@@ -2,6 +2,7 @@
 
 from django.db import migrations
 from data_refinery_common.utils import get_supported_rnaseq_platforms
+from django.core.paginator import Paginator
 
 
 def make_sample_platform_names_readable(apps, schema_editor):
@@ -24,12 +25,15 @@ def make_sample_platform_names_readable(apps, schema_editor):
     for platform in get_supported_rnaseq_platforms():
         platform_mapping[platform.replace(' ', '').upper()] = platform
 
-    for sample in Sample.objects.all():
-        munged_sample_platform = sample.platform_name.replace(' ', '').upper()
-        if munged_sample_platform in platform_mapping:
-            sample.platform_name = platform_mapping[munged_sample_platform]
-            sample.save()
+    paginator = Paginator(Sample.objects.all(), 200)
 
+    for page_idx in range(1, paginator.num_pages):
+        for sample in paginator.page(page_idx).object_list:
+            munged_sample_platform = sample.platform_name.replace(' ', '').upper()
+            if munged_sample_platform in platform_mapping:
+                sample.platform_name = platform_mapping[munged_sample_platform]
+                sample.save()
+        print("Updating page " + str(page_idx))
 
 class Migration(migrations.Migration):
 
