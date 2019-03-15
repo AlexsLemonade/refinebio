@@ -500,6 +500,18 @@ or
 ./workers/tester.sh -i no_op run_processor_job --job-name=NO_OP --job-id=1
 ```
 
+or
+
+```bash
+./workers/tester.sh -i salmon run_processor_job --job-name=SALMON --job-id=1
+```
+
+or
+
+```bash
+./workers/tester.sh -i transcriptome run_processor_job --job-name=TRANSCRIPTOME_INDEX_LONG --job-id=1
+```
+
 Or for more information run:
 ```bash
 ./workers/tester.sh -h
