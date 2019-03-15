@@ -133,7 +133,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         return job_context
 
     # Detect that this is an SRA file from the source URL
-    if 'ncbi.nlm.nih.gov' in job_context['original_files'][0].source_url:
+    if ('ncbi.nlm.nih.gov' in job_context['original_files'][0].source_url) or (job_context["input_file_path"][-4:].upper() == ".SRA"):
         new_input_file_path = os.path.join(job_context["work_dir"], original_files[0].filename)
         shutil.copyfile(job_context["input_file_path"], new_input_file_path)
         job_context['input_file_path'] = new_input_file_path
