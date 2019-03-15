@@ -454,7 +454,7 @@ class SalmonTestCase(TestCase):
             self.assertTrue(os.path.isfile(file.absolute_file_path))
 
     @tag("salmon")
-    def testget_tximport_inputs(self):
+    def test_get_tximport_inputs(self):
         """"Tests that tximport only considers RNA-Seq samples from GEO.
         """
         # Create one experiment and two related samples, based on:
@@ -508,7 +508,7 @@ class SalmonTestCase(TestCase):
         comp_file.sha1="ABC"
         comp_file.save()
 
-        quantified_experiments = salmon.get_tximport_inputs({"sample": sample1})
+        quantified_experiments = salmon.get_tximport_inputs({"sample": sample1})['tximport_inputs']
 
         self.assertEqual({}, quantified_experiments)
 
@@ -944,7 +944,7 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     job_context["index_length"] = "short"
     job_context = salmon._find_or_download_index(job_context)
 
-    # Actually run salmon on the second to last sample in the experiment.
+    job_context = salmon._get_tximport_inputs(job_context)
     job_context = salmon.tximport(job_context)
 
     return job_context
