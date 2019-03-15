@@ -1135,7 +1135,7 @@ class Stats(APIView):
     def _samples_processed_last_hour(self):
         current_date = datetime.now(tz=timezone.utc)
         start = current_date - timedelta(hours=1)
-        return Sample.processed_objects.filter(created_at__range=(start, current_date)).count()
+        return Sample.processed_objects.filter(last_modified__range=(start, current_date)).count()
 
     def _aggregate_nomad_jobs(self, aggregated_jobs):
         """Aggregates the job counts.
