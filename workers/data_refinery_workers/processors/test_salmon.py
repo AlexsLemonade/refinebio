@@ -944,7 +944,7 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     job_context["index_length"] = "short"
     job_context = salmon._find_or_download_index(job_context)
 
-    job_context = salmon._get_tximport_inputs(job_context)
+    job_context = salmon.get_tximport_inputs(job_context)
     job_context = salmon.tximport(job_context)
 
     return job_context
