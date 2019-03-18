@@ -16,7 +16,7 @@
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get upgrade -y
-apt-get install --yes jq iotop dstat speedometer awscli docker.io chrony htop
+apt-get install --yes jq iotop dstat speedometer awscli docker.io chrony htop monit
 
 ulimit -n 65536
 
@@ -123,8 +123,32 @@ chmod a+rwx /home/ubuntu/docker_volume
 chmod +x install_nomad.sh
 ./install_nomad.sh
 
-# Start the Nomad agent in client mode.
-nomad agent -config client.hcl > /var/log/nomad_client.log &
+# Start the Nomad agent in client mode via Monit
+echo "
+#!/bin/sh
+nomad status
+exit \$?
+" >> /home/ubuntu/nomad_status.sh
+chmod +x /home/ubuntu/nomad_status.sh
+
+echo "
+#!/bin/sh
+killall nomad
+sleep 120
+nomad agent -config /home/ubuntu/client.hcl > /var/log/nomad_client.log &
+" >> /home/ubuntu/kill_restart_nomad.sh
+chmod +x /home/ubuntu/kill_restart_nomad.sh
+/home/ubuntu/kill_restart_nomad.sh
+
+echo '
+check program nomad with path "/bin/bash /home/ubuntu/nomad_status.sh" as uid 0 and with gid 0
+    start program = "/home/ubuntu/kill_restart_nomad.sh" as uid 0 and with gid 0
+    if status != 0
+        then restart
+set daemon 300
+' >> /etc/monit/monitrc
+
+service monit restart
 
 # Set up the Docker hung process killer
 cat <<EOF >/home/ubuntu/killer.py
