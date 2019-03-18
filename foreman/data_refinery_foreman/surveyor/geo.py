@@ -282,6 +282,9 @@ class GeoSurveyor(ExternalSourceSurveyor):
                 # so don't add it to created_samples.
                 ExperimentSampleAssociation.objects.get_or_create(
                     experiment=experiment_object, sample=sample_object)
+
+                ExperimentOrganismAssociation.objects.get_or_create(
+                    experiment=experiment_object, organism=sample_object.organism)
             except Sample.DoesNotExist:
                 organism = Organism.get_object_for_name(sample.metadata['organism_ch1'][0].upper())
 
@@ -309,18 +312,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                                                                             sample_accession_code)
 
                 sample_object.save()
-                created_samples.append(sample_object)
                 logger.debug("Created Sample: " + str(sample_object))
-
-                # Now that we've determined the technology at the
-                # sample level, we can set it at the experiment level,
-                # just gotta make sure to only do it once.
-                # XXX: Do we want to remove this field? It's not going
-                # to be accurate in cases where an experiment has both
-                # technologies.
-                if not experiment_object.technology:
-                    experiment_object.technology = sample_object.technology
-                    experiment_object.save()
 
                 sample_annotation = SampleAnnotation()
                 sample_annotation.sample = sample_object
@@ -359,17 +351,44 @@ class GeoSurveyor(ExternalSourceSurveyor):
                         sample_object.has_raw = True
                         sample_object.save()
 
+                    # filename and source_filename are the same for these
+                    filename = supplementary_file_url.split('/')[-1]
                     original_file = OriginalFile.objects.get_or_create(
                             source_url = supplementary_file_url,
-                            source_filename = supplementary_file_url.split('/')[-1],
+                            filename = filename,
+                            source_filename = filename,
                             has_raw = sample_object.has_raw,
                             is_archive = True
                         )[0]
+
+                    logger.debug("Created OriginalFile: " + str(original_file))
 
                     original_file_sample_association = OriginalFileSampleAssociation.objects.get_or_create(
                             original_file = original_file,
                             sample = sample_object
                         )
+
+                    if original_file.is_affy_data():
+                        # Only Affymetrix Microarrays produce .CEL files
+                        sample_object.technology = 'MICROARRAY'
+                        sample_object.manufacturer = 'AFFYMETRTIX'
+                        sample_object.save()
+
+                # It's okay to survey RNA-Seq samples from GEO, but we
+                # don't actually want to download/process any RNA-Seq
+                # data unless it comes from SRA.
+                if sample_object.technology != 'RNA-SEQ':
+                    created_samples.append(sample_object)
+
+                # Now that we've determined the technology at the
+                # sample level, we can set it at the experiment level,
+                # just gotta make sure to only do it once. There can
+                # be more than one technology, this should be changed
+                # as part of:
+                # https://github.com/AlexsLemonade/refinebio/issues/1099
+                if not experiment_object.technology:
+                    experiment_object.technology = sample_object.technology
+                    experiment_object.save()
 
                 ExperimentSampleAssociation.objects.get_or_create(
                     experiment=experiment_object, sample=sample_object)
@@ -377,9 +396,12 @@ class GeoSurveyor(ExternalSourceSurveyor):
         # These supplementary files _may-or-may-not_ contain the type of raw data we can process.
         for experiment_supplement_url in gse.metadata.get('supplementary_file', []):
 
+            # filename and source_filename are the same for these
+            filename = experiment_supplement_url.split('/')[-1]
             original_file = OriginalFile.objects.get_or_create(
                     source_url = experiment_supplement_url,
-                    source_filename = experiment_supplement_url.split('/')[-1],
+                    filename = filename,
+                    source_filename = filename,
                     has_raw = sample_object.has_raw,
                     is_archive = True
                 )[0]

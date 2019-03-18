@@ -157,7 +157,7 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(metadata["library_strategy"], "RNA-Seq")
         self.assertEqual(metadata["organism_id"], "9031")
         self.assertEqual(metadata["organism_name"], "GALLUS GALLUS")
-        self.assertEqual(metadata["platform_instrument_model"], "IlluminaHiSeq2000")
+        self.assertEqual(metadata["platform_instrument_model"], "Illumina HiSeq 2000")
         self.assertEqual(metadata["read_spec_0_base_coord"], "1")
         self.assertEqual(metadata["read_spec_0_class"], "Application Read")
         self.assertEqual(metadata["read_spec_0_index"], "0")
@@ -193,4 +193,4 @@ class SraSurveyorTestCase(TestCase):
 
         ncbi_url = SraSurveyor._build_ncbi_file_url(metadata["run_accession"])
         self.assertTrue(ncbi_url in ['anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/DRR/DRR002/DRR002116/DRR002116.sra',
-            'anonftp@ftp-private.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/DRR/DRR002/DRR002116/DRR002116.sra'])
+            'anonftp@ftp-private.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/DRR/DRR002/DRR002116/DRR002116.sra', 'dbtest@sra-download.ncbi.nlm.nih.gov:data/sracloud/traces/dra0/DRR/000002/DRR002116'])

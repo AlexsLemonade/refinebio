@@ -265,6 +265,9 @@ resource "aws_cloudfront_distribution" "static-distribution" {
     min_ttl = 0
     default_ttl = 0
     max_ttl = 0
+
+    # https://www.terraform.io/docs/providers/aws/r/cloudfront_distribution.html#compress
+    compress = true
   }
 
   restrictions {

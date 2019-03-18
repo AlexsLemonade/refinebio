@@ -45,13 +45,13 @@ resource "aws_s3_bucket" "data_refinery_results_bucket" {
   }
 
   lifecycle_rule {
-    id = "auto-delete-after-1-days-${var.user}-${var.stage}"
+    id = "auto-delete-after-7-days-${var.user}-${var.stage}"
     prefix = ""
     enabled = true
     abort_incomplete_multipart_upload_days = 1
 
     expiration {
-      days = 1
+      days = 7
       expired_object_delete_marker = true
     }
 
@@ -113,7 +113,7 @@ resource "aws_s3_bucket" "data-refinery-static-access-logs" {
   }
 
   lifecycle_rule {
-    id = "auto-delete-after-1-days-${var.user}-${var.stage}"
+    id = "auto-delete-after-7-days-${var.user}-${var.stage}"
     prefix = ""
     enabled = true
     abort_incomplete_multipart_upload_days = 7

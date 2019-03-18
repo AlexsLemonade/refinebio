@@ -29,6 +29,7 @@ from data_refinery_api.views import (
     APITokenView,
     TranscriptomeIndexDetail,
     QNTargetsDetail,
+    QNTargetsAvailable,
     CompendiaDetail,
     ComputedFilesList
 )
@@ -146,6 +147,8 @@ urlpatterns = [
         name="transcriptome-indices"),
     url(r'^compendia', CompendiaDetail.as_view(),
         name="compendia"),
+    url(r'^qn_targets_available', QNTargetsAvailable.as_view(),
+        name="qn-targets-available"),
     url(r'^qn_targets', QNTargetsDetail.as_view(),
         name="qn-targets"),
     url(r'^computed_files', ComputedFilesList.as_view(),

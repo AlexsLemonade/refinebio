@@ -990,7 +990,7 @@ def _update_result_objects(job_context: Dict) -> Dict:
     dataset.is_processing = False
     dataset.is_processed = True
     dataset.is_available = True
-    dataset.expires_on = timezone.now() + timedelta(days=1)
+    dataset.expires_on = timezone.now() + timedelta(days=7)
     dataset.save()
 
     job_context['success'] = True

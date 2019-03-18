@@ -56,14 +56,13 @@ MIN_LOOP_TIME = datetime.timedelta(minutes=2)
 JANITOR_DISPATCH_TIME = datetime.timedelta(minutes=30)
 
 
-# TEMPORARY (while chasing down zebrafish data)
-# We want to limit the system to working on zebrafish data
-# temporarily, which means that we don't want the Foreman to requeue
-# anything that we haven't identitifed as being zebrafish data, so
-# there's a separate management command being used to pick what work
-# to focus on. So all the foreman needs to do is worry about jobs
-# queued after the beginning of the zebrafish sprint
-JOB_CREATED_AT_CUTOFF = datetime.datetime(2019, 2, 5, tzinfo=timezone.utc)
+# This time is currently set so far in the past that it's not doing
+# anything. However, should we ever want to suspend work on the
+# whatever we already have in our queues/database (perhaps to be able
+# to force "important work" to get done), setting this to a recent
+# date will prevent the Foreman from queuing/requeuing jobs created
+# before this cutoff.
+JOB_CREATED_AT_CUTOFF = datetime.datetime(2017, 2, 5, tzinfo=timezone.utc)
 
 
 def read_config_list(config_file: str) -> List[str]:
@@ -326,7 +325,6 @@ def retry_failed_downloader_jobs() -> None:
     failed_jobs = DownloaderJob.objects.filter(
         success=False,
         retried=False,
-        # TEMPORARY (while chasing down zebrafish data):
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).prefetch_related(
         "original_files__samples"
@@ -349,7 +347,6 @@ def retry_hung_downloader_jobs() -> None:
         end_time=None,
         start_time__isnull=False,
         no_retry=False,
-        # TEMPORARY (while chasing down zebrafish data):
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).prefetch_related(
         "original_files__samples"
@@ -398,7 +395,6 @@ def retry_lost_downloader_jobs() -> None:
         start_time=None,
         end_time=None,
         no_retry=False,
-        # TEMPORARY (while chasing down zebrafish data):
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).prefetch_related(
         "original_files__samples"
@@ -467,6 +463,8 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
             new_ram_amount = 16384
         elif new_ram_amount == 16384:
             new_ram_amount = 32768
+        elif new_ram_amount == 32768:
+            new_ram_amount = 65536
     # The AFFY pipeline is somewhat RAM-sensitive.
     # Try it again with an increased RAM amount, if possible.
     elif last_job.pipeline_applied == "AFFY_TO_PCL":
@@ -565,7 +563,6 @@ def retry_failed_processor_jobs() -> None:
         success=False,
         retried=False,
         volume_index__in=active_volumes,
-        # TEMPORARY (while chasing down zebrafish data):
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
@@ -600,7 +597,6 @@ def retry_hung_processor_jobs() -> None:
         start_time__isnull=False,
         no_retry=False,
         volume_index__in=active_volumes,
-        # TEMPORARY (while chasing down zebrafish data):
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
@@ -663,7 +659,6 @@ def retry_lost_processor_jobs() -> None:
         end_time=None,
         no_retry=False,
         volume_index__in=active_volumes,
-        # TEMPORARY (while chasing down zebrafish data):
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
@@ -809,7 +804,6 @@ def retry_failed_survey_jobs() -> None:
     failed_jobs = SurveyJob.objects.filter(
         success=False,
         retried=False,
-        # TEMPORARY (while chasing down zebrafish data):
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).order_by('pk')
     if failed_jobs:
@@ -828,7 +822,6 @@ def retry_hung_survey_jobs() -> None:
         end_time=None,
         start_time__isnull=False,
         no_retry=False,
-        # TEMPORARY (while chasing down zebrafish data):
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).order_by('pk')
 
@@ -873,7 +866,6 @@ def retry_lost_survey_jobs() -> None:
         start_time=None,
         end_time=None,
         no_retry=False,
-        # TEMPORARY (while chasing down zebrafish data):
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).order_by('pk')
 
@@ -1077,4 +1069,5 @@ def monitor_jobs():
         loop_time = timezone.now() - start_time
         if loop_time < MIN_LOOP_TIME:
             remaining_time = MIN_LOOP_TIME - loop_time
-            time.sleep(remaining_time.seconds)
+            if remaining_time.seconds > 0:
+                time.sleep(remaining_time.seconds)

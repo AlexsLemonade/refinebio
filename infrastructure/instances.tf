@@ -69,8 +69,7 @@ resource "aws_instance" "nomad_server_1" {
   subnet_id = "${aws_subnet.data_refinery_1b.id}"
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
-
-  disable_api_termination = "${var.stage == "prod" ? true : false}"
+  disable_api_termination = "false"
 
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
@@ -132,8 +131,7 @@ resource "aws_instance" "nomad_server_2" {
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
-
-  disable_api_termination = "${var.stage == "prod" ? true : false}"
+  disable_api_termination = "false"
 
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
@@ -169,8 +167,7 @@ resource "aws_instance" "nomad_server_3" {
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_internet_gateway.data_refinery"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
-
-  disable_api_termination = "${var.stage == "prod" ? true : false}"
+  disable_api_termination = "false"
 
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
@@ -315,151 +312,151 @@ resource "aws_spot_fleet_request" "cheap_ram" {
   ##
   # x1.16xlarge
   ##
-  # launch_specification {
+  launch_specification {
 
-  #   # Client Specific
-  #   instance_type             = "x1.16xlarge"
-  #   weighted_capacity         = 10 # via https://aws.amazon.com/ec2/instance-types/
-  #   spot_price                = "${var.spot_price}"
-  #   ami                       = "${data.aws_ami.ubuntu.id}"
-  #   iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
-  #   user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
-  #   vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
-  #   subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
-  #   availability_zone         = "${var.region}a"
-  #   key_name = "${aws_key_pair.data_refinery.key_name}"
+    # Client Specific
+    instance_type             = "x1.16xlarge"
+    weighted_capacity         = 10 # via https://aws.amazon.com/ec2/instance-types/
+    spot_price                = "${var.spot_price}"
+    ami                       = "${data.aws_ami.ubuntu.id}"
+    iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
+    user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
+    vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
+    subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
+    availability_zone         = "${var.region}a"
+    key_name = "${aws_key_pair.data_refinery.key_name}"
 
-  #   root_block_device {
-  #     volume_size = 100
-  #     volume_type = "gp2"
-  #   }
+    root_block_device {
+      volume_size = 100
+      volume_type = "gp2"
+    }
 
-  #   tags {
-  #       Name = "Spot Fleet Launch Specification x1.16xlarge ${var.user}-${var.stage}"
-  #       User = "${var.user}"
-  #       Stage = "${var.stage}"
-  #   }
+    tags {
+        Name = "Spot Fleet Launch Specification x1.16xlarge ${var.user}-${var.stage}"
+        User = "${var.user}"
+        Stage = "${var.stage}"
+    }
 
-  # }
-  # ##
-  # # x1.32xlarge
-  # ##
-  # launch_specification {
+  }
+  ##
+  # x1.32xlarge
+  ##
+  launch_specification {
 
-  #   # Client Specific
-  #   instance_type             = "x1.32xlarge"
-  #   weighted_capacity         = 20 # via https://aws.amazon.com/ec2/instance-types/
-  #   spot_price                = "${var.spot_price}"
-  #   ami                       = "${data.aws_ami.ubuntu.id}"
-  #   iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
-  #   user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
-  #   vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
-  #   subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
-  #   availability_zone         = "${var.region}a"
-  #   key_name = "${aws_key_pair.data_refinery.key_name}"
+    # Client Specific
+    instance_type             = "x1.32xlarge"
+    weighted_capacity         = 20 # via https://aws.amazon.com/ec2/instance-types/
+    spot_price                = "${var.spot_price}"
+    ami                       = "${data.aws_ami.ubuntu.id}"
+    iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
+    user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
+    vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
+    subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
+    availability_zone         = "${var.region}a"
+    key_name = "${aws_key_pair.data_refinery.key_name}"
 
-  #   root_block_device {
-  #     volume_size = 100
-  #     volume_type = "gp2"
-  #   }
+    root_block_device {
+      volume_size = 100
+      volume_type = "gp2"
+    }
 
-  #   tags {
-  #       Name = "Spot Fleet Launch Specification x1.32xlarge ${var.user}-${var.stage}"
-  #       User = "${var.user}"
-  #       Stage = "${var.stage}"
-  #   }
+    tags {
+        Name = "Spot Fleet Launch Specification x1.32xlarge ${var.user}-${var.stage}"
+        User = "${var.user}"
+        Stage = "${var.stage}"
+    }
 
-  # }
+  }
 
-  # ##
-  # # x1e.8xlarge
-  # ##
-  # launch_specification {
+  ##
+  # x1e.8xlarge
+  ##
+  launch_specification {
 
-  #   # Client Specific
-  #   instance_type             = "x1e.8xlarge"
-  #   weighted_capacity         = 10 # via https://aws.amazon.com/ec2/instance-types/
-  #   spot_price                = "${var.spot_price}"
-  #   ami                       = "${data.aws_ami.ubuntu.id}"
-  #   iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
-  #   user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
-  #   vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
-  #   subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
-  #   availability_zone         = "${var.region}a"
-  #   key_name = "${aws_key_pair.data_refinery.key_name}"
+    # Client Specific
+    instance_type             = "x1e.8xlarge"
+    weighted_capacity         = 10 # via https://aws.amazon.com/ec2/instance-types/
+    spot_price                = "${var.spot_price}"
+    ami                       = "${data.aws_ami.ubuntu.id}"
+    iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
+    user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
+    vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
+    subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
+    availability_zone         = "${var.region}a"
+    key_name = "${aws_key_pair.data_refinery.key_name}"
 
-  #   root_block_device {
-  #     volume_size = 100
-  #     volume_type = "gp2"
-  #   }
+    root_block_device {
+      volume_size = 100
+      volume_type = "gp2"
+    }
 
-  #   tags {
-  #       Name = "Spot Fleet Launch Specification x1e.8xlarge ${var.user}-${var.stage}"
-  #       User = "${var.user}"
-  #       Stage = "${var.stage}"
-  #   }
+    tags {
+        Name = "Spot Fleet Launch Specification x1e.8xlarge ${var.user}-${var.stage}"
+        User = "${var.user}"
+        Stage = "${var.stage}"
+    }
 
-  # }
+  }
 
-  # ##
-  # # r5d.24xlarge
-  # ##
-  # launch_specification {
+  ##
+  # r5d.24xlarge
+  ##
+  launch_specification {
 
-  #   # Client Specific
-  #   instance_type             = "r5d.24xlarge"
-  #   weighted_capacity         = 8 # Really, more like 1.4 # via https://aws.amazon.com/ec2/instance-types/
-  #   spot_price                = "${var.spot_price}"
-  #   ami                       = "${data.aws_ami.ubuntu.id}"
-  #   iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
-  #   user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
-  #   vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
-  #   subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
-  #   availability_zone         = "${var.region}a"
-  #   key_name = "${aws_key_pair.data_refinery.key_name}"
+    # Client Specific
+    instance_type             = "r5d.24xlarge"
+    weighted_capacity         = 8 # Really, more like 1.4 # via https://aws.amazon.com/ec2/instance-types/
+    spot_price                = "${var.spot_price}"
+    ami                       = "${data.aws_ami.ubuntu.id}"
+    iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
+    user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
+    vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
+    subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
+    availability_zone         = "${var.region}a"
+    key_name = "${aws_key_pair.data_refinery.key_name}"
 
-  #   root_block_device {
-  #     volume_size = 100
-  #     volume_type = "gp2"
-  #   }
+    root_block_device {
+      volume_size = 100
+      volume_type = "gp2"
+    }
 
-  #   tags {
-  #       Name = "Spot Fleet Launch Specification r5d.24xlarge ${var.user}-${var.stage}"
-  #       User = "${var.user}"
-  #       Stage = "${var.stage}"
-  #   }
+    tags {
+        Name = "Spot Fleet Launch Specification r5d.24xlarge ${var.user}-${var.stage}"
+        User = "${var.user}"
+        Stage = "${var.stage}"
+    }
 
-  # }
+  }
 
-  # ##
-  # # r5a.24xlarge
-  # ##
-  # launch_specification {
+  ##
+  # r5a.24xlarge
+  ##
+  launch_specification {
 
-  #   # Client Specific
-  #   instance_type             = "r5a.24xlarge"
-  #   weighted_capacity         = 8 # Really, more like 1.4 # via https://aws.amazon.com/ec2/instance-types/
-  #   spot_price                = "${var.spot_price}"
-  #   ami                       = "${data.aws_ami.ubuntu.id}"
-  #   iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
-  #   user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
-  #   vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
-  #   subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
-  #   availability_zone         = "${var.region}a"
-  #   key_name = "${aws_key_pair.data_refinery.key_name}"
+    # Client Specific
+    instance_type             = "r5a.24xlarge"
+    weighted_capacity         = 8 # Really, more like 1.4 # via https://aws.amazon.com/ec2/instance-types/
+    spot_price                = "${var.spot_price}"
+    ami                       = "${data.aws_ami.ubuntu.id}"
+    iam_instance_profile_arn  = "${aws_iam_instance_profile.data_refinery_instance_profile.arn}"
+    user_data                 = "${data.template_file.nomad_client_script_smusher.rendered}"
+    vpc_security_group_ids    = ["${aws_security_group.data_refinery_worker.id}"]
+    subnet_id                 = "${aws_subnet.data_refinery_1a.id}"
+    availability_zone         = "${var.region}a"
+    key_name = "${aws_key_pair.data_refinery.key_name}"
 
-  #   root_block_device {
-  #     volume_size = 100
-  #     volume_type = "gp2"
-  #   }
+    root_block_device {
+      volume_size = 100
+      volume_type = "gp2"
+    }
 
-  #   tags {
-  #       Name = "Spot Fleet Launch Specification r5a.24xlarge ${var.user}-${var.stage}"
-  #       User = "${var.user}"
-  #       Stage = "${var.stage}"
-  #   }
+    tags {
+        Name = "Spot Fleet Launch Specification r5a.24xlarge ${var.user}-${var.stage}"
+        User = "${var.user}"
+        Stage = "${var.stage}"
+    }
 
-  # }
+  }
 
   ##
   # r4.16xlarge
@@ -479,7 +476,7 @@ resource "aws_spot_fleet_request" "cheap_ram" {
     key_name = "${aws_key_pair.data_refinery.key_name}"
 
     root_block_device {
-      volume_size = 100 
+      volume_size = 100
       volume_type = "gp2"
     }
 
@@ -509,7 +506,7 @@ resource "aws_spot_fleet_request" "cheap_ram" {
     key_name = "${aws_key_pair.data_refinery.key_name}"
 
     root_block_device {
-      volume_size = 100 
+      volume_size = 100
       volume_type = "gp2"
     }
 
@@ -548,7 +545,8 @@ resource "aws_db_instance" "postgres_db" {
   allocated_storage = 100
   storage_type = "gp2"
   engine = "postgres"
-  engine_version = "9.6.6"
+  engine_version = "9.6.11"
+  auto_minor_version_upgrade = false
   instance_class = "db.${var.database_instance_type}"
   name = "data_refinery"
   port = "${var.database_hidden_port}"
@@ -581,9 +579,7 @@ resource "aws_instance" "pg_bouncer" {
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
   depends_on = ["aws_db_instance.postgres_db"]
   key_name = "${aws_key_pair.data_refinery.key_name}"
-
-  # Don't delete production servers by mistake!
-  disable_api_termination = "${var.stage == "prod" ? true : false}"
+  disable_api_termination = "false"
 
   # Our instance-user-data.sh script is built by Terraform at
   # apply-time so that it can put additional files onto the
@@ -807,7 +803,7 @@ resource "aws_instance" "foreman_server_1" {
   vpc_security_group_ids = ["${aws_security_group.data_refinery_foreman.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.data_refinery_instance_profile.name}"
   subnet_id = "${aws_subnet.data_refinery_1a.id}"
-  depends_on = ["aws_db_instance.postgres_db", "aws_instance.pg_bouncer"]
+  depends_on = ["aws_db_instance.postgres_db", "aws_instance.pg_bouncer", "aws_elasticsearch_domain.es"]
   user_data = "${data.template_file.foreman_server_script_smusher.rendered}"
   key_name = "${aws_key_pair.data_refinery.key_name}"
 

@@ -106,8 +106,8 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
             if downloader_task == job_lookup.Downloaders.NONE:
                 logger.warn(("No valid downloader task found for sample, which is weird"
                              " because it was able to have a processor job created for it..."),
-                            sample=sample_object.id,
-                            original_file=original_file.id)
+                            sample=sample_object.id)
+                return False
             else:
                 # determine_downloader_task returns an enum object,
                 # but we wanna set this on the DownloaderJob object so
@@ -133,6 +133,16 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
         downloader_task = original_downloader_job.downloader_task
         accession_code = original_downloader_job.accession_code
         original_files = original_downloader_job.original_files.all()
+
+        sample_object = original_files[0].samples.first()
+
+    # Disable GEO downloader job recreation until we resolve:
+    # https://github.com/AlexsLemonade/refinebio/issues/1068
+    if sample_object.source_database == "GEO":
+        logger.warn("Not recreating a downloader job for a sample coming from GEO.",
+                    sample=sample_object,
+                    original_files=original_files)
+        return False
 
     new_job = DownloaderJob()
     new_job.downloader_task = downloader_task
@@ -317,8 +327,10 @@ def start_job(job_context: Dict):
 
     logger.debug("Starting processor Job.", processor_job=job.id, pipeline=job.pipeline_applied)
 
-    # Janitors have no requirement
-    if job.pipeline_applied not in ["JANITOR"]:
+    # Janitor jobs don't operate on file objects.
+    # Tximport jobs don't need to download the original file, they
+    # just need it to know what experiment to process.
+    if job.pipeline_applied not in ["JANITOR", "TXIMPORT"]:
         # Some jobs take OriginalFiles, other take Datasets
         if job.pipeline_applied not in ["SMASHER", "QN_REFERENCE", "COMPENDIA"]:
             job_context = prepare_original_files(job_context)
@@ -504,6 +516,7 @@ class PipelineEnum(Enum):
     NO_OP = "No Op"
     SALMON = "Salmon"
     SMASHER = "Smasher"
+    TXIMPORT = 'Tximport'
     TX_INDEX = "Transcriptome Index"
     QN_REFERENCE = "Quantile Normalization Reference"
     JANITOR = "Janitor"
