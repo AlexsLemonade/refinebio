@@ -172,3 +172,45 @@ class DownloadGeoTestCase(TestCase):
         self.assertTrue(len(ProcessorJob.objects.all()) > 0)
         self.assertEqual(ProcessorJob.objects.all()[0].pipeline_applied, "AGILENT_TWOCOLOR_TO_PCL")
         self.assertEqual(ProcessorJob.objects.all()[0].ram_amount, 2048)
+
+    @tag('downloaders')
+    def test_no_rnaseq(self):
+        """Makes sure that no RNA-Seq data gets downloaded even if there's a job for it.
+        """
+        dlj = DownloaderJob()
+        dlj.accession_code = 'GSE103217'
+        dlj.save()
+
+        original_file = OriginalFile()
+        original_file.filename = "GSE103217_family.xml.tgz"
+        original_file.source_url= "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE103nnn/GSE103217/miniml/GSE103217_family.xml.tgz"
+        original_file.source_filename = "GSE103217_family.xml.tgz"
+        original_file.save()
+
+        assoc = DownloaderJobOriginalFileAssociation()
+        assoc.original_file = original_file
+        assoc.downloader_job = dlj
+        assoc.save()
+
+        sample = Sample()
+        sample.accession_code = 'GSE103217'
+        sample.technology = "RNA-SEQ"
+        sample.manufacturer = "ILLUMINA"
+        sample.platform_accession_code = "Illumina HiSeq 2500"
+        sample.save()
+
+        og_assoc = OriginalFileSampleAssociation()
+        og_assoc.sample = sample
+        og_assoc.original_file = original_file
+        og_assoc.save()
+
+        download_result = geo.download_geo(dlj.id)
+
+        self.assertFalse(download_result)
+        dlj.refresh_from_db()
+
+        self.assertFalse(dlj.success)
+
+        # It's not necessarily that we didn't extract any files, but
+        # none that were usable so it looks like none.
+        self.assertEqual(dlj.failure_reason, "Failed to extract any downloaded files.")

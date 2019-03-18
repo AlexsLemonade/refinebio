@@ -46,6 +46,8 @@ simplejson==3.16.0        # via multiqc
 six==1.11.0               # via cycler, python-dateutil, retrying
 spectra==0.0.11           # via multiqc
 sympy==1.3
+urllib3==1.23             # via botocore, requests
+untangle==1.1.1
 
 # For visualization
 bokeh==1.0.4

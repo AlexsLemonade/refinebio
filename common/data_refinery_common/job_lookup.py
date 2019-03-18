@@ -29,6 +29,7 @@ class ProcessorPipeline(PipelineEnums):
     AGILENT_ONECOLOR_TO_PCL = "AGILENT_ONECOLOR_TO_PCL"  # Currently unsupported
     AGILENT_TWOCOLOR_TO_PCL = "AGILENT_TWOCOLOR_TO_PCL"
     SALMON = "SALMON"
+    TXIMPORT = "TXIMPORT"
     ILLUMINA_TO_PCL = "ILLUMINA_TO_PCL"
     TRANSCRIPTOME_INDEX_LONG = "TRANSCRIPTOME_INDEX_LONG"
     TRANSCRIPTOME_INDEX_SHORT = "TRANSCRIPTOME_INDEX_SHORT"
@@ -147,7 +148,7 @@ def determine_processor_pipeline(sample_object: Sample, original_file=None) -> P
         manufacturer Otherwise it's SALMON-time.
     """
     if original_file:
-        if original_file.filename[-4:].upper() == ".CEL":
+        if original_file.is_affy_data():
             return ProcessorPipeline.AFFY_TO_PCL
         if is_file_rnaseq(original_file.filename):
             return ProcessorPipeline.SALMON

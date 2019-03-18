@@ -28,6 +28,7 @@ Refine.bio currently has four sub-projects contained within this repo:
     - [Services](#services)
       - [Postgres](#postgres)
       - [Nomad](#nomad)
+      - [ElasticSearch](#elasticsearch)
     - [Common Dependecies](#common-dependecies)
   - [Testing](#testing)
     - [API](#api)
@@ -44,6 +45,8 @@ Refine.bio currently has four sub-projects contained within this repo:
   - [Downloader Jobs](#downloader-jobs)
   - [Processor Jobs](#processor-jobs)
   - [Creating Quantile Normalization Reference Targets](#creating-quantile-normalization-reference-targets)
+  - [Creating Compendia](#creating-compendia)
+  - [Running Tximport Early](#running-tximport-early)
   - [Checking on Local Jobs](#checking-on-local-jobs)
   - [Development Helpers](#development-helpers)
 - [Cloud Deployment](#cloud-deployment)
@@ -497,6 +500,18 @@ or
 ./workers/tester.sh -i no_op run_processor_job --job-name=NO_OP --job-id=1
 ```
 
+or
+
+```bash
+./workers/tester.sh -i salmon run_processor_job --job-name=SALMON --job-id=1
+```
+
+or
+
+```bash
+./workers/tester.sh -i transcriptome run_processor_job --job-name=TRANSCRIPTOME_INDEX_LONG --job-id=1
+```
+
 Or for more information run:
 ```bash
 ./workers/tester.sh -h
@@ -509,6 +524,34 @@ If you want to quantile normalize combined outputs, you'll first need to create 
 ```bash
 nomad job dispatch -meta ORGANISM=DANIO_RERIO CREATE_QN_TARGET
 ```
+
+### Creating Compendia
+
+Creating species-wide compendia for a given species can be done in a production environment with the following:
+
+```bash
+nomad job dispatch -meta ORGANISM=DANIO_RERIO CREATE_COMPENDIA
+```
+
+or for all organisms with sufficient data:
+
+```bash
+nomad job dispatch -meta ORGANISM= CREATE_COMPENDIA
+```
+
+
+### Running Tximport Early
+
+Normally we wait until ever sample in an experiment has had Salmon run on it before we run Tximport.
+However Salmon won't work on every sample, so some experiments are doomed to never make it to 100% completion.
+Tximport can be run on such an experiment with:
+
+```bash
+nomad job dispatch -meta EXPERIMENT_ACCESSION=SRP009841 TXIMPORT
+```
+
+Note that if the experiment does not have at least 25 samples with at least 80% of them processed, this will do nothing.
+
 
 ### Checking on Local Jobs
 
@@ -785,4 +828,3 @@ Once `doctoc` is installed the table of contents can be re-generated with: `doct
 ## License
 
 BSD 3-Clause License.
-

@@ -4,16 +4,17 @@ from xml.etree import ElementTree
 from django.db import models
 from django.utils import timezone
 
+
 from data_refinery_common.models.base_models import TimeTrackedModel
 
 
-# Import and set logger
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.utils import get_env_variable
+logger = get_and_configure_logger(__name__)
 
 
 NCBI_ROOT_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+NCBI_API_KEY = get_env_variable("NCBI_API_KEY", "3a1f8d818b0aa05d1aa3c334fa2cc9a17e09") # This is only used by eUtils and for organisms that aren't cached yet - it's harmless to share.
 ESEARCH_URL = NCBI_ROOT_URL + "esearch.fcgi"
 EFETCH_URL = NCBI_ROOT_URL + "efetch.fcgi"
 TAXONOMY_DATABASE = "taxonomy"
@@ -28,11 +29,15 @@ class InvalidNCBITaxonomyId(Exception):
 
 
 def get_scientific_name(taxonomy_id: int) -> str:
-    parameters = {"db": TAXONOMY_DATABASE, "id": str(taxonomy_id)}
+    parameters = {"db": TAXONOMY_DATABASE, "id": str(taxonomy_id), "api_key": NCBI_API_KEY}
     response = requests.get(EFETCH_URL, parameters)
 
-    root = ElementTree.fromstring(response.text)
-    taxon_list = root.findall("Taxon")
+    try:
+        root = ElementTree.fromstring(response.text)
+        taxon_list = root.findall("Taxon")
+    except Exception as e:
+        logger.error("Bad response from eUtils.", text=response.text)
+        raise
 
     if len(taxon_list) == 0:
         logger.error("No names returned by ncbi.nlm.nih.gov for organism "
@@ -44,11 +49,15 @@ def get_scientific_name(taxonomy_id: int) -> str:
 
 
 def get_taxonomy_id(organism_name: str) -> int:
-    parameters = {"db": TAXONOMY_DATABASE, "term": organism_name}
+    parameters = {"db": TAXONOMY_DATABASE, "term": organism_name, "api_key": NCBI_API_KEY}
     response = requests.get(ESEARCH_URL, parameters)
 
-    root = ElementTree.fromstring(response.text)
-    id_list = root.find("IdList").findall("Id")
+    try:
+        root = ElementTree.fromstring(response.text)
+        id_list = root.find("IdList").findall("Id")
+    except Exception as e:
+        logger.error("Bad response from eUtils.", text=response.text)
+        raise
 
     if len(id_list) == 0:
         logger.error("Unable to retrieve NCBI taxonomy ID number for organism "
@@ -64,11 +73,15 @@ def get_taxonomy_id(organism_name: str) -> int:
 
 
 def get_taxonomy_id_scientific(organism_name: str) -> int:
-    parameters = {"db": TAXONOMY_DATABASE, "field": "scin", "term": organism_name}
+    parameters = {"db": TAXONOMY_DATABASE, "field": "scin", "term": organism_name, "api_key": NCBI_API_KEY}
     response = requests.get(ESEARCH_URL, parameters)
 
-    root = ElementTree.fromstring(response.text)
-    id_list = root.find("IdList").findall("Id")
+    try:
+        root = ElementTree.fromstring(response.text)
+        id_list = root.find("IdList").findall("Id")
+    except Exception as e:
+        logger.error("Bad response from eUtils.", text=response.text)
+        raise
 
     if len(id_list) == 0:
         raise UnscientificNameError
@@ -146,7 +159,7 @@ class Organism(models.Model):
         return organism.taxonomy_id
 
     @classmethod
-    def get_object_for_name(cls, name: str) -> id:
+    def get_object_for_name(cls, name: str):
         name = name.upper()
         name = name.replace(' ', '_')
         try:
@@ -168,6 +181,14 @@ class Organism(models.Model):
 
         return organism
 
+    @classmethod
+    def get_objects_with_qn_targets(cls):
+        """ Return a list of Organisms who already have valid QN targets associated with them. 
+        """
+        from data_refinery_common.models import ComputationalResultAnnotation
+        organism_ids = list(ComputationalResultAnnotation.objects.filter(data__is_qn=True).values_list('data__organism_id', flat=True).order_by('data__organism_id'))
+        organisms = Organism.objects.filter(id__in=organism_ids)
+        return organisms
 
     class Meta:
         db_table = "organisms"

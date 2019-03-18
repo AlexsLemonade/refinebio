@@ -25,7 +25,7 @@ from data_refinery_api.serializers import (
     ProcessorSerializer,
     SurveyJobSerializer,
 )
-from data_refinery_api.views import ExperimentList
+from data_refinery_api.views import ExperimentList, Stats
 from data_refinery_common.utils import get_env_variable
 from data_refinery_common.models import (
     ComputationalResult,
@@ -84,12 +84,14 @@ class APITestCases(APITestCase):
         sample.title = "123"
         sample.accession_code = "123"
         sample.is_processed = True
+        sample.organism = Organism.get_object_for_name("AILUROPODA_MELANOLEUCA")
         sample.save()
 
         sample = Sample()
         sample.title = "789"
         sample.accession_code = "789"
         sample.is_processed = True
+        sample.organism = Organism.get_object_for_name("AILUROPODA_MELANOLEUCA")
         sample.save()
         self.sample = sample
 
@@ -341,7 +343,31 @@ class APITestCases(APITestCase):
         drc1.save()
 
         response = self.client.get(reverse('compendia'))
-        self.assertEqual(3, len(response.json()))
+        response_json = response.json()
+        self.assertEqual(3, len(response_json))
+        # Prove that the download_url field is missing and not None.
+        self.assertEqual('NotPresent', response_json[0].get('download_url', 'NotPresent'))
+
+        # We don't actually want AWS to generate a temporary URL for
+        # us, and it won't unless we're running in the cloud, but if
+        # we provide an API Token and use the WithUrl serializer then
+        # it will set the download_url field to None rather than
+        # generate one.
+
+        # Get a token first
+        response = self.client.get(reverse('token'),
+                                    content_type="application/json")
+        token = response.json()
+        token['is_activated'] = True
+        token_id = token['id']
+        response = self.client.post(reverse('token'),
+                                    json.dumps(token),
+                                    content_type="application/json")
+
+        response = self.client.get(reverse('compendia'), HTTP_API_KEY=token_id)
+        response_json = response.json()
+        self.assertEqual(3, len(response_json))
+        self.assertIsNone(response_json[0]['download_url'])
 
     def test_search_and_filter(self):
 
@@ -660,6 +686,36 @@ class APITestCases(APITestCase):
 
         self.assertEqual(response.status_code, 400)
 
+        cr = ComputationalResult()
+        cr.save()
+
+        cra = ComputationalResultAnnotation()
+        cra.result = cr
+        cra.data = {"organism_id": self.sample.organism.id, "is_qn": True}
+        cra.save()
+
+        qni = ComputedFile()
+        qni.is_qn_target = True
+        qni.s3_bucket = "fake_qni_bucket"
+        qni.s3_key = "zazaza_homo_sapiens_1234.tsv"
+        qni.filename = "homo_sapiens_1234.tsv"
+        qni.is_public = True
+        qni.size_in_bytes = 56789
+        qni.sha1 = "c0a88d0bb020dadee3b707e647f7290368c235ba"
+        qni.result = cr
+        qni.save()
+
+        qni = ComputedFile()
+        qni.is_qn_target = False
+        qni.s3_bucket = "X"
+        qni.s3_key = "X.tsv"
+        qni.filename = "XXXXXXXXXXXXXXX.tsv"
+        qni.is_public = True
+        qni.size_in_bytes = 1
+        qni.sha1 = "123"
+        qni.result = cr
+        qni.save()
+
         # Update, just an experiment accession
         jdata = json.dumps({'data': {"GSE123": ["ALL"]}})
         response = self.client.put(reverse('dataset', kwargs={'id': good_id}),
@@ -710,6 +766,23 @@ class APITestCases(APITestCase):
 
         jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True, 'token_id': token_id, 'email_address': 'trust@verify.com', 'email_ccdl_ok': True } )
         response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
+        self.assertEqual(response.json()["is_processing"], True)
+
+        ds = Dataset.objects.get(id=response.json()['id'])
+        self.assertEqual(ds.email_address, 'trust@verify.com')
+        self.assertTrue(ds.email_ccdl_ok)
+
+        # Reset the dataset so we can test providing an API token via
+        # HTTP Header.
+        dataset = Dataset.objects.get(id=good_id)
+        dataset.is_processing = False
+        dataset.email_address = None
+        dataset.email_ccdl_ok = False
+        dataset.save()
+
+        jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True, 'email_address': 'trust@verify.com', 'email_ccdl_ok': True } )
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json", HTTP_API_KEY=token_id)
+
         self.assertEqual(response.json()["is_processing"], True)
 
         ds = Dataset.objects.get(id=response.json()['id'])
@@ -909,6 +982,152 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 500)
         mock_client.captureMessage.assert_called()
 
+    def test_qn_endpoints(self):
+
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
+        homo_sapiens.save()
+        danio_rerio.save()
+
+        result = ComputationalResult()
+        result.commands.append("create_qn_target.py")
+        result.is_ccdl = True
+        result.is_public = True
+        processor_key = "QN_REFERENCE"
+        result.processor = None
+        result.save()
+
+        cra = ComputationalResultAnnotation()
+        cra.result = result
+        cra.data = {
+            "organism_id": danio_rerio.id, # Danio
+            "is_qn": True,
+            "platform_accession_code": 'zebrafish',
+            "samples": [],
+            "geneset": str(["RWWJ000001", "RWWJ000002"]),
+        }
+        cra.save()
+        cra = ComputationalResultAnnotation()
+        cra.result = result
+        cra.data = {
+            "organism_id": homo_sapiens.id, # IDK
+            "is_qn": True,
+            "platform_accession_code": 'zebrafishplusone',
+            "samples": [],
+            "geneset": str(["RWWJ000003", "RWWJ000004"]),
+        }
+        cra.save()
+
+        response = self.client.get(reverse('qn-targets-available'))
+        self.assertEqual(len(response.json()), 2)
+
+class StatsTestCases(APITestCase):
+    @patch.object(Stats, '_get_nomad_jobs')
+    def test_nomad_stats_empty(self, mock_get_nomad_jobs):
+        mock_get_nomad_jobs.return_value = []
+        response = self.client.get(reverse('stats'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['nomad_running_jobs'], 0)
+        self.assertEqual(response.json()['nomad_pending_jobs'], 0)
+
+    @patch.object(Stats, '_get_nomad_jobs')
+    def test_nomad_stats(self, mock_get_nomad_jobs):
+        mock_get_nomad_jobs.return_value = StatsTestCases.MOCK_NOMAD_RESPONSE
+        response = self.client.get(reverse('stats'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['nomad_running_jobs'], 2)
+        self.assertEqual(response.json()['nomad_pending_jobs'], 0)
+        self.assertEqual(response.json()['nomad_running_jobs_by_type']['SALMON'], 2)
+        self.assertEqual(response.json()['nomad_running_jobs_by_volume']['1'], 1)
+        self.assertEqual(response.json()['nomad_running_jobs_by_volume']['2'], 1)
+
+    MOCK_NOMAD_RESPONSE = [
+        {
+            'CreateIndex': 5145, 
+            'ID': 'TXIMPORT', 
+            'JobModifyIndex': 5145, 
+            'JobSummary': {
+            'Children': {
+                'Dead': 0, 
+                'Pending': 0, 
+                'Running': 0
+            }, 
+            'CreateIndex': 5145,
+            'JobID': 'TXIMPORT',
+            'ModifyIndex': 5145,
+            'Namespace': 'default',
+            'Summary': {}
+            }, 
+            'ModifyIndex': 5145, 
+            'Name': 'TXIMPORT', 
+            'ParameterizedJob': True, 
+            'ParentID': '', 
+            'Periodic': False, 
+            'Priority': 50, 
+            'Status': 'running', 
+            'StatusDescription': '', 
+            'Stop': False, 
+            'SubmitTime': 1552322030836469355, 
+            'Type': 'batch'
+        },
+        {
+            'CreateIndex': 5145, 
+            'ID': 'SALMON_1_2323', 
+            'JobModifyIndex': 5145, 
+            'JobSummary': {
+            'Children': {
+                'Dead': 0, 
+                'Pending': 0, 
+                'Running': 1
+            }, 
+            'CreateIndex': 5145, 
+            'JobID': 'SALMON_1_2323', 
+            'ModifyIndex': 5145, 
+            'Namespace': 'default', 
+            'Summary': {}
+            }, 
+            'ModifyIndex': 5145, 
+            'Name': 'SALMON_1_2323', 
+            'ParameterizedJob': True, 
+            'ParentID': '', 
+            'Periodic': False, 
+            'Priority': 50, 
+            'Status': 'running', 
+            'StatusDescription': '', 
+            'Stop': False, 
+            'SubmitTime': 1552322030836469355, 
+            'Type': 'batch'
+        },
+        {
+            'CreateIndex': 5145, 
+            'ID': 'SALMON_2_2323', 
+            'JobModifyIndex': 5145, 
+            'JobSummary': {
+            'Children': {
+                'Dead': 0, 
+                'Pending': 0, 
+                'Running': 1
+            }, 
+            'CreateIndex': 5145, 
+            'JobID': 'SALMON_1_2323', 
+            'ModifyIndex': 5145, 
+            'Namespace': 'default', 
+            'Summary': {}
+            }, 
+            'ModifyIndex': 5145, 
+            'Name': 'SALMON_1_2323', 
+            'ParameterizedJob': True, 
+            'ParentID': '', 
+            'Periodic': False, 
+            'Priority': 50, 
+            'Status': 'running', 
+            'StatusDescription': '', 
+            'Stop': False, 
+            'SubmitTime': 1552322030836469355, 
+            'Type': 'batch'
+        }
+    ]
+
 class ESTestCases(APITestCase):
 
     def test_es_endpoint(self):
@@ -933,6 +1152,8 @@ class ESTestCases(APITestCase):
         experiment.title = "Hey Ho Let's Go"
         experiment.description = "This is a very exciting test experiment. Faygo soda. Blah blah blah."
         experiment.technology = "MICROARRAY"
+        experiment.num_processed_samples = 1 # added below
+        experiment.num_total_samples = 1
         experiment.save()
         self.experiment = experiment
 
@@ -949,6 +1170,8 @@ class ESTestCases(APITestCase):
         sample = Sample()
         sample.title = "789"
         sample.accession_code = "789"
+        sample.is_processed = True
+        sample.organism = Organism.get_object_for_name("AILUROPODA_MELANOLEUCA")
         sample.save()
         self.sample = sample
 
@@ -1013,6 +1236,10 @@ class ESTestCases(APITestCase):
         # Sanity
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['count'], 2)
+        # test sample counts in filters
+        self.assertEqual(response.json()['facets']['has_publication']['false'], 1)
+        self.assertEqual(response.json()['facets']['technology']['microarray'], 1)
+        self.assertEqual(response.json()['facets']['technology']['rna-seq'], 0)
 
         # Basic Search
         response = self.client.get('/es/?search=soda')

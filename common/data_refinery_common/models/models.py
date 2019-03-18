@@ -748,6 +748,13 @@ class OriginalFile(models.Model):
         # has been processed and doesn't need to be processed again.
         return successful_processor_jobs.count() == 0
 
+    def is_affy_data(self) -> bool:
+        """Return true if original_file is a CEL file or a gzipped CEL file.
+        """
+        upper_name = self.source_filename.upper()
+        return (len(upper_name) > 4 and upper_name[-4:] == ".CEL") \
+            or (len(upper_name) > 7 and upper_name[-7:] == ".CEL.GZ")
+
 
 class ComputedFile(models.Model):
     """ A representation of a file created by a data-refinery process """
@@ -939,13 +946,32 @@ class ComputedFile(models.Model):
 
     @property
     def s3_url(self):
-        """ Render the resulting S3 URL """
+        """ Render the resulting HTTPS URL for the S3 object."""
         return self.get_s3_url()
 
     def get_s3_url(self):
-        """ Render the resulting S3 URL """
+        """ Render the resulting HTTPS URL for the S3 object."""
         if (self.s3_key) and (self.s3_bucket):
             return "https://s3.amazonaws.com/" + self.s3_bucket + "/" + self.s3_key
+        else:
+            return None
+
+    @property
+    def download_url(self):
+        """ A temporary URL from which the file can be downloaded. """
+        return self.create_download_url()
+
+    def create_download_url(self):
+        """ Create a temporary URL from which the file can be downloaded."""
+        if settings.RUNNING_IN_CLOUD and self.s3_bucket and self.s3_key:
+            return S3.generate_presigned_url(
+                ClientMethod='get_object',
+                Params={
+                    'Bucket': self.s3_bucket,
+                    'Key': self.s3_key
+                },
+                ExpiresIn=(60 * 60 * 7 * 24) # 7 days in seconds.
+            )
         else:
             return None
 
@@ -1065,6 +1091,25 @@ class Dataset(models.Model):
             return True
         else:
             return False
+
+    @property
+    def download_url(self):
+        """ A temporary URL from which the file can be downloaded. """
+        return self.create_download_url()
+
+    def create_download_url(self):
+        """ Create a temporary URL from which the file can be downloaded."""
+        if settings.RUNNING_IN_CLOUD and self.s3_bucket and self.s3_key:
+            return S3.generate_presigned_url(
+                ClientMethod='get_object',
+                Params={
+                    'Bucket': self.s3_bucket,
+                    'Key': self.s3_key
+                },
+                ExpiresIn=(60 * 60 * 7 * 24) # 7 days in seconds.
+            )
+        else:
+            return None
 
     def s3_url(self):
         """ Render the resulting S3 URL """

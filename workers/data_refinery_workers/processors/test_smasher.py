@@ -69,7 +69,7 @@ def prepare_job():
     esa.save()
 
     computed_file = ComputedFile()
-    computed_file.filename = "GSM1237810_T09-1084.PCL"
+    computed_file.filename = "SRP149598_gene_lengthScaledTPM.tsv"
     computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
     computed_file.result = result
     computed_file.size_in_bytes = 123
@@ -103,7 +103,7 @@ def prepare_job():
     sra.save()
 
     computed_file = ComputedFile()
-    computed_file.filename = "GSM1237812_S97-PURE.PCL"
+    computed_file.filename = "GSM1487313_liver.PCL"
     computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
     computed_file.result = result
     computed_file.size_in_bytes = 123
@@ -221,7 +221,7 @@ class SmasherTestCase(TestCase):
             print('###')
 
             final_context = smasher.smash(job.pk, upload=False)
-            final_frame = final_context['final_frame']
+            final_frame = final_context.get('final_frame')
 
             # Sanity test that these frames can be computed upon
             final_frame.mean(axis=1)
@@ -256,7 +256,7 @@ class SmasherTestCase(TestCase):
             print('###')
 
             final_context = smasher.smash(job.pk, upload=False)
-            final_frame = final_context['final_frame']
+            final_frame = final_context.get('final_frame')
 
             # Sanity test that these frames can be computed upon
             final_frame.mean(axis=1)
@@ -290,7 +290,7 @@ class SmasherTestCase(TestCase):
             print('###')
 
             final_context = smasher.smash(job.pk, upload=False)
-            final_frame = final_context['final_frame']
+            final_frame = final_context.get('final_frame')
 
             # Sanity test that these frames can be computed upon
             final_frame.mean(axis=1)
@@ -312,7 +312,6 @@ class SmasherTestCase(TestCase):
             job.start_time = None
             job.end_time = None
             job.save()
-
 
     @tag("smasher")
     def test_get_results(self):
@@ -519,7 +518,7 @@ class SmasherTestCase(TestCase):
         print(ds.failure_reason)
         print(final_context['dataset'].failure_reason)
 
-        self.assertEqual(final_context['unsmashable_files'], ['GSM1238108'])
+        self.assertEqual(final_context['unsmashable_files'], ['GSM1237810_T09-1084.PCL'])
 
     @tag("smasher")
     def test_no_smash_dupe(self):
@@ -728,6 +727,29 @@ class SmasherTestCase(TestCase):
 
         final_context = smasher.smash(job.pk, upload=False)
         self.assertTrue(final_context['success'])
+
+        # Test single file smash
+
+        job = ProcessorJob()
+        job.pipeline_applied = "SMASHER"
+        job.save()
+
+        ds = Dataset()
+        ds.data = {'SRP051449': ['SRR1731761']}
+        ds.aggregate_by = 'EXPERIMENT'
+        ds.scale_by = 'NONE'
+        ds.email_address = "null@derp.com"
+        ds.quantile_normalize = True
+        ds.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = job
+        pjda.dataset = ds
+        pjda.save()
+
+        final_context = smasher.smash(job.pk, upload=False)
+        self.assertTrue(final_context['success'])
+
 
     @tag("smasher")
     def test_log2(self):

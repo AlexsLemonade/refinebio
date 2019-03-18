@@ -8,9 +8,12 @@ script_directory=`perl -e 'use File::Basename;
 cd $script_directory
 
 # CircleCI Docker won't make this by default for some reason
-VOLUMES=$script_directory/volumes_postgres
+# This doubly nested directory is a hacky workaround to prevent permissions issues.
+# Suggested here:
+# https://github.com/docker/for-linux/issues/380#issuecomment-436419102
+VOLUMES=$script_directory/volumes_postgres/volumes_postgres
 if [ ! -d $VOLUMES ]; then
-  mkdir $VOLUMES
+  mkdir -p $VOLUMES
 fi
 
 # Check if a docker database named "drdb" exists, and if so just run it
