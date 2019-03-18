@@ -58,4 +58,4 @@ datashape==0.5.2
 holoviews==1.11.2
 pyviz-comms==0.7.0
 selenium==3.141.0
-urllib3==1.22             # via botocore, elasticsearch, requests
+
