@@ -313,7 +313,6 @@ class SmasherTestCase(TestCase):
             job.end_time = None
             job.save()
 
-
     @tag("smasher")
     def test_get_results(self):
         """ Test our ability to collect the appropriate samples. """
@@ -728,6 +727,29 @@ class SmasherTestCase(TestCase):
 
         final_context = smasher.smash(job.pk, upload=False)
         self.assertTrue(final_context['success'])
+
+        # Test single file smash
+
+        job = ProcessorJob()
+        job.pipeline_applied = "SMASHER"
+        job.save()
+
+        ds = Dataset()
+        ds.data = {'SRP051449': ['SRR1731761']}
+        ds.aggregate_by = 'EXPERIMENT'
+        ds.scale_by = 'NONE'
+        ds.email_address = "null@derp.com"
+        ds.quantile_normalize = True
+        ds.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = job
+        pjda.dataset = ds
+        pjda.save()
+
+        final_context = smasher.smash(job.pk, upload=False)
+        self.assertTrue(final_context['success'])
+
 
     @tag("smasher")
     def test_log2(self):
