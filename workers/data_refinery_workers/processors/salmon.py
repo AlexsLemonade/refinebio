@@ -668,7 +668,7 @@ def _run_tximport_for_experiment(
     return job_context
 
 
-def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile]]:
+def get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile]]:
     """Return a mapping from experiments to a list of their quant files.
 
     Checks all the experiments which contain a sample from the current
@@ -726,18 +726,39 @@ def _get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFil
         if should_run_tximport:
             quant_files = []
             for result in salmon_quant_results:
-                quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])
+                try:
+                    quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])
+                except:
+                    try:
+                        sample = result.samples.first()
+                    except:
+                        sample = None
+
+                    logger.exception(
+                        "Salmon quant result found without quant.sf ComputedFile!",
+                        processor_job=job_context["job_id"],
+                        quant_result=result.id,
+                        sample=sample.id,
+                        experiment=experiment.id
+                    )
+                    job.failure_reason = (
+                        "Salmon quant result {} for sammple {} found without quant.sf"
+                        " ComputedFile in experiment {}!"
+                    ).format(str(result.id), str(sample.accession_code), str(experiment.accession_code))
+                    job_context["success"] = False
 
             quantified_experiments[experiment] = quant_files
 
-    return quantified_experiments
+    job_context["tximport_inputs"] = quantified_experiments
+
+    return job_context
 
 
 def tximport(job_context: Dict) -> Dict:
     """Run tximport R script based on input quant files and the path
     of genes_to_transcripts.txt.
     """
-    tximport_inputs = _get_tximport_inputs(job_context)
+    tximport_inputs = job_context["tximport_inputs"]
     for experiment, quant_files in tximport_inputs.items():
         job_context = _run_tximport_for_experiment(job_context, experiment, quant_files)
         # If `tximport` on any related experiment fails, exit immediately.
@@ -789,10 +810,10 @@ def _run_salmon(job_context: Dict) -> Dict:
             formatted_dump_command = dump_str.format(input_sra_file=job_context["sra_input_file_path"],
                                                    fifo_alpha=alpha,
                                                    fifo_beta=beta)
-            dump_po = subprocess.Popen(formatted_dump_command, 
-                                        shell=True, 
+            dump_po = subprocess.Popen(formatted_dump_command,
+                                        shell=True,
                                         executable='/bin/bash',
-                                        stdout=subprocess.PIPE, 
+                                        stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
 
             command_str = ( "salmon --no-version-check quant -l A -i {index} "
@@ -1194,6 +1215,7 @@ def salmon(job_id: int) -> None:
                         # _run_fastqc,
 
                         _run_salmon,
+                        get_tximport_inputs,
                         tximport,
                         _run_salmontools,
                         _run_multiqc,
