@@ -203,19 +203,19 @@ class ExperimentDocumentView(DocumentViewSet):
 
     # Define search fields
     # Is this exhaustive enough?
-    search_fields = (
-        'title',
-        'publication_title',
-        'description',
-        'publication_authors',
-        'submitter_institution',
-        'accession_code',
-        'alternate_accession_code',
-        'publication_doi',
-        'pubmed_id',
-        'sample_metadata_fields',
-        'platform_names'
-    )
+    search_fields = {
+        'title': {'boost': 10},
+        'publication_title':  {'boost': 5},
+        'description':  {'boost': 2},
+        'publication_authors': None,
+        'submitter_institution': None,
+        'accession_code': None,
+        'alternate_accession_code': None,
+        'publication_doi': None,
+        'pubmed_id': None,
+        'sample_metadata_fields': None,
+        'platform_names': None
+    }
 
     # Define filtering fields
     filter_fields = {
@@ -251,7 +251,7 @@ class ExperimentDocumentView(DocumentViewSet):
     }
 
     # Specify default ordering
-    ordering = ('-num_total_samples', 'id', 'title', 'description', '-source_first_published')
+    ordering = ('_score', '-num_total_samples', 'id', 'title', 'description', '-source_first_published')
 
     # Facets (aka Aggregations) provide statistics about the query result set in the API response.
     # More information here: https://github.com/barseghyanartur/django-elasticsearch-dsl-drf/blob/03a3aa716db31868ca3a71340513a993741a4177/src/django_elasticsearch_dsl_drf/filter_backends/faceted_search.py#L24
