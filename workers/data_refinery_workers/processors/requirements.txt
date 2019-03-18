@@ -59,3 +59,7 @@ holoviews==1.11.2
 pyviz-comms==0.7.0
 selenium==3.141.0
 
+# For ElasticSearch support:
+django-elasticsearch-dsl==0.5.1
+elasticsearch==6.2.0
+elasticsearch-dsl==6.1.0
