@@ -149,6 +149,26 @@ class PaginatedAPIView(APIView):
 # ElasticSearch
 ##
 from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
+from six import iteritems
+
+class FacetedSearchFilterBackendExtended(FacetedSearchFilterBackend):
+    def aggregate(self, request, queryset, view):
+        """Extends FacetedSearchFilterBackend to add sampple counts on each filter
+        https://github.com/barseghyanartur/django-elasticsearch-dsl-drf/blob/master/src/django_elasticsearch_dsl_drf/filter_backends/faceted_search.py#L19
+
+        All we need to add is one line when building the facets:
+
+        .metric('total_samples', 'sum', field='num_processed_samples')
+
+        (Maybe there's a way to do this with the options in `ExperimentDocumentView`)
+        """
+        facets = self.construct_facets(request, view)
+        for field, facet in iteritems(facets):
+            agg = facet['facet'].get_aggregation()
+            queryset.aggs.bucket(field, agg)\
+                .metric('total_samples', 'sum', field='num_processed_samples')
+        return queryset
+
 
 class ExperimentDocumentView(DocumentViewSet):
     """ElasticSearch powered experiment search.
@@ -175,7 +195,7 @@ class ExperimentDocumentView(DocumentViewSet):
         OrderingFilterBackend,
         DefaultOrderingFilterBackend,
         CompoundSearchFilterBackend,
-        FacetedSearchFilterBackend
+        FacetedSearchFilterBackendExtended
     ]
 
     # Primitive
@@ -300,6 +320,32 @@ class ExperimentDocumentView(DocumentViewSet):
         },
     }
     faceted_search_param = 'facet'
+
+    def list(self, request, *args, **kwargs):
+        """ Adds counts on certain filter fields to result JSON."""
+        response = super(ExperimentDocumentView, self).list(request, args, kwargs)
+        response.data['facets'] = self.transform_es_facets(response.data['facets'])
+        return response
+
+    def transform_es_facets(self, facets):
+        """Transforms Elastic Search facets into a set of objects where each one corresponds 
+        to a filter group. Example:
+
+        { technology: {rna-seq: 254, microarray: 8846, unknown: 0} }
+
+        Which means the users could attach `?technology=rna-seq` to the url and expect 254 
+        samples returned in the results.
+        """
+        result = {}
+        for field, facet in iteritems(facets):
+            filter_group = {}
+            for bucket in facet['buckets']:
+                if field == 'has_publication':
+                    filter_group[bucket['key_as_string']] = bucket['total_samples']['value']
+                else:
+                    filter_group[bucket['key']] = bucket['total_samples']['value']
+            result[field] = filter_group
+        return result
 
 ##
 # Search and Filter

@@ -23,9 +23,10 @@ from data_refinery_common.models import (
 )
 
 class OrganismShepherdTestCase(TransactionTestCase):
+    @patch('data_refinery_foreman.foreman.management.commands.organism_shepherd.get_active_volumes')
     @patch('data_refinery_foreman.foreman.management.commands.organism_shepherd.send_job')
     @patch('data_refinery_foreman.foreman.management.commands.organism_shepherd.Nomad')
-    def test_organism_shepherd_command(self, mock_nomad, mock_send_job):
+    def test_organism_shepherd_command(self, mock_nomad, mock_send_job, mock_get_active_volumes):
         """Tests that the organism shepherd requeues jobs in the right order.
 
         The situation we're setting up is basically this:
@@ -41,6 +42,8 @@ class OrganismShepherdTestCase(TransactionTestCase):
         """
         # First, set up our mocks to prevent network calls.
         mock_send_job.return_value = True
+        active_volumes =  {"1", "2", "3"}
+        mock_get_active_volumes.return_value = active_volumes
 
         def mock_init_nomad(host, port=0, timeout=0):
             ret_value = MagicMock()
@@ -197,6 +200,7 @@ class OrganismShepherdTestCase(TransactionTestCase):
         self.assertEqual(first_call_job_type, ProcessorPipeline.SALMON)
         self.assertEqual(first_call_job_object.pipeline_applied, fifty_percent_processor_job.pipeline_applied)
         self.assertEqual(first_call_job_object.ram_amount, fifty_percent_processor_job.ram_amount)
+        self.assertIn(first_call_job_object.volume_index, active_volumes)
 
         fifty_percent_processor_job.refresh_from_db()
         self.assertEqual(first_call_job_object, fifty_percent_processor_job.retried_job)

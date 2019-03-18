@@ -1152,6 +1152,8 @@ class ESTestCases(APITestCase):
         experiment.title = "Hey Ho Let's Go"
         experiment.description = "This is a very exciting test experiment. Faygo soda. Blah blah blah."
         experiment.technology = "MICROARRAY"
+        experiment.num_processed_samples = 1 # added below
+        experiment.num_total_samples = 1
         experiment.save()
         self.experiment = experiment
 
@@ -1168,6 +1170,8 @@ class ESTestCases(APITestCase):
         sample = Sample()
         sample.title = "789"
         sample.accession_code = "789"
+        sample.is_processed = True
+        sample.organism = Organism.get_object_for_name("AILUROPODA_MELANOLEUCA")
         sample.save()
         self.sample = sample
 
@@ -1232,6 +1236,10 @@ class ESTestCases(APITestCase):
         # Sanity
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['count'], 2)
+        # test sample counts in filters
+        self.assertEqual(response.json()['facets']['has_publication']['false'], 1)
+        self.assertEqual(response.json()['facets']['technology']['microarray'], 1)
+        self.assertEqual(response.json()['facets']['technology']['rna-seq'], 0)
 
         # Basic Search
         response = self.client.get('/es/?search=soda')

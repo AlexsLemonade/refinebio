@@ -473,6 +473,8 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         )
 
         job_context['technologies'] = {'microarray': [], 'rnaseq': []}
+        job_context['original_merged'] = pd.DataFrame()
+
         # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context['input_files'].items():
 
@@ -530,13 +532,22 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                         # data.columns = [computed_file.samples.all()[0].title]
                         # So we use this, which also helps us support the case of missing SampleComputedFileAssociation
                         data.columns = [computed_file.samples.all()[0].accession_code]
-                    except ValueError:
+                    except ValueError as e:
                         # This sample might have multiple channels, or something else.
                         # Don't mess with it.
-                        pass
+                        logger.exception("Smasher found multi-channel column (probably) - skipping!",
+                            computed_file_path=computed_file_path
+                        )
+                        unsmashable_files.append(computed_file.filename)
+                        continue
                     except Exception as e:
                         # Okay, somebody probably forgot to create a SampleComputedFileAssociation
-                        data.columns = [computed_file.filename]
+                        # Don't mess with it.
+                        logger.exception("Smasher found very bad column title - skipping!",
+                            computed_file_path=computed_file_path
+                        )
+                        unsmashable_files.append(computed_file.filename)
+                        continue
 
                     if computed_file_path.endswith("lengthScaledTPM.tsv"):
                         job_context['technologies']['rnaseq'].append(data.columns)
@@ -979,7 +990,7 @@ def _update_result_objects(job_context: Dict) -> Dict:
     dataset.is_processing = False
     dataset.is_processed = True
     dataset.is_available = True
-    dataset.expires_on = timezone.now() + timedelta(days=1)
+    dataset.expires_on = timezone.now() + timedelta(days=7)
     dataset.save()
 
     job_context['success'] = True
