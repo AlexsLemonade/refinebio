@@ -1,6 +1,6 @@
 from contextlib import closing
 from typing import List
-import django.utils.timezone
+from django.utils import timezone
 import os
 import shutil
 import subprocess
