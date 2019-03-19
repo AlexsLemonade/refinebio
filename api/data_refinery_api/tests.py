@@ -1040,7 +1040,7 @@ class StatsTestCases(APITestCase):
         self.assertEqual(response.json()['nomad_running_jobs_by_type']['SALMON'], 2)
         self.assertEqual(response.json()['nomad_running_jobs_by_volume']['1'], 1)
         self.assertEqual(response.json()['nomad_running_jobs_by_volume']['2'], 1)
-
+    
     MOCK_NOMAD_RESPONSE = [
         {
             'CreateIndex': 5145, 
@@ -1090,6 +1090,34 @@ class StatsTestCases(APITestCase):
             'Name': 'SALMON_1_2323', 
             'ParameterizedJob': True, 
             'ParentID': '', 
+            'Periodic': False, 
+            'Priority': 50, 
+            'Status': 'running', 
+            'StatusDescription': '', 
+            'Stop': False, 
+            'SubmitTime': 1552322030836469355, 
+            'Type': 'batch'
+        },
+        {
+            'CreateIndex': 5145, 
+            'ID': 'SALMON_3_2534/dispatch-213123-123123-123123',
+            'JobModifyIndex': 5145, 
+            'JobSummary': {
+            'Children': {
+                'Dead': 0, 
+                'Pending': 0, 
+                'Running': 0
+            }, 
+            'CreateIndex': 5145, 
+            'JobID': 'SALMON_3_2534/dispatch-213123-123123-123123', 
+            'ModifyIndex': 5145, 
+            'Namespace': 'default', 
+            'Summary': {}
+            }, 
+            'ModifyIndex': 5145, 
+            'Name': 'SALMON_3_2534/dispatch-213123-123123-123123', 
+            'ParameterizedJob': True, 
+            'ParentID': 'SALMON_1_2323', 
             'Periodic': False, 
             'Priority': 50, 
             'Status': 'running', 
