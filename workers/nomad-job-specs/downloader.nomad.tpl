@@ -72,7 +72,7 @@ job "DOWNLOADER" {
         # CPU is in AWS's CPU units.
         cpu = 512
         # Memory is in MB of RAM.
-        memory = 4096
+        memory = 1024 
       }
 
       logs {
