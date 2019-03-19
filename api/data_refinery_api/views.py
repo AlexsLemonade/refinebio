@@ -1071,7 +1071,7 @@ class Stats(APIView):
         data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
 
         # processed and unprocessed samples stats
-        data['unprocessed_samples'] = self._get_object_stats(Sample.objects.filter(is_processed=False), range_param)
+        data['unprocessed_samples'] = self._get_object_stats(Sample.objects.filter(is_processed=False), range_param, 'last_modified')
         data['processed_samples'] = self._get_object_stats(Sample.processed_objects, range_param, 'last_modified')
         data['processed_samples']['last_hour'] = self._samples_processed_last_hour()
 
@@ -1097,13 +1097,7 @@ class Stats(APIView):
             data['input_data_size'] = self._get_input_data_size()
             data['output_data_size'] = self._get_output_data_size()
 
-        nomad_stats = self._get_nomad_jobs_breakdown()
-        data['nomad_running_jobs'] = nomad_stats["nomad_running_jobs"]
-        data['nomad_pending_jobs'] = nomad_stats["nomad_pending_jobs"]
-        data['nomad_running_jobs_by_type'] = nomad_stats["nomad_running_jobs_by_type"]
-        data['nomad_pending_jobs_by_type'] = nomad_stats["nomad_pending_jobs_by_type"]
-        data['nomad_running_jobs_by_volume'] = nomad_stats["nomad_running_jobs_by_volume"]
-        data['nomad_pending_jobs_by_volume'] = nomad_stats["nomad_pending_jobs_by_volume"]
+        data.update(self._get_nomad_jobs_breakdown())
 
         return Response(data)
 
@@ -1155,16 +1149,8 @@ class Stats(APIView):
         nomad_running_jobs = {}
         nomad_pending_jobs = {}
         for (aggregate_key, group) in aggregated_jobs:
-            if not aggregate_key: continue
-            aggregated_pending = 0
-            aggregated_running = 0
-            for job in group:
-                children = job["JobSummary"]["Children"]
-                aggregated_pending = aggregated_pending + children["Pending"]
-                aggregated_running = aggregated_running + children["Running"]
-
-            nomad_pending_jobs[aggregate_key] = aggregated_pending
-            nomad_running_jobs[aggregate_key] = aggregated_running
+            nomad_pending_jobs[aggregate_key] = sum(job["JobSummary"]["Children"]["Pending"] for job in group)
+            nomad_running_jobs[aggregate_key] = sum(job["JobSummary"]["Children"]["Running"] for job in group)
 
         return nomad_pending_jobs, nomad_running_jobs
 
@@ -1181,6 +1167,9 @@ class Stats(APIView):
         
         return name_match.group('type'), name_match.group('volume_id')
 
+    def _get_job_type(self, job): return self._get_job_details(job)[0]
+    def _get_job_volume(self, job): return self._get_job_details(job)[1]
+
     def _get_nomad_jobs(self):
         """Calls nomad service and return all jobs"""
         try:
@@ -1188,7 +1177,6 @@ class Stats(APIView):
             nomad_port = get_env_variable("NOMAD_PORT", "4646")
             nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
             return nomad_client.jobs.get_jobs()
-
         except nomad.api.exceptions.BaseNomadException:
             # Nomad is not available right now
             return []
@@ -1197,21 +1185,19 @@ class Stats(APIView):
         jobs = self._get_nomad_jobs()
         parameterized_jobs = [job for job in jobs if job['ParameterizedJob']]
 
-        aggregated_jobs_by_type = groupby(parameterized_jobs, lambda job: self._get_job_details(job)[0])
+        # groupby must be executed on a sorted iterable https://docs.python.org/2/library/itertools.html#itertools.groupby
+        sorted_jobs_by_type = sorted(filter(self._get_job_type, parameterized_jobs), key=self._get_job_type)
+        aggregated_jobs_by_type = groupby(sorted_jobs_by_type, self._get_job_type)
         nomad_pending_jobs_by_type, nomad_running_jobs_by_type = self._aggregate_nomad_jobs(aggregated_jobs_by_type)
 
         # To get the total jobs for running and pending, the easiest
         # AND the most efficient way is to sum up the stats we've
         # already partially summed up.
-        nomad_running_jobs = 0
-        for job_type, num_jobs in nomad_running_jobs_by_type.items():
-            nomad_running_jobs = nomad_running_jobs + num_jobs
+        nomad_running_jobs = sum(num_jobs for job_type, num_jobs in nomad_running_jobs_by_type.items())
+        nomad_pending_jobs = sum(num_jobs for job_type, num_jobs in nomad_pending_jobs_by_type.items())
 
-        nomad_pending_jobs = 0
-        for job_type, num_jobs in nomad_pending_jobs_by_type.items():
-            nomad_pending_jobs = nomad_pending_jobs + num_jobs
-
-        aggregated_jobs_by_volume = groupby(parameterized_jobs, lambda job: self._get_job_details(job)[1])
+        sorted_jobs_by_volume = sorted(filter(self._get_job_volume, parameterized_jobs), key=self._get_job_volume)
+        aggregated_jobs_by_volume = groupby(sorted_jobs_by_volume, self._get_job_volume)
         nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume = self._aggregate_nomad_jobs(aggregated_jobs_by_volume)
 
         return {
