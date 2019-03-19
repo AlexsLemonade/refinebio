@@ -19,6 +19,7 @@ from data_refinery_common.models import (
     SampleAnnotation,
     SurveyJob,
 )
+from data_refinery_common.utils import get_fasp_sra_download
 from data_refinery_foreman.surveyor import utils, harmony
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 
@@ -302,31 +303,6 @@ class SraSurveyor(ExternalSourceSurveyor):
             sub_dir=sub_dir,
             long_accession=run_accession,
             read_suffix=read_suffix)
-
-    @staticmethod
-    def _get_fasp_sra_download(run_accession: str):
-        """Try getting the sra-download URL from CGI endpoint"""
-        #Ex: curl --data "acc=SRR6718414&accept-proto=fasp&version=2.0" https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi
-        cgi_url = "https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi"
-        data = "acc=" + run_accession + "&accept-proto=fasp&version=2.0"
-        try:
-            resp = requests.post(cgi_url, data=data)
-        except Exception as e:
-            logger.exception("Bad FASP CGI request", data=data)
-            return None
-
-        if resp.status_code != 200:
-            # This isn't on the new FASP servers
-            return None
-        else:
-            try:
-                # From: '#2.0\nsrapub|DRR002116|2324796808|2013-07-03T05:51:55Z|50964cfc69091cdbf92ea58aaaf0ac1c||fasp://dbtest@sra-download.ncbi.nlm.nih.gov:data/sracloud/traces/dra0/DRR/000002/DRR002116|200|ok\n'
-                # To:  'dbtest@sra-download.ncbi.nlm.nih.gov:data/sracloud/traces/dra0/DRR/000002/DRR002116'
-                sra_url = resp.text.split('\n')[1].split('|')[6].split('fasp://')[1]
-                return sra_url
-            except Exception as e:
-                logger.exception("Bad FASP CGI response", data=data, text=resp.text)
-                return None
 
     @staticmethod
     def _build_ncbi_file_url(run_accession: str):
