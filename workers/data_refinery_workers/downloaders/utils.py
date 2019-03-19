@@ -77,7 +77,7 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
         logger.error("Cannot find downloader job record.", downloader_job=job_id)
         raise
 
-    # worker_id = get_instance_id()
+    worker_id = get_instance_id()
     # num_downloader_jobs_currently_running = DownloaderJob.objects.filter(
     #                             worker_id=worker_id,
     #                             start_time__isnull=False,
