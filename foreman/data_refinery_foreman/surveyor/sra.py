@@ -312,7 +312,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         first_six = accession[:6]
 
         # Prefer the FASP-specific endpoints if possible..
-        download_url = SraSurveyor._get_fasp_sra_download(run_accession)
+        download_url = get_fasp_sra_download(run_accession)
 
         if not download_url:
             # ..else, load balancing via coin flip.
