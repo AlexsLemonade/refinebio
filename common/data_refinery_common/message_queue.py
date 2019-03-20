@@ -8,7 +8,7 @@ from enum import Enum
 from nomad.api.exceptions import URLNotFoundNomadException
 
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully, get_volume_index
-from data_refinery_common.models import ProcessorJob, SurveyJob
+from data_refinery_common.models import ProcessorJob, SurveyJob, DownloaderJob
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders, SurveyJobTypes
 from data_refinery_common.logging import get_and_configure_logger
 
@@ -97,6 +97,8 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
             job.save()
         nomad_job = nomad_job + "_" + job.volume_index + "_" + str(job.ram_amount)
     elif isinstance(job, SurveyJob):
+        nomad_job = nomad_job + "_" + str(job.ram_amount)
+    elif isinstance(job, DownloaderJob):
         nomad_job = nomad_job + "_" + str(job.ram_amount)
 
     # We only want to dispatch processor jobs directly.

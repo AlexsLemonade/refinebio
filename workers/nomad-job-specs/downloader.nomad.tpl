@@ -1,4 +1,4 @@
-job "DOWNLOADER" {
+job "DOWNLOADER_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -72,7 +72,7 @@ job "DOWNLOADER" {
         # CPU is in AWS's CPU units.
         cpu = 512
         # Memory is in MB of RAM.
-        memory = 1024 
+        memory = ${{RAM}}
       }
 
       logs {

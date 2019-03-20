@@ -61,6 +61,7 @@ def signal_handler(sig, frame):
     else:
         CURRENT_JOB.start_time = None
         CURRENT_JOB.num_retries = CURRENT_JOB.num_retries - 1
+        CURRENT_JOB.failure_reason = "Interruped by SIGTERM/SIGINT"
         CURRENT_JOB.save()
         sys.exit(0)
 
@@ -96,6 +97,7 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
                 if seconds % 15 == 0:
                     job.start_time = None
                     job.num_retries = job.num_retries - 1
+                    job.failure_reason = "Killed by harakiri"
                     job.save()
 
                     # What is dead may never die!
