@@ -97,7 +97,7 @@ from data_refinery_common.models import (
 from data_refinery_common.models.documents import (
     ExperimentDocument
 )
-from data_refinery_common.utils import get_env_variable, get_active_volumes
+from data_refinery_common.utils import get_env_variable, get_active_volumes, get_nomad_jobs
 from data_refinery_common.logging import get_and_configure_logger
 from .serializers import ExperimentDocumentSerializer
 
@@ -1170,19 +1170,8 @@ class Stats(APIView):
     def _get_job_type(self, job): return self._get_job_details(job)[0]
     def _get_job_volume(self, job): return self._get_job_details(job)[1]
 
-    def _get_nomad_jobs(self):
-        """Calls nomad service and return all jobs"""
-        try:
-            nomad_host = get_env_variable("NOMAD_HOST")
-            nomad_port = get_env_variable("NOMAD_PORT", "4646")
-            nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
-            return nomad_client.jobs.get_jobs()
-        except nomad.api.exceptions.BaseNomadException:
-            # Nomad is not available right now
-            return []
-
     def _get_nomad_jobs_breakdown(self):
-        jobs = self._get_nomad_jobs()
+        jobs = get_nomad_jobs()
         parameterized_jobs = [job for job in jobs if job['ParameterizedJob']]
 
         # groupby must be executed on a sorted iterable https://docs.python.org/2/library/itertools.html#itertools.groupby
