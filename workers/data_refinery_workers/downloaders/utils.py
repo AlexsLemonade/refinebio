@@ -34,16 +34,16 @@ CURRENT_JOB = None
 
 def get_max_jobs_for_current_node():
     """ Determine the maximum number of Downloader jobs that this node should sustain,
-    based on total system RAM made available to this container """
+    based on total system RAM."""
 
     total_vm = psutil.virtual_memory().total
     gb = int(total_vm / 1000000000)
     logger.info("Detected " + str(gb) + "GB of RAM.")
 
-    # We basically want to hit 2GB/s total across 10 x1.32larges. Each job hits 18MB/s.
-    # So it'd take 111 jobs across 10 boxes to hit our limit, so let's set our GB per to 12,
-    # which should pack well enough and give us a slight buffer.
-    max_jobs = (gb/12)
+    # We basically want to hit 2GB/s total across our entire cluster. Each job hits ~20MB/s,
+    # so it'd take 100 jobs to hit our limit. Our cluster has 10TB of RAM, which is ~10000 GB.
+    # 100 jobs per 10000 GB = 1 job per 100 GB
+    max_jobs = (gb/100)
 
     # However this will make sure we can still run a few jobs in local environments and in CI.
     if max_jobs < 5:
@@ -78,28 +78,28 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
         raise
 
     worker_id = get_instance_id()
-    # num_downloader_jobs_currently_running = DownloaderJob.objects.filter(
-    #                             worker_id=worker_id,
-    #                             start_time__isnull=False,
-    #                             end_time__isnull=True,
-    #                             success__isnull=True,
-    #                             retried=False
-    #                         ).count()
+    num_downloader_jobs_currently_running = DownloaderJob.objects.filter(
+                                worker_id=worker_id,
+                                start_time__isnull=False,
+                                end_time__isnull=True,
+                                success__isnull=True,
+                                retried=False
+                            ).count()
 
-    # # Death and rebirth.
-    # if settings.RUNNING_IN_CLOUD or force_harakiri:
-    #     if num_downloader_jobs_currently_running >= int(max_downloader_jobs_per_node):
-    #         # Wait for the death window
-    #         while True:
-    #             seconds = datetime.datetime.now().second
-    #             # Mass harakiri happens every 15 seconds.
-    #             if seconds % 15 == 0:
-    #                 job.start_time = None
-    #                 job.num_retries = job.num_retries - 1
-    #                 job.save()
+    # Death and rebirth.
+    if settings.RUNNING_IN_CLOUD or force_harakiri:
+        if num_downloader_jobs_currently_running >= int(max_downloader_jobs_per_node):
+            # Wait for the death window
+            while True:
+                seconds = datetime.datetime.now().second
+                # Mass harakiri happens every 15 seconds.
+                if seconds % 15 == 0:
+                    job.start_time = None
+                    job.num_retries = job.num_retries - 1
+                    job.save()
 
-    #                 # What is dead may never die!
-    #                 sys.exit(0)
+                    # What is dead may never die!
+                    sys.exit(0)
 
     # This job should not have been started.
     if job.start_time is not None:
