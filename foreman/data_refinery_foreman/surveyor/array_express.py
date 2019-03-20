@@ -175,7 +175,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             idf_xa.is_ccdl = False
             idf_xa.save()
 
-            if 'Investigation Title' in idf_dict:
+            if 'Investigation Title' in idf_dict and isinstance(idf_dict['Investigation Title'], str):
                 experiment_object.title = idf_dict['Investigation Title']
             if 'Person Affiliation' in idf_dict:
                 # This is very rare, ex: E-MEXP-32
