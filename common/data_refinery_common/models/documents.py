@@ -29,7 +29,7 @@ html_strip = analyzer(
 html_strip_no_ngram = analyzer(
     'html_strip_no_ngram',
     tokenizer="standard",
-    filter=["standard", "lowercase", "stop", "snowball"],
+    filter=["standard", "lowercase", "stop"],
     char_filter=["html_strip"]
 )
 html_strip_no_stop = analyzer(
