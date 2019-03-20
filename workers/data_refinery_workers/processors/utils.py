@@ -48,6 +48,7 @@ def signal_handler(sig, frame):
     else:
         CURRENT_JOB.start_time = None
         CURRENT_JOB.num_retries = CURRENT_JOB.num_retries - 1
+        CURRENT_JOB.success = False
         CURRENT_JOB.save()
         sys.exit(0)
 
