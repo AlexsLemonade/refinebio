@@ -21,7 +21,7 @@ EOF
 # is run, so we have to pass them in programatically
 echo "
 #!/bin/sh
-docker kill \$(docker ps -q) || true
+docker rm -f \$(docker ps --quiet --all) || true
 docker run \\
        --env-file /home/ubuntu/environment \\
        -e DATABASE_HOST=${database_host} \\
