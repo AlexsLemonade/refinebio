@@ -79,7 +79,7 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
     else:
         raise ValueError("Invalid job_type: {}".format(job_type.value))
 
-    logger.info("Queuing %s nomad job to run job %s with id %d.",
+    logger.debug("Queuing %s nomad job to run job %s with id %d.",
                 nomad_job,
                 job_type.value,
                 job.id)

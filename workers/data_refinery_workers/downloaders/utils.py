@@ -98,6 +98,7 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
                     job.start_time = None
                     job.num_retries = job.num_retries - 1
                     job.failure_reason = "Killed by harakiri"
+                    job.success = False
                     job.save()
 
                     # What is dead may never die!
