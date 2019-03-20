@@ -637,7 +637,7 @@ Tags intended to trigger a staging deploy MUST end with `-dev`, i.e. `v1.0.0-dev
 CircleCI runs a deploy on a dedicated AWS instance so that the Docker cache can be preserved between runs.
 Instructions for setting up that instance can be found in the infrastructure/deploy_box_instance_data.sh script.
 
-To trigger a new deploy, first see what tags already exist with `git tag --list`
+To trigger a new deploy, first see what tags already exist with `git tag --list | sort --version-sort`
 We have two different version counters, one for `dev` and one for `master` so a list including things like:
 * v1.1.2
 * v1.1.2-dev

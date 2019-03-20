@@ -250,8 +250,16 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
     """
     num_retries = last_job.num_retries + 1
 
+    ram_amount = last_job.ram_amount
+    if last_job.failure_reason is not None and 'harakiri' not in last_job.failure_reason:
+        if ram_amount == 1024:
+            ram_amount = 4096
+        elif ram_amount == 4096:
+            ram_amount = 8192
+
     new_job = DownloaderJob(num_retries=num_retries,
                             downloader_task=last_job.downloader_task,
+                            ram_amount=ram_amount,
                             accession_code=last_job.accession_code)
     new_job.save()
 

@@ -1,5 +1,6 @@
 from contextlib import closing
 from typing import List
+from django.utils import timezone
 import os
 import shutil
 import subprocess
@@ -12,7 +13,7 @@ from data_refinery_common.models import (
     DownloaderJobOriginalFileAssociation,
     OriginalFile,
 )
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable, get_fasp_sra_download
 from data_refinery_workers.downloaders import utils
 
 logger = get_and_configure_logger(__name__)
@@ -35,6 +36,15 @@ def _download_file(download_url: str,
         download_url = download_url.replace('.uk/', '.uk:/')
         return _download_file_aspera(download_url, downloader_job, target_file_path, source="ENA")
     elif "ncbi.nlm.nih.gov" in download_url and not force_ftp:
+        # Try to convert old-style endpoints into new-style endpoints if possible
+        try:
+            if 'anonftp' in download_url:
+                accession = download_url.split('/')[-1].split('.sra')[0]
+                new_url = get_fasp_sra_download(accession)
+                if new_url:
+                    download_url = new_url
+        except Exception:
+            pass
         return _download_file_aspera(download_url, downloader_job, target_file_path, source="NCBI")
     else:
         return _download_file_ftp(download_url, downloader_job, target_file_path)
@@ -96,9 +106,11 @@ def _download_file_aspera(download_url: str,
             command_str = ".aspera/cli/bin/ascp -T -k1 -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
             formatted_command = command_str.format(src=download_url,
                                                    dest=target_file_path)
+            logger.info("Starting NCBI ascp", time=str(timezone.now()))
             completed_command = subprocess.run(formatted_command.split(),
                                                stdout=subprocess.PIPE,
                                                stderr=subprocess.PIPE)
+            logger.info("Ending NCBI ascp", time=str(timezone.now()))
 
         # Something went wrong! Else, just fall through to returning True.
         if completed_command.returncode != 0:
