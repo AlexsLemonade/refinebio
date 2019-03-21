@@ -114,8 +114,6 @@ class ForemanTestCase(TestCase):
         job.success = False
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_failed_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -146,8 +144,6 @@ class ForemanTestCase(TestCase):
         job.start_time = timezone.now()
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_hung_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -179,8 +175,6 @@ class ForemanTestCase(TestCase):
         job.start_time = timezone.now()
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_hung_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
@@ -210,8 +204,6 @@ class ForemanTestCase(TestCase):
         job.created_at = timezone.now()
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_lost_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -243,8 +235,6 @@ class ForemanTestCase(TestCase):
         job.created_at = DAY_BEFORE_JOB_CUTOFF
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_lost_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
@@ -259,8 +249,6 @@ class ForemanTestCase(TestCase):
         job.created_at = timezone.now() - (main.MIN_LOOP_TIME + datetime.timedelta(minutes=1))
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_lost_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -292,8 +280,6 @@ class ForemanTestCase(TestCase):
         job.created_at = timezone.now()
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_lost_downloader_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
@@ -421,8 +407,6 @@ class ForemanTestCase(TestCase):
         job.success = False
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_failed_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -446,8 +430,6 @@ class ForemanTestCase(TestCase):
         job.success = False
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_failed_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
@@ -479,8 +461,6 @@ class ForemanTestCase(TestCase):
         job.start_time = timezone.now()
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_hung_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -514,8 +494,6 @@ class ForemanTestCase(TestCase):
         job.start_time = timezone.now()
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_hung_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
@@ -547,8 +525,6 @@ class ForemanTestCase(TestCase):
         job.created_at = timezone.now()
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_lost_processor_jobs()
 
         self.assertEqual(len(mock_send_job.mock_calls), 1)
@@ -581,8 +557,6 @@ class ForemanTestCase(TestCase):
         job.created_at = DAY_BEFORE_JOB_CUTOFF
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_lost_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
@@ -610,8 +584,6 @@ class ForemanTestCase(TestCase):
         job.created_at = timezone.now()
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_lost_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
@@ -634,8 +606,6 @@ class ForemanTestCase(TestCase):
         job.created_at = timezone.now() - (main.MIN_LOOP_TIME + datetime.timedelta(minutes=1))
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_lost_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -659,8 +629,6 @@ class ForemanTestCase(TestCase):
         job.created_at = timezone.now() - (main.MIN_LOOP_TIME + datetime.timedelta(minutes=1))
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_lost_processor_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
@@ -751,8 +719,6 @@ class ForemanTestCase(TestCase):
         job.success = False
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_failed_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -783,8 +749,6 @@ class ForemanTestCase(TestCase):
         job.start_time = timezone.now()
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_hung_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -816,8 +780,6 @@ class ForemanTestCase(TestCase):
         job.start_time = timezone.now()
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_hung_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
@@ -847,8 +809,6 @@ class ForemanTestCase(TestCase):
         job.created_at = timezone.now()
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_lost_survey_jobs()
 
         self.assertEqual(len(mock_send_job.mock_calls), 1)
@@ -881,8 +841,6 @@ class ForemanTestCase(TestCase):
         job.created_at = DAY_BEFORE_JOB_CUTOFF
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_lost_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
@@ -908,8 +866,6 @@ class ForemanTestCase(TestCase):
         job.created_at = timezone.now()
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_lost_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 0)
 
@@ -930,8 +886,6 @@ class ForemanTestCase(TestCase):
         job.created_at = timezone.now() - (main.MIN_LOOP_TIME + datetime.timedelta(minutes=1))
         job.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.retry_lost_survey_jobs()
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -955,8 +909,6 @@ class ForemanTestCase(TestCase):
             pj.volume_index = p
             pj.save()
 
-        # Just run it once, not forever so get the function that is
-        # decorated with @do_forever
         main.send_janitor_jobs()
 
         self.assertEqual(ProcessorJob.objects.all().count(), 6)
