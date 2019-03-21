@@ -134,7 +134,7 @@ crontab -l > tempcron
 # echo new cron into cron file
 # TODO: stop logging this to api_cron.log once we figure out why it
 # hasn't been working.
-echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/20 * * * * docker exec -it dr_api python3 manage.py search_index --populate -f >> /var/log/api_cron.log" >> tempcron
+echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/20 * * * * docker exec -it dr_api python3 manage.py search_index --populate -f >> /var/log/api_cron.log 2>&1" >> tempcron
 # install new cron file
 crontab tempcron
 rm tempcron
