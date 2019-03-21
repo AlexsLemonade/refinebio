@@ -1149,8 +1149,13 @@ class Stats(APIView):
         nomad_running_jobs = {}
         nomad_pending_jobs = {}
         for (aggregate_key, group) in aggregated_jobs:
-            nomad_pending_jobs[aggregate_key] = sum(job["JobSummary"]["Children"]["Pending"] for job in group)
-            nomad_running_jobs[aggregate_key] = sum(job["JobSummary"]["Children"]["Running"] for job in group)
+            pending_jobs_count = 0
+            running_jobs_count = 0
+            for job in group:
+                pending_jobs_count += job["JobSummary"]["Children"]["Pending"]
+                running_jobs_count += job["JobSummary"]["Children"]["Running"]
+            nomad_pending_jobs[aggregate_key] = pending_jobs_count
+            nomad_running_jobs[aggregate_key] = running_jobs_count
 
         return nomad_pending_jobs, nomad_running_jobs
 
@@ -1188,7 +1193,7 @@ class Stats(APIView):
         sorted_jobs_by_volume = sorted(filter(self._get_job_volume, parameterized_jobs), key=self._get_job_volume)
         aggregated_jobs_by_volume = groupby(sorted_jobs_by_volume, self._get_job_volume)
         nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume = self._aggregate_nomad_jobs(aggregated_jobs_by_volume)
-
+        
         return {
             "nomad_pending_jobs": nomad_pending_jobs,
             "nomad_running_jobs": nomad_running_jobs,
