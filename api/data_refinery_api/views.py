@@ -1172,16 +1172,16 @@ class Stats(APIView):
         
         return name_match.group('type'), name_match.group('volume_id')
 
-    def _get_job_type(self, job): return self._get_job_details(job)[0]
-    def _get_job_volume(self, job): return self._get_job_details(job)[1]
-
     def _get_nomad_jobs_breakdown(self):
         jobs = get_nomad_jobs()
         parameterized_jobs = [job for job in jobs if job['ParameterizedJob']]
 
+        get_job_type = lambda job: self._get_job_details(job)[0]
+        get_job_volume = lambda job: self._get_job_details(job)[1]
+
         # groupby must be executed on a sorted iterable https://docs.python.org/2/library/itertools.html#itertools.groupby
-        sorted_jobs_by_type = sorted(filter(self._get_job_type, parameterized_jobs), key=self._get_job_type)
-        aggregated_jobs_by_type = groupby(sorted_jobs_by_type, self._get_job_type)
+        sorted_jobs_by_type = sorted(filter(get_job_type, parameterized_jobs), key=get_job_type)
+        aggregated_jobs_by_type = groupby(sorted_jobs_by_type, get_job_type)
         nomad_pending_jobs_by_type, nomad_running_jobs_by_type = self._aggregate_nomad_jobs(aggregated_jobs_by_type)
 
         # To get the total jobs for running and pending, the easiest
@@ -1190,8 +1190,8 @@ class Stats(APIView):
         nomad_running_jobs = sum(num_jobs for job_type, num_jobs in nomad_running_jobs_by_type.items())
         nomad_pending_jobs = sum(num_jobs for job_type, num_jobs in nomad_pending_jobs_by_type.items())
 
-        sorted_jobs_by_volume = sorted(filter(self._get_job_volume, parameterized_jobs), key=self._get_job_volume)
-        aggregated_jobs_by_volume = groupby(sorted_jobs_by_volume, self._get_job_volume)
+        sorted_jobs_by_volume = sorted(filter(get_job_volume, parameterized_jobs), key=get_job_volume)
+        aggregated_jobs_by_volume = groupby(sorted_jobs_by_volume, get_job_volume)
         nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume = self._aggregate_nomad_jobs(aggregated_jobs_by_volume)
         
         return {
