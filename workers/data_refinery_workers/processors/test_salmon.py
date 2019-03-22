@@ -247,6 +247,21 @@ class SalmonTestCase(TestCase):
         shutil.rmtree(job_context["work_dir"], ignore_errors=True)
 
     @tag('salmon')
+    def test_salmon_dotsra_two(self):
+        """Test the whole pipeline."""
+        # Ensure any computed files from previous tests are removed.
+        try:
+            os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
+        except FileNotFoundError:
+            pass
+
+        job, files = prepare_dotsra_job('ERR2496079.sra')
+        job_context = salmon.salmon(job.pk)
+        job = ProcessorJob.objects.get(id=job.pk)
+        self.assertTrue(job.success)
+        shutil.rmtree(job_context["work_dir"], ignore_errors=True)
+
+    @tag('salmon')
     def test_salmon_dotsra_bad(self):
         try:
             os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
