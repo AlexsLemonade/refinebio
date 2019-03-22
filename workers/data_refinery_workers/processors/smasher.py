@@ -744,7 +744,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         # https://github.com/AlexsLemonade/refinebio/pull/421#discussion_r203799646
         metadata['non_aggregated_files'] = unsmashable_files
         metadata['ks_statistic'] = job_context.get("ks_statistic", None)
-        metadata['ks_statistic'] = job_context.get("ks_statistic", None)
         metadata['ks_pvalue'] = job_context.get("ks_pvalue", None)
         metadata['ks_warning'] = job_context.get("ks_warning", None)
 
