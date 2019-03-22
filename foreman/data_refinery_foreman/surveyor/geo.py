@@ -120,11 +120,12 @@ class GeoSurveyor(ExternalSourceSurveyor):
             else:
                 channel1_protocol = ""
 
-            if ('AGILENT' in channel1_protocol):
+            platform = sample_object.pretty_platform.upper()
+            if ('AGILENT' in platform):
                 sample_object.manufacturer = "AGILENT"
-            elif ('ILLUMINA' in channel1_protocol):
+            elif ('ILLUMINA' in platform or "NEXTSEQ" in platform):
                 sample_object.manufacturer = "ILLUMINA"
-            elif ('AFFYMETRIX' in channel1_protocol):
+            elif ('AFFYMETRIX' in platform):
                 sample_object.manufacturer = "AFFYMETRIX"
             else:
                 sample_object.manufacturer = UNKNOWN
