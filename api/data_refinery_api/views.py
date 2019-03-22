@@ -1152,8 +1152,10 @@ class Stats(APIView):
             pending_jobs_count = 0
             running_jobs_count = 0
             for job in group:
-                pending_jobs_count += job["JobSummary"]["Children"]["Pending"]
-                running_jobs_count += job["JobSummary"]["Children"]["Running"]
+                if job["JobSummary"]["Children"]: # this can be null
+                    pending_jobs_count += job["JobSummary"]["Children"]["Pending"]
+                    running_jobs_count += job["JobSummary"]["Children"]["Running"]
+
             nomad_pending_jobs[aggregate_key] = pending_jobs_count
             nomad_running_jobs[aggregate_key] = running_jobs_count
 
