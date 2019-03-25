@@ -273,7 +273,6 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
     Use the sra-stat tool to determine length
     ex:
         sra-stat -x --statistics ERR1562482.sra
-
     """
 
     command_str = ("sra-stat -x --statistics {sra_file}")
@@ -282,16 +281,34 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
     logger.debug("Running sra-stat using the following shell command: %s",
                  formatted_command,
                  processor_job=job_context["job_id"])
+
     completed_command = subprocess.run(formatted_command.split(),
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
     respo = completed_command.stdout.decode().strip()
-
     stats = untangle.parse(respo)
-    bases_count = int(stats.Run.Bases['count'])
-    reads_count = (int(stats.Run.Statistics['nspots']) * int(stats.Run.Statistics['nreads']))
-    job_context['sra_num_reads'] = int(stats.Run.Statistics['nreads'])
-    job_context["index_length_raw"] = int(bases_count / reads_count)
+
+    # Different SRA files can create different output formats, somehow.
+    # This mess tries every output method we can to parse these stats.
+    # If it's so messed up we don't know, default to short.
+    try:
+        bases_count = int(stats.Run.Bases['count'])
+        reads_count = (int(stats.Run.Statistics['nspots']) * int(stats.Run.Statistics['nreads']))
+        job_context['sra_num_reads'] = int(stats.Run.Statistics['nreads'])
+        job_context["index_length_raw"] = int(bases_count / reads_count)
+    except Exception:
+        try:
+            job_context['sra_num_reads'] = int(stats.Run.Statistics['nreads'])
+            spot_count_mates = int(stats.Run['spot_count_mates'])
+            base_count_bio_mates = int(stats.Run['base_count_bio_mates'])
+            reads_count = spot_count_mates * int(stats.Run.Statistics['nreads'])
+            job_context["index_length_raw"] = int(base_count_bio_mates / reads_count)
+        except Exception:
+            try:
+                job_context["index_length_raw"] = int(stats.Run.Statistics.Read[0]['average'])
+            except Exception:
+                logger.error("Unable to determine index length! Defaulting to small", stat_response=respo)
+                job_context["index_length_raw"] = -1
 
     if job_context["index_length_raw"] > 75:
         job_context["index_length"] = "long"
@@ -968,7 +985,7 @@ def _run_salmon(job_context: Dict) -> Dict:
             job_context['computed_files'].append(salmon_quant_archive)
 
         kv = ComputationalResultAnnotation()
-        kv.data = {"index_length": job_context["index_length"]}
+        kv.data = {"index_length": job_context["index_length"], "index_length_get": job_context.get("index_length_raw", None)}
         kv.result = result
         kv.is_public = True
         kv.save()
