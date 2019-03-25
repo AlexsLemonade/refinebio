@@ -427,7 +427,7 @@ def _quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict
                 # rather than failing tons of tests. This may need tuning.
                 if ks_check:
                     if statistic > ks_stat or pvalue < 0.8:
-                        raise Exception("Failed Kolmogorov Smirnov test! Stat: " +
+                        job_context['ks_warning'] = ("Failed Kolmogorov Smirnov test! Stat: " +
                                         str(statistic) + ", PVal: " + str(pvalue))
         else:
             logger.warning("Not enough columns to perform KS test - either bad smash or single saple smash.",
@@ -743,6 +743,9 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         metadata['scale_by'] = job_context["dataset"].scale_by
         # https://github.com/AlexsLemonade/refinebio/pull/421#discussion_r203799646
         metadata['non_aggregated_files'] = unsmashable_files
+        metadata['ks_statistic'] = job_context.get("ks_statistic", None)
+        metadata['ks_pvalue'] = job_context.get("ks_pvalue", None)
+        metadata['ks_warning'] = job_context.get("ks_warning", None)
 
         samples = {}
         for sample in job_context["dataset"].get_samples():
