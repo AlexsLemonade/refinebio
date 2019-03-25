@@ -990,20 +990,29 @@ def _run_salmon(job_context: Dict) -> Dict:
         kv.is_public = True
         kv.save()
 
-        with open(os.path.join(job_context['output_directory'], 'lib_format_counts.json')) as lfc_file:
-            format_count_data = json.load(lfc_file)
-            kv = ComputationalResultAnnotation()
-            kv.data = format_count_data
-            kv.result = result
-            kv.is_public = True
-            kv.save()
-        with open(os.path.join(job_context['output_directory'], 'aux_info', 'meta_info.json')) as mi_file:
-            meta_info = json.load(mi_file)
-            kv = ComputationalResultAnnotation()
-            kv.data = meta_info
-            kv.result = result
-            kv.is_public = True
-            kv.save()
+        try:
+            with open(os.path.join(job_context['output_directory'], 'lib_format_counts.json')) as lfc_file:
+                format_count_data = json.load(lfc_file)
+                kv = ComputationalResultAnnotation()
+                kv.data = format_count_data
+                kv.result = result
+                kv.is_public = True
+                kv.save()
+        except Exception:
+            # See: https://github.com/AlexsLemonade/refinebio/issues/1167
+            logger.exception("Error parsing Salmon lib_format_counts JSON output!", processor_job=job_context["job_id"])
+
+        try:
+            with open(os.path.join(job_context['output_directory'], 'aux_info', 'meta_info.json')) as mi_file:
+                meta_info = json.load(mi_file)
+                kv = ComputationalResultAnnotation()
+                kv.data = meta_info
+                kv.result = result
+                kv.is_public = True
+                kv.save()
+        except Exception:
+            # See: https://github.com/AlexsLemonade/refinebio/issues/1167
+            logger.exception("Error parsing Salmon meta_info JSON output!", processor_job=job_context["job_id"])
 
         job_context["success"] = True
 
