@@ -308,7 +308,7 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
                 job_context["index_length_raw"] = int(stats.Run.Statistics.Read[0]['average'])
             except Exception:
                 logger.error("Unable to determine index length! Defaulting to small", stat_response=respo)
-                job_context["index_length"] = "short"
+                job_context["index_length_raw"] = -1
 
     if job_context["index_length_raw"] > 75:
         job_context["index_length"] = "long"
