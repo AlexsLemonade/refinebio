@@ -985,7 +985,7 @@ def _run_salmon(job_context: Dict) -> Dict:
             job_context['computed_files'].append(salmon_quant_archive)
 
         kv = ComputationalResultAnnotation()
-        kv.data = {"index_length": job_context["index_length"]}
+        kv.data = {"index_length": job_context["index_length"], "index_length_get": job_context.get("index_length_raw", None)}
         kv.result = result
         kv.is_public = True
         kv.save()
