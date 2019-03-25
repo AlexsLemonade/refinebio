@@ -150,12 +150,6 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context['organism'] = job_context['sample'].organism
     job_context["success"] = True
 
-    # Since 0.9, Nomad can access Docker's tmpfs features,
-    # which allows us to avoid fasterq-dump's disk thrashing.
-    job_context["temp_dir"] = "/home/user/data_store_tmpfs"
-    # Should be created by Docker already, but do it anyway.
-    os.makedirs(job_context["temp_dir"], exist_ok=True)
-
     job_context["output_directory"] = job_context["work_dir"] + sample.accession_code + "_output/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
 
