@@ -348,17 +348,18 @@ def retry_failed_downloader_jobs() -> None:
 
     paginator = Paginator(failed_jobs, 200)
     page = paginator.page()
+    page_count = 0
     while True:
         logger.info(
             "Handling page %d of failed (explicitly-marked-as-failure) downloader jobs!",
-            page_idx,
-            jobs_count=(page.end_index() - page.start_index() + 1)
+            page_count
 
         )
         handle_downloader_jobs(page.object_list)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
         else:
             break
 
@@ -386,6 +387,8 @@ def retry_hung_downloader_jobs() -> None:
 
     paginator = Paginator(potentially_hung_jobs, 200)
     page = paginator.page()
+
+    page_count = 0
     while True:
         hung_jobs = []
         for job in page.object_list:
@@ -406,13 +409,14 @@ def retry_hung_downloader_jobs() -> None:
         if hung_jobs:
             logger.info(
                 "Handling page %d of hung (started-but-never-finished) downloader jobs!",
-                page_idx,
+                page_count,
                 jobs_count=len(hung_jobs)
             )
             handle_downloader_jobs(hung_jobs)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
         else:
             break
 
@@ -448,6 +452,7 @@ def retry_lost_downloader_jobs() -> None:
 
     paginator = Paginator(potentially_lost_jobs, 200)
     page = paginator.page()
+    page_count = 0
     while True:
         lost_jobs = []
         for job in page.object_list:
@@ -482,13 +487,14 @@ def retry_lost_downloader_jobs() -> None:
         if lost_jobs:
             logger.info(
                 "Handling page %d of lost (never-started) downloader jobs!",
-                page_idx,
+                page_count,
                 len_jobs=len(lost_jobs)
             )
             handle_downloader_jobs(lost_jobs)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
         else:
             break
 
@@ -629,16 +635,17 @@ def retry_failed_processor_jobs() -> None:
 
     paginator = Paginator(failed_jobs, 200)
     page = paginator.page()
+    page_count = 0
     while True:
         logger.info(
             "Handling page %d of failed (explicitly-marked-as-failure) processor jobs!",
-            page_idx,
-            jobs_count=(page.end_index() - page.start_index() + 1)
+            page_count
         )
         handle_processor_jobs(page.object_list)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
         else:
             break
 
@@ -678,9 +685,10 @@ def retry_hung_processor_jobs() -> None:
 
     paginator = Paginator(potentially_hung_jobs, 200)
     page = paginator.page()
+    page_count = 0
     while True:
         hung_jobs = []
-        for job in paginator.page(page_idx).object_list:
+        for job in page.object_list:
             try:
                 job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
                 if job_status != "running":
@@ -708,13 +716,14 @@ def retry_hung_processor_jobs() -> None:
         if hung_jobs:
             logger.info(
                 "Handling hung page %d of (started-but-never-finished) processor jobs!",
-                page_idx,
+                page_count,
                 len_jobs=len(hung_jobs)
             )
             handle_processor_jobs(hung_jobs)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
         else:
             break
 
@@ -753,6 +762,7 @@ def retry_lost_processor_jobs() -> None:
 
     paginator = Paginator(potentially_lost_jobs, 200)
     page = paginator.page()
+    page_count = 0
     while True:
         lost_jobs = []
         for job in page.object_list:
@@ -790,13 +800,14 @@ def retry_lost_processor_jobs() -> None:
         if lost_jobs:
             logger.info(
                 "Handling lost page %d of (never-started) processor jobs!",
-                page_idx,
+                page_count,
                 len_jobs=len(lost_jobs)
             )
             handle_processor_jobs(lost_jobs)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
         else:
             break
 
@@ -902,15 +913,21 @@ def retry_failed_survey_jobs() -> None:
         return
 
     paginator = Paginator(failed_jobs, 200)
-    for page_idx in range(1, paginator.num_pages + 1):
-        page = paginator.page(page_idx)
+    page = paginator.page()
+    page_count = 0
+    while True:
         logger.info(
             "Handling page %d of failed (explicitly-marked-as-failure) survey jobs!",
-            page_idx,
-            len_jobs=(page.end_index() - page.start_index() + 1)
+            page_count
         )
         handle_survey_jobs(page.object_list)
 
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
+        else:
+            break
+    
 
 def retry_hung_survey_jobs() -> None:
     """Retry survey jobs that were started but never finished."""
@@ -931,9 +948,11 @@ def retry_hung_survey_jobs() -> None:
         return
 
     paginator = Paginator(potentially_hung_jobs, 200)
-    for page_idx in range(1, paginator.num_pages + 1):
+    page = paginator.page()
+    page_count = 0
+    while True:
         hung_jobs = []
-        for job in paginator.page(page_idx).object_list:
+        for job in page.object_list:
             try:
                 # Surveyor jobs didn't always have nomad_job_ids. If they
                 # don't have one then by this point they've definitely died.
@@ -957,11 +976,16 @@ def retry_hung_survey_jobs() -> None:
         if hung_jobs:
             logger.info(
                 "Handling page %d of hung (started-but-never-finished) survey jobs!",
-                page_idx,
+                page_count,
                 len_jobs=len(hung_jobs)
             )
             handle_survey_jobs(hung_jobs)
 
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
+        else:
+            break
 
 def retry_lost_survey_jobs() -> None:
     """Retry survey jobs which never even got started for too long."""
@@ -982,9 +1006,11 @@ def retry_lost_survey_jobs() -> None:
         return
 
     paginator = Paginator(potentially_lost_jobs, 200)
-    for page_idx in range(1, paginator.num_pages + 1):
+    page = paginator.page()
+    page_count = 0
+    while True:
         lost_jobs = []
-        for job in paginator.page(page_idx).object_list:
+        for job in page.object_list:
             try:
                 # Surveyor jobs didn't always have nomad_job_ids. If they
                 # don't have one then by this point they've definitely died.
@@ -1017,10 +1043,16 @@ def retry_lost_survey_jobs() -> None:
         if lost_jobs:
             logger.info(
                 "Handling page %d of lost (never-started) survey jobs!",
-                page_idx,
+                page_count,
                 len_jobs=len(lost_jobs)
             )
             handle_survey_jobs(lost_jobs)
+
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
+        else:
+            break
 
 ##
 # Janitor
