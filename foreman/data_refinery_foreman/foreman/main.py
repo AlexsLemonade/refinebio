@@ -5,7 +5,8 @@ import time
 import traceback
 
 from django.conf import settings
-from django.core.paginator import Paginator
+#from django.core.paginator import Paginator
+from data_refinery_foreman.foreman.performant_pagination.pagination import PerformantPaginator as Paginator
 from django.db import transaction
 from django.utils import timezone
 from functools import wraps
@@ -346,8 +347,8 @@ def retry_failed_downloader_jobs() -> None:
         return
 
     paginator = Paginator(failed_jobs, 200)
-    for page_idx in range(1, paginator.num_pages + 1):
-        page = paginator.page(page_idx)
+    page = paginator.page()
+    while True:
         logger.info(
             "Handling page %d of failed (explicitly-marked-as-failure) downloader jobs!",
             page_idx,
@@ -356,6 +357,10 @@ def retry_failed_downloader_jobs() -> None:
         )
         handle_downloader_jobs(page.object_list)
 
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+        else:
+            break
 
 def retry_hung_downloader_jobs() -> None:
     """Retry downloader jobs that were started but never finished."""
@@ -380,9 +385,10 @@ def retry_hung_downloader_jobs() -> None:
         return
 
     paginator = Paginator(potentially_hung_jobs, 200)
-    for page_idx in range(1, paginator.num_pages + 1):
+    page = paginator.page()
+    while True:
         hung_jobs = []
-        for job in paginator.page(page_idx).object_list:
+        for job in page.object_list:
             try:
                 job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
                 if job_status != "running":
@@ -405,6 +411,10 @@ def retry_hung_downloader_jobs() -> None:
             )
             handle_downloader_jobs(hung_jobs)
 
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+        else:
+            break
 
 def retry_lost_downloader_jobs() -> None:
     """Retry downloader jobs that went too long without being started.
@@ -437,9 +447,10 @@ def retry_lost_downloader_jobs() -> None:
         return
 
     paginator = Paginator(potentially_lost_jobs, 200)
-    for page_idx in range(1, paginator.num_pages + 1):
+    page = paginator.page()
+    while True:
         lost_jobs = []
-        for job in paginator.page(page_idx).object_list:
+        for job in page.object_list:
             try:
                 if job.nomad_job_id:
                     job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
@@ -475,6 +486,11 @@ def retry_lost_downloader_jobs() -> None:
                 len_jobs=len(lost_jobs)
             )
             handle_downloader_jobs(lost_jobs)
+
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+        else:
+            break
 
 
 ##
@@ -612,8 +628,8 @@ def retry_failed_processor_jobs() -> None:
         return
 
     paginator = Paginator(failed_jobs, 200)
-    for page_idx in range(1, paginator.num_pages + 1):
-        page = paginator.page(page_idx)
+    page = paginator.page()
+    while True:
         logger.info(
             "Handling page %d of failed (explicitly-marked-as-failure) processor jobs!",
             page_idx,
@@ -621,6 +637,10 @@ def retry_failed_processor_jobs() -> None:
         )
         handle_processor_jobs(page.object_list)
 
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+        else:
+            break
 
 def retry_hung_processor_jobs() -> None:
     """Retry processor jobs that were started but never finished.
@@ -657,7 +677,8 @@ def retry_hung_processor_jobs() -> None:
         return
 
     paginator = Paginator(potentially_hung_jobs, 200)
-    for page_idx in range(1, paginator.num_pages + 1):
+    page = paginator.page()
+    while True:
         hung_jobs = []
         for job in paginator.page(page_idx).object_list:
             try:
@@ -692,6 +713,10 @@ def retry_hung_processor_jobs() -> None:
             )
             handle_processor_jobs(hung_jobs)
 
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+        else:
+            break
 
 def retry_lost_processor_jobs() -> None:
     """Retry processor jobs which never even got started for too long.
@@ -727,9 +752,10 @@ def retry_lost_processor_jobs() -> None:
         return
 
     paginator = Paginator(potentially_lost_jobs, 200)
-    for page_idx in range(1, paginator.num_pages + 1):
+    page = paginator.page()
+    while True:
         lost_jobs = []
-        for job in paginator.page(page_idx).object_list:
+        for job in page.object_list:
             try:
                 if job.nomad_job_id:
                     job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
@@ -768,6 +794,11 @@ def retry_lost_processor_jobs() -> None:
                 len_jobs=len(lost_jobs)
             )
             handle_processor_jobs(lost_jobs)
+
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+        else:
+            break
 
 ##
 # Surveyors
