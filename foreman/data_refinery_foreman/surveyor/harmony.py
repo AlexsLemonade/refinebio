@@ -668,10 +668,16 @@ def parse_sdrf(sdrf_url: str) -> List:
     """ Given a URL to an SDRF file, download parses it into JSON. """
 
     try:
-        sdrf_text = requests_retry_session().get(sdrf_url, timeout=60).text
+        sdrf_response = requests_retry_session().get(sdrf_url, timeout=60)
     except Exception as e:
-        logger.exception("Unable to fetch URL: " + sdrf_url, exception=str(e))
+        logger.exception("Unable to fetch URL: " + sdrf_url)
         return []
+
+    if sdrf_response.status_code != 200:
+        logger.error("Unable to fetch URL: " + sdrf_url, response_code=sdrf_response.status_code)
+        return []
+
+    sdrf_text = sdrf_response.text
 
     samples = []
 
