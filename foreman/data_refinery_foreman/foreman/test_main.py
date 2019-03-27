@@ -25,9 +25,9 @@ from test.support import EnvironmentVarGuard # Python >=3
 DAY_BEFORE_JOB_CUTOFF = main.JOB_CREATED_AT_CUTOFF - datetime.timedelta(days=1)
 
 class ForemanTestCase(TestCase):
-    def create_downloader_job(self):
+    def create_downloader_job(self, suffix="e8eaf540"):
         job = DownloaderJob(downloader_task="SRA",
-                            nomad_job_id="DOWNLOADER/dispatch-1528945054-e8eaf540",
+                            nomad_job_id="DOWNLOADER/dispatch-1528945054-" + suffix,
                             num_retries=0,
                             accession_code="NUNYA",
                             success=None)
@@ -124,6 +124,28 @@ class ForemanTestCase(TestCase):
         self.assertFalse(original_job.success)
 
         retried_job = jobs[1]
+        self.assertEqual(retried_job.num_retries, 1)
+
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_retrying_many_failed_downloader_jobs(self, mock_send_job):
+        mock_send_job.return_value = True
+
+        for x in range(0, 500):
+            job = self.create_downloader_job(str(x))
+            job.success = False
+            job.save()
+
+        main.retry_failed_downloader_jobs()
+        self.assertEqual(len(mock_send_job.mock_calls), 500)
+
+        jobs = DownloaderJob.objects.order_by('id')
+
+        original_job = jobs[0]
+        self.assertTrue(original_job.retried)
+        self.assertEqual(original_job.num_retries, 0)
+        self.assertFalse(original_job.success)
+
+        retried_job = jobs[501]
         self.assertEqual(retried_job.num_retries, 1)
 
     @patch('data_refinery_foreman.foreman.main.send_job')
