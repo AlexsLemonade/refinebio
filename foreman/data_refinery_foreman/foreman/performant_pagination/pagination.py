@@ -103,7 +103,8 @@ class PerformantPaginator(object):
             value = obj._meta.get_field(pieces[-1]).value_to_string(obj)
 
         # return our value
-        return b64encode(value)
+        value_bytes = value.encode()
+        return b64encode(value_bytes)
 
     def _token_to_clause(self, token, rev=False):
         # in the forward direction we want things that are greater than our
