@@ -48,6 +48,10 @@ MAX_NUM_RETRIES = 2
 # This can be overritten by the env var "MAX_TOTAL_JOBS"
 DEFAULT_MAX_JOBS = 20000
 
+
+# This is the maximum number of non-dead nomad jobs that can be in the queue.
+MAX_TOTAL_DOWNLOADER_JOBS = 200
+
 # The minimum amount of time in between each iteration of the main
 # loop. We could loop much less frequently than every two minutes if
 # the work we do takes longer than 2 minutes, but this will prevent
@@ -290,17 +294,28 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
         new_job.delete()
 
 
+def count_downloader_jobs_in_queue(nomad_client: Nomad) -> int:
+    """Counts how many downloader jobs in the Nomad queue do not have status of 'dead'."""
+    all_downloader_jobs = nomad_client.jobs.get_jobs(prefix="DOWNLOADER")
+
+    total = 0
+    for job in all_downloader_jobs:
+        if job['ParameterizedJob']:
+            total = total + job['JobSummary']['Children']['Pending']
+            total = total + job['JobSummary']['Children']['Running']
+
+    return total
+
+
 def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
     """For each job in jobs, either retry it or log it."""
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-    # Maximum number of total jobs running at a time.
-    # We do this now rather than import time for testing purposes.
-    MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
-    len_all_jobs = len(nomad_client.jobs.get_jobs())
-    if len_all_jobs >= MAX_TOTAL_JOBS:
+
+    num_downloader_jobs = count_downloader_jobs_in_queue(nomad_client)
+    if num_downloader_jobs >= MAX_TOTAL_DOWNLOADER_JOBS:
         logger.info("Not requeuing job until we're running fewer jobs.")
         return False
 
@@ -314,6 +329,7 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
     # jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
     # jobs = prioritize_zebrafish_jobs(jobs)
 
+    num_to_dispatch = MAX_TOTAL_DOWNLOADER_JOBS - num_downloader_jobs
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
         if job.num_retries < MAX_NUM_RETRIES:
@@ -322,12 +338,8 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
         else:
             handle_repeated_failure(job)
 
-        if (count % 100) == 0:
-            len_all_jobs = len(nomad_client.jobs.get_jobs())
-
-        if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
-            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more downloader jobs now.")
-            return False
+        if jobs_dispatched > num_to_dispatch:
+            break
 
     return True
 
@@ -927,7 +939,7 @@ def retry_failed_survey_jobs() -> None:
             page_count = page_count + 1
         else:
             break
-    
+
 
 def retry_hung_survey_jobs() -> None:
     """Retry survey jobs that were started but never finished."""
