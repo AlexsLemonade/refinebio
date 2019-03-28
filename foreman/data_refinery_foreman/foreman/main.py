@@ -50,6 +50,7 @@ DEFAULT_MAX_JOBS = 20000
 
 # This is the maximum number of non-dead nomad jobs that can be in the queue.
 MAX_TOTAL_DOWNLOADER_JOBS = 0
+DOWNLOADER_JOBS_PER_NODE = 40
 TIME_OF_LAST_SIZE_CHECK = timezone.now()
 
 # The minimum amount of time in between each iteration of the main
@@ -126,10 +127,13 @@ def get_max_downloader_jobs(window=datetime.timedelta(minutes=2), nomad_client=N
             nomad_port = get_env_variable("NOMAD_PORT", "4646")
             nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
 
-        MAX_TOTAL_DOWNLOADER_JOBS = len(nomad_client.nodes) * 50
+        MAX_TOTAL_DOWNLOADER_JOBS = len(nomad_client.nodes) * DOWNLOADER_JOBS_PER_NODE
         TIME_OF_LAST_SIZE_CHECK = timezone.now()
 
-    return MAX_TOTAL_DOWNLOADER_JOBS
+    if MAX_TOTAL_DOWNLOADER_JOBS > 1000:
+        return 1000
+    else:
+        return MAX_TOTAL_DOWNLOADER_JOBS
 
 ##
 # Job Prioritization
