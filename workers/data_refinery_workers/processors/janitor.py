@@ -59,10 +59,8 @@ def _find_and_remove_expired_jobs(job_context):
                 try:
                     job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
 
-                    # This job is running, don't delete  the working directory.
-                    if job_status == "running":
-                        continue
-                    if job_status == "pending":
+                    # This job is running, don't delete the working directory.
+                    if job_status in ["running", "pending"]:
                         continue
                 except URLNotFoundNomadException as e:
                     # Nomad has no record of this job, meaning it has likely been GC'd after death.
