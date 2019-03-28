@@ -49,7 +49,7 @@ MAX_NUM_RETRIES = 2
 DEFAULT_MAX_JOBS = 20000
 
 # This is the maximum number of non-dead nomad jobs that can be in the queue.
-MAX_TOTAL_DOWNLOADER_JOBS = 0
+MAX_TOTAL_DOWNLOADER_JOBS = 1
 DOWNLOADER_JOBS_PER_NODE = 40
 TIME_OF_LAST_SIZE_CHECK = timezone.now()
 
