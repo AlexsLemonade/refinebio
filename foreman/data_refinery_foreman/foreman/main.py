@@ -50,7 +50,7 @@ DEFAULT_MAX_JOBS = 20000
 
 
 # This is the maximum number of non-dead nomad jobs that can be in the queue.
-MAX_TOTAL_DOWNLOADER_JOBS = 400
+MAX_TOTAL_DOWNLOADER_JOBS = 1000
 
 # The minimum amount of time in between each iteration of the main
 # loop. We could loop much less frequently than every two minutes if
