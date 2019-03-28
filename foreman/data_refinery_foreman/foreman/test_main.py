@@ -922,17 +922,7 @@ class ForemanTestCase(TestCase):
             ixs.remove(p.volume_index)
 
     def test_get_max_downloader_jobs(self):
-
-        # Default is at zero since the cluster isn't online when the foreman starts up.
-        jobsnow = main.get_max_downloader_jobs()
-        self.assertEqual(jobsnow, 0)
-
-        # Once the window has elapsed, this should increase beyond 0.
-        time.sleep(2)
-        jobsnow = main.get_max_downloader_jobs(window=datetime.timedelta(seconds=1))
-        self.assertNotEqual(jobsnow, 0)
-        jobsnow = main.get_max_downloader_jobs()
-        self.assertNotEqual(jobsnow, 0)
+        self.assertNotEqual(main.get_max_downloader_jobs(), 0)
 
 # class JobPrioritizationTestCase(TestCase):
 #     def setUp(self):

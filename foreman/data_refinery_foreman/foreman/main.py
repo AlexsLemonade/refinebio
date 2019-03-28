@@ -48,9 +48,12 @@ MAX_NUM_RETRIES = 2
 # This can be overritten by the env var "MAX_TOTAL_JOBS"
 DEFAULT_MAX_JOBS = 20000
 
-# This is the maximum number of non-dead nomad jobs that can be in the queue.
-MAX_TOTAL_DOWNLOADER_JOBS = 0
 DOWNLOADER_JOBS_PER_NODE = 40
+
+# This is the maximum number of non-dead nomad jobs that can be in the
+# queue. Set the default to one node's worth so we never are unable
+# to queue downloader jobs.
+MAX_TOTAL_DOWNLOADER_JOBS = DOWNLOADER_JOBS_PER_NODE
 TIME_OF_LAST_SIZE_CHECK = timezone.now()
 
 # The minimum amount of time in between each iteration of the main
@@ -113,9 +116,17 @@ def handle_repeated_failure(job) -> None:
     logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1)
 
 def get_max_downloader_jobs(window=datetime.timedelta(minutes=2), nomad_client=None):
-    """
-    Fetches the desired maximum number of downloader jobs available based on the cluster size.
-    If this has been calculated recently, returns a cached value, else it will calculate it fresh every `window`.
+    """Fetches the desired maximum number of downloader jobs available
+    based on the cluster size.
+
+    If this has been calculated recently, returns a cached value, else
+    it will calculate it fresh every `window`.
+
+    Will never return less than DOWNLOADER_JOBS_PER_NODE because in
+    local and test environments we will never have more than one
+    node. Having DOWNLOADER_JOBS_PER_NODE jobs in the queue when
+    there's no nodes isn't an issue since they'll just get picked up
+    when there is.
     """
     global MAX_TOTAL_DOWNLOADER_JOBS
     global TIME_OF_LAST_SIZE_CHECK
@@ -133,6 +144,8 @@ def get_max_downloader_jobs(window=datetime.timedelta(minutes=2), nomad_client=N
 
     if MAX_TOTAL_DOWNLOADER_JOBS > 1000:
         return 1000
+    elif MAX_TOTAL_DOWNLOADER_JOBS == 0:
+        return DOWNLOADER_JOBS_PER_NODE
     else:
         return MAX_TOTAL_DOWNLOADER_JOBS
 
@@ -330,19 +343,21 @@ def count_downloader_jobs_in_queue(nomad_client: Nomad) -> int:
     return total
 
 
-def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
-    """For each job in jobs, either retry it or log it."""
+def get_capacity_for_downloader_jobs(nomad_client) -> bool:
+    """Returns how many downloader jobs the queue has capacity for.
+    """
 
-    nomad_host = get_env_variable("NOMAD_HOST")
-    nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-
-    num_downloader_jobs = count_downloader_jobs_in_queue(nomad_client)
     current_max_downloader_jobs = get_max_downloader_jobs(nomad_client=nomad_client)
-    if num_downloader_jobs >= current_max_downloader_jobs:
-        logger.info("Not requeuing job until we're running fewer jobs.")
-        return False
+    current_downloader_jobs_in_queue = count_downloader_jobs_in_queue(nomad_client)
+    return current_max_downloader_jobs - current_downloader_jobs_in_queue
 
+
+def handle_downloader_jobs(jobs: List[DownloaderJob],
+                           queue_capacity: int = MAX_TOTAL_DOWNLOADER_JOBS) -> None:
+    """For each job in jobs, either retry it or log it.
+
+    No more than queue_capacity jobs will be retried.
+    """
     # We want zebrafish data first, then hgu133plus2, then data
     # related to pediatric cancer, then to finish salmon experiments
     # that are close to completion.
@@ -353,19 +368,17 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
     # jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
     # jobs = prioritize_zebrafish_jobs(jobs)
 
-    num_to_dispatch = current_max_downloader_jobs - num_downloader_jobs
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
+        if jobs_dispatched >= queue_capacity:
+            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more downloader jobs now.")
+            return
+
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_downloader_job(job)
             jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
-
-        if jobs_dispatched > num_to_dispatch:
-            break
-
-    return True
 
 def retry_failed_downloader_jobs() -> None:
     """Handle downloader jobs that were marked as a failure."""
@@ -379,23 +392,27 @@ def retry_failed_downloader_jobs() -> None:
         "original_files__samples"
     )
 
-    if failed_jobs.count() == 0:
-        return
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+    queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
 
     paginator = Paginator(failed_jobs, 200)
     page = paginator.page()
     page_count = 0
-    while True:
+    while queue_capacity > 0:
         logger.info(
             "Handling page %d of failed (explicitly-marked-as-failure) downloader jobs!",
             page_count
 
         )
-        handle_downloader_jobs(page.object_list)
+
+        handle_downloader_jobs(page.object_list, queue_capacity)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
             page_count = page_count + 1
+            queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
         else:
             break
 
@@ -417,15 +434,12 @@ def retry_hung_downloader_jobs() -> None:
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-
-    if potentially_hung_jobs.count() == 0:
-        return
+    queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
 
     paginator = Paginator(potentially_hung_jobs, 200)
     page = paginator.page()
-
     page_count = 0
-    while True:
+    while queue_capacity > 0:
         hung_jobs = []
         for job in page.object_list:
             try:
@@ -448,11 +462,12 @@ def retry_hung_downloader_jobs() -> None:
                 page_count,
                 jobs_count=len(hung_jobs)
             )
-            handle_downloader_jobs(hung_jobs)
+            handle_downloader_jobs(hung_jobs, queue_capacity)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
             page_count = page_count + 1
+            queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
         else:
             break
 
@@ -482,14 +497,12 @@ def retry_lost_downloader_jobs() -> None:
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-
-    if potentially_lost_jobs.count() == 0:
-        return
+    queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
 
     paginator = Paginator(potentially_lost_jobs, 200)
     page = paginator.page()
     page_count = 0
-    while True:
+    while queue_capacity > 0:
         lost_jobs = []
         for job in page.object_list:
             try:
@@ -526,11 +539,12 @@ def retry_lost_downloader_jobs() -> None:
                 page_count,
                 len_jobs=len(lost_jobs)
             )
-            handle_downloader_jobs(lost_jobs)
+            handle_downloader_jobs(lost_jobs, queue_capacity)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
             page_count = page_count + 1
+            queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
         else:
             break
 
@@ -601,19 +615,26 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
         new_job.delete()
 
 
-def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
-    """For each job in jobs, either retry it or log it."""
-
-    nomad_host = get_env_variable("NOMAD_HOST")
-    nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+def get_capacity_for_processor_jobs(nomad_client) -> bool:
+    """Returns how many processor jobs the queue has capacity for.
+    """
     # Maximum number of total jobs running at a time.
     # We do this now rather than import time for testing purposes.
     MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
     len_all_jobs = len(nomad_client.jobs.get_jobs())
-    if len_all_jobs >= MAX_TOTAL_JOBS:
-        logger.info("Not requeuing job until we're running fewer jobs.")
-        return False
+    return MAX_TOTAL_JOBS - len_all_jobs
+
+
+def handle_processor_jobs(jobs: List[ProcessorJob],
+                          queue_capacity: int = None) -> None:
+    """For each job in jobs, either retry it or log it.
+
+    No more than queue_capacity jobs will be retried.
+    """
+    # Maximum number of total jobs running at a time.
+    # We do this now rather than import time for testing purposes.
+    if queue_capacity is None:
+        queue_capacity = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
 
     # We want zebrafish data first, then hgu133plus2, then data
     # related to pediatric cancer, then to finish salmon experiments
@@ -627,20 +648,16 @@ def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
 
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
+        if jobs_dispatched >= queue_capacity:
+            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more processor jobs now.")
+            return
+
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_processor_job(job)
             jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
 
-        if (count % 100) == 0:
-            len_all_jobs = len(nomad_client.jobs.get_jobs())
-
-        if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
-            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more processor jobs now.")
-            return False
-
-    return True
 
 
 def retry_failed_processor_jobs() -> None:
@@ -666,22 +683,25 @@ def retry_failed_processor_jobs() -> None:
         "original_files__samples"
     )
 
-    if failed_jobs.count() == 0:
-        return
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+    queue_capacity = get_capacity_for_processor_jobs(nomad_client)
 
     paginator = Paginator(failed_jobs, 200)
     page = paginator.page()
     page_count = 0
-    while True:
+    while queue_capacity > 0:
         logger.info(
             "Handling page %d of failed (explicitly-marked-as-failure) processor jobs!",
             page_count
         )
-        handle_processor_jobs(page.object_list)
+        handle_processor_jobs(page.object_list, queue_capacity)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
             page_count = page_count + 1
+            queue_capacity = get_capacity_for_processor_jobs(nomad_client)
         else:
             break
 
@@ -711,18 +731,15 @@ def retry_hung_processor_jobs() -> None:
         "original_files__samples"
     )
 
-
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-
-    if potentially_hung_jobs.count() == 0:
-        return
+    queue_capacity = get_capacity_for_processor_jobs(nomad_client)
 
     paginator = Paginator(potentially_hung_jobs, 200)
     page = paginator.page()
     page_count = 0
-    while True:
+    while queue_capacity > 0:
         hung_jobs = []
         for job in page.object_list:
             try:
@@ -755,11 +772,12 @@ def retry_hung_processor_jobs() -> None:
                 page_count,
                 len_jobs=len(hung_jobs)
             )
-            handle_processor_jobs(hung_jobs)
+            handle_processor_jobs(hung_jobs, queue_capacity)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
             page_count = page_count + 1
+            queue_capacity = get_capacity_for_processor_jobs(nomad_client)
         else:
             break
 
@@ -792,14 +810,12 @@ def retry_lost_processor_jobs() -> None:
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
-
-    if potentially_lost_jobs.count() == 0:
-        return
+    queue_capacity = get_capacity_for_processor_jobs(nomad_client)
 
     paginator = Paginator(potentially_lost_jobs, 200)
     page = paginator.page()
     page_count = 0
-    while True:
+    while queue_capacity > 0:
         lost_jobs = []
         for job in page.object_list:
             try:
@@ -839,11 +855,12 @@ def retry_lost_processor_jobs() -> None:
                 page_count,
                 len_jobs=len(lost_jobs)
             )
-            handle_processor_jobs(lost_jobs)
+            handle_processor_jobs(lost_jobs, queue_capacity)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
             page_count = page_count + 1
+            queue_capacity = get_capacity_for_processor_jobs(nomad_client)
         else:
             break
 
@@ -904,37 +921,36 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
 
     return True
 
-
-def handle_survey_jobs(jobs: List[SurveyJob]) -> None:
-    """For each job in jobs, either retry it or log it."""
-
-    nomad_host = get_env_variable("NOMAD_HOST")
-    nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+def get_capacity_for_survey_jobs(nomad_client) -> bool:
+    """Returns how many survey jobs the queue has capacity for.
+    """
     # Maximum number of total jobs running at a time.
     # We do this now rather than import time for testing purposes.
     MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
     len_all_jobs = len(nomad_client.jobs.get_jobs())
-    if len_all_jobs >= MAX_TOTAL_JOBS:
-        logger.info("Not requeuing job until we're running fewer jobs.")
-        return False
+    return MAX_TOTAL_JOBS - len_all_jobs
 
+
+def handle_survey_jobs(jobs: List[SurveyJob], queue_capacity: int = None) -> None:
+    """For each job in jobs, either retry it or log it.
+
+    No more than queue_capacity jobs will be retried.
+    """
+    # Maximum number of total jobs running at a time.
+    # We do this now rather than import time for testing purposes.
+    if queue_capacity is None:
+        queue_capacity = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
+        if jobs_dispatched >= queue_capacity:
+            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more survey jobs now.")
+            return
+
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_survey_job(job)
             jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
-
-        if (count % 100) == 0:
-            len_all_jobs = len(nomad_client.jobs.get_jobs())
-
-        if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
-            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more survey jobs now.")
-            return False
-
-    return True
 
 
 def retry_failed_survey_jobs() -> None:
@@ -945,22 +961,25 @@ def retry_failed_survey_jobs() -> None:
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).order_by('pk')
 
-    if failed_jobs.count() == 0:
-        return
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+    queue_capacity = get_capacity_for_survey_jobs(nomad_client)
 
     paginator = Paginator(failed_jobs, 200)
     page = paginator.page()
     page_count = 0
-    while True:
+    while queue_capacity > 0:
         logger.info(
             "Handling page %d of failed (explicitly-marked-as-failure) survey jobs!",
             page_count
         )
-        handle_survey_jobs(page.object_list)
+        handle_survey_jobs(page.object_list, queue_capacity)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
             page_count = page_count + 1
+            queue_capacity = get_capacity_for_survey_jobs(nomad_client)
         else:
             break
 
@@ -979,14 +998,12 @@ def retry_hung_survey_jobs() -> None:
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-
-    if potentially_hung_jobs.count() == 0:
-        return
+    queue_capacity = get_capacity_for_survey_jobs(nomad_client)
 
     paginator = Paginator(potentially_hung_jobs, 200)
     page = paginator.page()
     page_count = 0
-    while True:
+    while queue_capacity > 0:
         hung_jobs = []
         for job in page.object_list:
             try:
@@ -1015,11 +1032,12 @@ def retry_hung_survey_jobs() -> None:
                 page_count,
                 len_jobs=len(hung_jobs)
             )
-            handle_survey_jobs(hung_jobs)
+            handle_survey_jobs(hung_jobs, queue_capacity)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
             page_count = page_count + 1
+            queue_capacity = get_capacity_for_survey_jobs(nomad_client)
         else:
             break
 
@@ -1037,14 +1055,12 @@ def retry_lost_survey_jobs() -> None:
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-
-    if potentially_lost_jobs.count() == 0:
-        return
+    queue_capacity = get_capacity_for_survey_jobs(nomad_client)
 
     paginator = Paginator(potentially_lost_jobs, 200)
     page = paginator.page()
     page_count = 0
-    while True:
+    while queue_capacity > 0:
         lost_jobs = []
         for job in page.object_list:
             try:
@@ -1082,11 +1098,12 @@ def retry_lost_survey_jobs() -> None:
                 page_count,
                 len_jobs=len(lost_jobs)
             )
-            handle_survey_jobs(lost_jobs)
+            handle_survey_jobs(lost_jobs, queue_capacity)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
             page_count = page_count + 1
+            queue_capacity = get_capacity_for_survey_jobs(nomad_client)
         else:
             break
 
