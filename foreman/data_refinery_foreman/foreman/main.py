@@ -895,40 +895,32 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
 
     return True
 
-
-def handle_survey_jobs(jobs: List[SurveyJob]) -> None:
-    """For each job in jobs, either retry it or log it.
-
-    Returns a boolean representing whether or not the queue has more
-    capacity for surveyor jobs."""
-
-    nomad_host = get_env_variable("NOMAD_HOST")
-    nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+def get_capacity_for_survey_jobs(nomad_client) -> bool:
+    """Returns True if the queue has room for survey jobs, False otherwise.
+    """
     # Maximum number of total jobs running at a time.
     # We do this now rather than import time for testing purposes.
     MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
     len_all_jobs = len(nomad_client.jobs.get_jobs())
-    if len_all_jobs >= MAX_TOTAL_JOBS:
-        logger.info("Not requeuing job until we're running fewer jobs.")
-        return False
+    return MAX_TOTAL_JOBS - len_all_jobs
 
+
+def handle_survey_jobs(jobs: List[SurveyJob], max_to_queue=MAX_TOTAL_JOBS) -> None:
+    """For each job in jobs, either retry it or log it.
+
+    No more than max_to_queue jobs will be retried.
+    """
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
-        if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
+        if jobs_dispatched >= max_to_queue:
             logger.info("We hit the maximum total jobs ceiling, so we're not handling any more survey jobs now.")
-            return False
+            return
 
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_survey_job(job)
             jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
-
-        if (count % 100) == 0:
-            len_all_jobs = len(nomad_client.jobs.get_jobs())
-
-    return True
 
 
 def retry_failed_survey_jobs() -> None:
@@ -942,20 +934,25 @@ def retry_failed_survey_jobs() -> None:
     if failed_jobs.count() == 0:
         return
 
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+    queue_capacity = get_capacity_for_survey_jobs(nomad_client)
+
     paginator = Paginator(failed_jobs, 200)
     page = paginator.page()
     page_count = 0
-    queue_has_capacity = True
-    while queue_has_capacity:
+    while queue_capacity > 0:
         logger.info(
             "Handling page %d of failed (explicitly-marked-as-failure) survey jobs!",
             page_count
         )
-        queue_has_capacity = handle_survey_jobs(page.object_list)
+        handle_survey_jobs(page.object_list, queue_capacity)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
             page_count = page_count + 1
+            queue_capacity = get_capacity_for_survey_jobs(nomad_client)
         else:
             break
 
