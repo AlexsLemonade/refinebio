@@ -48,9 +48,12 @@ MAX_NUM_RETRIES = 2
 # This can be overritten by the env var "MAX_TOTAL_JOBS"
 DEFAULT_MAX_JOBS = 20000
 
-# This is the maximum number of non-dead nomad jobs that can be in the queue.
-MAX_TOTAL_DOWNLOADER_JOBS = 0
 DOWNLOADER_JOBS_PER_NODE = 40
+
+# This is the maximum number of non-dead nomad jobs that can be in the
+# queue. Set the default to one node's worth so we never are unable
+# to queue downloader jobs.
+MAX_TOTAL_DOWNLOADER_JOBS = DOWNLOADER_JOBS_PER_NODE
 TIME_OF_LAST_SIZE_CHECK = timezone.now()
 
 # The minimum amount of time in between each iteration of the main
@@ -346,7 +349,7 @@ def get_capacity_for_downloader_jobs(nomad_client) -> bool:
 
     current_max_downloader_jobs = get_max_downloader_jobs(nomad_client=nomad_client)
     current_downloader_jobs_in_queue = count_downloader_jobs_in_queue(nomad_client)
-    return current_max_downloader_jobs - current_max_downloader_jobs
+    return current_max_downloader_jobs - current_downloader_jobs_in_queue
 
 
 def handle_downloader_jobs(jobs: List[DownloaderJob],
