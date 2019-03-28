@@ -48,9 +48,9 @@ MAX_NUM_RETRIES = 2
 # This can be overritten by the env var "MAX_TOTAL_JOBS"
 DEFAULT_MAX_JOBS = 20000
 
-
 # This is the maximum number of non-dead nomad jobs that can be in the queue.
-MAX_TOTAL_DOWNLOADER_JOBS = 400
+MAX_TOTAL_DOWNLOADER_JOBS = 0
+TIME_OF_LAST_SIZE_CHECK = timezone.now()
 
 # The minimum amount of time in between each iteration of the main
 # loop. We could loop much less frequently than every two minutes if
@@ -61,7 +61,6 @@ MIN_LOOP_TIME = datetime.timedelta(minutes=2)
 # How frequently we dispatch Janitor jobs and clean unplaceable jobs
 # out of the Nomad queue.
 JANITOR_DISPATCH_TIME = datetime.timedelta(minutes=30)
-
 
 # This time is currently set so far in the past that it's not doing
 # anything. However, should we ever want to suspend work on the
@@ -112,6 +111,25 @@ def handle_repeated_failure(job) -> None:
     # during early testing stages.
     logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1)
 
+def get_max_downloader_jobs(window=datetime.timedelta(minutes=2), nomad_client=None):
+    """
+    Fetches the desired maximum number of downloader jobs available based on the cluster size.
+    If this has been calculated recently, returns a cached value, else it will calculate it fresh every `window`.
+    """
+    global MAX_TOTAL_DOWNLOADER_JOBS
+    global TIME_OF_LAST_SIZE_CHECK
+
+    if (timezone.now() - TIME_OF_LAST_SIZE_CHECK > window):
+        # Assuming they're all similar to an X1, give 50 downloaders per node.
+        if not nomad_client:
+            nomad_host = get_env_variable("NOMAD_HOST")
+            nomad_port = get_env_variable("NOMAD_PORT", "4646")
+            nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+
+        MAX_TOTAL_DOWNLOADER_JOBS = len(nomad_client.nodes) * 50
+        TIME_OF_LAST_SIZE_CHECK = timezone.now()
+
+    return MAX_TOTAL_DOWNLOADER_JOBS
 
 ##
 # Job Prioritization
@@ -315,7 +333,8 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
 
     num_downloader_jobs = count_downloader_jobs_in_queue(nomad_client)
-    if num_downloader_jobs >= MAX_TOTAL_DOWNLOADER_JOBS:
+    current_max_downloader_jobs = get_max_downloader_jobs(nomad_client=nomad_client)
+    if num_downloader_jobs >= current_max_downloader_jobs:
         logger.info("Not requeuing job until we're running fewer jobs.")
         return False
 
@@ -329,7 +348,7 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
     # jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
     # jobs = prioritize_zebrafish_jobs(jobs)
 
-    num_to_dispatch = MAX_TOTAL_DOWNLOADER_JOBS - num_downloader_jobs
+    num_to_dispatch = current_max_downloader_jobs - num_downloader_jobs
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
         if job.num_retries < MAX_NUM_RETRIES:
