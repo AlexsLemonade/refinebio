@@ -127,7 +127,8 @@ def get_max_downloader_jobs(window=datetime.timedelta(minutes=2), nomad_client=N
             nomad_port = get_env_variable("NOMAD_PORT", "4646")
             nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
 
-        MAX_TOTAL_DOWNLOADER_JOBS = len(nomad_client.nodes) * DOWNLOADER_JOBS_PER_NODE
+        # Minus one because the smasher doesn't run DLs
+        MAX_TOTAL_DOWNLOADER_JOBS = (len(nomad_client.nodes) - 1) * DOWNLOADER_JOBS_PER_NODE
         TIME_OF_LAST_SIZE_CHECK = timezone.now()
 
     if MAX_TOTAL_DOWNLOADER_JOBS > 1000:
