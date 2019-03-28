@@ -314,7 +314,8 @@ def get_capacity_for_downloader_jobs(nomad_client) -> bool:
 
 
 
-def handle_downloader_jobs(jobs: List[DownloaderJob], queue_capacity=MAX_TOTAL_JOBS) -> None:
+def handle_downloader_jobs(jobs: List[DownloaderJob],
+                           queue_capacity: int = MAX_TOTAL_DOWNLOADER_JOBS) -> None:
     """For each job in jobs, either retry it or log it.
 
     No more than queue_capacity jobs will be retried.
@@ -586,11 +587,17 @@ def get_capacity_for_processor_jobs(nomad_client) -> bool:
     return MAX_TOTAL_JOBS - len_all_jobs
 
 
-def handle_processor_jobs(jobs: List[ProcessorJob], queue_capacity: int) -> None:
+def handle_processor_jobs(jobs: List[ProcessorJob],
+                          queue_capacity: int = None) -> None:
     """For each job in jobs, either retry it or log it.
 
     No more than queue_capacity jobs will be retried.
     """
+    # Maximum number of total jobs running at a time.
+    # We do this now rather than import time for testing purposes.
+    if queue_capacity is None:
+        queue_capacity = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
+
     # We want zebrafish data first, then hgu133plus2, then data
     # related to pediatric cancer, then to finish salmon experiments
     # that are close to completion.
@@ -886,11 +893,15 @@ def get_capacity_for_survey_jobs(nomad_client) -> bool:
     return MAX_TOTAL_JOBS - len_all_jobs
 
 
-def handle_survey_jobs(jobs: List[SurveyJob], queue_capacity=MAX_TOTAL_JOBS) -> None:
+def handle_survey_jobs(jobs: List[SurveyJob], queue_capacity: int = None) -> None:
     """For each job in jobs, either retry it or log it.
 
     No more than queue_capacity jobs will be retried.
     """
+    # Maximum number of total jobs running at a time.
+    # We do this now rather than import time for testing purposes.
+    if queue_capacity is None:
+        queue_capacity = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
         if jobs_dispatched >= queue_capacity:
