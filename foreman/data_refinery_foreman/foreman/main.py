@@ -113,9 +113,17 @@ def handle_repeated_failure(job) -> None:
     logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1)
 
 def get_max_downloader_jobs(window=datetime.timedelta(minutes=2), nomad_client=None):
-    """
-    Fetches the desired maximum number of downloader jobs available based on the cluster size.
-    If this has been calculated recently, returns a cached value, else it will calculate it fresh every `window`.
+    """Fetches the desired maximum number of downloader jobs available
+    based on the cluster size.
+
+    If this has been calculated recently, returns a cached value, else
+    it will calculate it fresh every `window`.
+
+    Will never return less than DOWNLOADER_JOBS_PER_NODE because in
+    local and test environments we will never have more than one
+    node. Having DOWNLOADER_JOBS_PER_NODE jobs in the queue when
+    there's no nodes isn't an issue since they'll just get picked up
+    when there is.
     """
     global MAX_TOTAL_DOWNLOADER_JOBS
     global TIME_OF_LAST_SIZE_CHECK
@@ -133,6 +141,8 @@ def get_max_downloader_jobs(window=datetime.timedelta(minutes=2), nomad_client=N
 
     if MAX_TOTAL_DOWNLOADER_JOBS > 1000:
         return 1000
+    elif MAX_TOTAL_DOWNLOADER_JOBS == 0:
+        return DOWNLOADER_JOBS_PER_NODE
     else:
         return MAX_TOTAL_DOWNLOADER_JOBS
 
