@@ -762,7 +762,7 @@ def get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile
                         sample=sample.id,
                         experiment=experiment.id
                     )
-                    job.failure_reason = (
+                    job_context["job"].failure_reason = (
                         "Salmon quant result {} for sammple {} found without quant.sf"
                         " ComputedFile in experiment {}!"
                     ).format(str(result.id), str(sample.accession_code), str(experiment.accession_code))
