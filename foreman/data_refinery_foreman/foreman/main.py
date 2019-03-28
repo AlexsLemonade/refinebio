@@ -48,9 +48,10 @@ MAX_NUM_RETRIES = 2
 # This can be overritten by the env var "MAX_TOTAL_JOBS"
 DEFAULT_MAX_JOBS = 20000
 
-
 # This is the maximum number of non-dead nomad jobs that can be in the queue.
-MAX_TOTAL_DOWNLOADER_JOBS = 400
+MAX_TOTAL_DOWNLOADER_JOBS = 0
+DOWNLOADER_JOBS_PER_NODE = 40
+TIME_OF_LAST_SIZE_CHECK = timezone.now()
 
 # The minimum amount of time in between each iteration of the main
 # loop. We could loop much less frequently than every two minutes if
@@ -61,7 +62,6 @@ MIN_LOOP_TIME = datetime.timedelta(minutes=2)
 # How frequently we dispatch Janitor jobs and clean unplaceable jobs
 # out of the Nomad queue.
 JANITOR_DISPATCH_TIME = datetime.timedelta(minutes=30)
-
 
 # This time is currently set so far in the past that it's not doing
 # anything. However, should we ever want to suspend work on the
@@ -112,6 +112,29 @@ def handle_repeated_failure(job) -> None:
     # during early testing stages.
     logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1)
 
+def get_max_downloader_jobs(window=datetime.timedelta(minutes=2), nomad_client=None):
+    """
+    Fetches the desired maximum number of downloader jobs available based on the cluster size.
+    If this has been calculated recently, returns a cached value, else it will calculate it fresh every `window`.
+    """
+    global MAX_TOTAL_DOWNLOADER_JOBS
+    global TIME_OF_LAST_SIZE_CHECK
+
+    if (timezone.now() - TIME_OF_LAST_SIZE_CHECK > window):
+        # Assuming they're all similar to an X1, give 50 downloaders per node.
+        if not nomad_client:
+            nomad_host = get_env_variable("NOMAD_HOST")
+            nomad_port = get_env_variable("NOMAD_PORT", "4646")
+            nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+
+        # Minus one because the smasher doesn't run DLs
+        MAX_TOTAL_DOWNLOADER_JOBS = (len(nomad_client.nodes) - 1) * DOWNLOADER_JOBS_PER_NODE
+        TIME_OF_LAST_SIZE_CHECK = timezone.now()
+
+    if MAX_TOTAL_DOWNLOADER_JOBS > 1000:
+        return 1000
+    else:
+        return MAX_TOTAL_DOWNLOADER_JOBS
 
 ##
 # Job Prioritization
@@ -310,8 +333,10 @@ def count_downloader_jobs_in_queue(nomad_client: Nomad) -> int:
 def get_capacity_for_downloader_jobs(nomad_client) -> bool:
     """Returns how many downloader jobs the queue has capacity for.
     """
-    return MAX_TOTAL_DOWNLOADER_JOBS - count_downloader_jobs_in_queue(nomad_client)
 
+    current_max_downloader_jobs = get_max_downloader_jobs(nomad_client=nomad_client)
+    current_downloader_jobs_in_queue = count_downloader_jobs_in_queue(nomad_client)
+    return current_max_downloader_jobs - current_max_downloader_jobs
 
 
 def handle_downloader_jobs(jobs: List[DownloaderJob],
