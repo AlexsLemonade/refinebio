@@ -1,5 +1,6 @@
 from unittest.mock import patch, MagicMock
 import datetime
+import time
 from django.utils import timezone
 from django.test import TestCase
 from data_refinery_foreman.foreman import main
@@ -920,6 +921,18 @@ class ForemanTestCase(TestCase):
             self.assertTrue(p.volume_index in ixs)
             ixs.remove(p.volume_index)
 
+    def test_get_max_downloader_jobs(self):
+
+        # Default is at zero since the cluster isn't online when the foreman starts up.
+        jobsnow = main.get_max_downloader_jobs()
+        self.assertEqual(jobsnow, 0)
+
+        # Once the window has elapsed, this should increase beyond 0.
+        time.sleep(2)
+        jobsnow = main.get_max_downloader_jobs(window=datetime.timedelta(seconds=1))
+        self.assertNotEqual(jobsnow, 0)
+        jobsnow = main.get_max_downloader_jobs()
+        self.assertNotEqual(jobsnow, 0)
 
 # class JobPrioritizationTestCase(TestCase):
 #     def setUp(self):

@@ -286,7 +286,11 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
     respo = completed_command.stdout.decode().strip()
-    stats = untangle.parse(respo)
+
+    try:
+        stats = untangle.parse(respo)
+    except ValueError:
+        logger.error("Unable to parse sra-stat output!", respo=str(respo), command=formatted_command)
 
     # Different SRA files can create different output formats, somehow.
     # This mess tries every output method we can to parse these stats.
