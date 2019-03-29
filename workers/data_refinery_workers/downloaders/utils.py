@@ -109,6 +109,18 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
         logger.error("This downloader job has already been started!!!", downloader_job=job.id)
         raise Exception("downloaders.start_job called on a job that has already been started!")
 
+    for original_file in job.original_files.all():
+        if original_file.has_ever_been_processed():
+            logger.error(("Original file has a successful processor job, it doesn't need"
+                          " to be downloaded! Aborting!"),
+                         job_id=job.id,
+                         original_file_id=original_file.id
+            )
+            job_context["original_files"] = []
+            job_context["computed_files"] = []
+            job_context['abort'] = True
+            return job_context
+
     # Set up the SIGTERM handler so we can appropriately handle being interrupted.
     # (`docker stop` uses SIGTERM, not SIGINT.)
     # (however, Nomad sends an SIGINT so catch both.)

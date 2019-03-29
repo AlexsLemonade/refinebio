@@ -313,6 +313,18 @@ def start_job(job_context: Dict):
         logger.error("This processor job has already been started!!!", processor_job=job.id)
         raise Exception("processors.start_job called on job %s that has already been started!" % str(job.id))
 
+    for original_file in job.original_files.all():
+        if original_file.has_ever_been_processed():
+            logger.error(("Original file has a successful processor job, it doesn't need"
+                          " another! Aborting!"),
+                         job_id=job.id,
+                         original_file_id=original_file.id
+            )
+            job_context["original_files"] = []
+            job_context["computed_files"] = []
+            job_context['abort'] = True
+            return job_context
+
     # Set up the SIGTERM handler so we can appropriately handle being interrupted.
     # (`docker stop` uses SIGTERM, not SIGINT.)
     # (however, Nomad sends an SIGINT so catch both.)

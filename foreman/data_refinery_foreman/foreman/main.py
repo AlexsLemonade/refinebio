@@ -55,13 +55,13 @@ PAGE_SIZE=2000
 # queue. Set the default to one node's worth so we never are unable
 # to queue downloader jobs.
 MAX_TOTAL_DOWNLOADER_JOBS = DOWNLOADER_JOBS_PER_NODE
-TIME_OF_LAST_SIZE_CHECK = timezone.now()
+TIME_OF_LAST_SIZE_CHECK = timezone.now() - datetime.timedelta(hours=1)
 
 # The minimum amount of time in between each iteration of the main
 # loop. We could loop much less frequently than every two minutes if
 # the work we do takes longer than 2 minutes, but this will prevent
 # excessive spinning.
-MIN_LOOP_TIME = datetime.timedelta(minutes=2)
+MIN_LOOP_TIME = datetime.timedelta(seconds=15)
 
 # How frequently we dispatch Janitor jobs and clean unplaceable jobs
 # out of the Nomad queue.
@@ -139,8 +139,13 @@ def get_max_downloader_jobs(window=datetime.timedelta(minutes=2), nomad_client=N
             nomad_port = get_env_variable("NOMAD_PORT", "4646")
             nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
 
+        num_active_nodes = 0
+        for node in nomad_client.nodes.get_nodes():
+            if node['Status'] == 'ready':
+                num_active_nodes += 1
+
         # Minus one because the smasher doesn't run DLs
-        MAX_TOTAL_DOWNLOADER_JOBS = (len(nomad_client.nodes) - 1) * DOWNLOADER_JOBS_PER_NODE
+        MAX_TOTAL_DOWNLOADER_JOBS = (num_active_nodes - 1) * DOWNLOADER_JOBS_PER_NODE
         TIME_OF_LAST_SIZE_CHECK = timezone.now()
 
     if MAX_TOTAL_DOWNLOADER_JOBS > 1000:
