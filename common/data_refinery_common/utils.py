@@ -297,17 +297,14 @@ def has_original_file_been_processed(original_file) -> bool:
     if there's one then we would return True here which would be
     misleading.
     """
-    sample = original_file.samples().first()
+    sample = original_file.samples.first()
 
     if not sample:
         return False
 
     if sample.source_database != "SRA":
-        raise Exception(("has_original_file_been_processed called on an OriginalFile that"
-                         " was not from SRA! This is unsupported behavior!"))
-
-    for computed_file in sample.computed_files.all():
-            if compted_file.s3_bucket and compted_file.s3_key:
-                return True
+        for computed_file in sample.computed_files.all():
+                if computed_file.s3_bucket and computed_file.s3_key:
+                    return True
 
     return False
