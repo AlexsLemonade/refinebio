@@ -318,19 +318,16 @@ def start_job(job_context: Dict):
         logger.error("This processor job has already been started!!!", processor_job=job.id)
         raise Exception("processors.start_job called on job %s that has already been started!" % str(job.id))
 
-    # Only do this for SRA jobs because they don't have archives which
-    # this isn't capable of dealing with.
-    if job.downloader_task == "SRA":
-        if has_original_file_been_processed(job.original_files.first()):
-            logger.error(("Sample has a good computed file, it must have been processed, "
-                          "so it doesn't need to be downloaded! Aborting!"),
-                         job_id=job.id,
-                         original_file_id=original_file.id
-            )
-            job_context["original_files"] = []
-            job_context["computed_files"] = []
-            job_context['abort'] = True
-            return job_context
+    if has_original_file_been_processed(job.original_files.first()):
+        logger.error(("Sample has a good computed file, it must have been processed, "
+                      "so it doesn't need to be downloaded! Aborting!"),
+                     job_id=job.id,
+                     original_file_id=original_file.id
+        )
+        job_context["original_files"] = []
+        job_context["computed_files"] = []
+        job_context['abort'] = True
+        return job_context
 
     # Set up the SIGTERM handler so we can appropriately handle being interrupted.
     # (`docker stop` uses SIGTERM, not SIGINT.)
