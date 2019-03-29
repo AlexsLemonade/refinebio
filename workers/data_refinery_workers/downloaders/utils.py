@@ -88,21 +88,21 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
                             ).count()
 
     # Death and rebirth.
-    if settings.RUNNING_IN_CLOUD or force_harakiri:
-        if num_downloader_jobs_currently_running >= int(max_downloader_jobs_per_node):
-            # Wait for the death window
-            while True:
-                seconds = datetime.datetime.now().second
-                # Mass harakiri happens every 15 seconds.
-                if seconds % 15 == 0:
-                    job.start_time = None
-                    job.num_retries = job.num_retries - 1
-                    job.failure_reason = "Killed by harakiri"
-                    job.success = False
-                    job.save()
+    # if settings.RUNNING_IN_CLOUD or force_harakiri:
+    #     if num_downloader_jobs_currently_running >= int(max_downloader_jobs_per_node):
+    #         # Wait for the death window
+    #         while True:
+    #             seconds = datetime.datetime.now().second
+    #             # Mass harakiri happens every 15 seconds.
+    #             if seconds % 15 == 0:
+    #                 job.start_time = None
+    #                 job.num_retries = job.num_retries - 1
+    #                 job.failure_reason = "Killed by harakiri"
+    #                 job.success = False
+    #                 job.save()
 
-                    # What is dead may never die!
-                    sys.exit(0)
+    #                 # What is dead may never die!
+    #                 sys.exit(0)
 
     # This job should not have been started.
     if job.start_time is not None:
