@@ -311,7 +311,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
     # Only do this for SRA jobs because they don't have archives which
     # this isn't capable of dealing with.
     if last_job.downloader_task == "SRA":
-        if has_original_file_been_processed(job.original_files.first()):
+        if has_original_file_been_processed(last_job.original_files.first()):
             last_job.no_retry = True
             last_job.failure_reason = "Foreman told to redownloaded job with prior succesful processing."
             last_job.save()
