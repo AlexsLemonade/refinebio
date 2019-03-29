@@ -103,6 +103,7 @@ def _download_file_aspera(download_url: str,
                                                stderr=subprocess.PIPE)
         else:
             # NCBI requires encryption and recommends -k1 resume, as well as the 450m limit and -Q (play fair).
+            # ex: https://github.com/AlexsLemonade/refinebio/pull/1189#issuecomment-478018580
             command_str = ".aspera/cli/bin/ascp -p -Q -T -k1 -l 450m -i .aspera/cli/etc/asperaweb_id_dsa.openssh {src} {dest}"
             formatted_command = command_str.format(src=download_url,
                                                    dest=target_file_path)

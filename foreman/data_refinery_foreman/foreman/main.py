@@ -48,7 +48,8 @@ MAX_NUM_RETRIES = 2
 # This can be overritten by the env var "MAX_TOTAL_JOBS"
 DEFAULT_MAX_JOBS = 20000
 
-DOWNLOADER_JOBS_PER_NODE = 40
+DOWNLOADER_JOBS_PER_NODE = 65
+PAGE_SIZE=500
 
 # This is the maximum number of non-dead nomad jobs that can be in the
 # queue. Set the default to one node's worth so we never are unable
@@ -397,7 +398,7 @@ def retry_failed_downloader_jobs() -> None:
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
 
-    paginator = Paginator(failed_jobs, 200)
+    paginator = Paginator(failed_jobs, PAGE_SIZE)
     page = paginator.page()
     page_count = 0
     while queue_capacity > 0:
@@ -436,7 +437,7 @@ def retry_hung_downloader_jobs() -> None:
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
 
-    paginator = Paginator(potentially_hung_jobs, 200)
+    paginator = Paginator(potentially_hung_jobs, PAGE_SIZE)
     page = paginator.page()
     page_count = 0
     while queue_capacity > 0:
@@ -499,7 +500,7 @@ def retry_lost_downloader_jobs() -> None:
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
 
-    paginator = Paginator(potentially_lost_jobs, 200)
+    paginator = Paginator(potentially_lost_jobs, PAGE_SIZE)
     page = paginator.page()
     page_count = 0
     while queue_capacity > 0:
