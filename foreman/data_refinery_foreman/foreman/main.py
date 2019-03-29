@@ -35,7 +35,8 @@ from data_refinery_common.models import (
 from data_refinery_common.utils import (
     get_active_volumes,
     get_env_variable,
-    get_env_variable_gracefully
+    get_env_variable_gracefully,
+    has_original_file_been_processed,
 )
 
 
@@ -307,14 +308,14 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
             ram_amount = 8192
 
     # Don't redownload if we don't need to.
+    # Only do this for SRA jobs because they don't have archives which
+    # this isn't capable of dealing with.
     if last_job.downloader_task == "SRA":
-        sample = last_job.orignal_files.first().samples().first()
-        for computed_file in sample.computed_files.all():
-            if compted_file.s3_bucket and compted_file.s3_key:
-                last_job.no_retry = True
-                last_job.failure_reason = "Foreman told to redownloaded job with prior succesful processing."
-                last_job.save()
-                return
+        if has_original_file_been_processed(job.original_files.first()):
+            last_job.no_retry = True
+            last_job.failure_reason = "Foreman told to redownloaded job with prior succesful processing."
+            last_job.save()
+            return
 
     new_job = DownloaderJob(num_retries=num_retries,
                             downloader_task=last_job.downloader_task,

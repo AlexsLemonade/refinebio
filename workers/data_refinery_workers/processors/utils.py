@@ -29,7 +29,12 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
 )
-from data_refinery_common.utils import get_instance_id, get_env_variable, get_env_variable_gracefully
+from data_refinery_common.utils import (
+    get_env_variable,
+    get_env_variable_gracefully,
+    get_instance_id,
+    has_original_file_been_processed,
+)
 
 
 logger = get_and_configure_logger(__name__)
@@ -314,21 +319,18 @@ def start_job(job_context: Dict):
         raise Exception("processors.start_job called on job %s that has already been started!" % str(job.id))
 
     # Only do this for SRA jobs because they don't have archives which
-    # this isn't capable of dealing with yet.
+    # this isn't capable of dealing with.
     if job.downloader_task == "SRA":
-        # SRA jobs only have one sample.
-        sample = job.orignal_files.first().samples().first():
-        for computed_file in sample.computed_files.all():
-            if compted_file.s3_bucket and compted_file.s3_key:
-                logger.error(("Sample has a good computed file, it must have been processed, "
-                              "so it doesn't need to be downloaded! Aborting!"),
-                             job_id=job.id,
-                             original_file_id=original_file.id
-                )
-                job_context["original_files"] = []
-                job_context["computed_files"] = []
-                job_context['abort'] = True
-                return job_context
+        if has_original_file_been_processed(job.original_files.first()):
+            logger.error(("Sample has a good computed file, it must have been processed, "
+                          "so it doesn't need to be downloaded! Aborting!"),
+                         job_id=job.id,
+                         original_file_id=original_file.id
+            )
+            job_context["original_files"] = []
+            job_context["computed_files"] = []
+            job_context['abort'] = True
+            return job_context
 
     # Set up the SIGTERM handler so we can appropriately handle being interrupted.
     # (`docker stop` uses SIGTERM, not SIGINT.)
