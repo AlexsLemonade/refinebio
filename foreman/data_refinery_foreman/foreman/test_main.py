@@ -130,13 +130,13 @@ class ForemanTestCase(TestCase):
     def test_retrying_many_failed_downloader_jobs(self, mock_send_job):
         mock_send_job.return_value = True
 
-        for x in range(0, 500):
+        for x in range(0, 10000):
             job = self.create_downloader_job(str(x))
             job.success = False
             job.save()
 
         main.retry_failed_downloader_jobs()
-        self.assertEqual(len(mock_send_job.mock_calls), 500)
+        self.assertEqual(len(mock_send_job.mock_calls), 10000)
 
         jobs = DownloaderJob.objects.order_by('id')
 
@@ -145,7 +145,7 @@ class ForemanTestCase(TestCase):
         self.assertEqual(original_job.num_retries, 0)
         self.assertFalse(original_job.success)
 
-        retried_job = jobs[501]
+        retried_job = jobs[10001]
         self.assertEqual(retried_job.num_retries, 1)
 
     @patch('data_refinery_foreman.foreman.main.send_job')
