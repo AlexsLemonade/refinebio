@@ -49,7 +49,7 @@ MAX_NUM_RETRIES = 2
 DEFAULT_MAX_JOBS = 20000
 
 DOWNLOADER_JOBS_PER_NODE = 65
-PAGE_SIZE=500
+PAGE_SIZE=2000
 
 # This is the maximum number of non-dead nomad jobs that can be in the
 # queue. Set the default to one node's worth so we never are unable
