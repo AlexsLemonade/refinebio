@@ -306,6 +306,16 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
         elif ram_amount == 4096:
             ram_amount = 8192
 
+    # Don't redownload if we don't need to.
+    if last_job.downloader_task == "SRA":
+        sample = last_job.orignal_files.first().samples().first():
+        for computed_file in sample.computed_files.all():
+            if compted_file.s3_bucket and compted_file.s3_key:
+                last_job.no_retry = True
+                last_job.failure_reason = "Foreman told to redownloaded job with prior succesful processing."
+                last_job.save()
+                return
+
     new_job = DownloaderJob(num_retries=num_retries,
                             downloader_task=last_job.downloader_task,
                             ram_amount=ram_amount,
