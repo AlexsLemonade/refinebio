@@ -297,6 +297,9 @@ def has_original_file_been_processed(original_file) -> bool:
     if there's one then we would return True here which would be
     misleading.
     """
+    if not original_file;
+        return False
+
     sample = original_file.samples.first()
 
     if not sample:
