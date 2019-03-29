@@ -114,7 +114,7 @@ def handle_repeated_failure(job) -> None:
     # grabbing. However for the time being just logging should be
     # sufficient because all log messages will be closely monitored
     # during early testing stages.
-    logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1)
+    logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1, failure_reason=job.failure_reason)
 
 def get_max_downloader_jobs(window=datetime.timedelta(minutes=2), nomad_client=None):
     """Fetches the desired maximum number of downloader jobs available
