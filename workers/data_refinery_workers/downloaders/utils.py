@@ -121,10 +121,13 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
                              job_id=job.id,
                              original_file_id=original_file.id
                 )
-                job_context["original_files"] = []
-                job_context["computed_files"] = []
-                job_context['abort'] = True
-                return job_context
+                job.start_time = timezone.now()
+                job.failure_reason = "Was told to redownload a successfully proccessed file."
+                job.success = False
+                job.no_retry = True
+                job.end_time = timezone.now()
+                job.save()
+                sys.exit(0)
 
     # Set up the SIGTERM handler so we can appropriately handle being interrupted.
     # (`docker stop` uses SIGTERM, not SIGINT.)
