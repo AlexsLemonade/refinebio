@@ -284,7 +284,7 @@ def get_fasp_sra_download(run_accession: str):
             logger.exception("Bad FASP CGI response", data=data, text=resp.text)
             return None
 
-def has_original_file_been_processed(original_file: OriginalFile) -> bool:
+def has_original_file_been_processed(original_file) -> bool:
     """Returns True if original_file is from SRA and has been processed
 
     Returns False otherwise.
@@ -297,14 +297,17 @@ def has_original_file_been_processed(original_file: OriginalFile) -> bool:
     if there's one then we would return True here which would be
     misleading.
     """
-    sample = original_file.samples().first()
+    if not original_file:
+        return False
+
+    sample = original_file.samples.first()
+
+    if not sample:
+        return False
 
     if sample.source_database != "SRA":
-        raise Exception(("has_original_file_been_processed called on an OriginalFile that"
-                         " was not from SRA! This is unsupported behavior!"))
-
-    for computed_file in sample.computed_files.all():
-            if compted_file.s3_bucket and compted_file.s3_key:
-                return True
+        for computed_file in sample.computed_files.all():
+                if computed_file.s3_bucket and computed_file.s3_key:
+                    return True
 
     return False
