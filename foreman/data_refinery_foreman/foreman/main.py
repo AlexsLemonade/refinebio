@@ -308,7 +308,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
 
     # Don't redownload if we don't need to.
     if last_job.downloader_task == "SRA":
-        sample = last_job.orignal_files.first().samples().first():
+        sample = last_job.orignal_files.first().samples().first()
         for computed_file in sample.computed_files.all():
             if compted_file.s3_bucket and compted_file.s3_key:
                 last_job.no_retry = True

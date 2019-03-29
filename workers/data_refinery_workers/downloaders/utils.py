@@ -113,7 +113,7 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
     # this isn't capable of dealing with yet.
     if job.downloader_task == "SRA":
         # SRA jobs only have one sample.
-        sample = job.orignal_files.first().samples().first():
+        sample = job.orignal_files.first().samples().first()
         for computed_file in sample.computed_files.all():
             if compted_file.s3_bucket and compted_file.s3_key:
                 logger.error(("Sample has a good computed file, it must have been processed, "
