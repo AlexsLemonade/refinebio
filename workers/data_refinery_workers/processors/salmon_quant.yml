@@ -11,6 +11,7 @@ os_pkg:
 # Command lines (commands whose outputs will be kept track of)
 cmd_line:
   - salmon --version
+  - sra-stat --version
 
 # Python pip packages
 python:

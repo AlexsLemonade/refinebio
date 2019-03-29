@@ -57,7 +57,7 @@ COPY workers/install_tximport.R .
 RUN Rscript install_tximport.R
 
 # Install SalmonTools
-RUN git clone https://github.com/COMBINE-lab/SalmonTools.git && cd SalmonTools && git checkout 3e6654c2c10a5225498b623056993947fa688afc 
+RUN git clone https://github.com/COMBINE-lab/SalmonTools.git && cd SalmonTools && git checkout 3e6654c2c10a5225498b623056993947fa688afc
 RUN cd SalmonTools && cmake . -DCMAKE_INSTALL_PREFIX=/usr/local && make install
 RUN rm -rf SalmonTools
 
@@ -68,15 +68,6 @@ RUN wget "http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/${SRA_VERSION}/sratoolkit.${
     cp -r sratoolkit.${SRA_VERSION}-ubuntu64/bin/* /usr/bin
 
 RUN pip3 install --upgrade pip
-
-# We need JRE for QC tools
-RUN apt-get update -y && apt-get install -y default-jre --fix-missing
-
-# Install FastQC
-RUN wget -q https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.7.zip
-RUN unzip fastqc_v0.11.7.zip
-RUN chmod +x ./FastQC/fastqc
-RUN rm -f fastqc_v0.11.7.zip
 
 COPY config/ config/
 COPY .boto .boto

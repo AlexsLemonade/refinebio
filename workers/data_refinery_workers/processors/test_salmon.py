@@ -512,49 +512,6 @@ class SalmonTestCase(TestCase):
 
         self.assertEqual({}, quantified_experiments)
 
-    @tag("salmon")
-    def test_fastqc(self):
-
-        job, og_files = prepare_job()
-        win_context = {
-            'job': job,
-            'job_id': 789,
-            'job_dir_prefix': "processor_job_789",
-            'pipeline': Pipeline(name="Salmon"),
-            'qc_directory': "/home/user/data_store/raw/TEST/SALMON/qc",
-            'original_files': og_files,
-            'input_file_path': og_files[0],
-            'input_file_path_2': og_files[1],
-            "computed_files": [],
-            'success': True
-
-        }
-
-        # Ensure clean testdir
-        shutil.rmtree(win_context['qc_directory'], ignore_errors=True)
-        os.makedirs(win_context['qc_directory'], exist_ok=True)
-        win_context = salmon._prepare_files(win_context)
-
-        win = salmon._run_fastqc(win_context)
-        self.assertTrue(win['success'])
-        win = salmon._run_multiqc(win_context)
-        self.assertTrue(win['success'])
-
-        for file in win['qc_files']:
-            self.assertTrue(os.path.isfile(file.absolute_file_path))
-
-        fail_context = {
-            'job': job,
-            'job_id': 'hippityhoppity',
-            'pipeline': Pipeline(name="Salmon"),
-            'qc_directory': "/home/user/data_store/raw/TEST/SALMON/derp",
-            'original_files': [],
-            'success': True,
-            'computed_files': []
-        }
-        fail = salmon._run_fastqc(fail_context)
-        self.assertFalse(fail['success'])
-
 
 class SalmonToolsTestCase(TestCase):
     """Test SalmonTools command."""
@@ -726,22 +683,6 @@ class RuntimeProcessorTest(TestCase):
         cmd_str = "salmon --version"
         cmd_output = utils.get_cmd_lines([cmd_str])[cmd_str]
         self.assertEqual(sq_processor.environment['cmd_line'][cmd_str],
-                         cmd_output)
-
-    @tag('salmon')
-    def test_multiqc(self):
-        self.assertEqual(Processor.objects.count(), 0)  # No processor yet
-        proc_key = "MULTIQC"
-        multiqc_processor = utils.find_processor(proc_key)
-        self.assertEqual(Processor.objects.count(), 1)  # New processor created
-
-        # Validate some information of the new processor
-        self.assertEqual(multiqc_processor.name,
-                         utils.ProcessorEnum[proc_key].value['name'])
-
-        cmd_str = "/home/user/FastQC/fastqc --version"
-        cmd_output = utils.get_cmd_lines([cmd_str])[cmd_str]
-        self.assertEqual(multiqc_processor.environment['cmd_line'][cmd_str],
                          cmd_output)
 
     @tag('salmon')
