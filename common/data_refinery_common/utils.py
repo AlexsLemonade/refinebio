@@ -299,6 +299,9 @@ def has_original_file_been_processed(original_file) -> bool:
     """
     sample = original_file.samples().first()
 
+    if not sample:
+        return False
+
     if sample.source_database != "SRA":
         raise Exception(("has_original_file_been_processed called on an OriginalFile that"
                          " was not from SRA! This is unsupported behavior!"))
