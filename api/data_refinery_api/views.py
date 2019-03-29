@@ -97,7 +97,7 @@ from data_refinery_common.models import (
 from data_refinery_common.models.documents import (
     ExperimentDocument
 )
-from data_refinery_common.utils import get_env_variable, get_active_volumes
+from data_refinery_common.utils import get_env_variable, get_active_volumes, get_nomad_jobs
 from data_refinery_common.logging import get_and_configure_logger
 from .serializers import ExperimentDocumentSerializer
 
@@ -1117,8 +1117,8 @@ class Stats(APIView):
         data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
 
         # processed and unprocessed samples stats
-        data['unprocessed_samples'] = self._get_object_stats(Sample.objects.filter(is_processed=False), range_param)
-        data['processed_samples'] = self._get_object_stats(Sample.processed_objects, range_param)
+        data['unprocessed_samples'] = self._get_object_stats(Sample.objects.filter(is_processed=False), range_param, 'last_modified')
+        data['processed_samples'] = self._get_object_stats(Sample.processed_objects, range_param, 'last_modified')
         data['processed_samples']['last_hour'] = self._samples_processed_last_hour()
 
         data['processed_samples']['technology'] = {}
@@ -1143,28 +1143,29 @@ class Stats(APIView):
             data['input_data_size'] = self._get_input_data_size()
             data['output_data_size'] = self._get_output_data_size()
 
-        nomad_stats = self._get_nomad_jobs_breakdown()
-        data['nomad_running_jobs'] = nomad_stats["nomad_running_jobs"]
-        data['nomad_pending_jobs'] = nomad_stats["nomad_pending_jobs"]
-        data['nomad_running_jobs_by_type'] = nomad_stats["nomad_running_jobs_by_type"]
-        data['nomad_pending_jobs_by_type'] = nomad_stats["nomad_pending_jobs_by_type"]
-        data['nomad_running_jobs_by_volume'] = nomad_stats["nomad_running_jobs_by_volume"]
-        data['nomad_pending_jobs_by_volume'] = nomad_stats["nomad_pending_jobs_by_volume"]
+        data.update(self._get_nomad_jobs_breakdown())
 
         return Response(data)
 
+    EMAIL_USERNAME_BLACKLIST = ['arielsvn', 'miserlou', 'kurt.wheeler91', 'd.prasad']
+
     def _get_dataset_stats(self, range_param):
         """Returns stats for processed datasets"""
-        processed_datasets = Dataset.objects.filter(is_processed=True)
+        filter_query = Q()
+        for username in Stats.EMAIL_USERNAME_BLACKLIST:
+            filter_query = filter_query | Q(email_address__startswith=username)
+        filter_query = filter_query & Q(email_address__endswith='gmail.com')
+        processed_datasets = Dataset.objects.filter(is_processed=True).exclude(filter_query)
         result = processed_datasets.aggregate(
             total=Count('id'),
             aggregated_by_experiment=Count('id', filter=Q(aggregate_by='EXPERIMENT')),
-            aggregated_by_species=Count('id', filter=Q(aggregate_by='SAMPLES')),
+            aggregated_by_species=Count('id', filter=Q(aggregate_by='SPECIES')),
             scale_by_none=Count('id', filter=Q(scale_by='NONE')),
             scale_by_minmax=Count('id', filter=Q(scale_by='MINMAX')),
             scale_by_standard=Count('id', filter=Q(scale_by='STANDARD')),
             scale_by_robust=Count('id', filter=Q(scale_by='ROBUST')),
         )
+
         if range_param:
             # We don't save the dates when datasets are processed, but we can use
             # `last_modified`, since datasets aren't modified again after they are processed
@@ -1181,7 +1182,7 @@ class Stats(APIView):
     def _samples_processed_last_hour(self):
         current_date = datetime.now(tz=timezone.utc)
         start = current_date - timedelta(hours=1)
-        return Sample.processed_objects.filter(created_at__range=(start, current_date)).count()
+        return Sample.processed_objects.filter(last_modified__range=(start, current_date)).count()
 
     def _aggregate_nomad_jobs(self, aggregated_jobs):
         """Aggregates the job counts.
@@ -1194,16 +1195,15 @@ class Stats(APIView):
         nomad_running_jobs = {}
         nomad_pending_jobs = {}
         for (aggregate_key, group) in aggregated_jobs:
-            if not aggregate_key: continue
-            aggregated_pending = 0
-            aggregated_running = 0
+            pending_jobs_count = 0
+            running_jobs_count = 0
             for job in group:
-                children = job["JobSummary"]["Children"]
-                aggregated_pending = aggregated_pending + children["Pending"]
-                aggregated_running = aggregated_running + children["Running"]
+                if job["JobSummary"]["Children"]: # this can be null
+                    pending_jobs_count += job["JobSummary"]["Children"]["Pending"]
+                    running_jobs_count += job["JobSummary"]["Children"]["Running"]
 
-            nomad_pending_jobs[aggregate_key] = aggregated_pending
-            nomad_running_jobs[aggregate_key] = aggregated_running
+            nomad_pending_jobs[aggregate_key] = pending_jobs_count
+            nomad_running_jobs[aggregate_key] = running_jobs_count
 
         return nomad_pending_jobs, nomad_running_jobs
 
@@ -1220,39 +1220,28 @@ class Stats(APIView):
         
         return name_match.group('type'), name_match.group('volume_id')
 
-    def _get_nomad_jobs(self):
-        """Calls nomad service and return all jobs"""
-        try:
-            nomad_host = get_env_variable("NOMAD_HOST")
-            nomad_port = get_env_variable("NOMAD_PORT", "4646")
-            nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
-            return nomad_client.jobs.get_jobs()
-
-        except nomad.api.exceptions.BaseNomadException:
-            # Nomad is not available right now
-            return []
-
     def _get_nomad_jobs_breakdown(self):
-        jobs = self._get_nomad_jobs()
+        jobs = get_nomad_jobs()
         parameterized_jobs = [job for job in jobs if job['ParameterizedJob']]
 
-        aggregated_jobs_by_type = groupby(parameterized_jobs, lambda job: self._get_job_details(job)[0])
+        get_job_type = lambda job: self._get_job_details(job)[0]
+        get_job_volume = lambda job: self._get_job_details(job)[1]
+
+        # groupby must be executed on a sorted iterable https://docs.python.org/2/library/itertools.html#itertools.groupby
+        sorted_jobs_by_type = sorted(filter(get_job_type, parameterized_jobs), key=get_job_type)
+        aggregated_jobs_by_type = groupby(sorted_jobs_by_type, get_job_type)
         nomad_pending_jobs_by_type, nomad_running_jobs_by_type = self._aggregate_nomad_jobs(aggregated_jobs_by_type)
 
         # To get the total jobs for running and pending, the easiest
         # AND the most efficient way is to sum up the stats we've
         # already partially summed up.
-        nomad_running_jobs = 0
-        for job_type, num_jobs in nomad_running_jobs_by_type.items():
-            nomad_running_jobs = nomad_running_jobs + num_jobs
+        nomad_running_jobs = sum(num_jobs for job_type, num_jobs in nomad_running_jobs_by_type.items())
+        nomad_pending_jobs = sum(num_jobs for job_type, num_jobs in nomad_pending_jobs_by_type.items())
 
-        nomad_pending_jobs = 0
-        for job_type, num_jobs in nomad_pending_jobs_by_type.items():
-            nomad_pending_jobs = nomad_pending_jobs + num_jobs
-
-        aggregated_jobs_by_volume = groupby(parameterized_jobs, lambda job: self._get_job_details(job)[1])
+        sorted_jobs_by_volume = sorted(filter(get_job_volume, parameterized_jobs), key=get_job_volume)
+        aggregated_jobs_by_volume = groupby(sorted_jobs_by_volume, get_job_volume)
         nomad_pending_jobs_by_volume, nomad_running_jobs_by_volume = self._aggregate_nomad_jobs(aggregated_jobs_by_volume)
-
+        
         return {
             "nomad_pending_jobs": nomad_pending_jobs,
             "nomad_running_jobs": nomad_running_jobs,
@@ -1282,7 +1271,7 @@ class Stats(APIView):
     def _get_job_stats(self, jobs, range_param):
         result = jobs.aggregate(
             total=Count('id'),
-            pending=Count('id', filter=Q(start_time__isnull=True)),
+            pending=Count('id', filter=Q(start_time__isnull=True)), 
             completed=Count('id', filter=Q(end_time__isnull=False)),
             successful=Count('id', filter=Q(success=True)),
             open=Count('id', filter=Q(start_time__isnull=False, end_time__isnull=True, success__isnull=True)),
@@ -1301,20 +1290,21 @@ class Stats(APIView):
                                      .annotate(
                                          total=Count('id'),
                                          completed=Count('id', filter=Q(success=True)),
-                                         pending=Count('id', filter=Q(start_time__isnull=True)),
                                          failed=Count('id', filter=Q(success=False)),
-                                         open=Count('id', filter=Q(success__isnull=True)),
+                                         pending=Count('id', filter=Q(start_time__isnull=True, success__isnull=True)),
+                                         open=Count('id', filter=Q(start_time__isnull=False, success__isnull=True)),
                                      )
 
         return result
 
-    def _get_object_stats(self, objects, range_param = False):
+    def _get_object_stats(self, objects, range_param = False, field = 'created_at'):
         result = {
             'total': objects.count()
         }
 
         if range_param:
-            result['timeline'] = self._get_intervals(objects, range_param).annotate(total=Count('id'))
+            result['timeline'] = self._get_intervals(objects, range_param, field)\
+                                     .annotate(total=Count('id'))
 
         return result
 
