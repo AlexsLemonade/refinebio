@@ -284,7 +284,7 @@ def get_fasp_sra_download(run_accession: str):
             logger.exception("Bad FASP CGI response", data=data, text=resp.text)
             return None
 
-def has_original_file_been_processed(original_file: OriginalFile) -> bool:
+def has_original_file_been_processed(original_file) -> bool:
     """Returns True if original_file is from SRA and has been processed
 
     Returns False otherwise.
