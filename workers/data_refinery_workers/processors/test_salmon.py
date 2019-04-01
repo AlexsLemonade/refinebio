@@ -493,6 +493,8 @@ class SalmonTestCase(TestCase):
         comp_file.result = computational_result1
         comp_file.size_in_bytes=1337
         comp_file.sha1="ABC"
+        comp_file.s3_key = "key"
+        comp_file.s3_bucket = "bucket"
         comp_file.save()
 
         computational_result2 = ComputationalResult(processor=utils.find_processor('SALMON_QUANT'))
@@ -506,6 +508,8 @@ class SalmonTestCase(TestCase):
         comp_file.result = computational_result2
         comp_file.size_in_bytes=1337
         comp_file.sha1="ABC"
+        comp_file.s3_key = "key"
+        comp_file.s3_bucket = "bucket"
         comp_file.save()
 
         quantified_experiments = salmon.get_tximport_inputs({"sample": sample1})['tximport_inputs']
@@ -786,6 +790,8 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     comp_file.result = computational_result_short
     comp_file.size_in_bytes=1337
     comp_file.sha1="ABC"
+    comp_file.s3_key = "key"
+    comp_file.s3_bucket = "bucket"
     comp_file.save()
 
     for accession_code in incomplete_accessions:
@@ -845,6 +851,8 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
         quant_file.is_qc = False
         quant_file.result = quant_result
         quant_file.size_in_bytes = 12345
+        quant_file.s3_bucket = "bucket"
+        quant_file.s3_key = "key"
         quant_file.save()
 
         SampleResultAssociation.objects.get_or_create(

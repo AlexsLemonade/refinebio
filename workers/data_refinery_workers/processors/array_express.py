@@ -149,8 +149,8 @@ def _run_scan_upc(job_context: Dict) -> Dict:
 
                 for sample in job_context["samples"]:
                     sample.platform_accession_code = platform_accession_code
-                    sample_object.platform_name = platform_name
-                    sample_object.save()
+                    sample.platform_name = platform_name
+                    sample.save()
 
                 scan_upc(input_file,
                          job_context["output_file_path"],
