@@ -25,6 +25,7 @@ from data_refinery_common.job_lookup import (
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
+    ComputedFile,
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
     ProcessorJob,
@@ -68,6 +69,9 @@ MIN_LOOP_TIME = datetime.timedelta(seconds=15)
 # How frequently we dispatch Janitor jobs and clean unplaceable jobs
 # out of the Nomad queue.
 JANITOR_DISPATCH_TIME = datetime.timedelta(minutes=30)
+
+# How frequently we clean up the database.
+DBCLEAN_TIME = datetime.timedelta(hours=6)
 
 # This time is currently set so far in the past that it's not doing
 # anything. However, should we ever want to suspend work on the
@@ -1235,6 +1239,21 @@ def cleanup_the_queue():
                     # If we can't do this for some reason, we'll get it next loop.
                     pass
 
+def clean_database():
+    """ Removes duplicated objects that may have appeared through race, OOM, bugs, etc.
+    See: https://github.com/AlexsLemonade/refinebio/issues/1183
+    """
+
+    # Hide smashable files
+    computed_files = ComputedFile.objects.filter(s3_bucket=None, s3_key=None, is_smashable=True)
+    logger.info("Cleaning unsynced files!", num_to_clean=computed_files.count())
+
+    # We don't do this in bulk because we want the properties set by save() as well
+    for computed_file in computed_files:
+        computed_file.is_public=False
+        computed_file.save()
+
+    logger.info("Cleaned files!")
 
 ##
 # Main loop
@@ -1253,7 +1272,9 @@ def monitor_jobs():
     It does so on a loop forever that won't spin faster than
     MIN_LOOP_TIME, but it may spin slower than that.
     """
-    last_janitorial_time = None
+    last_janitorial_time = timezone.now()
+    last_dbclean_time = timezone.now()
+
     while(True):
         # Perform two heartbeats, one for the logs and one for Monit:
         logger.info("The Foreman's heart is beating, but he does not feel.")
@@ -1289,11 +1310,14 @@ def monitor_jobs():
                 logger.error("Caught exception in %s: ", function.__name__)
                 traceback.print_exc(chain=False)
 
-        if not last_janitorial_time \
-           or timezone.now() - last_janitorial_time > JANITOR_DISPATCH_TIME:
+        if timezone.now() - last_janitorial_time > JANITOR_DISPATCH_TIME:
             send_janitor_jobs()
             cleanup_the_queue()
             last_janitorial_time = timezone.now()
+
+        if timezone.now() - last_dbclean_time > DBCLEAN_TIME:
+            clean_database()
+            last_dbclean_time = timezone.now()
 
         loop_time = timezone.now() - start_time
         if loop_time < MIN_LOOP_TIME:

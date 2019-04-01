@@ -181,7 +181,8 @@ class Sample(models.Model):
         """ Get the most recent of the ComputedFile objects associated with this Sample """
         try:
             return self.computed_files.filter(
-                            is_smashable=True
+                            is_public=True,
+                            is_smashable=True,
                         ).latest()
         except Exception as e:
             # This sample has no smashable files yet.

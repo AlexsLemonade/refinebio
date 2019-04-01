@@ -611,7 +611,12 @@ def get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile
             quant_files = []
             for result in salmon_quant_results:
                 try:
-                    quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])
+                    quant_files.append(ComputedFile.objects.filter(
+                        result=result, 
+                        filename="quant.sf",
+                        s3_key__isnull=False,
+                        s3_bucket__isnull=False,
+                        ).order_by('-id')[0])
                 except:
                     try:
                         sample = result.samples.first()
