@@ -140,19 +140,29 @@ def get_max_downloader_jobs(window=datetime.timedelta(minutes=2), nomad_client=N
             nomad_port = get_env_variable("NOMAD_PORT", "4646")
             nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
 
-        num_active_nodes = 0
-        for node in nomad_client.nodes.get_nodes():
-            if node['Status'] == 'ready':
-                num_active_nodes += 1
+        try:
+            num_active_nodes = 0
+            for node in nomad_client.nodes.get_nodes():
+                if node['Status'] == 'ready':
+                    num_active_nodes += 1
+        except:
+            # Nomad is down! There's not much point in even trying to
+            # queue jobs, so prevent them from being queued by
+            # returning zero for the max.
+            return 0
 
-        # Minus one because the smasher doesn't run DLs
-        MAX_TOTAL_DOWNLOADER_JOBS = (num_active_nodes - 1) * DOWNLOADER_JOBS_PER_NODE
+        # The smasher node doesn't run DL jobs, but we don't have a
+        # smasher node in local and test environments.
+        if settings.RUNNING_IN_CLOUD:
+            num_smasher_nodes = 1
+        else:
+            num_smasher_nodes = 0
+
+        MAX_TOTAL_DOWNLOADER_JOBS = (num_active_nodes - num_smasher_nodes) * DOWNLOADER_JOBS_PER_NODE
         TIME_OF_LAST_SIZE_CHECK = timezone.now()
 
     if MAX_TOTAL_DOWNLOADER_JOBS > 1000:
         return 1000
-    elif MAX_TOTAL_DOWNLOADER_JOBS == 0:
-        return DOWNLOADER_JOBS_PER_NODE
     else:
         return MAX_TOTAL_DOWNLOADER_JOBS
 
@@ -349,7 +359,12 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
 
 def count_downloader_jobs_in_queue(nomad_client: Nomad) -> int:
     """Counts how many downloader jobs in the Nomad queue do not have status of 'dead'."""
-    all_downloader_jobs = nomad_client.jobs.get_jobs(prefix="DOWNLOADER")
+    try:
+        all_downloader_jobs = nomad_client.jobs.get_jobs(prefix="DOWNLOADER")
+    except:
+        # Nomad is down, return an impossibly high number to prevent
+        # additonal queuing from happening:
+        return 100000000
 
     total = 0
     for job in all_downloader_jobs:
