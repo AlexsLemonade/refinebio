@@ -707,23 +707,6 @@ class OriginalFile(models.Model):
         self.is_downloaded = False
         self.save()
 
-    def has_ever_been_processed(self, pipeline_applied=None) -> bool:
-        """Returns true if there are any successful processor jobs for this file."""
-        # Transcriptome files are used by two jobs, one for long and
-        # one for short. So one of them could have completed
-        # successfully before the file disappeared, therefore check
-        # the pipeline_applied to make sure we're looking at the same
-        # index_length.
-        if pipeline_applied:
-            successful_processor_jobs = self.processor_jobs.filter(
-                success=True,
-                pipeline_applied=pipeline_applied
-            )
-        else:
-            successful_processor_jobs = self.processor_jobs.filter(success=True)
-
-        return successful_processor_jobs.count() == 0
-
     def needs_downloading(self, pipeline_applied=None) -> bool:
         """Determine if a file needs to be downloaded.
 
@@ -748,9 +731,22 @@ class OriginalFile(models.Model):
         if unstarted_downloader_jobs.count() > 0:
             return False
 
+        # Transcriptome files are used by two jobs, one for long and
+        # one for short. So one of them could have completed
+        # successfully before the file disappeared, therefore check
+        # the pipeline_applied to make sure we're looking at the same
+        # index_length.
+        if pipeline_applied:
+            successful_processor_jobs = self.processor_jobs.filter(
+                success=True,
+                pipeline_applied=pipeline_applied
+            )
+        else:
+            successful_processor_jobs = self.processor_jobs.filter(success=True)
+
         # Finally, if there is a successful processor job, then the file
         # has been processed and doesn't need to be processed again.
-        return self.has_ever_been_processed(pipeline_applied)
+        return successful_processor_jobs.count() == 0
 
     def is_affy_data(self) -> bool:
         """Return true if original_file is a CEL file or a gzipped CEL file.
