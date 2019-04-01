@@ -462,7 +462,10 @@ def download_geo(job_id: int) -> None:
 
             try:
                 # The archive we downloaded
-                archive_file = OriginalFile.objects.get(source_filename__contains=filename)
+                archive_file = OriginalFile.objects.get(
+                    source_filename__contains=filename,
+                    is_archive=True
+                )
                 archive_file.is_downloaded = True
                 archive_file.is_archive = True
                 archive_file.absolute_file_path = dl_file_path
