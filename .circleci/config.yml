@@ -177,6 +177,7 @@ jobs:
       - run: sudo chown -R circleci:circleci workers/test_volume/
 
       # Run Illumina tests.
+      - run: ./prepare_image.sh -i illumina -s workers
       - run: .circleci/filter_tests.sh -t illumina
 
       # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
