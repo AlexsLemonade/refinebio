@@ -26,10 +26,9 @@ RUN \
   lsb-release \
   python3 \
   python3-pip \
-  r-base-core=3.4.2-1xenial1 \
-  r-base-dev=3.4.2-1xenial1 \
-  libpq-dev \
   libxml2-dev \
+  cmake \
+  r-base-core=3.4.2-1xenial1 \
   libssl-dev \
   libcurl4-openssl-dev \
   curl \
@@ -41,12 +40,11 @@ RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
 ENV R_LIBS "/usr/local/lib/R/site-library"
-
 COPY common/install_devtools.R .
-
 RUN Rscript install_devtools.R
 
 # These are for Illumina
+RUN apt-fast install -y r-base-dev=3.4.2-1xenial1
 COPY workers/illumina_dependencies.R .
 RUN Rscript illumina_dependencies.R
 
