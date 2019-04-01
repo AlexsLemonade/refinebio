@@ -209,7 +209,9 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
             try:
                 job_context["index_length_raw"] = int(stats.Run.Statistics.Read[0]['average'])
             except Exception:
-                logger.error("Unable to determine index length! Defaulting to small", stat_response=respo)
+                # sra-stat will sometimes put warnings in the XML stream, so we end up with nothing valid to parse.
+                # https://github.com/ncbi/sra-tools/issues/192
+                logger.error("Unable to determine index length! Defaulting to small", file=job_context["sra_input_file_path"])
                 job_context["index_length_raw"] = -1
 
     if job_context["index_length_raw"] > 75:
