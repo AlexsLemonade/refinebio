@@ -35,7 +35,8 @@ from data_refinery_common.models import (
 from data_refinery_common.utils import (
     get_active_volumes,
     get_env_variable,
-    get_env_variable_gracefully
+    get_env_variable_gracefully,
+    has_original_file_been_processed,
 )
 
 
@@ -55,13 +56,13 @@ PAGE_SIZE=2000
 # queue. Set the default to one node's worth so we never are unable
 # to queue downloader jobs.
 MAX_TOTAL_DOWNLOADER_JOBS = DOWNLOADER_JOBS_PER_NODE
-TIME_OF_LAST_SIZE_CHECK = timezone.now()
+TIME_OF_LAST_SIZE_CHECK = timezone.now() - datetime.timedelta(hours=1)
 
 # The minimum amount of time in between each iteration of the main
 # loop. We could loop much less frequently than every two minutes if
 # the work we do takes longer than 2 minutes, but this will prevent
 # excessive spinning.
-MIN_LOOP_TIME = datetime.timedelta(minutes=2)
+MIN_LOOP_TIME = datetime.timedelta(seconds=15)
 
 # How frequently we dispatch Janitor jobs and clean unplaceable jobs
 # out of the Nomad queue.
@@ -114,7 +115,7 @@ def handle_repeated_failure(job) -> None:
     # grabbing. However for the time being just logging should be
     # sufficient because all log messages will be closely monitored
     # during early testing stages.
-    logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1)
+    logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1, failure_reason=job.failure_reason)
 
 def get_max_downloader_jobs(window=datetime.timedelta(minutes=2), nomad_client=None):
     """Fetches the desired maximum number of downloader jobs available
@@ -139,8 +140,13 @@ def get_max_downloader_jobs(window=datetime.timedelta(minutes=2), nomad_client=N
             nomad_port = get_env_variable("NOMAD_PORT", "4646")
             nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
 
+        num_active_nodes = 0
+        for node in nomad_client.nodes.get_nodes():
+            if node['Status'] == 'ready':
+                num_active_nodes += 1
+
         # Minus one because the smasher doesn't run DLs
-        MAX_TOTAL_DOWNLOADER_JOBS = (len(nomad_client.nodes) - 1) * DOWNLOADER_JOBS_PER_NODE
+        MAX_TOTAL_DOWNLOADER_JOBS = (num_active_nodes - 1) * DOWNLOADER_JOBS_PER_NODE
         TIME_OF_LAST_SIZE_CHECK = timezone.now()
 
     if MAX_TOTAL_DOWNLOADER_JOBS > 1000:
@@ -300,6 +306,16 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
             ram_amount = 4096
         elif ram_amount == 4096:
             ram_amount = 8192
+
+    # Don't redownload if we don't need to.
+    # Only do this for SRA jobs because they don't have archives which
+    # this isn't capable of dealing with.
+    if last_job.downloader_task == "SRA":
+        if has_original_file_been_processed(last_job.original_files.first()):
+            last_job.no_retry = True
+            last_job.failure_reason = "Foreman told to redownloaded job with prior succesful processing."
+            last_job.save()
+            return
 
     new_job = DownloaderJob(num_retries=num_retries,
                             downloader_task=last_job.downloader_task,

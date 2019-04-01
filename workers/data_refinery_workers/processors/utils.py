@@ -29,7 +29,12 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
 )
-from data_refinery_common.utils import get_instance_id, get_env_variable, get_env_variable_gracefully
+from data_refinery_common.utils import (
+    get_env_variable,
+    get_env_variable_gracefully,
+    get_instance_id,
+    has_original_file_been_processed,
+)
 
 
 logger = get_and_configure_logger(__name__)
@@ -312,6 +317,17 @@ def start_job(job_context: Dict):
 
         logger.error("This processor job has already been started!!!", processor_job=job.id)
         raise Exception("processors.start_job called on job %s that has already been started!" % str(job.id))
+
+    if has_original_file_been_processed(job.original_files.first()):
+        logger.error(("Sample has a good computed file, it must have been processed, "
+                      "so it doesn't need to be downloaded! Aborting!"),
+                     job_id=job.id,
+                     original_file_id=original_file.id
+        )
+        job_context["original_files"] = []
+        job_context["computed_files"] = []
+        job_context['abort'] = True
+        return job_context
 
     # Set up the SIGTERM handler so we can appropriately handle being interrupted.
     # (`docker stop` uses SIGTERM, not SIGINT.)
