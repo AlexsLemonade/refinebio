@@ -23,7 +23,11 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
 )
-from data_refinery_common.utils import get_instance_id, get_env_variable
+from data_refinery_common.utils import (
+    get_env_variable,
+    get_instance_id,
+    has_original_file_been_processed,
+)
 
 logger = get_and_configure_logger(__name__)
 # Let this fail if SYSTEM_VERSION is unset.
@@ -88,26 +92,43 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
                             ).count()
 
     # Death and rebirth.
-    if settings.RUNNING_IN_CLOUD or force_harakiri:
-        if num_downloader_jobs_currently_running >= int(max_downloader_jobs_per_node):
-            # Wait for the death window
-            while True:
-                seconds = datetime.datetime.now().second
-                # Mass harakiri happens every 15 seconds.
-                if seconds % 15 == 0:
-                    job.start_time = None
-                    job.num_retries = job.num_retries - 1
-                    job.failure_reason = "Killed by harakiri"
-                    job.success = False
-                    job.save()
+    # if settings.RUNNING_IN_CLOUD or force_harakiri:
+    #     if num_downloader_jobs_currently_running >= int(max_downloader_jobs_per_node):
+    #         # Wait for the death window
+    #         while True:
+    #             seconds = datetime.datetime.now().second
+    #             # Mass harakiri happens every 15 seconds.
+    #             if seconds % 15 == 0:
+    #                 job.start_time = None
+    #                 job.num_retries = job.num_retries - 1
+    #                 job.failure_reason = "Killed by harakiri"
+    #                 job.success = False
+    #                 job.save()
 
-                    # What is dead may never die!
-                    sys.exit(0)
+    #                 # What is dead may never die!
+    #                 sys.exit(0)
 
     # This job should not have been started.
     if job.start_time is not None:
         logger.error("This downloader job has already been started!!!", downloader_job=job.id)
         raise Exception("downloaders.start_job called on a job that has already been started!")
+
+    # Only do this for SRA jobs because they don't have archives which
+    # this isn't capable of dealing with.
+    if job.downloader_task == "SRA":
+        if has_original_file_been_processed(job.original_files.first()):
+            logger.error(("Sample has a good computed file, it must have been processed, "
+                          "so it doesn't need to be downloaded! Aborting!"),
+                         job_id=job.id,
+                         original_file_id=original_file.id
+            )
+            job.start_time = timezone.now()
+            job.failure_reason = "Was told to redownload a successfully proccessed file."
+            job.success = False
+            job.no_retry = True
+            job.end_time = timezone.now()
+            job.save()
+            sys.exit(0)
 
     # Set up the SIGTERM handler so we can appropriately handle being interrupted.
     # (`docker stop` uses SIGTERM, not SIGINT.)
