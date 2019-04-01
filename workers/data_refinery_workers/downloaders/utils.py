@@ -243,7 +243,12 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
                              processor_job=processor_job.id,
                              original_file=original_file.id)
 
-            send_job(pipeline_to_apply, processor_job)
+            try:
+                send_job(pipeline_to_apply, processor_job)
+            except:
+                # If we cannot queue the job now the Foreman will do
+                # it later.
+                pass
 
 
 def create_processor_job_for_original_files(original_files: List[OriginalFile],
@@ -283,4 +288,9 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
         logger.debug("Queuing processor job.",
                      processor_job=processor_job.id)
 
-        send_job(pipeline_to_apply, processor_job)
+        try:
+            send_job(pipeline_to_apply, processor_job)
+        except:
+            # If we cannot queue the job now the Foreman will do
+            # it later.
+            pass
