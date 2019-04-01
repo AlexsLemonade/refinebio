@@ -97,8 +97,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 def tximport(job_id: int) -> None:
     """Main processor function for the Tximport Processor.
 
-    Runs salmon quant command line tool, specifying either a long or
-    short read length. Also runs FastQC, MultiQC, and Salmontools.
+    Runs tximport command line tool on an experiment.
     """
     pipeline = Pipeline(name=utils.PipelineEnum.TXIMPORT.value)
     final_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},

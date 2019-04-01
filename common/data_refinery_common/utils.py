@@ -85,6 +85,16 @@ def get_volume_index(path='/home/user/data_store/VOLUME_INDEX') -> str:
 
     return default
 
+def get_nomad_jobs() -> list:
+    """Calls nomad service and return all jobs"""
+    try:
+        nomad_host = get_env_variable("NOMAD_HOST")
+        nomad_port = get_env_variable("NOMAD_PORT", "4646")
+        nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
+        return nomad_client.jobs.get_jobs()
+    except nomad.api.exceptions.BaseNomadException:
+        # Nomad is not available right now
+        return []
 
 def get_active_volumes() -> Set[str]:
     """Returns a Set of indices for volumes that are currently mounted.
