@@ -206,10 +206,11 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
             reads_count = spot_count_mates * int(stats.Run.Statistics['nreads'])
             job_context["index_length_raw"] = int(base_count_bio_mates / reads_count)
         except Exception:
+            # https://github.com/ncbi/sra-tools/issues/192
             try:
                 job_context["index_length_raw"] = int(stats.Run.Statistics.Read[0]['average'])
             except Exception:
-                logger.error("Unable to determine index length! Defaulting to small", stat_response=respo)
+                logger.error("Unable to determine index length! Defaulting to small")
                 job_context["index_length_raw"] = -1
 
     if job_context["index_length_raw"] > 75:
