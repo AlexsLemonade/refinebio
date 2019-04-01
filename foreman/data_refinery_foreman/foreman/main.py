@@ -1,6 +1,7 @@
 import datetime
 import nomad
 import socket
+import sys
 import time
 import traceback
 
@@ -364,7 +365,7 @@ def count_downloader_jobs_in_queue(nomad_client: Nomad) -> int:
     except:
         # Nomad is down, return an impossibly high number to prevent
         # additonal queuing from happening:
-        return 100000000
+        return sys.maxsize
 
     total = 0
     for job in all_downloader_jobs:
