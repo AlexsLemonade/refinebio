@@ -323,7 +323,7 @@ def start_job(job_context: Dict):
         logger.error(("Sample has a good computed file, it must have been processed, "
                       "so it doesn't need to be downloaded! Aborting!"),
                      job_id=job.id,
-                     original_file_id=original_file
+                     original_file=original_file
         )
         job_context["original_files"] = []
         job_context["computed_files"] = []
