@@ -131,13 +131,16 @@ class ForemanTestCase(TestCase):
     def test_retrying_many_failed_downloader_jobs(self, mock_send_job):
         mock_send_job.return_value = True
 
-        for x in range(0, 10000):
+        NUM_PAGES = 5
+        for x in range(0, main.PAGE_SIZE * NUM_PAGES):
             job = self.create_downloader_job(str(x))
             job.success = False
             job.save()
 
         main.retry_failed_downloader_jobs()
-        self.assertEqual(len(mock_send_job.mock_calls), 10000)
+        # No jobs actually make it in Nomad queue, so expect
+        # DOWNLOADER_JOBS_PER_NODE jobs per page.
+        self.assertEqual(len(mock_send_job.mock_calls), main.DOWNLOADER_JOBS_PER_NODE * NUM_PAGES)
 
         jobs = DownloaderJob.objects.order_by('id')
 
