@@ -219,6 +219,28 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
     else:
         job_context["index_length"] = "short"
 
+    if not job_context.get('sra_num_reads', None):
+        try:
+            sample = job_context['sample']
+            for exp in sample.experiments.all():
+                for anno in exp.experimentannotation_set.all()
+                    if expanno.data.get('library_layout', '').upper() == 'PAIRED':
+                        job_context['sra_num_reads'] = 2
+                        return job_context
+                    if expanno.data.get('library_layout', '').upper() == 'SINGLE':
+                        job_context['sra_num_reads'] = 1
+                        return job_context
+        except Exception as e:
+            logger.exception("Problem trying to determine library strategy (single/paired)!", file=job_context["sra_input_file_path"])
+            job_context["job"].failure_reason = "Unable to determine library strategy (single/paired): " + str(e)
+            job_context["success"] = False
+            return job_context
+
+    if not job_context.get('sra_num_reads', None):
+        logger.error("Completely unable to determine library strategy (single/paired)!", file=job_context["sra_input_file_path"])
+        job_context["job"].failure_reason = "Unable to determine library strategy (single/paired)"
+        job_context["success"] = False
+
     return job_context
 
 
