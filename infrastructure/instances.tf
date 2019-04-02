@@ -82,11 +82,10 @@ resource "aws_instance" "nomad_server_1" {
 
   # Nomad server requirements can be found here:
   # https://www.nomadproject.io/guides/cluster/requirements.html
-  # However I do not think that these accurately reflect those requirements.
-  # I think these are the defaults provided in terraform examples.
+  # "40-80 GB+ of fast disk and significant network bandwidth"
   root_block_device = {
     volume_type = "gp2"
-    volume_size = 10
+    volume_size = 80
   }
 }
 
@@ -144,11 +143,10 @@ resource "aws_instance" "nomad_server_2" {
 
   # Nomad server requirements can be found here:
   # https://www.nomadproject.io/guides/cluster/requirements.html
-  # However I do not think that these accurately reflect those requirements.
-  # I think these are the defaults provided in terraform examples.
+  # "40-80 GB+ of fast disk and significant network bandwidth"
   root_block_device = {
     volume_type = "gp2"
-    volume_size = 100
+    volume_size = 80
   }
 }
 
@@ -180,11 +178,10 @@ resource "aws_instance" "nomad_server_3" {
 
   # Nomad server requirements can be found here:
   # https://www.nomadproject.io/guides/cluster/requirements.html
-  # However I do not think that these accurately reflect those requirements.
-  # I think these are the defaults provided in terraform examples.
+  # "40-80 GB+ of fast disk and significant network bandwidth"
   root_block_device = {
     volume_type = "gp2"
-    volume_size = 100
+    volume_size = 80
   }
 }
 
