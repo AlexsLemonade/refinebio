@@ -223,7 +223,7 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
         try:
             sample = job_context['sample']
             for exp in sample.experiments.all():
-                for anno in exp.experimentannotation_set.all()
+                for anno in exp.experimentannotation_set.all():
                     if expanno.data.get('library_layout', '').upper() == 'PAIRED':
                         job_context['sra_num_reads'] = 2
                         return job_context
