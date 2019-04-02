@@ -51,7 +51,7 @@ MAX_NUM_RETRIES = 2
 # This can be overritten by the env var "MAX_TOTAL_JOBS"
 DEFAULT_MAX_JOBS = 20000
 
-DOWNLOADER_JOBS_PER_NODE = 65
+DOWNLOADER_JOBS_PER_NODE = 35
 PAGE_SIZE=2000
 
 # This is the maximum number of non-dead nomad jobs that can be in the
@@ -414,7 +414,7 @@ def handle_downloader_jobs(jobs: List[DownloaderJob],
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
         if jobs_dispatched >= queue_capacity:
-            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more downloader jobs now.")
+            logger.info("We hit the maximum downloader jobs / capacity ceiling, so we're not handling any more downloader jobs now.")
             return
 
         if job.num_retries < MAX_NUM_RETRIES:
