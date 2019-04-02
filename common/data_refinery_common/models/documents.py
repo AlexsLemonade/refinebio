@@ -17,7 +17,7 @@ experiment_index.settings(
 edge_ngram_completion_filter = token_filter(
     'edge_ngram_completion_filter',
     type="edge_ngram",
-    min_gram=4,
+    min_gram=3,
     max_gram=12
 )
 html_strip = analyzer(
