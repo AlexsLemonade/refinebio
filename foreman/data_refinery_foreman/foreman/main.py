@@ -396,7 +396,7 @@ def get_capacity_for_downloader_jobs(nomad_client) -> bool:
 
 
 def handle_downloader_jobs(jobs: List[DownloaderJob],
-                           queue_capacity: MAX_TOTAL_DOWNLOADER_JOBS) -> None:
+                           queue_capacity=MAX_TOTAL_DOWNLOADER_JOBS) -> None:
     """For each job in jobs, either retry it or log it.
 
     No more than queue_capacity jobs will be retried.
