@@ -60,6 +60,12 @@ PAGE_SIZE=2000
 MAX_TOTAL_DOWNLOADER_JOBS = DOWNLOADER_JOBS_PER_NODE
 TIME_OF_LAST_SIZE_CHECK = timezone.now() - datetime.timedelta(hours=1)
 
+# This is the absolute max number of downloader jobs that should ever
+# be queued across the whole cluster no matter how many nodes we
+# have. This is important because too many downloader jobs and we take
+# down NCBI.
+HARD_MAX_DOWNLOADER_JOBS = 750
+
 # The minimum amount of time in between each iteration of the main
 # loop. We could loop much less frequently than every two minutes if
 # the work we do takes longer than 2 minutes, but this will prevent
@@ -166,8 +172,8 @@ def get_max_downloader_jobs(window=datetime.timedelta(minutes=2), nomad_client=N
         MAX_TOTAL_DOWNLOADER_JOBS = (num_active_nodes - num_smasher_nodes) * DOWNLOADER_JOBS_PER_NODE
         TIME_OF_LAST_SIZE_CHECK = timezone.now()
 
-    if MAX_TOTAL_DOWNLOADER_JOBS > 1000:
-        return 1000
+    if MAX_TOTAL_DOWNLOADER_JOBS > HARD_MAX_DOWNLOADER_JOBS:
+        return HARD_MAX_DOWNLOADER_JOBS
     else:
         return MAX_TOTAL_DOWNLOADER_JOBS
 
