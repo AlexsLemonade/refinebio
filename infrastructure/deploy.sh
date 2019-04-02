@@ -181,7 +181,7 @@ echo "Confirming Nomad cluster.."
 start_time=$(date +%s)
 diff=0
 nomad_status=$(check_nomad_status)
-while [[ $diff < 900 && $nomad_status != "200" ]]; do
+while [ "$diff" -lt "900" -a $nomad_status != "200" ]]; do
     sleep 1
     nomad_status=$(check_nomad_status)
     let "diff = $(date +%s) - $start_time"
