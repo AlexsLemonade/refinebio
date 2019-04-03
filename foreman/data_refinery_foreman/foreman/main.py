@@ -669,7 +669,8 @@ def get_capacity_for_processor_jobs(nomad_client) -> bool:
 
 
 def handle_processor_jobs(jobs: List[ProcessorJob],
-                          queue_capacity: int = None) -> None:
+                          queue_capacity: int = None,
+                          ignore_ceiling=False) -> None:
     """For each job in jobs, either retry it or log it.
 
     No more than queue_capacity jobs will be retried.
@@ -691,9 +692,11 @@ def handle_processor_jobs(jobs: List[ProcessorJob],
 
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
-        if jobs_dispatched >= queue_capacity:
-            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more processor jobs now.")
-            return
+
+        if not ignore_ceiling:
+            if jobs_dispatched >= queue_capacity:
+                logger.info("We hit the maximum total jobs ceiling, so we're not handling any more processor jobs now.")
+                return
 
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_processor_job(job)
@@ -899,13 +902,6 @@ def retry_lost_processor_jobs() -> None:
                 len_jobs=len(lost_jobs)
             )
             handle_processor_jobs(lost_jobs, queue_capacity)
-
-        if page.has_next():
-            page = paginator.page(page.next_page_number())
-            page_count = page_count + 1
-            queue_capacity = get_capacity_for_processor_jobs(nomad_client)
-        else:
-            break
 
 ##
 # Surveyors
@@ -1178,6 +1174,71 @@ def send_janitor_jobs():
             # If we can't dispatch this job, something else has gone wrong.
             continue
 
+##
+# Smasher
+##
+
+def retry_lost_smasher_jobs() -> None:
+    """Retry smasher jobs which never even got started for too long."""
+    try:
+        active_volumes = get_active_volumes()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
+
+    potentially_lost_jobs = ProcessorJob.objects.filter(
+        success=None,
+        retried=False,
+        start_time=None,
+        end_time=None,
+        no_retry=False,
+        pipeline_applied="SMASHER",
+        created_at__gt=(timezone.now() - timedelta(hours=24))
+    )
+
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+
+    for job in potentially_lost_jobs:
+        try:
+            if job.nomad_job_id:
+                job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+                # If the job is still pending, then it makes sense that it
+                # hasn't started and if it's running then it may not have
+                # been able to mark the job record as started yet.
+                if job_status != "pending" and job_status != "running":
+                    logger.debug(("Determined that a smasher job needs to be requeued because its"
+                                  " Nomad Job's status is: %s."),
+                                 job_status,
+                                 job_id=job.id
+                    )
+                    lost_jobs.append(job)
+            else:
+                # If there is no nomad_job_id field set, we could be
+                # in the small window where the job was created but
+                # hasn't yet gotten a chance to be queued.
+                # If this job really should be restarted we'll get it in the next loop.
+                if timezone.now() - job.created_at > MIN_LOOP_TIME:
+                    lost_jobs.append(job)
+        except URLNotFoundNomadException:
+            logger.debug(("Determined that a smasher job needs to be requeued because "
+                              "querying for its Nomad job failed: "),
+                             job_id=job.id
+            )
+            lost_jobs.append(job)
+        except nomad.api.exceptions.BaseNomadException:
+            raise
+        except Exception:
+            logger.exception("Couldn't query Nomad about smasher Job.", processor_job=job.id)
+
+    if lost_jobs:
+        logger.info(
+            "Handling lost page %d of (never-started) smasher jobs!",
+            page_count,
+            len_jobs=len(lost_jobs)
+        )
+        handle_processor_jobs(lost_jobs, sys.maxsize, ignore_ceiling=True)
 
 ##
 # Handling of node cycling
@@ -1306,7 +1367,8 @@ def monitor_jobs():
             retry_lost_downloader_jobs,
             retry_failed_survey_jobs,
             retry_hung_survey_jobs,
-            retry_lost_survey_jobs
+            retry_lost_survey_jobs,
+            retry_lost_smasher_jobs
         ]
 
         for function in requeuing_functions_in_order:
