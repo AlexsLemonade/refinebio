@@ -451,7 +451,9 @@ def _run_tximport_for_experiment(
     tximport_path_list_file = job_context["work_dir"] + "tximport_inputs.txt"
     with open(tximport_path_list_file, "w") as input_list:
         for quant_file in quant_files:
-            quant_work_path = job_context["work_dir"] + quant_file.filename
+            sample_output = job_context["work_dir"] + str(quant_file.absolute_file_path.split('/')[-2]) + "/"
+            os.makedirs(sample_output, exist_ok=True)
+            quant_work_path = sample_output + quant_file.filename
             input_list.write(quant_file.get_synced_file_path(path=quant_work_path) + "\n")
 
     rds_filename = "txi_out.RDS"
