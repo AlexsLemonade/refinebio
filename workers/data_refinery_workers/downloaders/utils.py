@@ -26,7 +26,6 @@ from data_refinery_common.models import (
 from data_refinery_common.utils import (
     get_env_variable,
     get_instance_id,
-    has_original_file_been_processed,
 )
 
 logger = get_and_configure_logger(__name__)

@@ -708,6 +708,31 @@ class OriginalFile(models.Model):
         self.is_downloaded = False
         self.save()
 
+
+    def has_been_processed(self) -> bool:
+        """Returns True if original_file has been completely processed, returns False otherwise.
+        """
+
+        sample = self.samples.first()
+        if not sample:
+            return False
+
+        if sample.source_database == "SRA":
+            for computed_file in sample.computed_files.all():
+                    if computed_file.s3_bucket and computed_file.s3_key:
+                        return True
+        else:
+            # If this original_file has multiple samples (is an archive), and any of them haven't been processed,
+            # we'll need the entire archive in order to process any of them.
+            # A check to non re-processed the already processed samples in the archive will happen elsewhere
+            # before dispatching.
+            for sample in self.samples:
+                if not sample.is_processed:
+                    return False
+            return True
+
+        return False
+
     def needs_downloading(self, pipeline_applied=None) -> bool:
         """Determine if a file needs to be downloaded.
 

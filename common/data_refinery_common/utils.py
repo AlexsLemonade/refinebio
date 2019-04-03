@@ -293,30 +293,3 @@ def get_fasp_sra_download(run_accession: str):
             logger = logging.getLogger(__name__)
             logger.exception("Bad FASP CGI response", data=data, text=resp.text)
             return None
-
-def has_original_file_been_processed(original_file) -> bool:
-    """Returns True if original_file is from SRA and has been processed
-
-    Returns False otherwise.
-
-    original_file must have source_database == SRA, otherwise an
-    exception will be raised. This is because SRA only has one sample
-    per original file, which is a precondition for this function being
-    correct. The reason for this is that otherwise an archive file
-    could have many samples which are unprocessed, but if there's one
-    then we would return True here which would be misleading.
-    """
-    if not original_file:
-        return False
-
-    sample = original_file.samples.first()
-
-    if not sample:
-        return False
-
-    if sample.source_database != "SRA":
-        for computed_file in sample.computed_files.all():
-                if computed_file.s3_bucket and computed_file.s3_key:
-                    return True
-
-    return False
