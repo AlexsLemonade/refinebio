@@ -124,7 +124,7 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
     job.save()
 
     needs_downloading = False
-    for original_file in job.original_files:
+    for original_file in job.original_files.all():
         if original_file.needs_downloading():
             needs_downloading = True
 
