@@ -451,7 +451,15 @@ def _run_tximport_for_experiment(
     tximport_path_list_file = job_context["work_dir"] + "tximport_inputs.txt"
     with open(tximport_path_list_file, "w") as input_list:
         for quant_file in quant_files:
-            quant_work_path = job_context["work_dir"] + quant_file.filename
+            # We create a directory in the work directory for each (quant.sf) file, as 
+            # tximport assigns column names based on the parent directory name,
+            # and we need those names so that we can reassociate withe samples later.
+            # ex., a file with absolute_file_path: /processor_job_1/SRR123_output/quant.sf
+            # downloads to: /processor_job_2/SRR123_output/quant.sf
+            # So the result file has frame "SRR123_output", which we can associate with sample SRR123
+            sample_output = job_context["work_dir"] + str(quant_file.absolute_file_path.split('/')[-2]) + "/"
+            os.makedirs(sample_output, exist_ok=True)
+            quant_work_path = sample_output + quant_file.filename
             input_list.write(quant_file.get_synced_file_path(path=quant_work_path) + "\n")
 
     rds_filename = "txi_out.RDS"
