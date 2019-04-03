@@ -314,7 +314,7 @@ def has_original_file_been_processed(original_file) -> bool:
     if not sample:
         return False
 
-    if sample.source_database != "SRA":
+    if sample.source_database == "SRA":
         for computed_file in sample.computed_files.all():
                 if computed_file.s3_bucket and computed_file.s3_key:
                     return True
