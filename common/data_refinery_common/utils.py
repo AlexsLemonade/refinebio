@@ -295,13 +295,7 @@ def get_fasp_sra_download(run_accession: str):
             return None
 
 def has_original_file_been_processed(original_file) -> bool:
-    """Returns True if original_filehas been processed, returns False otherwise.
-
-    SRA only has one sample
-    per original file, which is a precondition for this function being
-    correct. The reason for this is that otherwise an archive file
-    could have many samples which are unprocessed, but if there's one
-    then we would return True here which would be misleading.
+    """Returns True if original_file has been completely processed, returns False otherwise.
     """
     if not original_file:
         return False
@@ -315,6 +309,13 @@ def has_original_file_been_processed(original_file) -> bool:
                 if computed_file.s3_bucket and computed_file.s3_key:
                     return True
     else:
-        return sample.is_processed
+        # If this original_file has multiple samples (is an archive), and any of them haven't been processed,
+        # we'll need the entire archive in order to process any of them.
+        # A check to non re-processed the already processed samples in the archive will happen elsewhere
+        # before dispatching.
+        for sample in original_file.samples:
+            if not sample.is_processed:
+                return False
+        return True
 
     return False
