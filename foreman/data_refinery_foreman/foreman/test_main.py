@@ -567,6 +567,39 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
+    @patch('data_refinery_foreman.foreman.main.get_active_volumes')
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    @patch('data_refinery_foreman.foreman.main.Nomad')
+    def test_retrying_lost_smasher_jobs(self, mock_nomad, mock_send_job, mock_get_active_volumes):
+        mock_send_job.return_value = True
+        mock_get_active_volumes.return_value = {"1", "2", "3"}
+
+        def mock_init_nomad(host, port=0, timeout=0):
+            ret_value = MagicMock()
+            ret_value.job = MagicMock()
+            ret_value.job.get_job = MagicMock()
+            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
+            return ret_value
+
+        mock_nomad.side_effect = mock_init_nomad
+
+        job = self.create_processor_job()
+        job.created_at = timezone.now()
+        job.save()
+
+        main.retry_lost_smasher_jobs(pipeline="SMASHER")
+
+        self.assertEqual(len(mock_send_job.mock_calls), 1)
+
+        jobs = ProcessorJob.objects.order_by('id')
+        original_job = jobs[0]
+        self.assertTrue(original_job.retried)
+        self.assertEqual(original_job.num_retries, 0)
+        self.assertFalse(original_job.success)
+
+        retried_job = jobs[1]
+        self.assertEqual(retried_job.num_retries, 1)
+
     @patch('data_refinery_foreman.foreman.main.send_job')
     @patch('data_refinery_foreman.foreman.main.Nomad')
     def test_not_retrying_old_processor_jobs(self, mock_nomad, mock_send_job):

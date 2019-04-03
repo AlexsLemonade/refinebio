@@ -1202,6 +1202,7 @@ def retry_lost_smasher_jobs() -> None:
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
 
+    lost_jobs = []
     for job in potentially_lost_jobs:
         try:
             if job.nomad_job_id:
