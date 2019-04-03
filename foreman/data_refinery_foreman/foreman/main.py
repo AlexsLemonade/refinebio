@@ -693,8 +693,7 @@ def handle_processor_jobs(jobs: List[ProcessorJob],
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
 
-        if not ignore_ceiling:
-            if jobs_dispatched >= queue_capacity:
+        if not ignore_ceiling and jobs_dispatched >= queue_capacity:
                 logger.info("We hit the maximum total jobs ceiling, so we're not handling any more processor jobs now.")
                 return
 
@@ -902,6 +901,13 @@ def retry_lost_processor_jobs() -> None:
                 len_jobs=len(lost_jobs)
             )
             handle_processor_jobs(lost_jobs, queue_capacity)
+
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
+            queue_capacity = get_capacity_for_processor_jobs(nomad_client)
+        else:
+            break
 
 ##
 # Surveyors
