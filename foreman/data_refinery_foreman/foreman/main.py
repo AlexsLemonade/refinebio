@@ -1237,8 +1237,7 @@ def retry_lost_smasher_jobs() -> None:
 
     if lost_jobs:
         logger.info(
-            "Handling lost page %d of (never-started) smasher jobs!",
-            page_count,
+            "Handling lost (never-started) smasher jobs!",
             len_jobs=len(lost_jobs)
         )
         handle_processor_jobs(lost_jobs, sys.maxsize, ignore_ceiling=True)

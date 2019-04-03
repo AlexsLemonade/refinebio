@@ -583,11 +583,11 @@ class ForemanTestCase(TestCase):
 
         mock_nomad.side_effect = mock_init_nomad
 
-        job = self.create_processor_job()
+        job = self.create_processor_job(pipeline="SMASHER")
         job.created_at = timezone.now()
         job.save()
 
-        main.retry_lost_smasher_jobs(pipeline="SMASHER")
+        main.retry_lost_smasher_jobs()
 
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
