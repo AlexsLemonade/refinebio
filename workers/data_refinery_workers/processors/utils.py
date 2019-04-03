@@ -298,6 +298,10 @@ def start_job(job_context: Dict):
     if job.start_time is not None and settings.RUNNING_IN_CLOUD:
 
         if job.success:
+            failure_reason = "ProcessorJob has already completed succesfully - why are we here again? Bad Nomad!"
+            logger.error(failure_reason,
+                job_id=job.id
+            )
             job_context["original_files"] = []
             job_context["computed_files"] = []
             job_context['abort'] = True
