@@ -454,6 +454,9 @@ def _run_tximport_for_experiment(
             # We create a directory in the work directory for each (quant.sf) file, as 
             # tximport assigns column names based on the parent directory name,
             # and we need those names so that we can reassociate withe samples later.
+            # ex., a file with absolute_file_path: /processor_job_1/SRR123_output/quant.sf
+            # downloads to: /processor_job_2/SRR123_output/quant.sf
+            # So the result file has frame "SRR123_output", which we can associate with sample SRR123
             sample_output = job_context["work_dir"] + str(quant_file.absolute_file_path.split('/')[-2]) + "/"
             os.makedirs(sample_output, exist_ok=True)
             quant_work_path = sample_output + quant_file.filename
