@@ -33,7 +33,6 @@ from data_refinery_common.utils import (
     get_env_variable,
     get_env_variable_gracefully,
     get_instance_id,
-    has_original_file_been_processed,
 )
 
 
@@ -319,7 +318,7 @@ def start_job(job_context: Dict):
         raise Exception("processors.start_job called on job %s that has already been started!" % str(job.id))
 
     original_file = job.original_files.first()
-    if has_original_file_been_processed(original_file):
+    if original_file and original_file.has_been_processed():
         logger.error(("Sample has a good computed file, it must have been processed, "
                       "so it doesn't need to be downloaded! Aborting!"),
                      job_id=job.id,
