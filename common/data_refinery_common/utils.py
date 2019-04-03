@@ -293,29 +293,3 @@ def get_fasp_sra_download(run_accession: str):
             logger = logging.getLogger(__name__)
             logger.exception("Bad FASP CGI response", data=data, text=resp.text)
             return None
-
-def has_original_file_been_processed(original_file) -> bool:
-    """Returns True if original_file has been completely processed, returns False otherwise.
-    """
-    if not original_file:
-        return False
-
-    sample = original_file.samples.first()
-    if not sample:
-        return False
-
-    if sample.source_database == "SRA":
-        for computed_file in sample.computed_files.all():
-                if computed_file.s3_bucket and computed_file.s3_key:
-                    return True
-    else:
-        # If this original_file has multiple samples (is an archive), and any of them haven't been processed,
-        # we'll need the entire archive in order to process any of them.
-        # A check to non re-processed the already processed samples in the archive will happen elsewhere
-        # before dispatching.
-        for sample in original_file.samples:
-            if not sample.is_processed:
-                return False
-        return True
-
-    return False
