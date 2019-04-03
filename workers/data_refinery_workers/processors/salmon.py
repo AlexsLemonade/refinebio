@@ -451,6 +451,9 @@ def _run_tximport_for_experiment(
     tximport_path_list_file = job_context["work_dir"] + "tximport_inputs.txt"
     with open(tximport_path_list_file, "w") as input_list:
         for quant_file in quant_files:
+            # We create a directory in the work directory for each (quant.sf) file, as 
+            # tximport assigns column names based on the parent directory name,
+            # and we need those names so that we can reassociate withe samples later.
             sample_output = job_context["work_dir"] + str(quant_file.absolute_file_path.split('/')[-2]) + "/"
             os.makedirs(sample_output, exist_ok=True)
             quant_work_path = sample_output + quant_file.filename
