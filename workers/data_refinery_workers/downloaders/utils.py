@@ -113,23 +113,6 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
         logger.error("This downloader job has already been started!!!", downloader_job=job.id)
         raise Exception("downloaders.start_job called on a job that has already been started!")
 
-    # Only do this for SRA jobs because they don't have archives which
-    # this isn't capable of dealing with.
-    if job.downloader_task == "SRA":
-        if has_original_file_been_processed(job.original_files.first()):
-            logger.error(("Sample has a good computed file, it must have been processed, "
-                          "so it doesn't need to be downloaded! Aborting!"),
-                         job_id=job.id,
-                         original_file_id=original_file.id
-            )
-            job.start_time = timezone.now()
-            job.failure_reason = "Was told to redownload a successfully proccessed file."
-            job.success = False
-            job.no_retry = True
-            job.end_time = timezone.now()
-            job.save()
-            sys.exit(0)
-
     # Set up the SIGTERM handler so we can appropriately handle being interrupted.
     # (`docker stop` uses SIGTERM, not SIGINT.)
     # (however, Nomad sends an SIGINT so catch both.)
@@ -140,6 +123,52 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
     job.worker_version = SYSTEM_VERSION
     job.start_time = timezone.now()
     job.save()
+
+    # Only do this for SRA jobs because they don't have archives which
+    # this isn't capable of dealing with.
+    if job.downloader_task == "SRA":
+        original_files = job.original_files
+        first_file = original_files.first()
+        if not first_file:
+            logger.error("Downloader job had no associated original files!", job_id=job.id)
+            job.start_time = timezone.now()
+            job.failure_reason = "Downloader job had no associated original files!"
+            job.success = False
+            job.no_retry = True
+            job.end_time = timezone.now()
+            job.save()
+            sys.exit(0)
+        elif has_original_file_been_processed(first_file):
+            logger.error(("Sample has a good computed file, it must have been processed, "
+                          "so it doesn't need to be downloaded! Aborting!"),
+                         job_id=job.id,
+                         original_file_id=first_file.id
+            )
+            job.start_time = timezone.now()
+            job.failure_reason = "Was told to redownload a successfully proccessed file."
+            job.success = False
+            job.no_retry = True
+            job.end_time = timezone.now()
+            job.save()
+            sys.exit(0)
+
+        needs_downloading = False
+        for original_file in original_files
+            if original_file.needs_downloading('SALMON'):
+                needs_downloading = True
+
+        if not needs_downloading:
+            logger.error(("All files associated with this job are present on disk, "
+                          "so nothing needs to be downloaded! Aborting!"),
+                         job_id=job.id
+            )
+            job.start_time = timezone.now()
+            job.failure_reason = "Was told to redownload file(s) that are present on disk!"
+            job.success = False
+            job.no_retry = True
+            job.end_time = timezone.now()
+            job.save()
+            sys.exit(0)
 
     global CURRENT_JOB
     CURRENT_JOB = job
