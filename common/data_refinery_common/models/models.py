@@ -757,7 +757,8 @@ class OriginalFile(models.Model):
         if unstarted_downloader_jobs.count() > 0:
             return False
 
-        return self.has_been_processed()
+        # If this file has been processed, then it doesn't need to be downloaded again.
+        return not self.has_been_processed()
 
     def is_affy_data(self) -> bool:
         """Return true if original_file is a CEL file or a gzipped CEL file.
