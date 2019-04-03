@@ -726,7 +726,7 @@ class OriginalFile(models.Model):
             # we'll need the entire archive in order to process any of them.
             # A check to non re-processed the already processed samples in the archive will happen elsewhere
             # before dispatching.
-            for sample in self.samples:
+            for sample in self.samples.all():
                 if not sample.is_processed:
                     return False
             return True
