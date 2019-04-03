@@ -1195,7 +1195,7 @@ def retry_lost_smasher_jobs() -> None:
         end_time=None,
         no_retry=False,
         pipeline_applied="SMASHER",
-        created_at__gt=(timezone.now() - timedelta(hours=24))
+        created_at__gt=(timezone.now() - datetime.timedelta(hours=24))
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
