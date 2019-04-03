@@ -64,6 +64,7 @@ s3transfer==0.1.13        # via boto3
 scikit-image==0.14.2      # via datashader
 scikit-learn==0.20.0
 scipy==1.1.0
+simplejson==3.16.0
 six==1.11.0               # via bokeh, cycler, distributed, elasticsearch-dsl, multipledispatch, packaging, python-dateutil, retrying, scikit-image
 sortedcontainers==2.1.0   # via distributed
 sympy==1.3
