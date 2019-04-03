@@ -87,7 +87,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     ).latest('last_modified')
 
     target_archive_path = job_context["work_dir"] + archive_file.filename
-    archive_path = archive_file.get_synced_file_path(target_archive_path)
+    archive_path = archive_file.get_synced_file_path(path=target_archive_path)
 
     with tarfile.open(archive_path, "r:gz") as tar:
         tar.extractall(job_context["temp_dir"])
