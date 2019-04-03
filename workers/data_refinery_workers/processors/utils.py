@@ -325,8 +325,9 @@ def start_job(job_context: Dict):
 
     original_file = job.original_files.first()
     if original_file and original_file.has_been_processed():
-        logger.error(("Sample has a good computed file, it must have been processed, "
-                      "so it doesn't need to be downloaded! Aborting!"),
+        failure_reason = ("Sample has a good computed file, it must have been processed, "
+                          "so it doesn't need to be downloaded! Aborting!")
+        logger.error(failure_reason,
                      job_id=job.id,
                      original_file=original_file
         )
