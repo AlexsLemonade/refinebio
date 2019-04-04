@@ -269,8 +269,8 @@ def _write_tsv_json(job_context, metadata, smash_path):
             with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
                 dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
                 dw.writeheader()
-                for sample_title, sample_metadata in metadata['samples'].items():
-                    if sample_title in experiment_data['sample_titles']:
+                for sample_accession_code, sample_metadata in metadata['samples'].items():
+                    if sample_accession_code in experiment_data['sample_accession_codes']:
                         row_data = _get_tsv_row_data(sample_metadata)
                         dw.writerow(row_data)
         return tsv_paths
@@ -749,13 +749,13 @@ def _smash(job_context: Dict, how="inner") -> Dict:
 
         samples = {}
         for sample in job_context["dataset"].get_samples():
-            samples[sample.title] = sample.to_metadata_dict()
+            samples[sample.accession_code] = sample.to_metadata_dict()
         metadata['samples'] = samples
 
         experiments = {}
         for experiment in job_context["dataset"].get_experiments():
             exp_dict = experiment.to_metadata_dict()
-            exp_dict['sample_titles'] = [v for v in experiment.samples.all().values_list('title', flat=True)]
+            exp_dict['sample_accession_codes'] = [v for v in experiment.samples.all().values_list('accession_code', flat=True)]
             experiments[experiment.accession_code] = exp_dict
         metadata['experiments'] = experiments
 
