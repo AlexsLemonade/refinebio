@@ -5,6 +5,7 @@ failures for both the DownloaderJobs and ProcessorJobs and requeue
 those jobs it detects as failed.
 """
 
+import random
 import sys
 import time
 from typing import Dict, List
@@ -27,13 +28,13 @@ from data_refinery_common.models import (
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.utils import get_env_variable, get_active_volumes
 
 
 logger = get_and_configure_logger(__name__)
 
 
-MAX_JOBS_FOR_THIS_MODE = 3000
+MAX_JOBS_FOR_THIS_MODE = 10000
 
 
 def build_completion_list(organism: Organism) -> List[Dict]:
@@ -131,7 +132,7 @@ def build_prioritized_jobs_list(organism: Organism) -> List:
     return prioritized_job_list
 
 
-def requeue_job(job):
+def requeue_job(job, volume_index):
     """Requeues a job regardless of whether it is a DownloaderJob or ProcessorJob.
 
     This function reuses a lot of logic from requeue_downloader_job
@@ -142,16 +143,14 @@ def requeue_job(job):
     """
     # All new jobs are going to be set at 2 retries so they only get
     # tried once. Presumably all of these have failed at least once
-    # already, so there may be a good reason. Not immediately having
-    # them retried will give me a chance to actually take a look at
-    # what is happening to to them.
+    # already, so there may be a good reason.
     num_retries = 1
     if isinstance(job, ProcessorJob):
         new_job = ProcessorJob(
             num_retries=num_retries,
             pipeline_applied=job.pipeline_applied,
             ram_amount=job.ram_amount,
-            volume_index="0"
+            volume_index=volume_index
         )
         new_job.save()
 
@@ -255,14 +254,21 @@ class Command(BaseCommand):
 
             num_short_from_max = MAX_JOBS_FOR_THIS_MODE - len_all_jobs
             if num_short_from_max > 0:
+                # We don't want these jobs to sit in our queue because
+                # the volume we assigned isn't available, so only use
+                # active volumes. Also in order to spread them around
+                # do so randomly. We don't want to hammer Nomad to
+                # get the active volumes though, so just do it once
+                # per 10 minute loop.
+                volume_index = random.choice(list(get_active_volumes()))
                 for i in range(num_short_from_max):
                     if len(prioritized_job_list) > 0:
-                        requeue_job(prioritized_job_list.pop(0))
+                        requeue_job(prioritized_job_list.pop(0), volume_index)
 
             # Wait 10 minutes in between queuing additional work to
             # give it time to actually get done.
             if len(prioritized_job_list) > 0:
-                logger.info("Sleeping for 5 minutes while jobs get done.")
+                logger.info("Sleeping for 10 minutes while jobs get done.")
                 time.sleep(600)
 
         logger.info("Successfully requeued all jobs for unprocessed %s samples.", organism_name)

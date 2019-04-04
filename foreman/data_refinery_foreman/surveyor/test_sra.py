@@ -157,7 +157,7 @@ class SraSurveyorTestCase(TestCase):
         self.assertEqual(metadata["library_strategy"], "RNA-Seq")
         self.assertEqual(metadata["organism_id"], "9031")
         self.assertEqual(metadata["organism_name"], "GALLUS GALLUS")
-        self.assertEqual(metadata["platform_instrument_model"], "IlluminaHiSeq2000")
+        self.assertEqual(metadata["platform_instrument_model"], "Illumina HiSeq 2000")
         self.assertEqual(metadata["read_spec_0_base_coord"], "1")
         self.assertEqual(metadata["read_spec_0_class"], "Application Read")
         self.assertEqual(metadata["read_spec_0_index"], "0")

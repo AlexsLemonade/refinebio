@@ -29,7 +29,11 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
 )
-from data_refinery_common.utils import get_instance_id, get_env_variable, get_env_variable_gracefully
+from data_refinery_common.utils import (
+    get_env_variable,
+    get_env_variable_gracefully,
+    get_instance_id,
+)
 
 
 logger = get_and_configure_logger(__name__)
@@ -48,6 +52,8 @@ def signal_handler(sig, frame):
     else:
         CURRENT_JOB.start_time = None
         CURRENT_JOB.num_retries = CURRENT_JOB.num_retries - 1
+        CURRENT_JOB.failure_reason = "Caught either a SIGTERM or SIGINT signal."
+        CURRENT_JOB.success = False
         CURRENT_JOB.save()
         sys.exit(0)
 
@@ -292,24 +298,45 @@ def start_job(job_context: Dict):
     if job.start_time is not None and settings.RUNNING_IN_CLOUD:
 
         if job.success:
-            logger.error("ProcessorJob has already completed succesfully - why are we here again? Bad Nomad!",
+            failure_reason = "ProcessorJob has already completed succesfully - why are we here again? Bad Nomad!"
+            logger.error(failure_reason,
                 job_id=job.id
             )
             job_context["original_files"] = []
             job_context["computed_files"] = []
             job_context['abort'] = True
+            # Will be saved by end_job.
+            job_context['job'].failure_reason = failure_reason
             return job_context
         if job.success == False:
-            logger.error("ProcessorJob has already completed with a fail - why are we here again? Bad Nomad!",
+            failure_reason = "ProcessorJob has already completed with a fail - why are we here again? Bad Nomad!"
+            logger.error(failure_reason,
                 job_id=job.id
             )
             job_context["original_files"] = []
             job_context["computed_files"] = []
             job_context['abort'] = True
+            # Will be saved by end_job.
+            job_context['job'].failure_reason = failure_reason
             return job_context
 
         logger.error("This processor job has already been started!!!", processor_job=job.id)
         raise Exception("processors.start_job called on job %s that has already been started!" % str(job.id))
+
+    original_file = job.original_files.first()
+    if original_file and original_file.has_been_processed():
+        failure_reason = ("Sample has a good computed file, it must have been processed, "
+                          "so it doesn't need to be downloaded! Aborting!")
+        logger.error(failure_reason,
+                     job_id=job.id,
+                     original_file=original_file
+        )
+        job_context["original_files"] = []
+        job_context["computed_files"] = []
+        job_context['abort'] = True
+        # Will be saved by end_job.
+        job_context['job'].failure_reason = failure_reason
+        return job_context
 
     # Set up the SIGTERM handler so we can appropriately handle being interrupted.
     # (`docker stop` uses SIGTERM, not SIGINT.)
@@ -555,17 +582,7 @@ class ProcessorEnum(Enum):
         "yml_file": "no_op.yml"
     }
 
-    # Five processors in "Salmon" pipeline
-    MULTIQC = {
-        "name": "MultiQC",
-        "docker_img": "dr_salmon",
-        "yml_file": "multiqc.yml"
-    }
-    FASTERQ_DUMP = {
-        "name": "fasterq-dump",
-        "docker_img": "dr_salmon",
-        "yml_file": "fasterq_dump.yml"
-    }
+    # Three processors in "Salmon" pipeline
     SALMON_QUANT = {
         "name": "Salmon Quant",
         "docker_img": "dr_salmon",

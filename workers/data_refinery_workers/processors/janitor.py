@@ -59,8 +59,8 @@ def _find_and_remove_expired_jobs(job_context):
                 try:
                     job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
 
-                    # This job is running, don't delete  the working directory.
-                    if job_status == "running":
+                    # This job is running, don't delete the working directory.
+                    if job_status in ["running", "pending"]:
                         continue
                 except URLNotFoundNomadException as e:
                     # Nomad has no record of this job, meaning it has likely been GC'd after death.
@@ -71,9 +71,8 @@ def _find_and_remove_expired_jobs(job_context):
                     # just continue until we can again.
                     continue
                 except Exception as e:
-                    # This job is likely vanished. No need for this directory.
+                    # This job is likely vanished.
                     # Or, possibly, another Nomad error outside of BaseNomadException.
-                    logger.exception("Janitor found vanished job for " + item + " - why?")
                     continue
             except ProcessorJob.DoesNotExist:
                 # This job has vanished from the DB - clean it up!
@@ -87,7 +86,7 @@ def _find_and_remove_expired_jobs(job_context):
             # Delete it!
             try:
                 to_delete = LOCAL_ROOT_DIR + '/' + item
-                logger.info("Janitor deleting " + to_delete, contents=str(os.listdir(to_delete)))
+                logger.info("Janitor deleting " + to_delete, contents=str(os.listdir(to_delete)), job_id=job_id)
                 shutil.rmtree(to_delete)
                 job_context['deleted_items'].append(to_delete)
             except Exception as e:

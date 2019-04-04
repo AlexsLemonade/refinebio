@@ -19,6 +19,7 @@ from data_refinery_common.models import (
     SampleAnnotation,
     SurveyJob,
 )
+from data_refinery_common.utils import get_fasp_sra_download
 from data_refinery_foreman.surveyor import utils, harmony
 from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyor
 
@@ -140,10 +141,7 @@ class SraSurveyor(ExternalSourceSurveyor):
                         SraSurveyor.gather_spot_metadata(metadata, grandchild)
             elif child.tag == "PLATFORM":
                 # This structure is extraneously nested.
-                # This is used as the platform_accession_code for SRA
-                # objects, which becomes part of file paths, so we
-                # don't want any spaces in it.
-                metadata["platform_instrument_model"] = child[0][0].text.replace(" ", "")
+                metadata["platform_instrument_model"] = child[0][0].text
 
     @staticmethod
     def parse_run_link(run_link: ET.ElementTree) -> (str, str):
@@ -307,31 +305,6 @@ class SraSurveyor(ExternalSourceSurveyor):
             read_suffix=read_suffix)
 
     @staticmethod
-    def _get_fasp_sra_download(run_accession: str):
-        """Try getting the sra-download URL from CGI endpoint"""
-        #Ex: curl --data "acc=SRR6718414&accept-proto=fasp&version=2.0" https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi
-        cgi_url = "https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi"
-        data = "acc=" + run_accession + "&accept-proto=fasp&version=2.0"
-        try:
-            resp = requests.post(cgi_url, data=data)
-        except Exception as e:
-            logger.exception("Bad FASP CGI request", data=data)
-            return None
-
-        if resp.status_code != 200:
-            # This isn't on the new FASP servers
-            return None
-        else:
-            try:
-                # From: '#2.0\nsrapub|DRR002116|2324796808|2013-07-03T05:51:55Z|50964cfc69091cdbf92ea58aaaf0ac1c||fasp://dbtest@sra-download.ncbi.nlm.nih.gov:data/sracloud/traces/dra0/DRR/000002/DRR002116|200|ok\n'
-                # To:  'dbtest@sra-download.ncbi.nlm.nih.gov:data/sracloud/traces/dra0/DRR/000002/DRR002116'
-                sra_url = resp.text.split('\n')[1].split('|')[6].split('fasp://')[1]
-                return sra_url
-            except Exception as e:
-                logger.exception("Bad FASP CGI response", data=data, text=resp.text)
-                return None
-
-    @staticmethod
     def _build_ncbi_file_url(run_accession: str):
         """ Build the path to the hypothetical .sra file we want """
         accession = run_accession
@@ -339,7 +312,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         first_six = accession[:6]
 
         # Prefer the FASP-specific endpoints if possible..
-        download_url = SraSurveyor._get_fasp_sra_download(run_accession)
+        download_url = get_fasp_sra_download(run_accession)
 
         if not download_url:
             # ..else, load balancing via coin flip.
@@ -481,8 +454,9 @@ class SraSurveyor(ExternalSourceSurveyor):
             sample_object.organism = organism
 
             sample_object.platform_name = metadata.get("platform_instrument_model", "UNKNOWN")
-            # No platform accession nonsense with RNASeq, just use the name:
-            sample_object.platform_accession_code = sample_object.platform_name
+            # The platform_name is human readable and contains spaces,
+            # accession codes shouldn't have spaces though:
+            sample_object.platform_accession_code = sample_object.platform_name.replace(" ", "")
             sample_object.technology = "RNA-SEQ"
             if "ILLUMINA" in sample_object.platform_name.upper() \
             or "NEXTSEQ" in sample_object.platform_name.upper():

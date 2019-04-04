@@ -500,6 +500,18 @@ or
 ./workers/tester.sh -i no_op run_processor_job --job-name=NO_OP --job-id=1
 ```
 
+or
+
+```bash
+./workers/tester.sh -i salmon run_processor_job --job-name=SALMON --job-id=1
+```
+
+or
+
+```bash
+./workers/tester.sh -i transcriptome run_processor_job --job-name=TRANSCRIPTOME_INDEX_LONG --job-id=1
+```
+
 Or for more information run:
 ```bash
 ./workers/tester.sh -h
@@ -625,7 +637,7 @@ Tags intended to trigger a staging deploy MUST end with `-dev`, i.e. `v1.0.0-dev
 CircleCI runs a deploy on a dedicated AWS instance so that the Docker cache can be preserved between runs.
 Instructions for setting up that instance can be found in the infrastructure/deploy_box_instance_data.sh script.
 
-To trigger a new deploy, first see what tags already exist with `git tag --list`
+To trigger a new deploy, first see what tags already exist with `git tag --list | sort --version-sort`
 We have two different version counters, one for `dev` and one for `master` so a list including things like:
 * v1.1.2
 * v1.1.2-dev

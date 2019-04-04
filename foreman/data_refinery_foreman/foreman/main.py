@@ -1,26 +1,20 @@
+import datetime
 import nomad
 import socket
+import sys
 import time
 import traceback
 
+from django.conf import settings
+#from django.core.paginator import Paginator
+from data_refinery_foreman.foreman.performant_pagination.pagination import PerformantPaginator as Paginator
+from django.db import transaction
+from django.utils import timezone
+from functools import wraps
 from nomad import Nomad
 from nomad.api.exceptions import URLNotFoundNomadException
 from typing import List, Set
-from functools import wraps
-import datetime
-from django.conf import settings
-from django.utils import timezone
-from django.db import transaction
-from data_refinery_common.models import (
-    DownloaderJob,
-    ProcessorJob,
-    SurveyJob,
-    DownloaderJobOriginalFileAssociation,
-    ProcessorJobOriginalFileAssociation,
-    ProcessorJobDatasetAssociation,
-    SurveyJobKeyValue
-)
-from data_refinery_common.message_queue import send_job
+
 from data_refinery_common.job_lookup import (
     Downloaders,
     ProcessorPipeline,
@@ -29,6 +23,17 @@ from data_refinery_common.job_lookup import (
     is_file_rnaseq,
 )
 from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.message_queue import send_job
+from data_refinery_common.models import (
+    ComputedFile,
+    DownloaderJob,
+    DownloaderJobOriginalFileAssociation,
+    ProcessorJob,
+    ProcessorJobDatasetAssociation,
+    ProcessorJobOriginalFileAssociation,
+    SurveyJob,
+    SurveyJobKeyValue
+)
 from data_refinery_common.utils import (
     get_active_volumes,
     get_env_variable,
@@ -45,16 +50,33 @@ MAX_NUM_RETRIES = 2
 # This can be overritten by the env var "MAX_TOTAL_JOBS"
 DEFAULT_MAX_JOBS = 20000
 
+DOWNLOADER_JOBS_PER_NODE = 25
+PAGE_SIZE=2000
+
+# This is the maximum number of non-dead nomad jobs that can be in the
+# queue. Set the default to one node's worth so we never are unable
+# to queue downloader jobs.
+MAX_TOTAL_DOWNLOADER_JOBS = DOWNLOADER_JOBS_PER_NODE
+TIME_OF_LAST_SIZE_CHECK = timezone.now() - datetime.timedelta(hours=1)
+
+# This is the absolute max number of downloader jobs that should ever
+# be queued across the whole cluster no matter how many nodes we
+# have. This is important because too many downloader jobs and we take
+# down NCBI.
+HARD_MAX_DOWNLOADER_JOBS = 750
+
 # The minimum amount of time in between each iteration of the main
 # loop. We could loop much less frequently than every two minutes if
 # the work we do takes longer than 2 minutes, but this will prevent
 # excessive spinning.
-MIN_LOOP_TIME = datetime.timedelta(minutes=2)
+MIN_LOOP_TIME = datetime.timedelta(seconds=15)
 
 # How frequently we dispatch Janitor jobs and clean unplaceable jobs
 # out of the Nomad queue.
 JANITOR_DISPATCH_TIME = datetime.timedelta(minutes=30)
 
+# How frequently we clean up the database.
+DBCLEAN_TIME = datetime.timedelta(hours=6)
 
 # This time is currently set so far in the past that it's not doing
 # anything. However, should we ever want to suspend work on the
@@ -103,8 +125,56 @@ def handle_repeated_failure(job) -> None:
     # grabbing. However for the time being just logging should be
     # sufficient because all log messages will be closely monitored
     # during early testing stages.
-    logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1)
+    logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1, failure_reason=job.failure_reason)
 
+def get_max_downloader_jobs(window=datetime.timedelta(minutes=2), nomad_client=None):
+    """Fetches the desired maximum number of downloader jobs available
+    based on the cluster size.
+
+    If this has been calculated recently, returns a cached value, else
+    it will calculate it fresh every `window`.
+
+    Will never return less than DOWNLOADER_JOBS_PER_NODE because in
+    local and test environments we will never have more than one
+    node. Having DOWNLOADER_JOBS_PER_NODE jobs in the queue when
+    there's no nodes isn't an issue since they'll just get picked up
+    when there is.
+    """
+    global MAX_TOTAL_DOWNLOADER_JOBS
+    global TIME_OF_LAST_SIZE_CHECK
+
+    if (timezone.now() - TIME_OF_LAST_SIZE_CHECK > window):
+        # Assuming they're all similar to an X1, give 50 downloaders per node.
+        if not nomad_client:
+            nomad_host = get_env_variable("NOMAD_HOST")
+            nomad_port = get_env_variable("NOMAD_PORT", "4646")
+            nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+
+        try:
+            num_active_nodes = 0
+            for node in nomad_client.nodes.get_nodes():
+                if node['Status'] == 'ready':
+                    num_active_nodes += 1
+        except:
+            # Nomad is down! There's not much point in even trying to
+            # queue jobs, so prevent them from being queued by
+            # returning zero for the max.
+            return 0
+
+        # The smasher node doesn't run DL jobs, but we don't have a
+        # smasher node in local and test environments.
+        if settings.RUNNING_IN_CLOUD:
+            num_smasher_nodes = 1
+        else:
+            num_smasher_nodes = 0
+
+        MAX_TOTAL_DOWNLOADER_JOBS = (num_active_nodes - num_smasher_nodes) * DOWNLOADER_JOBS_PER_NODE
+        TIME_OF_LAST_SIZE_CHECK = timezone.now()
+
+    if MAX_TOTAL_DOWNLOADER_JOBS > HARD_MAX_DOWNLOADER_JOBS:
+        return HARD_MAX_DOWNLOADER_JOBS
+    else:
+        return MAX_TOTAL_DOWNLOADER_JOBS
 
 ##
 # Job Prioritization
@@ -250,8 +320,23 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
     """
     num_retries = last_job.num_retries + 1
 
+    ram_amount = last_job.ram_amount
+    if last_job.failure_reason is not None and 'harakiri' not in last_job.failure_reason:
+        if ram_amount == 1024:
+            ram_amount = 4096
+        elif ram_amount == 4096:
+            ram_amount = 8192
+
+    original_file = last_job.original_files.first()
+    if original_file and original_file.has_been_processed():
+        last_job.no_retry = True
+        last_job.failure_reason = "Foreman told to redownloaded job with prior succesful processing."
+        last_job.save()
+        return
+
     new_job = DownloaderJob(num_retries=num_retries,
                             downloader_task=last_job.downloader_task,
+                            ram_amount=ram_amount,
                             accession_code=last_job.accession_code)
     new_job.save()
 
@@ -279,20 +364,39 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
         new_job.delete()
 
 
-def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
-    """For each job in jobs, either retry it or log it."""
+def count_downloader_jobs_in_queue(nomad_client: Nomad) -> int:
+    """Counts how many downloader jobs in the Nomad queue do not have status of 'dead'."""
+    try:
+        all_downloader_jobs = nomad_client.jobs.get_jobs(prefix="DOWNLOADER")
+    except:
+        # Nomad is down, return an impossibly high number to prevent
+        # additonal queuing from happening:
+        return sys.maxsize
 
-    nomad_host = get_env_variable("NOMAD_HOST")
-    nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-    # Maximum number of total jobs running at a time.
-    # We do this now rather than import time for testing purposes.
-    MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
-    len_all_jobs = len(nomad_client.jobs.get_jobs())
-    if len_all_jobs >= MAX_TOTAL_JOBS:
-        logger.info("Not requeuing job until we're running fewer jobs.")
-        return False
+    total = 0
+    for job in all_downloader_jobs:
+        if job['ParameterizedJob']:
+            total = total + job['JobSummary']['Children']['Pending']
+            total = total + job['JobSummary']['Children']['Running']
 
+    return total
+
+
+def get_capacity_for_downloader_jobs(nomad_client) -> bool:
+    """Returns how many downloader jobs the queue has capacity for.
+    """
+
+    current_max_downloader_jobs = get_max_downloader_jobs(nomad_client=nomad_client)
+    current_downloader_jobs_in_queue = count_downloader_jobs_in_queue(nomad_client)
+    return current_max_downloader_jobs - current_downloader_jobs_in_queue
+
+
+def handle_downloader_jobs(jobs: List[DownloaderJob],
+                           queue_capacity=MAX_TOTAL_DOWNLOADER_JOBS) -> None:
+    """For each job in jobs, either retry it or log it.
+
+    No more than queue_capacity jobs will be retried.
+    """
     # We want zebrafish data first, then hgu133plus2, then data
     # related to pediatric cancer, then to finish salmon experiments
     # that are close to completion.
@@ -305,20 +409,15 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
 
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
+        if jobs_dispatched >= queue_capacity:
+            logger.info("We hit the maximum downloader jobs / capacity ceiling, so we're not handling any more downloader jobs now.")
+            return
+
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_downloader_job(job)
             jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
-
-        if (count % 100) == 0:
-            len_all_jobs = len(nomad_client.jobs.get_jobs())
-
-        if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
-            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more downloader jobs now.")
-            return False
-
-    return True
 
 def retry_failed_downloader_jobs() -> None:
     """Handle downloader jobs that were marked as a failure."""
@@ -326,18 +425,35 @@ def retry_failed_downloader_jobs() -> None:
         success=False,
         retried=False,
         created_at__gt=JOB_CREATED_AT_CUTOFF
+    ).order_by(
+        'id'
     ).prefetch_related(
         "original_files__samples"
     )
-    failed_jobs_list = [job for job in failed_jobs]
 
-    if failed_jobs_list:
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+    queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
+
+    paginator = Paginator(failed_jobs, PAGE_SIZE)
+    page = paginator.page()
+    page_count = 0
+    while queue_capacity > 0:
         logger.info(
-            "Handling failed (explicitly-marked-as-failure) downloader jobs!",
-            jobs_count=len(failed_jobs_list)
-        )
-        handle_downloader_jobs(failed_jobs_list)
+            "Handling page %d of failed (explicitly-marked-as-failure) downloader jobs!",
+            page_count
 
+        )
+
+        handle_downloader_jobs(page.object_list, queue_capacity)
+
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
+            queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
+        else:
+            break
 
 def retry_hung_downloader_jobs() -> None:
     """Retry downloader jobs that were started but never finished."""
@@ -348,6 +464,8 @@ def retry_hung_downloader_jobs() -> None:
         start_time__isnull=False,
         no_retry=False,
         created_at__gt=JOB_CREATED_AT_CUTOFF
+    ).order_by(
+        'id'
     ).prefetch_related(
         "original_files__samples"
     )
@@ -355,29 +473,42 @@ def retry_hung_downloader_jobs() -> None:
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-    hung_jobs = []
-    for job in potentially_hung_jobs:
-        try:
-            job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
-            if job_status != "running":
-                # Make sure it didn't finish since our original query.
-                job.refresh_from_db()
-                if job.end_time is None:
-                    hung_jobs.append(job)
-        except URLNotFoundNomadException:
-            hung_jobs.append(job)
-        except nomad.api.exceptions.BaseNomadException:
-            raise
-        except Exception:
-            logger.exception("Couldn't query Nomad about Downloader Job.", downloader_job=job.id)
+    queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
 
-    if hung_jobs:
-        logger.info(
-            "Handling hung (started-but-never-finished) downloader jobs!",
-            jobs_count=len(hung_jobs)
-        )
-        handle_downloader_jobs(hung_jobs)
+    paginator = Paginator(potentially_hung_jobs, PAGE_SIZE)
+    page = paginator.page()
+    page_count = 0
+    while queue_capacity > 0:
+        hung_jobs = []
+        for job in page.object_list:
+            try:
+                job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+                if job_status != "running":
+                    # Make sure it didn't finish since our original query.
+                    job.refresh_from_db()
+                    if job.end_time is None:
+                        hung_jobs.append(job)
+            except URLNotFoundNomadException:
+                hung_jobs.append(job)
+            except nomad.api.exceptions.BaseNomadException:
+                raise
+            except Exception:
+                logger.exception("Couldn't query Nomad about Downloader Job.", downloader_job=job.id)
 
+        if hung_jobs:
+            logger.info(
+                "Handling page %d of hung (started-but-never-finished) downloader jobs!",
+                page_count,
+                jobs_count=len(hung_jobs)
+            )
+            handle_downloader_jobs(hung_jobs, queue_capacity)
+
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
+            queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
+        else:
+            break
 
 def retry_lost_downloader_jobs() -> None:
     """Retry downloader jobs that went too long without being started.
@@ -396,6 +527,8 @@ def retry_lost_downloader_jobs() -> None:
         end_time=None,
         no_retry=False,
         created_at__gt=JOB_CREATED_AT_CUTOFF
+    ).order_by(
+        'id'
     ).prefetch_related(
         "original_files__samples"
     )
@@ -403,42 +536,56 @@ def retry_lost_downloader_jobs() -> None:
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-    lost_jobs = []
-    for job in potentially_lost_jobs:
-        try:
-            if job.nomad_job_id:
-                job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
-                # If the job is still pending, then it makes sense that it
-                # hasn't started and if it's running then it may not have
-                # been able to mark the job record as started yet.
-                if job_status != "pending" and job_status != "running":
-                    logger.debug(("Determined that a downloader job needs to be requeued because its"
-                                  " Nomad Job's status is: %s."),
-                                 job_status,
-                                 job_id=job.id
-                    )
-                    lost_jobs.append(job)
-            else:
-                lost_jobs.append(job)
-        except socket.timeout:
-            logger.info("Timeout connecting to Nomad - is Nomad down?", job_id=job.id)
-        except URLNotFoundNomadException:
-            logger.debug(("Determined that a downloader job needs to be requeued because "
-                              "querying for its Nomad job failed: "),
-                             job_id=job.id
-            )
-            lost_jobs.append(job)
-        except nomad.api.exceptions.BaseNomadException:
-            raise
-        except Exception:
-            logger.exception("Couldn't query Nomad about Downloader Job.", downloader_job=job.id)
+    queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
 
-    if lost_jobs:
-        logger.info(
-            "Handling lost (never-started) downloader jobs!",
-            len_jobs=len(lost_jobs)
-        )
-        handle_downloader_jobs(lost_jobs)
+    paginator = Paginator(potentially_lost_jobs, PAGE_SIZE)
+    page = paginator.page()
+    page_count = 0
+    while queue_capacity > 0:
+        lost_jobs = []
+        for job in page.object_list:
+            try:
+                if job.nomad_job_id:
+                    job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+                    # If the job is still pending, then it makes sense that it
+                    # hasn't started and if it's running then it may not have
+                    # been able to mark the job record as started yet.
+                    if job_status != "pending" and job_status != "running":
+                        logger.debug(("Determined that a downloader job needs to be requeued because its"
+                                      " Nomad Job's status is: %s."),
+                                     job_status,
+                                     job_id=job.id
+                        )
+                        lost_jobs.append(job)
+                else:
+                    lost_jobs.append(job)
+            except socket.timeout:
+                logger.info("Timeout connecting to Nomad - is Nomad down?", job_id=job.id)
+            except URLNotFoundNomadException:
+                logger.debug(("Determined that a downloader job needs to be requeued because "
+                                  "querying for its Nomad job failed: "),
+                                 job_id=job.id
+                )
+                lost_jobs.append(job)
+            except nomad.api.exceptions.BaseNomadException:
+                raise
+            except Exception:
+                logger.exception("Couldn't query Nomad about Downloader Job.", downloader_job=job.id)
+
+        if lost_jobs:
+            logger.info(
+                "Handling page %d of lost (never-started) downloader jobs!",
+                page_count,
+                len_jobs=len(lost_jobs)
+            )
+            handle_downloader_jobs(lost_jobs, queue_capacity)
+
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
+            queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
+        else:
+            break
 
 
 ##
@@ -463,6 +610,8 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
             new_ram_amount = 16384
         elif new_ram_amount == 16384:
             new_ram_amount = 32768
+        elif new_ram_amount == 32768:
+            new_ram_amount = 65536
     # The AFFY pipeline is somewhat RAM-sensitive.
     # Try it again with an increased RAM amount, if possible.
     elif last_job.pipeline_applied == "AFFY_TO_PCL":
@@ -505,19 +654,27 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
         new_job.delete()
 
 
-def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
-    """For each job in jobs, either retry it or log it."""
-
-    nomad_host = get_env_variable("NOMAD_HOST")
-    nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+def get_capacity_for_processor_jobs(nomad_client) -> bool:
+    """Returns how many processor jobs the queue has capacity for.
+    """
     # Maximum number of total jobs running at a time.
     # We do this now rather than import time for testing purposes.
     MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
     len_all_jobs = len(nomad_client.jobs.get_jobs())
-    if len_all_jobs >= MAX_TOTAL_JOBS:
-        logger.info("Not requeuing job until we're running fewer jobs.")
-        return False
+    return MAX_TOTAL_JOBS - len_all_jobs
+
+
+def handle_processor_jobs(jobs: List[ProcessorJob],
+                          queue_capacity: int = None,
+                          ignore_ceiling=False) -> None:
+    """For each job in jobs, either retry it or log it.
+
+    No more than queue_capacity jobs will be retried.
+    """
+    # Maximum number of total jobs running at a time.
+    # We do this now rather than import time for testing purposes.
+    if queue_capacity is None:
+        queue_capacity = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
 
     # We want zebrafish data first, then hgu133plus2, then data
     # related to pediatric cancer, then to finish salmon experiments
@@ -531,20 +688,17 @@ def handle_processor_jobs(jobs: List[ProcessorJob]) -> None:
 
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
+
+        if not ignore_ceiling and jobs_dispatched >= queue_capacity:
+                logger.info("We hit the maximum total jobs ceiling, so we're not handling any more processor jobs now.")
+                return
+
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_processor_job(job)
             jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
 
-        if (count % 100) == 0:
-            len_all_jobs = len(nomad_client.jobs.get_jobs())
-
-        if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
-            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more processor jobs now.")
-            return False
-
-    return True
 
 
 def retry_failed_processor_jobs() -> None:
@@ -564,19 +718,33 @@ def retry_failed_processor_jobs() -> None:
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
+    ).order_by(
+        'id'
     ).prefetch_related(
         "original_files__samples"
     )
 
-    failed_jobs_list = [job for job in failed_jobs]
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+    queue_capacity = get_capacity_for_processor_jobs(nomad_client)
 
-    if failed_jobs_list:
+    paginator = Paginator(failed_jobs, 200)
+    page = paginator.page()
+    page_count = 0
+    while queue_capacity > 0:
         logger.info(
-            "Handling failed (explicitly-marked-as-failure) processor jobs!",
-            len_jobs=len(failed_jobs_list)
+            "Handling page %d of failed (explicitly-marked-as-failure) processor jobs!",
+            page_count
         )
-        handle_processor_jobs(failed_jobs_list)
+        handle_processor_jobs(page.object_list, queue_capacity)
 
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
+            queue_capacity = get_capacity_for_processor_jobs(nomad_client)
+        else:
+            break
 
 def retry_hung_processor_jobs() -> None:
     """Retry processor jobs that were started but never finished.
@@ -598,47 +766,61 @@ def retry_hung_processor_jobs() -> None:
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
+    ).order_by(
+        'id'
     ).prefetch_related(
         "original_files__samples"
     )
 
-
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-    hung_jobs = []
-    for job in potentially_hung_jobs:
-        try:
-            job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
-            if job_status != "running":
-                # Make sure it didn't finish since our original query.
-                job.refresh_from_db()
-                if job.end_time is None:
-                    hung_jobs.append(job)
-        except URLNotFoundNomadException:
-            hung_jobs.append(job)
-        except TypeError:
-            # Almost certainly a python-nomad issue:
-            # File "/usr/local/lib/python3.5/dist-packages/nomad/api/job.py", line 63, in get_job
-            #   return self.request(id, method="get").json()
-            # File "/usr/local/lib/python3.5/dist-packages/nomad/api/base.py", line 74, in request
-            #   endpoint = self._endpoint_builder(self.ENDPOINT, *args)
-            # File "/usr/local/lib/python3.5/dist-packages/nomad/api/base.py", line 28, in _endpoint_builder
-            #   u = "/".join(args)
-            # TypeError: sequence item 1: expected str instance, NoneType found
-            logger.info("Couldn't query Nomad about Processor Job.", processor_job=job.id)
-        except nomad.api.exceptions.BaseNomadException:
-            raise
-        except Exception:
-            logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
+    queue_capacity = get_capacity_for_processor_jobs(nomad_client)
 
-    if hung_jobs:
-        logger.info(
-            "Handling hung (started-but-never-finished) processor jobs!",
-            len_jobs=len(hung_jobs)
-        )
-        handle_processor_jobs(hung_jobs)
+    paginator = Paginator(potentially_hung_jobs, 200)
+    page = paginator.page()
+    page_count = 0
+    while queue_capacity > 0:
+        hung_jobs = []
+        for job in page.object_list:
+            try:
+                job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+                if job_status != "running":
+                    # Make sure it didn't finish since our original query.
+                    job.refresh_from_db()
+                    if job.end_time is None:
+                        hung_jobs.append(job)
+            except URLNotFoundNomadException:
+                hung_jobs.append(job)
+            except TypeError:
+                # Almost certainly a python-nomad issue:
+                # File "/usr/local/lib/python3.5/dist-packages/nomad/api/job.py", line 63, in get_job
+                #   return self.request(id, method="get").json()
+                # File "/usr/local/lib/python3.5/dist-packages/nomad/api/base.py", line 74, in request
+                #   endpoint = self._endpoint_builder(self.ENDPOINT, *args)
+                # File "/usr/local/lib/python3.5/dist-packages/nomad/api/base.py", line 28, in _endpoint_builder
+                #   u = "/".join(args)
+                # TypeError: sequence item 1: expected str instance, NoneType found
+                logger.info("Couldn't query Nomad about Processor Job.", processor_job=job.id)
+            except nomad.api.exceptions.BaseNomadException:
+                raise
+            except Exception:
+                logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
 
+        if hung_jobs:
+            logger.info(
+                "Handling hung page %d of (started-but-never-finished) processor jobs!",
+                page_count,
+                len_jobs=len(hung_jobs)
+            )
+            handle_processor_jobs(hung_jobs, queue_capacity)
+
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
+            queue_capacity = get_capacity_for_processor_jobs(nomad_client)
+        else:
+            break
 
 def retry_lost_processor_jobs() -> None:
     """Retry processor jobs which never even got started for too long.
@@ -660,6 +842,8 @@ def retry_lost_processor_jobs() -> None:
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
+    ).order_by(
+        'id'
     ).prefetch_related(
         "original_files__samples"
     )
@@ -667,45 +851,59 @@ def retry_lost_processor_jobs() -> None:
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
-    lost_jobs = []
-    for job in potentially_lost_jobs:
-        try:
-            if job.nomad_job_id:
-                job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
-                # If the job is still pending, then it makes sense that it
-                # hasn't started and if it's running then it may not have
-                # been able to mark the job record as started yet.
-                if job_status != "pending" and job_status != "running":
-                    logger.debug(("Determined that a processor job needs to be requeued because its"
-                                  " Nomad Job's status is: %s."),
-                                 job_status,
-                                 job_id=job.id
-                    )
-                    lost_jobs.append(job)
-            else:
-                # If there is no nomad_job_id field set, we could be
-                # in the small window where the job was created but
-                # hasn't yet gotten a chance to be queued.
-                # If this job really should be restarted we'll get it in the next loop.
-                if timezone.now() - job.created_at > MIN_LOOP_TIME:
-                    lost_jobs.append(job)
-        except URLNotFoundNomadException:
-            logger.debug(("Determined that a processor job needs to be requeued because "
-                              "querying for its Nomad job failed: "),
-                             job_id=job.id
-            )
-            lost_jobs.append(job)
-        except nomad.api.exceptions.BaseNomadException:
-            raise
-        except Exception:
-            logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
+    queue_capacity = get_capacity_for_processor_jobs(nomad_client)
 
-    if lost_jobs:
-        logger.info(
-            "Handling lost (never-started) processor jobs!",
-            len_jobs=len(lost_jobs)
-        )
-        handle_processor_jobs(lost_jobs)
+    paginator = Paginator(potentially_lost_jobs, 200)
+    page = paginator.page()
+    page_count = 0
+    while queue_capacity > 0:
+        lost_jobs = []
+        for job in page.object_list:
+            try:
+                if job.nomad_job_id:
+                    job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+                    # If the job is still pending, then it makes sense that it
+                    # hasn't started and if it's running then it may not have
+                    # been able to mark the job record as started yet.
+                    if job_status != "pending" and job_status != "running":
+                        logger.debug(("Determined that a processor job needs to be requeued because its"
+                                      " Nomad Job's status is: %s."),
+                                     job_status,
+                                     job_id=job.id
+                        )
+                        lost_jobs.append(job)
+                else:
+                    # If there is no nomad_job_id field set, we could be
+                    # in the small window where the job was created but
+                    # hasn't yet gotten a chance to be queued.
+                    # If this job really should be restarted we'll get it in the next loop.
+                    if timezone.now() - job.created_at > MIN_LOOP_TIME:
+                        lost_jobs.append(job)
+            except URLNotFoundNomadException:
+                logger.debug(("Determined that a processor job needs to be requeued because "
+                                  "querying for its Nomad job failed: "),
+                                 job_id=job.id
+                )
+                lost_jobs.append(job)
+            except nomad.api.exceptions.BaseNomadException:
+                raise
+            except Exception:
+                logger.exception("Couldn't query Nomad about Processor Job.", processor_job=job.id)
+
+        if lost_jobs:
+            logger.info(
+                "Handling lost page %d of (never-started) processor jobs!",
+                page_count,
+                len_jobs=len(lost_jobs)
+            )
+            handle_processor_jobs(lost_jobs, queue_capacity)
+
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
+            queue_capacity = get_capacity_for_processor_jobs(nomad_client)
+        else:
+            break
 
 ##
 # Surveyors
@@ -764,37 +962,36 @@ def requeue_survey_job(last_job: SurveyJob) -> None:
 
     return True
 
-
-def handle_survey_jobs(jobs: List[SurveyJob]) -> None:
-    """For each job in jobs, either retry it or log it."""
-
-    nomad_host = get_env_variable("NOMAD_HOST")
-    nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+def get_capacity_for_survey_jobs(nomad_client) -> bool:
+    """Returns how many survey jobs the queue has capacity for.
+    """
     # Maximum number of total jobs running at a time.
     # We do this now rather than import time for testing purposes.
     MAX_TOTAL_JOBS = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
     len_all_jobs = len(nomad_client.jobs.get_jobs())
-    if len_all_jobs >= MAX_TOTAL_JOBS:
-        logger.info("Not requeuing job until we're running fewer jobs.")
-        return False
+    return MAX_TOTAL_JOBS - len_all_jobs
 
+
+def handle_survey_jobs(jobs: List[SurveyJob], queue_capacity: int = None) -> None:
+    """For each job in jobs, either retry it or log it.
+
+    No more than queue_capacity jobs will be retried.
+    """
+    # Maximum number of total jobs running at a time.
+    # We do this now rather than import time for testing purposes.
+    if queue_capacity is None:
+        queue_capacity = int(get_env_variable_gracefully("MAX_TOTAL_JOBS", DEFAULT_MAX_JOBS))
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
+        if jobs_dispatched >= queue_capacity:
+            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more survey jobs now.")
+            return
+
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_survey_job(job)
             jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
-
-        if (count % 100) == 0:
-            len_all_jobs = len(nomad_client.jobs.get_jobs())
-
-        if (jobs_dispatched + len_all_jobs) >= MAX_TOTAL_JOBS:
-            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more survey jobs now.")
-            return False
-
-    return True
 
 
 def retry_failed_survey_jobs() -> None:
@@ -804,12 +1001,28 @@ def retry_failed_survey_jobs() -> None:
         retried=False,
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).order_by('pk')
-    if failed_jobs:
+
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+    queue_capacity = get_capacity_for_survey_jobs(nomad_client)
+
+    paginator = Paginator(failed_jobs, 200)
+    page = paginator.page()
+    page_count = 0
+    while queue_capacity > 0:
         logger.info(
-            "Handling failed (explicitly-marked-as-failure) survey jobs!",
-            len_jobs=len(failed_jobs)
+            "Handling page %d of failed (explicitly-marked-as-failure) survey jobs!",
+            page_count
         )
-        handle_survey_jobs(failed_jobs)
+        handle_survey_jobs(page.object_list, queue_capacity)
+
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
+            queue_capacity = get_capacity_for_survey_jobs(nomad_client)
+        else:
+            break
 
 
 def retry_hung_survey_jobs() -> None:
@@ -826,35 +1039,48 @@ def retry_hung_survey_jobs() -> None:
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-    hung_jobs = []
-    for job in potentially_hung_jobs:
-        try:
-            # Surveyor jobs didn't always have nomad_job_ids. If they
-            # don't have one then by this point they've definitely died.
-            if job.nomad_job_id:
-                job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
-            else:
-                job_status = "absent"
+    queue_capacity = get_capacity_for_survey_jobs(nomad_client)
 
-            if job_status != "running":
-                # Make sure it didn't finish since our original query.
-                job.refresh_from_db()
-                if job.end_time is None:
-                    hung_jobs.append(job)
-        except URLNotFoundNomadException:
-            hung_jobs.append(job)
-        except nomad.api.exceptions.BaseNomadException:
-            raise
-        except Exception:
-            logger.exception("Couldn't query Nomad about SurveyJob Job.", survey_job=job.id)
+    paginator = Paginator(potentially_hung_jobs, 200)
+    page = paginator.page()
+    page_count = 0
+    while queue_capacity > 0:
+        hung_jobs = []
+        for job in page.object_list:
+            try:
+                # Surveyor jobs didn't always have nomad_job_ids. If they
+                # don't have one then by this point they've definitely died.
+                if job.nomad_job_id:
+                    job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+                else:
+                    job_status = "absent"
 
-    if hung_jobs:
-        logger.info(
-            "Handling hung (started-but-never-finished) survey jobs!",
-            len_jobs=len(hung_jobs)
-        )
-        handle_survey_jobs(hung_jobs)
+                if job_status != "running":
+                    # Make sure it didn't finish since our original query.
+                    job.refresh_from_db()
+                    if job.end_time is None:
+                        hung_jobs.append(job)
+            except URLNotFoundNomadException:
+                hung_jobs.append(job)
+            except nomad.api.exceptions.BaseNomadException:
+                raise
+            except Exception:
+                logger.exception("Couldn't query Nomad about SurveyJob Job.", survey_job=job.id)
 
+        if hung_jobs:
+            logger.info(
+                "Handling page %d of hung (started-but-never-finished) survey jobs!",
+                page_count,
+                len_jobs=len(hung_jobs)
+            )
+            handle_survey_jobs(hung_jobs, queue_capacity)
+
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
+            queue_capacity = get_capacity_for_survey_jobs(nomad_client)
+        else:
+            break
 
 def retry_lost_survey_jobs() -> None:
     """Retry survey jobs which never even got started for too long."""
@@ -870,44 +1096,57 @@ def retry_lost_survey_jobs() -> None:
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-    lost_jobs = []
+    queue_capacity = get_capacity_for_survey_jobs(nomad_client)
 
-    for job in potentially_lost_jobs:
-        try:
-            # Surveyor jobs didn't always have nomad_job_ids. If they
-            # don't have one then by this point they've definitely died.
-            if job.nomad_job_id:
-                job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
-            else:
-                job_status = "absent"
+    paginator = Paginator(potentially_lost_jobs, 200)
+    page = paginator.page()
+    page_count = 0
+    while queue_capacity > 0:
+        lost_jobs = []
+        for job in page.object_list:
+            try:
+                # Surveyor jobs didn't always have nomad_job_ids. If they
+                # don't have one then by this point they've definitely died.
+                if job.nomad_job_id:
+                    job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+                else:
+                    job_status = "absent"
 
-            # If the job is still pending, then it makes sense that it
-            # hasn't started and if it's running then it may not have
-            # been able to mark the job record as started yet.
-            if job_status != "pending" and job_status != "running":
-                logger.debug(("Determined that a survey job needs to be requeued because its"
-                             " Nomad Job's status is: %s."),
-                            job_status,
-                            job_id=job.id
+                # If the job is still pending, then it makes sense that it
+                # hasn't started and if it's running then it may not have
+                # been able to mark the job record as started yet.
+                if job_status != "pending" and job_status != "running":
+                    logger.debug(("Determined that a survey job needs to be requeued because its"
+                                 " Nomad Job's status is: %s."),
+                                job_status,
+                                job_id=job.id
+                    )
+                    lost_jobs.append(job)
+            except URLNotFoundNomadException:
+                logger.debug(("Determined that a survey job needs to be requeued because "
+                              "querying for its Nomad job failed."),
+                             job_id=job.id
                 )
                 lost_jobs.append(job)
-        except URLNotFoundNomadException:
-            logger.debug(("Determined that a survey job needs to be requeued because "
-                          "querying for its Nomad job failed."),
-                         job_id=job.id
-            )
-            lost_jobs.append(job)
-        except nomad.api.exceptions.BaseNomadException:
-            raise
-        except Exception:
-            logger.exception("Couldn't query Nomad about Processor Job.", survey_job=job.id)
+            except nomad.api.exceptions.BaseNomadException:
+                raise
+            except Exception:
+                logger.exception("Couldn't query Nomad about Processor Job.", survey_job=job.id)
 
-    if lost_jobs:
-        logger.info(
-            "Handling lost (never-started) survey jobs!",
-            len_jobs=len(lost_jobs)
-        )
-        handle_survey_jobs(lost_jobs)
+        if lost_jobs:
+            logger.info(
+                "Handling page %d of lost (never-started) survey jobs!",
+                page_count,
+                len_jobs=len(lost_jobs)
+            )
+            handle_survey_jobs(lost_jobs, queue_capacity)
+
+        if page.has_next():
+            page = paginator.page(page.next_page_number())
+            page_count = page_count + 1
+            queue_capacity = get_capacity_for_survey_jobs(nomad_client)
+        else:
+            break
 
 ##
 # Janitor
@@ -937,6 +1176,71 @@ def send_janitor_jobs():
             # If we can't dispatch this job, something else has gone wrong.
             continue
 
+##
+# Smasher
+##
+
+def retry_lost_smasher_jobs() -> None:
+    """Retry smasher jobs which never even got started for too long."""
+    try:
+        active_volumes = get_active_volumes()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
+
+    potentially_lost_jobs = ProcessorJob.objects.filter(
+        success=None,
+        retried=False,
+        start_time=None,
+        end_time=None,
+        no_retry=False,
+        pipeline_applied="SMASHER",
+        created_at__gt=(timezone.now() - datetime.timedelta(hours=24))
+    )
+
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+
+    lost_jobs = []
+    for job in potentially_lost_jobs:
+        try:
+            if job.nomad_job_id:
+                job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+                # If the job is still pending, then it makes sense that it
+                # hasn't started and if it's running then it may not have
+                # been able to mark the job record as started yet.
+                if job_status != "pending" and job_status != "running":
+                    logger.debug(("Determined that a smasher job needs to be requeued because its"
+                                  " Nomad Job's status is: %s."),
+                                 job_status,
+                                 job_id=job.id
+                    )
+                    lost_jobs.append(job)
+            else:
+                # If there is no nomad_job_id field set, we could be
+                # in the small window where the job was created but
+                # hasn't yet gotten a chance to be queued.
+                # If this job really should be restarted we'll get it in the next loop.
+                if timezone.now() - job.created_at > MIN_LOOP_TIME:
+                    lost_jobs.append(job)
+        except URLNotFoundNomadException:
+            logger.debug(("Determined that a smasher job needs to be requeued because "
+                              "querying for its Nomad job failed: "),
+                             job_id=job.id
+            )
+            lost_jobs.append(job)
+        except nomad.api.exceptions.BaseNomadException:
+            raise
+        except Exception:
+            logger.exception("Couldn't query Nomad about smasher Job.", processor_job=job.id)
+
+    if lost_jobs:
+        logger.info(
+            "Handling lost (never-started) smasher jobs!",
+            len_jobs=len(lost_jobs)
+        )
+        handle_processor_jobs(lost_jobs, sys.maxsize, ignore_ceiling=True)
 
 ##
 # Handling of node cycling
@@ -1004,6 +1308,21 @@ def cleanup_the_queue():
                     # If we can't do this for some reason, we'll get it next loop.
                     pass
 
+def clean_database():
+    """ Removes duplicated objects that may have appeared through race, OOM, bugs, etc.
+    See: https://github.com/AlexsLemonade/refinebio/issues/1183
+    """
+
+    # Hide smashable files
+    computed_files = ComputedFile.objects.filter(s3_bucket=None, s3_key=None, is_smashable=True)
+    logger.info("Cleaning unsynced files!", num_to_clean=computed_files.count())
+
+    # We don't do this in bulk because we want the properties set by save() as well
+    for computed_file in computed_files:
+        computed_file.is_public=False
+        computed_file.save()
+
+    logger.info("Cleaned files!")
 
 ##
 # Main loop
@@ -1022,7 +1341,9 @@ def monitor_jobs():
     It does so on a loop forever that won't spin faster than
     MIN_LOOP_TIME, but it may spin slower than that.
     """
-    last_janitorial_time = None
+    last_janitorial_time = timezone.now()
+    last_dbclean_time = timezone.now()
+
     while(True):
         # Perform two heartbeats, one for the logs and one for Monit:
         logger.info("The Foreman's heart is beating, but he does not feel.")
@@ -1048,7 +1369,8 @@ def monitor_jobs():
             retry_lost_downloader_jobs,
             retry_failed_survey_jobs,
             retry_hung_survey_jobs,
-            retry_lost_survey_jobs
+            retry_lost_survey_jobs,
+            retry_lost_smasher_jobs
         ]
 
         for function in requeuing_functions_in_order:
@@ -1058,11 +1380,14 @@ def monitor_jobs():
                 logger.error("Caught exception in %s: ", function.__name__)
                 traceback.print_exc(chain=False)
 
-        if not last_janitorial_time \
-           or timezone.now() - last_janitorial_time > JANITOR_DISPATCH_TIME:
+        if timezone.now() - last_janitorial_time > JANITOR_DISPATCH_TIME:
             send_janitor_jobs()
             cleanup_the_queue()
             last_janitorial_time = timezone.now()
+
+        if timezone.now() - last_dbclean_time > DBCLEAN_TIME:
+            clean_database()
+            last_dbclean_time = timezone.now()
 
         loop_time = timezone.now() - start_time
         if loop_time < MIN_LOOP_TIME:

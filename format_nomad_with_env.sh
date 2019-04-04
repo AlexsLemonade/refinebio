@@ -234,10 +234,17 @@ if [[ $project == "workers" ]]; then
         # Downloader logs go to a separate log stream.
         if [ $output_file == "downloader.nomad" ]; then
             export_log_conf "downloader"
-            cat nomad-job-specs/$template \
-                | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-                       > "$output_dir/$output_file$TEST_POSTFIX" \
-                       2> /dev/null
+            rams=(1024 4096 8192)
+            for r in "${rams[@]}"
+            do
+                export RAM_POSTFIX="_$r.nomad"
+                export RAM="$r"
+                cat nomad-job-specs/$template \
+                    | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                           > "$output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX" \
+                           2> /dev/null
+                echo "Made $output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX"
+            done
             echo "Made $output_dir/$output_file$TEST_POSTFIX"
         elif [ $output_file == "smasher.nomad" ] || [ $output_file == "create_qn_target.nomad" ] || [ $output_file == "create_compendia.nomad" ] || [ $output_file == "tximport.nomad" ]; then
             export_log_conf "processor"
@@ -249,7 +256,7 @@ if [[ $project == "workers" ]]; then
         else
             export_log_conf "processor"
             # rams=(1024 2048 3072 4096 5120 6144 7168 8192 9216 10240 11264 12288 13312)
-            rams=(2048 3072 4096 8192 12288 16384 32768)
+            rams=(2048 3072 4096 8192 12288 16384 32768 65536)
             for r in "${rams[@]}"
             do
                 for ((j=0; j<MAX_CLIENTS; j++));
