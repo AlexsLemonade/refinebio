@@ -55,8 +55,9 @@ def wait_for_job(job, job_class: type, start_time: datetime, loop_time: int=None
 
         # Don't log statuses more often than every 5 seconds.
         if timezone.now() - last_log_time > timedelta(seconds=5):
-            logger.info("Still polling the %s.",
-                        job_class.__name__)
+            logger.info("Still polling the %s with ID %s.",
+                        job_class.__name__,
+                        job.nomad_job_id)
             last_log_time = timezone.now()
 
         job = job_class.objects.filter(id=job.id).get()
