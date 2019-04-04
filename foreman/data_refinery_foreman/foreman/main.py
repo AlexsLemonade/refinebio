@@ -337,7 +337,8 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
     new_job = DownloaderJob(num_retries=num_retries,
                             downloader_task=last_job.downloader_task,
                             ram_amount=ram_amount,
-                            accession_code=last_job.accession_code)
+                            accession_code=last_job.accession_code,
+                            was_recreated=last_job.was_recreated)
     new_job.save()
 
     for original_file in last_job.original_files.all():
@@ -558,7 +559,9 @@ def retry_lost_downloader_jobs() -> None:
                         )
                         lost_jobs.append(job)
                 else:
-                    lost_jobs.append(job)
+                    # The job never got put in the Nomad queue, no
+                    # need to recreated, we just gotta queue it up!
+                    send_job(Downloaders[job.downloader_task], job=job, is_dispatch=True)
             except socket.timeout:
                 logger.info("Timeout connecting to Nomad - is Nomad down?", job_id=job.id)
             except URLNotFoundNomadException:
