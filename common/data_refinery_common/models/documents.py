@@ -3,6 +3,7 @@ from elasticsearch_dsl import analyzer
 from django_elasticsearch_dsl import DocType, Index, fields 
 from elasticsearch_dsl.analysis import token_filter
 
+from data_refinery_common.utils import get_supported_microarray_platforms, get_supported_rnaseq_platforms
 from .models import Sample, Experiment, Organism
 
 experiment_index = Index('experiments')
@@ -88,7 +89,7 @@ class ExperimentDocument(DocType):
     platform_accession_codes = fields.TextField(
         analyzer=standard_keyword,
         fielddata=True,
-        fields={'raw': fields.TextField()}
+        fields={'raw': fields.TextField(analyzer='keyword')}
     )
     
     # Basic Fields
@@ -123,4 +124,11 @@ class ExperimentDocument(DocType):
         fields = [
            'id',
         ]
-        # related_models = [Sample, Organism]
+
+    def get_queryset(self):
+        """ We use this opportunity not to include any experiments that only contain unsupported platforms from our ES instance"""
+        supported_microarray_platforms = [x['platform_accession'] for x in get_supported_microarray_platforms()]
+        supported_rnaseq_platforms = [x.replace(' ', '') for x in get_supported_rnaseq_platforms()]
+        all_supported_platforms = supported_microarray_platforms + supported_rnaseq_platforms
+        return super(ExperimentDocument, self).get_queryset().filter(platform_accession_codes__contained_by=all_supported_platforms) # https://www.postgresql.org/docs/9.1/functions-array.html
+
