@@ -1090,7 +1090,7 @@ class AggregationTestCase(TestCase):
             'experiments': {
                 "E-GEOD-44719": {
                     "accession_code": "E-GEOD-44719",
-                    "sample_titles": [ "IFNa DC_LB016_IFNa", "undefined_sample" ]
+                    "sample_accession_codes": [ "IFNa DC_LB016_IFNa", "undefined_sample" ]
                 }
             },
 
@@ -1253,7 +1253,7 @@ class AggregationTestCase(TestCase):
             'experiments': {
                 "E-GEOD-😎": {
                     "accession_code": "E-GEOD-😎",
-                    "sample_titles": [ "😎", "undefined_sample" ]
+                    "sample_accession_codes": [ "😎", "undefined_sample" ]
                 }
             },
             'samples': {
