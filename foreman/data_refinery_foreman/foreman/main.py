@@ -25,6 +25,7 @@ from data_refinery_common.job_lookup import (
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
+    ComputedFile,
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
     ProcessorJob,
@@ -36,8 +37,7 @@ from data_refinery_common.models import (
 from data_refinery_common.utils import (
     get_active_volumes,
     get_env_variable,
-    get_env_variable_gracefully,
-    has_original_file_been_processed,
+    get_env_variable_gracefully
 )
 
 
@@ -50,7 +50,7 @@ MAX_NUM_RETRIES = 2
 # This can be overritten by the env var "MAX_TOTAL_JOBS"
 DEFAULT_MAX_JOBS = 20000
 
-DOWNLOADER_JOBS_PER_NODE = 65
+DOWNLOADER_JOBS_PER_NODE = 25
 PAGE_SIZE=2000
 
 # This is the maximum number of non-dead nomad jobs that can be in the
@@ -58,6 +58,12 @@ PAGE_SIZE=2000
 # to queue downloader jobs.
 MAX_TOTAL_DOWNLOADER_JOBS = DOWNLOADER_JOBS_PER_NODE
 TIME_OF_LAST_SIZE_CHECK = timezone.now() - datetime.timedelta(hours=1)
+
+# This is the absolute max number of downloader jobs that should ever
+# be queued across the whole cluster no matter how many nodes we
+# have. This is important because too many downloader jobs and we take
+# down NCBI.
+HARD_MAX_DOWNLOADER_JOBS = 750
 
 # The minimum amount of time in between each iteration of the main
 # loop. We could loop much less frequently than every two minutes if
@@ -68,6 +74,9 @@ MIN_LOOP_TIME = datetime.timedelta(seconds=15)
 # How frequently we dispatch Janitor jobs and clean unplaceable jobs
 # out of the Nomad queue.
 JANITOR_DISPATCH_TIME = datetime.timedelta(minutes=30)
+
+# How frequently we clean up the database.
+DBCLEAN_TIME = datetime.timedelta(hours=6)
 
 # This time is currently set so far in the past that it's not doing
 # anything. However, should we ever want to suspend work on the
@@ -162,8 +171,8 @@ def get_max_downloader_jobs(window=datetime.timedelta(minutes=2), nomad_client=N
         MAX_TOTAL_DOWNLOADER_JOBS = (num_active_nodes - num_smasher_nodes) * DOWNLOADER_JOBS_PER_NODE
         TIME_OF_LAST_SIZE_CHECK = timezone.now()
 
-    if MAX_TOTAL_DOWNLOADER_JOBS > 1000:
-        return 1000
+    if MAX_TOTAL_DOWNLOADER_JOBS > HARD_MAX_DOWNLOADER_JOBS:
+        return HARD_MAX_DOWNLOADER_JOBS
     else:
         return MAX_TOTAL_DOWNLOADER_JOBS
 
@@ -318,15 +327,12 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
         elif ram_amount == 4096:
             ram_amount = 8192
 
-    # Don't redownload if we don't need to.
-    # Only do this for SRA jobs because they don't have archives which
-    # this isn't capable of dealing with.
-    if last_job.downloader_task == "SRA":
-        if has_original_file_been_processed(last_job.original_files.first()):
-            last_job.no_retry = True
-            last_job.failure_reason = "Foreman told to redownloaded job with prior succesful processing."
-            last_job.save()
-            return
+    original_file = last_job.original_files.first()
+    if original_file and original_file.has_been_processed():
+        last_job.no_retry = True
+        last_job.failure_reason = "Foreman told to redownloaded job with prior succesful processing."
+        last_job.save()
+        return
 
     new_job = DownloaderJob(num_retries=num_retries,
                             downloader_task=last_job.downloader_task,
@@ -386,7 +392,7 @@ def get_capacity_for_downloader_jobs(nomad_client) -> bool:
 
 
 def handle_downloader_jobs(jobs: List[DownloaderJob],
-                           queue_capacity: int = MAX_TOTAL_DOWNLOADER_JOBS) -> None:
+                           queue_capacity=MAX_TOTAL_DOWNLOADER_JOBS) -> None:
     """For each job in jobs, either retry it or log it.
 
     No more than queue_capacity jobs will be retried.
@@ -404,7 +410,7 @@ def handle_downloader_jobs(jobs: List[DownloaderJob],
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
         if jobs_dispatched >= queue_capacity:
-            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more downloader jobs now.")
+            logger.info("We hit the maximum downloader jobs / capacity ceiling, so we're not handling any more downloader jobs now.")
             return
 
         if job.num_retries < MAX_NUM_RETRIES:
@@ -659,7 +665,8 @@ def get_capacity_for_processor_jobs(nomad_client) -> bool:
 
 
 def handle_processor_jobs(jobs: List[ProcessorJob],
-                          queue_capacity: int = None) -> None:
+                          queue_capacity: int = None,
+                          ignore_ceiling=False) -> None:
     """For each job in jobs, either retry it or log it.
 
     No more than queue_capacity jobs will be retried.
@@ -681,9 +688,10 @@ def handle_processor_jobs(jobs: List[ProcessorJob],
 
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
-        if jobs_dispatched >= queue_capacity:
-            logger.info("We hit the maximum total jobs ceiling, so we're not handling any more processor jobs now.")
-            return
+
+        if not ignore_ceiling and jobs_dispatched >= queue_capacity:
+                logger.info("We hit the maximum total jobs ceiling, so we're not handling any more processor jobs now.")
+                return
 
         if job.num_retries < MAX_NUM_RETRIES:
             requeue_processor_job(job)
@@ -1168,6 +1176,71 @@ def send_janitor_jobs():
             # If we can't dispatch this job, something else has gone wrong.
             continue
 
+##
+# Smasher
+##
+
+def retry_lost_smasher_jobs() -> None:
+    """Retry smasher jobs which never even got started for too long."""
+    try:
+        active_volumes = get_active_volumes()
+    except:
+        # If we cannot reach Nomad now then we can wait until a later loop.
+        pass
+
+    potentially_lost_jobs = ProcessorJob.objects.filter(
+        success=None,
+        retried=False,
+        start_time=None,
+        end_time=None,
+        no_retry=False,
+        pipeline_applied="SMASHER",
+        created_at__gt=(timezone.now() - datetime.timedelta(hours=24))
+    )
+
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
+
+    lost_jobs = []
+    for job in potentially_lost_jobs:
+        try:
+            if job.nomad_job_id:
+                job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
+                # If the job is still pending, then it makes sense that it
+                # hasn't started and if it's running then it may not have
+                # been able to mark the job record as started yet.
+                if job_status != "pending" and job_status != "running":
+                    logger.debug(("Determined that a smasher job needs to be requeued because its"
+                                  " Nomad Job's status is: %s."),
+                                 job_status,
+                                 job_id=job.id
+                    )
+                    lost_jobs.append(job)
+            else:
+                # If there is no nomad_job_id field set, we could be
+                # in the small window where the job was created but
+                # hasn't yet gotten a chance to be queued.
+                # If this job really should be restarted we'll get it in the next loop.
+                if timezone.now() - job.created_at > MIN_LOOP_TIME:
+                    lost_jobs.append(job)
+        except URLNotFoundNomadException:
+            logger.debug(("Determined that a smasher job needs to be requeued because "
+                              "querying for its Nomad job failed: "),
+                             job_id=job.id
+            )
+            lost_jobs.append(job)
+        except nomad.api.exceptions.BaseNomadException:
+            raise
+        except Exception:
+            logger.exception("Couldn't query Nomad about smasher Job.", processor_job=job.id)
+
+    if lost_jobs:
+        logger.info(
+            "Handling lost (never-started) smasher jobs!",
+            len_jobs=len(lost_jobs)
+        )
+        handle_processor_jobs(lost_jobs, sys.maxsize, ignore_ceiling=True)
 
 ##
 # Handling of node cycling
@@ -1235,6 +1308,21 @@ def cleanup_the_queue():
                     # If we can't do this for some reason, we'll get it next loop.
                     pass
 
+def clean_database():
+    """ Removes duplicated objects that may have appeared through race, OOM, bugs, etc.
+    See: https://github.com/AlexsLemonade/refinebio/issues/1183
+    """
+
+    # Hide smashable files
+    computed_files = ComputedFile.objects.filter(s3_bucket=None, s3_key=None, is_smashable=True)
+    logger.info("Cleaning unsynced files!", num_to_clean=computed_files.count())
+
+    # We don't do this in bulk because we want the properties set by save() as well
+    for computed_file in computed_files:
+        computed_file.is_public=False
+        computed_file.save()
+
+    logger.info("Cleaned files!")
 
 ##
 # Main loop
@@ -1253,7 +1341,9 @@ def monitor_jobs():
     It does so on a loop forever that won't spin faster than
     MIN_LOOP_TIME, but it may spin slower than that.
     """
-    last_janitorial_time = None
+    last_janitorial_time = timezone.now()
+    last_dbclean_time = timezone.now()
+
     while(True):
         # Perform two heartbeats, one for the logs and one for Monit:
         logger.info("The Foreman's heart is beating, but he does not feel.")
@@ -1279,7 +1369,8 @@ def monitor_jobs():
             retry_lost_downloader_jobs,
             retry_failed_survey_jobs,
             retry_hung_survey_jobs,
-            retry_lost_survey_jobs
+            retry_lost_survey_jobs,
+            retry_lost_smasher_jobs
         ]
 
         for function in requeuing_functions_in_order:
@@ -1289,11 +1380,14 @@ def monitor_jobs():
                 logger.error("Caught exception in %s: ", function.__name__)
                 traceback.print_exc(chain=False)
 
-        if not last_janitorial_time \
-           or timezone.now() - last_janitorial_time > JANITOR_DISPATCH_TIME:
+        if timezone.now() - last_janitorial_time > JANITOR_DISPATCH_TIME:
             send_janitor_jobs()
             cleanup_the_queue()
             last_janitorial_time = timezone.now()
+
+        if timezone.now() - last_dbclean_time > DBCLEAN_TIME:
+            clean_database()
+            last_dbclean_time = timezone.now()
 
         loop_time = timezone.now() - start_time
         if loop_time < MIN_LOOP_TIME:

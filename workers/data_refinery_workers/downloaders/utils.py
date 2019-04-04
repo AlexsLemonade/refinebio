@@ -26,7 +26,6 @@ from data_refinery_common.models import (
 from data_refinery_common.utils import (
     get_env_variable,
     get_instance_id,
-    has_original_file_been_processed,
 )
 
 logger = get_and_configure_logger(__name__)
@@ -113,23 +112,6 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
         logger.error("This downloader job has already been started!!!", downloader_job=job.id)
         raise Exception("downloaders.start_job called on a job that has already been started!")
 
-    # Only do this for SRA jobs because they don't have archives which
-    # this isn't capable of dealing with.
-    if job.downloader_task == "SRA":
-        if has_original_file_been_processed(job.original_files.first()):
-            logger.error(("Sample has a good computed file, it must have been processed, "
-                          "so it doesn't need to be downloaded! Aborting!"),
-                         job_id=job.id,
-                         original_file_id=original_file.id
-            )
-            job.start_time = timezone.now()
-            job.failure_reason = "Was told to redownload a successfully proccessed file."
-            job.success = False
-            job.no_retry = True
-            job.end_time = timezone.now()
-            job.save()
-            sys.exit(0)
-
     # Set up the SIGTERM handler so we can appropriately handle being interrupted.
     # (`docker stop` uses SIGTERM, not SIGINT.)
     # (however, Nomad sends an SIGINT so catch both.)
@@ -140,6 +122,23 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
     job.worker_version = SYSTEM_VERSION
     job.start_time = timezone.now()
     job.save()
+
+    needs_downloading = False
+    for original_file in job.original_files.all():
+        if original_file.needs_downloading():
+            needs_downloading = True
+
+    if not needs_downloading:
+        logger.error(("No files associated with this job need to be downloaded! Aborting!"),
+                     job_id=job.id
+        )
+        job.start_time = timezone.now()
+        job.failure_reason = "Was told to redownload file(s) that are already downloaded!"
+        job.success = False
+        job.no_retry = True
+        job.end_time = timezone.now()
+        job.save()
+        sys.exit(0)
 
     global CURRENT_JOB
     CURRENT_JOB = job
@@ -243,7 +242,12 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
                              processor_job=processor_job.id,
                              original_file=original_file.id)
 
-            send_job(pipeline_to_apply, processor_job)
+            try:
+                send_job(pipeline_to_apply, processor_job)
+            except:
+                # If we cannot queue the job now the Foreman will do
+                # it later.
+                pass
 
 
 def create_processor_job_for_original_files(original_files: List[OriginalFile],
@@ -283,4 +287,9 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
         logger.debug("Queuing processor job.",
                      processor_job=processor_job.id)
 
-        send_job(pipeline_to_apply, processor_job)
+        try:
+            send_job(pipeline_to_apply, processor_job)
+        except:
+            # If we cannot queue the job now the Foreman will do
+            # it later.
+            pass

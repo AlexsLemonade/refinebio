@@ -209,13 +209,37 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
             try:
                 job_context["index_length_raw"] = int(stats.Run.Statistics.Read[0]['average'])
             except Exception:
-                logger.error("Unable to determine index length! Defaulting to small", stat_response=respo)
+                # sra-stat will sometimes put warnings in the XML stream, so we end up with nothing valid to parse.
+                # https://github.com/ncbi/sra-tools/issues/192
+                logger.error("Unable to determine index length! Defaulting to small", file=job_context["sra_input_file_path"])
                 job_context["index_length_raw"] = -1
 
     if job_context["index_length_raw"] > 75:
         job_context["index_length"] = "long"
     else:
         job_context["index_length"] = "short"
+
+    if not job_context.get('sra_num_reads', None):
+        try:
+            sample = job_context['sample']
+            for exp in sample.experiments.all():
+                for anno in exp.experimentannotation_set.all():
+                    if expanno.data.get('library_layout', '').upper() == 'PAIRED':
+                        job_context['sra_num_reads'] = 2
+                        return job_context
+                    if expanno.data.get('library_layout', '').upper() == 'SINGLE':
+                        job_context['sra_num_reads'] = 1
+                        return job_context
+        except Exception as e:
+            logger.exception("Problem trying to determine library strategy (single/paired)!", file=job_context["sra_input_file_path"])
+            job_context["job"].failure_reason = "Unable to determine library strategy (single/paired): " + str(e)
+            job_context["success"] = False
+            return job_context
+
+    if not job_context.get('sra_num_reads', None):
+        logger.error("Completely unable to determine library strategy (single/paired)!", file=job_context["sra_input_file_path"])
+        job_context["job"].failure_reason = "Unable to determine library strategy (single/paired)"
+        job_context["success"] = False
 
     return job_context
 
@@ -427,7 +451,16 @@ def _run_tximport_for_experiment(
     tximport_path_list_file = job_context["work_dir"] + "tximport_inputs.txt"
     with open(tximport_path_list_file, "w") as input_list:
         for quant_file in quant_files:
-            input_list.write(quant_file.get_synced_file_path() + "\n")
+            # We create a directory in the work directory for each (quant.sf) file, as 
+            # tximport assigns column names based on the parent directory name,
+            # and we need those names so that we can reassociate withe samples later.
+            # ex., a file with absolute_file_path: /processor_job_1/SRR123_output/quant.sf
+            # downloads to: /processor_job_2/SRR123_output/quant.sf
+            # So the result file has frame "SRR123_output", which we can associate with sample SRR123
+            sample_output = job_context["work_dir"] + str(quant_file.absolute_file_path.split('/')[-2]) + "/"
+            os.makedirs(sample_output, exist_ok=True)
+            quant_work_path = sample_output + quant_file.filename
+            input_list.write(quant_file.get_synced_file_path(path=quant_work_path) + "\n")
 
     rds_filename = "txi_out.RDS"
     rds_file_path = job_context["work_dir"] + rds_filename
@@ -611,7 +644,12 @@ def get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile
             quant_files = []
             for result in salmon_quant_results:
                 try:
-                    quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])
+                    quant_files.append(ComputedFile.objects.filter(
+                        result=result, 
+                        filename="quant.sf",
+                        s3_key__isnull=False,
+                        s3_bucket__isnull=False,
+                        ).order_by('-id')[0])
                 except:
                     try:
                         sample = result.samples.first()
