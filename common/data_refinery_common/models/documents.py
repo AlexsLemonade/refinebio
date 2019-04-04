@@ -89,7 +89,7 @@ class ExperimentDocument(DocType):
     platform_accession_codes = fields.TextField(
         analyzer=standard_keyword,
         fielddata=True,
-        fields={'raw': fields.TextField(analyzer='keyword')}
+        fields={'raw': fields.TextField()}
     )
     
     # Basic Fields
