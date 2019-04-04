@@ -147,6 +147,7 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
     new_job.downloader_task = downloader_task
     new_job.accession_code = accession_code
     new_job.was_recreated = True
+    new_job.ram_amount = 1024
     new_job.save()
 
     if archive_file:
