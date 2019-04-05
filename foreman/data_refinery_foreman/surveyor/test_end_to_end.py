@@ -382,8 +382,9 @@ class RedownloadingTestCase(TransactionTestCase):
             self.assertEqual(len(successful_processor_jobs), target_job_count)
 
     @tag("slow")
+    @tag("affymetrix")
     def test_geo_celgz_redownloading(self):
-        """Survey, download, then process an experiment we know is NO_OP.
+        """Survey, download, then process an experiment we know is Affymetrix.
 
         Each of the experiment's samples are in their own .cel.gz
         file, which is another way we expect GEO data to come.
@@ -489,21 +490,15 @@ class RedownloadingTestCase(TransactionTestCase):
 
             # And finally we can make sure that all of the processor
             # jobs were successful, including the one that got
-            # recreated. The processor job that recreated it deleted
+            # recreated. The processor job that recreated that job deleted
             # itself rather than failing, so there's only successes!
             logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
             successful_processor_jobs = []
             processor_jobs = ProcessorJob.objects.all()
             for processor_job in processor_jobs:
-                # One of the two calls to wait_for_job will fail
-                # because the job is going to delete itself when it
-                # finds that the file it wants to process is missing.
-                try:
-                    processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
-                    if processor_job.success:
-                        successful_processor_jobs.append(processor_job)
-                except:
-                    pass
+                processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
+                if processor_job.success:
+                    successful_processor_jobs.append(processor_job)
 
             self.assertEqual(len(successful_processor_jobs), SAMPLES_IN_EXPERIMENT)
 
