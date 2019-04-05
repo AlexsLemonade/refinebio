@@ -261,6 +261,9 @@ def _get_actual_file_if_queueable(
         # a file in the same archive.
         actual_file = potential_existing_files[0]
         if actual_file.needs_downloading():
+            if not actual_file.is_downloaded:
+                actual_file.is_downloaded = True
+                actual_file.save()
             return actual_file
         else:
             return None

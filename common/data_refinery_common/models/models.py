@@ -741,8 +741,7 @@ class OriginalFile(models.Model):
         """
         # If the file is downloaded and the file actually exists on disk,
         # then it doens't need to be downloaded.
-        if self.is_downloaded \
-           and self.absolute_file_path \
+        if self.absolute_file_path \
            and os.path.exists(self.absolute_file_path):
             return False
 
