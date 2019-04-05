@@ -237,6 +237,10 @@ jobs:
       # since we have the image for it, but we also need the downloaders image.
       - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
       - run: docker push localhost:5000/dr_downloaders
+
+      # This image was built by the affymetrix workers tests, just
+      # gotta retag it so it can go into the local docker repo.
+      - run: docker tag ccdlstaging/dr_affymetrix:latest localhost:5000/dr_affymetrix:latest
       - run: docker push localhost:5000/dr_affymetrix
 
       - run: ./foreman/run_tests.sh --tag=affymetrix
