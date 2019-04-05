@@ -413,7 +413,7 @@ class RedownloadingTestCase(TransactionTestCase):
 
             self.assertTrue(survey_job.success)
 
-            # This experiment has 15 samples that each have their own file.
+            # This experiment's samples each have their own file.
             downloader_jobs = DownloaderJob.objects.all()
             self.assertEqual(downloader_jobs.count(), SAMPLES_IN_EXPERIMENT)
 
@@ -449,15 +449,6 @@ class RedownloadingTestCase(TransactionTestCase):
                 downloader_job = wait_for_job(downloader_job, DownloaderJob, start_time, .01)
                 self.assertTrue(downloader_job.success)
 
-            # Apparently this experiment has a variable number of
-            # files because GEO processed experiments sometimes do...
-            # However this is okay because there's at least one file
-            # per sample, so each sample will get processed at least
-            # once and it's the best we can do with the state of GEO.
-
-            # We're going to preserve this number, because once a job
-            # deletes itself and is respawned, we should be back up to
-            # this number.
             try:
                 doomed_processor_job = og_file_to_delete.processor_jobs.all()[0]
             except:
@@ -496,9 +487,10 @@ class RedownloadingTestCase(TransactionTestCase):
             recreated_job = wait_for_job(recreated_job, DownloaderJob, start_time)
             self.assertTrue(recreated_job.success)
 
-            # And finally we can make sure that all 12 of the
-            # processor jobs were successful, including the one that
-            # got recreated.
+            # And finally we can make sure that all of the processor
+            # jobs were successful, including the one that got
+            # recreated. The processor job that recreated it deleted
+            # itself rather than failing, so there's only successes!
             logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
             successful_processor_jobs = []
             processor_jobs = ProcessorJob.objects.all()
