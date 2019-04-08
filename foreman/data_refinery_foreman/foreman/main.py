@@ -334,6 +334,14 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
         last_job.save()
         return
 
+    first_sample = original_file.samples.first()
+    if first_sample and first_sample.is_blacklisted:
+        last_job.no_retry = True
+        last_job.failure_reason = "Sample run accession has been blacklisted by SRA."
+        last_job.save()
+        logger.info("Avoiding requeuing for DownloaderJob for blacklisted run accession: " + str(first_sample.accession_code))
+        return
+
     new_job = DownloaderJob(num_retries=num_retries,
                             downloader_task=last_job.downloader_task,
                             ram_amount=ram_amount,
