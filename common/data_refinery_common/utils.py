@@ -300,7 +300,7 @@ def get_fasp_sra_download(run_accession: str):
             return None
 
 def load_blacklist(blacklist_csv: str="config/RNASeqRunBlackList.csv"):
-    """ Loads the SRA run blaclist """
+    """ Loads the SRA run blacklist """
 
     blacklisted_samples = []
     with open(blacklist_csv, encoding='utf-8') as blacklist_file:

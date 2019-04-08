@@ -7,31 +7,22 @@ from django.core.paginator import Paginator
 from data_refinery_common.utils import load_blacklist
 
 def update_blacklisted_samples(apps, schema_editor):
-    '''Makes the platform_names on the Sample model human readable.
-    We were removing spaces from rnaSeq samples' platforms, which made
-    them unfriendly to users. This reverts the platform names to the
-    original that didn't have spaces in them.
-    We do this by munging the platform name on both the Sample object
-    and the list of rnaSeq platforms so that they are comparable, then
-    if they match we set the Sample.platform_name to what the list had
-    originally.
-    We can't import the Sample model directly as it may be a newer
-    version than this migration expects. We use the historical version.
+    '''
+    Uses the SRA-supplied blacklist to mark samples as is_blacklisted or not.
     '''
     Sample = apps.get_model('data_refinery_common', 'Sample')
 
-    paginator = Paginator(Sample.objects.all(), 200)
-
     blacklist = load_blacklist()
 
+    paginator = Paginator(Sample.objects.all(), 1000)
     for page_idx in range(1, paginator.num_pages):
+        blacklisted = []
         for sample in paginator.page(page_idx).object_list:
-
             if sample.accession_code in blacklist:
                 sample.is_blacklisted = True
-                logger.info("Blacklisting " + str(sample.accession_code))
                 sample.save()
-
+                blacklisted.append(str(sample.accession_code))
+        print("Blacklisted page " + str(page_idx) + ": " + str(blacklisted))
 
 class Migration(migrations.Migration):
 
