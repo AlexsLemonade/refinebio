@@ -101,3 +101,4 @@ class UtilsTestCase(TestCase):
 
     def test_load_blacklist(self):
         blacklist = utils.load_blacklist()
+        self.assertEqual(len(blacklist), 239449)
