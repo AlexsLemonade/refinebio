@@ -113,6 +113,9 @@ class Sample(models.Model):
     # Crunch Properties
     is_processed = models.BooleanField(default=False)
 
+    # Blacklisting
+    is_blacklisted = models.BooleanField(default=False)
+
     # Common Properties
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
