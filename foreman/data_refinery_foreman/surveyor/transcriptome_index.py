@@ -90,8 +90,11 @@ class EnsemblUrlBuilder(ABC):
 
         # If the primary_assembly is not available use toplevel instead.
         try:
+            # Ancient unresolved bug. WTF python: https://bugs.python.org/issue27973
+            urllib.request.urlcleanup()
             file_handle = urllib.request.urlopen(url)
             file_handle.close()
+            urllib.request.urlcleanup()
         except:
             url = url.replace("primary_assembly", "toplevel")
 
