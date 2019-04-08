@@ -138,7 +138,7 @@ class NoOpEndToEndTestCase(TransactionTestCase):
             self.assertEqual(ProcessorJobOriginalFileAssociation.objects.all().count(), 0)
 
 
-class RedownloadingTestCase(TransactionTestCase):
+class ArrayexpressRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
     def test_array_express_redownloading(self):
         """Survey, download, then process an experiment we know is NO_OP."""
@@ -160,12 +160,13 @@ class RedownloadingTestCase(TransactionTestCase):
             organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
             organism.save()
 
+            NUM_SAMPLES_IN_EXPERIMENT = 12
             accession_code = "E-GEOD-3303"
             survey_job = surveyor.survey_experiment(accession_code, "ARRAY_EXPRESS")
 
             self.assertTrue(survey_job.success)
 
-            # This experiment has 12 samples that are contained in the
+            # All of this experiment's samples are contained in the
             # same archive, so only one job is needed.
             downloader_jobs = DownloaderJob.objects.all()
             self.assertEqual(downloader_jobs.count(), 1)
@@ -185,10 +186,10 @@ class RedownloadingTestCase(TransactionTestCase):
                     original_file.delete_local_file()
                     break
 
-            # The one downloader job should have extracted 12 files
-            # and created 12 processor jobs.
+            # The one downloader job should have extracted all the files
+            # and created as many processor jobs.
             processor_jobs = ProcessorJob.objects.all()
-            self.assertEqual(processor_jobs.count(), 12)
+            self.assertEqual(processor_jobs.count(), NUM_SAMPLES_IN_EXPERIMENT)
 
             doomed_processor_job = original_file.processor_jobs.all()[0]
             logger.info(
@@ -221,10 +222,11 @@ class RedownloadingTestCase(TransactionTestCase):
             self.assertTrue(recreated_job.success)
 
             # Once the Downloader job succeeds, it should create one
-            # and only one processor job, which the total goes back up to 12:
-            self.assertEqual(ProcessorJob.objects.all().count(), 12)
+            # and only one processor job, after which the total goes back up
+            # to NUM_SAMPLES_IN_EXPERIMENT:
+            self.assertEqual(ProcessorJob.objects.all().count(), NUM_SAMPLES_IN_EXPERIMENT)
 
-            # And finally we can make sure that all 12 of the
+            # And finally we can make sure that all of the
             # processor jobs were successful, including the one that
             # got recreated.
             logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
@@ -240,8 +242,9 @@ class RedownloadingTestCase(TransactionTestCase):
                 except:
                     pass
 
-            self.assertEqual(len(successful_processor_jobs), 12)
+            self.assertEqual(len(successful_processor_jobs), NUM_SAMPLES_IN_EXPERIMENT)
 
+class GeoArchiveRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
     def test_geo_archive_redownloading(self):
         """Survey, download, then process an experiment we know is NO_OP.
@@ -381,6 +384,8 @@ class RedownloadingTestCase(TransactionTestCase):
 
             self.assertEqual(len(successful_processor_jobs), target_job_count)
 
+
+class GeoCelgzRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
     @tag("affymetrix")
     def test_geo_celgz_redownloading(self):
@@ -630,6 +635,8 @@ class RedownloadingTestCase(TransactionTestCase):
             self.assertTrue(has_long)
             self.assertTrue(has_short)
 
+
+class SraRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
     @tag("salmon")
     def test_sra_redownloading(self):
