@@ -449,6 +449,7 @@ def _run_tximport_for_experiment(
     # tximport.R rather than having to pass in one argument per
     # sample.
     tximport_path_list_file = job_context["work_dir"] + "tximport_inputs.txt"
+    quant_file_paths = {}
     with open(tximport_path_list_file, "w") as input_list:
         for quant_file in quant_files:
             # We create a directory in the work directory for each (quant.sf) file, as 
@@ -460,7 +461,10 @@ def _run_tximport_for_experiment(
             sample_output = job_context["work_dir"] + str(quant_file.absolute_file_path.split('/')[-2]) + "/"
             os.makedirs(sample_output, exist_ok=True)
             quant_work_path = sample_output + quant_file.filename
-            input_list.write(quant_file.get_synced_file_path(path=quant_work_path) + "\n")
+            quant_file_path = quant_file.get_synced_file_path(path=quant_work_path)
+            input_list.write(quant_file_path + "\n")
+            quant_file_paths[quant_file_path] = os.stat(quant_file_path).st_size
+
 
     rds_filename = "txi_out.RDS"
     rds_file_path = job_context["work_dir"] + rds_filename
@@ -495,7 +499,13 @@ def _run_tximport_for_experiment(
     if tximport_result.returncode != 0:
         error_template = ("Found non-zero exit code from R code while running tximport.R: {}")
         error_message = error_template.format(tximport_result.stderr.decode().strip())
-        logger.error(error_message, processor_job=job_context["job_id"], experiment=experiment.id)
+        logger.error(error_message, 
+            processor_job=job_context["job_id"], 
+            experiment=experiment.id,
+            quant_files=quant_files,
+            cmd_tokens=cmd_tokens,
+            quant_file_paths=quant_file_paths,
+            )
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
         return job_context
