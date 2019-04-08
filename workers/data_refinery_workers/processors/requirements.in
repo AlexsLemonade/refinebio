@@ -1,7 +1,7 @@
 boto3
 coveralls
 django-elasticsearch-dsl
-django>=2.1.6
+django>=2.1.8
 elasticsearch-dsl
 matplotlib
 numpy
