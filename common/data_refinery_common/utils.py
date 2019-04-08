@@ -298,3 +298,19 @@ def get_fasp_sra_download(run_accession: str):
             logger = logging.getLogger(__name__)
             logger.exception("Error parsing FASP CGI response: " + str(cgi_url) + " " + str(data) + " " + str(resp.text))
             return None
+
+def load_blacklist(blacklist_csv: str="config/RNASeqRunBlackList.csv"):
+    """ Loads the SRA run blaclist """
+
+    blacklisted_samples = []
+    with open(blacklist_csv, encoding='utf-8') as blacklist_file:
+        reader = csv.reader(blacklist_file, )
+        for line in reader:
+            # Skip the header row
+            # Lines are 1 indexed, #BecauseCSV
+            if reader.line_num is 1:
+                continue
+
+            blacklisted_samples.append(line.strip())
+
+    return blacklisted_samples
