@@ -1154,8 +1154,7 @@ class Stats(APIView):
         filter_query = Q()
         for username in Stats.EMAIL_USERNAME_BLACKLIST:
             filter_query = filter_query | Q(email_address__startswith=username)
-        filter_query = filter_query & Q(email_address__endswith='gmail.com')
-        processed_datasets = Dataset.objects.filter(is_processed=True).exclude(filter_query)
+        processed_datasets = Dataset.objects.filter(is_processed=True, email_address__isnull=False).exclude(filter_query)
         result = processed_datasets.aggregate(
             total=Count('id'),
             aggregated_by_experiment=Count('id', filter=Q(aggregate_by='EXPERIMENT')),
@@ -1271,10 +1270,10 @@ class Stats(APIView):
     def _get_job_stats(self, jobs, range_param):
         result = jobs.aggregate(
             total=Count('id'),
-            pending=Count('id', filter=Q(start_time__isnull=True)), 
-            completed=Count('id', filter=Q(end_time__isnull=False)),
             successful=Count('id', filter=Q(success=True)),
-            open=Count('id', filter=Q(start_time__isnull=False, end_time__isnull=True, success__isnull=True)),
+            failed=Count('id', filter=Q(success=False)),
+            pending=Count('id', filter=Q(start_time__isnull=True, success__isnull=True)),
+            open=Count('id', filter=Q(start_time__isnull=False, success__isnull=True)),
         )
         # via https://stackoverflow.com/questions/32520655/get-average-of-difference-of-datetime-fields-in-django
         result['average_time'] = jobs.filter(start_time__isnull=False, end_time__isnull=False, success=True).aggregate(
@@ -1289,7 +1288,7 @@ class Stats(APIView):
             result['timeline'] = self._get_intervals(jobs, range_param) \
                                      .annotate(
                                          total=Count('id'),
-                                         completed=Count('id', filter=Q(success=True)),
+                                         successful=Count('id', filter=Q(success=True)),
                                          failed=Count('id', filter=Q(success=False)),
                                          pending=Count('id', filter=Q(start_time__isnull=True, success__isnull=True)),
                                          open=Count('id', filter=Q(start_time__isnull=False, success__isnull=True)),
