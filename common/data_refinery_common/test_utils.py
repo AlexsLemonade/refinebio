@@ -98,3 +98,6 @@ class UtilsTestCase(TestCase):
         with open('/tmp/VOLUME_INDEX', 'wb') as f:
             f.write("123".encode())
         self.assertEqual(utils.get_volume_index(path='/tmp/VOLUME_INDEX'), "123")
+
+    def test_load_blacklist(self):
+        blacklist = utils.load_blacklist()

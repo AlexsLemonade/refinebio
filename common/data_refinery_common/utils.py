@@ -311,6 +311,6 @@ def load_blacklist(blacklist_csv: str="config/RNASeqRunBlackList.csv"):
             if reader.line_num is 1:
                 continue
 
-            blacklisted_samples.append(line.strip())
+            blacklisted_samples.append(line[0].strip())
 
     return blacklisted_samples
