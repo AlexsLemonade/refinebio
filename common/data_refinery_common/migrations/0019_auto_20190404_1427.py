@@ -6,7 +6,7 @@ from data_refinery_common.utils import get_env_variable
 
 # We want this to throw if it can't access this, no point in running a
 # migration to set everything to a bad value.
-S3_BUCKET_NAME = get_env_variable("S3_QN_TARGET_BUCKET_NAME")
+S3_QN_TARGET_BUCKET_NAME = get_env_variable("S3_QN_TARGET_BUCKET_NAME")
 
 
 def update_qn_bucket(apps, schema_editor):
@@ -21,8 +21,9 @@ def update_qn_bucket(apps, schema_editor):
     # Pagination isn't necessary here because we have very few QN targets.
     ComputedFile = apps.get_model('data_refinery_common', 'ComputedFile')
     for computed_file in ComputedFile.objects.filter(is_qn_target=True):
-        computed_file.s3_bucket = S3_BUCKET_NAME
-        computed_file.save()
+        if not computed_file.change_s3_location(S3_QN_TARGET_BUCKET_NAME, computed_file.s3_key):
+            # What the hell am I supposed to do if errors start ocurring during a migration?!?
+            break
 
 
 class Migration(migrations.Migration):

@@ -899,6 +899,52 @@ class ComputedFile(models.Model):
             logger.exception(e, computed_file_id=self.pk)
             return None
 
+    def change_s3_location(self, new_bucket: str, new_key: str) -> bool:
+        old_bucket = self.s3_bucket
+        old_key = self.s3_key
+        copy_source = {
+            'Bucket': old_bucket,
+            'Key': old_key
+        }
+        try:
+            response = S3.copy_object(Bucket=new_bucket,
+                                      CopySource=copy_source,
+                                      Key=new_key)
+        except:
+            logger.exception("Could not copy computed file within S3",
+                             computed_file_id=self.id,
+                             source_bucket=old_bucket,
+                             source_key=old_key,
+                             destination_bucket=new_bucket,
+                             destination_key=new_key)
+            return False
+
+        try:
+            self.s3_bucket = new_bucket
+            self.s3_key = new_key
+            self.save()
+        except:
+            logger.exception("Could not save computed file after it was copied!!!",
+                             computed_file_id=self.id,
+                             source_bucket=old_bucket,
+                             source_key=old_key,
+                             destination_bucket=new_bucket,
+                             destination_key=new_key)
+            return False
+
+        try:
+            response = S3.delete_object(Bucket=old_bucket, Key=old_key)
+        except:
+            logger.exception("Could not delete computed file after it was copied and saved!!!",
+                             computed_file_id=self.id,
+                             source_bucket=old_bucket,
+                             source_key=old_key,
+                             destination_bucket=new_bucket,
+                             destination_key=new_key)
+            return False
+
+        return True
+
     def calculate_sha1(self) -> None:
         """ Calculate the SHA1 value of a given file.
         """
