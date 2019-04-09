@@ -120,7 +120,7 @@ variable "client_instance_type" {
 }
 
 variable "smasher_instance_type" {
-  default = "m5.12xlarge"
+  default = "m5.2xlarge"
 }
 
 variable "spot_price" {
