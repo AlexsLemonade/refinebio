@@ -640,7 +640,7 @@ class APITestCases(APITestCase):
         qni.save()
 
         response = self.client.get(reverse('qn-targets'), {'organism': 'Ailuropoda melanoleuca'})
-        self.assertEqual(len(response.json()), 1)
+        self.assertEqual(len(response.json().keys()), 11)
         self.assertEqual(response.json()['s3_url'], 'https://s3.amazonaws.com/fake_qni_bucket/zazaza_homo_sapiens_1234.tsv')
 
         response = self.client.get(reverse('computed-files'))
