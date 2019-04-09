@@ -220,8 +220,8 @@ def _extract_gz(file_path: str, accession_code: str) -> List[str]:
                   'filename': extracted_filepath.rsplit('/', 1)[1]
                   }]
 
-        logger.exception("While extracting %s caught exception %s",
     except Exception as e:
+        logger.exception("While extracting %s caught exception %s",
                          file_path,
                          str(e),
                          accession_code=accession_code,
