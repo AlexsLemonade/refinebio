@@ -733,7 +733,7 @@ class OriginalFile(models.Model):
 
         return False
 
-    def needs_downloading(self, pipeline_applied=None) -> bool:
+    def needs_downloading(self) -> bool:
         """Determine if a file needs to be downloaded.
 
         This is true if the file has already been downloaded and lost

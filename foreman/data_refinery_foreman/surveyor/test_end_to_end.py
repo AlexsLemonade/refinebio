@@ -425,11 +425,6 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
 
             logger.info("Survey Job finished, waiting for Downloader Jobs to complete.")
 
-            # Now we're going to find of the extracted files to delete.
-            for original_file in OriginalFile.objects.all():
-                if not original_file.is_archive:
-                    og_file_to_delete = original_file
-                    break
             start_time = timezone.now()
 
             # We're going to spin as fast as we can so we can delete

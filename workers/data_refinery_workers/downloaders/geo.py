@@ -220,8 +220,8 @@ def _extract_gz(file_path: str, accession_code: str) -> List[str]:
                   'filename': extracted_filepath.rsplit('/', 1)[1]
                   }]
 
-    except Exception as e:
         logger.exception("While extracting %s caught exception %s",
+    except Exception as e:
                          file_path,
                          str(e),
                          accession_code=accession_code,
@@ -260,7 +260,8 @@ def _get_actual_file_if_queueable(
         # needed to download it or if we just got it because we needed
         # a file in the same archive.
         actual_file = potential_existing_files[0]
-        if actual_file.needs_downloading():
+
+        if actual_file.has_been_processed():
             if not actual_file.is_downloaded:
                 actual_file.is_downloaded = True
                 actual_file.save()
