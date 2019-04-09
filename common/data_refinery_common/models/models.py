@@ -113,6 +113,9 @@ class Sample(models.Model):
     # Crunch Properties
     is_processed = models.BooleanField(default=False)
 
+    # Blacklisting
+    is_blacklisted = models.BooleanField(default=False)
+
     # Common Properties
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(editable=False, default=timezone.now)
@@ -181,7 +184,8 @@ class Sample(models.Model):
         """ Get the most recent of the ComputedFile objects associated with this Sample """
         try:
             return self.computed_files.filter(
-                            is_smashable=True
+                            is_public=True,
+                            is_smashable=True,
                         ).latest()
         except Exception as e:
             # This sample has no smashable files yet.
@@ -707,6 +711,31 @@ class OriginalFile(models.Model):
         self.is_downloaded = False
         self.save()
 
+
+    def has_been_processed(self) -> bool:
+        """Returns True if original_file has been completely processed, returns False otherwise.
+        """
+
+        sample = self.samples.first()
+        if not sample:
+            return False
+
+        if sample.source_database == "SRA":
+            for computed_file in sample.computed_files.all():
+                    if computed_file.s3_bucket and computed_file.s3_key:
+                        return True
+        else:
+            # If this original_file has multiple samples (is an archive), and any of them haven't been processed,
+            # we'll need the entire archive in order to process any of them.
+            # A check to non re-processed the already processed samples in the archive will happen elsewhere
+            # before dispatching.
+            for sample in self.samples.all():
+                if not sample.is_processed:
+                    return False
+            return True
+
+        return False
+
     def needs_downloading(self, pipeline_applied=None) -> bool:
         """Determine if a file needs to be downloaded.
 
@@ -731,22 +760,8 @@ class OriginalFile(models.Model):
         if unstarted_downloader_jobs.count() > 0:
             return False
 
-        # Transcriptome files are used by two jobs, one for long and
-        # one for short. So one of them could have completed
-        # successfully before the file disappeared, therefore check
-        # the pipeline_applied to make sure we're looking at the same
-        # index_length.
-        if pipeline_applied:
-            successful_processor_jobs = self.processor_jobs.filter(
-                success=True,
-                pipeline_applied=pipeline_applied
-            )
-        else:
-            successful_processor_jobs = self.processor_jobs.filter(success=True)
-
-        # Finally, if there is a successful processor job, then the file
-        # has been processed and doesn't need to be processed again.
-        return successful_processor_jobs.count() == 0
+        # If this file has been processed, then it doesn't need to be downloaded again.
+        return not self.has_been_processed()
 
     def is_affy_data(self) -> bool:
         """Return true if original_file is a CEL file or a gzipped CEL file.

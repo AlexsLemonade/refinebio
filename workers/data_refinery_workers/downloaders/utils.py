@@ -23,7 +23,10 @@ from data_refinery_common.models import (
     ProcessorJobOriginalFileAssociation,
     Sample,
 )
-from data_refinery_common.utils import get_instance_id, get_env_variable
+from data_refinery_common.utils import (
+    get_env_variable,
+    get_instance_id,
+)
 
 logger = get_and_configure_logger(__name__)
 # Let this fail if SYSTEM_VERSION is unset.
@@ -88,21 +91,21 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
                             ).count()
 
     # Death and rebirth.
-    if settings.RUNNING_IN_CLOUD or force_harakiri:
-        if num_downloader_jobs_currently_running >= int(max_downloader_jobs_per_node):
-            # Wait for the death window
-            while True:
-                seconds = datetime.datetime.now().second
-                # Mass harakiri happens every 15 seconds.
-                if seconds % 15 == 0:
-                    job.start_time = None
-                    job.num_retries = job.num_retries - 1
-                    job.failure_reason = "Killed by harakiri"
-                    job.success = False
-                    job.save()
+    # if settings.RUNNING_IN_CLOUD or force_harakiri:
+    #     if num_downloader_jobs_currently_running >= int(max_downloader_jobs_per_node):
+    #         # Wait for the death window
+    #         while True:
+    #             seconds = datetime.datetime.now().second
+    #             # Mass harakiri happens every 15 seconds.
+    #             if seconds % 15 == 0:
+    #                 job.start_time = None
+    #                 job.num_retries = job.num_retries - 1
+    #                 job.failure_reason = "Killed by harakiri"
+    #                 job.success = False
+    #                 job.save()
 
-                    # What is dead may never die!
-                    sys.exit(0)
+    #                 # What is dead may never die!
+    #                 sys.exit(0)
 
     # This job should not have been started.
     if job.start_time is not None:
@@ -119,6 +122,23 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
     job.worker_version = SYSTEM_VERSION
     job.start_time = timezone.now()
     job.save()
+
+    needs_downloading = False
+    for original_file in job.original_files.all():
+        if original_file.needs_downloading():
+            needs_downloading = True
+
+    if not needs_downloading:
+        logger.error(("No files associated with this job need to be downloaded! Aborting!"),
+                     job_id=job.id
+        )
+        job.start_time = timezone.now()
+        job.failure_reason = "Was told to redownload file(s) that are already downloaded!"
+        job.success = False
+        job.no_retry = True
+        job.end_time = timezone.now()
+        job.save()
+        sys.exit(0)
 
     global CURRENT_JOB
     CURRENT_JOB = job
@@ -222,7 +242,12 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
                              processor_job=processor_job.id,
                              original_file=original_file.id)
 
-            send_job(pipeline_to_apply, processor_job)
+            try:
+                send_job(pipeline_to_apply, processor_job)
+            except:
+                # If we cannot queue the job now the Foreman will do
+                # it later.
+                pass
 
 
 def create_processor_job_for_original_files(original_files: List[OriginalFile],
@@ -262,4 +287,9 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
         logger.debug("Queuing processor job.",
                      processor_job=processor_job.id)
 
-        send_job(pipeline_to_apply, processor_job)
+        try:
+            send_job(pipeline_to_apply, processor_job)
+        except:
+            # If we cannot queue the job now the Foreman will do
+            # it later.
+            pass

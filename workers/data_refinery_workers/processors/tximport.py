@@ -86,7 +86,8 @@ def _prepare_files(job_context: Dict) -> Dict:
         filename__endswith='.tar.gz'
     ).latest('last_modified')
 
-    archive_path = archive_file.get_synced_file_path()
+    target_archive_path = job_context["work_dir"] + archive_file.filename
+    archive_path = archive_file.get_synced_file_path(path=target_archive_path)
 
     with tarfile.open(archive_path, "r:gz") as tar:
         tar.extractall(job_context["temp_dir"])
@@ -97,8 +98,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 def tximport(job_id: int) -> None:
     """Main processor function for the Tximport Processor.
 
-    Runs salmon quant command line tool, specifying either a long or
-    short read length. Also runs FastQC, MultiQC, and Salmontools.
+    Runs tximport command line tool on an experiment.
     """
     pipeline = Pipeline(name=utils.PipelineEnum.TXIMPORT.value)
     final_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},

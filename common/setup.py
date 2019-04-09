@@ -23,7 +23,7 @@ setup(
     install_requires=["boto3>=1.9.16",
                       "coverage>=4.5.1",
                       "daiquiri>=1.5.0",
-                      "django>=2.1.2",
+                      "django>=2.1.8",
                       "raven>=6.9.0",
                       "requests>=2.10.1",
                       "retrying>=1.3.3",

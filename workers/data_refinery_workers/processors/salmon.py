@@ -150,19 +150,8 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context['organism'] = job_context['sample'].organism
     job_context["success"] = True
 
-    # Since 0.9, Nomad can access Docker's tmpfs features,
-    # which allows us to avoid fasterq-dump's disk thrashing.
-    job_context["temp_dir"] = "/home/user/data_store_tmpfs"
-    # Should be created by Docker already, but do it anyway.
-    os.makedirs(job_context["temp_dir"], exist_ok=True)
-
     job_context["output_directory"] = job_context["work_dir"] + sample.accession_code + "_output/"
     os.makedirs(job_context["output_directory"], exist_ok=True)
-
-    # The sample's directory is what should be used for MultiQC input
-    job_context["qc_input_directory"] = job_context["work_dir"]
-    job_context["qc_directory"] = job_context["work_dir"] + "qc/"
-    os.makedirs(job_context["qc_directory"], exist_ok=True)
 
     job_context["salmontools_directory"] = job_context["work_dir"] + "salmontools/"
     os.makedirs(job_context["salmontools_directory"], exist_ok=True)
@@ -176,97 +165,6 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     return job_context
 
-def _extract_sra(job_context: Dict) -> Dict:
-    """
-    If this is a .sra file, run `fasterq-dump` to get our desired fastq files.
-
-    """
-    if ".sra" not in job_context["input_file_path"]:
-        return job_context
-
-    if not os.path.exists(job_context["input_file_path"]):
-        logger.error("Was told to SRA-extract a non-existent file - why did this happen?",
-            input_file_path=job_context["input_file_path"],
-            processor_job=job_context["job_id"]
-        )
-        job_context["job"].failure_reason = "Missing SRA file: " + str(job_context["input_file_path"])
-        job_context["success"] = False
-        return job_context
-
-    # What the heck. Copy the file to work_dir, but remove the `.sra` extention.
-    # https://github.com/ncbi/sra-tools/issues/150#issuecomment-422529894
-    job_context['work_file'] = job_context['work_dir'] + job_context['sample_accession_code']
-    shutil.copyfile(job_context["input_file_path"], job_context['work_file'])
-
-    time_start = timezone.now()
-    # This can be improved with: " -e " + str(multiprocessing.cpu_count())
-    # but it seems to cause time to increase if there are too many jobs calling it at once.
-    formatted_command = "fasterq-dump " + job_context['work_file'] + \
-                        " -O " +  job_context['work_dir'] + \
-                        " --temp " + job_context["temp_dir"]
-
-    logger.debug("Running fasterq-dump using the following shell command: %s",
-                 formatted_command,
-                 processor_job=job_context["job_id"])
-    try:
-        completed_command = subprocess.run(formatted_command.split(),
-                                           stdout=subprocess.PIPE,
-                                           stderr=subprocess.PIPE,
-                                           timeout=2400)
-    except subprocess.TimeoutExpired as e:
-        logger.exception("Shell call to fasterq-dump failed with timeout",
-                     processor_job=job_context["job_id"],
-                     file=job_context["input_file_path"])
-        job_context["job"].failure_reason = str(e)
-        job_context["success"] = False
-        return job_context
-
-    stderr = completed_command.stderr.decode().strip()
-    stdout = completed_command.stderr.decode().strip()
-
-    # fasterq-dump doesn't respect return codes
-    # Related: https://github.com/ncbi/sra-tools/issues/146
-    if (completed_command.returncode != 0) or "err:" in stdout:
-        logger.error("Shell call to fasterq-dump failed with error message: %s",
-                     stderr,
-                     stdout=stdout,
-                     processor_job=job_context["job_id"],
-                     file=job_context["input_file_path"])
-        job_context["job"].failure_reason = stderr
-        job_context["success"] = False
-        return job_context
-
-    result = ComputationalResult()
-    result.commands.append(formatted_command)
-    result.time_start = time_start
-    result.time_end = timezone.now()
-    result.is_ccdl = True
-
-    try:
-        processor_key = "FASTERQ_DUMP"
-        result.processor = utils.find_processor(processor_key)
-    except Exception as e:
-        return utils.handle_processor_exception(job_context, processor_key, e)
-
-    result.save()
-    job_context['pipeline'].steps.append(result.id)
-
-    # Overwrite our current input_file_path with our newly extracted files
-    # We either want the one created file or _just_ _1
-    new_files = glob.glob(job_context['work_dir'] + '*.fastq')
-    if len(new_files) == 1:
-        job_context['input_file_path'] = new_files[0]
-    else:
-        for new_file in new_files:
-            # We only care about '_1' and '_2', unmated reads can skeddadle
-            if '_1.fast' in new_file:
-                job_context['input_file_path'] = new_file
-                continue
-            if '_2.fast' in new_file:
-                job_context['input_file_path_2'] = new_file
-                continue
-
-    return job_context
 
 def _determine_index_length_sra(job_context: Dict) -> Dict:
     """
@@ -286,7 +184,11 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
     respo = completed_command.stdout.decode().strip()
-    stats = untangle.parse(respo)
+
+    try:
+        stats = untangle.parse(respo)
+    except ValueError:
+        logger.error("Unable to parse sra-stat output!", respo=str(respo), command=formatted_command)
 
     # Different SRA files can create different output formats, somehow.
     # This mess tries every output method we can to parse these stats.
@@ -307,7 +209,9 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
             try:
                 job_context["index_length_raw"] = int(stats.Run.Statistics.Read[0]['average'])
             except Exception:
-                logger.error("Unable to determine index length! Defaulting to small", stat_response=respo)
+                # sra-stat will sometimes put warnings in the XML stream, so we end up with nothing valid to parse.
+                # https://github.com/ncbi/sra-tools/issues/192
+                logger.error("Unable to determine index length! Defaulting to small", file=job_context["sra_input_file_path"])
                 job_context["index_length_raw"] = -1
 
     if job_context["index_length_raw"] > 75:
@@ -315,7 +219,30 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
     else:
         job_context["index_length"] = "short"
 
+    if not job_context.get('sra_num_reads', None):
+        try:
+            sample = job_context['sample']
+            for exp in sample.experiments.all():
+                for anno in exp.experimentannotation_set.all():
+                    if expanno.data.get('library_layout', '').upper() == 'PAIRED':
+                        job_context['sra_num_reads'] = 2
+                        return job_context
+                    if expanno.data.get('library_layout', '').upper() == 'SINGLE':
+                        job_context['sra_num_reads'] = 1
+                        return job_context
+        except Exception as e:
+            logger.exception("Problem trying to determine library strategy (single/paired)!", file=job_context["sra_input_file_path"])
+            job_context["job"].failure_reason = "Unable to determine library strategy (single/paired): " + str(e)
+            job_context["success"] = False
+            return job_context
+
+    if not job_context.get('sra_num_reads', None):
+        logger.error("Completely unable to determine library strategy (single/paired)!", file=job_context["sra_input_file_path"])
+        job_context["job"].failure_reason = "Unable to determine library strategy (single/paired)"
+        job_context["success"] = False
+
     return job_context
+
 
 def _determine_index_length(job_context: Dict) -> Dict:
     """Determines whether to use the long or short salmon index.
@@ -499,42 +426,6 @@ def _find_or_download_index(job_context: Dict) -> Dict:
     return job_context
 
 
-def _run_fastqc(job_context: Dict) -> Dict:
-    """ Runs the `FastQC` package to generate the QC report.
-
-    TODO: same TODO as _run_multiqc."""
-
-    # We could use --noextract here, but MultiQC wants extracted files.
-    command_str = ("./FastQC/fastqc --threads=16 --outdir={qc_directory} {files}")
-    files = ' '.join([job_context.get('input_file_path', ''), job_context.get('input_file_path_2', '')])
-    formatted_command = command_str.format(qc_directory=job_context["qc_directory"],
-                files=files)
-
-    logger.debug("Running FastQC using the following shell command: %s",
-                 formatted_command,
-                 processor_job=job_context["job_id"])
-    completed_command = subprocess.run(formatted_command.split(),
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
-
-    # Java returns a 0 error code for runtime-related errors and FastQC puts progress
-    # information in stderr rather than stdout, so handle both.
-    stderr = completed_command.stderr.decode().strip()
-    if completed_command.returncode != 0 or "complete for" not in stderr:
-
-        logger.error("Shell call to FastQC failed with error message: %s",
-                     stderr,
-                     processor_job=job_context["job_id"])
-
-        job_context["job"].failure_reason = stderr
-        job_context["success"] = False
-
-    # We don't need to make a ComputationalResult here because
-    # MultiQC will read these files in as well.
-
-    return job_context
-
-
 def _find_salmon_quant_results(experiment: Experiment):
     """Returns a list of salmon quant results from `experiment`."""
     results = []
@@ -558,9 +449,22 @@ def _run_tximport_for_experiment(
     # tximport.R rather than having to pass in one argument per
     # sample.
     tximport_path_list_file = job_context["work_dir"] + "tximport_inputs.txt"
+    quant_file_paths = {}
     with open(tximport_path_list_file, "w") as input_list:
         for quant_file in quant_files:
-            input_list.write(quant_file.get_synced_file_path() + "\n")
+            # We create a directory in the work directory for each (quant.sf) file, as 
+            # tximport assigns column names based on the parent directory name,
+            # and we need those names so that we can reassociate withe samples later.
+            # ex., a file with absolute_file_path: /processor_job_1/SRR123_output/quant.sf
+            # downloads to: /processor_job_2/SRR123_output/quant.sf
+            # So the result file has frame "SRR123_output", which we can associate with sample SRR123
+            sample_output = job_context["work_dir"] + str(quant_file.absolute_file_path.split('/')[-2]) + "/"
+            os.makedirs(sample_output, exist_ok=True)
+            quant_work_path = sample_output + quant_file.filename
+            quant_file_path = quant_file.get_synced_file_path(path=quant_work_path)
+            input_list.write(quant_file_path + "\n")
+            quant_file_paths[quant_file_path] = os.stat(quant_file_path).st_size
+
 
     rds_filename = "txi_out.RDS"
     rds_file_path = job_context["work_dir"] + rds_filename
@@ -595,7 +499,13 @@ def _run_tximport_for_experiment(
     if tximport_result.returncode != 0:
         error_template = ("Found non-zero exit code from R code while running tximport.R: {}")
         error_message = error_template.format(tximport_result.stderr.decode().strip())
-        logger.error(error_message, processor_job=job_context["job_id"], experiment=experiment.id)
+        logger.error(error_message, 
+            processor_job=job_context["job_id"], 
+            experiment=experiment.id,
+            quant_files=quant_files,
+            cmd_tokens=cmd_tokens,
+            quant_file_paths=quant_file_paths,
+            )
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
         return job_context
@@ -744,7 +654,12 @@ def get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile
             quant_files = []
             for result in salmon_quant_results:
                 try:
-                    quant_files.append(ComputedFile.objects.filter(result=result, filename="quant.sf")[0])
+                    quant_files.append(ComputedFile.objects.filter(
+                        result=result, 
+                        filename="quant.sf",
+                        s3_key__isnull=False,
+                        s3_bucket__isnull=False,
+                        ).order_by('-id')[0])
                 except:
                     try:
                         sample = result.samples.first()
@@ -758,7 +673,7 @@ def get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile
                         sample=sample.id,
                         experiment=experiment.id
                     )
-                    job.failure_reason = (
+                    job_context["job"].failure_reason = (
                         "Salmon quant result {} for sammple {} found without quant.sf"
                         " ComputedFile in experiment {}!"
                     ).format(str(result.id), str(sample.accession_code), str(experiment.accession_code))
@@ -1018,99 +933,6 @@ def _run_salmon(job_context: Dict) -> Dict:
 
     return job_context
 
-def _run_multiqc(job_context: Dict) -> Dict:
-    """Runs the `MultiQC` package to generate the QC report.
-
-    TODO: These seem to consume a lot of RAM, even for small files.
-    We should consider tuning these or breaking them out into their
-    own processors. JVM settings may reduce RAM footprint.
-    """
-    command_str = ("multiqc {input_directory} --outdir {qc_directory} --zip-data-dir")
-    formatted_command = command_str.format(input_directory=job_context["qc_input_directory"],
-                                           qc_directory=job_context["qc_directory"])
-
-    logger.debug("Running MultiQC using the following shell command: %s",
-                formatted_command,
-                processor_job=job_context["job_id"])
-
-    qc_env = os.environ.copy()
-    qc_env["LC_ALL"] = "C.UTF-8"
-    qc_env["LANG"] = "C.UTF-8"
-
-    time_start = timezone.now()
-    completed_command = subprocess.run(formatted_command.split(),
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE,
-                                       env=qc_env)
-    time_end = timezone.now()
-
-    if completed_command.returncode != 0:
-
-        stderr = completed_command.stderr.decode().strip()
-        error_start = stderr.upper().find("ERROR:")
-        error_start = error_start if error_start != -1 else 0
-        logger.error("Shell call to MultiQC failed with error message: %s",
-                     stderr[error_start:],
-                     processor_job=job_context["job_id"])
-
-        job_context["job"].failure_reason = ("Shell call to MultiQC failed because: "
-                                             + stderr[error_start:])
-        job_context["success"] = False
-
-    result = ComputationalResult()
-    result.commands.append(formatted_command)
-    result.time_start = time_start
-    result.time_end = time_end
-    result.is_ccdl = True
-
-    try:
-        processor_key = "MULTIQC"
-        result.processor = utils.find_processor(processor_key)
-    except Exception as e:
-        return utils.handle_processor_exception(job_context, processor_key, e)
-
-    result.save()
-    job_context['pipeline'].steps.append(result.id)
-
-    assoc = SampleResultAssociation()
-    assoc.sample = job_context["sample"]
-    assoc.result = result
-    assoc.save()
-
-    job_context['qc_result'] = result
-
-    data_file = ComputedFile()
-    data_file.filename = "multiqc_data.zip" # This is deterministic
-    data_file.absolute_file_path = os.path.join(job_context["qc_directory"], data_file.filename)
-    data_file.calculate_sha1()
-    data_file.calculate_size()
-    data_file.is_public = True
-    data_file.result = job_context['qc_result']
-    data_file.is_smashable = False
-    data_file.is_qc = True
-    data_file.save()
-    job_context['computed_files'].append(data_file)
-
-    SampleComputedFileAssociation.objects.get_or_create(
-        sample=job_context["sample"],
-        computed_file=data_file)
-
-    report_file = ComputedFile()
-    report_file.filename = "multiqc_report.html" # This is deterministic
-    report_file.absolute_file_path = os.path.join(job_context["qc_directory"], report_file.filename)
-    report_file.calculate_sha1()
-    report_file.calculate_size()
-    report_file.is_public = True
-    report_file.is_smashable = False
-    report_file.is_qc = True
-    report_file.result = job_context['qc_result']
-    report_file.save()
-    job_context['computed_files'].append(report_file)
-
-    job_context['qc_files'] = [data_file, report_file]
-
-    return job_context
-
 
 def _run_salmontools(job_context: Dict) -> Dict:
     """ Run Salmontools to extract unmapped genes. """
@@ -1221,7 +1043,7 @@ def salmon(job_id: int) -> None:
     """Main processor function for the Salmon Processor.
 
     Runs salmon quant command line tool, specifying either a long or
-    short read length. Also runs FastQC, MultiQC, Salmontools, and Tximport.
+    short read length. Also runs Salmontools and Tximport.
     """
     pipeline = Pipeline(name=utils.PipelineEnum.SALMON.value)
     final_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
@@ -1229,21 +1051,12 @@ def salmon(job_id: int) -> None:
                         _set_job_prefix,
                         _prepare_files,
 
-                        # We're going to be using SRA files "directly",
-                        # so we don't extract them to disk anymore.
-                        #_extract_sra,
-
                         _determine_index_length,
                         _find_or_download_index,
-
-                        # We aren't using FastQC anymore since
-                        # we're skipping fastq files entirely.
-                        # _run_fastqc,
 
                         _run_salmon,
                         get_tximport_inputs,
                         tximport,
                         _run_salmontools,
-                        _run_multiqc,
                         utils.end_job])
     return final_context

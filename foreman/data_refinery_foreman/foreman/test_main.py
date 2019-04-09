@@ -1,9 +1,12 @@
 from unittest.mock import patch, MagicMock
 import datetime
+import time
 from django.utils import timezone
 from django.test import TestCase
 from data_refinery_foreman.foreman import main
 from data_refinery_common.models import (
+    ComputedFile,
+    ComputationalResult,
     Dataset,
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
@@ -16,6 +19,7 @@ from data_refinery_common.models import (
     ProcessorJobDatasetAssociation,
     ProcessorJobOriginalFileAssociation,
     Sample,
+    SampleComputedFileAssociation,
     SurveyJob,
     SurveyJobKeyValue,
 )
@@ -25,9 +29,9 @@ from test.support import EnvironmentVarGuard # Python >=3
 DAY_BEFORE_JOB_CUTOFF = main.JOB_CREATED_AT_CUTOFF - datetime.timedelta(days=1)
 
 class ForemanTestCase(TestCase):
-    def create_downloader_job(self):
+    def create_downloader_job(self, suffix="e8eaf540"):
         job = DownloaderJob(downloader_task="SRA",
-                            nomad_job_id="DOWNLOADER/dispatch-1528945054-e8eaf540",
+                            nomad_job_id="DOWNLOADER/dispatch-1528945054-" + suffix,
                             num_retries=0,
                             accession_code="NUNYA",
                             success=None)
@@ -124,6 +128,31 @@ class ForemanTestCase(TestCase):
         self.assertFalse(original_job.success)
 
         retried_job = jobs[1]
+        self.assertEqual(retried_job.num_retries, 1)
+
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_retrying_many_failed_downloader_jobs(self, mock_send_job):
+        mock_send_job.return_value = True
+
+        NUM_PAGES = 5
+        for x in range(0, main.PAGE_SIZE * NUM_PAGES):
+            job = self.create_downloader_job(str(x))
+            job.success = False
+            job.save()
+
+        main.retry_failed_downloader_jobs()
+        # No jobs actually make it in Nomad queue, so expect
+        # DOWNLOADER_JOBS_PER_NODE jobs per page.
+        self.assertEqual(len(mock_send_job.mock_calls), main.DOWNLOADER_JOBS_PER_NODE * NUM_PAGES)
+
+        jobs = DownloaderJob.objects.order_by('id')
+
+        original_job = jobs[0]
+        self.assertTrue(original_job.retried)
+        self.assertEqual(original_job.num_retries, 0)
+        self.assertFalse(original_job.success)
+
+        retried_job = jobs[10001]
         self.assertEqual(retried_job.num_retries, 1)
 
     @patch('data_refinery_foreman.foreman.main.send_job')
@@ -538,6 +567,39 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
+    @patch('data_refinery_foreman.foreman.main.get_active_volumes')
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    @patch('data_refinery_foreman.foreman.main.Nomad')
+    def test_retrying_lost_smasher_jobs(self, mock_nomad, mock_send_job, mock_get_active_volumes):
+        mock_send_job.return_value = True
+        mock_get_active_volumes.return_value = {"1", "2", "3"}
+
+        def mock_init_nomad(host, port=0, timeout=0):
+            ret_value = MagicMock()
+            ret_value.job = MagicMock()
+            ret_value.job.get_job = MagicMock()
+            ret_value.job.get_job.side_effect = lambda _: {"Status": "dead"}
+            return ret_value
+
+        mock_nomad.side_effect = mock_init_nomad
+
+        job = self.create_processor_job(pipeline="SMASHER")
+        job.created_at = timezone.now()
+        job.save()
+
+        main.retry_lost_smasher_jobs()
+
+        self.assertEqual(len(mock_send_job.mock_calls), 1)
+
+        jobs = ProcessorJob.objects.order_by('id')
+        original_job = jobs[0]
+        self.assertTrue(original_job.retried)
+        self.assertEqual(original_job.num_retries, 0)
+        self.assertFalse(original_job.success)
+
+        retried_job = jobs[1]
+        self.assertEqual(retried_job.num_retries, 1)
+
     @patch('data_refinery_foreman.foreman.main.send_job')
     @patch('data_refinery_foreman.foreman.main.Nomad')
     def test_not_retrying_old_processor_jobs(self, mock_nomad, mock_send_job):
@@ -920,6 +982,49 @@ class ForemanTestCase(TestCase):
             self.assertTrue(p.volume_index in ixs)
             ixs.remove(p.volume_index)
 
+    def test_get_max_downloader_jobs(self):
+        self.assertNotEqual(main.get_max_downloader_jobs(), 0)
+
+    def test_cleandb(self):
+
+        sample = Sample()
+        sample.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        good_file = ComputedFile()
+        good_file.s3_bucket = "my_cool_bucket"
+        good_file.s3_key = "my_sweet_key"
+        good_file.size_in_bytes = 1337
+        good_file.result = result
+        good_file.is_public = True
+        good_file.is_smashable = True
+        good_file.save()
+
+        sca = SampleComputedFileAssociation()
+        sca.sample = sample
+        sca.computed_file = good_file
+        sca.save()
+
+        bad_file = ComputedFile()
+        bad_file.s3_bucket = None
+        bad_file.s3_key = None
+        bad_file.result = result
+        bad_file.size_in_bytes = 7331
+        bad_file.is_public = True
+        bad_file.is_smashable = True
+        bad_file.save()
+
+        sca = SampleComputedFileAssociation()
+        sca.sample = sample
+        sca.computed_file = bad_file
+        sca.save()
+
+        self.assertEqual(sample.computed_files.count(), 2)
+        self.assertEqual(sample.get_most_recent_smashable_result_file().id, 2)
+        main.clean_database()
+        self.assertEqual(sample.get_most_recent_smashable_result_file().id, 1)
 
 # class JobPrioritizationTestCase(TestCase):
 #     def setUp(self):

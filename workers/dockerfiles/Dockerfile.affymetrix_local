@@ -12,6 +12,7 @@ ENV SYSTEM_VERSION $SYSTEM_VERSION
 
 USER user
 
+COPY config/ config/
 COPY workers/ .
 
 ENTRYPOINT []

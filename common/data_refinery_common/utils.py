@@ -85,6 +85,16 @@ def get_volume_index(path='/home/user/data_store/VOLUME_INDEX') -> str:
 
     return default
 
+def get_nomad_jobs() -> list:
+    """Calls nomad service and return all jobs"""
+    try:
+        nomad_host = get_env_variable("NOMAD_HOST")
+        nomad_port = get_env_variable("NOMAD_PORT", "4646")
+        nomad_client = nomad.Nomad(nomad_host, port=int(nomad_port), timeout=30)
+        return nomad_client.jobs.get_jobs()
+    except nomad.api.exceptions.BaseNomadException:
+        # Nomad is not available right now
+        return []
 
 def get_active_volumes() -> Set[str]:
     """Returns a Set of indices for volumes that are currently mounted.
@@ -263,9 +273,10 @@ def get_fasp_sra_download(run_accession: str):
     try:
         resp = requests.post(cgi_url, data=data)
     except Exception as e:
+        # Our configured logger needs util, so we use the standard logging library for just this.
         import logging
         logger = logging.getLogger(__name__)
-        logger.exception("Bad FASP CGI request", data=data)
+        logger.exception("Bad FASP CGI request!: " + str(cgi_url) + ", " + str(data))
         return None
 
     if resp.status_code != 200:
@@ -275,12 +286,31 @@ def get_fasp_sra_download(run_accession: str):
         try:
             # From: '#2.0\nsrapub|DRR002116|2324796808|2013-07-03T05:51:55Z|50964cfc69091cdbf92ea58aaaf0ac1c||fasp://dbtest@sra-download.ncbi.nlm.nih.gov:data/sracloud/traces/dra0/DRR/000002/DRR002116|200|ok\n'
             # To:  'dbtest@sra-download.ncbi.nlm.nih.gov:data/sracloud/traces/dra0/DRR/000002/DRR002116'
+
+            # Sometimes, the responses from names.cgi makes no sense at all on a per-accession-code basis. This helps us handle that.
+            # $ curl --data "acc=SRR5818019&accept-proto=fasp&version=2.0" https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi
+            # 2.0\nremote|SRR5818019|434259775|2017-07-11T21:32:08Z|a4bfc16dbab1d4f729c4552e3c9519d1|||400|Only 'https' protocol is allowed for this object
             sra_url = resp.text.split('\n')[1].split('|')[6].split('fasp://')[1]
             return sra_url
         except Exception as e:
             # Our configured logger needs util, so we use the standard logging library for just this.
             import logging
             logger = logging.getLogger(__name__)
-            logger.exception("Bad FASP CGI response", data=data, text=resp.text)
+            logger.exception("Error parsing FASP CGI response: " + str(cgi_url) + " " + str(data) + " " + str(resp.text))
             return None
 
+def load_blacklist(blacklist_csv: str="config/RNASeqRunBlackList.csv"):
+    """ Loads the SRA run blacklist """
+
+    blacklisted_samples = []
+    with open(blacklist_csv, encoding='utf-8') as blacklist_file:
+        reader = csv.reader(blacklist_file, )
+        for line in reader:
+            # Skip the header row
+            # Lines are 1 indexed, #BecauseCSV
+            if reader.line_num is 1:
+                continue
+
+            blacklisted_samples.append(line[0].strip())
+
+    return blacklisted_samples
