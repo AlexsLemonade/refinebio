@@ -128,9 +128,9 @@ def download_array_express(job_id: int) -> None:
             # but if a file is part of an archive and then we requeue
             # all of the files to be processed, we might end up
             # reprocessing files. Therefore make sure that they
-            # actually needed to be downloaded before marking them as
+            # haven't actually been processed before marking them as
             # downloaded and queuing processor jobs.
-            if original_file.needs_downloading():
+            if original_file.has_been_processed():
                 original_file.is_downloaded = True
                 original_file.is_archive = False
                 original_file.absolute_file_path = og_file['absolute_path']
