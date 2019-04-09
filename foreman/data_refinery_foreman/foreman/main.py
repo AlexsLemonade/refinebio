@@ -312,11 +312,13 @@ def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
 # Downloaders
 ##
 
-def requeue_downloader_job(last_job: DownloaderJob) -> None:
+def requeue_downloader_job(last_job: DownloaderJob) -> bool:
     """Queues a new downloader job.
 
     The new downloader job will have num_retries one greater than
     last_job.num_retries.
+
+    Returns True upon successful dispatching, False otherwise.
     """
     num_retries = last_job.num_retries + 1
 
@@ -332,7 +334,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
         last_job.no_retry = True
         last_job.failure_reason = "Foreman told to redownloaded job with prior succesful processing."
         last_job.save()
-        return
+        return False
 
     first_sample = original_file.samples.first()
     if first_sample and first_sample.is_blacklisted:
@@ -340,7 +342,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
         last_job.failure_reason = "Sample run accession has been blacklisted by SRA."
         last_job.save()
         logger.info("Avoiding requeuing for DownloaderJob for blacklisted run accession: " + str(first_sample.accession_code))
-        return
+        return False
 
     new_job = DownloaderJob(num_retries=num_retries,
                             downloader_task=last_job.downloader_task,
@@ -364,12 +366,16 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
         else:
             # Can't communicate with nomad just now, leave the job for a later loop.
             new_job.delete()
+            return False
     except:
         logger.error("Failed to requeue Downloader Job which had ID %d with a new Downloader Job with ID %d.",
                      last_job.id,
                      new_job.id)
         # Can't communicate with nomad just now, leave the job for a later loop.
         new_job.delete()
+        return False
+
+    return True
 
 
 def count_downloader_jobs_in_queue(nomad_client: Nomad) -> int:
@@ -422,8 +428,9 @@ def handle_downloader_jobs(jobs: List[DownloaderJob],
             return
 
         if job.num_retries < MAX_NUM_RETRIES:
-            requeue_downloader_job(job)
-            jobs_dispatched = jobs_dispatched + 1
+            requeue_success = requeue_downloader_job(job)
+            if requeue_success:
+                jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
 
