@@ -614,7 +614,7 @@ class APITestCases(APITestCase):
 
         cra = ComputationalResultAnnotation()
         cra.result = cr
-        cra.data = {"organism": "Ailuropoda melanoleuca"}
+        cra.data = {"organism": "Ailuropoda melanoleuca", "organism_id": 9646, "is_qn": True}
         cra.save()
 
         qni = ComputedFile()
@@ -639,9 +639,9 @@ class APITestCases(APITestCase):
         qni.result = cr
         qni.save()
 
-        response = self.client.get(reverse('qn-targets'))
+        response = self.client.get(reverse('qn-targets'), {'organism': 'Ailuropoda melanoleuca'})
         self.assertEqual(len(response.json()), 1)
-        self.assertEqual(response.json()[0]['s3_url'], 'https://s3.amazonaws.com/fake_qni_bucket/zazaza_homo_sapiens_1234.tsv')
+        self.assertEqual(response.json()['s3_url'], 'https://s3.amazonaws.com/fake_qni_bucket/zazaza_homo_sapiens_1234.tsv')
 
         response = self.client.get(reverse('computed-files'))
         self.assertEqual(len(response.json()), 2)
