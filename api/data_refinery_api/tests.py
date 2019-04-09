@@ -614,7 +614,7 @@ class APITestCases(APITestCase):
 
         cra = ComputationalResultAnnotation()
         cra.result = cr
-        cra.data = {"organism": "Ailuropoda melanoleuca", "organism_id": 9646, "is_qn": True}
+        cra.data = {"organism": "Ailuropoda melanoleuca", "organism_id": Organism.get_object_for_name("Ailuropoda melanoleuca").id, "is_qn": True}
         cra.save()
 
         qni = ComputedFile()

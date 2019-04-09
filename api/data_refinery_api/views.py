@@ -1434,7 +1434,7 @@ class QNTargetsDetail(APIView):
 
         organism = organism.upper().replace(" ", "_")
         try:
-            organism_id = Organism.get_id_for_name(organism)
+            organism_id = Organism.get_object_for_name(organism).id
             annotation = ComputationalResultAnnotation.objects.filter(
                 data__organism_id=organism_id,
                 data__is_qn=True
