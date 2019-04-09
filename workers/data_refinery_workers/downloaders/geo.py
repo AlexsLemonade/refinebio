@@ -262,12 +262,12 @@ def _get_actual_file_if_queueable(
         actual_file = potential_existing_files[0]
 
         if actual_file.has_been_processed():
+            return None
+        else:
             if not actual_file.is_downloaded:
                 actual_file.is_downloaded = True
                 actual_file.save()
             return actual_file
-        else:
-            return None
     else:
         actual_file = OriginalFile()
         actual_file.is_downloaded = True
