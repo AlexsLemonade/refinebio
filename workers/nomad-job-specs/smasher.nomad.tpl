@@ -67,7 +67,7 @@ job "SMASHER" {
         # CPU is in AWS's CPU units.
         cpu = 2048
         # Memory is in MB of RAM.
-        memory = 24576
+        memory = 28000
       }
 
       logs {
