@@ -447,6 +447,7 @@ def retry_failed_downloader_jobs() -> None:
     failed_jobs = DownloaderJob.objects.filter(
         success=False,
         retried=False,
+        no_retry=False,
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).order_by(
         'id'
