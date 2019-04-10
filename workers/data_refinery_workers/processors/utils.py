@@ -317,7 +317,7 @@ def start_job(job_context: Dict):
         raise Exception("processors.start_job called on job %s that has already been started!" % str(job.id))
 
     original_file = job.original_files.first()
-    if original_file and original_file.has_been_processed(job_context["job_id"]):
+    if original_file and not original_file.needs_processing(job_context["job_id"]):
         failure_reason = ("Sample has a good computed file, it must have been processed, "
                           "so it doesn't need to be downloaded! Aborting!")
         logger.error(failure_reason,

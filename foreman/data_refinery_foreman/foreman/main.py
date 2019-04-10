@@ -328,7 +328,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
             ram_amount = 8192
 
     original_file = last_job.original_files.first()
-    if original_file and original_file.has_been_processed():
+    if original_file and not original_file.needs_processing():
         last_job.no_retry = True
         last_job.failure_reason = "Foreman told to redownloaded job with prior succesful processing."
         last_job.save()

@@ -709,14 +709,14 @@ class OriginalFile(models.Model):
         self.save()
 
 
-    def has_been_processed(self, own_processor_id=None) -> bool:
+    def needs_processing(self, own_processor_id=None) -> bool:
         """Returns True if original_file has been completely processed, returns False otherwise.
 
         TODO: update this function semantically so it reflects that processing may be happening
         """
         sample = self.samples.first()
         if not sample:
-            return False
+            return True
 
         incomplete_processor_jobs = self.processor_jobs.filter(
             end_time__isnull=True,
@@ -730,12 +730,12 @@ class OriginalFile(models.Model):
         # If the file has a processor job that hasn't even started yet,
         # then it doesn't need another.
         if incomplete_processor_jobs.count() > 0:
-            return True
+            return False
 
         if sample.source_database == "SRA":
             for computed_file in sample.computed_files.all():
                     if computed_file.s3_bucket and computed_file.s3_key:
-                        return True
+                        return False
         else:
             # If this original_file has multiple samples (is an
             # archive), and any of them haven't been processed, we'll
@@ -745,11 +745,12 @@ class OriginalFile(models.Model):
             # dispatching.
             for sample in self.samples.all():
                 if not sample.is_processed:
-                    return False
+                    return True
 
-            return True
+            return False
 
-        return False
+        # If we aren't sure, prefer reprocessing over never processing.
+        return True
 
     def needs_downloading(self, own_processor_id=None) -> bool:
         """Determine if a file needs to be downloaded.
@@ -775,7 +776,7 @@ class OriginalFile(models.Model):
             return False
 
         # If this file has been processed, then it doesn't need to be downloaded again.
-        return not self.has_been_processed(own_processor_id)
+        return self.needs_processing(own_processor_id)
 
     def is_affy_data(self) -> bool:
         """Return true if original_file is a CEL file or a gzipped CEL file.
