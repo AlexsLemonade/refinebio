@@ -312,28 +312,12 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
             downloader_job = wait_for_job(downloader_jobs[0], DownloaderJob, start_time, .01)
             self.assertTrue(downloader_job.success)
 
-            # Apparently this experiment has a variable number of
-            # files because GEO processed experiments sometimes do...
-            # However this is okay because there's at least one file
-            # per sample, so each sample will get processed at least
-            # once and it's the best we can do with the state of GEO.
-
-            # We're going to preserve this number, because once a job
-            # deletes itself and is respawned, we should be back up to
-            # this number.
-            target_job_count = ProcessorJob.objects.all().count()
             try:
                 doomed_processor_job = og_file_to_delete.processor_jobs.all()[0]
-                self.assertGreater(target_job_count, 1)
             except:
                 # The doomed job may delete itself before we can get
                 # it. This is fine, we just can't look at it.
                 doomed_processor_job = None
-                self.assertGreater(target_job_count, 0)
-                # Also, we'll want to end up with one more job than
-                # currently exists because it will be recreated by the
-                # recreated DownloaderJob.
-                target_job_count += 1
 
             if doomed_processor_job:
                 logger.info(
@@ -382,7 +366,15 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
                 except:
                     pass
 
-            self.assertEqual(len(successful_processor_jobs), target_job_count)
+            # Apparently this experiment has a variable number of
+            # files because GEO processed experiments sometimes do...
+            # However this is okay because there's at least one file
+            # per sample, so each sample will get processed at least
+            # once and it's the best we can do with the state of GEO.
+            # Anyway, all of that is an explanation for why we count
+            # how many samples there are rather than just expecting
+            # how many we know the experiment has.
+            self.assertEqual(len(successful_processor_jobs), Sample.objects.all().count())
 
 
 class GeoCelgzRedownloadingTestCase(TransactionTestCase):
