@@ -333,6 +333,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> bool:
     original_file = last_job.original_files.first()
     if original_file and original_file.has_been_processed():
         last_job.no_retry = True
+        last_job.success = False
         last_job.failure_reason = "Foreman told to redownloaded job with prior succesful processing."
         last_job.save()
         return False
@@ -341,6 +342,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> bool:
         first_sample = original_file.samples.first()
         if first_sample and first_sample.is_blacklisted:
             last_job.no_retry = True
+            last_job.success = False
             last_job.failure_reason = "Sample run accession has been blacklisted by SRA."
             last_job.save()
             logger.info("Avoiding requeuing for DownloaderJob for blacklisted run accession: " + str(first_sample.accession_code))
