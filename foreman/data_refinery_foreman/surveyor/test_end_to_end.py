@@ -169,14 +169,15 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
             self.assertTrue(downloader_job.success)
 
             # Now we're going to delete one of the extracted files but not the other.
-            OriginalFile.objects.filter(is_archive=False)[0].delete_local_file()
+            deleted_file = OriginalFile.objects.filter(is_archive=False)[0]
+            deleted_file.delete_local_file()
 
             # The one downloader job should have extracted all the files
             # and created as many processor jobs.
             processor_jobs = ProcessorJob.objects.all()
             self.assertEqual(processor_jobs.count(), NUM_SAMPLES_IN_EXPERIMENT)
 
-            doomed_processor_job = original_file.processor_jobs.all()[0]
+            doomed_processor_job = deleted_file.processor_jobs.all()[0]
             logger.info(
                 "Waiting on processor Nomad job %s to fail because it realized it is missing a file.",
                 doomed_processor_job.nomad_job_id
