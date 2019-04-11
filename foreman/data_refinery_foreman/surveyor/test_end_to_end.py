@@ -257,11 +257,9 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
                 "Survey Job finished, waiting for Downloader Job with Nomad ID %s to complete.",
                 downloader_jobs[0].nomad_job_id
             )
+
             # Now we're going to find of the extracted files to delete.
-            for original_file in OriginalFile.objects.all():
-                if not original_file.is_archive:
-                    og_file_to_delete = original_file
-                    break
+            og_file_to_delete = OriginalFile.objects.filter(is_archive=False)[0]
             start_time = timezone.now()
 
             # We're going to spin as fast as we can so we can delete
@@ -269,20 +267,13 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
             # the processor job starts.
             file_deleted = False
             while not file_deleted and timezone.now() - start_time < MAX_WAIT_TIME:
-                original_files = OriginalFile.objects.all()
-                if original_files.count() > 1:
-                    # Now we're going to find one of the extracted files to delete.
-                    for original_file in original_files:
-                        if not original_file.is_archive:
-                            og_file_to_delete = original_file
+                if og_file_to_delete.absolute_file_path \
+                   and os.path.exists(og_file_to_delete.absolute_file_path):
+                    os.remove(og_file_to_delete.absolute_file_path)
+                    file_deleted = True
+                    break
 
-                            if og_file_to_delete.absolute_file_path \
-                               and os.path.exists(og_file_to_delete.absolute_file_path):
-                                os.remove(og_file_to_delete.absolute_file_path)
-                                file_deleted = True
-                                break
-
-            downloader_job = wait_for_job(downloader_jobs[0], DownloaderJob, start_time, .01)
+            downloader_job = wait_for_job(downloader_jobs[0], DownloaderJob, start_time)
             self.assertTrue(downloader_job.success)
 
             try:
@@ -322,22 +313,14 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
             recreated_job = wait_for_job(recreated_job, DownloaderJob, start_time)
             self.assertTrue(recreated_job.success)
 
-            # And finally we can make sure that all 12 of the
+            # And finally we can make sure that all of the
             # processor jobs were successful, including the one that
             # got recreated.
             logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
-            successful_processor_jobs = []
             processor_jobs = ProcessorJob.objects.all()
             for processor_job in processor_jobs:
-                # One of the two calls to wait_for_job will fail
-                # because the job is going to delete itself when it
-                # finds that the file it wants to process is missing.
-                try:
-                    processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
-                    if processor_job.success:
-                        successful_processor_jobs.append(processor_job)
-                except:
-                    pass
+                processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
+                self.assertTrue(processor_job.success)
 
             # Apparently this experiment has a variable number of
             # files because GEO processed experiments sometimes do...
@@ -347,7 +330,7 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
             # Anyway, all of that is an explanation for why we count
             # how many samples there are rather than just expecting
             # how many we know the experiment has.
-            self.assertEqual(len(successful_processor_jobs), Sample.objects.all().count())
+            self.assertEqual(processor_jobs.count(), Sample.objects.all().count())
 
 
 class GeoCelgzRedownloadingTestCase(TransactionTestCase):
