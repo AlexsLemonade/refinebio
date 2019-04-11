@@ -1419,13 +1419,36 @@ class QNTargetsAvailable(APIView):
 
 class QNTargetsDetail(APIView):
     """
-    Quantile Normalization Targets
+    Get a detailed view of the Quantile Normalization file for an organism.
+
+    ex: `?organism=DANIO_RERIO&format=json`
+
     """
 
-    """List all processors."""
     def get(self, request, format=None):
-        computed_files = ComputedFile.objects.filter(is_public=True, is_qn_target=True)
-        serializer = QNTargetSerializer(computed_files, many=True)
+
+        filter_dict = request.query_params.dict()
+        organism = filter_dict.pop('organism', None)
+        if not organism:
+            raise APIException("Organism must be supplied!")
+
+        organism = organism.upper().replace(" ", "_")
+        try:
+            organism_id = Organism.get_object_for_name(organism).id
+            annotation = ComputationalResultAnnotation.objects.filter(
+                data__organism_id=organism_id,
+                data__is_qn=True
+            ).order_by(
+                '-created_at'
+            ).first()
+            qn_target = annotation.result.computedfile_set.first()
+        except Exception:
+            raise APIException("Don't have a target for that organism!")
+
+        if not qn_target:
+            raise APIException("Don't have a target for that organism!!")
+
+        serializer = QNTargetSerializer(qn_target, many=False)
         return Response(serializer.data)
 
 ##

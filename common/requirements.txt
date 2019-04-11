@@ -10,7 +10,7 @@ certifi==2018.8.24        # via requests
 chardet==3.0.4            # via requests
 coverage==4.5.1
 daiquiri==1.5.0
-django==2.1.5
+django==2.1.8
 docutils==0.14            # via botocore
 idna==2.7                 # via requests
 jmespath==0.9.3           # via boto3, botocore
