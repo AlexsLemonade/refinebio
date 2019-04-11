@@ -50,7 +50,7 @@ MAX_NUM_RETRIES = 2
 # This can be overritten by the env var "MAX_TOTAL_JOBS"
 DEFAULT_MAX_JOBS = 20000
 
-DOWNLOADER_JOBS_PER_NODE = 25
+DOWNLOADER_JOBS_PER_NODE = 5
 PAGE_SIZE=2000
 
 # This is the maximum number of non-dead nomad jobs that can be in the
