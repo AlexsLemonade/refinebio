@@ -68,6 +68,10 @@ get_master_or_dev() {
     fi
 }
 
+set_nomad_address() {
+    export NOMAD_ADDR="http://$(get_ip_address):4646"
+}
+
 set_nomad_test_address() {
     export NOMAD_ADDR="http://$(get_ip_address):5646"
 }

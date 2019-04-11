@@ -710,9 +710,9 @@ class OriginalFile(models.Model):
 
 
     def needs_processing(self, own_processor_id=None) -> bool:
-        """Returns True if original_file has been completely processed, returns False otherwise.
+        """Returns True if original_file has been or is being processed.
 
-        TODO: update this function semantically so it reflects that processing may be happening
+        Returns False otherwise.
         """
         sample = self.samples.first()
         if not sample:
