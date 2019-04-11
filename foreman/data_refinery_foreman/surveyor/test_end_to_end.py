@@ -83,12 +83,6 @@ class NoOpEndToEndTestCase(TransactionTestCase):
             for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
                 shutil.rmtree(work_dir)
 
-            # Make sure there are no already existing jobs we might poll for unsuccessfully.
-            DownloaderJobOriginalFileAssociation.objects.all().delete()
-            DownloaderJob.objects.all().delete()
-            ProcessorJobOriginalFileAssociation.objects.all().delete()
-            ProcessorJob.objects.all().delete()
-
             # Prevent a call being made to NCBI's API to determine
             # organism name/id.
             organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
@@ -148,12 +142,6 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
         with self.env:
             for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
                 shutil.rmtree(work_dir)
-
-            # Make sure there are no already existing jobs we might poll for unsuccessfully.
-            DownloaderJobOriginalFileAssociation.objects.all().delete()
-            DownloaderJob.objects.all().delete()
-            ProcessorJobOriginalFileAssociation.objects.all().delete()
-            ProcessorJob.objects.all().delete()
 
             # Prevent a call being made to NCBI's API to determine
             # organism name/id.
@@ -249,12 +237,6 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
         with self.env:
             for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
                 shutil.rmtree(work_dir)
-
-            # Make sure there are no already existing jobs we might poll for unsuccessfully.
-            DownloaderJobOriginalFileAssociation.objects.all().delete()
-            DownloaderJob.objects.all().delete()
-            ProcessorJobOriginalFileAssociation.objects.all().delete()
-            ProcessorJob.objects.all().delete()
 
             # Prevent a call being made to NCBI's API to determine
             # organism name/id.
@@ -384,12 +366,6 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
                 shutil.rmtree(work_dir)
 
-            # Make sure there are no already existing jobs we might poll for unsuccessfully.
-            DownloaderJobOriginalFileAssociation.objects.all().delete()
-            DownloaderJob.objects.all().delete()
-            ProcessorJobOriginalFileAssociation.objects.all().delete()
-            ProcessorJob.objects.all().delete()
-
             # Prevent a call being made to NCBI's API to determine
             # organism name/id.
             organism = Organism(name="MUS_MUSCULUS", taxonomy_id=10090, is_scientific_name=True)
@@ -497,12 +473,6 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
                 work_dir_glob = LOCAL_ROOT_DIR + "/Caenorhabditis_elegans/" + length + "/processor_job_*"
                 for work_dir in glob.glob(work_dir_glob):
                     shutil.rmtree(work_dir)
-
-            # Make sure there are no already existing jobs we might poll for unsuccessfully.
-            DownloaderJobOriginalFileAssociation.objects.all().delete()
-            DownloaderJob.objects.all().delete()
-            ProcessorJobOriginalFileAssociation.objects.all().delete()
-            ProcessorJob.objects.all().delete()
 
             # Prevent a call being made to NCBI's API to determine
             # organism name/id.
@@ -625,12 +595,6 @@ class SraRedownloadingTestCase(TransactionTestCase):
         with self.env:
             for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
                 shutil.rmtree(work_dir)
-
-            # Make sure there are no already existing jobs we might poll for unsuccessfully.
-            DownloaderJobOriginalFileAssociation.objects.all().delete()
-            DownloaderJob.objects.all().delete()
-            ProcessorJobOriginalFileAssociation.objects.all().delete()
-            ProcessorJob.objects.all().delete()
 
             # prevent a call being made to NCBI's API to determine
             # organism name/id.
