@@ -373,9 +373,9 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             while not file_deleted and timezone.now() - start_time < MAX_WAIT_TIME:
                 non_archive_files = OriginalFile.objects.filter(is_archive=False)
                 for original_file in non_archive_files:
-                    if og_file_to_delete.absolute_file_path \
-                       and os.path.exists(og_file_to_delete.absolute_file_path):
-                        os.remove(og_file_to_delete.absolute_file_path)
+                    if original_file.absolute_file_path \
+                       and os.path.exists(original_file.absolute_file_path):
+                        os.remove(original_file.absolute_file_path)
                         file_deleted = True
                         break
 
