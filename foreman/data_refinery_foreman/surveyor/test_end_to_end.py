@@ -255,26 +255,26 @@ class GeoArchiveRedownloadingTestCase(TransactionTestCase):
                 downloader_jobs[0].nomad_job_id
             )
 
-            # Now we're going to find of the extracted files to delete.
-            og_file_to_delete = OriginalFile.objects.filter(is_archive=False)[0]
-            start_time = timezone.now()
 
             # We're going to spin as fast as we can so we can delete
             # the file in between when the downloader job finishes and
             # the processor job starts.
+            start_time = timezone.now()
             file_deleted = False
             while not file_deleted and timezone.now() - start_time < MAX_WAIT_TIME:
-                if og_file_to_delete.absolute_file_path \
-                   and os.path.exists(og_file_to_delete.absolute_file_path):
-                    os.remove(og_file_to_delete.absolute_file_path)
-                    file_deleted = True
-                    break
+                non_archive_files = OriginalFile.objects.filter(is_archive=False)
+                for original_file in non_archive_files:
+                    if original_file.absolute_file_path \
+                       and os.path.exists(original_file.absolute_file_path):
+                        os.remove(original_file.absolute_file_path)
+                        file_deleted = True
+                        break
 
             downloader_job = wait_for_job(downloader_jobs[0], DownloaderJob, start_time)
             self.assertTrue(downloader_job.success)
 
             try:
-                doomed_processor_job = og_file_to_delete.processor_jobs.all()[0]
+                doomed_processor_job = original_file.processor_jobs.all()[0]
             except:
                 # The doomed job may delete itself before we can get
                 # it. This is fine, we just can't look at it.
@@ -371,7 +371,7 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             # the file in between when the downloader jobs finishes and
             # the processor job starts.
             og_file_to_delete = OriginalFile.objects.filter(is_archive=False)[0]
-            while not file_deleted and timezone.now() - start_time < MAX_WAIT_TIME:
+            while timezone.now() - start_time < MAX_WAIT_TIME:
                 if og_file_to_delete.absolute_file_path \
                    and os.path.exists(og_file_to_delete.absolute_file_path):
                     os.remove(og_file_to_delete.absolute_file_path)
