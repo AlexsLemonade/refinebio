@@ -169,10 +169,7 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
             self.assertTrue(downloader_job.success)
 
             # Now we're going to delete one of the extracted files but not the other.
-            for original_file in OriginalFile.objects.all():
-                if not original_file.is_archive:
-                    original_file.delete_local_file()
-                    break
+            OriginalFile.objects.filter(is_archive=False)[0].delete_local_file()
 
             # The one downloader job should have extracted all the files
             # and created as many processor jobs.
@@ -361,7 +358,8 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
 
             self.assertTrue(survey_job.success)
 
-            # This experiment's samples each have their own file.
+            # This experiment's samples each have their own file so
+            # they each get their own downloader job.
             downloader_jobs = DownloaderJob.objects.all()
             self.assertEqual(downloader_jobs.count(), SAMPLES_IN_EXPERIMENT)
 
@@ -372,24 +370,16 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             # We're going to spin as fast as we can so we can delete
             # the file in between when the downloader jobs finishes and
             # the processor job starts.
-            file_deleted = False
+            og_file_to_delete = OriginalFile.objects.filter(is_archive=False)[0]
             while not file_deleted and timezone.now() - start_time < MAX_WAIT_TIME:
-                original_files = OriginalFile.objects.all()
-                if original_files.count() > 1:
-                    # Now we're going to find one of the extracted files to delete.
-                    for original_file in original_files:
-                        if not original_file.is_archive:
-                            og_file_to_delete = original_file
-
-                            if og_file_to_delete.absolute_file_path \
-                               and os.path.exists(og_file_to_delete.absolute_file_path):
-                                os.remove(og_file_to_delete.absolute_file_path)
-                                file_deleted = True
-                                break
+                if og_file_to_delete.absolute_file_path \
+                   and os.path.exists(og_file_to_delete.absolute_file_path):
+                    os.remove(og_file_to_delete.absolute_file_path)
+                    break
 
             # Wait for each of the DownloaderJobs to finish
             for downloader_job in downloader_jobs:
-                downloader_job = wait_for_job(downloader_job, DownloaderJob, start_time, .01)
+                downloader_job = wait_for_job(downloader_job, DownloaderJob, start_time)
                 self.assertTrue(downloader_job.success)
 
             try:
@@ -435,14 +425,12 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
             # recreated. The processor job that recreated that job deleted
             # itself rather than failing, so there's only successes!
             logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
-            successful_processor_jobs = []
             processor_jobs = ProcessorJob.objects.all()
             for processor_job in processor_jobs:
                 processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
-                if processor_job.success:
-                    successful_processor_jobs.append(processor_job)
+                self.assertTrue(processor_job.success)
 
-            self.assertEqual(len(successful_processor_jobs), SAMPLES_IN_EXPERIMENT)
+            self.assertEqual(processor_jobs.count(), SAMPLES_IN_EXPERIMENT)
 
     @tag("slow")
     @tag("transcriptome")
