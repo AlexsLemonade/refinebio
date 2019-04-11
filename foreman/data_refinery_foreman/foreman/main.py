@@ -333,15 +333,23 @@ def requeue_downloader_job(last_job: DownloaderJob) -> bool:
     original_file = last_job.original_files.first()
 
     if not original_file:
-        logger.info("Told to requeue a DownloaderJob without an OriginalFile - why?!",
+        last_job.no_retry = True
+        last_job.success = False
+        last_job.failure_reason = "Foreman told to requeue a DownloaderJob without an OriginalFile - why?!"
+        last_job.save()
+        logger.info("Foreman told to requeue a DownloaderJob without an OriginalFile - why?!",
             last_job=str(last_job)
             )
+        return False
 
     if original_file.has_been_processed():
         last_job.no_retry = True
         last_job.success = False
-        last_job.failure_reason = "Foreman told to redownloaded job with prior succesful processing."
+        last_job.failure_reason = "Foreman told to redownload job with prior successful processing."
         last_job.save()
+        logger.info("Foreman told to redownload job with prior successful processing.",
+            last_job=str(last_job)
+            )
         return False
 
     first_sample = original_file.samples.first()
