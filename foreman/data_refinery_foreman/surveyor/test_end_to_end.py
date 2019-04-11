@@ -224,25 +224,16 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
             # Once the Downloader job succeeds, it should create one
             # and only one processor job, after which the total goes back up
             # to NUM_SAMPLES_IN_EXPERIMENT:
-            self.assertEqual(ProcessorJob.objects.all().count(), NUM_SAMPLES_IN_EXPERIMENT)
+            processor_jobs = ProcessorJob.objects.all()
+            self.assertEqual(processor_jobs.count(), NUM_SAMPLES_IN_EXPERIMENT)
 
             # And finally we can make sure that all of the
             # processor jobs were successful, including the one that
             # got recreated.
             logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
-            successful_processor_jobs = []
             for processor_job in processor_jobs:
-                # One of the two calls to wait_for_job will fail
-                # because the job is going to delete itself when it
-                # finds that the file it wants to process is missing.
-                try:
-                    processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
-                    if processor_job.success:
-                        successful_processor_jobs.append(processor_job)
-                except:
-                    pass
-
-            self.assertEqual(len(successful_processor_jobs), NUM_SAMPLES_IN_EXPERIMENT)
+                processor_job = wait_for_job(processor_job, ProcessorJob, start_time)
+                self.assertTrue(processor_job.success)
 
 class GeoArchiveRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
