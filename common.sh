@@ -69,13 +69,13 @@ get_master_or_dev() {
 }
 
 # Convenience function to export the NOMAD_ADDR environment variable,
-# set to the address use for local development.
+# set to the address used for local development.
 set_nomad_address() {
     export NOMAD_ADDR="http://$(get_ip_address):4646"
 }
 
 # Convenience function to export the NOMAD_ADDR environment variable,
-# set to the address use for tests.
+# set to the address used for tests.
 set_nomad_test_address() {
     export NOMAD_ADDR="http://$(get_ip_address):5646"
 }
