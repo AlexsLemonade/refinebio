@@ -713,6 +713,10 @@ class OriginalFile(models.Model):
         """Returns True if original_file has been or is being processed.
 
         Returns False otherwise.
+
+        If own_processor_id is supplied then it will be ignored so
+        that processor jobs can use this function without their job
+        being counted as currently processing this file.
         """
         sample = self.samples.first()
         if not sample:
