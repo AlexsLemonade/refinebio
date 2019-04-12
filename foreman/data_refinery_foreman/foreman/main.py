@@ -361,6 +361,15 @@ def requeue_downloader_job(last_job: DownloaderJob) -> bool:
         logger.info("Avoiding requeuing for DownloaderJob for blacklisted run accession: " + str(first_sample.accession_code))
         return False
 
+    # This is a magic string that all the dbGaP studies appear to have
+    if first_sample and ("in the dbGaP study" in first_sample.title):
+        last_job.no_retry = True
+        last_job.success = False
+        last_job.failure_reason = "Sample is dbGaP access controlled."
+        last_job.save()
+        logger.info("Avoiding requeuing for DownloaderJob for dbGaP run accession: " + str(first_sample.accession_code))
+        return False
+
     new_job = DownloaderJob(num_retries=num_retries,
                             downloader_task=last_job.downloader_task,
                             ram_amount=ram_amount,
