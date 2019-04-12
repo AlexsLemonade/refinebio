@@ -1,6 +1,7 @@
 # refine.bio Species Compendium
 
-This is a refine.bio species compendium comprised of all the samples from a species that we were able to process. Species compendia provide a snapshot of the most complete collection of gene expression that refine.bio can produce for each supported organism.
+This is a refine.bio species compendium comprised of all the samples from a species that we were able to process. 
+Species compendia provide a snapshot of the most complete collection of gene expression that refine.bio can produce for each supported organism.
 
 You can read more about how we process species compendia in [our documentation](http://docs.refine.bio/en/latest/main_text.html#species-compendia).
 
@@ -8,9 +9,11 @@ You can read more about how we process species compendia in [our documentation](
 
 This download includes a gene expression matrix and experiment and sample metadata for all samples from a given organism that are fit for inclusion in the species compendium.
 
-* The `aggregated_metadata.json` file contains experiment metadata and information about the transformation applied to the data. Specifically, the `scale_by` field notes any row-wise transformation that was performed on the gene expression data. For species compendia, this value should always be `NONE`.
+* The `aggregated_metadata.json` file contains experiment metadata and information about the transformation applied to the data. 
+Specifically, the `scale_by` field notes any row-wise transformation that was performed on the gene expression data. For species compendia, this value should always be `NONE`.
 
-* The gene expression matrix is the tab-separated value (TSV) file that bears the species name. For example, if you have downloaded the zebrafish species compendium, you would find the gene expression matrix in the file `DANIO_RERIO/DANIO_RERIO.tsv`.
+* The gene expression matrix is the tab-separated value (TSV) file that bears the species name. 
+For example, if you have downloaded the zebrafish species compendium, you would find the gene expression matrix in the file `DANIO_RERIO/DANIO_RERIO.tsv`.
 Note that samples are _columns_ and rows are _genes_ or _features_. 
 This pattern is consistent with the input for many programs specifically designed for working with high-throughput gene expression data but may be transposed from what other machine learning libraries are expecting.
 
@@ -24,18 +27,23 @@ Please see [our documentation](http://docs.refine.bio/en/latest/) for more detai
 
 ## Notes and observations 
 
-Combining all samples from a given species is a technical challenge, as it necessitates the integration of different microarray platforms and microarray data with RNA-seq data. Although the normalization steps we perform eliminate some sources of technical bias, it is imperfect and an active area of development. We strongly encourage you to consider using methods or models that can account for such biases and to explore and visualize the data with particular concern for samples' technology of origin (RNA-seq, microarray). 
+Combining all samples from a given species is a technical challenge, as it necessitates the integration of different microarray platforms and microarray data with RNA-seq data. 
+Although the normalization steps we perform eliminate some sources of technical bias, it is imperfect and an active area of development. 
+We strongly encourage you to consider using methods or models that can account for such biases and to explore and visualize the data with particular concern for samples' technology of origin (RNA-seq, microarray). 
 
 ### Methods evaluation and exploratory data analysis
 
-To identify appropriate methods for processing the initial releases of species compendia (described [here](http://docs.refine.bio/en/latest/main_text.html#species-compendia)), we performed a series of evaluations in a small zebrafish test compendium. We've made these evaluations available and have documented our rationale on GitHub [here](https://github.com/AlexsLemonade/compendium-processing/tree/94089d2de170f0ca7b87e9e5c32239a8591faaa7/select_imputation_method).
+To identify appropriate methods for processing the initial releases of species compendia (described [here](http://docs.refine.bio/en/latest/main_text.html#species-compendia)), we performed a series of evaluations in a small zebrafish test compendium. 
+We've made these evaluations available and have documented our rationale on GitHub [here](https://github.com/AlexsLemonade/compendium-processing/tree/94089d2de170f0ca7b87e9e5c32239a8591faaa7/select_imputation_method).
 
-We have also performed exploratory analyses in a larger zebrafish test compendium ([GitHub](https://github.com/AlexsLemonade/compendium-processing/tree/94089d2de170f0ca7b87e9e5c32239a8591faaa7/quality_check)). We _briefly_ summarize our findings below, including links to relevant notebooks or plots:
+We have also performed exploratory analyses in a larger zebrafish test compendium ([GitHub](https://github.com/AlexsLemonade/compendium-processing/tree/94089d2de170f0ca7b87e9e5c32239a8591faaa7/quality_check)). 
+We _briefly_ summarize our findings below, including links to relevant notebooks or plots:
 
 * Genes that are longer tend to have higher values in RNA-seq data as compared to microarray data ([notebook](https://alexslemonade.github.io/compendium-processing/quality_check/07-technology_diff_exp.nb.html)).
 * Unsurprisingly, shorter genes are less likely to be observed in RNA-seq data ([notebook](https://alexslemonade.github.io/compendium-processing/quality_check/06-lowly_expressed_genes.nb.html)).
 * Genes that are often zero in RNA-seq data have lower average expression in microarray data ([notebook](https://alexslemonade.github.io/compendium-processing/quality_check/08-gene_lengths.nb.html)).
-* We observe some differences in technology in the first two principle components, but there is also a group of RNA-seq samples that are different from all other samples (see below). These are samples from the Wellcome Sanger Institute Zebrafish Mutation Project ([notebook](https://alexslemonade.github.io/compendium-processing/quality_check/11-rnaseq_bias.nb.html)).
+* We observe some differences in technology in the first two principle components, but there is also a group of RNA-seq samples that are different from all other samples (see below). 
+These are samples from the Wellcome Sanger Institute Zebrafish Mutation Project ([notebook](https://alexslemonade.github.io/compendium-processing/quality_check/11-rnaseq_bias.nb.html)).
 
 
 ![pca-test-compendium](https://raw.githubusercontent.com/AlexsLemonade/compendium-processing/6826cc448d8bd8605ba73d30e344e7d20438234c/quality_check/plots/larger_test_compendium_PCA.png)
