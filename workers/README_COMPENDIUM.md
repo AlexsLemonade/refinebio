@@ -86,7 +86,6 @@ print(data)
 
 For example R workflows, such as clustering of gene expression data, please see [our repository of example uses](https://github.com/AlexsLemonade/refinebio-examples).
 
-
 ## Contact
 
 If you identify issues with this download, please [file an issue on GitHub](https://github.com/AlexsLemonade/refinebio/issues).
