@@ -48,12 +48,12 @@ These are samples from the Wellcome Sanger Institute Zebrafish Mutation Project 
 
 ![pca-test-compendium](https://raw.githubusercontent.com/AlexsLemonade/compendium-processing/6826cc448d8bd8605ba73d30e344e7d20438234c/quality_check/plots/larger_test_compendium_PCA.png)
 
-### Usage
+## Usage
 
 The gene expression matrix TSV and JSON files can be read in, manipulated, or parsed with standard functions or libraries in the language of your choice.
 Below are some code snippets to help you import the data into R or Python and examine it.
 
-#### Reading TSV Files
+### Reading TSV Files
 
 Here's an example reading a gene expression TSV (`GSE11111.tsv`) into R as a data.frame with base R:
 
@@ -62,9 +62,9 @@ expression_df <- read.delim("GSE11111.tsv", header = TRUE,
 							row.names = 1, stringsAsFactors = FALSE)
 ```
 
-#### Reading JSON Files
+### Reading JSON Files
 
-**R**
+#### R
 
 The `rjson` R package allows us to read a metadata JSON file (`aggregated_metadata.json`) into R as a list:
 
@@ -73,7 +73,7 @@ library(rjson)
 metadata_list <- fromJSON(file = "aggregated_metadata.json")
 ```
 
-**Python**
+#### Python
 
 In Python, we can read in the metadata JSON like so:
 
