@@ -1,9 +1,7 @@
-# Refine.bio Aggregated Dataset
+# refine.bio Aggregated Dataset
 
 This is a refine.bio dataset. **refine.bio is in beta** and we welcome your feedback!
 
-If you identify issues with this download, please [file an issue on GitHub](https://github.com/AlexsLemonade/refinebio/issues).
-If you would prefer to report issues via e-mail, you can also email [ccdl@alexslemonade.org](mailto:ccdl@alexslemonade.org).
 
 ## Contents
 
@@ -29,13 +27,20 @@ Please see [our documentation](https://refinebio-docs.readthedocs.io/) for more 
 ## Usage
 
 The gene expression matrix TSV and JSON files can be read in, manipulated, or parsed with standard functions or libraries in the language of your choice.
+Below are some code snippets to help you import the data into R or Python and examine it.
+
+### Reading TSV Files
 
 Here's an example reading a gene expression TSV (`GSE11111.tsv`) into R as a data.frame with base R:
 
 ```
-expression_df <- read.delim("GSE11111.tsv", header = TRUE, 
+expression_df <- read.delim("GSE11111.tsv", header = TRUE,
 							row.names = 1, stringsAsFactors = FALSE)
 ```
+
+### Reading JSON Files
+
+#### R
 
 The `rjson` R package allows us to read a metadata JSON file (`aggregated_metadata.json`) into R as a list:
 
@@ -43,6 +48,8 @@ The `rjson` R package allows us to read a metadata JSON file (`aggregated_metada
 library(rjson)
 metadata_list <- fromJSON(file = "aggregated_metadata.json")
 ```
+
+#### Python
 
 In Python, we can read in the metadata JSON like so:
 
@@ -53,4 +60,9 @@ with open('aggregated_metadata.json', 'r') as jsonfile:
 print(data)
 ```
 
-For example R workflows, such as clustering of gene expression data, please see https://github.com/AlexsLemonade/refinebio-examples.
+For example R workflows, such as clustering of gene expression data, please see [our repository of example uses](https://github.com/AlexsLemonade/refinebio-examples).
+
+## Contact
+
+If you identify issues with this download, please [file an issue on GitHub](https://github.com/AlexsLemonade/refinebio/issues).
+If you would prefer to report issues via e-mail, you can also email [ccdl@alexslemonade.org](mailto:ccdl@alexslemonade.org).
