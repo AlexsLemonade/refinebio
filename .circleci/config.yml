@@ -187,7 +187,7 @@ jobs:
       # image, so clear out other images to ensure enough space for it.
       - run: docker rm $(docker ps -qa --no-trunc --filter "status=exited") || true
       - run: docker image rm ccdlstaging/dr_transcriptome
-      - run: docker image rm ccdlstaging/dr_illumina
+      # - run: docker image rm ccdlstaging/dr_illumina
 
   affy_agilent_tests:
     machine: true
