@@ -128,3 +128,13 @@ resource "aws_s3_bucket" "data-refinery-static-access-logs" {
     }
   }
 }
+
+resource "aws_s3_bucket" "data-refinery-config" {
+  bucket = "data-refinery-config-${var.user}-${var.stage}"
+  acl    = "private"
+
+  tags {
+    Name = "data-refinery-config-${var.user}-${var.stage}"
+    Environment = "${var.stage}"
+  }
+}
