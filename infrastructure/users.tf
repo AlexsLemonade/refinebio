@@ -43,7 +43,18 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
         {
             "Effect": "Allow",
             "Action": [
-                "s3:*"
+              "s3:AbortMultipartUpload",
+              "s3:DeleteObject",
+              "s3:DeleteObjectTagging",
+              "s3:DeleteObjectVersion",
+              "s3:GetObject  ",
+              "s3:GetObjectAcl",
+              "s3:GetObjectTagging",
+              "s3:GetObjectVersion   ",
+              "s3:GetObjectVersionAcl",
+              "s3:ListMultipartUploadParts",
+              "s3:PutObject  ",
+              "s3:PutObjectAcl"
             ],
             "Resource": [
               "arn:aws:s3:::${aws_s3_bucket.data_refinery_bucket.bucket}/*",
@@ -71,7 +82,20 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
         {
             "Effect": "Allow",
             "Action":[
-              "es:*"
+              "es:DescribeElasticsearchDomain",
+              "es:DescribeElasticsearchDomainConfig",
+              "es:DescribeElasticsearchDomains",
+              "es:DescribeElasticsearchInstanceTypeLimits",
+              "es:ListDomainNames",
+              "es:ListElasticsearchInstanceTypeDetails",
+              "es:ListElasticsearchInstanceTypes",
+              "es:ListElasticsearchVersions",
+              "es:ListTags",
+              "es:ESHttpDelete",
+              "es:ESHttpGet",
+              "es:ESHttpHead",
+              "es:ESHttpPost",
+              "es:ESHttpPut"
             ],
             "Resource": "arn:aws:es:${var.region}:${data.aws_caller_identity.current.account_id}:domain/${aws_elasticsearch_domain.es.domain_name}"
         }
