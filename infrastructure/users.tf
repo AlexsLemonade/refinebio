@@ -54,23 +54,11 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
         },
         {
             "Effect": "Allow",
-            "Action": [
-                "cloudwatch:GetMetricStatistics",
-                "cloudwatch:ListMetrics",
-                "cloudwatch:PutMetricAlarm",
-                "cloudwatch:PutMetricData",
-                "cloudwatch:SetAlarmState"
-            ],
-            "Resource":
-                "*"
-        },
-        {
-            "Effect": "Allow",
             "Action":[
               "SES:SendEmail",
               "SES:SendRawEmail"
             ],
-            "Resource": "*"
+            "Resource": "arn:aws:ses:${var.region}:${data.aws_caller_identity.current.account_id}:identity/refine.bio"
         },
         {
             "Effect": "Allow",
