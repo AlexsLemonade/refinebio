@@ -66,14 +66,14 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
               "ec2:DescribeVolumes",
               "ec2:AttachVolume"
             ],
-            "Resource": "*"
+            "Resource": "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${aws_ebs_volume.data_refinery_ebs.id}"
         },
         {
             "Effect": "Allow",
             "Action":[
               "es:*"
             ],
-            "Resource": "*"
+            "Resource": "arn:aws:es:${var.region}:${data.aws_caller_identity.current.account_id}:domain/${aws_elasticsearch_domain.es.domain_name}"
         }
     ]
 }
