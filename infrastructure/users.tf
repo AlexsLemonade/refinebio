@@ -89,7 +89,7 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
               "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 8)}",
               "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 9)}",
               "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 10)}",
-              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 11)}",
+              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 11)}"
             ]
         },
         {
