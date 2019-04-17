@@ -20,6 +20,9 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
   name = "data-refinery-user-client-key-${var.user}-${var.stage}"
   user = "${aws_iam_user.data_refinery_user_client.name}"
 
+  # In Terraform 0.12, the volumes will be able to rolled into a loop.
+  # However, that's not possible in 0.11, and listing them all causes the policy to be greater than
+  # the 2048 byte threshhold! So volumes are still *. That's okay.
   policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -78,18 +81,7 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
               "ec2:AttachVolume"
             ],
             "Resource": [
-              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 0)}",
-              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 1)}",
-              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 2)}",
-              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 3)}",
-              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 4)}",
-              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 5)}",
-              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 6)}",
-              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 7)}",
-              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 8)}",
-              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 9)}",
-              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 10)}",
-              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 11)}"
+              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/*"
             ]
         },
         {
