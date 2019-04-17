@@ -47,13 +47,13 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
               "s3:DeleteObject",
               "s3:DeleteObjectTagging",
               "s3:DeleteObjectVersion",
-              "s3:GetObject  ",
+              "s3:GetObject",
               "s3:GetObjectAcl",
               "s3:GetObjectTagging",
-              "s3:GetObjectVersion   ",
+              "s3:GetObjectVersion",
               "s3:GetObjectVersionAcl",
               "s3:ListMultipartUploadParts",
-              "s3:PutObject  ",
+              "s3:PutObject",
               "s3:PutObjectAcl"
             ],
             "Resource": [
@@ -77,7 +77,20 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
               "ec2:DescribeVolumes",
               "ec2:AttachVolume"
             ],
-            "Resource": "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${aws_ebs_volume.data_refinery_ebs.id}"
+            "Resource": [
+              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 0)}",
+              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 1)}",
+              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 2)}",
+              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 3)}",
+              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 4)}",
+              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 5)}",
+              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 6)}",
+              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 7)}",
+              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 8)}",
+              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 9)}",
+              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 10)}",
+              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 11)}",
+            ]
         },
         {
             "Effect": "Allow",
