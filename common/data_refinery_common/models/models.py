@@ -712,31 +712,54 @@ class OriginalFile(models.Model):
         self.save()
 
 
-    def has_been_processed(self) -> bool:
-        """Returns True if original_file has been completely processed, returns False otherwise.
-        """
+    def needs_processing(self, own_processor_id=None) -> bool:
+        """Returns True if original_file has been or is being processed.
 
+        Returns False otherwise.
+
+        If own_processor_id is supplied then it will be ignored so
+        that processor jobs can use this function without their job
+        being counted as currently processing this file.
+        """
         sample = self.samples.first()
         if not sample:
+            return True
+
+        incomplete_processor_jobs = self.processor_jobs.filter(
+            end_time__isnull=True,
+            success__isnull=True,
+            retried=False
+        )
+
+        if own_processor_id:
+            incomplete_processor_jobs = incomplete_processor_jobs.exclude(id=own_processor_id)
+
+        # If the file has a processor job that hasn't even started yet,
+        # then it doesn't need another.
+        if incomplete_processor_jobs.count() > 0:
             return False
 
         if sample.source_database == "SRA":
             for computed_file in sample.computed_files.all():
                     if computed_file.s3_bucket and computed_file.s3_key:
-                        return True
+                        return False
         else:
-            # If this original_file has multiple samples (is an archive), and any of them haven't been processed,
-            # we'll need the entire archive in order to process any of them.
-            # A check to non re-processed the already processed samples in the archive will happen elsewhere
-            # before dispatching.
+            # If this original_file has multiple samples (is an
+            # archive), and any of them haven't been processed, we'll
+            # need the entire archive in order to process any of them.
+            # A check to not re-processed the already processed
+            # samples in the archive will happen elsewhere before
+            # dispatching.
             for sample in self.samples.all():
                 if not sample.is_processed:
-                    return False
-            return True
+                    return True
 
-        return False
+            return False
 
-    def needs_downloading(self, pipeline_applied=None) -> bool:
+        # If we aren't sure, prefer reprocessing over never processing.
+        return True
+
+    def needs_downloading(self, own_processor_id=None) -> bool:
         """Determine if a file needs to be downloaded.
 
         This is true if the file has already been downloaded and lost
@@ -744,8 +767,7 @@ class OriginalFile(models.Model):
         """
         # If the file is downloaded and the file actually exists on disk,
         # then it doens't need to be downloaded.
-        if self.is_downloaded \
-           and self.absolute_file_path \
+        if self.absolute_file_path \
            and os.path.exists(self.absolute_file_path):
             return False
 
@@ -761,7 +783,7 @@ class OriginalFile(models.Model):
             return False
 
         # If this file has been processed, then it doesn't need to be downloaded again.
-        return not self.has_been_processed()
+        return self.needs_processing(own_processor_id)
 
     def is_affy_data(self) -> bool:
         """Return true if original_file is a CEL file or a gzipped CEL file.

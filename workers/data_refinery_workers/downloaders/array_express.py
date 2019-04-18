@@ -128,9 +128,9 @@ def download_array_express(job_id: int) -> None:
             # but if a file is part of an archive and then we requeue
             # all of the files to be processed, we might end up
             # reprocessing files. Therefore make sure that they
-            # actually needed to be downloaded before marking them as
+            # haven't actually been processed before marking them as
             # downloaded and queuing processor jobs.
-            if original_file.needs_downloading():
+            if original_file.needs_processing():
                 original_file.is_downloaded = True
                 original_file.is_archive = False
                 original_file.absolute_file_path = og_file['absolute_path']
@@ -142,6 +142,7 @@ def download_array_express(job_id: int) -> None:
             else:
                 # Clear out the files we don't actually need.
                 os.remove(og_file['absolute_path'])
+                continue
         except Exception:
             # The suspicion is that there are extra files related to
             # another experiment, that we don't want associated with
@@ -174,7 +175,7 @@ def download_array_express(job_id: int) -> None:
             except Exception as e:
                 platform_accession_code = "UNDETERMINABLE"
                 logger.warn("Unable to determine platform from CEL file: "
-                            + original_file.absolute_file_path,
+                            + str(original_file.absolute_file_path),
                             downloader_job=job_id)
             if platform_accession_code == "UNSUPPORTED":
                 logger.error("Found a raw .CEL file with an unsupported platform!",

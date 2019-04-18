@@ -58,7 +58,7 @@ def signal_handler(sig, frame):
         sys.exit(0)
 
 
-def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
+def create_downloader_job(undownloaded_files: OriginalFile, processor_job_id: int) -> bool:
     """Creates a downloader job to download `undownloaded_files`."""
     if not undownloaded_files:
         return False
@@ -142,18 +142,11 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
 
         sample_object = original_files[0].samples.first()
 
-    # Disable GEO downloader job recreation until we resolve:
-    # https://github.com/AlexsLemonade/refinebio/issues/1068
-    if sample_object.source_database == "GEO":
-        logger.warn("Not recreating a downloader job for a sample coming from GEO.",
-                    sample=sample_object,
-                    original_files=original_files)
-        return False
-
     new_job = DownloaderJob()
     new_job.downloader_task = downloader_task
     new_job.accession_code = accession_code
     new_job.was_recreated = True
+    new_job.ram_amount = 1024
     new_job.save()
 
     if archive_file:
@@ -165,7 +158,7 @@ def create_downloader_job(undownloaded_files: OriginalFile) -> bool:
         # So double check that it still needs downloading because
         # another file that came out of it could have already
         # recreated the DownloaderJob.
-        if archive_file.needs_downloading():
+        if archive_file.needs_downloading(processor_job_id):
             if archive_file.is_downloaded:
                 # If it needs to be downloaded then it's not
                 # downloaded and the is_downloaded field should stop
@@ -205,7 +198,7 @@ def prepare_original_files(job_context):
 
     undownloaded_files = set()
     for original_file in original_files:
-        if original_file.needs_downloading():
+        if original_file.needs_downloading(job_context["job_id"]):
             if original_file.is_downloaded:
                 # If it needs to be downloaded then it's not
                 # downloaded and the is_downloaded field should stop
@@ -223,7 +216,7 @@ def prepare_original_files(job_context):
             missing_files=list(undownloaded_files)
         )
 
-        if not create_downloader_job(undownloaded_files):
+        if not create_downloader_job(undownloaded_files, job_context["job_id"]):
             failure_reason = "Missing file for processor job but unable to recreate downloader jobs!"
             logger.error(failure_reason, processor_job=job.id)
             job_context["success"] = False
@@ -324,7 +317,7 @@ def start_job(job_context: Dict):
         raise Exception("processors.start_job called on job %s that has already been started!" % str(job.id))
 
     original_file = job.original_files.first()
-    if original_file and original_file.has_been_processed():
+    if original_file and not original_file.needs_processing(job_context["job_id"]):
         failure_reason = ("Sample has a good computed file, it must have been processed, "
                           "so it doesn't need to be downloaded! Aborting!")
         logger.error(failure_reason,
