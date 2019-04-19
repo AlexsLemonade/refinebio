@@ -52,15 +52,12 @@ class Command(BaseCommand):
                 logger.error("Proccessed samples don't meet minimum threshhold",
                     organism=organism,
                     count=samples.count(),
-                    min=options["min"]
+                    min=MIN
                 )
                 continue
 
-            if options["platform"] is None:
-                platform_counts = samples.values('platform_accession_code').annotate(dcount=Count('platform_accession_code')).order_by('-dcount')
-                biggest_platform = platform_counts[0]['platform_accession_code']
-            else:
-                biggest_platform = options["platform"]
+            platform_counts = samples.values('platform_accession_code').annotate(dcount=Count('platform_accession_code')).order_by('-dcount')
+            biggest_platform = platform_counts[0]['platform_accession_code']
 
             sample_codes_results = Sample.processed_objects.filter(
                 platform_accession_code=biggest_platform,
