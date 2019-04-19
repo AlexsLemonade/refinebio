@@ -59,9 +59,9 @@ job "QN_DISPATCHER" {
       # The resources the job will require.
       resources {
         # CPU is in AWS's CPU units.
-        cpu = 500
+        cpu = 1000
         # Memory is in MB of RAM.
-        memory = 256
+        memory = 4096
       }
 
       logs {
