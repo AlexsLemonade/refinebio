@@ -16,7 +16,6 @@ from data_refinery_common.job_lookup import SurveyJobTypes
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import SurveyJob, SurveyJobKeyValue
 from data_refinery_common.utils import parse_s3_url, get_env_variable
-from data_refinery_foreman.surveyor import surveyor
 
 from data_refinery_common.models import (
     ComputationalResult,
@@ -33,7 +32,6 @@ from data_refinery_common.models import (
     Sample,
     SampleComputedFileAssociation,
 )
-from data_refinery_workers.processors import qn_reference, utils
 
 logger = get_and_configure_logger(__name__)
 
