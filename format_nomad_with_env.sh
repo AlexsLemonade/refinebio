@@ -171,6 +171,12 @@ else
     environment_file="$script_directory/infrastructure/prod_env"
 fi
 
+# Temporarily set the logging config to nothing so we can see the logs
+# through nomad.
+if [[ $env == "staging" ]]; then
+    export LOGGING_CONFIG=""
+fi
+
 # Read all environment variables from the file for the appropriate
 # project and environment we want to run.
 while read line; do
