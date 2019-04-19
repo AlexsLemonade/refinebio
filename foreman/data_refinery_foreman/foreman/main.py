@@ -416,7 +416,7 @@ def count_downloader_jobs_in_queue(nomad_client: Nomad) -> int:
 
     total = 0
     for job in all_downloader_jobs:
-        if job['ParameterizedJob']:
+        if job['ParameterizedJob'] and 'Children' in job['ParameterizedJob'] and job['JobSummary']['Children']:
             total = total + job['JobSummary']['Children']['Pending']
             total = total + job['JobSummary']['Children']['Running']
 
