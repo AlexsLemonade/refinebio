@@ -23,7 +23,7 @@ job "QN_DISPATCHER" {
       size = "10"
     }
 
-    task "surveyor" {
+    task "qn_dispatcher" {
       driver = "docker"
 
       # This env will be passed into the container for the job.
@@ -77,7 +77,7 @@ job "QN_DISPATCHER" {
       }
 
       config {
-        image = "${{DOCKERHUB_REPO}}/${{FOREMAN_DOCKER_IMAGE}}"
+        image = "${{DOCKERHUB_REPO}}/${{SMASHER_DOCKER_IMAGE}}"
         force_pull = false
 
         # The args to pass to the Docker container's entrypoint.
