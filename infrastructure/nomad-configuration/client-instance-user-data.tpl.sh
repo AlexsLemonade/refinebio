@@ -27,10 +27,10 @@ fetch_and_mount_volume () {
     INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
 
     # Try to mount volume 0 first, so we have one volume we know is always mounted!
-    if aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=$@" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | grep 'VolumeID'; then
-        EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=$@" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
+    if aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=$1" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | grep 'VolumeID'; then
+        EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=$1" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
     else
-        EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=$@" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
+        EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=$1" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
     fi
 
     aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device "/dev/sdf" --region ${region}
