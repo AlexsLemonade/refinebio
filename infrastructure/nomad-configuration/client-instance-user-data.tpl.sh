@@ -27,16 +27,18 @@ fetch_and_mount_volume () {
     INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
 
     # Try to mount volume 0 first, so we have one volume we know is always mounted!
-    if aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=prod" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | grep 'VolumeID'; then
-        EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=prod" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
+    if aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=$@" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | grep 'VolumeID'; then
+        EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=$@" "Name=tag:IsBig,Values=True" "Name=tag:Index,Values=0" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
     else
-        EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=prod" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
+        EBS_VOLUME_ID=`aws ec2 describe-volumes --filters "Name=tag:User,Values=circleci" "Name=tag:Stage,Values=$@" "Name=tag:IsBig,Values=True" "Name=status,Values=available" "Name=availability-zone,Values=us-east-1a" --region us-east-1 | jq '.Volumes[0].VolumeId' | tr -d '"'`
     fi
 
     aws ec2 attach-volume --volume-id $EBS_VOLUME_ID --instance-id $INSTANCE_ID --device "/dev/sdf" --region ${region}
 }
 
-until fetch_and_mount_volume; do
+export STAGE=${stage}
+
+until fetch_and_mount_volume "$STAGE"; do
     sleep 10
 done
 
@@ -190,7 +192,6 @@ echo 'server 169.254.169.123 prefer iburst' | cat - /etc/chrony/chrony.conf > te
 /etc/init.d/chrony restart
 
 # Delete the cloudinit and syslog in production.
-export STAGE=${stage}
 if [[ $STAGE = *"prod"* ]]; then
     rm /var/log/cloud-init.log
     rm /var/log/cloud-init-output.log
