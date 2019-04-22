@@ -263,6 +263,10 @@ docker run \
        --env RUNNING_IN_CLOUD=False \
        $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate
 
+# Make sure to clear out any old nomad job specifications since we
+# will register everything in this directory.
+rm -r nomad-job-specs
+
 # Template the environment variables for production into the Nomad Job
 # specs and API confs.
 mkdir -p nomad-job-specs
