@@ -15,7 +15,7 @@ resource "aws_iam_user" "data-refinery-deployer" {
 }
 
 resource "aws_iam_user_policy" "data_refinery_user_client_policy_logs" {
-  name = "data-refinery-user-client-key-${var.user}-${var.stage}"
+  name = "data-refinery-user-client-key-${var.user}-${var.stage}-logs"
   user = "${aws_iam_user.data_refinery_user_client.name}"
 
   policy = <<EOF
@@ -44,7 +44,7 @@ EOF
 }
 
 resource "aws_iam_user_policy" "data_refinery_user_client_policy_s3" {
-  name = "data-refinery-user-client-key-${var.user}-${var.stage}"
+  name = "data-refinery-user-client-key-${var.user}-${var.stage}-s3"
   user = "${aws_iam_user.data_refinery_user_client.name}"
 
   policy = <<EOF
@@ -101,7 +101,7 @@ EOF
 }
 
 resource "aws_iam_user_policy" "data_refinery_user_client_policy_ec2" {
-  name = "data-refinery-user-client-key-${var.user}-${var.stage}"
+  name = "data-refinery-user-client-key-${var.user}-${var.stage}-ec2"
   user = "${aws_iam_user.data_refinery_user_client.name}"
 
   # In Terraform 0.12, the volumes will be able to rolled into a loop.
@@ -127,7 +127,7 @@ EOF
 }
 
 resource "aws_iam_user_policy" "data_refinery_user_client_policy_es" {
-  name = "data-refinery-user-client-key-${var.user}-${var.stage}"
+  name = "data-refinery-user-client-key-${var.user}-${var.stage}-es"
   user = "${aws_iam_user.data_refinery_user_client.name}"
 
   policy = <<EOF
