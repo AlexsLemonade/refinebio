@@ -1,8 +1,3 @@
-"""This command will create and run survey jobs for each experiment
-in the experiment_list. experiment list should be a file containing
-one experiment accession code per line.
-"""
-
 import boto3
 import botocore
 import nomad
@@ -41,14 +36,14 @@ MIN = 100
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        """ Handle it! """
+        """ Dispatch QN_REFERENCE creation jobs for all Organisms with a platform with enough processed samples. """
 
         organisms = Organism.objects.all()
 
         for organism in organisms:
             samples = Sample.processed_objects.filter(organism=organism, has_raw=True, technology="MICROARRAY", is_processed=True)
             if samples.count() < MIN:
-                logger.error("Proccessed samples don't meet minimum threshhold",
+                logger.info("Total proccessed samples don't meet minimum threshhold",
                     organism=organism,
                     count=samples.count(),
                     min=MIN
@@ -64,6 +59,16 @@ class Command(BaseCommand):
                 technology="MICROARRAY",
                 organism=organism,
                 is_processed=True).values('accession_code')
+
+            if sample_codes_results.count() < MIN:
+                logger.info("Number of processed samples for largest platform didn't mean threshold.",
+                    organism=organism,
+                    platform_accession_code=biggest_platform,
+                    count=sample_codes_results.count(),
+                    min=MIN
+                )
+                continue
+
             sample_codes = [res['accession_code'] for res in sample_codes_results]
 
             dataset = Dataset()

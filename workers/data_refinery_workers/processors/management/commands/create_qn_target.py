@@ -109,7 +109,7 @@ class Command(BaseCommand):
                 dataset.save()
 
                 job = ProcessorJob()
-                job.pipeline_applied = "QN_REFERENCE"
+                job.pipeline_applied = ProcessorPipeline.QN_REFERENCE.value
                 job.save()
 
                 pjda = ProcessorJobDatasetAssociation()
