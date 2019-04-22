@@ -14,15 +14,10 @@ resource "aws_iam_user" "data-refinery-deployer" {
   name = "data-refinery-deployer-${var.user}-${var.stage}"
 }
 
-
-# XXX: TODO: Lock these down!!!!
-resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
+resource "aws_iam_user_policy" "data_refinery_user_client_policy_logs" {
   name = "data-refinery-user-client-key-${var.user}-${var.stage}"
   user = "${aws_iam_user.data_refinery_user_client.name}"
 
-  # In Terraform 0.12, the volumes will be able to rolled into a loop.
-  # However, that's not possible in 0.11, and listing them all causes the policy to be greater than
-  # the 2048 byte threshhold! So volumes are still *. That's okay.
   policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -42,7 +37,20 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
               "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_api_nginx_access.name}",
               "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_api_nginx_error.name}"
             ]
-        },
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_user_policy" "data_refinery_user_client_policy_s3" {
+  name = "data-refinery-user-client-key-${var.user}-${var.stage}"
+  user = "${aws_iam_user.data_refinery_user_client.name}"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
         {
             "Effect": "Allow",
             "Action": [
@@ -65,7 +73,20 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
               "arn:aws:s3:::${aws_s3_bucket.data_refinery_transcriptome_index_bucket.bucket}/*",
               "arn:aws:s3:::${aws_s3_bucket.data_refinery_compendia_bucket.bucket}/*"
             ]
-        },
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_user_policy" "data_refinery_user_client_policy_ses" {
+  name = "data-refinery-user-client-key-${var.user}-${var.stage}"
+  user = "${aws_iam_user.data_refinery_user_client.name}"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
         {
             "Effect": "Allow",
             "Action":[
@@ -73,7 +94,23 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
               "SES:SendRawEmail"
             ],
             "Resource": "arn:aws:ses:${var.region}:${data.aws_caller_identity.current.account_id}:identity/refine.bio"
-        },
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_user_policy" "data_refinery_user_client_policy_ec2" {
+  name = "data-refinery-user-client-key-${var.user}-${var.stage}"
+  user = "${aws_iam_user.data_refinery_user_client.name}"
+
+  # In Terraform 0.12, the volumes will be able to rolled into a loop.
+  # However, that's not possible in 0.11, and listing them all causes the policy to be greater than
+  # the 2048 byte threshhold! So volumes are still *. That's okay.
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
         {
             "Effect": "Allow",
             "Action":[
@@ -83,7 +120,20 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
             "Resource": [
               "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/*"
             ]
-        },
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_user_policy" "data_refinery_user_client_policy_es" {
+  name = "data-refinery-user-client-key-${var.user}-${var.stage}"
+  user = "${aws_iam_user.data_refinery_user_client.name}"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
         {
             "Effect": "Allow",
             "Action":[
