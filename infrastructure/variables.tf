@@ -132,7 +132,7 @@ variable "spot_fleet_capacity" {
 }
 
 variable "max_clients" {
-  default = "10"
+  default = "12"
 }
 
 variable "scale_up_threshold" {

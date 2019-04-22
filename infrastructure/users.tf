@@ -20,6 +20,9 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
   name = "data-refinery-user-client-key-${var.user}-${var.stage}"
   user = "${aws_iam_user.data_refinery_user_client.name}"
 
+  # In Terraform 0.12, the volumes will be able to rolled into a loop.
+  # However, that's not possible in 0.11, and listing them all causes the policy to be greater than
+  # the 2048 byte threshhold! So volumes are still *. That's okay.
   policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -30,26 +33,38 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
           		  "logs:PutLogEvents",
                 "logs:DescribeLogStreams"
             ],
-            "Resource": "arn:aws:logs:*:*:*"
+            "Resource": [
+              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_surveyor.name}",
+              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_processor.name}",
+              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_downloader.name}",
+              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_foreman.name}",
+              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_api.name}",
+              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_api_nginx_access.name}",
+              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_api_nginx_error.name}"
+            ]
         },
         {
             "Effect": "Allow",
             "Action": [
-                "s3:*"
+              "s3:AbortMultipartUpload",
+              "s3:DeleteObject",
+              "s3:DeleteObjectTagging",
+              "s3:DeleteObjectVersion",
+              "s3:GetObject",
+              "s3:GetObjectAcl",
+              "s3:GetObjectTagging",
+              "s3:GetObjectVersion",
+              "s3:GetObjectVersionAcl",
+              "s3:ListMultipartUploadParts",
+              "s3:PutObject",
+              "s3:PutObjectAcl"
             ],
-            "Resource": "arn:aws:s3:::*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "cloudwatch:GetMetricStatistics",
-                "cloudwatch:ListMetrics",
-                "cloudwatch:PutMetricAlarm",
-                "cloudwatch:PutMetricData",
-                "cloudwatch:SetAlarmState"
-            ],
-            "Resource":
-                "*"
+            "Resource": [
+              "arn:aws:s3:::${aws_s3_bucket.data_refinery_bucket.bucket}/*",
+              "arn:aws:s3:::${aws_s3_bucket.data_refinery_results_bucket.bucket}/*",
+              "arn:aws:s3:::${aws_s3_bucket.data_refinery_transcriptome_index_bucket.bucket}/*",
+              "arn:aws:s3:::${aws_s3_bucket.data_refinery_compendia_bucket.bucket}/*"
+            ]
         },
         {
             "Effect": "Allow",
@@ -57,7 +72,7 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
               "SES:SendEmail",
               "SES:SendRawEmail"
             ],
-            "Resource": "*"
+            "Resource": "arn:aws:ses:${var.region}:${data.aws_caller_identity.current.account_id}:identity/refine.bio"
         },
         {
             "Effect": "Allow",
@@ -65,14 +80,29 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy" {
               "ec2:DescribeVolumes",
               "ec2:AttachVolume"
             ],
-            "Resource": "*"
+            "Resource": [
+              "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/*"
+            ]
         },
         {
             "Effect": "Allow",
             "Action":[
-              "es:*"
+              "es:DescribeElasticsearchDomain",
+              "es:DescribeElasticsearchDomainConfig",
+              "es:DescribeElasticsearchDomains",
+              "es:DescribeElasticsearchInstanceTypeLimits",
+              "es:ListDomainNames",
+              "es:ListElasticsearchInstanceTypeDetails",
+              "es:ListElasticsearchInstanceTypes",
+              "es:ListElasticsearchVersions",
+              "es:ListTags",
+              "es:ESHttpDelete",
+              "es:ESHttpGet",
+              "es:ESHttpHead",
+              "es:ESHttpPost",
+              "es:ESHttpPut"
             ],
-            "Resource": "*"
+            "Resource": "arn:aws:es:${var.region}:${data.aws_caller_identity.current.account_id}:domain/${aws_elasticsearch_domain.es.domain_name}"
         }
     ]
 }
