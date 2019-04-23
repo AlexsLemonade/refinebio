@@ -190,7 +190,7 @@ resource "aws_iam_policy" "cloudwatch_policy" {
                 "cloudwatch:SetAlarmState"
             ],
             "Resource": [
-              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:*"
+              "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:${aws_cloudwatch_log_group.data_refinery_log_group.name}:*"
             ]
         }
     ]
