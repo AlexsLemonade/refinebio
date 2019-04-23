@@ -107,6 +107,8 @@ resource "aws_iam_policy" "ec2_access_policy" {
   name = "data-refinery-ec2-access-policy-${var.user}-${var.stage}"
   description = "Allows EC2 Permissions."
 
+  # We can't iterate instances from the fleet, so allow attaching to any instance,
+  # but restrict which volumes can be attached.
   policy = <<EOF
 {
    "Version":"2012-10-17",
@@ -123,7 +125,8 @@ resource "aws_iam_policy" "ec2_access_policy" {
       {
          "Effect":"Allow",
          "Action": [
-            "ec2:AttachVolume"
+            "ec2:AttachVolume",
+            "ec2:CreateTags"
           ],
           "Resource": [
             "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 0)}",
@@ -137,8 +140,18 @@ resource "aws_iam_policy" "ec2_access_policy" {
             "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 8)}",
             "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 9)}",
             "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 10)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 11)}"
+            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 11)}",
+            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:instance/*"
           ]
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "sts:DecodeAuthorizationMessage"
+        ],
+        "Resource": [
+          "*"
+        ]
       }
    ]
 }
