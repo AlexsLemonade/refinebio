@@ -31,7 +31,7 @@ resource "aws_iam_group" "data_refinery_group" {
 }
 
 resource "aws_iam_group_membership" "data_refinery_group_membership" {
-  name = "tf-testing-group-membership"
+  name = "data-refinery-user-group-membership-${var.user}-${var.stage}"
 
   users = [
     "${aws_iam_user.data_refinery_user_client.name}",
