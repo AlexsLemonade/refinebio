@@ -269,8 +269,8 @@ class ExperimentDocumentView(DocumentViewSet):
                 'size': 999999
             }
         },
-        'platform_names': {
-            'field': 'platform_names',
+        'platform_accession_codes': {
+            'field': 'platform_accession_codes',
             'facet': TermsFacet,
             'enabled': True,
             'global': False,
@@ -284,7 +284,6 @@ class ExperimentDocumentView(DocumentViewSet):
             'enabled': True,
             'global': False,
         },
-
         # We don't actually need any "globals" to drive our web frontend,
         # but we'll leave them available but not enabled by default, as they're
         # expensive.
