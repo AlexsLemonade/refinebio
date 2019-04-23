@@ -1,3 +1,7 @@
+##
+# Keys
+##
+
 resource "aws_iam_access_key" "data_refinery_user_client_key" {
   user    = "${aws_iam_user.data_refinery_user_client.name}"
 }
@@ -5,6 +9,10 @@ resource "aws_iam_access_key" "data_refinery_user_client_key" {
 resource "aws_iam_access_key" "data-refinery-deployer-access-key" {
   user = "${aws_iam_user.data-refinery-deployer.name}"
 }
+
+##
+# Users
+##
 
 resource "aws_iam_user" "data_refinery_user_client" {
   name = "data-refinery-user-client-${var.user}-${var.stage}"
@@ -14,10 +22,62 @@ resource "aws_iam_user" "data-refinery-deployer" {
   name = "data-refinery-deployer-${var.user}-${var.stage}"
 }
 
-resource "aws_iam_user_policy" "data_refinery_user_client_policy_logs" {
-  name = "data-refinery-user-client-key-${var.user}-${var.stage}-logs"
-  user = "${aws_iam_user.data_refinery_user_client.name}"
+##
+# Groups
+##
 
+resource "aws_iam_group" "data_refinery_group" {
+  name = "data-refinery-user-client-group-${var.user}-${var.stage}"
+}
+
+resource "aws_iam_group_membership" "data_refinery_group_membership" {
+  name = "data-refinery-user-group-membership-${var.user}-${var.stage}"
+
+  users = [
+    "${aws_iam_user.data_refinery_user_client.name}",
+    "${aws_iam_user.data-refinery-deployer.name}",
+  ]
+
+  group = "${aws_iam_group.data_refinery_group.name}"
+}
+
+
+##
+# Roles
+##
+
+resource "aws_iam_role" "data_refinery_user_role" {
+  name = "data-refinery-user-role-${var.user}-${var.stage}"
+
+  # Policy text found at:
+  # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html
+  assume_role_policy = <<EOF
+{
+  "Version": "2008-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": ["ec2.amazonaws.com", "spotfleet.amazonaws.com"]
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
+##
+# Policies and Attachments
+##
+
+# Logs
+resource "aws_iam_policy" "data_refinery_client_policy_logs" {
+  name = "data-refinery-user-client-logs-${var.user}-${var.stage}"
+
+
+  # Streams are dynamically created, allow anything in the group.
   policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -29,13 +89,7 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy_logs" {
                 "logs:DescribeLogStreams"
             ],
             "Resource": [
-              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_surveyor.name}",
-              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_processor.name}",
-              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_downloader.name}",
-              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_foreman.name}",
-              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_api.name}",
-              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_api_nginx_access.name}",
-              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_api_nginx_error.name}"
+              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:*"
             ]
         }
     ]
@@ -43,9 +97,20 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy_logs" {
 EOF
 }
 
-resource "aws_iam_user_policy" "data_refinery_user_client_policy_s3" {
-  name = "data-refinery-user-client-key-${var.user}-${var.stage}-s3"
-  user = "${aws_iam_user.data_refinery_user_client.name}"
+resource "aws_iam_policy_attachment" "data_refinery_user_policy_attachment_logs" {
+  name       = "data-refinery-user-policy-attachment-${var.user}-${var.stage}"
+  roles      = ["${aws_iam_role.data_refinery_user_role.name}"]
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_logs.arn}"
+}
+
+resource "aws_iam_group_policy_attachment" "data_refinery_group_policy_attachment_logs" {
+  group      = "${aws_iam_group.data_refinery_group.name}"
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_logs.arn}"
+}
+
+# S3
+resource "aws_iam_policy" "data_refinery_client_policy_s3" {
+  name = "data-refinery-user-client-s3-${var.user}-${var.stage}"
 
   policy = <<EOF
 {
@@ -79,9 +144,20 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy_s3" {
 EOF
 }
 
-resource "aws_iam_user_policy" "data_refinery_user_client_policy_ses" {
-  name = "data-refinery-user-client-key-${var.user}-${var.stage}"
-  user = "${aws_iam_user.data_refinery_user_client.name}"
+resource "aws_iam_policy_attachment" "data_refinery_user_policy_attachment_s3" {
+  name       = "data-refinery-user-policy-attachment-${var.user}-${var.stage}"
+  roles      = ["${aws_iam_role.data_refinery_user_role.name}"]
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_s3.arn}"
+}
+
+resource "aws_iam_group_policy_attachment" "data_refinery_group_policy_attachment_s3" {
+  group      = "${aws_iam_group.data_refinery_group.name}"
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_s3.arn}"
+}
+
+# SES
+resource "aws_iam_policy" "data_refinery_client_policy_ses" {
+  name = "data-refinery-user-client-ses-${var.user}-${var.stage}"
 
   policy = <<EOF
 {
@@ -100,9 +176,20 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy_ses" {
 EOF
 }
 
-resource "aws_iam_user_policy" "data_refinery_user_client_policy_ec2" {
-  name = "data-refinery-user-client-key-${var.user}-${var.stage}-ec2"
-  user = "${aws_iam_user.data_refinery_user_client.name}"
+resource "aws_iam_policy_attachment" "data_refinery_user_policy_attachment_ses" {
+  name       = "data-refinery-user-policy-attachment-${var.user}-${var.stage}"
+  roles      = ["${aws_iam_role.data_refinery_user_role.name}"]
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_ses.arn}"
+}
+
+resource "aws_iam_group_policy_attachment" "data_refinery_group_policy_attachment_ses" {
+  group      = "${aws_iam_group.data_refinery_group.name}"
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_ses.arn}"
+}
+
+# EC2
+resource "aws_iam_policy" "data_refinery_client_policy_ec2" {
+  name = "data-refinery-user-client-ec2-${var.user}-${var.stage}"
 
   # In Terraform 0.12, the volumes will be able to rolled into a loop.
   # However, that's not possible in 0.11, and listing them all causes the policy to be greater than
@@ -126,9 +213,20 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy_ec2" {
 EOF
 }
 
-resource "aws_iam_user_policy" "data_refinery_user_client_policy_es" {
-  name = "data-refinery-user-client-key-${var.user}-${var.stage}-es"
-  user = "${aws_iam_user.data_refinery_user_client.name}"
+resource "aws_iam_policy_attachment" "data_refinery_user_policy_attachment_ec2" {
+  name       = "data-refinery-user-policy-attachment-${var.user}-${var.stage}"
+  roles      = ["${aws_iam_role.data_refinery_user_role.name}"]
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_ec2.arn}"
+}
+
+resource "aws_iam_group_policy_attachment" "data_refinery_group_policy_attachment_ec2" {
+  group      = "${aws_iam_group.data_refinery_group.name}"
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_ec2.arn}"
+}
+
+# ES
+resource "aws_iam_policy" "data_refinery_client_policy_es" {
+  name = "data-refinery-user-client-es-${var.user}-${var.stage}"
 
   policy = <<EOF
 {
@@ -158,6 +256,21 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy_es" {
 }
 EOF
 }
+
+resource "aws_iam_policy_attachment" "data_refinery_user_policy_attachment_es" {
+  name       = "data-refinery-user-policy-attachment-${var.user}-${var.stage}"
+  roles      = ["${aws_iam_role.data_refinery_user_role.name}"]
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_es.arn}"
+}
+
+resource "aws_iam_group_policy_attachment" "data_refinery_group_policy_attachment_es" {
+  group      = "${aws_iam_group.data_refinery_group.name}"
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_es.arn}"
+}
+
+##
+# IAM Policy Documents
+##
 
 data "aws_iam_policy_document" "data-refinery-deployment" {
   statement {

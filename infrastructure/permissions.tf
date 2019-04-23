@@ -107,6 +107,8 @@ resource "aws_iam_policy" "ec2_access_policy" {
   name = "data-refinery-ec2-access-policy-${var.user}-${var.stage}"
   description = "Allows EC2 Permissions."
 
+  # We can't iterate instances from the fleet, so allow attaching to any instance,
+  # but restrict which volumes can be attached.
   policy = <<EOF
 {
    "Version":"2012-10-17",
@@ -114,8 +116,17 @@ resource "aws_iam_policy" "ec2_access_policy" {
       {
          "Effect":"Allow",
          "Action": [
-            "ec2:DescribeVolumes",
-            "ec2:AttachVolume"
+            "ec2:DescribeVolumes"
+          ],
+          "Resource": [
+            "*"
+          ]
+      },
+      {
+         "Effect":"Allow",
+         "Action": [
+            "ec2:AttachVolume",
+            "ec2:CreateTags"
           ],
           "Resource": [
             "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 0)}",
@@ -129,8 +140,18 @@ resource "aws_iam_policy" "ec2_access_policy" {
             "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 8)}",
             "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 9)}",
             "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 10)}",
-            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 11)}"
+            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:volume/${element(aws_ebs_volume.data_refinery_ebs.*.id, 11)}",
+            "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:instance/*"
           ]
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "sts:DecodeAuthorizationMessage"
+        ],
+        "Resource": [
+          "*"
+        ]
       }
    ]
 }
@@ -149,6 +170,8 @@ resource "aws_iam_policy" "cloudwatch_policy" {
 
   # Policy text found at:
   # http://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/iam-identity-based-access-control-cwl.html
+
+  # Log streams are created dynamically by Nomad, so we give permission to the entire group
   policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -167,13 +190,7 @@ resource "aws_iam_policy" "cloudwatch_policy" {
                 "cloudwatch:SetAlarmState"
             ],
             "Resource": [
-              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_surveyor.name}",
-              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_processor.name}",
-              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_downloader.name}",
-              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_foreman.name}",
-              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_api.name}",
-              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_api_nginx_access.name}",
-              "arn:aws:logs:${var.region}:${aws_cloudwatch_log_group.data_refinery_log_group.name}:${aws_cloudwatch_log_stream.log_stream_api_nginx_error.name}"
+              "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:${aws_cloudwatch_log_group.data_refinery_log_group.name}:*"
             ]
         }
     ]
