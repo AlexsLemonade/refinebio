@@ -1,3 +1,7 @@
+##
+# Keys
+##
+
 resource "aws_iam_access_key" "data_refinery_user_client_key" {
   user    = "${aws_iam_user.data_refinery_user_client.name}"
 }
@@ -5,6 +9,10 @@ resource "aws_iam_access_key" "data_refinery_user_client_key" {
 resource "aws_iam_access_key" "data-refinery-deployer-access-key" {
   user = "${aws_iam_user.data-refinery-deployer.name}"
 }
+
+##
+# Users
+##
 
 resource "aws_iam_user" "data_refinery_user_client" {
   name = "data-refinery-user-client-${var.user}-${var.stage}"
@@ -14,9 +22,39 @@ resource "aws_iam_user" "data-refinery-deployer" {
   name = "data-refinery-deployer-${var.user}-${var.stage}"
 }
 
-resource "aws_iam_user_policy" "data_refinery_user_client_policy_logs" {
-  name = "data-refinery-user-client-key-${var.user}-${var.stage}"
-  user = "${aws_iam_user.data_refinery_user_client.name}"
+##
+# Roles
+##
+
+resource "aws_iam_role" "data_refinery_user_role" {
+  name = "data-refinery-user-role-${var.user}-${var.stage}"
+
+  # Policy text found at:
+  # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html
+  assume_role_policy = <<EOF
+{
+  "Version": "2008-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": ["ec2.amazonaws.com", "spotfleet.amazonaws.com"]
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
+##
+# Policies and Attachments
+##
+
+# Logs
+resource "aws_iam_policy" "data_refinery_client_policy_logs" {
+  name = "data-refinery-user-client-logs-${var.user}-${var.stage}"
 
   policy = <<EOF
 {
@@ -43,9 +81,15 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy_logs" {
 EOF
 }
 
-resource "aws_iam_user_policy" "data_refinery_user_client_policy_s3" {
-  name = "data-refinery-user-client-key-${var.user}-${var.stage}"
-  user = "${aws_iam_user.data_refinery_user_client.name}"
+resource "aws_iam_policy_attachment" "data_refinery_user_policy_attachment_logs" {
+  name       = "data-refinery-user-policy-attachment-${var.user}-${var.stage}"
+  roles      = ["${aws_iam_role.data_refinery_user_role.name}"]
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_logs.arn}"
+}
+
+# S3
+resource "aws_iam_policy" "data_refinery_client_policy_s3" {
+  name = "data-refinery-user-client-s3-${var.user}-${var.stage}"
 
   policy = <<EOF
 {
@@ -79,9 +123,15 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy_s3" {
 EOF
 }
 
-resource "aws_iam_user_policy" "data_refinery_user_client_policy_ses" {
-  name = "data-refinery-user-client-key-${var.user}-${var.stage}"
-  user = "${aws_iam_user.data_refinery_user_client.name}"
+resource "aws_iam_policy_attachment" "data_refinery_user_policy_attachment_s3" {
+  name       = "data-refinery-user-policy-attachment-${var.user}-${var.stage}"
+  roles      = ["${aws_iam_role.data_refinery_user_role.name}"]
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_s3.arn}"
+}
+
+# SES
+resource "aws_iam_policy" "data_refinery_client_policy_ses" {
+  name = "data-refinery-user-client-ses-${var.user}-${var.stage}"
 
   policy = <<EOF
 {
@@ -100,9 +150,15 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy_ses" {
 EOF
 }
 
-resource "aws_iam_user_policy" "data_refinery_user_client_policy_ec2" {
-  name = "data-refinery-user-client-key-${var.user}-${var.stage}"
-  user = "${aws_iam_user.data_refinery_user_client.name}"
+resource "aws_iam_policy_attachment" "data_refinery_user_policy_attachment_ses" {
+  name       = "data-refinery-user-policy-attachment-${var.user}-${var.stage}"
+  roles      = ["${aws_iam_role.data_refinery_user_role.name}"]
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_ses.arn}"
+}
+
+# EC2
+resource "aws_iam_policy" "data_refinery_client_policy_ec2" {
+  name = "data-refinery-user-client-ec2-${var.user}-${var.stage}"
 
   # In Terraform 0.12, the volumes will be able to rolled into a loop.
   # However, that's not possible in 0.11, and listing them all causes the policy to be greater than
@@ -126,9 +182,15 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy_ec2" {
 EOF
 }
 
-resource "aws_iam_user_policy" "data_refinery_user_client_policy_es" {
-  name = "data-refinery-user-client-key-${var.user}-${var.stage}"
-  user = "${aws_iam_user.data_refinery_user_client.name}"
+resource "aws_iam_policy_attachment" "data_refinery_user_policy_attachment_ec2" {
+  name       = "data-refinery-user-policy-attachment-${var.user}-${var.stage}"
+  roles      = ["${aws_iam_role.data_refinery_user_role.name}"]
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_ec2.arn}"
+}
+
+# ES
+resource "aws_iam_policy" "data_refinery_client_policy_es" {
+  name = "data-refinery-user-client-es-${var.user}-${var.stage}"
 
   policy = <<EOF
 {
@@ -158,6 +220,16 @@ resource "aws_iam_user_policy" "data_refinery_user_client_policy_es" {
 }
 EOF
 }
+
+resource "aws_iam_policy_attachment" "data_refinery_user_policy_attachment_es" {
+  name       = "data-refinery-user-policy-attachment-${var.user}-${var.stage}"
+  roles      = ["${aws_iam_role.data_refinery_user_role.name}"]
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_es.arn}"
+}
+
+##
+# IAM Policy Documents
+##
 
 data "aws_iam_policy_document" "data-refinery-deployment" {
   statement {
