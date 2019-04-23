@@ -23,6 +23,26 @@ resource "aws_iam_user" "data-refinery-deployer" {
 }
 
 ##
+# Groups
+##
+
+resource "aws_iam_group" "data_refinery_group" {
+  name = "data-refinery-user-client-group-${var.user}-${var.stage}"
+}
+
+resource "aws_iam_group_membership" "data_refinery_group_membership" {
+  name = "tf-testing-group-membership"
+
+  users = [
+    "${aws_iam_user.data_refinery_user_client.name}",
+    "${aws_iam_user.data-refinery-deployer.name}",
+  ]
+
+  group = "${aws_iam_group.data_refinery_group.name}"
+}
+
+
+##
 # Roles
 ##
 
@@ -87,6 +107,11 @@ resource "aws_iam_policy_attachment" "data_refinery_user_policy_attachment_logs"
   policy_arn = "${aws_iam_policy.data_refinery_client_policy_logs.arn}"
 }
 
+resource "aws_iam_group_policy_attachment" "data_refinery_group_policy_attachment_logs" {
+  group      = "${aws_iam_group.data_refinery_group.name}"
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_logs.arn}"
+}
+
 # S3
 resource "aws_iam_policy" "data_refinery_client_policy_s3" {
   name = "data-refinery-user-client-s3-${var.user}-${var.stage}"
@@ -129,6 +154,11 @@ resource "aws_iam_policy_attachment" "data_refinery_user_policy_attachment_s3" {
   policy_arn = "${aws_iam_policy.data_refinery_client_policy_s3.arn}"
 }
 
+resource "aws_iam_group_policy_attachment" "data_refinery_group_policy_attachment_s3" {
+  group      = "${aws_iam_group.data_refinery_group.name}"
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_s3.arn}"
+}
+
 # SES
 resource "aws_iam_policy" "data_refinery_client_policy_ses" {
   name = "data-refinery-user-client-ses-${var.user}-${var.stage}"
@@ -153,6 +183,11 @@ EOF
 resource "aws_iam_policy_attachment" "data_refinery_user_policy_attachment_ses" {
   name       = "data-refinery-user-policy-attachment-${var.user}-${var.stage}"
   roles      = ["${aws_iam_role.data_refinery_user_role.name}"]
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_ses.arn}"
+}
+
+resource "aws_iam_group_policy_attachment" "data_refinery_group_policy_attachment_ses" {
+  group      = "${aws_iam_group.data_refinery_group.name}"
   policy_arn = "${aws_iam_policy.data_refinery_client_policy_ses.arn}"
 }
 
@@ -185,6 +220,11 @@ EOF
 resource "aws_iam_policy_attachment" "data_refinery_user_policy_attachment_ec2" {
   name       = "data-refinery-user-policy-attachment-${var.user}-${var.stage}"
   roles      = ["${aws_iam_role.data_refinery_user_role.name}"]
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_ec2.arn}"
+}
+
+resource "aws_iam_group_policy_attachment" "data_refinery_group_policy_attachment_ec2" {
+  group      = "${aws_iam_group.data_refinery_group.name}"
   policy_arn = "${aws_iam_policy.data_refinery_client_policy_ec2.arn}"
 }
 
@@ -224,6 +264,11 @@ EOF
 resource "aws_iam_policy_attachment" "data_refinery_user_policy_attachment_es" {
   name       = "data-refinery-user-policy-attachment-${var.user}-${var.stage}"
   roles      = ["${aws_iam_role.data_refinery_user_role.name}"]
+  policy_arn = "${aws_iam_policy.data_refinery_client_policy_es.arn}"
+}
+
+resource "aws_iam_group_policy_attachment" "data_refinery_group_policy_attachment_es" {
+  group      = "${aws_iam_group.data_refinery_group.name}"
   policy_arn = "${aws_iam_policy.data_refinery_client_policy_es.arn}"
 }
 
