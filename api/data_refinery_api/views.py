@@ -72,7 +72,6 @@ from data_refinery_api.serializers import (
     APITokenSerializer,
     CreateDatasetSerializer,
     DatasetSerializer,
-    DatasetWithUrlSerializer,
 )
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.message_queue import send_job
@@ -577,18 +576,17 @@ class DatasetView(generics.RetrieveUpdateAPIView):
     serializer_class = DatasetSerializer
     lookup_field = 'id'
 
-    def get(self, request, id=None, format=None):
-        dataset = get_object_or_404(Dataset, id=id)
-
+    def get_serializer_context(self):
+        """
+        Extra context provided to the serializer class.
+        """
+        serializer_context = super(DatasetView, self).get_serializer_context()
         token_id = self.request.META.get('HTTP_API_KEY', None)
-
         try:
             token = APIToken.objects.get(id=token_id, is_activated=True)
-            serializer = DatasetWithUrlSerializer(dataset)
-        except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
-            serializer = DatasetSerializer(dataset)
-
-        return Response(serializer.data)
+            return {**serializer_context, 'token': token}
+        except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            return serializer_context
 
     def perform_update(self, serializer):
         """ If `start` is set, fire off the job. Disables dataset data updates after that. """
