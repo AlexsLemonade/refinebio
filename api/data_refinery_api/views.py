@@ -72,7 +72,6 @@ from data_refinery_api.serializers import (
     APITokenSerializer,
     CreateDatasetSerializer,
     DatasetSerializer,
-    DatasetWithUrlSerializer,
 )
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.message_queue import send_job
@@ -269,8 +268,8 @@ class ExperimentDocumentView(DocumentViewSet):
                 'size': 999999
             }
         },
-        'platform_names': {
-            'field': 'platform_names',
+        'platform_accession_codes': {
+            'field': 'platform_accession_codes',
             'facet': TermsFacet,
             'enabled': True,
             'global': False,
@@ -284,7 +283,6 @@ class ExperimentDocumentView(DocumentViewSet):
             'enabled': True,
             'global': False,
         },
-
         # We don't actually need any "globals" to drive our web frontend,
         # but we'll leave them available but not enabled by default, as they're
         # expensive.
@@ -578,18 +576,17 @@ class DatasetView(generics.RetrieveUpdateAPIView):
     serializer_class = DatasetSerializer
     lookup_field = 'id'
 
-    def get(self, request, id=None, format=None):
-        dataset = get_object_or_404(Dataset, id=id)
-
+    def get_serializer_context(self):
+        """
+        Extra context provided to the serializer class.
+        """
+        serializer_context = super(DatasetView, self).get_serializer_context()
         token_id = self.request.META.get('HTTP_API_KEY', None)
-
         try:
             token = APIToken.objects.get(id=token_id, is_activated=True)
-            serializer = DatasetWithUrlSerializer(dataset)
-        except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
-            serializer = DatasetSerializer(dataset)
-
-        return Response(serializer.data)
+            return {**serializer_context, 'token': token}
+        except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            return serializer_context
 
     def perform_update(self, serializer):
         """ If `start` is set, fire off the job. Disables dataset data updates after that. """
@@ -1419,13 +1416,36 @@ class QNTargetsAvailable(APIView):
 
 class QNTargetsDetail(APIView):
     """
-    Quantile Normalization Targets
+    Get a detailed view of the Quantile Normalization file for an organism.
+
+    ex: `?organism=DANIO_RERIO&format=json`
+
     """
 
-    """List all processors."""
     def get(self, request, format=None):
-        computed_files = ComputedFile.objects.filter(is_public=True, is_qn_target=True)
-        serializer = QNTargetSerializer(computed_files, many=True)
+
+        filter_dict = request.query_params.dict()
+        organism = filter_dict.pop('organism', None)
+        if not organism:
+            raise APIException("Organism must be supplied!")
+
+        organism = organism.upper().replace(" ", "_")
+        try:
+            organism_id = Organism.get_object_for_name(organism).id
+            annotation = ComputationalResultAnnotation.objects.filter(
+                data__organism_id=organism_id,
+                data__is_qn=True
+            ).order_by(
+                '-created_at'
+            ).first()
+            qn_target = annotation.result.computedfile_set.first()
+        except Exception:
+            raise APIException("Don't have a target for that organism!")
+
+        if not qn_target:
+            raise APIException("Don't have a target for that organism!!")
+
+        serializer = QNTargetSerializer(qn_target, many=False)
         return Response(serializer.data)
 
 ##

@@ -223,11 +223,11 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
         try:
             sample = job_context['sample']
             for exp in sample.experiments.all():
-                for anno in exp.experimentannotation_set.all():
-                    if expanno.data.get('library_layout', '').upper() == 'PAIRED':
+                for annotation in exp.experimentannotation_set.all():
+                    if annotation.data.get('library_layout', '').upper() == 'PAIRED':
                         job_context['sra_num_reads'] = 2
                         return job_context
-                    if expanno.data.get('library_layout', '').upper() == 'SINGLE':
+                    if annotation.data.get('library_layout', '').upper() == 'SINGLE':
                         job_context['sra_num_reads'] = 1
                         return job_context
         except Exception as e:
@@ -452,7 +452,7 @@ def _run_tximport_for_experiment(
     quant_file_paths = {}
     with open(tximport_path_list_file, "w") as input_list:
         for quant_file in quant_files:
-            # We create a directory in the work directory for each (quant.sf) file, as 
+            # We create a directory in the work directory for each (quant.sf) file, as
             # tximport assigns column names based on the parent directory name,
             # and we need those names so that we can reassociate withe samples later.
             # ex., a file with absolute_file_path: /processor_job_1/SRR123_output/quant.sf
@@ -499,8 +499,8 @@ def _run_tximport_for_experiment(
     if tximport_result.returncode != 0:
         error_template = ("Found non-zero exit code from R code while running tximport.R: {}")
         error_message = error_template.format(tximport_result.stderr.decode().strip())
-        logger.error(error_message, 
-            processor_job=job_context["job_id"], 
+        logger.error(error_message,
+            processor_job=job_context["job_id"],
             experiment=experiment.id,
             quant_files=quant_files,
             cmd_tokens=cmd_tokens,
@@ -655,7 +655,7 @@ def get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile
             for result in salmon_quant_results:
                 try:
                     quant_files.append(ComputedFile.objects.filter(
-                        result=result, 
+                        result=result,
                         filename="quant.sf",
                         s3_key__isnull=False,
                         s3_bucket__isnull=False,

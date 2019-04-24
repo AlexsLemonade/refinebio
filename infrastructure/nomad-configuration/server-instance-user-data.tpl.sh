@@ -76,7 +76,7 @@ chmod +x /home/ubuntu/kill_restart_nomad.sh
 
 echo '
 check program nomad with path "/bin/bash /home/ubuntu/nomad_status.sh" as uid 0 and with gid 0
-    start program = "/home/ubuntu/kill_restart_nomad.sh" as uid 0 and with gid 0
+    start program = "/home/ubuntu/kill_restart_nomad.sh" as uid 0 and with gid 0 with timeout 240 seconds
     if status != 0
         then restart
 set daemon 300

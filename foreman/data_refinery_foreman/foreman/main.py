@@ -50,7 +50,7 @@ MAX_NUM_RETRIES = 2
 # This can be overritten by the env var "MAX_TOTAL_JOBS"
 DEFAULT_MAX_JOBS = 20000
 
-DOWNLOADER_JOBS_PER_NODE = 25
+DOWNLOADER_JOBS_PER_NODE = 15
 PAGE_SIZE=2000
 
 # This is the maximum number of non-dead nomad jobs that can be in the
@@ -312,11 +312,13 @@ def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
 # Downloaders
 ##
 
-def requeue_downloader_job(last_job: DownloaderJob) -> None:
+def requeue_downloader_job(last_job: DownloaderJob) -> bool:
     """Queues a new downloader job.
 
     The new downloader job will have num_retries one greater than
     last_job.num_retries.
+
+    Returns True upon successful dispatching, False otherwise.
     """
     num_retries = last_job.num_retries + 1
 
@@ -327,25 +329,52 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
         elif ram_amount == 4096:
             ram_amount = 8192
 
+
     original_file = last_job.original_files.first()
-    if original_file and original_file.has_been_processed():
+
+    if not original_file:
         last_job.no_retry = True
-        last_job.failure_reason = "Foreman told to redownloaded job with prior succesful processing."
+        last_job.success = False
+        last_job.failure_reason = "Foreman told to requeue a DownloaderJob without an OriginalFile - why?!"
         last_job.save()
-        return
+        logger.info("Foreman told to requeue a DownloaderJob without an OriginalFile - why?!",
+            last_job=str(last_job)
+            )
+        return False
+
+    if not original_file.needs_processing():
+        last_job.no_retry = True
+        last_job.success = False
+        last_job.failure_reason = "Foreman told to redownload job with prior successful processing."
+        last_job.save()
+        logger.info("Foreman told to redownload job with prior successful processing.",
+            last_job=str(last_job)
+            )
+        return False
 
     first_sample = original_file.samples.first()
     if first_sample and first_sample.is_blacklisted:
         last_job.no_retry = True
+        last_job.success = False
         last_job.failure_reason = "Sample run accession has been blacklisted by SRA."
         last_job.save()
         logger.info("Avoiding requeuing for DownloaderJob for blacklisted run accession: " + str(first_sample.accession_code))
-        return
+        return False
+
+    # This is a magic string that all the dbGaP studies appear to have
+    if first_sample and ("in the dbGaP study" in first_sample.title):
+        last_job.no_retry = True
+        last_job.success = False
+        last_job.failure_reason = "Sample is dbGaP access controlled."
+        last_job.save()
+        logger.info("Avoiding requeuing for DownloaderJob for dbGaP run accession: " + str(first_sample.accession_code))
+        return False
 
     new_job = DownloaderJob(num_retries=num_retries,
                             downloader_task=last_job.downloader_task,
                             ram_amount=ram_amount,
-                            accession_code=last_job.accession_code)
+                            accession_code=last_job.accession_code,
+                            was_recreated=last_job.was_recreated)
     new_job.save()
 
     for original_file in last_job.original_files.all():
@@ -364,12 +393,16 @@ def requeue_downloader_job(last_job: DownloaderJob) -> None:
         else:
             # Can't communicate with nomad just now, leave the job for a later loop.
             new_job.delete()
+            return False
     except:
         logger.error("Failed to requeue Downloader Job which had ID %d with a new Downloader Job with ID %d.",
                      last_job.id,
                      new_job.id)
         # Can't communicate with nomad just now, leave the job for a later loop.
         new_job.delete()
+        return False
+
+    return True
 
 
 def count_downloader_jobs_in_queue(nomad_client: Nomad) -> int:
@@ -383,7 +416,7 @@ def count_downloader_jobs_in_queue(nomad_client: Nomad) -> int:
 
     total = 0
     for job in all_downloader_jobs:
-        if job['ParameterizedJob']:
+        if job['ParameterizedJob'] and job['JobSummary'].get('Children', None):
             total = total + job['JobSummary']['Children']['Pending']
             total = total + job['JobSummary']['Children']['Running']
 
@@ -422,8 +455,9 @@ def handle_downloader_jobs(jobs: List[DownloaderJob],
             return
 
         if job.num_retries < MAX_NUM_RETRIES:
-            requeue_downloader_job(job)
-            jobs_dispatched = jobs_dispatched + 1
+            requeue_success = requeue_downloader_job(job)
+            if requeue_success:
+                jobs_dispatched = jobs_dispatched + 1
         else:
             handle_repeated_failure(job)
 
@@ -432,6 +466,7 @@ def retry_failed_downloader_jobs() -> None:
     failed_jobs = DownloaderJob.objects.filter(
         success=False,
         retried=False,
+        no_retry=False,
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).order_by(
         'id'
@@ -566,7 +601,9 @@ def retry_lost_downloader_jobs() -> None:
                         )
                         lost_jobs.append(job)
                 else:
-                    lost_jobs.append(job)
+                    # The job never got put in the Nomad queue, no
+                    # need to recreate it, we just gotta queue it up!
+                    send_job(Downloaders[job.downloader_task], job=job, is_dispatch=True)
             except socket.timeout:
                 logger.info("Timeout connecting to Nomad - is Nomad down?", job_id=job.id)
             except URLNotFoundNomadException:

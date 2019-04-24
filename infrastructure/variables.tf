@@ -120,7 +120,7 @@ variable "client_instance_type" {
 }
 
 variable "smasher_instance_type" {
-  default = "m5.12xlarge"
+  default = "m5.2xlarge"
 }
 
 variable "spot_price" {
@@ -132,7 +132,7 @@ variable "spot_fleet_capacity" {
 }
 
 variable "max_clients" {
-  default = "10"
+  default = "12"
 }
 
 variable "scale_up_threshold" {

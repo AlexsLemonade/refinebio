@@ -591,14 +591,19 @@ class DatasetSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(DatasetSerializer, self).__init__(*args, **kwargs)
 
-        # only inclue the fields `experiments` and `organism_samples` when the param `?details=true`
-        # is provided. This is used on the frontend to render the downloads page
-        # thanks to https://django.cowhite.com/blog/dynamically-includeexclude-fields-to-django-rest-framwork-serializers-based-on-user-requests/
         if 'context' in kwargs:
             if 'request' in kwargs['context']:
+                # only inclue the fields `experiments` and `organism_samples` when the param `?details=true`
+                # is provided. This is used on the frontend to render the downloads page
+                # thanks to https://django.cowhite.com/blog/dynamically-includeexclude-fields-to-django-rest-framwork-serializers-based-on-user-requests/
                 if 'details' not in kwargs['context']['request'].query_params:
                     self.fields.pop('experiments')
                     self.fields.pop('organism_samples')
+
+            # only include the field `download_url` if a valid token is specified
+            # the token lookup happens in the view.
+            if 'token' not in kwargs['context']:
+                self.fields.pop('download_url')
 
     class Meta:
         model = Dataset
@@ -622,7 +627,8 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'size_in_bytes',
                     'sha1',
                     'experiments',
-                    'organism_samples'
+                    'organism_samples',
+                    'download_url'
             )
         extra_kwargs = {
                         'id': {
@@ -663,6 +669,9 @@ class DatasetSerializer(serializers.ModelSerializer):
                         },
                         'sha1': {
                             'read_only': True,
+                        },
+                        'download_url': {
+                            'read_only': True,
                         }
                     }
 
@@ -697,34 +706,6 @@ class DatasetSerializer(serializers.ModelSerializer):
         experiments = obj.get_experiments().prefetch_related('samples').prefetch_related('organisms')
         return DatasetDetailsExperimentSerializer(experiments, many=True).data
 
-
-class DatasetWithUrlSerializer(DatasetSerializer):
-
-    class Meta:
-        model = Dataset
-        fields = (
-                    'id',
-                    'data',
-                    'aggregate_by',
-                    'scale_by',
-                    'is_processing',
-                    'is_processed',
-                    'is_available',
-                    'has_email',
-                    'expires_on',
-                    's3_bucket',
-                    's3_key',
-                    'download_url',
-                    'success',
-                    'failure_reason',
-                    'created_at',
-                    'last_modified',
-                    'start',
-                    'size_in_bytes',
-                    'sha1',
-                    'experiments',
-                    'organism_samples'
-            )
 
 class APITokenSerializer(serializers.ModelSerializer):
 
