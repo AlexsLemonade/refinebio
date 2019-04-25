@@ -618,6 +618,7 @@ def retry_lost_downloader_jobs() -> None:
                     # The job never got put in the Nomad queue, no
                     # need to recreate it, we just gotta queue it up!
                     send_job(Downloaders[job.downloader_task], job=job, is_dispatch=True)
+                    jobs_queued_from_this_page += 1
             except socket.timeout:
                 logger.info("Timeout connecting to Nomad - is Nomad down?", job_id=job.id)
             except URLNotFoundNomadException:
