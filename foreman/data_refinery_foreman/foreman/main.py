@@ -1304,6 +1304,8 @@ def cleanup_the_queue():
     Therefore we clear out jobs of that type every once in a while so
     our queue is dedicated to jobs that can actually be placed.
     """
+    logger.info("Removing all jobs from Nomad queue whose volumes are not mounted.")
+
     # Smasher and QN Reference jobs aren't tied to a specific EBS volume.
     indexed_job_types = [e.value for e in ProcessorPipeline if e.value not in ["SMASHER", "QN_REFERENCE"]]
 
@@ -1318,12 +1320,15 @@ def cleanup_the_queue():
         # If we cannot reach Nomad now then we can wait until a later loop.
         return
 
+    logger.info(("These are the currently active volumes. Jobs for "
+                 "other volumes will now be removed from the Nomad queue."),
+                active_volumes=active_volumes)
 
-    jobs_to_kill = []
+    num_jobs_killed = 0
     for job in jobs:
         # Skip over the Parameterized Jobs because we need those to
         # always be running.
-        if "ParameterizedJob" not in job or not job["ParameterizedJob"]:
+        if "ParameterizedJob" not in job or job["ParameterizedJob"]:
             continue
 
         for job_type in indexed_job_types:
@@ -1349,9 +1354,15 @@ def cleanup_the_queue():
                     job_record = ProcessorJob(nomad_job_id=job["ID"])
                     job_record.num_retries = job_record.num_retries - 1
                     job_record.save()
+                    num_jobs_killed += 1
                 except:
+                    logger.exception("Could not remove Nomad job from the Nomad queue.",
+                                     nomad_job_id=job["ID"],
+                                     job_type=job_type)
                     # If we can't do this for some reason, we'll get it next loop.
                     pass
+
+    logger.info("Removed %d jobs from the Nomad queue.", num_jobs_killed)
 
 def clean_database():
     """ Removes duplicated objects that may have appeared through race, OOM, bugs, etc.
