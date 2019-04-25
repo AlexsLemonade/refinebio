@@ -599,6 +599,7 @@ def retry_lost_downloader_jobs() -> None:
     page_count = 0
     while queue_capacity > 0:
         lost_jobs = []
+        jobs_queued_from_this_page = 0
         for job in page.object_list:
             try:
                 if job.nomad_job_id:
@@ -613,10 +614,11 @@ def retry_lost_downloader_jobs() -> None:
                                      job_id=job.id
                         )
                         lost_jobs.append(job)
-                else:
+                elif jobs_queued_from_this_page < queue_capacity:
                     # The job never got put in the Nomad queue, no
                     # need to recreate it, we just gotta queue it up!
                     send_job(Downloaders[job.downloader_task], job=job, is_dispatch=True)
+                    jobs_queued_from_this_page += 1
             except socket.timeout:
                 logger.info("Timeout connecting to Nomad - is Nomad down?", job_id=job.id)
             except URLNotFoundNomadException:
@@ -630,13 +632,14 @@ def retry_lost_downloader_jobs() -> None:
             except Exception:
                 logger.exception("Couldn't query Nomad about Downloader Job.", downloader_job=job.id)
 
-        if lost_jobs:
+        remaining_capacity = queue_capacity - jobs_queued_from_this_page
+        if lost_jobs and remaining_capacity > 0:
             logger.info(
                 "Handling page %d of lost (never-started) downloader jobs!",
                 page_count,
                 len_jobs=len(lost_jobs)
             )
-            handle_downloader_jobs(lost_jobs, queue_capacity)
+            handle_downloader_jobs(lost_jobs, remaining_capacity)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
