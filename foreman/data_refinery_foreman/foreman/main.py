@@ -1356,6 +1356,8 @@ def cleanup_the_queue():
                     job_record.save()
                     num_jobs_killed += 1
                 except:
+                    logger.error("Could not remove Nomad job from the Nomad queue.",
+                                 nomad_job_id=job["ID"])
                     # If we can't do this for some reason, we'll get it next loop.
                     pass
 
