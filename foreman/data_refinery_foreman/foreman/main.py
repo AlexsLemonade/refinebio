@@ -1357,7 +1357,8 @@ def cleanup_the_queue():
                     num_jobs_killed += 1
                 except:
                     logger.exception("Could not remove Nomad job from the Nomad queue.",
-                                     nomad_job_id=job["ID"])
+                                     nomad_job_id=job["ID"],
+                                     job_type=job_type)
                     # If we can't do this for some reason, we'll get it next loop.
                     pass
 
