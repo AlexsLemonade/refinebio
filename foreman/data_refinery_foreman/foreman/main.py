@@ -50,14 +50,14 @@ MAX_NUM_RETRIES = 2
 # This can be overritten by the env var "MAX_TOTAL_JOBS"
 DEFAULT_MAX_JOBS = 20000
 
-DOWNLOADER_JOBS_PER_NODE = 15
+DOWNLOADER_JOBS_PER_NODE = 150
 PAGE_SIZE=2000
 
 # This is the maximum number of non-dead nomad jobs that can be in the
 # queue. Set the default to one node's worth so we never are unable
 # to queue downloader jobs.
 MAX_TOTAL_DOWNLOADER_JOBS = DOWNLOADER_JOBS_PER_NODE
-TIME_OF_LAST_SIZE_CHECK = timezone.now() - datetime.timedelta(hours=1)
+TIME_OF_LAST_SIZE_CHECK = timezone.now() - datetime.timedelta(minutes=10)
 
 # This is the absolute max number of downloader jobs that should ever
 # be queued across the whole cluster no matter how many nodes we
@@ -482,6 +482,11 @@ def retry_failed_downloader_jobs() -> None:
     paginator = Paginator(failed_jobs, PAGE_SIZE)
     page = paginator.page()
     page_count = 0
+
+    if queue_capacity <= 0:
+        logger.info("Not handling failed (explicitly-marked-as-failure) downloader jobs "
+                    "because there is no capacity for them.")
+
     while queue_capacity > 0:
         logger.info(
             "Handling page %d of failed (explicitly-marked-as-failure) downloader jobs!",
@@ -517,6 +522,10 @@ def retry_hung_downloader_jobs() -> None:
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
+
+    if queue_capacity <= 0:
+        logger.info("Not handling failed (explicitly-marked-as-failure) downloader jobs "
+                    "because there is no capacity for them.")
 
     paginator = Paginator(potentially_hung_jobs, PAGE_SIZE)
     page = paginator.page()
@@ -580,6 +589,10 @@ def retry_lost_downloader_jobs() -> None:
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
+
+    if queue_capacity <= 0:
+        logger.info("Not handling failed (explicitly-marked-as-failure) downloader jobs "
+                    "because there is no capacity for them.")
 
     paginator = Paginator(potentially_lost_jobs, PAGE_SIZE)
     page = paginator.page()
