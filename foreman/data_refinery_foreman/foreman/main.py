@@ -57,7 +57,7 @@ PAGE_SIZE=2000
 # queue. Set the default to one node's worth so we never are unable
 # to queue downloader jobs.
 MAX_TOTAL_DOWNLOADER_JOBS = DOWNLOADER_JOBS_PER_NODE
-TIME_OF_LAST_SIZE_CHECK = timezone.now() - datetime.timedelta(hours=1)
+TIME_OF_LAST_SIZE_CHECK = timezone.now() - datetime.timedelta(minutes=10)
 
 # This is the absolute max number of downloader jobs that should ever
 # be queued across the whole cluster no matter how many nodes we
