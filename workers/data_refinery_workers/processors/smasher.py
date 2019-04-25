@@ -724,6 +724,9 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             elif job_context['dataset'].aggregate_by == "ALL":
                 subdir = "ALL"
 
+            # Normalize the Header format
+            untransposed.index.rename('Gene', inplace=True)
+
             outfile_dir = smash_path + key + "/"
             os.makedirs(outfile_dir, exist_ok=True)
             outfile = outfile_dir + key + ".tsv"
