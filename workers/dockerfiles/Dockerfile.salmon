@@ -43,6 +43,8 @@ WORKDIR /home/user
 ENV SALMON_VERSION 0.13.1
 RUN wget https://github.com/COMBINE-lab/salmon/releases/download/v${SALMON_VERSION}/Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
 RUN mkdir Salmon-${SALMON_VERSION}_linux_x86_64
+# On version 0.13.1 salmon was being extracted to a folder with an all lowercase name
+# the options `-C` and `--strip-components` allow us to specify the name for the resulting file
 RUN tar -xzf Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz -C Salmon-${SALMON_VERSION}_linux_x86_64 --strip-components 1
 # Create soft link `/usr/local/bin/salmon` that points to the actual program
 RUN ln -sf `pwd`/Salmon-${SALMON_VERSION}_linux_x86_64/bin/salmon /usr/local/bin/
