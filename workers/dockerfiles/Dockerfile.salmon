@@ -40,7 +40,7 @@ RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
 # Install Salmon
-ENV SALMON_VERSION 0.9.1
+ENV SALMON_VERSION 0.13.1
 RUN wget https://github.com/COMBINE-lab/salmon/releases/download/v${SALMON_VERSION}/Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
 RUN tar -xzf Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
 # Create soft link `/usr/local/bin/salmon` that points to the actual program
