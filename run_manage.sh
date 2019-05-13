@@ -15,13 +15,13 @@ set -e
 script_directory=`perl -e 'use File::Basename;
  use Cwd "abs_path";
  print dirname(abs_path(@ARGV[0]));' -- "$0"`
-cd $script_directory
+cd "$script_directory"
 
 # Set up the data volume directory if it does not already exist
 volume_directory="$script_directory/api/volume"
 if [ ! -d "$volume_directory" ]; then
-    mkdir $volume_directory
-    chmod -R a+rwX $volume_directory
+    mkdir "$volume_directory"
+    chmod -R a+rwX "$volume_directory"
 fi
 
 docker build -t dr_shell -f api/dockerfiles/Dockerfile.api_local .
@@ -32,12 +32,12 @@ DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)
 
 docker run -it \
-       --add-host=database:$DB_HOST_IP \
-       --add-host=nomad:$HOST_IP \
-       --add-host=elasticsearch:$ES_HOST_IP \
-       --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
-       --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+       --add-host=database:"$DB_HOST_IP" \
+       --add-host=nomad:"$HOST_IP" \
+       --add-host=elasticsearch:"$ES_HOST_IP" \
+       --env AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+       --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
        --env-file api/environments/local \
        --volume /tmp:/tmp \
-       --volume $volume_directory:/home/user/data_store \
+       --volume "$volume_directory":/home/user/data_store \
        --interactive dr_shell python3 manage.py $@
