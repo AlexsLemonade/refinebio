@@ -903,6 +903,12 @@ class ComputedFile(models.Model):
             return None
 
     def change_s3_location(self, new_bucket: str, new_key: str) -> bool:
+        """Moves the file from its current location in S3.
+
+        The new location will be set based on `new_bucket` and
+        `new_key`. The s3_bucket and s3_key properties will be updated
+        to reflect this on a successful move.
+        """
         old_bucket = self.s3_bucket
         old_key = self.s3_key
         copy_source = {
