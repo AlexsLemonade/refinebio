@@ -11,4 +11,4 @@ done
 
 # If it is not a good key then the exit code is 1, which will cause
 # the deploy to fail.
-git tag --verify "$CIRCLE_TAG"
+git tag --verify "$1"
