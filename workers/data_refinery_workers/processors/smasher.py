@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 
 import boto3
 import csv
@@ -306,7 +306,7 @@ def _write_tsv_json(job_context, metadata, smash_path):
     else:
         all_dir = smash_path + "ALL/"
         os.makedirs(all_dir, exist_ok=True)
-        tsv_path = all_dir + 'metadata_ALL.tsv' 
+        tsv_path = all_dir + 'metadata_ALL.tsv'
         with open(tsv_path, 'w', encoding='utf-8') as tsv_file:
             dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
             dw.writeheader()
@@ -438,7 +438,7 @@ def _quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict
         new_merged = pd.DataFrame(ar, columns=job_context['merged_no_qn'].columns, index=job_context['merged_no_qn'].index)
         job_context['merged_qn'] = new_merged
         merged = new_merged
-    return job_context   
+    return job_context
 
 def _smash(job_context: Dict, how="inner") -> Dict:
     """
@@ -749,6 +749,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         metadata['ks_statistic'] = job_context.get("ks_statistic", None)
         metadata['ks_pvalue'] = job_context.get("ks_pvalue", None)
         metadata['ks_warning'] = job_context.get("ks_warning", None)
+        metadata['quantile_normalized'] = job_context['dataset'].quantile_normalize
 
         samples = {}
         for sample in job_context["dataset"].get_samples():
@@ -917,7 +918,7 @@ def _notify(job_context: Dict) -> Dict:
             if job_context['job'].failure_reason not in ['', None]:
                 SUBJECT = "There was a problem processing your refine.bio dataset :("
                 BODY_TEXT = "We tried but were unable to process your requested dataset. Error was: \n\n" + str(job_context['job'].failure_reason) + "\nDataset ID: " + str(job_context['dataset'].id) + "\n We have been notified and are looking into the problem. \n\nSorry!"
-                
+
                 ERROR_EMAIL_TITLE = quote('I can\'t download my dataset')
                 ERROR_EMAIL_BODY = quote("""
                 [What browser are you using?]
@@ -925,7 +926,7 @@ def _notify(job_context: Dict) -> Dict:
 
                 ---
                 """ + str(job_context['dataset'].id))
-                
+
                 FORMATTED_HTML = BODY_ERROR_HTML.replace('REPLACE_DATASET_URL', dataset_url)\
                                                 .replace('REPLACE_ERROR_TEXT', job_context['job'].failure_reason)\
                                                 .replace('REPLACE_NEW_ISSUE', 'https://github.com/AlexsLemonade/refinebio/issues/new?title={0}&body={1}&labels=bug'.format(ERROR_EMAIL_TITLE, ERROR_EMAIL_BODY))\
