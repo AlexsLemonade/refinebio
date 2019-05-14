@@ -46,7 +46,7 @@ run_on_deploy_box "git fetch --all"
 run_on_deploy_box "git checkout $CIRCLE_TAG"
 
 # Verify that the tag has been signed by a trusted team member.
-run_on_deploy_box "bash .circleci/verify_tag.sh"
+run_on_deploy_box "bash .circleci/verify_tag.sh $CIRCLE_TAG"
 
 # Copy the necessary environment variables over.
 scp -o StrictHostKeyChecking=no \
