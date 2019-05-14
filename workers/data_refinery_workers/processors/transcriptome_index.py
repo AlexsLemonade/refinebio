@@ -216,7 +216,7 @@ def _create_index(job_context: Dict) -> Dict:
     # https://github.com/COMBINE-lab/salmon/issues/148
     job_context["salmon_version"] = subprocess.run(['salmon', '--version'],
                                                 stderr=subprocess.PIPE,
-                                                stdout=subprocess.PIPE).stderr.decode().strip()
+                                                stdout=subprocess.PIPE).stdout.decode().strip()
 
     # TODO: is this providing a filename prefix or a directory or both?
     rsem_prefix = os.path.join(job_context["rsem_index_dir"],
