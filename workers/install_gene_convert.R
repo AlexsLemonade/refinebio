@@ -11,6 +11,7 @@ devtools::install_version('pillar', version='1.3.1')
 devtools::install_version('tibble', version='2.0.1')
 devtools::install_version('lazyeval', version='0.2.1')
 devtools::install_version('dplyr', version='0.7.8')
+devtools::install_version('reshape2', version='1.4.3')
 
 # devtools::install_url() requires BiocInstaller
 install.packages('https://bioconductor.org/packages/3.6/bioc/src/contrib/BiocInstaller_1.28.0.tar.gz')
