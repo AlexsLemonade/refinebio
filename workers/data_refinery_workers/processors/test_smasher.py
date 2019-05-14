@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 
 import csv
 import json
@@ -308,6 +308,13 @@ class SmasherTestCase(TestCase):
             self.assertTrue('LICENSE.TXT' in namelist)
             self.assertTrue('ALL/ALL.tsv' in namelist)
 
+            with zf.open('aggregated_metadata.json') as aggregated_metadata:
+                metadata_str = aggregated_metadata.read().decode()
+                parsed_metadata = json.loads(metadata_str)
+                # This dataset isn't quantile normalized, but we
+                # should still be providing this value as False
+                self.assertFalse(parsed_metadata['quantile_normalized'])
+
             os.remove(final_context['output_file'])
             job.start_time = None
             job.end_time = None
@@ -413,7 +420,7 @@ class SmasherTestCase(TestCase):
 
     @tag("smasher")
     def test_no_smash_all_diff_species(self):
-        """ Smashing together with 'ALL' with different species is a really weird behavior. 
+        """ Smashing together with 'ALL' with different species is a really weird behavior.
         This test isn't really testing a normal case, just make sure that it's marking the
         unsmashable files.
         """
@@ -749,6 +756,13 @@ class SmasherTestCase(TestCase):
 
         final_context = smasher.smash(job.pk, upload=False)
         self.assertTrue(final_context['success'])
+
+        zf = zipfile.ZipFile(final_context['output_file'])
+
+        with zf.open('aggregated_metadata.json') as aggregated_metadata:
+            metadata_str = aggregated_metadata.read().decode()
+            parsed_metadata = json.loads(metadata_str)
+            self.assertTrue(parsed_metadata['quantile_normalized'])
 
 
     @tag("smasher")
@@ -1280,7 +1294,7 @@ class AggregationTestCase(TestCase):
         }
         final_context = smasher._write_tsv_json(job_context, self.unicode_metadata, self.smash_path)
         reso = final_context[0]
-        with open(reso, encoding='utf-8') as tsv_file: 
+        with open(reso, encoding='utf-8') as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
             for row_num, row in enumerate(reader):
                 print(str(row).encode('utf-8'))
@@ -1292,7 +1306,7 @@ class AggregationTestCase(TestCase):
         }
         final_context = smasher._write_tsv_json(job_context, self.unicode_metadata, self.smash_path)
         reso = final_context[0]
-        with open(reso, encoding='utf-8') as tsv_file: 
+        with open(reso, encoding='utf-8') as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
             for row_num, row in enumerate(reader):
                 print(str(row).encode('utf-8'))
@@ -1306,7 +1320,7 @@ class AggregationTestCase(TestCase):
         }
         final_context = smasher._write_tsv_json(job_context, self.unicode_metadata, self.smash_path)
         reso = final_context[0]
-        with open(reso, encoding='utf-8') as tsv_file: 
+        with open(reso, encoding='utf-8') as tsv_file:
             reader = csv.DictReader(tsv_file, delimiter='\t')
             for row_num, row in enumerate(reader):
                 print(str(row).encode('utf-8'))
