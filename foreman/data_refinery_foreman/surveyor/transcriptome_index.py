@@ -16,33 +16,15 @@ from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyo
 
 logger = get_and_configure_logger(__name__)
 
-
-DIVISION_URL_TEMPLATE = ("https://rest.ensemblgenomes.org/info/genomes/division/{division}"
+DIVISION_URL_TEMPLATE = ("https://rest.ensembl.org/info/genomes/division/{division}"
                          "?content-type=application/json")
 TRANSCRIPTOME_URL_TEMPLATE = ("ftp://ftp.{url_root}/fasta/{species_sub_dir}/dna/"
                               "{filename_species}.{assembly}.dna.{schema_type}.fa.gz")
 GTF_URL_TEMPLATE = ("ftp://ftp.{url_root}/gtf/{species_sub_dir}/"
                     "{filename_species}.{assembly}.{assembly_version}.gtf.gz")
-MAIN_DIVISION_URL_TEMPLATE = "https://rest.ensembl.org/info/species?content-type=application/json"
 
-
-# For whatever reason the division in the download URL is shortened in
-# a way that doesn't seem to be discoverable programmatically. I've
-# therefore created this lookup map:
-DIVISION_LOOKUP = {"EnsemblPlants": "plants",
-                   "EnsemblFungi": "fungi",
-                   "EnsemblBacteria": "bacteria",
-                   "EnsemblProtists": "protists",
-                   "EnsemblMetazoa": "metazoa"}
-
-
-# Ensembl will periodically release updated versions of the
-# assemblies.  All divisions other than the main one have identical
-# release versions. These urls will return what the most recent
-# release version is.
-MAIN_RELEASE_URL = "https://rest.ensembl.org/info/software?content-type=application/json"
-DIVISION_RELEASE_URL = "https://rest.ensemblgenomes.org/info/eg_version?content-type=application/json"
-
+# Ensembl will periodically release updated versions of the assemblies.
+RELEASE_URL = "https://rest.ensembl.org/info/software?content-type=application/json"
 
 class EnsemblUrlBuilder(ABC):
     """Generates URLs for different divisions of Ensembl.
@@ -56,32 +38,17 @@ class EnsemblUrlBuilder(ABC):
 
     def __init__(self, species: Dict):
         """Species is a Dict containing parsed JSON from the Division API."""
-        self.url_root = "ensemblgenomes.org/pub/release-{assembly_version}/{short_division}"
-        self.short_division = DIVISION_LOOKUP[species["division"]]
-        self.assembly = species["assembly_name"].replace(" ", "_")
-        self.assembly_version = utils.requests_retry_session().get(DIVISION_RELEASE_URL).json()["version"]
-
-        # Some species are nested within a collection directory. If
-        # this is the case, then we need to add that extra directory
-        # to the URL, and for whatever reason the filename is not
-        # capitalized.
-        COLLECTION_REGEX = r"^(.*_collection).*"
-        match_object = re.search(COLLECTION_REGEX, species["dbname"])
-        if match_object:
-            self.species_sub_dir = match_object.group(1) + "/" + species["species"]
-            self.filename_species = species["species"]
-        else:
-            self.species_sub_dir = species["species"]
-            self.filename_species = species["species"].capitalize()
-
-        # These fields aren't needed for the URL, but they vary between
-        # the two REST APIs.
-        self.scientific_name = species["name"].upper()
+        self.url_root = "ensembl.org/pub/release-{assembly_version}"
+        self.assembly = species["assembly_name"]
+        self.assembly_version = utils.requests_retry_session().get(
+            RELEASE_URL).json()["release"]
+        self.species_sub_dir = species["name"]
+        self.filename_species = species["name"].capitalize()
         self.taxonomy_id = species["taxonomy_id"]
+        self.scientific_name = self.filename_species.replace("_", " ")
 
     def build_transcriptome_url(self) -> str:
-        url_root = self.url_root.format(assembly_version=self.assembly_version,
-                                        short_division=self.short_division)
+        url_root = self.url_root.format(assembly_version=self.assembly_version)
         url = TRANSCRIPTOME_URL_TEMPLATE.format(url_root=url_root,
                                                 species_sub_dir=self.species_sub_dir,
                                                 filename_species=self.filename_species,
@@ -101,8 +68,7 @@ class EnsemblUrlBuilder(ABC):
         return url
 
     def build_gtf_url(self) -> str:
-        url_root = self.url_root.format(assembly_version=self.assembly_version,
-                                        short_division=self.short_division)
+        url_root = self.url_root.format(assembly_version=self.assembly_version)
         return GTF_URL_TEMPLATE.format(url_root=url_root,
                                        species_sub_dir=self.species_sub_dir,
                                        filename_species=self.filename_species,
@@ -127,7 +93,8 @@ class MainEnsemblUrlBuilder(EnsemblUrlBuilder):
         self.species_sub_dir = species["name"]
         self.filename_species = species["name"].capitalize()
         self.assembly = species["assembly"]
-        self.assembly_version = utils.requests_retry_session().get(MAIN_RELEASE_URL).json()["release"]
+        self.assembly_version = utils.requests_retry_session().get(
+            MAIN_RELEASE_URL).json()["release"]
         self.scientific_name = self.filename_species.replace("_", " ")
         self.taxonomy_id = species["taxon_id"]
 
@@ -163,15 +130,7 @@ def ensembl_url_builder_factory(species: Dict) -> EnsemblUrlBuilder:
 
     The class of the returned object is based on the species' division.
     """
-    if species["division"] == "EnsemblProtists":
-        return EnsemblProtistsUrlBuilder(species)
-    elif species["division"] == "EnsemblFungi":
-        return EnsemblFungiUrlBuilder(species)
-    elif species["division"] == "EnsemblVertebrates":
-        return MainEnsemblUrlBuilder(species)
-    else:
-        return EnsemblUrlBuilder(species)
-
+    return EnsemblUrlBuilder(species)
 
 class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
     def source_type(self):
@@ -205,7 +164,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         url_builder = ensembl_url_builder_factory(species)
         fasta_download_url = url_builder.build_transcriptome_url()
         gtf_download_url = url_builder.build_gtf_url()
-
+        
         platform_accession_code = species.pop("division")
         self._clean_metadata(species)
 
@@ -272,16 +231,10 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
                     ensembl_division,
                     survey_job=self.survey_job.id)
 
-        # The main division has a different base URL for its REST API.
-        if ensembl_division == "Ensembl":
-            r = utils.requests_retry_session().get(MAIN_DIVISION_URL_TEMPLATE)
-
-            # Yes I'm aware that specieses isn't a word. However I need to
-            # distinguish between a singlular species and multiple species.
-            specieses = r.json()["species"]
-        else:
-            r = utils.requests_retry_session().get(DIVISION_URL_TEMPLATE.format(division=ensembl_division))
-            specieses = r.json()
+        r = utils.requests_retry_session().get(DIVISION_URL_TEMPLATE.format(division=ensembl_division))
+        # Yes I'm aware that specieses isn't a word. However I need to
+        # distinguish between a singular species and multiple species.
+        specieses = r.json()
 
         try:
             organism_name = SurveyJobKeyValue.objects.get(survey_job_id=self.survey_job.id,
@@ -293,11 +246,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         all_new_species = []
         if organism_name:
             for species in specieses:
-                # This key varies based on whether the division is the
-                # main one or not... why couldn't they just make them
-                # consistent?
-                if ('species' in species and species['species'] == organism_name) \
-                   or ('name' in species and species['name'] == organism_name):
+                if (species['name'] == organism_name):
                     all_new_species.append(self._generate_files(species))
                     break
         else:
