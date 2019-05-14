@@ -16,9 +16,9 @@ if [[ "$RELEASE_PLATFORM" = "darwin" ]]; then
 	function sha256sum() { shasum -a 256 "$@" ; } && export -f sha256sum
 fi
 
-curl -0s https://releases.hashicorp.com/nomad/${RELEASE_VERSION}/nomad_${RELEASE_VERSION}_${RELEASE_PLATFORM}_amd64.zip > nomad_${RELEASE_VERSION}_${RELEASE_PLATFORM}_amd64.zip
-curl -0s https://releases.hashicorp.com/nomad/${RELEASE_VERSION}/nomad_${RELEASE_VERSION}_SHA256SUMS > nomad_${RELEASE_VERSION}_SHA256SUMS
-curl -0s https://releases.hashicorp.com/nomad/${RELEASE_VERSION}/nomad_${RELEASE_VERSION}_SHA256SUMS.sig > nomad_${RELEASE_VERSION}_SHA256SUMS.sig
+curl -0s "https://releases.hashicorp.com/nomad/${RELEASE_VERSION}/nomad_${RELEASE_VERSION}_${RELEASE_PLATFORM}_amd64.zip" > "nomad_${RELEASE_VERSION}_${RELEASE_PLATFORM}_amd64.zip"
+curl -0s "https://releases.hashicorp.com/nomad/${RELEASE_VERSION}/nomad_${RELEASE_VERSION}_SHA256SUMS" > "nomad_${RELEASE_VERSION}_SHA256SUMS"
+curl -0s "https://releases.hashicorp.com/nomad/${RELEASE_VERSION}/nomad_${RELEASE_VERSION}_SHA256SUMS.sig" > "nomad_${RELEASE_VERSION}_SHA256SUMS.sig"
 
 # Verify the signature file is untampered.
 gpg_ok=$(gpg --verify "nomad_${RELEASE_VERSION}_SHA256SUMS.sig" "nomad_${RELEASE_VERSION}_SHA256SUMS" 2>&1 | grep Good)
@@ -28,7 +28,7 @@ if [[ "$gpg_ok" = "" ]]; then
 fi
 
 # Verify the SHASUM matches the binary.
-shasum_ok=$(sha256sum -c nomad_${RELEASE_VERSION}_SHA256SUMS 2>&1 | grep OK)
+shasum_ok=$(sha256sum -c "nomad_${RELEASE_VERSION}_SHA256SUMS" 2>&1 | grep OK)
 if [[ "$shasum_ok" = "" ]]; then
     echo "Could not verify the Nomad checksum provided by Hashicorp."
     exit 1
@@ -37,15 +37,15 @@ fi
 if [[ "$RELEASE_PLATFORM" = "linux" ]]; then
 	apt-get update
 	apt-get install -y unzip
-	unzip -d /usr/bin nomad_${RELEASE_VERSION}_${RELEASE_PLATFORM}_amd64.zip
+	unzip -d /usr/bin "nomad_${RELEASE_VERSION}_${RELEASE_PLATFORM}_amd64.zip"
 	chmod a+rx /usr/bin/nomad
 fi
 if [[ "$RELEASE_PLATFORM" = "darwin" ]]; then
-	unzip -d /usr/local/bin nomad_${RELEASE_VERSION}_${RELEASE_PLATFORM}_amd64.zip
+	unzip -d /usr/local/bin "nomad_${RELEASE_VERSION}_${RELEASE_PLATFORM}_amd64.zip"
 	chmod a+rx /usr/local/bin/nomad
 fi
 
 # Cleanup after ourselves
-rm nomad_${RELEASE_VERSION}_${RELEASE_PLATFORM}_amd64.zip
-rm nomad_${RELEASE_VERSION}_SHA256SUMS
-rm nomad_${RELEASE_VERSION}_SHA256SUMS.sig
+rm "nomad_${RELEASE_VERSION}_${RELEASE_PLATFORM}_amd64.zip"
+rm "nomad_${RELEASE_VERSION}_SHA256SUMS"
+rm "nomad_${RELEASE_VERSION}_SHA256SUMS.sig"

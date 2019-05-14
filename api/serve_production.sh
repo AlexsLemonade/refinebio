@@ -7,7 +7,7 @@
 script_directory=`perl -e 'use File::Basename;
  use Cwd "abs_path";
  print dirname(abs_path(@ARGV[0]));' -- "$0"`
-cd $script_directory
+cd "$script_directory"
 
 # However in order to give Docker access to all the code we have to
 # move up a level
@@ -22,8 +22,8 @@ DB_HOST_IP=$(get_docker_db_ip_address)
 STATIC_VOLUMES=/tmp/volumes_static
 
 docker run \
-       --add-host=database:$DB_HOST_IP \
-       --add-host=nomad:$HOST_IP \
+       --add-host=database:"$DB_HOST_IP" \
+       --add-host=nomad:"$HOST_IP" \
        --env-file api/environments/local \
        --link drdb:postgres \
        -v "$STATIC_VOLUMES":/tmp/www/static \

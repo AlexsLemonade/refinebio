@@ -43,12 +43,12 @@ while getopts ":d:v:h" opt; do
     esac
 done
 
-if [[ -z $DOCKERHUB_REPO ]]; then
+if [[ -z "$DOCKERHUB_REPO" ]]; then
     echo 'Error: must specify the Dockerhub repo with -d'
     exit 1
 fi
 
-if [[ -z $SYSTEM_VERSION ]]; then
+if [[ -z "$SYSTEM_VERSION" ]]; then
     echo 'Error: must specify the version repo with -v'
     exit 1
 fi
@@ -57,7 +57,7 @@ fi
 CCDL_WORKER_IMGS="salmon transcriptome no_op downloaders illumina smasher"
 
 # Set the version for the common project.
-echo $SYSTEM_VERSION > common/version
+echo "$SYSTEM_VERSION" > common/version
 
 # Create common/dist/data-refinery-common-*.tar.gz, which is
 # required by the workers and data_refinery_foreman images.
@@ -66,19 +66,19 @@ rm -f common/dist/*
 cd common && python setup.py sdist
 
 cd ..
-for IMG in $CCDL_WORKER_IMGS; do
+for IMG in "$CCDL_WORKER_IMGS"; do
     image_name="$DOCKERHUB_REPO/dr_$IMG"
 
     echo "Building docker image: $image_name:$SYSTEM_VERSION"
     # Build and push image.
     docker build \
-           -t $image_name:$SYSTEM_VERSION \
-           -f workers/dockerfiles/Dockerfile.$IMG \
-           --build-arg SYSTEM_VERSION=$SYSTEM_VERSION .
-    docker push $image_name:$SYSTEM_VERSION
+           -t "$image_name:$SYSTEM_VERSION" \
+           -f "workers/dockerfiles/Dockerfile.$IMG" \
+           --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" .
+    docker push "$image_name:$SYSTEM_VERSION"
     # Update latest version
-    docker tag $image_name:$SYSTEM_VERSION $image_name:latest
-    docker push $image_name:latest
+    docker tag "$image_name:$SYSTEM_VERSION" "$image_name:latest"
+    docker push "$image_name:latest"
 done
 
 # Build and push Foreman image.
@@ -86,7 +86,7 @@ FOREMAN_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_foreman"
 docker build \
        -t "$FOREMAN_DOCKER_IMAGE:$SYSTEM_VERSION" \
        -f foreman/dockerfiles/Dockerfile.foreman \
-       --build-arg SYSTEM_VERSION=$SYSTEM_VERSION .
+       --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" .
 docker push "$FOREMAN_DOCKER_IMAGE:$SYSTEM_VERSION"
 # Update latest version
 docker tag "$FOREMAN_DOCKER_IMAGE:$SYSTEM_VERSION" "$FOREMAN_DOCKER_IMAGE:latest"
@@ -97,7 +97,7 @@ API_DOCKER_IMAGE="$DOCKERHUB_REPO/dr_api"
 docker build \
        -t "$API_DOCKER_IMAGE:$SYSTEM_VERSION" \
        -f api/dockerfiles/Dockerfile.api_production \
-       --build-arg SYSTEM_VERSION=$SYSTEM_VERSION .
+       --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" .
 docker push "$API_DOCKER_IMAGE:$SYSTEM_VERSION"
 # Update latest version
 docker tag "$API_DOCKER_IMAGE:$SYSTEM_VERSION" "$API_DOCKER_IMAGE:latest"
