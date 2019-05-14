@@ -30,15 +30,10 @@ RUN cd RSEM && make install
 RUN rm -rf RSEM
 
 # Install Salmon
-
-# Old and busted
-# ENV SALMON_VERSION 0.8.0
-
-# Newer hotness
-ENV SALMON_VERSION 0.9.1
+ENV SALMON_VERSION 0.13.1
 
 # Doesn't work:
-# salmon: relocation error: /usr/local/bin/../lib/librt.so.1: symbol __vdso_clock_gettime, version GLIBC_PRIVATE not defined in file libc.so.6 with link time reference 
+# salmon: relocation error: /usr/local/bin/../lib/librt.so.1: symbol __vdso_clock_gettime, version GLIBC_PRIVATE not defined in file libc.so.6 with link time reference
 # ENV SALMON_VERSION 0.10.0
 
 # Binary releases moved to bioconda, doesn't work anymore.
