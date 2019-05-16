@@ -786,9 +786,10 @@ def _run_salmon(job_context: Dict) -> Dict:
                  processor_job=job_context["job_id"])
 
     job_context['time_start'] = timezone.now()
-    completed_command = subprocess.run(formatted_command.split(),
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
+    with open('/home/user/data_store/salmon.output', 'w') as salmon_output:
+        completed_command = subprocess.run(formatted_command.split(),
+                                           stdout=salmon_output,
+                                           stderr=salmon_output)
     job_context['time_end'] = timezone.now()
 
     ## To me, this looks broken: error codes are anything non-zero.

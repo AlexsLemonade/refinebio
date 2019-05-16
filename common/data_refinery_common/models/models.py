@@ -741,7 +741,7 @@ class OriginalFile(models.Model):
 
         if sample.source_database == "SRA":
             for computed_file in sample.computed_files.all():
-                    if computed_file.s3_bucket and computed_file.s3_key:
+                    if settings.RUNNING_IN_CLOUD and computed_file.s3_bucket and computed_file.s3_key:
                         return False
         else:
             # If this original_file has multiple samples (is an

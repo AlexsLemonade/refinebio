@@ -208,7 +208,9 @@ def prepare_original_files(job_context):
 
             undownloaded_files.add(original_file)
 
+
     if undownloaded_files:
+        import pdb; pdb.set_trace()
         logger.info(
             ("One or more files found which were missing or not downloaded."
              " Creating downloader jobs for them and deleting this job."),
