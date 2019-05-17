@@ -569,16 +569,14 @@ class DatasetDetailsExperimentSerializer(serializers.ModelSerializer):
     """ This serializer contains all of the information about an experiment needed for the download
     page
     """
-    organisms = serializers.StringRelatedField(many=True)
+    organisms = serializers.ReadOnlyField(source='organism_names')
     sample_metadata = serializers.ReadOnlyField(source='sample_metadata_fields')
-    pretty_platforms = serializers.ReadOnlyField()
 
     class Meta:
         model = Experiment
         fields = (
                     'title',
                     'accession_code',
-                    'pretty_platforms',
                     'organisms',
                     'sample_metadata',
                     'technology'
@@ -705,7 +703,7 @@ class DatasetSerializer(serializers.ModelSerializer):
 
     def get_experiments(self, obj):
         """ Call `get_experiments` in the model but add some `prefetch_related` calls """
-        experiments = obj.get_experiments().prefetch_related('organisms')
+        experiments = obj.get_experiments()
         return DatasetDetailsExperimentSerializer(experiments, many=True).data
 
 
