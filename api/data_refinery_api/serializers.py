@@ -584,7 +584,7 @@ class DatasetDetailsExperimentSerializer(serializers.ModelSerializer):
 
 class DatasetSerializer(serializers.ModelSerializer):
     start = serializers.NullBooleanField(required=False)
-    experiments = serializers.SerializerMethodField(read_only=True)
+    experiments = DatasetDetailsExperimentSerializer(source='get_experiments', many=True, read_only=True)
     organism_samples = serializers.SerializerMethodField(read_only=True)
 
     def __init__(self, *args, **kwargs):
@@ -700,12 +700,6 @@ class DatasetSerializer(serializers.ModelSerializer):
             result[sample['organism__name']].append(sample['accession_code'])
 
         return result
-
-    def get_experiments(self, obj):
-        """ Call `get_experiments` in the model but add some `prefetch_related` calls """
-        experiments = obj.get_experiments()
-        return DatasetDetailsExperimentSerializer(experiments, many=True).data
-
 
 class APITokenSerializer(serializers.ModelSerializer):
 
