@@ -570,7 +570,7 @@ class DatasetDetailsExperimentSerializer(serializers.ModelSerializer):
     page
     """
     organisms = serializers.StringRelatedField(many=True)
-    sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
+    sample_metadata = serializers.ReadOnlyField(source='sample_metadata_fields')
     pretty_platforms = serializers.ReadOnlyField()
 
     class Meta:
@@ -581,6 +581,7 @@ class DatasetDetailsExperimentSerializer(serializers.ModelSerializer):
                     'pretty_platforms',
                     'organisms',
                     'sample_metadata',
+                    'technology'
                 )
 
 class DatasetSerializer(serializers.ModelSerializer):
@@ -628,7 +629,8 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'sha1',
                     'experiments',
                     'organism_samples',
-                    'download_url'
+                    'download_url',
+                    'quantile_normalize'
             )
         extra_kwargs = {
                         'id': {
@@ -703,7 +705,7 @@ class DatasetSerializer(serializers.ModelSerializer):
 
     def get_experiments(self, obj):
         """ Call `get_experiments` in the model but add some `prefetch_related` calls """
-        experiments = obj.get_experiments().prefetch_related('samples').prefetch_related('organisms')
+        experiments = obj.get_experiments().prefetch_related('organisms')
         return DatasetDetailsExperimentSerializer(experiments, many=True).data
 
 
