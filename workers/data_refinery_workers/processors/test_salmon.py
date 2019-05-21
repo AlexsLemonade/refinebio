@@ -322,7 +322,7 @@ class SalmonTestCase(TestCase):
 
         og_read_2 = OriginalFile()
         og_read_2.absolute_file_path = os.path.join(experiment_dir, "raw/reads_2.fastq")
-        og_read_2.filename = "reads_1.fastq"
+        og_read_2.filename = "reads_2.fastq"
         og_read_2.save()
 
         OriginalFileSampleAssociation.objects.create(original_file=og_read_2, sample=test_sample).save()

@@ -461,9 +461,6 @@ for image in ${worker_images[*]}; do
         elif [[ $tag == "janitor" ]]; then
             ./prepare_image.sh -i smasher -s workers
             image_name=ccdlstaging/dr_smasher
-        elif [[ $tag == "salmon" ]]; then
-            # ignore salmon tests temporarily
-            continue
         else
             ./prepare_image.sh -i $image -s workers
             image_name=ccdlstaging/dr_$image
