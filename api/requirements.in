@@ -10,3 +10,6 @@ django-cors-headers
 django-filter
 coreapi
 mailchimp3
+# For ElasticSearch support:
+django-elasticsearch-dsl-drf
+six
