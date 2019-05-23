@@ -22,6 +22,7 @@ R:
   - Bioconductor
   - limma
   - oligo
+  - dplyr
   - illuminaHumanv1.db
   - illuminaHumanv2.db
   - illuminaHumanv3.db

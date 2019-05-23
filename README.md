@@ -119,7 +119,7 @@ The following services will need to be installed:
 - [Homebrew](https://brew.sh/)
 - [Docker for Mac](https://www.docker.com/docker-mac)
 - [Terraform](https://www.terraform.io/)
-- [Nomad](https://www.nomad.io/)
+- [Nomad](https://www.nomadproject.io/)
 - [git-crypt](https://www.agwa.name/projects/git-crypt/)
 - [iproute2mac](https://github.com/brona/iproute2mac)
 - [jq](https://stedolan.github.io/jq/)

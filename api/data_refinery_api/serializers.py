@@ -569,23 +569,22 @@ class DatasetDetailsExperimentSerializer(serializers.ModelSerializer):
     """ This serializer contains all of the information about an experiment needed for the download
     page
     """
-    organisms = serializers.StringRelatedField(many=True)
-    sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
-    pretty_platforms = serializers.ReadOnlyField()
+    organisms = serializers.ReadOnlyField(source='organism_names')
+    sample_metadata = serializers.ReadOnlyField(source='sample_metadata_fields')
 
     class Meta:
         model = Experiment
         fields = (
                     'title',
                     'accession_code',
-                    'pretty_platforms',
                     'organisms',
                     'sample_metadata',
+                    'technology'
                 )
 
 class DatasetSerializer(serializers.ModelSerializer):
     start = serializers.NullBooleanField(required=False)
-    experiments = serializers.SerializerMethodField(read_only=True)
+    experiments = DatasetDetailsExperimentSerializer(source='get_experiments', many=True, read_only=True)
     organism_samples = serializers.SerializerMethodField(read_only=True)
 
     def __init__(self, *args, **kwargs):
@@ -628,7 +627,8 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'sha1',
                     'experiments',
                     'organism_samples',
-                    'download_url'
+                    'download_url',
+                    'quantile_normalize'
             )
         extra_kwargs = {
                         'id': {
@@ -700,12 +700,6 @@ class DatasetSerializer(serializers.ModelSerializer):
             result[sample['organism__name']].append(sample['accession_code'])
 
         return result
-
-    def get_experiments(self, obj):
-        """ Call `get_experiments` in the model but add some `prefetch_related` calls """
-        experiments = obj.get_experiments().prefetch_related('samples').prefetch_related('organisms')
-        return DatasetDetailsExperimentSerializer(experiments, many=True).data
-
 
 class APITokenSerializer(serializers.ModelSerializer):
 

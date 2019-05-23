@@ -39,7 +39,7 @@ function docker_img_exists() {
                  -d '{"username": "'${DOCKER_ID}'", "password": "'${DOCKER_PASSWD}'"}' \
                  https://hub.docker.com/v2/users/login/ | jq -r .token)
     EXISTS=$(curl -s -H "Authorization: JWT ${TOKEN}" \
-                  https://hub.docker.com/v2/repositories/$1/tags/?page_size=10000 \
+                  "https://hub.docker.com/v2/repositories/$1/tags/?page_size=10000" \
              | jq -r "[.results | .[] | .name == \"$2\"] | any" 2> /dev/null)
     test -n "$EXISTS" -a "$EXISTS" = true
 }
@@ -49,18 +49,18 @@ function docker_img_exists() {
 # on master, then on dev, then error out because we should only deploy master or dev.
 get_master_or_dev() {
     # Takes the version that is being deployed as its only parameter
-    version=$1
+    version="$1"
 
-    if [[ -z $version ]]; then
+    if [[ -z "$version" ]]; then
         echo "You must pass the version to get_master_or_dev."
     else
         master_check=$(git log origin/master --decorate=full | grep "$version" || true)
         dev_check=$(git log origin/dev --decorate=full | grep "$version" || true)
 
         # All dev versions should end with '-dev' and all master versions should not.
-        if [[ ! -z $master_check ]] && [[ $version != *-dev ]]; then
+        if [[ ! -z "$master_check" ]] && [[ "$version" != *-dev ]]; then
             echo "master"
-        elif [[ ! -z $dev_check ]] ; then
+        elif [[ ! -z "$dev_check" ]] ; then
             echo "dev"
         else
             echo "unknown"

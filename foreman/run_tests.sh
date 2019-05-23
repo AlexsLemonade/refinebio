@@ -7,7 +7,7 @@
 script_directory=`perl -e 'use File::Basename;
  use Cwd "abs_path";
  print dirname(abs_path(@ARGV[0]));' -- "$0"`
-cd $script_directory
+cd "$script_directory"
 
 # Set up the data volume directory if it does not already exist.
 # Since the end-to-end tests are run from the Foreman image, use the
@@ -16,8 +16,8 @@ cd $script_directory
 project_root=$(cd .. && pwd)
 volume_directory="$project_root/test_volume"
 if [ ! -d "$volume_directory" ]; then
-    mkdir $volume_directory
-    chmod -R a+rwX $volume_directory
+    mkdir "$volume_directory"
+    chmod -R a+rwX "$volume_directory"
 fi
 
 # However in order to give Docker access to all the code we have to
@@ -50,9 +50,9 @@ ES_HOST_IP=$(get_docker_es_ip_address)
 HOST_IP=$(get_ip_address)
 
 docker run \
-       --add-host=database:$DB_HOST_IP \
-       --add-host=nomad:$HOST_IP \
-       --add-host=elasticsearch:$ES_HOST_IP \
+       --add-host=database:"$DB_HOST_IP" \
+       --add-host=nomad:"$HOST_IP" \
+       --add-host=elasticsearch:"$ES_HOST_IP" \
        --env-file foreman/environments/test \
-       --volume $volume_directory:/home/user/data_store \
+       --volume "$volume_directory":/home/user/data_store \
        -it ccdlstaging/dr_foreman bash -c "$(run_tests_with_coverage $@)"

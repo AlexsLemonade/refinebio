@@ -22,7 +22,7 @@ python:
 R:
   - AnnotationDbi
   - Bioconductor
-  - tidyverse
+  - dplyr
   - rlang
   - illuminaHumanv1.db
   - illuminaHumanv2.db

@@ -46,11 +46,11 @@ while getopts ":e:v:h" opt; do
     esac
 done
 
-if [[ -z $env ]]; then
+if [[ -z "$env" ]]; then
     env="local"
 fi
 
-if [[ -z $system_version ]]; then
+if [[ -z "$system_version" ]]; then
     system_version="latest"
 fi
 
@@ -58,13 +58,13 @@ fi
 script_directory=`perl -e 'use File::Basename;
  use Cwd "abs_path";
  print dirname(abs_path(@ARGV[0]));' -- "$0"`
-cd $script_directory
+cd "$script_directory"
 
 # Set up the data volume directory if it does not already exist
 volume_directory="$script_directory/volume"
 if [ ! -d "$volume_directory" ]; then
-    mkdir $volume_directory
-    chmod -R a+rwX $volume_directory
+    mkdir "$volume_directory"
+    chmod -R a+rwX "$volume_directory"
 fi
 
 # Load get_ip_address function.
@@ -74,7 +74,7 @@ export HOST_IP=$(get_ip_address)
 # Use a different Nomad port for test environment to avoid interfering
 # with the non-test Nomad.
 export NOMAD_PORT=4646
-if [ $env == "test" ]; then
+if [ "$env" == "test" ]; then
     export NOMAD_PORT=5646
 
     # format_nomad_with_env.sh will create distinct test Nomad job
@@ -93,18 +93,18 @@ else
 fi
 
 nomad_dir="$script_directory/nomad_dir$TEST_POSTFIX"
-if [ ! -d $nomad_dir ]; then
-    mkdir $nomad_dir
+if [ ! -d "$nomad_dir" ]; then
+    mkdir "$nomad_dir"
 fi
 
 # Start Nomad in both server and client mode locally
-nomad agent -bind $HOST_IP \
-      -data-dir $nomad_dir $TEST_NOMAD_CONFIG \
+nomad agent -bind "$HOST_IP" \
+      -data-dir "$nomad_dir" $TEST_NOMAD_CONFIG \
       -config nomad_client.config \
       -dev \
-    &> nomad.logs"$TEST_POSTFIX" &
+    &> nomad.logs$TEST_POSTFIX &
 
-export NOMAD_ADDR=http://$HOST_IP:$NOMAD_PORT
+export NOMAD_ADDR="http://$HOST_IP:$NOMAD_PORT"
 
 # While we wait for Nomad to start, make sure the Docker registry has
 # an up-to-date Docker image for the workers sub-project. We run a
@@ -122,28 +122,28 @@ check_nomad_status () {
     echo $(curl --write-out %{http_code} \
                   --silent \
                   --output /dev/null \
-                  $NOMAD_ADDR/v1/status/leader)
+                  "$NOMAD_ADDR/v1/status/leader")
 }
 
 # Wait for Nomad to get started.
 nomad_status=$(check_nomad_status)
-while [ $nomad_status != "200" ]; do
+while [ "$nomad_status" != "200" ]; do
     sleep 1
     nomad_status=$(check_nomad_status)
 done
 
 echo "Nomad is online. Registering jobs."
 
-./format_nomad_with_env.sh -p workers -e $env -v $system_version
-./format_nomad_with_env.sh -p surveyor -e $env -v $system_version
+./format_nomad_with_env.sh -p workers -e "$env" -v "$system_version"
+./format_nomad_with_env.sh -p surveyor -e "$env" -v "$system_version"
 
 # Register the jobs for dispatching.
-for job_spec in $(ls -1 workers/nomad-job-specs/*.nomad$TEST_POSTFIX); do
+for job_spec in $(ls -1 workers/nomad-job-specs/*.nomad"$TEST_POSTFIX"); do
     echo "Registering $job_spec"
-    nomad run $job_spec
+    nomad run "$job_spec"
 done
 
-for job_spec in $(ls -1 foreman/nomad-job-specs/*.nomad$TEST_POSTFIX); do
+for job_spec in $(ls -1 foreman/nomad-job-specs/*.nomad"$TEST_POSTFIX"); do
     echo "Registering $job_spec"
-    nomad run $job_spec
+    nomad run "$job_spec"
 done

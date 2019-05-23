@@ -21,13 +21,18 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options["job_id"] is None:
-            logger.error("You must specify a job ID.")
+            logger.error("You must specify a job ID.",
+                job_id=options["job_id"]
+            )
             sys.exit(1)
 
         try:
             job_type = ProcessorPipeline[options["job_name"]]
         except KeyError:
-            logger.error("You must specify a valid job name.")
+            logger.error("You must specify a valid job name.",
+                job_name=options["job_name"],
+                job_id=options["job_id"]
+            )
             sys.exit(1)
 
         if job_type is ProcessorPipeline.AFFY_TO_PCL:

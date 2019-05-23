@@ -55,7 +55,7 @@ while getopts "hi:" opt; do
     esac
 done
 
-if [[ -z $image ]]; then
+if [[ -z "$image" ]]; then
     image="downloaders"
 fi
 
@@ -64,18 +64,18 @@ fi
 script_directory=`perl -e 'use File::Basename;
  use Cwd "abs_path";
  print dirname(abs_path(@ARGV[0]));' -- "$0"`
-cd $script_directory
+cd "$script_directory"
 
 # However in order to give Docker access to all the code we have to
 # move up a level
 cd ..
 
 # Agilent uses the same image as affymetrix
-if [[ $image == "affymetrix" || $image == "agilent" ]]; then
+if [[ "$image" == "affymetrix" || "$image" == "agilent" ]]; then
     ./prepare_image.sh -p -i affymetrix
     image_name="ccdlstaging/dr_affymetrix"
 else
-    ./prepare_image.sh -i $image
+    ./prepare_image.sh -i "$image"
     image_name="ccdlstaging/dr_$image"
 fi
 
@@ -91,14 +91,14 @@ export AWS_SECRET_ACCESS_KEY=`~/bin/aws configure get default.aws_secret_access_
 
 docker run \
 	   -it \
-       --add-host=database:$DB_HOST_IP \
-       --add-host=nomad:$HOST_IP \
-       --add-host=elasticsearch:$ES_HOST_IP \
+       --add-host=database:"$DB_HOST_IP" \
+       --add-host=nomad:"$HOST_IP" \
+       --add-host=elasticsearch:"$ES_HOST_IP" \
        --env-file workers/environments/local \
        --env AWS_ACCESS_KEY_ID \
        --env AWS_SECRET_ACCESS_KEY \
        --entrypoint ./manage.py \
-       --volume $volume_directory:/home/user/data_store \
+       --volume "$volume_directory":/home/user/data_store \
        --mount type=tmpfs,destination=/home/user/data_store_tmpfs \
        --link drdb:postgres \
-       $image_name "${@: -3}" "${@: -2}" "${@: -1}"
+       "$image_name" "${@: -3}" "${@: -2}" "${@: -1}"

@@ -675,13 +675,13 @@ def get_cmd_lines(cmd_list):
             )
 
         output_bytes = process_done.stdout
-        # Workaround for "salmon --version" and "salmontools --version"
-        # commands, whose outputs are both sent to stderr instead of stdout.
+        # Workaround for the "salmontools --version"
+        # command, whose outputs are sent to stderr instead of stdout.
         # Alternatively, we could have used "stderr=subprocess.STDOUT" when
         # initializing process_done, but it is probably a better idea to
         # keep stdout and stderr separate.
         base_cmd = cmd.strip().split()[0]
-        if base_cmd == 'salmon' or base_cmd == "salmontools":
+        if base_cmd == "salmontools":
             output_bytes = process_done.stderr
 
         cmd_output = output_bytes.decode().strip()

@@ -50,14 +50,14 @@ MAX_NUM_RETRIES = 2
 # This can be overritten by the env var "MAX_TOTAL_JOBS"
 DEFAULT_MAX_JOBS = 20000
 
-DOWNLOADER_JOBS_PER_NODE = 15
+DOWNLOADER_JOBS_PER_NODE = 150
 PAGE_SIZE=2000
 
 # This is the maximum number of non-dead nomad jobs that can be in the
 # queue. Set the default to one node's worth so we never are unable
 # to queue downloader jobs.
 MAX_TOTAL_DOWNLOADER_JOBS = DOWNLOADER_JOBS_PER_NODE
-TIME_OF_LAST_SIZE_CHECK = timezone.now() - datetime.timedelta(hours=1)
+TIME_OF_LAST_SIZE_CHECK = timezone.now() - datetime.timedelta(minutes=10)
 
 # This is the absolute max number of downloader jobs that should ever
 # be queued across the whole cluster no matter how many nodes we
@@ -482,6 +482,11 @@ def retry_failed_downloader_jobs() -> None:
     paginator = Paginator(failed_jobs, PAGE_SIZE)
     page = paginator.page()
     page_count = 0
+
+    if queue_capacity <= 0:
+        logger.info("Not handling failed (explicitly-marked-as-failure) downloader jobs "
+                    "because there is no capacity for them.")
+
     while queue_capacity > 0:
         logger.info(
             "Handling page %d of failed (explicitly-marked-as-failure) downloader jobs!",
@@ -517,6 +522,10 @@ def retry_hung_downloader_jobs() -> None:
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
+
+    if queue_capacity <= 0:
+        logger.info("Not handling failed (explicitly-marked-as-failure) downloader jobs "
+                    "because there is no capacity for them.")
 
     paginator = Paginator(potentially_hung_jobs, PAGE_SIZE)
     page = paginator.page()
@@ -581,11 +590,16 @@ def retry_lost_downloader_jobs() -> None:
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
 
+    if queue_capacity <= 0:
+        logger.info("Not handling failed (explicitly-marked-as-failure) downloader jobs "
+                    "because there is no capacity for them.")
+
     paginator = Paginator(potentially_lost_jobs, PAGE_SIZE)
     page = paginator.page()
     page_count = 0
     while queue_capacity > 0:
         lost_jobs = []
+        jobs_queued_from_this_page = 0
         for job in page.object_list:
             try:
                 if job.nomad_job_id:
@@ -600,10 +614,11 @@ def retry_lost_downloader_jobs() -> None:
                                      job_id=job.id
                         )
                         lost_jobs.append(job)
-                else:
+                elif jobs_queued_from_this_page < queue_capacity:
                     # The job never got put in the Nomad queue, no
                     # need to recreate it, we just gotta queue it up!
                     send_job(Downloaders[job.downloader_task], job=job, is_dispatch=True)
+                    jobs_queued_from_this_page += 1
             except socket.timeout:
                 logger.info("Timeout connecting to Nomad - is Nomad down?", job_id=job.id)
             except URLNotFoundNomadException:
@@ -617,13 +632,14 @@ def retry_lost_downloader_jobs() -> None:
             except Exception:
                 logger.exception("Couldn't query Nomad about Downloader Job.", downloader_job=job.id)
 
-        if lost_jobs:
+        remaining_capacity = queue_capacity - jobs_queued_from_this_page
+        if lost_jobs and remaining_capacity > 0:
             logger.info(
                 "Handling page %d of lost (never-started) downloader jobs!",
                 page_count,
                 len_jobs=len(lost_jobs)
             )
-            handle_downloader_jobs(lost_jobs, queue_capacity)
+            handle_downloader_jobs(lost_jobs, remaining_capacity)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
@@ -1304,6 +1320,8 @@ def cleanup_the_queue():
     Therefore we clear out jobs of that type every once in a while so
     our queue is dedicated to jobs that can actually be placed.
     """
+    logger.info("Removing all jobs from Nomad queue whose volumes are not mounted.")
+
     # Smasher and QN Reference jobs aren't tied to a specific EBS volume.
     indexed_job_types = [e.value for e in ProcessorPipeline if e.value not in ["SMASHER", "QN_REFERENCE"]]
 
@@ -1318,12 +1336,15 @@ def cleanup_the_queue():
         # If we cannot reach Nomad now then we can wait until a later loop.
         return
 
+    logger.info(("These are the currently active volumes. Jobs for "
+                 "other volumes will now be removed from the Nomad queue."),
+                active_volumes=active_volumes)
 
-    jobs_to_kill = []
+    num_jobs_killed = 0
     for job in jobs:
         # Skip over the Parameterized Jobs because we need those to
         # always be running.
-        if "ParameterizedJob" not in job or not job["ParameterizedJob"]:
+        if "ParameterizedJob" not in job or job["ParameterizedJob"]:
             continue
 
         for job_type in indexed_job_types:
@@ -1349,9 +1370,15 @@ def cleanup_the_queue():
                     job_record = ProcessorJob(nomad_job_id=job["ID"])
                     job_record.num_retries = job_record.num_retries - 1
                     job_record.save()
+                    num_jobs_killed += 1
                 except:
+                    logger.exception("Could not remove Nomad job from the Nomad queue.",
+                                     nomad_job_id=job["ID"],
+                                     job_type=job_type)
                     # If we can't do this for some reason, we'll get it next loop.
                     pass
+
+    logger.info("Removed %d jobs from the Nomad queue.", num_jobs_killed)
 
 def clean_database():
     """ Removes duplicated objects that may have appeared through race, OOM, bugs, etc.

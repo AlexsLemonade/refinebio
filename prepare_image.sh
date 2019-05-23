@@ -53,23 +53,23 @@ while getopts "phi:d:s:" opt; do
     esac
 done
 
-if [[ -z $image ]]; then
+if [[ -z "$image" ]]; then
     echo "Error: you must specify an image with -i" >&2
     exit 1
 fi
 
 source common.sh
 
-if [[ -z $service ]]; then
+if [[ -z "$service" ]]; then
     service="workers"
 fi
 
-if [[ -z $dockerhub_repo ]]; then
+if [[ -z "$dockerhub_repo" ]]; then
     dockerhub_repo="ccdlstaging"
 fi
 
 # Default to "local" for system version if we're not running in the cloud.
-if [[ -z $SYSTEM_VERSION ]]; then
+if [[ -z "$SYSTEM_VERSION" ]]; then
     SYSTEM_VERSION="local$(date +%s)"
 fi
 
@@ -77,9 +77,9 @@ fi
 # it has we should use that rather than building it slowly.
 image_name="$dockerhub_repo/dr_$image"
 if [[ "$(docker_img_exists $image_name $branch_name)" ]] ; then
-    docker pull $image_name:$branch_name
-elif [[ ! -z $pull ]]; then
-    docker pull $image_name
+    docker pull "$image_name:$branch_name"
+elif [[ ! -z "$pull" ]]; then
+    docker pull "$image_name"
 else
     echo ""
     echo "Rebuilding the $image_name image."
@@ -92,8 +92,8 @@ else
 
         docker build \
                -t "$image_name" \
-               -f $service/dockerfiles/Dockerfile.$image \
-               --build-arg SYSTEM_VERSION=$SYSTEM_VERSION .
+               -f "$service/dockerfiles/Dockerfile.$image" \
+               --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" .
         finished=$?
         attempts=$[$attempts+1]
     done
