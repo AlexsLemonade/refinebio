@@ -99,10 +99,10 @@ fi
 
 # Start Nomad in both server and client mode locally
 nomad agent -bind "$HOST_IP" \
-      -data-dir "$nomad_dir" "$TEST_NOMAD_CONFIG" \
+      -data-dir "$nomad_dir" $TEST_NOMAD_CONFIG \
       -config nomad_client.config \
       -dev \
-    &> nomad.logs"$TEST_POSTFIX" &
+    &> nomad.logs$TEST_POSTFIX &
 
 export NOMAD_ADDR="http://$HOST_IP:$NOMAD_PORT"
 
