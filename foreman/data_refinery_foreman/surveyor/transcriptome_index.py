@@ -17,13 +17,14 @@ from data_refinery_foreman.surveyor.external_source import ExternalSourceSurveyo
 logger = get_and_configure_logger(__name__)
 
 
-DIVISION_URL_TEMPLATE = ("https://rest.ensemblgenomes.org/info/genomes/division/{division}"
+MAIN_DIVISION_URL_TEMPLATE = "https://rest.ensembl.org/info/species?content-type=application/json"
+DIVISION_URL_TEMPLATE = ("https://rest.ensembl.org/info/genomes/division/{division}"
                          "?content-type=application/json")
+
 TRANSCRIPTOME_URL_TEMPLATE = ("ftp://ftp.{url_root}/fasta/{species_sub_dir}/dna/"
                               "{filename_species}.{assembly}.dna.{schema_type}.fa.gz")
 GTF_URL_TEMPLATE = ("ftp://ftp.{url_root}/gtf/{species_sub_dir}/"
                     "{filename_species}.{assembly}.{assembly_version}.gtf.gz")
-MAIN_DIVISION_URL_TEMPLATE = "https://rest.ensembl.org/info/species?content-type=application/json"
 
 
 # For whatever reason the division in the download URL is shortened in
@@ -41,7 +42,7 @@ DIVISION_LOOKUP = {"EnsemblPlants": "plants",
 # release versions. These urls will return what the most recent
 # release version is.
 MAIN_RELEASE_URL = "https://rest.ensembl.org/info/software?content-type=application/json"
-DIVISION_RELEASE_URL = "https://rest.ensemblgenomes.org/info/eg_version?content-type=application/json"
+DIVISION_RELEASE_URL = "https://rest.ensembl.org/info/eg_version?content-type=application/json"
 
 
 class EnsemblUrlBuilder(ABC):
@@ -59,20 +60,15 @@ class EnsemblUrlBuilder(ABC):
         self.url_root = "ensemblgenomes.org/pub/release-{assembly_version}/{short_division}"
         self.short_division = DIVISION_LOOKUP[species["division"]]
         self.assembly = species["assembly_name"].replace(" ", "_")
-        self.assembly_version = utils.requests_retry_session().get(DIVISION_RELEASE_URL).json()["version"]
 
-        # Some species are nested within a collection directory. If
-        # this is the case, then we need to add that extra directory
-        # to the URL, and for whatever reason the filename is not
-        # capitalized.
-        COLLECTION_REGEX = r"^(.*_collection).*"
-        match_object = re.search(COLLECTION_REGEX, species["dbname"])
-        if match_object:
-            self.species_sub_dir = match_object.group(1) + "/" + species["species"]
-            self.filename_species = species["species"]
-        else:
-            self.species_sub_dir = species["species"]
-            self.filename_species = species["species"].capitalize()
+        # For some reason the API is returning version 44, which doesn't seem to exist
+        # in the FTP servers: ftp://ftp.ensemblgenomes.org/pub/
+        # That's why the version is hardcoded below.
+        # self.assembly_version = utils.requests_retry_session().get(DIVISION_RELEASE_URL).json()["version"]
+        self.assembly_version = '43'
+
+        self.species_sub_dir = species["name"]
+        self.filename_species = species["name"].capitalize()
 
         # These fields aren't needed for the URL, but they vary between
         # the two REST APIs.
@@ -90,8 +86,11 @@ class EnsemblUrlBuilder(ABC):
 
         # If the primary_assembly is not available use toplevel instead.
         try:
+            # Ancient unresolved bug. WTF python: https://bugs.python.org/issue27973
+            urllib.request.urlcleanup()
             file_handle = urllib.request.urlopen(url)
             file_handle.close()
+            urllib.request.urlcleanup()
         except:
             url = url.replace("primary_assembly", "toplevel")
 
@@ -124,7 +123,8 @@ class MainEnsemblUrlBuilder(EnsemblUrlBuilder):
         self.species_sub_dir = species["name"]
         self.filename_species = species["name"].capitalize()
         self.assembly = species["assembly"]
-        self.assembly_version = utils.requests_retry_session().get(MAIN_RELEASE_URL).json()["release"]
+        self.assembly_version = utils.requests_retry_session().get(
+            MAIN_RELEASE_URL).json()["release"]
         self.scientific_name = self.filename_species.replace("_", " ")
         self.taxonomy_id = species["taxon_id"]
 
@@ -202,7 +202,7 @@ class TranscriptomeIndexSurveyor(ExternalSourceSurveyor):
         url_builder = ensembl_url_builder_factory(species)
         fasta_download_url = url_builder.build_transcriptome_url()
         gtf_download_url = url_builder.build_gtf_url()
-
+        
         platform_accession_code = species.pop("division")
         self._clean_metadata(species)
 

@@ -260,10 +260,15 @@ def _get_actual_file_if_queueable(
         # needed to download it or if we just got it because we needed
         # a file in the same archive.
         actual_file = potential_existing_files[0]
-        if actual_file.needs_downloading():
+
+        if actual_file.needs_processing():
+            if not actual_file.is_downloaded:
+                actual_file.is_downloaded = True
+                actual_file.save()
             return actual_file
         else:
             return None
+
     else:
         actual_file = OriginalFile()
         actual_file.is_downloaded = True
@@ -462,7 +467,10 @@ def download_geo(job_id: int) -> None:
 
             try:
                 # The archive we downloaded
-                archive_file = OriginalFile.objects.get(source_filename__contains=filename)
+                archive_file = OriginalFile.objects.get(
+                    source_filename__contains=filename,
+                    is_archive=True
+                )
                 archive_file.is_downloaded = True
                 archive_file.is_archive = True
                 archive_file.absolute_file_path = dl_file_path

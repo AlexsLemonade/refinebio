@@ -2,6 +2,7 @@ import os
 import json
 import urllib
 from unittest.mock import Mock, patch, call
+from unittest import skip
 from django.test import TestCase
 from urllib.request import URLError
 from data_refinery_common.job_lookup import Downloaders
@@ -55,8 +56,8 @@ class SurveyTestCase(TestCase):
         key_value_pair.save()
 
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                                key="organism_name",
-                                                value="Danio rerio")
+                                           key="organism_name",
+                                           value="Danio rerio")
         key_value_pair.save()
 
         surveyor = TranscriptomeIndexSurveyor(self.survey_job)
@@ -80,8 +81,8 @@ class SurveyTestCase(TestCase):
         key_value_pair.save()
 
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
-                                                key="organism_name",
-                                                value="Octopus bimaculoides")
+                                           key="organism_name",
+                                           value="Octopus bimaculoides")
         key_value_pair.save()
 
         surveyor = TranscriptomeIndexSurveyor(self.survey_job)

@@ -34,7 +34,7 @@ from data_refinery_common.utils import get_env_variable, get_active_volumes
 logger = get_and_configure_logger(__name__)
 
 
-MAX_JOBS_FOR_THIS_MODE = 10000
+MAX_JOBS_FOR_THIS_MODE = 2000
 
 
 def build_completion_list(organism: Organism) -> List[Dict]:
@@ -180,7 +180,11 @@ def requeue_job(job, volume_index):
         raise ValueError("Told to requeue a job that's not a ProcessorJob nor DownloaderJob!")
 
     try:
-        if send_job(job_type, job=new_job, is_dispatch=True):
+        # Only dispatch a job to Nomad immediately if it's a processor
+        # job so that the Foreman can control the flow of
+        # DownloaderJobs.
+        dispatch_immediately = isinstance(job, ProcessorJob)
+        if send_job(job_type, job=new_job, is_dispatch=dispatch_immediately):
             job.retried = True
             job.success = False
             job.retried_job = new_job

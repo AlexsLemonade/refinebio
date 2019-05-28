@@ -27,10 +27,10 @@ jobs:
       # Update ES models
       - run: ./run_manage.sh search_index --rebuild -f;
 
-        # Install Nomad
+      # Install Nomad
       - run: sudo ./install_nomad.sh
 
-        # Start Nomad, build images, and register jobs.
+        # Start Nomad and register jobs.
       - run:
           command: sudo -E ./run_nomad.sh -e test
 
@@ -52,10 +52,10 @@ jobs:
 
       # The foreman includes the end-to-end tests, but some of these
       # require docker images which are not built in this
-      # workflow. Therefore we exclude salmon and transcriptome and
-      # let those end-to-end tests get run in the workflows that
-      # include building those images.
-      - run: ./foreman/run_tests.sh --exclude-tag=salmon --exclude-tag=transcriptome
+      # workflow. Therefore we exclude salmon, affymetrix, and
+      # transcriptome and let those end-to-end tests get run in the
+      # workflows that include building those images.
+      - run: ./foreman/run_tests.sh --exclude-tag=salmon --exclude-tag=transcriptome --exclude-tag=affymetrix
 
       # Run NO_OP tests
       - run: sudo chown -R circleci:circleci workers/test_volume/
@@ -177,7 +177,7 @@ jobs:
       - run: sudo chown -R circleci:circleci workers/test_volume/
 
       # Run Illumina tests.
-      - run: .circleci/filter_tests.sh -t illumina
+      # - run: .circleci/filter_tests.sh -t illumina
 
       # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
       # from making sure all the files in workers/test_volume have read/write permissions.
@@ -187,7 +187,7 @@ jobs:
       # image, so clear out other images to ensure enough space for it.
       - run: docker rm $(docker ps -qa --no-trunc --filter "status=exited") || true
       - run: docker image rm ccdlstaging/dr_transcriptome
-      - run: docker image rm ccdlstaging/dr_illumina
+      # - run: docker image rm ccdlstaging/dr_illumina
 
   affy_agilent_tests:
     machine: true
@@ -221,6 +221,29 @@ jobs:
 
       # This doesn't take as long because the image has already been pulled.
       - run: .circleci/filter_tests.sh -t agilent
+
+      # Update ES models
+      - run: ./run_manage.sh search_index --rebuild -f;
+
+      # Install Nomad
+      - run: sudo ./install_nomad.sh
+
+        # Start Nomad and register jobs.
+      - run:
+          command: sudo -E ./run_nomad.sh -e test
+
+      # The foreman includes the end-to-end tests. One of these
+      # end-to-end tests is specific to affymetrix, so we run it here
+      # since we have the image for it, but we also need the downloaders image.
+      - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
+      - run: docker push localhost:5000/dr_downloaders
+
+      # This image was built by the affymetrix workers tests, just
+      # gotta retag it so it can go into the local docker repo.
+      - run: docker tag ccdlstaging/dr_affymetrix:latest localhost:5000/dr_affymetrix:latest
+      - run: docker push localhost:5000/dr_affymetrix
+
+      - run: ./foreman/run_tests.sh --tag=affymetrix
 
   deploy:
     machine: true

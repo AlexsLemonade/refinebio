@@ -1,12 +1,15 @@
-job "SMASHER" {
+job "RUN_QN_JOB" {
   datacenters = ["dc1"]
 
   type = "batch"
-  priority = 75
+
+  # These are high priority because if we've dispatched them,
+  # we need them.
+  priority = 80
 
   parameterized {
     payload       = "forbidden"
-    meta_required = [ "JOB_NAME", "JOB_ID"]
+    meta_required = ["JOB_NAME", "JOB_ID"]
   }
 
   group "jobs" {
@@ -24,7 +27,7 @@ job "SMASHER" {
       size = "10"
     }
 
-    task "smasher" {
+    task "create_qn_target" {
       driver = "docker"
 
       kill_timeout = "30s"
@@ -45,19 +48,17 @@ job "SMASHER" {
         RAVEN_DSN="${{RAVEN_DSN}}"
         RAVEN_DSN_API="${{RAVEN_DSN_API}}"
 
-        RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
-
-        USE_S3 = "${{USE_S3}}"
-        S3_RESULTS_BUCKET_NAME = "${{S3_RESULTS_BUCKET_NAME}}"
-        S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
-        LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
-        EBS_INDEX = "${{INDEX}}"
+        NOMAD_HOST = "${{NOMAD_HOST}}"
+        NOMAD_PORT = "${{NOMAD_PORT}}"
 
         ELASTICSEARCH_HOST = "${{ELASTICSEARCH_HOST}}"
         ELASTICSEARCH_PORT = "${{ELASTICSEARCH_PORT}}"
 
-        NOMAD_HOST = "${{NOMAD_HOST}}"
-        NOMAD_PORT = "${{NOMAD_PORT}}"
+        RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
+
+        USE_S3 = "${{USE_S3}}"
+        S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
+        LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
 
         LOG_LEVEL = "${{LOG_LEVEL}}"
       }
@@ -67,7 +68,7 @@ job "SMASHER" {
         # CPU is in AWS's CPU units.
         cpu = 2048
         # Memory is in MB of RAM.
-        memory = 28000
+        memory = 131072
       }
 
       logs {
@@ -75,7 +76,12 @@ job "SMASHER" {
         max_file_size = 1
       }
 
-      ${{SMASHER_CONSTRAINT}}
+      # Don't run on the smasher instance, it's too small and should be running smasher jobs.
+      constraint {
+        attribute = "${meta.is_smasher}"
+        operator = "!="
+        value = "true"
+      }
 
       config {
         image = "${{DOCKERHUB_REPO}}/${{SMASHER_DOCKER_IMAGE}}"

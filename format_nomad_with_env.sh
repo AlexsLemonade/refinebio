@@ -55,61 +55,61 @@ while getopts ":p:e:o:v:h" opt; do
     esac
 done
 
-if [[ $project != "workers" && $project != "surveyor" && $project != "foreman" && $project != "api" ]]; then
+if [[ "$project" != "workers" && "$project" != "surveyor" && "$project" != "foreman" && "$project" != "api" ]]; then
     echo 'Error: must specify project as either "api", "workers", "surveyor", or "foreman" with -p.'
     exit 1
 fi
 
-if [[ -z $env ]]; then
+if [[ -z "$env" ]]; then
     env="local"
 fi
 
-if [[ -z $MAX_CLIENTS ]]; then
+if [[ -z "$MAX_CLIENTS" ]]; then
     MAX_CLIENTS="1"
 fi
 
-if [[ -z $system_version ]]; then
+if [[ -z "$system_version" ]]; then
     system_version="latest"
 fi
 
 # Default docker repo.
 # This are very sensible defaults, but we want to let these be set
 # outside the script so only set them if they aren't already set.
-if [[ -z $DOCKERHUB_REPO ]]; then
+if [[ -z "$DOCKERHUB_REPO" ]]; then
     # If someone wants to override this field we'll let them, but
     # test env should probably use the local docker registry.
-    if [ $env == "test" ]; then
+    if [ "$env" == "test" ]; then
         export DOCKERHUB_REPO="localhost:5000"
     else
         export DOCKERHUB_REPO="ccdlstaging"
     fi
 fi
-if [[ -z $FOREMAN_DOCKER_IMAGE ]]; then
-    export FOREMAN_DOCKER_IMAGE=dr_foreman:$system_version
+if [[ -z "$FOREMAN_DOCKER_IMAGE" ]]; then
+    export FOREMAN_DOCKER_IMAGE="dr_foreman:$system_version"
 fi
-if [[ -z $DOWNLOADERS_DOCKER_IMAGE ]]; then
-    export DOWNLOADERS_DOCKER_IMAGE=dr_downloaders:$system_version
+if [[ -z "$DOWNLOADERS_DOCKER_IMAGE" ]]; then
+    export DOWNLOADERS_DOCKER_IMAGE="dr_downloaders:$system_version"
 fi
-if [[ -z $TRANSCRIPTOME_DOCKER_IMAGE ]]; then
-    export TRANSCRIPTOME_DOCKER_IMAGE=dr_transcriptome:$system_version
+if [[ -z "$TRANSCRIPTOME_DOCKER_IMAGE" ]]; then
+    export TRANSCRIPTOME_DOCKER_IMAGE="dr_transcriptome:$system_version"
 fi
-if [[ -z $SALMON_DOCKER_IMAGE ]]; then
-    export SALMON_DOCKER_IMAGE=dr_salmon:$system_version
+if [[ -z "$SALMON_DOCKER_IMAGE" ]]; then
+    export SALMON_DOCKER_IMAGE="dr_salmon:$system_version"
 fi
-if [[ -z $SMASHER_DOCKER_IMAGE ]]; then
-    export SMASHER_DOCKER_IMAGE=dr_smasher:$system_version
+if [[ -z "$SMASHER_DOCKER_IMAGE" ]]; then
+    export SMASHER_DOCKER_IMAGE="dr_smasher:$system_version"
 fi
-if [[ -z $AFFYMETRIX_DOCKER_IMAGE ]]; then
-    export AFFYMETRIX_DOCKER_IMAGE=dr_affymetrix:$system_version
+if [[ -z "$AFFYMETRIX_DOCKER_IMAGE" ]]; then
+    export AFFYMETRIX_DOCKER_IMAGE="dr_affymetrix:$system_version"
 fi
-if [[ -z $ILLUMINA_DOCKER_IMAGE ]]; then
-    export ILLUMINA_DOCKER_IMAGE=dr_illumina:$system_version
+if [[ -z "$ILLUMINA_DOCKER_IMAGE" ]]; then
+    export ILLUMINA_DOCKER_IMAGE="dr_illumina:$system_version"
 fi
-if [[ -z $NO_OP_DOCKER_IMAGE ]]; then
-    export NO_OP_DOCKER_IMAGE=dr_no_op:$system_version
+if [[ -z "$NO_OP_DOCKER_IMAGE" ]]; then
+    export NO_OP_DOCKER_IMAGE="dr_no_op:$system_version"
 fi
-if [[ -z $COMPENDIA_DOCKER_IMAGE ]]; then
-    export COMPENDIA_DOCKER_IMAGE=dr_compendia:$system_version
+if [[ -z "$COMPENDIA_DOCKER_IMAGE" ]]; then
+    export COMPENDIA_DOCKER_IMAGE="dr_compendia:$system_version"
 fi
 
 
@@ -120,10 +120,10 @@ script_directory=`perl -e 'use File::Basename;
  print dirname(abs_path(@ARGV[0]));' -- "$0"`
 
 # Correct for foreman and surveyor being in same directory:
-if [ $project == "surveyor" ]; then
-    cd $script_directory/foreman
+if [ "$project" == "surveyor" ]; then
+    cd "$script_directory/foreman"
 else
-    cd $script_directory/$project
+    cd "$script_directory/$project"
 fi
 
 # It's important that these are run first so they will be overwritten
@@ -132,16 +132,16 @@ source ../common.sh
 export DB_HOST_IP=$(get_docker_db_ip_address)
 export NOMAD_HOST_IP=$(get_ip_address)
 
-if [ $env == "test" ]; then
-    export VOLUME_DIR=$script_directory/test_volume
+if [ "$env" == "test" ]; then
+    export VOLUME_DIR="$script_directory/test_volume"
     # Prevent test Nomad job specifications from overwriting
     # existing Nomad job specifications.
     export TEST_POSTFIX="_test"
-elif [[ $env == "prod" || $env == "staging" || $env == "dev" ]]; then
+elif [[ "$env" == "prod" || "$env" == "staging" || "$env" == "dev" ]]; then
     # In production we use EBS as the mount.
     export VOLUME_DIR=/var/ebs
 else
-    export VOLUME_DIR=$script_directory/volume
+    export VOLUME_DIR="$script_directory/volume"
 fi
 
 # We need to specify the database and Nomad hosts for development, but
@@ -151,7 +151,7 @@ fi
 # not in development.
 # We do these with multi-line environment variables so that they can
 # be formatted into development job specs.
-if [[ $env != "prod" && $env != "staging" && $env != "dev" ]]; then
+if [[ "$env" != "prod" && "$env" != "staging" && "$env" != "dev" ]]; then
     export EXTRA_HOSTS="
         extra_hosts = [\"database:$DB_HOST_IP\",
                        \"nomad:$NOMAD_HOST_IP\"]
@@ -171,15 +171,21 @@ else
     environment_file="$script_directory/infrastructure/prod_env"
 fi
 
+# Temporarily set the logging config to nothing so we can see the logs
+# through nomad.
+if [[ $env == "staging" ]]; then
+    export LOGGING_CONFIG=""
+fi
+
 # Read all environment variables from the file for the appropriate
 # project and environment we want to run.
 while read line; do
     # Skip all comments (lines starting with '#')
-    is_comment=$(echo $line | grep "^#")
-    if [[ -n $line ]] && [[ -z $is_comment ]]; then
-        export $line
+    is_comment=$(echo "$line" | grep "^#")
+    if [[ -n "$line" ]] && [[ -z "$is_comment" ]]; then
+        export "$line"
     fi
-done < $environment_file
+done < "$environment_file"
 
 # There is a current outstanding Nomad issue for the ability to
 # template environment variables into the job specifications. Until
@@ -189,16 +195,16 @@ done < $environment_file
 
 # If output_dir wasn't specified then assume the same folder we're
 # getting the templates from.
-if [[ -z $output_dir ]]; then
+if [[ -z "$output_dir" ]]; then
     output_dir=nomad-job-specs
 fi
 
 if [[ ! -d "$output_dir" ]]; then
-    mkdir $output_dir
+    mkdir "$output_dir"
 fi
 
 export_log_conf (){
-    if [[ $env == 'prod' || $env == 'staging' || $env == 'dev' ]]; then
+    if [[ "$env" == 'prod' || "$env" == 'staging' || "$env" == 'dev' ]]; then
         export LOGGING_CONFIG="
         logging {
           type = \"awslogs\"
@@ -225,30 +231,30 @@ export_log_conf (){
 
 # This actually performs the templating using Perl's regex engine.
 # Perl magic found here: https://stackoverflow.com/a/2916159/6095378
-if [[ $project == "workers" ]]; then
+if [[ "$project" == "workers" ]]; then
     # Iterate over all the template files in the directory.
     for template in $(ls -1 nomad-job-specs | grep \.tpl); do
         # Strip off the trailing .tpl for once we've formatted it.
-        output_file=${template/.tpl/}
+        output_file="${template/.tpl/}"
 
         # Downloader logs go to a separate log stream.
-        if [ $output_file == "downloader.nomad" ]; then
+        if [ "$output_file" == "downloader.nomad" ]; then
             export_log_conf "downloader"
             rams=(1024 4096 8192)
             for r in "${rams[@]}"
             do
                 export RAM_POSTFIX="_$r.nomad"
                 export RAM="$r"
-                cat nomad-job-specs/$template \
+                cat "nomad-job-specs/$template" \
                     | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                            > "$output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX" \
                            2> /dev/null
                 echo "Made $output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX"
             done
             echo "Made $output_dir/$output_file$TEST_POSTFIX"
-        elif [ $output_file == "smasher.nomad" ] || [ $output_file == "create_qn_target.nomad" ] || [ $output_file == "create_compendia.nomad" ] || [ $output_file == "tximport.nomad" ]; then
+        elif [ "$output_file" == "smasher.nomad" ] || [ "$output_file" == "create_qn_target.nomad" ] || [ "$output_file" == "create_compendia.nomad" ] || [ "$output_file" == "tximport.nomad" ]; then
             export_log_conf "processor"
-            cat nomad-job-specs/$template \
+            cat "nomad-job-specs/$template" \
                 | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                        > "$output_dir/$output_file$TEST_POSTFIX" \
                        2> /dev/null
@@ -265,7 +271,7 @@ if [[ $project == "workers" ]]; then
                     export INDEX="$j"
                     export RAM_POSTFIX="_$r.nomad"
                     export RAM="$r"
-                    cat nomad-job-specs/$template \
+                    cat "nomad-job-specs/$template" \
                         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                                > "$output_dir/$output_file$INDEX_POSTFIX$RAM_POSTFIX$TEST_POSTFIX" \
                                2> /dev/null
@@ -274,17 +280,17 @@ if [[ $project == "workers" ]]; then
             done
         fi
     done
-elif [[ $project == "surveyor" ]]; then
+elif [[ "$project" == "surveyor" ]]; then
 
     # Iterate over all the template files in the directory.
     for template in $(ls -1 nomad-job-specs | grep \.tpl); do
         # Strip off the trailing .tpl for once we've formatted it.
-        output_file=${template/.tpl/}
+        output_file="${template/.tpl/}"
 
         # Downloader logs go to a separate log stream.
-        if [ $output_file == "surveyor_dispatcher.nomad" ]; then
+        if [ "$output_file" == "surveyor_dispatcher.nomad" ]; then
             export_log_conf "surveyor_dispatcher"
-            cat nomad-job-specs/$template \
+            cat "nomad-job-specs/$template" \
                 | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                        > "$output_dir/$output_file$TEST_POSTFIX" \
                        2> /dev/null
@@ -296,7 +302,7 @@ elif [[ $project == "surveyor" ]]; then
             do
                 export RAM_POSTFIX="_$r.nomad"
                 export RAM="$r"
-                cat nomad-job-specs/$template \
+                cat "nomad-job-specs/$template" \
                     | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                            > "$output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX" \
                            2> /dev/null
@@ -305,14 +311,14 @@ elif [[ $project == "surveyor" ]]; then
         fi
     done
 
-elif [[ $project == "foreman" ]]; then
+elif [[ "$project" == "foreman" ]]; then
     # foreman sub-project
     export_log_conf "foreman"
     cat environment.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
                > "$output_dir"/environment"$TEST_POSTFIX" \
                2> /dev/null
-elif [[ $project == "api" ]]; then
+elif [[ "$project" == "api" ]]; then
     export_log_conf "api"
     cat environment.tpl \
         | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \

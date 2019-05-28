@@ -79,7 +79,7 @@ def _prepare_files(job_context: Dict) -> Dict:
                 with open(job_context["input_file_path"], 'r', encoding='utf-8') as f:
                     all_content = f.read()
 
-                job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
+                job_context["input_file_path"] = job_context["work_dir"] + original_file.filename + ".fixed"
                 with open(job_context["input_file_path"], 'w+', encoding='utf-8') as f:
                     f.seek(0, 0)
                     f.write('ID_REF\tVALUE' + '\n' + all_content)
@@ -88,7 +88,7 @@ def _prepare_files(job_context: Dict) -> Dict:
                 with open(job_context["input_file_path"], 'r', encoding='utf-8') as f:
                     all_content = f.read()
 
-                job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
+                job_context["input_file_path"] = job_context["work_dir"] + original_file.filename + ".fixed"
                 with open(job_context["input_file_path"], 'w+', encoding='utf-8') as f:
                     f.seek(0, 0)
                     f.write('ID_REF\tVALUE' + '\n' + ("\n".join(all_content[1:])))
@@ -120,7 +120,8 @@ def _prepare_files(job_context: Dict) -> Dict:
                     # Okay, there's no header so can just prepend to the file.
                     with open(job_context["input_file_path"], 'r', encoding='utf-8') as f:
                         all_content = f.read()
-                    job_context["input_file_path"] = job_context["input_file_path"] + ".fixed"
+
+                    job_context["input_file_path"] = job_context["work_dir"] + original_file.filename + ".fixed"
                     with open(job_context["input_file_path"], 'w+', encoding='utf-8') as f:
                         f.seek(0, 0)
                         if len(row) == 2:

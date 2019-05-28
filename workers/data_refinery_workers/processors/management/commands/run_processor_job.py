@@ -21,13 +21,18 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options["job_id"] is None:
-            logger.error("You must specify a job ID.")
+            logger.error("You must specify a job ID.",
+                job_id=options["job_id"]
+            )
             sys.exit(1)
 
         try:
             job_type = ProcessorPipeline[options["job_name"]]
         except KeyError:
-            logger.error("You must specify a valid job name.")
+            logger.error("You must specify a valid job name.",
+                job_name=options["job_name"],
+                job_id=options["job_id"]
+            )
             sys.exit(1)
 
         if job_type is ProcessorPipeline.AFFY_TO_PCL:
@@ -57,6 +62,9 @@ class Command(BaseCommand):
         elif job_type is ProcessorPipeline.JANITOR:
             from data_refinery_workers.processors.janitor import run_janitor
             run_janitor(options["job_id"])
+        elif job_type is ProcessorPipeline.QN_REFERENCE:
+            from data_refinery_workers.processors import qn_reference
+            qn_reference.create_qn_reference(options["job_id"])
         else:
             logger.error(("A valid job name was specified for job %s with id %d but "
                           "no processor function is known to run it."),

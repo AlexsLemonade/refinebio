@@ -1,12 +1,11 @@
-job "SMASHER" {
+job "QN_DISPATCHER" {
   datacenters = ["dc1"]
 
   type = "batch"
-  priority = 75
+  priority = 90
 
   parameterized {
     payload       = "forbidden"
-    meta_required = [ "JOB_NAME", "JOB_ID"]
   }
 
   group "jobs" {
@@ -24,10 +23,8 @@ job "SMASHER" {
       size = "10"
     }
 
-    task "smasher" {
+    task "qn_dispatcher" {
       driver = "docker"
-
-      kill_timeout = "30s"
 
       # This env will be passed into the container for the job.
       env {
@@ -48,16 +45,13 @@ job "SMASHER" {
         RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
 
         USE_S3 = "${{USE_S3}}"
-        S3_RESULTS_BUCKET_NAME = "${{S3_RESULTS_BUCKET_NAME}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
-        EBS_INDEX = "${{INDEX}}"
+        NOMAD_HOST = "${{NOMAD_HOST}}"
+        NOMAD_PORT = "${{NOMAD_PORT}}"
 
         ELASTICSEARCH_HOST = "${{ELASTICSEARCH_HOST}}"
         ELASTICSEARCH_PORT = "${{ELASTICSEARCH_PORT}}"
-
-        NOMAD_HOST = "${{NOMAD_HOST}}"
-        NOMAD_PORT = "${{NOMAD_PORT}}"
 
         LOG_LEVEL = "${{LOG_LEVEL}}"
       }
@@ -65,9 +59,9 @@ job "SMASHER" {
       # The resources the job will require.
       resources {
         # CPU is in AWS's CPU units.
-        cpu = 2048
+        cpu = 1000
         # Memory is in MB of RAM.
-        memory = 28000
+        memory = 4096
       }
 
       logs {
@@ -75,7 +69,12 @@ job "SMASHER" {
         max_file_size = 1
       }
 
-      ${{SMASHER_CONSTRAINT}}
+      # Don't run on the smasher instance, it's too small and should be running smasher jobs.
+      constraint {
+        attribute = "${meta.is_smasher}"
+        operator = "!="
+        value = "true"
+      }
 
       config {
         image = "${{DOCKERHUB_REPO}}/${{SMASHER_DOCKER_IMAGE}}"
@@ -85,9 +84,7 @@ job "SMASHER" {
         args = [
           "python3",
           "manage.py",
-          "run_processor_job",
-          "--job-name", "${NOMAD_META_JOB_NAME}",
-          "--job-id", "${NOMAD_META_JOB_ID}"
+          "qn_dispatcher",
         ]
         ${{EXTRA_HOSTS}}
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]
