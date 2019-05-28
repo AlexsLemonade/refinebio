@@ -50,12 +50,12 @@ resource "aws_iam_policy_attachment" "fleet_role" {
 }
 
 resource "aws_iam_instance_profile" "data_refinery_instance_profile" {
-  name  = "data-refinery-instance-profile-${var.user}-${var.stage}"
+  name = "data-refinery-instance-profile-${var.user}-${var.stage}"
   role = "${aws_iam_role.data_refinery_instance.name}"
 }
 
 resource "aws_iam_policy" "s3_access_policy" {
-  name = "data-refinery-s3-access-policy-${var.user}-${var.stage}"
+  name        = "data-refinery-s3-access-policy-${var.user}-${var.stage}"
   description = "Allows S3 Permissions."
 
   # Policy text based off of:
@@ -99,13 +99,14 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "s3" {
-  role = "${aws_iam_role.data_refinery_instance.name}"
+  role       = "${aws_iam_role.data_refinery_instance.name}"
   policy_arn = "${aws_iam_policy.s3_access_policy.arn}"
 }
 
 resource "aws_iam_policy" "ec2_access_policy" {
-  name = "data-refinery-ec2-access-policy-${var.user}-${var.stage}"
+  name        = "data-refinery-ec2-access-policy-${var.user}-${var.stage}"
   description = "Allows EC2 Permissions."
+  count       = "${var.max_clients == 0 ? 0 : 1}"
 
   # We can't iterate instances from the fleet, so allow attaching to any instance,
   # but restrict which volumes can be attached.
@@ -159,14 +160,14 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "ec2" {
-  role = "${aws_iam_role.data_refinery_instance.name}"
-  policy_arn = "${aws_iam_policy.ec2_access_policy.arn}"
+  role       = "${aws_iam_role.data_refinery_instance.name}"
+  policy_arn = "${aws_iam_policy.ec2_access_policy.*.arn[0]}"
+  count      = "${var.max_clients == 0 ? 0 : 1}"
 }
 
 resource "aws_iam_policy" "cloudwatch_policy" {
-  name = "data-refinery-cloudwatch-policy-${var.user}-${var.stage}"
+  name        = "data-refinery-cloudwatch-policy-${var.user}-${var.stage}"
   description = "Allows Cloudwatch Permissions."
-
 
   # Policy text found at:
   # http://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/iam-identity-based-access-control-cwl.html
@@ -199,6 +200,6 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "cloudwatch" {
-  role = "${aws_iam_role.data_refinery_instance.name}"
+  role       = "${aws_iam_role.data_refinery_instance.name}"
   policy_arn = "${aws_iam_policy.cloudwatch_policy.arn}"
 }
