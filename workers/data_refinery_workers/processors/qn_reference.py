@@ -25,7 +25,7 @@ from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils, smasher
 
 
-S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
+S3_BUCKET_NAME = get_env_variable("S3_QN_TARGET_BUCKET_NAME", "data-refinery")
 logger = get_and_configure_logger(__name__)
 
 
@@ -136,7 +136,7 @@ def _quantile_normalize(job_context: Dict) -> Dict:
     return job_context
 
 def _verify_result(job_context: Dict) -> Dict:
-    """ Statistically verify this is a sane result 
+    """ Statistically verify this is a sane result
     More info: https://github.com/AlexsLemonade/refinebio/issues/599#issuecomment-422132009
     """
 
