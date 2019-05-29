@@ -561,7 +561,6 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
 class SraRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
     @tag("salmon")
-    @skip("We're doing a staging test to see if the new salmon version works.")
     def test_sra_redownloading(self):
         """Survey, download, then process an experiment we know is SRA."""
         # Clear out pre-existing work dirs so there's no conflicts:

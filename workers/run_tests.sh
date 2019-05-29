@@ -82,28 +82,41 @@ if [[ -z $tag || $tag == "salmon" ]]; then
     git clone https://github.com/dongbohu/tximport_test.git $volume_directory/tximport_test
 
     # Make sure data for Salmon test is downloaded from S3.
-    rna_seq_test_raw_dir="$volume_directory/raw/TEST/SALMON"
+    ERR1562482_dir="$volume_directory/TEST/ERR1562482"
     read_1_name="ERR1562482_1.fastq.gz"
     read_2_name="ERR1562482_2.fastq.gz"
-    dotsra_name="ERR1562482.sra"
-    rna_seq_test_data_1="$rna_seq_test_raw_dir/$read_1_name"
-    rna_seq_test_data_2="$rna_seq_test_raw_dir/$read_2_name"
-    dotsra="$rna_seq_test_raw_dir/$dotsra_name"
-    if [ ! -e "$rna_seq_test_data_1" ]; then
-        mkdir -p $rna_seq_test_raw_dir
+    fastq_test_data_1="$ERR1562482_dir/$read_1_name"
+    fastq_test_data_2="$ERR1562482_dir/$read_2_name"
+    if [ ! -e "$fastq_test_data_1" ]; then
+        mkdir -p $ERR1562482_dir
         echo "Downloading $read_1_name for Salmon tests."
-        wget -q -O $rna_seq_test_data_1 \
+        wget -q -O $fastq_test_data_1 \
              "$test_data_repo/$read_1_name"
         echo "Downloading $read_2_name for Salmon tests."
-        wget -q -O $rna_seq_test_data_2 \
+        wget -q -O $fastq_test_data_2 \
              "$test_data_repo/$read_2_name"
     fi
-    if [ ! -e "$dotsra" ]; then
-        mkdir -p $rna_seq_test_raw_dir
-        echo "Downloading $dotsra_name for Salmon tests."
-        wget -q -O $dotsra \
-             "$test_data_repo/$dotsra_name"
+
+    SRR1944916_dir="$volume_directory/TEST/SRR1944916"
+    SRR1944916_name="SRR1944916.sra"
+    SRR1944916_data="$SRR1944916_dir/$SRR1944916_name"
+    if [ ! -e "$SRR1944916_data" ]; then
+        mkdir -p $SRR1944916_dir
+        echo "Downloading $SRR1944916_name for Salmon tests."
+        wget -q -O $SRR1944916_data \
+             "$test_data_repo/$SRR1944916_name"
     fi
+
+    SRR548309_dir="$volume_directory/TEST/SRR548309"
+    SRR548309_name="SRR548309.sra"
+    SRR548309_data="$SRR548309_dir/$SRR548309_name"
+    if [ ! -e "$SRR548309_data" ]; then
+        mkdir -p $SRR548309_dir
+        echo "Downloading $SRR548309_name for Salmon tests."
+        wget -q -O $SRR548309_data \
+             "$test_data_repo/$SRR548309_name"
+    fi
+
 fi
 
 if [[ -z $tag || $tag == "affymetrix" ]]; then

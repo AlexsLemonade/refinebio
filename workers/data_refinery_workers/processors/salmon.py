@@ -730,33 +730,32 @@ def _run_salmon(job_context: Dict) -> Dict:
         # Paired are trickier
         else:
             # fastq-dump does not allow you to choose the names of its
-            # output files. With the --split-3 option it will output
-            # paired reads to:
-            #   * <ACCESSION_CODE>_1.fastq
-            #   * <ACCESSION_CODE>_2.fastq
+            # output files. With the --split-3 and --gzip options it
+            # will output paired reads to:
+            #   * <ACCESSION_CODE>_1.fastq.gz
+            #   * <ACCESSION_CODE>_2.fastq.gz
             # and if there are unmated reads they will be output to:
-            #   * <ACCESSION_CODE>.fastq
+            #   * <ACCESSION_CODE>.fastq.gz
             # We don't care about unmated reads, so we'll just forward
             # that to /dev/null. We'll still use a named pipe so that
             # we don't have to use any I/O to write it to disk,
             # however we do need to read it out because otherwise
             # fastq-dump will hang until the data is read out of the
             # pipe.
-            alpha_fifo = job_context["work_dir"] + job_context["sample_accession_code"] + "_1.fastq"
+            alpha_fifo = job_context["work_dir"] + job_context["sample_accession_code"] + "_1.fastq.gz"
             os.mkfifo(alpha_fifo)
-            beta_fifo = job_context["work_dir"] + job_context["sample_accession_code"] + "_2.fastq"
+            beta_fifo = job_context["work_dir"] + job_context["sample_accession_code"] + "_2.fastq.gz"
             os.mkfifo(beta_fifo)
-            unmated_fifo = job_context["work_dir"] + job_context["sample_accession_code"] + ".fastq"
+            unmated_fifo = job_context["work_dir"] + job_context["sample_accession_code"] + ".fastq.gz"
             os.mkfifo(unmated_fifo)
 
+
             unmated_process = subprocess.Popen(["cat", unmated_fifo, ">", "/dev/null", "&"],
-                                               shell=True,
-                                               executable='/bin/bash',
                                                stdout=subprocess.PIPE,
                                                stderr=subprocess.STDOUT)
 
             # Call `cd` so we know where fastq-dump will be dumping files to.
-            dump_str = "cd {work_dir} && fastq-dump --stdout --split-3 -I {input_sra_file} &"
+            dump_str = "cd {work_dir} && fastq-dump --gzip --split-3 -I {input_sra_file} &"
             formatted_dump_command = dump_str.format(work_dir=job_context["work_dir"],
                                                      input_sra_file=job_context["sra_input_file_path"])
             subprocess.Popen(formatted_dump_command,

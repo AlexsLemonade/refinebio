@@ -59,6 +59,21 @@ def prepare_organism_indices():
     computational_result_long = ComputationalResult(processor=utils.find_processor('SALMON_QUANT'))
     computational_result_long.save()
 
+    organism_index = OrganismIndex()
+    organism_index.index_type = "TRANSCRIPTOME_LONG"
+    organism_index.organism = c_elegans
+    organism_index.result = computational_result_long
+    organism_index.absolute_directory_path = "/home/user/data_store/salmon_tests/TRANSCRIPTOME_INDEX/LONG"
+    organism_index.save()
+
+    comp_file = ComputedFile()
+    # This path will not be used because we already have the files extracted.
+    comp_file.absolute_file_path = "/home/user/data_store/salmon_tests/TRANSCRIPTOME_INDEX/LONG/celgans_long.tar.gz"
+    comp_file.result = computational_result_long
+    comp_file.size_in_bytes=1337
+    comp_file.sha1="ABC"
+    comp_file.save()
+
 
 def prepare_job():
     pj = ProcessorJob()
@@ -79,14 +94,14 @@ def prepare_job():
     og_file = OriginalFile()
     og_file.source_filename = "ERR1562482_1.fastq.gz"
     og_file.filename = "ERR1562482_1.fastq.gz"
-    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR1562482_1.fastq.gz"
+    og_file.absolute_file_path = "/home/user/data_store/ERR1562482/ERR1562482_1.fastq.gz"
     og_file.is_downloaded = True
     og_file.save()
 
     og_file2 = OriginalFile()
     og_file2.source_filename = "ERR1562482_2.fastq.gz"
     og_file2.filename = "ERR1562482_2.fastq.gz"
-    og_file2.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR1562482_2.fastq.gz"
+    og_file2.absolute_file_path = "/home/user/data_store/ERR1562482/ERR1562482_2.fastq.gz"
     og_file2.is_downloaded = True
     og_file2.save()
 
@@ -112,7 +127,7 @@ def prepare_job():
 
     return pj, [og_file, og_file2]
 
-def prepare_dotsra_job(filename="ERR1562482.sra"):
+def prepare_dotsra_job(accession_code):
     pj = ProcessorJob()
     pj.pipeline_applied = "SALMON"
     pj.id = random.randint(111, 999999)
@@ -121,7 +136,7 @@ def prepare_dotsra_job(filename="ERR1562482.sra"):
     c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
 
     samp = Sample()
-    samp.accession_code = "SALMON" # So the test files go to the right place
+    samp.accession_code = accession_code
     samp.organism = c_elegans
     samp.source_database = 'SRA'
     samp.technology = 'RNA-SEQ'
@@ -129,10 +144,23 @@ def prepare_dotsra_job(filename="ERR1562482.sra"):
 
     prepare_organism_indices()
 
+    # Create a symlink from where the files lives in the git repo to
+    # where the test is expecting it, so when the test completes it
+    # only deletes the symlink, not the file itself.
+    filename = accession_code + ".sra"
+    test_location = "/home/user/data_store/TEST/" + accession_code + "/" + filename
+    temp_location = "/home/user/data_store/" + accession_code + "/" + filename
+    # If a previous test failed, remove it, if not ignore the error.
+    try:
+        os.remove(temp_location)
+    except OSError:
+        pass
+    os.symlink(test_location, temp_location)
+
     og_file = OriginalFile()
     og_file.source_filename = filename
     og_file.filename = filename
-    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/" + filename
+    og_file.absolute_file_path = temp_location
     og_file.is_downloaded = True
     og_file.save()
 
@@ -175,13 +203,8 @@ def strong_quant_correlation(ref_filename, output_filename):
 class SalmonTestCase(TestCase):
     @tag('salmon')
     def test_salmon(self):
-        """Test the whole pipeline."""
-        # Ensure any computed files from previous tests are removed.
-        try:
-            os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
-        except FileNotFoundError:
-            pass
-
+        """Test the whole pipeline.
+        """
         job, files = prepare_job()
         job_context = salmon.salmon(job.pk)
         job = ProcessorJob.objects.get(id=job.pk)
@@ -195,11 +218,6 @@ class SalmonTestCase(TestCase):
     @tag('salmon')
     def test_no_salmon_on_geo(self):
         """Test that salmon won't be run on data coming from GEO."""
-        # Ensure any computed files from previous tests are removed.
-        try:
-            os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
-        except FileNotFoundError:
-            pass
 
         job, files = prepare_job()
 
@@ -233,14 +251,27 @@ class SalmonTestCase(TestCase):
 
     @tag('salmon')
     def test_salmon_dotsra(self):
-        """Test the whole pipeline."""
-        # Ensure any computed files from previous tests are removed.
-        try:
-            os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
-        except FileNotFoundError:
-            pass
+        """Test the whole pipeline.
 
-        job, files = prepare_dotsra_job()
+        The .sra file used here does not have unmated reads. This is
+        intentional because we need to have a test for a file without
+        unmated reads and one with unmated reads.
+        """
+        job, files = prepare_dotsra_job("SRR1944916")
+        job_context = salmon.salmon(job.pk)
+        job = ProcessorJob.objects.get(id=job.pk)
+        self.assertTrue(job.success)
+        shutil.rmtree(job_context["work_dir"], ignore_errors=True)
+
+    @tag('salmon')
+    def test_salmon_dotsra_unmated(self):
+        """Test the whole pipeline.
+
+        The .sra file used here has unmated reads. This is intentional
+        because we need to have a test for a file without unmated
+        reads and one with unmated reads.
+        """
+        job, files = prepare_dotsra_job("SRR548309")
         job_context = salmon.salmon(job.pk)
         job = ProcessorJob.objects.get(id=job.pk)
         self.assertTrue(job.success)
@@ -248,10 +279,6 @@ class SalmonTestCase(TestCase):
 
     @tag('salmon')
     def test_salmon_dotsra_bad(self):
-        try:
-            os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
-        except FileNotFoundError:
-            pass
 
         job, files = prepare_dotsra_job("i-dont-exist.sra")
         job_context = salmon.salmon(job.pk)
