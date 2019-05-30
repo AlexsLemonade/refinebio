@@ -9,6 +9,8 @@ This download includes gene expression matrices and experiment and sample metada
 
 * The `aggregated_metadata.json` file contains information about the options you selected for download.
 Specifically, the `aggregate_by` and `scale_by` fields note how the samples are grouped into gene expression matrices and how the gene expression data values were transformed, respectively.
+The `quantile_normalized` fields notes whether or not quantile normalization was performed.
+Currently, we only support skipping quantile normalization for RNA-seq experiments when aggregating by experiment on the web interface.
 
 * Individual gene expression matrices and their corresponding sample metadata files are in their own directories.
 
