@@ -25,7 +25,6 @@ from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils, smasher
 
 
-S3_BUCKET_NAME = get_env_variable("S3_QN_TARGET_BUCKET_NAME", "data-refinery")
 logger = get_and_configure_logger(__name__)
 
 
