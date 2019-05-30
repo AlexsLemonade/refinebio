@@ -40,6 +40,7 @@ logger = get_and_configure_logger(__name__)
 # Let this fail if SYSTEM_VERSION is unset.
 SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
+S3_QN_TARGET_BUCKET_NAME = get_env_variable("S3_QN_TARGET_BUCKET_NAME", "data-refinery")
 DIRNAME = os.path.dirname(os.path.abspath(__file__))
 CURRENT_JOB = None
 
@@ -418,6 +419,13 @@ def end_job(job_context: Dict, abort=False):
                 original_file.delete_local_file()
 
     if success:
+        # QN reference files go to a special bucket so they can be
+        # publicly available.
+        if job_context["job"].pipeline_applied == "QN_REFERENCE":
+            s3_bucket = S3_QN_TARGET_BUCKET_NAME
+        else:
+            s3_bucket = S3_BUCKET_NAME
+
         # S3-sync Computed Files
         for computed_file in job_context.get('computed_files', []):
             # Ensure even distribution across S3 servers
