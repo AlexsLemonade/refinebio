@@ -265,22 +265,22 @@ def calculate_sha1(absolute_file_path):
 
     return hash_object.hexdigest()
 
-def get_fasp_sra_download(run_accession: str):
+def get_sra_download_url(run_accession, protocol="fasp"):
     """Try getting the sra-download URL from CGI endpoint"""
     #Ex: curl --data "acc=SRR6718414&accept-proto=fasp&version=2.0" https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi
     cgi_url = "https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi"
-    data = "acc=" + run_accession + "&accept-proto=fasp&version=2.0"
+    data = "acc=" + run_accession + "&accept-proto=" + protocol + "&version=2.0"
     try:
         resp = requests.post(cgi_url, data=data)
     except Exception as e:
         # Our configured logger needs util, so we use the standard logging library for just this.
         import logging
         logger = logging.getLogger(__name__)
-        logger.exception("Bad FASP CGI request!: " + str(cgi_url) + ", " + str(data))
+        logger.exception("Bad CGI request!: " + str(cgi_url) + ", " + str(data))
         return None
 
     if resp.status_code != 200:
-        # This isn't on the new FASP servers
+        # This isn't on the new servers
         return None
     else:
         try:
@@ -290,14 +290,28 @@ def get_fasp_sra_download(run_accession: str):
             # Sometimes, the responses from names.cgi makes no sense at all on a per-accession-code basis. This helps us handle that.
             # $ curl --data "acc=SRR5818019&accept-proto=fasp&version=2.0" https://www.ncbi.nlm.nih.gov/Traces/names/names.cgi
             # 2.0\nremote|SRR5818019|434259775|2017-07-11T21:32:08Z|a4bfc16dbab1d4f729c4552e3c9519d1|||400|Only 'https' protocol is allowed for this object
-            sra_url = resp.text.split('\n')[1].split('|')[6].split('fasp://')[1]
+            protocol_header = protocol + '://'
+            sra_url = resp.text.split('\n')[1].split('|')[6]
             return sra_url
         except Exception as e:
             # Our configured logger needs util, so we use the standard logging library for just this.
             import logging
             logger = logging.getLogger(__name__)
-            logger.exception("Error parsing FASP CGI response: " + str(cgi_url) + " " + str(data) + " " + str(resp.text))
+            logger.exception("Error parsing CGI response: " + str(cgi_url) + " " + str(data) + " " + str(resp.text))
             return None
+
+
+def get_fasp_sra_download(run_accession: str):
+    """Get an URL for SRA using the FASP protocol.
+
+    These URLs should not actually include the protcol."""
+    full_url = get_sra_download_url(run_accession, 'fasp')
+    sra_url = resp.text.split('\n')[1].split('|')[6].split('fasp://')[1]
+    return sra_url
+
+def get_https_sra_download(run_accession: str):
+    """Get an HTTPS URL for SRA."""
+    return get_sra_download_url(run_accession, 'https')
 
 def load_blacklist(blacklist_csv: str="config/RNASeqRunBlackList.csv"):
     """ Loads the SRA run blacklist """
