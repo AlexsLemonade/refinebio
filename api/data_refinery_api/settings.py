@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'raven.contrib.django.raven_compat',
     'django_elasticsearch_dsl',
     'django_elasticsearch_dsl_drf',
+    'drf_yasg',
 
     # Local
     'data_refinery_common',
@@ -199,14 +200,14 @@ RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD') == "True"
 # Elastic Search
 ELASTICSEARCH_DSL = {
     'default': {
-        'hosts': get_env_variable('ELASTICSEARCH_HOST') + ":" + get_env_variable('ELASTICSEARCH_PORT') 
+        'hosts': get_env_variable('ELASTICSEARCH_HOST') + ":" + get_env_variable('ELASTICSEARCH_PORT')
     }
 }
 
 if 'test' in sys.argv:
     ELASTICSEARCH_INDEX_NAMES = {
-            'data_refinery_common.models.documents': 'experiments_test',
-        }
+        'data_refinery_common.models.documents': 'experiments_test',
+    }
 else:
     ELASTICSEARCH_INDEX_NAMES = {
         'data_refinery_common.models.documents': 'experiments',

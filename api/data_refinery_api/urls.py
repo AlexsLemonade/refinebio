@@ -1,3 +1,5 @@
+from data_refinery_api.views import ExperimentDocumentView
+from rest_framework.routers import DefaultRouter
 from django.conf.urls import url, include
 from django.conf import settings
 from django.contrib import admin
@@ -7,6 +9,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.urlpatterns import format_suffix_patterns
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
 
 from data_refinery_api.views import (
     SearchAndFilter,
@@ -93,20 +98,30 @@ class DatasetRoot(APIView):
 ##
 # ES
 ##
-from django.conf.urls import url, include
-from rest_framework.routers import DefaultRouter
-from data_refinery_api.views import ExperimentDocumentView
 
 # TODO:
-# Move this to a custom router 
-# so we can use 'name' 
+# Move this to a custom router
+# so we can use 'name'
 # https://www.django-rest-framework.org/api-guide/routers/
 router = DefaultRouter()
 router.register(r'',
-                    ExperimentDocumentView,
-                    base_name='esearch',
-                    )
+                ExperimentDocumentView,
+                base_name='esearch',
+                )
 router.include_format_suffixes = False
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="Snippets API",
+        default_version='v1',
+        description="Test description",
+        terms_of_service="https://www.google.com/policies/terms/",
+        contact=openapi.Contact(email="contact@snippets.local"),
+        license=openapi.License(name="BSD License"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+)
 
 urlpatterns = [
 
@@ -162,6 +177,10 @@ urlpatterns = [
 
     # ES
     url(r'^es/', include(router.urls), name="esearch"),
+
+    # api docs
+    url(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    url(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 
     # Root
     url(r'^$', APIRoot.as_view(), name="api_root"),
