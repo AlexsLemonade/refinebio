@@ -37,7 +37,7 @@ from django_elasticsearch_dsl_drf.filter_backends import (
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
 from elasticsearch_dsl import TermsFacet, DateHistogramFacet
-from rest_framework import status, filters, generics
+from rest_framework import status, filters, generics, mixins
 from rest_framework.exceptions import APIException
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination
@@ -99,6 +99,9 @@ from data_refinery_common.models.documents import (
 from data_refinery_common.utils import get_env_variable, get_active_volumes, get_nomad_jobs
 from data_refinery_common.logging import get_and_configure_logger
 from .serializers import ExperimentDocumentSerializer
+
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 
 logger = get_and_configure_logger(__name__)
 
@@ -174,10 +177,10 @@ class ExperimentDocumentView(DocumentViewSet):
 
     Search can be used by affixing:
 
-        ?search=medulloblastoma
-        ?id=1
-        ?search=medulloblastoma&technology=microarray&has_publication=true
-        ?ordering=source_first_published
+    ?search=medulloblastoma
+    ?id=1
+    ?search=medulloblastoma&technology=microarray&has_publication=true
+    ?ordering=source_first_published
 
     Full examples can be found in the Django-ES-DSL-DRF docs:
         https://django-elasticsearch-dsl-drf.readthedocs.io/en/0.17.1/filtering_usage_examples.html#filtering
@@ -562,8 +565,9 @@ class CreateDatasetView(generics.CreateAPIView):
     queryset = Dataset.objects.all()
     serializer_class = CreateDatasetSerializer
 
-class DatasetView(generics.RetrieveUpdateAPIView):
-    """ View and modify a single Dataset. Set `start` to `true` along with a valid
+class DatasetView(generics.RetrieveUpdateAPIView, mixins.CreateModelMixin):
+    """ 
+    View and modify a single Dataset. Set `start` to `true` along with a valid
     activated API token (from /token/) to begin smashing and delivery.
 
     Adding a supplying `["ALL"]` as an experiment's accession list will add all of the associated samples.
@@ -729,21 +733,9 @@ class DatasetView(generics.RetrieveUpdateAPIView):
         serializer.save()
 
 class DatasetStatsView(APIView):
-    """ Get stats for a given dataset. Ex:
-
-    {
-        "HOMO_SAPIENS": {
-            "num_experiments": 5,
-            "num_samples": 55 },
-        "GALLUS_GALLUS": {
-            "num_experiments": 5,
-            "num_samples": 55 },
-    }
-
-    """
+    """ Get stats for a given dataset. """
 
     def get(self, request, id):
-
         dataset = get_object_or_404(Dataset, id=id)
         stats = {}
 
@@ -808,11 +800,7 @@ class APITokenView(APIView):
 ##
 
 class ExperimentList(PaginatedAPIView):
-    """
-    List all Experiments.
-
-    Append the pk to the end of this URL to see a detail view.
-    """
+    """ Paginated list of all experiments. """
 
     def get(self, request, format=None):
         filter_dict = request.query_params.dict()
@@ -828,26 +816,37 @@ class ExperimentList(PaginatedAPIView):
             serializer = ExperimentSerializer(experiments, many=True)
             return Response(serializer.data)
 
-class ExperimentDetail(APIView):
-    """
-    Retrieve an Experiment instance.
-    """
-    def get_object(self, pk):
-        try:
-            return Experiment.public_objects.get(pk=pk)
-        except Experiment.DoesNotExist:
-            raise Http404
-        except Exception:
-            try:
-                return Experiment.public_objects.get(accession_code=pk)
-            except Experiment.DoesNotExist:
-                raise Http404
-            return HttpResponseBadRequest("Bad PK or Accession")
+class ExperimentDetail(generics.RetrieveAPIView):
+    """ Retrieve details for an experiment given it's accession code """
+    lookup_field = "accession_code"
+    queryset = Experiment.public_objects.all()
+    serializer_class = DetailedExperimentSerializer
 
-    def get(self, request, pk, format=None):
-        experiment = self.get_object(pk)
-        serializer = DetailedExperimentSerializer(experiment)
-        return Response(serializer.data)
+    # def get_object(self, pk):
+    #     try:
+    #         return Experiment.public_objects.get(pk=pk)
+    #     except Experiment.DoesNotExist:
+    #         raise Http404
+    #     except Exception:
+    #         try:
+    #             return Experiment.public_objects.get(accession_code=pk)
+    #         except Experiment.DoesNotExist:
+    #             raise Http404
+    #         return HttpResponseBadRequest("Bad PK or Accession")
+
+    # @swagger_auto_schema(
+    #     manual_parameters=[
+    #         openapi.Parameter('id', openapi.IN_PATH,
+    #             type=openapi.TYPE_STRING,
+    #             description="Accession code of the experiment",
+    #             required=True
+    #         ),
+    #     ],
+    # )
+    # def get(self, request, pk, format=None):
+    #     experiment = self.get_object(pk)
+    #     serializer = DetailedExperimentSerializer(experiment)
+    #     return Response(serializer.data)
 
 ##
 # Samples

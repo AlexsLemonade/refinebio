@@ -69,6 +69,8 @@ schema_view = get_schema_view(
         description="""
 refine.bio is a multi-organism collection of genome-wide transcriptome or gene expression data that has been obtained from publicly available repositories and uniformly processed and normalized. refine.bio allows biologists, clinicians, and machine learning researchers to search for experiments from different source repositories all in one place and build custom data sets for their questions of interest.
 
+The swagger-ui view can be found [here](http://api.refine.bio/swagger/).
+The ReDoc view can be found [here](http://api.refine.bio/).
 Additional documentation can be found at [docs.refine.bio](http://docs.refine.bio/en/latest/).
 
 ### Questions/Feedback?
@@ -90,7 +92,8 @@ urlpatterns = [
 
     # Endpoints / Self-documentation
     url(r'^experiments/$', ExperimentList.as_view(), name="experiments"),
-    url(r'^experiments/(?P<pk>.+)/$', ExperimentDetail.as_view(), name="experiments_detail"),
+    url(r'^experiments/(?P<accession_code>.+)/$', ExperimentDetail.as_view(), name="experiments_detail"),
+
     url(r'^samples/$', SampleList.as_view(), name="samples"),
     url(r'^samples/(?P<pk>[0-9]+)/$', SampleDetail.as_view(), name="samples_detail"),
     url(r'^organisms/$', OrganismList.as_view(), name="organisms"),
@@ -134,7 +137,7 @@ urlpatterns = [
     url(r'^docs/', include_docs_urls(title='Refine.bio API'), name="docs_schema"),
 
     # ES
-    url(r'^es/', include(router.urls), name="esearch"),
+    url(r'^es/', ExperimentDocumentView.as_view({'get': 'list'}), name="esearch"),
 
     # api docs
     url(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
