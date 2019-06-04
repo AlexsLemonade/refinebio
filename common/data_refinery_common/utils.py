@@ -306,8 +306,11 @@ def get_fasp_sra_download(run_accession: str):
 
     These URLs should not actually include the protcol."""
     full_url = get_sra_download_url(run_accession, 'fasp')
-    sra_url = full_url.text.split('\n')[1].split('|')[6].split('fasp://')[1]
-    return sra_url
+    if full_url:
+        sra_url = full_url.split('fasp://')[1]
+        return sra_url
+    else:
+        return None
 
 def get_https_sra_download(run_accession: str):
     """Get an HTTPS URL for SRA."""
