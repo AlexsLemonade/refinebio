@@ -21,4 +21,5 @@ rm -rf .terraform
 terraform init \
     -force-copy \
     -backend-config="bucket=refinebio-tfstate-deploy-$STAGE" \
-    -backend-config="key=terraform-${TF_VAR_user}.tfstate"
+    -backend-config="key=terraform-${TF_VAR_user}.tfstate" \
+    -backend-config="dynamodb_table=refinebio-terraform-lock"
