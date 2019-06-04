@@ -30,7 +30,7 @@ class DownloadSraTestCase(TestCase):
     # @patch('data_refinery_workers.downloaders.utils.send_job')
     # def test_download_file(self, mock_send_job):
     #     mock_send_job.return_value = None
-        
+
     #     dlj = DownloaderJob()
     #     dlj.accession_code = "ERR036"
     #     dlj.save()
@@ -62,17 +62,17 @@ class DownloadSraTestCase(TestCase):
     @patch('data_refinery_workers.downloaders.utils.send_job')
     def test_download_file_ncbi(self, mock_send_job):
         mock_send_job.return_value = None
-        
+
         dlj = DownloaderJob()
-        dlj.accession_code = "DRR002116"
+        dlj.accession_code = "SRR9117853"
         dlj.save()
         og = OriginalFile()
-        og.source_filename = "DRR002116.sra"
-        og.source_url = "anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/DRR/DRR002/DRR002116/DRR002116.sra"
+        og.source_filename = "SRR9117853.sra"
+        og.source_url = "anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/SRR/SRR9117/SRR9117853/SRR9117853.sra"
         og.is_archive = True
         og.save()
         sample = Sample()
-        sample.accession_code = 'DRR002116'
+        sample.accession_code = 'SRR9117853'
         sample.save()
         assoc = OriginalFileSampleAssociation()
         assoc.sample = sample
@@ -85,7 +85,7 @@ class DownloadSraTestCase(TestCase):
         result, downloaded_files = sra.download_sra(dlj.pk)
         utils.end_downloader_job(dlj, result)
         self.assertTrue(result)
-        self.assertEqual(downloaded_files[0].sha1, 'd5374e7fe047d4f76b165c3f5148ab2df9d42cea')
+        self.assertEqual(downloaded_files[0].sha1, 'e7ad484fe6f134ba7d1b2664e58cc15ae5a958cc')
         self.assertTrue(os.path.exists(downloaded_files[0].absolute_file_path))
 
     @tag('downloaders')
@@ -93,17 +93,17 @@ class DownloadSraTestCase(TestCase):
     @patch('data_refinery_workers.downloaders.utils.send_job')
     def test_download_file_swapper(self, mock_send_job):
         mock_send_job.return_value = None
-        
+
         dlj = DownloaderJob()
-        dlj.accession_code = "DRR002116"
+        dlj.accession_code = "SRR9117853"
         dlj.save()
         og = OriginalFile()
-        og.source_filename = "DRR002116.sra"
-        og.source_url = "anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/DRR/DRR002/DRR002116/DRR002116.sra"
+        og.source_filename = "SRR9117853.sra"
+        og.source_url = "anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/SRR/SRR9117/SRR9117853/SRR9117853.sra"
         og.is_archive = True
         og.save()
         sample = Sample()
-        sample.accession_code = 'DRR002116'
+        sample.accession_code = 'SRR9117853'
         sample.save()
         assoc = OriginalFileSampleAssociation()
         assoc.sample = sample
@@ -113,5 +113,5 @@ class DownloadSraTestCase(TestCase):
         assoc.downloader_job = dlj
         assoc.original_file = og
         assoc.save()
-        result = sra._download_file(og.source_url, dlj, "/tmp", force_ftp=False)
+        result = sra._download_file(og.source_url, dlj, "/tmp/doomed", force_ftp=False)
         self.assertTrue(result)
