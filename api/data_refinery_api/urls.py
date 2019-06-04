@@ -47,54 +47,6 @@ class AccessUser:
 if settings.DEBUG:
     admin.site.has_permission = lambda r: setattr(r, 'user', AccessUser()) or True
 
-# This class provides a friendlier root API page.
-class APIRoot(APIView):
-    """
-    Refine.bio API
-
-    This open API provides access to all of the Refine.bio experiment, sample and result information.
-
-    """
-    def get(self, request):
-        return Response({
-            'experiments': reverse('experiments', request=request),
-            'samples': reverse('samples', request=request),
-            'organisms': reverse('organisms', request=request),
-            'platforms': reverse('platforms', request=request),
-            'institutions': reverse('institutions', request=request),
-            'jobs': reverse('jobs', request=request),
-            'stats': reverse('stats', request=request),
-            'dataset': reverse('dataset_root', request=request),
-            'token': reverse('token', request=request),
-            'search': reverse('search', request=request)
-        })
-
-# This class provides a friendlier jobs API page.
-class JobsRoot(APIView):
-    """
-    Jobs!
-    """
-    def get(self, request):
-        return Response({
-            'survey': reverse('survey_jobs', request=request),
-            'downloader': reverse('downloader_jobs', request=request),
-            'processor': reverse('processor_jobs', request=request)
-        })
-
-# This class provides a friendlier Dataset API page.
-class DatasetRoot(APIView):
-    """
-    Use the 'create' endpoint to create a new dataset,
-    then use the returned 'id' field to see and update all the fields:
-
-    `/dataset/id-1234-1234/`
-
-    """
-    def get(self, request):
-        return Response({
-            'create': reverse('create_dataset', request=request)
-        })
-
 ##
 # ES
 ##
@@ -112,11 +64,19 @@ router.include_format_suffixes = False
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Snippets API",
+        title="Refine.bio API",
         default_version='v1',
-        description="Test description",
-        terms_of_service="https://www.google.com/policies/terms/",
-        contact=openapi.Contact(email="contact@snippets.local"),
+        description="""
+refine.bio is a multi-organism collection of genome-wide transcriptome or gene expression data that has been obtained from publicly available repositories and uniformly processed and normalized. refine.bio allows biologists, clinicians, and machine learning researchers to search for experiments from different source repositories all in one place and build custom data sets for their questions of interest.
+
+Additional documentation can be found at [docs.refine.bio](http://docs.refine.bio/en/latest/).
+
+### Questions/Feedback?
+
+If you have a question or comment, please [file an issue on GitHub](https://github.com/AlexsLemonade/refinebio/issues) or send us an email at [ccdl@alexslemonade.org](mailto:ccdl@alexslemonade.org).
+        """,
+        terms_of_service="https://www.refine.bio/terms",
+        contact=openapi.Contact(email="ccdl@alexslemonade.org"),
         license=openapi.License(name="BSD License"),
     ),
     public=True,
@@ -140,7 +100,6 @@ urlpatterns = [
     url(r'^processors/$', ProcessorList.as_view(), name="processors"),
 
     # Deliverables
-    url(r'^dataset/$', DatasetRoot.as_view(), name="dataset_root"),
     url(r'^dataset/create/$', CreateDatasetView.as_view(), name="create_dataset"),
     url(r'^dataset/stats/(?P<id>[0-9a-f-]+)/$', DatasetStatsView.as_view(), name="dataset_stats"),
     url(r'^dataset/(?P<id>[0-9a-f-]+)/$', DatasetView.as_view(), name="dataset"),
@@ -148,7 +107,6 @@ urlpatterns = [
     url(r'^token/(?P<id>[0-9a-f-]+)/$', APITokenView.as_view(), name="token_id"),
 
     # Jobs
-    url(r'^jobs/$', JobsRoot.as_view(), name="jobs"),
     url(r'^jobs/survey/$', SurveyJobList.as_view(), name="survey_jobs"),
     url(r'^jobs/downloader/$', DownloaderJobList.as_view(), name="downloader_jobs"),
     url(r'^jobs/processor/$', ProcessorJobList.as_view(), name="processor_jobs"),
@@ -180,10 +138,8 @@ urlpatterns = [
 
     # api docs
     url(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    url(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-
-    # Root
-    url(r'^$', APIRoot.as_view(), name="api_root"),
+    # Let's put redoc at the api root
+    url(r'^$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc')
 ]
 
 # This adds support explicitly typed endpoints such that appending '.json' returns that application type.
