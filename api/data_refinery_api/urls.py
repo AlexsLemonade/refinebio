@@ -93,9 +93,9 @@ urlpatterns = [
     # Endpoints / Self-documentation
     url(r'^experiments/$', ExperimentList.as_view(), name="experiments"),
     url(r'^experiments/(?P<accession_code>.+)/$', ExperimentDetail.as_view(), name="experiments_detail"),
-
     url(r'^samples/$', SampleList.as_view(), name="samples"),
-    url(r'^samples/(?P<pk>[0-9]+)/$', SampleDetail.as_view(), name="samples_detail"),
+    url(r'^samples/(?P<accession_code>.+)/$', SampleDetail.as_view(), name="samples_detail"),
+    
     url(r'^organisms/$', OrganismList.as_view(), name="organisms"),
     url(r'^platforms/$', PlatformList.as_view(), name="platforms"),
     url(r'^institutions/$', InstitutionList.as_view(), name="institutions"),

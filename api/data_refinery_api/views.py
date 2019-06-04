@@ -799,54 +799,17 @@ class APITokenView(APIView):
 # Experiments
 ##
 
-class ExperimentList(PaginatedAPIView):
+class ExperimentList(generics.ListAPIView):
     """ Paginated list of all experiments. """
-
-    def get(self, request, format=None):
-        filter_dict = request.query_params.dict()
-        filter_dict.pop('limit', None)
-        filter_dict.pop('offset', None)
-        experiments = Experiment.public_objects.filter(**filter_dict)
-
-        page = self.paginate_queryset(experiments)
-        if page is not None:
-            serializer = ExperimentSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        else:
-            serializer = ExperimentSerializer(experiments, many=True)
-            return Response(serializer.data)
+    model = Experiment
+    queryset = Experiment.public_objects.all()
+    serializer_class = ExperimentSerializer
 
 class ExperimentDetail(generics.RetrieveAPIView):
     """ Retrieve details for an experiment given it's accession code """
     lookup_field = "accession_code"
     queryset = Experiment.public_objects.all()
     serializer_class = DetailedExperimentSerializer
-
-    # def get_object(self, pk):
-    #     try:
-    #         return Experiment.public_objects.get(pk=pk)
-    #     except Experiment.DoesNotExist:
-    #         raise Http404
-    #     except Exception:
-    #         try:
-    #             return Experiment.public_objects.get(accession_code=pk)
-    #         except Experiment.DoesNotExist:
-    #             raise Http404
-    #         return HttpResponseBadRequest("Bad PK or Accession")
-
-    # @swagger_auto_schema(
-    #     manual_parameters=[
-    #         openapi.Parameter('id', openapi.IN_PATH,
-    #             type=openapi.TYPE_STRING,
-    #             description="Accession code of the experiment",
-    #             required=True
-    #         ),
-    #     ],
-    # )
-    # def get(self, request, pk, format=None):
-    #     experiment = self.get_object(pk)
-    #     serializer = DetailedExperimentSerializer(experiment)
-    #     return Response(serializer.data)
 
 ##
 # Samples
@@ -944,20 +907,11 @@ class SampleList(PaginatedAPIView):
             serializer = DetailedSampleSerializer(samples, many=True)
             return Response(serializer.data)
 
-class SampleDetail(APIView):
-    """
-    Retrieve a Sample instance.
-    """
-    def get_object(self, pk):
-        try:
-            return Sample.public_objects.get(pk=pk)
-        except Sample.DoesNotExist:
-            raise Http404
-
-    def get(self, request, pk, format=None):
-        sample = self.get_object(pk)
-        serializer = DetailedSampleSerializer(sample)
-        return Response(serializer.data)
+class SampleDetail(generics.RetrieveAPIView):
+    """ Retrieve the details for a Sample given it's accession code """
+    lookup_field = "accession_code"
+    queryset = Sample.public_objects.all()
+    serializer_class = DetailedSampleSerializer
 
 ##
 # Processor
