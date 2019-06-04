@@ -47,21 +47,6 @@ class AccessUser:
 if settings.DEBUG:
     admin.site.has_permission = lambda r: setattr(r, 'user', AccessUser()) or True
 
-##
-# ES
-##
-
-# TODO:
-# Move this to a custom router
-# so we can use 'name'
-# https://www.django-rest-framework.org/api-guide/routers/
-router = DefaultRouter()
-router.register(r'',
-                ExperimentDocumentView,
-                base_name='esearch',
-                )
-router.include_format_suffixes = False
-
 schema_view = get_schema_view(
     openapi.Info(
         title="Refine.bio API",
@@ -96,7 +81,7 @@ urlpatterns = [
     url(r'^samples/$', SampleList.as_view(), name="samples"),
     url(r'^samples/(?P<accession_code>.+)/$', SampleDetail.as_view(), name="samples_detail"),
     url(r'^organisms/$', OrganismList.as_view(), name="organisms"),
-    
+
     url(r'^platforms/$', PlatformList.as_view(), name="platforms"),
     url(r'^institutions/$', InstitutionList.as_view(), name="institutions"),
     url(r'^results/$', ResultsList.as_view(), name="results"),
