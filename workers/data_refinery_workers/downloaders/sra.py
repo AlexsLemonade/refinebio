@@ -82,11 +82,12 @@ def _download_file_http(download_url: str,
                         target_file_path: str
                           ) -> bool:
     try:
+        target_file = open(target_file_path, "wb")
         logger.debug("Downloading file from %s to %s using HTTP.",
                      download_url,
                      target_file_path,
                      downloader_job=downloader_job.id)
-        target_file = open(target_file_path, "wb")
+
         with closing(urllib.request.urlopen(download_url, timeout=60)) as request:
             shutil.copyfileobj(request, target_file, CHUNK_SIZE)
     except Exception:
