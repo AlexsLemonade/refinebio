@@ -204,8 +204,6 @@ def _create_result_objects(job_context: Dict) -> Dict:
     }
     annotation.save()
 
-    # TODO: upload this to a public read bucket.
-    # https://github.com/AlexsLemonade/refinebio/issues/586
     job_context['result'] = result
     job_context['computed_files'] = [computed_file]
     job_context['annotation'] = annotation
