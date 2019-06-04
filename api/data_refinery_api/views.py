@@ -815,75 +815,54 @@ class ExperimentDetail(generics.RetrieveAPIView):
 # Samples
 ##
 
-class SampleList(PaginatedAPIView):
-    """
-    List all Samples.
+class SampleList(generics.ListAPIView):
+    """ Returns detailed information about Samples """
+    model = Sample
+    serializer_class = DetailedSampleSerializer
+    filter_backends = (filters.OrderingFilter,)
+    ordering_fields = '__all__'
+    ordering = ('-is_processed')
 
-    Pass in a list of pk to an ids query parameter to filter by id.
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name='dataset_id', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description="Filters the result and only returns samples that are added to a dataset.",
+            ),
+            openapi.Parameter(
+                name='experiment_accession_code', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description="Filters the result and only returns only the samples associated with an experiment accession code.",
+            ),
+            openapi.Parameter(
+                name='accession_codes', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description="Provide a list of sample accession codes sepparated by commas and the endpoint will only return information about these samples.",
+            ),
+        ],
+    )
+    def get(self, request, *args, **kwargs):
+        return super(SampleList, self).get(request, *args, **kwargs)
 
-    Also accepts:
-        - `dataset_id` field instead of a list of accession codes
-        - `experiment_accession_code` to return the samples associated with a given experiment
-
-    Append the pk or accession_code to the end of this URL to see a detail view.
-
-    """
-
-    def get(self, request, format=None):
-        filter_dict = request.query_params.dict()
-        filter_dict.pop('limit', None)
-        filter_dict.pop('offset', None)
-        order_by = filter_dict.pop('order_by', None)
-        ids = filter_dict.pop('ids', None)
-        filter_by = filter_dict.pop('filter_by', None)
-        organism = filter_dict.pop('organism', None)
-
-        if ids is not None:
-            ids = [ int(x) for x in ids.split(',')]
-            filter_dict['pk__in'] = ids
-
-        experiment_accession_code = filter_dict.pop('experiment_accession_code', None)
-        if experiment_accession_code:
-            experiment = get_object_or_404(Experiment.objects.values('id'), accession_code=experiment_accession_code)
-            filter_dict['experiments__in'] = [experiment['id']]
-
-        accession_codes = filter_dict.pop('accession_codes', None)
-        if accession_codes:
-            accession_codes = accession_codes.split(',')
-            filter_dict['accession_code__in'] = accession_codes
-
-        dataset_id = filter_dict.pop('dataset_id', None)
-        if dataset_id:
-            dataset = get_object_or_404(Dataset, id=dataset_id)
-            # Python doesn't provide a prettier way of doing this that I know about.
-            filter_dict['accession_code__in'] = [item for sublist in dataset.data.values() for item in sublist]
-
-        # Accept Organism in both name and ID form
-        if organism:
-            try:
-                organism_id = int(organism)
-            except ValueError:
-                organism_object = Organism.get_object_for_name(organism)
-                organism_id = organism_object.id
-            filter_dict['organism'] = organism_id
-
-        samples = Sample.public_objects \
+    def get_queryset(self):
+        """
+        ref https://www.django-rest-framework.org/api-guide/filtering/#filtering-against-query-parameters
+        """
+        queryset = Sample.public_objects \
             .prefetch_related('sampleannotation_set') \
             .prefetch_related('organism') \
             .prefetch_related('results') \
             .prefetch_related('results__processor') \
             .prefetch_related('results__computationalresultannotation_set') \
             .prefetch_related('results__computedfile_set') \
-            .filter(**filter_dict) \
-            .order_by('-is_processed') \
+            .filter(**self.get_query_params_filters()) \
             .distinct()
 
-        if order_by:
-            samples = samples.order_by(order_by)
-
         # case insensitive search https://docs.djangoproject.com/en/2.1/ref/models/querysets/#icontains
+        filter_by = self.request.query_params.get('filter_by', None)        
         if filter_by:
-            samples = samples.filter(   Q(title__icontains=filter_by) |
+            queryset = queryset.filter( Q(title__icontains=filter_by) |
                                         Q(sex__icontains=filter_by) |
                                         Q(age__icontains=filter_by) |
                                         Q(specimen_part__icontains=filter_by) |
@@ -899,13 +878,45 @@ class SampleList(PaginatedAPIView):
                                         Q(sampleannotation__data__icontains=filter_by)
                                     )
 
-        page = self.paginate_queryset(samples)
-        if page is not None:
-            serializer = DetailedSampleSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        else:
-            serializer = DetailedSampleSerializer(samples, many=True)
-            return Response(serializer.data)
+        return queryset
+
+    def get_query_params_filters(self):
+        """ We do advanced filtering on the queryset depending on the query parameters.
+            This returns the parameters that should be used for that. """
+        filter_dict = dict()
+
+        ids = self.request.query_params.get('ids', None)
+        if ids is not None:
+            ids = [ int(x) for x in ids.split(',')]
+            filter_dict['pk__in'] = ids
+
+        experiment_accession_code = self.request.query_params.get('experiment_accession_code', None)
+        if experiment_accession_code:
+            experiment = get_object_or_404(Experiment.objects.values('id'), accession_code=experiment_accession_code)
+            filter_dict['experiments__in'] = [experiment['id']]
+
+        accession_codes = self.request.query_params.get('accession_codes', None)
+        if accession_codes:
+            accession_codes = accession_codes.split(',')
+            filter_dict['accession_code__in'] = accession_codes
+
+        dataset_id = self.request.query_params.get('dataset_id', None)
+        if dataset_id:
+            dataset = get_object_or_404(Dataset, id=dataset_id)
+            # Python doesn't provide a prettier way of doing this that I know about.
+            filter_dict['accession_code__in'] = [item for sublist in dataset.data.values() for item in sublist]
+
+        # Accept Organism in both name and ID form
+        organism = self.request.query_params.get('organism', None)        
+        if organism:
+            try:
+                organism_id = int(organism)
+            except ValueError:
+                organism_object = Organism.get_object_for_name(organism)
+                organism_id = organism_object.id
+            filter_dict['organism'] = organism_id
+
+        return filter_dict
 
 class SampleDetail(generics.RetrieveAPIView):
     """ Retrieve the details for a Sample given it's accession code """
