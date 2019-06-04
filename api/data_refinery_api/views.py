@@ -928,12 +928,10 @@ class SampleDetail(generics.RetrieveAPIView):
 # Processor
 ##
 
-class ProcessorList(APIView):
+class ProcessorList(generics.ListAPIView):
     """List all processors."""
-    def get(self, request, format=None):
-        processors = Processor.objects.all()
-        serializer = ProcessorSerializer(processors, many=True)
-        return Response(serializer.data)
+    queryset = Processor.objects.all()
+    serializer_class = ProcessorSerializer
 
 
 ##
@@ -976,35 +974,33 @@ class ResultsList(PaginatedAPIView):
 # Search Filter Models
 ##
 
-class OrganismList(APIView):
+class OrganismList(generics.ListAPIView):
     """
-	Unpaginated list of all the available organisms
+	Unpaginated list of all the available organisms.
 	"""
+    queryset = Organism.objects.all()
+    serializer_class = OrganismSerializer
+    paginator = None
 
-    def get(self, request, format=None):
-        organisms = Organism.objects.all()
-        serializer = OrganismSerializer(organisms, many=True)
-        return Response(serializer.data)
-
-class PlatformList(APIView):
+class PlatformList(generics.ListAPIView):
     """
 	Unpaginated list of all the available "platform" information
 	"""
+    serializer_class = PlatformSerializer
+    paginator = None
 
-    def get(self, request, format=None):
-        samples = Sample.public_objects.all().values("platform_accession_code", "platform_name").distinct()
-        serializer = PlatformSerializer(samples, many=True)
-        return Response(serializer.data)
+    def get_queryset(self):
+        return Sample.public_objects.all().values("platform_accession_code", "platform_name").distinct()
 
-class InstitutionList(APIView):
+class InstitutionList(generics.ListAPIView):
     """
 	Unpaginated list of all the available "institution" information
 	"""
+    serializer_class = InstitutionSerializer
+    paginator = None
 
-    def get(self, request, format=None):
-        experiments = Experiment.public_objects.all().values("submitter_institution").distinct()
-        serializer = InstitutionSerializer(experiments, many=True)
-        return Response(serializer.data)
+    def get_queryset(self):
+        return Experiment.public_objects.all().values("submitter_institution").distinct()
 
 ##
 # Jobs
