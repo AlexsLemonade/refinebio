@@ -776,36 +776,30 @@ class ProcessorList(generics.ListAPIView):
 # Results
 ##
 
-class ResultsList(PaginatedAPIView):
+class ResultsList(generics.ListAPIView):
     """
-    List all ComputationalResults.
+    results_list
+    This lists all `ComputationalResult` which contain meta-information about the output of a computer process. (Ex Salmon).
 
-    Append the pk to the end of this URL to see a detail view.
-
+    This can return valid S3 urls if a valid token is sent in the header `HTTP_API_KEY`.
     """
+    queryset = ComputationalResult.public_objects.all()
+    serializer_class = ComputationalResultSerializer
 
-    def get(self, request, format=None):
-        filter_dict = request.query_params.dict()
-        filter_dict.pop('limit', None)
-        filter_dict.pop('offset', None)
-        results = ComputationalResult.public_objects.filter(**filter_dict)
-
+    def get_serializer_class(self):
         token_id = self.request.META.get('HTTP_API_KEY', None)
 
         try:
             token = APIToken.objects.get(id=token_id, is_activated=True)
-            serializer_class = ComputationalResultWithUrlSerializer
+            return ComputationalResultWithUrlSerializer
         except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
-            serializer_class = ComputationalResultSerializer
+            return ComputationalResultSerializer
 
-        page = self.paginate_queryset(results)
-        if page is not None:
-            serializer = serializer_class(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        else:
-            serializer = serializer_class(results, many=True)
-            return Response(serializer.data)
-
+    def filter_queryset(self, queryset):
+        filter_dict = self.request.query_params.dict()
+        filter_dict.pop('limit', None)
+        filter_dict.pop('offset', None)
+        return queryset.filter(**filter_dict)
 
 ##
 # Search Filter Models
