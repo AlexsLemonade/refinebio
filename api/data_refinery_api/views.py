@@ -100,6 +100,7 @@ from data_refinery_common.utils import get_env_variable, get_active_volumes, get
 from data_refinery_common.logging import get_and_configure_logger
 from .serializers import ExperimentDocumentSerializer
 
+from django.utils.decorators import method_decorator
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
@@ -172,21 +173,27 @@ class FacetedSearchFilterBackendExtended(FacetedSearchFilterBackend):
         return queryset
 
 
+##
+# ElasticSearch powered Search and Filter
+##
+@method_decorator(name='list', decorator=swagger_auto_schema(operation_description="""
+Use this endpoint to search among the experiments. 
+
+This is powered by ElasticSearch, information regarding advanced usages of the 
+filters can be found in the [Django-ES-DSL-DRF docs](https://django-elasticsearch-dsl-drf.readthedocs.io/en/0.17.1/filtering_usage_examples.html#filtering)
+
+There's an additional field in the response named `facets` that contain stats on the number of results per filter type.
+
+Example Requests:
+```
+?search=medulloblastoma
+?id=1
+?search=medulloblastoma&technology=microarray&has_publication=true
+?ordering=source_first_published
+```
+"""))
 class ExperimentDocumentView(DocumentViewSet):
-    """ElasticSearch powered experiment search.
-
-    Search can be used by affixing:
-
-    ?search=medulloblastoma
-    ?id=1
-    ?search=medulloblastoma&technology=microarray&has_publication=true
-    ?ordering=source_first_published
-
-    Full examples can be found in the Django-ES-DSL-DRF docs:
-        https://django-elasticsearch-dsl-drf.readthedocs.io/en/0.17.1/filtering_usage_examples.html#filtering
-
-    """
-
+    """ ElasticSearch powered experiment search. """
     document = ExperimentDocument
     serializer_class = ExperimentDocumentSerializer
     pagination_class = ESLimitOffsetPagination
@@ -323,7 +330,6 @@ class ExperimentDocumentView(DocumentViewSet):
     faceted_search_param = 'facet'
 
     def list(self, request, *args, **kwargs):
-        """ Adds counts on certain filter fields to result JSON."""
         response = super(ExperimentDocumentView, self).list(request, args, kwargs)
         response.data['facets'] = self.transform_es_facets(response.data['facets'])
         return response
@@ -347,214 +353,6 @@ class ExperimentDocumentView(DocumentViewSet):
                     filter_group[bucket['key']] = bucket['total_samples']['value']
             result[field] = filter_group
         return result
-
-##
-# Search and Filter
-##
-
-class ExperimentFilter(django_filters.FilterSet):
-    queryset = Experiment.processed_public_objects.all()
-    has_publication = django_filters.BooleanFilter(field_name="has_publication")
-    submitter_institution = \
-        django_filters.ModelMultipleChoiceFilter(field_name="submitter_institution",
-                                                 to_field_name="submitter_institution",
-                                                 queryset=queryset)
-    submitter_institution.always_filter = False
-    technology = django_filters.ModelMultipleChoiceFilter(field_name="technology",
-                                                          to_field_name="technology",
-                                                          queryset=queryset)
-    technology.always_filter = False
-    source_first_published = django_filters.DateTimeFilter(field_name="source_first_published")
-    organisms__name = django_filters.ModelMultipleChoiceFilter(field_name="organisms__name",
-                                                               to_field_name="name",
-                                                               queryset=Organism.objects.all())
-    organisms__name.always_filter = False
-
-    samples__platform_name = \
-        django_filters.ModelMultipleChoiceFilter(field_name="samples__platform_name",
-                                                 to_field_name="platform_name",
-                                                 queryset=Sample.objects.all())
-    samples__platform_name.always_filter = False
-
-    class Meta:
-        model = Experiment
-        fields =    [   'has_publication',
-                        'submitter_institution',
-                        'technology',
-                        'source_first_published',
-                        'organisms__name',
-                        'samples__platform_name']
-
-    def to_html(self, request, queryset, view):
-        # Don't render the FKs in browsable view
-        return ''
-
-# Via: https://github.com/encode/django-rest-framework/issues/3905#issuecomment-294391278
-class NoMarkupDjangoFilterBackend(DjangoFilterBackend):
-    def to_html(self, request, queryset, view):
-        # We want this, but currently it incurs a huge performance penality on ChoiceFields with 1000+ choices
-        return ''
-
-# ListAPIView is read-only!
-class SearchAndFilter(generics.ListAPIView):
-    """
-    Search and filter for experiments and samples.
-
-    Ex: search/?search=human&has_publication=True
-
-    Interactive filtering allows users to explore results more easily. It can be enabled using the parameter `filter_order`.
-    The filter names should be sent sepparated by commas and depending on the order in which the filters are applied the
-    number of samples per filter will be different.
-
-    """
-
-    serializer_class = ExperimentSerializer
-    pagination_class = LimitOffsetPagination
-
-    filter_backends = (NoMarkupDjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
-    filter_class = ExperimentFilter
-
-    # Ordering
-    ordering_fields = ('total_samples_count', 'id', 'created_at', 'source_first_published', 'accession_code',)
-    ordering = ('-total_samples_count',)
-
-    def filter_samples_count(self, queryset, name, value):
-        return queryset.filter(total_samples_count=value)
-
-    # via http://www.django-rest-framework.org/api-guide/filtering/#searchfilter
-    # '^' Starts-with search.
-    # '=' Exact matches.
-    # '@' Full-text search.
-    # '$' Regex search.
-    search_fields = (   'title',
-                        'description',
-                        'accession_code',
-                        'alternate_accession_code',
-                        'protocol_description',
-                        'publication_title',
-                        'publication_doi',
-                        'publication_authors',
-                        'pubmed_id',
-                        'submitter_institution',
-                        'experimentannotation__data',
-                        # '@sample__accession_code',
-                        # '@sample__platform_name',
-                        # '@sample__platform_accession_code',
-                        # '@sample__organism__name',
-                        # '@sample__sex',
-                        # '@sample__specimen_part',
-                        # '@sample__disease',
-                        # '@sample__compound'
-                    )
-    filter_fields = ('has_publication', 'platform_name')
-
-    def get_queryset(self):
-
-        # For Prod:
-        queryset = Experiment.processed_public_objects.all()
-
-        # For Dev:
-        # queryset = Experiment.objects.all()
-
-        # Set up eager loading to avoid N+1 selects
-        queryset = self.get_serializer_class().setup_eager_loading(queryset)
-        return queryset
-
-    def list(self, request, *args, **kwargs):
-        """ Adds counts on certain filter fields to result JSON."""
-        response = super(SearchAndFilter, self).list(request, args, kwargs)
-
-        filter_param_names = ['organisms__name', 'technology', 'has_publication', 'platform']
-        # mapping between parameter names and category names
-        filter_name_map = {
-            'technology': 'technology',
-            'has_publication': 'publication',
-            'organisms__name': 'organism',
-            'platform': 'platforms'
-        }
-
-        # With interactive filtering, the filters in the last group are calculated differently, since they should stay unchanged when applied.
-        # ref https://github.com/AlexsLemonade/refinebio-frontend/issues/374#issuecomment-436373470
-        # This is only enabled when the parameter `filter_order` is provided (eg `filter_order=technology,platform`)
-        last_filter = self.get_last_filter()
-        if last_filter and last_filter in filter_param_names:
-            # 1. Calculate all filters except the one in the last category
-            queryset = self.search_queryset(request.query_params)
-            filter_names = [f for f in filter_param_names if f != last_filter]
-            response.data['filters'] = self.get_filters(queryset, filter_names)
-
-            # 2. Calculate the filters in the last category.
-            # We use a queryset built with all filters except those in the last category
-            params_without_last_category = request.query_params.copy()
-            params_without_last_category.pop(last_filter)
-            queryset_without_last_category = self.search_queryset(params_without_last_category)
-            last_category_filters = self.get_filters(queryset_without_last_category, [last_filter])
-            response.data['filters'][filter_name_map[last_filter]] = last_category_filters[filter_name_map[last_filter]]
-        else:
-            # Otherwise calculate the filters with the search term
-            response.data['filters'] = self.get_filters(self.search_queryset(), filter_param_names)
-
-        return response
-
-    def get_last_filter(self):
-        request = self.request
-        if 'filter_order' not in request.query_params:
-            return False
-        filter_order = request.query_params['filter_order']
-        last_filter = filter_order.split(',')[-1:][0]
-        # Ensure the last filter is valid and one of the applied filters
-        if not last_filter or last_filter not in request.query_params:
-            return False
-        return last_filter
-
-    def get_filters(self, queryset, filters_to_calculate):
-        result = {
-            'technology': {},
-            'publication': {},
-            'organism': {},
-            'platforms': {}
-        }
-
-        if 'technology' in filters_to_calculate:
-            # Technology
-            techs = queryset.values('technology').annotate(count=Count('sample__id', distinct=True))
-            for tech in techs:
-                if not tech['technology'] or not tech['technology'].strip():
-                    continue
-                result['technology'][tech['technology']] = tech['count']
-
-        if 'has_publication' in filters_to_calculate:
-            # Publication
-            pubs = queryset.values('has_publication').annotate(count=Count('sample__id', distinct=True))
-            for pub in pubs:
-                if pub['has_publication']:
-                    result['publication']['has_publication'] = pub['count']
-
-        if 'organisms__name' in filters_to_calculate:
-            # Organisms
-            organisms = queryset.values('organisms__name').annotate(count=Count('sample__id', distinct=True))
-            for organism in organisms:
-                # This experiment has no ExperimentOrganism-association, which is bad.
-                # This information may still live on the samples though.
-                if not organism['organisms__name']:
-                    continue
-                result['organism'][organism['organisms__name']] = organism['count']
-
-        if 'platform' in filters_to_calculate:
-            # Platforms
-            platforms = queryset.values('samples__platform_name').annotate(count=Count('sample__id', distinct=True))
-            for plat in platforms:
-                if plat['samples__platform_name']:
-                    result['platforms'][plat['samples__platform_name']] = plat['count']
-
-        return result
-
-    def search_queryset(self, filter_params = False):
-        if filter_params:
-            queryset = ExperimentFilter(filter_params, queryset=self.get_queryset()).qs
-        else:
-            queryset = self.get_queryset()
-        return filters.SearchFilter().filter_queryset(self.request, queryset, view=self)
 
 ##
 # Dataset
@@ -800,7 +598,7 @@ class APITokenView(APIView):
 ##
 
 class ExperimentList(generics.ListAPIView):
-    """ Paginated list of all experiments. """
+    """ Paginated list of all experiments. Advanced filtering can be done with the `/search` endpoint. """
     model = Experiment
     queryset = Experiment.public_objects.all()
     serializer_class = ExperimentSerializer
@@ -959,7 +757,6 @@ class ResultsList(PaginatedAPIView):
             serializer_class = ComputationalResultWithUrlSerializer
         except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
             serializer_class = ComputationalResultSerializer
-
 
         page = self.paginate_queryset(results)
         if page is not None:

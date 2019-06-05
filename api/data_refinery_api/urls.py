@@ -14,7 +14,6 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
 from data_refinery_api.views import (
-    SearchAndFilter,
     ExperimentList,
     ExperimentDetail,
     SampleList,
@@ -71,9 +70,8 @@ If you have a question or comment, please [file an issue on GitHub](https://gith
 )
 
 urlpatterns = [
-
     # Primary search and filter interface
-    url(r'^search/$', SearchAndFilter.as_view(), name="search"),
+    url(r'^search/$', ExperimentDocumentView.as_view({'get': 'list'}), name="search"),
 
     # Endpoints / Self-documentation
     url(r'^experiments/$', ExperimentList.as_view(), name="experiments"),
@@ -120,9 +118,6 @@ urlpatterns = [
 
     # Core API schema docs
     url(r'^docs/', include_docs_urls(title='Refine.bio API'), name="docs_schema"),
-
-    # ES
-    url(r'^es/', ExperimentDocumentView.as_view({'get': 'list'}), name="esearch"),
 
     # api docs
     url(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
