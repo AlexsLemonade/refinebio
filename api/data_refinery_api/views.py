@@ -176,7 +176,33 @@ class FacetedSearchFilterBackendExtended(FacetedSearchFilterBackend):
 ##
 # ElasticSearch powered Search and Filter
 ##
-@method_decorator(name='list', decorator=swagger_auto_schema(operation_description="""
+@method_decorator(name='list', decorator=swagger_auto_schema(
+manual_parameters=[
+    openapi.Parameter(
+        name='technology', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description="Allows filtering the results by technology, can have multiple values. Eg: `?technology=microarray&technology=rna-seq`",
+    ),
+    openapi.Parameter(
+        name='has_publication', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description="Filter the results that have associated publications with `?has_publication=true`",
+    ),
+    openapi.Parameter(
+        name='platform', in_=openapi.IN_QUERY,
+        type=openapi.TYPE_STRING,
+        description="Allows filtering the results by platform, this parameter can have multiple values.",
+    ),
+    openapi.Parameter(
+        name='organism', in_=openapi.IN_QUERY,
+        type=openapi.TYPE_STRING,
+        description="Allows filtering the results by organism, this parameter can have multiple values.",
+    ),
+    openapi.Parameter(
+        name='num_processed_samples', in_=openapi.IN_QUERY,
+        type=openapi.TYPE_NUMBER,
+        description="Use ElasticSearch queries to specify the number of processed samples of the results",
+    ),
+],
+operation_description="""
 Use this endpoint to search among the experiments. 
 
 This is powered by ElasticSearch, information regarding advanced usages of the 
