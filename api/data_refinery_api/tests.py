@@ -935,19 +935,19 @@ class APITestCases(APITestCase):
     def test_sentry_middleware_404(self, mock_client):
         # We don't send anything to raven if it's not enabled
         mock_client.is_enabled.side_effect = lambda: False
-        response = self.client.get(reverse('experiments_detail', kwargs={'pk': '1000'}))
+        response = self.client.get(reverse('experiments_detail', kwargs={'accession_code': 'INEXISTENT'}))
         self.assertEqual(response.status_code, 404)
         mock_client.captureMessage.assert_not_called()
 
         # A 404 with raven enabled will send a message to sentry
         mock_client.is_enabled.side_effect = lambda: True
-        response = self.client.get(reverse('experiments_detail', kwargs={'pk': '1000'}))
+        response = self.client.get(reverse('experiments_detail', kwargs={'accession_code': 'INEXISTENT'}))
         self.assertEqual(response.status_code, 404)
         mock_client.captureMessage.assert_not_called()
 
         # A 404 with raven enabled will send a message to sentry
         mock_client.is_enabled.side_effect = lambda: True
-        response = self.client.get(reverse('experiments_detail', kwargs={'pk': '1000'})[:-1] + "aasdas/")
+        response = self.client.get(reverse('experiments_detail', kwargs={'accession_code': 'INEXISTENT'})[:-1] + "aasdas/")
         self.assertEqual(response.status_code, 404)
         mock_client.captureMessage.assert_not_called()
 
@@ -1331,7 +1331,7 @@ class ProcessorTestCases(APITestCase):
                          'Salmon Tools 0.1.0')
 
     def test_processor_and_organism_in_sample(self):
-        sample = Sample.objects.create(title="fake sample")
+        sample = Sample.objects.create(accession_code='ACCESSION', title="fake sample")
         organism = Organism.get_object_for_name("HOMO_SAPIENS")
         transcriptome_result = ComputationalResult.objects.create()
         organism_index = OrganismIndex.objects.create(organism=organism,
@@ -1342,7 +1342,7 @@ class ProcessorTestCases(APITestCase):
         sra = SampleResultAssociation.objects.create(sample=sample, result=result)
 
         response = self.client.get(reverse('samples_detail',
-                                           kwargs={'pk': sample.id}))
+                                           kwargs={'accession_code': sample.accession_code}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         processor = response.json()['results'][0]['processor']
