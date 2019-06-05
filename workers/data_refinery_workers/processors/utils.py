@@ -13,7 +13,8 @@ from enum import Enum, unique
 from typing import List, Dict, Callable
 
 from data_refinery_common import job_lookup
-from data_refinery_common.logging import get_and_configure_logger, create_downloader_job
+from data_refinery_common.job_management import create_downloader_job
+from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
     ComputationalResultAnnotation,
