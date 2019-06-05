@@ -628,6 +628,25 @@ class ExperimentList(generics.ListAPIView):
     model = Experiment
     queryset = Experiment.public_objects.all()
     serializer_class = ExperimentSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = (
+        'title',
+        'description',
+        'accession_code',
+        'alternate_accession_code',
+        'source_database',
+        'source_url',
+        'has_publication',
+        'publication_title',
+        'publication_doi',
+        'pubmed_id',
+        'organisms',
+        'submitter_institution',
+        'created_at',
+        'last_modified',
+        'source_first_published',
+        'source_last_modified',
+    )
 
 class ExperimentDetail(generics.RetrieveAPIView):
     """ Retrieve details for an experiment given it's accession code """
@@ -1166,7 +1185,6 @@ class CompendiaDetail(APIView):
     A very simple modified ComputedFile endpoint which only shows Compendia results
     """
 
-    """List all processors."""
     def get(self, request, format=None):
 
         computed_files = ComputedFile.objects.filter(is_compendia=True, is_public=True, is_qn_target=False).order_by('-created_at')
