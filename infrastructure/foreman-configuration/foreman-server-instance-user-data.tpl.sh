@@ -42,6 +42,29 @@ docker run \\
 chmod +x /home/ubuntu/run_foreman.sh
 /home/ubuntu/run_foreman.sh
 
+# The foreman instance is used for running various management
+# commands. This script provides an easy way to do that.
+echo "
+#!/bin/sh
+
+# This script should be used by passing a management command name as
+# the first argument followed by any additional arguments to that
+# command.
+
+docker run \\
+       --env-file /home/ubuntu/environment \\
+       -e DATABASE_HOST=${database_host} \\
+       -e DATABASE_NAME=${database_name} \\
+       -e DATABASE_USER=${database_user} \\
+       -e DATABASE_PASSWORD=${database_password} \\
+       -e ELASTICSEARCH_HOST=${elasticsearch_host} \\
+       -e ELASTICSEARCH_PORT=${elasticsearch_port} \\
+       -v /tmp:/tmp \\
+       --add-host=nomad:${nomad_lead_server_ip} \\
+       -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py \$@
+" >> /home/ubuntu/run_management_command.sh
+chmod +x /home/ubuntu/run_foreman_command.sh
+
 # Start the Nomad agent in server mode via Monit
 apt-get -y update
 apt-get -y install monit htop
