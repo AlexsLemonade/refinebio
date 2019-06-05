@@ -13,7 +13,7 @@ from data_refinery_common.models import (
     DownloaderJobOriginalFileAssociation,
     OriginalFile,
 )
-from data_refinery_common.utils import get_env_variable, get_fasp_sra_download
+from data_refinery_common.utils import get_env_variable, get_https_sra_download
 from data_refinery_workers.downloaders import utils
 
 logger = get_and_configure_logger(__name__)
@@ -38,14 +38,14 @@ def _download_file(download_url: str,
     elif "ncbi.nlm.nih.gov" in download_url and not force_ftp:
         # Try to convert old-style endpoints into new-style endpoints if possible
         try:
-            if 'anonftp' in download_url:
+            if 'anonftp' in download_url or 'dbtest' in download_url:
                 accession = download_url.split('/')[-1].split('.sra')[0]
-                new_url = get_fasp_sra_download(accession)
+                new_url = get_https_sra_download(accession)
                 if new_url:
                     download_url = new_url
         except Exception:
             pass
-        return _download_file_aspera(download_url, downloader_job, target_file_path, source="NCBI")
+        return _download_file_http(download_url, downloader_job, target_file_path)
     else:
         return _download_file_ftp(download_url, downloader_job, target_file_path)
 
@@ -73,6 +73,30 @@ def _download_file_ftp(download_url: str, downloader_job: DownloaderJob, target_
         downloader_job.failure_reason = ("Exception caught while downloading "
                                          "file from the URL via FTP: {}").format(download_url)
         return False
+
+    return True
+
+
+def _download_file_http(download_url: str,
+                        downloader_job: DownloaderJob,
+                        target_file_path: str
+                          ) -> bool:
+    try:
+        target_file = open(target_file_path, "wb")
+        logger.debug("Downloading file from %s to %s using HTTP.",
+                     download_url,
+                     target_file_path,
+                     downloader_job=downloader_job.id)
+
+        with closing(urllib.request.urlopen(download_url, timeout=60)) as request:
+            shutil.copyfileobj(request, target_file, CHUNK_SIZE)
+    except Exception:
+        logger.exception("Exception caught while downloading file.",
+                         downloader_job=downloader_job.id)
+        downloader_job.failure_reason = "Exception caught while downloading file"
+        return False
+    finally:
+        target_file.close()
 
     return True
 

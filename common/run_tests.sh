@@ -31,5 +31,5 @@ docker run \
        --add-host=database:"$DB_HOST_IP" \
        --add-host=nomad:"$HOST_IP" \
        --add-host=elasticsearch:"$ES_HOST_IP" \
-       --env-file api/environments/test \
+       --env-file common/environments/test \
        -it ccdlstaging/dr_common_tests bash -c "$(run_tests_with_coverage $@)" --parallel

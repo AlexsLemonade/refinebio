@@ -2,7 +2,7 @@
 
 ##
 # EBS
-## 
+##
 
 resource "aws_ebs_volume" "data_refinery_ebs" {
   count = "${var.max_clients}"
@@ -36,7 +36,7 @@ resource "aws_s3_bucket" "data_refinery_bucket" {
 
 resource "aws_s3_bucket" "data_refinery_results_bucket" {
   bucket = "data-refinery-s3-results-${var.user}-${var.stage}"
-  acl    = "public-read"
+  acl    = "private"
   force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
 
   tags {
@@ -92,9 +92,20 @@ resource "aws_s3_bucket" "data_refinery_transcriptome_index_bucket" {
   }
 }
 
+resource "aws_s3_bucket" "data_refinery_qn_target_bucket" {
+  bucket = "data-refinery-s3-qn-target-${var.user}-${var.stage}"
+  acl    = "public-read"
+  force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
+
+  tags {
+    Name        = "data-refinery-s3-qn-target-${var.user}-${var.stage}"
+    Environment = "${var.stage}"
+  }
+}
+
 resource "aws_s3_bucket" "data_refinery_compendia_bucket" {
   bucket = "data-refinery-s3-compendia-${var.user}-${var.stage}"
-  acl    = "public-read"
+  acl    = "private"
   force_destroy = "${var.static_bucket_prefix == "dev" ? true : false}"
 
   tags {
