@@ -4,24 +4,13 @@ import time
 from typing import Dict, List
 
 from django.core.management.base import BaseCommand
-from nomad import Nomad
 
 from data_refinery_common.models import (
-    DownloaderJob,
-    DownloaderJobOriginalFileAssociation,
-    Experiment,
-    ExperimentOrganismAssociation,
-    ExperimentSampleAssociation,
-    Organism,
-    OriginalFile,
-    ProcessorJob,
-    ProcessorJobOriginalFileAssociation,
     Sample,
 )
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.message_queue import send_job
-from data_refinery_common.utils import get_env_variable, get_active_volumes, create_downloader_job
+from data_refinery_common.utils import create_downloader_job
+from data_refinery_foreman.foreman.performant_pagination.pagination import PerformantPaginator as Paginator
 
 
 logger = get_and_configure_logger(__name__)
@@ -47,8 +36,6 @@ class Command(BaseCommand):
         else:
             source_database = options["source_database"]
 
-        samples_with_computed_files = SampleComputedFileAssociation.objects.
-        unprocessed_samples = Sample.objects.filter(computed_files=[])
         sra_samples = Sample.objects.filter(
             source_database="SRA"
         ).prefetch_related(
