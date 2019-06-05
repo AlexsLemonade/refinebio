@@ -200,7 +200,7 @@ class APITestCases(APITestCase):
 
         response = self.client.get(reverse('samples'), kwargs={'page': 1})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
+
         response = self.client.get(reverse('organisms'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -801,7 +801,12 @@ class APITestCases(APITestCase):
         experiment_sample_association.experiment = experiment
         experiment_sample_association.save()
 
+        # we return all experiments
         response = self.client.get(reverse('search'), {'search': "GSX12345"})
+        self.assertEqual(response.json()['count'], 1)
+
+        # check requesting only experiments with processed samples
+        response = self.client.get(reverse('search'), {'search': "GSX12345", 'num_processed_samples__gt': 0})
         self.assertEqual(response.json()['count'], 0)
 
         sample2 = Sample()
