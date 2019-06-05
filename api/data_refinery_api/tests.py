@@ -210,9 +210,6 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('institutions'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('jobs'))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
         response = self.client.get(reverse('survey_jobs'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -231,13 +228,10 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('results'), kwargs={'page': 1})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('api_root'))
+        response = self.client.get(reverse('schema-redoc'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse('search'))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        response = self.client.get(reverse('dataset_root'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse('create_dataset'))
@@ -247,7 +241,6 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_sample_pagination(self):
-
         response = self.client.get(reverse('samples'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()['results']), 2)
@@ -256,11 +249,11 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()['results']), 1)
 
-        response = self.client.get(reverse('samples'), {'limit': 1, 'order_by': '-title'})
+        response = self.client.get(reverse('samples'), {'limit': 1, 'ordering': '-title'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['results'][0]['title'], '789')
 
-        response = self.client.get(reverse('samples'), {'limit': 1, 'order_by': 'title'})
+        response = self.client.get(reverse('samples'), {'limit': 1, 'ordering': 'title'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['results'][0]['title'], '123')
 
@@ -1251,7 +1244,7 @@ class ESTestCases(APITestCase):
         sra.save()
 
         # TODO: Use `reverse` when not using the DefaultRouter
-        response = self.client.get('/es/')
+        response = self.client.get('/search/')
 
         """ Test basic ES functionality """
         es_search_result = ExperimentDocument.search().filter("term", description="soda")
@@ -1267,15 +1260,15 @@ class ESTestCases(APITestCase):
         self.assertEqual(response.json()['facets']['technology']['rna-seq'], 0)
 
         # Basic Search
-        response = self.client.get('/es/?search=soda')
+        response = self.client.get('/search/?search=soda')
         self.assertEqual(response.json()['count'], 1)
 
         # Positive filter result
-        response = self.client.get('/es/?search=soda&technology=microarray')
+        response = self.client.get('/search/?search=soda&technology=microarray')
         self.assertEqual(response.json()['count'], 1)
 
         # Negative filter result
-        response = self.client.get('/es/?search=soda&technology=rna')
+        response = self.client.get('/search/?search=soda&technology=rna')
         self.assertEqual(response.json()['count'], 0)
 
 class ProcessorTestCases(APITestCase):
@@ -1328,7 +1321,8 @@ class ProcessorTestCases(APITestCase):
         response = self.client.get(reverse('processors'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        processors = response.json()
+        processors = response.json()['results']
+        
         self.assertEqual(processors[0]['name'], 'Salmon Quant')
         self.assertEqual(processors[0]['environment']['os_pkg']['python3'], '3.5.1-3')
 
