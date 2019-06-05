@@ -658,6 +658,23 @@ class ExperimentDetail(generics.RetrieveAPIView):
 # Samples
 ##
 
+@method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
+    openapi.Parameter(
+        name='dataset_id', in_=openapi.IN_QUERY,
+        type=openapi.TYPE_STRING,
+        description="Filters the result and only returns samples that are added to a dataset.",
+    ),
+    openapi.Parameter(
+        name='experiment_accession_code', in_=openapi.IN_QUERY,
+        type=openapi.TYPE_STRING,
+        description="Filters the result and only returns only the samples associated with an experiment accession code.",
+    ),
+    openapi.Parameter(
+        name='accession_codes', in_=openapi.IN_QUERY,
+        type=openapi.TYPE_STRING,
+        description="Provide a list of sample accession codes sepparated by commas and the endpoint will only return information about these samples.",
+    ),
+]))
 class SampleList(generics.ListAPIView):
     """ Returns detailed information about Samples """
     model = Sample
@@ -665,29 +682,7 @@ class SampleList(generics.ListAPIView):
     filter_backends = (filters.OrderingFilter,)
     ordering_fields = '__all__'
     ordering = ('-is_processed')
-
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
-                name='dataset_id', in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                description="Filters the result and only returns samples that are added to a dataset.",
-            ),
-            openapi.Parameter(
-                name='experiment_accession_code', in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                description="Filters the result and only returns only the samples associated with an experiment accession code.",
-            ),
-            openapi.Parameter(
-                name='accession_codes', in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                description="Provide a list of sample accession codes sepparated by commas and the endpoint will only return information about these samples.",
-            ),
-        ],
-    )
-    def get(self, request, *args, **kwargs):
-        return super(SampleList, self).get(request, *args, **kwargs)
-
+    
     def get_queryset(self):
         """
         ref https://www.django-rest-framework.org/api-guide/filtering/#filtering-against-query-parameters
