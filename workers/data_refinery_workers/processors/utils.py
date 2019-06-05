@@ -409,15 +409,6 @@ def end_job(job_context: Dict, abort=False):
                     experiment.update_num_samples()
                     experiment.save()
 
-    # If we are aborting, it's because we want to do something
-    # different, so leave the original files so that "something
-    # different" can use them.
-    if (success or job.no_retry) and not abort:
-        # Cleanup Original Files
-        if 'original_files' in job_context:
-            for original_file in job_context['original_files']:
-                original_file.delete_local_file()
-
     if success:
         # QN reference files go to a special bucket so they can be
         # publicly available.
@@ -433,10 +424,24 @@ def end_job(job_context: Dict, abort=False):
             result = computed_file.sync_to_s3(s3_bucket, nonce + "_" + computed_file.filename)
             if result:
                 computed_file.delete_local_file()
+
+            # If we can't upload the computed file then we haven't
+            # succeeded, unless we're running locally because we don't
+            # want to upload the file then.
+            success = result or not settings.RUNNING_IN_CLOUD
     else:
         for computed_file in job_context.get('computed_files', []):
             computed_file.delete_local_file()
             computed_file.delete()
+
+    # If we are aborting, it's because we want to do something
+    # different, so leave the original files so that "something
+    # different" can use them.
+    if (success or job.no_retry) and not abort:
+        # Cleanup Original Files
+        if 'original_files' in job_context:
+            for original_file in job_context['original_files']:
+                original_file.delete_local_file()
 
     # If the pipeline includes any steps, save it.
     if 'pipeline' in job_context:
