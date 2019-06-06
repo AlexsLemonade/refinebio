@@ -237,9 +237,6 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('create_dataset'))
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
-        response = self.client.get(reverse('token'))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
     def test_sample_pagination(self):
         response = self.client.get(reverse('samples'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -329,11 +326,11 @@ class APITestCases(APITestCase):
         drc1.s3_key = "drc2.tsv"
         drc1.save()
 
-        response = self.client.get(reverse('compendia'))
-        response_json = response.json()
+        response = self.client.get(reverse('computed-files'), {'is_compendia': True})
+        response_json = response.json()['results']
         self.assertEqual(3, len(response_json))
         # Prove that the download_url field is missing and not None.
-        self.assertEqual('NotPresent', response_json[0].get('download_url', 'NotPresent'))
+        self.assertEqual(None, response_json[0].get('download_url', None))
 
         # We don't actually want AWS to generate a temporary URL for
         # us, and it won't unless we're running in the cloud, but if
@@ -341,18 +338,17 @@ class APITestCases(APITestCase):
         # it will set the download_url field to None rather than
         # generate one.
 
-        # Get a token first
-        response = self.client.get(reverse('token'),
-                                    content_type="application/json")
+        # Create a token first
+        response = self.client.post(reverse('token'), content_type="application/json")
         token = response.json()
         token['is_activated'] = True
         token_id = token['id']
-        response = self.client.post(reverse('token'),
+        response = self.client.put(reverse('token_id', kwargs={'id': token_id}),
                                     json.dumps(token),
                                     content_type="application/json")
 
-        response = self.client.get(reverse('compendia'), HTTP_API_KEY=token_id)
-        response_json = response.json()
+        response = self.client.get(reverse('computed-files'), {'is_compendia': True}, HTTP_API_KEY=token_id)
+        response_json = response.json()['results']
         self.assertEqual(3, len(response_json))
         self.assertIsNone(response_json[0]['download_url'])
 
@@ -360,12 +356,12 @@ class APITestCases(APITestCase):
     def test_create_update_dataset(self, mock_send_job):
 
         # Get a token first
-        response = self.client.get(reverse('token'),
+        response = self.client.post(reverse('token'),
                                     content_type="application/json")
         token = response.json()
         token['is_activated'] = True
         token_id = token['id']
-        response = self.client.post(reverse('token'),
+        response = self.client.put(reverse('token_id', kwargs={'id': token_id}),
                                     json.dumps(token),
                                     content_type="application/json")
 
