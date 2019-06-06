@@ -29,7 +29,6 @@ from data_refinery_api.views import (
     Stats,
     CreateDatasetView,
     DatasetView,
-    DatasetStatsView,
     APITokenView,
     TranscriptomeIndexDetail,
     QNTargetsDetail,

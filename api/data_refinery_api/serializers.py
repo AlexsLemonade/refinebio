@@ -586,7 +586,6 @@ class DatasetSerializer(serializers.ModelSerializer):
     start = serializers.NullBooleanField(required=False)
     experiments = DatasetDetailsExperimentSerializer(source='get_experiments', many=True, read_only=True)
     organism_samples = serializers.SerializerMethodField(read_only=True)
-    data = serializers.Field(required=True)
 
     def __init__(self, *args, **kwargs):
         super(DatasetSerializer, self).__init__(*args, **kwargs)
@@ -632,6 +631,9 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'quantile_normalize'
             )
         extra_kwargs = {
+                        'data': {
+                            'required': True,
+                        },
                         'id': {
                             'read_only': True,
                         },

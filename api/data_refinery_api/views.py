@@ -389,7 +389,11 @@ class CreateDatasetView(generics.CreateAPIView):
     queryset = Dataset.objects.all()
     serializer_class = CreateDatasetSerializer
 
-@method_decorator(name='get', decorator=swagger_auto_schema(operation_description="View a single Dataset."))
+@method_decorator(name='get', decorator=swagger_auto_schema(operation_description="View a single Dataset.",manual_parameters=[
+openapi.Parameter(
+    name='details', in_=openapi.IN_QUERY, type=openapi.TYPE_BOOLEAN,
+    description="When set to `True`, additional fields will be included in the response with details about the experiments in the dataset. This is used mostly on the dataset page in www.refine.bio",
+)]))
 @method_decorator(name='patch', decorator=swagger_auto_schema(auto_schema=None)) # partial updates not supported
 @method_decorator(name='put', decorator=swagger_auto_schema(operation_description="""
 Modify an existing Dataset.
