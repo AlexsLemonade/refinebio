@@ -556,9 +556,12 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             serializer.validated_data['aggregate_by'] = old_aggregate
         serializer.save()
 
-class DatasetStatsView(APIView):
-    """ Get stats for a given dataset. """
 
+class DatasetStatsView(APIView):
+    """ Get stats for a given dataset. This is hidden from the API docs since it's very specific 
+    to our frontend. """
+
+    @swagger_auto_schema(auto_schema=None)
     def get(self, request, id):
         dataset = get_object_or_404(Dataset, id=id)
         stats = {}
