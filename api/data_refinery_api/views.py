@@ -560,36 +560,43 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             serializer.validated_data['aggregate_by'] = old_aggregate
         serializer.save()
 
-class APITokenView(APIView):
+class CreateApiTokenView(generics.CreateAPIView):
+    """ 
+    token_create
+
+    There're several endpoints like [/dataset](#tag/dataset) and [/results](#tag/results) that return 
+    S3 urls where users can download the files we produce, however in order to get those files people
+    need to accept our terms of use by creating a token and activating it.
+
+    ```
+    POST /token
+    PUT /token/{token-id} is_active=True
+    ```
+
+    The token id needs to be sent on the `API_KEY` header on http requests.
+
+    References
+    - [https://github.com/AlexsLemonade/refinebio/issues/731]()
+    - [https://github.com/AlexsLemonade/refinebio-frontend/issues/560]()
     """
-    Return this response to this endpoint with `is_activated: true` to activate this API token.
+    model = APIToken
+    serializer_class = APITokenSerializer
 
-    You must include an activated token's ID to download processed datasets.
+@method_decorator(name='patch', decorator=swagger_auto_schema(auto_schema=None))
+class APITokenView(generics.RetrieveUpdateAPIView):
     """
+    Read and modify Api Tokens.
 
-    def get(self, request, id=None):
-        """ Create a new token, or fetch a token by its ID. """
+    get:
+    Return details about a specific token.
 
-        if id:
-            token = get_object_or_404(APIToken, id=id)
-        else:
-            token = APIToken()
-            token.save()
-        serializer = APITokenSerializer(token)
-        return Response(serializer.data)
-
-    def post(self, request, id=None):
-        """ Given a token's ID, activate it."""
-
-        if not id:
-            id = request.data.get('id', None)
-
-        activated_token = get_object_or_404(APIToken, id=id)
-        activated_token.is_activated = request.data.get('is_activated', False)
-        activated_token.save()
-
-        serializer = APITokenSerializer(activated_token)
-        return Response(serializer.data)
+    put:
+    This can be used to activate a specific token by sending `is_activated: true`.
+    """
+    model = APIToken
+    lookup_field = 'id'
+    queryset = APIToken.objects.all()
+    serializer_class = APITokenSerializer
 
 ##
 # Experiments

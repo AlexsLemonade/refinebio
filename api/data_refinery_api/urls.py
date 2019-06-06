@@ -29,6 +29,7 @@ from data_refinery_api.views import (
     Stats,
     CreateDatasetView,
     DatasetView,
+    CreateApiTokenView,
     APITokenView,
     TranscriptomeIndexDetail,
     QNTargetsDetail,
@@ -85,7 +86,7 @@ urlpatterns = [
     # Deliverables
     url(r'^dataset/$', CreateDatasetView.as_view(), name="create_dataset"),
     url(r'^dataset/(?P<id>[0-9a-f-]+)/$', DatasetView.as_view(), name="dataset"),
-    url(r'^token/$', APITokenView.as_view(), name="token"),
+    url(r'^token/$', CreateApiTokenView.as_view(), name="token"),
     url(r'^token/(?P<id>[0-9a-f-]+)/$', APITokenView.as_view(), name="token_id"),
 
     # Jobs
