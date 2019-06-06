@@ -637,12 +637,6 @@ class APITestCases(APITestCase):
         self.assertEqual(response.json()['data'], json.loads(jdata)['data'])
         good_id = response.json()['id']
 
-        response = self.client.get(reverse('dataset_stats', kwargs={'id': good_id}))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json()['GALLUS_GALLUS'], {'num_experiments': 1, 'num_samples': 1})
-        self.assertEqual(response.json()['HOMO_SAPIENS'], {'num_experiments': 1, 'num_samples': 1})
-        self.assertEqual(len(response.json().keys()), 2)
-
         # Check that we can fetch these sample details via samples API
         response = self.client.get(reverse('samples'), {'dataset_id': good_id})
         self.assertEqual(response.json()['count'], 2)
