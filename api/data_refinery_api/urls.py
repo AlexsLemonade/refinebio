@@ -88,7 +88,6 @@ urlpatterns = [
     # Deliverables
     url(r'^dataset/$', CreateDatasetView.as_view(), name="create_dataset"),
     url(r'^dataset/(?P<id>[0-9a-f-]+)/$', DatasetView.as_view(), name="dataset"),
-    url(r'^dataset/stats/(?P<id>[0-9a-f-]+)/$', DatasetStatsView.as_view(), name="dataset_stats"),
     url(r'^token/$', APITokenView.as_view(), name="token"),
     url(r'^token/(?P<id>[0-9a-f-]+)/$', APITokenView.as_view(), name="token_id"),
 
