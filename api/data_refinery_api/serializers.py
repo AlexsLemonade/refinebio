@@ -210,7 +210,8 @@ class QNTargetSerializer(serializers.ModelSerializer):
 class ComputedFileListSerializer(serializers.ModelSerializer):
     result = ComputationalResultNoFilesSerializer(many=False)
     samples = DetailedExperimentSampleSerializer(many=True)
-
+    compendia_organism_name = serializers.CharField(source='compendia_organism__name', read_only=True)
+    
     class Meta:
         model = ComputedFile
         fields = (
@@ -223,14 +224,21 @@ class ComputedFileListSerializer(serializers.ModelSerializer):
                     'is_qc',
                     'is_compendia',
                     'compendia_version',
+                    'compendia_organism_name',
                     'sha1',
                     's3_bucket',
                     's3_key',
                     's3_url',
+                    'download_url',
                     'created_at',
                     'last_modified',
                     'result'
                 )
+        extra_kwargs = {
+            'download_url': {
+                'help_text': 'This will contain an url to download the file. You must send a valid [token](#tag/token) in order to receive this.'
+            }
+        }
 
 ##
 # Samples

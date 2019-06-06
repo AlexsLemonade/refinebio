@@ -24,7 +24,7 @@ from data_refinery_api.views import (
     SurveyJobList,
     DownloaderJobList,
     ProcessorJobList,
-    ResultsList,
+    ComputationalResultsList,
     ProcessorList,
     Stats,
     CreateDatasetView,
@@ -54,7 +54,9 @@ schema_view = get_schema_view(
 refine.bio is a multi-organism collection of genome-wide transcriptome or gene expression data that has been obtained from publicly available repositories and uniformly processed and normalized. refine.bio allows biologists, clinicians, and machine learning researchers to search for experiments from different source repositories all in one place and build custom data sets for their questions of interest.
 
 The swagger-ui view can be found [here](http://api.refine.bio/swagger/).
+
 The ReDoc view can be found [here](http://api.refine.bio/).
+
 Additional documentation can be found at [docs.refine.bio](http://docs.refine.bio/en/latest/).
 
 ### Questions/Feedback?
@@ -80,7 +82,6 @@ urlpatterns = [
     url(r'^organisms/$', OrganismList.as_view(), name="organisms"),
     url(r'^platforms/$', PlatformList.as_view(), name="platforms"),
     url(r'^institutions/$', InstitutionList.as_view(), name="institutions"),
-    url(r'^results/$', ResultsList.as_view(), name="results"),
     url(r'^processors/$', ProcessorList.as_view(), name="processors"),
 
     # Deliverables
@@ -97,18 +98,14 @@ urlpatterns = [
     # Dashboard Driver
     url(r'^stats/$', Stats.as_view(), name="stats"),
 
-    # Not-publically listed APIs
     # Transcriptome Indices and QN Targets
-    url(r'^transcriptome_indices', TranscriptomeIndexDetail.as_view(),
-        name="transcriptome-indices"),
-    url(r'^compendia', CompendiaDetail.as_view(),
-        name="compendia"),
-    url(r'^qn_targets_available', QNTargetsAvailable.as_view(),
-        name="qn-targets-available"),
-    url(r'^qn_targets', QNTargetsDetail.as_view(),
-        name="qn-targets"),
-    url(r'^computed_files', ComputedFilesList.as_view(),
-        name="computed-files"),
+    url(r'^transcriptome_indices', TranscriptomeIndexDetail.as_view(), name="transcriptome-indices"),
+    url(r'^qn_targets_available', QNTargetsAvailable.as_view(), name="qn-targets-available"),
+    url(r'^qn_targets', QNTargetsDetail.as_view(), name="qn-targets"),
+
+    url(r'^compendia/$', CompendiaDetail.as_view(), name="compendia"),
+    url(r'^computed_files/$', ComputedFilesList.as_view(), name="computed-files"),
+    url(r'^computational_results/$', ComputationalResultsList.as_view(), name="results"),
 
     # Admin
     url(r'^admin/', admin.site.urls),

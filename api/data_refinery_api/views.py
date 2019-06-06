@@ -755,10 +755,10 @@ class ProcessorList(generics.ListAPIView):
 # Results
 ##
 
-class ResultsList(generics.ListAPIView):
+class ComputationalResultsList(generics.ListAPIView):
     """
-    results_list
-    This lists all `ComputationalResult` which contain meta-information about the output of a computer process. (Ex Salmon).
+    computational_results_list
+    This lists all `ComputationalResult`. Each one contains meta-information about the output of a computer process. (Ex Salmon).
 
     This can return valid S3 urls if a valid token is sent in the header `HTTP_API_KEY`.
     """
@@ -1177,10 +1177,8 @@ class QNTargetsAvailable(APIView):
     This is a list of all of the organisms which have available QN Targets
     """
     def get(self, request, format=None):
-        
         organisms = Organism.get_objects_with_qn_targets()
         serializer = OrganismSerializer(organisms, many=True)
-
         return Response(serializer.data)
 
 class QNTargetsDetail(APIView):
@@ -1188,7 +1186,6 @@ class QNTargetsDetail(APIView):
     Get a detailed view of the Quantile Normalization file for an organism.
 
     ex: `?organism=DANIO_RERIO&format=json`
-
     """
 
     def get(self, request, format=None):
@@ -1221,17 +1218,37 @@ class QNTargetsDetail(APIView):
 # Computed Files
 ##
 
-class ComputedFilesList(PaginatedAPIView):
+class ComputedFilesList(generics.ListAPIView):
     """
+    ComputedFiles are representation of files created by data-refinery processes.
     """
+    queryset = ComputedFile.objects.all()
+    serializer_class = ComputedFileListSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
+    filterset_fields =  (
+                            'id',
+                            'is_qn_target',
+                            'is_smashable',
+                            'is_qc',
+                            'is_compendia',
+                            'compendia_version',
+                            'created_at',
+                            'last_modified',
+                        )
+    ordering_fields = ('id', 'created_at', 'last_modified', 'compendia_version',)
+    ordering = ('-id',)
 
-    def get(self, request, format=None):
-        filter_dict = request.query_params.dict()
-        limit = max(int(filter_dict.pop('limit', 100)), 100)
-        offset = int(filter_dict.pop('offset', 0))
-        files = ComputedFile.objects.filter(**filter_dict).order_by('-id')[offset:(offset + limit)]
-        serializer = ComputedFileListSerializer(files, many=True)
-        return Response(serializer.data)
+    def get_serializer_context(self):
+        """
+        Extra context provided to the serializer class.
+        """
+        serializer_context = super(ComputedFilesList, self).get_serializer_context()
+        token_id = self.request.META.get('HTTP_API_KEY', None)
+        try:
+            token = APIToken.objects.get(id=token_id, is_activated=True)
+            return {**serializer_context, 'token': token}
+        except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            return serializer_context
 
 ##
 # Util
