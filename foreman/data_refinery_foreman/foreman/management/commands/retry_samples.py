@@ -9,7 +9,7 @@ from data_refinery_common.models import (
     Sample,
 )
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.utils import create_downloader_job
+from data_refinery_common.job_management import create_downloader_job
 from data_refinery_foreman.foreman.performant_pagination.pagination import PerformantPaginator as Paginator
 
 
@@ -37,7 +37,7 @@ class Command(BaseCommand):
             source_database = options["source_database"]
 
         sra_samples = Sample.objects.filter(
-            source_database="SRA"
+            source_database=source_database
         ).prefetch_related(
             "computed_files",
             "original_files"
@@ -47,10 +47,23 @@ class Command(BaseCommand):
         page = paginator.page()
         page_count = 0
 
-        while page.has_next():
+        creation_count = 0
+        while True:
             for sample in page.object_list:
                 if sample.computed_files.count() == 0:
-                    create_downloader_job(sample.original_files, force=True)
+                    logger.debug("Creating downloader job for a sample.",
+                                 sample=sample.accession_code)
+                    if create_downloader_job(sample.original_files.all(), force=True):
+                        creation_count += 1
+
+            logger.info(
+                "Created %d new downloader jobs because their samples lacked computed files.",
+                creation_count
+            )
+
+            if not page.has_next():
+                break
+            creation_count = 0
 
             # 2000 samples queued up every five minutes should be fast
             # enough and also not thrash the DB.
