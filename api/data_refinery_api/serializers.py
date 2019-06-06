@@ -733,50 +733,6 @@ class APITokenSerializer(serializers.ModelSerializer):
                         }
                     }
 
-
-class CompendiaSerializer(serializers.ModelSerializer):
-    organism_name = serializers.CharField(source='compendia_organism.name', read_only=True)
-
-    class Meta:
-        model = ComputedFile
-        fields = (
-                    'id',
-                    'filename',
-                    'size_in_bytes',
-                    'is_compendia',
-                    'compendia_version',
-                    'organism_name',
-                    'sha1',
-                    's3_bucket',
-                    's3_key',
-                    's3_url',
-                    'created_at',
-                    'last_modified'
-                )
-
-
-class CompendiaWithUrlSerializer(serializers.ModelSerializer):
-    organism_name = serializers.CharField(source='compendia_organism.name', read_only=True)
-
-    class Meta:
-        model = ComputedFile
-        fields = (
-                    'id',
-                    'filename',
-                    'size_in_bytes',
-                    'is_compendia',
-                    'compendia_version',
-                    'organism_name',
-                    'sha1',
-                    's3_bucket',
-                    's3_key',
-                    's3_url',
-                    'download_url',
-                    'created_at',
-                    'last_modified'
-                )
-
-
 ##
 # ElasticSearch Document Serializers
 ##
