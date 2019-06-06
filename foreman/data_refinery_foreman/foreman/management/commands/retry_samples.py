@@ -63,6 +63,9 @@ class Command(BaseCommand):
 
             if not page.has_next():
                 break
+            else:
+                page = paginator.page(page.next_page_number())
+
             creation_count = 0
 
             # 2000 samples queued up every five minutes should be fast
