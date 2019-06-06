@@ -383,23 +383,23 @@ class ExperimentDocumentView(DocumentViewSet):
 ##
 # Dataset
 ##
-class CreateDatasetView(generics.CreateAPIView):
-    """ Creates and returns new Dataset. """
 
+class CreateDatasetView(generics.CreateAPIView):
+    """ Creates and returns new Datasets. """
     queryset = Dataset.objects.all()
     serializer_class = CreateDatasetSerializer
 
-class DatasetView(generics.RetrieveUpdateAPIView, mixins.CreateModelMixin):
-    """ 
-    View and modify a single Dataset. Set `start` to `true` along with a valid
-    activated API token (from /token/) to begin smashing and delivery.
+@method_decorator(name='get', decorator=swagger_auto_schema(operation_description="View a single Dataset."))
+@method_decorator(name='patch', decorator=swagger_auto_schema(auto_schema=None)) # partial updates not supported
+@method_decorator(name='put', decorator=swagger_auto_schema(operation_description="""
+Modify an existing Dataset.
 
-    Adding a supplying `["ALL"]` as an experiment's accession list will add all of the associated samples.
+Set `start` to `true` along with a valid activated API token (from `/token/`) to begin smashing and delivery.
 
-    You must also supply `email_address` with `start`, though this will never be serialized back to you.
-
-    """
-
+You must also supply `email_address` with `start`, though this will never be serialized back to you.
+"""))
+class DatasetView(generics.RetrieveUpdateAPIView):
+    """ View and modify a single Dataset. """
     queryset = Dataset.objects.all()
     serializer_class = DatasetSerializer
     lookup_field = 'id'

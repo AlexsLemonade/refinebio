@@ -586,6 +586,7 @@ class DatasetSerializer(serializers.ModelSerializer):
     start = serializers.NullBooleanField(required=False)
     experiments = DatasetDetailsExperimentSerializer(source='get_experiments', many=True, read_only=True)
     organism_samples = serializers.SerializerMethodField(read_only=True)
+    data = serializers.Field(required=True)
 
     def __init__(self, *args, **kwargs):
         super(DatasetSerializer, self).__init__(*args, **kwargs)
@@ -801,4 +802,3 @@ class ExperimentDocumentSerializer(serializers.Serializer):
     # FK/M2M
     # We don't use any ForgeinKey serializers right now, but if we did, we'd do it like this:
     # organisms = OrganismSerializer(many=True)
-    
