@@ -92,7 +92,12 @@ def prepare_original_files(job_context):
             missing_files=list(undownloaded_files)
         )
 
-        if not create_downloader_job(undownloaded_files, processor_job_id=job_context["job_id"]):
+        was_job_created = create_downloader_job(
+            undownloaded_files,
+            processor_job_id=job_context["job_id"],
+            force=True
+        )
+        if not was_job_created:
             failure_reason = "Missing file for processor job but unable to recreate downloader jobs!"
             logger.error(failure_reason, processor_job=job.id)
             job_context["success"] = False
