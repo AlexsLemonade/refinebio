@@ -785,11 +785,11 @@ def _run_salmon(job_context: Dict) -> Dict:
                  formatted_command,
                  processor_job=job_context["job_id"])
 
-    # 3 hours seems like a reasonable timeout for salmon. This is
+    # 1 hour seems like a reasonable timeout for salmon. This is
     # necessary because some samples make salmon hang forever and this
     # ties up our computing resources forever. Until this bug is
     # fixed, we'll just have to do it like this.
-    timeout = 60 * 60 * 3
+    timeout = 60 * 60
     job_context['time_start'] = timezone.now()
     try:
         completed_command = subprocess.run(formatted_command.split(),
