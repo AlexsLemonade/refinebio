@@ -58,6 +58,8 @@ from data_refinery_api.serializers import (
     PlatformSerializer,
     ProcessorSerializer,
     SampleSerializer,
+    CompendiaSerializer,
+    CompendiaWithUrlSerializer,
     QNTargetSerializer,
     ComputedFileListSerializer,
 
@@ -1143,6 +1145,30 @@ class TranscriptomeIndexDetail(APIView):
                 raise Http404
 
 ###
+# Compendia
+###
+
+class CompendiaDetail(APIView):
+    """
+    A very simple modified ComputedFile endpoint which only shows Compendia results
+    """
+
+    def get(self, request, format=None):
+
+        computed_files = ComputedFile.objects.filter(is_compendia=True, is_public=True, is_qn_target=False).order_by('-created_at')
+
+        token_id = self.request.META.get('HTTP_API_KEY', None)
+
+        try:
+            token = APIToken.objects.get(id=token_id, is_activated=True)
+            serializer = CompendiaWithUrlSerializer(computed_files, many=True)
+        except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            serializer = CompendiaSerializer(computed_files, many=True)
+
+        return Response(serializer.data)
+
+
+###
 # QN Targets
 ###
 
@@ -1194,15 +1220,7 @@ class QNTargetsDetail(APIView):
 
 class ComputedFilesList(generics.ListAPIView):
     """
-    computed_files_list
-    
     ComputedFiles are representation of files created by data-refinery processes.
-
-    This can also be used to fetch all the compendia files we have generated with:
-
-    ```
-    GET /computed_files?is_compendia=True&is_public=True
-    ```
     """
     queryset = ComputedFile.objects.all()
     serializer_class = ComputedFileListSerializer
