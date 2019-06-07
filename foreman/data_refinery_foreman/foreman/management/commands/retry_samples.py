@@ -47,18 +47,19 @@ class Command(BaseCommand):
         page = paginator.page()
         page_count = 0
 
-        creation_count = 0
+        creation_count_loop = 0
+        creation_count_since_sleep = 0
         while True:
             for sample in page.object_list:
                 if sample.computed_files.count() == 0:
                     logger.debug("Creating downloader job for a sample.",
                                  sample=sample.accession_code)
                     if create_downloader_job(sample.original_files.all(), force=True):
-                        creation_count += 1
+                        creation_count_loop += 1
 
             logger.info(
                 "Created %d new downloader jobs because their samples lacked computed files.",
-                creation_count
+                creation_count_loop
             )
 
             if not page.has_next():
@@ -66,8 +67,11 @@ class Command(BaseCommand):
             else:
                 page = paginator.page(page.next_page_number())
 
-            creation_count = 0
+            creation_count_since_sleep += creation_count_loop
+            creation_count_loop = 0
 
-            # 2000 samples queued up every five minutes should be fast
+            # 1000 samples queued up every five minutes should be fast
             # enough and also not thrash the DB.
-            time.sleep(60 * 5)
+            if creation_count_since_sleep >= 1000:
+                time.sleep(60 * 5)
+                creation_count_since_sleep = 0
