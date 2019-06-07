@@ -38,7 +38,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
 from elasticsearch_dsl import TermsFacet, DateHistogramFacet
 from rest_framework import status, filters, generics, mixins
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import APIException, NotFound
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
@@ -1174,29 +1174,29 @@ class CompendiaDetail(APIView):
 # QN Targets
 ###
 
-class QNTargetsAvailable(APIView):
+class QNTargetsAvailable(generics.ListAPIView):
     """
     This is a list of all of the organisms which have available QN Targets
     """
-    def get(self, request, format=None):
-        organisms = Organism.get_objects_with_qn_targets()
-        serializer = OrganismSerializer(organisms, many=True)
-        return Response(serializer.data)
+    serializer_class = OrganismSerializer
+    paginator = None
 
-class QNTargetsDetail(APIView):
+    def get_queryset(self):
+        return Organism.get_objects_with_qn_targets()
+
+@method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
+openapi.Parameter(
+    name='organism_name', in_=openapi.IN_PATH, type=openapi.TYPE_STRING,
+    description="Eg `DANIO_RERIO`, `MUS_MUSCULUS`",
+)], responses={404: 'QN Target not found for the given organism.'}))
+class QNTargetsDetail(generics.RetrieveAPIView):
     """
     Get a detailed view of the Quantile Normalization file for an organism.
-
-    ex: `?organism=DANIO_RERIO&format=json`
     """
+    serializer_class = QNTargetSerializer
 
-    def get(self, request, format=None):
-
-        filter_dict = request.query_params.dict()
-        organism = filter_dict.pop('organism', None)
-        if not organism:
-            raise APIException("Organism must be supplied!")
-
+    def get_object(self):
+        organism = self.kwargs['organism_name']
         organism = organism.upper().replace(" ", "_")
         try:
             organism_id = Organism.get_object_for_name(organism).id
@@ -1208,13 +1208,10 @@ class QNTargetsDetail(APIView):
             ).first()
             qn_target = annotation.result.computedfile_set.first()
         except Exception:
-            raise APIException("Don't have a target for that organism!")
-
+            raise NotFound("Don't have a target for that organism!")
         if not qn_target:
-            raise APIException("Don't have a target for that organism!!")
-
-        serializer = QNTargetSerializer(qn_target, many=False)
-        return Response(serializer.data)
+            raise NotFound("Don't have a target for that organism!!")
+        return qn_target
 
 ##
 # Computed Files

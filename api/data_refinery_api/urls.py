@@ -100,8 +100,8 @@ urlpatterns = [
 
     # Transcriptome Indices and QN Targets
     url(r'^transcriptome_indices', TranscriptomeIndexDetail.as_view(), name="transcriptome-indices"),
-    url(r'^qn_targets_available', QNTargetsAvailable.as_view(), name="qn-targets-available"),
-    url(r'^qn_targets', QNTargetsDetail.as_view(), name="qn-targets"),
+    url(r'^qn_targets/$', QNTargetsAvailable.as_view(), name="qn-targets-available"),
+    url(r'^qn_targets/(?P<organism_name>.+)$', QNTargetsDetail.as_view(), name="qn-targets"),
 
     url(r'^compendia/$', CompendiaDetail.as_view(), name="compendia"),
     url(r'^computed_files/$', ComputedFilesList.as_view(), name="computed-files"),
