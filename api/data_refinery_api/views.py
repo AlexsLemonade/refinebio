@@ -758,9 +758,10 @@ class ProcessorList(generics.ListAPIView):
 class ComputationalResultsList(generics.ListAPIView):
     """
     computational_results_list
+
     This lists all `ComputationalResult`. Each one contains meta-information about the output of a computer process. (Ex Salmon).
 
-    This can return valid S3 urls if a valid token is sent in the header `HTTP_API_KEY`.
+    This can return valid S3 urls if a valid [token](#tag/token) is sent in the header `HTTP_API_KEY`.
     """
     queryset = ComputationalResult.public_objects.all()
     serializer_class = ComputationalResultSerializer
@@ -1150,9 +1151,10 @@ class TranscriptomeIndexDetail(APIView):
 
 class CompendiaDetail(APIView):
     """
-    A very simple modified ComputedFile endpoint which only shows Compendia results
+    A very simple modified ComputedFile endpoint which only shows Compendia results.
     """
     
+    @swagger_auto_schema(deprecated=True)
     def get(self, request, format=None):
 
         computed_files = ComputedFile.objects.filter(is_compendia=True, is_public=True, is_qn_target=False).order_by('-created_at')
@@ -1219,7 +1221,6 @@ class QNTargetsDetail(APIView):
 ##
 
 class ComputedFilesList(generics.ListAPIView):
-
     """
     computed_files_list
     
