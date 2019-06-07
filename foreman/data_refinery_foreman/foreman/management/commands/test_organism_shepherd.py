@@ -205,11 +205,13 @@ class OrganismShepherdTestCase(TransactionTestCase):
         fifty_percent_processor_job.refresh_from_db()
         self.assertEqual(first_call_job_object, fifty_percent_processor_job.retried_job)
 
-        second_call_job_type = mock_calls[1][1][0]
-        second_call_job_object = mock_calls[1][2]["job"]
-        self.assertEqual(second_call_job_type, Downloaders.SRA)
-        self.assertEqual(second_call_job_object.accession_code, zero_percent_dl_job.accession_code)
-        self.assertEqual(second_call_job_object.downloader_task, zero_percent_dl_job.downloader_task)
+        # For now we aren't queuing experiments that haven't been processed at all.
+        self.assertEqual(len(mock_calls), 1)
+        # second_call_job_type = mock_calls[1][1][0]
+        # second_call_job_object = mock_calls[1][2]["job"]
+        # self.assertEqual(second_call_job_type, Downloaders.SRA)
+        # self.assertEqual(second_call_job_object.accession_code, zero_percent_dl_job.accession_code)
+        # self.assertEqual(second_call_job_object.downloader_task, zero_percent_dl_job.downloader_task)
 
-        zero_percent_dl_job.refresh_from_db()
-        self.assertEqual(second_call_job_object, zero_percent_dl_job.retried_job)
+        # zero_percent_dl_job.refresh_from_db()
+        # self.assertEqual(second_call_job_object, zero_percent_dl_job.retried_job)

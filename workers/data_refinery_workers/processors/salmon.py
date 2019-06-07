@@ -796,7 +796,7 @@ def _run_salmon(job_context: Dict) -> Dict:
                                            stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE,
                                            timeout=timeout)
-    except subprocess.TimeoutError:
+    except subprocess.TimeoutExpired:
         failure_reason = "Salmon timed out because it failed to complete within 3 hours."
         logger.error(failure_reason,
                      sample_accesion_code=job_context["sample"].accession_code,
