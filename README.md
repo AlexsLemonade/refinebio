@@ -830,4 +830,4 @@ Once `doctoc` is installed the table of contents can be re-generated with: `doct
 BSD 3-Clause License.
 
 
-<a href="https://raw.githubusercontent.com/AlexsLemonade/refinebio-examples/master/scripts/create_gct_file.R" download>Click to Download</a>
+<a href="https://raw.githubusercontent.com/AlexsLemonade/refinebio-examples/master/scripts/create_gct_file.R" download target="_blank">Click to Download</a>
