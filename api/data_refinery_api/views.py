@@ -869,12 +869,13 @@ class ProcessorJobList(PaginatedAPIView):
 ###
 
 class Stats(APIView):
-    """
-    Statistics about the health of the system.
+    """ Statistics about the health of the system. """
 
-    ?range=week  includes statics for the last week
-    """
-
+    @swagger_auto_schema(manual_parameters=[openapi.Parameter(
+        name='range', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description="Specify a range from which to calculate the possible options",
+        enum=('day', 'week', 'month', 'year',)
+    )])
     def get(self, request, format=None):
         range_param = request.query_params.dict().pop('range', None)
 
