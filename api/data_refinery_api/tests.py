@@ -234,6 +234,9 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('search'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+        response = self.client.get(reverse('transcriptome-indices'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
         response = self.client.get(reverse('create_dataset'))
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -265,8 +268,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_fetching_organism_index(self):
-        response = self.client.get(reverse('transcriptome-indices'),
-                                   {'organism': 'DANIO_RERIO', 'length': 'SHORT'})
+        response = self.client.get(reverse('transcriptome-indices-read', kwargs={'organism_name': 'DANIO_RERIO'}), {'length': 'SHORT'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['index_type'], 'TRANSCRIPTOME_SHORT')
 
