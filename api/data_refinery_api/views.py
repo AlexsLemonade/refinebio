@@ -817,52 +817,41 @@ class InstitutionList(generics.ListAPIView):
 # Jobs
 ##
 
-class SurveyJobList(PaginatedAPIView):
+class SurveyJobList(generics.ListAPIView):
     """
     List of all SurveyJob.
-
-	Ex:
-	  - ?start_time__lte=2018-03-23T15:29:40.848381Z
-	  - ?start_time__lte=2018-03-23T15:29:40.848381Z&start_time__gte=2018-03-23T14:29:40.848381Z
-	  - ?success=True
-
-      Works with required 'limit' and 'offset' params.
-
     """
+    model = SurveyJob
+    queryset = SurveyJob.objects.all()
+    serializer_class = SurveyJobSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
+    filterset_fields = SurveyJobSerializer.Meta.fields
+    ordering_fields = ('id', 'created_at')
+    ordering = ('-id',)
 
-    def get(self, request, format=None):
-        filter_dict = request.query_params.dict()
-        limit = max(int(filter_dict.pop('limit', 100)), 100)
-        offset = int(filter_dict.pop('offset', 0))
-        jobs = SurveyJob.objects.filter(**filter_dict).order_by('-id')[offset:(offset + limit)]
-        serializer = SurveyJobSerializer(jobs, many=True)
-        return Response(serializer.data)
-
-class DownloaderJobList(PaginatedAPIView):
+class DownloaderJobList(generics.ListAPIView):
     """
     List of all DownloaderJob
     """
+    model = DownloaderJob
+    queryset = DownloaderJob.objects.all()
+    serializer_class = DownloaderJobSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
+    filterset_fields = DownloaderJobSerializer.Meta.fields
+    ordering_fields = ('id', 'created_at')
+    ordering = ('-id',)
 
-    def get(self, request, format=None):
-        filter_dict = request.query_params.dict()
-        limit = max(int(filter_dict.pop('limit', 100)), 100)
-        offset = int(filter_dict.pop('offset', 0))
-        jobs = DownloaderJob.objects.filter(**filter_dict).order_by('-id')[offset: offset + limit]
-        serializer = DownloaderJobSerializer(jobs, many=True)
-        return Response(serializer.data)
-
-class ProcessorJobList(PaginatedAPIView):
+class ProcessorJobList(generics.ListAPIView):
     """
-    List of all ProcessorJobs
+    List of all ProcessorJobs.
     """
-
-    def get(self, request, format=None):
-        filter_dict = request.query_params.dict()
-        limit = max(int(filter_dict.pop('limit', 100)), 100)
-        offset = int(filter_dict.pop('offset', 0))
-        jobs = ProcessorJob.objects.filter(**filter_dict).order_by('-id')[offset: offset + limit]
-        serializer = ProcessorJobSerializer(jobs, many=True)
-        return Response(serializer.data)
+    model = ProcessorJob
+    queryset = ProcessorJob.objects.all()
+    serializer_class = ProcessorJobSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
+    filterset_fields = ProcessorJobSerializer.Meta.fields
+    ordering_fields = ('id', 'created_at')
+    ordering = ('-id',)
 
 ###
 # Statistics
