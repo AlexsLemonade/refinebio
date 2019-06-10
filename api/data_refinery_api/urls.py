@@ -31,6 +31,7 @@ from data_refinery_api.views import (
     DatasetView,
     CreateApiTokenView,
     APITokenView,
+    TranscriptomeIndexList,
     TranscriptomeIndexDetail,
     QNTargetsDetail,
     QNTargetsAvailable,
@@ -99,7 +100,8 @@ urlpatterns = [
     url(r'^stats/$', Stats.as_view(), name="stats"),
 
     # Transcriptome Indices and QN Targets
-    url(r'^transcriptome_indices', TranscriptomeIndexDetail.as_view(), name="transcriptome-indices"),
+    url(r'^transcriptome_indices/$', TranscriptomeIndexList.as_view(), name="transcriptome-indices"),
+    url(r'^transcriptome_indices/(?P<organism_name>.+)$', TranscriptomeIndexDetail.as_view(), name="transcriptome-indices-read"),
     url(r'^qn_targets/$', QNTargetsAvailable.as_view(), name="qn-targets-available"),
     url(r'^qn_targets/(?P<organism_name>.+)$', QNTargetsDetail.as_view(), name="qn-targets"),
 

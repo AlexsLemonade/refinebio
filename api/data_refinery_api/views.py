@@ -1103,48 +1103,46 @@ class Stats(APIView):
 # Transcriptome Indices
 ###
 
-class TranscriptomeIndexDetail(APIView):
+class TranscriptomeIndexList(generics.ListAPIView):
+    """ List all Transcriptome Indices. These are a special type of process result, necessary for processing other SRA samples. """
+    serializer_class = OrganismIndexSerializer
+
+    def get_queryset(self):
+        return OrganismIndex.objects.distinct("organism", "index_type")
+
+@method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
+    openapi.Parameter(
+        name='organism_name', in_=openapi.IN_PATH, type=openapi.TYPE_STRING,
+        description="Organism name. Eg. `MUS_MUSCULUS`",
+    ),
+    openapi.Parameter(
+        name='length', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description="",
+        enum=('short', 'long',),
+        default='short'
+    ),
+]))
+class TranscriptomeIndexDetail(generics.RetrieveAPIView):
     """
-    Retrieve the S3 URL and index metadata associated with an OrganismIndex.
+    Gets the S3 url associated with the organism and length, along with other metadata about
+    the transcriptome index we have stored.
     """
+    serializer_class = OrganismIndexSerializer
 
-    def get(self, request, format=None):
-        """
-        Gets the S3 url associated with the organism and length, along with other metadata about
-        the transcriptome index we have stored. Organism must be specified in underscore-delimited
-        uppercase, i.e. "GALLUS_GALLUS". Length must either be "long" or "short"
-        """
-        params = request.query_params
+    def get_object(self):
+        organism_name = self.kwargs['organism_name'].upper()
+        length = self.request.query_params.get('length', 'short')
 
-        if 'all' in params.keys():
-            # Show all available indexes
-            organism = Organism.objects.all()
-            organism_index = OrganismIndex.objects.distinct("organism", "index_type")
-            serializer = OrganismIndexSerializer(organism_index, many=True)
-            return Response(serializer.data)
-        else:
-            # Verify that the required params are present
-            errors = dict()
-            if "organism" not in params:
-                errors["organism"] = "You must specify the organism of the index you want"
-            if "length" not in params:
-                errors["length"] = "You must specify the length of the transcriptome index"
-
-            if len(errors) > 0:
-                raise ValidationError(errors)
-
-            # Get the correct organism index object, serialize it, and return it
-            transcription_length = "TRANSCRIPTOME_" + params["length"].upper()
-            try:
-                organism = Organism.objects.get(name=params["organism"].upper())
-                organism_index = (OrganismIndex.objects.exclude(s3_url__exact="")
-                                  .distinct("organism", "index_type")
-                                  .get(organism=organism,
-                                       index_type=transcription_length))
-                serializer = OrganismIndexSerializer(organism_index)
-                return Response(serializer.data)
-            except OrganismIndex.DoesNotExist:
-                raise Http404
+        # Get the correct organism index object, serialize it, and return it
+        transcription_length = "TRANSCRIPTOME_" + length.upper()
+        try:
+            organism = Organism.objects.get(name=organism_name.upper())
+            organism_index = OrganismIndex.objects.exclude(s3_url__exact="")\
+                                .distinct("organism", "index_type")\
+                                .get(organism=organism, index_type=transcription_length)
+            return organism_index
+        except OrganismIndex.DoesNotExist:
+            raise Http404('Organism does not exists')
 
 ###
 # Compendia
