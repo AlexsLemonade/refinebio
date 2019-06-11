@@ -924,7 +924,7 @@ def _notify(job_context: Dict) -> Dict:
                                 'author_name': job_context["dataset"].email_address,
                                 'fields': [
                                     {
-                                        'title': 'Id',
+                                        'title': 'Dataset id',
                                         'value': str(job_context['dataset'].id)
                                     }
                                 ]
