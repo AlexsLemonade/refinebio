@@ -299,7 +299,6 @@ def end_job(job_context: Dict, abort=False):
                 unique_experiments = list(set(unique_experiments + sample.experiments.all()[::1]))
         for experiment in unique_experiments:
             experiment.update_num_samples()
-            experiment.save()
 
         # QN reference files go to a special bucket so they can be
         # publicly available.
