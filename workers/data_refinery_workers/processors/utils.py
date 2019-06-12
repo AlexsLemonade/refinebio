@@ -272,22 +272,15 @@ def end_job(job_context: Dict, abort=False):
 
             if mark_as_processed:
                 # This handles most of our cases
-                unique_experiments = []
                 for sample in job_context.get("samples", []):
                     sample.is_processed = True
                     sample.save()
-                    if sample.experiments.all().count() > 0:
-                        unique_experiments = list(set(unique_experiments + sample.experiments.all()[::1]))
 
                 # Explicitly for the single-salmon scenario
                 if 'sample' in job_context:
                     sample = job_context['sample']
                     sample.is_processed = True
                     sample.save()
-
-                for experiment in unique_experiments:
-                    experiment.update_num_samples()
-                    experiment.save()
 
     # If we are aborting, it's because we want to do something
     # different, so leave the original files so that "something
@@ -299,6 +292,15 @@ def end_job(job_context: Dict, abort=False):
                 original_file.delete_local_file()
 
     if success:
+        # update the cached values of each experiment
+        unique_experiments = []
+        for sample in job_context.get("samples", []):
+            if sample.experiments.all().count() > 0:
+                unique_experiments = list(set(unique_experiments + sample.experiments.all()[::1]))
+        for experiment in unique_experiments:
+            experiment.update_num_samples()
+            experiment.save()
+
         # QN reference files go to a special bucket so they can be
         # publicly available.
         if job_context["job"].pipeline_applied == "QN_REFERENCE":
