@@ -157,7 +157,7 @@ class FacetedSearchFilterBackendExtended(FacetedSearchFilterBackend):
 
         All we need to add is one line when building the facets:
 
-        .metric('total_samples', 'sum', field='num_processed_samples')
+        .metric('total_samples', 'sum', field='num_downloadable_samples')
 
         (Maybe there's a way to do this with the options in `ExperimentDocumentView`)
         """
@@ -165,7 +165,7 @@ class FacetedSearchFilterBackendExtended(FacetedSearchFilterBackend):
         for field, facet in iteritems(facets):
             agg = facet['facet'].get_aggregation()
             queryset.aggs.bucket(field, agg)\
-                .metric('total_samples', 'sum', field='num_processed_samples')
+                .metric('total_samples', 'sum', field='num_downloadable_samples')
         return queryset
 
 
@@ -229,8 +229,8 @@ class ExperimentDocumentView(DocumentViewSet):
         'has_publication': 'has_publication',
         'platform': 'platform_accession_codes',
         'organism': 'organism_names',
-        'num_processed_samples': {
-            'field': 'num_processed_samples',
+        'num_downloadable_samples': {
+            'field': 'num_downloadable_samples',
             'lookups': [
                 LOOKUP_FILTER_RANGE,
                 LOOKUP_QUERY_IN,
@@ -245,7 +245,7 @@ class ExperimentDocumentView(DocumentViewSet):
         'title': 'title.raw',
         'description': 'description.raw',
         'num_total_samples': 'num_total_samples',
-        'num_processed_samples': 'num_processed_samples',
+        'num_downloadable_samples': 'num_downloadable_samples',
         'source_first_published': 'source_first_published'
     }
 

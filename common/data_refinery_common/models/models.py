@@ -327,7 +327,8 @@ class Experiment(models.Model):
         """ Update our cache values """
         self.num_total_samples = self.samples.count()
         self.num_processed_samples = self.samples.filter(is_processed=True).count()
-        self.num_processed_samples = 0
+        qn_organisms = Organism.get_objects_with_qn_targets()
+        self.num_downloadable_samples = self.samples.filter(is_processed=True, organism__in=qn_organisms).count()
         self.save()
 
     def to_metadata_dict(self):
