@@ -264,7 +264,6 @@ def end_job(job_context: Dict, abort=False):
 
     if not abort:
         if job_context.get("success", False) and not (job_context["job"].pipeline_applied in ["SMASHER", "QN_REFERENCE", "COMPENDIA"]):
-
             # Salmon requires the final `tximport` step to be fully `is_processed`.
             mark_as_processed = True
             if (job_context["job"].pipeline_applied == "SALMON" and not job_context.get('tximported', False)):
@@ -292,13 +291,15 @@ def end_job(job_context: Dict, abort=False):
                 original_file.delete_local_file()
 
     if success:
-        # update the cached values of each experiment
-        unique_experiments = []
-        for sample in job_context.get("samples", []):
-            if sample.experiments.all().count() > 0:
-                unique_experiments = list(set(unique_experiments + sample.experiments.all()[::1]))
-        for experiment in unique_experiments:
-            experiment.update_num_samples()
+        if job_context["job"].pipeline_applied not in ["SMASHER"]:
+            # update the cached values of each experiment
+            # job_context['samples'] is a string for SMASHER jobs, that's why we skip this part for those
+            unique_experiments = []
+            for sample in job_context.get("samples", []):
+                if sample.experiments.all().count() > 0:
+                    unique_experiments = list(set(unique_experiments + sample.experiments.all()[::1]))
+            for experiment in unique_experiments:
+                experiment.update_num_samples()
 
         # QN reference files go to a special bucket so they can be
         # publicly available.
