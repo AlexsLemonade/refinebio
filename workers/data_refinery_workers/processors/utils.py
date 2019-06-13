@@ -264,6 +264,7 @@ def end_job(job_context: Dict, abort=False):
 
     if not abort:
         if job_context.get("success", False) and not (job_context["job"].pipeline_applied in ["SMASHER", "QN_REFERENCE", "COMPENDIA"]):
+            
             # Salmon requires the final `tximport` step to be fully `is_processed`.
             mark_as_processed = True
             if (job_context["job"].pipeline_applied == "SALMON" and not job_context.get('tximported', False)):
@@ -271,7 +272,7 @@ def end_job(job_context: Dict, abort=False):
 
             if mark_as_processed:
                 # This handles most of our cases
-                unique_experiments = []                
+                unique_experiments = []
                 for sample in job_context.get("samples", []):
                     sample.is_processed = True
                     sample.save()
