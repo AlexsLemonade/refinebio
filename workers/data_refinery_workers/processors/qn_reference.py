@@ -210,6 +210,20 @@ def _create_result_objects(job_context: Dict) -> Dict:
     job_context['success'] = True
     return job_context
 
+def _update_experiment_caches(job_context: Dict) -> Dict:
+    """ Experiments have a cached value with the number of samples that have QN targets
+        generated, this value should be updated after generating new QN targets. """
+    unique_experiments = []
+    all_samples = job_context['samples']['ALL']
+    for sample in all_samples:
+        if sample.experiments.all().count() > 0:
+            unique_experiments = list(set(unique_experiments + sample.experiments.all()[::1]))
+
+    for experiment in unique_experiments:
+        experiment.update_num_samples()
+
+    return job_context
+
 def create_qn_reference(job_id: int) -> None:
     pipeline = Pipeline(name=utils.PipelineEnum.QN_REFERENCE.value)
     job_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
@@ -218,5 +232,6 @@ def create_qn_reference(job_id: int) -> None:
                         _build_qn_target,
                         # _verify_result,
                         _create_result_objects,
+                        _update_experiment_caches,
                         utils.end_job])
     return job_context
