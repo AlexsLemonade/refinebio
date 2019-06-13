@@ -560,7 +560,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     num_samples = num_samples + 1
 
                     if (num_samples % 100) == 0:
-                        logger.warning("Loaded " + str(num_samples) + " samples into frames.",
+                        logger.debug("Loaded " + str(num_samples) + " samples into frames.",
                             dataset_id=job_context['dataset'].id,
                             how=how
                         )
