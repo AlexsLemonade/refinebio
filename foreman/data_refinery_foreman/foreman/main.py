@@ -323,7 +323,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> bool:
     num_retries = last_job.num_retries + 1
 
     ram_amount = last_job.ram_amount
-    if last_job.failure_reason is not None and 'harakiri' not in last_job.failure_reason:
+    if last_job.failure_reason is None or 'harakiri' not in last_job.failure_reason:
         if ram_amount == 1024:
             ram_amount = 4096
         elif ram_amount == 4096:
