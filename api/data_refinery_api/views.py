@@ -229,6 +229,14 @@ class ExperimentDocumentView(DocumentViewSet):
         'has_publication': 'has_publication',
         'platform': 'platform_accession_codes',
         'organism': 'organism_names',
+        'num_processed_samples': {
+            'field': 'num_processed_samples',
+            'lookups': [
+                LOOKUP_FILTER_RANGE,
+                LOOKUP_QUERY_IN,
+                LOOKUP_QUERY_GT
+            ],
+        },
         'num_downloadable_samples': {
             'field': 'num_downloadable_samples',
             'lookups': [
