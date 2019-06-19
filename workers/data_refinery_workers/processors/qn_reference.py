@@ -213,12 +213,10 @@ def _create_result_objects(job_context: Dict) -> Dict:
 def _update_experiment_caches(job_context: Dict) -> Dict:
     """ Experiments have a cached value with the number of samples that have QN targets
         generated, this value should be updated after generating new QN targets. """
-    unique_experiments = []
-    all_samples = job_context['samples']['ALL']
-    for sample in all_samples:
-        if sample.experiments.all().count() > 0:
-            unique_experiments = list(set(unique_experiments + sample.experiments.all()[::1]))
-
+    organism_id = job_context['samples']['ALL'][0].organism_id
+    organism_name = Organism.get_name_for_id(organism_id)
+    unique_experiments = Experiments.objects.all().filter(organism_names__contains=organism_name)
+    
     for experiment in unique_experiments:
         experiment.update_num_samples()
 
