@@ -33,6 +33,11 @@ from data_refinery_common.models import (
     SampleComputedFileAssociation,
     SampleResultAssociation,
 )
+from data_refinery_common.rna_seq import (
+    get_quant_results_for_experiment,
+    get_quant_files_for_results,
+    should_run_tximport
+)
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils
 
@@ -426,19 +431,6 @@ def _find_or_download_index(job_context: Dict) -> Dict:
     return job_context
 
 
-def _find_salmon_quant_results(experiment: Experiment):
-    """Returns a list of salmon quant results from `experiment`."""
-    results = []
-    for sample in experiment.samples.all():
-        for result in sample.results.order_by('-created_at').all():
-            # TODO: this will break when we want to run for a new version.
-            if result.processor.name == utils.ProcessorEnum.SALMON_QUANT.value['name']:
-                results.append(result)
-                break
-
-    return results
-
-
 def _run_tximport_for_experiment(
         job_context: Dict,
         experiment: Experiment,
@@ -595,8 +587,8 @@ def _run_tximport_for_experiment(
     return job_context
 
 
-def get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile]]:
-    """Return a mapping from experiments to a list of their quant files.
+def get_tximport_inputs(job_context: Dict) -> Dict:
+    """Adds to the job_context a mapping from experiments to a list of their quant files.
 
     Checks all the experiments which contain a sample from the current
     experiment. If any of them are fully processed (at least with
@@ -616,70 +608,23 @@ def get_tximport_inputs(job_context: Dict) -> Dict[Experiment, List[ComputedFile
         if num_eligible_samples == 0:
             continue
 
-        salmon_quant_results = _find_salmon_quant_results(experiment)
-        num_quant_results = len(salmon_quant_results)
+        salmon_quant_results = _get_quant_results_for_experiment(experiment)
+        is_tximport_job = 'is_tximport_only' in job_context and job_context['is_tximport_only']
 
-        # If an experiment is 100% complete we should always run
-        # tximport.  Otherwise, if this is a tximport job we should
-        # use EARLY_TXIMPORT_MIN_SIZE and EARLY_TXIMPORT_MIN_PERCENT
-        # to determine if tximport should be run. See the definitions
-        # of those values for more context.
-        should_run_tximport = False
-        percent_complete = num_quant_results / num_eligible_samples
-        if 'is_tximport_only' in job_context and job_context['is_tximport_only']:
-            if num_eligible_samples < EARLY_TXIMPORT_MIN_SIZE:
-                logger.warn(
-                    ("This is a Tximport job but there aren't enough samples"
-                     " in the experiment so I'm not running it."),
-                    processor_job=job_context["job_id"],
-                    experiment=experiment.accession_code
-                )
-            elif percent_complete < EARLY_TXIMPORT_MIN_PERCENT:
-                logger.warn(
-                    ("This is a Tximport job but a high enough percentage of samples"
-                     " in the experiment have not been processed yet so I'm not running it."),
-                )
-            else:
-                logger.info(
-                    ("This is a Tximport job and the minimum thresholds"
-                     " have been met so tximport will be run"),
-                    processor_job=job_context["job_id"],
-                    experiment=experiment.accession_code
-                )
-                should_run_tximport = True
-        elif percent_complete == 1.0:
-            should_run_tximport = True
+        if is_tximport_job:
+            # If the job is only running tximport, then index_length
+            # hasn't been set on the job context because we don't have
+            # a raw file to run it on. Therefore pull it from one of
+            # the result annotations.
 
-        if should_run_tximport:
-            quant_files = []
-            for result in salmon_quant_results:
-                try:
-                    quant_files.append(ComputedFile.objects.filter(
-                        result=result,
-                        filename="quant.sf",
-                        s3_key__isnull=False,
-                        s3_bucket__isnull=False,
-                        ).order_by('-id')[0])
-                except:
-                    try:
-                        sample = result.samples.first()
-                    except:
-                        sample = None
+            annotation_json = ComputationalResultAnnotation.objects.filter(
+                result=salmon_quant_results[0]
+            ).data
 
-                    logger.exception(
-                        "Salmon quant result found without quant.sf ComputedFile!",
-                        processor_job=job_context["job_id"],
-                        quant_result=result.id,
-                        sample=sample.id,
-                        experiment=experiment.id
-                    )
-                    job_context["job"].failure_reason = (
-                        "Salmon quant result {} for sammple {} found without quant.sf"
-                        " ComputedFile in experiment {}!"
-                    ).format(str(result.id), str(sample.accession_code), str(experiment.accession_code))
-                    job_context["success"] = False
+            job_context['index_length'] = annotation_json["index_length"]
 
-            quantified_experiments[experiment] = quant_files
+        if should_run_tximport(experiment, len(salmon_quant_results), is_tximport_only):
+            quantified_experiments[experiment] = get_quant_files_for_results(salmon_quant_results)
 
     job_context["tximport_inputs"] = quantified_experiments
 
