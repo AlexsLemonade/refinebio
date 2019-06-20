@@ -1,3 +1,13 @@
+from typing import Dict, List
+
+from data_refinery_common.job_lookup import ProcessorEnum
+from data_refinery_common.logging import get_and_configure_logger
+from data_refinery_common.models import (
+    ComputationalResult,
+    ComputedFile,
+    Experiment,
+)
+
 
 def should_run_tximport(experiment: Experiment,
                         num_quantified: int,
@@ -37,7 +47,7 @@ def get_quant_results_for_experiment(experiment: Experiment):
     for sample in experiment.samples.all():
         for result in sample.results.order_by('-created_at').all():
             # TODO: this will break when we want to run for a new version.
-            if result.processor.name == utils.ProcessorEnum.SALMON_QUANT.value['name']:
+            if result.processor.name == ProcessorEnum.SALMON_QUANT.value['name']:
                 results.append(result)
                 break
 

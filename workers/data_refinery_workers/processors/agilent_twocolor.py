@@ -9,6 +9,7 @@ from typing import Dict
 import rpy2.robjects as ro
 from rpy2.rinterface import RRuntimeError
 
+from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     OriginalFile,
@@ -152,7 +153,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 def agilent_twocolor_to_pcl(job_id: int) -> None:
-    pipeline = Pipeline(name=utils.PipelineEnum.AGILENT_TWOCOLOR.value)
+    pipeline = Pipeline(name=PipelineEnum.AGILENT_TWOCOLOR.value)
     utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _prepare_files,

@@ -10,8 +10,8 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 
+from data_refinery_common.job_lookup import PipelineEnum, ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (
     ComputationalResult,
@@ -400,7 +400,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 def illumina_to_pcl(job_id: int) -> None:
-    pipeline = Pipeline(name=utils.PipelineEnum.ILLUMINA.value)
+    pipeline = Pipeline(name=PipelineEnum.ILLUMINA.value)
     return utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                               [utils.start_job,
                                _prepare_files,

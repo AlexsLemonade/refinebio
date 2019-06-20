@@ -17,7 +17,7 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 
-from data_refinery_common.job_lookup import Downloaders
+from data_refinery_common.job_lookup import Downloaders, PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
@@ -81,7 +81,7 @@ def tximport(job_id: int) -> None:
 
     Runs tximport command line tool on an experiment.
     """
-    pipeline = Pipeline(name=utils.PipelineEnum.TXIMPORT.value)
+    pipeline = Pipeline(name=PipelineEnum.TXIMPORT.value)
     final_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _set_job_prefix,

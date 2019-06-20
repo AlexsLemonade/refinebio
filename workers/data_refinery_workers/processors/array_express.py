@@ -7,6 +7,7 @@ import warnings
 from rpy2.rinterface import RRuntimeError
 import rpy2.robjects as ro
 
+from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
@@ -219,7 +220,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 def affy_to_pcl(job_id: int) -> None:
-    pipeline = Pipeline(name=utils.PipelineEnum.ARRAY_EXPRESS.value)
+    pipeline = Pipeline(name=PipelineEnum.ARRAY_EXPRESS.value)
     utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _prepare_files,

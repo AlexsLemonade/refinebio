@@ -11,7 +11,7 @@ from django.test import TestCase, tag
 from typing import Dict, List
 from unittest.mock import MagicMock
 
-from data_refinery_common.utils import get_env_variable
+from data_refinery_common.job_lookup import ProcessorEnum
 from data_refinery_common.models import (
     ComputationalResult,
     ComputedFile,
@@ -30,6 +30,7 @@ from data_refinery_common.models import (
     SampleResultAssociation,
     SurveyJob,
 )
+from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import salmon, tximport, utils
 
 
@@ -645,11 +646,11 @@ class RuntimeProcessorTest(TestCase):
 
         # Validate some information of the new processor
         self.assertEqual(tximport_processor.name,
-                         utils.ProcessorEnum[proc_key].value['name'])
+                         ProcessorEnum[proc_key].value['name'])
         self.assertEqual(tximport_processor.version,
                          get_env_variable("SYSTEM_VERSION"))
         self.assertEqual(tximport_processor.docker_image,
-                         utils.ProcessorEnum[proc_key].value['docker_img'])
+                         ProcessorEnum[proc_key].value['docker_img'])
         self.assertEqual(tximport_processor.environment['os_distribution'],
                          utils.get_os_distro())
 
@@ -682,7 +683,7 @@ class RuntimeProcessorTest(TestCase):
 
         # Validate some information of the new processor
         self.assertEqual(sq_processor.name,
-                         utils.ProcessorEnum[proc_key].value['name'])
+                         ProcessorEnum[proc_key].value['name'])
 
         cmd_str = "salmon --version"
         cmd_output = utils.get_cmd_lines([cmd_str])[cmd_str]
@@ -698,7 +699,7 @@ class RuntimeProcessorTest(TestCase):
 
         # Validate some information of the new processor
         self.assertEqual(st_processor.name,
-                         utils.ProcessorEnum[proc_key].value['name'])
+                         ProcessorEnum[proc_key].value['name'])
 
         cmd_str = "salmontools --version"
         cmd_output = utils.get_cmd_lines([cmd_str])[cmd_str]
@@ -746,15 +747,15 @@ class RuntimeProcessorTest(TestCase):
         job_context["sample"] = sample
 
         # Set the wrong yml filename on purpose to mess up Salmontools processor
-        original_yml_file = utils.ProcessorEnum['SALMONTOOLS'].value['yml_file']
-        utils.ProcessorEnum['SALMONTOOLS'].value['yml_file'] = 'foobar.yml'
+        original_yml_file = ProcessorEnum['SALMONTOOLS'].value['yml_file']
+        ProcessorEnum['SALMONTOOLS'].value['yml_file'] = 'foobar.yml'
 
         salmon._run_salmontools(job_context)
         self.assertEqual(job_context["success"], False)
         self.assertTrue(job_context["job"].failure_reason.startswith('Failed to set processor:'))
 
         # Change yml filename back
-        utils.ProcessorEnum['SALMONTOOLS'].value['yml_file'] = original_yml_file
+        ProcessorEnum['SALMONTOOLS'].value['yml_file'] = original_yml_file
 
 
 def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_accessions: List[str]) -> Dict:

@@ -6,6 +6,7 @@ import subprocess
 
 from typing import Dict
 
+from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
@@ -385,7 +386,7 @@ def check_output_quality(output_file_path: str):
 
 
 def no_op_processor(job_id: int) -> None:
-    pipeline = Pipeline(name=utils.PipelineEnum.NO_OP.value)
+    pipeline = Pipeline(name=PipelineEnum.NO_OP.value)
     return utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                               [utils.start_job,
                                _prepare_files,

@@ -18,7 +18,7 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 
-from data_refinery_common.job_lookup import Downloaders
+from data_refinery_common.job_lookup import Downloaders, PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
@@ -608,7 +608,7 @@ def get_tximport_inputs(job_context: Dict) -> Dict:
         if num_eligible_samples == 0:
             continue
 
-        salmon_quant_results = _get_quant_results_for_experiment(experiment)
+        salmon_quant_results = get_quant_results_for_experiment(experiment)
         is_tximport_job = 'is_tximport_only' in job_context and job_context['is_tximport_only']
 
         if is_tximport_job:
@@ -619,7 +619,7 @@ def get_tximport_inputs(job_context: Dict) -> Dict:
 
             annotation_json = ComputationalResultAnnotation.objects.filter(
                 result=salmon_quant_results[0]
-            ).data
+            )[0].data
 
             job_context['index_length'] = annotation_json["index_length"]
 
@@ -1007,7 +1007,7 @@ def salmon(job_id: int) -> None:
     Runs salmon quant command line tool, specifying either a long or
     short read length. Also runs Salmontools and Tximport.
     """
-    pipeline = Pipeline(name=utils.PipelineEnum.SALMON.value)
+    pipeline = Pipeline(name=PipelineEnum.SALMON.value)
     final_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _set_job_prefix,

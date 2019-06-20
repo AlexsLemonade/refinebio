@@ -24,6 +24,7 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 
+from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
@@ -914,11 +915,11 @@ def _notify(job_context: Dict) -> Dict:
                 requests.post(
                     "https://hooks.slack.com/services/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",
                     json={
-                        'fallback': 'Dataset failed processing.'
+                        'fallback': 'Dataset failed processing.',
                         'title': 'Dataset failed processing',
                         'title_link': dataset_url,
                         "attachments":[
-                            {   
+                            {
                                 "color": "warning",
                                 "text": job_context['job'].failure_reason,
                                 'author_name': job_context["dataset"].email_address,
@@ -1040,7 +1041,7 @@ def _update_result_objects(job_context: Dict) -> Dict:
 def smash(job_id: int, upload=True) -> None:
     """ Main Smasher interface """
 
-    pipeline = Pipeline(name=utils.PipelineEnum.SMASHER.value)
+    pipeline = Pipeline(name=PipelineEnum.SMASHER.value)
     return utils.run_pipeline({ "job_id": job_id,
                                 "upload": upload,
                                 "pipeline": pipeline
