@@ -8,7 +8,6 @@ from data_refinery_common.models import (
     ProcessorJob,
     OriginalFile,
     Sample,
-    Organism,
     SampleComputedFileAssociation,
     ProcessorJobOriginalFileAssociation,
     Dataset,
@@ -18,6 +17,7 @@ from data_refinery_common.models import (
     ExperimentSampleAssociation,
     ProcessorJobDatasetAssociation
 )
+from data_refinery_common.models.organism import Organism
 from data_refinery_workers.processors import qn_reference, smasher, utils
 
 
