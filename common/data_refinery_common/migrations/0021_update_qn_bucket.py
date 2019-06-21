@@ -44,7 +44,7 @@ def update_qn_bucket(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0019_sample_is_blacklisted'),
+        ('data_refinery_common', '0020_auto_20190607_1505'),
     ]
 
     operations = [
