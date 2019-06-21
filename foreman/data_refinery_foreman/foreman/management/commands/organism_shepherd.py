@@ -71,11 +71,16 @@ def build_completion_list(organism: Organism) -> List[Dict]:
             else:
                 unprocessed_samples.add(sample)
 
-        completion_list.append({
-            "experiment": experiment,
-            "unprocessed": unprocessed_samples,
-            "processed": processed_samples
-        })
+        # For now we only want to queue samples from experiments from
+        # which we've been able to process at least one sample,
+        # because that means the sample probably does not have unmated
+        # reads. Unmated reads currently break our salmon pipeline.
+        if len(processed_samples) > 0:
+            completion_list.append({
+                "experiment": experiment,
+                "unprocessed": unprocessed_samples,
+                "processed": processed_samples
+            })
 
     return completion_list
 
@@ -263,16 +268,16 @@ class Command(BaseCommand):
                 # active volumes. Also in order to spread them around
                 # do so randomly. We don't want to hammer Nomad to
                 # get the active volumes though, so just do it once
-                # per 10 minute loop.
+                # per 5 minute loop.
                 volume_index = random.choice(list(get_active_volumes()))
                 for i in range(num_short_from_max):
                     if len(prioritized_job_list) > 0:
                         requeue_job(prioritized_job_list.pop(0), volume_index)
 
-            # Wait 10 minutes in between queuing additional work to
+            # Wait 5 minutes in between queuing additional work to
             # give it time to actually get done.
             if len(prioritized_job_list) > 0:
-                logger.info("Sleeping for 10 minutes while jobs get done.")
-                time.sleep(600)
+                logger.info("Sleeping for 5 minutes while jobs get done.")
+                time.sleep(300)
 
         logger.info("Successfully requeued all jobs for unprocessed %s samples.", organism_name)

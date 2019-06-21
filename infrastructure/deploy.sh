@@ -18,7 +18,7 @@ print_options() {
     echo '   "-e dev" will deploy a dev stack which is appropriate for a single developer to use to test.'
     echo '-d May be used to override the Dockerhub repo where the images will be pulled from.'
     echo '   This may also be specified by setting the TF_VAR_dockerhub_repo environment variable.'
-    echo '   If unset, defaults to the value in `infrastructure/environments/$env`, which is "ccdlstaging"'
+    echo '   If unset, defaults to "ccdlstaging" if the version contains "-dev" and "ccdl" otherwise.'
     echo '   for dev and staging environments and "ccdl" for prod.'
     echo '   This option is useful for testing code changes. Images with the code to be tested can be pushed'
     echo '   to your private Dockerhub repo and then the system will find them.'
@@ -78,6 +78,14 @@ fi
 if [[ -z $SYSTEM_VERSION ]]; then
     echo 'Error: must specify the system version with -v.'
     exit 1
+fi
+
+if [[ -z $TF_VAR_dockerhub_repo ]]; then
+    if [[ $SYSTEM_VERSION == *"-dev" ]]; then
+        export TF_VAR_dockerhub_repo=ccdlstaging
+    else
+        export TF_VAR_dockerhub_repo=ccdl
+    fi
 fi
 
 if [[ -z $TF_VAR_region ]]; then

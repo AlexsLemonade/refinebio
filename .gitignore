@@ -141,3 +141,5 @@ dr_env/
 
 # emacs backup files
 *~
+
+.vscode

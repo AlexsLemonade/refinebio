@@ -14,6 +14,7 @@ NOMAD_PORT=4646
 LOCAL_ROOT_DIR=/home/user/data_store
 USE_S3=False
 S3_BUCKET_NAME=data-refinery
+S3_QN_TARGET_BUCKET_NAME=data-refinery-s3-qn-target-bucket
 DATABASE_TIMEOUT=5
 
 RUNNING_IN_CLOUD=False

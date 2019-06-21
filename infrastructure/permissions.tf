@@ -106,6 +106,7 @@ resource "aws_iam_role_policy_attachment" "s3" {
 resource "aws_iam_policy" "ec2_access_policy" {
   name = "data-refinery-ec2-access-policy-${var.user}-${var.stage}"
   description = "Allows EC2 Permissions."
+  count = "${var.max_clients == 0 ? 0 : 1}"
 
   # We can't iterate instances from the fleet, so allow attaching to any instance,
   # but restrict which volumes can be attached.
@@ -161,6 +162,7 @@ EOF
 resource "aws_iam_role_policy_attachment" "ec2" {
   role = "${aws_iam_role.data_refinery_instance.name}"
   policy_arn = "${aws_iam_policy.ec2_access_policy.arn}"
+  count = "${var.max_clients == 0 ? 0 : 1}"
 }
 
 resource "aws_iam_policy" "cloudwatch_policy" {

@@ -323,7 +323,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> bool:
     num_retries = last_job.num_retries + 1
 
     ram_amount = last_job.ram_amount
-    if last_job.failure_reason is not None and 'harakiri' not in last_job.failure_reason:
+    if last_job.failure_reason is None or 'harakiri' not in last_job.failure_reason:
         if ram_amount == 1024:
             ram_amount = 4096
         elif ram_amount == 4096:
@@ -353,13 +353,6 @@ def requeue_downloader_job(last_job: DownloaderJob) -> bool:
         return False
 
     first_sample = original_file.samples.first()
-    if first_sample and first_sample.is_blacklisted:
-        last_job.no_retry = True
-        last_job.success = False
-        last_job.failure_reason = "Sample run accession has been blacklisted by SRA."
-        last_job.save()
-        logger.info("Avoiding requeuing for DownloaderJob for blacklisted run accession: " + str(first_sample.accession_code))
-        return False
 
     # This is a magic string that all the dbGaP studies appear to have
     if first_sample and ("in the dbGaP study" in first_sample.title):
