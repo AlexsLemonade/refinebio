@@ -92,6 +92,7 @@ coverage.xml
 # Django stuff:
 *.log
 local_settings.py
+common/version
 
 # Flask stuff:
 instance/
