@@ -194,3 +194,11 @@ class SraSurveyorTestCase(TestCase):
         ncbi_url = SraSurveyor._build_ncbi_file_url(metadata["run_accession"])
         self.assertTrue(ncbi_url in ['anonftp@ftp.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/DRR/DRR002/DRR002116/DRR002116.sra',
             'anonftp@ftp-private.ncbi.nlm.nih.gov:/sra/sra-instant/reads/ByRun/sra/DRR/DRR002/DRR002116/DRR002116.sra', 'dbtest@sra-download.ncbi.nlm.nih.gov:data/sracloud/traces/dra0/DRR/000002/DRR002116'])
+
+    def test_sra_metadata_is_harmonized(self):
+        metadata = SraSurveyor.gather_all_metadata("SRR3098582")
+        sample = Sample()
+        SraSurveyor._apply_harmonized_metadata_to_sample(sample, metadata)
+        self.assertEqual(sample.treatment, "biliatresone")
+        self.assertEqual(sample.subject, "liver")
+        self.assertEqual(sample.specimen_part, "liver")
