@@ -474,7 +474,6 @@ class SraSurveyor(ExternalSourceSurveyor):
             else:
                 sample_object.manufacturer = "UNKNOWN"
 
-            # Directly apply the harmonized values
             SraSurveyor._apply_harmonized_metadata_to_sample(sample_object, metadata)
 
             protocol_info, is_updated = self.update_sample_protocol_info(
