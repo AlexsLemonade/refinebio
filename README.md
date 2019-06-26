@@ -307,6 +307,11 @@ linter within the project's directory tree, it will enforce a line length limit
 of 100 instead of 80. This will also be true for editors which rely on either
 linter.
 
+All user-facing scripts have been linted with `shellcheck` for common
+warnings and POSIX-correctness. If a script is user-facing, it should ideally
+be POSIX-compliant and have the extension `.sh`, but if bashisms are necessary
+it should have the extension `.bash`.
+
 ### Gotchas
 
 During development, you make encounter some occasional strangeness. Here's
