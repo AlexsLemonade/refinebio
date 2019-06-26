@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 print_description() {
     echo "Prepares an image specified by -i."
@@ -53,40 +53,41 @@ while getopts "phi:d:s:" opt; do
     esac
 done
 
-if [[ -z "$image" ]]; then
+if [ -z "$image" ]; then
     echo "Error: you must specify an image with -i" >&2
     exit 1
 fi
 
-source common.sh
+. ./common.sh
 
-if [[ -z "$service" ]]; then
+if [ -z "$service" ]; then
     service="workers"
 fi
 
-if [[ -z "$dockerhub_repo" ]]; then
+if [ -z "$dockerhub_repo" ]; then
     dockerhub_repo="ccdlstaging"
 fi
 
 # Default to "local" for system version if we're not running in the cloud.
-if [[ -z "$SYSTEM_VERSION" ]]; then
+if [ -z "$SYSTEM_VERSION" ]; then
     SYSTEM_VERSION="local$(date +%s)"
 fi
 
 # We want to check if a test image has been built for this branch. If
 # it has we should use that rather than building it slowly.
 image_name="$dockerhub_repo/dr_$image"
-if [[ "$(docker_img_exists $image_name $branch_name)" ]] ; then
+# shellcheck disable=SC2086
+if [ "$(docker_img_exists $image_name $branch_name)" ] ; then
     docker pull "$image_name:$branch_name"
-elif [[ ! -z "$pull" ]]; then
+elif [ -n "$pull" ]; then
     docker pull "$image_name"
 else
     echo ""
     echo "Rebuilding the $image_name image."
     finished=1
     attempts=0
-    while (( finished != 0 && attempts < 3 )); do
-        if (( attempts > 0 )); then
+    while [ $finished != 0 ] && [ $attempts -lt 3 ]; do
+        if [ $attempts -gt 0 ]; then
             echo "Failed to build $image_name, trying again."
         fi
 
@@ -95,10 +96,10 @@ else
                -f "$service/dockerfiles/Dockerfile.$image" \
                --build-arg SYSTEM_VERSION="$SYSTEM_VERSION" .
         finished=$?
-        attempts=$[$attempts+1]
+        attempts=$((attempts+1))
     done
 
-    if (( finished != 0  && attempts >= 3 )); then
+    if [ $finished != 0 ] && [ $attempts -ge 3 ]; then
         echo "Could not build $image_name after three attempts."
         exit 1
     fi

@@ -1,10 +1,10 @@
-#!/bin/bash
+#!/bin/sh
 
 # the directory it lives in.
-script_directory=`perl -e 'use File::Basename;
+script_directory="$(perl -e 'use File::Basename;
  use Cwd "abs_path";
- print dirname(abs_path(@ARGV[0]));' -- "$0"`
-cd "$script_directory"
+ print dirname(abs_path(@ARGV[0]));' -- "$0")"
+cd "$script_directory" || exit
 
 # However in order to give Docker access to all the code we have to
 # move up a level
@@ -15,12 +15,14 @@ image_name="ccdlstaging/dr_smasher"
 
 volume_directory="$script_directory/volume"
 
-source common.sh
+. ./common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 
-export AWS_ACCESS_KEY_ID=`~/bin/aws configure get default.aws_access_key_id`
-export AWS_SECRET_ACCESS_KEY=`~/bin/aws configure get default.aws_secret_access_key`
+AWS_ACCESS_KEY_ID="$(~/bin/aws configure get default.aws_access_key_id)"
+export AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY="$(~/bin/aws configure get default.aws_secret_access_key)"
+export AWS_SECRET_ACCESS_KEY 
 
 docker run \
        -it \

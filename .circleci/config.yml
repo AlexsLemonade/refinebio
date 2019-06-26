@@ -172,14 +172,14 @@ jobs:
       - run: ./prepare_image.sh -i transcriptome -s workers
       - run: .circleci/filter_tests.sh -t transcriptome
 
-      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
+      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.bash
       # from making sure all the files in workers/test_volume have read/write permissions.
       - run: sudo chown -R circleci:circleci workers/test_volume/
 
       # Run Illumina tests.
       # - run: .circleci/filter_tests.sh -t illumina
 
-      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
+      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.bash
       # from making sure all the files in workers/test_volume have read/write permissions.
       - run: sudo chown -R circleci:circleci workers/test_volume/
 
@@ -215,7 +215,7 @@ jobs:
           # This takes a while because the affymetrix image is huge
           no_output_timeout: 1h
 
-      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.sh
+      # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.bash
       # from making sure all the files in workers/test_volume have read/write permissions.
       - run: sudo chown -R circleci:circleci workers/test_volume/
 

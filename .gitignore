@@ -8,9 +8,11 @@ workers/processor.nomad
 workers/test_volume/processed/TEST/TRANSCRIPTOME_INDEX/Homo_sapiens_short.tar.gz
 volumes_postgres/
 aspera*
+common/version
 
 # Project-specific Nomad related files
 nomad.logs
+nomad.logs_test
 nomad_dir
 nomad_dir_test
 infrastructure/nomad-job-specs/

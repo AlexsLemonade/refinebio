@@ -1,7 +1,10 @@
-#!/bin/bash -e
+#!/bin/sh
 
 # This script is very similar to .circleci/update_docker_images.sh but it has less
 # production/cloud related checks.
+
+# Exit on failure
+set -e
 
 print_description() {
     echo 'This script will re-build all refine.bio docker images and push them to'
@@ -10,7 +13,11 @@ print_description() {
 
 print_options() {
     echo 'There is are two arguments for this script: -d and -v, and they are not optional.'
+    # shellcheck disable=SC2039
+    # https://github.com/koalaman/shellcheck/issues/1011
     echo '-d specifies the Dockerhub repo you would like to deploy to.'
+    # shellcheck disable=SC2039
+    # https://github.com/koalaman/shellcheck/issues/1011
     echo '-v specifies the version you would like to build. This version will passed into'
     echo '  the Docker image as the environment variable SYSTEM_VERSION.'
     echo '  It also will be used as the tag for the Docker images built.'
@@ -43,12 +50,12 @@ while getopts ":d:v:h" opt; do
     esac
 done
 
-if [[ -z "$DOCKERHUB_REPO" ]]; then
+if [ -z "$DOCKERHUB_REPO" ]; then
     echo 'Error: must specify the Dockerhub repo with -d'
     exit 1
 fi
 
-if [[ -z "$SYSTEM_VERSION" ]]; then
+if [ -z "$SYSTEM_VERSION" ]; then
     echo 'Error: must specify the version repo with -v'
     exit 1
 fi
@@ -66,7 +73,7 @@ rm -f common/dist/*
 cd common && python setup.py sdist
 
 cd ..
-for IMG in "$CCDL_WORKER_IMGS"; do
+for IMG in $CCDL_WORKER_IMGS; do
     image_name="$DOCKERHUB_REPO/dr_$IMG"
 
     echo "Building docker image: $image_name:$SYSTEM_VERSION"

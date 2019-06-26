@@ -1,8 +1,11 @@
-#!/bin/bash -e
+#!/bin/sh
 
 # Script for executing Django management commands within a Docker container.
 
-while getopts "hi:" opt; do
+# Exit on failure
+set -e
+
+while getopts "i:" opt; do
     case $opt in
         i)
             image=$OPTARG
@@ -14,7 +17,7 @@ while getopts "hi:" opt; do
     esac
 done
 
-if [[ -z "$image" ]]; then
+if [ -z "$image" ]; then
     image="smasher"
 else
     shift
@@ -23,17 +26,17 @@ fi
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory=`perl -e 'use File::Basename;
+script_directory="$(perl -e 'use File::Basename;
  use Cwd "abs_path";
- print dirname(abs_path(@ARGV[0]));' -- "$0"`
-cd "$script_directory"
+ print dirname(abs_path(@ARGV[0]));' -- "$0")"
+cd "$script_directory" || exit
 
 # However in order to give Docker access to all the code we have to
 # move up a level
 cd ..
 
 # Ensure that postgres is running
-if ! [[ $(docker ps --filter name=drdb -q) ]]; then
+if ! [ "$(docker ps --filter name=drdb -q)" ]; then
     echo "You must start Postgres first with:" >&2
     echo "./run_postgres.sh" >&2
     exit 1
@@ -45,7 +48,7 @@ if [ ! -d "$volume_directory" ]; then
     chmod -R a+rwX "$volume_directory"
 fi
 
-source common.sh
+. ./common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 

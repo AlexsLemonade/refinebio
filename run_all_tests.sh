@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Runs all common and app specific tests.
 # End to end tests require Nomad to be running for the test environment.
@@ -7,8 +7,8 @@
 # This should mirror what happens in the CircleCI config (.circleci/config).
 
 # Ensure that Nomad is running first
-# Double w in `ps` will cause the columns to never be truncated regardless of environment.
-if ! ps auxww | grep test_nomad | grep -v grep > /dev/null; then
+# The -f option in `pgrep` means that pgrep checks the full command line
+if ! pgrep -f test_nomad > /dev/null; then
     echo "You must start the nomad test environment first with" >&2
     echo "sudo -E ./run_nomad.sh -e test" >&2
     exit 1
@@ -24,4 +24,4 @@ mkdir -p test_volume && chmod -R a+rw test_volume
 ./api/run_tests.sh
 ./common/run_tests.sh
 ./foreman/run_tests.sh
-./workers/run_tests.sh
+./workers/run_tests.bash

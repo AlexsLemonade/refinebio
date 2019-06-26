@@ -24,34 +24,34 @@ print_options() {
 
 while getopts ":p:e:o:v:h" opt; do
     case $opt in
-    p)
-        export project=$OPTARG
-        ;;
-    e)
-        export env=$OPTARG
-        ;;
-    o)
-        export output_dir=$OPTARG
-        ;;
-    v)
-        export system_version=$OPTARG
-        ;;
-    h)
-        print_description
-        echo
-        print_options
-        exit 0
-        ;;
-    \?)
-        echo "Invalid option: -$OPTARG" >&2
-        print_options >&2
-        exit 1
-        ;;
-    :)
-        echo "Option -$OPTARG requires an argument." >&2
-        print_options >&2
-        exit 1
-        ;;
+        p)
+            export project=$OPTARG
+            ;;
+        e)
+            export env=$OPTARG
+            ;;
+        o)
+            export output_dir=$OPTARG
+            ;;
+        v)
+            export system_version=$OPTARG
+            ;;
+        h)
+            print_description
+            echo
+            print_options
+            exit 0
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            print_options >&2
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            print_options >&2
+            exit 1
+            ;;
     esac
 done
 
@@ -115,22 +115,26 @@ fi
 
 # This script should always run from the context of the directory of
 # the project it is building.
-script_directory=`perl -e 'use File::Basename;
+script_directory="$(perl -e 'use File::Basename;
  use Cwd "abs_path";
- print dirname(abs_path(@ARGV[0]));' -- "$0"`
+ print dirname(abs_path(@ARGV[0]));' -- "$0")"
 
 # Correct for foreman and surveyor being in same directory:
 if [ "$project" == "surveyor" ]; then
-    cd "$script_directory/foreman"
+    cd "$script_directory/foreman" || exit
 else
-    cd "$script_directory/$project"
+    cd "$script_directory/$project" || exit
 fi
 
 # It's important that these are run first so they will be overwritten
 # by environment variables.
+
+# shellcheck disable=SC1091
 source ../common.sh
-export DB_HOST_IP=$(get_docker_db_ip_address)
-export NOMAD_HOST_IP=$(get_ip_address)
+DB_HOST_IP=$(get_docker_db_ip_address)
+export DB_HOST_IP
+NOMAD_HOST_IP=$(get_ip_address)
+export NOMAD_HOST_IP
 
 if [ "$env" == "test" ]; then
     export VOLUME_DIR="$script_directory/test_volume"
@@ -179,10 +183,11 @@ fi
 
 # Read all environment variables from the file for the appropriate
 # project and environment we want to run.
-while read line; do
+while read -r line; do
     # Skip all comments (lines starting with '#')
     is_comment=$(echo "$line" | grep "^#")
     if [[ -n "$line" ]] && [[ -z "$is_comment" ]]; then
+        # shellcheck disable=SC2163
         export "$line"
     fi
 done < "$environment_file"
@@ -233,7 +238,7 @@ export_log_conf (){
 # Perl magic found here: https://stackoverflow.com/a/2916159/6095378
 if [[ "$project" == "workers" ]]; then
     # Iterate over all the template files in the directory.
-    for template in $(ls -1 nomad-job-specs | grep \.tpl); do
+    for template in nomad-job-specs/*.tpl; do
         # Strip off the trailing .tpl for once we've formatted it.
         output_file="${template/.tpl/}"
 
@@ -245,19 +250,19 @@ if [[ "$project" == "workers" ]]; then
             do
                 export RAM_POSTFIX="_$r.nomad"
                 export RAM="$r"
-                cat "nomad-job-specs/$template" \
-                    | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-                           > "$output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX" \
-                           2> /dev/null
+                perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                     < "nomad-job-specs/$template" \
+                     > "$output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX" \
+                     2> /dev/null
                 echo "Made $output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX"
             done
             echo "Made $output_dir/$output_file$TEST_POSTFIX"
         elif [ "$output_file" == "smasher.nomad" ] || [ "$output_file" == "create_qn_target.nomad" ] || [ "$output_file" == "create_compendia.nomad" ] || [ "$output_file" == "tximport.nomad" ]; then
             export_log_conf "processor"
-            cat "nomad-job-specs/$template" \
-                | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-                       > "$output_dir/$output_file$TEST_POSTFIX" \
-                       2> /dev/null
+            perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                 < "nomad-job-specs/$template" \
+                 > "$output_dir/$output_file$TEST_POSTFIX" \
+                 2> /dev/null
             echo "Made $output_dir/$output_file$TEST_POSTFIX"
         else
             export_log_conf "processor"
@@ -271,10 +276,10 @@ if [[ "$project" == "workers" ]]; then
                     export INDEX="$j"
                     export RAM_POSTFIX="_$r.nomad"
                     export RAM="$r"
-                    cat "nomad-job-specs/$template" \
-                        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-                               > "$output_dir/$output_file$INDEX_POSTFIX$RAM_POSTFIX$TEST_POSTFIX" \
-                               2> /dev/null
+                    perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                         < "nomad-job-specs/$template" \
+                         > "$output_dir/$output_file$INDEX_POSTFIX$RAM_POSTFIX$TEST_POSTFIX" \
+                         2> /dev/null
                     echo "Made $output_dir/$output_file$INDEX_POSTFIX$RAM_POSTFIX$TEST_POSTFIX"
                 done
             done
@@ -283,17 +288,17 @@ if [[ "$project" == "workers" ]]; then
 elif [[ "$project" == "surveyor" ]]; then
 
     # Iterate over all the template files in the directory.
-    for template in $(ls -1 nomad-job-specs | grep \.tpl); do
+    for template in nomad-job-specs/*.tpl; do
         # Strip off the trailing .tpl for once we've formatted it.
         output_file="${template/.tpl/}"
 
         # Downloader logs go to a separate log stream.
         if [ "$output_file" == "surveyor_dispatcher.nomad" ]; then
             export_log_conf "surveyor_dispatcher"
-            cat "nomad-job-specs/$template" \
-                | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-                       > "$output_dir/$output_file$TEST_POSTFIX" \
-                       2> /dev/null
+            perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                 < "nomad-job-specs/$template" \
+                 > "$output_dir/$output_file$TEST_POSTFIX" \
+                 2> /dev/null
             echo "Made $output_dir/$output_file$TEST_POSTFIX"
         else
             export_log_conf "surveyor"
@@ -302,10 +307,10 @@ elif [[ "$project" == "surveyor" ]]; then
             do
                 export RAM_POSTFIX="_$r.nomad"
                 export RAM="$r"
-                cat "nomad-job-specs/$template" \
-                    | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-                           > "$output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX" \
-                           2> /dev/null
+                perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                     < "nomad-job-specs/$template" \
+                     > "$output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX" \
+                     2> /dev/null
                 echo "Made $output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX"
             done
         fi
@@ -314,14 +319,14 @@ elif [[ "$project" == "surveyor" ]]; then
 elif [[ "$project" == "foreman" ]]; then
     # foreman sub-project
     export_log_conf "foreman"
-    cat environment.tpl \
-        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"/environment"$TEST_POSTFIX" \
-               2> /dev/null
+    perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+         < environment.tpl \
+         > "$output_dir"/environment"$TEST_POSTFIX" \
+         2> /dev/null
 elif [[ "$project" == "api" ]]; then
     export_log_conf "api"
-    cat environment.tpl \
-        | perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-               > "$output_dir"/environment"$TEST_POSTFIX" \
-               2> /dev/null
+    perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+         < environment.tpl \
+         > "$output_dir"/environment"$TEST_POSTFIX" \
+         2> /dev/null
 fi

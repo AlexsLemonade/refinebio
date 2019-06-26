@@ -1,11 +1,11 @@
-#! /bin/bash
+#! /bin/sh
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory=`perl -e 'use File::Basename;
+script_directory="$(perl -e 'use File::Basename;
  use Cwd "abs_path";
- print dirname(abs_path(@ARGV[0]));' -- "$0"`
-cd "$script_directory"
+ print dirname(abs_path(@ARGV[0]));' -- "$0")"
+cd "$script_directory" || exit
 
 # CircleCI Docker won't make this by default for some reason
 # This doubly nested directory is a hacky workaround to prevent permissions issues.
@@ -17,7 +17,7 @@ if [ ! -d "$VOLUMES" ]; then
 fi
 
 # Check if a docker database named "drdb" exists, and if so just run it
-if [[ $(docker ps -a --filter name=drdb -q) ]]; then
+if [ "$(docker ps -a --filter name=drdb -q)" ]; then
   docker start drdb > /dev/null
   echo "Started database."
 # Otherwise, install it from docker hub

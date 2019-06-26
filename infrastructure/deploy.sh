@@ -137,7 +137,7 @@ if [[ ! -f terraform.tfstate ]]; then
     ran_init_build=true
     echo "No terraform state file found, applying initial terraform deployment."
 
-    # These files are inputs but are created by format_nomad_with_env.sh
+    # These files are inputs but are created by format_nomad_with_env.bash
     # based on outputs from terraform. Kinda a Catch 22, but we can
     # get around it by providing dummy files to get bootstrapped.
     touch api-configuration/environment
@@ -159,8 +159,8 @@ fi
 rm -f prod_env
 format_environment_variables
 
-../format_nomad_with_env.sh -p api -e $env -o $(pwd)/api-configuration/
-../format_nomad_with_env.sh -p foreman -e $env -o $(pwd)/foreman-configuration/
+../format_nomad_with_env.bash -p api -e $env -o $(pwd)/api-configuration/
+../format_nomad_with_env.bash -p foreman -e $env -o $(pwd)/foreman-configuration/
 
 if [[ -z $ran_init_build ]]; then
     # Open up ingress to AWS for Circle, stop jobs, migrate DB.
@@ -278,12 +278,12 @@ rm -r nomad-job-specs
 # Template the environment variables for production into the Nomad Job
 # specs and API confs.
 mkdir -p nomad-job-specs
-../format_nomad_with_env.sh -p workers -e $env -o $(pwd)/nomad-job-specs
-../format_nomad_with_env.sh -p surveyor -e $env -o $(pwd)/nomad-job-specs
+../format_nomad_with_env.bash -p workers -e $env -o $(pwd)/nomad-job-specs
+../format_nomad_with_env.bash -p surveyor -e $env -o $(pwd)/nomad-job-specs
 
 # API and foreman aren't run as nomad jobs, but the templater still works.
-../format_nomad_with_env.sh -p foreman -e $env -o $(pwd)/foreman-configuration
-../format_nomad_with_env.sh -p api -e $env -o $(pwd)/api-configuration/
+../format_nomad_with_env.bash -p foreman -e $env -o $(pwd)/foreman-configuration
+../format_nomad_with_env.bash -p api -e $env -o $(pwd)/api-configuration/
 
 
 # Don't leave secrets lying around!
