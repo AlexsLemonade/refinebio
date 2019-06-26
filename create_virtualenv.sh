@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if ! type "virtualenv" > /dev/null; then
-  pip install virtualenv
+  pip3 install virtualenv
 fi
 
 virtualenv -p python3 dr_env
