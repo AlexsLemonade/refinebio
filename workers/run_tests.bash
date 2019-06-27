@@ -462,21 +462,21 @@ for image in ${worker_images[*]}; do
     if [[ -z $tag || $tag == "$image" ]]; then
         if [[ $image == "agilent" || $image == "affymetrix" ]]; then
             # Agilent uses the same docker image as Affymetrix
-            ./prepare_image.sh -p -i affymetrix -s workers
-            ./prepare_image.sh -i affymetrix_local -d ccdlstaging
+            ./scripts/prepare_image.sh -p -i affymetrix -s workers
+            ./scripts/prepare_image.sh -i affymetrix_local -d ccdlstaging
             docker tag ccdlstaging/dr_affymetrix_local:latest ccdlstaging/dr_affymetrix:latest
             image_name=ccdlstaging/dr_affymetrix
         elif [[ $tag == "qn" ]]; then
-            ./prepare_image.sh -i smasher -s workers
+            ./scripts/prepare_image.sh -i smasher -s workers
             image_name=ccdlstaging/dr_smasher
         elif [[ $tag == "janitor" ]]; then
-            ./prepare_image.sh -i smasher -s workers
+            ./scripts/prepare_image.sh -i smasher -s workers
             image_name=ccdlstaging/dr_smasher
         elif [[ $tag == "salmon" ]]; then
             # ignore salmon tests temporarily
             continue
         else
-            ./prepare_image.sh -i "$image" -s workers
+            ./scripts/prepare_image.sh -i "$image" -s workers
             image_name=ccdlstaging/dr_$image
         fi
 

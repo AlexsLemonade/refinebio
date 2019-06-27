@@ -72,10 +72,10 @@ cd ..
 
 # Agilent uses the same image as affymetrix
 if [[ "$image" == "affymetrix" || "$image" == "agilent" ]]; then
-    ./prepare_image.sh -p -i affymetrix
+    ./scripts/prepare_image.sh -p -i affymetrix
     image_name="ccdlstaging/dr_affymetrix"
 else
-    ./prepare_image.sh -i "$image"
+    ./scripts/prepare_image.sh -i "$image"
     image_name="ccdlstaging/dr_$image"
 fi
 

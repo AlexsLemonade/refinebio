@@ -677,7 +677,7 @@ If the Dockerhub repo requires you to be logged in, you should do so before runn
 The -v option allows you to specify the version, which will both end up on the Docker images you're building as the SYSTEM_VERSION environment variable and also will be the docker tag for the image.
 
 `scripts/update_my_docker_images.sh` will not build the dr_affymetrix image, because this image requires a lot of resources and time to build.
-It can instead be built with `./prepare_image.sh -i affymetrix -d <YOUR_DOCKERHUB_REPO>`.
+It can instead be built with `./scripts/prepare_image.sh -i affymetrix -d <YOUR_DOCKERHUB_REPO>`.
 WARNING: The affymetrix image installs a lot of data-as-R-packages and needs a lot of disk space to build the image.
 It's not recommended to build the image with less than 60GB of free space on the disk that Docker runs on.
 

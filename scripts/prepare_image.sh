@@ -30,7 +30,7 @@ print_options() {
     echo
     echo "Examples:"
     echo "    Build the image ccdl/dr_downloaders:"
-    echo "    ./prepare_image.sh -i downloaders -d ccdl"
+    echo "    ./scripts/prepare_image.sh -i downloaders -d ccdl"
 }
 
 while getopts "phi:d:s:" opt; do
