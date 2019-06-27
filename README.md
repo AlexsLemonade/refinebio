@@ -112,17 +112,6 @@ Instructions for installing Docker, Terraform, and Nomad can be found by
 following the link for each service. git-crypt, jq, and iproute2 can be installed via
 `sudo apt-get install git-crypt jq iproute2`.
 
-When installing pip packages later in the install, you might get an error saying you need sudo permissions.
-In order to fix this you have to edit your `~/.config/pip/pip.conf` to add this:
-
-```
-[install]
-user = yes
-no-binary = :all:
-```
-
-This sets pip to install all packages in your user directory so sudo is not required for pip intalls.
-
 #### Mac (Manual)
 
 The following services will need to be installed:

@@ -331,6 +331,14 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         return download_url
 
+    @staticmethod
+    def _apply_harmonized_metadata_to_sample(sample: Sample, metadata: dict):
+        """Harmonizes the metadata and applies it to `sample`"""
+        sample.title = harmony.extract_title(metadata)
+        harmonized_sample = harmony.harmonize([metadata])
+        for key, value in harmonized_sample[sample.title].items():
+            setattr(sample, key, value)
+
     def _generate_experiment_and_samples(self, run_accession: str, study_accession: str=None) -> (Experiment, List[Sample]):
         """Generates Experiments and Samples for the provided run_accession."""
         metadata = SraSurveyor.gather_all_metadata(run_accession)
@@ -466,11 +474,7 @@ class SraSurveyor(ExternalSourceSurveyor):
             else:
                 sample_object.manufacturer = "UNKNOWN"
 
-            # Directly apply the harmonized values
-            sample_object.title = harmony.extract_title(metadata)
-            harmonized_sample = harmony.harmonize([metadata])
-            for key, value in harmonized_sample.items():
-                setattr(sample_object, key, value)
+            SraSurveyor._apply_harmonized_metadata_to_sample(sample_object, metadata)
 
             protocol_info, is_updated = self.update_sample_protocol_info(
                 existing_protocols=[],
