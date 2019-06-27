@@ -22,8 +22,9 @@ Refine.bio currently has four sub-projects contained within this repo:
 - [Development](#development)
   - [Git Workflow](#git-workflow)
   - [Installation](#installation)
-    - [Linux](#linux)
-    - [Mac](#mac)
+    - [Automatic](#automatic)
+    - [Linux (Manual)](#linux-manual)
+    - [Mac (Manual)](#mac-manual)
     - [Virtual Environment](#virtual-environment)
     - [Services](#services)
       - [Postgres](#postgres)
@@ -83,7 +84,16 @@ have been tested on Ubuntu 16.04 or later, but other Linux distributions
 _should_ be able to run the necessary services. Microsoft Windows is currently
 unsupported by this project.
 
-#### Linux
+#### Automatic
+
+The easiest way to run Refine.bio locally is to run `./scripts/install_all.sh`
+to install all of the necessary dependencies. As long as you are using a recent
+version of Ubuntu or macOS it should work. If you are using another version of
+Linux it should still install most of the dependencies as long as you give the
+appropriate `INSTALL_CMD` environment variable, but some dependencies may be
+named differently in your package manager than in Ubuntu's.
+
+#### Linux (Manual)
 
 The following services will need to be installed:
 - Python3 and Pip: `sudo apt-get -y install python3-pip`
@@ -113,7 +123,7 @@ no-binary = :all:
 
 This sets pip to install all packages in your user directory so sudo is not required for pip intalls.
 
-#### Mac
+#### Mac (Manual)
 
 The following services will need to be installed:
 - [Homebrew](https://brew.sh/)
