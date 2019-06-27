@@ -241,6 +241,7 @@ export_log_conf (){
 if [[ "$project" == "workers" ]]; then
     # Iterate over all the template files in the directory.
     for template in nomad-job-specs/*.tpl; do
+	template="$(basename $template)"
         # Strip off the trailing .tpl for once we've formatted it.
         output_file="${template/.tpl/}"
 
@@ -291,6 +292,7 @@ elif [[ "$project" == "surveyor" ]]; then
 
     # Iterate over all the template files in the directory.
     for template in nomad-job-specs/*.tpl; do
+	template="$(basename $template)"
         # Strip off the trailing .tpl for once we've formatted it.
         output_file="${template/.tpl/}"
 
