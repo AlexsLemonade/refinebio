@@ -17,8 +17,14 @@ script_directory="$(perl -e 'use File::Basename;
  print dirname(abs_path(@ARGV[0]));' -- "$0")"
 cd "$script_directory"
 
+# Import common functions
+. ./common.sh
+
+# Get access to all of refinebio
+cd ..
+
 # Set up the data volume directory if it does not already exist
-volume_directory="$script_directory/api/volume"
+volume_directory="$script_directory/../api/volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir "$volume_directory"
     chmod -R a+rwX "$volume_directory"
@@ -26,7 +32,6 @@ fi
 
 docker build -t dr_shell -f api/dockerfiles/Dockerfile.api_local .
 
-. ./common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)

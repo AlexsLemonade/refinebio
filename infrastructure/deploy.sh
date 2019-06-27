@@ -114,7 +114,7 @@ format_environment_variables () {
 }
 
 # Load $ALL_CCDL_IMAGES and helper functions
-source ../common.sh
+source ../scripts/common.sh
 # Make our IP address known to terraform.
 export TF_VAR_host_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
 
@@ -159,8 +159,8 @@ fi
 rm -f prod_env
 format_environment_variables
 
-../format_nomad_with_env.bash -p api -e $env -o $(pwd)/api-configuration/
-../format_nomad_with_env.bash -p foreman -e $env -o $(pwd)/foreman-configuration/
+../scripts/format_nomad_with_env.bash -p api -e $env -o $(pwd)/api-configuration/
+../scripts/format_nomad_with_env.bash -p foreman -e $env -o $(pwd)/foreman-configuration/
 
 if [[ -z $ran_init_build ]]; then
     # Open up ingress to AWS for Circle, stop jobs, migrate DB.
@@ -278,12 +278,12 @@ rm -r nomad-job-specs
 # Template the environment variables for production into the Nomad Job
 # specs and API confs.
 mkdir -p nomad-job-specs
-../format_nomad_with_env.bash -p workers -e $env -o $(pwd)/nomad-job-specs
-../format_nomad_with_env.bash -p surveyor -e $env -o $(pwd)/nomad-job-specs
+../scripts/format_nomad_with_env.bash -p workers -e $env -o $(pwd)/nomad-job-specs
+../scripts/format_nomad_with_env.bash -p surveyor -e $env -o $(pwd)/nomad-job-specs
 
 # API and foreman aren't run as nomad jobs, but the templater still works.
-../format_nomad_with_env.bash -p foreman -e $env -o $(pwd)/foreman-configuration
-../format_nomad_with_env.bash -p api -e $env -o $(pwd)/api-configuration/
+../scripts/format_nomad_with_env.bash -p foreman -e $env -o $(pwd)/foreman-configuration
+../scripts/format_nomad_with_env.bash -p api -e $env -o $(pwd)/api-configuration/
 
 
 # Don't leave secrets lying around!

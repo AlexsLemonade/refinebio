@@ -38,7 +38,7 @@ cd ..
 # Ensure that postgres is running
 if ! [ "$(docker ps --filter name=drdb -q)" ]; then
     echo "You must start Postgres first with:" >&2
-    echo "./run_postgres.sh" >&2
+    echo "./scripts/run_postgres.sh" >&2
     exit 1
 fi
 
@@ -48,13 +48,13 @@ if [ ! -d "$volume_directory" ]; then
     chmod -R a+rwX "$volume_directory"
 fi
 
-. ./common.sh
+. ./scripts/common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 
 chmod -R a+rwX "$volume_directory"
 
-./prepare_image.sh -i "$image" -s workers
+./scripts/prepare_image.sh -i "$image" -s workers
 image_name=ccdlstaging/dr_"$image"
 
 docker run \

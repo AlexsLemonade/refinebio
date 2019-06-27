@@ -7,11 +7,14 @@ script_directory="$(perl -e 'use File::Basename;
  print dirname(abs_path(@ARGV[0]));' -- "$0")"
 cd "$script_directory" || exit
 
+# Get access to all of refinebio
+cd ..
+
 # CircleCI Docker won't make this by default for some reason
 # This doubly nested directory is a hacky workaround to prevent permissions issues.
 # Suggested here:
 # https://github.com/docker/for-linux/issues/380#issuecomment-436419102
-VOLUMES="$script_directory/volumes_postgres/volumes_postgres"
+VOLUMES="$script_directory/../volumes_postgres/volumes_postgres"
 if [ ! -d "$VOLUMES" ]; then
   mkdir -p "$VOLUMES"
 fi

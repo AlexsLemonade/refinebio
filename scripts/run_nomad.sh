@@ -60,17 +60,21 @@ script_directory="$(perl -e 'use File::Basename;
  print dirname(abs_path(@ARGV[0]));' -- "$0")"
 cd "$script_directory" || exit
 
+# Load get_ip_address function.
+. ./common.sh
+HOST_IP=$(get_ip_address)
+export HOST_IP
+
+# Get access to the root directory of refinebio
+cd ..
+
 # Set up the data volume directory if it does not already exist
-volume_directory="$script_directory/volume"
+volume_directory="$script_directory/../volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir "$volume_directory"
     chmod -R a+rwX "$volume_directory"
 fi
 
-# Load get_ip_address function.
-. ./common.sh
-HOST_IP=$(get_ip_address)
-export HOST_IP
 
 # Use a different Nomad port for test environment to avoid interfering
 # with the non-test Nomad.
@@ -93,7 +97,7 @@ else
     env="local"
 fi
 
-nomad_dir="$script_directory/nomad_dir$TEST_POSTFIX"
+nomad_dir="$script_directory/../nomad_dir$TEST_POSTFIX"
 if [ ! -d "$nomad_dir" ]; then
     mkdir "$nomad_dir"
 fi
@@ -135,8 +139,8 @@ done
 
 echo "Nomad is online. Registering jobs."
 
-./format_nomad_with_env.bash -p workers -e "$env" -v "$system_version"
-./format_nomad_with_env.bash -p surveyor -e "$env" -v "$system_version"
+./scripts/format_nomad_with_env.bash -p workers -e "$env" -v "$system_version"
+./scripts/format_nomad_with_env.bash -p surveyor -e "$env" -v "$system_version"
 
 # Register the jobs for dispatching.
 for job_spec in workers/nomad-job-specs/*.nomad"$TEST_POSTFIX"; do

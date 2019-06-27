@@ -56,7 +56,7 @@ cd ..
 # Ensure that postgres is running
 if ! [[ $(docker ps --filter name=drdb -q) ]]; then
     echo "You must start Postgres first with:" >&2
-    echo "./run_postgres.sh" >&2
+    echo "./scripts/run_postgres.sh" >&2
     exit 1
 fi
 
@@ -448,7 +448,7 @@ if [[ -z $tag || $tag == "compendia" ]]; then
     fi
 fi
 
-source common.sh
+source scripts/common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)

@@ -15,10 +15,16 @@ set -e
 script_directory="$(perl -e 'use File::Basename;
  use Cwd "abs_path";
  print dirname(abs_path(@ARGV[0]));' -- "$0")"
-cd "$script_directory"
+cd "$script_directory" || exit
+
+# Import functions in common.sh
+. ./common.sh
+
+# Get access to all of refinebio
+cd ..
 
 # Set up the data volume directory if it does not already exist
-volume_directory="$script_directory/foreman/volume"
+volume_directory="$script_directory/../foreman/volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir "$volume_directory"
     chmod -R a+rwX "$volume_directory"
@@ -26,7 +32,6 @@ fi
 
 docker build -t dr_shell -f foreman/dockerfiles/Dockerfile.foreman .
 
-. ./common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 

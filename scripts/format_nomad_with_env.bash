@@ -119,25 +119,27 @@ script_directory="$(perl -e 'use File::Basename;
  use Cwd "abs_path";
  print dirname(abs_path(@ARGV[0]));' -- "$0")"
 
+project_directory="$script_directory/.."
+
 # Correct for foreman and surveyor being in same directory:
 if [ "$project" == "surveyor" ]; then
-    cd "$script_directory/foreman" || exit
+    cd "$project_directory/foreman" || exit
 else
-    cd "$script_directory/$project" || exit
+    cd "$project_directory/$project" || exit
 fi
 
 # It's important that these are run first so they will be overwritten
 # by environment variables.
 
 # shellcheck disable=SC1091
-source ../common.sh
+source ../scripts/common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
 export DB_HOST_IP
 NOMAD_HOST_IP=$(get_ip_address)
 export NOMAD_HOST_IP
 
 if [ "$env" == "test" ]; then
-    export VOLUME_DIR="$script_directory/test_volume"
+    export VOLUME_DIR="$project_directory/test_volume"
     # Prevent test Nomad job specifications from overwriting
     # existing Nomad job specifications.
     export TEST_POSTFIX="_test"
@@ -145,7 +147,7 @@ elif [[ "$env" == "prod" || "$env" == "staging" || "$env" == "dev" ]]; then
     # In production we use EBS as the mount.
     export VOLUME_DIR=/var/ebs
 else
-    export VOLUME_DIR="$script_directory/volume"
+    export VOLUME_DIR="$project_directory/volume"
 fi
 
 # We need to specify the database and Nomad hosts for development, but
@@ -172,7 +174,7 @@ else
     AWS_SECRET_ACCESS_KEY = \"$AWS_SECRET_ACCESS_KEY_CLIENT\""
     # When deploying prod we write the output of Terraform to a
     # temporary environment file.
-    environment_file="$script_directory/infrastructure/prod_env"
+    environment_file="$project_directory/infrastructure/prod_env"
 fi
 
 # Temporarily set the logging config to nothing so we can see the logs

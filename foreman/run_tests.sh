@@ -28,23 +28,23 @@ cd ..
 # The -f option in `pgrep` means that pgrep checks the full command line
 if ! pgrep -f test_nomad > /dev/null; then
     echo "You must start the nomad test environment first with:" >&2
-    echo "sudo -E ./run_nomad.sh -e test" >&2
+    echo "sudo -E ./scripts/run_nomad.sh -e test" >&2
     exit 1
 # Then ensure postgres is running
 elif ! [ "$(docker ps --filter name=drdb -q)" ]; then
     echo "You must start Postgres first with:" >&2
-    echo "./run_postgres.sh" >&2
+    echo "./scripts/run_postgres.sh" >&2
     exit 1
 # Then ensure elasticsearch is running
 elif ! [ "$(docker ps --filter name=dres -q)" ]; then
     echo "You must start Elasticsearch first with:" >&2
-    echo "./run_es.sh" >&2
+    echo "./scripts/run_es.sh" >&2
     exit 1
 fi
 
-./prepare_image.sh -i foreman -s foreman
+./scripts/prepare_image.sh -i foreman -s foreman
 
-. ./common.sh
+. ./scripts/common.sh
 DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)
 HOST_IP=$(get_ip_address)

@@ -92,7 +92,7 @@ The following services will need to be installed:
 (https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
 so Docker does not need sudo permissions.
 - [Terraform](https://www.terraform.io/)
-- [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./install_nomad.sh`.
+- [Nomad](https://www.nomadproject.io/docs/install/index.html#precompiled-binaries) can be installed on Linux clients with `sudo ./scripts/install_nomad.sh`.
 - [pip3](https://pip.pypa.io/en/stable/) can be installed on Linux clients with `sudo apt-get install python3-pip`
 - [git-crypt](https://www.agwa.name/projects/git-crypt/)
 - [jq](https://stedolan.github.io/jq/)
@@ -136,7 +136,7 @@ Docker](https://docs.docker.com/docker-for-mac/#advanced) from the default of
 
 #### Virtual Environment
 
-Run `./create_virtualenv.sh` to set up the virtualenv. It will activate the `dr_env`
+Run `./scripts/create_virtualenv.sh` to set up the virtualenv. It will activate the `dr_env`
 for you the first time. This virtualenv is valid for the entire `refinebio`
 repo. Sub-projects each have their own environments managed by their
 containers. When returning to this project you should run
@@ -153,25 +153,25 @@ development machine.
 To start a local Postgres server in a Docker container, use:
 
 ```bash
-./run_postgres.sh
+./scripts/run_postgres.sh
 ```
 
 Then, to initialize the database, run:
 
 ```bash
-./common/install_db_docker.sh
+./scripts/install_db_docker.sh
 ```
 
 If you need to access a `psql` shell for inspecting the database, you can use:
 
 ```bash
-./run_psql_shell.sh
+./scripts/run_psql_shell.sh
 ```
 
 or if you have `psql` installed this command will give you a better shell experience:
 
 ```
-source common.sh && PGPASSWORD=mysecretpassword psql -h $(get_docker_db_ip_address) -U postgres -d data_refinery
+source scripts/common.sh && PGPASSWORD=mysecretpassword psql -h $(get_docker_db_ip_address) -U postgres -d data_refinery
 ```
 
 ##### Nomad
@@ -182,7 +182,7 @@ However if you run Linux and you have followed the [installation instructions](#
 can run Nomad with:
 
 ```bash
-sudo -E ./run_nomad.sh
+sudo -E ./scripts/run_nomad.sh
 ```
 
 (_Note:_ This step may take some time because it downloads lots of files.)
@@ -198,13 +198,13 @@ with `docker container prune -f`.
 One of the API endpoints is powered by ElasticSearch. ElasticSearch must be running for this functionality to work. A local ElasticSearch instance in a Docker container can be executed with:
 
 ```bash
-./run_es.sh
+./scripts/run_es.sh
 ```
 
 And then the ES Indexes (akin to Postgres 'databases') can be created with:
 
 ```bash
-./run_manage.sh search_index --rebuild -f;
+./scripts/run_manage.sh search_index --rebuild -f;
 ```
 
 #### Common Dependecies
@@ -215,7 +215,7 @@ should prepare the distribution directory `common/dist` with this
 script:
 
 ```bash
-./update_models.sh
+./scripts/update_models.sh
 ```
 
 (_Note:_ This step requires the postgres container to be running and initialized.)
@@ -231,13 +231,13 @@ that the tests can be run without interfering with local
 development. The second Nomad client can be started with:
 
 ```bash
-sudo -E ./run_nomad.sh -e test
+sudo -E ./scripts/run_nomad.sh -e test
 ```
 
 To run the entire test suite:
 
 ```bash
-./run_all_tests.sh
+./scripts/run_all_tests.sh
 ```
 
 (_Note:_ Running all the tests can take some time, especially the first time because it downloads a lot of files.)
@@ -317,7 +317,7 @@ it should have the extension `.bash`.
 During development, you make encounter some occasional strangeness. Here's
 some things to watch out for:
 
-  - Since we use multiple Docker instances, don't forget to `./update_models`
+  - Since we use multiple Docker instances, don't forget to `./scripts/update_models`
   - If builds are failing, increase the size of Docker's memory allocation. (Mac only.)
   - If Docker images are failing mysteriously during creation, it may
 be the result of Docker's `Docker.qcow2` or `Docker.raw` file filling. You
@@ -625,7 +625,7 @@ which ran that allocation. The allocation is really a Refine.bio job.
 ### Development Helpers
 
 It can be useful to have an interactive Python interpreter running within the
-context of the Docker container. The `run_shell.sh` script has been provided
+context of the Docker container. The `scripts/run_shell.sh` script has been provided
 for this purpose. It is in the top level directory so that if you wish to
 reference it in any integrations its location will be constant. However, it
 is configured by default for the Foreman project. The interpreter will
@@ -672,13 +672,13 @@ Refine.bio uses a number of different Docker images to run different pieces of t
 By default, refine.bio will pull images from the Dockerhub repo `ccdlstaging`.
 If you would like to use images you have built and pushed to Dockerhub yourself you can pass the `-d` option to the `deploy.sh` script.
 
-To make building and pushing your own images easier, the `update_my_docker_images.sh` has been provided.
+To make building and pushing your own images easier, the `scripts/update_my_docker_images.sh` has been provided.
 The `-d` option will allow you to specify which repo you'd like to push to.
 If the Dockerhub repo requires you to be logged in, you should do so before running the script using `docker login`.
 The -v option allows you to specify the version, which will both end up on the Docker images you're building as the SYSTEM_VERSION environment variable and also will be the docker tag for the image.
 
-`update_my_docker_images.sh` will not build the dr_affymetrix image, because this image requires a lot of resources and time to build.
-It can instead be built with `./prepare_image.sh -i affymetrix -d <YOUR_DOCKERHUB_REPO`.
+`scripts/update_my_docker_images.sh` will not build the dr_affymetrix image, because this image requires a lot of resources and time to build.
+It can instead be built with `./prepare_image.sh -i affymetrix -d <YOUR_DOCKERHUB_REPO>`.
 WARNING: The affymetrix image installs a lot of data-as-R-packages and needs a lot of disk space to build the image.
 It's not recommended to build the image with less than 60GB of free space on the disk that Docker runs on.
 

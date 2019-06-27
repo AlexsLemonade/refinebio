@@ -13,30 +13,30 @@ jobs:
       - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
-      - run: ./run_postgres.sh
-      - run: ./run_es.sh
+      - run: ./scripts/run_postgres.sh
+      - run: ./scripts/run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
-      - run: ./common/install_db_docker.sh
+      - run: ./scripts/install_db_docker.sh
 
       # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
-      - run: ./update_models.sh
+      - run: ./scripts/update_models.sh
 
       # Update ES models
-      - run: ./run_manage.sh search_index --rebuild -f;
+      - run: ./scripts/run_manage.sh search_index --rebuild -f;
 
       # Install Nomad
-      - run: sudo ./install_nomad.sh
+      - run: sudo ./scripts/install_nomad.sh
 
         # Start Nomad and register jobs.
       - run:
-          command: sudo -E ./run_nomad.sh -e test
+          command: sudo -E ./scripts/run_nomad.sh -e test
 
-      - run: ./prepare_image.sh -i no_op -s workers -d localhost:5000
+      - run: ./scripts/prepare_image.sh -i no_op -s workers -d localhost:5000
       - run: docker push localhost:5000/dr_no_op
-      - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
+      - run: ./scripts/prepare_image.sh -i downloaders -s workers -d localhost:5000
       - run: docker push localhost:5000/dr_downloaders
 
       # Run Downloader Tests
@@ -78,21 +78,21 @@ jobs:
       - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
-      - run: ./run_postgres.sh
-      - run: ./run_es.sh
+      - run: ./scripts/run_postgres.sh
+      - run: ./scripts/run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
-      - run: ./common/install_db_docker.sh
+      - run: ./scripts/install_db_docker.sh
 
       # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
-      - run: ./update_models.sh
+      - run: ./scripts/update_models.sh
 
       # Run Common Tests.
       - run: ./common/run_tests.sh
 
-      - run: ./prepare_image.sh -i smasher -s workers -d localhost:5000
+      - run: ./scripts/prepare_image.sh -i smasher -s workers -d localhost:5000
 
       # Run Smasher tests.
       - run: sudo chown -R circleci:circleci workers/test_volume/
@@ -126,19 +126,19 @@ jobs:
       - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
-      - run: ./run_postgres.sh
-      - run: ./run_es.sh
+      - run: ./scripts/run_postgres.sh
+      - run: ./scripts/run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
-      - run: ./common/install_db_docker.sh
+      - run: ./scripts/install_db_docker.sh
 
       # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
-      - run: ./update_models.sh
+      - run: ./scripts/update_models.sh
 
       # Update ES models
-      - run: ./run_manage.sh search_index --rebuild -f;
+      - run: ./scripts/run_manage.sh search_index --rebuild -f;
 
       # Run API Tests.
       - run: ./api/run_tests.sh
@@ -158,18 +158,18 @@ jobs:
       - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
-      - run: ./run_postgres.sh
-      - run: ./run_es.sh
+      - run: ./scripts/run_postgres.sh
+      - run: ./scripts/run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
-      - run: ./common/install_db_docker.sh
+      - run: ./scripts/install_db_docker.sh
 
       # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
-      - run: ./update_models.sh
+      - run: ./scripts/update_models.sh
 
-      - run: ./prepare_image.sh -i transcriptome -s workers
+      - run: ./scripts/prepare_image.sh -i transcriptome -s workers
       - run: .circleci/filter_tests.sh -t transcriptome
 
       # Files created by containers are owned by the user ubuntu, which prevents workers/run_tests.bash
@@ -199,16 +199,16 @@ jobs:
       - run: sudo ./.circleci/cleanup_instance.sh
 
       # Setup Postgres in a Container
-      - run: ./run_postgres.sh
-      - run: ./run_es.sh
+      - run: ./scripts/run_postgres.sh
+      - run: ./scripts/run_es.sh
       # Let Postgres start up.
       - run: sleep 30
       # Finish setting up Postgres now that it's running.
-      - run: ./common/install_db_docker.sh
+      - run: ./scripts/install_db_docker.sh
 
       # Install our application. Provides the data_refinery_common package for the other images.
       - run: chmod -R a+wr common
-      - run: ./update_models.sh
+      - run: ./scripts/update_models.sh
 
       - run:
           command: .circleci/filter_tests.sh -t affymetrix
@@ -223,19 +223,19 @@ jobs:
       - run: .circleci/filter_tests.sh -t agilent
 
       # Update ES models
-      - run: ./run_manage.sh search_index --rebuild -f;
+      - run: ./scripts/run_manage.sh search_index --rebuild -f;
 
       # Install Nomad
-      - run: sudo ./install_nomad.sh
+      - run: sudo ./scripts/install_nomad.sh
 
         # Start Nomad and register jobs.
       - run:
-          command: sudo -E ./run_nomad.sh -e test
+          command: sudo -E ./scripts/run_nomad.sh -e test
 
       # The foreman includes the end-to-end tests. One of these
       # end-to-end tests is specific to affymetrix, so we run it here
       # since we have the image for it, but we also need the downloaders image.
-      - run: ./prepare_image.sh -i downloaders -s workers -d localhost:5000
+      - run: ./scripts/prepare_image.sh -i downloaders -s workers -d localhost:5000
       - run: docker push localhost:5000/dr_downloaders
 
       # This image was built by the affymetrix workers tests, just

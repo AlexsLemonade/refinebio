@@ -3,6 +3,13 @@
 # Exit on error
 set -e
 
+# This script should always run as if it were being called from
+# the directory it lives in.
+script_directory="$(perl -e 'use File::Basename;
+ use Cwd "abs_path";
+ print dirname(abs_path(@ARGV[0]));' -- "$0")"
+cd "$script_directory" || exit
+
 # Config variables
 TERRAFORM_VERSION="0.12.3"
 
@@ -176,7 +183,7 @@ echo "Run \`source dr_env/bin/activate\` to activate the virtual environment."
 
 echo "Starting postgres and installing the database..."
 ./run_postgres.sh > $OUTPUT
-./common/install_db_docker.sh > $OUTPUT
+./install_db_docker.sh > $OUTPUT
 
 echo "Starting elasticsearch and building the ES Indexes..."
 ./run_es.sh > $OUTPUT

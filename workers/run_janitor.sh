@@ -10,12 +10,12 @@ cd "$script_directory" || exit
 # move up a level
 cd ..
 
-./prepare_image.sh -i smasher
+./scripts/prepare_image.sh -i smasher
 image_name="ccdlstaging/dr_smasher"
 
 volume_directory="$script_directory/volume"
 
-. ./common.sh
+. ./scripts/common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 

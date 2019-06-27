@@ -20,9 +20,9 @@ if [ ! -d "$volume_directory" ]; then
     chmod -R a+rwX "$volume_directory"
 fi
 
-./prepare_image.sh -i foreman -s foreman
+./scripts/prepare_image.sh -i foreman -s foreman
 
-. ./common.sh
+. ./scripts/common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)

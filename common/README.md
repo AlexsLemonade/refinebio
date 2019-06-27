@@ -9,7 +9,7 @@ happen before you can utilize those changes in other projects that rely on the
 model. First you should make and run migrations:
 
 ```
-./make_migrations.sh
+../scripts/make_migrations.sh
 ```
 
 Next you should generate the package:

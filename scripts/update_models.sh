@@ -4,9 +4,19 @@
 # Exit on fail
 set -e
 
+# This script should always run as if it were being called from
+# the directory it lives in.
+script_directory="$(perl -e 'use File::Basename;
+ use Cwd "abs_path";
+ print dirname(abs_path(@ARGV[0]));' -- "$0")"
+cd "$script_directory" || exit
+
+# Get access to all of refinebio
+cd ..
+
 if ! docker ps | tail -n +2 | awk '{ print $NF }' | grep drdb > /dev/null; then
     echo "You must start Postgres first with:" >&2
-    echo "./run_postgres.sh" >&2
+    echo "./scripts/run_postgres.sh" >&2
     exit 1
 fi
 
@@ -22,4 +32,4 @@ echo "$SYSTEM_VERSION" > common/version
 # Ensure there is only one distribution to copy over.
 rm -f common/dist/*
 
-./common/make_migrations.sh && cd common && python setup.py sdist
+./scripts/make_migrations.sh && cd common && python setup.py sdist

@@ -13,10 +13,6 @@ script_directory="$(perl -e 'use File::Basename;
  print dirname(abs_path(@ARGV[0]));' -- "$0")"
 cd "$script_directory" || exit
 
-# However in order to give Docker access to all the code we have to
-# move up a level
-cd ..
-
 ./prepare_image.sh -i migrations -s common
 
 . ./common.sh
@@ -24,16 +20,16 @@ DB_HOST_IP=$(get_docker_db_ip_address)
 HOST_IP=$(get_ip_address)
 
 docker run \
-       --volume "$script_directory/data_refinery_common":/home/user/data_refinery_common \
+       --volume "$script_directory/../common/data_refinery_common":/home/user/data_refinery_common \
        --add-host=database:"$DB_HOST_IP" \
        --add-host=nomad:"$HOST_IP" \
-       --env-file common/environments/local \
+       --env-file ../common/environments/local \
        --interactive \
        ccdlstaging/dr_migrations python3.6 manage.py makemigrations data_refinery_common
 
 docker run \
-       --volume "$script_directory/data_refinery_common":/home/user/data_refinery_common \
+       --volume "$script_directory/../common/data_refinery_common":/home/user/data_refinery_common \
        --add-host=database:"$DB_HOST_IP" \
        --add-host=nomad:"$HOST_IP" \
-       --env-file common/environments/local \
+       --env-file ../common/environments/local \
        ccdlstaging/dr_migrations python3.6 manage.py migrate

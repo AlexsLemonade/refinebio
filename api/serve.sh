@@ -13,9 +13,9 @@ cd "$script_directory" || exit
 # move up a level
 cd ..
 
-./prepare_image.sh -i api_local -s api
+./scripts/prepare_image.sh -i api_local -s api
 
-. ./common.sh
+. ./scripts/common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)

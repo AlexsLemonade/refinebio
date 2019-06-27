@@ -58,7 +58,7 @@ sudo mv nomad /usr/local/bin/
 cd ~/refinebio/infrastructure
 
 # Circle won't set the branch name for us, so do it ourselves.
-source ~/refinebio/common.sh
+source ~/refinebio/scripts/common.sh
 branch=$(get_master_or_dev $CIRCLE_TAG)
 
 if [[ "$CIRCLE_TAG" == *"-hotfix" && $branch == "dev" ]]; then

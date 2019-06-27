@@ -1,5 +1,18 @@
 #!/bin/sh
 
+# This script should always run as if it were being called from
+# the directory it lives in.
+script_directory="$(perl -e 'use File::Basename;
+ use Cwd "abs_path";
+ print dirname(abs_path(@ARGV[0]));' -- "$0")"
+cd "$script_directory" || exit
+
+# Import the functions in common.sh
+. ./common.sh
+
+# We need access to all of the projects
+cd ..
+
 print_description() {
     echo "Prepares an image specified by -i."
     echo "Must be called from the repo root."
@@ -58,7 +71,6 @@ if [ -z "$image" ]; then
     exit 1
 fi
 
-. ./common.sh
 
 if [ -z "$service" ]; then
     service="workers"

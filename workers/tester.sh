@@ -81,7 +81,7 @@ fi
 
 volume_directory="$script_directory/volume"
 
-source common.sh
+source scripts/common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)
