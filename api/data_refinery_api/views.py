@@ -584,6 +584,21 @@ class DatasetView(generics.RetrieveUpdateAPIView):
     serializer_class = DatasetSerializer
     lookup_field = 'id'
 
+    @staticmethod
+    def _should_display_on_engagement_bot(email: str) -> bool:
+        return email is not None \
+            and email.find("cansav09") != 0 \
+            and email.find("arielsvn") != 0 \
+            and email.find("jaclyn.n.taroni") != 0 \
+            and email.find("kurt.wheeler") != 0 \
+            and email.find("greenescientist") != 0 \
+            and email.find("@alexslemonade.org") == -1 \
+            and email.find("miserlou") != 0 \
+            and email.find("michael.zietz@gmail.com") != 0 \
+            and email.find("d.prasad") != 0 \
+            and email.find("daniel.himmelstein@gmail.com") != 0 \
+            and email.find("dv.prasad991@gmail.com") != 0
+
     def get_serializer_context(self):
         """
         Extra context provided to the serializer class.
@@ -704,24 +719,25 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                         except Exception:
                             city = "COULD_NOT_DETERMINE"
 
-                        new_user_text = "New user " + supplied_email_address + " from " + city + " [" + remote_ip + "] downloaded a dataset! (" + str(old_object.id) + ")"
-                        webhook_url = "https://hooks.slack.com/services/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"
-                        slack_json = {
-                            "channel": "ccdl-general", # Move to robots when we get sick of these
-                            "username": "EngagementBot",
-                            "icon_emoji": ":halal:",
-                            "attachments":[
-                                {   "color": "good",
-                                    "text": new_user_text
-                                }
-                            ]
-                        }
-                        response = requests.post(
-                            webhook_url,
-                            json=slack_json,
-                            headers={'Content-Type': 'application/json'},
-                            timeout=10
-                        )
+                        if DatasetView._should_display_on_engagement_bot(supplied_email_address):
+                            new_user_text = "New user " + supplied_email_address + " from " + city + " [" + remote_ip + "] downloaded a dataset! (" + str(old_object.id) + ")"
+                            webhook_url = "https://hooks.slack.com/services/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"
+                            slack_json = {
+                                "channel": "ccdl-general", # Move to robots when we get sick of these
+                                "username": "EngagementBot",
+                                "icon_emoji": ":halal:",
+                                "attachments":[
+                                    {   "color": "good",
+                                        "text": new_user_text
+                                    }
+                                ]
+                            }
+                            response = requests.post(
+                                webhook_url,
+                                json=slack_json,
+                                headers={'Content-Type': 'application/json'},
+                                timeout=10
+                            )
                     except Exception as e:
                         # It doens't really matter if this didn't work
                         logger.error(e)

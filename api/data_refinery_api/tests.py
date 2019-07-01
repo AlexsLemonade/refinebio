@@ -25,7 +25,7 @@ from data_refinery_api.serializers import (
     ProcessorSerializer,
     SurveyJobSerializer,
 )
-from data_refinery_api.views import ExperimentList, Stats
+from data_refinery_api.views import ExperimentList, Stats, DatasetView
 from data_refinery_common.utils import get_env_variable
 from data_refinery_common.models import (
     ComputationalResult,
@@ -931,6 +931,22 @@ class APITestCases(APITestCase):
         # Check that we can fetch these sample details via samples API
         response = self.client.get(reverse('samples'), {'dataset_id': good_id})
         self.assertEqual(response.json()['count'], 2)
+
+    def test_engagement_bot_email_filtering(self):
+        self.assertTrue(DatasetView._should_display_on_engagement_bot("test@gmail.com"))
+
+        self.assertFalse(DatasetView._should_display_on_engagement_bot(None))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("cansav09@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("arielsvn@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("jaclyn.n.taroni@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("kurt.wheeler@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("greenescientist@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("test@alexslemonade.org"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("miserlou@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("michael.zietz@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("d.prasad@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("daniel.himmelstein@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("dv.prasad991@gmail.com"))
 
     @patch('raven.contrib.django.models.client')
     def test_sentry_middleware_ok(self, mock_client):
