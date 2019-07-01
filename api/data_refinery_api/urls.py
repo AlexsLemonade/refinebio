@@ -4,7 +4,6 @@ from django.conf.urls import url, include
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
-from rest_framework.documentation import include_docs_urls
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
@@ -111,9 +110,6 @@ urlpatterns = [
 
     # Admin
     url(r'^admin/', admin.site.urls),
-
-    # Core API schema docs
-    url(r'^docs/', include_docs_urls(title='Refine.bio API'), name="docs_schema"),
 
     # api docs
     url(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),

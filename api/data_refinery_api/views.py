@@ -772,7 +772,6 @@ class ComputationalResultsList(generics.ListAPIView):
     This can return valid S3 urls if a valid [token](#tag/token) is sent in the header `HTTP_API_KEY`.
     """
     queryset = ComputationalResult.public_objects.all()
-    serializer_class = ComputationalResultSerializer
 
     def get_serializer_class(self):
         token_id = self.request.META.get('HTTP_API_KEY', None)
