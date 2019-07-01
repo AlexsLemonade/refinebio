@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0019_sample_is_blacklisted'),
+        ('data_refinery_common', '0021_experiment_num_downloadable_samples'),
     ]
 
     operations = [
