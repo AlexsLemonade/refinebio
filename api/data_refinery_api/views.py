@@ -711,7 +711,8 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 serializer.validated_data['is_processing'] = True
                 obj = serializer.save()
 
-                if settings.RUNNING_IN_CLOUD:
+                if settings.RUNNING_IN_CLOUD and settings.ENVIRONMENT == "prod" \
+                   and DatasetView._should_display_on_engagement_bot(supplied_email_address):
                     try:
                         try:
                             remote_ip = get_client_ip(self.request)
@@ -719,25 +720,24 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                         except Exception:
                             city = "COULD_NOT_DETERMINE"
 
-                        if DatasetView._should_display_on_engagement_bot(supplied_email_address):
-                            new_user_text = "New user " + supplied_email_address + " from " + city + " [" + remote_ip + "] downloaded a dataset! (" + str(old_object.id) + ")"
-                            webhook_url = "https://hooks.slack.com/services/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"
-                            slack_json = {
-                                "channel": "ccdl-general", # Move to robots when we get sick of these
-                                "username": "EngagementBot",
-                                "icon_emoji": ":halal:",
-                                "attachments":[
-                                    {   "color": "good",
-                                        "text": new_user_text
-                                    }
-                                ]
-                            }
-                            response = requests.post(
-                                webhook_url,
-                                json=slack_json,
-                                headers={'Content-Type': 'application/json'},
-                                timeout=10
-                            )
+                        new_user_text = "New user " + supplied_email_address + " from " + city + " [" + remote_ip + "] downloaded a dataset! (" + str(old_object.id) + ")"
+                        webhook_url = "https://hooks.slack.com/services/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"
+                        slack_json = {
+                            "channel": "ccdl-general", # Move to robots when we get sick of these
+                            "username": "EngagementBot",
+                            "icon_emoji": ":halal:",
+                            "attachments":[
+                                {   "color": "good",
+                                    "text": new_user_text
+                                }
+                            ]
+                        }
+                        response = requests.post(
+                            webhook_url,
+                            json=slack_json,
+                            headers={'Content-Type': 'application/json'},
+                            timeout=10
+                        )
                     except Exception as e:
                         # It doens't really matter if this didn't work
                         logger.error(e)
