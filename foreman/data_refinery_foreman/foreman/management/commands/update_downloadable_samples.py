@@ -1,4 +1,4 @@
-import django.contrib.postgres.fields
+from django.core.management.base import BaseCommand
 from data_refinery_common.models import Experiment, ComputationalResultAnnotation
 
 class Command(BaseCommand):
@@ -7,3 +7,5 @@ class Command(BaseCommand):
             organism_ids = list(ComputationalResultAnnotation.objects.filter(data__is_qn=True).values_list('data__organism_id', flat=True))
             experiment.num_downloadable_samples = experiment.samples.filter(is_processed=True, organism__id__in=organism_ids).count()
             experiment.save()
+
+        print("Updated the num_downloadable_samples field on all experiment objects.")
