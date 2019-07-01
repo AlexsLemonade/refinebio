@@ -9,6 +9,7 @@ import shutil
 import simplejson as json
 import string
 import warnings
+import requests
 
 from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
@@ -560,7 +561,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     num_samples = num_samples + 1
 
                     if (num_samples % 100) == 0:
-                        logger.warning("Loaded " + str(num_samples) + " samples into frames.",
+                        logger.debug("Loaded " + str(num_samples) + " samples into frames.",
                             dataset_id=job_context['dataset'].id,
                             how=how
                         )
@@ -904,6 +905,38 @@ def _notify(job_context: Dict) -> Dict:
     # SES
     ##
     if job_context.get("upload", True) and settings.RUNNING_IN_CLOUD:
+        # Link to the dataset page, where the user can re-try the download job
+        dataset_url = 'https://www.refine.bio/dataset/' + str(job_context['dataset'].id)
+
+        # Send a notification to slack when a dataset fails to be processed
+        if job_context['job'].failure_reason not in ['', None]:
+            try:
+                requests.post(
+                    "https://hooks.slack.com/services/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",
+                    json={
+                        'fallback': 'Dataset failed processing.',
+                        'title': 'Dataset failed processing',
+                        'title_link': dataset_url,
+                        "attachments":[
+                            {
+                                "color": "warning",
+                                "text": job_context['job'].failure_reason,
+                                'author_name': job_context["dataset"].email_address,
+                                'fields': [
+                                    {
+                                        'title': 'Dataset id',
+                                        'value': str(job_context['dataset'].id)
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    headers={'Content-Type': 'application/json'},
+                    timeout=10
+                )
+            except Exception as e:
+                logger.error(e) # It doens't really matter if this didn't work
+                pass
 
         # Don't send an email if we don't have address.
         if job_context["dataset"].email_address:
@@ -912,8 +945,6 @@ def _notify(job_context: Dict) -> Dict:
             AWS_REGION = "us-east-1"
             CHARSET = "UTF-8"
 
-            # Link to the dataset page, where the user can re-try the download job
-            dataset_url = 'https://www.refine.bio/dataset/' + str(job_context['dataset'].id)
 
             if job_context['job'].failure_reason not in ['', None]:
                 SUBJECT = "There was a problem processing your refine.bio dataset :("
@@ -934,8 +965,8 @@ def _notify(job_context: Dict) -> Dict:
                 job_context['success'] = False
             else:
                 SUBJECT = "Your refine.bio Dataset is Ready!"
-                BODY_TEXT = "Hot off the presses:\n\n" + job_context["result_url"] + "\n\nLove!,\nThe refine.bio Team"
-                FORMATTED_HTML = BODY_HTML.replace('REPLACE_DOWNLOAD_URL', job_context["result_url"])\
+                BODY_TEXT = "Hot off the presses:\n\n" + dataset_url + "\n\nLove!,\nThe refine.bio Team"
+                FORMATTED_HTML = BODY_HTML.replace('REPLACE_DOWNLOAD_URL', dataset_url)\
                                           .replace('REPLACE_DATASET_URL', dataset_url)
 
             # Try to send the email.

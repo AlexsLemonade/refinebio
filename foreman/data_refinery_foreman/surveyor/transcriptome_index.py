@@ -60,12 +60,7 @@ class EnsemblUrlBuilder(ABC):
         self.url_root = "ensemblgenomes.org/pub/release-{assembly_version}/{short_division}"
         self.short_division = DIVISION_LOOKUP[species["division"]]
         self.assembly = species["assembly_name"].replace(" ", "_")
-
-        # For some reason the API is returning version 44, which doesn't seem to exist
-        # in the FTP servers: ftp://ftp.ensemblgenomes.org/pub/
-        # That's why the version is hardcoded below.
-        # self.assembly_version = utils.requests_retry_session().get(DIVISION_RELEASE_URL).json()["version"]
-        self.assembly_version = '43'
+        self.assembly_version = utils.requests_retry_session().get(DIVISION_RELEASE_URL).json()["version"]
 
         self.species_sub_dir = species["name"]
         self.filename_species = species["name"].capitalize()

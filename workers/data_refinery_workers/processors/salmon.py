@@ -785,10 +785,27 @@ def _run_salmon(job_context: Dict) -> Dict:
                  formatted_command,
                  processor_job=job_context["job_id"])
 
+    # 1 hour seems like a reasonable timeout for salmon. This is
+    # necessary because some samples make salmon hang forever and this
+    # ties up our computing resources forever. Until this bug is
+    # fixed, we'll just have to do it like this.
+    timeout = 60 * 60
     job_context['time_start'] = timezone.now()
-    completed_command = subprocess.run(formatted_command.split(),
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
+    try:
+        completed_command = subprocess.run(formatted_command.split(),
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE,
+                                           timeout=timeout)
+    except subprocess.TimeoutExpired:
+        failure_reason = "Salmon timed out because it failed to complete within 3 hours."
+        logger.error(failure_reason,
+                     sample_accesion_code=job_context["sample"].accession_code,
+                     processor_job=job_context["job_id"]
+        )
+        job_context["job"].failure_reason = failure_reason
+        job_context["success"] = False
+        return job_context
+
     job_context['time_end'] = timezone.now()
 
     ## To me, this looks broken: error codes are anything non-zero.

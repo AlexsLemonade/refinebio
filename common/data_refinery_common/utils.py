@@ -1,4 +1,4 @@
-from typing import Dict, Set
+from typing import Dict, Set, List
 from urllib.parse import urlparse
 import csv
 import nomad

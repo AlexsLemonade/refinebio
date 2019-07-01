@@ -389,8 +389,7 @@ class ExperimentAnnotationSerializer(serializers.ModelSerializer):
 class DetailedExperimentSerializer(serializers.ModelSerializer):
     annotations = ExperimentAnnotationSerializer(many=True, source='experimentannotation_set')
     samples = DetailedExperimentSampleSerializer(many=True)
-    organisms = OrganismSerializer(many=True)
-    sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
+    sample_metadata = serializers.ReadOnlyField(source='sample_metadata_fields')
 
     class Meta:
         model = Experiment
@@ -414,8 +413,11 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
                     'submitter_institution',
                     'last_modified',
                     'created_at',
-                    'organisms',
+                    'organism_names',
                     'sample_metadata',
+                    'num_total_samples',
+                    'num_processed_samples',
+                    'num_downloadable_samples'
                 )
 
 class PlatformSerializer(serializers.ModelSerializer):
@@ -796,6 +798,7 @@ class ExperimentDocumentSerializer(serializers.Serializer):
     pubmed_id = serializers.CharField(read_only=True)
     num_total_samples = serializers.IntegerField(read_only=True)
     num_processed_samples = serializers.IntegerField(read_only=True)
+    num_downloadable_samples = serializers.IntegerField(read_only=True)
     source_first_published = serializers.DateField(read_only=True)
 
     # FK/M2M
