@@ -196,7 +196,7 @@ else:
 
 RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD') == "True"
 
-ENVIRONMENT = get_env_variable('ENVIRONMENT')
+ENVIRONMENT = get_env_variable_gracefully('ENVIRONMENT')
 
 # Elastic Search
 ELASTICSEARCH_DSL = {
