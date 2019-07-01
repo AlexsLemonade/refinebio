@@ -332,7 +332,7 @@ class APITestCases(APITestCase):
         response_json = response.json()['results']
         self.assertEqual(3, len(response_json))
         # Prove that the download_url field is missing and not None.
-        self.assertEqual(None, response_json[0].get('download_url', None))
+        self.assertEqual('NotPresent', response_json[0].get('download_url', 'NotPresent'))
 
         # We don't actually want AWS to generate a temporary URL for
         # us, and it won't unless we're running in the cloud, but if

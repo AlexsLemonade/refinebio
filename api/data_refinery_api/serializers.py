@@ -212,6 +212,14 @@ class ComputedFileListSerializer(serializers.ModelSerializer):
     samples = DetailedExperimentSampleSerializer(many=True)
     compendia_organism_name = serializers.CharField(source='compendia_organism__name', read_only=True)
     
+    def __init__(self, *args, **kwargs):
+        super(ComputedFileListSerializer, self).__init__(*args, **kwargs)
+        if 'context' in kwargs:
+            # only include the field `download_url` if a valid token is specified
+            # the token lookup happens in the view.
+            if 'token' not in kwargs['context']:
+                self.fields.pop('download_url')
+
     class Meta:
         model = ComputedFile
         fields = (
