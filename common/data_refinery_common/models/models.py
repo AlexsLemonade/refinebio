@@ -297,6 +297,7 @@ class Experiment(models.Model):
     # Cached Computed Properties
     num_total_samples = models.IntegerField(default=0)
     num_processed_samples = models.IntegerField(default=0)
+    num_downloadable_samples = models.IntegerField(default=0)    
     sample_metadata_fields = ArrayField(models.TextField(), default=list)
     organism_names = ArrayField(models.TextField(), default=list)
     platform_names = ArrayField(models.TextField(), default=list)
@@ -326,6 +327,8 @@ class Experiment(models.Model):
         """ Update our cache values """
         self.num_total_samples = self.samples.count()
         self.num_processed_samples = self.samples.filter(is_processed=True).count()
+        qn_organisms = Organism.get_objects_with_qn_targets()
+        self.num_downloadable_samples = self.samples.filter(is_processed=True, organism__in=qn_organisms).count()
         self.save()
 
     def to_metadata_dict(self):

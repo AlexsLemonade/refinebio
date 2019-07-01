@@ -20,6 +20,7 @@ from data_refinery_common.models import (
     Processor,
     SampleComputedFileAssociation,
     SampleResultAssociation,
+    Experiment,
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.processors import utils, smasher
@@ -210,6 +211,17 @@ def _create_result_objects(job_context: Dict) -> Dict:
     job_context['success'] = True
     return job_context
 
+def _update_experiment_caches(job_context: Dict) -> Dict:
+    """ Experiments have a cached value with the number of samples that have QN targets
+        generated, this value should be updated after generating new QN targets. """
+    organism_name = job_context['samples']['ALL'][0].organism.name
+    unique_experiments = Experiment.objects.all().filter(organism_names__contains=[organism_name])
+    
+    for experiment in unique_experiments:
+        experiment.update_num_samples()
+
+    return job_context
+
 def create_qn_reference(job_id: int) -> None:
     pipeline = Pipeline(name=utils.PipelineEnum.QN_REFERENCE.value)
     job_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
@@ -218,5 +230,6 @@ def create_qn_reference(job_id: int) -> None:
                         _build_qn_target,
                         # _verify_result,
                         _create_result_objects,
+                        _update_experiment_caches,
                         utils.end_job])
     return job_context

@@ -887,6 +887,7 @@ class ESTestCases(APITestCase):
         experiment.technology = "MICROARRAY"
         experiment.num_processed_samples = 1 # added below
         experiment.num_total_samples = 1
+        experiment.num_downloadable_samples = 1
         experiment.save()
         self.experiment = experiment
 
