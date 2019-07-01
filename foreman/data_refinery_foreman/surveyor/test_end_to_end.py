@@ -575,7 +575,10 @@ class SraRedownloadingTestCase(TransactionTestCase):
             organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
             organism.save()
 
-            survey_job = surveyor.survey_experiment("SRP040623", "SRA")
+            # survey_job = surveyor.survey_experiment("SRP040623", "SRA")
+            # survey_job = surveyor.survey_experiment("ERP022060", "SRA")
+            # OK so I think this will be best because this has unmated reads and is only 15GB big.
+            survey_job = surveyor.survey_experiment("SRP015332", "SRA")
 
             self.assertTrue(survey_job.success)
 
