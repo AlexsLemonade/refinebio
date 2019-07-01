@@ -61,14 +61,13 @@ fi
 test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 
 if [[ -z $tag || $tag == "salmon" ]]; then
-    # Download "salmon quant" test data
-
-    # TODO: rename the test_data_new to test_data and remove check for
-    # the new file. These are here temporarily so other branches'
-    # tests don't break.
-    if [[ ! -e $volume_directory/salmon_tests || ! -e $volume_directory/salmon_tests/newer ]]; then
+    # Download "salmon quant" test data The `newer` file was to
+    # signify that we using updated data. However the data has been
+    # updated again so now we need to go back to checking to make sure
+    # that it's not there so we know we have even NEWER data.
+    if [[ ! -e $volume_directory/salmon_tests || -e $volume_directory/salmon_tests/newer ]]; then
         echo "Downloading 'salmon quant' test data..."
-        wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests_newer.tar.gz
+        wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests.tar.gz
         tar xzf $volume_directory/salmon_tests.tar.gz -C $volume_directory
         rm $volume_directory/salmon_tests.tar.gz
     fi
@@ -461,9 +460,6 @@ for image in ${worker_images[*]}; do
         elif [[ $tag == "janitor" ]]; then
             ./prepare_image.sh -i smasher -s workers
             image_name=ccdlstaging/dr_smasher
-        elif [[ $tag == "salmon" ]]; then
-            # ignore salmon tests temporarily
-            continue
         else
             ./prepare_image.sh -i $image -s workers
             image_name=ccdlstaging/dr_$image
