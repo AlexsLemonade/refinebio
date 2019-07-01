@@ -1,5 +1,6 @@
 boto3
 coveralls
+multiqc
 django-elasticsearch-dsl
 django>=2.1.8
 elasticsearch-dsl

@@ -72,6 +72,15 @@ RUN wget "http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/${SRA_VERSION}/sratoolkit.${
 
 RUN pip3 install --upgrade pip
 
+# We need JRE for QC tools
+RUN apt-get update -y && apt-get install -y default-jre --fix-missing
+
+# Install FastQC
+RUN wget -q https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.7.zip
+RUN unzip fastqc_v0.11.7.zip
+RUN chmod +x ./FastQC/fastqc
+RUN rm -f fastqc_v0.11.7.zip
+
 COPY config/ config/
 COPY .boto .boto
 
