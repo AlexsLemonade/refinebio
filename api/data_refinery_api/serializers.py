@@ -210,6 +210,15 @@ class QNTargetSerializer(serializers.ModelSerializer):
 class ComputedFileListSerializer(serializers.ModelSerializer):
     result = ComputationalResultNoFilesSerializer(many=False)
     samples = DetailedExperimentSampleSerializer(many=True)
+    compendia_organism_name = serializers.CharField(source='compendia_organism__name', read_only=True)
+    
+    def __init__(self, *args, **kwargs):
+        super(ComputedFileListSerializer, self).__init__(*args, **kwargs)
+        if 'context' in kwargs:
+            # only include the field `download_url` if a valid token is specified
+            # the token lookup happens in the view.
+            if 'token' not in kwargs['context']:
+                self.fields.pop('download_url')
 
     class Meta:
         model = ComputedFile
@@ -223,14 +232,21 @@ class ComputedFileListSerializer(serializers.ModelSerializer):
                     'is_qc',
                     'is_compendia',
                     'compendia_version',
+                    'compendia_organism_name',
                     'sha1',
                     's3_bucket',
                     's3_key',
                     's3_url',
+                    'download_url',
                     'created_at',
                     'last_modified',
                     'result'
                 )
+        extra_kwargs = {
+            'download_url': {
+                'help_text': 'This will contain an url to download the file. You must send a valid [token](#tag/token) in order to receive this.'
+            }
+        }
 
 ##
 # Samples
@@ -389,8 +405,7 @@ class ExperimentAnnotationSerializer(serializers.ModelSerializer):
 class DetailedExperimentSerializer(serializers.ModelSerializer):
     annotations = ExperimentAnnotationSerializer(many=True, source='experimentannotation_set')
     samples = DetailedExperimentSampleSerializer(many=True)
-    organisms = OrganismSerializer(many=True)
-    sample_metadata = serializers.ReadOnlyField(source='get_sample_metadata_fields')
+    sample_metadata = serializers.ReadOnlyField(source='sample_metadata_fields')
 
     class Meta:
         model = Experiment
@@ -414,8 +429,11 @@ class DetailedExperimentSerializer(serializers.ModelSerializer):
                     'submitter_institution',
                     'last_modified',
                     'created_at',
-                    'organisms',
+                    'organism_names',
                     'sample_metadata',
+                    'num_total_samples',
+                    'num_processed_samples',
+                    'num_downloadable_samples'
                 )
 
 class PlatformSerializer(serializers.ModelSerializer):
@@ -631,6 +649,9 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'quantile_normalize'
             )
         extra_kwargs = {
+                        'data': {
+                            'required': True,
+                        },
                         'id': {
                             'read_only': True,
                         },
@@ -796,6 +817,7 @@ class ExperimentDocumentSerializer(serializers.Serializer):
     pubmed_id = serializers.CharField(read_only=True)
     num_total_samples = serializers.IntegerField(read_only=True)
     num_processed_samples = serializers.IntegerField(read_only=True)
+    num_downloadable_samples = serializers.IntegerField(read_only=True)
     source_first_published = serializers.DateField(read_only=True)
 
     # FK/M2M

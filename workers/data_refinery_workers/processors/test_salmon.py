@@ -269,13 +269,6 @@ class SalmonTestCase(TestCase):
         job_context = salmon._determine_index_length(job_context)
         job_context = salmon._find_or_download_index(job_context)
 
-        # This is a brittle/hacky patch.
-        # However I am unsure why the double_reads reads are
-        # determined to be short but require a long index to be
-        # processed successfully.
-        if "test_experiment" in sample_dir:
-            job_context["index_directory"] = job_context["index_directory"].replace("SHORT", "LONG")
-
         job_context = salmon._run_salmon(job_context)
         job_context = salmon.get_tximport_inputs(job_context)
         job_context = salmon.tximport(job_context)
@@ -768,7 +761,7 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     """
     # Create the experiment
     experiment_accession = 'SRP095529'
-    data_dir = '/home/user/data_store/salmon_tests/'
+    data_dir = '/home/user/data_store/'
     experiment_dir = data_dir + experiment_accession
     experiment = Experiment.objects.create(accession_code=experiment_accession)
 
@@ -782,12 +775,12 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     organism_index.index_type = "TRANSCRIPTOME_SHORT"
     organism_index.organism = zebrafish
     organism_index.result = computational_result_short
-    organism_index.absolute_directory_path = "/home/user/data_store/salmon_tests/ZEBRAFISH_INDEX/SHORT"
+    organism_index.absolute_directory_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
     organism_index.save()
 
     comp_file = ComputedFile()
     # This path will not be used because we already have the files extracted.
-    comp_file.absolute_file_path = "/home/user/data_store/salmon_tests/ZEBRAFISH_INDEX/SHORT/zebrafish_short.tar.gz"
+    comp_file.absolute_file_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT/zebrafish_short.tar.gz"
     comp_file.result = computational_result_short
     comp_file.size_in_bytes=1337
     comp_file.sha1="ABC"

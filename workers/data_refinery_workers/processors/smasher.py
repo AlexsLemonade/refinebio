@@ -562,7 +562,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     num_samples = num_samples + 1
 
                     if (num_samples % 100) == 0:
-                        logger.warning("Loaded " + str(num_samples) + " samples into frames.",
+                        logger.debug("Loaded " + str(num_samples) + " samples into frames.",
                             dataset_id=job_context['dataset'].id,
                             how=how
                         )
@@ -966,8 +966,8 @@ def _notify(job_context: Dict) -> Dict:
                 job_context['success'] = False
             else:
                 SUBJECT = "Your refine.bio Dataset is Ready!"
-                BODY_TEXT = "Hot off the presses:\n\n" + job_context["result_url"] + "\n\nLove!,\nThe refine.bio Team"
-                FORMATTED_HTML = BODY_HTML.replace('REPLACE_DOWNLOAD_URL', job_context["result_url"])\
+                BODY_TEXT = "Hot off the presses:\n\n" + dataset_url + "\n\nLove!,\nThe refine.bio Team"
+                FORMATTED_HTML = BODY_HTML.replace('REPLACE_DOWNLOAD_URL', dataset_url)\
                                           .replace('REPLACE_DATASET_URL', dataset_url)
 
             # Try to send the email.

@@ -50,7 +50,7 @@ MAX_NUM_RETRIES = 2
 # This can be overritten by the env var "MAX_TOTAL_JOBS"
 DEFAULT_MAX_JOBS = 20000
 
-DOWNLOADER_JOBS_PER_NODE = 150
+DOWNLOADER_JOBS_PER_NODE = 75
 PAGE_SIZE=2000
 
 # This is the maximum number of non-dead nomad jobs that can be in the
@@ -323,7 +323,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> bool:
     num_retries = last_job.num_retries + 1
 
     ram_amount = last_job.ram_amount
-    if last_job.failure_reason is not None and 'harakiri' not in last_job.failure_reason:
+    if last_job.failure_reason is None or 'harakiri' not in last_job.failure_reason:
         if ram_amount == 1024:
             ram_amount = 4096
         elif ram_amount == 4096:

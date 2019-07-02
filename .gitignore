@@ -30,12 +30,7 @@ workers/test_volume/*
 !workers/test_volume/raw/TEST/TRANSCRIPTOME_INDEX/aegilops_tauschii_short.gtf.gz
 !workers/test_volume/raw/TEST/NO_OP/test.txt
 
-# Trying to ignore most of a directory tree but not a specific subfolder is tricky:
-# https://stackoverflow.com/questions/5533050/gitignore-exclude-folder-but-include-specific-subfolder
-!workers/test_volume/salmon_tests
-workers/test_volume/salmon_tests/*
-!workers/test_volume/salmon_tests/SRP095529/
-!workers/test_volume/salmon_tests/ZEBRAFISH_INDEX
+workers/test_volume/salmon_tests/
 
 
 # Byte-compiled / optimized / DLL files
@@ -92,6 +87,7 @@ coverage.xml
 # Django stuff:
 *.log
 local_settings.py
+common/version
 
 # Flask stuff:
 instance/
@@ -128,6 +124,9 @@ dr_env/
 
 # Rope project settings
 .ropeproject
+
+#VS Code
+.vscode
 
 # OSX
 .DS_Store

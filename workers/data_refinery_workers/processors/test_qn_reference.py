@@ -8,7 +8,6 @@ from data_refinery_common.models import (
     ProcessorJob,
     OriginalFile,
     Sample,
-    Organism,
     SampleComputedFileAssociation,
     ProcessorJobOriginalFileAssociation,
     Dataset,
@@ -18,6 +17,7 @@ from data_refinery_common.models import (
     ExperimentSampleAssociation,
     ProcessorJobDatasetAssociation
 )
+from data_refinery_common.models.organism import Organism
 from data_refinery_workers.processors import qn_reference, smasher, utils
 
 
@@ -37,6 +37,7 @@ class QNRefTestCase(TestCase):
 
         experiment = Experiment()
         experiment.accession_code = "12345"
+        experiment.organism_names = [homo_sapiens.name]
         experiment.save()
 
         for code in ['1', '2', '3', '4', '5', '6']:
