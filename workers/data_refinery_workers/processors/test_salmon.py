@@ -760,7 +760,7 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     """
     # Create the experiment
     experiment_accession = 'SRP095529'
-    data_dir = '/home/user/data_store/salmon_tests/'
+    data_dir = '/home/user/data_store/'
     experiment_dir = data_dir + experiment_accession
     experiment = Experiment.objects.create(accession_code=experiment_accession)
 
@@ -774,12 +774,12 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     organism_index.index_type = "TRANSCRIPTOME_SHORT"
     organism_index.organism = zebrafish
     organism_index.result = computational_result_short
-    organism_index.absolute_directory_path = "/home/user/data_store/salmon_tests/ZEBRAFISH_INDEX/SHORT"
+    organism_index.absolute_directory_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
     organism_index.save()
 
     comp_file = ComputedFile()
     # This path will not be used because we already have the files extracted.
-    comp_file.absolute_file_path = "/home/user/data_store/salmon_tests/ZEBRAFISH_INDEX/SHORT/zebrafish_short.tar.gz"
+    comp_file.absolute_file_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT/zebrafish_short.tar.gz"
     comp_file.result = computational_result_short
     comp_file.size_in_bytes=1337
     comp_file.sha1="ABC"
