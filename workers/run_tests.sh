@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # shellcheck disable=2103
 
 # Script for executing Django PyUnit tests within a Docker container.
@@ -54,7 +54,7 @@ cd "$script_directory" || exit
 cd ..
 
 # Ensure that postgres is running
-if ! [[ $(docker ps --filter name=drdb -q) ]]; then
+if ! [ "$(docker ps --filter name=drdb -q)" ]; then
     echo "You must start Postgres first with:" >&2
     echo "./scripts/run_postgres.sh" >&2
     exit 1
@@ -69,13 +69,13 @@ fi
 
 test_data_repo="https://s3.amazonaws.com/data-refinery-test-assets"
 
-if [[ -z $tag || $tag == "salmon" ]]; then
+if [ -z "$tag" ] || [ "$tag" = "salmon" ]; then
     # Download "salmon quant" test data
 
     # TODO: rename the test_data_new to test_data and remove check for
     # the new file. These are here temporarily so other branches'
     # tests don't break.
-    if [[ ! -e $volume_directory/salmon_tests || ! -e $volume_directory/salmon_tests/newer ]]; then
+    if [ ! -e "$volume_directory/salmon_tests" ] || [ ! -e "$volume_directory/salmon_tests/newer" ]; then
         echo "Downloading 'salmon quant' test data..."
         wget -q -O "$volume_directory"/salmon_tests.tar.gz "$test_data_repo"/salmon_tests_newer.tar.gz
         tar xzf "$volume_directory"/salmon_tests.tar.gz -C "$volume_directory"
@@ -115,7 +115,7 @@ if [[ -z $tag || $tag == "salmon" ]]; then
     fi
 fi
 
-if [[ -z $tag || $tag == "affymetrix" ]]; then
+if [ -z "$tag" ] || [ "$tag" = "affymetrix" ]; then
     # Make sure CEL for test is downloaded from S3
     cel_name="GSM1426071_CD_colon_active_1.CEL"
     cel_name2="GSM45588.CEL"
@@ -135,7 +135,7 @@ if [[ -z $tag || $tag == "affymetrix" ]]; then
     fi
 fi
 
-if [[ -z $tag || $tag == "transcriptome" ]]; then
+if [ -z "$tag" ] || [ "$tag" = "transcriptome" ]; then
     # Make sure data for Transcriptome Index tests is downloaded.
     tx_index_test_raw_dir="$volume_directory/raw/TEST/TRANSCRIPTOME_INDEX/AEGILOPS_TAUSCHII/"
     fasta_file="aegilops_tauschii_short.fa.gz"
@@ -154,7 +154,7 @@ if [[ -z $tag || $tag == "transcriptome" ]]; then
     fi
 fi
 
-if [[ -z $tag || $tag == "illumina" ]]; then
+if [ -z "$tag" ] || [ "$tag" = "illumina" ]; then
     # Illumina test file
     ilu_file="GSE22427_non-normalized.txt"
     ilu_test_raw_dir="$volume_directory/raw/TEST/ILLUMINA"
@@ -173,7 +173,7 @@ if [[ -z $tag || $tag == "illumina" ]]; then
     fi
 fi
 
-if [[ -z $tag || $tag == "agilent" ]]; then
+if [ -z "$tag" ] || [ "$tag" = "agilent" ]; then
     # Agilnt Two Color test file
     at_file="GSM466597_95899_agilent.txt"
     at_test_raw_dir="$volume_directory/raw/TEST/AGILENT_TWOCOLOR"
@@ -184,7 +184,7 @@ if [[ -z $tag || $tag == "agilent" ]]; then
              "$test_data_repo/$at_file"
     fi
 fi
-if [[ -z $tag || $tag == "no_op" ]]; then
+if [ -z "$tag" ] || [ "$tag" = "no_op" ]; then
     no_file="GSM269747-tbl-1.txt"
     no_test_raw_dir="$volume_directory/raw/TEST/NO_OP"
     if [ ! -e "$no_test_raw_dir/$no_file" ]; then
@@ -237,7 +237,7 @@ if [[ -z $tag || $tag == "no_op" ]]; then
     fi
 fi
 
-if [[ -z $tag || $tag == "smasher" ]]; then
+if [ -z "$tag" ] || [ "$tag" = "smasher" ]; then
     # Make sure PCL for test is downloaded from S3
     pcl_name="GSM1237810_T09-1084.PCL"
     pcl_name2="GSM1237812_S97-PURE.PCL"
@@ -415,7 +415,7 @@ if [ -z "$tag" ] || [ "$tag" = "qn" ]; then
              "$test_data_repo/$qn_name"
     fi
 fi
-if [[ -z $tag || $tag == "compendia" ]]; then
+if [ -z "$tag" ] || [ "$tag" = "compendia" ]; then
     # Download RNASEQ and MICROARRAY data from prod S3
     micro_list_file="microarray.txt"
     micro_list_dir="$volume_directory/raw/TEST/MICROARRAY"
@@ -448,7 +448,7 @@ if [[ -z $tag || $tag == "compendia" ]]; then
     fi
 fi
 
-source scripts/common.sh
+. scripts/common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)
@@ -456,23 +456,23 @@ ES_HOST_IP=$(get_docker_es_ip_address)
 # Ensure permissions are set for everything within the test data directory.
 chmod -R a+rwX "$volume_directory"
 
-worker_images=(salmon transcriptome no_op downloaders smasher illumina agilent affymetrix qn affymetrix_local janitor compendia)
+worker_images="salmon transcriptome no_op downloaders smasher illumina agilent affymetrix qn affymetrix_local janitor compendia"
 
-for image in ${worker_images[*]}; do
-    if [[ -z $tag || $tag == "$image" ]]; then
-        if [[ $image == "agilent" || $image == "affymetrix" ]]; then
+for image in $worker_images; do
+    if [ -z "$tag" ] || [ "$tag" = "$image" ]; then
+        if [ "$image" = "agilent" ] || [ "$image" = "affymetrix" ]; then
             # Agilent uses the same docker image as Affymetrix
             ./scripts/prepare_image.sh -p -i affymetrix -s workers
             ./scripts/prepare_image.sh -i affymetrix_local -d ccdlstaging
             docker tag ccdlstaging/dr_affymetrix_local:latest ccdlstaging/dr_affymetrix:latest
             image_name=ccdlstaging/dr_affymetrix
-        elif [[ $tag == "qn" ]]; then
+        elif [ "$tag" = "qn" ]; then
             ./scripts/prepare_image.sh -i smasher -s workers
             image_name=ccdlstaging/dr_smasher
-        elif [[ $tag == "janitor" ]]; then
+        elif [ "$tag" = "janitor" ]; then
             ./scripts/prepare_image.sh -i smasher -s workers
             image_name=ccdlstaging/dr_smasher
-        elif [[ $tag == "salmon" ]]; then
+        elif [ "$tag" = "salmon" ]; then
             # ignore salmon tests temporarily
             continue
         else
