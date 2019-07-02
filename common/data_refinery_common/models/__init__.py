@@ -30,3 +30,5 @@ from data_refinery_common.models.models import (
     SampleComputedFileAssociation,
     SampleResultAssociation,
 )
+
+from data_refinery_common.models.ontology_term import OntologyTerm
