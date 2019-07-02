@@ -416,6 +416,21 @@ class DatasetView(generics.RetrieveUpdateAPIView):
     serializer_class = DatasetSerializer
     lookup_field = 'id'
 
+    @staticmethod
+    def _should_display_on_engagement_bot(email: str) -> bool:
+        return email is not None \
+            and email.find("cansav09") != 0 \
+            and email.find("arielsvn") != 0 \
+            and email.find("jaclyn.n.taroni") != 0 \
+            and email.find("kurt.wheeler") != 0 \
+            and email.find("greenescientist") != 0 \
+            and email.find("@alexslemonade.org") == -1 \
+            and email.find("miserlou") != 0 \
+            and email.find("michael.zietz@gmail.com") != 0 \
+            and email.find("d.prasad") != 0 \
+            and email.find("daniel.himmelstein@gmail.com") != 0 \
+            and email.find("dv.prasad991@gmail.com") != 0
+
     def get_serializer_context(self):
         """
         Extra context provided to the serializer class.
@@ -528,7 +543,8 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 serializer.validated_data['is_processing'] = True
                 obj = serializer.save()
 
-                if settings.RUNNING_IN_CLOUD:
+                if settings.RUNNING_IN_CLOUD and settings.ENVIRONMENT == "prod" \
+                   and DatasetView._should_display_on_engagement_bot(supplied_email_address):
                     try:
                         try:
                             remote_ip = get_client_ip(self.request)
