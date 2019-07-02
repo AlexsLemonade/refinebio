@@ -50,26 +50,6 @@ LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 
 
-# Some experiments won't be entirely processed, but we'd still like to
-# make the samples we can process available. This means we need to run
-# tximport on the experiment before 100% of the samples are processed
-# individually.
-# This idea has been discussed here: https://github.com/AlexsLemonade/refinebio/issues/909
-
-# The consensus is that this is a good idea, but that we need a cutoff
-# to determine which experiments have enough data to have tximport run
-# on them early.  Candace ran an experiment to find these cutoff
-# values and recorded the results of this experiment here:
-# https://github.com/AlexsLemonade/tximport_partial_run_tests/pull/3
-
-# The gist of that discussion/experiment is that we need two cutoff
-# values, one for a minimum size experiment that can be processed
-# early and the percentage of completion necessary before we can
-# run tximport on the experiment. The values we decided on are:
-EARLY_TXIMPORT_MIN_SIZE = 25
-EARLY_TXIMPORT_MIN_PERCENT = .80
-
-
 def _set_job_prefix(job_context: Dict) -> Dict:
     """ Sets the `job_dir_prefix` value in the job context object."""
     job_context["job_dir_prefix"] = JOB_DIR_PREFIX + str(job_context["job_id"])

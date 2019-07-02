@@ -14,6 +14,7 @@ from unittest.mock import MagicMock
 from data_refinery_common.job_lookup import ProcessorEnum
 from data_refinery_common.models import (
     ComputationalResult,
+    ComputationalResultAnnotation,
     ComputedFile,
     Experiment,
     ExperimentSampleAssociation,
