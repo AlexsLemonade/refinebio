@@ -17,7 +17,7 @@ def should_run_tximport(experiment: Experiment,
 
     num_quantified is how many samples have had salmon quant run on them.
     """
-    if len(quant_files) == 0:
+    if num_quantified == 0:
         return False
 
     eligible_samples = experiment.samples.filter(source_database='SRA', technology='RNA-SEQ')
@@ -26,7 +26,7 @@ def should_run_tximport(experiment: Experiment,
     if num_eligible_samples == 0:
         return False
 
-    percent_complete = len(quant_files) / num_eligible_samples
+    percent_complete = num_quantified / num_eligible_samples
 
     if percent_complete == 1.0:
         # If an experiment is fully quantified then we should run
