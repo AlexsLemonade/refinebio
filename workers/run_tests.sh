@@ -66,8 +66,9 @@ if [[ -z $tag || $tag == "salmon" ]]; then
     # updated again so now we need to go back to checking to make sure
     # that it's not there so we know we have even NEWER data.
     if [[ ! -e $volume_directory/salmon_tests || -e $volume_directory/salmon_tests/newer ]]; then
+        rm -rf $volume_directory/salmon_tests
         echo "Downloading 'salmon quant' test data..."
-        wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests.tar.gz
+        wget -q -O $volume_directory/salmon_tests_newer.tar.gz $test_data_repo/salmon_tests.tar.gz
         tar xzf $volume_directory/salmon_tests.tar.gz -C $volume_directory
         rm $volume_directory/salmon_tests.tar.gz
     fi

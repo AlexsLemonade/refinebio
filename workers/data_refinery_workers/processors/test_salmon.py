@@ -268,13 +268,6 @@ class SalmonTestCase(TestCase):
         job_context = salmon._determine_index_length(job_context)
         job_context = salmon._find_or_download_index(job_context)
 
-        # This is a brittle/hacky patch.
-        # However I am unsure why the double_reads reads are
-        # determined to be short but require a long index to be
-        # processed successfully.
-        if "test_experiment" in sample_dir:
-            job_context["index_directory"] = job_context["index_directory"].replace("SHORT", "LONG")
-
         job_context = salmon._run_salmon(job_context)
         job_context = salmon.get_tximport_inputs(job_context)
         job_context = salmon.tximport(job_context)
