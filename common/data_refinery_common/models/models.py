@@ -1089,12 +1089,12 @@ class Dataset(models.Model):
     # Experiments and samples live here: {'E-ABC-1': ['SAMP1', 'SAMP2']}
     # This isn't going to be queryable, so we can use JSON-in-text, just make
     # sure we validate properly in and out!
-    data = JSONField(default=dict)
+    data = JSONField(default=dict, help_text="This is a dictionary where the keys are experiment accession codes and the values are lists with sample accession codes. Eg: `{'E-ABC-1': ['SAMP1', 'SAMP2']}`")
 
     # Processing properties
-    aggregate_by = models.CharField(max_length=255, choices=AGGREGATE_CHOICES, default="EXPERIMENT")
-    scale_by = models.CharField(max_length=255, choices=SCALE_CHOICES, default="NONE")
-    quantile_normalize = models.BooleanField(default=True)
+    aggregate_by = models.CharField(max_length=255, choices=AGGREGATE_CHOICES, default="EXPERIMENT", help_text="Specifies how samples are [aggregated](http://docs.refine.bio/en/latest/main_text.html#aggregations).")
+    scale_by = models.CharField(max_length=255, choices=SCALE_CHOICES, default="NONE", help_text="Specifies options for [transformations](http://docs.refine.bio/en/latest/main_text.html#transformations).")
+    quantile_normalize = models.BooleanField(default=True, help_text="Part of the advanced options. Allows [skipping quantile normalization](http://docs.refine.bio/en/latest/faq.html#what-does-it-mean-to-skip-quantile-normalization-for-rna-seq-samples) for RNA-Seq samples.")
 
     # State properties
     is_processing = models.BooleanField(default=False)  # Data is still editable when False
@@ -1115,7 +1115,7 @@ class Dataset(models.Model):
     s3_bucket = models.CharField(max_length=255)
     s3_key = models.CharField(max_length=255)
 
-    size_in_bytes = models.BigIntegerField(blank=True, null=True, default=0)
+    size_in_bytes = models.BigIntegerField(blank=True, null=True, default=0, help_text="Contains the size in bytes of the processed dataset.")
     sha1 = models.CharField(max_length=64, null=True, default='')
 
     # Common Properties
