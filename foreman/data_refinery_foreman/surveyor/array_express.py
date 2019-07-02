@@ -356,6 +356,12 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
         return (existing_protocols, is_updated)
 
+    @staticmethod
+    def _apply_harmonized_metadata_to_sample(sample: Sample, harmonized_metadata: dict):
+        """Applies the harmonized metadata to `sample`"""
+        for key, value in harmonized_metadata.items():
+            setattr(sample, key, value)
+
     def create_samples_from_api(self,
                                 experiment: Experiment,
                                 platform_dict: Dict
@@ -378,7 +384,6 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 Download the derived data and no-op it.
 
         See an example at: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-3050/samples
-
         """
 
         created_samples = []
@@ -559,9 +564,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
 
                 # Directly assign the harmonized properties
                 harmonized_sample = harmonized_samples[title]
-                for key, value in harmonized_sample.items():
-                    setattr(sample_object, key, value)
-                sample_object.save()
+                ArrayExpressSurveyor._apply_harmonized_metadata_to_sample(sample_object, harmonized_sample)
 
                 sample_annotation = SampleAnnotation()
                 sample_annotation.data = sample_data

@@ -25,7 +25,7 @@ from data_refinery_api.serializers import (
     ProcessorSerializer,
     SurveyJobSerializer,
 )
-from data_refinery_api.views import ExperimentList, Stats
+from data_refinery_api.views import ExperimentList, Stats, DatasetView
 from data_refinery_common.utils import get_env_variable
 from data_refinery_common.models import (
     ComputationalResult,
@@ -189,9 +189,6 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('experiments'), kwargs={'page': 1})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('experiments_detail', kwargs={'pk': '1'}))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
         response = self.client.get(reverse('samples'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -204,9 +201,6 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('samples'), kwargs={'page': 1})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('samples_detail', kwargs={'pk': '1'}))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
         response = self.client.get(reverse('organisms'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -214,9 +208,6 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse('institutions'))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        response = self.client.get(reverse('jobs'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse('survey_jobs'))
@@ -237,23 +228,19 @@ class APITestCases(APITestCase):
         response = self.client.get(reverse('results'), kwargs={'page': 1})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('api_root'))
+        response = self.client.get(reverse('schema-redoc'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse('search'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('dataset_root'))
+        response = self.client.get(reverse('transcriptome-indices'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response = self.client.get(reverse('create_dataset'))
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
-        response = self.client.get(reverse('token'))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
     def test_sample_pagination(self):
-
         response = self.client.get(reverse('samples'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()['results']), 2)
@@ -262,11 +249,11 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()['results']), 1)
 
-        response = self.client.get(reverse('samples'), {'limit': 1, 'order_by': '-title'})
+        response = self.client.get(reverse('samples'), {'limit': 1, 'ordering': '-title'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['results'][0]['title'], '789')
 
-        response = self.client.get(reverse('samples'), {'limit': 1, 'order_by': 'title'})
+        response = self.client.get(reverse('samples'), {'limit': 1, 'ordering': 'title'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['results'][0]['title'], '123')
 
@@ -281,8 +268,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_fetching_organism_index(self):
-        response = self.client.get(reverse('transcriptome-indices'),
-                                   {'organism': 'DANIO_RERIO', 'length': 'SHORT'})
+        response = self.client.get(reverse('transcriptome-indices-read', kwargs={'organism_name': 'DANIO_RERIO'}), {'length': 'SHORT'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['index_type'], 'TRANSCRIPTOME_SHORT')
 
@@ -342,8 +328,8 @@ class APITestCases(APITestCase):
         drc1.s3_key = "drc2.tsv"
         drc1.save()
 
-        response = self.client.get(reverse('compendia'))
-        response_json = response.json()
+        response = self.client.get(reverse('computed-files'), {'is_compendia': True})
+        response_json = response.json()['results']
         self.assertEqual(3, len(response_json))
         # Prove that the download_url field is missing and not None.
         self.assertEqual('NotPresent', response_json[0].get('download_url', 'NotPresent'))
@@ -354,308 +340,30 @@ class APITestCases(APITestCase):
         # it will set the download_url field to None rather than
         # generate one.
 
-        # Get a token first
-        response = self.client.get(reverse('token'),
-                                    content_type="application/json")
+        # Create a token first
+        response = self.client.post(reverse('token'), content_type="application/json")
         token = response.json()
         token['is_activated'] = True
         token_id = token['id']
-        response = self.client.post(reverse('token'),
+        response = self.client.put(reverse('token_id', kwargs={'id': token_id}),
                                     json.dumps(token),
                                     content_type="application/json")
 
-        response = self.client.get(reverse('compendia'), HTTP_API_KEY=token_id)
-        response_json = response.json()
+        response = self.client.get(reverse('computed-files'), {'is_compendia': True}, HTTP_API_KEY=token_id)
+        response_json = response.json()['results']
         self.assertEqual(3, len(response_json))
         self.assertIsNone(response_json[0]['download_url'])
-
-    def test_search_and_filter(self):
-
-        sample = Sample()
-        sample.accession_code = "XXXXXXXXXXXXXXX"
-        sample.is_processed = True
-        sample.technology = "RNA-SEQ"
-        sample.save()
-
-        # Our Docker image doesn't have the standard dict. >=[
-        words = ['the', 'of', 'to', 'and', 'a', 'in', 'is', 'it', 'you', 'that', 'he', 'was', 'for', 'on', 'are', 'with', 'as', 'I', 'his', 'they', 'be', 'at', 'one', 'have', 'this', 'from', 'or', 'had', 'by', 'hot', 'word', 'but', 'what', 'some', 'we', 'can', 'out', 'other', 'were', 'all', 'there', 'when', 'up', 'use', 'your', 'how', 'said', 'an', 'each', 'she', 'which', 'do', 'their', 'time', 'if', 'will', 'way', 'about', 'many', 'then', 'them', 'write', 'would', 'like', 'so', 'these', 'her', 'long', 'make', 'thing', 'see', 'him', 'two', 'has', 'look', 'more', 'day', 'could', 'go', 'come', 'did', 'number', 'sound', 'no', 'most', 'people', 'my', 'over', 'know', 'water', 'than', 'call', 'first', 'who', 'may', 'down', 'side', 'been', 'now', 'find', 'any', 'new', 'work', 'part', 'take', 'get', 'place', 'made', 'live', 'where', 'after', 'back', 'little', 'only', 'round', 'man', 'year', 'came', 'show', 'every', 'good', 'me', 'give', 'our', 'under', 'name', 'very', 'through', 'just', 'form', 'sentence', 'great', 'think', 'say', 'help', 'low', 'line', 'differ', 'turn', 'cause', 'much', 'mean', 'before', 'move', 'right', 'boy', 'old', 'too', 'same', 'tell', 'does', 'set', 'three', 'want', 'air', 'well', 'also', 'play', 'small', 'end', 'put', 'home', 'read', 'hand', 'port', 'large', 'spell', 'add', 'even', 'land', 'here', 'must', 'big', 'high', 'such', 'follow', 'act', 'why', 'ask', 'men', 'change', 'went', 'light', 'kind', 'off', 'need', 'house', 'picture', 'try', 'us', 'again', 'animal', 'point', 'mother', 'world', 'near', 'build', 'self', 'earth', 'father', 'head', 'stand', 'own', 'page', 'should', 'country', 'found', 'answer', 'school', 'grow', 'study', 'still', 'learn', 'plant', 'cover', 'food', 'sun', 'four', 'between', 'state', 'keep', 'eye', 'never', 'last', 'let', 'thought', 'citcitree', 'cross', 'farm', 'hhhh', 'start', 'might', 'stosy', 'saw', 'sar', 'sea', 'draw', 'left', 'late', 'run', "don't", 'while', 'press', 'close', 'night', 'real', 'life', 'few', 'north', 'open', 'seemseegether', 'next', 'white', 'chilchin', 'chiln', 'got', 'walk', 'exampexamase', 'paper', 'group', 'always', 'music', 'those', 'botbotark', 'often', 'letter', 'until', 'mile', 'river', 'car', 'feet', 'care', 'second', 'book', 'carry', 'took', 'science', 'eat', 'room', 'friefr', 'bbban', 'idea', 'fish', 'mountain', 'stop', 'once', 'base', 'hear', 'horse', 'cut', 'sure', 'watch', 'color', 'face', 'wood', 'main', 'enough', 'plain', 'girl', 'usual', 'young', 'ready', 'above', 'ever', 'red', 'list', 'though', 'feel', 'talk', 'bird', 'soon', 'body', 'dog', 'family', 'direct', 'pose', 'leave', 'song', 'measure', 'door', 'product', 'black', 'short', 'numeral', 'class', 'wind', 'question', 'happen', 'complete', 'ship', 'area', 'half', 'rock', 'order', 'fire', 'south', 'problem', 'piece', 'told', 'knew', 'pass', 'since', 'top', 'whole', 'king', 'space', 'heard', 'best', 'hour', 'better', 'true', 'during', 'hundred', 'five', 'rrrember', 'step', 'early', 'hold', 'west', 'groundgroterest', 'reach', 'fast', 'verb', 'sing', 'llsten', 'six', 'table', 'travel', 'less', 'morning', 'ten', 'simple', 'several', 'vowel', 'toward', 'war', 'lay', 'against', 'pattern', 'slow', 'center', 'love', 'person', 'money', 'serve', 'appear', 'road', 'map', 'rain', 'rule', 'govern', 'pull', 'cold', 'notice', 'voice', 'unit', 'powepotown', 'fine', 'certain', 'flflflll', 'lead', 'cry', 'dark', 'machine', 'note', 'waitwalan', 'fifife', 'star', 'box', 'noun', 'field', 'rest', 'correct', 'able', 'pound', 'done', 'beauty', 'drive', 'stood', 'contain', 'front', 'teach', 'week', 'final', 'gave', 'green', 'oh', 'quick', 'develop', 'ocean', 'warm', 'free', 'minute', 'strong', 'specispecisd', 'behind', 'cccccctail', 'produce', 'fact', 'street', 'inch', 'multiply', 'nothing', 'course', 'stay', 'wheel', 'full', 'force', 'blue', 'object', 'decide', 'surface', 'deep', 'moon', 'island', 'foot', 'system', 'busy', 'test', 'record', 'boat', 'common', 'gold', 'possible', 'plane', 'steasteay', 'wonder', 'laugh', 'thousand', 'ago', 'ran', 'check', 'game', 'shape', 'equate', 'hot', 'miss', 'brought', 'heat', 'snow', 'tire', 'bring', 'yes', 'distant', 'fififeast', 'paint', 'language', 'among', 'grand', 'ball', 'yet', 'yet', '', '', 'gop', 'heart', 'am', 'present', 'heaheadance', 'engine', 'position', 'arm', 'wide', 'sail', 'material', 'size', 'vary', 'settle', 'speak', 'weight', 'general', 'ice', 'matter', 'circle', 'pair', 'include', 'divide', 'syllable', 'felt', 'perhaps', 'pick', 'sudden', 'count', 'square', 'reason', 'length', 'represent', 'art', 'subject', 'region', 'energyenerg', 'probable', 'bed', 'brother', 'egg', 'ride', 'cell', 'believe', 'fraction', 'forest', 'sit', 'race', 'window', 'store', 'summer', 'train', 'sleep', 'prove', 'lone', 'lelelxercise', 'wall', 'catch', 'mount', 'wish', 'skyskyskd', 'joy', 'winter', 'sat', 'written', 'wild', 'instrument', 'kept', 'glass', 'grass', 'cow', 'job', 'edge', 'sign', 'visit', 'ppppppoft', 'fun', 'bright', 'gggggeather', 'month', 'million', 'bear', 'finish', 'happy', 'hope', 'flower', 'clothe', 'strange', 'gonegonmpgoney', 'eight', 'village', 'meet', 'root', 'buy', 'raise', 'solve', 'metal', 'whether', 'push', 'seven', 'paragraph', 'third', 'shall', 'held', 'hair', 'describe', 'cook', 'floor', 'either', 'result', 'burn', 'hill', 'safe', 'cat', 'century', 'consider', 'type', 'law', 'bit', 'coast', 'copy', 'phrase', 'silent', 'tall', 'sand', 'ssss', 'roll', 'temperature', 'ffffff', 'industry', 'value', 'fight', 'lie', 'beat', 'excite', 'naturalnaturalense', 'eee', 'else', 'ququq', 'bbbbb', 'case', 'middle', 'kill', 'son', 'lake', 'moment', 'scale', 'loud', 'spring', 'observe', 'child', 'straight', 'consonant', 'nation', 'dictionary', 'milk', 'speed', 'method', 'organ', 'pay', 'age', 'section', 'dress', 'cloud', 'surprsue', 'quiet', 'stone', 'tiny', 'climb', 'cool', 'design', 'ppppplot', 'experiment', 'bottom', 'key', 'iron', 'single', 'stick', 'flat', 'twenty', 'skin', 'smile', 'crease', 'hole', 'trade', 'melody', 'trip', 'office', 'receive', 'row', 'row', 'ive', 'act', 'symbol', 'die', 'least', 'trouble', 'shout', 'except', 'wrote', 'seed', 'tone', 'join', 'joigest', 'clean', 'break', 'lalalalrd', 'rise', 'badbadba', 'oil', 'blood', 'touch', 'grew', 'cent', 'mix', 'team', 'wire', 'cost', 'lost', 'brown', 'wear', 'garden', 'equal', 'sent', 'choose', 'fell', 'fit', 'flow', 'fair', 'bank', 'collect', 'save', 'control', 'decimal', 'gentle', 'woman', 'captain', 'practice', 'separatsepaffiseparatsepr', 'please', 'protect', 'noon', 'whose', 'locate', 'ring', 'character', 'insect', 'caught', 'period', 'indicate', 'radio', 'spoke', 'atom', 'human', 'history', 'effect', 'electric', 'expect', 'crop', 'modern', 'element', 'hit', 'student', 'corner', 'corner', 'upply', 'bone', 'rail', 'imagine', 'proproe', 'agree', 'thus', 'capital', "won't", 'chair', 'danger', 'fruit', 'rich', 'thick', 'thickerthickess', 'opeopee', 'guessguecessary', 'sharp', 'wing', 'create', 'neighbor', 'wash', 'bat', 'rather', 'crowd', 'corn', 'compare', 'poem', 'string', 'bell', 'depend', 'meat', 'rub', 'tube', 'famous', 'dollar', 'stream', 'fear', 'sight', 'thin', 'triangle', 'planet', 'hurry', 'chief', 'colony', 'clock', 'mine', 'tie', 'enter', 'major', 'fresh', 'search', 'send', 'yellow', 'gun', 'alloalloint', 'deaddeaddeaesert', 'suit', 'curcurt', 'lift', 'rose', 'continue', 'block', 'chart', 'hat', 'sell', 'succesu', 'company', 'subtrsubtevent', 'particular', 'deal', 'swim', 'term', 'opposite', 'wife', 'shoe', 'shoulder', 'spread', 'arrange', 'camp', 'invent', 'cotton', 'born', 'determine', 'quququnine', 'truck', 'noise', 'level', 'chance', 'chance', 'shop', 'stretch', 'throw', 'shine', 'property', 'column', 'molecule', 'selsel', 'wrong', 'gray', 'repeat', 'require', 'broad', 'prepare', 'salt', 'nose', 'plural', 'anger', 'claim', 'continent', 'oxygen', 'sugar', 'death', 'deatty', 'skill', 'women', 'season', 'solution', 'magnet', 'silver', 'thank', 'branch', 'match', 'suffix', 'especially', 'fig', 'afraid', 'huge', 'sister', 'steel', 'discuss', 'forward', 'similar', 'guide', 'experience', 'score', 'apple', 'bought', 'ledledled', 'coat', 'mass', 'card', 'babababpebabipbababdream', 'evening', 'condition', 'feed', 'tool', 'total', 'basic', 'smell', 'smell', '', 'nor', 'double', 'seat', 'arrive', 'master', 'track', 'parent', 'shore', 'division', 'sheet', 'substance', 'favor', 'connect', 'post', 'spend', 'chord', 'fat', 'glad', 'original', 'share', 'stationstad', 'bread', 'charge', 'proper', 'bar', 'offer', 'segmentsegave', 'duck', 'instant', 'market', 'degree', 'populate', 'chick', 'dear', 'enemy', 'reply', 'drink', 'occur', 'sssssrt', 'speech', 'nature', 'range', 'steam', 'motion', 'path', 'liquid', 'log', 'meant', 'quotient', 'teetteetteetteck']
-
-        # Let's create a lot of objects!
-        LOTS = 10000
-        experiments = []
-        xsa = []
-        for x in range(1, LOTS):
-            ex = Experiment()
-            ex.accession_code = "".join(random.choice(words)
-                                        for i in range(3)) + str(random.randint(0, 1000))[:64]
-            ex.title = " ".join(random.choice(words) for i in range(10))
-            ex.description = " ".join(random.choice(words) for i in range(100))
-            ex.technology = random.choice(["RNA-SEQ", "MICROARRAY"])
-            ex.submitter_institution = random.choice(["Funkytown", "Monkeytown"])
-
-            # cached values
-            ex.num_total_samples = 1
-            ex.num_processed_samples = 1
-
-            experiments.append(ex)
-
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
-
-        Experiment.objects.bulk_create(experiments)
-        for exz in experiments:
-            xs = ExperimentSampleAssociation()
-            xs.experiment = exz
-            xs.sample = sample
-            xsa.append(xs)
-        ExperimentSampleAssociation.objects.bulk_create(xsa)
-        experiments = []
-        xsa = []
-
-        ex = Experiment()
-        ex.accession_code = "FINDME_TEMPURA"
-        ex.title = "THISWILLBEINASEARCHRESULT"
-        ex.description = "SOWILLTHIS"
-        ex.technology = "MICROARRAY"
-        ex.submitter_institution = "Funkytown"
-        experiments.append(ex)
-
-        ex2 = Experiment()
-        ex2.accession_code = "FINDME2"
-        ex2.title = "THISWILLBEINASEARCHRESULT"
-        ex2.description = "SOWILLTHIS"
-        ex2.technology = "RNA-SEQ"
-        ex2.submitter_institution = "Funkytown"
-        ex2.has_publication = True
-        experiments.append(ex2)
-
-        ex3 = Experiment()
-        ex3.accession_code = "FINDME3"
-        ex3.title = "THISWILLBEINASEARCHRESULT"
-        ex3.description = "SOWILLTHIS"
-        ex3.technology = "FAKE-TECH"
-        ex3.submitter_institution = "Utopia"
-        experiments.append(ex3)
-
-        # Use an E-GEOD-XXXX accession so we can test the E-GEOD -> GSE alternate accession.
-        ex4 = Experiment()
-        ex4.accession_code = "E-GEOD-1234"
-        ex4.title = "IGNORED"
-        ex4.description = "IGNORED"
-        ex4.technology = "MICROARRAY"
-        ex4.submitter_institution = "IGNORED"
-        # Bulk create won't call the save method.
-        ex4.save()
-
-        # Use an GSEXXX accession so we can test the GSE -> E-GEOD alternate accession.
-        ex5 = Experiment()
-        ex5.accession_code = "GSE5678"
-        ex5.title = "IGNORED"
-        ex5.description = "IGNORED"
-        ex5.technology = "RNA-SEQ"
-        ex5.submitter_institution = "IGNORED"
-        ex5.has_publication = True
-        # Bulk create won't call the save method.
-        ex5.save()
-
-        sample1 = Sample()
-        sample1.title = "1123"
-        sample1.accession_code = "1123"
-        sample1.platform_name = "AFFY"
-        sample1.is_processed = True
-        sample1.technology = "RNA-SEQ"
-        sample1.save()
-
-        sample2 = Sample()
-        sample2.title = "3345"
-        sample2.accession_code = "3345"
-        sample2.platform_name = "ILLUMINA"
-        sample2.organism = homo_sapiens
-        sample2.is_processed = True
-        sample1.technology = "MICROARRAY"
-        sample2.save()
-
-        Experiment.objects.bulk_create(experiments)
-        experiment_sample_association = ExperimentSampleAssociation()
-        experiment_sample_association.sample = sample
-        experiment_sample_association.experiment = ex2
-        experiment_sample_association.save()
-        ex2.num_total_samples = 1
-        ex2.num_processed_samples = 1
-        ex2.save()
-
-        experiment_sample_association = ExperimentSampleAssociation()
-        experiment_sample_association.sample = sample
-        experiment_sample_association.experiment = ex3
-        experiment_sample_association.save()
-        ex3.num_total_samples = 1
-        ex3.num_processed_samples = 1
-        ex3.save()
-
-        experiment_sample_association = ExperimentSampleAssociation()
-        experiment_sample_association.sample = sample
-        experiment_sample_association.experiment = ex4
-        experiment_sample_association.save()
-        ex4.num_total_samples = 1
-        ex4.num_processed_samples = 1
-        ex4.save()
-
-        experiment_sample_association = ExperimentSampleAssociation()
-        experiment_sample_association.sample = sample
-        experiment_sample_association.experiment = ex5
-        experiment_sample_association.save()
-        ex5.num_total_samples = 1
-        ex5.num_processed_samples = 1
-        ex5.save()
-
-        xa = ExperimentAnnotation()
-        xa.data = {'name': 'Clark Kent'}
-        xa.experiment = ex
-        xa.save()
-
-        xoa = ExperimentOrganismAssociation()
-        xoa.experiment=ex
-        xoa.organism=homo_sapiens
-        xoa.save()
-
-        xoa = ExperimentOrganismAssociation()
-        xoa.experiment=ex2
-        xoa.organism=homo_sapiens
-        xoa.save()
-
-        xoa = ExperimentOrganismAssociation()
-        xoa.experiment=ex3
-        xoa.organism=Organism.objects.create(name="Extra-Terrestrial-1982", taxonomy_id=9999)
-        xoa.save()
-
-        experiment_sample_association = ExperimentSampleAssociation()
-        experiment_sample_association.sample = sample1
-        experiment_sample_association.experiment = ex
-        experiment_sample_association.save()
-
-        experiment_sample_association = ExperimentSampleAssociation()
-        experiment_sample_association.sample = sample2
-        experiment_sample_association.experiment = ex
-        experiment_sample_association.save()
-
-        ex.num_total_samples = 2 # sample1 and sample2
-        ex.num_processed_samples = 2 # both processed
-        ex.save()
-
-        # Test all
-        response = self.client.get(reverse('search'))
-        self.assertEqual(response.json()['count'], LOTS + 5)
-
-        # Test search
-        response = self.client.get(reverse('search'), {'search': 'THISWILLBEINASEARCHRESULT'})
-        self.assertEqual(response.json()['count'], 3)
-
-        # Test filter
-        response = self.client.get(reverse('search'), {'search': 'FINDME', 'has_publication': True})
-        for result in response.json()['results']:
-            self.assertTrue(result['has_publication'])
-        response = self.client.get(reverse('search'), {'search': 'FINDME', 'has_publication': False})
-        for result in response.json()['results']:
-            self.assertFalse(result['has_publication'])
-
-        # Test search and filter
-        response = self.client.get(reverse('search'),
-                                   {'search': 'THISWILLBEINASEARCHRESULT',
-                                    'technology': 'MICROARRAY'})
-        self.assertEqual(response.json()['count'], 1)
-        self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME_TEMPURA')
-        # filter contain values for the top search query
-        self.assertEqual(response.json()['filters']['technology'], {'FAKE-TECH': 1, 'MICROARRAY': 2, 'RNA-SEQ': 1})
-        self.assertEqual(response.json()['filters']['publication'], {'has_publication': 1})
-        self.assertEqual(response.json()['filters']['organism'], {'Extra-Terrestrial-1982': 1, 'HOMO_SAPIENS': 3})
-
-        # Test search and interactive filtering
-        response = self.client.get(reverse('search'),
-                                   {'search': 'THISWILLBEINASEARCHRESULT',
-                                    'technology': 'MICROARRAY',
-                                    'filter_order': 'technology'})
-        self.assertEqual(response.json()['count'], 1)
-        self.assertEqual(response.json()['results'][0]['accession_code'], 'FINDME_TEMPURA')
-        self.assertEqual(response.json()['filters']['technology'], {'FAKE-TECH': 1, 'MICROARRAY': 2, 'RNA-SEQ': 1})
-        self.assertEqual(response.json()['filters']['publication'], {}) # FINDME_TEMPURA is the only result and doesn't have any publication
-        # organism filter number should reflect the single result: two samples HOMO_SAPIENS
-        self.assertEqual(response.json()['filters']['organism'], {'HOMO_SAPIENS': 2})
-
-        response = self.client.get(reverse('search'),
-                                   {'search': 'THISWILLBEINASEARCHRESULT',
-                                    'organisms__name': 'Extra-Terrestrial-1982'})
-        self.assertEqual(response.json()['count'], 1)
-
-        response = self.client.get(reverse('search'), {'search': 'Clark Kent'})
-        self.assertEqual(response.json()['count'], 1)
-        self.assertEqual(response.json()['results'][0]['accession_code'], "FINDME_TEMPURA")
-
-        # Test multiple filters
-        # This has to be done manually due to dicts requring distinct keys
-        response = self.client.get(reverse('search') + "?search=THISWILLBEINASEARCHRESULT&technology=MICROARRAY&technology=FAKE-TECH")
-        self.assertEqual(response.json()['count'], 2)
-
-        # Test ordering
-        response = self.client.get(reverse('search') + "?search=SEARCH&ordering=id")
-        response2 = self.client.get(reverse('search') + "?search=SEARCH&ordering=-id")
-        self.assertNotEqual(response.json()['results'][0]['id'], response2.json()['results'][0]['id'])
-        self.assertTrue(response2.json()['results'][0]['id'] > response.json()['results'][0]['id'])
-
-        # Test Searching on Alternate Accession Codes
-        response = self.client.get(reverse('search'), {'search': 'GSE1234'})
-        self.assertEqual(response.json()['count'], 1)
-        self.assertEqual(response.json()['results'][0]['accession_code'], "E-GEOD-1234")
-
-        response = self.client.get(reverse('search'), {'search': 'E-GEOD-5678'})
-        self.assertEqual(response.json()['count'], 1)
-        self.assertEqual(response.json()['results'][0]['accession_code'], "GSE5678")
-
-        cr = ComputationalResult()
-        cr.save()
-
-        cra = ComputationalResultAnnotation()
-        cra.result = cr
-        cra.data = {"organism": "Ailuropoda melanoleuca", "organism_id": Organism.get_object_for_name("Ailuropoda melanoleuca").id, "is_qn": True}
-        cra.save()
-
-        qni = ComputedFile()
-        qni.is_qn_target = True
-        qni.s3_bucket = "fake_qni_bucket"
-        qni.s3_key = "zazaza_homo_sapiens_1234.tsv"
-        qni.filename = "homo_sapiens_1234.tsv"
-        qni.is_public = True
-        qni.size_in_bytes = 56789
-        qni.sha1 = "c0a88d0bb020dadee3b707e647f7290368c235ba"
-        qni.result = cr
-        qni.save()
-
-        qni = ComputedFile()
-        qni.is_qn_target = False
-        qni.s3_bucket = "X"
-        qni.s3_key = "X.tsv"
-        qni.filename = "XXXXXXXXXXXXXXX.tsv"
-        qni.is_public = True
-        qni.size_in_bytes = 1
-        qni.sha1 = "123"
-        qni.result = cr
-        qni.save()
-
-        response = self.client.get(reverse('qn-targets'), {'organism': 'Ailuropoda melanoleuca'})
-        self.assertEqual(len(response.json().keys()), 11)
-        self.assertEqual(response.json()['s3_url'], 'https://s3.amazonaws.com/fake_qni_bucket/zazaza_homo_sapiens_1234.tsv')
-
-        response = self.client.get(reverse('computed-files'))
-        self.assertEqual(len(response.json()), 2)
 
     @patch('data_refinery_common.message_queue.send_job')
     def test_create_update_dataset(self, mock_send_job):
 
         # Get a token first
-        response = self.client.get(reverse('token'),
+        response = self.client.post(reverse('token'),
                                     content_type="application/json")
         token = response.json()
         token['is_activated'] = True
         token_id = token['id']
-        response = self.client.post(reverse('token'),
+        response = self.client.put(reverse('token_id', kwargs={'id': token_id}),
                                     json.dumps(token),
                                     content_type="application/json")
 
@@ -807,7 +515,12 @@ class APITestCases(APITestCase):
         experiment_sample_association.experiment = experiment
         experiment_sample_association.save()
 
+        # we return all experiments
         response = self.client.get(reverse('search'), {'search': "GSX12345"})
+        self.assertEqual(response.json()['count'], 1)
+
+        # check requesting only experiments with processed samples
+        response = self.client.get(reverse('search'), {'search': "GSX12345", 'num_processed_samples__gt': 0})
         self.assertEqual(response.json()['count'], 0)
 
         sample2 = Sample()
@@ -922,15 +635,25 @@ class APITestCases(APITestCase):
         self.assertEqual(response.json()['data'], json.loads(jdata)['data'])
         good_id = response.json()['id']
 
-        response = self.client.get(reverse('dataset_stats', kwargs={'id': good_id}))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json()['GALLUS_GALLUS'], {'num_experiments': 1, 'num_samples': 1})
-        self.assertEqual(response.json()['HOMO_SAPIENS'], {'num_experiments': 1, 'num_samples': 1})
-        self.assertEqual(len(response.json().keys()), 2)
-
         # Check that we can fetch these sample details via samples API
         response = self.client.get(reverse('samples'), {'dataset_id': good_id})
         self.assertEqual(response.json()['count'], 2)
+
+    def test_engagement_bot_email_filtering(self):
+        self.assertTrue(DatasetView._should_display_on_engagement_bot("test@gmail.com"))
+
+        self.assertFalse(DatasetView._should_display_on_engagement_bot(None))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("cansav09@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("arielsvn@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("jaclyn.n.taroni@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("kurt.wheeler@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("greenescientist@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("test@alexslemonade.org"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("miserlou@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("michael.zietz@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("d.prasad@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("daniel.himmelstein@gmail.com"))
+        self.assertFalse(DatasetView._should_display_on_engagement_bot("dv.prasad991@gmail.com"))
 
     @patch('raven.contrib.django.models.client')
     def test_sentry_middleware_ok(self, mock_client):
@@ -943,19 +666,19 @@ class APITestCases(APITestCase):
     def test_sentry_middleware_404(self, mock_client):
         # We don't send anything to raven if it's not enabled
         mock_client.is_enabled.side_effect = lambda: False
-        response = self.client.get(reverse('experiments_detail', kwargs={'pk': '1000'}))
+        response = self.client.get(reverse('experiments_detail', kwargs={'accession_code': 'INEXISTENT'}))
         self.assertEqual(response.status_code, 404)
         mock_client.captureMessage.assert_not_called()
 
         # A 404 with raven enabled will send a message to sentry
         mock_client.is_enabled.side_effect = lambda: True
-        response = self.client.get(reverse('experiments_detail', kwargs={'pk': '1000'}))
+        response = self.client.get(reverse('experiments_detail', kwargs={'accession_code': 'INEXISTENT'}))
         self.assertEqual(response.status_code, 404)
         mock_client.captureMessage.assert_not_called()
 
         # A 404 with raven enabled will send a message to sentry
         mock_client.is_enabled.side_effect = lambda: True
-        response = self.client.get(reverse('experiments_detail', kwargs={'pk': '1000'})[:-1] + "aasdas/")
+        response = self.client.get(reverse('experiments_detail', kwargs={'accession_code': 'INEXISTENT'})[:-1] + "aasdas/")
         self.assertEqual(response.status_code, 404)
         mock_client.captureMessage.assert_not_called()
 
@@ -1253,7 +976,7 @@ class ESTestCases(APITestCase):
         sra.save()
 
         # TODO: Use `reverse` when not using the DefaultRouter
-        response = self.client.get('/es/')
+        response = self.client.get('/search/')
 
         """ Test basic ES functionality """
         es_search_result = ExperimentDocument.search().filter("term", description="soda")
@@ -1269,15 +992,15 @@ class ESTestCases(APITestCase):
         self.assertEqual(response.json()['facets']['technology']['rna-seq'], 0)
 
         # Basic Search
-        response = self.client.get('/es/?search=soda')
+        response = self.client.get('/search/?search=soda')
         self.assertEqual(response.json()['count'], 1)
 
         # Positive filter result
-        response = self.client.get('/es/?search=soda&technology=microarray')
+        response = self.client.get('/search/?search=soda&technology=microarray')
         self.assertEqual(response.json()['count'], 1)
 
         # Negative filter result
-        response = self.client.get('/es/?search=soda&technology=rna')
+        response = self.client.get('/search/?search=soda&technology=rna')
         self.assertEqual(response.json()['count'], 0)
 
 class ProcessorTestCases(APITestCase):
@@ -1330,7 +1053,8 @@ class ProcessorTestCases(APITestCase):
         response = self.client.get(reverse('processors'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        processors = response.json()
+        processors = response.json()['results']
+        
         self.assertEqual(processors[0]['name'], 'Salmon Quant')
         self.assertEqual(processors[0]['environment']['os_pkg']['python3'], '3.5.1-3')
 
@@ -1339,7 +1063,7 @@ class ProcessorTestCases(APITestCase):
                          'Salmon Tools 0.1.0')
 
     def test_processor_and_organism_in_sample(self):
-        sample = Sample.objects.create(title="fake sample")
+        sample = Sample.objects.create(accession_code='ACCESSION', title="fake sample")
         organism = Organism.get_object_for_name("HOMO_SAPIENS")
         transcriptome_result = ComputationalResult.objects.create()
         organism_index = OrganismIndex.objects.create(organism=organism,
@@ -1350,7 +1074,7 @@ class ProcessorTestCases(APITestCase):
         sra = SampleResultAssociation.objects.create(sample=sample, result=result)
 
         response = self.client.get(reverse('samples_detail',
-                                           kwargs={'pk': sample.id}))
+                                           kwargs={'accession_code': sample.accession_code}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         processor = response.json()['results'][0]['processor']

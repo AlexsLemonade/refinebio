@@ -482,7 +482,7 @@ def _find_or_download_index(job_context: Dict) -> Dict:
     except Exception as e:
         error_template = "Failed to download or extract transcriptome index for organism {0}: {1}"
         error_message = error_template.format(str(job_context['organism']), str(e))
-        logger.error(error_message, processor_job=job_context["job_id"])
+        logger.exception(error_message, processor_job=job_context["job_id"])
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
 

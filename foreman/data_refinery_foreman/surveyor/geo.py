@@ -213,6 +213,12 @@ class GeoSurveyor(ExternalSourceSurveyor):
                                               + sample_accession_code)
         return protocol_info
 
+    @staticmethod
+    def _apply_harmonized_metadata_to_sample(sample: Sample, harmonized_metadata: dict):
+        """Applies the harmonized metadata to `sample`"""
+        for key, value in harmonized_metadata.items():
+            setattr(sample, key, value)
+
     def create_experiment_and_samples_from_api(self, experiment_accession_code) -> (Experiment, List[Sample]):
         """ The main surveyor - find the Experiment and Samples from NCBI GEO.
 
@@ -303,10 +309,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
 
                 self.set_platform_properties(sample_object, sample.metadata, gse)
 
-                # Directly assign the harmonized properties
-                harmonized_sample = harmonized_samples[sample_object.title]
-                for key, value in harmonized_sample.items():
-                    setattr(sample_object, key, value)
+                GeoSurveyor._apply_harmonized_metadata_to_sample(sample_object, harmonized_samples[sample_object.title])
 
                 # Sample-level protocol_info
                 sample_object.protocol_info = self.get_sample_protocol_info(sample.metadata,
