@@ -53,6 +53,7 @@ RUN Rscript install_gene_convert.R
 RUN mkdir -p gene_indexes
 WORKDIR /home/user/gene_indexes
 ENV ID_REFINERY_URL https://zenodo.org/record/1410647/files/all_1536267482.zip
+RUN echo "Busting cache because our test volumes got broken at this point somehow."
 RUN curl -O $ID_REFINERY_URL
 RUN echo $ID_REFINERY_URL > /etc/identifier_refinery_url
 RUN unzip *.zip
