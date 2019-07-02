@@ -68,7 +68,7 @@ if [[ -z $tag || $tag == "salmon" ]]; then
     if [[ ! -e $volume_directory/salmon_tests || -e $volume_directory/salmon_tests/newer ]]; then
         rm -rf $volume_directory/salmon_tests
         echo "Downloading 'salmon quant' test data..."
-        wget -q -O $volume_directory/salmon_tests_newer.tar.gz $test_data_repo/salmon_tests.tar.gz
+        wget -q -O $volume_directory/salmon_tests.tar.gz $test_data_repo/salmon_tests_newer.tar.gz
         tar xzf $volume_directory/salmon_tests.tar.gz -C $volume_directory
         rm $volume_directory/salmon_tests.tar.gz
     fi
