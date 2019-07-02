@@ -823,6 +823,12 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
         quant_result.processor = quant_processor
         quant_result.save()
 
+        kv = ComputationalResultAnnotation()
+        kv.data = {"index_length": "short"}
+        kv.result = quant_result
+        kv.is_public = True
+        kv.save()
+
         # In prod the filename pattern will involve the timestamp
         # but here we're using the accession code so we can find
         # the archive file for the current sample.

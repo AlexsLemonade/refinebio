@@ -5,9 +5,9 @@ set -e
 
 # Running this script will start an interactive python shell running
 # within the context of a Docker container.
-# By default the Docker container will be for the foreman project.
+# By default the Docker container will be for the workers project.
 # This can be changed by modifying the --env-file command line arg,
-# changing foreman/Dockerfile to the appropriate Dockerfile,
+# changing workers/Dockerfile to the appropriate Dockerfile,
 # and changing the volume_directory path.
 
 # This script should always run as if it were being called from
