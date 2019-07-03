@@ -349,6 +349,7 @@ def harmonize(metadata: List) -> Dict:
                     'patient age',
                     'age of patient',
                     'age (years)',
+                    'age (yrs)',
                     'age (months)',
                     'age (days)',
                     'age (hours)',

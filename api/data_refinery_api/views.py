@@ -37,8 +37,8 @@ from django_elasticsearch_dsl_drf.filter_backends import (
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
 from elasticsearch_dsl import TermsFacet, DateHistogramFacet
-from rest_framework import status, filters, generics
-from rest_framework.exceptions import APIException
+from rest_framework import status, filters, generics, mixins
+from rest_framework.exceptions import APIException, NotFound
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
@@ -99,6 +99,10 @@ from data_refinery_common.models.documents import (
 from data_refinery_common.utils import get_env_variable, get_active_volumes, get_nomad_jobs
 from data_refinery_common.logging import get_and_configure_logger
 from .serializers import ExperimentDocumentSerializer
+
+from django.utils.decorators import method_decorator
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 
 logger = get_and_configure_logger(__name__)
 
@@ -169,21 +173,53 @@ class FacetedSearchFilterBackendExtended(FacetedSearchFilterBackend):
         return queryset
 
 
+##
+# ElasticSearch powered Search and Filter
+##
+@method_decorator(name='list', decorator=swagger_auto_schema(
+manual_parameters=[
+    openapi.Parameter(
+        name='technology', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description="Allows filtering the results by technology, can have multiple values. Eg: `?technology=microarray&technology=rna-seq`",
+    ),
+    openapi.Parameter(
+        name='has_publication', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description="Filter the results that have associated publications with `?has_publication=true`",
+    ),
+    openapi.Parameter(
+        name='platform', in_=openapi.IN_QUERY,
+        type=openapi.TYPE_STRING,
+        description="Allows filtering the results by platform, this parameter can have multiple values.",
+    ),
+    openapi.Parameter(
+        name='organism', in_=openapi.IN_QUERY,
+        type=openapi.TYPE_STRING,
+        description="Allows filtering the results by organism, this parameter can have multiple values.",
+    ),
+    openapi.Parameter(
+        name='num_processed_samples', in_=openapi.IN_QUERY,
+        type=openapi.TYPE_NUMBER,
+        description="Use ElasticSearch queries to specify the number of processed samples of the results",
+    ),
+],
+operation_description="""
+Use this endpoint to search among the experiments. 
+
+This is powered by ElasticSearch, information regarding advanced usages of the 
+filters can be found in the [Django-ES-DSL-DRF docs](https://django-elasticsearch-dsl-drf.readthedocs.io/en/0.17.1/filtering_usage_examples.html#filtering)
+
+There's an additional field in the response named `facets` that contain stats on the number of results per filter type.
+
+Example Requests:
+```
+?search=medulloblastoma
+?id=1
+?search=medulloblastoma&technology=microarray&has_publication=true
+?ordering=source_first_published
+```
+"""))
 class ExperimentDocumentView(DocumentViewSet):
-    """ElasticSearch powered experiment search.
-
-    Search can be used by affixing:
-
-        ?search=medulloblastoma
-        ?id=1
-        ?search=medulloblastoma&technology=microarray&has_publication=true
-        ?ordering=source_first_published
-
-    Full examples can be found in the Django-ES-DSL-DRF docs:
-        https://django-elasticsearch-dsl-drf.readthedocs.io/en/0.17.1/filtering_usage_examples.html#filtering
-
-    """
-
+    """ ElasticSearch powered experiment search. """
     document = ExperimentDocument
     serializer_class = ExperimentDocumentSerializer
     pagination_class = ESLimitOffsetPagination
@@ -328,7 +364,6 @@ class ExperimentDocumentView(DocumentViewSet):
     faceted_search_param = 'facet'
 
     def list(self, request, *args, **kwargs):
-        """ Adds counts on certain filter fields to result JSON."""
         response = super(ExperimentDocumentView, self).list(request, args, kwargs)
         response.data['facets'] = self.transform_es_facets(response.data['facets'])
         return response
@@ -354,235 +389,47 @@ class ExperimentDocumentView(DocumentViewSet):
         return result
 
 ##
-# Search and Filter
-##
-
-class ExperimentFilter(django_filters.FilterSet):
-    queryset = Experiment.processed_public_objects.all()
-    has_publication = django_filters.BooleanFilter(field_name="has_publication")
-    submitter_institution = \
-        django_filters.ModelMultipleChoiceFilter(field_name="submitter_institution",
-                                                 to_field_name="submitter_institution",
-                                                 queryset=queryset)
-    submitter_institution.always_filter = False
-    technology = django_filters.ModelMultipleChoiceFilter(field_name="technology",
-                                                          to_field_name="technology",
-                                                          queryset=queryset)
-    technology.always_filter = False
-    source_first_published = django_filters.DateTimeFilter(field_name="source_first_published")
-    organisms__name = django_filters.ModelMultipleChoiceFilter(field_name="organisms__name",
-                                                               to_field_name="name",
-                                                               queryset=Organism.objects.all())
-    organisms__name.always_filter = False
-
-    samples__platform_name = \
-        django_filters.ModelMultipleChoiceFilter(field_name="samples__platform_name",
-                                                 to_field_name="platform_name",
-                                                 queryset=Sample.objects.all())
-    samples__platform_name.always_filter = False
-
-    class Meta:
-        model = Experiment
-        fields =    [   'has_publication',
-                        'submitter_institution',
-                        'technology',
-                        'source_first_published',
-                        'organisms__name',
-                        'samples__platform_name']
-
-    def to_html(self, request, queryset, view):
-        # Don't render the FKs in browsable view
-        return ''
-
-# Via: https://github.com/encode/django-rest-framework/issues/3905#issuecomment-294391278
-class NoMarkupDjangoFilterBackend(DjangoFilterBackend):
-    def to_html(self, request, queryset, view):
-        # We want this, but currently it incurs a huge performance penality on ChoiceFields with 1000+ choices
-        return ''
-
-# ListAPIView is read-only!
-class SearchAndFilter(generics.ListAPIView):
-    """
-    Search and filter for experiments and samples.
-
-    Ex: search/?search=human&has_publication=True
-
-    Interactive filtering allows users to explore results more easily. It can be enabled using the parameter `filter_order`.
-    The filter names should be sent sepparated by commas and depending on the order in which the filters are applied the
-    number of samples per filter will be different.
-
-    """
-
-    serializer_class = ExperimentSerializer
-    pagination_class = LimitOffsetPagination
-
-    filter_backends = (NoMarkupDjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
-    filter_class = ExperimentFilter
-
-    # Ordering
-    ordering_fields = ('total_samples_count', 'id', 'created_at', 'source_first_published', 'accession_code',)
-    ordering = ('-total_samples_count',)
-
-    def filter_samples_count(self, queryset, name, value):
-        return queryset.filter(total_samples_count=value)
-
-    # via http://www.django-rest-framework.org/api-guide/filtering/#searchfilter
-    # '^' Starts-with search.
-    # '=' Exact matches.
-    # '@' Full-text search.
-    # '$' Regex search.
-    search_fields = (   'title',
-                        'description',
-                        'accession_code',
-                        'alternate_accession_code',
-                        'protocol_description',
-                        'publication_title',
-                        'publication_doi',
-                        'publication_authors',
-                        'pubmed_id',
-                        'submitter_institution',
-                        'experimentannotation__data',
-                        # '@sample__accession_code',
-                        # '@sample__platform_name',
-                        # '@sample__platform_accession_code',
-                        # '@sample__organism__name',
-                        # '@sample__sex',
-                        # '@sample__specimen_part',
-                        # '@sample__disease',
-                        # '@sample__compound'
-                    )
-    filter_fields = ('has_publication', 'platform_name')
-
-    def get_queryset(self):
-
-        # For Prod:
-        queryset = Experiment.processed_public_objects.all()
-
-        # For Dev:
-        # queryset = Experiment.objects.all()
-
-        # Set up eager loading to avoid N+1 selects
-        queryset = self.get_serializer_class().setup_eager_loading(queryset)
-        return queryset
-
-    def list(self, request, *args, **kwargs):
-        """ Adds counts on certain filter fields to result JSON."""
-        response = super(SearchAndFilter, self).list(request, args, kwargs)
-
-        filter_param_names = ['organisms__name', 'technology', 'has_publication', 'platform']
-        # mapping between parameter names and category names
-        filter_name_map = {
-            'technology': 'technology',
-            'has_publication': 'publication',
-            'organisms__name': 'organism',
-            'platform': 'platforms'
-        }
-
-        # With interactive filtering, the filters in the last group are calculated differently, since they should stay unchanged when applied.
-        # ref https://github.com/AlexsLemonade/refinebio-frontend/issues/374#issuecomment-436373470
-        # This is only enabled when the parameter `filter_order` is provided (eg `filter_order=technology,platform`)
-        last_filter = self.get_last_filter()
-        if last_filter and last_filter in filter_param_names:
-            # 1. Calculate all filters except the one in the last category
-            queryset = self.search_queryset(request.query_params)
-            filter_names = [f for f in filter_param_names if f != last_filter]
-            response.data['filters'] = self.get_filters(queryset, filter_names)
-
-            # 2. Calculate the filters in the last category.
-            # We use a queryset built with all filters except those in the last category
-            params_without_last_category = request.query_params.copy()
-            params_without_last_category.pop(last_filter)
-            queryset_without_last_category = self.search_queryset(params_without_last_category)
-            last_category_filters = self.get_filters(queryset_without_last_category, [last_filter])
-            response.data['filters'][filter_name_map[last_filter]] = last_category_filters[filter_name_map[last_filter]]
-        else:
-            # Otherwise calculate the filters with the search term
-            response.data['filters'] = self.get_filters(self.search_queryset(), filter_param_names)
-
-        return response
-
-    def get_last_filter(self):
-        request = self.request
-        if 'filter_order' not in request.query_params:
-            return False
-        filter_order = request.query_params['filter_order']
-        last_filter = filter_order.split(',')[-1:][0]
-        # Ensure the last filter is valid and one of the applied filters
-        if not last_filter or last_filter not in request.query_params:
-            return False
-        return last_filter
-
-    def get_filters(self, queryset, filters_to_calculate):
-        result = {
-            'technology': {},
-            'publication': {},
-            'organism': {},
-            'platforms': {}
-        }
-
-        if 'technology' in filters_to_calculate:
-            # Technology
-            techs = queryset.values('technology').annotate(count=Count('sample__id', distinct=True))
-            for tech in techs:
-                if not tech['technology'] or not tech['technology'].strip():
-                    continue
-                result['technology'][tech['technology']] = tech['count']
-
-        if 'has_publication' in filters_to_calculate:
-            # Publication
-            pubs = queryset.values('has_publication').annotate(count=Count('sample__id', distinct=True))
-            for pub in pubs:
-                if pub['has_publication']:
-                    result['publication']['has_publication'] = pub['count']
-
-        if 'organisms__name' in filters_to_calculate:
-            # Organisms
-            organisms = queryset.values('organisms__name').annotate(count=Count('sample__id', distinct=True))
-            for organism in organisms:
-                # This experiment has no ExperimentOrganism-association, which is bad.
-                # This information may still live on the samples though.
-                if not organism['organisms__name']:
-                    continue
-                result['organism'][organism['organisms__name']] = organism['count']
-
-        if 'platform' in filters_to_calculate:
-            # Platforms
-            platforms = queryset.values('samples__platform_name').annotate(count=Count('sample__id', distinct=True))
-            for plat in platforms:
-                if plat['samples__platform_name']:
-                    result['platforms'][plat['samples__platform_name']] = plat['count']
-
-        return result
-
-    def search_queryset(self, filter_params = False):
-        if filter_params:
-            queryset = ExperimentFilter(filter_params, queryset=self.get_queryset()).qs
-        else:
-            queryset = self.get_queryset()
-        return filters.SearchFilter().filter_queryset(self.request, queryset, view=self)
-
-##
 # Dataset
 ##
-class CreateDatasetView(generics.CreateAPIView):
-    """ Creates and returns new Dataset. """
 
+class CreateDatasetView(generics.CreateAPIView):
+    """ Creates and returns new Datasets. """
     queryset = Dataset.objects.all()
     serializer_class = CreateDatasetSerializer
 
+@method_decorator(name='get', decorator=swagger_auto_schema(operation_description="View a single Dataset.",manual_parameters=[
+openapi.Parameter(
+    name='details', in_=openapi.IN_QUERY, type=openapi.TYPE_BOOLEAN,
+    description="When set to `True`, additional fields will be included in the response with details about the experiments in the dataset. This is used mostly on the dataset page in www.refine.bio",
+)]))
+@method_decorator(name='patch', decorator=swagger_auto_schema(auto_schema=None)) # partial updates not supported
+@method_decorator(name='put', decorator=swagger_auto_schema(operation_description="""
+Modify an existing Dataset.
+
+Set `start` to `true` along with a valid activated API token (from `/token/`) to begin smashing and delivery.
+
+You must also supply `email_address` with `start`, though this will never be serialized back to you.
+"""))
 class DatasetView(generics.RetrieveUpdateAPIView):
-    """ View and modify a single Dataset. Set `start` to `true` along with a valid
-    activated API token (from /token/) to begin smashing and delivery.
-
-    Adding a supplying `["ALL"]` as an experiment's accession list will add all of the associated samples.
-
-    You must also supply `email_address` with `start`, though this will never be serialized back to you.
-
-    """
-
+    """ View and modify a single Dataset. """
     queryset = Dataset.objects.all()
     serializer_class = DatasetSerializer
     lookup_field = 'id'
+
+    @staticmethod
+    def _should_display_on_engagement_bot(email: str) -> bool:
+        return email is not None \
+            and email.find("cansav09") != 0 \
+            and email.find("arielsvn") != 0 \
+            and email.find("jaclyn.n.taroni") != 0 \
+            and email.find("kurt.wheeler") != 0 \
+            and email.find("greenescientist") != 0 \
+            and email.find("@alexslemonade.org") == -1 \
+            and email.find("miserlou") != 0 \
+            and email.find("michael.zietz@gmail.com") != 0 \
+            and email.find("d.prasad") != 0 \
+            and email.find("daniel.himmelstein@gmail.com") != 0 \
+            and email.find("dv.prasad991@gmail.com") != 0
 
     def get_serializer_context(self):
         """
@@ -696,7 +543,8 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 serializer.validated_data['is_processing'] = True
                 obj = serializer.save()
 
-                if settings.RUNNING_IN_CLOUD:
+                if settings.RUNNING_IN_CLOUD and settings.ENVIRONMENT == "prod" \
+                   and DatasetView._should_display_on_engagement_bot(supplied_email_address):
                     try:
                         try:
                             remote_ip = get_client_ip(self.request)
@@ -736,200 +584,126 @@ class DatasetView(generics.RetrieveUpdateAPIView):
             serializer.validated_data['aggregate_by'] = old_aggregate
         serializer.save()
 
-class DatasetStatsView(APIView):
-    """ Get stats for a given dataset. Ex:
+class CreateApiTokenView(generics.CreateAPIView):
+    """ 
+    token_create
 
-    {
-        "HOMO_SAPIENS": {
-            "num_experiments": 5,
-            "num_samples": 55 },
-        "GALLUS_GALLUS": {
-            "num_experiments": 5,
-            "num_samples": 55 },
-    }
+    There're several endpoints like [/dataset](#tag/dataset) and [/results](#tag/results) that return 
+    S3 urls where users can download the files we produce, however in order to get those files people
+    need to accept our terms of use by creating a token and activating it.
 
+    ```
+    POST /token
+    PUT /token/{token-id} is_active=True
+    ```
+
+    The token id needs to be sent on the `API_KEY` header on http requests.
+
+    References
+    - [https://github.com/AlexsLemonade/refinebio/issues/731]()
+    - [https://github.com/AlexsLemonade/refinebio-frontend/issues/560]()
     """
+    model = APIToken
+    serializer_class = APITokenSerializer
 
-    def get(self, request, id):
-
-        dataset = get_object_or_404(Dataset, id=id)
-        stats = {}
-
-        experiments = Experiment.objects.filter(accession_code__in=dataset.data.keys())
-
-        # Find all the species for these experiments
-        for experiment in experiments:
-            species_names = experiment.organisms.values_list('name')
-            for species_name in species_names:
-                species = stats.get(species_name[0], {"num_experiments": 0, "num_samples": 0})
-                species['num_experiments'] = species['num_experiments'] + 1
-                stats[species_name[0]] = species
-
-        # Count the samples
-        all_sample_accessions = [value[0] for value in dataset.data.values()]
-        empty_species = []
-        for species in stats.keys():
-            samples = Sample.objects.filter(accession_code__in=all_sample_accessions, organism__name=species)
-            stats[species]['num_samples'] = len(samples)
-            if stats[species]['num_samples'] == 0:
-                empty_species.append(species)
-
-        # Delete empty associations
-        for species in empty_species:
-            del stats[species]
-
-        return Response(stats)
-
-class APITokenView(APIView):
+@method_decorator(name='patch', decorator=swagger_auto_schema(auto_schema=None))
+class APITokenView(generics.RetrieveUpdateAPIView):
     """
-    Return this response to this endpoint with `is_activated: true` to activate this API token.
+    Read and modify Api Tokens.
 
-    You must include an activated token's ID to download processed datasets.
+    get:
+    Return details about a specific token.
+
+    put:
+    This can be used to activate a specific token by sending `is_activated: true`.
     """
-
-    def get(self, request, id=None):
-        """ Create a new token, or fetch a token by its ID. """
-
-        if id:
-            token = get_object_or_404(APIToken, id=id)
-        else:
-            token = APIToken()
-            token.save()
-        serializer = APITokenSerializer(token)
-        return Response(serializer.data)
-
-    def post(self, request, id=None):
-        """ Given a token's ID, activate it."""
-
-        if not id:
-            id = request.data.get('id', None)
-
-        activated_token = get_object_or_404(APIToken, id=id)
-        activated_token.is_activated = request.data.get('is_activated', False)
-        activated_token.save()
-
-        serializer = APITokenSerializer(activated_token)
-        return Response(serializer.data)
+    model = APIToken
+    lookup_field = 'id'
+    queryset = APIToken.objects.all()
+    serializer_class = APITokenSerializer
 
 ##
 # Experiments
 ##
 
-class ExperimentList(PaginatedAPIView):
-    """
-    List all Experiments.
+class ExperimentList(generics.ListAPIView):
+    """ Paginated list of all experiments. Advanced filtering can be done with the `/search` endpoint. """
+    model = Experiment
+    queryset = Experiment.public_objects.all()
+    serializer_class = ExperimentSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = (
+        'title',
+        'description',
+        'accession_code',
+        'alternate_accession_code',
+        'source_database',
+        'source_url',
+        'has_publication',
+        'publication_title',
+        'publication_doi',
+        'pubmed_id',
+        'organisms',
+        'submitter_institution',
+        'created_at',
+        'last_modified',
+        'source_first_published',
+        'source_last_modified',
+    )
 
-    Append the pk to the end of this URL to see a detail view.
-    """
-
-    def get(self, request, format=None):
-        filter_dict = request.query_params.dict()
-        filter_dict.pop('limit', None)
-        filter_dict.pop('offset', None)
-        experiments = Experiment.public_objects.filter(**filter_dict)
-
-        page = self.paginate_queryset(experiments)
-        if page is not None:
-            serializer = ExperimentSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        else:
-            serializer = ExperimentSerializer(experiments, many=True)
-            return Response(serializer.data)
-
-class ExperimentDetail(APIView):
-    """
-    Retrieve an Experiment instance.
-    """
-    def get_object(self, pk):
-        try:
-            return Experiment.public_objects.get(pk=pk)
-        except Experiment.DoesNotExist:
-            raise Http404
-        except Exception:
-            try:
-                return Experiment.public_objects.get(accession_code=pk)
-            except Experiment.DoesNotExist:
-                raise Http404
-            return HttpResponseBadRequest("Bad PK or Accession")
-
-    def get(self, request, pk, format=None):
-        experiment = self.get_object(pk)
-        serializer = DetailedExperimentSerializer(experiment)
-        return Response(serializer.data)
+class ExperimentDetail(generics.RetrieveAPIView):
+    """ Retrieve details for an experiment given it's accession code """
+    lookup_field = "accession_code"
+    queryset = Experiment.public_objects.all()
+    serializer_class = DetailedExperimentSerializer
 
 ##
 # Samples
 ##
 
-class SampleList(PaginatedAPIView):
-    """
-    List all Samples.
-
-    Pass in a list of pk to an ids query parameter to filter by id.
-
-    Also accepts:
-        - `dataset_id` field instead of a list of accession codes
-        - `experiment_accession_code` to return the samples associated with a given experiment
-
-    Append the pk or accession_code to the end of this URL to see a detail view.
-
-    """
-
-    def get(self, request, format=None):
-        filter_dict = request.query_params.dict()
-        filter_dict.pop('limit', None)
-        filter_dict.pop('offset', None)
-        order_by = filter_dict.pop('order_by', None)
-        ids = filter_dict.pop('ids', None)
-        filter_by = filter_dict.pop('filter_by', None)
-        organism = filter_dict.pop('organism', None)
-
-        if ids is not None:
-            ids = [ int(x) for x in ids.split(',')]
-            filter_dict['pk__in'] = ids
-
-        experiment_accession_code = filter_dict.pop('experiment_accession_code', None)
-        if experiment_accession_code:
-            experiment = get_object_or_404(Experiment.objects.values('id'), accession_code=experiment_accession_code)
-            filter_dict['experiments__in'] = [experiment['id']]
-
-        accession_codes = filter_dict.pop('accession_codes', None)
-        if accession_codes:
-            accession_codes = accession_codes.split(',')
-            filter_dict['accession_code__in'] = accession_codes
-
-        dataset_id = filter_dict.pop('dataset_id', None)
-        if dataset_id:
-            dataset = get_object_or_404(Dataset, id=dataset_id)
-            # Python doesn't provide a prettier way of doing this that I know about.
-            filter_dict['accession_code__in'] = [item for sublist in dataset.data.values() for item in sublist]
-
-        # Accept Organism in both name and ID form
-        if organism:
-            try:
-                organism_id = int(organism)
-            except ValueError:
-                organism_object = Organism.get_object_for_name(organism)
-                organism_id = organism_object.id
-            filter_dict['organism'] = organism_id
-
-        samples = Sample.public_objects \
+@method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
+    openapi.Parameter(
+        name='dataset_id', in_=openapi.IN_QUERY,
+        type=openapi.TYPE_STRING,
+        description="Filters the result and only returns samples that are added to a dataset.",
+    ),
+    openapi.Parameter(
+        name='experiment_accession_code', in_=openapi.IN_QUERY,
+        type=openapi.TYPE_STRING,
+        description="Filters the result and only returns only the samples associated with an experiment accession code.",
+    ),
+    openapi.Parameter(
+        name='accession_codes', in_=openapi.IN_QUERY,
+        type=openapi.TYPE_STRING,
+        description="Provide a list of sample accession codes sepparated by commas and the endpoint will only return information about these samples.",
+    ),
+]))
+class SampleList(generics.ListAPIView):
+    """ Returns detailed information about Samples """
+    model = Sample
+    serializer_class = DetailedSampleSerializer
+    filter_backends = (filters.OrderingFilter,)
+    ordering_fields = '__all__'
+    ordering = ('-is_processed')
+    
+    def get_queryset(self):
+        """
+        ref https://www.django-rest-framework.org/api-guide/filtering/#filtering-against-query-parameters
+        """
+        queryset = Sample.public_objects \
             .prefetch_related('sampleannotation_set') \
             .prefetch_related('organism') \
             .prefetch_related('results') \
             .prefetch_related('results__processor') \
             .prefetch_related('results__computationalresultannotation_set') \
             .prefetch_related('results__computedfile_set') \
-            .filter(**filter_dict) \
-            .order_by('-is_processed') \
+            .filter(**self.get_query_params_filters()) \
             .distinct()
 
-        if order_by:
-            samples = samples.order_by(order_by)
-
         # case insensitive search https://docs.djangoproject.com/en/2.1/ref/models/querysets/#icontains
+        filter_by = self.request.query_params.get('filter_by', None)        
         if filter_by:
-            samples = samples.filter(   Q(title__icontains=filter_by) |
+            queryset = queryset.filter( Q(title__icontains=filter_by) |
                                         Q(sex__icontains=filter_by) |
                                         Q(age__icontains=filter_by) |
                                         Q(specimen_part__icontains=filter_by) |
@@ -945,173 +719,175 @@ class SampleList(PaginatedAPIView):
                                         Q(sampleannotation__data__icontains=filter_by)
                                     )
 
-        page = self.paginate_queryset(samples)
-        if page is not None:
-            serializer = DetailedSampleSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        else:
-            serializer = DetailedSampleSerializer(samples, many=True)
-            return Response(serializer.data)
+        return queryset
 
-class SampleDetail(APIView):
-    """
-    Retrieve a Sample instance.
-    """
-    def get_object(self, pk):
-        try:
-            return Sample.public_objects.get(pk=pk)
-        except Sample.DoesNotExist:
-            raise Http404
+    def get_query_params_filters(self):
+        """ We do advanced filtering on the queryset depending on the query parameters.
+            This returns the parameters that should be used for that. """
+        filter_dict = dict()
 
-    def get(self, request, pk, format=None):
-        sample = self.get_object(pk)
-        serializer = DetailedSampleSerializer(sample)
-        return Response(serializer.data)
+        ids = self.request.query_params.get('ids', None)
+        if ids is not None:
+            ids = [ int(x) for x in ids.split(',')]
+            filter_dict['pk__in'] = ids
+
+        experiment_accession_code = self.request.query_params.get('experiment_accession_code', None)
+        if experiment_accession_code:
+            experiment = get_object_or_404(Experiment.objects.values('id'), accession_code=experiment_accession_code)
+            filter_dict['experiments__in'] = [experiment['id']]
+
+        accession_codes = self.request.query_params.get('accession_codes', None)
+        if accession_codes:
+            accession_codes = accession_codes.split(',')
+            filter_dict['accession_code__in'] = accession_codes
+
+        dataset_id = self.request.query_params.get('dataset_id', None)
+        if dataset_id:
+            dataset = get_object_or_404(Dataset, id=dataset_id)
+            # Python doesn't provide a prettier way of doing this that I know about.
+            filter_dict['accession_code__in'] = [item for sublist in dataset.data.values() for item in sublist]
+
+        # Accept Organism in both name and ID form
+        organism = self.request.query_params.get('organism', None)        
+        if organism:
+            try:
+                organism_id = int(organism)
+            except ValueError:
+                organism_object = Organism.get_object_for_name(organism)
+                organism_id = organism_object.id
+            filter_dict['organism'] = organism_id
+
+        return filter_dict
+
+class SampleDetail(generics.RetrieveAPIView):
+    """ Retrieve the details for a Sample given it's accession code """
+    lookup_field = "accession_code"
+    queryset = Sample.public_objects.all()
+    serializer_class = DetailedSampleSerializer
 
 ##
 # Processor
 ##
 
-class ProcessorList(APIView):
+class ProcessorList(generics.ListAPIView):
     """List all processors."""
-    def get(self, request, format=None):
-        processors = Processor.objects.all()
-        serializer = ProcessorSerializer(processors, many=True)
-        return Response(serializer.data)
+    queryset = Processor.objects.all()
+    serializer_class = ProcessorSerializer
 
 
 ##
 # Results
 ##
 
-class ResultsList(PaginatedAPIView):
+class ComputationalResultsList(generics.ListAPIView):
     """
-    List all ComputationalResults.
+    computational_results_list
 
-    Append the pk to the end of this URL to see a detail view.
+    This lists all `ComputationalResult`. Each one contains meta-information about the output of a computer process. (Ex Salmon).
 
+    This can return valid S3 urls if a valid [token](#tag/token) is sent in the header `HTTP_API_KEY`.
     """
+    queryset = ComputationalResult.public_objects.all()
 
-    def get(self, request, format=None):
-        filter_dict = request.query_params.dict()
-        filter_dict.pop('limit', None)
-        filter_dict.pop('offset', None)
-        results = ComputationalResult.public_objects.filter(**filter_dict)
-
+    def get_serializer_class(self):
         token_id = self.request.META.get('HTTP_API_KEY', None)
 
         try:
             token = APIToken.objects.get(id=token_id, is_activated=True)
-            serializer_class = ComputationalResultWithUrlSerializer
+            return ComputationalResultWithUrlSerializer
         except Exception: # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
-            serializer_class = ComputationalResultSerializer
+            return ComputationalResultSerializer
 
-
-        page = self.paginate_queryset(results)
-        if page is not None:
-            serializer = serializer_class(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        else:
-            serializer = serializer_class(results, many=True)
-            return Response(serializer.data)
-
+    def filter_queryset(self, queryset):
+        filter_dict = self.request.query_params.dict()
+        filter_dict.pop('limit', None)
+        filter_dict.pop('offset', None)
+        return queryset.filter(**filter_dict)
 
 ##
 # Search Filter Models
 ##
 
-class OrganismList(APIView):
+class OrganismList(generics.ListAPIView):
     """
-	Unpaginated list of all the available organisms
+	Unpaginated list of all the available organisms.
 	"""
+    queryset = Organism.objects.all()
+    serializer_class = OrganismSerializer
+    paginator = None
 
-    def get(self, request, format=None):
-        organisms = Organism.objects.all()
-        serializer = OrganismSerializer(organisms, many=True)
-        return Response(serializer.data)
-
-class PlatformList(APIView):
+class PlatformList(generics.ListAPIView):
     """
 	Unpaginated list of all the available "platform" information
 	"""
+    serializer_class = PlatformSerializer
+    paginator = None
 
-    def get(self, request, format=None):
-        samples = Sample.public_objects.all().values("platform_accession_code", "platform_name").distinct()
-        serializer = PlatformSerializer(samples, many=True)
-        return Response(serializer.data)
+    def get_queryset(self):
+        return Sample.public_objects.all().values("platform_accession_code", "platform_name").distinct()
 
-class InstitutionList(APIView):
+class InstitutionList(generics.ListAPIView):
     """
 	Unpaginated list of all the available "institution" information
 	"""
+    serializer_class = InstitutionSerializer
+    paginator = None
 
-    def get(self, request, format=None):
-        experiments = Experiment.public_objects.all().values("submitter_institution").distinct()
-        serializer = InstitutionSerializer(experiments, many=True)
-        return Response(serializer.data)
+    def get_queryset(self):
+        return Experiment.public_objects.all().values("submitter_institution").distinct()
 
 ##
 # Jobs
 ##
 
-class SurveyJobList(PaginatedAPIView):
+class SurveyJobList(generics.ListAPIView):
     """
     List of all SurveyJob.
-
-	Ex:
-	  - ?start_time__lte=2018-03-23T15:29:40.848381Z
-	  - ?start_time__lte=2018-03-23T15:29:40.848381Z&start_time__gte=2018-03-23T14:29:40.848381Z
-	  - ?success=True
-
-      Works with required 'limit' and 'offset' params.
-
     """
+    model = SurveyJob
+    queryset = SurveyJob.objects.all()
+    serializer_class = SurveyJobSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
+    filterset_fields = SurveyJobSerializer.Meta.fields
+    ordering_fields = ('id', 'created_at')
+    ordering = ('-id',)
 
-    def get(self, request, format=None):
-        filter_dict = request.query_params.dict()
-        limit = max(int(filter_dict.pop('limit', 100)), 100)
-        offset = int(filter_dict.pop('offset', 0))
-        jobs = SurveyJob.objects.filter(**filter_dict).order_by('-id')[offset:(offset + limit)]
-        serializer = SurveyJobSerializer(jobs, many=True)
-        return Response(serializer.data)
-
-class DownloaderJobList(PaginatedAPIView):
+class DownloaderJobList(generics.ListAPIView):
     """
     List of all DownloaderJob
     """
+    model = DownloaderJob
+    queryset = DownloaderJob.objects.all()
+    serializer_class = DownloaderJobSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
+    filterset_fields = DownloaderJobSerializer.Meta.fields
+    ordering_fields = ('id', 'created_at')
+    ordering = ('-id',)
 
-    def get(self, request, format=None):
-        filter_dict = request.query_params.dict()
-        limit = max(int(filter_dict.pop('limit', 100)), 100)
-        offset = int(filter_dict.pop('offset', 0))
-        jobs = DownloaderJob.objects.filter(**filter_dict).order_by('-id')[offset: offset + limit]
-        serializer = DownloaderJobSerializer(jobs, many=True)
-        return Response(serializer.data)
-
-class ProcessorJobList(PaginatedAPIView):
+class ProcessorJobList(generics.ListAPIView):
     """
-    List of all ProcessorJobs
+    List of all ProcessorJobs.
     """
-
-    def get(self, request, format=None):
-        filter_dict = request.query_params.dict()
-        limit = max(int(filter_dict.pop('limit', 100)), 100)
-        offset = int(filter_dict.pop('offset', 0))
-        jobs = ProcessorJob.objects.filter(**filter_dict).order_by('-id')[offset: offset + limit]
-        serializer = ProcessorJobSerializer(jobs, many=True)
-        return Response(serializer.data)
+    model = ProcessorJob
+    queryset = ProcessorJob.objects.all()
+    serializer_class = ProcessorJobSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
+    filterset_fields = ProcessorJobSerializer.Meta.fields
+    ordering_fields = ('id', 'created_at')
+    ordering = ('-id',)
 
 ###
 # Statistics
 ###
 
 class Stats(APIView):
-    """
-    Statistics about the health of the system.
+    """ Statistics about the health of the system. """
 
-    ?range=week  includes statics for the last week
-    """
-
+    @swagger_auto_schema(manual_parameters=[openapi.Parameter(
+        name='range', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description="Specify a range from which to calculate the possible options",
+        enum=('day', 'week', 'month', 'year',)
+    )])
     def get(self, request, format=None):
         range_param = request.query_params.dict().pop('range', None)
 
@@ -1339,48 +1115,46 @@ class Stats(APIView):
 # Transcriptome Indices
 ###
 
-class TranscriptomeIndexDetail(APIView):
+class TranscriptomeIndexList(generics.ListAPIView):
+    """ List all Transcriptome Indices. These are a special type of process result, necessary for processing other SRA samples. """
+    serializer_class = OrganismIndexSerializer
+
+    def get_queryset(self):
+        return OrganismIndex.objects.distinct("organism", "index_type")
+
+@method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
+    openapi.Parameter(
+        name='organism_name', in_=openapi.IN_PATH, type=openapi.TYPE_STRING,
+        description="Organism name. Eg. `MUS_MUSCULUS`",
+    ),
+    openapi.Parameter(
+        name='length', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING,
+        description="",
+        enum=('short', 'long',),
+        default='short'
+    ),
+]))
+class TranscriptomeIndexDetail(generics.RetrieveAPIView):
     """
-    Retrieve the S3 URL and index metadata associated with an OrganismIndex.
+    Gets the S3 url associated with the organism and length, along with other metadata about
+    the transcriptome index we have stored.
     """
+    serializer_class = OrganismIndexSerializer
 
-    def get(self, request, format=None):
-        """
-        Gets the S3 url associated with the organism and length, along with other metadata about
-        the transcriptome index we have stored. Organism must be specified in underscore-delimited
-        uppercase, i.e. "GALLUS_GALLUS". Length must either be "long" or "short"
-        """
-        params = request.query_params
+    def get_object(self):
+        organism_name = self.kwargs['organism_name'].upper()
+        length = self.request.query_params.get('length', 'short')
 
-        if 'all' in params.keys():
-            # Show all available indexes
-            organism = Organism.objects.all()
-            organism_index = OrganismIndex.objects.distinct("organism", "index_type")
-            serializer = OrganismIndexSerializer(organism_index, many=True)
-            return Response(serializer.data)
-        else:
-            # Verify that the required params are present
-            errors = dict()
-            if "organism" not in params:
-                errors["organism"] = "You must specify the organism of the index you want"
-            if "length" not in params:
-                errors["length"] = "You must specify the length of the transcriptome index"
-
-            if len(errors) > 0:
-                raise ValidationError(errors)
-
-            # Get the correct organism index object, serialize it, and return it
-            transcription_length = "TRANSCRIPTOME_" + params["length"].upper()
-            try:
-                organism = Organism.objects.get(name=params["organism"].upper())
-                organism_index = (OrganismIndex.objects.exclude(s3_url__exact="")
-                                  .distinct("organism", "index_type")
-                                  .get(organism=organism,
-                                       index_type=transcription_length))
-                serializer = OrganismIndexSerializer(organism_index)
-                return Response(serializer.data)
-            except OrganismIndex.DoesNotExist:
-                raise Http404
+        # Get the correct organism index object, serialize it, and return it
+        transcription_length = "TRANSCRIPTOME_" + length.upper()
+        try:
+            organism = Organism.objects.get(name=organism_name.upper())
+            organism_index = OrganismIndex.objects.exclude(s3_url__exact="")\
+                                .distinct("organism", "index_type")\
+                                .get(organism=organism, index_type=transcription_length)
+            return organism_index
+        except OrganismIndex.DoesNotExist:
+            raise Http404('Organism does not exists')
 
 ###
 # Compendia
@@ -1388,10 +1162,10 @@ class TranscriptomeIndexDetail(APIView):
 
 class CompendiaDetail(APIView):
     """
-    A very simple modified ComputedFile endpoint which only shows Compendia results
+    A very simple modified ComputedFile endpoint which only shows Compendia results.
     """
-
-    """List all processors."""
+    
+    @swagger_auto_schema(deprecated=True)
     def get(self, request, format=None):
 
         computed_files = ComputedFile.objects.filter(is_compendia=True, is_public=True, is_qn_target=False).order_by('-created_at')
@@ -1411,32 +1185,29 @@ class CompendiaDetail(APIView):
 # QN Targets
 ###
 
-class QNTargetsAvailable(APIView):
+class QNTargetsAvailable(generics.ListAPIView):
     """
     This is a list of all of the organisms which have available QN Targets
     """
-    def get(self, request, format=None):
-        
-        organisms = Organism.get_objects_with_qn_targets()
-        serializer = OrganismSerializer(organisms, many=True)
+    serializer_class = OrganismSerializer
+    paginator = None
 
-        return Response(serializer.data)
+    def get_queryset(self):
+        return Organism.get_objects_with_qn_targets()
 
-class QNTargetsDetail(APIView):
+@method_decorator(name='get', decorator=swagger_auto_schema(manual_parameters=[
+openapi.Parameter(
+    name='organism_name', in_=openapi.IN_PATH, type=openapi.TYPE_STRING,
+    description="Eg `DANIO_RERIO`, `MUS_MUSCULUS`",
+)], responses={404: 'QN Target not found for the given organism.'}))
+class QNTargetsDetail(generics.RetrieveAPIView):
     """
     Get a detailed view of the Quantile Normalization file for an organism.
-
-    ex: `?organism=DANIO_RERIO&format=json`
-
     """
+    serializer_class = QNTargetSerializer
 
-    def get(self, request, format=None):
-
-        filter_dict = request.query_params.dict()
-        organism = filter_dict.pop('organism', None)
-        if not organism:
-            raise APIException("Organism must be supplied!")
-
+    def get_object(self):
+        organism = self.kwargs['organism_name']
         organism = organism.upper().replace(" ", "_")
         try:
             organism_id = Organism.get_object_for_name(organism).id
@@ -1448,29 +1219,53 @@ class QNTargetsDetail(APIView):
             ).first()
             qn_target = annotation.result.computedfile_set.first()
         except Exception:
-            raise APIException("Don't have a target for that organism!")
-
+            raise NotFound("Don't have a target for that organism!")
         if not qn_target:
-            raise APIException("Don't have a target for that organism!!")
-
-        serializer = QNTargetSerializer(qn_target, many=False)
-        return Response(serializer.data)
+            raise NotFound("Don't have a target for that organism!!")
+        return qn_target
 
 ##
 # Computed Files
 ##
 
-class ComputedFilesList(PaginatedAPIView):
+class ComputedFilesList(generics.ListAPIView):
     """
-    """
+    computed_files_list
+    
+    ComputedFiles are representation of files created by data-refinery processes.
 
-    def get(self, request, format=None):
-        filter_dict = request.query_params.dict()
-        limit = max(int(filter_dict.pop('limit', 100)), 100)
-        offset = int(filter_dict.pop('offset', 0))
-        files = ComputedFile.objects.filter(**filter_dict).order_by('-id')[offset:(offset + limit)]
-        serializer = ComputedFileListSerializer(files, many=True)
-        return Response(serializer.data)
+    This can also be used to fetch all the compendia files we have generated with:
+    ```
+    GET /computed_files?is_compendia=True&is_public=True
+    ```
+    """
+    queryset = ComputedFile.objects.all()
+    serializer_class = ComputedFileListSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
+    filterset_fields =  (
+                            'id',
+                            'is_qn_target',
+                            'is_smashable',
+                            'is_qc',
+                            'is_compendia',
+                            'compendia_version',
+                            'created_at',
+                            'last_modified',
+                        )
+    ordering_fields = ('id', 'created_at', 'last_modified', 'compendia_version',)
+    ordering = ('-id',)
+
+    def get_serializer_context(self):
+        """
+        Extra context provided to the serializer class.
+        """
+        serializer_context = super(ComputedFilesList, self).get_serializer_context()
+        token_id = self.request.META.get('HTTP_API_KEY', None)
+        try:
+            token = APIToken.objects.get(id=token_id, is_activated=True)
+            return {**serializer_context, 'token': token}
+        except Exception:  # General APIToken.DoesNotExist or django.core.exceptions.ValidationError
+            return serializer_context
 
 ##
 # Util
