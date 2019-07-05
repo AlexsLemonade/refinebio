@@ -57,6 +57,10 @@ class Command(BaseCommand):
                 processor_job = ProcessorJob()
                 processor_job.pipeline_applied = tximport_pipeline.value
                 processor_job.ram_amount = 8192
+                # This job doesn't need to run on a specific volume
+                # but it uses the same Nomad job as Salmon jobs which
+                # do require the volume index.
+                processor_job.volume_index = random.choice(get_active_volumes())
                 processor_job.save()
 
                 assoc = ProcessorJobOriginalFileAssociation()
