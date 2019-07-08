@@ -337,7 +337,7 @@ class ExperimentDocumentView(DocumentViewSet):
             'facet': RangeFacet,
             'options': {
                 'ranges': [
-                    ("0", (0, None)),
+                    ("0", (1, None)),
                 ]
             },
             'enabled': True,
