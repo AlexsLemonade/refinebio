@@ -399,7 +399,7 @@ class ExperimentDocumentView(DocumentViewSet):
                 if field == 'has_publication':
                     filter_group[bucket['key_as_string']] = bucket['total_samples']['value']
                 else:
-                    filter_group[bucket['key']] = bucket['total_samples']['value']
+                    filter_group[bucket['key']] = bucket['total_samples']['value'] if 'total_samples' in bucket else 0
             result[field] = filter_group
         return result
 
