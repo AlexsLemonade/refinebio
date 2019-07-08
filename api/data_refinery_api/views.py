@@ -36,7 +36,7 @@ from django_elasticsearch_dsl_drf.filter_backends import (
 )
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
-from elasticsearch_dsl import TermsFacet, DateHistogramFacet
+from elasticsearch_dsl import TermsFacet, RangeFacet
 from rest_framework import status, filters, generics, mixins
 from rest_framework.exceptions import APIException, NotFound
 from rest_framework.exceptions import ValidationError
@@ -326,6 +326,16 @@ class ExperimentDocumentView(DocumentViewSet):
             'facet': TermsFacet,
             'enabled': True,
             'global': False,
+        },
+        'num_downloadable_samples__gt': {
+            'field': 'num_total_samples',
+            'facet': RangeFacet,
+            'options': {
+                'ranges': [
+                    ("0", (0, None)),
+                ]
+            },
+            'enabled': True,
         },
         # We don't actually need any "globals" to drive our web frontend,
         # but we'll leave them available but not enabled by default, as they're
