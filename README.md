@@ -309,7 +309,9 @@ linter.
 All user-facing scripts have been linted with `shellcheck` for common
 warnings and POSIX-correctness. If a script is user-facing, it should ideally
 be POSIX-compliant and have the extension `.sh`, but if bashisms are necessary
-it should have the extension `.bash`.
+it should have the extension `.bash`. To install `shellcheck`, you can run
+`apt-get install shellcheck` or `brew install shellcheck`. Then, you can lint
+scripts with `shellcheck FILE`.
 
 ### Gotchas
 
