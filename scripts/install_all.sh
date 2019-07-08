@@ -3,13 +3,6 @@
 # Exit on error
 set -e
 
-# This script should always run as if it were being called from
-# the directory it lives in.
-script_directory="$(perl -e 'use File::Basename;
- use Cwd "abs_path";
- print dirname(abs_path(@ARGV[0]));' -- "$0")"
-cd "$script_directory" || exit
-
 # Config variables
 TERRAFORM_VERSION="0.12.3"
 
@@ -64,11 +57,6 @@ while getopts "hv" opt; do
 	    ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
-            print_usage >&2
-            exit 1
-            ;;
-        :)
-            echo "Option -$OPTARG requires an argument." >&2
             print_usage >&2
             exit 1
             ;;
