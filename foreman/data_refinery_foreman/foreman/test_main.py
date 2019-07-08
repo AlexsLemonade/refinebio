@@ -2,7 +2,7 @@ from unittest.mock import patch, MagicMock
 import datetime
 import time
 from django.utils import timezone
-from django.test import TestCase
+from django.test import TransactionTestCase, TestCase
 from data_refinery_foreman.foreman import main
 from data_refinery_common.models import (
     ComputedFile,
@@ -986,7 +986,7 @@ class ForemanTestCase(TestCase):
         self.assertNotEqual(main.get_max_downloader_jobs(), 0)
 
 
-class CleanDatabaseTestCase(TestCase):
+class CleanDatabaseTestCase(TransactionTestCase):
     def test_cleandb(self):
         sample = Sample()
         sample.save()

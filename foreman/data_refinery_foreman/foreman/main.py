@@ -659,8 +659,10 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     new_ram_amount = last_job.ram_amount
 
     # These initial values are set in common/job_lookup.py:determine_ram_amount
-    if last_job.pipeline_applied == "SALMON":
-        if new_ram_amount == 12288:
+    if last_job.pipeline_applied == "SALMON" or last_job.pipeline_applied == "TXIMPORT":
+        if new_ram_amount == 8192:
+            new_ram_amount = 12288
+        elif new_ram_amount == 12288:
             new_ram_amount = 16384
         elif new_ram_amount == 16384:
             new_ram_amount = 32768
