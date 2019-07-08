@@ -543,7 +543,7 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                 serializer.validated_data['is_processing'] = True
                 obj = serializer.save()
 
-                if settings.RUNNING_IN_CLOUD and settings.ENVIRONMENT == "prod" \
+                if settings.RUNNING_IN_CLOUD and settings.ENGAGEMENTBOT_WEBHOOK is not None \
                    and DatasetView._should_display_on_engagement_bot(supplied_email_address):
                     try:
                         try:
@@ -553,7 +553,7 @@ class DatasetView(generics.RetrieveUpdateAPIView):
                             city = "COULD_NOT_DETERMINE"
 
                         new_user_text = "New user " + supplied_email_address + " from " + city + " [" + remote_ip + "] downloaded a dataset! (" + str(old_object.id) + ")"
-                        webhook_url = "https://hooks.slack.com/services/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"
+                        webhook_url = settings.ENGAGEMENTBOT_WEBHOOK
                         slack_json = {
                             "channel": "ccdl-general", # Move to robots when we get sick of these
                             "username": "EngagementBot",
