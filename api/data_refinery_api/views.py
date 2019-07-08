@@ -201,6 +201,11 @@ manual_parameters=[
         type=openapi.TYPE_NUMBER,
         description="Use ElasticSearch queries to specify the number of processed samples of the results",
     ),
+    openapi.Parameter(
+        name='num_downloadable_samples', in_=openapi.IN_QUERY,
+        type=openapi.TYPE_NUMBER,
+        description="Use ElasticSearch queries to specify the number of downloadable samples of the results. Eg: `/?num_downloadable_samples__gt=0`",
+    ),
 ],
 operation_description="""
 Use this endpoint to search among the experiments. 
