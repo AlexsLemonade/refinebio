@@ -333,7 +333,7 @@ class ExperimentDocumentView(DocumentViewSet):
             'global': False,
         },
         'num_downloadable_samples__gt': {
-            'field': 'num_total_samples',
+            'field': 'num_downloadable_samples',
             'facet': RangeFacet,
             'options': {
                 'ranges': [
