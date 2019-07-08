@@ -985,8 +985,9 @@ class ForemanTestCase(TestCase):
     def test_get_max_downloader_jobs(self):
         self.assertNotEqual(main.get_max_downloader_jobs(), 0)
 
-    def test_cleandb(self):
 
+class CleanDatabaseTestCase(TestCase):
+    def test_cleandb(self):
         sample = Sample()
         sample.save()
 
