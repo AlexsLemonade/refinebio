@@ -8,7 +8,7 @@
 
 print_description() {
     echo "Starts Nomad and registers the jobs with it. This involves re-building the "
-    echo "Docker images and running format_nomad_with_env.bash to format the Nomad job "
+    echo "Docker images and running format_nomad_with_env.sh to format the Nomad job "
     echo "specifications for the correct environment."
 }
 
@@ -82,7 +82,7 @@ export NOMAD_PORT=4646
 if [ "$env" = "test" ]; then
     export NOMAD_PORT=5646
 
-    # format_nomad_with_env.bash will create distinct test Nomad job
+    # format_nomad_with_env.sh will create distinct test Nomad job
     # specifications to avoid overwriting other job
     # specifications. This is done by appending '.test' to the job
     # specification file names.
@@ -139,8 +139,8 @@ done
 
 echo "Nomad is online. Registering jobs."
 
-./scripts/format_nomad_with_env.bash -p workers -e "$env" -v "$system_version"
-./scripts/format_nomad_with_env.bash -p surveyor -e "$env" -v "$system_version"
+./scripts/format_nomad_with_env.sh -p workers -e "$env" -v "$system_version"
+./scripts/format_nomad_with_env.sh -p surveyor -e "$env" -v "$system_version"
 
 # Register the jobs for dispatching.
 for job_spec in workers/nomad-job-specs/*.nomad"$TEST_POSTFIX"; do

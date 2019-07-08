@@ -34,4 +34,4 @@ mkdir -p test_volume && chmod -R a+rw test_volume
 ./api/run_tests.sh
 ./common/run_tests.sh
 ./foreman/run_tests.sh
-./workers/run_tests.bash
+./workers/run_tests.sh
