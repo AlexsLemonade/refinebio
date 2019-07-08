@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Exit on error:
 set -e
@@ -12,13 +12,19 @@ set -e
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory=`perl -e 'use File::Basename;
+script_directory="$(perl -e 'use File::Basename;
  use Cwd "abs_path";
- print dirname(abs_path(@ARGV[0]));' -- "$0"`
+ print dirname(abs_path(@ARGV[0]));' -- "$0")"
 cd "$script_directory"
 
+# Import common functions
+. ./common.sh
+
+# Get access to all of refinebio
+cd ..
+
 # Set up the data volume directory if it does not already exist
-volume_directory="$script_directory/api/volume"
+volume_directory="$script_directory/../api/volume"
 if [ ! -d "$volume_directory" ]; then
     mkdir "$volume_directory"
     chmod -R a+rwX "$volume_directory"
@@ -26,7 +32,6 @@ fi
 
 docker build -t dr_shell -f api/dockerfiles/Dockerfile.api_local .
 
-source common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)
@@ -40,4 +45,4 @@ docker run -it \
        --env-file api/environments/local \
        --volume /tmp:/tmp \
        --volume "$volume_directory":/home/user/data_store \
-       --interactive dr_shell python3 manage.py $@
+       --interactive dr_shell python3 manage.py "$@"
