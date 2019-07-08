@@ -65,4 +65,4 @@ docker run \
        --env AWS_SECRET_ACCESS_KEY \
        --volume "$volume_directory":/home/user/data_store \
        --link drdb:postgres \
-       -it "$image_name" Rscript -e "source('more_accessions.R'); get_random_sample_accessions('SRA_supported_runs_human_mouse_rat/mouse.xml', '/home/user/data_store/more_mouse.txt', blacklist='crunch_lists/mouse_random_0.01_SRA_study_accessions.txt')"
+       -it "$image_name" bash -c "$@"
