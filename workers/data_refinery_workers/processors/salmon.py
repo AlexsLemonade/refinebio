@@ -177,69 +177,6 @@ def _prepare_files(job_context: Dict) -> Dict:
     return job_context
 
 
-def _extract_sra(job_context: Dict) -> Dict:
-    """
-    If this is a .sra file, run `fasterq-dump` to get our desired fastq files.
-    """
-    if job_context.get('sra_input_file_path', None) is None:
-        return job_context
-
-    # Single reads
-    if job_context['sra_num_reads'] == 1:
-        job_context['input_file_path'] = job_context["temp_dir"] \
-            + job_context["sample_accesion_code"] + ".fastq"
-
-        dump_str = "fastq-dump --stdout {input_sra_file} > {output_file}"
-        formatted_command = dump_str.format(input_sra_file=job_context["sra_input_file_path"],
-                                            output_file=job_context['input_file_path'])
-
-        logger.debug("Running fastq-dump using the following shell command: %s",
-                     formatted_command,
-                     processor_job=job_context["job_id"])
-
-        subprocess.run(formatted_command, shell=True, stdout=subprocess.PIPE,
-                       stderr=subprocess.STDOUT)
-
-    # Paired are trickier
-    else:
-        # fastq-dump does not allow you to choose the names of its
-        # output files. With the --split-3 and --gzip options it
-        # will output paired reads to:
-        #   * <ACCESSION_CODE>_1.fastq.gz
-        #   * <ACCESSION_CODE>_2.fastq.gz
-        # and if there are unmated reads they will be output to:
-        #   * <ACCESSION_CODE>.fastq.gz
-        # We don't care about unmated reads, so we'll just forward
-        # that to /dev/null. We'll still use a named pipe so that
-        # we don't have to use any I/O to write it to disk,
-        # however we do need to read it out because otherwise
-        # fastq-dump will hang until the data is read out of the
-        # pipe.
-        job_context["input_file_path"] = job_context["temp_dir"] \
-            + job_context["sample_accession_code"] + "_1.fastq.gz"
-        job_context["input_file_path_2"] = job_context["temp_dir"] \
-            + job_context["sample_accession_code"] + "_2.fastq.gz"
-
-        unmated_fifo = job_context["temp_dir"] + job_context["sample_accession_code"] + ".fastq.gz"
-        os.mkfifo(unmated_fifo)
-
-        # Call `cd` so we know where fastq-dump will be dumping files to.
-        dump_str = "cd {work_dir} && fastq-dump --gzip --split-3 -I {input_sra_file} &"
-        formatted_dump_command = dump_str.format(work_dir=job_context["work_dir"],
-                                                 input_sra_file=job_context["sra_input_file_path"])
-        subprocess.Popen(formatted_dump_command,
-                         shell=True,
-                         executable='/bin/bash',
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT)
-
-        subprocess.run(["cat", unmated_fifo, ">", "/dev/null"],
-                                           stdout=subprocess.PIPE,
-                                           stderr=subprocess.STDOUT)
-
-    return job_context
-
-
 def _determine_index_length_sra(job_context: Dict) -> Dict:
     """
     Use the sra-stat tool to determine length
@@ -314,6 +251,69 @@ def _determine_index_length_sra(job_context: Dict) -> Dict:
         logger.error("Completely unable to determine library strategy (single/paired)!", file=job_context["sra_input_file_path"])
         job_context["job"].failure_reason = "Unable to determine library strategy (single/paired)"
         job_context["success"] = False
+
+    return job_context
+
+
+def _extract_sra(job_context: Dict) -> Dict:
+    """
+    If this is a .sra file, run `fasterq-dump` to get our desired fastq files.
+    """
+    if job_context.get('sra_input_file_path', None) is None:
+        return job_context
+
+    # Single reads
+    if job_context['sra_num_reads'] == 1:
+        job_context['input_file_path'] = job_context["temp_dir"] \
+            + job_context["sample_accesion_code"] + ".fastq"
+
+        dump_str = "fastq-dump --stdout {input_sra_file} > {output_file}"
+        formatted_command = dump_str.format(input_sra_file=job_context["sra_input_file_path"],
+                                            output_file=job_context['input_file_path'])
+
+        logger.debug("Running fastq-dump using the following shell command: %s",
+                     formatted_command,
+                     processor_job=job_context["job_id"])
+
+        subprocess.run(formatted_command, shell=True, stdout=subprocess.PIPE,
+                       stderr=subprocess.STDOUT)
+
+    # Paired are trickier
+    else:
+        # fastq-dump does not allow you to choose the names of its
+        # output files. With the --split-3 and --gzip options it
+        # will output paired reads to:
+        #   * <ACCESSION_CODE>_1.fastq.gz
+        #   * <ACCESSION_CODE>_2.fastq.gz
+        # and if there are unmated reads they will be output to:
+        #   * <ACCESSION_CODE>.fastq.gz
+        # We don't care about unmated reads, so we'll just forward
+        # that to /dev/null. We'll still use a named pipe so that
+        # we don't have to use any I/O to write it to disk,
+        # however we do need to read it out because otherwise
+        # fastq-dump will hang until the data is read out of the
+        # pipe.
+        job_context["input_file_path"] = job_context["temp_dir"] \
+            + job_context["sample_accession_code"] + "_1.fastq.gz"
+        job_context["input_file_path_2"] = job_context["temp_dir"] \
+            + job_context["sample_accession_code"] + "_2.fastq.gz"
+
+        unmated_fifo = job_context["temp_dir"] + job_context["sample_accession_code"] + ".fastq.gz"
+        os.mkfifo(unmated_fifo)
+
+        # Call `cd` so we know where fastq-dump will be dumping files to.
+        dump_str = "cd {work_dir} && fastq-dump --gzip --split-3 -I {input_sra_file} &"
+        formatted_dump_command = dump_str.format(work_dir=job_context["work_dir"],
+                                                 input_sra_file=job_context["sra_input_file_path"])
+        subprocess.Popen(formatted_dump_command,
+                         shell=True,
+                         executable='/bin/bash',
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT)
+
+        subprocess.run(["cat", unmated_fifo, ">", "/dev/null"],
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.STDOUT)
 
     return job_context
 
@@ -1215,10 +1215,11 @@ def salmon(job_id: int) -> None:
                        [utils.start_job,
                         _set_job_prefix,
                         _prepare_files,
-                        _extract_sra,
 
                         _determine_index_length,
                         _find_or_download_index,
+
+                        _extract_sra,
 
                         _run_fastqc,
 
