@@ -114,6 +114,10 @@ if ! command -v docker > /dev/null; then
         echo "Fixing docker permissions..."
         sudo groupadd -f docker
         sudo usermod -aG docker "$USER"
+
+	echo
+	echo "Logout and log back in to apply the permissions changes, then execute this script again."
+	exit 0
     fi
 fi
 
@@ -165,10 +169,6 @@ if ! command -v ip > /dev/null; then
     fi
 fi
 
-echo "Creating virtual environment..."
-./create_virtualenv.sh > $OUTPUT
-echo "Run \`source dr_env/bin/activate\` to activate the virtual environment."
-
 echo "Starting postgres and installing the database..."
 ./run_postgres.sh > $OUTPUT
 ./install_db_docker.sh > $OUTPUT
@@ -177,5 +177,11 @@ echo "Starting elasticsearch and building the ES Indexes..."
 ./run_es.sh > $OUTPUT
 ./run_manage.sh search_index --rebuild -f > $OUTPUT
 
+echo "Creating virtual environment..."
+./create_virtualenv.sh > $OUTPUT
+echo "Run \`source dr_env/bin/activate\` to activate the virtual environment."
+
 echo "Updating common dependencies..."
+# Source the virtual environment first
+. ../dr_env/bin/activate
 ./update_models.sh > $OUTPUT
