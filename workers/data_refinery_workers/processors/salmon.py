@@ -728,6 +728,7 @@ def _run_salmon(job_context: Dict) -> Dict:
                      processor_job=job_context["job_id"]
         )
         job_context["job"].failure_reason = failure_reason
+        job_context["job"].no_retry = True
         job_context["success"] = False
         return job_context
 
