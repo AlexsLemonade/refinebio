@@ -146,13 +146,13 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     job_context['sample_accession_code'] = sample.accession_code
     job_context['sample'] = sample
-    job_context['samples'] = [] # This will only be populated in the `tximport` job
+    job_context['samples'] = []  # This will only be populated in the `tximport` job
     job_context['organism'] = job_context['sample'].organism
     job_context["success"] = True
 
     # Since 0.9, Nomad can access Docker's tmpfs features,
     # which allows us to avoid fasterq-dump's disk thrashing.
-    job_context["temp_dir"] = "/home/user/data_store_tmpfs"
+    job_context["temp_dir"] = "/home/user/data_store_tmpfs/"
     # Should be created by Docker already, but do it anyway.
     os.makedirs(job_context["temp_dir"], exist_ok=True)
 
@@ -169,7 +169,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["salmontools_archive"] = job_context["work_dir"] + "salmontools-result.tar.gz"
 
     timestamp = str(timezone.now().timestamp()).split('.')[0]
-    job_context["output_archive"] = job_context["work_dir"] + 'result-' + timestamp +  '.tar.gz'
+    job_context["output_archive"] = job_context["work_dir"] + 'result-' + timestamp + '.tar.gz'
 
     job_context["computed_files"] = []
     job_context["smashable_files"] = []
@@ -298,22 +298,20 @@ def _extract_sra(job_context: Dict) -> Dict:
         job_context["input_file_path_2"] = job_context["temp_dir"] \
             + job_context["sample_accession_code"] + "_2.fastq.gz"
 
-        unmated_fifo = job_context["temp_dir"] + job_context["sample_accession_code"] + ".fastq.gz"
-        os.mkfifo(unmated_fifo)
+        unmated_file = job_context["temp_dir"] + job_context["sample_accession_code"] + ".fastq.gz"
 
         # Call `cd` so we know where fastq-dump will be dumping files to.
-        dump_str = "cd {work_dir} && fastq-dump --gzip --split-3 -I {input_sra_file} &"
-        formatted_dump_command = dump_str.format(work_dir=job_context["work_dir"],
+        dump_str = "cd {work_dir} && fastq-dump --gzip --split-3 -I {input_sra_file}"
+        formatted_dump_command = dump_str.format(work_dir=job_context["temp_dir"],
                                                  input_sra_file=job_context["sra_input_file_path"])
-        subprocess.Popen(formatted_dump_command,
-                         shell=True,
-                         executable='/bin/bash',
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT)
+        logger.debug("Running fastq-dump using the following shell command: %s",
+                     formatted_dump_command,
+                     processor_job=job_context["job_id"])
+        subprocess.run(formatted_dump_command, shell=True, stdout=subprocess.PIPE,
+                       stderr=subprocess.STDOUT)
 
-        subprocess.run(["cat", unmated_fifo, ">", "/dev/null"],
-                                           stdout=subprocess.PIPE,
-                                           stderr=subprocess.STDOUT)
+        if os.path.exists(unmated_file):
+            os.remove(unmated_file)
 
     return job_context
 
