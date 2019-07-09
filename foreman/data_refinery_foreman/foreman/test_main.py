@@ -1023,9 +1023,9 @@ class CleanDatabaseTestCase(TransactionTestCase):
         sca.save()
 
         self.assertEqual(sample.computed_files.count(), 2)
-        self.assertEqual(sample.get_most_recent_smashable_result_file().id, 2)
+        self.assertEqual(sample.get_most_recent_smashable_result_file().id, bad_file.id)
         main.clean_database()
-        self.assertEqual(sample.get_most_recent_smashable_result_file().id, 1)
+        self.assertEqual(sample.get_most_recent_smashable_result_file().id, good_file.id)
 
 # class JobPrioritizationTestCase(TestCase):
 #     def setUp(self):
