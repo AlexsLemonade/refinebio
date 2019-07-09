@@ -8,6 +8,7 @@ from django.conf import settings
 from django.utils import timezone
 from typing import Dict
 
+from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
@@ -401,7 +402,7 @@ def build_transcriptome_index(job_id: int, length="long") -> None:
     The output of salmon index is a directory which is pushed in full
     to Permanent Storage.
     """
-    pipeline = Pipeline(name=utils.PipelineEnum.TX_INDEX.value)
+    pipeline = Pipeline(name=PipelineEnum.TX_INDEX.value)
     return utils.run_pipeline({"job_id": job_id, "length": length, "pipeline": pipeline},
                               [utils.start_job,
                                _compute_paths,

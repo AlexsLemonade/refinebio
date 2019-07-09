@@ -1,8 +1,7 @@
-"""
-This command will run the Foreman's main function monitor_jobs.
-This will cause the Foreman to check for a number of different
-failures for both the DownloaderJobs and ProcessorJobs and requeue
-those jobs it detects as failed.
+"""This management command will queue jobs for experiments which
+haven't been completely processed yet. It does so by first figuring
+out which experiments are closest to completion and queuing them
+first.
 """
 
 import random

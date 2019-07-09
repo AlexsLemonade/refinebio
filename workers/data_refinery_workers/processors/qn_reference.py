@@ -11,6 +11,7 @@ import pandas as pd
 from django.utils import timezone
 from typing import Dict
 
+from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
@@ -223,7 +224,7 @@ def _update_experiment_caches(job_context: Dict) -> Dict:
     return job_context
 
 def create_qn_reference(job_id: int) -> None:
-    pipeline = Pipeline(name=utils.PipelineEnum.QN_REFERENCE.value)
+    pipeline = Pipeline(name=PipelineEnum.QN_REFERENCE.value)
     job_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _prepare_input,
