@@ -309,7 +309,7 @@ class ExperimentDocumentView(DocumentViewSet):
             'facet': TermsFacet,
             'enabled': True # These are enabled by default, which is more expensive but more simple.
         },
-        'organism_names': {
+        'organism': {
             'field': 'organism_names',
             'facet': TermsFacet,
             'enabled': True,
@@ -317,7 +317,7 @@ class ExperimentDocumentView(DocumentViewSet):
                 'size': 999999
             }
         },
-        'platform_accession_codes': {
+        'platform': {
             'field': 'platform_accession_codes',
             'facet': TermsFacet,
             'enabled': True,
@@ -331,16 +331,6 @@ class ExperimentDocumentView(DocumentViewSet):
             'facet': TermsFacet,
             'enabled': True,
             'global': False,
-        },
-        'num_downloadable_samples__gt': {
-            'field': 'num_downloadable_samples',
-            'facet': RangeFacet,
-            'options': {
-                'ranges': [
-                    ("0", (1, None)),
-                ]
-            },
-            'enabled': True,
         },
         # We don't actually need any "globals" to drive our web frontend,
         # but we'll leave them available but not enabled by default, as they're
