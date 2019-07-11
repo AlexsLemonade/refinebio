@@ -915,7 +915,7 @@ def _notify(job_context: Dict) -> Dict:
                 requests.post(
                     "https://hooks.slack.com/services/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",
                     json={
-                        'fallback': 'Dataset failed processing.'
+                        'fallback': 'Dataset failed processing.',
                         'title': 'Dataset failed processing',
                         'title_link': dataset_url,
                         "attachments":[
