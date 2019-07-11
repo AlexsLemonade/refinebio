@@ -148,6 +148,13 @@ class ProcessorJob(models.Model):
         self.last_modified = current_time
         return super(ProcessorJob, self).save(*args, **kwargs)
 
+    def clean_up_original_files(self):
+        """ If a processor job fails too many times, we want to clean up the downloaded files to
+        save hard drive space.
+        """
+        for original_file in self.original_files:
+            original_file.delete_local_file()
+
     def __str__(self):
         return "ProcessorJob " + str(self.pk) + ": " + str(self.pipeline_applied)
 

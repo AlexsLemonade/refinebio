@@ -82,7 +82,8 @@ class ForemanTestCase(TestCase):
         self.assertEqual(retried_job.original_files.count(), 2)
 
     @patch('data_refinery_foreman.foreman.main.send_job')
-    def test_repeated_download_failures(self, mock_send_job):
+    @patch('os.remove')
+    def test_repeated_download_failures(self, mock_send_job, mock_os_remove):
         """Jobs will be repeatedly retried."""
         mock_send_job.return_value = True
 
@@ -109,6 +110,7 @@ class ForemanTestCase(TestCase):
         self.assertTrue(last_job.retried)
         self.assertEqual(last_job.num_retries, main.MAX_NUM_RETRIES)
         self.assertFalse(last_job.success)
+        mock_os_remove.assert_called()
 
     @patch('data_refinery_foreman.foreman.main.send_job')
     def test_retrying_failed_downloader_jobs(self, mock_send_job):
