@@ -113,6 +113,19 @@ jobs:
           command: .circleci/filter_tests.sh -t compendia
           no_output_timeout: 1h
 
+  syntax_test:
+    working_directory: ~/refinebio
+    docker:
+      - image: circleci/python:3.6.4
+    steps:
+      - checkout
+
+      # Install flake8
+      - run: sudo pip install flake8
+
+      # Check for syntax errors in our project
+      # (--select=E9 only checks for SyntaxErrors)
+      - run: flake8 foreman workers common api --count --select=E9 --show-source --statistics
 
   # This tests workers tests tagged as 'salmon'
   salmon_and_api_tests:
@@ -276,6 +289,12 @@ workflows:
             # "test" job, an explicit "tags" filter is required here.
             tags:
               only: /v.*/
+      - syntax_test:
+          filters:
+            # To allow tag commits whose name start with "v" to trigger
+            # "test" job, an explicit "tags" filter is required here.
+            tags:
+              only: /v.*/
       - salmon_and_api_tests:
           filters:
             # To allow tag commits whose name start with "v" to trigger
@@ -301,6 +320,7 @@ workflows:
           requires:
             - main_tests
             - common_smasher_tests
+	    - syntax_test
             - salmon_and_api_tests
             - tx_illumina_tests
             - affy_agilent_tests
