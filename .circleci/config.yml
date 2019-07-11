@@ -320,7 +320,7 @@ workflows:
           requires:
             - main_tests
             - common_smasher_tests
-	    - syntax_test
+            - syntax_test
             - salmon_and_api_tests
             - tx_illumina_tests
             - affy_agilent_tests
