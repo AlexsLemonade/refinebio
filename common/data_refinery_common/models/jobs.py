@@ -152,7 +152,7 @@ class ProcessorJob(models.Model):
         """ If a processor job fails too many times, we want to clean up the downloaded files to
         save hard drive space.
         """
-        for original_file in self.original_files:
+        for original_file in self.original_files.all():
             original_file.delete_local_file()
 
     def __str__(self):
