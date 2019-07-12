@@ -14,6 +14,7 @@ from fancyimpute import KNN, BiScaler, SoftImpute, IterativeSVD
 from django.utils import timezone
 from typing import Dict
 
+from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
@@ -74,7 +75,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     Take the inputs and perform the primary imputation.
 
-    Via https://github.com/AlexsLemonade/refinebio/issues/508#issuecomment-435879283: 
+    Via https://github.com/AlexsLemonade/refinebio/issues/508#issuecomment-435879283:
      - Combine all microarray samples with a full join to form a microarray_expression_matrix (this may end up being a DataFrame)
      - Combine all RNA-seq samples (lengthScaledTPM) with a full outer join to form a rnaseq_expression_matrix
      - Calculate the sum of the lengthScaledTPM values for each row (gene) of the rnaseq_expression_matrix (rnaseq_row_sums)
@@ -158,7 +159,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
         # Skip purged columns
         if column not in row_col_filtered_combined_matrix_samples:
             continue
-        
+
         # Place the zero
         try:
             # This generates a warning, so use loc[] instead
@@ -324,7 +325,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 def create_compendia(job_id: int) -> None:
-    pipeline = Pipeline(name=utils.PipelineEnum.COMPENDIA.value)
+    pipeline = Pipeline(name=PipelineEnum.COMPENDIA.value)
     job_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _prepare_input,

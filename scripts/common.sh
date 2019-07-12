@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # These are lists of docker images that we use. The actual names end
 # up being <DOCKERHUB_REPO>/dr_<IMAGE_NAME> but this is useful for scripting.
@@ -7,10 +7,10 @@ export ALL_CCDL_IMAGES="smasher compendia illumina affymetrix salmon transcripto
 export CCDL_WORKER_IMAGES="smasher compendia illumina affymetrix salmon transcriptome no_op downloaders"
 
 get_ip_address () {
-    if [ `uname` == "Linux" ]; then
-        echo $(ip route get 8.8.8.8 | grep -oE 'src ([0-9]{1,3}\.){3}[0-9]{1,3}' | awk '{print $2; exit}')
-    elif [ `uname` == 'Darwin' ]; then # MacOS
-        echo $(ifconfig | grep "inet " | grep -v 127.0.0.1 | cut -d\  -f2 | tail -1)
+    if [ "$(uname)" = "Linux" ]; then
+        ip route get 8.8.8.8 | grep -oE 'src ([0-9]{1,3}\.){3}[0-9]{1,3}' | awk '{print $2; exit}'
+    elif [ "$(uname)" = 'Darwin' ]; then # MacOS
+        ifconfig | grep "inet " | grep -v 127.0.0.1 | cut -d\  -f2 | tail -1
     fi
 }
 
@@ -28,19 +28,19 @@ get_docker_es_ip_address () {
 # then exit with the appropriate code.
 # This is done a function so arguments to the tests can be passed through.
 run_tests_with_coverage () {
-    echo "coverage run --source=\".\" manage.py test --no-input $@; exit_code=\$?; coverage report -m; exit \$exit_code"
+    echo "coverage run --source=\".\" manage.py test --no-input $*; exit_code=\$?; coverage report -m; exit \$exit_code"
 }
 
 # This function checks whether a given docker image name ($1:$CIRCLE_TAG)
 # exists in Docker Hub or not using Docker Hub API V2. Based on:
 # https://stackoverflow.com/questions/32113330/check-if-imagetag-combination-already-exists-on-docker-hub
-function docker_img_exists() {
+docker_img_exists() {
     TOKEN=$(curl -s -H "Content-Type: application/json" -X POST \
-                 -d '{"username": "'${DOCKER_ID}'", "password": "'${DOCKER_PASSWD}'"}' \
+                 -d '{"username": "'"${DOCKER_ID}"'", "password": "'"${DOCKER_PASSWD}"'"}' \
                  https://hub.docker.com/v2/users/login/ | jq -r .token)
     EXISTS=$(curl -s -H "Authorization: JWT ${TOKEN}" \
                   "https://hub.docker.com/v2/repositories/$1/tags/?page_size=10000" \
-             | jq -r "[.results | .[] | .name == \"$2\"] | any" 2> /dev/null)
+                 | jq -r "[.results | .[] | .name == \"$2\"] | any" 2> /dev/null)
     test -n "$EXISTS" -a "$EXISTS" = true
 }
 
@@ -51,16 +51,16 @@ get_master_or_dev() {
     # Takes the version that is being deployed as its only parameter
     version="$1"
 
-    if [[ -z "$version" ]]; then
+    if [ -z "$version" ]; then
         echo "You must pass the version to get_master_or_dev."
     else
         master_check=$(git log origin/master --decorate=full | grep "$version" || true)
         dev_check=$(git log origin/dev --decorate=full | grep "$version" || true)
 
         # All dev versions should end with '-dev' and all master versions should not.
-        if [[ ! -z "$master_check" ]] && [[ "$version" != *-dev ]]; then
+        if [ -n "$master_check" ] && ! echo "$version" | grep -q "\-dev$"; then
             echo "master"
-        elif [[ ! -z "$dev_check" ]] ; then
+        elif [ -n "$dev_check" ] ; then
             echo "dev"
         else
             echo "unknown"
@@ -71,11 +71,13 @@ get_master_or_dev() {
 # Convenience function to export the NOMAD_ADDR environment variable,
 # set to the address used for local development.
 set_nomad_address() {
-    export NOMAD_ADDR="http://$(get_ip_address):4646"
+    NOMAD_ADDR="http://$(get_ip_address):4646"
+    export NOMAD_ADDR
 }
 
 # Convenience function to export the NOMAD_ADDR environment variable,
 # set to the address used for tests.
 set_nomad_test_address() {
-    export NOMAD_ADDR="http://$(get_ip_address):5646"
+    NOMAD_ADDR="http://$(get_ip_address):5646"
+    export NOMAD_ADDR
 }

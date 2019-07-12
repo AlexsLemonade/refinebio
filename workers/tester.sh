@@ -72,16 +72,16 @@ cd ..
 
 # Agilent uses the same image as affymetrix
 if [[ "$image" == "affymetrix" || "$image" == "agilent" ]]; then
-    ./prepare_image.sh -p -i affymetrix
+    ./scripts/prepare_image.sh -p -i affymetrix
     image_name="ccdlstaging/dr_affymetrix"
 else
-    ./prepare_image.sh -i "$image"
+    ./scripts/prepare_image.sh -i "$image"
     image_name="ccdlstaging/dr_$image"
 fi
 
 volume_directory="$script_directory/volume"
 
-source common.sh
+source scripts/common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)

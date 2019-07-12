@@ -53,6 +53,9 @@ class Command(BaseCommand):
         elif job_type is ProcessorPipeline.SALMON:
             from data_refinery_workers.processors.salmon import salmon
             salmon(options["job_id"])
+        elif job_type is ProcessorPipeline.TXIMPORT:
+            from data_refinery_workers.processors.tximport import tximport
+            tximport(options["job_id"])
         elif job_type is ProcessorPipeline.SMASHER:
             from data_refinery_workers.processors.smasher import smash
             smash(options["job_id"])

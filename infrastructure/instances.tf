@@ -24,7 +24,7 @@ data "aws_ami" "ubuntu" {
 
 # This script installs Nomad.
 data "local_file" "install_nomad_script" {
-  filename = "../install_nomad.sh"
+  filename = "../scripts/install_nomad.sh"
 }
 
 # This is the configuration for the Nomad Server.

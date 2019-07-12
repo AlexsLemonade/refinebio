@@ -17,7 +17,7 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 
-from data_refinery_common.job_lookup import Downloaders
+from data_refinery_common.job_lookup import Downloaders, PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
@@ -51,11 +51,6 @@ def _set_job_prefix(job_context: Dict) -> Dict:
 
 def _prepare_files(job_context: Dict) -> Dict:
     """Moves the file(s) from the raw directory to the temp directory.
-
-    Also adds the keys "input_file_path" and "output_directory" to
-    job_context so everything is prepared for processing. If the reads
-    are paired then there will also be an "input_file_path_2" key
-    added to job_context for the second read.
     """
     logger.debug("Preparing files..")
 
@@ -65,9 +60,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     # same time.)
     job_context["work_dir"] = os.path.join(LOCAL_ROOT_DIR,
                                            job_context["job_dir_prefix"]) + "/"
-    job_context["temp_dir"] = job_context["work_dir"] + "temp/"
     os.makedirs(job_context["work_dir"], exist_ok=True)
-    os.makedirs(job_context["temp_dir"], exist_ok=True)
 
     # Technically unsafe, but if either of these objects don't exist we need to fail anyway.
     sample = job_context["job"].original_files.first().samples.first()
@@ -80,18 +73,6 @@ def _prepare_files(job_context: Dict) -> Dict:
     job_context["computed_files"] = []
     job_context["smashable_files"] = []
 
-    archive_file = ComputedFile.objects.filter(
-        result_id__in=sample.results.values('id'),
-        filename__startswith='result-',
-        filename__endswith='.tar.gz'
-    ).latest('last_modified')
-
-    target_archive_path = job_context["work_dir"] + archive_file.filename
-    archive_path = archive_file.get_synced_file_path(path=target_archive_path)
-
-    with tarfile.open(archive_path, "r:gz") as tar:
-        tar.extractall(job_context["temp_dir"])
-
     return job_context
 
 
@@ -100,11 +81,12 @@ def tximport(job_id: int) -> None:
 
     Runs tximport command line tool on an experiment.
     """
-    pipeline = Pipeline(name=utils.PipelineEnum.TXIMPORT.value)
+    pipeline = Pipeline(name=PipelineEnum.TXIMPORT.value)
     final_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _set_job_prefix,
                         _prepare_files,
+                        salmon.get_tximport_inputs,
                         salmon._find_or_download_index,
                         salmon.tximport,
                         utils.end_job])

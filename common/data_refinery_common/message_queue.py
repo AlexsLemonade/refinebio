@@ -39,7 +39,8 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
     if job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_LONG \
        or job_type is ProcessorPipeline.TRANSCRIPTOME_INDEX_SHORT:
         nomad_job = NOMAD_TRANSCRIPTOME_JOB
-    elif job_type is ProcessorPipeline.SALMON:
+    elif job_type is ProcessorPipeline.SALMON or job_type is ProcessorPipeline.TXIMPORT:
+        # Tximport uses the same job specification as Salmon.
         nomad_job = ProcessorPipeline.SALMON.value
     elif job_type is ProcessorPipeline.AFFY_TO_PCL:
         nomad_job = ProcessorPipeline.AFFY_TO_PCL.value

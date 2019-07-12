@@ -1,28 +1,28 @@
-#!/bin/bash
+#!/bin/sh
 
 # Script for executing Django PyUnit tests within a Docker container.
 
 # This script should always run as if it were being called from
 # the directory it lives in.
-script_directory=`perl -e 'use File::Basename;
+script_directory="$(perl -e 'use File::Basename;
  use Cwd "abs_path";
- print dirname(abs_path(@ARGV[0]));' -- "$0"`
-cd "$script_directory"
+ print dirname(abs_path(@ARGV[0]));' -- "$0")"
+cd "$script_directory" || exit
 
 # However in order to give Docker access to all the code we have to
 # move up a level
 cd ..
 
 # Ensure that postgres is running
-if ! [[ $(docker ps --filter name=drdb -q) ]]; then
+if ! [ "$(docker ps --filter name=drdb -q)" ]; then
     echo "You must start Postgres first with:" >&2
-    echo "./run_postgres.sh" >&2
+    echo "./scripts/run_postgres.sh" >&2
     exit 1
 fi
 
-./prepare_image.sh -i api_local -s api
+./scripts/prepare_image.sh -i api_local -s api
 
-source common.sh
+. ./scripts/common.sh
 HOST_IP=$(get_ip_address)
 DB_HOST_IP=$(get_docker_db_ip_address)
 ES_HOST_IP=$(get_docker_es_ip_address)
@@ -32,4 +32,4 @@ docker run \
        --add-host=nomad:"$HOST_IP" \
        --add-host=elasticsearch:"$ES_HOST_IP" \
        --env-file api/environments/test \
-       -it ccdlstaging/dr_api_local bash -c "$(run_tests_with_coverage $@)"
+       -it ccdlstaging/dr_api_local bash -c "$(run_tests_with_coverage "$@")"

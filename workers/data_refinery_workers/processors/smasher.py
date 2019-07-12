@@ -24,6 +24,7 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 
+from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
@@ -1040,7 +1041,7 @@ def _update_result_objects(job_context: Dict) -> Dict:
 def smash(job_id: int, upload=True) -> None:
     """ Main Smasher interface """
 
-    pipeline = Pipeline(name=utils.PipelineEnum.SMASHER.value)
+    pipeline = Pipeline(name=PipelineEnum.SMASHER.value)
     return utils.run_pipeline({ "job_id": job_id,
                                 "upload": upload,
                                 "pipeline": pipeline

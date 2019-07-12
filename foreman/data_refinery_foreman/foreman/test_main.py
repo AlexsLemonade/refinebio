@@ -2,7 +2,7 @@ from unittest.mock import patch, MagicMock
 import datetime
 import time
 from django.utils import timezone
-from django.test import TestCase
+from django.test import TransactionTestCase, TestCase
 from data_refinery_foreman.foreman import main
 from data_refinery_common.models import (
     ComputedFile,
@@ -985,8 +985,9 @@ class ForemanTestCase(TestCase):
     def test_get_max_downloader_jobs(self):
         self.assertNotEqual(main.get_max_downloader_jobs(), 0)
 
-    def test_cleandb(self):
 
+class CleanDatabaseTestCase(TransactionTestCase):
+    def test_cleandb(self):
         sample = Sample()
         sample.save()
 
@@ -1022,9 +1023,9 @@ class ForemanTestCase(TestCase):
         sca.save()
 
         self.assertEqual(sample.computed_files.count(), 2)
-        self.assertEqual(sample.get_most_recent_smashable_result_file().id, 2)
+        self.assertEqual(sample.get_most_recent_smashable_result_file().id, bad_file.id)
         main.clean_database()
-        self.assertEqual(sample.get_most_recent_smashable_result_file().id, 1)
+        self.assertEqual(sample.get_most_recent_smashable_result_file().id, good_file.id)
 
 # class JobPrioritizationTestCase(TestCase):
 #     def setUp(self):

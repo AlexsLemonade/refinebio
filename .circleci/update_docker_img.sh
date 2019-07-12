@@ -2,7 +2,7 @@
 set -e
 
 # Load docker_img_exists function and $CCDL_WORKER_IMAGES
-source ~/refinebio/common.sh
+source ~/refinebio/scripts/common.sh
 
 # Circle won't set the branch name for us, so do it ourselves.
 branch=$(get_master_or_dev $CIRCLE_TAG)

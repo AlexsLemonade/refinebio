@@ -11,6 +11,7 @@ from nomad import Nomad
 from nomad.api.exceptions import BaseNomadException, URLNotFoundNomadException
 from typing import Dict
 
+from data_refinery_common.job_lookup import PipelineEnum
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
     ComputationalResult,
@@ -122,7 +123,7 @@ def _find_and_remove_expired_jobs(job_context):
     return job_context
 
 def run_janitor(job_id: int) -> None:
-    pipeline = Pipeline(name=utils.PipelineEnum.JANITOR.value)
+    pipeline = Pipeline(name=PipelineEnum.JANITOR.value)
     job_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _find_and_remove_expired_jobs,

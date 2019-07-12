@@ -1,9 +1,9 @@
-#! /bin/bash
+#! /bin/sh
 
 docker rm -f dres 2> /dev/null
 
 # Check if a docker database named "dres" exists, and if so just start it
-if [[ $(docker ps -a --filter name=dres -q) ]]; then
+if [ "$(docker ps -a --filter name=dres -q)" ]; then
   docker start dres > /dev/null
 # Otherwise, run it with `docker run`
 else
