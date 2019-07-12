@@ -13,6 +13,7 @@ from django.db.models.expressions import F, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.views.decorators.cache import cache_page
 from django_elasticsearch_dsl_drf.constants import (
     LOOKUP_FILTER_TERMS,
     LOOKUP_FILTER_RANGE,
@@ -880,6 +881,7 @@ class ProcessorJobList(generics.ListAPIView):
 # Statistics
 ###
 
+
 class Stats(APIView):
     """ Statistics about the health of the system. """
 
@@ -888,6 +890,7 @@ class Stats(APIView):
         description="Specify a range from which to calculate the possible options",
         enum=('day', 'week', 'month', 'year',)
     )])
+    @method_decorator(cache_page(60*5))  # Cache the stats view for five minutes
     def get(self, request, format=None):
         range_param = request.query_params.dict().pop('range', None)
 
