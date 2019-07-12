@@ -81,9 +81,8 @@ class ForemanTestCase(TestCase):
 
         self.assertEqual(retried_job.original_files.count(), 2)
 
-    @patch('os.remove')
     @patch('data_refinery_foreman.foreman.main.send_job')
-    def test_repeated_download_failures(self, mock_send_job, mock_os_remove):
+    def test_repeated_download_failures(self, mock_send_job):
         """Jobs will be repeatedly retried."""
         mock_send_job.return_value = True
 
@@ -110,7 +109,6 @@ class ForemanTestCase(TestCase):
         self.assertTrue(last_job.retried)
         self.assertEqual(last_job.num_retries, main.MAX_NUM_RETRIES)
         self.assertFalse(last_job.success)
-        mock_os_remove.assert_called()
 
     @patch('data_refinery_foreman.foreman.main.send_job')
     def test_retrying_failed_downloader_jobs(self, mock_send_job):
@@ -397,9 +395,10 @@ class ForemanTestCase(TestCase):
         self.assertEqual(original_job.ram_amount, 16384)
         self.assertEqual(retried_job.ram_amount, 32768)
 
+    @patch('os.remove')
     @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
-    def test_repeated_processor_failures(self, mock_send_job, mock_get_active_volumes):
+    def test_repeated_processor_failures(self, mock_send_job, mock_get_active_volumes, mock_os_remove):
         mock_send_job.return_value = True
         mock_get_active_volumes.return_value = {"1", "2", "3"}
 
@@ -427,6 +426,8 @@ class ForemanTestCase(TestCase):
         self.assertTrue(last_job.retried)
         self.assertEqual(last_job.num_retries, main.MAX_NUM_RETRIES)
         self.assertFalse(last_job.success)
+
+        mock_os_remove.assert_called_with("nor this")
 
     @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
