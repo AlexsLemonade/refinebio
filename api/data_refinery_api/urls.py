@@ -73,40 +73,40 @@ If you have a question or comment, please [file an issue on GitHub](https://gith
 
 urlpatterns = [
     # Primary search and filter interface
-    url(r'^search/$', ExperimentDocumentView.as_view({'get': 'list'}), name="search"),
+    url(r'^(?P<version>(v1))/search/$', ExperimentDocumentView.as_view({'get': 'list'}), name="search"),
 
-    url(r'^experiments/$', ExperimentList.as_view(), name="experiments"),
-    url(r'^experiments/(?P<accession_code>.+)/$', ExperimentDetail.as_view(), name="experiments_detail"),
-    url(r'^samples/$', SampleList.as_view(), name="samples"),
-    url(r'^samples/(?P<accession_code>.+)/$', SampleDetail.as_view(), name="samples_detail"),
-    url(r'^organisms/$', OrganismList.as_view(), name="organisms"),
-    url(r'^platforms/$', PlatformList.as_view(), name="platforms"),
-    url(r'^institutions/$', InstitutionList.as_view(), name="institutions"),
-    url(r'^processors/$', ProcessorList.as_view(), name="processors"),
+    url(r'^(?P<version>(v1))/experiments/$', ExperimentList.as_view(), name="experiments"),
+    url(r'^(?P<version>(v1))/experiments/(?P<accession_code>.+)/$', ExperimentDetail.as_view(), name="experiments_detail"),
+    url(r'^(?P<version>(v1))/samples/$', SampleList.as_view(), name="samples"),
+    url(r'^(?P<version>(v1))/samples/(?P<accession_code>.+)/$', SampleDetail.as_view(), name="samples_detail"),
+    url(r'^(?P<version>(v1))/organisms/$', OrganismList.as_view(), name="organisms"),
+    url(r'^(?P<version>(v1))/platforms/$', PlatformList.as_view(), name="platforms"),
+    url(r'^(?P<version>(v1))/institutions/$', InstitutionList.as_view(), name="institutions"),
+    url(r'^(?P<version>(v1))/processors/$', ProcessorList.as_view(), name="processors"),
 
     # Deliverables
-    url(r'^dataset/$', CreateDatasetView.as_view(), name="create_dataset"),
-    url(r'^dataset/(?P<id>[0-9a-f-]+)/$', DatasetView.as_view(), name="dataset"),
-    url(r'^token/$', CreateApiTokenView.as_view(), name="token"),
-    url(r'^token/(?P<id>[0-9a-f-]+)/$', APITokenView.as_view(), name="token_id"),
+    url(r'^(?P<version>(v1))/dataset/$', CreateDatasetView.as_view(), name="create_dataset"),
+    url(r'^(?P<version>(v1))/dataset/(?P<id>[0-9a-f-]+)/$', DatasetView.as_view(), name="dataset"),
+    url(r'^(?P<version>(v1))/token/$', CreateApiTokenView.as_view(), name="token"),
+    url(r'^(?P<version>(v1))/token/(?P<id>[0-9a-f-]+)/$', APITokenView.as_view(), name="token_id"),
 
     # Jobs
-    url(r'^jobs/survey/$', SurveyJobList.as_view(), name="survey_jobs"),
-    url(r'^jobs/downloader/$', DownloaderJobList.as_view(), name="downloader_jobs"),
-    url(r'^jobs/processor/$', ProcessorJobList.as_view(), name="processor_jobs"),
+    url(r'^(?P<version>(v1))/jobs/survey/$', SurveyJobList.as_view(), name="survey_jobs"),
+    url(r'^(?P<version>(v1))/jobs/downloader/$', DownloaderJobList.as_view(), name="downloader_jobs"),
+    url(r'^(?P<version>(v1))/jobs/processor/$', ProcessorJobList.as_view(), name="processor_jobs"),
 
     # Dashboard Driver
-    url(r'^stats/$', Stats.as_view(), name="stats"),
+    url(r'^(?P<version>(v1))/stats/$', Stats.as_view(), name="stats"),
 
     # Transcriptome Indices and QN Targets
-    url(r'^transcriptome_indices/$', TranscriptomeIndexList.as_view(), name="transcriptome-indices"),
-    url(r'^transcriptome_indices/(?P<organism_name>.+)$', TranscriptomeIndexDetail.as_view(), name="transcriptome-indices-read"),
-    url(r'^qn_targets/$', QNTargetsAvailable.as_view(), name="qn-targets-available"),
-    url(r'^qn_targets/(?P<organism_name>.+)$', QNTargetsDetail.as_view(), name="qn-targets"),
+    url(r'^(?P<version>(v1))/transcriptome_indices/$', TranscriptomeIndexList.as_view(), name="transcriptome-indices"),
+    url(r'^(?P<version>(v1))/transcriptome_indices/(?P<organism_name>.+)$', TranscriptomeIndexDetail.as_view(), name="transcriptome-indices-read"),
+    url(r'^(?P<version>(v1))/qn_targets/$', QNTargetsAvailable.as_view(), name="qn-targets-available"),
+    url(r'^(?P<version>(v1))/qn_targets/(?P<organism_name>.+)$', QNTargetsDetail.as_view(), name="qn-targets"),
 
-    url(r'^compendia/$', CompendiaDetail.as_view(), name="compendia"),
-    url(r'^computed_files/$', ComputedFilesList.as_view(), name="computed-files"),
-    url(r'^computational_results/$', ComputationalResultsList.as_view(), name="results"),
+    url(r'^(?P<version>(v1))/compendia/$', CompendiaDetail.as_view(), name="compendia"),
+    url(r'^(?P<version>(v1))/computed_files/$', ComputedFilesList.as_view(), name="computed-files"),
+    url(r'^(?P<version>(v1))/computational_results/$', ComputationalResultsList.as_view(), name="results"),
 
     # Admin
     url(r'^admin/', admin.site.urls),
