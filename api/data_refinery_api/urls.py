@@ -11,6 +11,7 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from django.views.generic import RedirectView
 
 from data_refinery_api.views import (
     ExperimentList,
@@ -73,48 +74,52 @@ If you have a question or comment, please [file an issue on GitHub](https://gith
 
 urlpatterns = [
     # Primary search and filter interface
-    url(r'^(?P<version>(v1))/search/$', ExperimentDocumentView.as_view({'get': 'list'}), name="search"),
+    url(r'^(?P<version>v1)/search/$', ExperimentDocumentView.as_view({'get': 'list'}), name="search"),
 
-    url(r'^(?P<version>(v1))/experiments/$', ExperimentList.as_view(), name="experiments"),
-    url(r'^(?P<version>(v1))/experiments/(?P<accession_code>.+)/$', ExperimentDetail.as_view(), name="experiments_detail"),
-    url(r'^(?P<version>(v1))/samples/$', SampleList.as_view(), name="samples"),
-    url(r'^(?P<version>(v1))/samples/(?P<accession_code>.+)/$', SampleDetail.as_view(), name="samples_detail"),
-    url(r'^(?P<version>(v1))/organisms/$', OrganismList.as_view(), name="organisms"),
-    url(r'^(?P<version>(v1))/platforms/$', PlatformList.as_view(), name="platforms"),
-    url(r'^(?P<version>(v1))/institutions/$', InstitutionList.as_view(), name="institutions"),
-    url(r'^(?P<version>(v1))/processors/$', ProcessorList.as_view(), name="processors"),
+    url(r'^(?P<version>v1)/experiments/$', ExperimentList.as_view(), name="experiments"),
+    url(r'^(?P<version>v1)/experiments/(?P<accession_code>.+)/$', ExperimentDetail.as_view(), name="experiments_detail"),
+    url(r'^(?P<version>v1)/samples/$', SampleList.as_view(), name="samples"),
+    url(r'^(?P<version>v1)/samples/(?P<accession_code>.+)/$', SampleDetail.as_view(), name="samples_detail"),
+    url(r'^(?P<version>v1)/organisms/$', OrganismList.as_view(), name="organisms"),
+    url(r'^(?P<version>v1)/platforms/$', PlatformList.as_view(), name="platforms"),
+    url(r'^(?P<version>v1)/institutions/$', InstitutionList.as_view(), name="institutions"),
+    url(r'^(?P<version>v1)/processors/$', ProcessorList.as_view(), name="processors"),
 
     # Deliverables
-    url(r'^(?P<version>(v1))/dataset/$', CreateDatasetView.as_view(), name="create_dataset"),
-    url(r'^(?P<version>(v1))/dataset/(?P<id>[0-9a-f-]+)/$', DatasetView.as_view(), name="dataset"),
-    url(r'^(?P<version>(v1))/token/$', CreateApiTokenView.as_view(), name="token"),
-    url(r'^(?P<version>(v1))/token/(?P<id>[0-9a-f-]+)/$', APITokenView.as_view(), name="token_id"),
+    url(r'^(?P<version>v1)/dataset/$', CreateDatasetView.as_view(), name="create_dataset"),
+    url(r'^(?P<version>v1)/dataset/(?P<id>[0-9a-f-]+)/$', DatasetView.as_view(), name="dataset"),
+    url(r'^(?P<version>v1)/token/$', CreateApiTokenView.as_view(), name="token"),
+    url(r'^(?P<version>v1)/token/(?P<id>[0-9a-f-]+)/$', APITokenView.as_view(), name="token_id"),
 
     # Jobs
-    url(r'^(?P<version>(v1))/jobs/survey/$', SurveyJobList.as_view(), name="survey_jobs"),
-    url(r'^(?P<version>(v1))/jobs/downloader/$', DownloaderJobList.as_view(), name="downloader_jobs"),
-    url(r'^(?P<version>(v1))/jobs/processor/$', ProcessorJobList.as_view(), name="processor_jobs"),
+    url(r'^(?P<version>v1)/jobs/survey/$', SurveyJobList.as_view(), name="survey_jobs"),
+    url(r'^(?P<version>v1)/jobs/downloader/$', DownloaderJobList.as_view(), name="downloader_jobs"),
+    url(r'^(?P<version>v1)/jobs/processor/$', ProcessorJobList.as_view(), name="processor_jobs"),
 
     # Dashboard Driver
-    url(r'^(?P<version>(v1))/stats/$', Stats.as_view(), name="stats"),
+    url(r'^(?P<version>v1)/stats/$', Stats.as_view(), name="stats"),
 
     # Transcriptome Indices and QN Targets
-    url(r'^(?P<version>(v1))/transcriptome_indices/$', TranscriptomeIndexList.as_view(), name="transcriptome-indices"),
-    url(r'^(?P<version>(v1))/transcriptome_indices/(?P<organism_name>.+)$', TranscriptomeIndexDetail.as_view(), name="transcriptome-indices-read"),
-    url(r'^(?P<version>(v1))/qn_targets/$', QNTargetsAvailable.as_view(), name="qn-targets-available"),
-    url(r'^(?P<version>(v1))/qn_targets/(?P<organism_name>.+)$', QNTargetsDetail.as_view(), name="qn-targets"),
+    url(r'^(?P<version>v1)/transcriptome_indices/$', TranscriptomeIndexList.as_view(), name="transcriptome-indices"),
+    url(r'^(?P<version>v1)/transcriptome_indices/(?P<organism_name>.+)$', TranscriptomeIndexDetail.as_view(), name="transcriptome-indices-read"),
+    url(r'^(?P<version>v1)/qn_targets/$', QNTargetsAvailable.as_view(), name="qn-targets-available"),
+    url(r'^(?P<version>v1)/qn_targets/(?P<organism_name>.+)$', QNTargetsDetail.as_view(), name="qn-targets"),
 
-    url(r'^(?P<version>(v1))/compendia/$', CompendiaDetail.as_view(), name="compendia"),
-    url(r'^(?P<version>(v1))/computed_files/$', ComputedFilesList.as_view(), name="computed-files"),
-    url(r'^(?P<version>(v1))/computational_results/$', ComputationalResultsList.as_view(), name="results"),
+    url(r'^(?P<version>v1)/compendia/$', CompendiaDetail.as_view(), name="compendia"),
+    url(r'^(?P<version>v1)/computed_files/$', ComputedFilesList.as_view(), name="computed-files"),
+    url(r'^(?P<version>v11)/computational_results/$', ComputationalResultsList.as_view(), name="results"),
 
     # Admin
     url(r'^admin/', admin.site.urls),
 
-    # api docs
-    url(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    # Let's put redoc at the api root
-    url(r'^$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc')
+    # v1 api docs
+    url(r'^(?P<version>v1)/swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    url(r'^(?P<version>v1)$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+
+    # Redirect root urls to latest version api docs
+    url(r'^swagger/$', RedirectView.as_view(url="/v1/swagger")),
+    url(r'^$', RedirectView.as_view(url="/v1")),
+
 ]
 
 # This adds support explicitly typed endpoints such that appending '.json' returns that application type.
