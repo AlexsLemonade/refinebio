@@ -107,7 +107,7 @@ urlpatterns = [
 
     url(r'^(?P<version>v1)/compendia/$', CompendiaDetail.as_view(), name="compendia"),
     url(r'^(?P<version>v1)/computed_files/$', ComputedFilesList.as_view(), name="computed-files"),
-    url(r'^(?P<version>v11)/computational_results/$', ComputationalResultsList.as_view(), name="results"),
+    url(r'^(?P<version>v1)/computational_results/$', ComputationalResultsList.as_view(), name="results"),
 
     # Admin
     url(r'^admin/', admin.site.urls),
