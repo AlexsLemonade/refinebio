@@ -53,6 +53,8 @@ from data_refinery_common.models.documents import (
     ExperimentDocument
 )
 
+API_VERSION = 'v1'
+
 class APITestCases(APITestCase):
     def setUp(self):
         # Saving this for if we have protected endpoints
@@ -182,62 +184,62 @@ class APITestCases(APITestCase):
         SampleAnnotation.objects.all().delete()
 
     def test_all_endpoints(self):
-        response = self.client.get(reverse('experiments'))
+        response = self.client.get(reverse('experiments', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response['X-Source-Revision'], get_env_variable('SYSTEM_VERSION'))
 
-        response = self.client.get(reverse('experiments'), kwargs={'page': 1})
+        response = self.client.get(reverse('experiments', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('samples'))
+        response = self.client.get(reverse('samples', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('samples'), {'ids': str(self.sample.id) + ',1000'})
+        response = self.client.get(reverse('samples', kwargs={'version': API_VERSION}), {'ids': str(self.sample.id) + ',1000'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('samples'), {'accession_codes': str(self.sample.accession_code) + ',1000'})
+        response = self.client.get(reverse('samples', kwargs={'version': API_VERSION}), {'accession_codes': str(self.sample.accession_code) + ',1000'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('samples'), kwargs={'page': 1})
+        response = self.client.get(reverse('samples', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('organisms'))
+        response = self.client.get(reverse('organisms', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('platforms'))
+        response = self.client.get(reverse('platforms', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('institutions'))
+        response = self.client.get(reverse('institutions', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('survey_jobs'))
+        response = self.client.get(reverse('survey_jobs', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('downloader_jobs'))
+        response = self.client.get(reverse('downloader_jobs', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('processor_jobs'))
+        response = self.client.get(reverse('processor_jobs', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('stats'))
+        response = self.client.get(reverse('stats', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('results'))
+        response = self.client.get(reverse('results', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('results'), kwargs={'page': 1})
+        response = self.client.get(reverse('results', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('schema-redoc'))
+        response = self.client.get(reverse('schema_redoc', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('search'))
+        response = self.client.get(reverse('search', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('transcriptome-indices'))
+        response = self.client.get(reverse('transcriptome_indices', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('create_dataset'))
+        response = self.client.get(reverse('create_dataset', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_sample_pagination(self):
@@ -268,7 +270,7 @@ class APITestCases(APITestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_fetching_organism_index(self):
-        response = self.client.get(reverse('transcriptome-indices-read', kwargs={'organism_name': 'DANIO_RERIO'}), {'length': 'SHORT'})
+        response = self.client.get(reverse('transcriptome_indices_read', kwargs={'organism_name': 'DANIO_RERIO'}), {'length': 'SHORT'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['index_type'], 'TRANSCRIPTOME_SHORT')
 
@@ -328,7 +330,7 @@ class APITestCases(APITestCase):
         drc1.s3_key = "drc2.tsv"
         drc1.save()
 
-        response = self.client.get(reverse('computed-files'), {'is_compendia': True})
+        response = self.client.get(reverse('computed_files'), {'is_compendia': True})
         response_json = response.json()['results']
         self.assertEqual(3, len(response_json))
         # Prove that the download_url field is missing and not None.
@@ -349,7 +351,7 @@ class APITestCases(APITestCase):
                                     json.dumps(token),
                                     content_type="application/json")
 
-        response = self.client.get(reverse('computed-files'), {'is_compendia': True}, HTTP_API_KEY=token_id)
+        response = self.client.get(reverse('computed_files'), {'is_compendia': True}, HTTP_API_KEY=token_id)
         response_json = response.json()['results']
         self.assertEqual(3, len(response_json))
         self.assertIsNone(response_json[0]['download_url'])
@@ -741,7 +743,7 @@ class APITestCases(APITestCase):
         }
         cra.save()
 
-        response = self.client.get(reverse('qn-targets-available'))
+        response = self.client.get(reverse('qn_targets_available'))
         self.assertEqual(len(response.json()), 2)
 
 MOCK_NOMAD_RESPONSE = [
