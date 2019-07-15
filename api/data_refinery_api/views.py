@@ -1132,7 +1132,7 @@ class CompendiaDetail(APIView):
     """
     
     @swagger_auto_schema(deprecated=True)
-    def get(self, request, format=None):
+    def get(self, request, version, format=None):
 
         computed_files = ComputedFile.objects.filter(is_compendia=True, is_public=True, is_qn_target=False).order_by('-created_at')
 
