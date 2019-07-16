@@ -86,7 +86,6 @@ class SraSurveyorTestCase(TestCase):
         sra_surveyor.discover_experiment_and_samples()
 
         samples = Sample.objects.all()
-        # downloader_jobs = DownloaderJob.objects.all()
 
         # We are expecting this to discover 1 sample.
         self.assertEqual(samples.count(), 1)
