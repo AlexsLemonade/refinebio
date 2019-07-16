@@ -1202,7 +1202,7 @@ class AggregationTestCase(TestCase):
     @tag("smasher")
     def test_columns(self):
         columns = smasher._get_tsv_columns(self.metadata['samples'])
-        self.assertEqual(len(columns), 21)
+        self.assertEqual(len(columns), 22)
         self.assertEqual(columns[0], 'refinebio_accession_code')
         self.assertTrue('refinebio_accession_code' in columns)
         self.assertTrue('cell population' in columns)
@@ -1215,7 +1215,9 @@ class AggregationTestCase(TestCase):
         """Check tsv file that includes all sample metadata."""
 
         job_context = {
-            'dataset': Dataset.objects.create(aggregate_by='ALL')
+            'dataset': Dataset.objects.create(aggregate_by='ALL',
+                                              data={'GSE56409': ['GSM1361050'],
+                                                    'E-GEOD-44719': ['E-GEOD-44719-GSM1089311']})
         }
         smasher._write_tsv_json(job_context, self.metadata, self.smash_path)
         tsv_filename = self.smash_path + "ALL/metadata_ALL.tsv"
@@ -1230,10 +1232,12 @@ class AggregationTestCase(TestCase):
                     self.assertFalse('source' in row)                   # ArrayExpress specific
                     self.assertEqual(row['detection_percentage'], '98.44078')
                     self.assertEqual(row["extract"], "GSM1089311 extract 1")
+                    self.assertEqual(row["experiment_accession"], "E-GEOD-44719")
                 elif row['refinebio_accession_code'] == 'GSM1361050':
                     self.assertEqual(row['tissue'], 'Bone Marrow')      # GEO specific
                     self.assertEqual(row['refinebio_organism'], 'homo_sapiens')
                     self.assertEqual(row["contact_address"], "Crown Street")
+                    self.assertEqual(row["experiment_accession"], "GSE56409")
 
         self.assertEqual(row_num, 1)  # only two data rows in tsv file
         os.remove(tsv_filename)
@@ -1243,7 +1247,9 @@ class AggregationTestCase(TestCase):
         """Check tsv file that is aggregated by experiment."""
 
         job_context = {
-            'dataset': Dataset.objects.create(aggregate_by='EXPERIMENT')
+            'dataset': Dataset.objects.create(aggregate_by='EXPERIMENT',
+                                              data={'GSE56409': ['GSM1361050'],
+                                                    'E-GEOD-44719': ['E-GEOD-44719-GSM1089311']})
         }
         smasher._write_tsv_json(job_context, self.metadata, self.smash_path)
 
@@ -1254,6 +1260,7 @@ class AggregationTestCase(TestCase):
             reader = csv.DictReader(tsv_file, delimiter='\t')
             for row_num, row in enumerate(reader):
                 self.assertEqual(row['refinebio_accession_code'], 'E-GEOD-44719-GSM1089311')
+                self.assertEqual(row["experiment_accession"], "E-GEOD-44719")
                 self.assertEqual(row['cell population'], 'IFNa DC')  # ArrayExpress specific
                 self.assertEqual(row['dose'], '1 mL')                # ArrayExpress specific
                 self.assertEqual(row['detection_percentage'], '98.44078')
@@ -1330,7 +1337,9 @@ class AggregationTestCase(TestCase):
         """Check tsv file that is aggregated by species."""
 
         job_context = {
-            'dataset': Dataset.objects.create(aggregate_by='SPECIES'),
+            'dataset': Dataset.objects.create(aggregate_by='SPECIES',
+                                              data={'GSE56409': ['GSM1361050'],
+                                                    'E-GEOD-44719': ['E-GEOD-44719-GSM1089311']}),
             'input_files': {
                 'homo_sapiens': [], # only the key matters in this test
                 'fake_species': []  # only the key matters in this test
@@ -1347,6 +1356,7 @@ class AggregationTestCase(TestCase):
             reader = csv.DictReader(tsv_file, delimiter='\t')
             for row_num, row in enumerate(reader):
                 self.assertEqual(row['refinebio_accession_code'], 'GSM1361050')
+                self.assertEqual(row["experiment_accession"], "GSE56409")
                 self.assertEqual(row['tissue'], 'Bone Marrow')      # GEO specific
                 self.assertEqual(row['refinebio_organism'], 'homo_sapiens')
 
@@ -1371,6 +1381,7 @@ class AggregationTestCase(TestCase):
             reader = csv.DictReader(tsv_file, delimiter='\t')
             for row_num, row in enumerate(reader):
                 self.assertEqual(row['refinebio_accession_code'], 'E-GEOD-44719-GSM1089311')
+                self.assertEqual(row["experiment_accession"], "E-GEOD-44719")
                 self.assertEqual(row['cell population'], 'IFNa DC')  # ArrayExpress specific
                 self.assertEqual(row['dose'], '1 mL')                # ArrayExpress specific
                 self.assertEqual(row['detection_percentage'], '98.44078')
