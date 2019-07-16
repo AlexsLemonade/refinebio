@@ -166,6 +166,18 @@ STATICFILES_DIRS = [
     '',
 ]
 
+
+# Caching
+# https://docs.djangoproject.com/en/2.2/topics/cache/
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cache_table',
+    }
+}
+
+
 ##
 # Django Rest Framework
 ##

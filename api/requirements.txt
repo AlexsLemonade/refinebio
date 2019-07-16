@@ -4,6 +4,7 @@
 #
 #    pip-compile requirements.in
 #
+apscheduler==3.6.0
 boto3==1.9.16
 botocore==1.12.16         # via boto3, s3transfer
 certifi==2018.8.24        # via requests
@@ -36,10 +37,14 @@ psycopg2-binary==2.7.5
 psycopg2==2.7.5           # via djangorestframework-hstore
 python-dateutil==2.7.3    # via botocore, elasticsearch-dsl
 python-nomad==1.1.0
-pytz==2018.5              # via django
+pytz==2018.5              # via apscheduler, django, tzlocal
 requests==2.20.0
 ruamel.yaml==0.15.96      # via drf-yasg
 s3transfer==0.1.13        # via boto3
 six==1.11.0
+tzlocal==1.5.1            # via apscheduler
 uritemplate==3.0.0        # via coreapi, drf-yasg
 urllib3==1.23             # via botocore, elasticsearch, requests
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools==41.0.1        # via apscheduler
