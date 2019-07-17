@@ -121,6 +121,11 @@ def handle_repeated_failure(job) -> None:
     job.success = False
     job.save()
 
+    # If the job is a processor job and we want to stop retrying it,
+    # delete the original files to conserve disk space.
+    if isinstance(job, ProcessorJob):
+        job.clean_up_original_files()
+
     # At some point this should become more noisy/attention
     # grabbing. However for the time being just logging should be
     # sufficient because all log messages will be closely monitored
