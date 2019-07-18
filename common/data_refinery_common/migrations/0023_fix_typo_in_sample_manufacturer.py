@@ -3,7 +3,7 @@
 from django.db import migrations
 
 
-def fix_typo_in_affymetrix_samples(apps, schema_editor):
+def fix_typo_in_sample_manufacturer(apps, schema_editor):
     '''Fixes affymetrix samples that have their manufacturer set to "AFFYMETRTIX" or "NEXTSEQ"
     Based off of:
     https://simpleisbetterthancomplex.com/tutorial/2017/09/26/how-to-create-django-data-migrations.html
@@ -11,8 +11,11 @@ def fix_typo_in_affymetrix_samples(apps, schema_editor):
     Sample = apps.get_model('data_refinery_common', 'Sample')
 
     for sample in Sample.objects.all():
-        if sample.manufacturer in ("AFFYMETRTIX", "NEXTSEQ"):
+        if sample.manufacturer == "AFFYMETRTIX":
             sample.manufacturer = "AFFYMETRIX"
+            sample.save()
+        elif sample.manufacturer == "NEXTSEQ":
+            sample.manufacturer = "ILLUMINA"
             sample.save()
 
 
@@ -23,5 +26,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(fix_typo_in_affymetrix_samples),
+        migrations.RunPython(fix_typo_in_sample_manufacturer),
     ]
