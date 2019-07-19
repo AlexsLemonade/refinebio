@@ -7,6 +7,8 @@ devtools::install_version('data.table', version='1.11.0')
 devtools::install_version('optparse', version='1.4.4')
 
 devtools::install_version('rlang', version='0.3.1')
+devtools::install_version('vctrs', version='0.1.0')
+devtools::install_version('blob', version='1.1.1')
 devtools::install_version('pillar', version='1.3.1')
 devtools::install_version('tibble', version='2.0.1')
 devtools::install_version('lazyeval', version='0.2.1')

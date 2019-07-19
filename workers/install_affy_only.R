@@ -4,6 +4,10 @@ options(warn=2)
 options(repos=structure(c(CRAN="https://cran.revolutionanalytics.com")))
 options(Ncpus=parallel::detectCores())
 
+# Pin dependencies
+devtools::install_version('vctrs', version='0.1.0')
+devtools::install_version('blob', version='1.1.1')
+
 # Bioconductor packages, installed by devtools::install_url()
 
 # devtools::install_url() requires BiocInstaller
