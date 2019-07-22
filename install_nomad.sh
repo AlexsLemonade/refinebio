@@ -10,7 +10,7 @@
 curl https://keybase.io/hashicorp/pgp_keys.asc | gpg --import
 
 # Download the binary and signature files.
-export RELEASE_VERSION=0.8.3
+export RELEASE_VERSION=0.9.3
 export RELEASE_PLATFORM=`uname | tr '[:upper:]' '[:lower:]'`
 if [[ "$RELEASE_PLATFORM" = "darwin" ]]; then
 	function sha256sum() { shasum -a 256 "$@" ; } && export -f sha256sum
