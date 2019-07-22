@@ -1,5 +1,5 @@
 options(warn=2)
-options(repos=structure(c(CRAN="http://cran.us.r-project.org")))
+options(repos="https://cran.microsoft.com/snapshot/2019-07-03")
 options(Ncpus=parallel::detectCores())
 
 devtools::install_version('doParallel', version='1.0.11')
