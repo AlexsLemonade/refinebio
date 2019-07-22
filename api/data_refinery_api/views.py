@@ -701,8 +701,7 @@ class SampleList(generics.ListAPIView):
             .prefetch_related('results__processor') \
             .prefetch_related('results__computationalresultannotation_set') \
             .prefetch_related('results__computedfile_set') \
-            .filter(**self.get_query_params_filters()) \
-            .distinct()
+            .filter(**self.get_query_params_filters())
 
         # case insensitive search https://docs.djangoproject.com/en/2.1/ref/models/querysets/#icontains
         filter_by = self.request.query_params.get('filter_by', None)        
