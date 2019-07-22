@@ -860,14 +860,14 @@ MOCK_NOMAD_RESPONSE = [
 ]
 
 class StatsTestCases(APITestCase):
-    @patch('data_refinery_api.views.get_nomad_jobs', return_value = [])
+    @patch('data_refinery_common.utils.get_nomad_jobs', return_value=[])
     def test_nomad_stats_empty(self, mock_get_nomad_jobs):
         response = self.client.get(reverse('stats'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['nomad_running_jobs'], 0)
         self.assertEqual(response.json()['nomad_pending_jobs'], 0)
 
-    @patch('data_refinery_api.views.get_nomad_jobs', return_value = MOCK_NOMAD_RESPONSE)
+    @patch('data_refinery_common.utils.get_nomad_jobs', return_value=MOCK_NOMAD_RESPONSE)
     def test_nomad_stats(self, mock_get_nomad_jobs):
         response = self.client.get(reverse('stats'))
         self.assertEqual(response.status_code, 200)

@@ -251,13 +251,20 @@ if [ "$project" = "workers" ]; then
             rams="1024 4096 8192"
             for r in $rams
             do
-                export RAM_POSTFIX="_$r.nomad"
-                export RAM="$r"
-                perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
-                     < "nomad-job-specs/$template" \
-                     > "$output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX" \
-                     2> /dev/null
-                echo "Made $output_dir/$output_file$RAM_POSTFIX$TEST_POSTFIX"
+		j=0
+                while [ "$j" -lt "$MAX_CLIENTS" ];
+                do
+                    export INDEX_POSTFIX="_$j"
+                    export INDEX="$j"
+                    export RAM_POSTFIX="_$r.nomad"
+                    export RAM="$r"
+                    perl -p -e 's/\$\{\{([^}]+)\}\}/defined $ENV{$1} ? $ENV{$1} : $&/eg' \
+                         < "nomad-job-specs/$template" \
+                         > "$output_dir/$output_file$INDEX_POSTFIX$RAM_POSTFIX$TEST_POSTFIX" \
+                         2> /dev/null
+                    echo "Made $output_dir/$output_file$INDEX_POSTFIX$RAM_POSTFIX$TEST_POSTFIX"
+		    j=$((j + 1))
+                done
             done
             echo "Made $output_dir/$output_file$TEST_POSTFIX"
         elif [ "$output_file" = "smasher.nomad" ] || [ "$output_file" = "create_qn_target.nomad" ] || [ "$output_file" = "create_compendia.nomad" ] || [ "$output_file" = "tximport.nomad" ]; then
