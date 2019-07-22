@@ -1,7 +1,7 @@
 # Turn warnings into errors because biocLite throws warnings instead
 # of error if it fails to install something.
 options(warn=2)
-options(repos=structure(c(CRAN="https://cran.revolutionanalytics.com")))
+options(repos="https://cran.microsoft.com/snapshot/2019-07-03")
 options(Ncpus=parallel::detectCores())
 
 # Bioconductor packages, installed by devtools::install_url()

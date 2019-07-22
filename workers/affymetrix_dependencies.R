@@ -1,15 +1,13 @@
 # Turn warnings into errors because biocLite throws warnings instead
 # of error if it fails to install something.
 options(warn=2)
-options(repos=structure(c(CRAN="https://cran.revolutionanalytics.com")))
+options(repos="https://cran.microsoft.com/snapshot/2019-07-03")
 options(Ncpus=parallel::detectCores())
 
 # Use devtools::install_version() to install packages in cran.
 devtools::install_version('ff', version='2.2-13')
 devtools::install_version('XML', version='3.98-1.10')
 devtools::install_version('RCurl', version='1.95-4.10')
-devtools::install_version('vctrs', version='0.1.0')
-devtools::install_version('blob', version='1.1.1')
 devtools::install_version('RSQLite', version='2.0')
 devtools::install_version('tibble', version='1.4.2')
 devtools::install_version('xtable', version='1.8-2')
