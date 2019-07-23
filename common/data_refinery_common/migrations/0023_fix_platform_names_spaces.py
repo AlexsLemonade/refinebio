@@ -9,7 +9,7 @@ def make_sample_platform_names_readable(apps, schema_editor):
     for platform_name in get_supported_rnaseq_platforms():
         munged_platform = platform_name.replace(' ', '')
         Sample.objects.all().filter(platform_name=munged_platform).update(platform_name=platform_name)
-        print("Updating platform name from \'%s\' to \'%s\' page" % (munged_platform, platform_name))
+        print("Updating platform name from \'%s\' to \'%s\'" % (munged_platform, platform_name))
 
 class Migration(migrations.Migration):
 
