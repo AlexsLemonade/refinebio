@@ -96,7 +96,8 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
         elif isinstance(job, SurveyJob):
             nomad_job = nomad_job + "_" + str(job.ram_amount)
         elif isinstance(job, DownloaderJob):
-            nomad_job = nomad_job + "_" + job.volume_index + "_" + str(job.ram_amount)
+            volume_index = job.volume_index if settings.RUNNING_IN_CLOUD else "0"
+            nomad_job = nomad_job + "_" + volume_index + "_" + str(job.ram_amount)
 
         try:
             nomad_response = nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,
