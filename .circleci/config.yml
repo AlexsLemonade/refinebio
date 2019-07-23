@@ -25,7 +25,7 @@ jobs:
       - run: ./scripts/update_models.sh
 
       # Update ES models
-      - run: ./scripts/run_manage.sh search_index --rebuild -f;
+      - run: ./scripts/rebuild_es_index.sh
 
       # Install Nomad
       - run: sudo ./scripts/install_nomad.sh
@@ -151,7 +151,7 @@ jobs:
       - run: ./scripts/update_models.sh
 
       # Update ES models
-      - run: ./scripts/run_manage.sh search_index --rebuild -f;
+      - run: ./scripts/rebuild_es_index.sh
 
       # Run API Tests.
       - run: ./api/run_tests.sh
@@ -236,7 +236,7 @@ jobs:
       - run: .circleci/filter_tests.sh -t agilent
 
       # Update ES models
-      - run: ./scripts/run_manage.sh search_index --rebuild -f;
+      - run: ./scripts/rebuild_es_index.sh
 
       # Install Nomad
       - run: sudo ./scripts/install_nomad.sh

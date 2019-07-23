@@ -175,7 +175,7 @@ echo "Starting postgres and installing the database..."
 
 echo "Starting elasticsearch and building the ES Indexes..."
 ./run_es.sh > $OUTPUT
-./run_manage.sh search_index --rebuild -f > $OUTPUT
+./rebuild_es_index.sh > $OUTPUT
 
 echo "Creating virtual environment..."
 ./create_virtualenv.sh > $OUTPUT
