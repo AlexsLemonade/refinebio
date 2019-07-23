@@ -1,6 +1,7 @@
 
 from django.test import TransactionTestCase
 from unittest.mock import Mock, patch, call
+from django.test import tag
 
 from data_refinery_common.models import (
     DownloaderJob,
@@ -15,10 +16,11 @@ from data_refinery_common.models import (
     SurveyJob,
     SurveyJobKeyValue,
 )
-from data_refinery_foreman.foreman.management.commands.create_missing_processor_jobs import Command
+from data_refinery_foreman.foreman.management.commands.create_missing_downloader_jobs import Command
 from data_refinery_foreman.surveyor.geo import GeoSurveyor
 
 class SurveyTestCase(TransactionTestCase):
+    @tag('missing_jobs')
     def test_create_missing_jobs(self):
         """Tests that files which should have downloader jobs get them created."""
 
@@ -70,7 +72,6 @@ class SurveyTestCase(TransactionTestCase):
             sample=sample_no_downloader,
             original_file=original_file
         )
-
 
         # 3. Setup is done, actually run the command.
         command = Command()

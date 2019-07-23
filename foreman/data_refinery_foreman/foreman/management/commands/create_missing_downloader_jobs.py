@@ -6,6 +6,7 @@ without any luck.
 """
 
 from django.core.management.base import BaseCommand
+from django.db.models import Count
 
 from data_refinery_common.models import (
   Sample,
@@ -36,6 +37,8 @@ class Command(BaseCommand):
           )
 
       logger.info("Found %d samples without downloader jobs, starting to create them now.", samples_without_downloader.count())
+
+      import pdb; pdb.set_trace()
       
       paginator = Paginator(samples_without_downloader, PAGE_SIZE)
       page = paginator.page()
