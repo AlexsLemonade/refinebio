@@ -115,40 +115,6 @@ MAILCHIMP_API_KEY = get_env_variable("MAILCHIMP_API_KEY")
 MAILCHIMP_LIST_ID = get_env_variable("MAILCHIMP_LIST_ID")
 
 ##
-# Custom Views
-##
-
-class PaginatedAPIView(APIView):
-    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-
-    @property
-    def paginator(self):
-        """
-        The paginator instance associated with the view, or `None`.
-        """
-        if not hasattr(self, '_paginator'):
-            if self.pagination_class is None:
-                self._paginator = None
-            else:
-                self._paginator = self.pagination_class()
-        return self._paginator
-
-    def paginate_queryset(self, queryset):
-        """
-        Return a single page of results, or `None` if pagination is disabled.
-        """
-        if self.paginator is None:
-            return None
-        return self.paginator.paginate_queryset(queryset, self.request, view=self)
-
-    def get_paginated_response(self, data):
-        """
-        Return a paginated style `Response` object for the given output data.
-        """
-        assert self.paginator is not None
-        return self.paginator.get_paginated_response(data)
-
-##
 # ElasticSearch
 ##
 from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
@@ -887,7 +853,7 @@ class Stats(APIView):
         description="Specify a range from which to calculate the possible options",
         enum=('day', 'week', 'month', 'year',)
     )])
-    def get(self, request, format=None):
+    def get(self, request, version, format=None):
         range_param = request.query_params.dict().pop('range', None)
 
         data = {}
@@ -1165,7 +1131,7 @@ class CompendiaDetail(APIView):
     """
     
     @swagger_auto_schema(deprecated=True)
-    def get(self, request, format=None):
+    def get(self, request, version, format=None):
 
         computed_files = ComputedFile.objects.filter(is_compendia=True, is_public=True, is_qn_target=False).order_by('-created_at')
 
