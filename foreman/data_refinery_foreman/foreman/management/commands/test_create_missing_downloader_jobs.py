@@ -35,7 +35,8 @@ class SurveyTestCase(TransactionTestCase):
         sample_with_downloader = Sample()
         sample_with_downloader.accession_code = "MA_doesnt_need_processor"
         sample_with_downloader.technology = "MICROARRAY"
-        sample_with_downloader.source_database = "ARRAY_EXPRESS"
+        sample_with_downloader.source_database = "GEO"
+        sample_with_downloader.platform_accession_code = "bovine"
         sample_with_downloader.save()
 
         OriginalFileSampleAssociation.objects.get_or_create(
@@ -65,7 +66,8 @@ class SurveyTestCase(TransactionTestCase):
         sample_no_downloader = Sample()
         sample_no_downloader.accession_code = "sample_no_downloader"
         sample_no_downloader.technology = "MICROARRAY"
-        sample_no_downloader.source_database = "ARRAY_EXPRESS"
+        sample_no_downloader.source_database = "GEO"
+        sample_no_downloader.platform_accession_code = "bovine" # must be a supported platform
         sample_no_downloader.save()
 
         OriginalFileSampleAssociation.objects.get_or_create(

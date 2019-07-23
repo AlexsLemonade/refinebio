@@ -38,8 +38,6 @@ class Command(BaseCommand):
 
       logger.info("Found %d samples without downloader jobs, starting to create them now.", samples_without_downloader.count())
 
-      import pdb; pdb.set_trace()
-      
       paginator = Paginator(samples_without_downloader, PAGE_SIZE)
       page = paginator.page()
       page_count = 0
