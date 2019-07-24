@@ -61,9 +61,9 @@ echo "Building new images"
 # Output to the docker update log.
 run_on_deploy_box "sudo touch /var/log/docker_update_$CIRCLE_TAG.log"
 run_on_deploy_box "sudo chown ubuntu:ubuntu /var/log/docker_update_$CIRCLE_TAG.log"
-run_on_deploy_box "source env_vars && echo -e '######\nBuilding new images for $CIRCLE_TAG\n######'  &>> /var/log/docker_update_$CIRCLE_TAG.log 2>&1"
-run_on_deploy_box "source env_vars && ./.circleci/update_docker_img.sh >> /var/log/docker_update_$CIRCLE_TAG.log 2>&1"
-run_on_deploy_box "source env_vars && echo -e '######\nFinished building new images for $CIRCLE_TAG\n######'  &>> /var/log/docker_update_$CIRCLE_TAG.log 2>&1"
+run_on_deploy_box "source env_vars && echo -e '######\nBuilding new images for $CIRCLE_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$CIRCLE_TAG.log"
+run_on_deploy_box "source env_vars && ./.circleci/update_docker_img.sh 2>&1 | tee -a /var/log/docker_update_$CIRCLE_TAG.log"
+run_on_deploy_box "source env_vars && echo -e '######\nFinished building new images for $CIRCLE_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$CIRCLE_TAG.log"
 
 # Load docker_img_exists function and $ALL_CCDL_IMAGES
 source ~/refinebio/scripts/common.sh
@@ -101,9 +101,9 @@ echo "Finished building new images, running run_terraform.sh."
 
 run_on_deploy_box "sudo touch /var/log/deploy_$CIRCLE_TAG.log"
 run_on_deploy_box "sudo chown ubuntu:ubuntu /var/log/deploy_$CIRCLE_TAG.log"
-run_on_deploy_box "source env_vars && echo -e '######\nStarting new deploy for $CIRCLE_TAG\n######' >> /var/log/deploy_$CIRCLE_TAG.log 2>&1"
-run_on_deploy_box "source env_vars && ./.circleci/run_terraform.sh >> /var/log/deploy_$CIRCLE_TAG.log 2>&1"
-run_on_deploy_box "source env_vars && echo -e '######\nDeploying $CIRCLE_TAG finished!\n######' >> /var/log/deploy_$CIRCLE_TAG.log 2>&1"
+run_on_deploy_box "source env_vars && echo -e '######\nStarting new deploy for $CIRCLE_TAG\n######' 2>&1 | tee -a /var/log/deploy_$CIRCLE_TAG.log"
+run_on_deploy_box "source env_vars && ./.circleci/run_terraform.sh 2>&1 | tee -a /var/log/deploy_$CIRCLE_TAG.log"
+run_on_deploy_box "source env_vars && echo -e '######\nDeploying $CIRCLE_TAG finished!\n######' 2>&1 | tee -a /var/log/deploy_$CIRCLE_TAG.log"
 
 # Don't leave secrets lying around.
 ## Clean out any files we've created or moved so git-crypt will relock the repo.
