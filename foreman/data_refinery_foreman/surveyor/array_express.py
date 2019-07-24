@@ -42,38 +42,12 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
     def source_type(self):
         return Downloaders.ARRAY_EXPRESS.value
 
-    def create_experiment_from_api(self, experiment_accession_code: str) -> (Experiment, Dict):
-        """Given an experiment accession code, create an Experiment object.
-
-        Also returns a dictionary of additional information about the
-        platform discovered for the experiment.
-
-        Will raise an UnsupportedPlatformException if this experiment was
-        conducted using a platform which we don't support.
-
-        See an example at: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-3050/sample
-        """
-        request_url = EXPERIMENTS_URL + experiment_accession_code
-        experiment_request = utils.requests_retry_session().get(request_url, timeout=60)
-
-        try:
-            parsed_json = experiment_request.json()["experiments"]["experiment"][0]
-        except KeyError:
-            logger.error("Remote experiment has no Experiment data!",
-                         experiment_accession_code=experiment_accession_code,
-                         survey_job=self.survey_job.id)
-            raise
-
+    @staticmethod
+    def _apply_metadata_to_experiment(experiment_object: Experiment, parsed_json: Dict):
         experiment = {}
         experiment["name"] = parsed_json["name"]
-        experiment["experiment_accession_code"] = experiment_accession_code
+        experiment["experiment_accession_code"] = experiment_object.accession_code
 
-        # This experiment has no platform at all, and is therefore useless.
-        if 'arraydesign' not in parsed_json or len(parsed_json["arraydesign"]) == 0:
-            logger.warn("Remote experiment has no arraydesign listed.",
-                        experiment_accession_code=experiment_accession_code,
-                        survey_job=self.survey_job.id)
-            raise UnsupportedPlatformException
         # If there is more than one arraydesign listed in the experiment
         # then there is no other way to determine which array was used
         # for which sample other than looking at the header of the CEL
@@ -81,7 +55,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         # downloaded so we can just mark it as UNKNOWN and let the
         # downloader inspect the downloaded file to determine the
         # array then.
-        elif len(parsed_json["arraydesign"]) != 1 or "accession" not in parsed_json["arraydesign"][0]:
+        if len(parsed_json["arraydesign"]) != 1\
+           or "accession" not in parsed_json["arraydesign"][0]:
             experiment["platform_accession_code"] = UNKNOWN
             experiment["platform_accession_name"] = UNKNOWN
             experiment["manufacturer"] = UNKNOWN
@@ -89,7 +64,8 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             external_accession = parsed_json["arraydesign"][0]["accession"]
             for platform in get_supported_microarray_platforms():
                 if platform["external_accession"] == external_accession:
-                    experiment["platform_accession_code"] = get_normalized_platform(platform["platform_accession"])
+                    experiment["platform_accession_code"] = \
+                        get_normalized_platform(platform["platform_accession"])
 
                     # Illumina appears in the accession codes for
                     # platforms manufactured by Illumina
@@ -118,6 +94,56 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         else:
             experiment["last_update_date"] = parsed_json["releasedate"]
 
+        # We aren't sure these fields will be populated, or how many there will be.
+        # Try to join them all together, or set a sensible default.
+        experiment_descripton = ""
+        if "description" in parsed_json and len(parsed_json["description"]) > 0:
+            for description_item in parsed_json["description"]:
+                if "text" in description_item:
+                    experiment_descripton = experiment_descripton + description_item["text"] + "\n"
+
+        if experiment_descripton == "":
+            experiment_descripton = "Description not available.\n"
+
+        experiment_object.source_database = "ARRAY_EXPRESS"
+        experiment_object.title = parsed_json["name"]
+        # This will need to be updated if we ever use Array
+        # Express to get other kinds of data.
+        experiment_object.technology = "MICROARRAY"
+        experiment_object.description = experiment_descripton
+        experiment_object.source_first_published = parse_datetime(experiment["release_date"])
+        experiment_object.source_last_modified = parse_datetime(experiment["last_update_date"])
+
+    def create_experiment_from_api(self, experiment_accession_code: str) -> (Experiment, Dict):
+        """Given an experiment accession code, create an Experiment object.
+
+        Also returns a dictionary of additional information about the
+        platform discovered for the experiment.
+
+        Will raise an UnsupportedPlatformException if this experiment was
+        conducted using a platform which we don't support.
+
+        See an example at: https://www.ebi.ac.uk/arrayexpress/json/v3/experiments/E-MTAB-3050/sample
+        """
+        request_url = EXPERIMENTS_URL + experiment_accession_code
+        experiment_request = utils.requests_retry_session().get(request_url, timeout=60)
+
+        try:
+            parsed_json = experiment_request.json()["experiments"]["experiment"][0]
+        except KeyError:
+            logger.error("Remote experiment has no Experiment data!",
+                         experiment_accession_code=experiment_accession_code,
+                         survey_job=self.survey_job.id)
+            raise
+
+        # Check the received JSON
+        if 'arraydesign' not in parsed_json or len(parsed_json["arraydesign"]) == 0:
+            # This experiment has no platform at all, and is therefore useless.
+            logger.warn("Remote experiment has no arraydesign listed.",
+                        experiment_accession_code=experiment_accession_code,
+                        survey_job=self.survey_job.id)
+            raise UnsupportedPlatformException
+
         # Create the experiment object
         try:
             experiment_object = Experiment.objects.get(accession_code=experiment_accession_code)
@@ -125,28 +151,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                          experiment_accession_code=experiment_accession_code,
                          survey_job=self.survey_job.id)
         except Experiment.DoesNotExist:
-            # We aren't sure these fields will be populated, or how many there will be.
-            # Try to join them all together, or set a sensible default.
-            experiment_descripton = ""
-            if "description" in parsed_json and len(parsed_json["description"]) > 0:
-                for description_item in parsed_json["description"]:
-                    if "text" in description_item:
-                        experiment_descripton = experiment_descripton + description_item["text"] + "\n"
-
-            if experiment_descripton == "":
-                experiment_descripton = "Description not available.\n"
-
             experiment_object = Experiment()
             experiment_object.accession_code = experiment_accession_code
             experiment_object.source_url = request_url
-            experiment_object.source_database = "ARRAY_EXPRESS"
-            experiment_object.title = parsed_json["name"]
-            # This will need to be updated if we ever use Array
-            # Express to get other kinds of data.
-            experiment_object.technology = "MICROARRAY"
-            experiment_object.description = experiment_descripton
-            experiment_object.source_first_published = parse_datetime(experiment["release_date"])
-            experiment_object.source_last_modified = parse_datetime(experiment["last_update_date"])
+            ArrayExpressSurveyor._apply_metadata_to_experiment(experiment_object, parsed_json)
             experiment_object.save()
 
             json_xa = ExperimentAnnotation()
@@ -155,7 +163,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             json_xa.is_ccdl = False
             json_xa.save()
 
-            ## Fetch and parse the IDF/SDRF file for any other fields
+            # Fetch and parse the IDF/SDRF file for any other fields
             IDF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.idf.txt"
             idf_url = IDF_URL_TEMPLATE.format(code=experiment_accession_code)
             idf_text = utils.requests_retry_session().get(idf_url, timeout=60).text

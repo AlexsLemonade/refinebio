@@ -29,7 +29,7 @@ class Command(BaseCommand):
         """
         possible_source_databases = ["ARRAY_EXPRESS", "GEO", "SRA"]
 
-        if options["source_database"] is None:
+        if options.get("source_database", None) is None:
             samples = Sample.objects.all()
         elif options["source_database"] in possible_source_databases:
             source_database = options["source_database"]
