@@ -956,6 +956,7 @@ class ESTestCases(APITestCase):
         processor_assoc.processor_job = processor_job
         processor_assoc.save()
 
+        # associate the experiment with the sample
         experiment_sample_association = ExperimentSampleAssociation()
         experiment_sample_association.sample = sample
         experiment_sample_association.experiment = experiment
@@ -964,6 +965,15 @@ class ESTestCases(APITestCase):
         result = ComputationalResult()
         result.save()
 
+        # and create a qn tarjet for the sample
+        computational_result = ComputationalResultAnnotation()
+        computational_result.result = result
+        computational_result.data = {
+            'is_qn': True,
+            'organism_id': sample.organism.id
+        }
+        computational_result.save()
+
         sra = SampleResultAssociation()
         sra.sample = sample
         sra.result = result
@@ -976,6 +986,8 @@ class ESTestCases(APITestCase):
         sra.sample = sample
         sra.result = result
         sra.save()
+
+
 
         response = self.client.get(reverse('search', kwargs={'version': API_VERSION}))
 
