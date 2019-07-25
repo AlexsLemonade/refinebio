@@ -879,18 +879,16 @@ class StatsTestCases(APITestCase):
         self.assertEqual(response.json()['nomad_running_jobs_by_volume']['1'], 1)
         self.assertEqual(response.json()['nomad_running_jobs_by_volume']['2'], 1)
 
+from django.core.management import call_command
+from django.core.cache import cache
+
 class ESTestCases(APITestCase):
 
-    def test_es_endpoint(self):
-        """ Test basic ES functionality
+    @classmethod
+    def setUpClass(cls):
+        super(ESTestCases, cls).setUpClass() # ref https://stackoverflow.com/a/29655301/763705
 
-        This is pretty tricky because ES doesn't know that we're creating
-        test objects.
-        """
-
-        # First, we purge.
-        Experiment.objects.all().delete()
-
+        """Set up class."""
         experiment = Experiment()
         experiment.accession_code = "GSE000-X"
         experiment.title = "NONONONO"
@@ -907,7 +905,6 @@ class ESTestCases(APITestCase):
         experiment.num_total_samples = 1
         experiment.num_downloadable_samples = 1
         experiment.save()
-        self.experiment = experiment
 
         experiment_annotation = ExperimentAnnotation()
         experiment_annotation.data = {"hello": "world", "123": 456}
@@ -925,7 +922,6 @@ class ESTestCases(APITestCase):
         sample.is_processed = True
         sample.organism = Organism.get_object_for_name("AILUROPODA_MELANOLEUCA")
         sample.save()
-        self.sample = sample
 
         sample_annotation = SampleAnnotation()
         sample_annotation.data = {"goodbye": "world", "789": 123}
@@ -987,8 +983,13 @@ class ESTestCases(APITestCase):
         sra.result = result
         sra.save()
 
+        # clear default cache and reindex
+        # otherwise the organisms with qn_targes will be cached.
+        cache.clear()
+        call_command('search_index', '--rebuild', '-f')
 
-
+    def test_es_endpoint(self):
+        """ Test basic ES functionality  """
         response = self.client.get(reverse('search', kwargs={'version': API_VERSION}))
 
         """ Test basic ES functionality """
@@ -999,6 +1000,7 @@ class ESTestCases(APITestCase):
         # Sanity
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['count'], 2)
+
         # test sample counts in filters
         self.assertEqual(response.json()['facets']['has_publication']['false'], 1)
         self.assertEqual(response.json()['facets']['technology']['microarray'], 1)
