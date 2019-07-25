@@ -122,20 +122,21 @@ from six import iteritems
 
 class FacetedSearchFilterBackendExtended(FacetedSearchFilterBackend):
     def aggregate(self, request, queryset, view):
-        """Extends FacetedSearchFilterBackend to add sampple counts on each filter
+        """Extends FacetedSearchFilterBackend to add additional metrics to each bucket
         https://github.com/barseghyanartur/django-elasticsearch-dsl-drf/blob/master/src/django_elasticsearch_dsl_drf/filter_backends/faceted_search.py#L19
 
-        All we need to add is one line when building the facets:
-
-        .metric('total_samples', 'sum', field='num_downloadable_samples')
-
-        (Maybe there's a way to do this with the options in `ExperimentDocumentView`)
+        We have the downloadable sample accession codes indexed for each experiment.
+        The cardinality metric, returns the number of unique samples for each bucket.
+        However it's just an approximate
+        https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-cardinality-aggregation.html#_counts_are_approximate
+        I used the highest possible precision threshold, but this might increase the amount
+        of memory used.
         """
         facets = self.construct_facets(request, view)
         for field, facet in iteritems(facets):
             agg = facet['facet'].get_aggregation()
             queryset.aggs.bucket(field, agg)\
-                .metric('total_samples', 'sum', field='num_downloadable_samples')
+                .metric('total_samples', 'cardinality', field='downloadable_samples', precision_threshold=40000)
         return queryset
 
 
