@@ -28,6 +28,7 @@ bioc_url <- 'https://bioconductor.org/packages/3.6/bioc/src/contrib/'
 bioc_pkgs <- c(
   'oligo_1.42.0.tar.gz',
   'Biobase_2.38.0.tar.gz',
+  'GEOquery_2.46.15.tar.gz',
   'SCAN.UPC_2.20.0.tar.gz',
   'affy_1.56.0.tar.gz',
   'affyio_1.48.0.tar.gz',
