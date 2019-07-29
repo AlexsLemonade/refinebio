@@ -57,8 +57,8 @@ get_master_or_dev() {
         master_check=$(git log origin/master --decorate=full | grep "$version" || true)
         dev_check=$(git log origin/dev --decorate=full | grep "$version" || true)
 
-        # All dev versions should end with '-dev' and all master versions should not.
-        if [ -n "$master_check" ] && ! echo "$version" | grep -q "\-dev$"; then
+        # All dev versions should end with '-dev' or '-dev-hotfix' and all master versions should not.
+        if [ -n "$master_check" ] && ! echo "$version" | grep -Eq "\-dev(\-hotfix)?$"; then
             echo "master"
         elif [ -n "$dev_check" ] ; then
             echo "dev"
