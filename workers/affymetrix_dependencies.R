@@ -12,6 +12,8 @@ devtools::install_version('RSQLite', version='2.0')
 devtools::install_version('tibble', version='1.4.2')
 devtools::install_version('xtable', version='1.8-2')
 devtools::install_version('pkgconfig', version='2.0.1')
+devtools::install_version('dplyr', version='0.7.8')
+devtools::install_version('tidyr', version='0.8.2')
 
 # Bioconductor packages, installed by devtools::install_url()
 

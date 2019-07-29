@@ -4,6 +4,10 @@ options(warn=2)
 options(repos=structure(c(CRAN="https://cran.microsoft.com/snapshot/2019-07-03")))
 options(Ncpus=parallel::detectCores())
 
+# Use devtools::install_version() to install packages in cran.
+devtools::install_version('dplyr', version='0.7.8')
+devtools::install_version('tidyr', version='0.8.2')
+
 # Bioconductor packages, installed by devtools::install_url()
 
 # devtools::install_url() requires BiocInstaller
