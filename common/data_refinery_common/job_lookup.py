@@ -1,3 +1,5 @@
+import re
+
 from enum import Enum, unique
 from typing import List
 
@@ -155,11 +157,14 @@ def is_file_rnaseq(filename: str) -> bool:
     if not filename:
         return False
 
+    matches_accession_pattern = re.search('[SED]RR\d{5,}', filename)
+
     return filename[-5:].upper() == "FASTQ" \
         or filename[-8:].upper() == "FASTQ.GZ" \
         or filename[-2:].upper() == "FQ" \
         or filename[-3:].upper() == "SRA" \
-        or filename[-5:].upper() == "FQ.GZ"
+        or filename[-5:].upper() == "FQ.GZ" \
+        or matches_accession_pattern
 
 
 def _is_platform_supported(platform: str) -> bool:
