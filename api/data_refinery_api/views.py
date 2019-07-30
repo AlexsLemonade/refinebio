@@ -641,17 +641,41 @@ class ExperimentDetail(generics.RetrieveAPIView):
     openapi.Parameter(
         name='accession_codes', in_=openapi.IN_QUERY,
         type=openapi.TYPE_STRING,
-        description="Provide a list of sample accession codes sepparated by commas and the endpoint will only return information about these samples.",
+        description="Provide a list of sample accession codes separated by commas and the endpoint will only return information about these samples.",
     ),
 ]))
 class SampleList(generics.ListAPIView):
     """ Returns detailed information about Samples """
     model = Sample
     serializer_class = DetailedSampleSerializer
-    filter_backends = (filters.OrderingFilter,)
+    filter_backends = (filters.OrderingFilter, DjangoFilterBackend)
     ordering_fields = '__all__'
     ordering = ('-is_processed')
-    
+    filterset_fields = (
+        'title',
+        'organism',
+        'source_database',
+        'source_archive_url',
+        'has_raw',
+        'platform_name',
+        'technology',
+        'manufacturer',
+        'sex',
+        'age',
+        'specimen_part',
+        'genotype',
+        'disease',
+        'disease_stage',
+        'cell_line',
+        'treatment',
+        'race',
+        'subject',
+        'compound',
+        'time',
+        'is_processed',
+        'is_public'
+    )
+
     def get_queryset(self):
         """
         ref https://www.django-rest-framework.org/api-guide/filtering/#filtering-against-query-parameters
@@ -668,21 +692,20 @@ class SampleList(generics.ListAPIView):
         # case insensitive search https://docs.djangoproject.com/en/2.1/ref/models/querysets/#icontains
         filter_by = self.request.query_params.get('filter_by', None)        
         if filter_by:
-            queryset = queryset.filter( Q(title__icontains=filter_by) |
-                                        Q(sex__icontains=filter_by) |
-                                        Q(age__icontains=filter_by) |
-                                        Q(specimen_part__icontains=filter_by) |
-                                        Q(genotype__icontains=filter_by) |
-                                        Q(disease__icontains=filter_by) |
-                                        Q(disease_stage__icontains=filter_by) |
-                                        Q(cell_line__icontains=filter_by) |
-                                        Q(treatment__icontains=filter_by) |
-                                        Q(race__icontains=filter_by) |
-                                        Q(subject__icontains=filter_by) |
-                                        Q(compound__icontains=filter_by) |
-                                        Q(time__icontains=filter_by) |
-                                        Q(sampleannotation__data__icontains=filter_by)
-                                    )
+            queryset = queryset.filter(Q(title__icontains=filter_by) |
+                                       Q(sex__icontains=filter_by) |
+                                       Q(age__icontains=filter_by) |
+                                       Q(specimen_part__icontains=filter_by) |
+                                       Q(genotype__icontains=filter_by) |
+                                       Q(disease__icontains=filter_by) |
+                                       Q(disease_stage__icontains=filter_by) |
+                                       Q(cell_line__icontains=filter_by) |
+                                       Q(treatment__icontains=filter_by) |
+                                       Q(race__icontains=filter_by) |
+                                       Q(subject__icontains=filter_by) |
+                                       Q(compound__icontains=filter_by) |
+                                       Q(time__icontains=filter_by) |
+                                       Q(sampleannotation__data__icontains=filter_by))
 
         return queryset
 
@@ -693,7 +716,7 @@ class SampleList(generics.ListAPIView):
 
         ids = self.request.query_params.get('ids', None)
         if ids is not None:
-            ids = [ int(x) for x in ids.split(',')]
+            ids = [int(x) for x in ids.split(',')]
             filter_dict['pk__in'] = ids
 
         experiment_accession_code = self.request.query_params.get('experiment_accession_code', None)
