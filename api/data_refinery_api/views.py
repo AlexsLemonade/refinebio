@@ -206,10 +206,10 @@ class ExperimentDocumentView(DocumentViewSet):
     # Is this exhaustive enough?
     search_fields = {
         'title': {'boost': 10},
+        'publication_authors': {'boost': 8},  # "People will search themselves"
         'publication_title':  {'boost': 5},
+        'submitter_institution': {'boost': 3},
         'description':  {'boost': 2},
-        'publication_authors': None,
-        'submitter_institution': None,
         'accession_code': None,
         'alternate_accession_code': None,
         'publication_doi': None,
@@ -268,7 +268,7 @@ class ExperimentDocumentView(DocumentViewSet):
         'technology': {
             'field': 'technology',
             'facet': TermsFacet,
-            'enabled': True # These are enabled by default, which is more expensive but more simple.
+            'enabled': True  # These are enabled by default, which is more expensive but more simple.
         },
         'organism_names': {
             'field': 'organism_names',
@@ -335,12 +335,12 @@ class ExperimentDocumentView(DocumentViewSet):
         return response
 
     def transform_es_facets(self, facets):
-        """Transforms Elastic Search facets into a set of objects where each one corresponds 
+        """Transforms Elastic Search facets into a set of objects where each one corresponds
         to a filter group. Example:
 
         { technology: {rna-seq: 254, microarray: 8846, unknown: 0} }
 
-        Which means the users could attach `?technology=rna-seq` to the url and expect 254 
+        Which means the users could attach `?technology=rna-seq` to the url and expect 254
         samples returned in the results.
         """
         result = {}
