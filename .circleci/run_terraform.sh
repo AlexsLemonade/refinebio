@@ -62,9 +62,9 @@ source ~/refinebio/scripts/common.sh
 branch=$(get_master_or_dev $CIRCLE_TAG)
 
 if [[ $branch == "master" ]]; then
-    DOCKERHUB_REPO=ccdl
+    ENVIRONMENT=prod
 elif [[ $branch == "dev" ]]; then
-    DOCKERHUB_REPO=ccdlstaging
+    ENVIRONMENT=staging
 else
     echo "Why in the world was run_terraform.sh called from a branch other than dev or master?!?!?"
     exit 1
