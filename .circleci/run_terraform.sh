@@ -61,12 +61,10 @@ cd ~/refinebio/infrastructure
 source ~/refinebio/scripts/common.sh
 branch=$(get_master_or_dev $CIRCLE_TAG)
 
-if [[ "$CIRCLE_TAG" == *"-hotfix" && $branch == "dev" ]]; then
-    ENVIRONMENT=prod
-elif [[ $branch == "master" ]]; then
-    ENVIRONMENT=prod
+if [[ $branch == "master" ]]; then
+    DOCKERHUB_REPO=ccdl
 elif [[ $branch == "dev" ]]; then
-    ENVIRONMENT=staging
+    DOCKERHUB_REPO=ccdlstaging
 else
     echo "Why in the world was run_terraform.sh called from a branch other than dev or master?!?!?"
     exit 1
