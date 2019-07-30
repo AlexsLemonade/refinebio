@@ -507,6 +507,7 @@ def retry_hung_downloader_jobs() -> None:
         success=None,
         retried=False,
         end_time=None,
+        nomad_job_id__isnull=False,
         start_time__isnull=False,
         no_retry=False,
         created_at__gt=JOB_CREATED_AT_CUTOFF
@@ -822,6 +823,7 @@ def retry_hung_processor_jobs() -> None:
         success=None,
         retried=False,
         end_time=None,
+        nomad_job_id__isnull=False,
         start_time__isnull=False,
         no_retry=False,
         volume_index__in=active_volumes,
@@ -1094,6 +1096,7 @@ def retry_hung_survey_jobs() -> None:
         success=None,
         retried=False,
         end_time=None,
+        nomad_job_id__isnull=False,
         start_time__isnull=False,
         no_retry=False,
         created_at__gt=JOB_CREATED_AT_CUTOFF
