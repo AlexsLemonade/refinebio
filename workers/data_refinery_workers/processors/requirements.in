@@ -19,6 +19,7 @@ unicodecsv
 untangle>=1.1.1
 # For visualization
 dask>=1.1.1
+xarray>=0.12.2
 datashader>=0.6.9
 datashape>=0.5.2
 holoviews>=1.11.2

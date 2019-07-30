@@ -63,6 +63,16 @@ class SraSurveyorTestCase(TestCase):
                             is_scientific_name=True)
         organism.save()
 
+        organism1 = Organism(name="GALLUS_GALLUS",
+                             taxonomy_id=9031,
+                             is_scientific_name=True)
+        organism1.save()
+
+        organism2 = Organism(name="DANIO_RERIO",
+                             taxonomy_id=7955,
+                             is_scientific_name=True)
+        organism2.save()
+
     def tearDown(self):
         DownloaderJob.objects.all().delete()
         SurveyJobKeyValue.objects.all().delete()
@@ -76,22 +86,18 @@ class SraSurveyorTestCase(TestCase):
         sra_surveyor.discover_experiment_and_samples()
 
         samples = Sample.objects.all()
-        downloader_jobs = DownloaderJob.objects.all()
 
         # We are expecting this to discover 1 sample.
         self.assertEqual(samples.count(), 1)
         # Confirm the sample's protocol_info
         experiment = Experiment.objects.all().first()
         self.assertEqual(samples.first().protocol_info[0]['Description'],
-                         experiment.protocol_description
-        )
-
+                         experiment.protocol_description)
 
     @patch('data_refinery_foreman.surveyor.external_source.message_queue.send_job')
     def test_srp_survey(self, mock_send_task):
         """A slightly harder test of the SRA surveyor.
         """
-
         survey_job = SurveyJob(source_type="SRA")
         survey_job.save()
         key_value_pair = SurveyJobKeyValue(survey_job=survey_job,
@@ -115,7 +121,7 @@ class SraSurveyorTestCase(TestCase):
         experiment, samples = sra_surveyor.discover_experiment_and_samples()
 
         self.assertEqual(experiment.accession_code, "SRP111553")
-        self.assertEqual(len(samples), 16) # 8 samples with 2 runs each
+        self.assertEqual(len(samples), 16)  # 8 samples with 2 runs each
 
         survey_job = SurveyJob(source_type="SRA")
         survey_job.save()

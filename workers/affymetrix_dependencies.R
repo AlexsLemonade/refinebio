@@ -1,7 +1,7 @@
 # Turn warnings into errors because biocLite throws warnings instead
 # of error if it fails to install something.
 options(warn=2)
-options(repos=structure(c(CRAN="https://cran.revolutionanalytics.com")))
+options(repos=structure(c(CRAN="https://cran.microsoft.com/snapshot/2019-07-03")))
 options(Ncpus=parallel::detectCores())
 
 # Use devtools::install_version() to install packages in cran.
@@ -12,6 +12,8 @@ devtools::install_version('RSQLite', version='2.0')
 devtools::install_version('tibble', version='1.4.2')
 devtools::install_version('xtable', version='1.8-2')
 devtools::install_version('pkgconfig', version='2.0.1')
+devtools::install_version('dplyr', version='0.7.8')
+devtools::install_version('tidyr', version='0.8.2')
 
 # Bioconductor packages, installed by devtools::install_url()
 
@@ -28,6 +30,7 @@ bioc_url <- 'https://bioconductor.org/packages/3.6/bioc/src/contrib/'
 bioc_pkgs <- c(
   'oligo_1.42.0.tar.gz',
   'Biobase_2.38.0.tar.gz',
+  'GEOquery_2.46.15.tar.gz',
   'SCAN.UPC_2.20.0.tar.gz',
   'affy_1.56.0.tar.gz',
   'affyio_1.48.0.tar.gz',
