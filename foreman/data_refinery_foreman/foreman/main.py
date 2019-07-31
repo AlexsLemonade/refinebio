@@ -327,7 +327,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> bool:
         if ram_amount == 1024:
             ram_amount = 4096
         elif ram_amount == 4096:
-            ram_amount = 8192
+            ram_amount = 16384
 
 
     original_file = last_job.original_files.first()

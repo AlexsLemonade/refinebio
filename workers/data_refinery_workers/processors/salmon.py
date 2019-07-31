@@ -597,11 +597,23 @@ def get_tximport_inputs(job_context: Dict) -> Dict:
             # a raw file to run it on. Therefore pull it from one of
             # the result annotations.
 
-            annotation_json = ComputationalResultAnnotation.objects.filter(
+            annotations = ComputationalResultAnnotation.objects.filter(
                 result=salmon_quant_results[0]
-            )[0].data
+            )
 
-            job_context['index_length'] = annotation_json["index_length"]
+            for annotation_json in annotations:
+                if "index_length" in annotation_json.data:
+                    job_context['index_length'] = annotation_json.data["index_length"]
+                    break
+
+            if not "index_length" in job_context:
+                failure_reason = ("Found quant result without an annotation specifying its index length. "
+                                  "Why did this happen?!?")
+                logger.error(failure_reason, processor_job=job_context["job_id"])
+                job_context["job"].failure_reason = failure_reason
+                job_context["job"].no_retry = True
+                job_context["success"] = False
+                return job_context
 
         if should_run_tximport(experiment, len(salmon_quant_results), is_tximport_job):
             quantified_experiments[experiment] = get_quant_files_for_results(salmon_quant_results)
