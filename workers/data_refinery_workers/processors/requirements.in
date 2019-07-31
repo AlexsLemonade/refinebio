@@ -1,4 +1,4 @@
-boto3
+boto3>=1.9.199
 coveralls
 django-elasticsearch-dsl
 django>=2.1.8
@@ -9,7 +9,7 @@ pandas
 psycopg2-binary
 python-nomad>=1.0.2
 pyyaml>=4.2b1
-requests>=2.20.0
+requests>=2.22.0
 retrying
 scikit-learn
 scipy
