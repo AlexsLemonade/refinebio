@@ -18,4 +18,8 @@ class Migration(migrations.Migration):
             model_name='processorjob',
             index=models.Index(fields=['created_at', 'start_time', 'end_time'], name='processor_jobs_created_at_time'),
         ),
+        migrations.AddIndex(
+            model_name='downloaderjob',
+            index=models.Index(fields=['worker_id'], name='downloader__worker__d0aba6_idx'),
+        ),
     ]

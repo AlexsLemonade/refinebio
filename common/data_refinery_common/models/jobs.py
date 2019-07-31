@@ -174,6 +174,7 @@ class DownloaderJob(models.Model):
                 name='downloader_jobs_created_at',
                 # condition=Q(success=None, retried=False, no_retry=False)
             ),
+            models.Index(fields=['worker_id']),
         ]
 
     # This field contains a string which corresponds to a valid
