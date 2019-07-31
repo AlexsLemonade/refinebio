@@ -87,6 +87,17 @@ class ProcessorJob(models.Model):
     class Meta:
         db_table = "processor_jobs"
 
+        indexes = [
+            models.Index(
+                fields=['created_at', 'start_time', 'end_time'], 
+                name='processor_jobs_created_at_time',
+                # A partial index might be better here, given our queries we don't
+                # need to index the whole table. We need to update to Django 2.2
+                # for this to be supported.
+                # condition=Q(success=None, retried=False, no_retry=False)
+            ),
+        ]
+
     # This field will contain an enumerated value specifying which
     # processor pipeline was applied during the processor job.
     pipeline_applied = models.CharField(max_length=256)
@@ -156,6 +167,14 @@ class DownloaderJob(models.Model):
 
     class Meta:
         db_table = "downloader_jobs"
+
+        indexes = [
+            models.Index(
+                fields=['created_at', 'start_time', 'end_time'], 
+                name='downloader_jobs_created_at',
+                # condition=Q(success=None, retried=False, no_retry=False)
+            ),
+        ]
 
     # This field contains a string which corresponds to a valid
     # Downloader Task. Valid values are enumerated in:

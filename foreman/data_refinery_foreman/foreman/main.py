@@ -460,9 +460,7 @@ def retry_failed_downloader_jobs() -> None:
         success=False,
         retried=False,
         no_retry=False,
-        created_at__gt=JOB_CREATED_AT_CUTOFF
-    ).order_by(
-        'id'
+        created_at__gt=JOB_CREATED_AT_CUTOFF,
     ).prefetch_related(
         "original_files__samples"
     )
@@ -501,13 +499,11 @@ def retry_hung_downloader_jobs() -> None:
     potentially_hung_jobs = DownloaderJob.objects.filter(
         success=None,
         retried=False,
+        no_retry=False,
+        created_at__gt=JOB_CREATED_AT_CUTOFF,
+        start_time__isnull=False,
         end_time=None,
         nomad_job_id__isnull=False,
-        start_time__isnull=False,
-        no_retry=False,
-        created_at__gt=JOB_CREATED_AT_CUTOFF
-    ).order_by(
-        'id'
     ).prefetch_related(
         "original_files__samples"
     )
@@ -569,12 +565,10 @@ def retry_lost_downloader_jobs() -> None:
     potentially_lost_jobs = DownloaderJob.objects.filter(
         success=None,
         retried=False,
+        no_retry=False,        
+        created_at__gt=JOB_CREATED_AT_CUTOFF,
         start_time=None,
         end_time=None,
-        no_retry=False,
-        created_at__gt=JOB_CREATED_AT_CUTOFF
-    ).order_by(
-        'id'
     ).prefetch_related(
         "original_files__samples"
     )
@@ -817,16 +811,14 @@ def retry_hung_processor_jobs() -> None:
     potentially_hung_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
+        no_retry=False,
+        created_at__gt=JOB_CREATED_AT_CUTOFF,
+        start_time__isnull=False,
         end_time=None,
         nomad_job_id__isnull=False,
-        start_time__isnull=False,
-        no_retry=False,
         volume_index__in=active_volumes,
-        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
-    ).order_by(
-        'id'
     ).prefetch_related(
         "original_files__samples"
     )
@@ -894,15 +886,13 @@ def retry_lost_processor_jobs() -> None:
     potentially_lost_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
+        no_retry=False,
+        created_at__gt=JOB_CREATED_AT_CUTOFF,
         start_time=None,
         end_time=None,
-        no_retry=False,
         volume_index__in=active_volumes,
-        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
-    ).order_by(
-        'id'
     ).prefetch_related(
         "original_files__samples"
     )
@@ -1252,11 +1242,11 @@ def retry_lost_smasher_jobs() -> None:
     potentially_lost_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
+        no_retry=False,
+        created_at__gt=(timezone.now() - datetime.timedelta(hours=24)),
         start_time=None,
         end_time=None,
-        no_retry=False,
         pipeline_applied="SMASHER",
-        created_at__gt=(timezone.now() - datetime.timedelta(hours=24))
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")
