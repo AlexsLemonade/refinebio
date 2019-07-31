@@ -78,13 +78,9 @@ JANITOR_DISPATCH_TIME = datetime.timedelta(minutes=30)
 # How frequently we clean up the database.
 DBCLEAN_TIME = datetime.timedelta(hours=6)
 
-# This time is currently set so far in the past that it's not doing
-# anything. However, should we ever want to suspend work on the
-# whatever we already have in our queues/database (perhaps to be able
-# to force "important work" to get done), setting this to a recent
-# date will prevent the Foreman from queuing/requeuing jobs created
-# before this cutoff.
-JOB_CREATED_AT_CUTOFF = datetime.datetime(2017, 2, 5, tzinfo=timezone.utc)
+# Setting this to a recent date will prevent the Foreman from queuing/requeuing 
+# jobs created before this cutoff.
+JOB_CREATED_AT_CUTOFF = datetime.datetime(2019, 6, 5, tzinfo=timezone.utc)
 
 
 def read_config_list(config_file: str) -> List[str]:
