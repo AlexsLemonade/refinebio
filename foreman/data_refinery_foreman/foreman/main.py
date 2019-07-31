@@ -121,11 +121,6 @@ def handle_repeated_failure(job) -> None:
     job.success = False
     job.save()
 
-    # If the job is a processor job and we want to stop retrying it,
-    # delete the original files to conserve disk space.
-    if isinstance(job, ProcessorJob):
-        job.clean_up_original_files()
-
     # At some point this should become more noisy/attention
     # grabbing. However for the time being just logging should be
     # sufficient because all log messages will be closely monitored
@@ -332,7 +327,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> bool:
         if ram_amount == 1024:
             ram_amount = 4096
         elif ram_amount == 4096:
-            ram_amount = 8192
+            ram_amount = 16384
 
 
     original_file = last_job.original_files.first()
@@ -507,6 +502,7 @@ def retry_hung_downloader_jobs() -> None:
         success=None,
         retried=False,
         end_time=None,
+        nomad_job_id__isnull=False,
         start_time__isnull=False,
         no_retry=False,
         created_at__gt=JOB_CREATED_AT_CUTOFF
@@ -775,6 +771,7 @@ def retry_failed_processor_jobs() -> None:
     failed_jobs = ProcessorJob.objects.filter(
         success=False,
         retried=False,
+        no_retry=False,
         volume_index__in=active_volumes,
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
@@ -821,6 +818,7 @@ def retry_hung_processor_jobs() -> None:
         success=None,
         retried=False,
         end_time=None,
+        nomad_job_id__isnull=False,
         start_time__isnull=False,
         no_retry=False,
         volume_index__in=active_volumes,
@@ -1060,6 +1058,7 @@ def retry_failed_survey_jobs() -> None:
     failed_jobs = SurveyJob.objects.filter(
         success=False,
         retried=False,
+        no_retry=False,
         created_at__gt=JOB_CREATED_AT_CUTOFF
     ).order_by('pk')
 
@@ -1092,6 +1091,7 @@ def retry_hung_survey_jobs() -> None:
         success=None,
         retried=False,
         end_time=None,
+        nomad_job_id__isnull=False,
         start_time__isnull=False,
         no_retry=False,
         created_at__gt=JOB_CREATED_AT_CUTOFF

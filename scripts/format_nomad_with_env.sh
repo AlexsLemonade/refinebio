@@ -248,7 +248,7 @@ if [ "$project" = "workers" ]; then
         # Downloader logs go to a separate log stream.
         if [ "$output_file" = "downloader.nomad" ]; then
             export_log_conf "downloader"
-            rams="1024 4096 8192"
+            rams="1024 4096 16384"
             for r in $rams
             do
                 export RAM_POSTFIX="_$r.nomad"

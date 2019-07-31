@@ -203,7 +203,7 @@ One of the API endpoints is powered by ElasticSearch. ElasticSearch must be runn
 And then the ES Indexes (akin to Postgres 'databases') can be created with:
 
 ```bash
-./scripts/run_manage.sh search_index --rebuild -f;
+./scripts/rebuild_es_index.sh
 ```
 
 #### Common Dependecies
