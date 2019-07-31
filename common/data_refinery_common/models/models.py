@@ -745,7 +745,7 @@ class OriginalFile(models.Model):
 
         # Check if there's any jobs which should block another
         # processing attempt.
-        blocking_jobs = no_retry | incomplete_processor_jobs
+        blocking_jobs = no_retry_processor_jobs | incomplete_processor_jobs
         if blocking_jobs.count() > 0:
             return False
 
