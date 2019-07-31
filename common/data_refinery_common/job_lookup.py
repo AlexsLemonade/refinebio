@@ -223,7 +223,7 @@ def determine_ram_amount(sample: Sample, job) -> int:
     elif job.pipeline_applied == ProcessorPipeline.AGILENT_ONECOLOR_TO_PCL.value:
         return 2048
     elif job.pipeline_applied == ProcessorPipeline.SALMON.value:
-        return 12288
+        return 65536
     elif job.pipeline_applied == ProcessorPipeline.NONE.value:
         return 1024
     else:

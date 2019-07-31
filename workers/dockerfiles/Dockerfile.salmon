@@ -72,6 +72,9 @@ RUN wget "http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/${SRA_VERSION}/sratoolkit.${
 
 RUN pip3 install --upgrade pip
 
+RUN pip3 install setuptools --upgrade && \
+  rm -rf /root/.cache
+
 # We need JRE for QC tools
 RUN apt-get update -y && apt-get install -y default-jre --fix-missing
 
