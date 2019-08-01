@@ -27,7 +27,7 @@ from data_refinery_common.models import (
     Organism
 )
 from data_refinery_common.utils import get_env_variable
-from data_refinery_workers.processors import utils, smasher, visualize
+from data_refinery_workers.processors import utils, smasher#, visualize
 
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
@@ -131,26 +131,26 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # Perform a full outer join of microarray_expression_matrix and log2_rnaseq_matrix; combined_matrix
     combined_matrix = microarray_expression_matrix.merge(log2_rnaseq_matrix, how='outer', left_index=True, right_index=True)
 
-    # Visualize Prefiltered
-    output_path = job_context['output_dir'] + "pre_filtered_" + str(time.time()) + ".png"
-    visualized_prefilter = visualize.visualize(combined_matrix.copy(), output_path)
+    # # Visualize Prefiltered
+    # output_path = job_context['output_dir'] + "pre_filtered_" + str(time.time()) + ".png"
+    # visualized_prefilter = visualize.visualize(combined_matrix.copy(), output_path)
 
     # Remove genes (rows) with <=70% present values in combined_matrix
     thresh = combined_matrix.shape[1] * .7 # (Rows, Columns)
     row_filtered_combined_matrix = combined_matrix.dropna(axis='index', thresh=thresh) # Everything below `thresh` is dropped
 
-    # Visualize Row Filtered
-    output_path = job_context['output_dir'] + "row_filtered_" + str(time.time()) + ".png"
-    visualized_rowfilter = visualize.visualize(row_filtered_combined_matrix.copy(), output_path)
+    # # Visualize Row Filtered
+    # output_path = job_context['output_dir'] + "row_filtered_" + str(time.time()) + ".png"
+    # visualized_rowfilter = visualize.visualize(row_filtered_combined_matrix.copy(), output_path)
 
     # Remove samples (columns) with <50% present values in combined_matrix
     # XXX: Find better test data for this!
     col_thresh = row_filtered_combined_matrix.shape[0] * .5
     row_col_filtered_combined_matrix_samples = row_filtered_combined_matrix.dropna(axis='columns', thresh=col_thresh)
 
-    # Visualize Row and Column Filtered
-    output_path = job_context['output_dir'] + "row_col_filtered_" + str(time.time()) + ".png"
-    visualized_rowcolfilter = visualize.visualize(row_col_filtered_combined_matrix_samples.copy(), output_path)
+    # # Visualize Row and Column Filtered
+    # output_path = job_context['output_dir'] + "row_col_filtered_" + str(time.time()) + ".png"
+    # visualized_rowcolfilter = visualize.visualize(row_col_filtered_combined_matrix_samples.copy(), output_path)
 
     # "Reset" zero values that were set to NA in RNA-seq samples (i.e., make these zero again) in combined_matrix
     for column in cached_zeroes.keys():
@@ -204,15 +204,15 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # XXX: Refactor QN target acquisition and application before doing this
     job_context['organism'] = Organism.get_object_for_name(list(job_context['input_files'].keys())[0])
     job_context['merged_no_qn'] = untransposed_imputed_matrix_df
-    output_path = job_context['output_dir'] + "compendia_no_qn_" + str(time.time()) + ".png"
-    visualized_merged_no_qn = visualize.visualize(untransposed_imputed_matrix_df.copy(), output_path)
+    # output_path = job_context['output_dir'] + "compendia_no_qn_" + str(time.time()) + ".png"
+    # visualized_merged_no_qn = visualize.visualize(untransposed_imputed_matrix_df.copy(), output_path)
 
     # Perform the Quantile Normalization
     job_context = smasher._quantile_normalize(job_context, ks_check=False)
 
     # Visualize Final Compendia
-    output_path = job_context['output_dir'] + "compendia_with_qn_" + str(time.time()) + ".png"
-    visualized_merged_qn = visualize.visualize(job_context['merged_qn'].copy(), output_path)
+    # output_path = job_context['output_dir'] + "compendia_with_qn_" + str(time.time()) + ".png"
+    # visualized_merged_qn = visualize.visualize(job_context['merged_qn'].copy(), output_path)
 
     job_context['time_end'] = timezone.now()
     job_context['formatted_command'] = "create_compendia.py"
@@ -280,8 +280,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
     # Create the resulting archive
     final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk) + "_compendia"
     # Copy LICENSE.txt and README.md files
-    shutil.copy("README_COMPENDIA.md", final_zip_base + "/README.md")
-    shutil.copy("LICENSE_DATASET.txt", final_zip_base + "/LICENSE.TXT")
+    shutil.copy("/home/user/data_store/README_COMPENDIA.md", final_zip_base + "/README.md")
+    shutil.copy("/home/user/data_store/LICENSE_DATASET.txt", final_zip_base + "/LICENSE.TXT")
     archive_path = shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
 
     # Save the related metadata file
