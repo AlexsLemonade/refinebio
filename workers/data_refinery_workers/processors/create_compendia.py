@@ -280,8 +280,8 @@ def _create_result_objects(job_context: Dict) -> Dict:
     # Create the resulting archive
     final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk) + "_compendia"
     # Copy LICENSE.txt and README.md files
-    shutil.copy("/home/user/data_store/README_COMPENDIUM.md", final_zip_base + "/README.md")
-    shutil.copy("/home/user/data_store/LICENSE_DATASET.txt", final_zip_base + "/LICENSE.TXT")
+    shutil.copy("/home/user/README_COMPENDIUM.md", final_zip_base + "/README.md")
+    shutil.copy("/home/user/LICENSE_DATASET.txt", final_zip_base + "/LICENSE.TXT")
     archive_path = shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
 
     # Save the related metadata file
