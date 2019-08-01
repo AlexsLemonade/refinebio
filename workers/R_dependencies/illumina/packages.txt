@@ -6,3 +6,4 @@ rlang
 pillar
 tibble
 dplyr
+RSQLite
