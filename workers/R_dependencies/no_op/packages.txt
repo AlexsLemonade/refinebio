@@ -6,3 +6,4 @@ tibble
 lazyeval
 dplyr
 reshape2
+RSQLite
