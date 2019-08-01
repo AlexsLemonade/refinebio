@@ -45,6 +45,9 @@ COPY common/install_devtools.R .
 
 RUN Rscript install_devtools.R
 
+COPY workers/R_dependencies/qn/dependencies.R .
+RUN Rscript dependencies.R
+
 COPY workers/qn_dependencies.R .
 RUN Rscript qn_dependencies.R
 # End QN-specific

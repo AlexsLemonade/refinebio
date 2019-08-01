@@ -1,0 +1,8 @@
+doParallel
+data.table
+optparse
+lazyeval
+rlang
+pillar
+tibble
+dplyr
