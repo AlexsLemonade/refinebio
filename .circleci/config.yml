@@ -329,10 +329,9 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              # From CirlceCI Docs:
-              # If both only and ignore are specified the only is considered before ignore.
-              only: /v.*/
-              ignore: /v.*-hotfix/
+              # Only run deploys on versions tagged with /v.*/, unless regex
+              # lookahead finds `-hotfix` at the end of the version tag
+              only: /^v((?!-hotfix$).)*$/
 
   hotfix-deploy:
     jobs:
