@@ -89,8 +89,8 @@ class ProcessorJob(models.Model):
 
         indexes = [
             models.Index(
-                fields=['created_at', 'start_time', 'end_time'], 
-                name='processor_jobs_created_at_time',
+                fields=['created_at'], 
+                name='processor_jobs_created_at',
                 # A partial index might be better here, given our queries we don't
                 # need to index the whole table. We need to update to Django 2.2
                 # for this to be supported.
@@ -170,7 +170,7 @@ class DownloaderJob(models.Model):
 
         indexes = [
             models.Index(
-                fields=['created_at', 'start_time', 'end_time'], 
+                fields=['created_at'], 
                 name='downloader_jobs_created_at',
                 # condition=Q(success=None, retried=False, no_retry=False)
             ),
