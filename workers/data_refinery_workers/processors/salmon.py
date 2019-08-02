@@ -649,20 +649,28 @@ def _run_salmon(job_context: Dict) -> Dict:
         # Single reads
         if job_context['sra_num_reads'] == 1:
 
-            fifo = "/tmp/barney"
-            os.mkfifo(fifo)
+            fifo1 = "/tmp/barney1"
+            os.mkfifo(fifo1)
+
+            fifo2 = "/tmp/barney2"
+            os.mkfifo(fifo2)
 
             dump_str = "fastq-dump --stdout {input_sra_file} > {fifo} &"
             formatted_dump_command = dump_str.format(input_sra_file=job_context["sra_input_file_path"],
-                                                   fifo=fifo)
+                                                     fifo=fifo1)
             dump_po = subprocess.Popen(formatted_dump_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-            command_str = ( "salmon --no-version-check quant -l A -i {index} "
-                            "-r {fifo} -p 16 -o {output_directory} --seqBias --dumpEq --writeUnmappedNames"
-                         )
+            buffer_str = "~/buffer.py < {fifo1} > {fifo2} &"
+            formatted_buffer_command = buffer_str.format(fifo1=fifo1, fifo2=fifo2)
+
+            buffer_po = subprocess.Popen(formatted_buffer_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+            command_str = ("salmon --no-version-check quant -l A -i {index} "
+                           "-r {fifo} -p 16 -o {output_directory} --seqBias --dumpEq"
+                           "--writeUnmappedNames")
             formatted_command = command_str.format(index=job_context["index_directory"],
                                                    input_sra_file=job_context["sra_input_file_path"],
-                                                   fifo=fifo,
+                                                   fifo=fifo2,
                                                    output_directory=job_context["output_directory"])
         # Paired are trickier
         else:
@@ -670,28 +678,38 @@ def _run_salmon(job_context: Dict) -> Dict:
             # Okay, for some reason I can't explain, this only works in the temp directory,
             # otherwise the `tee` part will only output to one or the other of the streams (non-deterministically),
             # but not both. This doesn't appear to happen if the fifos are in tmp.
-            alpha = "/tmp/alpha"
-            os.mkfifo(alpha)
-            beta = "/tmp/beta"
-            os.mkfifo(beta)
+            alpha1 = "/tmp/alpha1"
+            os.mkfifo(alpha1)
+            alpha2 = "/tmp/alpha2"
+            os.mkfifo(alpha2)
+
+            beta1 = "/tmp/beta1"
+            os.mkfifo(beta1)
+            beta2 = "/tmp/beta2"
+            os.mkfifo(beta2)
 
             dump_str = "fastq-dump --stdout --split-files -I {input_sra_file} | tee >(grep '@.*\.1\s' -A3 --no-group-separator > {fifo_alpha}) >(grep '@.*\.2\s' -A3 --no-group-separator > {fifo_beta}) > /dev/null &"
             formatted_dump_command = dump_str.format(input_sra_file=job_context["sra_input_file_path"],
-                                                   fifo_alpha=alpha,
-                                                   fifo_beta=beta)
+                                                     fifo_alpha=alpha1,
+                                                     fifo_beta=beta1)
             dump_po = subprocess.Popen(formatted_dump_command,
                                         shell=True,
                                         executable='/bin/bash',
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
 
+            buffer_str = "~/buffer.py < {alpha1} > {alpha2} &; ~/buffer.py < {beta1} > {beta2} &"
+            formatted_buffer_command = buffer_str.format(alpha1=alpha1, alpha2=alpha2, beta1=beta1, beta2=beta2)
+
+            buffer_po = subprocess.Popen(formatted_buffer_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
             command_str = ( "salmon --no-version-check quant -l A -i {index} "
                             "-1 {fifo_alpha} -2 {fifo_beta} -p 16 -o {output_directory} --seqBias --dumpEq --writeUnmappedNames"
                          )
             formatted_command = command_str.format(index=job_context["index_directory"],
                                                    input_sra_file=job_context["sra_input_file_path"],
-                                                   fifo_alpha=alpha,
-                                                   fifo_beta=beta,
+                                                   fifo_alpha=alpha2,
+                                                   fifo_beta=beta2,
                                                    output_directory=job_context["output_directory"])
 
     else:
