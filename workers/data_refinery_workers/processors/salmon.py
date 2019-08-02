@@ -660,9 +660,8 @@ def _run_salmon(job_context: Dict) -> Dict:
                                                      fifo=fifo1)
             dump_po = subprocess.Popen(formatted_dump_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-            buffer_str = "~/buffer.py < {fifo1} > {fifo2} &"
+            buffer_str = "/home/user/buffer.py < {fifo1} > {fifo2} &"
             formatted_buffer_command = buffer_str.format(fifo1=fifo1, fifo2=fifo2)
-
             buffer_po = subprocess.Popen(formatted_buffer_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
             command_str = ("salmon --no-version-check quant -l A -i {index} "
@@ -698,10 +697,13 @@ def _run_salmon(job_context: Dict) -> Dict:
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
 
-            buffer_str = "~/buffer.py < {alpha1} > {alpha2} &; ~/buffer.py < {beta1} > {beta2} &"
-            formatted_buffer_command = buffer_str.format(alpha1=alpha1, alpha2=alpha2, beta1=beta1, beta2=beta2)
+            buffer_str_1 = "/home/user/buffer.py < {alpha1} > {alpha2} &"
+            formatted_buffer_command_1 = buffer_str_1.format(alpha1=alpha1, alpha2=alpha2)
+            buffer_po_1 = subprocess.Popen(formatted_buffer_command_1, shell=True, stderr=subprocess.PIPE)
 
-            buffer_po = subprocess.Popen(formatted_buffer_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            buffer_str_2 = "/home/user/buffer.py < {beta1} > {beta2} &"
+            formatted_buffer_command_2 = buffer_str_2.format(beta1=beta1, beta2=beta2)
+            buffer_po_2 = subprocess.Popen(formatted_buffer_command_2, shell=True, stderr=subprocess.PIPE)
 
             command_str = ( "salmon --no-version-check quant -l A -i {index} "
                             "-1 {fifo_alpha} -2 {fifo_beta} -p 16 -o {output_directory} --seqBias --dumpEq --writeUnmappedNames"

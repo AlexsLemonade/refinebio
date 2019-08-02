@@ -10,7 +10,7 @@ import time
 
 queue = queue.Queue()
 finished_reading = False
-READ_SIZE_BYTES = 10240
+READ_SIZE_BYTES = 1024
 
 
 def read_thread():
