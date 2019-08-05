@@ -408,21 +408,23 @@ def count_downloader_jobs_in_queue(window=datetime.timedelta(minutes=5)) -> int:
     global DOWNLOADER_JOBS_IN_QUEUE
 
     if (timezone.now() - TIME_OF_LAST_DOWNLOADER_JOB_CHECK > window):
-        TIME_OF_LAST_DOWNLOADER_JOB_CHECK = timezone.now()
         try:
             all_downloader_jobs = nomad_client.jobs.get_jobs(prefix="DOWNLOADER")
+
+            total = 0
+            for job in all_downloader_jobs:
+                if job['ParameterizedJob'] and job['JobSummary'].get('Children', None):
+                    total = total + job['JobSummary']['Children']['Pending']
+                    total = total + job['JobSummary']['Children']['Running']
+
+            DOWNLOADER_JOBS_IN_QUEUE = total
+
         except:
             # Nomad is down, return an impossibly high number to prevent
             # additonal queuing from happening:
             DOWNLOADER_JOBS_IN_QUEUE = sys.maxsize
 
-        total = 0
-        for job in all_downloader_jobs:
-            if job['ParameterizedJob'] and job['JobSummary'].get('Children', None):
-                total = total + job['JobSummary']['Children']['Pending']
-                total = total + job['JobSummary']['Children']['Running']
-
-        DOWNLOADER_JOBS_IN_QUEUE = total
+        TIME_OF_LAST_DOWNLOADER_JOB_CHECK = timezone.now()
 
     return DOWNLOADER_JOBS_IN_QUEUE
 
