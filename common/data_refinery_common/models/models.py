@@ -1108,6 +1108,8 @@ class Dataset(models.Model):
     is_processed = models.BooleanField(default=False)  # Result has been made
     is_available = models.BooleanField(default=False)  # Result is ready for delivery
 
+    processor_jobs = models.ManyToManyField('data_refinery_common.ProcessorJob', through='ProcessorJobDataSetAssociation')
+
     # Fail handling
     success = models.NullBooleanField(null=True)
     failure_reason = models.TextField()

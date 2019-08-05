@@ -604,6 +604,7 @@ class DatasetSerializer(serializers.ModelSerializer):
     start = serializers.NullBooleanField(required=False)
     experiments = DatasetDetailsExperimentSerializer(source='get_experiments', many=True, read_only=True)
     organism_samples = serializers.SerializerMethodField(read_only=True)
+    worker_version = serializers.SerializerMethodField(read_only=True)
 
     def __init__(self, *args, **kwargs):
         super(DatasetSerializer, self).__init__(*args, **kwargs)
@@ -616,6 +617,7 @@ class DatasetSerializer(serializers.ModelSerializer):
                 if 'details' not in kwargs['context']['request'].query_params:
                     self.fields.pop('experiments')
                     self.fields.pop('organism_samples')
+                    self.fields.pop('worker_version')
 
             # only include the field `download_url` if a valid token is specified
             # the token lookup happens in the view.
@@ -646,7 +648,8 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'experiments',
                     'organism_samples',
                     'download_url',
-                    'quantile_normalize'
+                    'quantile_normalize',
+                    'worker_version'
             )
         extra_kwargs = {
                         'data': {
@@ -693,6 +696,10 @@ class DatasetSerializer(serializers.ModelSerializer):
                         },
                         'download_url': {
                             'read_only': True,
+                        },
+                        'worker_version': {
+                            'read_only': True,
+                            'help_text': 'Returns the latest version of refine.bio that was used to build this dataset.'
                         }
                     }
 
@@ -721,6 +728,13 @@ class DatasetSerializer(serializers.ModelSerializer):
             result[sample['organism__name']].append(sample['accession_code'])
 
         return result
+
+    def get_worker_version(self, obj):
+        processor_jobs = obj.processor_jobs.order_by('-created_at').values_list('worker_version', flat=True)
+        if processor_jobs:
+            return processor_jobs[0]
+        else:
+            return None
 
 class APITokenSerializer(serializers.ModelSerializer):
 

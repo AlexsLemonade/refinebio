@@ -36,6 +36,7 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.utils import (
     get_active_volumes,
+    get_nomad_jobs_breakdown,
     get_env_variable,
     get_env_variable_gracefully
 )
@@ -50,14 +51,19 @@ MAX_NUM_RETRIES = 2
 # This can be overritten by the env var "MAX_TOTAL_JOBS"
 DEFAULT_MAX_JOBS = 20000
 
-DOWNLOADER_JOBS_PER_NODE = 50
-PAGE_SIZE=2000
+PAGE_SIZE = 2000
 
-# This is the maximum number of non-dead nomad jobs that can be in the
-# queue. Set the default to one node's worth so we never are unable
-# to queue downloader jobs.
-MAX_TOTAL_DOWNLOADER_JOBS = DOWNLOADER_JOBS_PER_NODE
-TIME_OF_LAST_SIZE_CHECK = timezone.now() - datetime.timedelta(minutes=10)
+# The number of jobs running on each currently running volume
+VOLUME_WORK_DEPTH = dict()
+TIME_OF_LAST_WORK_DEPTH_CHECK = timezone.now() - datetime.timedelta(minutes=10)
+
+# The number of downloader jobs currently in the queue
+DOWNLOADER_JOBS_IN_QUEUE = 0
+TIME_OF_LAST_DOWNLOADER_JOB_CHECK = timezone.now() - datetime.timedelta(minutes=10)
+
+# The desired number of active + pending jobs on a volume. Downloader jobs
+# will be assigned to instances until this limit is reached.
+DESIRED_WORK_DEPTH = 1000
 
 # This is the absolute max number of downloader jobs that should ever
 # be queued across the whole cluster no matter how many nodes we
@@ -125,56 +131,42 @@ def handle_repeated_failure(job) -> None:
     # grabbing. However for the time being just logging should be
     # sufficient because all log messages will be closely monitored
     # during early testing stages.
-    logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1, failure_reason=job.failure_reason)
+    logger.warn("%s #%d failed %d times!!!", job.__class__.__name__, job.id, MAX_NUM_RETRIES + 1,
+                failure_reason=job.failure_reason)
 
-def get_max_downloader_jobs(window=datetime.timedelta(minutes=2), nomad_client=None):
-    """Fetches the desired maximum number of downloader jobs available
-    based on the cluster size.
 
-    If this has been calculated recently, returns a cached value, else
-    it will calculate it fresh every `window`.
+def update_volume_work_depth(window=datetime.timedelta(minutes=5)):
+    """When a new job is created our local idea of the work depth is updated, but every so often
+    we refresh from Nomad how many jobs were stopped or killed"""
+    global VOLUME_WORK_DEPTH
+    global TIME_OF_LAST_WORK_DEPTH_CHECK
 
-    Will never return less than DOWNLOADER_JOBS_PER_NODE because in
-    local and test environments we will never have more than one
-    node. Having DOWNLOADER_JOBS_PER_NODE jobs in the queue when
-    there's no nodes isn't an issue since they'll just get picked up
-    when there is.
-    """
-    global MAX_TOTAL_DOWNLOADER_JOBS
-    global TIME_OF_LAST_SIZE_CHECK
+    if (timezone.now() - TIME_OF_LAST_WORK_DEPTH_CHECK > window):
+        # Reset the work depth dict in case a volume was removed since the last iteration
+        VOLUME_WORK_DEPTH = dict()
 
-    if (timezone.now() - TIME_OF_LAST_SIZE_CHECK > window):
-        # Assuming they're all similar to an X1, give 50 downloaders per node.
-        if not nomad_client:
-            nomad_host = get_env_variable("NOMAD_HOST")
-            nomad_port = get_env_variable("NOMAD_PORT", "4646")
-            nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+        breakdown = get_nomad_jobs_breakdown()
 
-        try:
-            num_active_nodes = 0
-            for node in nomad_client.nodes.get_nodes():
-                if node['Status'] == 'ready':
-                    num_active_nodes += 1
-        except:
-            # Nomad is down! There's not much point in even trying to
-            # queue jobs, so prevent them from being queued by
-            # returning zero for the max.
-            return 0
+        # Loop through all available volumes, which are the keys to the fields aggreaged by volume
+        for available_volume in breakdown["nomad_pending_jobs_by_volume"].keys():
+            VOLUME_WORK_DEPTH[available_volume] = \
+                breakdown["nomad_pending_jobs_by_volume"][available_volume] \
+                + breakdown["nomad_running_jobs_by_volume"][available_volume]
 
-        # The smasher node doesn't run DL jobs, but we don't have a
-        # smasher node in local and test environments.
-        if settings.RUNNING_IN_CLOUD:
-            num_smasher_nodes = 1
-        else:
-            num_smasher_nodes = 0
+        TIME_OF_LAST_WORK_DEPTH_CHECK = timezone.now()
 
-        MAX_TOTAL_DOWNLOADER_JOBS = (num_active_nodes - num_smasher_nodes) * DOWNLOADER_JOBS_PER_NODE
-        TIME_OF_LAST_SIZE_CHECK = timezone.now()
 
-    if MAX_TOTAL_DOWNLOADER_JOBS > HARD_MAX_DOWNLOADER_JOBS:
-        return HARD_MAX_DOWNLOADER_JOBS
-    else:
-        return MAX_TOTAL_DOWNLOADER_JOBS
+def get_emptiest_volume() -> str:
+    # This should never get returned, because get_emptiest_volume() should only be called when there
+    # is one or more volumes with a work depth smaller than the DESIRED_WORK_DEPTH
+    emptiest_volume = {"index": "", "work_depth": DESIRED_WORK_DEPTH}
+
+    for volume, work_depth in VOLUME_WORK_DEPTH.items():
+        if work_depth < emptiest_volume["work_depth"]:
+            emptiest_volume["index"] = volume
+            emptiest_volume["work_depth"] = work_depth
+
+    return emptiest_volume["index"]
 
 ##
 # Job Prioritization
@@ -312,13 +304,14 @@ def prioritize_jobs_by_accession(jobs: List, accession_list: List[str]) -> List:
 # Downloaders
 ##
 
-def requeue_downloader_job(last_job: DownloaderJob) -> bool:
+def requeue_downloader_job(last_job: DownloaderJob) -> (bool, str):
     """Queues a new downloader job.
 
     The new downloader job will have num_retries one greater than
     last_job.num_retries.
 
-    Returns True upon successful dispatching, False otherwise.
+    Returns True and the volume index of the downloader job upon successful dispatching,
+    False and an empty string otherwise.
     """
     num_retries = last_job.num_retries + 1
 
@@ -340,7 +333,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> bool:
         logger.info("Foreman told to requeue a DownloaderJob without an OriginalFile - why?!",
             last_job=str(last_job)
             )
-        return False
+        return False, ""
 
     if not original_file.needs_processing():
         last_job.no_retry = True
@@ -350,7 +343,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> bool:
         logger.info("Foreman told to redownload job with prior successful processing.",
             last_job=str(last_job)
             )
-        return False
+        return False, ""
 
     first_sample = original_file.samples.first()
 
@@ -361,13 +354,14 @@ def requeue_downloader_job(last_job: DownloaderJob) -> bool:
         last_job.failure_reason = "Sample is dbGaP access controlled."
         last_job.save()
         logger.info("Avoiding requeuing for DownloaderJob for dbGaP run accession: " + str(first_sample.accession_code))
-        return False
+        return False, ""
 
     new_job = DownloaderJob(num_retries=num_retries,
                             downloader_task=last_job.downloader_task,
                             ram_amount=ram_amount,
                             accession_code=last_job.accession_code,
-                            was_recreated=last_job.was_recreated)
+                            was_recreated=last_job.was_recreated,
+                            volume_index=get_emptiest_volume())
     new_job.save()
 
     for original_file in last_job.original_files.all():
@@ -386,60 +380,78 @@ def requeue_downloader_job(last_job: DownloaderJob) -> bool:
         else:
             # Can't communicate with nomad just now, leave the job for a later loop.
             new_job.delete()
-            return False
+            return False, ""
     except:
         logger.error("Failed to requeue Downloader Job which had ID %d with a new Downloader Job with ID %d.",
                      last_job.id,
                      new_job.id)
         # Can't communicate with nomad just now, leave the job for a later loop.
         new_job.delete()
-        return False
+        return False, ""
 
-    return True
+    return True, new_job.volume_index
 
 
-def count_downloader_jobs_in_queue(nomad_client: Nomad) -> int:
+def count_downloader_jobs_in_queue(window=datetime.timedelta(minutes=5)) -> int:
     """Counts how many downloader jobs in the Nomad queue do not have status of 'dead'."""
-    try:
-        all_downloader_jobs = nomad_client.jobs.get_jobs(prefix="DOWNLOADER")
-    except:
-        # Nomad is down, return an impossibly high number to prevent
-        # additonal queuing from happening:
-        return sys.maxsize
 
-    total = 0
-    for job in all_downloader_jobs:
-        if job['ParameterizedJob'] and job['JobSummary'].get('Children', None):
-            total = total + job['JobSummary']['Children']['Pending']
-            total = total + job['JobSummary']['Children']['Running']
+    nomad_host = get_env_variable("NOMAD_HOST")
+    nomad_port = get_env_variable("NOMAD_PORT", "4646")
+    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
 
-    return total
+    global TIME_OF_LAST_DOWNLOADER_JOB_CHECK
+    global DOWNLOADER_JOBS_IN_QUEUE
+
+    if (timezone.now() - TIME_OF_LAST_DOWNLOADER_JOB_CHECK > window):
+        try:
+            all_downloader_jobs = nomad_client.jobs.get_jobs(prefix="DOWNLOADER")
+
+            total = 0
+            for job in all_downloader_jobs:
+                if job['ParameterizedJob'] and job['JobSummary'].get('Children', None):
+                    total = total + job['JobSummary']['Children']['Pending']
+                    total = total + job['JobSummary']['Children']['Running']
+
+            DOWNLOADER_JOBS_IN_QUEUE = total
+
+        except:
+            # Nomad is down, return an impossibly high number to prevent
+            # additonal queuing from happening:
+            DOWNLOADER_JOBS_IN_QUEUE = sys.maxsize
+
+        TIME_OF_LAST_DOWNLOADER_JOB_CHECK = timezone.now()
+
+    return DOWNLOADER_JOBS_IN_QUEUE
 
 
-def get_capacity_for_downloader_jobs(nomad_client) -> bool:
+def get_capacity_for_downloader_jobs() -> int:
     """Returns how many downloader jobs the queue has capacity for.
     """
 
-    current_max_downloader_jobs = get_max_downloader_jobs(nomad_client=nomad_client)
-    current_downloader_jobs_in_queue = count_downloader_jobs_in_queue(nomad_client)
-    return current_max_downloader_jobs - current_downloader_jobs_in_queue
+    update_volume_work_depth()
+
+    total_capacity = 0
+    for work_depth in VOLUME_WORK_DEPTH.values():
+        if work_depth >= DESIRED_WORK_DEPTH:
+            continue
+
+        total_capacity += DESIRED_WORK_DEPTH - work_depth
+
+    downloader_jobs_in_queue = count_downloader_jobs_in_queue()
+
+    if downloader_jobs_in_queue + total_capacity >= HARD_MAX_DOWNLOADER_JOBS:
+        return HARD_MAX_DOWNLOADER_JOBS - downloader_jobs_in_queue
+
+    return total_capacity
 
 
-def handle_downloader_jobs(jobs: List[DownloaderJob],
-                           queue_capacity=MAX_TOTAL_DOWNLOADER_JOBS) -> None:
+def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
     """For each job in jobs, either retry it or log it.
 
     No more than queue_capacity jobs will be retried.
     """
-    # We want zebrafish data first, then hgu133plus2, then data
-    # related to pediatric cancer, then to finish salmon experiments
-    # that are close to completion.
-    # Each function moves the jobs it prioritizes to the front of the
-    # list, so apply them in backwards order.
-    # jobs = prioritize_salmon_jobs(jobs)
-    # jobs = prioritize_jobs_by_accession(jobs, PEDIATRIC_ACCESSION_LIST)
-    # jobs = prioritize_jobs_by_accession(jobs, HGU133PLUS2_ACCESSION_LIST)
-    # jobs = prioritize_zebrafish_jobs(jobs)
+
+    queue_capacity = get_capacity_for_downloader_jobs()
 
     jobs_dispatched = 0
     for count, job in enumerate(jobs):
@@ -448,9 +460,10 @@ def handle_downloader_jobs(jobs: List[DownloaderJob],
             return
 
         if job.num_retries < MAX_NUM_RETRIES:
-            requeue_success = requeue_downloader_job(job)
+            requeue_success, dispatched_volume = requeue_downloader_job(job)
             if requeue_success:
                 jobs_dispatched = jobs_dispatched + 1
+                VOLUME_WORK_DEPTH[dispatched_volume] += 1
         else:
             handle_repeated_failure(job)
 
@@ -470,7 +483,7 @@ def retry_failed_downloader_jobs() -> None:
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-    queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
+    queue_capacity = get_capacity_for_downloader_jobs()
 
     paginator = Paginator(failed_jobs, PAGE_SIZE)
     page = paginator.page()
@@ -487,12 +500,12 @@ def retry_failed_downloader_jobs() -> None:
 
         )
 
-        handle_downloader_jobs(page.object_list, queue_capacity)
+        handle_downloader_jobs(page.object_list)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
             page_count = page_count + 1
-            queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
+            queue_capacity = get_capacity_for_downloader_jobs()
         else:
             break
 
@@ -515,7 +528,7 @@ def retry_hung_downloader_jobs() -> None:
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-    queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
+    queue_capacity = get_capacity_for_downloader_jobs()
 
     if queue_capacity <= 0:
         logger.info("Not handling failed (explicitly-marked-as-failure) downloader jobs "
@@ -547,12 +560,12 @@ def retry_hung_downloader_jobs() -> None:
                 page_count,
                 jobs_count=len(hung_jobs)
             )
-            handle_downloader_jobs(hung_jobs, queue_capacity)
+            handle_downloader_jobs(hung_jobs)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
             page_count = page_count + 1
-            queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
+            queue_capacity = get_capacity_for_downloader_jobs()
         else:
             break
 
@@ -582,7 +595,7 @@ def retry_lost_downloader_jobs() -> None:
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
-    queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
+    queue_capacity = get_capacity_for_downloader_jobs()
 
     if queue_capacity <= 0:
         logger.info("Not handling failed (explicitly-marked-as-failure) downloader jobs "
@@ -626,19 +639,18 @@ def retry_lost_downloader_jobs() -> None:
             except Exception:
                 logger.exception("Couldn't query Nomad about Downloader Job.", downloader_job=job.id)
 
-        remaining_capacity = queue_capacity - jobs_queued_from_this_page
-        if lost_jobs and remaining_capacity > 0:
+        if lost_jobs and get_capacity_for_downloader_jobs() > 0:
             logger.info(
                 "Handling page %d of lost (never-started) downloader jobs!",
                 page_count,
                 len_jobs=len(lost_jobs)
             )
-            handle_downloader_jobs(lost_jobs, remaining_capacity)
+            handle_downloader_jobs(lost_jobs)
 
         if page.has_next():
             page = paginator.page(page.next_page_number())
             page_count = page_count + 1
-            queue_capacity = get_capacity_for_downloader_jobs(nomad_client)
+            queue_capacity = get_capacity_for_downloader_jobs()
         else:
             break
 

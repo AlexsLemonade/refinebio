@@ -55,7 +55,3 @@ class Command(BaseCommand):
                 break
 
             page = paginator.page(page.next_page_number())
-
-            # 2000 samples queued up every five minutes should be fast
-            # enough and also not thrash the DB.
-            time.sleep(60 * 5)
