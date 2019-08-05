@@ -119,40 +119,6 @@ MAILCHIMP_API_KEY = get_env_variable("MAILCHIMP_API_KEY")
 MAILCHIMP_LIST_ID = get_env_variable("MAILCHIMP_LIST_ID")
 
 ##
-# Custom Views
-##
-
-class PaginatedAPIView(APIView):
-    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-
-    @property
-    def paginator(self):
-        """
-        The paginator instance associated with the view, or `None`.
-        """
-        if not hasattr(self, '_paginator'):
-            if self.pagination_class is None:
-                self._paginator = None
-            else:
-                self._paginator = self.pagination_class()
-        return self._paginator
-
-    def paginate_queryset(self, queryset):
-        """
-        Return a single page of results, or `None` if pagination is disabled.
-        """
-        if self.paginator is None:
-            return None
-        return self.paginator.paginate_queryset(queryset, self.request, view=self)
-
-    def get_paginated_response(self, data):
-        """
-        Return a paginated style `Response` object for the given output data.
-        """
-        assert self.paginator is not None
-        return self.paginator.get_paginated_response(data)
-
-##
 # ElasticSearch
 ##
 from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
@@ -244,10 +210,10 @@ class ExperimentDocumentView(DocumentViewSet):
     # Is this exhaustive enough?
     search_fields = {
         'title': {'boost': 10},
+        'publication_authors': {'boost': 8},  # "People will search themselves"
         'publication_title':  {'boost': 5},
+        'submitter_institution': {'boost': 3},
         'description':  {'boost': 2},
-        'publication_authors': None,
-        'submitter_institution': None,
         'accession_code': None,
         'alternate_accession_code': None,
         'publication_doi': None,
@@ -306,7 +272,7 @@ class ExperimentDocumentView(DocumentViewSet):
         'technology': {
             'field': 'technology',
             'facet': TermsFacet,
-            'enabled': True # These are enabled by default, which is more expensive but more simple.
+            'enabled': True  # These are enabled by default, which is more expensive but more simple.
         },
         'organism_names': {
             'field': 'organism_names',
@@ -679,17 +645,41 @@ class ExperimentDetail(generics.RetrieveAPIView):
     openapi.Parameter(
         name='accession_codes', in_=openapi.IN_QUERY,
         type=openapi.TYPE_STRING,
-        description="Provide a list of sample accession codes sepparated by commas and the endpoint will only return information about these samples.",
+        description="Provide a list of sample accession codes separated by commas and the endpoint will only return information about these samples.",
     ),
 ]))
 class SampleList(generics.ListAPIView):
     """ Returns detailed information about Samples """
     model = Sample
     serializer_class = DetailedSampleSerializer
-    filter_backends = (filters.OrderingFilter,)
+    filter_backends = (filters.OrderingFilter, DjangoFilterBackend)
     ordering_fields = '__all__'
     ordering = ('-is_processed')
-    
+    filterset_fields = (
+        'title',
+        'organism',
+        'source_database',
+        'source_archive_url',
+        'has_raw',
+        'platform_name',
+        'technology',
+        'manufacturer',
+        'sex',
+        'age',
+        'specimen_part',
+        'genotype',
+        'disease',
+        'disease_stage',
+        'cell_line',
+        'treatment',
+        'race',
+        'subject',
+        'compound',
+        'time',
+        'is_processed',
+        'is_public'
+    )
+
     def get_queryset(self):
         """
         ref https://www.django-rest-framework.org/api-guide/filtering/#filtering-against-query-parameters
@@ -706,21 +696,20 @@ class SampleList(generics.ListAPIView):
         # case insensitive search https://docs.djangoproject.com/en/2.1/ref/models/querysets/#icontains
         filter_by = self.request.query_params.get('filter_by', None)        
         if filter_by:
-            queryset = queryset.filter( Q(title__icontains=filter_by) |
-                                        Q(sex__icontains=filter_by) |
-                                        Q(age__icontains=filter_by) |
-                                        Q(specimen_part__icontains=filter_by) |
-                                        Q(genotype__icontains=filter_by) |
-                                        Q(disease__icontains=filter_by) |
-                                        Q(disease_stage__icontains=filter_by) |
-                                        Q(cell_line__icontains=filter_by) |
-                                        Q(treatment__icontains=filter_by) |
-                                        Q(race__icontains=filter_by) |
-                                        Q(subject__icontains=filter_by) |
-                                        Q(compound__icontains=filter_by) |
-                                        Q(time__icontains=filter_by) |
-                                        Q(sampleannotation__data__icontains=filter_by)
-                                    )
+            queryset = queryset.filter(Q(title__icontains=filter_by) |
+                                       Q(sex__icontains=filter_by) |
+                                       Q(age__icontains=filter_by) |
+                                       Q(specimen_part__icontains=filter_by) |
+                                       Q(genotype__icontains=filter_by) |
+                                       Q(disease__icontains=filter_by) |
+                                       Q(disease_stage__icontains=filter_by) |
+                                       Q(cell_line__icontains=filter_by) |
+                                       Q(treatment__icontains=filter_by) |
+                                       Q(race__icontains=filter_by) |
+                                       Q(subject__icontains=filter_by) |
+                                       Q(compound__icontains=filter_by) |
+                                       Q(time__icontains=filter_by) |
+                                       Q(sampleannotation__data__icontains=filter_by))
 
         return queryset
 
@@ -731,7 +720,7 @@ class SampleList(generics.ListAPIView):
 
         ids = self.request.query_params.get('ids', None)
         if ids is not None:
-            ids = [ int(x) for x in ids.split(',')]
+            ids = [int(x) for x in ids.split(',')]
             filter_dict['pk__in'] = ids
 
         experiment_accession_code = self.request.query_params.get('experiment_accession_code', None)
@@ -891,7 +880,7 @@ class Stats(APIView):
         description="Specify a range from which to calculate the possible options",
         enum=('day', 'week', 'month', 'year',)
     )])
-    def get(self, request, format=None):
+    def get(self, request, version, format=None):
         range_param = request.query_params.dict().pop('range', None)
 
         data = {}
@@ -1102,7 +1091,7 @@ class CompendiaDetail(APIView):
     """
     
     @swagger_auto_schema(deprecated=True)
-    def get(self, request, format=None):
+    def get(self, request, version, format=None):
 
         computed_files = ComputedFile.objects.filter(is_compendia=True, is_public=True, is_qn_target=False).order_by('-created_at')
 
