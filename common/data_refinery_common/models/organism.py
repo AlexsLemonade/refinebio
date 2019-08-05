@@ -111,6 +111,7 @@ class Organism(models.Model):
     last_modified = models.DateTimeField(default=timezone.now)
 
     experiments = models.ManyToManyField('Experiment', through='ExperimentOrganismAssociation')
+    qn_target = models.ForeignKey('ComputationalResult', blank=True, null=True, on_delete=models.SET_NULL)
 
     def save(self, *args, **kwargs):
         """ On save, update timestamps """
