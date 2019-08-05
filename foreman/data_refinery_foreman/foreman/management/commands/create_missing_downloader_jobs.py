@@ -15,6 +15,8 @@ from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.job_management import create_downloader_job
 from data_refinery_foreman.foreman.performant_pagination.pagination import PerformantPaginator as Paginator
 
+from data_refinery_common import job_lookup
+
 logger = get_and_configure_logger(__name__)
 
 PAGE_SIZE = 2000
@@ -45,11 +47,16 @@ class Command(BaseCommand):
         page = paginator.page()
 
         while True:
+            count = 0
             for sample in page.object_list:
-                logger.debug("Creating downloader job for a sample.", sample=sample.accession_code)
-                create_downloader_job(sample.original_files.all())
+                # ensure a downloader job can be created for the sample before trying to create a new one
+                downloader_task = job_lookup.determine_downloader_task(sample_object)
+                if downloader_task != job_lookup.Downloaders.NONE:
+                    logger.debug("Creating downloader job for a sample.", sample=sample.accession_code)
+                    create_downloader_job(sample.original_files.all())
+                    count = count + 1
 
-            logger.info("Created %d new downloader jobs because their samples didn't have any.", PAGE_SIZE)
+            logger.info("Created %d new downloader jobs because their samples didn't have any.", count)
 
             if not page.has_next():
                 break
