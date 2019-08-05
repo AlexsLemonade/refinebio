@@ -148,13 +148,6 @@ class ProcessorJob(models.Model):
         self.last_modified = current_time
         return super(ProcessorJob, self).save(*args, **kwargs)
 
-    def clean_up_original_files(self):
-        """ If a processor job fails too many times, we want to clean up the downloaded files to
-        save hard drive space.
-        """
-        for original_file in self.original_files.all():
-            original_file.delete_local_file()
-
     def __str__(self):
         return "ProcessorJob " + str(self.pk) + ": " + str(self.pipeline_applied)
 
@@ -181,6 +174,7 @@ class DownloaderJob(models.Model):
 
     # Resources
     ram_amount = models.IntegerField(default=1024)
+    volume_index = models.CharField(max_length=3, null=True)
 
     # This field represents how many times this job has been
     # retried. It starts at 0 and each time the job has to be retried

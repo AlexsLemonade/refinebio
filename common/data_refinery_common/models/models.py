@@ -751,6 +751,12 @@ class OriginalFile(models.Model):
         if not sample:
             return True
 
+        # If the file has a processor job that should not have been
+        # retried, then it still shouldn't be retried.
+        no_retry_processor_jobs = self.processor_jobs.filter(no_retry=True)
+
+        # If the file has a processor job that hasn't even started
+        # yet, then it doesn't need another.
         incomplete_processor_jobs = self.processor_jobs.filter(
             end_time__isnull=True,
             success__isnull=True,
@@ -760,9 +766,10 @@ class OriginalFile(models.Model):
         if own_processor_id:
             incomplete_processor_jobs = incomplete_processor_jobs.exclude(id=own_processor_id)
 
-        # If the file has a processor job that hasn't even started yet,
-        # then it doesn't need another.
-        if incomplete_processor_jobs.count() > 0:
+        # Check if there's any jobs which should block another
+        # processing attempt.
+        blocking_jobs = no_retry_processor_jobs | incomplete_processor_jobs
+        if blocking_jobs.count() > 0:
             return False
 
         if sample.source_database == "SRA":
@@ -1123,6 +1130,8 @@ class Dataset(models.Model):
     is_processing = models.BooleanField(default=False)  # Data is still editable when False
     is_processed = models.BooleanField(default=False)  # Result has been made
     is_available = models.BooleanField(default=False)  # Result is ready for delivery
+
+    processor_jobs = models.ManyToManyField('data_refinery_common.ProcessorJob', through='ProcessorJobDataSetAssociation')
 
     # Fail handling
     success = models.NullBooleanField(null=True)
