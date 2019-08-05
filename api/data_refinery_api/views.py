@@ -883,7 +883,7 @@ class Stats(APIView):
         description="Specify a range from which to calculate the possible options",
         enum=('day', 'week', 'month', 'year',)
     )])
-    def get(self, request, format=None):
+    def get(self, request, version, format=None):
         cached_stats = cache.get("stats", None)
         range_param = request.query_params.dict().pop('range', None)
 
