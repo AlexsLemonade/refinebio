@@ -22,8 +22,6 @@ from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models.organism import Organism
 from data_refinery_common.utils import get_env_variable, get_s3_url, calculate_file_size, calculate_sha1
 
-from django.core.cache import cache
-
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.
 S3 = boto3.client('s3', config=Config(signature_version='s3v4'))
@@ -429,17 +427,7 @@ class Experiment(models.Model):
         This is indexed on elastic search and used to count the number of samples
         on the filters.
         """
-        # I couldn't not find a way to get calculate the samples that have organisms with QN
-        # targets in a single DB query. Since the QN Targets are `ComputationalResultAnnotation`
-        # that are not associated with the Organisms.
-        # This method will be called for each experiment when the ES index is being created
-        # This cache is to ensure that we don't repeat the query to calculate the organisms with 
-        # qn targets multiple times.
-        qn_organisms = cache.get('qn_organisms')
-        if qn_organisms == None:
-            qn_organisms = Organism.get_objects_with_qn_targets()
-            cache.set('qn_organisms', qn_organisms, 30*60) # save value for 1h
-
+        qn_organisms = Organism.get_objects_with_qn_targets()
         return list(self.samples.filter(is_processed=True, organism__in=qn_organisms)\
                                       .values_list('accession_code', flat=True))
 

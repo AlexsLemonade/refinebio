@@ -185,10 +185,7 @@ class Organism(models.Model):
     @classmethod
     def get_objects_with_qn_targets(cls):
         """ Return a list of Organisms who already have valid QN targets associated with them. """
-        from data_refinery_common.models import ComputationalResultAnnotation
-        organism_ids = list(ComputationalResultAnnotation.objects.filter(data__is_qn=True).values_list('data__organism_id', flat=True).order_by('data__organism_id'))
-        organisms = Organism.objects.filter(id__in=organism_ids)
-        return organisms
+        return Organism.objects.all().filter(qn_target__isnull=False)
 
     class Meta:
         db_table = "organisms"
