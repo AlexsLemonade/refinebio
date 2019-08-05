@@ -22,7 +22,7 @@ def fix_typo_in_sample_manufacturer(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0022_auto_20190607_1505'),
+        ('data_refinery_common', '0025_downloaderjob_volume_index'),
     ]
 
     operations = [
