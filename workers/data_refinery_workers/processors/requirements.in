@@ -1,4 +1,4 @@
-boto3
+boto3>=1.9.199
 coveralls
 django-elasticsearch-dsl
 django>=2.1.8
@@ -9,9 +9,10 @@ pandas
 psycopg2-binary
 python-nomad>=1.0.2
 pyyaml>=4.2b1
-requests>=2.20.0
+requests>=2.22.0
 retrying
-scikit-learn
+# Fancyimpute needs this version.
+scikit-learn>=0.21.2
 scipy
 simplejson
 sympy
@@ -19,6 +20,7 @@ unicodecsv
 untangle>=1.1.1
 # For visualization
 dask>=1.1.1
+xarray>=0.12.2
 datashader>=0.6.9
 datashape>=0.5.2
 holoviews>=1.11.2

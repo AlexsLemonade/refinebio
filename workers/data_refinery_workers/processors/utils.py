@@ -11,7 +11,7 @@ from django.conf import settings
 from django.utils import timezone
 from typing import List, Dict, Callable
 
-from data_refinery_common.job_lookup import ProcessorEnum
+from data_refinery_common.job_lookup import ProcessorEnum, ProcessorPipeline
 from data_refinery_common.job_management import create_downloader_job
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
@@ -197,7 +197,8 @@ def start_job(job_context: Dict):
         raise Exception("processors.start_job called on job %s that has already been started!" % str(job.id))
 
     original_file = job.original_files.first()
-    if original_file and not original_file.needs_processing(job_context["job_id"]):
+    if not job.pipeline_applied == ProcessorPipeline.TXIMPORT.value and original_file\
+       and not original_file.needs_processing(job_context["job_id"]):
         failure_reason = ("Sample has a good computed file, it must have been processed, "
                           "so it doesn't need to be downloaded! Aborting!")
         logger.error(failure_reason,

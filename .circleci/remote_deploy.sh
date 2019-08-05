@@ -61,9 +61,9 @@ echo "Building new images"
 # Output to the docker update log.
 run_on_deploy_box "sudo touch /var/log/docker_update_$CIRCLE_TAG.log"
 run_on_deploy_box "sudo chown ubuntu:ubuntu /var/log/docker_update_$CIRCLE_TAG.log"
-run_on_deploy_box "source env_vars && echo -e '######\nBuilding new images for $CIRCLE_TAG\n######'  &>> /var/log/docker_update_$CIRCLE_TAG.log 2>&1"
-run_on_deploy_box "source env_vars && ./.circleci/update_docker_img.sh >> /var/log/docker_update_$CIRCLE_TAG.log 2>&1"
-run_on_deploy_box "source env_vars && echo -e '######\nFinished building new images for $CIRCLE_TAG\n######'  &>> /var/log/docker_update_$CIRCLE_TAG.log 2>&1"
+run_on_deploy_box "source env_vars && echo -e '######\nBuilding new images for $CIRCLE_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$CIRCLE_TAG.log"
+run_on_deploy_box "source env_vars && ./.circleci/update_docker_img.sh 2>&1 | tee -a /var/log/docker_update_$CIRCLE_TAG.log"
+run_on_deploy_box "source env_vars && echo -e '######\nFinished building new images for $CIRCLE_TAG\n######' 2>&1 | tee -a /var/log/docker_update_$CIRCLE_TAG.log"
 
 # Load docker_img_exists function and $ALL_CCDL_IMAGES
 source ~/refinebio/scripts/common.sh
@@ -71,9 +71,7 @@ source ~/refinebio/scripts/common.sh
 # Circle won't set the branch name for us, so do it ourselves.
 branch=$(get_master_or_dev $CIRCLE_TAG)
 
-if [[ "$CIRCLE_TAG" == *"-hotfix" && "$branch" == "dev" ]]; then
-    DOCKERHUB_REPO=ccdl
-elif [[ "$branch" == "master" ]]; then
+if [[ "$branch" == "master" ]]; then
     DOCKERHUB_REPO=ccdl
 elif [[ "$branch" == "dev" ]]; then
     DOCKERHUB_REPO=ccdlstaging

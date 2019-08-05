@@ -61,9 +61,9 @@ class ExternalSourceSurveyor:
                 continue
 
             # There is already a downloader job associated with this file.
-            old_assocs = DownloaderJobOriginalFileAssociation.objects.filter(
-                original_file__source_url=original_file.source_url)
-            if len(old_assocs) > 0:
+            old_assocs_count = DownloaderJobOriginalFileAssociation.objects.filter(
+                original_file__source_url=original_file.source_url).count()
+            if old_assocs_count > 0:
                 logger.debug("We found an existing DownloaderJob for this file/url.",
                              original_file_id=original_file.id)
                 continue
@@ -118,9 +118,9 @@ class ExternalSourceSurveyor:
         else:
             source_urls = [original_file.source_url for original_file in original_files]        
             # There is already a downloader job associated with this file.
-            old_assocs = DownloaderJobOriginalFileAssociation.objects.filter(
-                original_file__source_url__in=source_urls)
-            if len(old_assocs) > 0:
+            old_assocs_count = DownloaderJobOriginalFileAssociation.objects.filter(
+                original_file__source_url__in=source_urls).count()
+            if old_assocs_count > 0:
                 logger.debug("We found an existing DownloaderJob for these urls.",
                             source_urls=source_urls)
                 return False

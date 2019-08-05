@@ -917,6 +917,7 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
 
     job_context = salmon.get_tximport_inputs(job_context)
     job_context = salmon.tximport(job_context)
+    job_context = utils.end_job(job_context)
 
     return job_context
 
@@ -992,6 +993,7 @@ class EarlyTximportTestCase(TestCase):
             sample = tpm_file.samples.first()
             SampleComputedFileAssociation.objects.get(sample=sample, computed_file=tpm_file)
             SampleComputedFileAssociation.objects.get(sample=sample, computed_file=rds_file)
+            self.assertTrue(sample.is_processed)
 
         # Make sure that these samples actually were ignored.
         for accession_code in incomplete_accessions:

@@ -7,7 +7,7 @@ from django.http import HttpResponseForbidden, HttpResponseServerError
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from data_refinery_api.serializers import (
     DetailedExperimentSerializer,
@@ -52,6 +52,8 @@ from data_refinery_common.models import (
 from data_refinery_common.models.documents import (
     ExperimentDocument
 )
+
+API_VERSION = 'v1'
 
 class APITestCases(APITestCase):
     def setUp(self):
@@ -182,98 +184,98 @@ class APITestCases(APITestCase):
         SampleAnnotation.objects.all().delete()
 
     def test_all_endpoints(self):
-        response = self.client.get(reverse('experiments'))
+        response = self.client.get(reverse('experiments', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response['X-Source-Revision'], get_env_variable('SYSTEM_VERSION'))
 
-        response = self.client.get(reverse('experiments'), kwargs={'page': 1})
+        response = self.client.get(reverse('experiments', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('samples'))
+        response = self.client.get(reverse('samples', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('samples'), {'ids': str(self.sample.id) + ',1000'})
+        response = self.client.get(reverse('samples', kwargs={'version': API_VERSION}), {'ids': str(self.sample.id) + ',1000'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('samples'), {'accession_codes': str(self.sample.accession_code) + ',1000'})
+        response = self.client.get(reverse('samples', kwargs={'version': API_VERSION}), {'accession_codes': str(self.sample.accession_code) + ',1000'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('samples'), kwargs={'page': 1})
+        response = self.client.get(reverse('samples', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('organisms'))
+        response = self.client.get(reverse('organisms', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('platforms'))
+        response = self.client.get(reverse('platforms', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('institutions'))
+        response = self.client.get(reverse('institutions', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('survey_jobs'))
+        response = self.client.get(reverse('survey_jobs', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('downloader_jobs'))
+        response = self.client.get(reverse('downloader_jobs', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('processor_jobs'))
+        response = self.client.get(reverse('processor_jobs', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('stats'))
+        response = self.client.get(reverse('stats', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('results'))
+        response = self.client.get(reverse('results', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('results'), kwargs={'page': 1})
+        response = self.client.get(reverse('results', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('schema-redoc'))
+        response = self.client.get(reverse('schema_redoc', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('search'))
+        response = self.client.get(reverse('search', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('transcriptome-indices'))
+        response = self.client.get(reverse('transcriptome_indices', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(reverse('create_dataset'))
+        response = self.client.get(reverse('create_dataset', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_sample_pagination(self):
-        response = self.client.get(reverse('samples'))
+        response = self.client.get(reverse('samples', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()['results']), 2)
 
-        response = self.client.get(reverse('samples'), {'limit': 1})
+        response = self.client.get(reverse('samples', kwargs={'version': API_VERSION}), {'limit': 1})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()['results']), 1)
 
-        response = self.client.get(reverse('samples'), {'limit': 1, 'ordering': '-title'})
+        response = self.client.get(reverse('samples', kwargs={'version': API_VERSION}), {'limit': 1, 'ordering': '-title'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['results'][0]['title'], '789')
 
-        response = self.client.get(reverse('samples'), {'limit': 1, 'ordering': 'title'})
+        response = self.client.get(reverse('samples', kwargs={'version': API_VERSION}), {'limit': 1, 'ordering': 'title'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['results'][0]['title'], '123')
 
     def test_fetching_experiment_samples(self):
-        response = self.client.get(reverse('samples'), {'experiment_accession_code': self.experiment.accession_code})
+        response = self.client.get(reverse('samples', kwargs={'version': API_VERSION}), {'experiment_accession_code': self.experiment.accession_code})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()['results']), 1)
         self.assertEqual(response.json()['results'][0]['accession_code'], '789')
 
         # Expect 404 if the experiment accession code isn't valid
-        response = self.client.get(reverse('samples'), {'experiment_accession_code': 'wrong-accession-code'})
+        response = self.client.get(reverse('samples', kwargs={'version': API_VERSION}), {'experiment_accession_code': 'wrong-accession-code'})
         self.assertEqual(response.status_code, 404)
 
     def test_fetching_organism_index(self):
-        response = self.client.get(reverse('transcriptome-indices-read', kwargs={'organism_name': 'DANIO_RERIO'}), {'length': 'SHORT'})
+        response = self.client.get(reverse('transcriptome_indices_read', kwargs={'organism_name': 'DANIO_RERIO', 'version': API_VERSION}), {'length': 'SHORT'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['index_type'], 'TRANSCRIPTOME_SHORT')
 
         # Expect 404 if the experiment accession code isn't valid
-        response = self.client.get(reverse('samples'), {'experiment_accession_code': 'wrong-accession-code'})
+        response = self.client.get(reverse('samples', kwargs={'version': API_VERSION}), {'experiment_accession_code': 'wrong-accession-code'})
         self.assertEqual(response.status_code, 404)
 
     def test_compendia(self):
@@ -328,7 +330,7 @@ class APITestCases(APITestCase):
         drc1.s3_key = "drc2.tsv"
         drc1.save()
 
-        response = self.client.get(reverse('computed-files'), {'is_compendia': True})
+        response = self.client.get(reverse('computed_files', kwargs={'version': API_VERSION}), {'is_compendia': True})
         response_json = response.json()['results']
         self.assertEqual(3, len(response_json))
         # Prove that the download_url field is missing and not None.
@@ -341,15 +343,15 @@ class APITestCases(APITestCase):
         # generate one.
 
         # Create a token first
-        response = self.client.post(reverse('token'), content_type="application/json")
+        response = self.client.post(reverse('token', kwargs={'version': API_VERSION}), content_type="application/json")
         token = response.json()
         token['is_activated'] = True
         token_id = token['id']
-        response = self.client.put(reverse('token_id', kwargs={'id': token_id}),
+        response = self.client.put(reverse('token_id', kwargs={'id': token_id, 'version': API_VERSION}),
                                     json.dumps(token),
                                     content_type="application/json")
 
-        response = self.client.get(reverse('computed-files'), {'is_compendia': True}, HTTP_API_KEY=token_id)
+        response = self.client.get(reverse('computed_files', kwargs={'version': API_VERSION}), {'is_compendia': True}, HTTP_API_KEY=token_id)
         response_json = response.json()['results']
         self.assertEqual(3, len(response_json))
         self.assertIsNone(response_json[0]['download_url'])
@@ -358,12 +360,12 @@ class APITestCases(APITestCase):
     def test_create_update_dataset(self, mock_send_job):
 
         # Get a token first
-        response = self.client.post(reverse('token'),
+        response = self.client.post(reverse('token', kwargs={'version': API_VERSION}),
                                     content_type="application/json")
         token = response.json()
         token['is_activated'] = True
         token_id = token['id']
-        response = self.client.put(reverse('token_id', kwargs={'id': token_id}),
+        response = self.client.put(reverse('token_id', kwargs={'id': token_id, 'version': API_VERSION}),
                                     json.dumps(token),
                                     content_type="application/json")
 
@@ -373,7 +375,7 @@ class APITestCases(APITestCase):
 
         # Good
         jdata = json.dumps({'data': {"A": ["B"]}})
-        response = self.client.post(reverse('create_dataset'),
+        response = self.client.post(reverse('create_dataset', kwargs={'version': API_VERSION}),
                                     jdata,
                                     content_type="application/json")
 
@@ -381,14 +383,14 @@ class APITestCases(APITestCase):
         self.assertEqual(response.json()['data'], json.loads(jdata)['data'])
         good_id = response.json()['id']
 
-        response = self.client.get(reverse('dataset', kwargs={'id': good_id}))
+        response = self.client.get(reverse('dataset', kwargs={'id': good_id, 'version': API_VERSION}))
         self.assertEqual(response.json()['id'], good_id)
         self.assertEqual(response.json()['data'], json.loads(jdata)['data'])
         self.assertEqual(response.json()['data']["A"], ["B"])
 
         # Bad (Duplicates)
         jdata = json.dumps({'data': {"A": ["B", "B", "B"]}})
-        response = self.client.post(reverse('create_dataset'),
+        response = self.client.post(reverse('create_dataset', kwargs={'version': API_VERSION}),
                                     jdata,
                                     content_type="application/json")
 
@@ -426,7 +428,7 @@ class APITestCases(APITestCase):
 
         # Update, just an experiment accession
         jdata = json.dumps({'data': {"GSE123": ["ALL"]}})
-        response = self.client.put(reverse('dataset', kwargs={'id': good_id}),
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id, 'version': API_VERSION}),
                                    jdata,
                                    content_type="application/json")
         self.assertEqual(response.status_code, 200)
@@ -437,7 +439,7 @@ class APITestCases(APITestCase):
 
         # Update
         jdata = json.dumps({'data': {"A": ["C"]}})
-        response = self.client.put(reverse('dataset', kwargs={'id': good_id}),
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id, 'version': API_VERSION}),
                                    jdata,
                                    content_type="application/json")
         self.assertEqual(response.status_code, 200)
@@ -450,14 +452,14 @@ class APITestCases(APITestCase):
         dataset.is_processing = True
         dataset.save()
         jdata = json.dumps({'data': {"A": ["D"]}})
-        response = self.client.put(reverse('dataset', kwargs={'id': good_id}),
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id, 'version': API_VERSION}),
                                    jdata,
                                    content_type="application/json")
         self.assertNotEqual(response.json()['data']["A"], ["D"])
 
         # Bad
         jdata = json.dumps({'data': 123})
-        response = self.client.post(reverse('create_dataset'),
+        response = self.client.post(reverse('create_dataset', kwargs={'version': API_VERSION}),
                                     jdata,
                                     content_type="application/json")
         self.assertEqual(response.status_code, 400)
@@ -469,11 +471,11 @@ class APITestCases(APITestCase):
 
         # With bad token first
         jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True, 'token_id': "HEYO" } )
-        response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id, 'version': API_VERSION}), jdata, content_type="application/json")
         self.assertEqual(response.status_code, 500)
 
         jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True, 'token_id': token_id, 'email_address': 'trust@verify.com', 'email_ccdl_ok': True } )
-        response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json")
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id, 'version': API_VERSION}), jdata, content_type="application/json")
         self.assertEqual(response.json()["is_processing"], True)
 
         ds = Dataset.objects.get(id=response.json()['id'])
@@ -489,7 +491,7 @@ class APITestCases(APITestCase):
         dataset.save()
 
         jdata = json.dumps({'data': {"A": ["D"]}, 'start': True, 'no_send_job': True, 'email_address': 'trust@verify.com', 'email_ccdl_ok': True } )
-        response = self.client.put(reverse('dataset', kwargs={'id': good_id}), jdata, content_type="application/json", HTTP_API_KEY=token_id)
+        response = self.client.put(reverse('dataset', kwargs={'id': good_id, 'version': API_VERSION}), jdata, content_type="application/json", HTTP_API_KEY=token_id)
 
         self.assertEqual(response.json()["is_processing"], True)
 
@@ -516,11 +518,11 @@ class APITestCases(APITestCase):
         experiment_sample_association.save()
 
         # we return all experiments
-        response = self.client.get(reverse('search'), {'search': "GSX12345"})
+        response = self.client.get(reverse('search', kwargs={'version': API_VERSION}), {'search': "GSX12345"})
         self.assertEqual(response.json()['count'], 1)
 
         # check requesting only experiments with processed samples
-        response = self.client.get(reverse('search'), {'search': "GSX12345", 'num_processed_samples__gt': 0})
+        response = self.client.get(reverse('search', kwargs={'version': API_VERSION}), {'search': "GSX12345", 'num_processed_samples__gt': 0})
         self.assertEqual(response.json()['count'], 0)
 
         sample2 = Sample()
@@ -539,7 +541,7 @@ class APITestCases(APITestCase):
         experiment.num_processed_samples = 1
         experiment.save()
 
-        response = self.client.get(reverse('search'), {'search': "GSX12345"})
+        response = self.client.get(reverse('search', kwargs={'version': API_VERSION}), {'search': "GSX12345"})
         self.assertEqual(response.json()['count'], 1)
 
         qs = Experiment.processed_public_objects
@@ -627,7 +629,7 @@ class APITestCases(APITestCase):
         experiment_sample_association.save()
 
         jdata = json.dumps({'data': {"XYZ123": ["1"], "ABC789": ["2"]}})
-        response = self.client.post(reverse('create_dataset'),
+        response = self.client.post(reverse('create_dataset', kwargs={'version': API_VERSION}),
                                     jdata,
                                     content_type="application/json")
 
@@ -636,7 +638,7 @@ class APITestCases(APITestCase):
         good_id = response.json()['id']
 
         # Check that we can fetch these sample details via samples API
-        response = self.client.get(reverse('samples'), {'dataset_id': good_id})
+        response = self.client.get(reverse('samples', kwargs={'version': API_VERSION}), {'dataset_id': good_id})
         self.assertEqual(response.json()['count'], 2)
 
     def test_engagement_bot_email_filtering(self):
@@ -658,7 +660,7 @@ class APITestCases(APITestCase):
     @patch('raven.contrib.django.models.client')
     def test_sentry_middleware_ok(self, mock_client):
         # We don't even import raven if it's a good response.
-        response = self.client.get(reverse('experiments'))
+        response = self.client.get(reverse('experiments', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         mock_client.is_enabled.assert_not_called()
 
@@ -666,29 +668,29 @@ class APITestCases(APITestCase):
     def test_sentry_middleware_404(self, mock_client):
         # We don't send anything to raven if it's not enabled
         mock_client.is_enabled.side_effect = lambda: False
-        response = self.client.get(reverse('experiments_detail', kwargs={'accession_code': 'INEXISTENT'}))
+        response = self.client.get(reverse('experiments_detail', kwargs={'accession_code': 'INEXISTENT', 'version': API_VERSION}))
         self.assertEqual(response.status_code, 404)
         mock_client.captureMessage.assert_not_called()
 
         # A 404 with raven enabled will send a message to sentry
         mock_client.is_enabled.side_effect = lambda: True
-        response = self.client.get(reverse('experiments_detail', kwargs={'accession_code': 'INEXISTENT'}))
+        response = self.client.get(reverse('experiments_detail', kwargs={'accession_code': 'INEXISTENT', 'version': API_VERSION}))
         self.assertEqual(response.status_code, 404)
         mock_client.captureMessage.assert_not_called()
 
         # A 404 with raven enabled will send a message to sentry
         mock_client.is_enabled.side_effect = lambda: True
-        response = self.client.get(reverse('experiments_detail', kwargs={'accession_code': 'INEXISTENT'})[:-1] + "aasdas/")
+        response = self.client.get(reverse('experiments_detail', kwargs={'accession_code': 'INEXISTENT', 'version': API_VERSION})[:-1] + "aasdas/")
         self.assertEqual(response.status_code, 404)
         mock_client.captureMessage.assert_not_called()
 
     @patch.object(ExperimentList, 'get')
     @patch('raven.contrib.django.models.client')
     def test_sentry_middleware_403(self, mock_client, mock_get_method):
-        mock_get_method.side_effect = lambda _: HttpResponseForbidden()
+        mock_get_method.side_effect = Mock(return_value=HttpResponseForbidden())
         # A 403 with raven enabled will send a message to sentry
-        mock_client.is_enabled.side_effect = lambda: True
-        response = self.client.get(reverse('experiments'))
+        mock_client.is_enabled.side_effect = Mock(return_value=True)
+        response = self.client.get(reverse('experiments', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, 403)
         mock_client.captureMessage.assert_called()
 
@@ -698,10 +700,10 @@ class APITestCases(APITestCase):
         def raise_error(_):
             raise KeyError()
 
-        mock_get_method.side_effect = lambda _: HttpResponseServerError()
+        mock_get_method.side_effect =  Mock(return_value=HttpResponseServerError())
         # A 500 with raven enabled will send a message to sentry
-        mock_client.is_enabled.side_effect = lambda: True
-        response = self.client.get(reverse('experiments'))
+        mock_client.is_enabled.side_effect = Mock(return_value=True)
+        response = self.client.get(reverse('experiments', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, 500)
         mock_client.captureMessage.assert_called()
 
@@ -741,7 +743,7 @@ class APITestCases(APITestCase):
         }
         cra.save()
 
-        response = self.client.get(reverse('qn-targets-available'))
+        response = self.client.get(reverse('qn_targets_available', kwargs={'version': API_VERSION}))
         self.assertEqual(len(response.json()), 2)
 
 MOCK_NOMAD_RESPONSE = [
@@ -860,16 +862,16 @@ MOCK_NOMAD_RESPONSE = [
 ]
 
 class StatsTestCases(APITestCase):
-    @patch('data_refinery_api.views.get_nomad_jobs', return_value = [])
+    @patch('data_refinery_common.utils.get_nomad_jobs', return_value=[])
     def test_nomad_stats_empty(self, mock_get_nomad_jobs):
-        response = self.client.get(reverse('stats'))
+        response = self.client.get(reverse('stats', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['nomad_running_jobs'], 0)
         self.assertEqual(response.json()['nomad_pending_jobs'], 0)
 
-    @patch('data_refinery_api.views.get_nomad_jobs', return_value = MOCK_NOMAD_RESPONSE)
+    @patch('data_refinery_common.utils.get_nomad_jobs', return_value=MOCK_NOMAD_RESPONSE)
     def test_nomad_stats(self, mock_get_nomad_jobs):
-        response = self.client.get(reverse('stats'))
+        response = self.client.get(reverse('stats', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['nomad_running_jobs'], 2)
         self.assertEqual(response.json()['nomad_pending_jobs'], 0)
@@ -975,8 +977,7 @@ class ESTestCases(APITestCase):
         sra.result = result
         sra.save()
 
-        # TODO: Use `reverse` when not using the DefaultRouter
-        response = self.client.get('/search/')
+        response = self.client.get(reverse('search', kwargs={'version': API_VERSION}))
 
         """ Test basic ES functionality """
         es_search_result = ExperimentDocument.search().filter("term", description="soda")
@@ -992,15 +993,15 @@ class ESTestCases(APITestCase):
         self.assertEqual(response.json()['facets']['technology']['rna-seq'], 0)
 
         # Basic Search
-        response = self.client.get('/search/?search=soda')
+        response = self.client.get(reverse('search', kwargs={'version': API_VERSION}), {'search':'soda'})
         self.assertEqual(response.json()['count'], 1)
 
         # Positive filter result
-        response = self.client.get('/search/?search=soda&technology=microarray')
+        response = self.client.get(reverse('search', kwargs={'version': API_VERSION}), {'search': 'soda', 'technology': 'microarray'})
         self.assertEqual(response.json()['count'], 1)
 
         # Negative filter result
-        response = self.client.get('/search/?search=soda&technology=rna')
+        response = self.client.get(reverse('search', kwargs={'version': API_VERSION}), {'search': 'soda', 'technology': 'rna'})
         self.assertEqual(response.json()['count'], 0)
 
 class ProcessorTestCases(APITestCase):
@@ -1050,7 +1051,7 @@ class ProcessorTestCases(APITestCase):
         )
 
     def test_endpoint(self):
-        response = self.client.get(reverse('processors'))
+        response = self.client.get(reverse('processors', kwargs={'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         processors = response.json()['results']
@@ -1074,7 +1075,7 @@ class ProcessorTestCases(APITestCase):
         sra = SampleResultAssociation.objects.create(sample=sample, result=result)
 
         response = self.client.get(reverse('samples_detail',
-                                           kwargs={'accession_code': sample.accession_code}))
+                                           kwargs={'accession_code': sample.accession_code, 'version': API_VERSION}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         processor = response.json()['results'][0]['processor']
