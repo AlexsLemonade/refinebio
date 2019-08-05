@@ -16,6 +16,7 @@ from data_refinery_common.job_management import create_downloader_job
 from data_refinery_foreman.foreman.performant_pagination.pagination import PerformantPaginator as Paginator
 
 from data_refinery_common import job_lookup
+from data_refinery_common.utils import get_supported_microarray_platforms, get_supported_rnaseq_platforms
 
 logger = get_and_configure_logger(__name__)
 
@@ -32,7 +33,13 @@ class Command(BaseCommand):
         """ Requeues downloader jobs for samples that haven't been processed and their original files
         have no no downloader jobs associated with them
         """
+        supported_microarray_platforms = [x['platform_accession'] for x in get_supported_microarray_platforms()]
+        supported_rnaseq_platforms = [x.replace(' ', '') for x in get_supported_rnaseq_platforms()]
+        all_supported_platforms = supported_microarray_platforms + supported_rnaseq_platforms # https://www.postgresql.org/docs/9.1/functions-array.html
+
+        # Ensure selected samples have valid platforms
         samples_without_downloader = Sample.objects.all()\
+                                                   .filter(platform_accession_code__in=all_supported_platforms)\
                                                    .annotate(original_files_count=Count('original_files'), downloader_job_count=Count('original_files__downloader_jobs'))\
                                                    .filter(is_processed=False, original_files_count__gt=0, downloader_job_count=0)\
 
@@ -47,16 +54,11 @@ class Command(BaseCommand):
         page = paginator.page()
 
         while True:
-            count = 0
             for sample in page.object_list:
-                # ensure a downloader job can be created for the sample before trying to create a new one
-                downloader_task = job_lookup.determine_downloader_task(sample_object)
-                if downloader_task != job_lookup.Downloaders.NONE:
-                    logger.debug("Creating downloader job for a sample.", sample=sample.accession_code)
-                    create_downloader_job(sample.original_files.all())
-                    count = count + 1
+                logger.debug("Creating downloader job for a sample.", sample=sample.accession_code)
+                create_downloader_job(sample.original_files.all())
 
-            logger.info("Created %d new downloader jobs because their samples didn't have any.", count)
+            logger.info("Created %d new downloader jobs because their samples didn't have any.", PAGE_SIZE)
 
             if not page.has_next():
                 break
