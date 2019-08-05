@@ -1,4 +1,4 @@
-job "DOWNLOADER_${{RAM}}" {
+job "DOWNLOADER_${{INDEX}}_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -80,11 +80,10 @@ job "DOWNLOADER_${{RAM}}" {
         max_file_size = 1
       }
 
-      # Don't run on the smasher instance, it's too small and should be running smasher jobs.
       constraint {
-        attribute = "${meta.is_smasher}"
-        operator = "!="
-        value = "true"
+        attribute = "${meta.volume_index}"
+        operator  = "="
+        value     = "${{INDEX}}"
       }
 
       config {
