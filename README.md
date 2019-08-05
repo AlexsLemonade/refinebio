@@ -545,6 +545,13 @@ or for all organisms with sufficient data:
 nomad job dispatch -meta ORGANISM= CREATE_COMPENDIA
 ```
 
+Compendia jobs run on the smasher instance.
+However they require a very large amount of RAM to be able to complete.
+Our smasher instance does not generally have enough RAM to be able to run them, so if you need to run a smasher job you should temporarily increase the size of the smasher instance.
+This can be done by changing the terraform variable `smasher_instance_type` which can be found in qinfrastructure/variables.tf`.
+Select an AWS instance type that has enough RAM to run the compendia jobs.
+At the time of writing, compendia jobs require 180GB of RAM and m5.12xlarge has 192GM of RAM so it is sufficiently large to run the jobs.
+
 
 ### Running Tximport Early
 
