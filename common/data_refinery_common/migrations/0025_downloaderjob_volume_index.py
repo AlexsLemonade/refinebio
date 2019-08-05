@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0023_fix_platform_names_spaces'),
+        ('data_refinery_common', '0024_dataset_processor_jobs'),
     ]
 
     operations = [
