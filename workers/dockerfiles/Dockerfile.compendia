@@ -1,6 +1,6 @@
 FROM miserlou/python3base:latest
 
-# This is very similar to the `smasher` image, 
+# This is very similar to the `smasher` image,
 # but comes from a base image with OpenBLAS, needed for fast impuation,
 # and some of the other libraries required for fancyimpute.
 

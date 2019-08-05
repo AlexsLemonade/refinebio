@@ -175,6 +175,14 @@ def strong_quant_correlation(ref_filename, output_filename):
 
 
 class SalmonTestCase(TestCase):
+    def setUp(self):
+        # Insert the organism into the database so the model doesn't call the
+        # taxonomy API to populate it.
+        organism = Organism(name="CAENORHABDITIS_ELEGANS",
+                            taxonomy_id=6239,
+                            is_scientific_name=True)
+        organism.save()
+
     @tag('salmon')
     def test_salmon(self):
         """Test the whole pipeline."""
@@ -517,6 +525,12 @@ class SalmonToolsTestCase(TestCase):
 
     def setUp(self):
         self.test_dir = '/home/user/data_store/salmontools/'
+        # Insert the organism into the database so the model doesn't call the
+        # taxonomy API to populate it.
+        organism = Organism(name="CAENORHABDITIS_ELEGANS",
+                            taxonomy_id=6239,
+                            is_scientific_name=True)
+        organism.save()
 
     @tag('salmon')
     def test_double_reads(self):
@@ -595,6 +609,13 @@ class DetermineIndexLengthTestCase(TestCase):
     """Test salmon._determine_index_length function, which gets the salmon index length of a sample.
     For now, these tests only ensure that the output of the new faster salmon index function match
     that of the old one for the test data."""
+    def setUp(self):
+        # Insert the organism into the database so the model doesn't call the
+        # taxonomy API to populate it.
+        organism = Organism(name="CAENORHABDITIS_ELEGANS",
+                            taxonomy_id=6239,
+                            is_scientific_name=True)
+        organism.save()
 
     @tag('salmon')
     def test_salmon_determine_index_length_single_read(self):
@@ -896,6 +917,7 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
 
     job_context = salmon.get_tximport_inputs(job_context)
     job_context = salmon.tximport(job_context)
+    job_context = utils.end_job(job_context)
 
     return job_context
 
@@ -971,6 +993,7 @@ class EarlyTximportTestCase(TestCase):
             sample = tpm_file.samples.first()
             SampleComputedFileAssociation.objects.get(sample=sample, computed_file=tpm_file)
             SampleComputedFileAssociation.objects.get(sample=sample, computed_file=rds_file)
+            self.assertTrue(sample.is_processed)
 
         # Make sure that these samples actually were ignored.
         for accession_code in incomplete_accessions:

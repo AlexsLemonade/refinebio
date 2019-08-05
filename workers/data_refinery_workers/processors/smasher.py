@@ -151,11 +151,13 @@ def _get_tsv_columns(samples_metadata):
                     else:
                         _add_annotation_column(annotation_columns, annotation_key)
 
-    # Return sorted columns, in which "refinebio_accession_code" is always the first,
-    # followed by the other refinebio columns (in alphabetic order), and
+    # Return sorted columns, in which "refinebio_accession_code" and "experiment_accession" are
+    # always first, followed by the other refinebio columns (in alphabetic order), and
     # annotation columns (in alphabetic order) at the end.
     refinebio_columns.discard('refinebio_accession_code')
-    return ['refinebio_accession_code'] + sorted(refinebio_columns) + sorted(annotation_columns)
+    return ['refinebio_accession_code', 'experiment_accession'] + sorted(refinebio_columns) \
+        + sorted(annotation_columns)
+
 
 def _add_annotation_value(row_data, col_name, col_value, sample_accession_code):
     """Adds a new `col_name` key whose value is `col_value` to row_data.
@@ -184,7 +186,14 @@ def _add_annotation_value(row_data, col_name, col_value, sample_accession_code):
         )
 
 
-def _get_tsv_row_data(sample_metadata):
+def _get_experiment_accession(sample_accession_code, dataset_data):
+    for experiment_accession, samples in dataset_data.items():
+        if sample_accession_code in samples:
+            return experiment_accession
+    return ""  # Should never happen, because the sample is by definition in the dataset
+
+
+def _get_tsv_row_data(sample_metadata, dataset_data):
     """Returns field values based on input sample_metadata.
 
     Some annotation fields are treated specially because they are more
@@ -246,6 +255,9 @@ def _get_tsv_row_data(sample_metadata):
                     _add_annotation_value(row_data, annotation_key, annotation_value,
                                           sample_accession_code)
 
+    row_data["experiment_accession"] = _get_experiment_accession(sample_accession_code,
+                                                                 dataset_data)
+
     return row_data
 
 
@@ -273,7 +285,7 @@ def _write_tsv_json(job_context, metadata, smash_path):
                 dw.writeheader()
                 for sample_accession_code, sample_metadata in metadata['samples'].items():
                     if sample_accession_code in experiment_data['sample_accession_codes']:
-                        row_data = _get_tsv_row_data(sample_metadata)
+                        row_data = _get_tsv_row_data(sample_metadata, job_context["dataset"].data)
                         dw.writerow(row_data)
         return tsv_paths
     # Per-Species Metadata
@@ -290,7 +302,7 @@ def _write_tsv_json(job_context, metadata, smash_path):
                 dw.writeheader()
                 for sample_metadata in metadata['samples'].values():
                     if sample_metadata.get('refinebio_organism', '') == species:
-                        row_data = _get_tsv_row_data(sample_metadata)
+                        row_data = _get_tsv_row_data(sample_metadata, job_context["dataset"].data)
                         dw.writerow(row_data)
                         samples_in_species.append(sample_metadata)
 
@@ -313,9 +325,10 @@ def _write_tsv_json(job_context, metadata, smash_path):
             dw = csv.DictWriter(tsv_file, columns, delimiter='\t')
             dw.writeheader()
             for sample_metadata in metadata['samples'].values():
-                row_data = _get_tsv_row_data(sample_metadata)
+                row_data = _get_tsv_row_data(sample_metadata, job_context["dataset"].data)
                 dw.writerow(row_data)
         return [tsv_path]
+
 
 def _quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict:
     """
