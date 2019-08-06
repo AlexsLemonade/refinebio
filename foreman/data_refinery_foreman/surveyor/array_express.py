@@ -43,57 +43,14 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         return Downloaders.ARRAY_EXPRESS.value
 
     @staticmethod
-    def _apply_metadata_to_experiment(experiment_object: Experiment, parsed_json: Dict):
-        experiment = {}
-        experiment["name"] = parsed_json["name"]
-        experiment["experiment_accession_code"] = experiment_object.accession_code
-
-        # If there is more than one arraydesign listed in the experiment
-        # then there is no other way to determine which array was used
-        # for which sample other than looking at the header of the CEL
-        # file. That obviously cannot happen until the CEL file has been
-        # downloaded so we can just mark it as UNKNOWN and let the
-        # downloader inspect the downloaded file to determine the
-        # array then.
-        if len(parsed_json["arraydesign"]) != 1\
-           or "accession" not in parsed_json["arraydesign"][0]:
-            experiment["platform_accession_code"] = UNKNOWN
-            experiment["platform_accession_name"] = UNKNOWN
-            experiment["manufacturer"] = UNKNOWN
-        else:
-            external_accession = parsed_json["arraydesign"][0]["accession"]
-            for platform in get_supported_microarray_platforms():
-                if platform["external_accession"] == external_accession:
-                    experiment["platform_accession_code"] = \
-                        get_normalized_platform(platform["platform_accession"])
-
-                    # Illumina appears in the accession codes for
-                    # platforms manufactured by Illumina
-                    if "ILLUMINA" in experiment["platform_accession_code"].upper():
-                        experiment["manufacturer"] = "ILLUMINA"
-                        experiment["platform_accession_name"] = platform["platform_accession"]
-                    else:
-                        # It's not Illumina, the only other supported Microarray platform is
-                        # Affy. As our list of supported platforms grows this logic will
-                        # need to get more sophisticated.
-                        experiment["manufacturer"] = "AFFYMETRIX"
-                        platform_mapping = get_readable_affymetrix_names()
-                        experiment["platform_accession_name"] = platform_mapping[
-                            platform["platform_accession"]]
-
-            if "platform_accession_code" not in experiment:
-                # We don't know what platform this accession corresponds to.
-                experiment["platform_accession_code"] = external_accession
-                experiment["platform_accession_name"] = UNKNOWN
-                experiment["manufacturer"] = UNKNOWN
-
-        experiment["release_date"] = parsed_json["releasedate"]
-
+    def _get_last_update_date(parsed_json: Dict) -> str:
         if "lastupdatedate" in parsed_json:
-            experiment["last_update_date"] = parsed_json["lastupdatedate"]
+            return parsed_json["lastupdatedate"]
         else:
-            experiment["last_update_date"] = parsed_json["releasedate"]
+            return parsed_json["releasedate"]
 
+    @classmethod
+    def _apply_metadata_to_experiment(cls, experiment_object: Experiment, parsed_json: Dict):
         # We aren't sure these fields will be populated, or how many there will be.
         # Try to join them all together, or set a sensible default.
         experiment_descripton = ""
@@ -111,8 +68,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
         # Express to get other kinds of data.
         experiment_object.technology = "MICROARRAY"
         experiment_object.description = experiment_descripton
-        experiment_object.source_first_published = parse_datetime(experiment["release_date"])
-        experiment_object.source_last_modified = parse_datetime(experiment["last_update_date"])
+
+        experiment_object.source_first_published = parse_datetime(parsed_json["releasedate"])
+        experiment_object.source_last_modified \
+            = parse_datetime(cls._get_last_update_date(parsed_json))
 
     def create_experiment_from_api(self, experiment_accession_code: str) -> (Experiment, Dict):
         """Given an experiment accession code, create an Experiment object.
@@ -136,13 +95,55 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                          survey_job=self.survey_job.id)
             raise
 
-        # Check the received JSON
+        experiment = {}
+        experiment["name"] = parsed_json["name"]
+        experiment["experiment_accession_code"] = experiment_accession_code
+
+        # This experiment has no platform at all, and is therefore useless.
         if 'arraydesign' not in parsed_json or len(parsed_json["arraydesign"]) == 0:
-            # This experiment has no platform at all, and is therefore useless.
             logger.warn("Remote experiment has no arraydesign listed.",
                         experiment_accession_code=experiment_accession_code,
                         survey_job=self.survey_job.id)
             raise UnsupportedPlatformException
+        # If there is more than one arraydesign listed in the experiment
+        # then there is no other way to determine which array was used
+        # for which sample other than looking at the header of the CEL
+        # file. That obviously cannot happen until the CEL file has been
+        # downloaded so we can just mark it as UNKNOWN and let the
+        # downloader inspect the downloaded file to determine the
+        # array then.
+        elif len(parsed_json["arraydesign"]) != 1 or "accession" not in parsed_json["arraydesign"][0]:
+            experiment["platform_accession_code"] = UNKNOWN
+            experiment["platform_accession_name"] = UNKNOWN
+            experiment["manufacturer"] = UNKNOWN
+        else:
+            external_accession = parsed_json["arraydesign"][0]["accession"]
+            for platform in get_supported_microarray_platforms():
+                if platform["external_accession"] == external_accession:
+                    experiment["platform_accession_code"] = get_normalized_platform(platform["platform_accession"])
+
+                    # Illumina appears in the accession codes for
+                    # platforms manufactured by Illumina
+                    if "ILLUMINA" in experiment["platform_accession_code"].upper():
+                        experiment["manufacturer"] = "ILLUMINA"
+                        experiment["platform_accession_name"] = platform["platform_accession"]
+                    else:
+                        # It's not Illumina, the only other supported Microarray platform is
+                        # Affy. As our list of supported platforms grows this logic will
+                        # need to get more sophisticated.
+                        experiment["manufacturer"] = "AFFYMETRIX"
+                        platform_mapping = get_readable_affymetrix_names()
+                        experiment["platform_accession_name"] = platform_mapping[
+                            platform["platform_accession"]]
+
+            if "platform_accession_code" not in experiment:
+                # We don't know what platform this accession corresponds to.
+                experiment["platform_accession_code"] = external_accession
+                experiment["platform_accession_name"] = UNKNOWN
+                experiment["manufacturer"] = UNKNOWN
+
+        experiment["release_date"] = parsed_json["releasedate"]
+        experiment["last_update_date"] = self._get_last_update_date(parsed_json)
 
         # Create the experiment object
         try:
