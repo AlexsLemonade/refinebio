@@ -58,7 +58,7 @@ class SurveyTestCase(TransactionTestCase):
         command.handle()
 
     def test_geo_experiment_missing_metadata(self):
-        """Tests that an SRA experiment has its missing metadata added."""
+        """Tests that a GEO experiment has its missing metadata added."""
 
         # 1. Create an experiment with a bad title
         BAD_TITLE = "GEO accession GSE1337 is currently private\
@@ -85,7 +85,7 @@ class SurveyTestCase(TransactionTestCase):
         command.handle()
 
     def test_array_express_experiment_missing_metadata(self):
-        """Tests that an SRA experiment has its missing metadata added."""
+        """Tests that an ArrayExpress experiment has its missing metadata added."""
 
         # 1. Create an experiment with a bad title
         BAD_TITLE = "GEO accession GSE1337 is currently private\

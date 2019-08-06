@@ -22,10 +22,10 @@ class Command(BaseCommand):
             "--source-database",
             type=str,
             help=("The name of a source database, such as ARRAY_EXPRESS, GEO, or SRA."
-                  "All samples from this source database will have their metadata refreshed."))
+                  "All experiments from this source database will have their metadata refreshed."))
 
     def handle(self, *args, **options):
-        """Refreshes the metadata for RNA-Seq samples
+        """Refreshes the metadata for all experiments, or experiments from a specific database
         """
         possible_source_databases = ["ARRAY_EXPRESS", "GEO", "SRA"]
 

@@ -25,7 +25,7 @@ class Command(BaseCommand):
                   "All samples from this source database will have their metadata refreshed."))
 
     def handle(self, *args, **options):
-        """Refreshes the metadata for RNA-Seq samples
+        """Refreshes the metadata for all samples, or samples from a specific database
         """
         possible_source_databases = ["ARRAY_EXPRESS", "GEO", "SRA"]
 
