@@ -966,6 +966,10 @@ class ESTestCases(APITestCase):
         }
         computational_result.save()
 
+        # and associate it with the sample organism
+        sample.organism.qn_target = result
+        sample.organism.save()
+
         sra = SampleResultAssociation()
         sra.sample = sample
         sra.result = result
