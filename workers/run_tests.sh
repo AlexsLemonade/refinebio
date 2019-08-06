@@ -93,7 +93,7 @@ if [ -z "$tag" ] || [ "$tag" = "salmon" ]; then
     git clone https://github.com/dongbohu/tximport_test.git "$volume_directory"/tximport_test
 
     # Make sure data for Salmon test is downloaded from S3.
-    rna_seq_test_raw_dir="$volume_directory/raw/TEST/SALMON"
+    rna_seq_test_raw_dir="$volume_directory/raw/TEST/ERR1562482"
     read_1_name="ERR1562482_1.fastq.gz"
     read_2_name="ERR1562482_2.fastq.gz"
     dotsra_name="ERR1562482.sra"

@@ -70,7 +70,7 @@ def prepare_job():
     c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
 
     samp = Sample()
-    samp.accession_code = "SALMON" # So the test files go to the right place
+    samp.accession_code = "ERR1562482"
     samp.organism = c_elegans
     samp.source_database = 'SRA'
     samp.technology = 'RNA-SEQ'
@@ -81,14 +81,14 @@ def prepare_job():
     og_file = OriginalFile()
     og_file.source_filename = "ERR1562482_1.fastq.gz"
     og_file.filename = "ERR1562482_1.fastq.gz"
-    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR1562482_1.fastq.gz"
+    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/ERR1562482/ERR1562482_1.fastq.gz"
     og_file.is_downloaded = True
     og_file.save()
 
     og_file2 = OriginalFile()
     og_file2.source_filename = "ERR1562482_2.fastq.gz"
     og_file2.filename = "ERR1562482_2.fastq.gz"
-    og_file2.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/ERR1562482_2.fastq.gz"
+    og_file2.absolute_file_path = "/home/user/data_store/raw/TEST/ERR1562482/ERR1562482_2.fastq.gz"
     og_file2.is_downloaded = True
     og_file2.save()
 
@@ -123,7 +123,7 @@ def prepare_dotsra_job(filename="ERR1562482.sra"):
     c_elegans = Organism.get_object_for_name("CAENORHABDITIS_ELEGANS")
 
     samp = Sample()
-    samp.accession_code = "SALMON" # So the test files go to the right place
+    samp.accession_code = "ERR1562482"
     samp.organism = c_elegans
     samp.source_database = 'SRA'
     samp.technology = 'RNA-SEQ'
@@ -134,7 +134,7 @@ def prepare_dotsra_job(filename="ERR1562482.sra"):
     og_file = OriginalFile()
     og_file.source_filename = filename
     og_file.filename = filename
-    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/SALMON/" + filename
+    og_file.absolute_file_path = "/home/user/data_store/raw/TEST/ERR1562482/" + filename
     og_file.is_downloaded = True
     og_file.save()
 
@@ -188,7 +188,7 @@ class SalmonTestCase(TestCase):
         """Test the whole pipeline."""
         # Ensure any computed files from previous tests are removed.
         try:
-            os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
+            os.remove("/home/user/data_store/raw/TEST/ERR1562482/processed/quant.sf")
         except FileNotFoundError:
             pass
 
@@ -207,7 +207,7 @@ class SalmonTestCase(TestCase):
         """Test that salmon won't be run on data coming from GEO."""
         # Ensure any computed files from previous tests are removed.
         try:
-            os.remove("/home/user/data_store/raw/TEST/SALMON/processed/quant.sf")
+            os.remove("/home/user/data_store/raw/TEST/ERR1562482/processed/quant.sf")
         except FileNotFoundError:
             pass
 
