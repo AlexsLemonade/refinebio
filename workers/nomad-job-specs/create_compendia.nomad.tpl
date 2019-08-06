@@ -77,12 +77,7 @@ job "CREATE_COMPENDIA" {
         max_file_size = 1
       }
 
-      # Don't run on the smasher instance, it's too small
-      constraint {
-        attribute = "${meta.is_smasher}"
-        operator = "!="
-        value = "true"
-      }
+      ${{SMASHER_CONSTRAINT}}
 
       config {
         image = "${{DOCKERHUB_REPO}}/${{COMPENDIA_DOCKER_IMAGE}}"

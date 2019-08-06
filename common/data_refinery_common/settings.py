@@ -137,3 +137,14 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 RUNNING_IN_CLOUD = get_env_variable('RUNNING_IN_CLOUD') == "True"
+
+
+# Caching
+# https://docs.djangoproject.com/en/2.2/topics/cache/
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cache_table',
+    }
+}
