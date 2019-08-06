@@ -1,3 +1,4 @@
+from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import timedelta, datetime
 import requests
 import mailchimp3
@@ -6,6 +7,7 @@ from typing import Dict
 from itertools import groupby
 from re import match
 from django.conf import settings
+from django.core.cache import cache
 from django.db.models import Count, Prefetch, DateTimeField
 from django.db.models.functions import Trunc
 from django.db.models.aggregates import Avg, Sum
@@ -872,6 +874,7 @@ class ProcessorJobList(generics.ListAPIView):
 # Statistics
 ###
 
+
 class Stats(APIView):
     """ Statistics about the health of the system. """
 
@@ -881,18 +884,32 @@ class Stats(APIView):
         enum=('day', 'week', 'month', 'year',)
     )])
     def get(self, request, version, format=None):
+        cached_stats = cache.get("stats", None)
         range_param = request.query_params.dict().pop('range', None)
 
+        # This should only need to run once for each range at most. From then on,
+        # the cache is refreshed in the background using apscheduler.
+        # We index the dict by str(range_param) because None is the default range.
+        if cached_stats is None or cached_stats.get(str(range_param), None) is None:
+            cached_stats = Stats.update_cache(range_param)
+
+        return Response(cached_stats[str(range_param)])
+
+    @classmethod
+    def update_cache(cls, range_param):
+
+        logger.info("Updating cache")
+
         data = {}
-        data['survey_jobs'] = self._get_job_stats(SurveyJob.objects, range_param)
-        data['downloader_jobs'] = self._get_job_stats(DownloaderJob.objects, range_param)
-        data['processor_jobs'] = self._get_job_stats(ProcessorJob.objects, range_param)
-        data['experiments'] = self._get_object_stats(Experiment.objects, range_param)
+        data['survey_jobs'] = cls._get_job_stats(SurveyJob.objects, range_param)
+        data['downloader_jobs'] = cls._get_job_stats(DownloaderJob.objects, range_param)
+        data['processor_jobs'] = cls._get_job_stats(ProcessorJob.objects, range_param)
+        data['experiments'] = cls._get_object_stats(Experiment.objects, range_param)
 
         # processed and unprocessed samples stats
-        data['unprocessed_samples'] = self._get_object_stats(Sample.objects.filter(is_processed=False), range_param, 'last_modified')
-        data['processed_samples'] = self._get_object_stats(Sample.processed_objects, range_param, 'last_modified')
-        data['processed_samples']['last_hour'] = self._samples_processed_last_hour()
+        data['unprocessed_samples'] = cls._get_object_stats(Sample.objects.filter(is_processed=False), range_param, 'last_modified')
+        data['processed_samples'] = cls._get_object_stats(Sample.processed_objects, range_param, 'last_modified')
+        data['processed_samples']['last_hour'] = cls._samples_processed_last_hour()
 
         data['processed_samples']['technology'] = {}
         techs = Sample.processed_objects.values('technology').annotate(count=Count('technology'))
@@ -908,21 +925,29 @@ class Stats(APIView):
                 continue
             data['processed_samples']['organism'][organism['organism__name']] = organism['count']
 
-        data['processed_experiments'] = self._get_object_stats(Experiment.processed_public_objects)
+        data['processed_experiments'] = cls._get_object_stats(Experiment.processed_public_objects)
         data['active_volumes'] = list(get_active_volumes())
-        data['dataset'] = self._get_dataset_stats(range_param)
+        data['dataset'] = cls._get_dataset_stats(range_param)
 
         if range_param:
-            data['input_data_size'] = self._get_input_data_size()
-            data['output_data_size'] = self._get_output_data_size()
+            data['input_data_size'] = cls._get_input_data_size()
+            data['output_data_size'] = cls._get_output_data_size()
 
         data.update(get_nomad_jobs_breakdown())
 
-        return Response(data)
+        cached_data = cache.get("stats")
+        if cached_data is None:
+            cached_data = dict()
+
+        cached_data[str(range_param)] = data
+        cache.set("stats", cached_data, None)
+
+        return cached_data
 
     EMAIL_USERNAME_BLACKLIST = ['arielsvn', 'miserlou', 'kurt.wheeler91', 'd.prasad']
 
-    def _get_dataset_stats(self, range_param):
+    @classmethod
+    def _get_dataset_stats(cls, range_param):
         """Returns stats for processed datasets"""
         filter_query = Q()
         for username in Stats.EMAIL_USERNAME_BLACKLIST:
@@ -941,7 +966,7 @@ class Stats(APIView):
         if range_param:
             # We don't save the dates when datasets are processed, but we can use
             # `last_modified`, since datasets aren't modified again after they are processed
-            result['timeline'] = self._get_intervals(
+            result['timeline'] = cls._get_intervals(
                 processed_datasets,
                 range_param,
                 'last_modified'
@@ -951,12 +976,14 @@ class Stats(APIView):
             )
         return result
 
-    def _samples_processed_last_hour(self):
+    @classmethod
+    def _samples_processed_last_hour(cls):
         current_date = datetime.now(tz=timezone.utc)
         start = current_date - timedelta(hours=1)
         return Sample.processed_objects.filter(last_modified__range=(start, current_date)).count()
 
-    def _get_input_data_size(self):
+    @classmethod
+    def _get_input_data_size(cls):
         total_size = OriginalFile.objects.filter(
             sample__is_processed=True  # <-- SLOW
         ).aggregate(
@@ -964,7 +991,8 @@ class Stats(APIView):
         )
         return total_size['size_in_bytes__sum'] if total_size['size_in_bytes__sum'] else 0
 
-    def _get_output_data_size(self):
+    @classmethod
+    def _get_output_data_size(cls):
         total_size = ComputedFile.public_objects.all().filter(
             s3_bucket__isnull=False,
             s3_key__isnull=True
@@ -973,7 +1001,8 @@ class Stats(APIView):
         )
         return total_size['size_in_bytes__sum'] if total_size['size_in_bytes__sum'] else 0
 
-    def _get_job_stats(self, jobs, range_param):
+    @classmethod
+    def _get_job_stats(cls, jobs, range_param):
         result = jobs.aggregate(
             total=Count('id'),
             successful=Count('id', filter=Q(success=True)),
@@ -991,7 +1020,7 @@ class Stats(APIView):
             result['average_time'] = result['average_time'].total_seconds()
 
         if range_param:
-            result['timeline'] = self._get_intervals(jobs, range_param) \
+            result['timeline'] = cls._get_intervals(jobs, range_param) \
                                      .annotate(
                                          total=Count('id'),
                                          successful=Count('id', filter=Q(success=True)),
@@ -1002,18 +1031,20 @@ class Stats(APIView):
 
         return result
 
-    def _get_object_stats(self, objects, range_param = False, field = 'created_at'):
+    @classmethod
+    def _get_object_stats(cls, objects, range_param=False, field='created_at'):
         result = {
             'total': objects.count()
         }
 
         if range_param:
-            result['timeline'] = self._get_intervals(objects, range_param, field)\
+            result['timeline'] = cls._get_intervals(objects, range_param, field)\
                                      .annotate(total=Count('id'))
 
         return result
 
-    def _get_intervals(self, objects, range_param, field = 'created_at'):
+    @classmethod
+    def _get_intervals(cls, objects, range_param, field='created_at'):
         range_to_trunc = {
             'day': 'hour',
             'week': 'day',
@@ -1035,6 +1066,15 @@ class Stats(APIView):
         return objects.annotate(start=Trunc(field, range_to_trunc.get(range_param), output_field=DateTimeField())) \
                       .values('start') \
                       .filter(start__gte=range_to_start_date.get(range_param))
+
+
+STAT_CACHE_REFRESH_INTERVAL_MINUTES = 5
+scheduler = BackgroundScheduler()
+for timeframe in ('day', 'week', 'month', 'year', None):
+    scheduler.add_job(Stats.update_cache, 'interval', [timeframe],
+                      minutes=STAT_CACHE_REFRESH_INTERVAL_MINUTES)
+scheduler.start()
+
 
 ###
 # Transcriptome Indices
