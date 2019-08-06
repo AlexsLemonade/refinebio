@@ -167,7 +167,7 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
         if original_file.is_affy_data():
             # Only Affymetrix Microarrays produce .CEL files
             sample_object.technology = 'MICROARRAY'
-            sample_object.manufacturer = 'AFFYMETRTIX'
+            sample_object.manufacturer = 'AFFYMETRIX'
             sample_object.save()
 
         pipeline_to_apply = determine_processor_pipeline(sample_object, original_file)
