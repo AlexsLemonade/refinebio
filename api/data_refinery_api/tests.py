@@ -743,6 +743,11 @@ class APITestCases(APITestCase):
         }
         cra.save()
 
+        homo_sapiens.qn_target = result
+        homo_sapiens.save()
+        danio_rerio.qn_target = result
+        danio_rerio.save()
+
         response = self.client.get(reverse('qn_targets_available', kwargs={'version': API_VERSION}))
         self.assertEqual(len(response.json()), 2)
 
