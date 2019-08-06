@@ -194,6 +194,7 @@ class DownloaderJob(models.Model):
 
     # Resources
     ram_amount = models.IntegerField(default=1024)
+    volume_index = models.CharField(max_length=3, null=True)
 
     # This field represents how many times this job has been
     # retried. It starts at 0 and each time the job has to be retried

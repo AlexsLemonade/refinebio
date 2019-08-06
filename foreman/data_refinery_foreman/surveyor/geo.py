@@ -375,7 +375,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     if original_file.is_affy_data():
                         # Only Affymetrix Microarrays produce .CEL files
                         sample_object.technology = 'MICROARRAY'
-                        sample_object.manufacturer = 'AFFYMETRTIX'
+                        sample_object.manufacturer = 'AFFYMETRIX'
                         sample_object.save()
 
                 # It's okay to survey RNA-Seq samples from GEO, but we
