@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0022_auto_20190607_1505'),
+        ('data_refinery_common', '0026_fix_typo_in_sample_manufacturer'),
     ]
 
     operations = [
