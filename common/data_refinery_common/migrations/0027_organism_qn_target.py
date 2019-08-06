@@ -6,6 +6,7 @@ import django.db.models.deletion
 def update_organisms_qn_targets(apps, schema_editor):
     """ Set the latest qn_target to each organism. """
     Organism = apps.get_model('data_refinery_common', 'Organism')
+    ComputationalResultAnnotation = apps.get_model('data_refinery_common', 'ComputationalResultAnnotation')
 
     for organism in Organism.objects.all():
         result_annotation = ComputationalResultAnnotation.objects.all()\
@@ -19,7 +20,7 @@ def update_organisms_qn_targets(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0025_downloaderjob_volume_index'),
+        ('data_refinery_common', '0026_fix_typo_in_sample_manufacturer'),
     ]
 
     operations = [
