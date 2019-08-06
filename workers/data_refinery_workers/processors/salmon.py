@@ -677,25 +677,31 @@ def _run_salmon(job_context: Dict) -> Dict:
             # Okay, for some reason I can't explain, this only works in the temp directory,
             # otherwise the `tee` part will only output to one or the other of the streams (non-deterministically),
             # but not both. This doesn't appear to happen if the fifos are in tmp.
-            alpha1 = "/tmp/alpha1"
+            alpha1 = job_context["work_dir"] + job_context["sample_accession_code"] + "_1.fastq.gz"
             os.mkfifo(alpha1)
-            alpha2 = "/tmp/alpha2"
+            alpha2 = alpha1 + ".fifo1"
             os.mkfifo(alpha2)
 
-            beta1 = "/tmp/beta1"
+            beta1 = job_context["work_dir"] + job_context["sample_accession_code"] + "_2.fastq.gz"
             os.mkfifo(beta1)
-            beta2 = "/tmp/beta2"
+            beta2 = beta1 + ".fifo1"
             os.mkfifo(beta2)
 
-            dump_str = "fastq-dump --stdout --split-files -I {input_sra_file} | tee >(grep '@.*\.1\s' -A3 --no-group-separator > {fifo_alpha}) >(grep '@.*\.2\s' -A3 --no-group-separator > {fifo_beta}) > /dev/null &"
+            unmated_fifo = job_context["work_dir"] + job_context["sample_accession_code"] + ".fastq.gz"
+            os.mkfifo(unmated_fifo)
+
+            dump_str = "cd {work_dir} && fastq-dump --gzip --split-3 -I {input_sra_file} &"
             formatted_dump_command = dump_str.format(input_sra_file=job_context["sra_input_file_path"],
-                                                     fifo_alpha=alpha1,
-                                                     fifo_beta=beta1)
+                                                     work_dir=job_context["work_dir"])
             dump_po = subprocess.Popen(formatted_dump_command,
                                         shell=True,
                                         executable='/bin/bash',
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT)
+
+            unmated_process = subprocess.Popen(["cat", unmated_fifo, ">", "/dev/null", "&"],
+                                               stdout=subprocess.PIPE,
+                                               stderr=subprocess.STDOUT)
 
             buffer_str_1 = "/home/user/buffer.py < {alpha1} > {alpha2} &"
             formatted_buffer_command_1 = buffer_str_1.format(alpha1=alpha1, alpha2=alpha2)
