@@ -48,6 +48,9 @@ COPY common/install_devtools.R .
 
 RUN Rscript install_devtools.R
 
+COPY workers/R_dependencies/no_op/dependencies.R .
+RUN Rscript dependencies.R
+
 COPY workers/install_gene_convert.R .
 RUN Rscript install_gene_convert.R
 RUN mkdir -p gene_indexes

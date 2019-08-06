@@ -1,0 +1,9 @@
+data.table
+optparse
+rlang
+pillar
+tibble
+lazyeval
+dplyr
+reshape2
+RSQLite

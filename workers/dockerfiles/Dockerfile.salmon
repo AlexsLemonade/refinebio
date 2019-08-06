@@ -54,6 +54,8 @@ RUN rm -f Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
 # Install R dependencies
 COPY common/install_devtools.R .
 RUN Rscript install_devtools.R
+COPY workers/R_dependencies/tximport/dependencies.R tximport_dependencies.R
+RUN Rscript tximport_dependencies.R
 
 # Install tximport
 COPY workers/install_tximport.R .
