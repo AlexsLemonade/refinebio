@@ -35,26 +35,6 @@ SYSTEM_VERSION = get_env_variable("SYSTEM_VERSION")
 BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
 CURRENT_JOB = None
 
-def get_max_jobs_for_current_node():
-    """ Determine the maximum number of Downloader jobs that this node should sustain,
-    based on total system RAM."""
-
-    total_vm = psutil.virtual_memory().total
-    gb = int(total_vm / 1000000000)
-    logger.info("Detected " + str(gb) + "GB of RAM.")
-
-    # We basically want to hit 2GB/s total across our entire cluster. Each job hits ~20MB/s,
-    # so it'd take 100 jobs to hit our limit. Our cluster has 10TB of RAM, which is ~10000 GB.
-    # 100 jobs per 10000 GB = 1 job per 100 GB
-    max_jobs = (gb/100)
-
-    # However this will make sure we can still run a few jobs in local environments and in CI.
-    if max_jobs < 5:
-        max_jobs = 5
-
-    return max_jobs
-
-MAX_DOWNLOADER_JOBS_PER_NODE = get_max_jobs_for_current_node()
 
 def signal_handler(sig, frame):
     """Signal Handler, works for both SIGTERM and SIGINT"""
@@ -68,7 +48,8 @@ def signal_handler(sig, frame):
         CURRENT_JOB.save()
         sys.exit(0)
 
-def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_NODE, force_harakiri=False) -> DownloaderJob:
+
+def start_job(job_id: int) -> DownloaderJob:
     """Record in the database that this job is being started.
 
     Retrieves the job from the database and returns it after marking
@@ -82,30 +63,6 @@ def start_job(job_id: int, max_downloader_jobs_per_node=MAX_DOWNLOADER_JOBS_PER_
         raise
 
     worker_id = get_instance_id()
-    num_downloader_jobs_currently_running = DownloaderJob.objects.filter(
-                                worker_id=worker_id,
-                                start_time__isnull=False,
-                                end_time__isnull=True,
-                                success__isnull=True,
-                                retried=False
-                            ).count()
-
-    # Death and rebirth.
-    # if settings.RUNNING_IN_CLOUD or force_harakiri:
-    #     if num_downloader_jobs_currently_running >= int(max_downloader_jobs_per_node):
-    #         # Wait for the death window
-    #         while True:
-    #             seconds = datetime.datetime.now().second
-    #             # Mass harakiri happens every 15 seconds.
-    #             if seconds % 15 == 0:
-    #                 job.start_time = None
-    #                 job.num_retries = job.num_retries - 1
-    #                 job.failure_reason = "Killed by harakiri"
-    #                 job.success = False
-    #                 job.save()
-
-    #                 # What is dead may never die!
-    #                 sys.exit(0)
 
     # This job should not have been started.
     if job.start_time is not None:
@@ -152,7 +109,7 @@ def end_downloader_job(job: DownloaderJob, success: bool):
     """
     if success:
         logger.debug("Downloader Job completed successfully.",
-                    downloader_job=job.id)
+                     downloader_job=job.id)
     else:
         # Should be set by now, but make sure.
         success = False
@@ -175,6 +132,7 @@ def end_downloader_job(job: DownloaderJob, success: bool):
     job.success = success
     job.end_time = timezone.now()
     job.save()
+
 
 def delete_if_blacklisted(original_file: OriginalFile) -> OriginalFile:
     extension = original_file.filename.split(".")[-1]
@@ -209,7 +167,7 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
         if original_file.is_affy_data():
             # Only Affymetrix Microarrays produce .CEL files
             sample_object.technology = 'MICROARRAY'
-            sample_object.manufacturer = 'AFFYMETRTIX'
+            sample_object.manufacturer = 'AFFYMETRIX'
             sample_object.save()
 
         pipeline_to_apply = determine_processor_pipeline(sample_object, original_file)

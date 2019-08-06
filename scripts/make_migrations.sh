@@ -33,3 +33,10 @@ docker run \
        --add-host=nomad:"$HOST_IP" \
        --env-file ../common/environments/local \
        ccdlstaging/dr_migrations python3.6 manage.py migrate
+
+docker run \
+       --volume "$script_directory/../common/data_refinery_common":/home/user/data_refinery_common \
+       --add-host=database:"$DB_HOST_IP" \
+       --add-host=nomad:"$HOST_IP" \
+       --env-file ../common/environments/local \
+       ccdlstaging/dr_migrations python3.6 manage.py createcachetable

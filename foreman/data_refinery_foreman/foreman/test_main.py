@@ -1,5 +1,6 @@
 from unittest.mock import patch, MagicMock
 import datetime
+import math
 import time
 from django.utils import timezone
 from django.test import TransactionTestCase, TestCase
@@ -130,20 +131,32 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
+    @patch('data_refinery_foreman.foreman.main.get_nomad_jobs_breakdown')
     @patch('data_refinery_foreman.foreman.main.send_job')
-    def test_retrying_many_failed_downloader_jobs(self, mock_send_job):
+    def test_retrying_many_failed_downloader_jobs(self, mock_send_job, mock_breakdown):
         mock_send_job.return_value = True
+        mock_breakdown.return_value = {"nomad_pending_jobs_by_volume": {"0": 7, "1": 9},
+                                       "nomad_running_jobs_by_volume": {"0": 60, "1": 90}}
 
-        NUM_PAGES = 5
+        main.update_volume_work_depth(datetime.timedelta(0))
+        self.assertEqual(main.VOLUME_WORK_DEPTH, {"0": 67, "1": 99})
+
+        # Ensure that there are at least enough jobs to saturate the desired work depth
+        # for both mocked volumes
+        NUM_PAGES = 4 + math.ceil(2 * main.DESIRED_WORK_DEPTH / main.PAGE_SIZE)
         for x in range(0, main.PAGE_SIZE * NUM_PAGES):
             job = self.create_downloader_job(str(x))
             job.success = False
             job.save()
 
         main.retry_failed_downloader_jobs()
-        # No jobs actually make it in Nomad queue, so expect
-        # DOWNLOADER_JOBS_PER_NODE jobs per page.
-        self.assertEqual(len(mock_send_job.mock_calls), main.DOWNLOADER_JOBS_PER_NODE * NUM_PAGES)
+        # No jobs actually make it in Nomad queue, but we keep a tally of the last reported work
+        # depth plus any new queued jobs, so this should only queue up enough jobs to fill the
+        # DESIRED_WORK_DEPTH for every node
+        # ((DESIRED_WORK_DEPTH - 67) + (DESIRED_WORK_DEPTH - 99) jobs in total)
+        self.assertEqual(len(mock_send_job.mock_calls), 2 * main.DESIRED_WORK_DEPTH - 67 - 99)
+        self.assertEqual(main.VOLUME_WORK_DEPTH,
+                         {"0": main.DESIRED_WORK_DEPTH, "1": main.DESIRED_WORK_DEPTH})
 
         jobs = DownloaderJob.objects.order_by('id')
 
@@ -152,7 +165,7 @@ class ForemanTestCase(TestCase):
         self.assertEqual(original_job.num_retries, 0)
         self.assertFalse(original_job.success)
 
-        retried_job = jobs[10001]
+        retried_job = jobs[main.PAGE_SIZE * NUM_PAGES + 1]
         self.assertEqual(retried_job.num_retries, 1)
 
     @patch('data_refinery_foreman.foreman.main.send_job')
@@ -395,10 +408,9 @@ class ForemanTestCase(TestCase):
         self.assertEqual(original_job.ram_amount, 16384)
         self.assertEqual(retried_job.ram_amount, 32768)
 
-    @patch('os.remove')
     @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
-    def test_repeated_processor_failures(self, mock_send_job, mock_get_active_volumes, mock_os_remove):
+    def test_repeated_processor_failures(self, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
         mock_get_active_volumes.return_value = {"1", "2", "3"}
 
@@ -426,8 +438,6 @@ class ForemanTestCase(TestCase):
         self.assertTrue(last_job.retried)
         self.assertEqual(last_job.num_retries, main.MAX_NUM_RETRIES)
         self.assertFalse(last_job.success)
-
-        mock_os_remove.assert_called_with("nor this")
 
     @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
@@ -984,9 +994,6 @@ class ForemanTestCase(TestCase):
         for p in ProcessorJob.objects.filter(pipeline_applied="JANITOR"):
             self.assertTrue(p.volume_index in ixs)
             ixs.remove(p.volume_index)
-
-    def test_get_max_downloader_jobs(self):
-        self.assertNotEqual(main.get_max_downloader_jobs(), 0)
 
 
 class CleanDatabaseTestCase(TransactionTestCase):
