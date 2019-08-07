@@ -13,6 +13,7 @@ from data_refinery_common.models import (
     DownloaderJobOriginalFileAssociation,
     OriginalFile,
 )
+from data_refinery_common.rna_seq import _build_ena_file_url
 from data_refinery_common.utils import get_env_variable, get_https_sra_download
 from data_refinery_workers.downloaders import utils
 
@@ -194,6 +195,83 @@ def _download_file_aspera(download_url: str,
     return True
 
 
+def _has_unmated_reads(accession_code: str) -> bool:
+    """Checks if the SRA accession has unmated reads.
+
+    Returns True if it does and False if it doesn't."""
+    full_ftp_link = _build_ena_file_url(accession_code)
+
+    # Strip off the protocol code because we know it's FTP and the FTP
+    # library doesn't want the protocol.
+    no_protocol_link = full_ftp_link.split("://")[1]
+
+    # We need to extract the server so we can login to it.
+    split_link = no_protocol_link.split("/")
+    ftp_server = split_link[0]
+
+    # We need to get the FTP directory the file is in so we can check
+    # how many other files are in it. Therefore we're looking to get
+    # the path inbetween the server and the filename itself.
+    sample_directory = "/".join(split_link[1:-1])
+
+    try:
+        ftp = FTP(ftp_server)
+        ftp.login()
+        ftp.cwd(sample_directory)
+
+        # If there's three files then there's unmated reads, because
+        # there's the one read file, the other read file, and the
+        # unmated reads.
+        if len(ftp.nlst()) == 3:
+            return True
+        else:
+            return False
+    except:
+        # If we can't find the sample on ENA's FTP server, then we
+        # shouldn't try to download it from there.
+        return False
+    finally:
+        ftp.close()
+
+    # Shouldn't reach here, but just in case default to NCBI.
+    return False
+
+
+def _replace_dotsra_with_fastq_files(sample: Sample,
+                                     downloader_job: DownloaderJob,
+                                     original_file: OriginalFile) -> List[OriginalFile]:
+    """Replaces a .SRA file with two .fastq files.
+
+    This function should only be called on a sample which has unmated
+    reads, so it makes the assumption that the sample passed into it
+    has at least two read files in ENA.
+    """
+    read_one_url = _build_ena_file_url(sample.accession_code, "_1")
+    read_two_url = _build_ena_file_url(sample.accession_code, "_2")
+
+    # Technically this is a different file, but deleting this one and
+    # its associations just to recreate another with the same
+    # associations seems rather pointless.
+    original_file.file_url = read_one_url
+    original_file.source_filename = read_one_url.split('/')[-1]
+    original_file.save()
+
+    read_two_original_file = OriginalFile.objects.get_or_create(
+        source_url = read_two_url,
+        source_filename = read_two_url.split('/')[-1],
+        has_raw = True
+    )[0]
+    OriginalFileSampleAssociation.objects.get_or_create(
+        original_file = read_two_original_file,
+        sample = sample
+    )
+    DownloaderJobOriginalFileAssociation.objects.get_or_create(
+        original_file = read_two_original_file,
+        downloader_job = downloader_job
+    )
+    return [original_file, read_two_original_file]
+
+
 def download_sra(job_id: int) -> None:
     """The main function for the SRA Downloader.
 
@@ -201,6 +279,16 @@ def download_sra(job_id: int) -> None:
     """
     job = utils.start_job(job_id)
     file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
+
+    sample = original_file.samples.first()
+    if _has_unmated_reads(sample.accession_code):
+        file_assocs = _replace_dotsra_with_fastq_files(sample, file_assocs[0])
+    else:
+        # _replace_dotsra_with_fastq_files returns a list of
+        # OriginalFiles so turn the queryset of
+        # DownloaderJobOriginalFileAssociations into a list of
+        # OriginalFiles to be consistent.
+        file_assocs = [f for f in file_assocs]
 
     downloaded_files = []
     success = None
@@ -214,9 +302,8 @@ def download_sra(job_id: int) -> None:
             success = True
             continue
 
-        sample_accession_code = original_file.samples.first().accession_code
         exp_path = LOCAL_ROOT_DIR + '/' + job.accession_code
-        samp_path = exp_path + '/' + sample_accession_code
+        samp_path = exp_path + '/' + sample.accession_code
         os.makedirs(exp_path, exist_ok=True)
         os.makedirs(samp_path, exist_ok=True)
         dl_file_path = samp_path + '/' + original_file.source_filename
