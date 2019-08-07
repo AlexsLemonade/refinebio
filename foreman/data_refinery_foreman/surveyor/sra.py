@@ -339,6 +339,45 @@ class SraSurveyor(ExternalSourceSurveyor):
         for key, value in harmonized_sample[sample.title].items():
             setattr(sample, key, value)
 
+    @staticmethod
+    def _apply_metadata_to_experiment(experiment: Experiment, metadata: dict):
+        experiment.source_url = ENA_URL_TEMPLATE.format(experiment.accession_code)
+        experiment.source_database = "SRA"
+        experiment.technology = "RNA-SEQ"
+
+        # We don't get this value from the API, unfortunately.
+        # experiment.platform_accession_code = experiment["platform_accession_code"]
+
+        if not experiment.description:
+            experiment.description = "No description."
+
+        if "study_title" in metadata:
+            experiment.title = metadata["study_title"]
+        if "study_abstract" in metadata:
+            experiment.description = metadata["study_abstract"]
+        if "lab_name" in metadata:
+            experiment.submitter_institution = metadata["lab_name"]
+        if "experiment_design_description" in metadata:
+            experiment.protocol_description = metadata["experiment_design_description"]
+        if "pubmed_id" in metadata:
+            experiment.pubmed_id = metadata["pubmed_id"]
+            experiment.has_publication = True
+        if "study_ena_first_public" in metadata:
+            experiment.source_first_published = parse_datetime(metadata["study_ena_first_public"])
+        if "study_ena_last_update" in metadata:
+            experiment.source_last_modified = parse_datetime(metadata["study_ena_last_update"])
+
+        # Rare, but it happens.
+        if not experiment.protocol_description:
+            experiment.protocol_description = metadata.get("library_construction_protocol",
+                                                           "Protocol was never provided.")
+        # Scrape publication title and authorship from Pubmed
+        if experiment.pubmed_id:
+            pubmed_metadata = utils.get_title_and_authors_for_pubmed_id(experiment.pubmed_id)
+            experiment.publication_title = pubmed_metadata[0]
+            experiment.publication_authors = pubmed_metadata[1]
+
+
     def _generate_experiment_and_samples(self, run_accession: str, study_accession: str=None) -> (Experiment, List[Sample]):
         """Generates Experiments and Samples for the provided run_accession."""
         metadata = SraSurveyor.gather_all_metadata(run_accession)
@@ -347,7 +386,7 @@ class SraSurveyor(ExternalSourceSurveyor):
             if study_accession:
                 logger.error("Could not discover any metadata for run.",
                              accession=run_accession,
-                study_accession=study_accession)
+                             study_accession=study_accession)
             else:
                 logger.error("Could not discover any metadata for run.",
                              accession=run_accession)
@@ -385,42 +424,7 @@ class SraSurveyor(ExternalSourceSurveyor):
         except Experiment.DoesNotExist:
             experiment_object = Experiment()
             experiment_object.accession_code = experiment_accession_code
-            experiment_object.source_url = ENA_URL_TEMPLATE.format(experiment_accession_code)
-            experiment_object.source_database = "SRA"
-            experiment_object.technology = "RNA-SEQ"
-
-            # We don't get this value from the API, unfortunately.
-            # experiment_object.platform_accession_code = experiment["platform_accession_code"]
-
-            if not experiment_object.description:
-                experiment_object.description = "No description."
-
-            if "study_title" in metadata:
-                experiment_object.title = metadata["study_title"]
-            if "study_abstract" in metadata:
-                experiment_object.description = metadata["study_abstract"]
-            if "lab_name" in metadata:
-                experiment_object.submitter_institution = metadata["lab_name"]
-            if "experiment_design_description" in metadata:
-                experiment_object.protocol_description = metadata["experiment_design_description"]
-            if "pubmed_id" in metadata:
-                experiment_object.pubmed_id = metadata["pubmed_id"]
-                experiment_object.has_publication = True
-            if "study_ena_first_public" in metadata:
-                experiment_object.source_first_published = parse_datetime(metadata["study_ena_first_public"])
-            if "study_ena_last_update" in metadata:
-                experiment_object.source_last_modified = parse_datetime(metadata["study_ena_last_update"])
-
-            # Rare, but it happens.
-            if not experiment_object.protocol_description:
-                experiment_object.protocol_description = metadata.get("library_construction_protocol",
-                                                                      "Protocol was never provided.")
-            # Scrape publication title and authorship from Pubmed
-            if experiment_object.pubmed_id:
-                pubmed_metadata = utils.get_title_and_authors_for_pubmed_id(experiment_object.pubmed_id)
-                experiment_object.publication_title = pubmed_metadata[0]
-                experiment_object.publication_authors = pubmed_metadata[1]
-
+            SraSurveyor._apply_metadata_to_experiment(experiment_object, metadata)
             experiment_object.save()
 
             ##

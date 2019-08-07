@@ -1,4 +1,3 @@
-
 from django.test import TransactionTestCase
 from unittest.mock import Mock, patch, call
 from django.test import tag

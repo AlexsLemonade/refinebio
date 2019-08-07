@@ -46,6 +46,9 @@ COPY common/install_devtools.R .
 
 RUN Rscript install_devtools.R
 
+COPY workers/R_dependencies/affymetrix/dependencies.R .
+RUN Rscript dependencies.R
+
 COPY workers/affymetrix_dependencies.R .
 COPY workers/install_ensg_pkgs.R .
 

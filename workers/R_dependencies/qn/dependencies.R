@@ -1,0 +1,12 @@
+# Generated from cranlock
+options(warn=2)
+options(Ncpus=parallel::detectCores())
+options(repos=structure(c(CRAN="https://cran.revolutionanalytics.com")))
+devtools::install_version('codetools', version='0.2-15')
+devtools::install_version('iterators', version='1.0.10')
+devtools::install_version('foreach', version='1.4.4')
+devtools::install_version('doParallel', version='1.0.11')
+devtools::install_version('data.table', version='1.11.0')
+devtools::install_version('getopt', version='1.20.3')
+devtools::install_version('optparse', version='1.4.4')
+devtools::install_version('lazyeval', version='0.2.1')
