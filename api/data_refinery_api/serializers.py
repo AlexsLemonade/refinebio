@@ -23,7 +23,9 @@ from data_refinery_common.models import (
     APIToken
 )
 from collections import defaultdict
-
+from data_refinery_common.models.documents import (
+    ExperimentDocument
+)
 
 s3 = boto3.client('s3')
 
@@ -805,35 +807,33 @@ class CompendiaWithUrlSerializer(serializers.ModelSerializer):
 # ElasticSearch Document Serializers
 ##
 
-class ExperimentDocumentSerializer(serializers.Serializer):
+from django_elasticsearch_dsl_drf.serializers import DocumentSerializer
+
+class ExperimentDocumentSerializer(DocumentSerializer):
     """Serializer for the Experiment document."""
-
-    # PK
-    id = serializers.IntegerField(read_only=True)
-
-    #  Complex (Keyword)
-    title = serializers.CharField(read_only=True)
-    publication_title = serializers.CharField(read_only=True)
-    description = serializers.CharField(read_only=True)
-
-    # Simple
-    technology = serializers.CharField(read_only=True)
-    accession_code = serializers.CharField(read_only=True)
-    alternate_accession_code = serializers.CharField(read_only=True)
-    submitter_institution = serializers.CharField(read_only=True)
-    has_publication = serializers.BooleanField(read_only=True)
-    publication_doi = serializers.CharField(read_only=True)
-    publication_authors = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
-    sample_metadata_fields = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
-    platform_names = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
-    platform_accession_codes = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
-    organism_names = serializers.ListField(child=serializers.CharField(max_length=128, allow_blank=True))
-    pubmed_id = serializers.CharField(read_only=True)
-    num_total_samples = serializers.IntegerField(read_only=True)
-    num_processed_samples = serializers.IntegerField(read_only=True)
-    num_downloadable_samples = serializers.IntegerField(read_only=True)
-    source_first_published = serializers.DateField(read_only=True)
-
-    # FK/M2M
-    # We don't use any ForgeinKey serializers right now, but if we did, we'd do it like this:
-    # organisms = OrganismSerializer(many=True)
+    class Meta(object):
+        """Meta options."""
+        document = ExperimentDocument
+        fields = (
+            'id',
+            'title',
+            'publication_title',
+            'description',
+            'technology',
+            'accession_code',
+            'alternate_accession_code',
+            'submitter_institution',
+            'has_publication',
+            'publication_doi',
+            'publication_authors',
+            'sample_metadata_fields',
+            'platform_names',
+            'platform_accession_codes',
+            'organism_names',
+            'pubmed_id',
+            'num_total_samples',
+            'num_processed_samples',
+            'num_downloadable_samples',
+            'source_first_published',
+        )
+        read_only_fields = fields

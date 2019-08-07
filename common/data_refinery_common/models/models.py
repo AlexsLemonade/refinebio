@@ -420,6 +420,17 @@ class Experiment(models.Model):
     def processed_samples(self):
         return list([sample.accession_code for sample in self.samples.all() if sample.is_processed == True])
 
+    @property
+    def downloadable_samples(self):
+        """
+        Returns the accession codes of the downloadable samples in this experiment.
+        This is indexed on elastic search and used to count the number of samples
+        on the filters.
+        """
+        qn_organisms = Organism.get_objects_with_qn_targets()
+        return list(self.samples.filter(is_processed=True, organism__in=qn_organisms)\
+                                      .values_list('accession_code', flat=True))
+
 class ExperimentAnnotation(models.Model):
     """ Semi-standard information associated with an Experiment """
 
