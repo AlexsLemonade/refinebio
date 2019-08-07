@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0026_fix_typo_in_sample_manufacturer'),
+        ('data_refinery_common', '0027_organism_qn_target'),
     ]
 
     operations = [
