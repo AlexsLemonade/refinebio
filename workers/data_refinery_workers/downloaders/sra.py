@@ -12,6 +12,7 @@ from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
     OriginalFile,
+    OriginalFileSampleAssociation,
 )
 from data_refinery_common.rna_seq import _build_ena_file_url
 from data_refinery_common.utils import get_env_variable, get_https_sra_download
