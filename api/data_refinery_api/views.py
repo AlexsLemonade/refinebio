@@ -688,7 +688,6 @@ class SampleList(generics.ListAPIView):
         ref https://www.django-rest-framework.org/api-guide/filtering/#filtering-against-query-parameters
         """
         queryset = Sample.public_objects \
-            .prefetch_related('sampleannotation_set') \
             .prefetch_related('organism') \
             .prefetch_related('results') \
             .prefetch_related('results__processor') \
@@ -697,7 +696,7 @@ class SampleList(generics.ListAPIView):
             .filter(**self.get_query_params_filters())
 
         # case insensitive search https://docs.djangoproject.com/en/2.1/ref/models/querysets/#icontains
-        filter_by = self.request.query_params.get('filter_by', None)        
+        filter_by = self.request.query_params.get('filter_by', None)
         if filter_by:
             queryset = queryset.filter(Q(title__icontains=filter_by) |
                                        Q(sex__icontains=filter_by) |
@@ -711,8 +710,7 @@ class SampleList(generics.ListAPIView):
                                        Q(race__icontains=filter_by) |
                                        Q(subject__icontains=filter_by) |
                                        Q(compound__icontains=filter_by) |
-                                       Q(time__icontains=filter_by) |
-                                       Q(sampleannotation__data__icontains=filter_by))
+                                       Q(time__icontains=filter_by))
 
         return queryset
 
