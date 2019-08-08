@@ -1058,7 +1058,7 @@ class Stats(APIView):
             'year': current_date - timedelta(days=365)
         }
 
-        # trucate the `last_modified` field by hour, day or month depending on the `range` param
+        # truncate the `last_modified` field by hour, day or month depending on the `range` param
         # and annotate each object with that. This will allow us to count the number of objects
         # on each interval with a single query
         # ref https://stackoverflow.com/a/38359913/763705
