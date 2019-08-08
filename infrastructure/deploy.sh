@@ -271,6 +271,14 @@ docker run \
        --env RUNNING_IN_CLOUD=False \
        $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate
 
+# Apply general migrations.
+docker run \
+       --env-file prod_env \
+       --env DATABASE_HOST=$RDS_HOST \
+       --env DATABASE_PORT=$DATABASE_HIDDEN_PORT \
+       --env RUNNING_IN_CLOUD=False \
+       $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py createcachetable
+
 # Make sure to clear out any old nomad job specifications since we
 # will register everything in this directory.
 rm -r nomad-job-specs
