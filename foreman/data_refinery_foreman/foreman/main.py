@@ -84,7 +84,7 @@ JANITOR_DISPATCH_TIME = datetime.timedelta(minutes=30)
 # How frequently we clean up the database.
 DBCLEAN_TIME = datetime.timedelta(hours=6)
 
-# Setting this to a recent date will prevent the Foreman from queuing/requeuing 
+# Setting this to a recent date will prevent the Foreman from queuing/requeuing
 # jobs created before this cutoff.
 JOB_CREATED_AT_CUTOFF = datetime.datetime(2019, 6, 5, tzinfo=timezone.utc)
 
@@ -578,7 +578,7 @@ def retry_lost_downloader_jobs() -> None:
     potentially_lost_jobs = DownloaderJob.objects.filter(
         success=None,
         retried=False,
-        no_retry=False,        
+        no_retry=False,
         created_at__gt=JOB_CREATED_AT_CUTOFF,
         start_time=None,
         end_time=None,
@@ -620,6 +620,8 @@ def retry_lost_downloader_jobs() -> None:
                 elif jobs_queued_from_this_page < queue_capacity:
                     # The job never got put in the Nomad queue, no
                     # need to recreate it, we just gotta queue it up!
+                    job.volume_index = get_emptiest_volume()
+                    job.save()
                     send_job(Downloaders[job.downloader_task], job=job, is_dispatch=True)
                     jobs_queued_from_this_page += 1
             except socket.timeout:
