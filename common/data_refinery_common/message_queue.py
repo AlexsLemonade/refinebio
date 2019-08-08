@@ -77,26 +77,28 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
                 job_type.value,
                 job.id)
 
-    # Smasher doesn't need to be on a specific instance since it will
-    # download all the data to its instance anyway.
-    if isinstance(job, ProcessorJob) and job_type not in [ProcessorPipeline.SMASHER, ProcessorPipeline.QN_REFERENCE]:
-        # Make sure this job goes to the correct EBS resource.
-        # If this is being dispatched for the first time, make sure that
-        # we store the currently attached index.
-        # If this is being dispatched by the Foreman, it should already
-        # have an attached volume index, so use that.
-        if job.volume_index is None:
-            job.volume_index = get_volume_index()
-            job.save()
-        nomad_job = nomad_job + "_" + job.volume_index + "_" + str(job.ram_amount)
-    elif isinstance(job, SurveyJob):
-        nomad_job = nomad_job + "_" + str(job.ram_amount)
-    elif isinstance(job, DownloaderJob):
-        nomad_job = nomad_job + "_" + str(job.ram_amount)
-
     # We only want to dispatch processor jobs directly.
     # Everything else will be handled by the Foreman, which will increment the retry counter.
     if is_processor or is_dispatch or (not settings.RUNNING_IN_CLOUD):
+
+        # Smasher doesn't need to be on a specific instance since it will
+        # download all the data to its instance anyway.
+        if isinstance(job, ProcessorJob) and job_type not in [ProcessorPipeline.SMASHER, ProcessorPipeline.QN_REFERENCE]:
+            # Make sure this job goes to the correct EBS resource.
+            # If this is being dispatched for the first time, make sure that
+            # we store the currently attached index.
+            # If this is being dispatched by the Foreman, it should already
+            # have an attached volume index, so use that.
+            if job.volume_index is None:
+                job.volume_index = get_volume_index()
+                job.save()
+            nomad_job = nomad_job + "_" + job.volume_index + "_" + str(job.ram_amount)
+        elif isinstance(job, SurveyJob):
+            nomad_job = nomad_job + "_" + str(job.ram_amount)
+        elif isinstance(job, DownloaderJob):
+            volume_index = job.volume_index if settings.RUNNING_IN_CLOUD else "0"
+            nomad_job = nomad_job + "_" + volume_index + "_" + str(job.ram_amount)
+
         try:
             nomad_response = nomad_client.job.dispatch_job(nomad_job, meta={"JOB_NAME": job_type.value,
                                                                             "JOB_ID": str(job.id)})
@@ -109,10 +111,9 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
             raise
         except Exception as e:
             logger.info('Unable to Dispatch Nomad Job.',
-                job_name=job_type.value,
-                job_id=str(job.id),
-                reason=str(e)
-            )
+                        job_name=job_type.value,
+                        job_id=str(job.id),
+                        reason=str(e))
             raise
     else:
         job.num_retries = job.num_retries - 1

@@ -127,7 +127,7 @@ class Command(BaseCommand):
                     # it's an Affymetrix Microarray because that's the
                     # only one that makes .CEL files.
                     sample.technology = 'MICROARRAY'
-                    sample.manufacturer = 'AFFYMETRTIX'
+                    sample.manufacturer = 'AFFYMETRIX'
                     sample.save()
 
                     # If there's other original files associated with

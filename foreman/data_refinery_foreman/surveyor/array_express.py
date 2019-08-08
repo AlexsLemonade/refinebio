@@ -42,6 +42,37 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
     def source_type(self):
         return Downloaders.ARRAY_EXPRESS.value
 
+    @staticmethod
+    def _get_last_update_date(parsed_json: Dict) -> str:
+        if "lastupdatedate" in parsed_json:
+            return parsed_json["lastupdatedate"]
+        else:
+            return parsed_json["releasedate"]
+
+    @classmethod
+    def _apply_metadata_to_experiment(cls, experiment_object: Experiment, parsed_json: Dict):
+        # We aren't sure these fields will be populated, or how many there will be.
+        # Try to join them all together, or set a sensible default.
+        experiment_descripton = ""
+        if "description" in parsed_json and len(parsed_json["description"]) > 0:
+            for description_item in parsed_json["description"]:
+                if "text" in description_item:
+                    experiment_descripton = experiment_descripton + description_item["text"] + "\n"
+
+        if experiment_descripton == "":
+            experiment_descripton = "Description not available.\n"
+
+        experiment_object.source_database = "ARRAY_EXPRESS"
+        experiment_object.title = parsed_json["name"]
+        # This will need to be updated if we ever use Array
+        # Express to get other kinds of data.
+        experiment_object.technology = "MICROARRAY"
+        experiment_object.description = experiment_descripton
+
+        experiment_object.source_first_published = parse_datetime(parsed_json["releasedate"])
+        experiment_object.source_last_modified \
+            = parse_datetime(cls._get_last_update_date(parsed_json))
+
     def create_experiment_from_api(self, experiment_accession_code: str) -> (Experiment, Dict):
         """Given an experiment accession code, create an Experiment object.
 
@@ -112,11 +143,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                 experiment["manufacturer"] = UNKNOWN
 
         experiment["release_date"] = parsed_json["releasedate"]
-
-        if "lastupdatedate" in parsed_json:
-            experiment["last_update_date"] = parsed_json["lastupdatedate"]
-        else:
-            experiment["last_update_date"] = parsed_json["releasedate"]
+        experiment["last_update_date"] = self._get_last_update_date(parsed_json)
 
         # Create the experiment object
         try:
@@ -125,28 +152,10 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
                          experiment_accession_code=experiment_accession_code,
                          survey_job=self.survey_job.id)
         except Experiment.DoesNotExist:
-            # We aren't sure these fields will be populated, or how many there will be.
-            # Try to join them all together, or set a sensible default.
-            experiment_descripton = ""
-            if "description" in parsed_json and len(parsed_json["description"]) > 0:
-                for description_item in parsed_json["description"]:
-                    if "text" in description_item:
-                        experiment_descripton = experiment_descripton + description_item["text"] + "\n"
-
-            if experiment_descripton == "":
-                experiment_descripton = "Description not available.\n"
-
             experiment_object = Experiment()
             experiment_object.accession_code = experiment_accession_code
             experiment_object.source_url = request_url
-            experiment_object.source_database = "ARRAY_EXPRESS"
-            experiment_object.title = parsed_json["name"]
-            # This will need to be updated if we ever use Array
-            # Express to get other kinds of data.
-            experiment_object.technology = "MICROARRAY"
-            experiment_object.description = experiment_descripton
-            experiment_object.source_first_published = parse_datetime(experiment["release_date"])
-            experiment_object.source_last_modified = parse_datetime(experiment["last_update_date"])
+            ArrayExpressSurveyor._apply_metadata_to_experiment(experiment_object, parsed_json)
             experiment_object.save()
 
             json_xa = ExperimentAnnotation()
@@ -155,7 +164,7 @@ class ArrayExpressSurveyor(ExternalSourceSurveyor):
             json_xa.is_ccdl = False
             json_xa.save()
 
-            ## Fetch and parse the IDF/SDRF file for any other fields
+            # Fetch and parse the IDF/SDRF file for any other fields
             IDF_URL_TEMPLATE = "https://www.ebi.ac.uk/arrayexpress/files/{code}/{code}.idf.txt"
             idf_url = IDF_URL_TEMPLATE.format(code=experiment_accession_code)
             idf_text = utils.requests_retry_session().get(idf_url, timeout=60).text

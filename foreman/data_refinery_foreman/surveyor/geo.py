@@ -219,6 +219,31 @@ class GeoSurveyor(ExternalSourceSurveyor):
         for key, value in harmonized_metadata.items():
             setattr(sample, key, value)
 
+    @staticmethod
+    def _apply_metadata_to_experiment(experiment: Experiment, gse):
+        """ Gets the metadata out of gse and applies it to the experiment"""
+        experiment.source_url = ("https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc="
+                                 + experiment.accession_code)
+        experiment.source_database = "GEO"
+        experiment.title = gse.metadata.get('title', [''])[0]
+        experiment.description = gse.metadata.get('summary', [''])[0]
+
+        # Source doesn't provide time information, assume midnight.
+        submission_date = gse.metadata["submission_date"][0] + " 00:00:00 UTC"
+        experiment.source_first_published = dateutil.parser.parse(submission_date)
+        last_updated_date = gse.metadata["last_update_date"][0] + " 00:00:00 UTC"
+        experiment.source_last_updated = dateutil.parser.parse(last_updated_date)
+
+        unique_institutions = list(set(gse.metadata["contact_institute"]))
+        experiment.submitter_institution = ", ".join(unique_institutions)
+        experiment.pubmed_id = gse.metadata.get("pubmed_id", [""])[0]
+
+        # Scrape publication title and authorship from Pubmed
+        if experiment.pubmed_id:
+            pubmed_metadata = utils.get_title_and_authors_for_pubmed_id(experiment.pubmed_id)
+            experiment.publication_title = pubmed_metadata[0]
+            experiment.publication_authors = pubmed_metadata[1]
+
     def create_experiment_and_samples_from_api(self, experiment_accession_code) -> (Experiment, List[Sample]):
         """ The main surveyor - find the Experiment and Samples from NCBI GEO.
 
@@ -239,28 +264,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
         except Experiment.DoesNotExist:
             experiment_object = Experiment()
             experiment_object.accession_code = experiment_accession_code
-            experiment_object.source_url = ("https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc="
-                                            + experiment_accession_code)
-            experiment_object.source_database = "GEO"
-            experiment_object.title = gse.metadata.get('title', [''])[0]
-            experiment_object.description = gse.metadata.get('summary', [''])[0]
-
-            # Source doesn't provide time information, assume midnight.
-            submission_date = gse.metadata["submission_date"][0] + " 00:00:00 UTC"
-            experiment_object.source_first_published = dateutil.parser.parse(submission_date)
-            last_updated_date = gse.metadata["last_update_date"][0] + " 00:00:00 UTC"
-            experiment_object.source_last_updated = dateutil.parser.parse(last_updated_date)
-
-            unique_institutions = list(set(gse.metadata["contact_institute"]))
-            experiment_object.submitter_institution = ", ".join(unique_institutions)
-            experiment_object.pubmed_id = gse.metadata.get("pubmed_id", [""])[0]
-
-            # Scrape publication title and authorship from Pubmed
-            if experiment_object.pubmed_id:
-                pubmed_metadata = utils.get_title_and_authors_for_pubmed_id(experiment_object.pubmed_id)
-                experiment_object.publication_title = pubmed_metadata[0]
-                experiment_object.publication_authors = pubmed_metadata[1]
-
+            GeoSurveyor._apply_metadata_to_experiment(experiment_object, gse)
             experiment_object.save()
 
             experiment_annotation = ExperimentAnnotation()
@@ -375,7 +379,7 @@ class GeoSurveyor(ExternalSourceSurveyor):
                     if original_file.is_affy_data():
                         # Only Affymetrix Microarrays produce .CEL files
                         sample_object.technology = 'MICROARRAY'
-                        sample_object.manufacturer = 'AFFYMETRTIX'
+                        sample_object.manufacturer = 'AFFYMETRIX'
                         sample_object.save()
 
                 # It's okay to survey RNA-Seq samples from GEO, but we

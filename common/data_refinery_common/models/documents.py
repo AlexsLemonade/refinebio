@@ -105,31 +105,23 @@ class ExperimentDocument(DocType):
     num_downloadable_samples = fields.IntegerField()
     source_first_published = fields.DateField()
 
-    # FK/M2M
-    # We actually don't use any ForeignKeys in our Experiment document,
-    # but if we did, we'd do it like this. The function `get_instances_from_related` is similarly required,
-    # as is the `related_models` field in the Meta class.
-
-    # organisms = fields.NestedField(properties={
-    #     'name': fields.KeywordField(),
-    #     'taxonomy_id': fields.IntegerField(),
-    #     'pk': fields.IntegerField(),
-    # })
-    # 
-    # def get_instances_from_related(self, related_instance):
-    #     return related_instance.experts_set.all()
+    # Index all downloadable samples as keywords so that we can calculate unique counts on the facets
+    downloadable_samples = fields.ListField(
+        fields.KeywordField()
+    )
 
     class Meta:
         model = Experiment
+        parallel_indexing = True
+        queryset_pagination = 3000
 
         fields = [
            'id',
         ]
 
     def get_queryset(self):
-        """ We use this opportunity not to include any experiments that only contain unsupported platforms from our ES instance"""
-        supported_microarray_platforms = [x['platform_accession'] for x in get_supported_microarray_platforms()]
-        supported_rnaseq_platforms = [x.replace(' ', '') for x in get_supported_rnaseq_platforms()]
-        all_supported_platforms = supported_microarray_platforms + supported_rnaseq_platforms
-        return super(ExperimentDocument, self).get_queryset().filter(platform_accession_codes__contained_by=all_supported_platforms) # https://www.postgresql.org/docs/9.1/functions-array.html
+        return super(ExperimentDocument, self).get_queryset()\
+            .order_by('id')\
+            .prefetch_related('samples')\
+            .prefetch_related('samples__organism')
 
