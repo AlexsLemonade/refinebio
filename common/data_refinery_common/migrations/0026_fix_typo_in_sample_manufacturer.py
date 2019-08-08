@@ -9,14 +9,8 @@ def fix_typo_in_sample_manufacturer(apps, schema_editor):
     https://simpleisbetterthancomplex.com/tutorial/2017/09/26/how-to-create-django-data-migrations.html
     '''
     Sample = apps.get_model('data_refinery_common', 'Sample')
-
-    for sample in Sample.objects.all():
-        if sample.manufacturer == "AFFYMETRTIX":
-            sample.manufacturer = "AFFYMETRIX"
-            sample.save()
-        elif sample.manufacturer == "NEXTSEQ":
-            sample.manufacturer = "ILLUMINA"
-            sample.save()
+    Sample.objects.all().filter(platform_name="AFFYMETRTIX").update(platform_name="AFFYMETRIX")
+    Sample.objects.all().filter(platform_name="NEXTSEQ").update(platform_name="ILLUMINA")
 
 
 class Migration(migrations.Migration):
