@@ -95,6 +95,7 @@ class ProcessorJob(models.Model):
                 # need to index the whole table. We need to update to Django 2.2
                 # for this to be supported.
                 # condition=Q(success=None, retried=False, no_retry=False)
+                # https://github.com/AlexsLemonade/refinebio/issues/1454
             ),
         ]
 
