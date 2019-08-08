@@ -87,6 +87,18 @@ class ProcessorJob(models.Model):
     class Meta:
         db_table = "processor_jobs"
 
+        indexes = [
+            models.Index(
+                fields=['created_at'], 
+                name='processor_jobs_created_at',
+                # A partial index might be better here, given our queries we don't
+                # need to index the whole table. We need to update to Django 2.2
+                # for this to be supported.
+                # condition=Q(success=None, retried=False, no_retry=False)
+                # https://github.com/AlexsLemonade/refinebio/issues/1454
+            ),
+        ]
+
     # This field will contain an enumerated value specifying which
     # processor pipeline was applied during the processor job.
     pipeline_applied = models.CharField(max_length=256)
@@ -156,6 +168,15 @@ class DownloaderJob(models.Model):
 
     class Meta:
         db_table = "downloader_jobs"
+
+        indexes = [
+            models.Index(
+                fields=['created_at'], 
+                name='downloader_jobs_created_at',
+                # condition=Q(success=None, retried=False, no_retry=False)
+            ),
+            models.Index(fields=['worker_id']),
+        ]
 
     # This field contains a string which corresponds to a valid
     # Downloader Task. Valid values are enumerated in:
