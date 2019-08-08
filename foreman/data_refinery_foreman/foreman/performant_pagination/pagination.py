@@ -6,6 +6,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 from base64 import b64decode, b64encode
 from django.core.paginator import Page
+from django.db.models import DateTimeField
 
 
 # we inherit from Page, even though it's a bit odd since we're so
@@ -132,8 +133,14 @@ class PerformantPaginator(object):
                     # relationship) and finally its _meta which is what we're
                     # after
                     meta = meta.get_field(piece).related.parent_model._meta
+            
+            meta_field = meta.get_field(pieces[-1])
+            if (isinstance(meta_field, DateTimeField)):
+                # special case for datetime fields
+                # we need to decode the bytes in `token` into a string so that it can be parsed
+                token = token.decode()
 
-            value = meta.get_field(pieces[-1]).to_python(token)
+            value = meta_field.to_python(token)
 
         return {'{0}__{1}'.format(self._field, d): value}
 
