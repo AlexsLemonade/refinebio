@@ -176,9 +176,9 @@ manual_parameters=[
     ),
 ],
 operation_description="""
-Use this endpoint to search among the experiments. 
+Use this endpoint to search among the experiments.
 
-This is powered by ElasticSearch, information regarding advanced usages of the 
+This is powered by ElasticSearch, information regarding advanced usages of the
 filters can be found in the [Django-ES-DSL-DRF docs](https://django-elasticsearch-dsl-drf.readthedocs.io/en/0.17.1/filtering_usage_examples.html#filtering)
 
 There's an additional field in the response named `facets` that contain stats on the number of results per filter type.
@@ -558,10 +558,10 @@ class DatasetView(generics.RetrieveUpdateAPIView):
         serializer.save()
 
 class CreateApiTokenView(generics.CreateAPIView):
-    """ 
+    """
     token_create
 
-    There're several endpoints like [/dataset](#tag/dataset) and [/results](#tag/results) that return 
+    There're several endpoints like [/dataset](#tag/dataset) and [/results](#tag/results) that return
     S3 urls where users can download the files we produce, however in order to get those files people
     need to accept our terms of use by creating a token and activating it.
 
@@ -741,7 +741,7 @@ class SampleList(generics.ListAPIView):
             filter_dict['accession_code__in'] = [item for sublist in dataset.data.values() for item in sublist]
 
         # Accept Organism in both name and ID form
-        organism = self.request.query_params.get('organism', None)        
+        organism = self.request.query_params.get('organism', None)
         if organism:
             try:
                 organism_id = int(organism)
@@ -1067,12 +1067,12 @@ class Stats(APIView):
                       .filter(start__gte=range_to_start_date.get(range_param))
 
 
-STAT_CACHE_REFRESH_INTERVAL_MINUTES = 5
-scheduler = BackgroundScheduler()
-for timeframe in ('day', 'week', 'month', 'year', None):
-    scheduler.add_job(Stats.update_cache, 'interval', [timeframe],
-                      minutes=STAT_CACHE_REFRESH_INTERVAL_MINUTES)
-scheduler.start()
+# STAT_CACHE_REFRESH_INTERVAL_MINUTES = 5
+# scheduler = BackgroundScheduler()
+# for timeframe in ('day', 'week', 'month', 'year', None):
+#     scheduler.add_job(Stats.update_cache, 'interval', [timeframe],
+#                       minutes=STAT_CACHE_REFRESH_INTERVAL_MINUTES)
+# scheduler.start()
 
 
 ###
@@ -1128,7 +1128,7 @@ class CompendiaDetail(APIView):
     """
     A very simple modified ComputedFile endpoint which only shows Compendia results.
     """
-    
+
     @swagger_auto_schema(deprecated=True)
     def get(self, request, version, format=None):
 
@@ -1195,7 +1195,7 @@ class QNTargetsDetail(generics.RetrieveAPIView):
 class ComputedFilesList(generics.ListAPIView):
     """
     computed_files_list
-    
+
     ComputedFiles are representation of files created by data-refinery processes.
 
     This can also be used to fetch all the compendia files we have generated with:
