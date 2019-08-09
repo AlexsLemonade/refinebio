@@ -143,16 +143,16 @@ def update_volume_work_depth(window=datetime.timedelta(minutes=5)):
 
         breakdown = get_nomad_jobs_breakdown()
 
-        # Loop through all available volumes, which are the keys to the fields aggreaged by volume
+        # Loop through all active volumes, which are the keys to the fields aggreaged by volume
         for volume_index in get_active_volumes():
             if volume_index in breakdown["nomad_pending_jobs_by_volume"]:
-                VOLUME_WORK_DEPTH[available_volume] = \
+                VOLUME_WORK_DEPTH[volume_index] = \
                     breakdown["nomad_pending_jobs_by_volume"][volume_index] \
                     + breakdown["nomad_running_jobs_by_volume"][volume_index]
             else:
                 # There are no nomad jobs currently queued for the
                 # volume index, so set its work depth is 0.
-                VOLUME_WORK_DEPTH[available_volume] = 0
+                VOLUME_WORK_DEPTH[volume_index] = 0
 
         TIME_OF_LAST_WORK_DEPTH_CHECK = timezone.now()
 
