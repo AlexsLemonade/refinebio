@@ -1,6 +1,7 @@
 from contextlib import closing
 from typing import List
 from django.utils import timezone
+from ftplib import FTP
 import os
 import shutil
 import subprocess
@@ -13,6 +14,7 @@ from data_refinery_common.models import (
     DownloaderJobOriginalFileAssociation,
     OriginalFile,
     OriginalFileSampleAssociation,
+    Sample,
 )
 from data_refinery_common.rna_seq import _build_ena_file_url
 from data_refinery_common.utils import get_env_variable, get_https_sra_download
@@ -215,6 +217,7 @@ def _has_unmated_reads(accession_code: str) -> bool:
     # the path inbetween the server and the filename itself.
     sample_directory = "/".join(split_link[1:-1])
 
+    ftp = None
     try:
         ftp = FTP(ftp_server)
         ftp.login()
@@ -232,7 +235,8 @@ def _has_unmated_reads(accession_code: str) -> bool:
         # shouldn't try to download it from there.
         return False
     finally:
-        ftp.close()
+        if ftp:
+            ftp.close()
 
     # Shouldn't reach here, but just in case default to NCBI.
     return False
@@ -281,21 +285,20 @@ def download_sra(job_id: int) -> None:
     job = utils.start_job(job_id)
     file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
 
+    original_file = file_assocs[0].original_file
     sample = original_file.samples.first()
     if _has_unmated_reads(sample.accession_code):
-        file_assocs = _replace_dotsra_with_fastq_files(sample, file_assocs[0])
+        original_files = _replace_dotsra_with_fastq_files(sample, job, original_file)
     else:
         # _replace_dotsra_with_fastq_files returns a list of
         # OriginalFiles so turn the queryset of
         # DownloaderJobOriginalFileAssociations into a list of
         # OriginalFiles to be consistent.
-        file_assocs = [f for f in file_assocs]
+        original_files = [f for f in file_assocs]
 
     downloaded_files = []
     success = None
-    for assoc in file_assocs:
-        original_file = assoc.original_file
-
+    for original_file in original_files:
         if original_file.is_downloaded:
             logger.info("File already downloaded!",
                          original_file_id=original_file.id,
