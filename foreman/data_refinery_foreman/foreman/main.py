@@ -143,11 +143,16 @@ def update_volume_work_depth(window=datetime.timedelta(minutes=5)):
 
         breakdown = get_nomad_jobs_breakdown()
 
-        # Loop through all available volumes, which are the keys to the fields aggreaged by volume
-        for available_volume in breakdown["nomad_pending_jobs_by_volume"].keys():
-            VOLUME_WORK_DEPTH[available_volume] = \
-                breakdown["nomad_pending_jobs_by_volume"][available_volume] \
-                + breakdown["nomad_running_jobs_by_volume"][available_volume]
+        # Loop through all active volumes, which are the keys to the fields aggreaged by volume
+        for volume_index in get_active_volumes():
+            if volume_index in breakdown["nomad_pending_jobs_by_volume"]:
+                VOLUME_WORK_DEPTH[volume_index] = \
+                    breakdown["nomad_pending_jobs_by_volume"][volume_index] \
+                    + breakdown["nomad_running_jobs_by_volume"][volume_index]
+            else:
+                # There are no nomad jobs currently queued for the
+                # volume index, so set its work depth is 0.
+                VOLUME_WORK_DEPTH[volume_index] = 0
 
         TIME_OF_LAST_WORK_DEPTH_CHECK = timezone.now()
 
@@ -155,7 +160,7 @@ def update_volume_work_depth(window=datetime.timedelta(minutes=5)):
 def get_emptiest_volume() -> str:
     # This should never get returned, because get_emptiest_volume() should only be called when there
     # is one or more volumes with a work depth smaller than the DESIRED_WORK_DEPTH
-    emptiest_volume = {"index": "", "work_depth": DESIRED_WORK_DEPTH}
+    emptiest_volume = {"index": "0", "work_depth": DESIRED_WORK_DEPTH}
 
     for volume, work_depth in VOLUME_WORK_DEPTH.items():
         if work_depth < emptiest_volume["work_depth"]:
@@ -1334,6 +1339,9 @@ def cleanup_the_queue():
 
     # Smasher and QN Reference jobs aren't tied to a specific EBS volume.
     indexed_job_types = [e.value for e in ProcessorPipeline if e.value not in ["SMASHER", "QN_REFERENCE"]]
+    # Special case for downloader jobs because they only have one
+    # nomad job type for all downloader tasks.
+    indexed_job_types.append("DOWNLOADER")
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
@@ -1377,7 +1385,19 @@ def cleanup_the_queue():
                 # will be incremented when it is requeued).
                 try:
                     nomad_client.job.deregister_job(job["ID"], purge=True)
-                    job_record = ProcessorJob(nomad_job_id=job["ID"])
+                    processor_jobs = ProcessorJob.objects.filter(nomad_job_id=job["ID"])
+
+                    if processor_jobs.count() > 0:
+                        job_record = processor_jobs[0]
+                    else:
+                        # If it's not a processor job, it's probably a downloader job.
+                        job_record = DownloaderJob.objects.filter(nomad_job_id=job["ID"])[0]
+
+                        # If it's a downloader job, then it doesn't
+                        # have to run on the volume it was assigned
+                        # to. We can let the foreman reassign it.
+                        job_record.volume_index = None
+
                     job_record.num_retries = job_record.num_retries - 1
                     job_record.save()
                     num_jobs_killed += 1
