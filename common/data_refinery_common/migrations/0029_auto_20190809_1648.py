@@ -18,4 +18,8 @@ class Migration(migrations.Migration):
             model_name='originalfile',
             index=models.Index(fields=['source_filename'], name='original_fi_source__6b971c_idx'),
         ),
+        migrations.AddIndex(
+            model_name='sample',
+            index=models.Index(fields=['accession_code'], name='samples_accessi_b4dd7e_idx'),
+        ),
     ]

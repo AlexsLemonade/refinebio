@@ -63,6 +63,10 @@ class Sample(models.Model):
         base_manager_name = "public_objects"
         get_latest_by = "created_at"
 
+        indexes = [
+            models.Index(fields=['accession_code']),
+        ]
+
     def __str__(self):
         return self.accession_code
 
