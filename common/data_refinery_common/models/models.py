@@ -645,6 +645,11 @@ class OriginalFile(models.Model):
     class Meta:
         db_table = "original_files"
 
+        indexes = [
+            models.Index(fields=['filename']),
+            models.Index(fields=['source_filename']),
+        ]
+
     def __str__(self):
         return "OriginalFile: " + self.get_display_name()
 
