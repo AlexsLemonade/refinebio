@@ -431,8 +431,7 @@ class Experiment(models.Model):
         This is indexed on elastic search and used to count the number of samples
         on the filters.
         """
-        qn_organisms = Organism.get_objects_with_qn_targets()
-        return list(self.samples.filter(is_processed=True, organism__in=qn_organisms)\
+        return list(self.samples.filter(is_processed=True, organism__qn_target__isnull=False)\
                                       .values_list('accession_code', flat=True))
 
 class ExperimentAnnotation(models.Model):
