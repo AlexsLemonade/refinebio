@@ -84,13 +84,9 @@ JANITOR_DISPATCH_TIME = datetime.timedelta(minutes=30)
 # How frequently we clean up the database.
 DBCLEAN_TIME = datetime.timedelta(hours=6)
 
-# This time is currently set so far in the past that it's not doing
-# anything. However, should we ever want to suspend work on the
-# whatever we already have in our queues/database (perhaps to be able
-# to force "important work" to get done), setting this to a recent
-# date will prevent the Foreman from queuing/requeuing jobs created
-# before this cutoff.
-JOB_CREATED_AT_CUTOFF = datetime.datetime(2017, 2, 5, tzinfo=timezone.utc)
+# Setting this to a recent date will prevent the Foreman from queuing/requeuing
+# jobs created before this cutoff.
+JOB_CREATED_AT_CUTOFF = datetime.datetime(2019, 6, 5, tzinfo=timezone.utc)
 
 
 def read_config_list(config_file: str) -> List[str]:
@@ -473,9 +469,9 @@ def retry_failed_downloader_jobs() -> None:
         success=False,
         retried=False,
         no_retry=False,
-        created_at__gt=JOB_CREATED_AT_CUTOFF
+        created_at__gt=JOB_CREATED_AT_CUTOFF,
     ).order_by(
-        'id'
+        'created_at'
     ).prefetch_related(
         "original_files__samples"
     )
@@ -485,7 +481,7 @@ def retry_failed_downloader_jobs() -> None:
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     queue_capacity = get_capacity_for_downloader_jobs()
 
-    paginator = Paginator(failed_jobs, PAGE_SIZE)
+    paginator = Paginator(failed_jobs, PAGE_SIZE, 'created_at')
     page = paginator.page()
     page_count = 0
 
@@ -514,13 +510,13 @@ def retry_hung_downloader_jobs() -> None:
     potentially_hung_jobs = DownloaderJob.objects.filter(
         success=None,
         retried=False,
+        no_retry=False,
+        created_at__gt=JOB_CREATED_AT_CUTOFF,
+        start_time__isnull=False,
         end_time=None,
         nomad_job_id__isnull=False,
-        start_time__isnull=False,
-        no_retry=False,
-        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).order_by(
-        'id'
+        'created_at'
     ).prefetch_related(
         "original_files__samples"
     )
@@ -534,7 +530,7 @@ def retry_hung_downloader_jobs() -> None:
         logger.info("Not handling failed (explicitly-marked-as-failure) downloader jobs "
                     "because there is no capacity for them.")
 
-    paginator = Paginator(potentially_hung_jobs, PAGE_SIZE)
+    paginator = Paginator(potentially_hung_jobs, PAGE_SIZE, 'created_at')
     page = paginator.page()
     page_count = 0
     while queue_capacity > 0:
@@ -582,12 +578,12 @@ def retry_lost_downloader_jobs() -> None:
     potentially_lost_jobs = DownloaderJob.objects.filter(
         success=None,
         retried=False,
+        no_retry=False,
+        created_at__gt=JOB_CREATED_AT_CUTOFF,
         start_time=None,
         end_time=None,
-        no_retry=False,
-        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).order_by(
-        'id'
+        'created_at'
     ).prefetch_related(
         "original_files__samples"
     )
@@ -601,7 +597,7 @@ def retry_lost_downloader_jobs() -> None:
         logger.info("Not handling failed (explicitly-marked-as-failure) downloader jobs "
                     "because there is no capacity for them.")
 
-    paginator = Paginator(potentially_lost_jobs, PAGE_SIZE)
+    paginator = Paginator(potentially_lost_jobs, PAGE_SIZE, 'created_at')
     page = paginator.page()
     page_count = 0
     while queue_capacity > 0:
@@ -624,6 +620,8 @@ def retry_lost_downloader_jobs() -> None:
                 elif jobs_queued_from_this_page < queue_capacity:
                     # The job never got put in the Nomad queue, no
                     # need to recreate it, we just gotta queue it up!
+                    job.volume_index = get_emptiest_volume()
+                    job.save()
                     send_job(Downloaders[job.downloader_task], job=job, is_dispatch=True)
                     jobs_queued_from_this_page += 1
             except socket.timeout:
@@ -789,7 +787,7 @@ def retry_failed_processor_jobs() -> None:
     ).exclude(
         pipeline_applied="JANITOR"
     ).order_by(
-        'id'
+        'created_at'
     ).prefetch_related(
         "original_files__samples"
     )
@@ -799,7 +797,7 @@ def retry_failed_processor_jobs() -> None:
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     queue_capacity = get_capacity_for_processor_jobs(nomad_client)
 
-    paginator = Paginator(failed_jobs, 200)
+    paginator = Paginator(failed_jobs, 200, 'created_at')
     page = paginator.page()
     page_count = 0
     while queue_capacity > 0:
@@ -829,16 +827,16 @@ def retry_hung_processor_jobs() -> None:
     potentially_hung_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
+        no_retry=False,
+        created_at__gt=JOB_CREATED_AT_CUTOFF,
+        start_time__isnull=False,
         end_time=None,
         nomad_job_id__isnull=False,
-        start_time__isnull=False,
-        no_retry=False,
         volume_index__in=active_volumes,
-        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
     ).order_by(
-        'id'
+        'created_at'
     ).prefetch_related(
         "original_files__samples"
     )
@@ -848,7 +846,7 @@ def retry_hung_processor_jobs() -> None:
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
     queue_capacity = get_capacity_for_processor_jobs(nomad_client)
 
-    paginator = Paginator(potentially_hung_jobs, 200)
+    paginator = Paginator(potentially_hung_jobs, 200, 'created_at')
     page = paginator.page()
     page_count = 0
     while queue_capacity > 0:
@@ -906,15 +904,15 @@ def retry_lost_processor_jobs() -> None:
     potentially_lost_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
+        no_retry=False,
+        created_at__gt=JOB_CREATED_AT_CUTOFF,
         start_time=None,
         end_time=None,
-        no_retry=False,
         volume_index__in=active_volumes,
-        created_at__gt=JOB_CREATED_AT_CUTOFF
     ).exclude(
         pipeline_applied="JANITOR"
     ).order_by(
-        'id'
+        'created_at'
     ).prefetch_related(
         "original_files__samples"
     )
@@ -924,7 +922,7 @@ def retry_lost_processor_jobs() -> None:
     nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
     queue_capacity = get_capacity_for_processor_jobs(nomad_client)
 
-    paginator = Paginator(potentially_lost_jobs, 200)
+    paginator = Paginator(potentially_lost_jobs, 200, 'created_at')
     page = paginator.page()
     page_count = 0
     while queue_capacity > 0:
@@ -1264,11 +1262,11 @@ def retry_lost_smasher_jobs() -> None:
     potentially_lost_jobs = ProcessorJob.objects.filter(
         success=None,
         retried=False,
+        no_retry=False,
+        created_at__gt=(timezone.now() - datetime.timedelta(hours=24)),
         start_time=None,
         end_time=None,
-        no_retry=False,
         pipeline_applied="SMASHER",
-        created_at__gt=(timezone.now() - datetime.timedelta(hours=24))
     )
 
     nomad_host = get_env_variable("NOMAD_HOST")

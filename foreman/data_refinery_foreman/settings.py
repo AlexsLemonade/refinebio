@@ -145,6 +145,17 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 
+# Caching
+# https://docs.djangoproject.com/en/2.2/topics/cache/
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cache_table',
+    }
+}
+
+
 # Setting the RAVEN_CONFIG when RAVEN_DSN isn't set will cause the
 # following warning:
 # /usr/local/lib/python3.6/site-packages/raven/conf/remote.py:91:

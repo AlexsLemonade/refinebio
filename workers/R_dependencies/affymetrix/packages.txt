@@ -7,3 +7,7 @@ xtable
 pkgconfig
 dplyr
 tidyr
+httr
+readr
+xml2
+magrittr
