@@ -375,6 +375,26 @@ if [[ ! -z $container_running ]]; then
        --name=dr_api \
        -it -d $DOCKERHUB_REPO/$API_DOCKER_IMAGE /bin/sh -c /home/user/collect_and_run_uwsgi.sh"
 
+    ssh -o StrictHostKeyChecking=no \
+        -o ServerAliveInterval=15 \
+        -o ConnectTimeout=5 \
+        -i data-refinery-key.pem \
+        ubuntu@$API_IP_ADDRESS "docker run \
+       --env-file environment \
+       -e DATABASE_HOST=$DATABASE_HOST \
+       -e DATABASE_NAME=$DATABASE_NAME \
+       -e DATABASE_USER=$DATABASE_USER \
+       -e DATABASE_PASSWORD=$DATABASE_PASSWORD \
+       -e ELASTICSEARCH_HOST=$ELASTICSEARCH_HOST \
+       -e ELASTICSEARCH_PORT=$ELASTICSEARCH_PORT \
+       -v /tmp/volumes_static:/tmp/www/static \
+       --log-driver=awslogs \
+       --log-opt awslogs-region=$REGION \
+       --log-opt awslogs-group=data-refinery-log-group-$USER-$STAGE \
+       --log-opt awslogs-stream=log-stream-api-$USER-$STAGE \
+       --name=dr_api_stats_refresh \
+       -it -d $DOCKERHUB_REPO/$API_DOCKER_IMAGE python3 manage.py start_stats_refresh"
+
     # Don't leave secrets lying around.
     ssh -o StrictHostKeyChecking=no \
         -o ServerAliveInterval=15 \

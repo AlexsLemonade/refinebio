@@ -1,4 +1,3 @@
-from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import timedelta, datetime
 import requests
 import mailchimp3
@@ -883,16 +882,16 @@ class Stats(APIView):
         enum=('day', 'week', 'month', 'year',)
     )])
     def get(self, request, version, format=None):
-        cached_stats = cache.get("stats", None)
         range_param = request.query_params.dict().pop('range', None)
+        cached_stats = cache.get("stats_" + str(range_param), None)
 
         # This should only need to run once for each range at most. From then on,
         # the cache is refreshed in the background using apscheduler.
         # We index the dict by str(range_param) because None is the default range.
-        if cached_stats is None or cached_stats.get(str(range_param), None) is None:
+        if cached_stats is None:
             cached_stats = Stats.update_cache(range_param)
 
-        return Response(cached_stats[str(range_param)])
+        return Response(cached_stats)
 
     @classmethod
     def update_cache(cls, range_param):
@@ -934,14 +933,11 @@ class Stats(APIView):
 
         data.update(get_nomad_jobs_breakdown())
 
-        cached_data = cache.get("stats")
-        if cached_data is None:
-            cached_data = dict()
+        # Set the timeout to 10 minutes so that it should always be refreshed by the refresher
+        # if we want to refresh that range, but otherwise we don't have the same data forever
+        cache.set("stats_" + str(range_param), data, 10 * 60)
 
-        cached_data[str(range_param)] = data
-        cache.set("stats", cached_data, None)
-
-        return cached_data
+        return data
 
     EMAIL_USERNAME_BLACKLIST = ['arielsvn', 'miserlou', 'kurt.wheeler91', 'd.prasad']
 
@@ -1065,14 +1061,6 @@ class Stats(APIView):
         return objects.annotate(start=Trunc(field, range_to_trunc.get(range_param), output_field=DateTimeField())) \
                       .values('start') \
                       .filter(start__gte=range_to_start_date.get(range_param))
-
-
-# STAT_CACHE_REFRESH_INTERVAL_MINUTES = 5
-# scheduler = BackgroundScheduler()
-# for timeframe in ('day', 'week', 'month', 'year', None):
-#     scheduler.add_job(Stats.update_cache, 'interval', [timeframe],
-#                       minutes=STAT_CACHE_REFRESH_INTERVAL_MINUTES)
-# scheduler.start()
 
 
 ###
