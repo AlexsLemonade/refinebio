@@ -359,7 +359,7 @@ def download_geo(job_id: int) -> None:
                 sample_id = filename.split('.')[0]
 
             try:
-                sample = Sample.objects.get(accession_code=sample_id)
+                sample = Sample.objects.all().prefetch_related('original_files').get(accession_code=sample_id)
             except Exception as e:
                 # We don't have this sample, but it's not a total failure. This happens.
                 continue
@@ -372,7 +372,7 @@ def download_geo(job_id: int) -> None:
 
             try:
                 # Files from the GEO supplemental file are gzipped inside of the tarball. Great!
-                archive_file = OriginalFile.objects.get(source_filename__contains=sample_id)
+                archive_file = sample.original_files.get(source_filename__contains=sample_id)
                 archive_file.is_downloaded = True
                 archive_file.is_archive = True
                 archive_file.absolute_file_path = og_file['absolute_path']
@@ -463,11 +463,20 @@ def download_geo(job_id: int) -> None:
         for og_file in extracted_files:
 
             filename = og_file['filename']
-            sample_id = filename.split('.')[0]
+            if '_' in filename:
+                sample_id = filename.split('_')[0]
+            else:
+                sample_id = filename.split('.')[0]
+
+            try:
+                sample = Sample.objects.all().prefetch_related('original_files').get(accession_code=sample_id)
+            except Exception as e:
+                # We don't have this sample, but it's not a total failure. This happens.
+                continue
 
             try:
                 # The archive we downloaded
-                archive_file = OriginalFile.objects.get(
+                archive_file = sample.original_files.get(
                     source_filename__contains=filename,
                     is_archive=True
                 )

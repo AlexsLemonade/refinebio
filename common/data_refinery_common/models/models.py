@@ -63,6 +63,10 @@ class Sample(models.Model):
         base_manager_name = "public_objects"
         get_latest_by = "created_at"
 
+        indexes = [
+            models.Index(fields=['accession_code']),
+        ]
+
     def __str__(self):
         return self.accession_code
 
@@ -427,8 +431,7 @@ class Experiment(models.Model):
         This is indexed on elastic search and used to count the number of samples
         on the filters.
         """
-        qn_organisms = Organism.get_objects_with_qn_targets()
-        return list(self.samples.filter(is_processed=True, organism__in=qn_organisms)\
+        return list(self.samples.filter(is_processed=True, organism__qn_target__isnull=False)\
                                       .values_list('accession_code', flat=True))
 
 class ExperimentAnnotation(models.Model):
@@ -644,6 +647,11 @@ class OriginalFile(models.Model):
 
     class Meta:
         db_table = "original_files"
+
+        indexes = [
+            models.Index(fields=['filename']),
+            models.Index(fields=['source_filename']),
+        ]
 
     def __str__(self):
         return "OriginalFile: " + self.get_display_name()

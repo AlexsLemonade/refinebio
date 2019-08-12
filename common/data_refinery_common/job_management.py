@@ -49,10 +49,8 @@ def create_downloader_job(undownloaded_files: List[OriginalFile],
             # until we've checked all the files before calling it a
             # failure.
             try:
-                archive_file = OriginalFile.objects.filter(filename=archive_filename)
-                if archive_file.count() > 0:
-                    archive_file = archive_file.first()
-                else:
+                archive_file = OriginalFile.objects.filter(filename=archive_filename).first()
+                if not archive_file:
                     # We might need to match these up based on
                     # source_filenames rather than filenames so just
                     # try them both.
