@@ -12,6 +12,8 @@ from datetime import datetime
 from functools import partial
 from typing import Dict, Set
 
+from django.db.models import Count, Prefetch, DateTimeField
+from django.db.models.expressions import F, Q
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import transaction
@@ -329,9 +331,14 @@ class Experiment(models.Model):
 
     def update_num_samples(self):
         """ Update our cache values """
-        self.num_total_samples = self.samples.count()
-        self.num_processed_samples = self.samples.filter(is_processed=True).count()
-        self.num_downloadable_samples = self.samples.filter(is_processed=True, organism__qn_target__isnull=False).count()
+        aggregates = self.samples.aggregate(
+            num_total_samples=Count('id'),
+            num_processed_samples=Count('id', filter=Q(is_processed=True)),
+            num_downloadable_samples=Count('id', filter=Q(is_processed=True, organism__qn_target__isnull=False))
+        )
+        self.num_total_samples = aggregates['num_total_samples']
+        self.num_processed_samples = aggregates['num_processed_samples']
+        self.num_downloadable_samples = aggregates['num_downloadable_samples']
         self.save()
 
     def to_metadata_dict(self):
