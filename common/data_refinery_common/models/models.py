@@ -12,6 +12,8 @@ from datetime import datetime
 from functools import partial
 from typing import Dict, Set
 
+from django.db.models import Count, Prefetch, DateTimeField
+from django.db.models.expressions import F, Q
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import transaction
@@ -62,6 +64,10 @@ class Sample(models.Model):
         db_table = "samples"
         base_manager_name = "public_objects"
         get_latest_by = "created_at"
+
+        indexes = [
+            models.Index(fields=['accession_code']),
+        ]
 
     def __str__(self):
         return self.accession_code
@@ -325,10 +331,14 @@ class Experiment(models.Model):
 
     def update_num_samples(self):
         """ Update our cache values """
-        self.num_total_samples = self.samples.count()
-        self.num_processed_samples = self.samples.filter(is_processed=True).count()
-        qn_organisms = Organism.get_objects_with_qn_targets()
-        self.num_downloadable_samples = self.samples.filter(is_processed=True, organism__in=qn_organisms).count()
+        aggregates = self.samples.aggregate(
+            num_total_samples=Count('id'),
+            num_processed_samples=Count('id', filter=Q(is_processed=True)),
+            num_downloadable_samples=Count('id', filter=Q(is_processed=True, organism__qn_target__isnull=False))
+        )
+        self.num_total_samples = aggregates['num_total_samples']
+        self.num_processed_samples = aggregates['num_processed_samples']
+        self.num_downloadable_samples = aggregates['num_downloadable_samples']
         self.save()
 
     def to_metadata_dict(self):
@@ -427,8 +437,7 @@ class Experiment(models.Model):
         This is indexed on elastic search and used to count the number of samples
         on the filters.
         """
-        qn_organisms = Organism.get_objects_with_qn_targets()
-        return list(self.samples.filter(is_processed=True, organism__in=qn_organisms)\
+        return list(self.samples.filter(is_processed=True, organism__qn_target__isnull=False)\
                                       .values_list('accession_code', flat=True))
 
 class ExperimentAnnotation(models.Model):
@@ -644,6 +653,11 @@ class OriginalFile(models.Model):
 
     class Meta:
         db_table = "original_files"
+
+        indexes = [
+            models.Index(fields=['filename']),
+            models.Index(fields=['source_filename']),
+        ]
 
     def __str__(self):
         return "OriginalFile: " + self.get_display_name()
