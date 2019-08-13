@@ -120,8 +120,5 @@ class ExperimentDocument(DocType):
         ]
 
     def get_queryset(self):
-        return super(ExperimentDocument, self).get_queryset()\
-            .order_by('id')\
-            .prefetch_related('samples')\
-            .prefetch_related('samples__organism')
-
+        """ Override default queryset """
+        return super(ExperimentDocument, self).get_queryset()
