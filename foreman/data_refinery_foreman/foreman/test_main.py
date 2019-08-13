@@ -131,12 +131,14 @@ class ForemanTestCase(TestCase):
         retried_job = jobs[1]
         self.assertEqual(retried_job.num_retries, 1)
 
+    @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.get_nomad_jobs_breakdown')
     @patch('data_refinery_foreman.foreman.main.send_job')
-    def test_retrying_many_failed_downloader_jobs(self, mock_send_job, mock_breakdown):
+    def test_retrying_many_failed_downloader_jobs(self, mock_send_job, mock_breakdown, mock_active_volumes):
         mock_send_job.return_value = True
         mock_breakdown.return_value = {"nomad_pending_jobs_by_volume": {"0": 7, "1": 9},
                                        "nomad_running_jobs_by_volume": {"0": 60, "1": 90}}
+        mock_active_volumes.return_value = ['0', '1']
 
         main.update_volume_work_depth(datetime.timedelta(0))
         self.assertEqual(main.VOLUME_WORK_DEPTH, {"0": 67, "1": 99})
