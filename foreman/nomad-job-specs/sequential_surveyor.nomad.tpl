@@ -1,4 +1,4 @@
-job "SURVEYOR_${{RAM}}" {
+job "SEQUENTIAL_SURVEYOR_${{RAM}}" {
   datacenters = ["dc1"]
 
   type = "batch"
@@ -88,7 +88,7 @@ job "SURVEYOR_${{RAM}}" {
           "python3",
           "manage.py",
           "survey_all",
-          "--file", "${NOMAD_META_FILE",
+          "--file", "${NOMAD_META_FILE}",
         ]
         ${{EXTRA_HOSTS}}
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]
