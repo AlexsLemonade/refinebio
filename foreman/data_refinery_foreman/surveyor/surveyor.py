@@ -86,6 +86,7 @@ def run_job(survey_job: SurveyJob) -> SurveyJob:
     except Exception as e:
         logger.exception("Exception caught while running Survey Job.",
                          survey_job=survey_job.id)
+        survey_job.failure_reason = str(e)
         job_success = False
 
     survey_job = _end_job(survey_job, job_success)
