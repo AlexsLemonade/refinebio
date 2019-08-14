@@ -336,13 +336,14 @@ class ForemanTestCase(TestCase):
         # Make sure no additional job was created.
         self.assertEqual(jobs.count(), 1)
 
-    def create_processor_job(self, pipeline="AFFY_TO_PCL", ram_amount=2048):
+    def create_processor_job(self, pipeline="AFFY_TO_PCL", ram_amount=2048, start_time=None):
         job = ProcessorJob(pipeline_applied=pipeline,
                            nomad_job_id="PROCESSOR/dispatch-1528945054-e8eaf540",
                            ram_amount=ram_amount,
                            num_retries=0,
                            volume_index="1",
-                           success=None)
+                           success=None,
+                           start_time=start_time)
         job.save()
 
         og_file = OriginalFile()
@@ -395,7 +396,7 @@ class ForemanTestCase(TestCase):
         mock_send_job.return_value = True
         mock_get_active_volumes.return_value = {"1", "2", "3"}
 
-        job = self.create_processor_job(pipeline="SALMON", ram_amount=16384)
+        job = self.create_processor_job(pipeline="SALMON", ram_amount=16384, start_time=timezone.now())
 
         main.requeue_processor_job(job)
         self.assertEqual(len(mock_send_job.mock_calls), 1)
