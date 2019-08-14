@@ -317,7 +317,10 @@ def requeue_downloader_job(last_job: DownloaderJob) -> (bool, str):
     num_retries = last_job.num_retries + 1
 
     ram_amount = last_job.ram_amount
-    if last_job.failure_reason is None or 'harakiri' not in last_job.failure_reason:
+    # If there's no start time then it's likely that the instance got
+    # cycled which means we didn't get OOM-killed, so we don't need to
+    # increase the RAM amount.
+    if last_job.start_time and last_job.failure_reason is None:
         if ram_amount == 1024:
             ram_amount = 4096
         elif ram_amount == 4096:
@@ -674,23 +677,27 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     # Try it again with an increased RAM amount, if possible.
     new_ram_amount = last_job.ram_amount
 
-    # These initial values are set in common/job_lookup.py:determine_ram_amount
-    if last_job.pipeline_applied == "SALMON" or last_job.pipeline_applied == "TXIMPORT":
-        if new_ram_amount == 8192:
-            new_ram_amount = 12288
-        elif new_ram_amount == 12288:
-            new_ram_amount = 16384
-        elif new_ram_amount == 16384:
-            new_ram_amount = 32768
-        elif new_ram_amount == 32768:
-            new_ram_amount = 65536
-    # The AFFY pipeline is somewhat RAM-sensitive.
-    # Try it again with an increased RAM amount, if possible.
-    elif last_job.pipeline_applied == "AFFY_TO_PCL":
-        if new_ram_amount == 2048:
-            new_ram_amount = 4096
-        elif new_ram_amount == 4096:
-            new_ram_amount = 8192
+    # If there's no start time then it's likely that the instance got
+    # cycled which means we didn't get OOM-killed, so we don't need to
+    # increase the RAM amount.
+    if last_job.start_time:
+        # These initial values are set in common/job_lookup.py:determine_ram_amount
+        if last_job.pipeline_applied == "SALMON" or last_job.pipeline_applied == "TXIMPORT":
+            if new_ram_amount == 8192:
+                new_ram_amount = 12288
+            elif new_ram_amount == 12288:
+                new_ram_amount = 16384
+            elif new_ram_amount == 16384:
+                new_ram_amount = 32768
+            elif new_ram_amount == 32768:
+                new_ram_amount = 65536
+        # The AFFY pipeline is somewhat RAM-sensitive.
+        # Try it again with an increased RAM amount, if possible.
+        elif last_job.pipeline_applied == "AFFY_TO_PCL":
+            if new_ram_amount == 2048:
+                new_ram_amount = 4096
+            elif new_ram_amount == 4096:
+                new_ram_amount = 8192
 
     new_job = ProcessorJob(num_retries=num_retries,
                            pipeline_applied=last_job.pipeline_applied,
