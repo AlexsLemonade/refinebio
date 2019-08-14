@@ -369,8 +369,15 @@ class SraSurveyor(ExternalSourceSurveyor):
 
         # Rare, but it happens.
         if not experiment.protocol_description:
-            experiment.protocol_description = metadata.get("library_construction_protocol",
-                                                           "Protocol was never provided.")
+            # metadata.get() doesn't work here because sometimes the
+            # key is present but its value is None, in which case None
+            # is returned, causing our database constraint to be
+            # violated.
+            if "library_construction_protocol" in metadata and metadata["library_construction_protocol"]:
+                experiment.protocol_description = metadata["library_construction_protocol"]
+            else:
+                experiment.protocol_description = "Protocol was never provided."
+
         # Scrape publication title and authorship from Pubmed
         if experiment.pubmed_id:
             pubmed_metadata = utils.get_title_and_authors_for_pubmed_id(experiment.pubmed_id)
