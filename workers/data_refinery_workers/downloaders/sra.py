@@ -294,7 +294,7 @@ def download_sra(job_id: int) -> None:
         # OriginalFiles so turn the queryset of
         # DownloaderJobOriginalFileAssociations into a list of
         # OriginalFiles to be consistent.
-        original_files = [f for f in file_assocs]
+        original_files = [assoc.original_file for assoc in file_assocs]
 
     downloaded_files = []
     success = None
