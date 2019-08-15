@@ -6,6 +6,7 @@ one experiment accession code per line.
 import boto3
 import botocore
 import nomad
+import time
 import uuid
 
 from django.core.management.base import BaseCommand
@@ -121,5 +122,10 @@ Note: One entry per line, GSE* entries survey GEO, E-GEO-* entries survey ArrayE
                 accession = accession.strip()
                 try:
                     queue_surveyor_for_accession(accession)
+
+                    # Sleep for 30 seconds so all surveyor jobs don't
+                    # start at the exact same time and overload the
+                    # database or ENA.
+                    time.sleep(30)
                 except Exception as e:
                     logger.exception(e)
