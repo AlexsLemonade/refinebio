@@ -9,6 +9,9 @@ from data_refinery_common.models import (
 )
 
 
+logger = get_and_configure_logger(__name__)
+
+
 # Some experiments won't be entirely processed, but we'd still like to
 # make the samples we can process available. This means we need to run
 # tximport on the experiment before 100% of the samples are processed
@@ -100,3 +103,24 @@ def get_quant_files_for_results(results: List[ComputationalResult]):
             raise e
 
     return quant_files
+
+
+ENA_DOWNLOAD_URL_TEMPLATE = ("ftp://ftp.sra.ebi.ac.uk/vol1/fastq/{short_accession}{sub_dir}"
+                             "/{long_accession}/{long_accession}{read_suffix}.fastq.gz")
+ENA_SUB_DIR_PREFIX = "/00"
+
+
+def _build_ena_file_url(run_accession: str, read_suffix=""):
+    # ENA has a weird way of nesting data: if the run accession is
+    # greater than 9 characters long then there is an extra
+    # sub-directory in the path which is "00" + the last digit of
+    # the run accession.
+    sub_dir = ""
+    if len(run_accession) > 9:
+        sub_dir = ENA_SUB_DIR_PREFIX + run_accession[-1]
+
+    return ENA_DOWNLOAD_URL_TEMPLATE.format(
+        short_accession=run_accession[:6],
+        sub_dir=sub_dir,
+        long_accession=run_accession,
+        read_suffix=read_suffix)

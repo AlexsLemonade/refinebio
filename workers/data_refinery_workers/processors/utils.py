@@ -263,8 +263,8 @@ def end_job(job_context: Dict, abort=False):
         success = True
 
     if not abort:
-        if job_context.get("success", False) and not (job_context["job"].pipeline_applied in ["SMASHER", "QN_REFERENCE", "COMPENDIA"]):
-            
+        if job_context.get("success", False) and not (job_context["job"].pipeline_applied in ["SMASHER", "QN_REFERENCE", "COMPENDIA", "JANITOR"]):
+
             # Salmon requires the final `tximport` step to be fully `is_processed`.
             mark_as_processed = True
             if (job_context["job"].pipeline_applied == "SALMON" and not job_context.get('tximported', False)):

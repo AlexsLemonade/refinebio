@@ -3,8 +3,10 @@ from typing import Dict, Set
 from django.db import transaction
 from django.db import models
 from django.utils import timezone
+from nomad import Nomad
 
 from data_refinery_common.models.models import Sample, Experiment, OriginalFile
+from data_refinery_common.utils import get_env_variable
 
 
 class SurveyJob(models.Model):
@@ -61,6 +63,20 @@ class SurveyJob(models.Model):
         except:
             return None
 
+    def kill_nomad_job(self) -> bool:
+        if not self.nomad_job_id:
+            return False
+
+        try:
+            nomad_host = get_env_variable("NOMAD_HOST")
+            nomad_port = get_env_variable("NOMAD_PORT", "4646")
+            nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+            nomad_client.job.deregister_job(self.nomad_job_id)
+        except:
+            return False
+
+        return True
+
     def __str__(self):
         return "SurveyJob " + str(self.pk) + ": " + str(self.source_type)
 
@@ -89,7 +105,7 @@ class ProcessorJob(models.Model):
 
         indexes = [
             models.Index(
-                fields=['created_at'], 
+                fields=['created_at'],
                 name='processor_jobs_created_at',
                 # A partial index might be better here, given our queries we don't
                 # need to index the whole table. We need to update to Django 2.2
@@ -152,6 +168,20 @@ class ProcessorJob(models.Model):
 
         return samples
 
+    def kill_nomad_job(self) -> bool:
+        if not self.nomad_job_id:
+            return False
+
+        try:
+            nomad_host = get_env_variable("NOMAD_HOST")
+            nomad_port = get_env_variable("NOMAD_PORT", "4646")
+            nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+            nomad_client.job.deregister_job(self.nomad_job_id)
+        except:
+            return False
+
+        return True
+
     def save(self, *args, **kwargs):
         """ On save, update timestamps """
         current_time = timezone.now()
@@ -171,7 +201,7 @@ class DownloaderJob(models.Model):
 
         indexes = [
             models.Index(
-                fields=['created_at'], 
+                fields=['created_at'],
                 name='downloader_jobs_created_at',
                 # condition=Q(success=None, retried=False, no_retry=False)
             ),
@@ -236,6 +266,20 @@ class DownloaderJob(models.Model):
                 samples.add(sample)
 
         return samples
+
+    def kill_nomad_job(self) -> bool:
+        if not self.nomad_job_id:
+            return False
+
+        # try:
+        nomad_host = get_env_variable("NOMAD_HOST")
+        nomad_port = get_env_variable("NOMAD_PORT", "4646")
+        nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
+        nomad_client.job.deregister_job(self.nomad_job_id)
+        # except:
+        #     return False
+
+        return True
 
     def save(self, *args, **kwargs):
         """ On save, update timestamps """
