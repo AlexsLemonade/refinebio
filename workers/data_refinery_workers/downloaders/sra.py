@@ -214,7 +214,7 @@ def _has_unmated_reads(accession_code: str) -> bool:
 
     # We need to get the FTP directory the file is in so we can check
     # how many other files are in it. Therefore we're looking to get
-    # the path inbetween the server and the filename itself.
+    # the path between the server and the filename itself.
     sample_directory = "/".join(split_link[1:-1])
 
     ftp = None
