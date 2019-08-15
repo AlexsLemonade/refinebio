@@ -271,7 +271,7 @@ docker run \
        --env RUNNING_IN_CLOUD=False \
        $DOCKERHUB_REPO/$FOREMAN_DOCKER_IMAGE python3 manage.py migrate
 
-# Apply general migrations.
+# Create the cache table if it does not already exist.
 docker run \
        --env-file prod_env \
        --env DATABASE_HOST=$RDS_HOST \

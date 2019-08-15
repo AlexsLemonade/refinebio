@@ -257,7 +257,7 @@ def _replace_dotsra_with_fastq_files(sample: Sample,
     # Technically this is a different file, but deleting this one and
     # its associations just to recreate another with the same
     # associations seems rather pointless.
-    original_file.file_url = read_one_url
+    original_file.source_url = read_one_url
     original_file.source_filename = read_one_url.split('/')[-1]
     original_file.save()
 

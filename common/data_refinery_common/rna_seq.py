@@ -9,6 +9,9 @@ from data_refinery_common.models import (
 )
 
 
+logger = get_and_configure_logger(__name__)
+
+
 # Some experiments won't be entirely processed, but we'd still like to
 # make the samples we can process available. This means we need to run
 # tximport on the experiment before 100% of the samples are processed
