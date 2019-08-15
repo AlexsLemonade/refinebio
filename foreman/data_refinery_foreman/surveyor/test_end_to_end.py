@@ -561,7 +561,6 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
 class SraRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
     @tag("salmon")
-    @skip("We're doing a staging test to see if the new salmon version works.")
     def test_sra_redownloading(self):
         """Survey, download, then process an experiment we know is SRA."""
         # Clear out pre-existing work dirs so there's no conflicts:
@@ -676,3 +675,49 @@ class SraRedownloadingTestCase(TransactionTestCase):
                     pass
 
             self.assertEqual(len(successful_processor_jobs), 4)
+
+
+class EnaFallbackTestCase(TransactionTestCase):
+    @tag("slow")
+    @tag("salmon")
+    def test_unmated_reads(self):
+        """Survey, download, then process a sample we know is SRA and has unmated reads."""
+        # Clear out pre-existing work dirs so there's no conflicts:
+        self.env = EnvironmentVarGuard()
+        self.env.set('RUNING_IN_CLOUD', 'False')
+        with self.env:
+            for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
+                shutil.rmtree(work_dir)
+
+            # prevent a call being made to NCBI's API to determine
+            # organism name/id.
+            organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
+            organism.save()
+
+            # Survey just a single run to make things faster!
+            # This sample has unmated reads!
+            survey_job = surveyor.survey_experiment("SRR1603661", "SRA")
+
+            self.assertTrue(survey_job.success)
+
+            # This experiment has 4 samples that each need a downloader job.
+            downloader_jobs = DownloaderJob.objects.all()
+            self.assertEqual(downloader_jobs.count(), 4)
+
+            # We want one ProcessorJob to fail because it doesn't have
+            # the file it was expecting, so we need to wait until one
+            # DownloaderJob finishes, delete a file that is
+            # downloaded, and then not delete any more.
+            start_time = timezone.now()
+            logger.info("Survey Job finished, waiting for Downloader Jobs to complete.")
+            downloader_job = wait_for_job(downloader_job, DownloaderJob, start_time, .1)
+            self.assertTrue(downloader_job.success)
+
+            processor_jobs = ProcessorJob.objects.all()
+            self.assertEqual(processor_jobs.count(), 1)
+            processor_job = processor_jobs.first()
+
+            wait_for_job(processor_job, ProcessorJob, start_time)
+
+            logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
+            self.assertEqual(processor_job.success, True)
