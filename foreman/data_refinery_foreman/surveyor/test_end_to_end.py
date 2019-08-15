@@ -700,24 +700,18 @@ class EnaFallbackTestCase(TransactionTestCase):
 
             self.assertTrue(survey_job.success)
 
-            # This experiment has 4 samples that each need a downloader job.
+            # Let's give the downloader a little bit to get started
+            # and to update the OriginalFiles' source_urls.
+            time.sleep(30)
+
             downloader_jobs = DownloaderJob.objects.all()
-            self.assertEqual(downloader_jobs.count(), 4)
+            self.assertEqual(downloader_jobs.count(), 1)
+            downloader_job = downloader_jobs.first()
 
-            # We want one ProcessorJob to fail because it doesn't have
-            # the file it was expecting, so we need to wait until one
-            # DownloaderJob finishes, delete a file that is
-            # downloaded, and then not delete any more.
-            start_time = timezone.now()
-            logger.info("Survey Job finished, waiting for Downloader Jobs to complete.")
-            downloader_job = wait_for_job(downloader_job, DownloaderJob, start_time, .1)
-            self.assertTrue(downloader_job.success)
+            self.assertIsNotNone(downloader_job.start_time)
 
-            processor_jobs = ProcessorJob.objects.all()
-            self.assertEqual(processor_jobs.count(), 1)
-            processor_job = processor_jobs.first()
+            for original_file in downloader_job.original_files.all():
+                self.assertTrue(".fastq.gz" in original_file.source_url)
 
-            wait_for_job(processor_job, ProcessorJob, start_time)
-
-            logger.info("Downloader Jobs finished, waiting for processor Jobs to complete.")
-            self.assertEqual(processor_job.success, True)
+            # The downloader job will take a while to complete. Let's not wait.
+            print(downloader_job.kill_nomad_job())

@@ -726,7 +726,7 @@ def _run_salmon(job_context: Dict) -> Dict:
     # necessary because some samples make salmon hang forever and this
     # ties up our computing resources forever. Until this bug is
     # fixed, we'll just have to do it like this.
-    timeout = 60 * 60 * 3
+    timeout = 60 * 60
     job_context['time_start'] = timezone.now()
     try:
         completed_command = subprocess.run(formatted_command.split(),

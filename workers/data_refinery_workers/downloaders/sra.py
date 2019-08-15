@@ -284,8 +284,9 @@ def download_sra(job_id: int) -> None:
     """
     job = utils.start_job(job_id)
     file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
+    original_files = job.original_files.all()
 
-    original_file = file_assocs[0].original_file
+    original_file = original_files[0]
     sample = original_file.samples.first()
     if _has_unmated_reads(sample.accession_code):
         original_files = _replace_dotsra_with_fastq_files(sample, job, original_file)
