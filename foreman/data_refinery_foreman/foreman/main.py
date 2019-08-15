@@ -143,7 +143,8 @@ def update_volume_work_depth(window=datetime.timedelta(minutes=5)):
 
         breakdown = get_nomad_jobs_breakdown()
 
-        # Loop through all active volumes, which are the keys to the fields aggregated by volume
+        # Loop through all active volumes, which are the keys to the
+        # fields aggregated by volume
         for volume_index in get_active_volumes():
             if volume_index in breakdown["nomad_pending_jobs_by_volume"]:
                 VOLUME_WORK_DEPTH[volume_index] = \

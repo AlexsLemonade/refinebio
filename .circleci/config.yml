@@ -38,6 +38,9 @@ jobs:
       - run: docker push localhost:5000/dr_no_op
       - run: ./scripts/prepare_image.sh -i downloaders -s workers -d localhost:5000
       - run: docker push localhost:5000/dr_downloaders
+      # For the salmon end-to-end tests.
+      - run: ./scripts/prepare_image.sh -i salmon -s workers -d localhost:5000
+      - run: docker push localhost:5000/dr_salmon
 
       # Run Downloader Tests
       # Running these in the same job as the common tests is good
@@ -52,10 +55,10 @@ jobs:
 
       # The foreman includes the end-to-end tests, but some of these
       # require docker images which are not built in this
-      # workflow. Therefore we exclude salmon, affymetrix, and
+      # workflow. Therefore we exclude affymetrix and
       # transcriptome and let those end-to-end tests get run in the
       # workflows that include building those images.
-      - run: ./foreman/run_tests.sh --exclude-tag=salmon --exclude-tag=transcriptome --exclude-tag=affymetrix
+      - run: ./foreman/run_tests.sh --exclude-tag=transcriptome --exclude-tag=affymetrix
 
       # Run NO_OP tests
       - run: sudo chown -R circleci:circleci workers/test_volume/
@@ -159,6 +162,22 @@ jobs:
       - run:
           command: .circleci/filter_tests.sh -t salmon
           no_output_timeout: 1h
+
+      # Install Nomad
+      - run: sudo ./scripts/install_nomad.sh
+
+        # Start Nomad and register jobs.
+      - run:
+          command: sudo -E ./scripts/run_nomad.sh -e test
+
+      # For the salmon end-to-end tests.
+      - run: ./scripts/prepare_image.sh -i downloaders -s workers -d localhost:5000
+      - run: docker push localhost:5000/dr_downloaders
+      # This docker image should have already been built, but with the wrong dockerhub repo.
+      - run: ./scripts/prepare_image.sh -i salmon -s workers -d localhost:5000
+      - run: docker push localhost:5000/dr_salmon
+
+      - run: ./foreman/run_tests.sh --tag=salmon
 
   tx_illumina_tests:
     working_directory: ~/refinebio

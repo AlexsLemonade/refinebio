@@ -561,7 +561,6 @@ class GeoCelgzRedownloadingTestCase(TransactionTestCase):
 class SraRedownloadingTestCase(TransactionTestCase):
     @tag("slow")
     @tag("salmon")
-    @skip("We're doing a staging test to see if the new salmon version works.")
     def test_sra_redownloading(self):
         """Survey, download, then process an experiment we know is SRA."""
         # Clear out pre-existing work dirs so there's no conflicts:
@@ -676,3 +675,43 @@ class SraRedownloadingTestCase(TransactionTestCase):
                     pass
 
             self.assertEqual(len(successful_processor_jobs), 4)
+
+
+class EnaFallbackTestCase(TransactionTestCase):
+    @tag("slow")
+    @tag("salmon")
+    def test_unmated_reads(self):
+        """Survey, download, then process a sample we know is SRA and has unmated reads."""
+        # Clear out pre-existing work dirs so there's no conflicts:
+        self.env = EnvironmentVarGuard()
+        self.env.set('RUNING_IN_CLOUD', 'False')
+        with self.env:
+            for work_dir in glob.glob(LOCAL_ROOT_DIR + "/processor_job_*"):
+                shutil.rmtree(work_dir)
+
+            # prevent a call being made to NCBI's API to determine
+            # organism name/id.
+            organism = Organism(name="HOMO_SAPIENS", taxonomy_id=9606, is_scientific_name=True)
+            organism.save()
+
+            # Survey just a single run to make things faster!
+            # This sample has unmated reads!
+            survey_job = surveyor.survey_experiment("SRR1603661", "SRA")
+
+            self.assertTrue(survey_job.success)
+
+            # Let's give the downloader a little bit to get started
+            # and to update the OriginalFiles' source_urls.
+            time.sleep(30)
+
+            downloader_jobs = DownloaderJob.objects.all()
+            self.assertEqual(downloader_jobs.count(), 1)
+            downloader_job = downloader_jobs.first()
+
+            self.assertIsNotNone(downloader_job.start_time)
+
+            for original_file in downloader_job.original_files.all():
+                self.assertTrue(".fastq.gz" in original_file.source_url)
+
+            # The downloader job will take a while to complete. Let's not wait.
+            print(downloader_job.kill_nomad_job())
