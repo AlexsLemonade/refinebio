@@ -38,13 +38,15 @@ class Command(BaseCommand):
                 batch_accessions[0]
             )
 
-            present_accessions = Experiment.objects.filter(
+            existing_experiments = Experiment.objects.filter(
                 accession_code__in=batch_accessions
             ).values(
                 'accession_code'
             )
 
-            missing_accessions = set(batch_accessions) - set(present_accessions)
+            existing_accessions = [experiment['accession_code'] for experiment in existing_experiments]
+
+            missing_accessions = set(batch_accessions) - set(existing_accessions)
             while len(missing_accessions) > 0:
                 try:
                     all_surveyor_jobs = nomad_client.jobs.get_jobs(prefix="SURVEYOR")
