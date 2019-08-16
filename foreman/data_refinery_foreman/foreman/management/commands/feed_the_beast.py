@@ -45,31 +45,30 @@ class Command(BaseCommand):
             )
 
             missing_accessions = set(batch_accessions) - set(present_accessions)
-            for accession_code in missing_accessions:
-                while len(missing_accessions) > 0:
+            while len(missing_accessions) > 0:
+                try:
+                    all_surveyor_jobs = nomad_client.jobs.get_jobs(prefix="SURVEYOR")
+
+                    num_surveyor_jobs = 0
+                    for job in all_surveyor_jobs:
+                        if job['ParameterizedJob'] and job['JobSummary'].get('Children', None):
+                            num_surveyor_jobs = num_surveyor_jobs + job['JobSummary']['Children']['Pending']
+                            num_surveyor_jobs = num_surveyor_jobs + job['JobSummary']['Children']['Running']
+                except:
+                    logger.exception("Exception caught counting surveyor jobs!")
+                    # Probably having trouble communicating with Nomad, let's try again next loop.
+                    continue
+
+                if num_surveyor_jobs < 15:
                     try:
-                        all_surveyor_jobs = nomad_client.jobs.get_jobs(prefix="SURVEYOR")
-
-                        num_surveyor_jobs = 0
-                        for job in all_surveyor_jobs:
-                            if job['ParameterizedJob'] and job['JobSummary'].get('Children', None):
-                                num_surveyor_jobs = num_surveyor_jobs + job['JobSummary']['Children']['Pending']
-                                num_surveyor_jobs = num_surveyor_jobs + job['JobSummary']['Children']['Running']
-                    except:
-                        logger.exception("Exception caught counting surveyor jobs!")
-                        # Probably having trouble communicating with Nomad, let's try again next loop.
-                        continue
-
-                    if num_surveyor_jobs < 15:
-                        try:
-                            queue_surveyor_for_accession(missing_accessions.pop())
-                            time.sleep(30)
-                        except:
-                            # We don't want to stop, gotta keep feeding the beast!!!!
-                            logger.exception("Exception caught while looping through all accessions!")
-                    else:
-                        # Do it here so we don't sleep when there's an exception.
+                        queue_surveyor_for_accession(missing_accessions.pop())
                         time.sleep(30)
+                    except:
+                        # We don't want to stop, gotta keep feeding the beast!!!!
+                        logger.exception("Exception caught while looping through all accessions!")
+                else:
+                    # Do it here so we don't sleep when there's an exception.
+                    time.sleep(30)
 
             batch_index += 1
             if batch_index * BATCH_SIZE >= len(all_accessions):
