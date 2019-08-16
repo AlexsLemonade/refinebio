@@ -60,12 +60,14 @@ class Command(BaseCommand):
                     continue
 
                 if num_surveyor_jobs < 15:
+                    accession_code = missing_accessions.pop()
                     try:
-                        queue_surveyor_for_accession(missing_accessions.pop())
+                        queue_surveyor_for_accession(accession_code)
                         time.sleep(30)
                     except:
                         # We don't want to stop, gotta keep feeding the beast!!!!
-                        logger.exception("Exception caught while looping through all accessions!")
+                        logger.exception("Exception caught while looping through all accessions!",
+                                         accession_code=accession_code)
                 else:
                     # Do it here so we don't sleep when there's an exception.
                     time.sleep(30)
