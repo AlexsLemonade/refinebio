@@ -27,8 +27,9 @@ class Command(BaseCommand):
         total = 0
         i = 0
         paginator = Paginator(timed_out_jobs, 1000)
-        for page_idx in range(1, paginator.num_pages):
-            for processor_job in paginator.page(page_idx).object_list:
+        page = paginator.page()
+        while page:
+            for processor_job in page.object_list:
                 # Reset the job so it'll start at 12288 RAM (since it'll go up from here).
                 processor_job.ram_amount = 8192
                 # And so it'll be retried twice more.
@@ -38,6 +39,11 @@ class Command(BaseCommand):
                 # We don't actually have to send this off to Nomad ourselves.
                 # The Foreman will find it and requeue it for us!
                 processor_job.save()
+
+                if page.has_next():
+                    page = paginator.page(page.next_page_number())
+                else:
+                    break
 
                 total += 1
                 i += 1
