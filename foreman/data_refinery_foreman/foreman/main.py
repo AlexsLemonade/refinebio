@@ -131,7 +131,7 @@ def handle_repeated_failure(job) -> None:
                 failure_reason=job.failure_reason)
 
 
-def update_volume_work_depth(window=datetime.timedelta(minutes=5)):
+def update_volume_work_depth(window=datetime.timedelta(minutes=2)):
     """When a new job is created our local idea of the work depth is updated, but every so often
     we refresh from Nomad how many jobs were stopped or killed"""
     global VOLUME_WORK_DEPTH
@@ -397,7 +397,7 @@ def requeue_downloader_job(last_job: DownloaderJob) -> (bool, str):
     return True, new_job.volume_index
 
 
-def count_downloader_jobs_in_queue(window=datetime.timedelta(minutes=5)) -> int:
+def count_downloader_jobs_in_queue(window=datetime.timedelta(minutes=2)) -> int:
     """Counts how many downloader jobs in the Nomad queue do not have status of 'dead'."""
 
     nomad_host = get_env_variable("NOMAD_HOST")
@@ -455,6 +455,7 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
 
     No more than queue_capacity jobs will be retried.
     """
+    global VOLUME_WORK_DEPTH
 
     queue_capacity = get_capacity_for_downloader_jobs()
 
