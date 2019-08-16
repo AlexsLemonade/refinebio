@@ -68,11 +68,14 @@ def get_quant_results_for_experiment(experiment: Experiment):
     """Returns a list of salmon quant results from `experiment`."""
     results = []
     for sample in experiment.samples.all():
-        for result in sample.results.order_by('-created_at').all():
+        result = sample.results\
             # TODO: this will break when we want to run for a new version.
-            if result.processor.name == ProcessorEnum.SALMON_QUANT.value['name']:
-                results.append(result)
-                break
+            .filter(processor__name=ProcessorEnum.SALMON_QUANT.value['name'])\
+            .order_by('-created_at')\
+            .first()
+
+        if result:
+            results.append(result)
 
     return results
 

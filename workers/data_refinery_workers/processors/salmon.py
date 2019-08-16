@@ -576,9 +576,7 @@ def get_tximport_inputs(job_context: Dict) -> Dict:
     mapping to a list of paths to the quant.sf file for each sample in
     that experiment.
     """
-    experiments_set = ExperimentSampleAssociation.objects.filter(
-        sample=job_context['sample']).values_list('experiment')
-    experiments = Experiment.objects.filter(pk__in=experiments_set)
+    experiments = Experiment.objects.filter(samples=job_context['sample']) # https://stackoverflow.com/a/18317340/763705
 
     quantified_experiments = {}
     for experiment in experiments:
