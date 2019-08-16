@@ -613,7 +613,7 @@ def get_tximport_inputs(job_context: Dict) -> Dict:
                 job_context["success"] = False
                 return job_context
 
-        if should_run_tximport(experiment, len(salmon_quant_results), is_tximport_job):
+        if should_run_tximport(experiment, salmon_quant_results, is_tximport_job):
             quantified_experiments[experiment] = get_quant_files_for_results(salmon_quant_results)
 
     job_context["tximport_inputs"] = quantified_experiments

@@ -33,14 +33,21 @@ EARLY_TXIMPORT_MIN_PERCENT = .80
 
 
 def should_run_tximport(experiment: Experiment,
-                        num_quantified: int,
+                        results: List[ComputationalResult],
                         is_tximport_job: bool):
     """ Returns whether or not the experiment is eligible to have tximport
     run on it.
 
-    num_quantified is how many samples have had salmon quant run on them.
+    results is a list of ComputationalResults for the samples that had salmon quant run on them.
     """
+    num_quantified = len(results)
     if num_quantified == 0:
+        return False
+
+    salmon_versions = set(result.organism_index.salmon_version for result in results)
+    if len(salmon_versions) > 1:
+        # Tximport requires that all samples are processed with the same salmon version
+        # https://github.com/AlexsLemonade/refinebio/issues/1496
         return False
 
     eligible_samples = experiment.samples.filter(source_database='SRA', technology='RNA-SEQ')
