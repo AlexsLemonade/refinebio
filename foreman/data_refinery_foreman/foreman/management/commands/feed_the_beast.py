@@ -30,7 +30,7 @@ class Command(BaseCommand):
 
         BATCH_SIZE = 1000
         batch_index = 0
-        batch_accessions = all_accessions[batch_index * BATCH_SIZE:BATCH_SIZE]
+        batch_accessions = all_accessions[0:BATCH_SIZE]
 
         while batch_accessions:
             logger.info(
@@ -78,4 +78,6 @@ class Command(BaseCommand):
             if batch_index * BATCH_SIZE >= len(all_accessions):
                 break
 
-            batch_accessions = all_accessions[batch_index * BATCH_SIZE:BATCH_SIZE]
+            batch_start = batch_index * BATCH_SIZE
+            batch_end = batch_start + BATCH_SIZE
+            batch_accessions = all_accessions[batch_start:batch_end]
