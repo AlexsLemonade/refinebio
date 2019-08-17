@@ -456,6 +456,7 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
     No more than queue_capacity jobs will be retried.
     """
     global VOLUME_WORK_DEPTH
+    global DOWNLOADER_JOBS_IN_QUEUE
 
     queue_capacity = get_capacity_for_downloader_jobs()
 
@@ -470,6 +471,7 @@ def handle_downloader_jobs(jobs: List[DownloaderJob]) -> None:
             if requeue_success:
                 jobs_dispatched = jobs_dispatched + 1
                 VOLUME_WORK_DEPTH[dispatched_volume] += 1
+                DOWNLOADER_JOBS_IN_QUEUE += 1
         else:
             handle_repeated_failure(job)
 
