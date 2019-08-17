@@ -79,5 +79,5 @@ class Command(BaseCommand):
                 break
 
             batch_start = batch_index * BATCH_SIZE
-            bach_end = batch_start + BATCH_SIZE
+            batch_end = batch_start + BATCH_SIZE
             batch_accessions = all_accessions[batch_start:batch_end]
