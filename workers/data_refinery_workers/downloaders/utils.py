@@ -212,7 +212,6 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
                                             downloader_job: DownloaderJob=None):
     """
     Create a processor job and queue a processor task for sample related to an experiment.
-
     """
 
     # If there's no original files then we've created all the jobs we need to!
