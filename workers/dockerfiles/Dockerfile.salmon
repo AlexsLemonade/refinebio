@@ -40,7 +40,12 @@ RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 WORKDIR /home/user
 
 # Install Salmon
+
+# Tximport requires all experiments to be processed with the same version of Salmon to work https://github.com/AlexsLemonade/refinebio/issues/1496
+# This is something that should be considered when updating salmon, because
+# all unprocessed experiments will require to have salmon run on them again.
 ENV SALMON_VERSION 0.13.1
+
 RUN wget https://github.com/COMBINE-lab/salmon/releases/download/v${SALMON_VERSION}/Salmon-${SALMON_VERSION}_linux_x86_64.tar.gz
 RUN mkdir Salmon-${SALMON_VERSION}_linux_x86_64
 # On version 0.13.1 salmon was being extracted to a folder with an all lowercase name

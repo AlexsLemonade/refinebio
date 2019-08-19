@@ -30,6 +30,10 @@ RUN cd RSEM && make install
 RUN rm -rf RSEM
 
 # Install Salmon
+
+# Tximport requires all experiments to be processed with the same version of Salmon to work https://github.com/AlexsLemonade/refinebio/issues/1496
+# This is something that should be considered when updating salmon, because
+# all unprocessed experiments will require to have salmon run on them again.
 ENV SALMON_VERSION 0.13.1
 
 # Doesn't work:
