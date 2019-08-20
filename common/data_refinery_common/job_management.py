@@ -6,12 +6,16 @@ from data_refinery_common.models import (
     DownloaderJob,
     DownloaderJobOriginalFileAssociation,
     OriginalFile,
+    ProcessorJob,
+    ProcessorJobOriginalFileAssociation,
 )
 from data_refinery_common.utils import (
     get_env_variable,
     get_env_variable_gracefully,
     get_instance_id,
 )
+from data_refinery_common.job_lookup import determine_processor_pipeline, determine_ram_amount, ProcessorEnum, ProcessorPipeline, Downloaders
+from data_refinery_common.message_queue import send_job
 
 
 logger = get_and_configure_logger(__name__)
@@ -141,3 +145,122 @@ def create_downloader_job(undownloaded_files: List[OriginalFile],
             )
 
     return True
+
+# TODO: extend this list.
+BLACKLISTED_EXTENSIONS = ["xml", "chp", "exp"]
+
+def delete_if_blacklisted(original_file: OriginalFile) -> OriginalFile:
+    extension = original_file.filename.split(".")[-1]
+    if extension.lower() in BLACKLISTED_EXTENSIONS:
+        logger.debug("Original file had a blacklisted extension of %s, skipping",
+                     extension,
+                     original_file=original_file.id)
+
+        original_file.delete_local_file()
+        original_file.is_downloaded = False
+        original_file.save()
+        return None
+
+    return original_file
+
+def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
+                                             downloader_job: DownloaderJob=None):
+    """
+    Creates one processor job for each original file given.
+    """
+    for original_file in original_files:
+        sample_object = original_file.samples.first()
+
+        if not delete_if_blacklisted(original_file):
+            continue
+
+        # Fix for: https://github.com/AlexsLemonade/refinebio/issues/968
+        # Basically, we incorrectly detected technology/manufacturers
+        # for many Affymetrix samples and this is a good place to fix
+        # some of them.
+        if original_file.is_affy_data():
+            # Only Affymetrix Microarrays produce .CEL files
+            sample_object.technology = 'MICROARRAY'
+            sample_object.manufacturer = 'AFFYMETRIX'
+            sample_object.save()
+
+        pipeline_to_apply = determine_processor_pipeline(sample_object, original_file)
+
+        if pipeline_to_apply == ProcessorPipeline.NONE:
+            logger.info("No valid processor pipeline found to apply to sample.",
+                        sample=sample_object.id,
+                        original_file=original_files[0].id)
+            original_file.delete_local_file()
+            original_file.is_downloaded = False
+            original_file.save()
+        else:
+            processor_job = ProcessorJob()
+            processor_job.pipeline_applied = pipeline_to_apply.value
+            processor_job.ram_amount = determine_ram_amount(sample_object, processor_job)
+            processor_job.save()
+
+            assoc = ProcessorJobOriginalFileAssociation()
+            assoc.original_file = original_file
+            assoc.processor_job = processor_job
+            assoc.save()
+
+            if downloader_job:
+                logger.debug("Queuing processor job.",
+                             processor_job=processor_job.id,
+                             original_file=original_file.id,
+                             downloader_job=downloader_job.id)
+            else:
+                logger.debug("Queuing processor job.",
+                             processor_job=processor_job.id,
+                             original_file=original_file.id)
+
+            try:
+                send_job(pipeline_to_apply, processor_job)
+            except:
+                # If we cannot queue the job now the Foreman will do
+                # it later.
+                pass
+
+
+def create_processor_job_for_original_files(original_files: List[OriginalFile],
+                                            downloader_job: DownloaderJob=None):
+    """
+    Create a processor job and queue a processor task for sample related to an experiment.
+    """
+
+    # If there's no original files then we've created all the jobs we need to!
+    if len(original_files) == 0:
+        return
+
+    # For anything that has raw data there should only be one Sample per OriginalFile
+    sample_object = original_files[0].samples.first()
+    pipeline_to_apply = determine_processor_pipeline(sample_object, original_files[0])
+
+    if pipeline_to_apply == ProcessorPipeline.NONE:
+        logger.info("No valid processor pipeline found to apply to sample.",
+                    sample=sample_object.id,
+                    original_file=original_files[0].id)
+        for original_file in original_files:
+            original_file.delete_local_file()
+            original_file.is_downloaded = False
+            original_file.save()
+    else:
+        processor_job = ProcessorJob()
+        processor_job.pipeline_applied = pipeline_to_apply.value
+        processor_job.ram_amount = determine_ram_amount(sample_object, processor_job)
+        processor_job.save()
+        for original_file in original_files:
+            assoc = ProcessorJobOriginalFileAssociation()
+            assoc.original_file = original_file
+            assoc.processor_job = processor_job
+            assoc.save()
+
+        logger.debug("Queuing processor job.",
+                     processor_job=processor_job.id)
+
+        try:
+            send_job(pipeline_to_apply, processor_job)
+        except:
+            # If we cannot queue the job now the Foreman will do
+            # it later.
+            pass
