@@ -234,24 +234,55 @@ def setup_experiment(complete_accessions: List[str], incomplete_accessions: List
             result=quant_result
         )
 
+    return experiment
 
 class RerunSalmonTestCase(TestCase):
     """
     Tests that new processor jobs are created for samples that belong to experiments that were 
     processed with multiple versions of Salmon
     """
-
-    def test_no_processor_job_needed(self):
+    @patch('data_refinery_common.job_management.send_job')
+    def test_no_processor_job_needed(self, mock_send_job):
         setup_experiment(['AA001', 'AA002'], [])
         update_salmon_all_experiments()
 
-        # Both these samples were processed with the latest version of salmon, no processor job needed
-        self.assertEqual(ProcessorJob.objects.all().count(), 0)
+        # Verify that no jobs were created, because all samples had been processed with the latest version
+        mock_calls = mock_send_job.mock_calls
+        self.assertEqual(len(mock_calls), 0)
         
-    def test(self):
+    @patch('data_refinery_common.job_management.send_job')
+    def test(self, mock_send_job):
         setup_experiment(['SS001'], ['SS002'])
         update_salmon_all_experiments()
 
-        # Only one processor job should be created for sample SS002
-        self.assertEqual(ProcessorJob.objects.all().count(), 1)
+        # Verify that we attempted to send the jobs off to nomad
+        mock_calls = mock_send_job.mock_calls
+        self.assertEqual(len(mock_calls), 1)
+
+        first_call_job_type = mock_calls[0][1][0]
+        self.assertEqual(first_call_job_type, ProcessorPipeline.SALMON)
+
+    @patch('data_refinery_common.job_management.send_job')
+    def test_no_job_created_when_failed_job_exists(self, mock_send_job):
+        experiment = setup_experiment([], ['GSM001'])
+
+        # create a failed job for that experiment
+        processor_job = ProcessorJob()
+        processor_job.pipeline_applied = ProcessorPipeline.SALMON
+        processor_job.ram_amount = 1024
+        processor_job.success = False
+        processor_job.retried = False
+        processor_job.no_retry = False
+        processor_job.save()
+
+        assoc = ProcessorJobOriginalFileAssociation()
+        assoc.original_file = experiment.samples.first().original_files.first()
+        assoc.processor_job = processor_job
+        assoc.save()
+
+        # Run command
+        update_salmon_all_experiments()
+
+        mock_calls = mock_send_job.mock_calls
+        self.assertEqual(len(mock_calls), 0)
 

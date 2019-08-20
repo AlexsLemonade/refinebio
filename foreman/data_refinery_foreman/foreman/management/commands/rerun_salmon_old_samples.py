@@ -10,6 +10,7 @@ from typing import Dict, List
 from django.core.management.base import BaseCommand
 from nomad import Nomad
 from django.db.models import OuterRef, Subquery
+from django.db.models.expressions import Q
 
 from data_refinery_common.models import (
     DownloaderJob,
@@ -61,6 +62,22 @@ def update_salmon_versions(experiment: Experiment):
     # create new processor jobs for the samples that were run with an older salmon version
     for sample in samples:
         original_files = list(sample.original_files.all())
+
+        if not len(original_files): continue
+
+        # Ensure that there's no processor jobs for these original files that the foreman
+        # might want to retry (failed | hung | lost)
+        has_open_processor_job = ProcessorJob.objects.all()\
+                                    .filter(original_files = original_files[0], pipeline_applied=ProcessorPipeline.SALMON)\
+                                    .filter(
+                                        Q(success=False, retried=False, no_retry=False) | 
+                                        Q(success=None, retried=False, no_retry=False, start_time__isnull=False, end_time=None, nomad_job_id__isnull=False) |
+                                        Q(success=None, retried=False, no_retry=False, start_time=None, end_time=None)
+                                    )\
+                                    .exists()
+        if (has_open_processor_job):
+            continue
+
         create_processor_job_for_original_files(original_files)
 
 def update_salmon_all_experiments():
