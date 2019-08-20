@@ -137,11 +137,11 @@ class ForemanTestCase(TestCase):
     def test_retrying_many_failed_downloader_jobs(self, mock_send_job, mock_breakdown, mock_active_volumes):
         mock_send_job.return_value = True
         mock_breakdown.return_value = {"nomad_pending_jobs_by_volume": {"0": 7, "1": 9},
-                                       "nomad_running_jobs_by_volume": {"0": 60, "1": 90}}
+                                       "nomad_running_jobs_by_volume": {"0": 600, "1": 900}}
         mock_active_volumes.return_value = ['0', '1']
 
         main.update_volume_work_depth(datetime.timedelta(0))
-        self.assertEqual(main.VOLUME_WORK_DEPTH, {"0": 67, "1": 99})
+        self.assertEqual(main.VOLUME_WORK_DEPTH, {"0": 607, "1": 909})
 
         # Ensure that there are at least enough jobs to saturate the desired work depth
         # for both mocked volumes
@@ -156,7 +156,7 @@ class ForemanTestCase(TestCase):
         # depth plus any new queued jobs, so this should only queue up enough jobs to fill the
         # DESIRED_WORK_DEPTH for every node
         # ((DESIRED_WORK_DEPTH - 67) + (DESIRED_WORK_DEPTH - 99) jobs in total)
-        self.assertEqual(len(mock_send_job.mock_calls), 2 * main.DESIRED_WORK_DEPTH - 67 - 99)
+        self.assertEqual(len(mock_send_job.mock_calls), 2 * main.DESIRED_WORK_DEPTH - 607 - 909)
         self.assertEqual(main.VOLUME_WORK_DEPTH,
                          {"0": main.DESIRED_WORK_DEPTH, "1": main.DESIRED_WORK_DEPTH})
 
