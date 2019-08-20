@@ -1,5 +1,3 @@
-import os
-import psutil
 
 from django.test import TestCase, tag
 from typing import List
