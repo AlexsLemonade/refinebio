@@ -242,7 +242,7 @@ class RerunSalmonTestCase(TestCase):
     """
 
     def test_no_processor_job_needed(self):
-        setup_experiment(['AA001', 'AA002'])
+        setup_experiment(['AA001', 'AA002'], [])
         update_salmon_all_experiments()
 
         # Both these samples were processed with the latest version of salmon, no processor job needed
