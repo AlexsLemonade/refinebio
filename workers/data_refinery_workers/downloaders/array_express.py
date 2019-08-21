@@ -24,6 +24,7 @@ from data_refinery_common.utils import (
     get_supported_microarray_platforms,
 )
 from data_refinery_workers.downloaders import utils
+from data_refinery_common.job_management import create_processor_jobs_for_original_files
 
 
 logger = get_and_configure_logger(__name__)
@@ -214,6 +215,6 @@ def download_array_express(job_id: int) -> None:
                      url=url,
                      downloader_job=job_id)
 
-        utils.create_processor_jobs_for_original_files(og_files, job)
+        create_processor_jobs_for_original_files(og_files, job)
 
     utils.end_downloader_job(job, success)

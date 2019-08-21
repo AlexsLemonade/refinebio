@@ -51,7 +51,7 @@ def run_tximport():
     for experiment in eligible_experiments:
         quant_results = get_quant_results_for_experiment(experiment)
 
-        if should_run_tximport(experiment, len(quant_results), True):
+        if should_run_tximport(experiment, quant_results, True):
             processor_job = ProcessorJob()
             processor_job.pipeline_applied = tximport_pipeline.value
             processor_job.ram_amount = 8192
