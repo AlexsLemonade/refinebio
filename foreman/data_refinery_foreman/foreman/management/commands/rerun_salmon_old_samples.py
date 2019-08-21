@@ -87,6 +87,7 @@ def update_salmon_all_experiments():
     
     for experiment in eligible_experiments:
         update_salmon_versions(experiment)
+        time.sleep(10)
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
