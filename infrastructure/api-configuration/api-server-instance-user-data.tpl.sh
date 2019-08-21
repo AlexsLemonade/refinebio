@@ -127,14 +127,13 @@ docker run \
 sleep 30
 docker exec dr_api python3 manage.py search_index --delete -f;
 docker exec dr_api python3 manage.py search_index --rebuild -f;
-docker exec dr_api python3 manage.py search_index --populate -f;
 
 # Let's use this instance to call the populate command every twenty minutes.
 crontab -l > tempcron
 # echo new cron into cron file
 # TODO: stop logging this to api_cron.log once we figure out why it
 # hasn't been working.
-echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/20 * * * * docker exec dr_api python3 manage.py search_index --populate -f >> /var/log/api_cron.log 2>&1" >> tempcron
+echo -e "SHELL=/bin/bash\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/20 * * * * docker exec dr_api python3 manage.py update_es_index >> /var/log/api_cron.log 2>&1" >> tempcron
 # install new cron file
 crontab tempcron
 rm tempcron
