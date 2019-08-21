@@ -98,7 +98,8 @@ def _download_file_http(download_url: str,
     except Exception:
         logger.exception("Exception caught while downloading file.",
                          downloader_job=downloader_job.id)
-        downloader_job.failure_reason = "Exception caught while downloading file"
+        downloader_job.failure_reason = "Exception caught while downloading file" \
+                                        + str(e).replace('\n', '\\n')
         return False
     finally:
         target_file.close()
