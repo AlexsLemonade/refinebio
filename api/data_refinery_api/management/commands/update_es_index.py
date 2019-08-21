@@ -20,7 +20,7 @@ class Command(BaseCommand):
         We have updated it so that it will do incremental updates
         rather than looping over the full queryset every time.
         """
-        models = registry.get_models()
+        models = set(registry.get_models())
 
         for doc in registry.get_documents(models):
             start_time = timezone.now() - UPDATE_WINDOW
