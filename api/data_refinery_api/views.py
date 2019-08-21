@@ -939,7 +939,19 @@ class Stats(APIView):
 
         return data
 
-    EMAIL_USERNAME_BLACKLIST = ['arielsvn', 'miserlou', 'kurt.wheeler91', 'd.prasad']
+
+    EMAIL_USERNAME_BLACKLIST = [
+        'arielsvn',
+        'cansav09',
+        'd.prasad',
+        'daniel.himmelstein',
+        'dv.prasad991',
+        'greenescientist',
+        'jaclyn.n.taroni',
+        'kurt.wheeler91',
+        'michael.zietz',
+        'miserlou'
+    ]
 
     @classmethod
     def _get_dataset_stats(cls, range_param):
@@ -947,6 +959,7 @@ class Stats(APIView):
         filter_query = Q()
         for username in Stats.EMAIL_USERNAME_BLACKLIST:
             filter_query = filter_query | Q(email_address__startswith=username)
+        filter_query = filter_query | Q(email_address__endswith='@alexslemonade.org')
         processed_datasets = Dataset.objects.filter(is_processed=True, email_address__isnull=False).exclude(filter_query)
         result = processed_datasets.aggregate(
             total=Count('id'),

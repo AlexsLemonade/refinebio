@@ -613,7 +613,7 @@ class DatasetSerializer(serializers.ModelSerializer):
 
         if 'context' in kwargs:
             if 'request' in kwargs['context']:
-                # only inclue the fields `experiments` and `organism_samples` when the param `?details=true`
+                # only include the fields `experiments` and `organism_samples` when the param `?details=true`
                 # is provided. This is used on the frontend to render the downloads page
                 # thanks to https://django.cowhite.com/blog/dynamically-includeexclude-fields-to-django-rest-framwork-serializers-based-on-user-requests/
                 if 'details' not in kwargs['context']['request'].query_params:

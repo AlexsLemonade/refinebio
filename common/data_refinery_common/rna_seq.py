@@ -1,4 +1,5 @@
 from typing import Dict, List
+from django.db.models import OuterRef, Subquery
 
 from data_refinery_common.job_lookup import ProcessorEnum
 from data_refinery_common.logging import get_and_configure_logger
@@ -33,14 +34,23 @@ EARLY_TXIMPORT_MIN_PERCENT = .80
 
 
 def should_run_tximport(experiment: Experiment,
-                        num_quantified: int,
+                        results,
                         is_tximport_job: bool):
     """ Returns whether or not the experiment is eligible to have tximport
     run on it.
 
-    num_quantified is how many samples have had salmon quant run on them.
+    results is a queryset of ComputationalResults for the samples that had salmon quant run on them.
     """
+    num_quantified = results.count()
     if num_quantified == 0:
+        return False
+        
+    num_salmon_versions = results.filter(organism_index__salmon_version__isnull=False)\
+                                 .values_list('organism_index__salmon_version')\
+                                 .distinct().count()
+    if num_salmon_versions > 1:
+        # Tximport requires that all samples are processed with the same salmon version
+        # https://github.com/AlexsLemonade/refinebio/issues/1496
         return False
 
     eligible_samples = experiment.samples.filter(source_database='SRA', technology='RNA-SEQ')
@@ -66,16 +76,29 @@ def should_run_tximport(experiment: Experiment,
 
 def get_quant_results_for_experiment(experiment: Experiment):
     """Returns a list of salmon quant results from `experiment`."""
-    results = []
-    for sample in experiment.samples.all():
-        for result in sample.results.order_by('-created_at').all():
-            # TODO: this will break when we want to run for a new version.
-            if result.processor.name == ProcessorEnum.SALMON_QUANT.value['name']:
-                results.append(result)
-                break
+    # Subquery to calculate quant results
+    # https://docs.djangoproject.com/en/2.2/ref/models/expressions/#subquery-expressions
 
-    return results
+    # Calculate the computational results sorted that are associated with a given sample (
+    # referenced from the top query)
+    newest_computational_results = ComputationalResult.objects.all()\
+        .filter(
+            samples=OuterRef('id'),
+            processor__name=ProcessorEnum.SALMON_QUANT.value['name']
+        )\
+        .order_by('-created_at')
 
+    # Annotate each sample in the experiment with the id of the most recent computational result
+    computational_results_ids = experiment.samples.all().annotate(
+        latest_computational_result_id=Subquery(newest_computational_results.values('id')[:1])
+    )\
+    .filter(latest_computational_result_id__isnull=False)\
+    .values_list('latest_computational_result_id', flat=True)
+
+    # return the computational results that match those ids
+    return ComputationalResult.objects.all().filter(
+        id__in=computational_results_ids
+    )
 
 def get_quant_files_for_results(results: List[ComputationalResult]):
     """Returns a list of salmon quant results from `experiment`."""

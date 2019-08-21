@@ -22,6 +22,7 @@ from data_refinery_common.models import (
 )
 from data_refinery_common.utils import get_env_variable
 from data_refinery_workers.downloaders import utils
+from data_refinery_common.job_management import create_processor_jobs_for_original_files
 
 
 logger = get_and_configure_logger(__name__)
@@ -547,7 +548,7 @@ def download_geo(job_id: int) -> None:
         job.failure_reason = "Failed to extract any downloaded files."
 
     if success:
-        utils.create_processor_jobs_for_original_files(unpacked_sample_files, job)
+        create_processor_jobs_for_original_files(unpacked_sample_files, job)
 
     if original_file.is_archive:
         original_file.delete_local_file()

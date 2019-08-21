@@ -19,6 +19,7 @@ from data_refinery_common.models import (
 from data_refinery_common.rna_seq import _build_ena_file_url
 from data_refinery_common.utils import get_env_variable, get_https_sra_download
 from data_refinery_workers.downloaders import utils
+from data_refinery_common.job_management import create_processor_job_for_original_files
 
 logger = get_and_configure_logger(__name__)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
@@ -97,7 +98,8 @@ def _download_file_http(download_url: str,
     except Exception:
         logger.exception("Exception caught while downloading file.",
                          downloader_job=downloader_job.id)
-        downloader_job.failure_reason = "Exception caught while downloading file"
+        downloader_job.failure_reason = "Exception caught while downloading file\\n " \
+                                        + str(e).replace('\n', '\\n')
         return False
     finally:
         target_file.close()
@@ -328,7 +330,7 @@ def download_sra(job_id: int) -> None:
             break
 
     if success:
-        utils.create_processor_job_for_original_files(downloaded_files, job)
+        create_processor_job_for_original_files(downloaded_files, job)
 
     utils.end_downloader_job(job, success)
 
