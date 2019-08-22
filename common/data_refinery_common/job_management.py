@@ -164,7 +164,8 @@ def delete_if_blacklisted(original_file: OriginalFile) -> OriginalFile:
     return original_file
 
 def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
-                                             downloader_job: DownloaderJob=None):
+                                             downloader_job: DownloaderJob=None,
+                                             volume_index: str=None):
     """
     Creates one processor job for each original file given.
     """
@@ -197,6 +198,10 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
             processor_job = ProcessorJob()
             processor_job.pipeline_applied = pipeline_to_apply.value
             processor_job.ram_amount = determine_ram_amount(sample_object, processor_job)
+
+            if volume_index:
+                processor_job.volume_index = volume_index
+
             processor_job.save()
 
             assoc = ProcessorJobOriginalFileAssociation()
@@ -223,7 +228,8 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
 
 
 def create_processor_job_for_original_files(original_files: List[OriginalFile],
-                                            downloader_job: DownloaderJob=None):
+                                            downloader_job: DownloaderJob=None,
+                                            volume_index: str=None):
     """
     Create a processor job and queue a processor task for sample related to an experiment.
     """
@@ -248,6 +254,10 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
         processor_job = ProcessorJob()
         processor_job.pipeline_applied = pipeline_to_apply.value
         processor_job.ram_amount = determine_ram_amount(sample_object, processor_job)
+
+        if volume_index:
+            processor_job.volume_index = volume_index
+
         processor_job.save()
         for original_file in original_files:
             assoc = ProcessorJobOriginalFileAssociation()

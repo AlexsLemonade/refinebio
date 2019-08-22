@@ -31,15 +31,18 @@ from data_refinery_common.message_queue import send_job
 from data_refinery_common.rna_seq import get_quant_results_for_experiment
 from data_refinery_common.utils import get_env_variable, get_active_volumes
 from data_refinery_common.job_management import create_processor_job_for_original_files
+from data_refinery_foreman.foreman import main
 
 logger = get_and_configure_logger(__name__)
 
 def update_salmon_versions(experiment: Experiment):
+    global main.VOLUME_WORK_DEPTH
+
     quant_results = get_quant_results_for_experiment(experiment)
     salmon_versions = list(quant_results.order_by('-organism_index__created_at')\
                                    .values_list('organism_index__salmon_version', flat=True)\
                                    .distinct())
-    
+
     if len(salmon_versions) <= 1:
         # only apply this command on experiments that have more than one salmon version applied on their samples
         return
@@ -53,7 +56,7 @@ def update_salmon_versions(experiment: Experiment):
             processor__name=ProcessorEnum.SALMON_QUANT.value['name']
         )\
         .order_by('-created_at')
-    
+
     samples = experiment.samples.all().annotate(
             salmon_version=Subquery(newest_computational_results.values('organism_index__salmon_version')[:1])
         )\
@@ -70,7 +73,7 @@ def update_salmon_versions(experiment: Experiment):
         has_open_processor_job = ProcessorJob.objects.all()\
                                     .filter(original_files = original_files[0], pipeline_applied=ProcessorPipeline.SALMON)\
                                     .filter(
-                                        Q(success=False, retried=False, no_retry=False) | 
+                                        Q(success=False, retried=False, no_retry=False) |
                                         Q(success=None, retried=False, no_retry=False, start_time__isnull=False, end_time=None, nomad_job_id__isnull=False) |
                                         Q(success=None, retried=False, no_retry=False, start_time=None, end_time=None)
                                     )\
@@ -78,13 +81,19 @@ def update_salmon_versions(experiment: Experiment):
         if (has_open_processor_job):
             continue
 
-        create_processor_job_for_original_files(original_files)
+        volume_index = main.get_emptiest_volume()
+        create_processor_job_for_original_files(original_files, volume_index)
+        main.VOLUME_WORK_DEPTH[volume_index] += 1
 
 def update_salmon_all_experiments():
     """Creates a tximport job for all eligible experiments."""
     eligible_experiments = Experiment.objects.all()\
         .filter(technology='RNA-SEQ', num_processed_samples=0)\
-    
+
+    # Just update this once, things won't change that drastically
+    # while this job is running.
+    main.update_volume_work_depth()
+
     for experiment in eligible_experiments:
         update_salmon_versions(experiment)
         time.sleep(10)
