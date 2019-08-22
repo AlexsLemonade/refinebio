@@ -36,8 +36,6 @@ from data_refinery_foreman.foreman import main
 logger = get_and_configure_logger(__name__)
 
 def update_salmon_versions(experiment: Experiment):
-    global main.VOLUME_WORK_DEPTH
-
     quant_results = get_quant_results_for_experiment(experiment)
     salmon_versions = list(quant_results.order_by('-organism_index__created_at')\
                                    .values_list('organism_index__salmon_version', flat=True)\
