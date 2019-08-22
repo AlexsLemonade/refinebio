@@ -63,7 +63,7 @@ TIME_OF_LAST_DOWNLOADER_JOB_CHECK = timezone.now() - datetime.timedelta(minutes=
 
 # The desired number of active + pending jobs on a volume. Downloader jobs
 # will be assigned to instances until this limit is reached.
-DESIRED_WORK_DEPTH = 1000
+DESIRED_WORK_DEPTH = 500
 
 # This is the absolute max number of downloader jobs that should ever
 # be queued across the whole cluster no matter how many nodes we
