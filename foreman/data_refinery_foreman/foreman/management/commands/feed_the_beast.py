@@ -28,8 +28,8 @@ class Command(BaseCommand):
         with open("config/all_rna_seq_accessions.txt") as accession_list_file:
             all_accessions = [line.strip() for line in accession_list_file]
 
-        # We've surveyed up to ERP113019 so far!
-        all_accessions = all_accessions[all_accessions.index('ERP113019'):]
+        # We've surveyed up to SRP076491 so far!
+        all_accessions = all_accessions[all_accessions.index('SRP076491'):]
 
         BATCH_SIZE = 1000
         batch_index = 0
