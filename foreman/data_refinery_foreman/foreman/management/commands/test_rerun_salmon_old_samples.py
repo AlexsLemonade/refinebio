@@ -238,7 +238,7 @@ def setup_experiment(complete_accessions: List[str], incomplete_accessions: List
 
 class RerunSalmonTestCase(TestCase):
     """
-    Tests that new processor jobs are created for samples that belong to experiments that were 
+    Tests that new processor jobs are created for samples that belong to experiments that were
     processed with multiple versions of Salmon
     """
     @patch('data_refinery_common.job_management.send_job')
@@ -249,7 +249,7 @@ class RerunSalmonTestCase(TestCase):
         # Verify that no jobs were created, because all samples had been processed with the latest version
         mock_calls = mock_send_job.mock_calls
         self.assertEqual(len(mock_calls), 0)
-        
+
     @patch('data_refinery_common.job_management.send_job')
     def test(self, mock_send_job):
         setup_experiment(['SS001'], ['SS002'])
@@ -285,4 +285,3 @@ class RerunSalmonTestCase(TestCase):
 
         mock_calls = mock_send_job.mock_calls
         self.assertEqual(len(mock_calls), 0)
-

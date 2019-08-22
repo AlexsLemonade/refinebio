@@ -60,6 +60,10 @@ def update_salmon_versions(experiment: Experiment):
         )\
         .exclude(salmon_version=latest_salmon_version)
 
+    logger.info("Found %d samples for experiment %s that need to be rerun.",
+                samples.count(),
+                experiment.accession_code)
+
     # create new processor jobs for the samples that were run with an older salmon version
     for sample in samples:
         original_files = list(sample.original_files.all())
@@ -80,7 +84,7 @@ def update_salmon_versions(experiment: Experiment):
             continue
 
         volume_index = main.get_emptiest_volume()
-        create_processor_job_for_original_files(original_files, volume_index)
+        create_processor_job_for_original_files(original_files, volume_index=volume_index)
         main.VOLUME_WORK_DEPTH[volume_index] += 1
 
 def update_salmon_all_experiments():
