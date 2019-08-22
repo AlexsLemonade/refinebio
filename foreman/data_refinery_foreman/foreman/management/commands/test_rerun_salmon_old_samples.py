@@ -262,6 +262,9 @@ class RerunSalmonTestCase(TestCase):
         first_call_job_type = mock_calls[0][1][0]
         self.assertEqual(first_call_job_type, ProcessorPipeline.SALMON)
 
+        created_job = ProcessorJob.objects.all()[0]
+        self.assertEqual(created_job.volume_index, '0')
+
     @patch('data_refinery_common.job_management.send_job')
     def test_no_job_created_when_failed_job_exists(self, mock_send_job):
         experiment = setup_experiment([], ['GSM001'])

@@ -259,6 +259,7 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
             processor_job.volume_index = volume_index
 
         processor_job.save()
+
         for original_file in original_files:
             assoc = ProcessorJobOriginalFileAssociation()
             assoc.original_file = original_file
