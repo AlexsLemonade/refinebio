@@ -30,6 +30,10 @@ S3 = boto3.client('s3', config=Config(signature_version='s3v4'))
 
 logger = get_and_configure_logger(__name__)
 LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
+# We store what salmon ouptuts as its version, therefore for
+# comparisions or defaults we shouldn't just store the version string,
+# we need something with the pattern: 'salmon X.X.X'
+CURRENT_SALMON_VERSION = 'salmon ' + get_env_variable("SALMON_VERSION", "0.13.1")
 CHUNK_SIZE = 1024 * 256 # chunk_size is in bytes
 
 """
@@ -592,7 +596,8 @@ class OrganismIndex(models.Model):
         base_manager_name = 'public_objects'
 
     def __str__(self):
-        return "OrganismIndex " + str(self.pk) + ": " + self.organism.name + ' [' + self.index_type + '] - ' + str(self.salmon_version)
+        return "OrganismIndex " + str(self.pk) + ": " + self.organism.name + \
+            ' [' + self.index_type + '] - ' + str(self.salmon_version)
 
     # Managers
     objects = models.Manager()
@@ -617,7 +622,7 @@ class OrganismIndex(models.Model):
     assembly_name = models.CharField(max_length=255, default="UNKNOWN")
 
     # This matters, for instance salmon 0.9.0 indexes don't work with 0.10.0
-    salmon_version = models.CharField(max_length=255, default="0.9.1")
+    salmon_version = models.CharField(max_length=255, default=CURRENT_SALMON_VERSION)
 
     # We keep the director unextracted on the shared filesystem so all
     # Salmon jobs can access it.
@@ -775,8 +780,13 @@ class OriginalFile(models.Model):
             return False
 
         if sample.source_database == "SRA":
-            for computed_file in sample.computed_files.all():
-                    if computed_file.s3_bucket and computed_file.s3_key:
+            for computed_file in sample.computed_files.prefetch_related('result__organsim_index').all():
+                    if computed_file.s3_bucket and computed_file.s3_key \
+                       and (computed_file.result.organism_index == None
+                       or computed_file.result.organism_index.salmon_version == CURRENT_SALMON_VERSION):
+                        # If the file wasn't computed with the latest
+                        # version of salmon, then it should be rerun
+                        # with the latest version of salmon.
                         return False
         else:
             # If this original_file has multiple samples (is an

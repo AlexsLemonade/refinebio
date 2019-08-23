@@ -31,6 +31,7 @@ from data_refinery_common.message_queue import send_job
 from data_refinery_common.rna_seq import get_quant_results_for_experiment
 from data_refinery_common.utils import get_env_variable, get_active_volumes
 from data_refinery_common.job_management import create_processor_job_for_original_files
+from data_refinery_foreman.foreman import main
 
 logger = get_and_configure_logger(__name__)
 
@@ -40,6 +41,7 @@ def update_salmon_versions(experiment: Experiment):
                         .prefetch_related('organism_index')\
                         .prefetch_related('samples__original_files')
 
+    total_samples_queued = 0
     latest_salmon_version = None
     for quant_result in quant_results:
         if not latest_salmon_version:
@@ -52,6 +54,8 @@ def update_salmon_versions(experiment: Experiment):
             for sample in quant_result.samples.all():
                 original_files = list(sample.original_files.all())
 
+                samples.count(),
+                experiment.accession_code)
                 if not len(original_files): continue
 
                 # Ensure that there's no processor jobs for these original files that the foreman
@@ -67,7 +71,15 @@ def update_salmon_versions(experiment: Experiment):
                 if (has_open_processor_job):
                     continue
 
-                create_processor_job_for_original_files(original_files)
+                volume_index = main.get_emptiest_volume()
+                create_processor_job_for_original_files(original_files, volume_index=volume_index)
+                main.VOLUME_WORK_DEPTH[volume_index] += 1
+
+                total_samples_queued += 1
+
+    logger.info("Re-ran Salmon for %d samples in experiment %s.",
+                    samples.count(),
+                    experiment.accession_code)
 
 def update_salmon_all_experiments():
     """Creates a tximport job for all eligible experiments."""
@@ -78,6 +90,10 @@ def update_salmon_all_experiments():
                                       filter=Q(samples__results__processor__name=ProcessorEnum.SALMON_QUANT.value['name']))
         )\
         .filter(num_salmon_versions__gt=1)
+
+    # Just update this once, things won't change that drastically
+    # while this job is running.
+    main.update_volume_work_depth()
 
     for experiment in eligible_experiments:
         update_salmon_versions(experiment)
