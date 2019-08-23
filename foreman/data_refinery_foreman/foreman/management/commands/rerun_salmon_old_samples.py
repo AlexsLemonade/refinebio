@@ -9,7 +9,7 @@ from typing import Dict, List
 
 from django.core.management.base import BaseCommand
 from nomad import Nomad
-from django.db.models import OuterRef, Subquery
+from django.db.models import OuterRef, Count, Subquery
 from django.db.models.expressions import Q
 
 from data_refinery_common.models import (
@@ -39,7 +39,7 @@ def update_salmon_versions(experiment: Experiment):
     salmon_versions = list(quant_results.order_by('-organism_index__created_at')\
                                    .values_list('organism_index__salmon_version', flat=True)\
                                    .distinct())
-    
+
     if len(salmon_versions) <= 1:
         # only apply this command on experiments that have more than one salmon version applied on their samples
         return
@@ -84,7 +84,12 @@ def update_salmon_all_experiments():
     """Creates a tximport job for all eligible experiments."""
     eligible_experiments = Experiment.objects.all()\
         .filter(technology='RNA-SEQ', num_processed_samples=0)\
-    
+        .annotate(
+            num_salmon_versions=Count('samples__results__organism_index__salmon_version', distinct=True, 
+                                      filter=Q(samples__results__processor__name=ProcessorEnum.SALMON_QUANT.value['name']))
+        )\
+        .filter(num_salmon_versions__gt=1)
+
     for experiment in eligible_experiments:
         update_salmon_versions(experiment)
         time.sleep(10)
