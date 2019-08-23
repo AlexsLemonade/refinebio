@@ -4,32 +4,19 @@ that multiple versions of salmon have been used on the samples.
 
 import random
 import sys
-import time
-from typing import Dict, List
 
 from django.core.management.base import BaseCommand
 from nomad import Nomad
-from django.db.models import OuterRef, Count, Subquery
+from django.db.models import Count
 from django.db.models.expressions import Q
 
 from data_refinery_common.models import (
-    DownloaderJob,
-    DownloaderJobOriginalFileAssociation,
     Experiment,
-    ExperimentOrganismAssociation,
-    ExperimentSampleAssociation,
-    Organism,
-    OriginalFile,
     ProcessorJob,
-    ProcessorJobOriginalFileAssociation,
-    Sample,
-    ComputationalResult,
 )
-from data_refinery_common.job_lookup import ProcessorEnum, ProcessorPipeline, Downloaders
+from data_refinery_common.job_lookup import ProcessorEnum, ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.message_queue import send_job
 from data_refinery_common.rna_seq import get_quant_results_for_experiment
-from data_refinery_common.utils import get_env_variable, get_active_volumes
 from data_refinery_common.job_management import create_processor_job_for_original_files
 from data_refinery_foreman.foreman import main
 
@@ -54,8 +41,6 @@ def update_salmon_versions(experiment: Experiment):
             for sample in quant_result.samples.all():
                 original_files = list(sample.original_files.all())
 
-                samples.count(),
-                experiment.accession_code)
                 if not len(original_files): continue
 
                 # Ensure that there's no processor jobs for these original files that the foreman
@@ -63,7 +48,7 @@ def update_salmon_versions(experiment: Experiment):
                 has_open_processor_job = ProcessorJob.objects.all()\
                                             .filter(original_files = original_files[0], pipeline_applied=ProcessorPipeline.SALMON)\
                                             .filter(
-                                                Q(success=False, retried=False, no_retry=False) | 
+                                                Q(success=False, retried=False, no_retry=False) |
                                                 Q(success=None, retried=False, no_retry=False, start_time__isnull=False, end_time=None, nomad_job_id__isnull=False) |
                                                 Q(success=None, retried=False, no_retry=False, start_time=None, end_time=None)
                                             )\
