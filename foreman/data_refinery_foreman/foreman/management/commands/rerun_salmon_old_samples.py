@@ -63,7 +63,7 @@ def update_salmon_versions(experiment: Experiment):
                 total_samples_queued += 1
 
     logger.info("Re-ran Salmon for %d samples in experiment %s.",
-                    samples.count(),
+                    total_samples_queued,
                     experiment.accession_code)
 
 def update_salmon_all_experiments():
