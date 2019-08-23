@@ -780,7 +780,7 @@ class OriginalFile(models.Model):
             return False
 
         if sample.source_database == "SRA":
-            for computed_file in sample.computed_files.prefetch_related('result__organsim_index').all():
+            for computed_file in sample.computed_files.prefetch_related('result__organism_index').all():
                     if computed_file.s3_bucket and computed_file.s3_key \
                        and (computed_file.result.organism_index == None
                        or computed_file.result.organism_index.salmon_version == CURRENT_SALMON_VERSION):
