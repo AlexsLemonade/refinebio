@@ -35,50 +35,39 @@ from data_refinery_common.job_management import create_processor_job_for_origina
 logger = get_and_configure_logger(__name__)
 
 def update_salmon_versions(experiment: Experiment):
-    quant_results = get_quant_results_for_experiment(experiment)
-    salmon_versions = list(quant_results.order_by('-organism_index__created_at')\
-                                   .values_list('organism_index__salmon_version', flat=True)\
-                                   .distinct())
+    quant_results = get_quant_results_for_experiment(experiment)\
+                        .order_by('-organism_index__created_at')\
+                        .prefetch_related('organism_index')\
+                        .prefetch_related('samples__original_files')
 
-    if len(salmon_versions) <= 1:
-        # only apply this command on experiments that have more than one salmon version applied on their samples
-        return
+    latest_salmon_version = None
+    for quant_result in quant_results:
+        if not latest_salmon_version:
+            # we can safely ignore the latest salmon version, that will be the first
+            # quant result. Note we are ordering by -organism_index__created_at
+            latest_salmon_version = quant_result.organism_index.salmon_version
+        elif latest_salmon_version != quant_result.organism_index.salmon_version:
+            # we found a quant result associated with an experiment where we need to run salmon
+            # hopefully each computational result is associated with a single sample
+            for sample in quant_result.samples.all():
+                original_files = list(sample.original_files.all())
 
-    latest_salmon_version = salmon_versions[0]
+                if not len(original_files): continue
 
-    # find the samples that were not processed with `latest_salmon_version` and trigger new processor jobs for them
-    newest_computational_results = ComputationalResult.objects.all()\
-        .filter(
-            samples=OuterRef('id'),
-            processor__name=ProcessorEnum.SALMON_QUANT.value['name']
-        )\
-        .order_by('-created_at')
-    
-    samples = experiment.samples.all().annotate(
-            salmon_version=Subquery(newest_computational_results.values('organism_index__salmon_version')[:1])
-        )\
-        .exclude(salmon_version=latest_salmon_version)
+                # Ensure that there's no processor jobs for these original files that the foreman
+                # might want to retry (failed | hung | lost)
+                has_open_processor_job = ProcessorJob.objects.all()\
+                                            .filter(original_files = original_files[0], pipeline_applied=ProcessorPipeline.SALMON)\
+                                            .filter(
+                                                Q(success=False, retried=False, no_retry=False) | 
+                                                Q(success=None, retried=False, no_retry=False, start_time__isnull=False, end_time=None, nomad_job_id__isnull=False) |
+                                                Q(success=None, retried=False, no_retry=False, start_time=None, end_time=None)
+                                            )\
+                                            .exists()
+                if (has_open_processor_job):
+                    continue
 
-    # create new processor jobs for the samples that were run with an older salmon version
-    for sample in samples:
-        original_files = list(sample.original_files.all())
-
-        if not len(original_files): continue
-
-        # Ensure that there's no processor jobs for these original files that the foreman
-        # might want to retry (failed | hung | lost)
-        has_open_processor_job = ProcessorJob.objects.all()\
-                                    .filter(original_files = original_files[0], pipeline_applied=ProcessorPipeline.SALMON)\
-                                    .filter(
-                                        Q(success=False, retried=False, no_retry=False) | 
-                                        Q(success=None, retried=False, no_retry=False, start_time__isnull=False, end_time=None, nomad_job_id__isnull=False) |
-                                        Q(success=None, retried=False, no_retry=False, start_time=None, end_time=None)
-                                    )\
-                                    .exists()
-        if (has_open_processor_job):
-            continue
-
-        create_processor_job_for_original_files(original_files)
+                create_processor_job_for_original_files(original_files)
 
 def update_salmon_all_experiments():
     """Creates a tximport job for all eligible experiments."""
@@ -92,7 +81,6 @@ def update_salmon_all_experiments():
 
     for experiment in eligible_experiments:
         update_salmon_versions(experiment)
-        time.sleep(10)
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
