@@ -30,7 +30,7 @@ from data_refinery_common.models import (
 )
 from data_refinery_foreman.foreman.management.commands.rerun_salmon_old_samples import update_salmon_all_experiments
 
-def setup_experiment(complete_accessions: List[str], incomplete_accessions: List[str]) -> Dict:
+def setup_experiment(new_version_accessions: List[str], old_version_accessions: List[str]) -> Dict:
     """ Create an experiment where some samples were processed with the newest version of salmon and
     other with an older one.
     """
@@ -49,7 +49,7 @@ def setup_experiment(complete_accessions: List[str], incomplete_accessions: List
     # Create the transcriptome processor and result:
     transcriptome_processor = Processor()
     transcriptome_processor.name = "Transcriptome"
-    transcriptome_processor.version = "v9.9.9"
+    transcriptome_processor.version = "v0.9.0"
     transcriptome_processor.docker_image = "dr_transcriptome"
     transcriptome_processor.environment = '{"some": "environment"}'
     transcriptome_processor.save()
@@ -81,7 +81,7 @@ def setup_experiment(complete_accessions: List[str], incomplete_accessions: List
     quant_processor.environment = '{"some": "environment"}'
     quant_processor.save()
 
-    for accession_code in incomplete_accessions:
+    for accession_code in old_version_accessions:
         sample = Sample.objects.create(
             accession_code=accession_code,
             organism=zebrafish,
@@ -144,7 +144,7 @@ def setup_experiment(complete_accessions: List[str], incomplete_accessions: List
     # Create another OrganismIndex with a newer version of
     transcriptome_processor = Processor()
     transcriptome_processor.name = "Transcriptome"
-    transcriptome_processor.version = "v9.9.10"
+    transcriptome_processor.version = "v0.13.0"
     transcriptome_processor.docker_image = "dr_transcriptome"
     transcriptome_processor.environment = '{"some": "environment"}'
     transcriptome_processor.save()
@@ -169,12 +169,7 @@ def setup_experiment(complete_accessions: List[str], incomplete_accessions: List
     comp_file.s3_bucket = "bucket"
     comp_file.save()
 
-
-    # Create the already processed samples along with their
-    # ComputationalResults and ComputedFiles. They don't need
-    # original files for this test because we aren't going to run
-    # salmon quant on them.
-    for accession_code in complete_accessions:
+    for accession_code in new_version_accessions:
         sample = Sample.objects.create(
             accession_code=accession_code,
             organism=zebrafish,
