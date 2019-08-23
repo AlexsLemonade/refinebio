@@ -45,7 +45,7 @@ def update_salmon_versions(experiment: Experiment):
 
                 # Ensure that there's no processor jobs for these original files that the foreman
                 # might want to retry (failed | hung | lost)
-                has_open_processor_job = ProcessorJob.objects.all()\
+                has_open_processor_job = ProcessorJob.objects\
                                             .filter(original_files = original_files[0], pipeline_applied=ProcessorPipeline.SALMON)\
                                             .filter(
                                                 Q(success=False, retried=False, no_retry=False) |
@@ -68,7 +68,7 @@ def update_salmon_versions(experiment: Experiment):
 
 def update_salmon_all_experiments():
     """Creates a tximport job for all eligible experiments."""
-    eligible_experiments = Experiment.objects.all()\
+    eligible_experiments = Experiment.objects\
         .filter(technology='RNA-SEQ', num_processed_samples=0)\
         .annotate(
             num_salmon_versions=Count('samples__results__organism_index__salmon_version', distinct=True, 
@@ -95,7 +95,7 @@ class Command(BaseCommand):
         if options["accession_code"] is None:
             update_salmon_all_experiments()
         else:
-            experiment = Experiment.objects.all().filter(accession_code=options["accession_code"]).first()
+            experiment = Experiment.objects.filter(accession_code=options["accession_code"]).first()
             if not experiment:
                 logger.error("The provided experiment accession code was not valid.")
                 sys.exit(1)
