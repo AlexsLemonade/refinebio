@@ -167,13 +167,6 @@ def start_job(job_context: Dict):
     """
     job = job_context["job"]
 
-    # This job should not have been started, for some reason Nomad restarts some of our jobs
-    # https://github.com/AlexsLemonade/refinebio/issues/1487
-    if job.start_time is not None and settings.RUNNING_IN_CLOUD:
-        # Let's just log the event and let the job run instead of failing.
-        logger.warn('ProcessorJob was restarted by Nomad. We do not know why this happened', 
-                    processor_job=job.id, processor_job_success=job.success)
-
     original_file = job.original_files.first()
     if not job.pipeline_applied == ProcessorPipeline.TXIMPORT.value and original_file\
        and not original_file.needs_processing(job_context["job_id"]):
@@ -196,6 +189,20 @@ def start_job(job_context: Dict):
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 
+    # This job should not have been started, for some reason Nomad restarts some of our jobs
+    # https://github.com/AlexsLemonade/refinebio/issues/1487
+    if job.start_time is not None and settings.RUNNING_IN_CLOUD:
+        # Let's just log the event and let the job run instead of failing
+        # and also reset the endtime and failure reason, since those fields might have been set
+        logger.warn('ProcessorJob was restarted by Nomad. We do not know why this happened', 
+                        processor_job=job.id, 
+                        success=job.success, 
+                        failure_reason=job.failure_reason,
+                        start_time=job.start_time,
+                        end_time=job.end_time)
+        job.end_time = None
+        job.failure_reason = None
+        
     job.worker_id = get_instance_id()
     job.worker_version = SYSTEM_VERSION
     job.start_time = timezone.now()
