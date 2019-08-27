@@ -86,7 +86,8 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
             accession_code=accession_code,
             organism=zebrafish,
             source_database='SRA',
-            technology='RNA-SEQ'
+            technology='RNA-SEQ',
+            platform_accession_code='IlluminaHiSeq1000'
         )
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
 
@@ -174,7 +175,8 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
             accession_code=accession_code,
             organism=zebrafish,
             source_database='SRA',
-            technology='RNA-SEQ'
+            technology='RNA-SEQ',
+            platform_accession_code='IlluminaHiSeq1000'
         )
         ExperimentSampleAssociation.objects.create(experiment=experiment, sample=sample)
 
@@ -236,32 +238,22 @@ class RerunSalmonTestCase(TestCase):
     Tests that new processor jobs are created for samples that belong to experiments that were
     processed with multiple versions of Salmon
     """
-    @patch('data_refinery_common.job_management.send_job')
-    def test_no_processor_job_needed(self, mock_send_job):
+    def test_no_processor_job_needed(self):
         setup_experiment(['AA001', 'AA002'], [])
         update_salmon_all_experiments()
 
         # Verify that no jobs were created, because all samples had been processed with the latest version
-        mock_calls = mock_send_job.mock_calls
-        self.assertEqual(len(mock_calls), 0)
+        dl_jobs = DownloaderJob.objects.all()
+        self.assertEqual(dl_jobs.count(), 0)
 
-    @patch('data_refinery_common.job_management.send_job')
-    def test(self, mock_send_job):
+    def test(self):
         setup_experiment(['SS001'], ['SS002'])
         update_salmon_all_experiments()
 
-        # Verify that we attempted to send the jobs off to nomad
-        mock_calls = mock_send_job.mock_calls
-        self.assertEqual(len(mock_calls), 1)
+        dl_jobs = DownloaderJob.objects.all()
+        self.assertEqual(dl_jobs.count(), 1)
 
-        first_call_job_type = mock_calls[0][1][0]
-        self.assertEqual(first_call_job_type, ProcessorPipeline.SALMON)
-
-        created_job = ProcessorJob.objects.all()[0]
-        self.assertEqual(created_job.volume_index, '0')
-
-    @patch('data_refinery_common.job_management.send_job')
-    def test_no_job_created_when_failed_job_exists(self, mock_send_job):
+    def test_no_job_created_when_failed_job_exists(self):
         experiment = setup_experiment([], ['GSM001'])
 
         # create a failed job for that experiment
@@ -281,5 +273,5 @@ class RerunSalmonTestCase(TestCase):
         # Run command
         update_salmon_all_experiments()
 
-        mock_calls = mock_send_job.mock_calls
-        self.assertEqual(len(mock_calls), 0)
+        dl_jobs = DownloaderJob.objects.all()
+        self.assertEqual(dl_jobs.count(), 0)

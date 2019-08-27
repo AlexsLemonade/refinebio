@@ -326,6 +326,7 @@ def _find_or_download_index(job_context: Dict) -> Dict:
             processor_job=job_context["job_id"],
             index_type=index_type
         )
+        job_context["job"].no_retry = True
         job_context["job"].failure_reason = "Missing transcriptome index. (" + index_type + ")"
         job_context["success"] = False
         return job_context
@@ -741,10 +742,6 @@ def _run_salmon(job_context: Dict) -> Dict:
 
     job_context['time_end'] = timezone.now()
 
-    ## To me, this looks broken: error codes are anything non-zero.
-    ## However, Salmon (seems) to output with negative status codes
-    ## even with successful executions.
-    ## Possibly related: https://github.com/COMBINE-lab/salmon/issues/55
     if completed_command.returncode == 1:
         stderr = completed_command.stderr.decode().strip()
         error_start = stderr.upper().find("ERROR:")
@@ -753,6 +750,8 @@ def _run_salmon(job_context: Dict) -> Dict:
                      stderr[error_start:],
                      processor_job=job_context["job_id"])
 
+        # If salmon has an error exit code then we don't want to retry it.
+        job_context["job"].no_retry = True
         job_context["job"].failure_reason = ("Shell call to salmon failed because: "
                                              + stderr[error_start:])
         job_context["success"] = False
