@@ -16,15 +16,15 @@ from data_refinery_common.models import (
 from data_refinery_common.job_lookup import ProcessorEnum, ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.rna_seq import get_quant_results_for_experiment
-from data_refinery_common.job_management import create_processor_job_for_original_files
+from data_refinery_common.job_management import create_downloader_job
 from data_refinery_foreman.foreman import main
 
 logger = get_and_configure_logger(__name__)
 
-def requeue_downloader_jobs():
+def retry_jobs_restarted_by_nomad():
     """Creates a tximport job for all eligible experiments."""
     latest_processor_job_for_sample = ProcessorJob.objects\
-            .filter(origina_files__samples=OuterRef('id'))\
+            .filter(original_files__samples=OuterRef('id'))\
             .order_by('-start_time')
 
     eligible_sample_ids = Sample.objects\
@@ -51,4 +51,4 @@ def requeue_downloader_jobs():
 
 class Command(BaseCommand):
   def handle(self, *args, **options):
-    requeue_downloader_jobs()
+    retry_jobs_restarted_by_nomad()
