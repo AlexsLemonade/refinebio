@@ -1,11 +1,14 @@
 import random
 import sys
 import time
+import re
 from typing import Dict, List
 
 from django.core.management.base import BaseCommand
+from django.db.models import OuterRef, Subquery, Count
 
 from data_refinery_common.models import (
+    ProcessorJob,    
     Sample,
 )
 from data_refinery_common.logging import get_and_configure_logger
@@ -17,6 +20,74 @@ logger = get_and_configure_logger(__name__)
 
 PAGE_SIZE=2000
 
+def requeue_samples(eligible_samples):
+    paginator = Paginator(eligible_samples, PAGE_SIZE)
+    page = paginator.page()
+
+    creation_count = 0
+    while True:
+        for sample in page.object_list:
+            if create_downloader_job(sample.original_files.all(), force=True):
+                creation_count += 1
+
+        if not page.has_next():
+            break
+        else:
+            page = paginator.page(page.next_page_number())
+
+        # 2000 samples queued up every five minutes should be fast
+        # enough and also not thrash the DB.
+        time.sleep(60 * 5)
+
+    return creation_count
+
+def retry_by_source_database(source_database):
+    sra_samples = Sample.objects.filter(
+        source_database=source_database
+    )\
+    .annotate(
+        num_computed_files=Count('computed_files')
+    )\
+    .filter(num_computed_files__gt=0)\
+    .prefetch_related(
+        "original_files"
+    )
+
+    creation_count = requeue_samples(sra_samples)
+    logger.info(
+        "Created %d new downloader jobs because their samples lacked computed files.",
+        creation_count
+    )
+
+def retry_by_accession_codes(accession_codes_param):
+    accession_codes = accession_codes_param.split(',')
+    eligible_samples = Sample.objects.filter(accession_code__in=accession_codes)\
+                                     .prefetch_related('original_files')
+    total_samples_queued = requeue_samples(eligible_samples)
+    logger.info("Re-queued %d samples with accession codes %s.", total_samples_queued, accession_codes_param)
+
+def retry_by_regex(pattern):
+    """ Finds the samples where the failure reason of the latest processor job that was applied to them
+    matches the given regex
+    https://docs.djangoproject.com/en/dev/ref/models/querysets/#regex
+    """
+    latest_processor_job_for_sample = ProcessorJob.objects\
+        .filter(original_files__samples=OuterRef('id'))\
+        .order_by('-start_time')
+
+    eligible_samples = Sample.objects\
+        .annotate(
+            failure_reason=Subquery(latest_processor_job_for_sample.values('failure_reason')[:1])
+        )\
+        .filter(
+            failure_reason__regex=pattern
+        )\
+        .prefetch_related('original_files')
+
+    total_samples_queued = requeue_samples(eligible_samples)
+
+    logger.info("Re-queued %d samples that had failed with the pattern %s.", total_samples_queued, pattern)
+
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
@@ -26,48 +97,30 @@ class Command(BaseCommand):
                   "All samples from this source database will have downloader "
                   "jobs requeued for them.")
         )
-
-    def handle(self, *args, **options):
-        """Requeues all unprocessed RNA-Seq samples for an organism.
-        """
-        if options["source_database"] is None:
-            logger.error("You must specify a source-database.")
-            sys.exit(1)
-        else:
-            source_database = options["source_database"]
-
-        sra_samples = Sample.objects.filter(
-            source_database=source_database
-        ).prefetch_related(
-            "computed_files",
-            "original_files"
+        parser.add_argument(
+            "--accession-codes",
+            type=str,
+            help=("Comma sepparated sample accession codes that need to be requeued.")
+        )
+        # https://docs.djangoproject.com/en/dev/ref/models/querysets/#regex
+        parser.add_argument(
+            "--failure-regex",
+            type=str,
+            help=("Re-queues all samples where the latest processor job failure reason matches this regex.")
         )
 
-        paginator = Paginator(sra_samples, PAGE_SIZE)
-        page = paginator.page()
-        page_count = 0
+    def handle(self, *args, **options):
+        """ Re-queues all unprocessed RNA-Seq samples for an organism. """
+        if options["source_database"]:
+            retry_by_source_database(options["source_database"])
 
-        creation_count = 0
-        while True:
-            for sample in page.object_list:
-                if sample.computed_files.count() == 0:
-                    logger.debug("Creating downloader job for a sample.",
-                                 sample=sample.accession_code)
-                    if create_downloader_job(sample.original_files.all(), force=True):
-                        creation_count += 1
+        if options['accession_codes']:
+            # --accession-codes="GSM12323,GSM98586"
+            retry_by_accession_codes(options['accession_codes'])
 
-            logger.info(
-                "Created %d new downloader jobs because their samples lacked computed files.",
-                creation_count
-            )
-
-            if not page.has_next():
-                break
-            else:
-                page = paginator.page(page.next_page_number())
-
-            creation_count = 0
-
-            # 2000 samples queued up every five minutes should be fast
-            # enough and also not thrash the DB.
-            time.sleep(60 * 5)
+        if options['failure_regex']:
+            # Examples
+            # --failure-regex="ProcessorJob has already completed .*"
+            # --failure-regex="Encountered error in R code while running AFFY_TO_PCL pipeline .*"
+            retry_by_regex(options['failure_regex'])
+        

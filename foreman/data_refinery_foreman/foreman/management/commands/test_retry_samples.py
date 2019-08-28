@@ -28,7 +28,7 @@ from data_refinery_common.models import (
     Sample,
     SampleResultAssociation,
 )
-from data_refinery_foreman.foreman.management.commands.retry_jobs_restarted_by_nomad import retry_jobs_restarted_by_nomad
+from data_refinery_foreman.foreman.management.commands.retry_samples import retry_by_regex
 
 def setup_experiment() -> Dict:
     """ Create an experiment with two samples where one of them has a processor job that failed 
@@ -94,12 +94,12 @@ def setup_experiment() -> Dict:
 
     return experiment
 
-class RequeueFailedNomadJobs(TestCase):
+class RetrySamples(TestCase):
     """
     """
     def test(self):
         setup_experiment()
-        retry_jobs_restarted_by_nomad()
+        retry_by_regex('ProcessorJob has already completed .*')
 
         dl_jobs = DownloaderJob.objects.all()
         self.assertEqual(dl_jobs.count(), 1)
