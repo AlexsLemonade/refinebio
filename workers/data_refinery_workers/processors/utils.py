@@ -167,35 +167,6 @@ def start_job(job_context: Dict):
     """
     job = job_context["job"]
 
-    # This job should not have been started.
-    if job.start_time is not None and settings.RUNNING_IN_CLOUD:
-
-        if job.success:
-            failure_reason = "ProcessorJob has already completed succesfully - why are we here again? Bad Nomad!"
-            logger.error(failure_reason,
-                job_id=job.id
-            )
-            job_context["original_files"] = []
-            job_context["computed_files"] = []
-            job_context['abort'] = True
-            # Will be saved by end_job.
-            job_context['job'].failure_reason = failure_reason
-            return job_context
-        if job.success == False:
-            failure_reason = "ProcessorJob has already completed with a fail - why are we here again? Bad Nomad!"
-            logger.error(failure_reason,
-                job_id=job.id
-            )
-            job_context["original_files"] = []
-            job_context["computed_files"] = []
-            job_context['abort'] = True
-            # Will be saved by end_job.
-            job_context['job'].failure_reason = failure_reason
-            return job_context
-
-        logger.error("This processor job has already been started!!!", processor_job=job.id)
-        raise Exception("processors.start_job called on job %s that has already been started!" % str(job.id))
-
     original_file = job.original_files.first()
     if not job.pipeline_applied == ProcessorPipeline.TXIMPORT.value and original_file\
        and not original_file.needs_processing(job_context["job_id"]):
@@ -218,6 +189,20 @@ def start_job(job_context: Dict):
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 
+    # This job should not have been started, for some reason Nomad restarts some of our jobs
+    # https://github.com/AlexsLemonade/refinebio/issues/1487
+    if job.start_time is not None and settings.RUNNING_IN_CLOUD:
+        # Let's just log the event and let the job run instead of failing
+        # and also reset the endtime and failure reason, since those fields might have been set
+        logger.warn('ProcessorJob was restarted by Nomad. We do not know why this happened', 
+                        processor_job=job.id, 
+                        success=job.success, 
+                        failure_reason=job.failure_reason,
+                        start_time=job.start_time,
+                        end_time=job.end_time)
+        job.end_time = None
+        job.failure_reason = None
+        
     job.worker_id = get_instance_id()
     job.worker_version = SYSTEM_VERSION
     job.start_time = timezone.now()
