@@ -43,7 +43,8 @@ def requeue_samples(eligible_samples):
 
 def retry_by_source_database(source_database):
     sra_samples = Sample.objects.filter(
-        source_database=source_database
+        source_database=source_database,
+        is_processed=False
     )\
     .annotate(
         num_computed_files=Count('computed_files')
@@ -76,6 +77,7 @@ def retry_by_regex(pattern):
         .order_by('-start_time')
 
     eligible_samples = Sample.objects\
+        .filter(is_processed=False)\
         .annotate(
             failure_reason=Subquery(latest_processor_job_for_sample.values('failure_reason')[:1])
         )\
