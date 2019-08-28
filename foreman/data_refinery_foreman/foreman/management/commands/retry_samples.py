@@ -35,6 +35,8 @@ def requeue_samples(eligible_samples):
         else:
             page = paginator.page(page.next_page_number())
 
+        logger.info("Creating new downloader jobs. %d so far", creation_count)
+
         # 2000 samples queued up every five minutes should be fast
         # enough and also not thrash the DB.
         time.sleep(60 * 5)
