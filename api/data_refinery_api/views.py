@@ -119,6 +119,9 @@ MAILCHIMP_USER = get_env_variable("MAILCHIMP_USER")
 MAILCHIMP_API_KEY = get_env_variable("MAILCHIMP_API_KEY")
 MAILCHIMP_LIST_ID = get_env_variable("MAILCHIMP_LIST_ID")
 
+
+JOB_CREATED_AT_CUTOFF = datetime(2019, 6, 5, tzinfo=timezone.utc)
+
 ##
 # ElasticSearch
 ##
@@ -1015,7 +1018,9 @@ class Stats(APIView):
             total=Count('id'),
             successful=Count('id', filter=Q(success=True)),
             failed=Count('id', filter=Q(success=False)),
-            pending=Count('id', filter=Q(start_time__isnull=True, success__isnull=True)),
+            pending=Count('id', filter=Q(start_time__isnull=True,
+                                         success__isnull=True,
+                                         created_at__gt=JOB_CREATED_AT_CUTOFF)),
             open=Count('id', filter=Q(start_time__isnull=False, success__isnull=True)),
         )
         # via https://stackoverflow.com/questions/32520655/get-average-of-difference-of-datetime-fields-in-django
