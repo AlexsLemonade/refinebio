@@ -173,18 +173,6 @@ variable "max_downloader_jobs_per_node" {
   default = 8
 }
 
-variable "mailchimp_user" {
-  default = ""
-}
-
-variable "mailchimp_api_key" {
-  default = ""
-}
-
-variable "mailchimp_list_id" {
-  default = ""
-}
-
 variable "elasticsearch_port" {
   default = "80"
 }
