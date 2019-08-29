@@ -82,6 +82,8 @@ def setup_experiment() -> Dict:
 
     # add a failed processor job for the second sample
     processor_job = ProcessorJob()
+    processor_job.start_time = timezone.now()
+    processor_job.end_time = timezone.now()
     processor_job.no_retry=True
     processor_job.success=False
     processor_job.failure_reason = 'ProcessorJob has already completed with a fail - why are we here again? Bad Nomad!'

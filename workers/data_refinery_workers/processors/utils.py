@@ -62,10 +62,9 @@ def prepare_original_files(job_context):
     """ Provision in the Job context for OriginalFile-driven processors
     """
     job = job_context["job"]
-    relations = ProcessorJobOriginalFileAssociation.objects.filter(processor_job=job)
-    original_files = OriginalFile.objects.filter(id__in=relations.values('original_file_id'))
+    original_files = OriginalFile.objects.filter(processor_jobs=job)
 
-    if len(original_files) == 0:
+    if original_files.count() == 0:
         logger.error("No files found.", processor_job=job.id)
         job_context["success"] = False
         job.failure_reason = "No files were found for the job."
@@ -115,9 +114,8 @@ def prepare_original_files(job_context):
         return job_context
 
     job_context["original_files"] = original_files
-    original_file = job_context['original_files'][0]
-    assocs = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
-    samples = Sample.objects.filter(id__in=assocs.values('sample_id')).distinct()
+    first_original_file = original_files.first()
+    samples = Sample.objects.filter(original_files=first_original_file)
     job_context['samples'] = samples
     job_context["computed_files"] = []
 

@@ -111,6 +111,12 @@ from drf_yasg.utils import swagger_auto_schema
 logger = get_and_configure_logger(__name__)
 
 ##
+# Variables
+##
+
+JOB_CREATED_AT_CUTOFF = datetime(2019, 6, 5, tzinfo=timezone.utc)
+
+##
 # ElasticSearch
 ##
 from django_elasticsearch_dsl_drf.pagination import LimitOffsetPagination as ESLimitOffsetPagination
@@ -987,7 +993,9 @@ class Stats(APIView):
             total=Count('id'),
             successful=Count('id', filter=Q(success=True)),
             failed=Count('id', filter=Q(success=False)),
-            pending=Count('id', filter=Q(start_time__isnull=True, success__isnull=True)),
+            pending=Count('id', filter=Q(start_time__isnull=True,
+                                         success__isnull=True,
+                                         created_at__gt=JOB_CREATED_AT_CUTOFF)),
             open=Count('id', filter=Q(start_time__isnull=False, success__isnull=True)),
         )
         # via https://stackoverflow.com/questions/32520655/get-average-of-difference-of-datetime-fields-in-django
