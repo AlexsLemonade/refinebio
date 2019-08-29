@@ -50,7 +50,6 @@ def run_tximport():
 
     paginator = Paginator(eligible_experiments, PAGE_SIZE)
     page = paginator.page()
-    page_count = 0
 
     # Next is to figure out how many samples were processed for
     # each experiment. Should be able to reuse code from salmon
