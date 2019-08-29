@@ -636,7 +636,9 @@ def tximport(job_context: Dict) -> Dict:
 
         quantified_experiments += 1
 
-    if quantified_experiments == 0 and job_context["is_tximport_only"]:
+    if quantified_experiments == 0 \
+       and "is_tximport_job" in job_context \
+       and job_context["is_tximport_only"]:
         failure_reason = ("Tximport job ran on no experiments... Why?!?!?")
         logger.error(failure_reason, processor_job=job_context["job_id"])
         job_context["job"].failure_reason = failure_reason
