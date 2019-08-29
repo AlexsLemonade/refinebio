@@ -56,7 +56,7 @@ def update_salmon_versions(experiment: Experiment):
                 if (has_open_processor_job):
                     continue
 
-                create_downloader_job(original_files)
+                create_downloader_job(original_files, force=True)
                 total_samples_queued += 1
 
     logger.info("Re-ran Salmon for %d samples in experiment %s.",
