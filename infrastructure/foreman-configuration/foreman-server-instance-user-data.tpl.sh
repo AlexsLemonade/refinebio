@@ -63,7 +63,7 @@ docker run \\
        --add-host=nomad:${nomad_lead_server_ip} \\
        -it -d ${dockerhub_repo}/${foreman_docker_image} python3 manage.py \$@
 " >> /home/ubuntu/run_management_command.sh
-chmod +x /home/ubuntu/run_foreman_command.sh
+chmod +x /home/ubuntu/run_management_command.sh
 
 # Start the Nomad agent in server mode via Monit
 apt-get -y update
