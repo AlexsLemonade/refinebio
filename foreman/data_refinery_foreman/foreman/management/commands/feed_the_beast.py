@@ -29,7 +29,7 @@ class Command(BaseCommand):
             all_accessions = [line.strip() for line in accession_list_file]
 
         # We've surveyed up to SRP076491 so far!
-        all_accessions = all_accessions[all_accessions.index('SRP076491'):]
+        all_accessions = all_accessions[all_accessions.index('SRP134965'):]
 
         BATCH_SIZE = 1000
         batch_index = 0
