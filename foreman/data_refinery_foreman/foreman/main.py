@@ -69,7 +69,7 @@ DESIRED_WORK_DEPTH = 500
 # be queued across the whole cluster no matter how many nodes we
 # have. This is important because too many downloader jobs and we take
 # down NCBI.
-HARD_MAX_DOWNLOADER_JOBS = 750
+HARD_MAX_DOWNLOADER_JOBS = 1000
 
 # The minimum amount of time in between each iteration of the main
 # loop. We could loop much less frequently than every two minutes if

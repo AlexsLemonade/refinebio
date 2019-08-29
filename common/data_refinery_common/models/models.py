@@ -782,8 +782,8 @@ class OriginalFile(models.Model):
         if sample.source_database == "SRA":
             for computed_file in sample.computed_files.prefetch_related('result__organism_index').all():
                     if computed_file.s3_bucket and computed_file.s3_key \
-                       and (computed_file.result.organism_index == None
-                       or computed_file.result.organism_index.salmon_version == CURRENT_SALMON_VERSION):
+                       and computed_file.result.organism_index != None \
+                       and computed_file.result.organism_index.salmon_version == CURRENT_SALMON_VERSION:
                         # If the file wasn't computed with the latest
                         # version of salmon, then it should be rerun
                         # with the latest version of salmon.
