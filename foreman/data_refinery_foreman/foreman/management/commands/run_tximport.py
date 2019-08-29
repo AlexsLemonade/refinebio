@@ -57,10 +57,10 @@ def run_tximport():
     tximport_pipeline = ProcessorPipeline.TXIMPORT
 
     while True:
+        creation_count = 0
+
         for experiment in page.object_list:
             quant_results = get_quant_results_for_experiment(experiment)
-
-            creation_count = 0
 
             if should_run_tximport(experiment, quant_results, True):
                 processor_job = ProcessorJob()
