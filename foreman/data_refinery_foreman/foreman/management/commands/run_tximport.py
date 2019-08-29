@@ -31,9 +31,13 @@ from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.rna_seq import get_quant_results_for_experiment, should_run_tximport
 from data_refinery_common.utils import get_env_variable, get_active_volumes
+from data_refinery_foreman.foreman.performant_pagination.pagination import PerformantPaginator as Paginator
 
 
 logger = get_and_configure_logger(__name__)
+
+PAGE_SIZE=2000
+
 
 def run_tximport():
     """Creates a tximport job for all eligible experiments."""
@@ -44,39 +48,59 @@ def run_tximport():
         num_processed_samples=0
     ).prefetch_related('samples__results')
 
+    paginator = Paginator(eligible_experiments, PAGE_SIZE)
+    page = paginator.page()
+    page_count = 0
+
     # Next is to figure out how many samples were processed for
     # each experiment. Should be able to reuse code from salmon
     # cause it does this stuff.
     tximport_pipeline = ProcessorPipeline.TXIMPORT
-    for experiment in eligible_experiments:
-        quant_results = get_quant_results_for_experiment(experiment)
 
-        if should_run_tximport(experiment, quant_results, True):
-            processor_job = ProcessorJob()
-            processor_job.pipeline_applied = tximport_pipeline.value
-            processor_job.ram_amount = 8192
-            # This job doesn't need to run on a specific volume
-            # but it uses the same Nomad job as Salmon jobs which
-            # do require the volume index.
-            processor_job.volume_index = random.choice(list(get_active_volumes()))
-            processor_job.save()
+    while True:
+        for experiment in page.object_list:
+            quant_results = get_quant_results_for_experiment(experiment)
 
-            assoc = ProcessorJobOriginalFileAssociation()
-            # Any original file linked to any sample of the
-            # experiment will work. Tximport is somewhat special
-            # in that it doesn't actuallhy use original files so
-            # this is just used to point to the experiment.
-            samples = experiment.samples.all()
-            assoc.original_file = experiment.samples.all()[0].original_files.all()[0]
-            assoc.processor_job = processor_job
-            assoc.save()
+            creation_count = 0
 
-            try:
-                send_job(tximport_pipeline, processor_job)
-            except:
-                # If we cannot queue the job now the Foreman will do
-                # it later.
-                pass
+            if should_run_tximport(experiment, quant_results, True):
+                processor_job = ProcessorJob()
+                processor_job.pipeline_applied = tximport_pipeline.value
+                processor_job.ram_amount = 8192
+                # This job doesn't need to run on a specific volume
+                # but it uses the same Nomad job as Salmon jobs which
+                # do require the volume index.
+                processor_job.volume_index = random.choice(list(get_active_volumes()))
+                processor_job.save()
+
+                assoc = ProcessorJobOriginalFileAssociation()
+                # Any original file linked to any sample of the
+                # experiment will work. Tximport is somewhat special
+                # in that it doesn't actuallhy use original files so
+                # this is just used to point to the experiment.
+                samples = experiment.samples.all()
+                assoc.original_file = experiment.samples.all()[0].original_files.all()[0]
+                assoc.processor_job = processor_job
+                assoc.save()
+
+                creation_count += 1
+
+                try:
+                    send_job(tximport_pipeline, processor_job)
+                except:
+                    # If we cannot queue the job now the Foreman will do
+                    # it later.
+                    pass
+
+        logger.info(
+            "Created %d tximport jobs for experiments past the thresholds.",
+            creation_count
+        )
+
+        if not page.has_next():
+            break
+        else:
+            page = paginator.page(page.next_page_number())
 
 class Command(BaseCommand):
 

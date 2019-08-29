@@ -627,11 +627,21 @@ def tximport(job_context: Dict) -> Dict:
     of genes_to_transcripts.txt.
     """
     tximport_inputs = job_context["tximport_inputs"]
+    quantified_experiments = 0
     for experiment, quant_files in tximport_inputs.items():
         job_context = _run_tximport_for_experiment(job_context, experiment, quant_files)
         # If `tximport` on any related experiment fails, exit immediately.
         if not job_context["success"]:
             return job_context
+
+        quantified_experiments += 1
+
+    if quantified_experiments == 0:
+        failure_reason = ("Tximport job ran on no experiments... Why?!?!?")
+        logger.error(failure_reason, processor_job=job_context["job_id"])
+        job_context["job"].failure_reason = failure_reason
+        job_context["job"].no_retry = True
+        job_context["success"] = False
 
     return job_context
 
