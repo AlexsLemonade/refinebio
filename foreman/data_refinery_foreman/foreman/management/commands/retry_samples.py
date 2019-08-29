@@ -75,7 +75,7 @@ def retry_by_regex(pattern):
     https://docs.djangoproject.com/en/dev/ref/models/querysets/#regex
     """
     latest_processor_job_for_sample = ProcessorJob.objects\
-        .filter(original_files__samples=OuterRef('id'))\
+        .filter(start_time__isnull=False, original_files__samples=OuterRef('id'))\
         .order_by('-start_time')
 
     eligible_samples = Sample.objects\
