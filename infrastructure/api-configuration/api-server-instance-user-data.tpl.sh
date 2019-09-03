@@ -127,6 +127,7 @@ docker run \
 sleep 30
 docker exec dr_api python3 manage.py search_index --delete -f;
 docker exec dr_api python3 manage.py search_index --rebuild -f;
+docker exec dr_api python3 manage.py search_index --populate -f;
 
 # Let's use this instance to call the populate command every twenty minutes.
 crontab -l > tempcron
