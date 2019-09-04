@@ -994,7 +994,6 @@ class Stats(APIView):
         if range_param:
             current_date = datetime.now(tz=timezone.utc)
             start_date = {
-                ''
                 'day': current_date - timedelta(days=1),
                 'week': current_date - timedelta(weeks=1),
                 'month': current_date - timedelta(days=30),
