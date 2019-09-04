@@ -573,7 +573,7 @@ variable NOMAD_ADDR to include the IP address of your development
 machine. This can be done with:
 
 ```bash
-source common.sh && export NOMAD_ADDR=http://$(get_ip_address):4646
+source scripts/common.sh && export NOMAD_ADDR=http://$(get_ip_address):4646
 ```
 
 To check on the status of a job, run:
