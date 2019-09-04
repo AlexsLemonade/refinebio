@@ -999,7 +999,7 @@ class Stats(APIView):
                 'month': current_date - timedelta(days=30),
                 'year': current_date - timedelta(days=365)
             }.get(range_param)
-            start_filter | Q(start_time__gte=start_date)
+            start_filter = start_filter | Q(start_time__gte=start_date)
 
         result = jobs.filter(start_filter).aggregate(
             total=Count('id'),
@@ -1016,9 +1016,10 @@ class Stats(APIView):
         result['average_time'] = jobs.filter(start_filter).filter(
             start_time__isnull=False,
             end_time__isnull=False,
-            success=True).aggregate(
-                average_time=Avg(F('end_time') - F('start_time'))
-            )['average_time']
+            success=True
+        ).aggregate(
+            average_time=Avg(F('end_time') - F('start_time'))
+        )['average_time']
 
         if not result['average_time']:
             result['average_time'] = 0
