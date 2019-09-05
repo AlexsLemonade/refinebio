@@ -148,6 +148,6 @@ class CorrectAffyCdfTestCase(TestCase):
             Experiment.objects.get(accession_code="GSE12417")
 
         survey_jobs = SurveyJob.objects.all()
-        self.assertEqual(1, survey_jobs)
+        self.assertEqual(1, survey_jobs.count())
 
         self.assertEqual("GSE12417", SurveyJobKeyValue.objects.first().value)
