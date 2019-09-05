@@ -10,24 +10,12 @@ from unittest.mock import MagicMock, Mock, patch, call
 
 from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders
 from data_refinery_common.models import (
-    ComputationalResult,
-    ComputationalResultAnnotation,
-    ComputedFile,
-    DownloaderJob,
-    DownloaderJobOriginalFileAssociation,
     Experiment,
-    ExperimentOrganismAssociation,
-    ExperimentResultAssociation,
     ExperimentSampleAssociation,
-    OriginalFile,
-    OriginalFileSampleAssociation,
     Organism,
-    OrganismIndex,
-    Processor,
-    ProcessorJob,
-    ProcessorJobOriginalFileAssociation,
     Sample,
-    SampleResultAssociation,
+    SurveyJob,
+    SurveyJobKeyValue,
 )
 from data_refinery_foreman.foreman.management.commands.rerun_salmon_old_samples import update_salmon_all_experiments
 
@@ -155,4 +143,11 @@ class CorrectAffyCdfTestCase(TestCase):
         for experiment in unchanged_experiments:
             self.assertEqual(2, experiment.samples.count())
 
-        self.assertEqual(405, Experiment.objects.get(accession_code="GSE12417").samples.count())
+        # GSE12417 should have been unsurveyed.
+        with self.assertRaises(Experiment.DoesNotExist):
+            Experiment.objects.get(accession_code="GSE12417")
+
+        survey_jobs = SurveyJob.objects.all()
+        self.assertEqual(1, survey_jobs)
+
+        self.assertEqual("GSE12417", SurveyJobKeyValue.objects.first().value)
