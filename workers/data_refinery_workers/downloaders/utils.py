@@ -79,15 +79,10 @@ def start_job(job_id: int) -> DownloaderJob:
     job.start_time = timezone.now()
     job.save()
 
-    needs_downloading = False
-    for original_file in job.original_files.all():
-        if original_file.needs_downloading():
-            needs_downloading = True
+    needs_downloading = any(original_file.needs_downloading() for original_file in job.original_files.all())
 
     if not needs_downloading:
-        logger.error(("No files associated with this job need to be downloaded! Aborting!"),
-                     job_id=job.id
-        )
+        logger.error(("No files associated with this job need to be downloaded! Aborting!"), job_id=job.id)
         job.start_time = timezone.now()
         job.failure_reason = "Was told to redownload file(s) that are already downloaded!"
         job.success = False
