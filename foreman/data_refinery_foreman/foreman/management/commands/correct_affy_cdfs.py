@@ -54,7 +54,6 @@ class Command(BaseCommand):
                         break
 
                 if wrong_platform:
-                    print(type(options["dry_run"]))
                     if options["dry_run"]:
                         logger.info("Would have re-surveyed experiment with accession code %s",
                                     experiment.accession_code)
