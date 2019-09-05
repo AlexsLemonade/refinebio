@@ -29,9 +29,13 @@ class DownloadGeoTestCase(TestCase):
 
         # *_family.xml.tgz
         geo._download_file('ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE10nnn/GSE10241/miniml/GSE10241_family.xml.tgz', '/home/user/data_store/GSE10241/raw/GSE10241_family.xml.tgz', dlj)
-        files = geo._extract_tgz('/home/user/data_store/GSE10241/raw/GSE10241_family.xml.tgz', 'GSE10241')
+        archive_file = geo.ArchivedFile('/home/user/data_store/GSE10241/raw/GSE10241_family.xml.tgz')
+        files = [file for file in archive_file.get_files()]
 
-        self.assertEqual(8, len(files))
+        # There should be 8 files in total in the directory, 2 downloaded and 6 extracted
+        # `archive_file.get_files()` only returns the files that are extracted from the archives
+        # instead of enumerating over all files.
+        self.assertEqual(6, len(files))
 
         # GPL File
         self.assertTrue(os.path.isfile('/home/user/data_store/GSE10241/raw/GPL6102-tbl-1.txt'))
@@ -49,12 +53,14 @@ class DownloadGeoTestCase(TestCase):
 
         # .txt.gz
         geo._download_file('ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM254nnn/GSM254828/suppl/GSM254828.txt.gz', '/home/user/data_store/GSM254828/raw/GSM254828.txt.gz', dlj)
-        files = geo._extract_gz('/home/user/data_store/GSM254828/raw/GSM254828.txt.gz', 'GSM254828')
+        archive_file = geo.ArchivedFile('/home/user/data_store/GSM254828/raw/GSM254828.txt.gz')
+        files = [file for file in archive_file.get_files()]
         self.assertEqual(1, len(files))
         self.assertTrue(os.path.isfile('/home/user/data_store/GSM254828/raw/GSM254828.txt'))
 
         geo._download_file("ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE22nnn/GSE22427/suppl/GSE22427_non-normalized.txt.gz", '/home/user/data_store/GSE22427/raw/GSE22427_non-normalized.txt.gz',  dlj)
-        files = geo._extract_gz('/home/user/data_store/GSE22427/raw/GSE22427_non-normalized.txt.gz', 'GSE22427')
+        archive_file = geo.ArchivedFile('/home/user/data_store/GSE22427/raw/GSE22427_non-normalized.txt.gz')
+        files = [file for file in archive_file.get_files()]
         self.assertEqual(1, len(files))
 
         self.assertTrue(os.path.isfile('/home/user/data_store/GSE22427/raw/GSE22427_non-normalized.txt'))

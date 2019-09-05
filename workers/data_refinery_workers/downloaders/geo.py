@@ -188,55 +188,57 @@ class ArchivedFile:
             # for archives extract them and enumerate all the files inside
             for path in self._extract_files():
                 archived_file = ArchivedFile(path, self)
-                for file in archived_file.files():
+                for file in archived_file.get_files():
                     yield file
 
     def _extract_files(self):
-        logger.debug("Extracting %s!", file_path, file_path=file_path)
+        logger.debug("Extracting %s!", self.file_path, file_path=self.file_path)
 
         try:
             if '.tar' == self.extension:
-                return ArchivedFile._extract_tar(self.file_path)
+                return self._extract_tar()
             elif '.tgz' == self.extension:
-                return ArchivedFile._extract_tgz(self.file_path)
+                return self._extract_tgz()
             elif '.gz' == self.extension:
-                return ArchivedFile._extract_tgz(self.file_path)
+                return self._extract_gz()
         except Exception as e:
-            logger.exception("While extracting %s caught exception %s", file_path, str(e), file_path=file_path)
-            raise FileExtractionError(file_path, e)
+            logger.exception("While extracting %s caught exception %s", self.file_path, str(e), file_path=self.file_path)
+            raise FileExtractionError(self.file_path, e)
         
-        raise FileExtractionError(file_path, 'Unknown archive file format.')
+        raise FileExtractionError(self.file_path, 'Unknown archive file format.')
 
-    @classmethod
-    def _extract_tar(cls, file_path: str) -> List[str]:
+    def _extract_tar(self) -> List[str]:
         """ Extract tar and return a list of the raw files. """
         # This is technically an unsafe operation.
         # However, we're trusting GEO as a data source.
-        zip_ref = tarfile.TarFile(file_path, "r")
-        abs_with_code_raw = LOCAL_ROOT_DIR + '/' + accession_code + '/raw/'
-        zip_ref.extractall(abs_with_code_raw)
-        zip_ref.close()
-        # os.abspath doesn't do what I thought it does, hency this monstrocity.
-        return [(abs_with_code_raw + f) for f in os.listdir(abs_with_code_raw)]
+        abs_with_code_raw = LOCAL_ROOT_DIR + '/' + self.sample_accession_code() + '/raw/'
 
-    @classmethod
-    def _extract_tgz(cls, file_path: str) -> List[str]:
+        with tarfile.TarFile(self.file_path, "r") as zip_ref:
+            zip_ref.extractall(abs_with_code_raw)
+            extracted_files = zip_ref.getnames() # https://docs.python.org/3/library/tarfile.html#tarfile.TarFile.getnames
+
+        return [(abs_with_code_raw + f) for f in extracted_files]
+
+    def _extract_tgz(self) -> List[str]:
         """Extract tgz and return a list of the raw files."""
-        extracted_filepath = file_path.replace('.tgz', '.tar')
-        with gzip.open(file_path, 'rb') as f_in:
+        abs_with_code_raw = LOCAL_ROOT_DIR + '/' + self.sample_accession_code() + '/raw/'
+        
+        extracted_filepath = self.file_path.replace('.tgz', '.tar')
+
+        with gzip.open(self.file_path, 'rb') as f_in:
             with open(extracted_filepath, 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
-        zip_ref = tarfile.TarFile(extracted_filepath, "r")
-        abs_with_code_raw = LOCAL_ROOT_DIR + '/' + accession_code + '/raw/'
-        zip_ref.extractall(abs_with_code_raw)
-        zip_ref.close()
-        return [(abs_with_code_raw + f) for f in os.listdir(abs_with_code_raw)]
 
-    @classmethod
-    def _extract_gz(cls, file_path: str) -> List[str]:
+        with tarfile.TarFile(extracted_filepath, "r") as zip_ref:
+            zip_ref.extractall(abs_with_code_raw)
+            extracted_files = zip_ref.getnames() # https://docs.python.org/3/library/tarfile.html#tarfile.TarFile.getnames
+
+        return [(abs_with_code_raw + f) for f in extracted_files]
+
+    def _extract_gz(self) -> List[str]:
         """Extract gz and return a list of the raw files."""
-        extracted_filepath = file_path.replace('.gz', '')
-        with gzip.open(file_path, 'rb') as f_in:
+        extracted_filepath = self.file_path.replace('.gz', '')
+        with gzip.open(self.file_path, 'rb') as f_in:
             with open(extracted_filepath, 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
         return [extracted_filepath]
