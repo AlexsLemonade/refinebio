@@ -300,33 +300,23 @@ def download_geo(job_id: int) -> None:
     GEO.
     """
     job = utils.start_job(job_id)
+    accession_code = job.accession_code
+    original_file = job.original_files.first()
 
-    file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
-
-    if file_assocs.count() == 0:
+    if not original_file:
         job.failure_reason = "No files associated with the job."
-        logger.error(
-            "Error occured while extracting tar file.", downloader_job=job_id)
+        logger.error("Error occured while extracting tar file.", downloader_job=job_id)
         utils.end_downloader_job(job, success=False)
         return
 
-    original_file = file_assocs[0].original_file
     url = original_file.source_url
-    accession_code = job.accession_code
-
-    sample_assocs = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
-    related_samples = Sample.objects.filter(
-        id__in=sample_assocs.values('sample_id')
-    ).exclude(
-        technology='RNA-SEQ'
-    )
+    related_samples = original_file.samples.exclude(technology='RNA-SEQ')
 
     # First, download the sample archive URL.
     # Then, unpack all the ones downloaded.
     # Then create processor jobs!
 
-    # The files for all of the samples are
-    # contained within the same zip file. Therefore only
+    # The files for all of the samples are contained within the same zip file. Therefore only
     # download the one.
     os.makedirs(LOCAL_ROOT_DIR + '/' + accession_code, exist_ok=True)
     dl_file_path = LOCAL_ROOT_DIR + '/' + accession_code + '/' + url.split('/')[-1]
