@@ -5,6 +5,7 @@ import subprocess
 import tarfile
 import time
 import urllib.request
+import re
 
 from contextlib import closing
 from typing import List, Dict
@@ -163,13 +164,7 @@ class ArchivedFile:
 
     def sample_accession_code(self):
         """ Tries to get a sample accession code from the file name """
-        if '.txt' in self.filename:
-            return self.filename.split('-')[0]
-
-        if '_' in self.filename:
-            return self.filename.split('_')[0]
-        else:
-            return self.filename.split('.')[0]
+        return re.match(r'((GSE|ERP|SRP)\d{3,6})', self.filename).group(0)
 
     def get_sample(self):
         """ Tries to find the sample associated with this file, and returns None if unable.
@@ -333,7 +328,7 @@ def download_geo(job_id: int) -> None:
             actual_file.source_filename = original_file.source_filename
             actual_file.save()
 
-            for sample in samples:
+            for sample in related_samples:
                 original_file_sample_association = OriginalFileSampleAssociation()
                 original_file_sample_association.sample = sample
                 original_file_sample_association.original_file = actual_file
