@@ -164,14 +164,20 @@ class ArchivedFile:
 
     def sample_accession_code(self):
         """ Tries to get a sample accession code from the file name """
-        return re.match(r'((GSE|ERP|SRP)\d{3,6})', self.filename).group(0)
+        match = re.match(r'((GSE|ERP|SRP)\d{3,6})', self.filename)
+        if match:
+            return match.group(0)
+        return None
 
     def get_sample(self):
         """ Tries to find the sample associated with this file, and returns None if unable.
         If the file comes from an archive and we can't find a sample associated with it, we
         return the sample that's associated with the parent """
-        return Sample.objects.filter(accession_code=self.sample_accession_code()).first() \
-            or (self.parent_archive and self.parent_archive.get_sample())
+        if self.sample_accession_code():
+            sample = Sample.objects.filter(accession_code=self.sample_accession_code()).first()
+            if sample: return sample
+
+        return self.parent_archive and self.parent_archive.get_sample()
 
     def is_archive(self):
         return self.extension in ['.tar', '.tgz', '.gz']
