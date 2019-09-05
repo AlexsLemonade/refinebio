@@ -295,12 +295,10 @@ def download_geo(job_id: int) -> None:
 
     for og_file in archived_files:
         sample = og_file.get_sample()
-        # We don't have this sample, but it's not a total failure. This happens.
-        if not sample: continue
 
         # We don't want RNA-Seq data from GEO:
         # https://github.com/AlexsLemonade/refinebio/issues/966
-        if sample.technology == 'RNA-SEQ':
+        if sample and sample.technology == 'RNA-SEQ':
             logger.warn("RNA-Seq sample found in GEO downloader job.", sample=sample)
             continue
 
@@ -322,6 +320,7 @@ def download_geo(job_id: int) -> None:
                 unpacked_sample_files.append(potential_existing_file)
         else:
             # create a file that will be queued
+            # This is probably just a .txt file
             actual_file = OriginalFile()
             actual_file.is_downloaded = True
             actual_file.is_archive = False
