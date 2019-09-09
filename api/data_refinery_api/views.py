@@ -999,7 +999,7 @@ class Stats(APIView):
                 'month': current_date - timedelta(days=30),
                 'year': current_date - timedelta(days=365)
             }.get(range_param)
-            start_filter = start_filter | Q(start_time__gte=start_date)
+            start_filter = start_filter | Q(start_time__gte=start_date) | Q(start_time__isnull=True)
 
         result = jobs.filter(start_filter).aggregate(
             total=Count('id'),
