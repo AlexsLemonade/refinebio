@@ -162,22 +162,20 @@ class ArchivedFile:
         self.filename = os.path.basename(self.file_path)
         self.extension = os.path.splitext(self.file_path)[1]
 
+    def parent_is_archive(self):
+        """ Returns true if this file came from an archive """
+        return self.parent_archive and self.parent_archive.is_archive()
+
     def sample_accession_code(self):
         """ Tries to get a sample accession code from the file name """
-        match = re.match(r'((GSE|ERP|SRP)\d{3,6})', self.filename)
+        match = re.match(r'((GSM|GSE)\d{4,7})', self.filename)
         if match:
             return match.group(0)
         return None
 
     def get_sample(self):
-        """ Tries to find the sample associated with this file, and returns None if unable.
-        If the file comes from an archive and we can't find a sample associated with it, we
-        return the sample that's associated with the parent """
-        if self.sample_accession_code():
-            sample = Sample.objects.filter(accession_code=self.sample_accession_code()).first()
-            if sample: return sample
-
-        return self.parent_archive and self.parent_archive.get_sample()
+        """ Tries to find the sample associated with this file, and returns None if unable. """
+        return Sample.objects.filter(accession_code=self.sample_accession_code()).first()
 
     def is_archive(self):
         return self.extension in ['.tar', '.tgz', '.gz']
@@ -295,35 +293,17 @@ def download_geo(job_id: int) -> None:
 
     for og_file in archived_files:
         sample = og_file.get_sample()
+
+        if not sample and og_file.parent_is_archive():
+            # We don't have this sample, but it's not a total failure. This happens.
+            continue
+
         # We don't want RNA-Seq data from GEO:
         # https://github.com/AlexsLemonade/refinebio/issues/966
         if sample and sample.technology == 'RNA-SEQ':
             logger.warn("RNA-Seq sample found in GEO downloader job.", sample=sample)
             continue
         
-        # 1. if we got an archive that's an original file mark it as downloaded
-        if og_file.is_archive():
-            try:
-                archive_file = sample.original_files.get(source_filename__contains=og_file.sample_accession_code())
-                archive_file.is_downloaded = True
-                archive_file.is_archive = True
-                archive_file.absolute_file_path = og_file['absolute_path']
-                archive_file.calculate_size()
-                archive_file.calculate_sha1()
-                archive_file.save()
-            except Exception as e:
-                # TODO - is this worth failing a job for?
-                logger.debug("Found a file we didn't have an OriginalFile for! Why did this happen?: "
-                             + og_file['filename'],
-                             exc_info=1,
-                             file=og_file['filename'],
-                             sample_id=sample_id,
-                             accession_code=accession_code)
-                # If we don't know why we have it, get rid of it.
-                os.remove(og_file["absolute_path"])
-            continue
-
-        # 2. For files that aren't archives, look to see if we already created them
         potential_existing_file = OriginalFile.objects.filter(
             source_filename=original_file.source_filename,
             filename=og_file.filename,
@@ -341,7 +321,7 @@ def download_geo(job_id: int) -> None:
                 unpacked_sample_files.append(potential_existing_file)
             continue
 
-        # 3. if not, then this is a new file and we should create an original file for it
+        # Then this is a new file and we should create an original file for it
         actual_file = OriginalFile()
         actual_file.is_downloaded = True
         actual_file.is_archive = False
