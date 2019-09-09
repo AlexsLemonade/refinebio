@@ -989,18 +989,37 @@ class Stats(APIView):
 
     @classmethod
     def _get_job_stats(cls, jobs, range_param):
-        result = jobs.aggregate(
+        start_filter = Q()
+
+        if range_param:
+            current_date = datetime.now(tz=timezone.utc)
+            start_date = {
+                'day': current_date - timedelta(days=1),
+                'week': current_date - timedelta(weeks=1),
+                'month': current_date - timedelta(days=30),
+                'year': current_date - timedelta(days=365)
+            }.get(range_param)
+            start_filter = start_filter | Q(start_time__gte=start_date)
+
+        result = jobs.filter(start_filter).aggregate(
             total=Count('id'),
             successful=Count('id', filter=Q(success=True)),
             failed=Count('id', filter=Q(success=False)),
             pending=Count('id', filter=Q(start_time__isnull=True,
                                          success__isnull=True,
                                          created_at__gt=JOB_CREATED_AT_CUTOFF)),
-            open=Count('id', filter=Q(start_time__isnull=False, success__isnull=True)),
+            open=Count('id', filter=Q(start_time__isnull=False,
+                                      success__isnull=True,
+                                      created_at__gt=JOB_CREATED_AT_CUTOFF)),
         )
         # via https://stackoverflow.com/questions/32520655/get-average-of-difference-of-datetime-fields-in-django
-        result['average_time'] = jobs.filter(start_time__isnull=False, end_time__isnull=False, success=True).aggregate(
-                average_time=Avg(F('end_time') - F('start_time')))['average_time']
+        result['average_time'] = jobs.filter(start_filter).filter(
+            start_time__isnull=False,
+            end_time__isnull=False,
+            success=True
+        ).aggregate(
+            average_time=Avg(F('end_time') - F('start_time'))
+        )['average_time']
 
         if not result['average_time']:
             result['average_time'] = 0

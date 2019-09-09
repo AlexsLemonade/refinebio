@@ -587,6 +587,9 @@ def retry_lost_downloader_jobs() -> None:
     during which the price of spot instance is higher than our bid
     price.
     """
+    global VOLUME_WORK_DEPTH
+    global DOWNLOADER_JOBS_IN_QUEUE
+
     potentially_lost_jobs = DownloaderJob.objects.filter(
         success=None,
         retried=False,
@@ -636,6 +639,7 @@ def retry_lost_downloader_jobs() -> None:
                     job.save()
                     send_job(Downloaders[job.downloader_task], job=job, is_dispatch=True)
                     jobs_queued_from_this_page += 1
+                    VOLUME_WORK_DEPTH[dispatched_volume] += 1
             except socket.timeout:
                 logger.info("Timeout connecting to Nomad - is Nomad down?", job_id=job.id)
             except URLNotFoundNomadException:
