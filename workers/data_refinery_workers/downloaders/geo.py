@@ -250,7 +250,7 @@ def download_geo(job_id: int) -> None:
     """The main function for the GEO Downloader.
 
     Downloads a single tar file containing the files representing
-    samples relating to a single experiement stored in
+    samples relating to a single experiment stored in
     GEO.
     """
     job = utils.start_job(job_id)
@@ -259,7 +259,7 @@ def download_geo(job_id: int) -> None:
 
     if not original_file:
         job.failure_reason = "No files associated with the job."
-        logger.error("Error occured while extracting tar file.", downloader_job=job_id)
+        logger.error("Error occurred while extracting tar file.", downloader_job=job_id)
         utils.end_downloader_job(job, success=False)
         return
 
@@ -286,7 +286,7 @@ def download_geo(job_id: int) -> None:
 
     try:
         # enumerate all files inside the archive
-        archived_files = [file for file in ArchivedFile(dl_file_path).get_files()]
+        archived_files = list(ArchivedFile(dl_file_path).get_files())
     except FileExtractionError as e:
         job.failure_reason = e
         logger.exception("Error occurred while extracting file.", path=dl_file_path, exception=str(e))
@@ -295,19 +295,40 @@ def download_geo(job_id: int) -> None:
 
     for og_file in archived_files:
         sample = og_file.get_sample()
-
         # We don't want RNA-Seq data from GEO:
         # https://github.com/AlexsLemonade/refinebio/issues/966
         if sample and sample.technology == 'RNA-SEQ':
             logger.warn("RNA-Seq sample found in GEO downloader job.", sample=sample)
             continue
+        
+        # 1. if we got an archive that's an original file mark it as downloaded
+        if og_file.is_archive():
+            try:
+                archive_file = sample.original_files.get(source_filename__contains=og_file.sample_accession_code())
+                archive_file.is_downloaded = True
+                archive_file.is_archive = True
+                archive_file.absolute_file_path = og_file['absolute_path']
+                archive_file.calculate_size()
+                archive_file.calculate_sha1()
+                archive_file.save()
+            except Exception as e:
+                # TODO - is this worth failing a job for?
+                logger.debug("Found a file we didn't have an OriginalFile for! Why did this happen?: "
+                             + og_file['filename'],
+                             exc_info=1,
+                             file=og_file['filename'],
+                             sample_id=sample_id,
+                             accession_code=accession_code)
+                # If we don't know why we have it, get rid of it.
+                os.remove(og_file["absolute_path"])
+            continue
 
+        # 2. For files that aren't archives, look to see if we already created them
         potential_existing_file = OriginalFile.objects.filter(
             source_filename=original_file.source_filename,
             filename=og_file.filename,
             is_archive=False
         ).first()
-
         if potential_existing_file:
             # We've already created this record, let's see if we actually
             # needed to download it or if we just got it because we needed
@@ -318,28 +339,36 @@ def download_geo(job_id: int) -> None:
                     potential_existing_file.save()
 
                 unpacked_sample_files.append(potential_existing_file)
-        else:
-            # create a file that will be queued
-            # This is probably just a .txt file
-            actual_file = OriginalFile()
-            actual_file.is_downloaded = True
-            actual_file.is_archive = False
-            actual_file.absolute_file_path = og_file.file_path
-            actual_file.filename = og_file.filename
-            actual_file.calculate_size()
-            actual_file.calculate_sha1()
-            actual_file.has_raw = True
-            actual_file.source_url = original_file.source_url
-            actual_file.source_filename = original_file.source_filename
-            actual_file.save()
+            continue
 
+        # 3. if not, then this is a new file and we should create an original file for it
+        actual_file = OriginalFile()
+        actual_file.is_downloaded = True
+        actual_file.is_archive = False
+        actual_file.absolute_file_path = og_file.file_path
+        actual_file.filename = og_file.filename
+        actual_file.calculate_size()
+        actual_file.calculate_sha1()
+        actual_file.has_raw = True
+        actual_file.source_url = original_file.source_url
+        actual_file.source_filename = original_file.source_filename
+        actual_file.save()
+
+        # try to see if the file name is referring to a sample accession code
+        if sample:
+            original_file_sample_association = OriginalFileSampleAssociation()
+            original_file_sample_association.sample = sample
+            original_file_sample_association.original_file = actual_file
+            original_file_sample_association.save()
+        else:
+            # if not, we can associate this file with all samples in the experiment
             for sample in related_samples:
                 original_file_sample_association = OriginalFileSampleAssociation()
                 original_file_sample_association.sample = sample
                 original_file_sample_association.original_file = actual_file
                 original_file_sample_association.save()
 
-            unpacked_sample_files.append(actual_file)
+        unpacked_sample_files.append(actual_file)
 
     if len(unpacked_sample_files) > 0:
         success = True
