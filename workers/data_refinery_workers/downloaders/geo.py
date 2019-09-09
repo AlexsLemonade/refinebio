@@ -166,16 +166,27 @@ class ArchivedFile:
         """ Returns true if this file came from an archive """
         return self.parent_archive and self.parent_archive.is_archive()
 
+    def experiment_accession_code(self):
+        """ Tries to get an experiment accession code from the file name.
+        GEO experiment accession codes start with GSE and have between 5 and 9 characters """
+        match = re.match(r'(GSE\d{2,6})', self.filename)
+        if match: return match.group(0)
+        return None
+
     def sample_accession_code(self):
-        """ Tries to get a sample accession code from the file name """
-        match = re.match(r'((GSM|GSE)\d{4,7})', self.filename)
-        if match:
-            return match.group(0)
+        """ Tries to get a sample accession code from the file name.
+        GEO sample accession codes start with GSM and have between 6 and 10 characters """
+        match = re.match(r'(GSM\d{4,7})', self.filename)
+        if match: return match.group(0)
         return None
 
     def get_sample(self):
         """ Tries to find the sample associated with this file, and returns None if unable. """
         return Sample.objects.filter(accession_code=self.sample_accession_code()).first()
+
+    def is_processable(self):
+        """ Returns true if the current file has an extension that could be passed to the processor jobs """
+        return self.extension in ['.txt']
 
     def is_archive(self):
         return self.extension in ['.tar', '.tgz', '.gz']
@@ -206,11 +217,20 @@ class ArchivedFile:
         
         raise FileExtractionError(self.file_path, 'Unknown archive file format.')
 
+    def _get_absolute_path(self):
+        """ This returns the path where this file would be extracted if it's an archive """
+        if self.experiment_accession_code():
+            return LOCAL_ROOT_DIR + '/' + self.experiment_accession_code() + '/raw/'
+        elif self.sample_accession_code():
+            return LOCAL_ROOT_DIR + '/' + self.sample_accession_code() + '/raw/'
+        else:
+            return LOCAL_ROOT_DIR + '/' + self.filename + '/raw/'
+
     def _extract_tar(self) -> List[str]:
         """ Extract tar and return a list of the raw files. """
         # This is technically an unsafe operation.
         # However, we're trusting GEO as a data source.
-        abs_with_code_raw = LOCAL_ROOT_DIR + '/' + self.sample_accession_code() + '/raw/'
+        abs_with_code_raw = self._get_absolute_path()
 
         with tarfile.TarFile(self.file_path, "r") as zip_ref:
             zip_ref.extractall(abs_with_code_raw)
@@ -220,7 +240,7 @@ class ArchivedFile:
 
     def _extract_tgz(self) -> List[str]:
         """Extract tgz and return a list of the raw files."""
-        abs_with_code_raw = LOCAL_ROOT_DIR + '/' + self.sample_accession_code() + '/raw/'
+        abs_with_code_raw = self._get_absolute_path()
         
         extracted_filepath = self.file_path.replace('.tgz', '.tar')
 
@@ -294,16 +314,17 @@ def download_geo(job_id: int) -> None:
     for og_file in archived_files:
         sample = og_file.get_sample()
 
-        if not sample and og_file.parent_is_archive():
-            # We don't have this sample, but it's not a total failure. This happens.
-            continue
-
         # We don't want RNA-Seq data from GEO:
         # https://github.com/AlexsLemonade/refinebio/issues/966
         if sample and sample.technology == 'RNA-SEQ':
             logger.warn("RNA-Seq sample found in GEO downloader job.", sample=sample)
             continue
-        
+
+        if not sample and (not og_file.is_processable() or og_file.experiment_accession_code() != accession_code):
+            # skip the files that we don't know what to do with them, they are now associated with a sample
+            #  nor with an experiment. Also those that doesn't look like they can be processed
+            continue
+
         potential_existing_file = OriginalFile.objects.filter(
             source_filename=original_file.source_filename,
             filename=og_file.filename,
@@ -334,7 +355,7 @@ def download_geo(job_id: int) -> None:
         actual_file.source_filename = original_file.source_filename
         actual_file.save()
 
-        # try to see if the file name is referring to a sample accession code
+        # try to see if the file should be associated with a sample
         if sample:
             original_file_sample_association = OriginalFileSampleAssociation()
             original_file_sample_association.sample = sample
