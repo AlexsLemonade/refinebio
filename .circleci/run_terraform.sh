@@ -32,7 +32,7 @@ sudo mv terraform /usr/local/bin/
 sudo apt-get update
 sudo apt-get install lxc -y  # Install lxc, which is required by nomad
 
-NOMAD_VERSION=0.8.7
+NOMAD_VERSION=0.9.5
 wget -N https://releases.hashicorp.com/nomad/$NOMAD_VERSION/nomad_${NOMAD_VERSION}_linux_amd64.zip
 wget -N https://releases.hashicorp.com/nomad/$NOMAD_VERSION/nomad_${NOMAD_VERSION}_SHA256SUMS
 wget -N https://releases.hashicorp.com/nomad/$NOMAD_VERSION/nomad_${NOMAD_VERSION}_SHA256SUMS.sig
