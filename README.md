@@ -268,6 +268,7 @@ If you want to debug the status of a specific nomad job you can use:
 ```
 $ nomad status NO_OP_0_2048/dispatch-1567796915-3d7c7c87
 $ nomad status f9c1345b
+$ nomad logs f9c1345b
 ```
 
 `f9c1345b` is the allocation id that it's returned in `nomad status`.

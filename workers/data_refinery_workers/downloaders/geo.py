@@ -273,7 +273,7 @@ def download_geo(job_id: int) -> None:
 
     if not original_file:
         job.failure_reason = "No files associated with the job."
-        logger.error("Error occurred while extracting tar file.", downloader_job=job_id)
+        logger.error("No files associated with the job.", downloader_job=job_id)
         utils.end_downloader_job(job, success=False)
         return
 
