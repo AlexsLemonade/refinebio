@@ -140,7 +140,7 @@ class DownloadGeoTestCase(TestCase):
         assoc.save()
 
         sample = Sample()
-        sample.accession_code = 'GSE22427'
+        sample.accession_code = 'GSM557431'
         sample.technology = "MICROARRAY"
         sample.manufacturer = "AGILENT"
         sample.has_raw = True
