@@ -316,7 +316,7 @@ def download_geo(job_id: int) -> None:
             logger.warn("RNA-Seq sample found in GEO downloader job.", sample=sample)
             continue
 
-        if not sample and (not og_file.sample_accession_code() or og_file.experiment_accession_code() != accession_code):
+        if not sample and not og_file.sample_accession_code() and og_file.experiment_accession_code() != accession_code:
             # skip the files that we don't know what to do with them, they are not associated with a sample
             # nor with an experiment
             continue
