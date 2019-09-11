@@ -199,7 +199,7 @@ class DownloadGeoTestCase(TestCase):
         assoc.save()
 
         sample = Sample()
-        sample.accession_code = 'GSE103217'
+        sample.accession_code = 'GSM2757251'
         sample.technology = "RNA-SEQ"
         sample.manufacturer = "ILLUMINA"
         sample.platform_accession_code = "Illumina HiSeq 2500"

@@ -184,8 +184,19 @@ class ArchivedFile:
         """ Tries to find the sample associated with this file, and returns None if unable. """
         return Sample.objects.filter(accession_code=self.sample_accession_code()).first()
 
+    def is_processable(self):
+        """ There're some known file patterns that are found in GEO that we know we can ignore. """
+        if re.match(r'(GSE\d{2,6})_family.xml', self.filename):
+            return False
+
+        # ignore platform files
+        if re.match(r'(GPL\d{3,5})', self.filename):
+            return False
+
+        return True
+
     def is_archive(self):
-        return self.extension in ['.tar', '.tgz', '.gz']
+        return self.extension.lower() in ['.tar', '.tgz', '.gz']
 
     def get_files(self):
         if not self.is_archive():
@@ -316,9 +327,9 @@ def download_geo(job_id: int) -> None:
             logger.warn("RNA-Seq sample found in GEO downloader job.", sample=sample)
             continue
 
-        if not sample and not og_file.sample_accession_code() and og_file.experiment_accession_code() != accession_code:
-            # skip the files that we don't know what to do with them, they are not associated with a sample
-            # nor with an experiment
+        if not sample and (not og_file.is_processable() or og_file.experiment_accession_code() != accession_code):
+            # skip the files that we know are not processable and can't be associated with a sample
+            # also skip the files were we couldn't find a sample and they don't mention the current experiment            
             continue
 
         potential_existing_file = OriginalFile.objects.filter(
