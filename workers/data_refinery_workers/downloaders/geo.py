@@ -5,6 +5,7 @@ import subprocess
 import tarfile
 import time
 import urllib.request
+import re
 
 from contextlib import closing
 from typing import List, Dict
@@ -146,187 +147,155 @@ def _download_file_aspera(download_url: str,
                                      )
     return True
 
+class FileExtractionError(Exception):
+    def __init__(self, file_path, original_error):
+        self.file_path = file_path
+        self.original_error = original_error
 
-def _extract_tar(file_path: str, accession_code: str) -> List[str]:
-    """Extract tar and return a list of the raw files.
-    """
+class ArchivedFile:
+    """ Contains utility functions to enumerate the files inside an archive that was downloaded from GEO. """
+    def __init__(self, downloaded_file_path, parent_archive = None):
+        self.file_path = downloaded_file_path
+        self.parent_archive = parent_archive
 
-    logger.debug("Extracting %s!", file_path, file_path=file_path)
+        # thanks to https://stackoverflow.com/a/541394/763705
+        self.filename = os.path.basename(self.file_path)
+        self.extension = os.path.splitext(self.file_path)[1]
 
-    try:
+    def parent_is_archive(self):
+        """ Returns true if this file came from an archive """
+        return self.parent_archive and self.parent_archive.is_archive()
+
+    def experiment_accession_code(self):
+        """ Tries to get an experiment accession code from the file name.
+        GEO experiment accession codes start with GSE and have between 5 and 9 characters """
+        match = re.match(r'(GSE\d{2,6})', self.filename)
+        if match: return match.group(0)
+        return None
+
+    def sample_accession_code(self):
+        """ Tries to get a sample accession code from the file name.
+        GEO sample accession codes start with GSM and have between 6 and 10 characters """
+        match = re.match(r'(GSM\d{4,7})', self.filename)
+        if match: return match.group(0)
+        return None
+
+    def get_sample(self):
+        """ Tries to find the sample associated with this file, and returns None if unable. """
+        return Sample.objects.filter(accession_code=self.sample_accession_code()).first()
+
+    def is_processable(self):
+        """ There're some known file patterns that are found in GEO that we know we can ignore. """
+        if re.match(r'(GSE\d{2,6})_family.xml', self.filename):
+            return False
+
+        # ignore platform files
+        if re.match(r'(GPL\d{3,5})', self.filename):
+            return False
+
+        return True
+
+    def is_archive(self):
+        return self.extension.lower() in ['.tar', '.tgz', '.gz']
+
+    def get_files(self):
+        if not self.is_archive():
+            yield self
+        else:
+            # for archives extract them and enumerate all the files inside
+            for path in self._extract_files():
+                archived_file = ArchivedFile(path, self)
+                for file in archived_file.get_files():
+                    yield file
+
+    def _extract_files(self):
+        logger.debug("Extracting %s!", self.file_path, file_path=self.file_path)
+
+        try:
+            if '.tar' == self.extension:
+                return self._extract_tar()
+            elif '.tgz' == self.extension:
+                return self._extract_tgz()
+            elif '.gz' == self.extension:
+                return self._extract_gz()
+        except Exception as e:
+            logger.exception("While extracting %s caught exception %s", self.file_path, str(e), file_path=self.file_path)
+            raise FileExtractionError(self.file_path, e)
+        
+        raise FileExtractionError(self.file_path, 'Unknown archive file format.')
+
+    def _get_absolute_path(self):
+        """ This returns the path where this file would be extracted if it's an archive """
+        if self.experiment_accession_code():
+            return LOCAL_ROOT_DIR + '/' + self.experiment_accession_code() + '/raw/'
+        elif self.sample_accession_code():
+            return LOCAL_ROOT_DIR + '/' + self.sample_accession_code() + '/raw/'
+        else:
+            return LOCAL_ROOT_DIR + '/' + self.filename + '/raw/'
+
+    def _extract_tar(self) -> List[str]:
+        """ Extract tar and return a list of the raw files. """
         # This is technically an unsafe operation.
         # However, we're trusting GEO as a data source.
-        zip_ref = tarfile.TarFile(file_path, "r")
-        abs_with_code_raw = LOCAL_ROOT_DIR + '/' + accession_code + '/raw/'
-        zip_ref.extractall(abs_with_code_raw)
-        zip_ref.close()
+        abs_with_code_raw = self._get_absolute_path()
 
-        # os.abspath doesn't do what I thought it does, hency this monstrocity.
-        files = [{'absolute_path': abs_with_code_raw + f, 'filename': f}
-                 for f in os.listdir(abs_with_code_raw)]
+        with tarfile.TarFile(self.file_path, "r") as zip_ref:
+            zip_ref.extractall(abs_with_code_raw)
+            extracted_files = zip_ref.getnames() # https://docs.python.org/3/library/tarfile.html#tarfile.TarFile.getnames
 
-    except Exception as e:
-        logger.exception("While extracting %s caught exception %s",
-                         file_path,
-                         str(e),
-                         accession_code=accession_code,
-                         file_path=file_path)
-        raise
+        return [(abs_with_code_raw + f) for f in extracted_files]
 
-    return files
+    def _extract_tgz(self) -> List[str]:
+        """Extract tgz and return a list of the raw files."""
+        abs_with_code_raw = self._get_absolute_path()
+        
+        extracted_filepath = self.file_path.replace('.tgz', '.tar')
 
-
-def _extract_tgz(file_path: str, accession_code: str) -> List[str]:
-    """Extract tgz and return a list of the raw files.
-    """
-
-    logger.debug("Extracting %s!", file_path, file_path=file_path)
-
-    try:
-        extracted_filepath = file_path.replace('.tgz', '.tar')
-        with gzip.open(file_path, 'rb') as f_in:
+        with gzip.open(self.file_path, 'rb') as f_in:
             with open(extracted_filepath, 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
 
-        zip_ref = tarfile.TarFile(extracted_filepath, "r")
-        abs_with_code_raw = LOCAL_ROOT_DIR + '/' + accession_code + '/raw/'
-        zip_ref.extractall(abs_with_code_raw)
-        zip_ref.close()
+        with tarfile.TarFile(extracted_filepath, "r") as zip_ref:
+            zip_ref.extractall(abs_with_code_raw)
+            extracted_files = zip_ref.getnames() # https://docs.python.org/3/library/tarfile.html#tarfile.TarFile.getnames
 
-        files = [{'absolute_path': abs_with_code_raw + f, 'filename': f}
-                 for f in os.listdir(abs_with_code_raw)]
+        return [(abs_with_code_raw + f) for f in extracted_files]
 
-    except Exception as e:
-        reason = "Exception %s caught while extracting %s", str(e), file_path
-        logger.exception(reason, accession_code=accession_code, file_path=file_path)
-        raise
-
-    return files
-
-
-def _extract_gz(file_path: str, accession_code: str) -> List[str]:
-    """Extract gz and return a list of the raw files.
-    """
-
-    logger.debug("Extracting %s!", file_path, file_path=file_path)
-
-    try:
-
-        extracted_filepath = file_path.replace('.gz', '')
-        with gzip.open(file_path, 'rb') as f_in:
+    def _extract_gz(self) -> List[str]:
+        """Extract gz and return a list of the raw files."""
+        extracted_filepath = self.file_path.replace('.gz', '')
+        with gzip.open(self.file_path, 'rb') as f_in:
             with open(extracted_filepath, 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
+        return [extracted_filepath]
 
-        files = [{'absolute_path': extracted_filepath,
-                  'filename': extracted_filepath.rsplit('/', 1)[1]
-                  }]
-
-    except Exception as e:
-        logger.exception("While extracting %s caught exception %s",
-                         file_path,
-                         str(e),
-                         accession_code=accession_code,
-                         file_path=file_path)
-        raise
-
-    return files
-
-
-def _get_actual_file_if_queueable(
-        extracted_subfile: Dict,
-        original_file: OriginalFile,
-        samples: List[Sample]) -> OriginalFile:
-    """Returns the actual file from the archive if it should be queued.
-
-    If the file has been processed or has an unstarted DownloaderJob,
-    None will be returned.
-
-    `extracted_subfile` should be a Dict containing metadata about the
-    file that was extracted from an archive.
-
-    `original_file` should be the file associated with the CURRENT
-    DownloaderJob.
-
-    `samples` are the samples that the actual file should be associated
-    with if it has to be created.
-    """
-    # Check to see if we've made this original file before:
-    potential_existing_files = OriginalFile.objects.filter(
-        source_filename=original_file.source_filename,
-        filename=extracted_subfile['filename'],
-        is_archive=False
-    )
-    if potential_existing_files.count() > 0:
-        # We've already created this record, let's see if we actually
-        # needed to download it or if we just got it because we needed
-        # a file in the same archive.
-        actual_file = potential_existing_files[0]
-
-        if actual_file.needs_processing():
-            if not actual_file.is_downloaded:
-                actual_file.is_downloaded = True
-                actual_file.save()
-            return actual_file
-        else:
-            return None
-
-    else:
-        actual_file = OriginalFile()
-        actual_file.is_downloaded = True
-        actual_file.is_archive = False
-        actual_file.absolute_file_path = extracted_subfile['absolute_path']
-        actual_file.filename = extracted_subfile['filename']
-        actual_file.calculate_size()
-        actual_file.calculate_sha1()
-        actual_file.has_raw = True
-        actual_file.source_url = original_file.source_url
-        actual_file.source_filename = original_file.source_filename
-        actual_file.save()
-
-        for sample in samples:
-            original_file_sample_association = OriginalFileSampleAssociation()
-            original_file_sample_association.sample = sample
-            original_file_sample_association.original_file = actual_file
-            original_file_sample_association.save()
-
-        return actual_file
 
 
 def download_geo(job_id: int) -> None:
     """The main function for the GEO Downloader.
 
     Downloads a single tar file containing the files representing
-    samples relating to a single experiement stored in
+    samples relating to a single experiment stored in
     GEO.
     """
     job = utils.start_job(job_id)
+    accession_code = job.accession_code
+    original_file = job.original_files.first()
 
-    file_assocs = DownloaderJobOriginalFileAssociation.objects.filter(downloader_job=job)
-
-    if file_assocs.count() == 0:
+    if not original_file:
         job.failure_reason = "No files associated with the job."
-        logger.error(
-            "Error occured while extracting tar file.", downloader_job=job_id)
+        logger.error("No files associated with the job.", downloader_job=job_id)
         utils.end_downloader_job(job, success=False)
         return
 
-    original_file = file_assocs[0].original_file
     url = original_file.source_url
-    accession_code = job.accession_code
-
-    sample_assocs = OriginalFileSampleAssociation.objects.filter(original_file=original_file)
-    related_samples = Sample.objects.filter(
-        id__in=sample_assocs.values('sample_id')
-    ).exclude(
-        technology='RNA-SEQ'
-    )
+    related_samples = original_file.samples.exclude(technology='RNA-SEQ')
 
     # First, download the sample archive URL.
     # Then, unpack all the ones downloaded.
     # Then create processor jobs!
 
-    # The files for all of the samples are
-    # contained within the same zip file. Therefore only
+    # The files for all of the samples are contained within the same zip file. Therefore only
     # download the one.
     os.makedirs(LOCAL_ROOT_DIR + '/' + accession_code, exist_ok=True)
     dl_file_path = LOCAL_ROOT_DIR + '/' + accession_code + '/' + url.split('/')[-1]
@@ -340,184 +309,52 @@ def download_geo(job_id: int) -> None:
     has_raw = True
     unpacked_sample_files = []
 
-    # These files are tarred, and also subsequently gzipped
-    if '.tar' in dl_file_path:
-        try:
-            extracted_files = _extract_tar(dl_file_path, accession_code)
-        except Exception as e:
-            job.failure_reason = e
-            logger.exception(
-                "Error occured while extracting tar file.", path=dl_file_path, exception=str(e))
-            utils.end_downloader_job(job, success=False)
-            return
+    try:
+        # enumerate all files inside the archive
+        archived_files = list(ArchivedFile(dl_file_path).get_files())
+    except FileExtractionError as e:
+        job.failure_reason = e
+        logger.exception("Error occurred while extracting file.", path=dl_file_path, exception=str(e))
+        utils.end_downloader_job(job, success=False)
+        return
 
-        for og_file in extracted_files:
+    for og_file in archived_files:
+        sample = og_file.get_sample()
 
-            filename = og_file['filename']
-            if '_' in filename:
-                sample_id = filename.split('_')[0]
-            else:
-                sample_id = filename.split('.')[0]
+        # We don't want RNA-Seq data from GEO:
+        # https://github.com/AlexsLemonade/refinebio/issues/966
+        if sample and sample.technology == 'RNA-SEQ':
+            logger.warn("RNA-Seq sample found in GEO downloader job.", sample=sample)
+            continue
 
-            try:
-                sample = Sample.objects.all().prefetch_related('original_files').get(accession_code=sample_id)
-            except Exception as e:
-                # We don't have this sample, but it's not a total failure. This happens.
-                continue
+        if not sample and (not og_file.is_processable() or og_file.experiment_accession_code() != accession_code):
+            # skip the files that we know are not processable and can't be associated with a sample
+            # also skip the files were we couldn't find a sample and they don't mention the current experiment            
+            continue
 
-            # We don't want RNA-Seq data from GEO:
-            # https://github.com/AlexsLemonade/refinebio/issues/966
-            if sample.technology == 'RNA-SEQ':
-                logger.warn("RNA-Seq sample found in GEO downloader job.", sample=sample)
-                continue
+        potential_existing_file = OriginalFile.objects.filter(
+            source_filename=original_file.source_filename,
+            filename=og_file.filename,
+            is_archive=False
+        ).first()
+        if potential_existing_file:
+            # We've already created this record, let's see if we actually
+            # needed to download it or if we just got it because we needed
+            # a file in the same archive.
+            if potential_existing_file.needs_processing():
+                if not potential_existing_file.is_downloaded:
+                    potential_existing_file.is_downloaded = True
+                    potential_existing_file.save()
 
-            try:
-                # Files from the GEO supplemental file are gzipped inside of the tarball. Great!
-                archive_file = sample.original_files.get(source_filename__contains=sample_id)
-                archive_file.is_downloaded = True
-                archive_file.is_archive = True
-                archive_file.absolute_file_path = og_file['absolute_path']
-                archive_file.calculate_size()
-                archive_file.calculate_sha1()
-                archive_file.save()
+                unpacked_sample_files.append(potential_existing_file)
+            continue
 
-                if '.gz' in og_file['filename']:
-                    extracted_subfile = _extract_gz(og_file['absolute_path'], accession_code)
-                else:
-                    extracted_subfile = [og_file]
-
-                # Check if the OriginalFile for the file contained
-                # within the archive exists already, create it if it
-                # doesn't, and then check if we actually need to queue
-                # it for processing or not.
-                actual_file = _get_actual_file_if_queueable(extracted_subfile[0], original_file, [sample])
-                if actual_file:
-                    unpacked_sample_files.append(actual_file)
-
-                archive_file.delete_local_file()
-                archive_file.is_downloaded = False
-                archive_file.save()
-            except Exception as e:
-                # TODO - is this worth failing a job for?
-                logger.debug("Found a file we didn't have an OriginalFile for! Why did this happen?: "
-                             + og_file['filename'],
-                             exc_info=1,
-                             file=og_file['filename'],
-                             sample_id=sample_id,
-                             accession_code=accession_code)
-                # If we don't know why we have it, get rid of it.
-                os.remove(og_file["absolute_path"])
-
-    # This is a .tgz file.
-    elif '.tgz' in dl_file_path:
-        # If this is the MINiML file, it has been preprocessed
-        if '_family.xml.tgz' in dl_file_path:
-            has_raw = False
-
-        try:
-            extracted_files = _extract_tgz(dl_file_path, accession_code)
-        except Exception as e:
-            job.failure_reason = e
-            logger.exception("Error occured while extracting tgz file.",
-                             path=dl_file_path,
-                             exception=str(e))
-            utils.end_downloader_job(job, success=False)
-            return
-
-        for og_file in extracted_files:
-
-            if '.txt' in og_file['filename']:
-                try:
-                    gsm_id = og_file['filename'].split('-')[0]
-                    sample = Sample.objects.get(accession_code=gsm_id)
-                except Exception as e:
-                    os.remove(og_file["absolute_path"])
-                    continue
-
-                # We don't want RNA-Seq data from GEO:
-                # https://github.com/AlexsLemonade/refinebio/issues/966
-                if sample.technology == 'RNA-SEQ':
-                    logger.warn("RNA-Seq sample found in GEO downloader job.", sample=sample)
-                    continue
-
-                # Check if the OriginalFile for the file contained
-                # within the archive exists already, create it if it
-                # doesn't, and then check if we actually need to queue
-                # it for processing or not.
-                actual_file = _get_actual_file_if_queueable(og_file, original_file, [sample])
-                if actual_file:
-                    unpacked_sample_files.append(actual_file)
-
-    # These files are only gzipped.
-    # These are generally the _actually_ raw (rather than the non-raw data in a RAW file) data
-    elif '.gz' in dl_file_path:
-        try:
-            extracted_files = _extract_gz(dl_file_path, accession_code)
-        except Exception as e:
-            job.failure_reason = e
-            logger.exception("Error occured while extracting gz file.",
-                             path=dl_file_path,
-                             exception=str(e))
-            utils.end_downloader_job(job, success=False)
-            return
-
-        for og_file in extracted_files:
-
-            filename = og_file['filename']
-            if '_' in filename:
-                sample_id = filename.split('_')[0]
-            else:
-                sample_id = filename.split('.')[0]
-
-            try:
-                sample = Sample.objects.all().prefetch_related('original_files').get(accession_code=sample_id)
-            except Exception as e:
-                # We don't have this sample, but it's not a total failure. This happens.
-                continue
-
-            try:
-                # The archive we downloaded
-                archive_file = sample.original_files.get(
-                    source_filename__contains=filename,
-                    is_archive=True
-                )
-                archive_file.is_downloaded = True
-                archive_file.is_archive = True
-                archive_file.absolute_file_path = dl_file_path
-                archive_file.calculate_size()
-                archive_file.calculate_sha1()
-                archive_file.save()
-
-                # Check if the OriginalFile for the file contained
-                # within the archive exists already, create it if it
-                # doesn't, and then check if we actually need to queue
-                # it for processing or not.
-                actual_file = _get_actual_file_if_queueable(og_file, original_file, related_samples)
-                if actual_file:
-                    unpacked_sample_files.append(actual_file)
-
-                archive_file.delete_local_file()
-                archive_file.is_downloaded = False
-                archive_file.save()
-            except Exception as e:
-                logger.debug("Found a file we didn't have an OriginalFile for! Why did this happen?: "
-                            + og_file['filename'],
-                            exc_info=1,
-                            file=og_file['filename'],
-                            sample_id=sample_id,
-                            accession_code=accession_code)
-                os.remove(og_file["absolute_path"])
-
-    # This is probably just a .txt file
-    else:
-        filename = dl_file_path.split('/')[-1]
-        sample_id = filename.split('_')[0]
-
+        # Then this is a new file and we should create an original file for it
         actual_file = OriginalFile()
         actual_file.is_downloaded = True
         actual_file.is_archive = False
-        actual_file.absolute_file_path = dl_file_path
-        actual_file.filename = filename
+        actual_file.absolute_file_path = og_file.file_path
+        actual_file.filename = og_file.filename
         actual_file.calculate_size()
         actual_file.calculate_sha1()
         actual_file.has_raw = True
@@ -525,11 +362,19 @@ def download_geo(job_id: int) -> None:
         actual_file.source_filename = original_file.source_filename
         actual_file.save()
 
-        for sample in related_samples:
-            new_association = OriginalFileSampleAssociation()
-            new_association.original_file = actual_file
-            new_association.sample = sample
-            new_association.save()
+        # try to see if the file should be associated with a sample
+        if sample:
+            original_file_sample_association = OriginalFileSampleAssociation()
+            original_file_sample_association.sample = sample
+            original_file_sample_association.original_file = actual_file
+            original_file_sample_association.save()
+        else:
+            # if not, we can associate this file with all samples in the experiment
+            for sample in related_samples:
+                original_file_sample_association = OriginalFileSampleAssociation()
+                original_file_sample_association.sample = sample
+                original_file_sample_association.original_file = actual_file
+                original_file_sample_association.save()
 
         unpacked_sample_files.append(actual_file)
 

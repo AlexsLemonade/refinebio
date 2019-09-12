@@ -241,7 +241,39 @@ To run the entire test suite:
 
 (_Note:_ Running all the tests can take some time, especially the first time because it downloads a lot of files.)
 
-These tests will also be run continuosly for each commit via CircleCI.
+You can use the following to get the current status of nomad when running in the test environment.
+
+```
+$ source scripts/common.sh
+$ set_nomad_test_address
+$ nomad status
+```
+
+Running the end to end tests is tricky because Nomad's needs to pull images from docker with our code.
+We have a docker image registry that runs locally, but you'll need to update it with different images in order to make the code run.
+The script `./scripts/prepare_image.sh` can be used to prepare the images before pushing them.
+
+```
+$ ./scripts/prepare_image.sh -i downloaders -d localhost:5000
+$ docker push localhost:5000/dr_downloaders:latest
+
+$ ./scripts/prepare_image.sh -i no_op -d localhost:5000
+$ docker push localhost:5000/dr_no_op:latest
+```
+
+That's for the images `downloaders` and `no_op`, the same need to be executed for the other images: `salmon`, `transcriptome`, `illumina` and `affymetrix`.
+
+If you want to debug the status of a specific nomad job you can use:
+
+```
+$ nomad status NO_OP_0_2048/dispatch-1567796915-3d7c7c87
+$ nomad status f9c1345b
+$ nomad logs f9c1345b
+```
+
+`f9c1345b` is the allocation id that it's returned in `nomad status`.
+
+These tests will also be run continuously for each commit via CircleCI.
 
 For more granular testing, you can just run the tests for specific parts of the system.
 

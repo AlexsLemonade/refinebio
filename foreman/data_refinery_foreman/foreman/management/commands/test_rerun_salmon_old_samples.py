@@ -49,7 +49,7 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
     # Create the transcriptome processor and result:
     transcriptome_processor = Processor()
     transcriptome_processor.name = "Transcriptome"
-    transcriptome_processor.version = "v0.9.0"
+    transcriptome_processor.version = "salmon 0.9.1"
     transcriptome_processor.docker_image = "dr_transcriptome"
     transcriptome_processor.environment = '{"some": "environment"}'
     transcriptome_processor.save()
@@ -61,7 +61,7 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
     organism_index.organism = zebrafish
     organism_index.result = computational_result_short
     organism_index.absolute_directory_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
-    organism_index.salmon_version='v0.9.0'
+    organism_index.salmon_version='salmon 0.9.1'
     organism_index.save()
 
     comp_file = ComputedFile()
@@ -76,7 +76,7 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
 
     quant_processor = Processor()
     quant_processor.name = "Salmon Quant"
-    quant_processor.version = "v9.9.9"
+    quant_processor.version = "salmon 0.9.1"
     quant_processor.docker_image = "dr_salmon"
     quant_processor.environment = '{"some": "environment"}'
     quant_processor.save()
@@ -145,7 +145,7 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
     # Create another OrganismIndex with a newer version of
     transcriptome_processor = Processor()
     transcriptome_processor.name = "Transcriptome"
-    transcriptome_processor.version = "v0.13.0"
+    transcriptome_processor.version = "salmon 0.13.1"
     transcriptome_processor.docker_image = "dr_transcriptome"
     transcriptome_processor.environment = '{"some": "environment"}'
     transcriptome_processor.save()
@@ -157,7 +157,7 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
     organism_index.organism = zebrafish
     organism_index.result = computational_result_short
     organism_index.absolute_directory_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
-    organism_index.salmon_version='v0.13.0' # DIFFERENT SALMON VERSION
+    organism_index.salmon_version='salmon 0.13.1' # DIFFERENT SALMON VERSION
     organism_index.save()
 
     comp_file = ComputedFile()
