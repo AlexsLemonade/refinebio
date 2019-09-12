@@ -23,7 +23,7 @@ from data_refinery_foreman.foreman import main
 logger = get_and_configure_logger(__name__)
 
 def update_salmon_versions(experiment: Experiment):
-    quant_results = get_quant_results_for_experiment(experiment)\
+    quant_results = get_quant_results_for_experiment(experiment, filter_old_versions=False)\
                         .order_by('-organism_index__created_at')\
                         .prefetch_related('organism_index')\
                         .prefetch_related('samples__original_files')
