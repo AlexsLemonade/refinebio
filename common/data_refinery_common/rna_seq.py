@@ -8,6 +8,7 @@ from data_refinery_common.models import (
     ComputedFile,
     Experiment,
 )
+from data_refinery_common.utils import get_env_variable
 
 
 logger = get_and_configure_logger(__name__)
