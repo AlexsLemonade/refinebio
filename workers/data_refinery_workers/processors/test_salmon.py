@@ -47,6 +47,7 @@ def prepare_organism_indices():
     organism_index.organism = c_elegans
     organism_index.result = computational_result_short
     organism_index.absolute_directory_path = "/home/user/data_store/salmon_tests/TRANSCRIPTOME_INDEX/SHORT"
+    organism_index.salmon_version = 'salmon 0.13.1'
     organism_index.save()
 
     comp_file = ComputedFile()
@@ -798,6 +799,7 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     organism_index.organism = zebrafish
     organism_index.result = computational_result_short
     organism_index.absolute_directory_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
+    organism_index.salmon_version = 'salmon 0.13.1'
     organism_index.save()
 
     comp_file = ComputedFile()
@@ -843,6 +845,7 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
         quant_result = ComputationalResult()
         quant_result.is_ccdl = True
         quant_result.processor = quant_processor
+        quant_result.organism_index = organism_index
         quant_result.save()
 
         kv = ComputationalResultAnnotation()

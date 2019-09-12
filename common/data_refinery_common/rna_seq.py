@@ -44,7 +44,7 @@ def should_run_tximport(experiment: Experiment,
     num_quantified = results.count()
     if num_quantified == 0:
         return False
-        
+
     num_salmon_versions = results.filter(organism_index__salmon_version__isnull=False)\
                                  .values_list('organism_index__salmon_version')\
                                  .distinct().count()
@@ -102,6 +102,8 @@ def get_quant_results_for_experiment(experiment: Experiment):
 
 def get_quant_files_for_results(results: List[ComputationalResult]):
     """Returns a list of salmon quant results from `experiment`."""
+    # Salmon version gets saved as what salmon outputs, which includes this prefix.
+    current_salmon_version = 'salmon ' + get_env_variable('SALMON_VERSION', '0.13.1')
     quant_files = []
     for result in results:
         try:
@@ -110,6 +112,7 @@ def get_quant_files_for_results(results: List[ComputationalResult]):
                 filename="quant.sf",
                 s3_key__isnull=False,
                 s3_bucket__isnull=False,
+                result__organism_index__salmon_version=current_salmon_version
                 ).order_by('-id')[0])
         except Exception as e:
             try:
