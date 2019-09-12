@@ -774,7 +774,9 @@ class RuntimeProcessorTest(TestCase):
         ProcessorEnum['SALMONTOOLS'].value['yml_file'] = original_yml_file
 
 
-def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_accessions: List[str]) -> Dict:
+def run_tximport_at_progress_point(complete_accessions: List[str],
+                                   incomplete_accessions: List[str],
+                                   salmon_version='salmon 0.13.1') -> Dict:
     """Create an experiment and associated objects and run tximport on it.
 
     Creates a sample for each accession contained in either input
@@ -799,7 +801,7 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     organism_index.organism = zebrafish
     organism_index.result = computational_result_short
     organism_index.absolute_directory_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
-    organism_index.salmon_version = 'salmon 0.13.1'
+    organism_index.salmon_version = salmon_version
     organism_index.save()
 
     comp_file = ComputedFile()
@@ -1002,6 +1004,50 @@ class EarlyTximportTestCase(TestCase):
         for accession_code in incomplete_accessions:
             sample = Sample.objects.get(accession_code=accession_code)
             self.assertEqual(sample.computed_files.count(), 0)
+
+    @tag('salmon')
+    def test_version_filter(self):
+        """Tests that we don't run tximport on old salmon versions.
+        """
+        # Accessions SRR5125616-SRR5125620 don't exist in SRA, but we
+        # don't actually want to process them so it's okay.
+        incomplete_accessions = [
+            "SRR5125616",
+            "SRR5125617",
+            "SRR5125618",
+            "SRR5125619",
+            "SRR5125620",
+        ]
+
+        complete_accessions = [
+            "SRR5125621",
+            "SRR5125622",
+            "SRR5125623",
+            "SRR5125624",
+            "SRR5125625",
+            "SRR5125626",
+            "SRR5125627",
+            "SRR5125628",
+            "SRR5125629",
+            "SRR5125630",
+            "SRR5125631",
+            "SRR5125632",
+            "SRR5125633",
+            "SRR5125634",
+            "SRR5125635",
+            "SRR5125636",
+            "SRR5125637",
+            "SRR5125638",
+            "SRR5125639",
+            "SRR5125640",
+        ]
+
+        job_context = run_tximport_at_progress_point(complete_accessions, incomplete_accessions, salmon_version='salmon 0.9.1')
+
+        # Confirm that this experiment is not ready for tximport yet,
+        # because `salmon quant` is not run on 'fake_sample' and it
+        # doens't have enough samples to have tximport run early.
+        self.assertFalse("tximported" in job_context)
 
     @tag("salmon")
     def test_tximport_percent_cutoff(self):
