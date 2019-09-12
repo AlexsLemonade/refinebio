@@ -179,11 +179,12 @@ class ExternalSourceSurveyor:
             logger.exception(("Exception caught while discovering samples. "
                               "Terminating survey job."),
                              survey_job=self.survey_job.id)
+            self.survey_job.failure_reason = "Exception caught while discovering samples. Terminating survey job."
             return False
 
         if not experiment:
-            logger.info("No experiment found.",
-                        survey_job=self.survey_job.id)
+            logger.info("No experiment found.", survey_job=self.survey_job.id)
+            self.survey_job.failure_reason = "No experiment found."
             return False
 
         try:
@@ -197,9 +198,9 @@ class ExternalSourceSurveyor:
             else:
                 self.queue_downloader_jobs(experiment, samples)
         except Exception:
-            logger.exception(("Failed to queue downloader jobs. "
-                              "Terminating survey job."),
+            logger.exception(("Failed to queue downloader jobs. Terminating survey job."),
                              survey_job=self.survey_job.id)
+            self.survey_job.failure_reason = "Failed to queue downloader jobs. Terminating survey job."
             return False
 
         # Update our cached values
