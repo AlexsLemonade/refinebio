@@ -79,12 +79,16 @@ def get_quant_results_for_experiment(experiment: Experiment):
     # Subquery to calculate quant results
     # https://docs.djangoproject.com/en/2.2/ref/models/expressions/#subquery-expressions
 
+    # Salmon version gets saved as what salmon outputs, which includes this prefix.
+    current_salmon_version = 'salmon ' + get_env_variable('SALMON_VERSION', '0.13.1')
+
     # Calculate the computational results sorted that are associated with a given sample (
     # referenced from the top query)
-    newest_computational_results = ComputationalResult.objects.all()\
+    newest_computational_results = ComputationalResult.objects.prefetch_related('organism_index')\
         .filter(
             samples=OuterRef('id'),
-            processor__name=ProcessorEnum.SALMON_QUANT.value['name']
+            processor__name=ProcessorEnum.SALMON_QUANT.value['name'],
+            organism_index__salmon_version=current_salmon_version
         )\
         .order_by('-created_at')
 
@@ -102,8 +106,6 @@ def get_quant_results_for_experiment(experiment: Experiment):
 
 def get_quant_files_for_results(results: List[ComputationalResult]):
     """Returns a list of salmon quant results from `experiment`."""
-    # Salmon version gets saved as what salmon outputs, which includes this prefix.
-    current_salmon_version = 'salmon ' + get_env_variable('SALMON_VERSION', '0.13.1')
     quant_files = []
     for result in results:
         try:
@@ -112,7 +114,6 @@ def get_quant_files_for_results(results: List[ComputationalResult]):
                 filename="quant.sf",
                 s3_key__isnull=False,
                 s3_bucket__isnull=False,
-                result__organism_index__salmon_version=current_salmon_version
                 ).order_by('-id')[0])
         except Exception as e:
             try:
