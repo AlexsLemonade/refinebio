@@ -138,4 +138,6 @@ dr_env/
 # emacs backup files
 *~
 
+# vim swp files
+*.*.swp
 .vscode
