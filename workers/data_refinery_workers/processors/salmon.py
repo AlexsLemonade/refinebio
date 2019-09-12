@@ -590,7 +590,7 @@ def get_tximport_inputs(job_context: Dict) -> Dict:
         salmon_quant_results = get_quant_results_for_experiment(experiment)
         is_tximport_job = 'is_tximport_only' in job_context and job_context['is_tximport_only']
 
-        if is_tximport_job:
+        if is_tximport_job and salmon_quant_results.count() > 0:
             # If the job is only running tximport, then index_length
             # hasn't been set on the job context because we don't have
             # a raw file to run it on. Therefore pull it from one of
