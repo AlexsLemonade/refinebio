@@ -103,7 +103,7 @@ def _detect_columns(job_context: Dict) -> Dict:
         with open(input_file, 'r') as tsv_in:
             tsv_in = csv.reader(tsv_in, delimiter='\t')
             for row in tsv_in:
-                headers = [column.strip() for column in row]
+                headers = row
                 break
 
         # Ex GSE45331_non-normalized.txt
