@@ -53,7 +53,7 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     # Create the transcriptome processor and result:
     transcriptome_processor = Processor()
     transcriptome_processor.name = "Transcriptome"
-    transcriptome_processor.version = "v9.9.9"
+    transcriptome_processor.version = "salmon 0.13.1"
     transcriptome_processor.docker_image = "dr_transcriptome"
     transcriptome_processor.environment = '{"some": "environment"}'
     transcriptome_processor.save()
@@ -96,13 +96,13 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
 
     quant_processor = Processor()
     quant_processor.name = "Salmon Quant"
-    quant_processor.version = "v9.9.9"
+    quant_processor.version = "salmon 0.13.1"
     quant_processor.docker_image = "dr_salmon"
     quant_processor.environment = '{"some": "environment"}'
     quant_processor.save()
     tximport_processor = Processor()
     tximport_processor.name = "Tximport"
-    tximport_processor.version = "v9.9.9"
+    tximport_processor.version = "salmon 0.13.1"
     tximport_processor.docker_image = "dr_salmon"
     tximport_processor.environment = '{"some": "environment"}'
     tximport_processor.save()
@@ -131,6 +131,7 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
         quant_result = ComputationalResult()
         quant_result.is_ccdl = True
         quant_result.processor = quant_processor
+        quant_result.organism_index = organism_index
         quant_result.save()
 
         kv = ComputationalResultAnnotation()
