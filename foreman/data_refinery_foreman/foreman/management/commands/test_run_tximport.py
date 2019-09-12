@@ -65,6 +65,7 @@ def run_tximport_at_progress_point(complete_accessions: List[str], incomplete_ac
     organism_index.organism = zebrafish
     organism_index.result = computational_result_short
     organism_index.absolute_directory_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
+    organism_index.salmon_version = 'salmon 0.13.1'
     organism_index.save()
 
     comp_file = ComputedFile()

@@ -61,7 +61,7 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
     organism_index.organism = zebrafish
     organism_index.result = computational_result_short
     organism_index.absolute_directory_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
-    organism_index.salmon_version='v0.9.0'
+    organism_index.salmon_version='v0.9.1'
     organism_index.save()
 
     comp_file = ComputedFile()
@@ -157,7 +157,7 @@ def setup_experiment(new_version_accessions: List[str], old_version_accessions: 
     organism_index.organism = zebrafish
     organism_index.result = computational_result_short
     organism_index.absolute_directory_path = "/home/user/data_store/ZEBRAFISH_INDEX/SHORT"
-    organism_index.salmon_version='v0.13.0' # DIFFERENT SALMON VERSION
+    organism_index.salmon_version='v0.13.1' # DIFFERENT SALMON VERSION
     organism_index.save()
 
     comp_file = ComputedFile()
