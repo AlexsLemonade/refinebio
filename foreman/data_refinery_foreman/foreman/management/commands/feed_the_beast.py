@@ -13,7 +13,7 @@ from data_refinery_common.utils import  get_env_variable
 from data_refinery_foreman.foreman.performant_pagination.pagination import PerformantPaginator as Paginator
 from data_refinery_foreman.surveyor.management.commands.surveyor_dispatcher import queue_surveyor_for_accession
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_common.models import Experiment, ProcessorJob
+from data_refinery_common.models import Experiment, ProcessorJob, SurveyedAccession
 
 
 logger = get_and_configure_logger(__name__)
@@ -26,14 +26,18 @@ class Command(BaseCommand):
         nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=30)
 
         with open("config/all_rna_seq_accessions.txt") as accession_list_file:
-            all_accessions = [line.strip() for line in accession_list_file]
+            all_rna_accessions = [line.strip() for line in accession_list_file]
 
-        # We've surveyed up to SRP134965 so far!
-        all_accessions = all_accessions[all_accessions.index('SRP134965'):]
+        with open("config/all_microarray_accessions.txt") as accession_list_file:
+            all_microarray_accessions = [line.strip() for line in accession_list_file]
+
+        all_accessions = all_microarray_accessions + all_rna_accession
 
         BATCH_SIZE = 1000
         batch_index = 0
         batch_accessions = all_accessions[0:BATCH_SIZE]
+
+        fed_accessions = []
 
         while batch_accessions:
             logger.info(
@@ -41,15 +45,16 @@ class Command(BaseCommand):
                 batch_accessions[0]
             )
 
-            existing_experiments = Experiment.objects.filter(
+            # Check against surveyed accessions table to prevent resurveying
+            surveyed_experiments = SurveyedAccession.objects.filter(
                 accession_code__in=batch_accessions
             ).values(
                 'accession_code'
             )
 
-            existing_accessions = [experiment['accession_code'] for experiment in existing_experiments]
+            surveyed_accessions = [experiment['accession_code'] for experiment in surveyed_experiments]
 
-            missing_accessions = set(batch_accessions) - set(existing_accessions)
+            missing_accessions = set(batch_accessions) - set(surveyed_accessions)
             while len(missing_accessions) > 0:
                 try:
                     all_surveyor_jobs = nomad_client.jobs.get_jobs(prefix="SURVEYOR")
@@ -68,14 +73,17 @@ class Command(BaseCommand):
                     accession_code = missing_accessions.pop()
                     try:
                         queue_surveyor_for_accession(accession_code)
-                        time.sleep(30)
+                        fed_accessions.append(accession_code)
                     except:
                         # We don't want to stop, gotta keep feeding the beast!!!!
                         logger.exception("Exception caught while looping through all accessions!",
                                          accession_code=accession_code)
                 else:
-                    # Do it here so we don't sleep when there's an exception.
-                    time.sleep(30)
+                    # Do it here so we don't sleep when there's an exception
+                    pass
+
+            # Bulk insert fed_accessions to SurveyedAccession
+            fed_accessions = []
 
             batch_index += 1
             if batch_index * BATCH_SIZE >= len(all_accessions):
