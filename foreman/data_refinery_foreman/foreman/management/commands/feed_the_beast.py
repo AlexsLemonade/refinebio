@@ -32,7 +32,7 @@ class Command(BaseCommand):
         with open("config/all_microarray_accessions.txt") as accession_list_file:
             all_microarray_accessions = [line.strip() for line in accession_list_file]
 
-        all_accessions = all_microarray_accessions + all_rna_accession
+        all_accessions = all_microarray_accessions + all_rna_accessions
 
         BATCH_SIZE = 1000
         batch_index = 0
@@ -93,7 +93,7 @@ class Command(BaseCommand):
                     created_at=current_time
                 ))
 
-            SurveyedAccession.objects.bulk_create(surveyed_experiments)
+            SurveyedAccession.objects.bulk_create(new_surveyed_accessions)
             fed_accessions = []
 
             batch_index += 1
