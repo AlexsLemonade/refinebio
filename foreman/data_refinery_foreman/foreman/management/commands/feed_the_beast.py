@@ -75,13 +75,14 @@ class Command(BaseCommand):
                     try:
                         queue_surveyor_for_accession(accession_code)
                         fed_accessions.append(accession_code)
+                        time.sleep(30)
                     except:
                         # We don't want to stop, gotta keep feeding the beast!!!!
                         logger.exception("Exception caught while looping through all accessions!",
                                          accession_code=accession_code)
                 else:
                     # Do it here so we don't sleep when there's an exception
-                    pass
+                    time.sleep(30)
 
             # Bulk insert fed_accessions to SurveyedAccession
             new_surveyed_accessions = []
