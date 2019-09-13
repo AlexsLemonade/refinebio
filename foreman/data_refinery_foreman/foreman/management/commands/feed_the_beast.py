@@ -7,6 +7,7 @@ import time
 from typing import List
 
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 from nomad import Nomad
 
 from data_refinery_common.utils import  get_env_variable
@@ -83,6 +84,16 @@ class Command(BaseCommand):
                     pass
 
             # Bulk insert fed_accessions to SurveyedAccession
+            new_surveyed_accessions = []
+            current_time = timezone.now()
+
+            for accession in fed_accessions:
+                new_surveyed_accessions.append(SurveyedAccession(
+                    accession_code=accession,
+                    created_at=current_time
+                ))
+
+            SurveyedAccession.objects.bulk_create(surveyed_experiments)
             fed_accessions = []
 
             batch_index += 1
