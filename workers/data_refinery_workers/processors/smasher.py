@@ -496,7 +496,8 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         for key, input_files in job_context['input_files'].items():
 
             # Merge all the frames into one
-            all_frames = []
+            all_frames = [None] * len(input_files) if input_files else []
+            all_frames_index = 0;
 
             for computed_file in input_files:
 
@@ -571,7 +572,8 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     else:
                         job_context['technologies']['microarray'].append(data.columns)
 
-                    all_frames.append(data)
+                    all_frames[all_frames_index] = data
+                    all_frames_index += 1
                     num_samples = num_samples + 1
 
                     if (num_samples % 100) == 0:
@@ -591,6 +593,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     if computed_file_path:
                         os.remove(computed_file_path)
 
+            all_frames = all_frames[0:all_frames_index]
             job_context['all_frames'] = all_frames
 
             if len(all_frames) < 1:

@@ -239,7 +239,7 @@ if [ -z "$tag" ] || [ "$tag" = "no_op" ]; then
     fi
 fi
 
-if [ -z "$tag" ] || [ "$tag" = "smasher" ]; then
+if [ -z "$tag" ] || [ "$tag" = "smasher" ] || [ "$tag" = "compendia" ]; then
     # Make sure PCL for test is downloaded from S3
     pcl_name="GSM1237810_T09-1084.PCL"
     pcl_name2="GSM1237812_S97-PURE.PCL"
