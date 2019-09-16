@@ -526,7 +526,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     #   aggregating by experiment -> return untransformed output from tximport
                     #   aggregating by species -> log2(x + 1) tximport output
                     if job_context['dataset'].aggregate_by == 'SPECIES' \
-                    and computed_file_path.endswith("lengthScaledTPM.tsv"):
+                        and computed_file_path.endswith("lengthScaledTPM.tsv"):
                         data = data + 1
                         data = np.log2(data)
 
@@ -740,6 +740,20 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             outfile = outfile_dir + key + ".tsv"
             job_context['smash_outfile'] = outfile
             untransposed.to_csv(outfile, sep='\t', encoding='utf-8')
+
+            # Check if we need to copy the quant.sf files
+            if job_context['dataset'].include_quant_files:
+                for computed_file in input_files:
+                    # we just want to output the quant.sf files
+                    if computed_file.filename != 'quant.sf': continue
+                    computed_file_path = job_context["work_dir"] + computed_file.filename
+                    computed_file_path = computed_file.get_synced_file_path(path=computed_file_path)
+                    if not computed_file_path: continue
+                    sample = computed_file.samples.all().first()
+                    if not sample: continue # check that the computed file is associated with a sample
+                    accession_code = sample.accession_code
+                    # copy file to outfile_dir
+                    shutil.copy(computed_file_path, outfile_dir + accession_code + "_quant.sf")
 
         # Copy LICENSE.txt and README.md files
         shutil.copy("README_DATASET.md", smash_path + "README.md")
