@@ -50,25 +50,18 @@ def _prepare_files(job_context: Dict) -> Dict:
     Fetches and prepares the files to smash.
     """
 
-    all_sample_files = []
+    has_any_smashable_files = False
     job_context['input_files'] = {}
 
     # `key` can either be the species name or experiment accession.
     for key, samples in job_context["samples"].items():
-        smashable_files = []
-        for sample in samples:
-            smashable_file = sample.get_most_recent_smashable_result_file()
-
-            if smashable_file is not None:
-                smashable_files = smashable_files + [smashable_file]
-        smashable_files = list(set(smashable_files))
+        smashable_files = list(set(smashable_file for smashable_file in sample.get_most_recent_smashable_result_file() 
+                                                  if smashable_file is not None))
         job_context['input_files'][key] = smashable_files
-        all_sample_files = all_sample_files + smashable_files
+        if len(smashable_files) > 0:
+            has_any_smashable_files = True
 
-    # Filter empty results. This shouldn't get here, but it's possible, so we filter just in case it does.
-    all_sample_files = [sf for sf in all_sample_files if sf is not None]
-
-    if all_sample_files == []:
+    if not has_any_smashable_files:
         error_message = "Couldn't get any files to smash for Smash job!!"
         logger.error(error_message,
                      dataset_id=job_context['dataset'].id,
@@ -79,7 +72,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         job_context['dataset'].success = False
         job_context['dataset'].save()
         job_context['job'].success = False
-        job_context["job"].failure_reason = "Couldn't get any files to smash for Smash job - empty all_sample_files"
+        job_context['job'].failure_reason = "Couldn't get any files to smash for Smash job"
         return job_context
 
     job_context["work_dir"] = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk) + "/"
