@@ -496,7 +496,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         for key, input_files in job_context['input_files'].items():
 
             # Merge all the frames into one
-            all_frames = [None] * len(input_files)
+            all_frames = [None] * len(input_files) if input_files else []
             all_frames_index = 0;
 
             for computed_file in input_files:
