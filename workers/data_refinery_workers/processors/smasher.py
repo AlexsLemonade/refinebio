@@ -593,7 +593,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     if computed_file_path:
                         os.remove(computed_file_path)
 
-            job_context['all_frames'] = all_frames
+            job_context['all_frames'] = all_frames[0:all_frames_index]
 
             if len(all_frames) < 1:
                 logger.warning("Was told to smash a frame with no frames!",
