@@ -651,6 +651,7 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'organism_samples',
                     'download_url',
                     'quantile_normalize',
+                    'quant_sf_only',
                     'worker_version'
             )
         extra_kwargs = {
