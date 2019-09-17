@@ -50,7 +50,8 @@ def _build_qn_target(job_context: Dict) -> Dict:
     job_context['time_start'] = timezone.now()
 
     # Get the gene list from the first input
-    computed_file_path = job_context['input_files']['ALL'][0].get_synced_file_path()
+    (computed_file, _) =  job_context['input_files']['ALL'][0]
+    computed_file_path = computed_file.get_synced_file_path()
     geneset_target_frame = smasher._load_and_sanitize_file(computed_file_path)
 
     # Get the geneset
@@ -63,7 +64,7 @@ def _build_qn_target(job_context: Dict) -> Dict:
 
     # Read and sum all of the inputs
     num_valid_inputs = 0
-    for file in job_context['input_files']['ALL']:
+    for file, sample in job_context['input_files']['ALL']:
         try:
             input_filepath = file.get_synced_file_path()
             input_frame = smasher._load_and_sanitize_file(input_filepath)

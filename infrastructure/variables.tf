@@ -177,6 +177,9 @@ variable "elasticsearch_port" {
   default = "80"
 }
 
+variable "engagementbot_webhook" {
+}
+
 # Output our production environment variables.
 output "environment_variables" {
   value = [
@@ -265,6 +268,8 @@ output "environment_variables" {
     {name = "MAX_CLIENTS"
       value = "${var.max_clients}"},
     {name = "MAX_DOWNLOADER_JOBS_PER_NODE"
-      value = "${var.max_downloader_jobs_per_node}"}
+      value = "${var.max_downloader_jobs_per_node}"},
+    {name = "ENGAGEMENTBOT_WEBHOOK"
+      value = "${var.engagementbot_webhook}"}
   ]
 }
