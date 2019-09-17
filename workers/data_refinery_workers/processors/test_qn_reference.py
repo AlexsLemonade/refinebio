@@ -33,7 +33,8 @@ class QNRefTestCase(TestCase):
         job.pipeline_applied = "QN_REFERENCE"
         job.save()
 
-        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+        homo_sapiens = Organism(name="HOMO_SAPIENS", taxonomy_id=9606)
+        homo_sapiens.save()
 
         experiment = Experiment()
         experiment.accession_code = "12345"
