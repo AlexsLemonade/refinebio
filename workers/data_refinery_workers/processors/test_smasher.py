@@ -528,6 +528,72 @@ class SmasherTestCase(TestCase):
         self.assertEqual(final_context['unsmashable_files'], ['GSM1237810_T09-1084.PCL'])
 
     @tag("smasher")
+    def test_qn_targets_only(self):
+        """ """
+        job = ProcessorJob()
+        job.pipeline_applied = "SMASHER"
+        job.save()
+
+        experiment = Experiment()
+        experiment.accession_code = "GSE51088"
+        experiment.save()
+
+        result = ComputationalResult()
+        result.save()
+
+        homo_sapiens = Organism.get_object_for_name("HOMO_SAPIENS")
+
+        sample = Sample()
+        sample.accession_code = 'GSM1237818'
+        sample.title = 'GSM1237818'
+        sample.organism = homo_sapiens
+        sample.save()
+
+        sra = SampleResultAssociation()
+        sra.sample = sample
+        sra.result = result
+        sra.save()
+
+        esa = ExperimentSampleAssociation()
+        esa.experiment = experiment
+        esa.sample = sample
+        esa.save()
+
+        computed_file = ComputedFile()
+        computed_file.s3_key = "smasher-test-quant.sf"
+        computed_file.s3_bucket = "data-refinery-test-assets"
+        computed_file.filename = "quant.sf"
+        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
+        computed_file.result = result
+        computed_file.is_smashable = True
+        computed_file.size_in_bytes = 123123
+        computed_file.sha1 = "08c7ea90b66b52f7cd9d9a569717a1f5f3874967" # this matches with the downloaded file
+        computed_file.save()
+
+        assoc = SampleComputedFileAssociation()
+        assoc.sample = sample
+        assoc.computed_file = computed_file
+        assoc.save()
+
+        ds = Dataset()
+        ds.data = {'GSE51088': ['GSM1237818']}
+        ds.aggregate_by = 'SPECIES'
+        ds.scale_by = 'STANDARD'
+        ds.email_address = "null@derp.com"
+        ds.quant_sf_only = True # Make the dataset include quant.sf files only
+        ds.save()
+
+        pjda = ProcessorJobDatasetAssociation()
+        pjda.processor_job = job
+        pjda.dataset = ds
+        pjda.save()
+
+        final_context = smasher.smash(job.pk, upload=False)
+
+        # Check that the sample was really generated
+        self.assertTrue(os.path.exists(final_context['output_dir'] + '/HOMO_SAPIENS/GSM1237818_quant.sf'))
+
+    @tag("smasher")
     def test_no_smash_dupe(self):
         """ """
 

@@ -455,19 +455,19 @@ def _quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict
         merged = new_merged
     return job_context
 
-def sync_quant_files(path, files):
+def sync_quant_files(output_path, files, job_context: Dict):
     """ Takes a list of ComputedFiles and copies the ones that are quant files to the provided directory """
     for computed_file in files:
         # we just want to output the quant.sf files
         if computed_file.filename != 'quant.sf': continue
         computed_file_path = job_context["work_dir"] + computed_file.filename
-        computed_file_path = computed_file.get_synced_file_path(path=computed_file_path)
+        computed_file_path = computed_file.get_synced_file_path(path=computed_file_path, force=True)
         if not computed_file_path: continue
         sample = computed_file.samples.all().first()
         if not sample: continue # check that the computed file is associated with a sample
         accession_code = sample.accession_code
-        # copy file to outfile_dir
-        shutil.copy(computed_file_path, outfile_dir + accession_code + "_quant.sf")
+        # copy file to the output path
+        shutil.copy(computed_file_path, output_path + accession_code + "_quant.sf")
 
 def _smash(job_context: Dict, how="inner") -> Dict:
     """
@@ -512,7 +512,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             if job_context['dataset'].quant_sf_only:
                 outfile_dir = smash_path + key + "/"
                 os.makedirs(outfile_dir, exist_ok=True)
-                sync_quant_files(outfile_dir, input_files)
+                sync_quant_files(outfile_dir, input_files, job_context)
                 # we ONLY want to give quant sf files to the user if that's what they requested
                 continue
 
