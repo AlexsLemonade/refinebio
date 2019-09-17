@@ -568,7 +568,13 @@ nomad job dispatch -meta ORGANISM=DANIO_RERIO CREATE_QN_TARGET
 Creating species-wide compendia for a given species can be done in a production environment with the following:
 
 ```bash
-nomad job dispatch -meta ORGANISM=DANIO_RERIO CREATE_COMPENDIA
+nomad job dispatch -meta ORGANISMs=DANIO_RERIO CREATE_COMPENDIA
+```
+
+or for a list of organisms:
+
+```bash
+nomad job dispatch -meta ORGANISM=DANIO_RERIO,HOMO_SAPIENS CREATE_COMPENDIA
 ```
 
 or for all organisms with sufficient data:

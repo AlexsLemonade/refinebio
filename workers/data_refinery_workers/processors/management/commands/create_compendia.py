@@ -53,9 +53,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--organism",
+            "--organisms",
             type=str,
-            help=("Name of organism"))
+            help=("Comma separated list of organism names."))
 
     def handle(self, *args, **options):
         """Create a compendium for one or more organisms.
@@ -64,16 +64,19 @@ class Command(BaseCommand):
         for it. If not a new job will be dispatched for each organism
         with enough microarray samples.
         """
-        if options["organism"] is None:
+        if options["organisms"] is None:
             all_organisms = Organism.objects.all()
+        else:
+            organisms = options["organisms"].upper().replace(" ", "_").split(",")
+            all_organisms = Organism.objects.filter(name__in=organisms)
 
+        if all_organisms.count() > 1:
             for organism in all_organisms:
                 job = create_job_for_organism(organism)
                 logger.info("Sending CREATE_COMPENDIA for Organism", job_id=str(job.pk), organism=str(organism))
                 send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
         else:
-            organism = Organism.get_object_for_name(options["organism"].upper())
-            job = create_job_for_organism(organism)
+            job = create_job_for_organism(organisms[0])
             create_compendia.create_compendia(job.id)
 
         sys.exit(0)
