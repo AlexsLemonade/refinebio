@@ -70,13 +70,16 @@ class Command(BaseCommand):
             organisms = options["organisms"].upper().replace(" ", "_").split(",")
             all_organisms = Organism.objects.filter(name__in=organisms)
 
+        logger.error(all_organisms)
+
         if all_organisms.count() > 1:
             for organism in all_organisms:
+                logger.error(organism)
                 job = create_job_for_organism(organism)
                 logger.info("Sending CREATE_COMPENDIA for Organism", job_id=str(job.pk), organism=str(organism))
                 send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
         else:
-            job = create_job_for_organism(organisms[0])
+            job = create_job_for_organism(all_organisms[0])
             create_compendia.create_compendia(job.id)
 
         sys.exit(0)
