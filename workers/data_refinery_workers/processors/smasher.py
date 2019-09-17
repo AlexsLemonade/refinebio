@@ -460,14 +460,12 @@ def sync_quant_files(output_path, files, job_context: Dict):
     for computed_file in files:
         # we just want to output the quant.sf files
         if computed_file.filename != 'quant.sf': continue
-        computed_file_path = job_context["work_dir"] + computed_file.filename
-        computed_file_path = computed_file.get_synced_file_path(path=computed_file_path, force=True)
-        if not computed_file_path: continue
         sample = computed_file.samples.all().first()
         if not sample: continue # check that the computed file is associated with a sample
         accession_code = sample.accession_code
         # copy file to the output path
-        shutil.copy(computed_file_path, output_path + accession_code + "_quant.sf")
+        output_file_path = output_path + accession_code + "_quant.sf"
+        computed_file.get_synced_file_path(path=output_file_path)
 
 def _smash(job_context: Dict, how="inner") -> Dict:
     """

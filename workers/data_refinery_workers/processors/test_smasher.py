@@ -563,7 +563,7 @@ class SmasherTestCase(TestCase):
         computed_file.s3_key = "smasher-test-quant.sf"
         computed_file.s3_bucket = "data-refinery-test-assets"
         computed_file.filename = "quant.sf"
-        computed_file.absolute_file_path = "/home/user/data_store/PCL/" + computed_file.filename
+        computed_file.absolute_file_path = "/home/user/data_store/QUANT/smasher-test-quant.sf"
         computed_file.result = result
         computed_file.is_smashable = True
         computed_file.size_in_bytes = 123123
