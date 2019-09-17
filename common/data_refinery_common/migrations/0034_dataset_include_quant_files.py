@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='dataset',
             name='quant_sf_only',
-            field=models.BooleanField(default=True, help_text='Include only quant.sf files in the generated dataset.'),
+            field=models.BooleanField(default=False, help_text='Include only quant.sf files in the generated dataset.'),
         ),
     ]
