@@ -88,9 +88,8 @@ class QNRefTestCase(TestCase):
 
         final_context = qn_reference.create_qn_reference(job.pk)
         self.assertTrue(final_context['success'])
-
         self.assertTrue(os.path.exists(final_context['target_file']))
-        self.assertEqual(os.path.getsize(final_context['target_file']), 556)
+        self.assertEqual(os.path.getsize(final_context['target_file']), 559)
 
         target = utils.get_most_recent_qn_target_for_organism(homo_sapiens)
         self.assertEqual(target.sha1, '636d72d5cbf4b9785b0bd271a1430b615feaa7ea')
