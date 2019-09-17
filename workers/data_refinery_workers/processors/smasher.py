@@ -497,7 +497,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                      dataset_data=len(job_context['dataset'].data),
         )
 
-        #job_context['technologies'] = {'microarray': [], 'rnaseq': []}
+        job_context['technologies'] = {'microarray': [], 'rnaseq': []}
         job_context['original_merged'] = pd.DataFrame()
 
         # Once again, `key` is either a species name or an experiment accession
