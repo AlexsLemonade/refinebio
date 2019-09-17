@@ -26,7 +26,7 @@ def create_job_for_organism(organism=Organism):
     Fetch all of the experiments and compile large but normally formated Dataset.
     """
     data = {}
-    experiments = Experiment.objects.filter(id__in=(ExperimentOrganismAssociation.objects.filter(organism=organism)).values('experiment'))
+    experiments = Experiment.objects.filter(organisms=organism).prefetch_related('samples')
     for experiment in experiments:
         data[experiment.accession_code] = list(experiment.samples.filter(organism=organism).values_list('accession_code', flat=True))
 
