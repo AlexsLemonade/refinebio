@@ -5,6 +5,7 @@ import string
 import subprocess
 import time
 import warnings
+import psutil
 
 import numpy as np
 import pandas as pd
@@ -35,8 +36,16 @@ S3_COMPENDIA_BUCKET_NAME = get_env_variable("S3_COMPENDIA_BUCKET_NAME", "data-re
 logger = get_and_configure_logger(__name__)
 
 
-def _prepare_input(job_context: Dict) -> Dict:
+def log_state(message):
+    # get ram usage
+    ram = psutil.virtual_memory().percent
+    # get cpu usage
+    cpu = psutil.cpu_percent()
 
+    logger.debug("cpu:%s - ram:%s - %s", cpu, ram, message)
+
+def _prepare_input(job_context: Dict) -> Dict:
+    log_state("start prepare input")
     # We're going to use the smasher outside of the smasher.
     # I'm not crazy about this yet. Maybe refactor later,
     # but I need the data now.
@@ -68,6 +77,7 @@ def _prepare_input(job_context: Dict) -> Dict:
     job_context['smashed_file'] = outfile
     job_context['target_file'] = outfile_base + '_target.tsv'
 
+    log_state("end prepare input")
     return job_context
 
 def _perform_imputation(job_context: Dict) -> Dict:
@@ -93,8 +103,10 @@ def _perform_imputation(job_context: Dict) -> Dict:
      - Quantile normalize imputed_matrix where genes are rows and samples are columns
 
     """
+    log_state("start perform imputation")
     job_context['time_start'] = timezone.now()
 
+    log_state("platform imputation")
     # Combine all microarray samples with a full join to form a microarray_expression_matrix (this may end up being a DataFrame)
     microarray_expression_matrix = job_context['microarray_inputs']
 
@@ -107,6 +119,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # Calculate the 10th percentile of rnaseq_row_sums
     rnaseq_tenth_percentile = np.percentile(rnaseq_row_sums, 10)
 
+    log_state("drop all rows")
     # Drop all rows in rnaseq_expression_matrix with a row sum < 10th percentile of rnaseq_row_sums; this is now filtered_rnaseq_matrix
     # TODO: This is probably a better way to do this with `np.where`
     rows_to_filter = []
@@ -216,7 +229,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     job_context['time_end'] = timezone.now()
     job_context['formatted_command'] = "create_compendia.py"
-
+    log_state("end prepart imputation")
     return job_context
 
 
@@ -224,7 +237,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     """
     Store and host the result as a ComputationalResult object.
     """
-
+    log_state("start create result object")
     result = ComputationalResult()
     result.commands.append(" ".join(job_context['formatted_command']))
     result.is_ccdl = True
