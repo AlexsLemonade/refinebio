@@ -11,6 +11,7 @@ the experiment and reprocess it correctly.
 
 from django.core.management.base import BaseCommand
 import GEOparse
+import shutil
 
 from data_refinery_common.models import Experiment, Sample
 from data_refinery_common.logging import get_and_configure_logger
@@ -22,6 +23,9 @@ from data_refinery_foreman.surveyor.management.commands.unsurvey import purge_ex
 logger = get_and_configure_logger(__name__)
 
 PAGE_SIZE = 2000
+
+
+GEO_TEMP_DIR = '/tmp/'
 
 
 class Command(BaseCommand):
@@ -40,30 +44,36 @@ class Command(BaseCommand):
 
         while True:
             for experiment in page.object_list:
-                gse = GEOparse.get_GEO(experiment.accession_code, destdir='/tmp/', how="brief", silent=True)
+                try:
+                    gse = GEOparse.get_GEO(experiment.accession_code, destdir=GEO_TEMP_DIR, how="brief", silent=True)
 
-                sample_accessions = list(gse.gsms.keys())
-                samples = Sample.objects.filter(accession_code__in=sample_accessions)
+                    sample_accessions = list(gse.gsms.keys())
+                    samples = Sample.objects.filter(accession_code__in=sample_accessions)
 
-                wrong_platform = False
-                for sample in samples:
-                    gpl = gse.gsms[sample.accession_code].metadata['platform_id'][0]
-                    internal_accession = get_internal_microarray_accession(gpl)
-                    if internal_accession != sample.platform_accession_code:
-                        wrong_platform = True
-                        break
+                    wrong_platform = False
+                    for sample in samples:
+                        gpl = gse.gsms[sample.accession_code].metadata['platform_id'][0]
+                        internal_accession = get_internal_microarray_accession(gpl)
+                        if internal_accession != sample.platform_accession_code:
+                            wrong_platform = True
+                            break
 
-                if wrong_platform:
-                    if options["dry_run"]:
-                        logger.info("Would have re-surveyed experiment with accession code %s",
-                                    experiment.accession_code)
-                    else:
-                        logger.info("Re-surveying experiment with accession code %s",
-                                    experiment.accession_code)
+                    if wrong_platform:
+                        if options["dry_run"]:
+                            logger.info("Would have re-surveyed experiment with accession code %s",
+                                        experiment.accession_code)
+                        else:
+                            logger.info("Re-surveying experiment with accession code %s",
+                                        experiment.accession_code)
 
-                        purge_experiment(experiment.accession_code)
+                            purge_experiment(experiment.accession_code)
 
-                        queue_surveyor_for_accession(experiment.accession_code)
+                            queue_surveyor_for_accession(experiment.accession_code)
+                finally:
+                    # GEOparse downloads files here and never cleans them up! Grrrr!
+                    download_path = GEO_TEMP_DIR + experiment.accession_code + '_family.soft.gz'
+                    # It's not a directory, but ignore_errors is useful.
+                    shutil.rmtree(download_path, ignore_errors=True)
 
 
             if not page.has_next():

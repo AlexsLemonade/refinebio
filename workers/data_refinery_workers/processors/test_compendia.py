@@ -127,6 +127,7 @@ class CompendiaTestCase(TestCase):
         pjda.save()
 
         final_context = create_compendia.create_compendia(job.id)
+        self.assertFalse(final_context['success'])
 
     @tag('compendia')
     def test_create_compendia_danio(self):

@@ -14,7 +14,7 @@ def update_blacklisted_samples(apps, schema_editor):
 
     blacklist = load_blacklist()
 
-    paginator = Paginator(Sample.objects.all(), 1000)
+    paginator = Paginator(Sample.objects.all().order_by('id'), 1000)
     for page_idx in range(1, paginator.num_pages):
         blacklisted = []
         for sample in paginator.page(page_idx).object_list:

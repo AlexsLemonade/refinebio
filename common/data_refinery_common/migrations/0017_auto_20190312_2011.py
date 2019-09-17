@@ -25,7 +25,7 @@ def make_sample_platform_names_readable(apps, schema_editor):
     for platform in get_supported_rnaseq_platforms():
         platform_mapping[platform.replace(' ', '').upper()] = platform
 
-    paginator = Paginator(Sample.objects.all(), 200)
+    paginator = Paginator(Sample.objects.all().order_by('id'), 200)
 
     for page_idx in range(1, paginator.num_pages):
         for sample in paginator.page(page_idx).object_list:
