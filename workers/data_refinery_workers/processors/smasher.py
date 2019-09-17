@@ -10,6 +10,7 @@ import simplejson as json
 import string
 import warnings
 import requests
+import psutil
 
 from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
@@ -44,12 +45,17 @@ BODY_HTML = Path('data_refinery_workers/processors/smasher_email.min.html').read
 BODY_ERROR_HTML = Path('data_refinery_workers/processors/smasher_email_error.min.html').read_text().replace('\n', '')
 logger = get_and_configure_logger(__name__)
 
+def log_state(message):
+    ram = psutil.virtual_memory().percent
+    cpu = psutil.cpu_percent()
+    logger.debug("cpu:%s - ram:%s -  %s", cpu, ram, message)
+
 
 def _prepare_files(job_context: Dict) -> Dict:
     """
     Fetches and prepares the files to smash.
     """
-
+    log_state("start prepare files")
     all_sample_files = []
     job_context['input_files'] = {}
 
@@ -60,7 +66,7 @@ def _prepare_files(job_context: Dict) -> Dict:
             smashable_file = sample.get_most_recent_smashable_result_file()
 
             if smashable_file is not None:
-                smashable_files = smashable_files + [smashable_file]
+                smashable_files = smashable_files + [(smashable_file, sample)]
         smashable_files = list(set(smashable_files))
         job_context['input_files'][key] = smashable_files
         all_sample_files = all_sample_files + smashable_files
@@ -89,7 +95,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     job_context["output_dir"] = job_context["work_dir"] + "output/"
     os.makedirs(job_context["output_dir"])
-
+    log_state("end prepare files")
     return job_context
 
 
@@ -109,7 +115,7 @@ def _get_tsv_columns(samples_metadata):
     Some nested annotation fields are taken out as separate columns
     because they are more important than the others.
     """
-
+    log_state("start get tsv columns")
     refinebio_columns = set()
     annotation_columns = set()
     for sample_metadata in samples_metadata.values():
@@ -155,6 +161,7 @@ def _get_tsv_columns(samples_metadata):
     # always first, followed by the other refinebio columns (in alphabetic order), and
     # annotation columns (in alphabetic order) at the end.
     refinebio_columns.discard('refinebio_accession_code')
+    log_state("end get tsv columns")
     return ['refinebio_accession_code', 'experiment_accession'] + sorted(refinebio_columns) \
         + sorted(annotation_columns)
 
@@ -164,7 +171,7 @@ def _add_annotation_value(row_data, col_name, col_value, sample_accession_code):
     If col_name already exists in row_data with different value, print
     out a warning message.
     """
-
+    log_state("start add annotation value")
     # Generate a warning message if annotation field name starts with
     # "refinebio_".  This should rarely (if ever) happen.
     if col_name.startswith("refinebio_"):
@@ -184,6 +191,7 @@ def _add_annotation_value(row_data, col_name, col_value, sample_accession_code):
                 col_name, row_data[col_name], col_value),
             sample_accession_code=sample_accession_code
         )
+    log_state("end add annotation value")
 
 
 def _get_experiment_accession(sample_accession_code, dataset_data):
@@ -485,8 +493,8 @@ def _smash(job_context: Dict, how="inner") -> Dict:
 
         # Smash all of the sample sets
         logger.debug("About to smash!",
-                     input_files=job_context['input_files'],
-                     dataset_data=job_context['dataset'].data,
+                     input_files=job_context['input_files'].keys(),
+                     dataset_data=len(job_context['dataset'].data),
         )
 
         job_context['technologies'] = {'microarray': [], 'rnaseq': []}
@@ -494,13 +502,16 @@ def _smash(job_context: Dict, how="inner") -> Dict:
 
         # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context['input_files'].items():
-
+            log_state("build frames for species or experiment")
             # Merge all the frames into one
             all_frames = [None] * len(input_files) if input_files else []
             all_frames_index = 0;
 
-            for computed_file in input_files:
+            technologies_rnaseq= [None] * len(all_frames)
+            technologies_microarray = [None] * len(all_frames)
 
+            for computed_file, sample in input_files:
+                log_state("input file iteration")
                 try:
                     # Download the file to a job-specific location so it
                     # won't disappear while we're using it.
@@ -549,7 +560,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                         # Unfortuantely, we can't use this as `title` can cause a collision
                         # data.columns = [computed_file.samples.all()[0].title]
                         # So we use this, which also helps us support the case of missing SampleComputedFileAssociation
-                        data.columns = [computed_file.samples.all()[0].accession_code]
+                        data.columns = [sample.accession_code]
                     except ValueError as e:
                         # This sample might have multiple channels, or something else.
                         # Don't mess with it.
@@ -568,9 +579,9 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                         continue
 
                     if computed_file_path.endswith("lengthScaledTPM.tsv"):
-                        job_context['technologies']['rnaseq'].append(data.columns)
+                        technologies_rnaseq[all_frames_index] = data.columns
                     else:
-                        job_context['technologies']['microarray'].append(data.columns)
+                        technologies_microarray[all_frames_index] = data.columns
 
                     all_frames[all_frames_index] = data
                     all_frames_index += 1
@@ -595,7 +606,11 @@ def _smash(job_context: Dict, how="inner") -> Dict:
 
             all_frames = all_frames[0:all_frames_index]
             job_context['all_frames'] = all_frames
-
+            job_context['technologies'] = {
+                'microarray': [x for x in technologies_microarray if not None],
+                'rnaseq': [x for x in technologies_rnaseq if not None]
+            }
+            log_state("set all frames")
             if len(all_frames) < 1:
                 logger.warning("Was told to smash a frame with no frames!",
                     key=key,
