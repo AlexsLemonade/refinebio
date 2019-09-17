@@ -50,7 +50,7 @@ def _build_qn_target(job_context: Dict) -> Dict:
     job_context['time_start'] = timezone.now()
 
     # Get the gene list from the first input
-    (computed_file,) =  job_context['input_files']['ALL'][0]
+    (computed_file, _) =  job_context['input_files']['ALL'][0]
     computed_file_path = computed_file.get_synced_file_path()
     geneset_target_frame = smasher._load_and_sanitize_file(computed_file_path)
 
