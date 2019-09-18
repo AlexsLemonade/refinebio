@@ -41,7 +41,13 @@ class Command(BaseCommand):
         organisms = Organism.objects.all()
 
         for organism in organisms:
-            samples = Sample.processed_objects.filter(organism=organism, has_raw=True, technology="MICROARRAY", is_processed=True)
+            samples = Sample.processed_objects.filter(
+                organism=organism,
+                has_raw=True,
+                technology="MICROARRAY",
+                is_processed=True,
+                platform_name__contains='Affymetrix',
+            )
             if samples.count() < MIN:
                 logger.info("Total proccessed samples don't meet minimum threshhold",
                     organism=organism,
