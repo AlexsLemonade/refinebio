@@ -589,9 +589,12 @@ class SmasherTestCase(TestCase):
         pjda.save()
 
         final_context = smasher.smash(job.pk, upload=False)
-
+        
         # Check that the sample was really generated
         self.assertTrue(os.path.exists(final_context['output_dir'] + '/HOMO_SAPIENS/GSM1237818_quant.sf'))
+        self.assertTrue(final_context['metadata']['quant_sf_only'])
+        self.assertEqual(final_context['metadata']['num_samples'], 1)
+        self.assertEqual(final_context['metadata']['num_experiments'], 1)
 
     @tag("smasher")
     def test_no_smash_dupe(self):
