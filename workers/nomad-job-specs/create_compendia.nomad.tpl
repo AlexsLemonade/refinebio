@@ -9,7 +9,7 @@ job "CREATE_COMPENDIA" {
 
   parameterized {
     payload       = "forbidden"
-    meta_required = ["ORGANISMS"]
+    meta_required = ["ORGANISMS", "QUANT_SF_ONLY"]
   }
 
   group "jobs" {
@@ -89,6 +89,7 @@ job "CREATE_COMPENDIA" {
           "manage.py",
           "create_compendia",
           "--organisms", "${NOMAD_META_ORGANISMS}",
+          "--quant-sf-only", "${NOMAD_META_QUANT_SF_ONLY}",
         ]
         ${{EXTRA_HOSTS}}
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]

@@ -60,7 +60,7 @@ class Command(BaseCommand):
 
         parser.add_argument(
             "--quant-sf-only",
-            type=bool,
+            type=lambda x: x == "True",
             help=("Whether to create a quantpendium or normal compendium."))
 
     def handle(self, *args, **options):
