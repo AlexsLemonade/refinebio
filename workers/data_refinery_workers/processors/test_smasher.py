@@ -596,6 +596,7 @@ class SmasherTestCase(TestCase):
         self.assertEqual(final_context['metadata']['num_samples'], 1)
         self.assertEqual(final_context['metadata']['num_experiments'], 1)
         self.assertTrue('aggregate_by' not in final_context['metadata'])
+        
     @tag("smasher")
     def test_no_smash_dupe(self):
         """ """
