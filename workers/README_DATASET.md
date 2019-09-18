@@ -1,7 +1,6 @@
 # refine.bio Aggregated Dataset
 
-This is a refine.bio dataset. **refine.bio is in beta** and we welcome your feedback!
-
+This is a refine.bio dataset.
 
 ## Contents
 
@@ -68,3 +67,11 @@ For example R workflows, such as clustering of gene expression data, please see 
 
 If you identify issues with this download, please [file an issue on GitHub](https://github.com/AlexsLemonade/refinebio/issues).
 If you would prefer to report issues via e-mail, you can also email [ccdl@alexslemonade.org](mailto:ccdl@alexslemonade.org).
+
+## Citing refine.bio
+
+Please use the following:
+
+Casey S. Greene, Dongbo Hu, Richard W. W. Jones, Stephanie Liu, David S. Mejia, Rob Patro, Stephen R. Piccolo, Ariel Rodriguez Romero, Hirak Sarkar, Candace L. Savonen, Jaclyn N. Taroni, William E. Vauclain, Deepashree Venkatesh Prasad, Kurt G. Wheeler. **refine.bio: a resource of uniformly processed publicly available gene expression datasets.** URL: https://www.refine.bio 
+
+_Note that the contributor list is in alphabetical order as we prepare a manuscript for submission._
