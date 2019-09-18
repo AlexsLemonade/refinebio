@@ -1388,20 +1388,3 @@ class ExperimentResultAssociation(models.Model):
     class Meta:
         db_table = "experiment_result_associations"
         unique_together = ('result', 'experiment')
-
-class SurveyedAccession(models.Model):
-
-    accession_code = models.CharField(max_length=64, unique=True)
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-
-    def save(self, *args, **kwargs):
-        """ On save, update timestamps """
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        else:
-            raise AssertionError("This accession has already been surveyed!")
-        return super(SurveyAccession, self).save(*args, **kwargs)
-
-    class Meta:
-        db_table = "surveyed_accessions"

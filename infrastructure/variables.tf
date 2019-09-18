@@ -162,7 +162,7 @@ variable "api_instance_type" {
 }
 
 variable "foreman_instance_type" {
-  default = "m5.large"
+  default = "m5.2xlarge"
 }
 
 variable "volume_size_in_gb" {
