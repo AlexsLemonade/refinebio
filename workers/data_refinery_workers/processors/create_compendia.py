@@ -272,6 +272,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
         "organism_name": job_context['samples'][organism_key][0].organism.name,
         "is_qn": False,
         "is_compendia": True,
+        "quant_sf_only": job_context['dataset'].quant_sf_only,
         "samples": [sample.accession_code for sample in job_context["samples"][organism_key]],
         "num_samples": len(job_context["samples"][organism_key]),
         "experiment_accessions": [e.accession_code for e in job_context['experiments']],
@@ -302,8 +303,10 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
     try:
         last_compendia = ComputedFile.objects.filter(
-                                    is_compendia=True,
-                                    compendia_organism=organism).order_by('-compendia_version')[-1]
+            is_compendia=True,
+            quant_sf_only=job_context['dataset'].quant_sf_only,
+            compendia_organism=organism
+        ).order_by('-compendia_version')[-1]
         compendia_version = last_compendia.compendia_version + 1
     except Exception as e:
         # This is the first compendia for this Organism
@@ -318,6 +321,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.is_qn_target = False
     archive_computed_file.result = result
     archive_computed_file.is_compendia = True
+    archive_computed_file.quant_sf_only = job_context['dataset'].quant_sf_only
     archive_computed_file.compendia_organism = job_context['samples'][organism_key][0].organism
     archive_computed_file.compendia_version = compendia_version
     archive_computed_file.save()
