@@ -463,12 +463,11 @@ def _quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict
         merged = new_merged
     return job_context
 
-def sync_quant_files(output_path, files, job_context: Dict):
+def sync_quant_files(output_path, files_sample_tuple, job_context: Dict):
     """ Takes a list of ComputedFiles and copies the ones that are quant files to the provided directory """
-    for computed_file in files:
+    for (computed_file, sample) in files_sample_tuple:
         # we just want to output the quant.sf files
         if computed_file.filename != 'quant.sf': continue
-        sample = computed_file.samples.all().first()
         if not sample: continue # check that the computed file is associated with a sample
         accession_code = sample.accession_code
         # copy file to the output path
@@ -525,7 +524,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             log_state("build frames for species or experiment")
             # Merge all the frames into one
             all_frames = [None] * len(input_files) if input_files else []
-            all_frames_index = 0;
+            all_frames_index = 0
 
             technologies_rnaseq= [None] * len(all_frames)
             technologies_microarray = [None] * len(all_frames)
