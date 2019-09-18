@@ -1137,6 +1137,7 @@ class Dataset(models.Model):
     aggregate_by = models.CharField(max_length=255, choices=AGGREGATE_CHOICES, default="EXPERIMENT", help_text="Specifies how samples are [aggregated](http://docs.refine.bio/en/latest/main_text.html#aggregations).")
     scale_by = models.CharField(max_length=255, choices=SCALE_CHOICES, default="NONE", help_text="Specifies options for [transformations](http://docs.refine.bio/en/latest/main_text.html#transformations).")
     quantile_normalize = models.BooleanField(default=True, help_text="Part of the advanced options. Allows [skipping quantile normalization](http://docs.refine.bio/en/latest/faq.html#what-does-it-mean-to-skip-quantile-normalization-for-rna-seq-samples) for RNA-Seq samples.")
+    quant_sf_only = models.BooleanField(default=False, help_text="Include only quant.sf files in the generated dataset.")
 
     # State properties
     is_processing = models.BooleanField(default=False)  # Data is still editable when False

@@ -273,6 +273,9 @@ if [ -z "$tag" ] || [ "$tag" = "smasher" ] || [ "$tag" = "compendia" ]; then
     bad_test_data_1="$bad_test_raw_dir/$bad_name"
     bad_test_data_2="$bad_test_raw_dir/$bad_name2"
     bad_test_data_3="$bad_test_raw_dir/$bad_name3"
+    quant_test_raw_dir="$volume_directory/QUANT"
+    quant_name="smasher-test-quant.sf"
+    quant_test_data_1="$quant_test_raw_dir/$quant_name"
     if [ ! -e "$pcl_test_data_1" ]; then
         mkdir -p "$pcl_test_raw_dir"
         echo "Downloading PCL for tests."
@@ -351,6 +354,12 @@ if [ -z "$tag" ] || [ "$tag" = "smasher" ] || [ "$tag" = "compendia" ]; then
         echo "Downloading Bad PCL for tests."
         wget -q -O "$bad_test_data_3" \
              "$test_data_repo/$bad_name3"
+    fi
+    if [ ! -e "$quant_test_data_1" ]; then
+        mkdir -p "$quant_test_raw_dir"
+        echo "Downloading Quant files for tests."
+        wget -q -O "$quant_test_data_1" \
+             "$test_data_repo/$quant_name"
     fi
     if [ -z "$AWS_ACCESS_KEY_ID" ]; then
         AWS_ACCESS_KEY_ID="$(~/bin/aws configure get default.aws_access_key_id)"

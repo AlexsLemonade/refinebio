@@ -463,6 +463,21 @@ def _quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict
         merged = new_merged
     return job_context
 
+def sync_quant_files(output_path, files_sample_tuple, job_context: Dict):
+    """ Takes a list of ComputedFiles and copies the ones that are quant files to the provided directory.
+        Returns the total number of samples that were included """
+    num_samples = 0
+    for (computed_file, sample) in files_sample_tuple:
+        # we just want to output the quant.sf files
+        if computed_file.filename != 'quant.sf': continue
+        if not sample: continue # check that the computed file is associated with a sample
+        accession_code = sample.accession_code
+        # copy file to the output path
+        output_file_path = output_path + accession_code + "_quant.sf"
+        num_samples += 1
+        computed_file.get_synced_file_path(path=output_file_path)
+    return num_samples
+
 def _smash(job_context: Dict, how="inner") -> Dict:
     """
     Smash all of the samples together!
@@ -502,10 +517,18 @@ def _smash(job_context: Dict, how="inner") -> Dict:
 
         # Once again, `key` is either a species name or an experiment accession
         for key, input_files in job_context['input_files'].items():
+            # Check if we need to copy the quant.sf files
+            if job_context['dataset'].quant_sf_only:
+                outfile_dir = smash_path + key + "/"
+                os.makedirs(outfile_dir, exist_ok=True)
+                num_samples += sync_quant_files(outfile_dir, input_files, job_context)
+                # we ONLY want to give quant sf files to the user if that's what they requested
+                continue
+
             log_state("build frames for species or experiment")
             # Merge all the frames into one
             all_frames = [None] * len(input_files) if input_files else []
-            all_frames_index = 0;
+            all_frames_index = 0
 
             technologies_rnaseq= [None] * len(all_frames)
             technologies_microarray = [None] * len(all_frames)
@@ -545,7 +568,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     #   aggregating by experiment -> return untransformed output from tximport
                     #   aggregating by species -> log2(x + 1) tximport output
                     if job_context['dataset'].aggregate_by == 'SPECIES' \
-                    and computed_file_path.endswith("lengthScaledTPM.tsv"):
+                        and computed_file_path.endswith("lengthScaledTPM.tsv"):
                         data = data + 1
                         data = np.log2(data)
 
@@ -775,14 +798,17 @@ def _smash(job_context: Dict, how="inner") -> Dict:
 
         metadata['num_samples'] = num_samples
         metadata['num_experiments'] = job_context["experiments"].count()
-        metadata['aggregate_by'] = job_context["dataset"].aggregate_by
-        metadata['scale_by'] = job_context["dataset"].scale_by
-        # https://github.com/AlexsLemonade/refinebio/pull/421#discussion_r203799646
-        metadata['non_aggregated_files'] = unsmashable_files
-        metadata['ks_statistic'] = job_context.get("ks_statistic", None)
-        metadata['ks_pvalue'] = job_context.get("ks_pvalue", None)
-        metadata['ks_warning'] = job_context.get("ks_warning", None)
-        metadata['quantile_normalized'] = job_context['dataset'].quantile_normalize
+        metadata['quant_sf_only'] = job_context['dataset'].quant_sf_only
+        
+        if not job_context['dataset'].quant_sf_only:
+            metadata['aggregate_by'] = job_context["dataset"].aggregate_by
+            metadata['scale_by'] = job_context["dataset"].scale_by
+            # https://github.com/AlexsLemonade/refinebio/pull/421#discussion_r203799646
+            metadata['non_aggregated_files'] = unsmashable_files
+            metadata['ks_statistic'] = job_context.get("ks_statistic", None)
+            metadata['ks_pvalue'] = job_context.get("ks_pvalue", None)
+            metadata['ks_warning'] = job_context.get("ks_warning", None)
+            metadata['quantile_normalized'] = job_context['dataset'].quantile_normalize
 
         samples = {}
         for sample in job_context["dataset"].get_samples():
