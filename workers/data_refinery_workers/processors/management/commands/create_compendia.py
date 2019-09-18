@@ -20,7 +20,7 @@ from data_refinery_workers.processors import create_compendia
 logger = get_and_configure_logger(__name__)
 
 
-def create_job_for_organism(organism=Organism):
+def create_job_for_organism(organism=Organism, quant_sf_only=False):
     """Returns a compendia job for the provided organism.
 
     Fetch all of the experiments and compile large but normally formated Dataset.
@@ -39,6 +39,7 @@ def create_job_for_organism(organism=Organism):
     dset.scale_by = 'NONE'
     dset.aggregate_by = 'SPECIES'
     dset.quantile_normalize = False
+    dset.quant_sf_only = quant_sf_only
     dset.save()
 
     pjda = ProcessorJobDatasetAssociation()
@@ -57,6 +58,11 @@ class Command(BaseCommand):
             type=str,
             help=("Comma separated list of organism names."))
 
+        parser.add_argument(
+            "--quant-sf-only",
+            type=bool,
+            help=("Whether to create a quantpendium or normal compendium."))
+
     def handle(self, *args, **options):
         """Create a compendium for one or more organisms.
 
@@ -70,16 +76,23 @@ class Command(BaseCommand):
             organisms = options["organisms"].upper().replace(" ", "_").split(",")
             all_organisms = Organism.objects.filter(name__in=organisms)
 
+        # I think we could just use options["quant_sf_only"] but I
+        # wanna make sure that values that are not True do not trigger
+        # a truthy evaluation.
+        quant_sf_only = False
+        if options["quant_sf_only"] is True:
+            quant_sf_only = True
+
         logger.error(all_organisms)
 
         if all_organisms.count() > 1:
             for organism in all_organisms:
                 logger.error(organism)
-                job = create_job_for_organism(organism)
+                job = create_job_for_organism(organism, quant_sf_only)
                 logger.info("Sending CREATE_COMPENDIA for Organism", job_id=str(job.pk), organism=str(organism))
                 send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
         else:
-            job = create_job_for_organism(all_organisms[0])
+            job = create_job_for_organism(all_organisms[0], quant_sf_only)
             create_compendia.create_compendia(job.id)
 
         sys.exit(0)
