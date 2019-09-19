@@ -178,6 +178,8 @@ variable "elasticsearch_port" {
 }
 
 variable "engagementbot_webhook" {
+  # Only necessary for TF, but will be overwritten.
+  default = "DEFAULT"
 }
 
 # Output our production environment variables.
