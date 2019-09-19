@@ -65,7 +65,7 @@ class Command(BaseCommand):
         with enough microarray samples.
         """
         if options["organisms"] is None:
-            all_organisms = Organism.objects.all()
+            all_organisms = Organism.objects.exclude(name__in=["HOMO_SAPIENS", "MUS_MUSCULUS"])
         else:
             organisms = options["organisms"].upper().replace(" ", "_").split(",")
             all_organisms = Organism.objects.filter(name__in=organisms)
