@@ -318,6 +318,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.is_qn_target = False
     archive_computed_file.result = result
     archive_computed_file.is_compendia = True
+    archive_computed_file.quant_sf_only = True
     archive_computed_file.compendia_organism = job_context['samples'][organism_key][0].organism
     archive_computed_file.compendia_version = compendia_version
     archive_computed_file.save()

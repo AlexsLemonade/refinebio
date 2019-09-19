@@ -873,6 +873,7 @@ class ComputedFile(models.Model):
     is_qn_target = models.BooleanField(default=False)
 
     # Compendia details
+    quant_sf_only = models.BooleanField(default=False)
     is_compendia = models.BooleanField(default=False)
     compendia_organism = models.ForeignKey(Organism,
                                         blank=True,
