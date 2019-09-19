@@ -9,6 +9,7 @@ from django.conf import settings
 #from django.core.paginator import Paginator
 from data_refinery_foreman.foreman.performant_pagination.pagination import PerformantPaginator as Paginator
 from django.db import transaction
+from django.db.models.expressions import Q
 from django.utils import timezone
 from functools import wraps
 from nomad import Nomad
@@ -86,7 +87,7 @@ DBCLEAN_TIME = datetime.timedelta(hours=6)
 
 # Setting this to a recent date will prevent the Foreman from queuing/requeuing
 # jobs created before this cutoff.
-JOB_CREATED_AT_CUTOFF = datetime.datetime(2019, 6, 5, tzinfo=timezone.utc)
+JOB_CREATED_AT_CUTOFF = datetime.datetime(2019, 9, 19, tzinfo=timezone.utc)
 
 
 def read_config_list(config_file: str) -> List[str]:
@@ -799,11 +800,11 @@ def retry_failed_processor_jobs() -> None:
         pass
 
     failed_jobs = ProcessorJob.objects.filter(
-        success=False,
-        retried=False,
-        no_retry=False,
-        volume_index__in=active_volumes,
-        created_at__gt=JOB_CREATED_AT_CUTOFF
+        Q(success=False,
+          retried=False,
+          no_retry=False,
+          created_at__gt=JOB_CREATED_AT_CUTOFF) \
+        and (Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))
     ).exclude(
         pipeline_applied="JANITOR"
     ).order_by(
@@ -845,14 +846,14 @@ def retry_hung_processor_jobs() -> None:
         pass
 
     potentially_hung_jobs = ProcessorJob.objects.filter(
-        success=None,
-        retried=False,
-        no_retry=False,
-        created_at__gt=JOB_CREATED_AT_CUTOFF,
-        start_time__isnull=False,
-        end_time=None,
-        nomad_job_id__isnull=False,
-        volume_index__in=active_volumes,
+        Q(success=None,
+          retried=False,
+          no_retry=False,
+          created_at__gt=JOB_CREATED_AT_CUTOFF,
+          start_time__isnull=False,
+          end_time=None,
+          nomad_job_id__isnull=False) \
+        and (Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))
     ).exclude(
         pipeline_applied="JANITOR"
     ).order_by(
@@ -922,13 +923,13 @@ def retry_lost_processor_jobs() -> None:
         pass
 
     potentially_lost_jobs = ProcessorJob.objects.filter(
-        success=None,
-        retried=False,
-        no_retry=False,
-        created_at__gt=JOB_CREATED_AT_CUTOFF,
-        start_time=None,
-        end_time=None,
-        volume_index__in=active_volumes,
+        Q(success=None,
+          retried=False,
+          no_retry=False,
+          created_at__gt=JOB_CREATED_AT_CUTOFF,
+          start_time=None,
+          end_time=None) \
+        and (Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))
     ).exclude(
         pipeline_applied="JANITOR"
     ).order_by(
@@ -1251,6 +1252,9 @@ def send_janitor_jobs():
         # If we cannot reach Nomad now then we can wait until a later loop.
         pass
 
+    # Clean up the smasher:
+    active_volumes.append(None)
+
     for volume_index in active_volumes:
         new_job = ProcessorJob(num_retries=0,
                                pipeline_applied="JANITOR",
@@ -1266,72 +1270,6 @@ def send_janitor_jobs():
         except Exception as e:
             # If we can't dispatch this job, something else has gone wrong.
             continue
-
-##
-# Smasher
-##
-
-def retry_lost_smasher_jobs() -> None:
-    """Retry smasher jobs which never even got started for too long."""
-    try:
-        active_volumes = get_active_volumes()
-    except:
-        # If we cannot reach Nomad now then we can wait until a later loop.
-        pass
-
-    potentially_lost_jobs = ProcessorJob.objects.filter(
-        success=None,
-        retried=False,
-        no_retry=False,
-        created_at__gt=(timezone.now() - datetime.timedelta(hours=24)),
-        start_time=None,
-        end_time=None,
-        pipeline_applied="SMASHER",
-    )
-
-    nomad_host = get_env_variable("NOMAD_HOST")
-    nomad_port = get_env_variable("NOMAD_PORT", "4646")
-    nomad_client = Nomad(nomad_host, port=int(nomad_port), timeout=5)
-
-    lost_jobs = []
-    for job in potentially_lost_jobs:
-        try:
-            if job.nomad_job_id:
-                job_status = nomad_client.job.get_job(job.nomad_job_id)["Status"]
-                # If the job is still pending, then it makes sense that it
-                # hasn't started and if it's running then it may not have
-                # been able to mark the job record as started yet.
-                if job_status != "pending" and job_status != "running":
-                    logger.debug(("Determined that a smasher job needs to be requeued because its"
-                                  " Nomad Job's status is: %s."),
-                                 job_status,
-                                 job_id=job.id
-                    )
-                    lost_jobs.append(job)
-            else:
-                # If there is no nomad_job_id field set, we could be
-                # in the small window where the job was created but
-                # hasn't yet gotten a chance to be queued.
-                # If this job really should be restarted we'll get it in the next loop.
-                if timezone.now() - job.created_at > MIN_LOOP_TIME:
-                    lost_jobs.append(job)
-        except URLNotFoundNomadException:
-            logger.debug(("Determined that a smasher job needs to be requeued because "
-                              "querying for its Nomad job failed: "),
-                             job_id=job.id
-            )
-            lost_jobs.append(job)
-        except nomad.api.exceptions.BaseNomadException:
-            raise
-        except Exception:
-            logger.exception("Couldn't query Nomad about smasher Job.", processor_job=job.id)
-
-    if lost_jobs:
-        logger.info(
-            "Handling lost (never-started) smasher jobs!",
-            len_jobs=len(lost_jobs)
-        )
-        handle_processor_jobs(lost_jobs, sys.maxsize, ignore_ceiling=True)
 
 ##
 # Handling of node cycling
@@ -1486,8 +1424,7 @@ def monitor_jobs():
             retry_lost_downloader_jobs,
             retry_failed_survey_jobs,
             retry_hung_survey_jobs,
-            retry_lost_survey_jobs,
-            retry_lost_smasher_jobs
+            retry_lost_survey_jobs
         ]
 
         for function in requeuing_functions_in_order:
