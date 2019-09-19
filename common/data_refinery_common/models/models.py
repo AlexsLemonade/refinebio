@@ -848,6 +848,12 @@ class ComputedFile(models.Model):
     def __str__(self):
         return "ComputedFile: " + str(self.filename)
 
+    SVD_ALGORITHM_CHOICES = (
+        ('NONE', 'None'),
+        ('RANDOMIZED', 'randomized'),
+        ('ARPACK', 'arpack'),
+    )
+
     # Managers
     objects = models.Manager()
     public_objects = PublicObjectsManager()
@@ -875,6 +881,11 @@ class ComputedFile(models.Model):
     # Compendia details
     quant_sf_only = models.BooleanField(default=False)
     is_compendia = models.BooleanField(default=False)
+    svd_algorithm = models.CharField(
+        max_length=255,
+        choices=SVD_ALGORITHM_CHOICES,
+        default="NONE"
+    )
     compendia_organism = models.ForeignKey(Organism,
                                         blank=True,
                                         null=True,
@@ -1126,6 +1137,12 @@ class Dataset(models.Model):
         ('ROBUST', 'Robust'),
     )
 
+    SVD_ALGORITHM_CHOICES = (
+        ('NONE', 'None'),
+        ('RANDOMIZED', 'randomized'),
+        ('ARPACK', 'arpack'),
+    )
+
     # ID
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -1137,9 +1154,13 @@ class Dataset(models.Model):
     # Processing properties
     aggregate_by = models.CharField(max_length=255, choices=AGGREGATE_CHOICES, default="EXPERIMENT", help_text="Specifies how samples are [aggregated](http://docs.refine.bio/en/latest/main_text.html#aggregations).")
     scale_by = models.CharField(max_length=255, choices=SCALE_CHOICES, default="NONE", help_text="Specifies options for [transformations](http://docs.refine.bio/en/latest/main_text.html#transformations).")
-    quantile_normalize = models.BooleanField(default=True, help_text="Part of the advanced options. Allows [skipping quantile normalization](http://docs.refine.bio/en/latest/faq.html#what-does-it-mean-to-skip-quantile-normalization-for-rna-seq-samples) for RNA-Seq samples.")
+    quantile_normalize = models.BooleanField(
+        default=True,
+        help_text="Part of the advanced options. Allows [skipping quantile normalization](http://docs.refine.bio/en/latest/faq.html#what-does-it-mean-to-skip-quantile-normalization-for-rna-seq-samples) for RNA-Seq samples."
+    )
     quant_sf_only = models.BooleanField(default=False, help_text="Include only quant.sf files in the generated dataset.")
 
+    svd_algorithm = models.CharField(max_length=255, choices=SVD_ALGORITHM_CHOICES, default="NONE", help_text="Specifies choice of SVD algorithm")
     # State properties
     is_processing = models.BooleanField(default=False)  # Data is still editable when False
     is_processed = models.BooleanField(default=False)  # Result has been made
