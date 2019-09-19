@@ -912,11 +912,12 @@ class Stats(APIView):
         data.update(get_nomad_jobs_breakdown())
         
         # these are global stats that are used in the frontend for the about page
-        data['about'] = self.get_about_stats()
+        data['about'] = cls._get_about_stats()
 
         return data
 
-    def get_about_stats(self):
+    @classmethod
+    def _get_about_stats(cls):
         """ returns the stats that are used in the about page """
         return {
             # count the total number of samples that are processed or that have a quant.sf file associated with them
