@@ -1206,16 +1206,17 @@ class ComputedFilesList(generics.ListAPIView):
     queryset = ComputedFile.objects.all()
     serializer_class = ComputedFileListSerializer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
-    filterset_fields =  (
-                            'id',
-                            'is_qn_target',
-                            'is_smashable',
-                            'is_qc',
-                            'is_compendia',
-                            'compendia_version',
-                            'created_at',
-                            'last_modified',
-                        )
+    filterset_fields = (
+        'id',
+        'is_qn_target',
+        'is_smashable',
+        'is_qc',
+        'is_compendia',
+        'quant_sf_only',
+        'compendia_version',
+        'created_at',
+        'last_modified',
+    )
     ordering_fields = ('id', 'created_at', 'last_modified', 'compendia_version',)
     ordering = ('-id',)
 
