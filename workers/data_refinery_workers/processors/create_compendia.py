@@ -6,6 +6,7 @@ import subprocess
 import time
 import warnings
 import psutil
+import logging
 
 import numpy as np
 import pandas as pd
@@ -34,6 +35,8 @@ from data_refinery_workers.processors import utils, smasher#, visualize
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 S3_COMPENDIA_BUCKET_NAME = get_env_variable("S3_COMPENDIA_BUCKET_NAME", "data-refinery-compendia")
 logger = get_and_configure_logger(__name__)
+### DEBUG ###
+logger.setLevel(logging.getLevelName('DEBUG'))
 
 
 def log_state(message):
@@ -203,7 +206,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     logger.info("Total percentage of data to impute!", total_percent_imputed=total_percent_imputed)
 
     # Perform imputation of missing values with IterativeSVD (rank=10) on the transposed_matrix; imputed_matrix
-    imputed_matrix = IterativeSVD(rank=10).fit_transform(transposed_matrix)
+    imputed_matrix = IterativeSVD(rank=10, svd_algorithm="randomized").fit_transform(transposed_matrix)
 
     # Untranspose imputed_matrix (genes are now rows, samples are now columns)
     untransposed_imputed_matrix = imputed_matrix.transpose()
