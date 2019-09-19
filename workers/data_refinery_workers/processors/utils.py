@@ -192,15 +192,15 @@ def start_job(job_context: Dict):
     if job.start_time is not None and settings.RUNNING_IN_CLOUD:
         # Let's just log the event and let the job run instead of failing
         # and also reset the endtime and failure reason, since those fields might have been set
-        logger.warn('ProcessorJob was restarted by Nomad. We do not know why this happened', 
-                        processor_job=job.id, 
-                        success=job.success, 
+        logger.warn('ProcessorJob was restarted by Nomad. We do not know why this happened',
+                        processor_job=job.id,
+                        success=job.success,
                         failure_reason=job.failure_reason,
                         start_time=job.start_time,
                         end_time=job.end_time)
         job.end_time = None
         job.failure_reason = None
-        
+
     job.worker_id = get_instance_id()
     job.worker_version = SYSTEM_VERSION
     job.start_time = timezone.now()
@@ -245,6 +245,33 @@ def end_job(job_context: Dict, abort=False):
     else:
         success = True
 
+    # Upload first so if this fails we can set success = False and let
+    # the rest of the function mark it as failed.
+    if success:
+        # QN reference files go to a special bucket so they can be
+        # publicly available.
+        if job_context["job"].pipeline_applied == "QN_REFERENCE":
+            s3_bucket = S3_QN_TARGET_BUCKET_NAME
+        else:
+            s3_bucket = S3_BUCKET_NAME
+
+        # S3-sync Computed Files
+        for computed_file in job_context.get('computed_files', []):
+            # Ensure even distribution across S3 servers
+            nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(24))
+            result = computed_file.sync_to_s3(s3_bucket, nonce + "_" + computed_file.filename)
+            if result:
+                computed_file.delete_local_file()
+            else:
+                success = False
+                job_context['success'] = False
+                break
+
+    if not success:
+        for computed_file in job_context.get('computed_files', []):
+            computed_file.delete_local_file()
+            computed_file.delete()
+
     if not abort:
         if job_context.get("success", False) and not (job_context["job"].pipeline_applied in ["SMASHER", "QN_REFERENCE", "COMPENDIA", "JANITOR"]):
 
@@ -279,26 +306,6 @@ def end_job(job_context: Dict, abort=False):
         if 'original_files' in job_context:
             for original_file in job_context['original_files']:
                 original_file.delete_local_file()
-
-    if success:
-        # QN reference files go to a special bucket so they can be
-        # publicly available.
-        if job_context["job"].pipeline_applied == "QN_REFERENCE":
-            s3_bucket = S3_QN_TARGET_BUCKET_NAME
-        else:
-            s3_bucket = S3_BUCKET_NAME
-
-        # S3-sync Computed Files
-        for computed_file in job_context.get('computed_files', []):
-            # Ensure even distribution across S3 servers
-            nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(24))
-            result = computed_file.sync_to_s3(s3_bucket, nonce + "_" + computed_file.filename)
-            if result:
-                computed_file.delete_local_file()
-    else:
-        for computed_file in job_context.get('computed_files', []):
-            computed_file.delete_local_file()
-            computed_file.delete()
 
     # If the pipeline includes any steps, save it.
     if 'pipeline' in job_context:
