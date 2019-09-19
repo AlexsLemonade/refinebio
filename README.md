@@ -568,19 +568,25 @@ nomad job dispatch -meta ORGANISM=DANIO_RERIO CREATE_QN_TARGET
 Creating species-wide compendia for a given species can be done in a production environment with the following:
 
 ```bash
-nomad job dispatch -meta ORGANISMS=DANIO_RERIO CREATE_COMPENDIA
+nomad job dispatch -meta ORGANISMS=DANIO_RERIO -meta QUANT_SF_ONLY=False CREATE_COMPENDIA
 ```
 
 or for a list of organisms:
 
 ```bash
-nomad job dispatch -meta ORGANISMS=DANIO_RERIO,HOMO_SAPIENS CREATE_COMPENDIA
+nomad job dispatch -meta ORGANISMS=DANIO_RERIO,HOMO_SAPIENS -meta QUANT_SF_ONLY=False CREATE_COMPENDIA
 ```
 
 or for all organisms with sufficient data:
 
 ```bash
-nomad job dispatch -meta ORGANISMS= CREATE_COMPENDIA
+nomad job dispatch -meta ORGANISMS= -meta QUANT_SF_ONLY=False CREATE_COMPENDIA
+```
+
+Alternatively a compendium can be created which only includes quant.sf files by specifying the nomad meta field `QUANT_SF_ONLY=True` like so:
+
+```
+nomad job dispatch -meta ORGANISMS=DANIO_RERIO -meta QUANT_SF_ONLY=True CREATE_COMPENDIA
 ```
 
 Compendia jobs run on the smasher instance.

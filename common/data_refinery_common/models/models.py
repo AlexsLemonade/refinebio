@@ -873,6 +873,7 @@ class ComputedFile(models.Model):
     is_qn_target = models.BooleanField(default=False)
 
     # Compendia details
+    quant_sf_only = models.BooleanField(default=False)
     is_compendia = models.BooleanField(default=False)
     compendia_organism = models.ForeignKey(Organism,
                                         blank=True,
@@ -1137,6 +1138,7 @@ class Dataset(models.Model):
     aggregate_by = models.CharField(max_length=255, choices=AGGREGATE_CHOICES, default="EXPERIMENT", help_text="Specifies how samples are [aggregated](http://docs.refine.bio/en/latest/main_text.html#aggregations).")
     scale_by = models.CharField(max_length=255, choices=SCALE_CHOICES, default="NONE", help_text="Specifies options for [transformations](http://docs.refine.bio/en/latest/main_text.html#transformations).")
     quantile_normalize = models.BooleanField(default=True, help_text="Part of the advanced options. Allows [skipping quantile normalization](http://docs.refine.bio/en/latest/faq.html#what-does-it-mean-to-skip-quantile-normalization-for-rna-seq-samples) for RNA-Seq samples.")
+    quant_sf_only = models.BooleanField(default=False, help_text="Include only quant.sf files in the generated dataset.")
 
     # State properties
     is_processing = models.BooleanField(default=False)  # Data is still editable when False
@@ -1388,20 +1390,3 @@ class ExperimentResultAssociation(models.Model):
     class Meta:
         db_table = "experiment_result_associations"
         unique_together = ('result', 'experiment')
-
-class SurveyedAccession(models.Model):
-
-    accession_code = models.CharField(max_length=64, unique=True)
-    created_at = models.DateTimeField(editable=False, default=timezone.now)
-
-    def save(self, *args, **kwargs):
-        """ On save, update timestamps """
-        current_time = timezone.now()
-        if not self.id:
-            self.created_at = current_time
-        else:
-            raise AssertionError("This accession has already been surveyed!")
-        return super(SurveyAccession, self).save(*args, **kwargs)
-
-    class Meta:
-        db_table = "surveyed_accessions"

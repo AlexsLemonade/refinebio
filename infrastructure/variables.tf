@@ -120,7 +120,7 @@ variable "client_instance_type" {
 }
 
 variable "smasher_instance_type" {
-  # 256 GiB Memory, compendia jobs needs 250
+  # 256 GiB Memory, compendia jobs needs 220 and smasher jobs need 28.
   default = "m5.16xlarge"
 }
 
@@ -162,7 +162,7 @@ variable "api_instance_type" {
 }
 
 variable "foreman_instance_type" {
-  default = "m5.large"
+  default = "m5.2xlarge"
 }
 
 variable "volume_size_in_gb" {
@@ -178,6 +178,8 @@ variable "elasticsearch_port" {
 }
 
 variable "engagementbot_webhook" {
+  # Only necessary for TF, but will be overwritten.
+  default = "DEFAULT"
 }
 
 # Output our production environment variables.

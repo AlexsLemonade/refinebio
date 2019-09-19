@@ -111,17 +111,19 @@ class ComputedFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComputedFile
         fields = (
-                    'id',
-                    'filename',
-                    'size_in_bytes',
-                    'is_smashable',
-                    'is_qc',
-                    'sha1',
-                    's3_bucket',
-                    's3_key',
-                    'created_at',
-                    'last_modified'
-                )
+            'id',
+            'filename',
+            'size_in_bytes',
+            'is_smashable',
+            'is_qc',
+            'is_compendia',
+            'quant_sf_only',
+            'sha1',
+            's3_bucket',
+            's3_key',
+            'created_at',
+            'last_modified'
+        )
 
 
 class ComputedFileWithUrlSerializer(serializers.ModelSerializer):
@@ -129,18 +131,20 @@ class ComputedFileWithUrlSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComputedFile
         fields = (
-                    'id',
-                    'filename',
-                    'size_in_bytes',
-                    'is_smashable',
-                    'is_qc',
-                    'sha1',
-                    's3_bucket',
-                    's3_key',
-                    'download_url',
-                    'created_at',
-                    'last_modified'
-                )
+            'id',
+            'filename',
+            'size_in_bytes',
+            'is_smashable',
+            'is_qc',
+            'is_compendia',
+            'quant_sf_only',
+            'sha1',
+            's3_bucket',
+            's3_key',
+            'download_url',
+            'created_at',
+            'last_modified'
+        )
 
 
 class ComputationalResultSerializer(serializers.ModelSerializer):
@@ -213,7 +217,7 @@ class ComputedFileListSerializer(serializers.ModelSerializer):
     result = ComputationalResultNoFilesSerializer(many=False)
     samples = DetailedExperimentSampleSerializer(many=True)
     compendia_organism_name = serializers.CharField(source='compendia_organism__name', read_only=True)
-    
+
     def __init__(self, *args, **kwargs):
         super(ComputedFileListSerializer, self).__init__(*args, **kwargs)
         if 'context' in kwargs:
@@ -651,6 +655,7 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'organism_samples',
                     'download_url',
                     'quantile_normalize',
+                    'quant_sf_only',
                     'worker_version'
             )
         extra_kwargs = {
