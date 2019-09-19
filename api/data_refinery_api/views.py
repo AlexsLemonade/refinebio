@@ -863,19 +863,19 @@ class Stats(APIView):
         range_param = request.query_params.dict().pop('range', None)
         cached_stats = cache.get("stats_" + str(range_param), None)
 
-        # This should only need to run once for each range at most. From then on,
-        # the cache is refreshed in the background using apscheduler.
+        # This should only need to run once for each range at most.
         # We index the dict by str(range_param) because None is the default range.
         if cached_stats is None:
-            cached_stats = Stats.update_cache(range_param)
+            logger.info("Updating cache")        
+            cached_stats = Stats.calculate_stats(range_param)
+            # Set the timeout to 10 minutes so that it should always be refreshed by the refresher
+            # if we want to refresh that range, but otherwise we don't have the same data forever
+            cache.set("stats_" + str(range_param), cached_stats, 10 * 60)
 
         return Response(cached_stats)
 
     @classmethod
-    def update_cache(cls, range_param):
-
-        logger.info("Updating cache")
-
+    def calculate_stats(cls, range_param):
         data = {}
         data['survey_jobs'] = cls._get_job_stats(SurveyJob.objects, range_param)
         data['downloader_jobs'] = cls._get_job_stats(DownloaderJob.objects, range_param)
@@ -910,14 +910,25 @@ class Stats(APIView):
             data['output_data_size'] = cls._get_output_data_size()
 
         data.update(get_nomad_jobs_breakdown())
-
-        # Set the timeout to 10 minutes so that it should always be refreshed by the refresher
-        # if we want to refresh that range, but otherwise we don't have the same data forever
-        cache.set("stats_" + str(range_param), data, 10 * 60)
+        
+        # these are global stats that are used in the frontend for the about page
+        data['about'] = cls._get_about_stats()
 
         return data
 
-
+    @classmethod
+    def _get_about_stats(cls):
+        """ returns the stats that are used in the about page """
+        return {
+            # count the total number of samples that are processed or that have a quant.sf file associated with them
+            'samples_available': Sample.objects.filter(Q(is_processed=True) | Q(results__computedfile__filename='quant.sf')).distinct().count(),
+            'total_size_in_bytes': OriginalFile.objects.aggregate(total_size=Sum('size_in_bytes'))['total_size'],
+            # count organisms with qn targets or that have at least one sample with quant files
+            'supported_organisms': Organism.objects.filter(Q(qn_target__isnull=False) | Q(sample__results__computedfile__filename='quant.sf')).distinct().count(),
+            # total experiments with at least one sample processed
+            'experiments_processed': Experiment.objects.filter(Q(samples__is_processed=True) | Q(samples__results__computedfile__filename='quant.sf')).distinct().count()
+        }
+        
     EMAIL_USERNAME_BLACKLIST = [
         'arielsvn',
         'cansav09',
