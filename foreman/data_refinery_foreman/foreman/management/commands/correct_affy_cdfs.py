@@ -9,16 +9,19 @@ experiment and all related data from the database so we can re-survey
 the experiment and reprocess it correctly.
 """
 
-from django.core.management.base import BaseCommand
 import GEOparse
 import shutil
 
-from data_refinery_common.models import Experiment, Sample
+from django.core.management.base import BaseCommand
+from django.utils import timezone
+
+from data_refinery_common.models import Experiment, Sample, CdfCorrectedAccession
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.utils import get_internal_microarray_accession
 from data_refinery_foreman.foreman.performant_pagination.pagination import PerformantPaginator as Paginator
 from data_refinery_foreman.surveyor.management.commands.surveyor_dispatcher import queue_surveyor_for_accession
 from data_refinery_foreman.surveyor.management.commands.unsurvey import purge_experiment
+
 
 logger = get_and_configure_logger(__name__)
 
@@ -37,7 +40,15 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """Re-surveys GEO experiments containing samples with incorrect platform information.
         """
-        gse_experiments = Experiment.objects.filter(source_database='GEO')
+        # Check against CDF corrected accessions table to prevent recorrection of the same samples.
+        corrected_experiments = CdfCorrectedAccession.objects.all().values('accession_code')
+        corrected_accessions = [experiment['accession_code'] for experiment in corrected_experiments]
+
+        gse_experiments = Experiment.objects.filter(
+            source_database='GEO'
+        ).exclude(
+            accession_code__in=corrected_experiments
+        )
 
         paginator = Paginator(gse_experiments, PAGE_SIZE)
         page = paginator.page()
@@ -69,6 +80,12 @@ class Command(BaseCommand):
                             purge_experiment(experiment.accession_code)
 
                             queue_surveyor_for_accession(experiment.accession_code)
+
+                    current_time = timezone.now()
+                    CdfCorrectedAccession(
+                        accession_code=experiment.accession_code,
+                        created_at=current_time
+                    ).save()
                 finally:
                     # GEOparse downloads files here and never cleans them up! Grrrr!
                     download_path = GEO_TEMP_DIR + experiment.accession_code + '_family.soft.gz'
