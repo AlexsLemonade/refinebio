@@ -739,7 +739,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             if job_context['dataset'].quantile_normalize:
                 try:
                     job_context['merged_no_qn'] = merged
-                    job_context['organism'] = job_context['dataset'].samples.first().organism
+                    job_context['organism'] = job_context['dataset'].get_samples().first().organism
                     job_context = _quantile_normalize(job_context)
                     merged = job_context.get('merged_qn', None)
                     # We probably don't have an QN target or there is another error,
