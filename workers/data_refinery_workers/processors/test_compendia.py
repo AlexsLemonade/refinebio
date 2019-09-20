@@ -127,7 +127,9 @@ class CompendiaTestCase(TestCase):
         pjda.dataset = dset
         pjda.save()
 
-        final_context = create_compendia.create_compendia(job.id)
+        with self.assertRaises(ValueError):
+            final_context = create_compendia.create_compendia(job.id)
+
         self.assertFalse(job.success)
  
 
@@ -253,7 +255,7 @@ class CompendiaTestCase(TestCase):
         dset.data = {'GSE1234': micros, 'GSE5678': rnas}
         dset.scale_by = 'NONE'
         dset.aggregate_by = 'SPECIES'
-        dset.svd_algorithm = 'RANDOMIZED'
+        dset.svd_algorithm = 'ARPACK'
         dset.quantile_normalize = False
         dset.save()
 
