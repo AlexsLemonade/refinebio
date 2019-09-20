@@ -6,7 +6,6 @@ from typing import Dict, List
 
 from django.core.management.base import BaseCommand
 from django.db.models import OuterRef, Subquery, Count
-from django.db.models.expressions import Q
 from data_refinery_common.models import (
     ProcessorJob,
     Sample,
@@ -93,9 +92,9 @@ def retry_by_regex(pattern):
     logger.info("Re-queued %d samples that had failed with the pattern %s.", total_samples_queued, pattern)
 
 def retry_computed_files_not_uploaded():
-    samples_with_results = Sample.objects.filter(Q(results__computedfile__s3_bucket__isnull=True)).values('id')
+    samples_with_results = Sample.objects.filter(results__computedfile__s3_bucket__isnull=True).values('id')
 
-    samples_with_computed_files = Sample.objects.filter(Q(computed_files__s3_bucket__isnull=True)).values('id')
+    samples_with_computed_files = Sample.objects.filter(computed_files__s3_bucket__isnull=True).values('id')
 
     sample_ids = {s['id'] for s in samples_with_results} | {s['id'] for s in samples_with_computed_files}
 
