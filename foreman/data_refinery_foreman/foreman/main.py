@@ -804,7 +804,7 @@ def retry_failed_processor_jobs() -> None:
           retried=False,
           no_retry=False,
           created_at__gt=JOB_CREATED_AT_CUTOFF) \
-        and (Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))
+        & (Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))
     ).exclude(
         pipeline_applied="JANITOR"
     ).order_by(
@@ -853,7 +853,7 @@ def retry_hung_processor_jobs() -> None:
           start_time__isnull=False,
           end_time=None,
           nomad_job_id__isnull=False) \
-        and (Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))
+        & (Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))
     ).exclude(
         pipeline_applied="JANITOR"
     ).order_by(
@@ -929,7 +929,7 @@ def retry_lost_processor_jobs() -> None:
           created_at__gt=JOB_CREATED_AT_CUTOFF,
           start_time=None,
           end_time=None) \
-        and (Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))
+        & (Q(volume_index__isnull=True) | Q(volume_index__in=active_volumes))
     ).exclude(
         pipeline_applied="JANITOR"
     ).order_by(
