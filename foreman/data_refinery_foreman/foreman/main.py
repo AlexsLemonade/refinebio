@@ -1253,7 +1253,7 @@ def send_janitor_jobs():
         pass
 
     # Clean up the smasher:
-    active_volumes.append(None)
+    active_volumes.add(None)
 
     for volume_index in active_volumes:
         new_job = ProcessorJob(num_retries=0,
