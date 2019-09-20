@@ -13,6 +13,7 @@ import requests
 import psutil
 import multiprocessing 
 import logging
+import time
 
 from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
@@ -50,17 +51,23 @@ logger = get_and_configure_logger(__name__)
 logger.setLevel(logging.getLevelName('DEBUG'))
 
 
-def log_state(message):
-    ram = psutil.virtual_memory().percent
-    cpu = psutil.cpu_percent()
-    logger.debug("cpu:%s - ram:%s -  %s", cpu, ram, message)
-
+def log_state(message, start_time=False):
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug("%s: cpu:%s - ram:%s" % (
+            message,
+            psutil.cpu_percent(),
+            psutil.virtual_memory().percent,
+        ))
+        if start_time:
+            logger.debug('Duration: %s' % (time.time() - start_time))
+        else:
+            return time.time()
 
 def _prepare_files(job_context: Dict) -> Dict:
     """
     Fetches and prepares the files to smash.
     """
-    log_state("start prepare files")
+    start_prepare_files = log_state("start prepare files")
     all_sample_files = []
     job_context['input_files'] = {}
 
@@ -100,7 +107,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     job_context["output_dir"] = job_context["work_dir"] + "output/"
     os.makedirs(job_context["output_dir"])
-    log_state("end prepare files")
+    log_state("end prepare files", start_prepare_files)
     return job_context
 
 
@@ -120,7 +127,7 @@ def _get_tsv_columns(samples_metadata):
     Some nested annotation fields are taken out as separate columns
     because they are more important than the others.
     """
-    log_state("start get tsv columns")
+    tsv_start = log_state("start get tsv columns")
     refinebio_columns = set()
     annotation_columns = set()
     for sample_metadata in samples_metadata.values():
@@ -166,7 +173,7 @@ def _get_tsv_columns(samples_metadata):
     # always first, followed by the other refinebio columns (in alphabetic order), and
     # annotation columns (in alphabetic order) at the end.
     refinebio_columns.discard('refinebio_accession_code')
-    log_state("end get tsv columns")
+    log_state("end get tsv columns", tsv_start)
     return ['refinebio_accession_code', 'experiment_accession'] + sorted(refinebio_columns) \
         + sorted(annotation_columns)
 
@@ -176,7 +183,7 @@ def _add_annotation_value(row_data, col_name, col_value, sample_accession_code):
     If col_name already exists in row_data with different value, print
     out a warning message.
     """
-    log_state("start add annotation value")
+    annotation_start = log_state("start add annotation value")
     # Generate a warning message if annotation field name starts with
     # "refinebio_".  This should rarely (if ever) happen.
     if col_name.startswith("refinebio_"):
@@ -196,7 +203,7 @@ def _add_annotation_value(row_data, col_name, col_value, sample_accession_code):
                 col_name, row_data[col_name], col_value),
             sample_accession_code=sample_accession_code
         )
-    log_state("end add annotation value")
+    log_state("end add annotation value", annotation_start)
 
 
 def _get_experiment_accession(sample_accession_code, dataset_data):
@@ -588,6 +595,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         Scale features with sci-kit learn
         Transpose again such that samples are columns and genes are rows
     """
+    start_smash = log_state("start smash")
     # We have already failed - return now so we can send our fail email.
     if job_context['dataset'].failure_reason not in ['', None]:
         return job_context
@@ -624,7 +632,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 # we ONLY want to give quant sf files to the user if that's what they requested
                 continue
 
-            log_state("build frames for species or experiment")
+            start_frames = log_state("build frames for species or experiment")
             # Merge all the frames into one
             start = datetime.now()
             cpus = psutil.cpu_count()/2
@@ -724,7 +732,8 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 merged = pd.concat(all_frames, axis=1, keys=None, join='outer', copy=False, sort=True)
 
             job_context['original_merged'] = merged
-
+            log_state("end build frames", start_frames)
+            start_qn = log_state("start qn", start_frames)
             # Quantile Normalization
             if job_context['dataset'].quantile_normalize:
                 try:
@@ -762,13 +771,13 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     job_context['failure_reason'] = str(e)
                     return job_context
             # End QN
-
+            log_state("end qn", start_qn)
             # Transpose before scaling
             # Do this even if we don't want to scale in case transpose
             # modifies the data in any way. (Which it shouldn't but
             # we're paranoid.)
             transposed = merged.transpose()
-
+            start_scaler = log_state("starting scaler")
             # Scaler
             if job_context['dataset'].scale_by != "NONE":
                 scale_funtion = scalers[job_context['dataset'].scale_by]
@@ -783,6 +792,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             else:
                 # Wheeeeeeeeeee
                 untransposed = transposed.transpose()
+            log_state("end scaler", start_scaler)
 
             # This is just for quality assurance in tests.
             job_context['final_frame'] = untransposed
@@ -876,6 +886,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
     logger.debug("Created smash output!",
         archive_location=job_context["output_file"])
 
+    log_state("end smash", start_smash);
     return job_context
 
 def _load_and_sanitize_file(computed_file_path):
