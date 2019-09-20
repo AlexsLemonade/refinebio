@@ -68,10 +68,10 @@ class Command(BaseCommand):
 
         If --organism is supplied will immediately create a compedium
         for it. If not a new job will be dispatched for each organism
-        with enough microarray samples except for human and mouse.
+        with enough microarray samples.
         """
         if options["organisms"] is None:
-            all_organisms = Organism.objects.exclude(name__in=["HOMO_SAPIENS", "MUS_MUSCULUS"])
+            all_organisms = Organism.objects.all()
         else:
             organisms = options["organisms"].upper().replace(" ", "_").split(",")
             all_organisms = Organism.objects.filter(name__in=organisms)
