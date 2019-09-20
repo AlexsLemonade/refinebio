@@ -5,7 +5,7 @@ from typing import Dict
 from itertools import groupby
 from re import match
 from django.conf import settings
-from django.core.cache import cache
+from django.views.decorators.cache import cache_page
 from django.db.models import Count, Prefetch, DateTimeField
 from django.db.models.functions import Trunc
 from django.db.models.aggregates import Avg, Sum
@@ -859,19 +859,10 @@ class Stats(APIView):
         description="Specify a range from which to calculate the possible options",
         enum=('day', 'week', 'month', 'year',)
     )])
+    @method_decorator(cache_page(10 * 60))
     def get(self, request, version, format=None):
         range_param = request.query_params.dict().pop('range', None)
-        cached_stats = cache.get("stats_" + str(range_param), None)
-
-        # This should only need to run once for each range at most.
-        # We index the dict by str(range_param) because None is the default range.
-        if cached_stats is None:
-            logger.info("Updating cache")        
-            cached_stats = Stats.calculate_stats(range_param)
-            # Set the timeout to 10 minutes so that it should always be refreshed by the refresher
-            # if we want to refresh that range, but otherwise we don't have the same data forever
-            cache.set("stats_" + str(range_param), cached_stats, 10 * 60)
-
+        cached_stats = Stats.calculate_stats(range_param)
         return Response(cached_stats)
 
     @classmethod
