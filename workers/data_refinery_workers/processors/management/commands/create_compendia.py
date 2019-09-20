@@ -91,7 +91,7 @@ class Command(BaseCommand):
 
         # default algorithm to arpack until we decide that ranomized is preferred
         svd_algorithm = 'ARPACK'
-        if options["svd_algrothm"] in ['ARPACK', 'RANDOMIZED', 'NONE']
+        if options["svd_algrothm"] in ['ARPACK', 'RANDOMIZED', 'NONE']:
             svd_algorithm = options["svd_algorithm"]
 
         logger.error(all_organisms)
