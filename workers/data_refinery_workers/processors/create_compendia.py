@@ -98,7 +98,8 @@ def _perform_imputation(job_context: Dict) -> Dict:
      - Remove samples (columns) with >50% missing values in combined_matrix
      - "Reset" zero values that were set to NA in RNA-seq samples (i.e., make these zero again) in combined_matrix
      - Transpose combined_matrix; transposed_matrix
-     - Perform imputation of missing values with IterativeSVD (rank=10) on the transposed_matrix; imputed_matrix
+     - Perform imputation of missing values with IterativeSVD (rank=10) on the transposed_matrix; imputed_matrix 
+        -- with specified svd algorithm or skip
      - Untranspose imputed_matrix (genes are now rows, samples are now columns)
      - Quantile normalize imputed_matrix where genes are rows and samples are columns
 
@@ -189,11 +190,13 @@ def _perform_imputation(job_context: Dict) -> Dict:
     combined_matrix_zero = row_col_filtered_combined_matrix_samples
 
     # Transpose combined_matrix; transposed_matrix
-    transposed_matrix = combined_matrix_zero.transpose() #  row_col_filtered_combined_matrix_samples.transpose()
+    transposed_matrix_with_zeros = combined_matrix_zero.transpose() #  row_col_filtered_combined_matrix_samples.transpose()
+    del combined_matrix_zero
 
     # Remove -inf and inf
     # This should never happen, but make sure it doesn't!
-    transposed_matrix = transposed_matrix.replace([np.inf, -np.inf], np.nan)
+    transposed_matrix = transposed_matrix_with_zeros.replace([np.inf, -np.inf], np.nan)
+    del transposed_matrix_with_zeros
 
     # Store the absolute/percentages of imputed values
     total = transposed_matrix.isnull().sum().sort_values(ascending=False)
@@ -203,15 +206,24 @@ def _perform_imputation(job_context: Dict) -> Dict:
     logger.info("Total percentage of data to impute!", total_percent_imputed=total_percent_imputed)
 
     # Perform imputation of missing values with IterativeSVD (rank=10) on the transposed_matrix; imputed_matrix
-    imputed_matrix = IterativeSVD(rank=10).fit_transform(transposed_matrix)
+    svd_algorithm = job_context['dataset'].svd_algorithm
+    if svd_algorithm == 'NONE':
+        imputed_matrix = transposed_matrix
+        logger.info("Skipping IterativeSVD")
+    else:
+        logger.info("IterativeSVD algorithm: %s" % svd_algorithm)
+        imputed_matrix = IterativeSVD(rank=10, svd_algorithm=svd_algorithm).fit_transform(transposed_matrix)
+    del transposed_matrix
 
     # Untranspose imputed_matrix (genes are now rows, samples are now columns)
     untransposed_imputed_matrix = imputed_matrix.transpose()
+    del imputed_matrix
 
     # Convert back to Pandas
     untransposed_imputed_matrix_df = pd.DataFrame.from_records(untransposed_imputed_matrix)
     untransposed_imputed_matrix_df.index = row_col_filtered_combined_matrix_samples.index
     untransposed_imputed_matrix_df.columns = row_col_filtered_combined_matrix_samples.columns
+    del row_col_filtered_combined_matrix_samples
 
     # Quantile normalize imputed_matrix where genes are rows and samples are columns
     # XXX: Refactor QN target acquisition and application before doing this

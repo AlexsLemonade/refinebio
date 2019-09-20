@@ -118,6 +118,7 @@ class CompendiaTestCase(TestCase):
         dset.data = {'GSE1487313': ['GSM1487313'], 'SRX332914': ['SRS332914']}
         dset.scale_by = 'NONE'
         dset.aggregate_by = 'SPECIES'
+        dset.svd_algorithm = 'ARPACK'
         dset.quantile_normalize = False
         dset.save()
 
@@ -252,6 +253,7 @@ class CompendiaTestCase(TestCase):
         dset.data = {'GSE1234': micros, 'GSE5678': rnas}
         dset.scale_by = 'NONE'
         dset.aggregate_by = 'SPECIES'
+        dset.svd_algorithm = 'RANDOMIZED'
         dset.quantile_normalize = False
         dset.save()
 

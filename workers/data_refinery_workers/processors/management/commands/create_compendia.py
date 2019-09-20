@@ -20,7 +20,7 @@ from data_refinery_workers.processors import create_compendia
 logger = get_and_configure_logger(__name__)
 
 
-def create_job_for_organism(organism=Organism, quant_sf_only=False, svd_algorithm='arpack'):
+def create_job_for_organism(organism=Organism, quant_sf_only=False, svd_algorithm='ARPACK'):
     """Returns a compendia job for the provided organism.
 
     Fetch all of the experiments and compile large but normally formated Dataset.
@@ -67,7 +67,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--svd-algorithm",
             type=str,
-            help=("Specify SVD algorithm applied during imputation 'arpack', 'randomized' or 'none' to skip. (no quotes)"))
+            help=("Specify SVD algorithm applied during imputation ARPACK, RANDOMIZED or NONE to skip."))
 
     def handle(self, *args, **options):
         """Create a compendium for one or more organisms.
@@ -90,8 +90,8 @@ class Command(BaseCommand):
             quant_sf_only = True
 
         # default algorithm to arpack until we decide that ranomized is preferred
-        svd_algorithm = 'arpack'
-        if options["svd_algrothm"] in ['arpack', 'randomized', 'none']
+        svd_algorithm = 'ARPACK'
+        if options["svd_algrothm"] in ['ARPACK', 'RANDOMIZED', 'NONE']
             svd_algorithm = options["svd_algorithm"]
 
         logger.error(all_organisms)
