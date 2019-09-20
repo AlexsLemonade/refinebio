@@ -570,6 +570,13 @@ class SmasherTestCase(TestCase):
         computed_file.sha1 = "08c7ea90b66b52f7cd9d9a569717a1f5f3874967" # this matches with the downloaded file
         computed_file.save()
 
+        computed_file = ComputedFile()
+        computed_file.filename = "logquant.tsv"
+        computed_file.is_smashable = True
+        computed_file.size_in_bytes = 123123
+        computed_file.result = result        
+        computed_file.save()
+
         assoc = SampleComputedFileAssociation()
         assoc.sample = sample
         assoc.computed_file = computed_file
@@ -589,7 +596,7 @@ class SmasherTestCase(TestCase):
         pjda.save()
 
         final_context = smasher.smash(job.pk, upload=False)
-        
+
         # Check that the sample was really generated
         self.assertTrue(os.path.exists(final_context['output_dir'] + '/HOMO_SAPIENS/GSM1237818_quant.sf'))
         self.assertTrue(final_context['metadata']['quant_sf_only'])
