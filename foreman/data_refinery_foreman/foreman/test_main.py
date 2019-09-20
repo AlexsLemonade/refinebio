@@ -587,6 +587,9 @@ class ForemanTestCase(TestCase):
     @patch('data_refinery_foreman.foreman.main.send_job')
     @patch('data_refinery_foreman.foreman.main.Nomad')
     def test_retrying_lost_smasher_jobs(self, mock_nomad, mock_send_job, mock_get_active_volumes):
+        """Make sure that the smasher jobs will get retried even though they
+        don't have a volume_index.
+        """
         mock_send_job.return_value = True
         mock_get_active_volumes.return_value = {"1", "2", "3"}
 
@@ -600,10 +603,11 @@ class ForemanTestCase(TestCase):
         mock_nomad.side_effect = mock_init_nomad
 
         job = self.create_processor_job(pipeline="SMASHER")
+        job.volume_index = None # Smasher jobs won't have a volume_index.
         job.created_at = timezone.now()
         job.save()
 
-        main.retry_lost_smasher_jobs()
+        main.retry_lost_processor_jobs()
 
         self.assertEqual(len(mock_send_job.mock_calls), 1)
 
@@ -989,11 +993,11 @@ class ForemanTestCase(TestCase):
 
         main.send_janitor_jobs()
 
-        self.assertEqual(ProcessorJob.objects.all().count(), 6)
-        self.assertEqual(ProcessorJob.objects.filter(pipeline_applied="JANITOR").count(), 3)
+        self.assertEqual(ProcessorJob.objects.all().count(), 7)
+        self.assertEqual(ProcessorJob.objects.filter(pipeline_applied="JANITOR").count(), 4)
 
         # Make sure that the janitors are dispatched to the correct volumes.
-        ixs = ["1", "2", "3"]
+        ixs = ["1", "2", "3", None]
         for p in ProcessorJob.objects.filter(pipeline_applied="JANITOR"):
             self.assertTrue(p.volume_index in ixs)
             ixs.remove(p.volume_index)

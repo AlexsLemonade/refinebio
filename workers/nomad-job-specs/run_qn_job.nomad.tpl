@@ -58,6 +58,7 @@ job "RUN_QN_JOB" {
 
         USE_S3 = "${{USE_S3}}"
         S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
+        S3_QN_TARGET_BUCKET_NAME = "${{S3_QN_TARGET_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
 
         LOG_LEVEL = "${{LOG_LEVEL}}"
