@@ -993,11 +993,11 @@ class ForemanTestCase(TestCase):
 
         main.send_janitor_jobs()
 
-        self.assertEqual(ProcessorJob.objects.all().count(), 6)
-        self.assertEqual(ProcessorJob.objects.filter(pipeline_applied="JANITOR").count(), 3)
+        self.assertEqual(ProcessorJob.objects.all().count(), 7)
+        self.assertEqual(ProcessorJob.objects.filter(pipeline_applied="JANITOR").count(), 4)
 
         # Make sure that the janitors are dispatched to the correct volumes.
-        ixs = ["1", "2", "3"]
+        ixs = ["1", "2", "3", None]
         for p in ProcessorJob.objects.filter(pipeline_applied="JANITOR"):
             self.assertTrue(p.volume_index in ixs)
             ixs.remove(p.volume_index)
