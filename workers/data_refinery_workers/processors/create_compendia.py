@@ -6,6 +6,7 @@ import subprocess
 import time
 import warnings
 import psutil
+import logging
 
 import numpy as np
 import pandas as pd
@@ -34,6 +35,8 @@ from data_refinery_workers.processors import utils, smasher#, visualize
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 S3_COMPENDIA_BUCKET_NAME = get_env_variable("S3_COMPENDIA_BUCKET_NAME", "data-refinery-compendia")
 logger = get_and_configure_logger(__name__)
+### DEBUG ###
+logger.setLevel(logging.getLevelName('DEBUG'))
 
 
 def log_state(message):
