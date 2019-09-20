@@ -533,7 +533,7 @@ def process_frame(inputs) -> Dict:
                 computed_file_path=computed_file_path,
                 computed_file_id=computed_file.id
                 )
-            return unsmashable(computed_file_path) 
+            return unsmashable(computed_file_path)
 
         # via https://github.com/AlexsLemonade/refinebio/issues/330:
         #   aggregating by experiment -> return untransformed output from tximport
@@ -559,8 +559,10 @@ def process_frame(inputs) -> Dict:
             # This sample might have multiple channels, or something else.
             # Don't mess with it.
             logger.exception("Smasher found multi-channel column (probably) - skipping!",
-                computed_file_path=computed_file_path
-            )
+                computed_file_path=computed_file_path,
+                e=e,
+                col=data.columns
+                )
             return unsmashable(computed_file.filename)
         except Exception as e:
             # Okay, somebody probably forgot to create a SampleComputedFileAssociation
@@ -578,10 +580,10 @@ def process_frame(inputs) -> Dict:
             file=computed_file_path,
             dataset_id=job_context['dataset'].id,
             )
-        return  unsmashable(computed_file_path)
+        return unsmashable(computed_file_path)
     finally:
         # Delete before archiving the work dir
-        if computed_file_path:
+        if computed_file_path and os.path.exists(computed_file_path):
             os.remove(computed_file_path)
     return smashable(data)
 
@@ -648,16 +650,15 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     ) for i, (computed_file, sample) in enumerate(input_files)
                 ])
            
-            logger.debug(datetime.now() - start)
             all_frames = [f['data'] for f in processed_frames if f['data'] is not None]
             num_samples = num_samples + len([x for x in all_frames])
-            
+            unsmashable_files = unsmashable_files + [f['unsmashable_file'] for f in processed_frames if f['unsmashable_file'] is not None]
             job_context['all_frames'] = all_frames
             job_context['technologies'] = {
                 'microarray': [f['columns'] for f in processed_frames if f['column_type'] is 'microarray'],
                 'rnaseq': [f['columns'] for f in processed_frames if f['column_type'] is 'rnaseq']
             }
-            log_state("set all frames")
+            log_state("set all frames", start_frames)
             if len(all_frames) < 1:
                 logger.warning("Was told to smash a frame with no frames!",
                     key=key,
@@ -738,7 +739,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             if job_context['dataset'].quantile_normalize:
                 try:
                     job_context['merged_no_qn'] = merged
-                    job_context['organism'] = computed_file.samples.first().organism
+                    job_context['organism'] = job_context['dataset'].samples.first().organism
                     job_context = _quantile_normalize(job_context)
                     merged = job_context.get('merged_qn', None)
                     # We probably don't have an QN target or there is another error,
@@ -877,7 +878,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         job_context['job'].success = False
         job_context['failure_reason'] = str(e)
         return job_context
-
     job_context['metadata'] = metadata
     job_context['unsmashable_files'] = unsmashable_files
     job_context['dataset'].success = True
