@@ -6,7 +6,7 @@ from typing import Dict, List
 
 from django.core.management.base import BaseCommand
 from django.db.models import OuterRef, Subquery, Count
-
+from django.db.models.expressions import Q
 from data_refinery_common.models import (
     ProcessorJob,    
     Sample,
@@ -92,6 +92,13 @@ def retry_by_regex(pattern):
 
     logger.info("Re-queued %d samples that had failed with the pattern %s.", total_samples_queued, pattern)
 
+def retry_computed_files_not_uploaded():
+    eligible_samples = Sample.objects.filter(
+        Q(computed_files__s3_bucket__isnull=True) | Q(results__computedfile__s3_bucket__isnull=True)
+    ).distinct()
+    total_samples_queued = requeue_samples(eligible_samples)
+    logger.info("Re-queued %d samples that were associated with computed files that were not uploaded to S3", total_samples_queued)
+
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
@@ -112,6 +119,12 @@ class Command(BaseCommand):
             type=str,
             help=("Re-queues all samples where the latest processor job failure reason matches this regex.")
         )
+        # https://github.com/AlexsLemonade/refinebio/issues/1627
+        parser.add_argument(
+            '--computed-files-not-uploaded',
+            action='store_true',
+            help='Finds the samples that are associated with computed files that were not uploaded to S3 and requeue them',
+        )
 
     def handle(self, *args, **options):
         """ Re-queues all unprocessed RNA-Seq samples for an organism. """
@@ -127,4 +140,7 @@ class Command(BaseCommand):
             # --failure-regex="ProcessorJob has already completed .*"
             # --failure-regex="Encountered error in R code while running AFFY_TO_PCL pipeline .*"
             retry_by_regex(options['failure_regex'])
+
+        if options['computed_files_not_uploaded']:
+            retry_computed_files_not_uploaded()
         

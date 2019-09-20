@@ -66,7 +66,6 @@ class AffyToPCLTestCase(TestCase):
         self.assertEqual(ComputedFile.objects.all()[0].filename, 'GSM1426071_CD_colon_active_1.PCL')
 
         os.remove(ComputedFile.objects.all()[0].absolute_file_path)
-        ComputationalResult.objects.all()[0].delete() # ComputedFile deleted by cascade
 
     @tag("affymetrix")
     def test_affy_to_pcl_no_brainarray(self):
@@ -83,4 +82,3 @@ class AffyToPCLTestCase(TestCase):
         self.assertEqual(ComputedFile.objects.all()[0].filename, 'GSM45588.PCL')
 
         os.remove(ComputedFile.objects.all()[0].absolute_file_path)
-        ComputationalResult.objects.all()[0].delete() # ComputedFile deleted by cascade
