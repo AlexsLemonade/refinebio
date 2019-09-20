@@ -356,7 +356,6 @@ def _quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict
         logger.error("Could not find QN target for Organism!",
             organism=organism,
             dataset_id=job_context['dataset'].id,
-            dataset_data=job_context['dataset'].data,
             processor_job_id=job_context["job"].id,
         )
         job_context['dataset'].success = False
@@ -459,7 +458,7 @@ def _quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict
                                         str(statistic) + ", PVal: " + str(pvalue))
         else:
             logger.warning("Not enough columns to perform KS test - either bad smash or single saple smash.",
-                dset=job_context['dataset'].id)
+                dataset_id=job_context['dataset'].id)
 
         # And finally convert back to Pandas
         ar = np.array(reso)
@@ -609,7 +608,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         # Smash all of the sample sets
         logger.debug("About to smash!",
                      input_files=job_context['input_files'].keys(),
-                     dataset_data=len(job_context['dataset'].data),
+                     dataset_count=len(job_context['dataset'].data),
         )
 
         job_context['technologies'] = {'microarray': [], 'rnaseq': []}
@@ -739,7 +738,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                         e = "Problem occured during quantile normalization: No merged_qn"
                         logger.error(e,
                             dataset_id=job_context['dataset'].id,
-                            dataset_data=job_context['dataset'].data,
                             processor_job_id=job_context["job"].id,
                         )
                         job_context['dataset'].success = False
@@ -753,7 +751,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 except Exception as e:
                     logger.exception("Problem occured during quantile normalization",
                         dataset_id=job_context['dataset'].id,
-                        dataset_data=job_context['dataset'].data,
                         processor_job_id=job_context["job"].id,
                     )
                     job_context['dataset'].success = False
@@ -849,7 +846,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 json.dump(metadata, metadata_file, indent=4, sort_keys=True)
         except Exception as e:
             logger.exception("Failed to write metadata TSV!",
-                j_id = job_context['job'].id)
+                job_id = job_context['job'].id)
             job_context['metadata_tsv_paths'] = None
         metadata['files'] = os.listdir(smash_path)
 
