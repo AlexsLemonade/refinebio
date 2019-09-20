@@ -93,9 +93,7 @@ def retry_by_regex(pattern):
     logger.info("Re-queued %d samples that had failed with the pattern %s.", total_samples_queued, pattern)
 
 def retry_computed_files_not_uploaded():
-    samples_with_results = Sample.objects.filter(
-        Q(computed_files__s3_bucket__isnull=True) | Q(results__computedfile__s3_bucket__isnull=True)
-    ).values('accession_code')
+    samples_with_results = Sample.objects.filter(Q(results__computedfile__s3_bucket__isnull=True)).values('id')
 
     samples_with_computed_files = Sample.objects.filter(Q(computed_files__s3_bucket__isnull=True)).values('id')
 
