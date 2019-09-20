@@ -718,14 +718,9 @@ class SampleList(generics.ListAPIView):
             filter_dict['accession_code__in'] = [item for sublist in dataset.data.values() for item in sublist]
 
         # Accept Organism in both name and ID form
-        organism = self.request.query_params.get('organism', None)
-        if organism:
-            try:
-                organism_id = int(organism)
-            except ValueError:
-                organism_object = Organism.get_object_for_name(organism)
-                organism_id = organism_object.id
-            filter_dict['organism'] = organism_id
+        organism_name = self.request.query_params.get('organism__name', None)
+        if organism_name:
+            filter_dict['organism__name'] = organism_name
 
         return filter_dict
 
