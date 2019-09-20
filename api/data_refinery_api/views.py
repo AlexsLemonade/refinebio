@@ -896,9 +896,9 @@ class Stats(APIView):
             data['output_data_size'] = cls._get_output_data_size()
 
         data.update(get_nomad_jobs_breakdown())
-        
+
         # these are global stats that are used in the frontend for the about page
-        data['about'] = cls._get_about_stats()
+        # data['about'] = cls._get_about_stats()
 
         return data
 
@@ -914,7 +914,7 @@ class Stats(APIView):
             # total experiments with at least one sample processed
             'experiments_processed': Experiment.objects.filter(Q(samples__is_processed=True) | Q(samples__results__computedfile__filename='quant.sf')).distinct().count()
         }
-        
+
     EMAIL_USERNAME_BLACKLIST = [
         'arielsvn',
         'cansav09',
