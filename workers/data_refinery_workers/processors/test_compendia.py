@@ -127,8 +127,8 @@ class CompendiaTestCase(TestCase):
         pjda.dataset = dset
         pjda.save()
 
-        with self.assertRaises(ValueError):
-            final_context = create_compendia.create_compendia(job.id)
+#        with self.assertRaises(ValueError):
+        final_context = create_compendia.create_compendia(job.id)
 
         self.assertFalse(job.success)
  
