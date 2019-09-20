@@ -99,7 +99,7 @@ def retry_computed_files_not_uploaded():
 
     samples_with_computed_files = Sample.objects.filter(Q(computed_files__s3_bucket__isnull=True)).values('id')
 
-    sample_ids {s['id'] for s in samples_with_results} | {s['id'] for s in samples_with_computed_files}
+    sample_ids = {s['id'] for s in samples_with_results} | {s['id'] for s in samples_with_computed_files}
 
     eligible_samples = Sample.objects.filter(id__in=sample_ids)
 
