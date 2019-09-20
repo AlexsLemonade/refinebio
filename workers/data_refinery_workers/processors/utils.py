@@ -270,7 +270,8 @@ def end_job(job_context: Dict, abort=False):
     if not success:
         for computed_file in job_context.get('computed_files', []):
             computed_file.delete_local_file()
-            computed_file.delete()
+            if computed_file.id:
+                computed_file.delete()
 
     if not abort:
         if job_context.get("success", False) and not (job_context["job"].pipeline_applied in ["SMASHER", "QN_REFERENCE", "COMPENDIA", "JANITOR"]):
