@@ -260,11 +260,13 @@ def end_job(job_context: Dict, abort=False):
             # Ensure even distribution across S3 servers
             nonce = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(24))
             result = computed_file.sync_to_s3(s3_bucket, nonce + "_" + computed_file.filename)
+
             if result:
                 computed_file.delete_local_file()
             else:
                 success = False
                 job_context['success'] = False
+                job.failure_reason = "Failed to upload computed file."
                 break
 
     if not success:
