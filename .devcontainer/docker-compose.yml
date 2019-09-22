@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: api/dockerfiles/Dockerfile.api_local
+    ports:
+      - 8000:8000
+    volumes:
+      - ..:/workspace
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+
+    env_file: ../api/environments/local
+
+    depends_on:
+      - database
+      - elasticsearch
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.5.4
+    restart: unless-stopped
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      discovery.type: single-node
+
+  database:
+    image: postgres:9.6.6
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    volumes:
+      - ../volumes_postgres/volumes_postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: mysecretpassword
