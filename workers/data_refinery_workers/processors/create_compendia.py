@@ -52,7 +52,7 @@ def log_state(message, start_time=False):
             return time.time()
 
 def _prepare_input(job_context: Dict) -> Dict:
-    start = log_state("prepare input")
+    start_time = log_state("prepare input")
     # We're going to use the smasher outside of the smasher.
     # I'm not crazy about this yet. Maybe refactor later,
     # but I need the data now.
@@ -84,7 +84,7 @@ def _prepare_input(job_context: Dict) -> Dict:
     job_context['smashed_file'] = outfile
     job_context['target_file'] = outfile_base + '_target.tsv'
 
-    log_state("prepare input done", start)
+    log_state("prepare input done", start_time)
     return job_context
 
 def _perform_imputation(job_context: Dict) -> Dict:
