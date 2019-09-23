@@ -6,7 +6,7 @@ WORKDIR /workspace
 RUN apt-get update
 RUN apt-get -y install git procps wget unzip python3-pip jq iproute2 r-base r-base-dev sudo
 RUN pip install --upgrade pip
-RUN pip install -U pip-tools setuptools pylint pytest pytest-django pytest-pythonpath pytest-env
+RUN pip install -U pip-tools setuptools pylint pylint-django pytest pytest-django pytest-pythonpath pytest-env
 
 # install terraform
 # RUN wget --quiet https://releases.hashicorp.com/terraform/0.12.9/terraform_0.12.9_darwin_amd64.zip \
