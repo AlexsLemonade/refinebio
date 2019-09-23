@@ -854,6 +854,10 @@ class ComputedFile(models.Model):
         db_table = "computed_files"
         get_latest_by = "created_at"
 
+        indexes = [
+            models.Index(fields=['filename']),
+        ]
+
     def __str__(self):
         return "ComputedFile: " + str(self.filename)
 
