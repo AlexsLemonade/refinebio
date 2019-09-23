@@ -4,11 +4,13 @@ services:
   app:
     build:
       context: ..
-      dockerfile: api/dockerfiles/Dockerfile.api_local
+      dockerfile: .devcontainer/Dockerfile
     ports:
       - 8000:8000
     volumes:
       - ..:/workspace
+    environment:
+      SYSTEM_VERSION: local
 
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
