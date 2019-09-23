@@ -1,4 +1,3 @@
-from data_refinery_api.views import ExperimentDocumentView
 from rest_framework.routers import DefaultRouter
 from django.conf.urls import url, include
 from django.conf import settings
@@ -13,7 +12,8 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from django.views.generic import RedirectView
 
-from data_refinery_api.views import (
+from .views import (
+    ExperimentDocumentView,
     ExperimentList,
     ExperimentDetail,
     SampleList,
@@ -36,7 +36,8 @@ from data_refinery_api.views import (
     QNTargetsDetail,
     QNTargetsAvailable,
     CompendiaDetail,
-    ComputedFilesList
+    ComputedFilesList,
+    AboutStats
 )
 
 # This provides _public_ access to the /admin interface!
@@ -99,6 +100,7 @@ urlpatterns = [
 
         # Dashboard Driver
         url(r'^stats/$', Stats.as_view(), name='stats'),
+        url(r'^stats-about/$', AboutStats.as_view(), name='stats_about'),
 
         # Transcriptome Indices and QN Targets
         url(r'^transcriptome_indices/$', TranscriptomeIndexList.as_view(), name='transcriptome_indices'),
