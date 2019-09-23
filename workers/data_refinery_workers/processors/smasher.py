@@ -50,7 +50,6 @@ def log_state(message):
     cpu = psutil.cpu_percent()
     logger.debug("cpu:%s - ram:%s -  %s", cpu, ram, message)
 
-
 def _prepare_files(job_context: Dict) -> Dict:
     """
     Fetches and prepares the files to smash.
@@ -467,15 +466,15 @@ def sync_quant_files(output_path, files_sample_tuple, job_context: Dict):
     """ Takes a list of ComputedFiles and copies the ones that are quant files to the provided directory.
         Returns the total number of samples that were included """
     num_samples = 0
-    for (computed_file, sample) in files_sample_tuple:
+    for (_, sample) in files_sample_tuple:
+        latest_computed_file = sample.get_most_recent_quant_sf_file()
         # we just want to output the quant.sf files
-        if computed_file.filename != 'quant.sf': continue
-        if not sample: continue # check that the computed file is associated with a sample
+        if not latest_computed_file: continue
         accession_code = sample.accession_code
         # copy file to the output path
         output_file_path = output_path + accession_code + "_quant.sf"
         num_samples += 1
-        computed_file.get_synced_file_path(path=output_file_path)
+        latest_computed_file.get_synced_file_path(path=output_file_path)
     return num_samples
 
 def _smash(job_context: Dict, how="inner") -> Dict:

@@ -201,6 +201,15 @@ class Sample(models.Model):
             # This sample has no smashable files yet.
             return None
 
+    def get_most_recent_quant_sf_file(self):
+        """ Returns the latest quant.sf file that was generated for this sample.
+        Note: We don't associate that file to the computed_files of this sample, that's
+        why we have to go through the computational results. """
+        return ComputedFile.objects\
+            .filter(result__in=self.results.all(), filename='quant.sf')\
+            .order_by('-created_at')\
+            .first()
+
     @property
     def pretty_platform(self):
         """ Turns
