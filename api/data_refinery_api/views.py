@@ -907,12 +907,20 @@ class Stats(APIView):
         """ returns the stats that are used in the about page """
         return {
             # count the total number of samples that are processed or that have a quant.sf file associated with them
-            'samples_available': Sample.objects.filter(Q(is_processed=True) | Q(results__computedfile__filename='quant.sf')).distinct().count(),
+            'samples_available': Sample.objects.filter(is_processed=True).count() \
+                + Sample.objects.filter(is_processed=False, technology='RNA-SEQ', results__computedfile__filename='quant.sf').distinct().count(),
             'total_size_in_bytes': OriginalFile.objects.aggregate(total_size=Sum('size_in_bytes'))['total_size'],
             # count organisms with qn targets or that have at least one sample with quant files
-            'supported_organisms': Organism.objects.filter(Q(qn_target__isnull=False) | Q(sample__results__computedfile__filename='quant.sf')).distinct().count(),
+            'supported_organisms': Organism.objects.filter(qn_target__isnull=False).count() \
+                +  Organism.objects.filter(
+                    qn_target__isnull=True,
+                    sample__is_processed=False,
+                    sample__technology='RNA-SEQ',
+                    sample__results__computedfile__filename='quant.sf'
+                  ).distinct().count(),
             # total experiments with at least one sample processed
-            'experiments_processed': Experiment.objects.filter(Q(samples__is_processed=True) | Q(samples__results__computedfile__filename='quant.sf')).distinct().count()
+            # technically we should also include here the experiments with at least one unprocessed sample with quant file
+            'experiments_processed': Experiment.objects.filter(samples__is_processed=True).distinct().count()
         }
 
     EMAIL_USERNAME_BLACKLIST = [
