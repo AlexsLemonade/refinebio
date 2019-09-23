@@ -979,15 +979,15 @@ class SmasherTestCase(TestCase):
 
         # RNASEQ TECH
         experiment2 = Experiment()
-        experiment2.accession_code = "SRS332914"
+        experiment2.accession_code = "SRP332914"
         experiment2.save()
 
         result2 = ComputationalResult()
         result2.save()
 
         sample2 = Sample()
-        sample2.accession_code = 'SRS332914'
-        sample2.title = 'SRS332914'
+        sample2.accession_code = 'SRR332914'
+        sample2.title = 'SRR332914'
         sample2.organism = gallus_gallus
         sample2.technology = "RNA-SEQ"
         sample2.save()
@@ -1017,7 +1017,7 @@ class SmasherTestCase(TestCase):
 
         # CROSS-SMASH BY SPECIES
         ds = Dataset()
-        ds.data = {'GSE1487313': ['GSM1487313'], 'SRX332914': ['SRS332914']}
+        ds.data = {'GSE1487313': ['GSM1487313'], 'SRP332914': ['SRR332914']}
         ds.aggregate_by = 'SPECIES'
         ds.scale_by = 'STANDARD'
         ds.email_address = "null@derp.com"
