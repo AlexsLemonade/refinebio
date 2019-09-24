@@ -6,10 +6,10 @@ from typing import Dict, List
 
 from django.core.management.base import BaseCommand
 from django.db.models import OuterRef, Subquery, Count
-from django.db.models.expressions import Q
 from data_refinery_common.models import (
-    ProcessorJob,    
+    ProcessorJob,
     Sample,
+    ComputedFile
 )
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.job_management import create_downloader_job
@@ -93,9 +93,18 @@ def retry_by_regex(pattern):
     logger.info("Re-queued %d samples that had failed with the pattern %s.", total_samples_queued, pattern)
 
 def retry_computed_files_not_uploaded():
-    eligible_samples = Sample.objects.filter(
-        Q(computed_files__s3_bucket__isnull=True) | Q(results__computedfile__s3_bucket__isnull=True)
-    ).distinct()
+    samples_with_computed_files = ComputedFile.objects\
+        .filter(s3_bucket__isnull=True, samples__isnull=False)\
+        .values_list('samples', flat=True)
+
+    samples_with_results = ComputedFile.objects\
+        .filter(s3_bucket__isnull=True, result__samples__isnull=False)\
+        .values_list('result__samples', flat=True)
+
+    sample_ids = set(samples_with_results) | set(samples_with_computed_files)
+
+    eligible_samples = Sample.objects.filter(id__in=sample_ids)
+
     total_samples_queued = requeue_samples(eligible_samples)
     logger.info("Re-queued %d samples that were associated with computed files that were not uploaded to S3", total_samples_queued)
 
@@ -143,4 +152,3 @@ class Command(BaseCommand):
 
         if options['computed_files_not_uploaded']:
             retry_computed_files_not_uploaded()
-        

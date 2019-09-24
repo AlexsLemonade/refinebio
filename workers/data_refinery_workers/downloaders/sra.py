@@ -95,7 +95,7 @@ def _download_file_http(download_url: str,
 
         with closing(urllib.request.urlopen(download_url, timeout=60)) as request:
             shutil.copyfileobj(request, target_file, CHUNK_SIZE)
-    except Exception:
+    except Exception as e:
         logger.exception("Exception caught while downloading file.",
                          downloader_job=downloader_job.id)
         downloader_job.failure_reason = "Exception caught while downloading file\\n " \

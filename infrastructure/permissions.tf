@@ -90,6 +90,7 @@ resource "aws_iam_policy" "s3_access_policy" {
             "arn:aws:s3:::${aws_s3_bucket.data_refinery_bucket.bucket}/*",
             "arn:aws:s3:::${aws_s3_bucket.data_refinery_results_bucket.bucket}/*",
             "arn:aws:s3:::${aws_s3_bucket.data_refinery_transcriptome_index_bucket.bucket}/*",
+            "arn:aws:s3:::${aws_s3_bucket.data_refinery_qn_target_bucket.bucket}/*",
             "arn:aws:s3:::${aws_s3_bucket.data_refinery_compendia_bucket.bucket}/*"
           ]
       }

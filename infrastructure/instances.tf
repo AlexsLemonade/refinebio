@@ -274,7 +274,7 @@ resource "aws_instance" "smasher_instance" {
   # Should be more than enough to store 2 jobs worth of data at a time.
   root_block_device = {
     volume_type = "gp2"
-    volume_size = 100
+    volume_size = 6000
   }
 }
 

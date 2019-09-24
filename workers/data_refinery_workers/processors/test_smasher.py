@@ -570,6 +570,13 @@ class SmasherTestCase(TransactionTestCase):
         computed_file.sha1 = "08c7ea90b66b52f7cd9d9a569717a1f5f3874967" # this matches with the downloaded file
         computed_file.save()
 
+        computed_file = ComputedFile()
+        computed_file.filename = "logquant.tsv"
+        computed_file.is_smashable = True
+        computed_file.size_in_bytes = 123123
+        computed_file.result = result        
+        computed_file.save()
+
         assoc = SampleComputedFileAssociation()
         assoc.sample = sample
         assoc.computed_file = computed_file

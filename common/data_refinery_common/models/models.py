@@ -201,6 +201,15 @@ class Sample(models.Model):
             # This sample has no smashable files yet.
             return None
 
+    def get_most_recent_quant_sf_file(self):
+        """ Returns the latest quant.sf file that was generated for this sample.
+        Note: We don't associate that file to the computed_files of this sample, that's
+        why we have to go through the computational results. """
+        return ComputedFile.objects\
+            .filter(result__in=self.results.all(), filename='quant.sf')\
+            .order_by('-created_at')\
+            .first()
+
     @property
     def pretty_platform(self):
         """ Turns
@@ -780,14 +789,24 @@ class OriginalFile(models.Model):
             return False
 
         if sample.source_database == "SRA":
-            for computed_file in sample.computed_files.prefetch_related('result__organism_index').all():
-                    if computed_file.s3_bucket and computed_file.s3_key \
-                       and computed_file.result.organism_index != None \
-                       and computed_file.result.organism_index.salmon_version == CURRENT_SALMON_VERSION:
-                        # If the file wasn't computed with the latest
-                        # version of salmon, then it should be rerun
-                        # with the latest version of salmon.
-                        return False
+            computed_file = sample.get_most_recent_smashable_result_file()
+
+            # If there's no smashable file then we should check the quant.sf file.
+            if not computed_file:
+                computed_file = sample.get_most_recent_quant_sf_file()
+
+            # If there's neither a quant.sf file nor a smashable file
+            # then we definitely need to process it.
+            if not computed_file:
+                return True
+
+            if computed_file.s3_bucket and computed_file.s3_key \
+               and computed_file.result.organism_index != None \
+               and computed_file.result.organism_index.salmon_version == CURRENT_SALMON_VERSION:
+                # If the file wasn't computed with the latest
+                # version of salmon, then it should be rerun
+                # with the latest version of salmon.
+                return False
         else:
             # If this original_file has multiple samples (is an
             # archive), and any of them haven't been processed, we'll
@@ -796,7 +815,10 @@ class OriginalFile(models.Model):
             # samples in the archive will happen elsewhere before
             # dispatching.
             for sample in self.samples.all():
-                if not sample.is_processed:
+                computed_file = sample.get_most_recent_smashable_result_file()
+                if not sample.is_processed \
+                   or computed_file.s3_bucket is None \
+                   or computed_file.s3_key is None:
                     return True
 
             return False
@@ -844,6 +866,10 @@ class ComputedFile(models.Model):
     class Meta:
         db_table = "computed_files"
         get_latest_by = "created_at"
+
+        indexes = [
+            models.Index(fields=['filename']),
+        ]
 
     def __str__(self):
         return "ComputedFile: " + str(self.filename)

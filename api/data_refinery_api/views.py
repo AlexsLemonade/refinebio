@@ -845,6 +845,48 @@ class ProcessorJobList(generics.ListAPIView):
 # Statistics
 ###
 
+class AboutStats(APIView):
+    """ Returns general stats for the site, used in the about page """
+    @method_decorator(cache_page(10 * 60))
+    def get(self, request, version, format=None):
+        result = {
+            'samples_available': self._get_samples_available(),
+            'total_size_in_bytes': OriginalFile.objects.aggregate(total_size=Sum('size_in_bytes'))['total_size'],
+            'supported_organisms': self._get_supported_organisms(),
+            'experiments_processed': self._get_experiments_processed()
+        }
+        return Response(result)
+
+    def _get_experiments_processed(self):
+        """ total experiments with at least one sample processed """
+        experiments_with_sample_processed = Experiment.objects.filter(samples__is_processed=True).distinct().count()
+        experiments_with_sample_quant = Experiment.objects.filter(
+            samples__is_processed=False,
+            sample__technology='RNA-SEQ',
+            sample__results__computedfile__filename='quant.sf'
+        ).distinct().count()
+        return experiments_with_sample_processed + experiments_with_sample_quant
+
+    def _get_supported_organisms(self):
+        """ count organisms with qn targets or that have at least one sample with quant files """
+        organisms_with_qn_targets = Organism.objects.filter(qn_target__isnull=False).count()
+        organisms_without_qn_targets = Organism.objects.filter(
+            qn_target__isnull=True,
+            sample__is_processed=False,
+            sample__technology='RNA-SEQ',
+            sample__results__computedfile__filename='quant.sf'
+        ).distinct().count()
+        return organisms_with_qn_targets + organisms_without_qn_targets
+
+    def _get_samples_available(self):
+        """ count the total number of samples that are processed or that have a quant.sf file associated with them """
+        processed_samples = Sample.objects.filter(is_processed=True).count()
+        unprocessed_samples_with_quant = Sample.objects.filter(
+            is_processed=False,
+            technology='RNA-SEQ',
+            results__computedfile__filename='quant.sf'
+        ).distinct().count()
+        return processed_samples + unprocessed_samples_with_quant
 
 class Stats(APIView):
     """ Statistics about the health of the system. """
@@ -896,25 +938,9 @@ class Stats(APIView):
             data['output_data_size'] = cls._get_output_data_size()
 
         data.update(get_nomad_jobs_breakdown())
-        
-        # these are global stats that are used in the frontend for the about page
-        data['about'] = cls._get_about_stats()
 
         return data
 
-    @classmethod
-    def _get_about_stats(cls):
-        """ returns the stats that are used in the about page """
-        return {
-            # count the total number of samples that are processed or that have a quant.sf file associated with them
-            'samples_available': Sample.objects.filter(Q(is_processed=True) | Q(results__computedfile__filename='quant.sf')).distinct().count(),
-            'total_size_in_bytes': OriginalFile.objects.aggregate(total_size=Sum('size_in_bytes'))['total_size'],
-            # count organisms with qn targets or that have at least one sample with quant files
-            'supported_organisms': Organism.objects.filter(Q(qn_target__isnull=False) | Q(sample__results__computedfile__filename='quant.sf')).distinct().count(),
-            # total experiments with at least one sample processed
-            'experiments_processed': Experiment.objects.filter(Q(samples__is_processed=True) | Q(samples__results__computedfile__filename='quant.sf')).distinct().count()
-        }
-        
     EMAIL_USERNAME_BLACKLIST = [
         'arielsvn',
         'cansav09',
