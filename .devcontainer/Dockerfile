@@ -4,9 +4,13 @@ FROM python:3.6.1
 # ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
-RUN apt-get -y install git procps wget unzip python3-pip jq iproute2 r-base r-base-dev
+RUN apt-get -y install git procps lsb-release wget curl unzip python3-pip jq iproute2 r-base r-base-dev
 RUN pip install --upgrade pip
 RUN pip install -U pip-tools setuptools pylint pylint-django pytest pytest-django pytest-pythonpath pytest-env
+
+# install git-crypt
+RUN curl -L https://github.com/AGWA/git-crypt/archive/0.6.0.tar.gz | tar zxv -C /var/tmp
+RUN cd /var/tmp/git-crypt-0.6.0 && make && make install PREFIX=/usr/local
 
 RUN mkdir /workspace
 WORKDIR /workspace
