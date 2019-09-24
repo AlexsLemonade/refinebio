@@ -9,6 +9,7 @@ services:
       - 8000:8000
     volumes:
       - ..:/workspace
+      - ~/.ssh:/root/.ssh-localhost:ro
     environment:
       SYSTEM_VERSION: local
 
