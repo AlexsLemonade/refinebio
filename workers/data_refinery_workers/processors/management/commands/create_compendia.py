@@ -90,7 +90,7 @@ class Command(BaseCommand):
             quant_sf_only = True
 
         # default algorithm to arpack until we decide that ranomized is preferred
-        svd_algorithm = 'ARPACK'
+        svd_algorithm = 'NONE' if quant_sf_only else 'ARPACK' 
         if options["svd_algrothm"] in ['ARPACK', 'RANDOMIZED', 'NONE']:
             svd_algorithm = options["svd_algorithm"]
 
