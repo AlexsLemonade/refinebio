@@ -636,7 +636,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
 
             start_frames = log_state("build frames for species or experiment")
             # Merge all the frames into one
-            cpus = min(1, psutil.cpu_count()/2)
+            cpus = max(1, psutil.cpu_count()/2)
             with multiprocessing.Pool(int(cpus)) as pool:
 
                 processed_frames = pool.map(
