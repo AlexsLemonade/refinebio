@@ -89,6 +89,12 @@ def get_quant_results_for_experiment(experiment: Experiment, filter_old_versions
     else:
         eligible_results = ComputationalResult.objects.all()
 
+    # A result is only eligible to be used if it actually got uploaded.
+    eligible_results = eligible_results.select_related('computedfile').filter(
+        computedfile__s3_bucket__isnull=False,
+        computedfile__s3_key__isnull=False
+    )
+
     # Calculate the computational results sorted that are associated with a given sample (
     # referenced from the top query)
     newest_computational_results = eligible_results.filter(

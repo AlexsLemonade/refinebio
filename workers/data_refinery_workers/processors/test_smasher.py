@@ -11,7 +11,7 @@ from io import StringIO
 import pandas as pd
 
 from django.core.management import call_command
-from django.test import TestCase, tag
+from django.test import TestCase, TransactionTestCase, tag
 from data_refinery_common.models import (
     SurveyJob,
     ProcessorJob,
@@ -139,7 +139,7 @@ def prepare_job():
 
     return pj
 
-class SmasherTestCase(TestCase):
+class SmasherTestCase(TransactionTestCase):
 
     @tag("smasher")
     def test_smasher(self):
@@ -603,7 +603,7 @@ class SmasherTestCase(TestCase):
         self.assertEqual(final_context['metadata']['num_samples'], 1)
         self.assertEqual(final_context['metadata']['num_experiments'], 1)
         self.assertTrue('aggregate_by' not in final_context['metadata'])
-        
+
     @tag("smasher")
     def test_no_smash_dupe(self):
         """ """
@@ -986,15 +986,15 @@ class SmasherTestCase(TestCase):
 
         # RNASEQ TECH
         experiment2 = Experiment()
-        experiment2.accession_code = "SRS332914"
+        experiment2.accession_code = "SRP332914"
         experiment2.save()
 
         result2 = ComputationalResult()
         result2.save()
 
         sample2 = Sample()
-        sample2.accession_code = 'SRS332914'
-        sample2.title = 'SRS332914'
+        sample2.accession_code = 'SRR332914'
+        sample2.title = 'SRR332914'
         sample2.organism = gallus_gallus
         sample2.technology = "RNA-SEQ"
         sample2.save()
@@ -1024,7 +1024,7 @@ class SmasherTestCase(TestCase):
 
         # CROSS-SMASH BY SPECIES
         ds = Dataset()
-        ds.data = {'GSE1487313': ['GSM1487313'], 'SRX332914': ['SRS332914']}
+        ds.data = {'GSE1487313': ['GSM1487313'], 'SRP332914': ['SRR332914']}
         ds.aggregate_by = 'SPECIES'
         ds.scale_by = 'STANDARD'
         ds.email_address = "null@derp.com"
@@ -1143,7 +1143,7 @@ class SmasherTestCase(TestCase):
         self.assertTrue(final_context.get('success', True))
 
 
-class CompendiaTestCase(TestCase):
+class CompendiaTestCase(TransactionTestCase):
     """Testing management commands are hard.  Since there is always an explicit
     sys.exit (which is really an Exception), we have to do weird stdio rerouting
     to capture the result. Really, these are just sanity tests.
@@ -1174,7 +1174,7 @@ class CompendiaTestCase(TestCase):
         sys.stdout = old_stdout
 
 
-class AggregationTestCase(TestCase):
+class AggregationTestCase(TransactionTestCase):
     """Test the tsv file generation."""
     def setUp(self):
         self.metadata = {

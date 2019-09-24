@@ -1236,6 +1236,7 @@ class ComputedFilesList(generics.ListAPIView):
         'is_qc',
         'is_compendia',
         'quant_sf_only',
+        'svd_algorithm',
         'compendia_version',
         'created_at',
         'last_modified',

@@ -120,8 +120,8 @@ variable "client_instance_type" {
 }
 
 variable "smasher_instance_type" {
-  # 256 GiB Memory, compendia jobs needs 220 and smasher jobs need 28.
-  default = "m5.16xlarge"
+  # 3,904 GiB Memory, compendia jobs needs 220 and smasher jobs need 28.
+  default = "x1e.32xlarge"
 }
 
 variable "spot_price" {
