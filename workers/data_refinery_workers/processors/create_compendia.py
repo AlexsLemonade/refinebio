@@ -141,6 +141,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # log2(x + 1) transform filtered_rnaseq_matrix; this is now log2_rnaseq_matrix
     filtered_rnaseq_matrix_plus_one = filtered_rnaseq_matrix + 1
     log2_rnaseq_matrix = np.log2(filtered_rnaseq_matrix_plus_one)
+    del filtered_rnaseq_matrix_plus_one
 
     # Cache our RNA-Seq zero values
     cached_zeroes = {}
@@ -152,6 +153,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # Perform a full outer join of microarray_expression_matrix and log2_rnaseq_matrix; combined_matrix
     combined_matrix = microarray_expression_matrix.merge(log2_rnaseq_matrix, how='outer', left_index=True, right_index=True)
+    del microarray_expression_matrix
 
     # # Visualize Prefiltered
     # output_path = job_context['output_dir'] + "pre_filtered_" + str(time.time()) + ".png"
@@ -169,6 +171,11 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # XXX: Find better test data for this!
     col_thresh = row_filtered_combined_matrix.shape[0] * .5
     row_col_filtered_combined_matrix_samples = row_filtered_combined_matrix.dropna(axis='columns', thresh=col_thresh)
+    row_col_filtered_combined_matrix_samples_index = row_col_filtered_combined_matrix_samples.index
+    row_col_filtered_combined_matrix_samples_columns = row_col_filtered_combined_matrix_samples.columns
+
+    del combined_matrix
+    del row_filtered_combined_matrix
 
     # # Visualize Row and Column Filtered
     # output_path = job_context['output_dir'] + "row_col_filtered_" + str(time.time()) + ".png"
@@ -187,7 +194,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
             # This generates a warning, so use loc[] instead
             #row_col_filtered_combined_matrix_samples[column].replace(zeroes, 0.0, inplace=True)
             zeroes_list = zeroes.tolist()
-            new_index_list = row_col_filtered_combined_matrix_samples.index.tolist()
+            new_index_list = row_col_filtered_combined_matrix_samples_index.tolist()
             new_zeroes = list(set(new_index_list) & set(zeroes_list))
             row_col_filtered_combined_matrix_samples[column].loc[new_zeroes] = 0.0
         except Exception as e:
@@ -196,6 +203,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # Label our new replaced data
     combined_matrix_zero = row_col_filtered_combined_matrix_samples
+    del row_col_filtered_combined_matrix_samples
 
     # Transpose combined_matrix; transposed_matrix
     # We originally thought we were going to use KNN imputation and
@@ -234,10 +242,10 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # Convert back to Pandas
     untransposed_imputed_matrix_df = pd.DataFrame.from_records(untransposed_imputed_matrix)
-    untransposed_imputed_matrix_df.index = row_col_filtered_combined_matrix_samples.index
-    untransposed_imputed_matrix_df.columns = row_col_filtered_combined_matrix_samples.columns
-    del row_col_filtered_combined_matrix_samples
-
+    untransposed_imputed_matrix_df.index = row_col_filtered_combined_matrix_samples_index
+    untransposed_imputed_matrix_df.columns = row_col_filtered_combined_matrix_samples_columns
+    del row_col_filtered_combined_matrix_samples_index
+    del row_col_filtered_combined_matrix_samples_columns
     # Quantile normalize imputed_matrix where genes are rows and samples are columns
     # XXX: Refactor QN target acquisition and application before doing this
     job_context['organism'] = Organism.get_object_for_name(list(job_context['input_files'].keys())[0])
