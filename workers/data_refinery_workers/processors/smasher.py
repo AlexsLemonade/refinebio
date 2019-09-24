@@ -659,8 +659,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             log_state("set all frames", start_frames)
             if len(all_frames) < 1:
                 logger.warning("Was told to smash a frame with no frames!",
-                    key=key,
-                    input_files=str(input_files)
+                    key=key
                 )
                 continue
 
