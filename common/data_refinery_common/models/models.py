@@ -884,7 +884,8 @@ class ComputedFile(models.Model):
     svd_algorithm = models.CharField(
         max_length=255,
         choices=SVD_ALGORITHM_CHOICES,
-        default="NONE"
+        default="NONE",
+        help_text='The SVD algorithm that was used to generate the file.'
     )
     compendia_organism = models.ForeignKey(Organism,
                                         blank=True,
