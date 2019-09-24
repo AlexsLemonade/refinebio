@@ -198,6 +198,9 @@ def _perform_imputation(job_context: Dict) -> Dict:
     combined_matrix_zero = row_col_filtered_combined_matrix_samples
 
     # Transpose combined_matrix; transposed_matrix
+    # We originally thought we were going to use KNN imputation and
+    # it may have expected standardize features, hence the transpose.
+    # Transpose may no longer be needed, but leaving until we can evaluate.
     transposed_matrix_with_zeros = combined_matrix_zero.transpose() #  row_col_filtered_combined_matrix_samples.transpose()
     del combined_matrix_zero
 
