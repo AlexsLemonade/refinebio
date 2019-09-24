@@ -9,7 +9,7 @@ job "CREATE_COMPENDIA" {
 
   parameterized {
     payload       = "forbidden"
-    meta_required = ["ORGANISMS", "QUANT_SF_ONLY", "SVD_ALGORITHM]
+    meta_required = ["ORGANISMS", "QUANT_SF_ONLY", "SVD_ALGORITHM"]
   }
 
   group "jobs" {
