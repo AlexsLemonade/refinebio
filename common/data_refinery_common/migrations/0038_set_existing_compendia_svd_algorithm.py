@@ -9,7 +9,7 @@ def set_existing_compendia_svd_algorithm(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('data_refinery_common', '0036_auto_20190924_2153'),
+        ('data_refinery_common', '0037_auto_20190924_2305'),
     ]
 
     operations = [
