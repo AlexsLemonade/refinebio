@@ -270,7 +270,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     """
     Store and host the result as a ComputationalResult object.
     """
-    start = log_state("start create result object")
+    result_start = log_state("start create result object")
     result = ComputationalResult()
     result.commands.append(" ".join(job_context['formatted_command']))
     result.is_ccdl = True
@@ -370,7 +370,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     job_context['computed_files'] = [compendia_tsv_computed_file, metadata_computed_file, archive_computed_file]
     job_context['success'] = True
 
-    log_state("end create result object", start)
+    log_state("end create result object", result_start)
 
     return job_context
 
