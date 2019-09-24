@@ -806,7 +806,8 @@ def _run_salmon(job_context: Dict) -> Dict:
 
         quant_file = ComputedFile()
         quant_file.s3_bucket = S3_BUCKET_NAME
-        quant_file.s3_key = "quant_files/sample_" + str(job_context["sample"].id) + "_quant.sf"
+        timestamp = str(timezone.now().timestamp()).split('.')[0]
+        quant_file.s3_key = "quant_files/sample_{0}_{1}_quant.sf".format(job_context["sample"].id, timestamp)
         quant_file.filename = "quant.sf"
         quant_file.absolute_file_path = job_context["output_directory"] + "quant.sf"
         quant_file.is_public = False

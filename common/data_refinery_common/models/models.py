@@ -789,14 +789,24 @@ class OriginalFile(models.Model):
             return False
 
         if sample.source_database == "SRA":
-            for computed_file in sample.computed_files.prefetch_related('result__organism_index').all():
-                    if computed_file.s3_bucket and computed_file.s3_key \
-                       and computed_file.result.organism_index != None \
-                       and computed_file.result.organism_index.salmon_version == CURRENT_SALMON_VERSION:
-                        # If the file wasn't computed with the latest
-                        # version of salmon, then it should be rerun
-                        # with the latest version of salmon.
-                        return False
+            computed_file = sample.get_most_recent_smashable_result_file()
+
+            # If there's no smashable file then we should check the quant.sf file.
+            if not computed_file:
+                computed_file = sample.get_most_recent_quant_sf_file()
+
+            # If there's neither a quant.sf file nor a smashable file
+            # then we definitely need to process it.
+            if not computed_file:
+                return True
+
+            if computed_file.s3_bucket and computed_file.s3_key \
+               and computed_file.result.organism_index != None \
+               and computed_file.result.organism_index.salmon_version == CURRENT_SALMON_VERSION:
+                # If the file wasn't computed with the latest
+                # version of salmon, then it should be rerun
+                # with the latest version of salmon.
+                return False
         else:
             # If this original_file has multiple samples (is an
             # archive), and any of them haven't been processed, we'll
@@ -805,7 +815,10 @@ class OriginalFile(models.Model):
             # samples in the archive will happen elsewhere before
             # dispatching.
             for sample in self.samples.all():
-                if not sample.is_processed:
+                computed_file = sample.get_most_recent_smashable_result_file()
+                if not sample.is_processed \
+                   or computed_file.s3_bucket is None \
+                   or computed_file.s3_key is None:
                     return True
 
             return False
