@@ -10,3 +10,5 @@ mkdir -p ~/.ssh \
     && chmod 700 ~/.ssh \
     && chmod 600 ~/.ssh/*
 
+git config commit.gpgsign false
+
