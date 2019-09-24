@@ -774,7 +774,7 @@ class RuntimeProcessorTest(TestCase):
         ProcessorEnum['SALMONTOOLS'].value['yml_file'] = original_yml_file
 
 
-def run_tximport_at_progress_point(complete_accessions: List[str],
+def create_tximport_job_context(complete_accessions: List[str],
                                    incomplete_accessions: List[str],
                                    salmon_version='salmon 0.13.1') -> Dict:
     """Create an experiment and associated objects and run tximport on it.
@@ -918,6 +918,11 @@ def run_tximport_at_progress_point(complete_accessions: List[str],
     # just pick one, it doesn't matter that much because we aren't
     # checking the output data.
     job_context["index_length"] = "short"
+
+    return job_context
+
+
+def run_tximport_for_job_context(job_context: Dict) -> Dict:
     job_context = salmon._find_or_download_index(job_context)
 
     job_context = salmon.get_tximport_inputs(job_context)
@@ -925,6 +930,15 @@ def run_tximport_at_progress_point(complete_accessions: List[str],
     job_context = utils.end_job(job_context)
 
     return job_context
+
+
+def run_tximport_at_progress_point(complete_accessions: List[str],
+                                   incomplete_accessions: List[str],
+                                   salmon_version='salmon 0.13.1') -> Dict:
+    job_context = create_tximport_job_context(complete_accessions, incomplete_accessions, salmon_version)
+
+    return run_tximport_for_job_context(job_context)
+
 
 
 class EarlyTximportTestCase(TestCase):
@@ -1152,6 +1166,68 @@ class EarlyTximportTestCase(TestCase):
         ]
 
         job_context = run_tximport_at_progress_point(complete_accessions, incomplete_accessions)
+
+        # Confirm that this experiment is not ready for tximport yet,
+        # because `salmon quant` is not run on 'fake_sample' and it
+        # doens't have enough samples to have tximport run early.
+        self.assertFalse("tximported" in job_context)
+
+        # Make sure that these samples actually were ignored.
+        for accession_code in incomplete_accessions:
+            sample = Sample.objects.get(accession_code=accession_code)
+            self.assertEqual(sample.computed_files.count(), 0)
+
+    @tag('salmon')
+    def test_missing_computed_file(self):
+        """Tests that tximport will ignore computed files that were not uploaded to S3.
+
+        We will do this by setting the s3_bucket and s3_key fields to
+        None for one of the complete_accessions so that it will get
+        filtered out and then we won't make the threshold for
+        tximport.
+        """
+        # Accessions SRR5125616-SRR5125620 don't exist in SRA, but we
+        # don't actually want to process them so it's okay.
+        incomplete_accessions = [
+            "SRR5125616",
+            "SRR5125617",
+            "SRR5125618",
+            "SRR5125619",
+            "SRR5125620",
+        ]
+
+        complete_accessions = [
+            "SRR5125621",
+            "SRR5125622",
+            "SRR5125623",
+            "SRR5125624",
+            "SRR5125625",
+            "SRR5125626",
+            "SRR5125627",
+            "SRR5125628",
+            "SRR5125629",
+            "SRR5125630",
+            "SRR5125631",
+            "SRR5125632",
+            "SRR5125633",
+            "SRR5125634",
+            "SRR5125635",
+            "SRR5125636",
+            "SRR5125637",
+            "SRR5125638",
+            "SRR5125639",
+            "SRR5125640",
+        ]
+
+        job_context = create_tximport_job_context(complete_accessions, incomplete_accessions)
+
+        result = Sample.objects.filter(accession_code="SRR5125621").first().results.first()
+        computed_file = ComputedFile.objects.get(result=result, filename='quant.sf')
+        computed_file.s3_bucket = None
+        computed_file.s3_key = None
+        computed_file.save()
+
+        job_context = run_tximport_for_job_context(job_context)
 
         # Confirm that this experiment is not ready for tximport yet,
         # because `salmon quant` is not run on 'fake_sample' and it
