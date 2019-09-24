@@ -520,7 +520,7 @@ def process_frame(inputs) -> Dict:
             logger.error("Smasher received non-existent file path.",
                 computed_file_path=computed_file_path,
                 computed_file=computed_file,
-                dataset=job_context['dataset'],
+                dataset_id=job_context['dataset'].id,
             )
             return unsmashable(computed_file_path) 
 
@@ -617,7 +617,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
 
         # Smash all of the sample sets
         logger.debug("About to smash!",
-                     input_files=job_context['input_files'].keys(),
                      dataset_count=len(job_context['dataset'].data),
         )
 
@@ -697,7 +696,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                                        dataset_id=job_context["dataset"].id,
                                        processor_job_id=job_context["job"].id,
                                        column=column,
-                                       frame=frame
                         )
                         continue
 
