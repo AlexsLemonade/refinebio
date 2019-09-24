@@ -11,6 +11,9 @@ import string
 import warnings
 import requests
 import psutil
+import multiprocessing 
+import logging
+import time
 
 from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
@@ -44,28 +47,38 @@ S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 BODY_HTML = Path('data_refinery_workers/processors/smasher_email.min.html').read_text().replace('\n', '')
 BODY_ERROR_HTML = Path('data_refinery_workers/processors/smasher_email_error.min.html').read_text().replace('\n', '')
 logger = get_and_configure_logger(__name__)
+### DEBUG ###
+logger.setLevel(logging.getLevelName('DEBUG'))
 
-def log_state(message):
-    ram = psutil.virtual_memory().percent
-    cpu = psutil.cpu_percent()
-    logger.debug("cpu:%s - ram:%s -  %s", cpu, ram, message)
+
+def log_state(message, start_time=False):
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug("%s: cpu:%s - ram:%s" % (
+            message,
+            psutil.cpu_percent(),
+            psutil.virtual_memory().percent,
+        ))
+        if start_time:
+            logger.debug('Duration: %s' % (time.time() - start_time))
+        else:
+            return time.time()
 
 def _prepare_files(job_context: Dict) -> Dict:
     """
     Fetches and prepares the files to smash.
     """
-    log_state("start prepare files")
+    start_prepare_files = log_state("start prepare files")
     all_sample_files = []
     job_context['input_files'] = {}
-
     # `key` can either be the species name or experiment accession.
     for key, samples in job_context["samples"].items():
         smashable_files = []
+        seen_files = set()
         for sample in samples:
             smashable_file = sample.get_most_recent_smashable_result_file()
-
-            if smashable_file is not None:
+            if smashable_file is not None and smashable_file not in seen_files:
                 smashable_files = smashable_files + [(smashable_file, sample)]
+                seen_files.add(smashable_file)
         smashable_files = list(set(smashable_files))
         job_context['input_files'][key] = smashable_files
         all_sample_files = all_sample_files + smashable_files
@@ -94,7 +107,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     job_context["output_dir"] = job_context["work_dir"] + "output/"
     os.makedirs(job_context["output_dir"])
-    log_state("end prepare files")
+    log_state("end prepare files", start_prepare_files)
     return job_context
 
 
@@ -114,7 +127,7 @@ def _get_tsv_columns(samples_metadata):
     Some nested annotation fields are taken out as separate columns
     because they are more important than the others.
     """
-    log_state("start get tsv columns")
+    tsv_start = log_state("start get tsv columns")
     refinebio_columns = set()
     annotation_columns = set()
     for sample_metadata in samples_metadata.values():
@@ -160,7 +173,7 @@ def _get_tsv_columns(samples_metadata):
     # always first, followed by the other refinebio columns (in alphabetic order), and
     # annotation columns (in alphabetic order) at the end.
     refinebio_columns.discard('refinebio_accession_code')
-    log_state("end get tsv columns")
+    log_state("end get tsv columns", tsv_start)
     return ['refinebio_accession_code', 'experiment_accession'] + sorted(refinebio_columns) \
         + sorted(annotation_columns)
 
@@ -170,7 +183,7 @@ def _add_annotation_value(row_data, col_name, col_value, sample_accession_code):
     If col_name already exists in row_data with different value, print
     out a warning message.
     """
-    log_state("start add annotation value")
+    annotation_start = log_state("start add annotation value")
     # Generate a warning message if annotation field name starts with
     # "refinebio_".  This should rarely (if ever) happen.
     if col_name.startswith("refinebio_"):
@@ -190,7 +203,7 @@ def _add_annotation_value(row_data, col_name, col_value, sample_accession_code):
                 col_name, row_data[col_name], col_value),
             sample_accession_code=sample_accession_code
         )
-    log_state("end add annotation value")
+    log_state("end add annotation value", annotation_start)
 
 
 def _get_experiment_accession(sample_accession_code, dataset_data):
@@ -350,7 +363,6 @@ def _quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict
         logger.error("Could not find QN target for Organism!",
             organism=organism,
             dataset_id=job_context['dataset'].id,
-            dataset_data=job_context['dataset'].data,
             processor_job_id=job_context["job"].id,
         )
         job_context['dataset'].success = False
@@ -453,7 +465,7 @@ def _quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict
                                         str(statistic) + ", PVal: " + str(pvalue))
         else:
             logger.warning("Not enough columns to perform KS test - either bad smash or single saple smash.",
-                dset=job_context['dataset'].id)
+                dataset_id=job_context['dataset'].id)
 
         # And finally convert back to Pandas
         ar = np.array(reso)
@@ -477,6 +489,104 @@ def sync_quant_files(output_path, files_sample_tuple, job_context: Dict):
         latest_computed_file.get_synced_file_path(path=output_file_path)
     return num_samples
 
+def process_frame(inputs) -> Dict:
+    (job_context, computed_file, sample, index) = inputs
+    logger.debug('processing frame %s', index)
+    frame = {
+        "unsmashable": False,
+        "unsmashable_file": None,
+        "column_type": None,
+        "columns": None,
+        "data": None
+    }
+
+    def unsmashable(path):
+      frame['unsmashable'] = True
+      frame['unsmashable_file'] = path
+      return frame
+
+    def smashable(data):
+      frame['data'] = data
+      return frame
+
+    try:
+        # Download the file to a job-specific location so it
+        # won't disappear while we're using it.
+        computed_file_path = job_context["work_dir"] + computed_file.filename
+        computed_file_path = computed_file.get_synced_file_path(path=computed_file_path)
+
+        # Bail appropriately if this isn't a real file.
+        if not computed_file_path or not os.path.exists(computed_file_path):
+            logger.error("Smasher received non-existent file path.",
+                computed_file_path=computed_file_path,
+                computed_file=computed_file,
+                dataset_id=job_context['dataset'].id,
+            )
+            return unsmashable(computed_file_path) 
+
+        data = _load_and_sanitize_file(computed_file_path)
+
+        if len(data.columns) > 2:
+            # Most of the time, >1 is actually bad, but we also need to support
+            # two-channel samples. I think ultimately those should be given some kind of
+            # special consideration.
+            logger.info("Found a frame with more than 2 columns - this shouldn't happen!",
+                computed_file_path=computed_file_path,
+                computed_file_id=computed_file.id
+            )
+            return unsmashable(computed_file_path)
+
+        # via https://github.com/AlexsLemonade/refinebio/issues/330:
+        #   aggregating by experiment -> return untransformed output from tximport
+        #   aggregating by species -> log2(x + 1) tximport output
+        if job_context['dataset'].aggregate_by == 'SPECIES' \
+        and computed_file_path.endswith("lengthScaledTPM.tsv"):
+            data = data + 1
+            data = np.log2(data)
+
+        # Detect if this data hasn't been log2 scaled yet.
+        # Ideally done in the NO-OPPER, but sanity check here.
+        if (not computed_file_path.endswith("lengthScaledTPM.tsv")) and (data.max() > 100).any():
+            logger.info("Detected non-log2 microarray data.", file=computed_file)
+            data = np.log2(data)
+
+        # Explicitly title this dataframe
+        try:
+            # Unfortuantely, we can't use this as `title` can cause a collision
+            # data.columns = [computed_file.samples.all()[0].title]
+            # So we use this, which also helps us support the case of missing SampleComputedFileAssociation
+            data.columns = [sample.accession_code]
+        except ValueError as e:
+            # This sample might have multiple channels, or something else.
+            # Don't mess with it.
+            logger.exception("Smasher found multi-channel column (probably) - skipping!",
+                computed_file_path=computed_file_path,
+            )
+            return unsmashable(computed_file.filename)
+        except Exception as e:
+            # Okay, somebody probably forgot to create a SampleComputedFileAssociation
+            # Don't mess with it.
+            logger.exception("Smasher found very bad column title - skipping!",
+                computed_file_path=computed_file_path
+            )
+            return unsmashable(computed_file.filename)
+
+        is_rnaseq = computed_file_path.endswith("lengthScaledTPM.tsv")
+        frame['column_type'] = 'rnaseq' if is_rnaseq else 'microarray'
+
+    except Exception as e:
+        logger.exception("Unable to smash file",
+            file=computed_file_path,
+            dataset_id=job_context['dataset'].id,
+        )
+        return unsmashable(computed_file_path)
+    finally:
+        # Delete before archiving the work dir
+        if computed_file_path and os.path.exists(computed_file_path):
+            os.remove(computed_file_path)
+
+    return smashable(data)
+
 def _smash(job_context: Dict, how="inner") -> Dict:
     """
     Smash all of the samples together!
@@ -487,7 +597,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         Scale features with sci-kit learn
         Transpose again such that samples are columns and genes are rows
     """
-
+    start_smash = log_state("start smash")
     # We have already failed - return now so we can send our fail email.
     if job_context['dataset'].failure_reason not in ['', None]:
         return job_context
@@ -507,8 +617,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
 
         # Smash all of the sample sets
         logger.debug("About to smash!",
-                     input_files=job_context['input_files'].keys(),
-                     dataset_data=len(job_context['dataset'].data),
+                     dataset_count=len(job_context['dataset'].data),
         )
 
         job_context['technologies'] = {'microarray': [], 'rnaseq': []}
@@ -524,119 +633,33 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 # we ONLY want to give quant sf files to the user if that's what they requested
                 continue
 
-            log_state("build frames for species or experiment")
+            start_frames = log_state("build frames for species or experiment")
             # Merge all the frames into one
-            all_frames = [None] * len(input_files) if input_files else []
-            all_frames_index = 0
-
-            technologies_rnaseq= [None] * len(all_frames)
-            technologies_microarray = [None] * len(all_frames)
-
-            for computed_file, sample in input_files:
-                log_state("input file iteration")
-                try:
-                    # Download the file to a job-specific location so it
-                    # won't disappear while we're using it.
-
-                    computed_file_path = job_context["work_dir"] + computed_file.filename
-                    computed_file_path = computed_file.get_synced_file_path(path=computed_file_path)
-
-                    # Bail appropriately if this isn't a real file.
-                    if not computed_file_path or not os.path.exists(computed_file_path):
-                        unsmashable_files.append(computed_file_path)
-                        logger.error("Smasher received non-existent file path.",
-                            computed_file_path=computed_file_path,
-                            computed_file=computed_file,
-                            dataset=job_context['dataset'],
-                            )
-                        continue
-
-                    data = _load_and_sanitize_file(computed_file_path)
-
-                    if len(data.columns) > 2:
-                        # Most of the time, >1 is actually bad, but we also need to support
-                        # two-channel samples. I think ultimately those should be given some kind of
-                        # special consideration.
-                        logger.info("Found a frame with more than 2 columns - this shouldn't happen!",
-                            computed_file_path=computed_file_path,
-                            computed_file_id=computed_file.id
-                            )
-                        continue
-
-                    # via https://github.com/AlexsLemonade/refinebio/issues/330:
-                    #   aggregating by experiment -> return untransformed output from tximport
-                    #   aggregating by species -> log2(x + 1) tximport output
-                    if job_context['dataset'].aggregate_by == 'SPECIES' \
-                        and computed_file_path.endswith("lengthScaledTPM.tsv"):
-                        data = data + 1
-                        data = np.log2(data)
-
-                    # Detect if this data hasn't been log2 scaled yet.
-                    # Ideally done in the NO-OPPER, but sanity check here.
-                    if (not computed_file_path.endswith("lengthScaledTPM.tsv")) and (data.max() > 100).any():
-                        logger.info("Detected non-log2 microarray data.", file=computed_file)
-                        data = np.log2(data)
-
-                    # Explicitly title this dataframe
-                    try:
-                        # Unfortuantely, we can't use this as `title` can cause a collision
-                        # data.columns = [computed_file.samples.all()[0].title]
-                        # So we use this, which also helps us support the case of missing SampleComputedFileAssociation
-                        data.columns = [sample.accession_code]
-                    except ValueError as e:
-                        # This sample might have multiple channels, or something else.
-                        # Don't mess with it.
-                        logger.exception("Smasher found multi-channel column (probably) - skipping!",
-                            computed_file_path=computed_file_path
-                        )
-                        unsmashable_files.append(computed_file.filename)
-                        continue
-                    except Exception as e:
-                        # Okay, somebody probably forgot to create a SampleComputedFileAssociation
-                        # Don't mess with it.
-                        logger.exception("Smasher found very bad column title - skipping!",
-                            computed_file_path=computed_file_path
-                        )
-                        unsmashable_files.append(computed_file.filename)
-                        continue
-
-                    if computed_file_path.endswith("lengthScaledTPM.tsv"):
-                        technologies_rnaseq[all_frames_index] = data.columns
-                    else:
-                        technologies_microarray[all_frames_index] = data.columns
-
-                    all_frames[all_frames_index] = data
-                    all_frames_index += 1
-                    num_samples = num_samples + 1
-
-                    if (num_samples % 100) == 0:
-                        logger.debug("Loaded " + str(num_samples) + " samples into frames.",
-                            dataset_id=job_context['dataset'].id,
-                            how=how
-                        )
-
-                except Exception as e:
-                    unsmashable_files.append(computed_file_path)
-                    logger.exception("Unable to smash file",
-                        file=computed_file_path,
-                        dataset_id=job_context['dataset'].id,
-                        )
-                finally:
-                    # Delete before archiving the work dir
-                    if computed_file_path:
-                        os.remove(computed_file_path)
-
-            all_frames = all_frames[0:all_frames_index]
+            #cpus = max(1, psutil.cpu_count()/2)
+            #with multiprocessing.Pool(int(cpus)) as pool:
+            #    processed_frames = pool.map(
+            mapped_frames = map(
+                process_frame,
+                [(
+                    job_context,
+                    computed_file,
+                    sample,
+                    i
+                ) for i, (computed_file, sample) in enumerate(input_files)
+            ])
+            processed_frames = list(mapped_frames)
+            all_frames = [f['data'] for f in processed_frames if f['data'] is not None]
+            num_samples = num_samples + len([x for x in all_frames])
+            unsmashable_files = unsmashable_files + [f['unsmashable_file'] for f in processed_frames if f['unsmashable']]
             job_context['all_frames'] = all_frames
             job_context['technologies'] = {
-                'microarray': [x for x in technologies_microarray if not None],
-                'rnaseq': [x for x in technologies_rnaseq if not None]
+                'microarray': [f['data'].columns for f in processed_frames if f['column_type'] is 'microarray'],
+                'rnaseq': [f['data'].columns for f in processed_frames if f['column_type'] is 'rnaseq']
             }
-            log_state("set all frames")
+            log_state("set all frames", start_frames)
             if len(all_frames) < 1:
                 logger.warning("Was told to smash a frame with no frames!",
-                    key=key,
-                    input_files=str(input_files)
+                    key=key
                 )
                 continue
 
@@ -672,7 +695,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                                        dataset_id=job_context["dataset"].id,
                                        processor_job_id=job_context["job"].id,
                                        column=column,
-                                       frame=frame
                         )
                         continue
 
@@ -707,12 +729,13 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 merged = pd.concat(all_frames, axis=1, keys=None, join='outer', copy=False, sort=True)
 
             job_context['original_merged'] = merged
-
+            log_state("end build frames", start_frames)
+            start_qn = log_state("start qn", start_frames)
             # Quantile Normalization
             if job_context['dataset'].quantile_normalize:
                 try:
                     job_context['merged_no_qn'] = merged
-                    job_context['organism'] = computed_file.samples.first().organism
+                    job_context['organism'] = job_context['dataset'].get_samples().first().organism
                     job_context = _quantile_normalize(job_context)
                     merged = job_context.get('merged_qn', None)
                     # We probably don't have an QN target or there is another error,
@@ -721,7 +744,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                         e = "Problem occured during quantile normalization: No merged_qn"
                         logger.error(e,
                             dataset_id=job_context['dataset'].id,
-                            dataset_data=job_context['dataset'].data,
                             processor_job_id=job_context["job"].id,
                         )
                         job_context['dataset'].success = False
@@ -735,7 +757,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 except Exception as e:
                     logger.exception("Problem occured during quantile normalization",
                         dataset_id=job_context['dataset'].id,
-                        dataset_data=job_context['dataset'].data,
                         processor_job_id=job_context["job"].id,
                     )
                     job_context['dataset'].success = False
@@ -747,13 +768,13 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     job_context['failure_reason'] = str(e)
                     return job_context
             # End QN
-
+            log_state("end qn", start_qn)
             # Transpose before scaling
             # Do this even if we don't want to scale in case transpose
             # modifies the data in any way. (Which it shouldn't but
             # we're paranoid.)
             transposed = merged.transpose()
-
+            start_scaler = log_state("starting scaler")
             # Scaler
             if job_context['dataset'].scale_by != "NONE":
                 scale_funtion = scalers[job_context['dataset'].scale_by]
@@ -768,6 +789,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             else:
                 # Wheeeeeeeeeee
                 untransposed = transposed.transpose()
+            log_state("end scaler", start_scaler)
 
             # This is just for quality assurance in tests.
             job_context['final_frame'] = untransposed
@@ -831,7 +853,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 json.dump(metadata, metadata_file, indent=4, sort_keys=True)
         except Exception as e:
             logger.exception("Failed to write metadata TSV!",
-                j_id = job_context['job'].id)
+                job_id = job_context['job'].id)
             job_context['metadata_tsv_paths'] = None
         metadata['files'] = os.listdir(smash_path)
 
@@ -843,7 +865,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         logger.exception("Could not smash dataset.",
                         dataset_id=job_context['dataset'].id,
                         processor_job_id=job_context['job_id'],
-                        input_files=job_context['input_files'])
+                        input_files=len(job_context['input_files']))
         job_context['dataset'].success = False
         job_context['job'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].failure_reason = "Failure reason: " + str(e)
@@ -852,7 +874,6 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         job_context['job'].success = False
         job_context['failure_reason'] = str(e)
         return job_context
-
     job_context['metadata'] = metadata
     job_context['unsmashable_files'] = unsmashable_files
     job_context['dataset'].success = True
@@ -861,6 +882,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
     logger.debug("Created smash output!",
         archive_location=job_context["output_file"])
 
+    log_state("end smash", start_smash);
     return job_context
 
 def _load_and_sanitize_file(computed_file_path):

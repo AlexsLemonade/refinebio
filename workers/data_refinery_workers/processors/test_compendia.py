@@ -1,7 +1,7 @@
 import os
 import shutil
 from contextlib import closing
-from django.test import TestCase, tag
+from django.test import TransactionTestCase, TestCase, tag
 from unittest.mock import MagicMock
 from data_refinery_common.models import (
     SurveyJob,
@@ -24,7 +24,7 @@ from data_refinery_common.models import (
 from data_refinery_workers.processors import create_compendia, smasher, utils
 
 
-class CompendiaTestCase(TestCase):
+class CompendiaTestCase(TransactionTestCase):
 
     @tag('compendia')
     def test_sanity(self):
@@ -118,6 +118,7 @@ class CompendiaTestCase(TestCase):
         dset.data = {'GSE1487313': ['GSM1487313'], 'SRX332914': ['SRS332914']}
         dset.scale_by = 'NONE'
         dset.aggregate_by = 'SPECIES'
+        dset.svd_algorithm = 'ARPACK'
         dset.quantile_normalize = False
         dset.save()
 
@@ -126,8 +127,11 @@ class CompendiaTestCase(TestCase):
         pjda.dataset = dset
         pjda.save()
 
+#        with self.assertRaises(ValueError):
         final_context = create_compendia.create_compendia(job.id)
-        self.assertFalse(final_context['success'])
+
+        self.assertFalse(job.success)
+ 
 
     @tag('compendia')
     def test_create_compendia_danio(self):
@@ -251,6 +255,7 @@ class CompendiaTestCase(TestCase):
         dset.data = {'GSE1234': micros, 'GSE5678': rnas}
         dset.scale_by = 'NONE'
         dset.aggregate_by = 'SPECIES'
+        dset.svd_algorithm = 'ARPACK'
         dset.quantile_normalize = False
         dset.save()
 

@@ -20,7 +20,7 @@ from data_refinery_workers.processors import create_compendia
 logger = get_and_configure_logger(__name__)
 
 
-def create_job_for_organism(organism=Organism, quant_sf_only=False):
+def create_job_for_organism(organism=Organism, quant_sf_only=False, svd_algorithm='ARPACK'):
     """Returns a compendia job for the provided organism.
 
     Fetch all of the experiments and compile large but normally formated Dataset.
@@ -40,6 +40,7 @@ def create_job_for_organism(organism=Organism, quant_sf_only=False):
     dset.aggregate_by = 'SPECIES'
     dset.quantile_normalize = False
     dset.quant_sf_only = quant_sf_only
+    dset.svd_algorithm = svd_algorithm
     dset.save()
 
     pjda = ProcessorJobDatasetAssociation()
@@ -63,6 +64,11 @@ class Command(BaseCommand):
             type=lambda x: x == "True",
             help=("Whether to create a quantpendium or normal compendium."))
 
+        parser.add_argument(
+            "--svd-algorithm",
+            type=str,
+            help=("Specify SVD algorithm applied during imputation ARPACK, RANDOMIZED or NONE to skip."))
+
     def handle(self, *args, **options):
         """Create a compendium for one or more organisms.
 
@@ -83,16 +89,21 @@ class Command(BaseCommand):
         if options["quant_sf_only"] is True:
             quant_sf_only = True
 
+        # default algorithm to arpack until we decide that ranomized is preferred
+        svd_algorithm = 'NONE' if quant_sf_only else 'ARPACK' 
+        if options["svd_algrothm"] in ['ARPACK', 'RANDOMIZED', 'NONE']:
+            svd_algorithm = options["svd_algorithm"]
+
         logger.error(all_organisms)
 
         if all_organisms.count() > 1:
             for organism in all_organisms:
                 logger.error(organism)
-                job = create_job_for_organism(organism, quant_sf_only)
+                job = create_job_for_organism(organism, quant_sf_only, svd_algorithm)
                 logger.info("Sending CREATE_COMPENDIA for Organism", job_id=str(job.pk), organism=str(organism))
                 send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
         else:
-            job = create_job_for_organism(all_organisms[0], quant_sf_only)
+            job = create_job_for_organism(all_organisms[0], quant_sf_only, svd_algorithm)
             create_compendia.create_compendia(job.id)
 
         sys.exit(0)
