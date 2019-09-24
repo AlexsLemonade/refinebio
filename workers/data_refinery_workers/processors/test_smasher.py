@@ -1136,7 +1136,7 @@ class SmasherTestCase(TransactionTestCase):
         self.assertTrue(final_context.get('success', True))
 
 
-class CompendiaTestCase(TestCase):
+class CompendiaTestCase(TransactionTestCase):
     """Testing management commands are hard.  Since there is always an explicit
     sys.exit (which is really an Exception), we have to do weird stdio rerouting
     to capture the result. Really, these are just sanity tests.
@@ -1167,7 +1167,7 @@ class CompendiaTestCase(TestCase):
         sys.stdout = old_stdout
 
 
-class AggregationTestCase(TestCase):
+class AggregationTestCase(TransactionTestCase):
     """Test the tsv file generation."""
     def setUp(self):
         self.metadata = {
