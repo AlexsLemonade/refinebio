@@ -1,9 +1,15 @@
 from django.db import migrations, models
+from django.core.paginator import Paginator
 
 def set_existing_compendia_svd_algorithm(apps, schema_editor):
     """ Fixes existing compendia svd algorithm - defaulted NONE corrects to ARPACK """ 
     ComputedFile = apps.get_model('data_refinery_common', 'ComputedFile')
-    ComputedFile.objects.all().filter(is_compendia=True).update(svd_algorithm="ARPACK")
+
+    paginator = Paginator(ComputedFile.objects.all().order_by('id'), 1000)
+    for page_idx in range(1, paginator.num_pages):
+        for computedFile in paginator.page(page_idx).object_list:
+            if computedFile.is_compendia:
+                computedFile.update(svd_algorithm="ARPACK")
 
 
 class Migration(migrations.Migration):
