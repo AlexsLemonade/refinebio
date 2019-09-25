@@ -6,7 +6,7 @@ FROM python:3.6.1
 RUN apt-get update
 RUN apt-get -y install git procps lsb-release wget curl unzip python3-pip jq iproute2 r-base r-base-dev
 RUN pip install --upgrade pip
-RUN pip install -U pip-tools setuptools pylint pylint-django pytest==5.0.1 pytest-django pytest-pythonpath pytest-env
+RUN pip install -U pip-tools setuptools pylint==2.3.1 pylint-django==2.0.11 pytest==5.0.1 pytest-django pytest-pythonpath pytest-env autopep8
 
 # install git-crypt
 RUN curl -L https://github.com/AGWA/git-crypt/archive/0.6.0.tar.gz | tar zxv -C /var/tmp

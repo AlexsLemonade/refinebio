@@ -10,9 +10,11 @@
 	"settings": {
 		"python.pythonPath": "/usr/local/bin/python",
 		"python.jediEnabled": false,
+		"python.analysis.disabled": ["undefined-variable", "unresolved-import"],
 		"python.linting.pylintEnabled": true,
-		"python.linting.enabled": true,
-		"python.linting.pylintArgs": ["--load-plugin", "pylint_django"],
+		"python.linting.enabled": false,
+		"python.linting.pylintUseMinimalCheckers": true,
+		"python.linting.pylintArgs": ["--load-plugins", "pylint_django"],
 		"python.testing.pytestEnabled": true,
 		"python.testing.pytestArgs": []
 	},
