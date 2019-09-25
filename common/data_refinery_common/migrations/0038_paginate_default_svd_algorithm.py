@@ -13,7 +13,7 @@ def batch_update(queryset, batch=1000, **changes):
         if pks:
             queryset.model.objects.filter(pk__in=pks).update(**changes)
 
-        is_done = len(pks) <= batch
+        is_done = len(pks) < batch
 
 def set_computed_file_svd_algorithm_arpack(apps, schema_editor):
     """ Set svd_algorithm for computed files - ARPACK when is_compendia"""
