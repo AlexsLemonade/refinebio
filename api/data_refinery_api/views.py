@@ -849,6 +849,18 @@ class AboutStats(APIView):
     """ Returns general stats for the site, used in the about page """
     @method_decorator(cache_page(10 * 60))
     def get(self, request, version, format=None):
+        # static values for now
+        dummy = request.query_params.dict().pop('dummy', None)
+        if dummy:
+            # add a dummy response, calculated these on 09/25/2019
+            result = {
+                'samples_available': 904953 + 391022,
+                'total_size_in_bytes': 832195361132962,
+                'supported_organisms': 43 + 159,
+                'experiments_processed': 35785 + 8661
+            }
+            return Response(result)
+
         result = {
             'samples_available': self._get_samples_available(),
             'total_size_in_bytes': OriginalFile.objects.aggregate(total_size=Sum('size_in_bytes'))['total_size'],
@@ -859,12 +871,17 @@ class AboutStats(APIView):
 
     def _get_experiments_processed(self):
         """ total experiments with at least one sample processed """
-        experiments_with_sample_processed = Experiment.objects.filter(samples__is_processed=True).distinct().count()
-        experiments_with_sample_quant = Experiment.objects.filter(
-            samples__is_processed=False,
-            sample__technology='RNA-SEQ',
-            sample__results__computedfile__filename='quant.sf'
-        ).distinct().count()
+        experiments_with_sample_processed = Experiment.objects\
+            .annotate(
+                processed_samples_count=Count('samples', filter=Q(samples__is_processed=True)),
+            )\
+            .filter(Q(processed_samples_count__gt=1))\
+            .count()
+        experiments_with_sample_quant = ComputedFile.objects\
+            .filter(filename='quant.sf', result__samples__is_processed=False)\
+            .values_list('result__samples__experiments', flat=True)\
+            .distinct()\
+            .count()
         return experiments_with_sample_processed + experiments_with_sample_quant
 
     def _get_supported_organisms(self):
