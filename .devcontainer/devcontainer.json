@@ -26,7 +26,6 @@
 	"extensions": [
 		"ms-python.python",
 		"donjayamanne.python-extension-pack",
-		"VisualStudioExptTeam.vscodeintellicode",
-		"littlefoxteam.vscode-python-test-adapter"
+		"VisualStudioExptTeam.vscodeintellicode"
 	]
 }
