@@ -3,16 +3,17 @@ from django.db import migrations, models
 def batch_update(queryset, batch=1000, **changes):
     """ Update per batch """
     is_done = False
-    current = 1
+    current = 0
 
     while not is_done:
+        current = current + 1
         start = (current - 1) * batch
         end = start + batch
         pks = queryset.values_list('pk', flat=True)[start:end][::1]
-        queryset.model.objects.filter(pk__in=pks).update(**changes)
+        if pks:
+            queryset.model.objects.filter(pk__in=pks).update(**changes)
+
         is_done = len(pks) <= batch
-        if not is_done:
-            current = current + 1
 
 def set_computed_file_svd_algorithm_arpack(apps, schema_editor):
     """ Set svd_algorithm for computed files - ARPACK when is_compendia"""
