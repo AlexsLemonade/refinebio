@@ -86,6 +86,8 @@ class Command(BaseCommand):
                         accession_code=experiment.accession_code,
                         created_at=current_time
                     ).save()
+                except Exception:
+                    logger.exception("Caught an exception with %s!", experiment.accession_code)
                 finally:
                     # GEOparse downloads files here and never cleans them up! Grrrr!
                     download_path = GEO_TEMP_DIR + experiment.accession_code + '_family.soft.gz'
