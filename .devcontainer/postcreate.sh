@@ -12,3 +12,6 @@ mkdir -p ~/.ssh \
 
 git config commit.gpgsign false
 
+# https://click.palletsprojects.com/en/7.x/python3/#python-3-surrogate-handling
+export LC_ALL=C.UTF-8
+export LANG=C.UTF-8
