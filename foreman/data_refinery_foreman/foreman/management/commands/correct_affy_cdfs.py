@@ -93,12 +93,12 @@ class Command(BaseCommand):
                     download_path = GEO_TEMP_DIR + experiment.accession_code + '_family.soft.gz'
                     # It's not a directory, but ignore_errors is useful.
                     try:
-                        os.remove(download_path, ignore_errors=True)
+                        os.remove(download_path)
                     except:
                         # Don't anything interrupt this, like say,
                         # GEOParse downloading a directory instead of
                         # a file...
-                        pass
+                        logger.exception("Failed to delete an archive.")
 
 
             if not page.has_next():
