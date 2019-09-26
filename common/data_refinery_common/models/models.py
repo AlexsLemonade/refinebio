@@ -670,6 +670,7 @@ class OriginalFile(models.Model):
 
         indexes = [
             models.Index(fields=['filename']),
+            models.Index(fields=['source_url']),
             models.Index(fields=['source_filename']),
         ]
 
@@ -801,7 +802,7 @@ class OriginalFile(models.Model):
                 return True
 
             if computed_file.s3_bucket and computed_file.s3_key \
-               and computed_file.result.organism_index != None \
+               and computed_file.result.organism_index is not None \
                and computed_file.result.organism_index.salmon_version == CURRENT_SALMON_VERSION:
                 # If the file wasn't computed with the latest
                 # version of salmon, then it should be rerun
@@ -816,6 +817,8 @@ class OriginalFile(models.Model):
             # dispatching.
             for sample in self.samples.all():
                 computed_file = sample.get_most_recent_smashable_result_file()
+                if not computed_file:
+                    return True
                 if not sample.is_processed \
                    or computed_file.s3_bucket is None \
                    or computed_file.s3_key is None:

@@ -10,7 +10,7 @@ the experiment and reprocess it correctly.
 """
 
 import GEOparse
-import shutil
+import os
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -92,7 +92,13 @@ class Command(BaseCommand):
                     # GEOparse downloads files here and never cleans them up! Grrrr!
                     download_path = GEO_TEMP_DIR + experiment.accession_code + '_family.soft.gz'
                     # It's not a directory, but ignore_errors is useful.
-                    shutil.rmtree(download_path, ignore_errors=True)
+                    try:
+                        os.remove(download_path)
+                    except:
+                        # Don't anything interrupt this, like say,
+                        # GEOParse downloading a directory instead of
+                        # a file...
+                        logger.exception("Failed to delete an archive.")
 
 
             if not page.has_next():

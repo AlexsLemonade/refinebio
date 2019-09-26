@@ -4,10 +4,11 @@ import rpy2.robjects as ro
 
 from rpy2.rinterface import RRuntimeError
 from typing import Dict
+from data_refinery_common.logging import get_and_configure_logger
 
+logger = get_and_configure_logger(__name__)
 
 ENSG_PKG_FILENAME = "/home/user/r_ensg_probe_pkgs.txt"
-
 
 def get_platform_from_CEL(cel_file_path: str) -> str:
     """.CEL files have a header which contains platform information.
