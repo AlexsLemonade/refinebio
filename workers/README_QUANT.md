@@ -1,7 +1,7 @@
 # refine.bio RNA-Seq Sample Compendium
 
 This is a refine.bio RNA-seq sample compendium.
-It represents the Salmon output for the collection of RNA-seq samples from an organism that can be processed with refine.bio.
+It represents the Salmon output for the collection of RNA-seq samples from an organism that have been processed with refine.bio.
 Each individual sample has its own `quant.sf` file; the samples have not been aggregated and normalized.
 RNA-seq sample compendia are designed to allow users that are comfortable handling these files to generate output that is most useful for their downstream applications.
 
