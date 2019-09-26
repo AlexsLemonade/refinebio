@@ -25,7 +25,7 @@ The contents of a sample's `refinebio_annotations` field in JSON files include t
 
 _Note that we use the terms "sample" and "experiment" to be consistent with the rest of refine.bio, but files will use run identifiers and project identifiers, respectively._
 
-Please see [our documentation](http://docs.refine.bio/en/latest/) for more details.
+Please see [our documentation](http://docs.refine.bio/en/latest/main_text.html#rna-seq-sample-compendia) for more details.
 
 ## Contact
 

@@ -3,7 +3,7 @@
 This is a refine.bio normalized compendium comprised of all the samples from a species that we were able to process, aggregate, and normalize. 
 Normalized compendia provide a snapshot of the most complete collection of gene expression that refine.bio can produce for each supported organism.
 
-You can read more about how we process species compendia in [our documentation](http://docs.refine.bio/en/latest/main_text.html#species-compendia).
+You can read more about how we process refine.bio compendia in [our documentation](http://docs.refine.bio/en/latest/main_text.html#refine-bio-compendia).
 
 ## Contents
 
