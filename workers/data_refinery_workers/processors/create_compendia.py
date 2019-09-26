@@ -33,7 +33,6 @@ from data_refinery_workers.processors import utils, smasher#, visualize
 
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
-S3_COMPENDIA_BUCKET_NAME = get_env_variable("S3_COMPENDIA_BUCKET_NAME", "data-refinery-compendia")
 logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
@@ -369,7 +368,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
     # Upload the result to S3
     key = job_context['samples'][organism_key][0].organism.name + "_" + str(compendia_version) + "_" + str(int(time.time())) + ".zip"
-    archive_computed_file.sync_to_s3(S3_COMPENDIA_BUCKET_NAME, key)
+    archive_computed_file.sync_to_s3(S3_BUCKET_NAME, key)
 
     job_context['result'] = result
     job_context['computed_files'] = [compendia_tsv_computed_file, metadata_computed_file, archive_computed_file]
