@@ -752,7 +752,8 @@ resource "aws_instance" "foreman_server_1" {
   # They should be removed or revisited.
   root_block_device = {
     volume_type = "gp2"
-    volume_size = 100
+    # TODO set this back 100 once correct_affy_cdfs finishes!
+    volume_size = 1000
   }
 }
 
