@@ -111,7 +111,7 @@ class ProcessorEnum(Enum):
     @classmethod
     def has_key(cls, key):
         """Class method that tells whether a certain key exists."""
-        return key in cls.__members__Z
+        return key in cls.__members__
 
 
 class ProcessorPipeline(Enum):
@@ -130,6 +130,7 @@ class ProcessorPipeline(Enum):
     RUN_QN_JOB = "RUN_QN_JOB"
     JANITOR = "JANITOR"
     NONE = "NONE"
+    CREATE_COMPENDIA = "CREATE_COMPENDIA"
 
 
 def does_processor_job_have_samples(job: ProcessorJob):
