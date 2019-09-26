@@ -670,6 +670,7 @@ class OriginalFile(models.Model):
 
         indexes = [
             models.Index(fields=['filename']),
+            models.Index(fields=['source_url']),
             models.Index(fields=['source_filename']),
         ]
 
