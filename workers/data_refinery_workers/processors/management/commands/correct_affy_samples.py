@@ -93,11 +93,12 @@ class Command(BaseCommand):
 
         Basically does what is described at the top of this file.
         """
-        # Create working dir
         LOCAL_ROOT_DIR = get_env_variable("LOCAL_ROOT_DIR", "/home/user/data_store")
         work_dir = LOCAL_ROOT_DIR + "/affy_correction/"
-        os.makedirs(work_dir, exist_ok=True)
         for sample in Sample.objects.filter(technology='RNA-SEQ', source_database='GEO'):
+            # Re-create working dir every iteration so we can't run out of disk space.
+            shutil.rmtree(work_dir, ignore_errors=True)
+            os.makedirs(work_dir, exist_ok=True)
             for original_file in sample.original_files.all():
                 if original_file.is_affy_data() :
                     input_file_path = work_dir + original_file.source_filename
@@ -134,6 +135,3 @@ class Command(BaseCommand):
                     # this sample, we don't need them because we
                     # already corrected the platform.
                     break
-
-        # Cleanup after ourselves:
-        shutil.rmtree(work_dir)
