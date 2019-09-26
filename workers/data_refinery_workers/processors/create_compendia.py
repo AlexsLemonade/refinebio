@@ -105,7 +105,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
      - Remove samples (columns) with >50% missing values in combined_matrix
      - "Reset" zero values that were set to NA in RNA-seq samples (i.e., make these zero again) in combined_matrix
      - Transpose combined_matrix; transposed_matrix
-     - Perform imputation of missing values with IterativeSVD (rank=10) on the transposed_matrix; imputed_matrix 
+     - Perform imputation of missing values with IterativeSVD (rank=10) on the transposed_matrix; imputed_matrix
         -- with specified svd algorithm or skip
      - Untranspose imputed_matrix (genes are now rows, samples are now columns)
      - Quantile normalize imputed_matrix where genes are rows and samples are columns
@@ -325,8 +325,13 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
     # Create the resulting archive
     final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk) + "_compendia"
-    # Copy LICENSE.txt and README.md files
-    shutil.copy("/home/user/README_COMPENDIUM.md", job_context["output_dir"] + "/README.md")
+    # Copy LICENSE.txt and correct README.md files.
+    if job_context["dataset"].quant_sf_only:
+        readme_file = "/home/user/README_QUANT.md"
+    else:
+        readme_file = "/home/user/README_NORMALIZED.md"
+
+    shutil.copy(readme_file, job_context["output_dir"] + "/README.md")
     shutil.copy("/home/user/LICENSE_DATASET.txt", job_context["output_dir"] + "/LICENSE.TXT")
     archive_path = shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
 
