@@ -36,7 +36,8 @@ from .views import (
     QNTargetsDetail,
     QNTargetsAvailable,
     CompendiaDetail,
-    ComputedFilesList
+    ComputedFilesList,
+    AboutStats
 )
 
 # This provides _public_ access to the /admin interface!
@@ -99,6 +100,7 @@ urlpatterns = [
 
         # Dashboard Driver
         url(r'^stats/$', Stats.as_view(), name='stats'),
+        url(r'^stats-about/$', AboutStats.as_view(), name='stats_about'),
 
         # Transcriptome Indices and QN Targets
         url(r'^transcriptome_indices/$', TranscriptomeIndexList.as_view(), name='transcriptome_indices'),

@@ -1,7 +1,7 @@
 import os
 import shutil
 from contextlib import closing
-from django.test import TestCase, tag
+from django.test import TransactionTestCase, TestCase, tag
 from unittest.mock import MagicMock
 from data_refinery_common.models import (
     SurveyJob,
@@ -21,7 +21,7 @@ from data_refinery_common.models.organism import Organism
 from data_refinery_workers.processors import qn_reference, smasher, utils
 
 
-class QNRefTestCase(TestCase):
+class QNRefTestCase(TransactionTestCase):
 
     @tag('qn')
     def test_sanity(self):

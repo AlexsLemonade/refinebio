@@ -9,7 +9,7 @@ job "CREATE_COMPENDIA" {
 
   parameterized {
     payload       = "forbidden"
-    meta_required = ["ORGANISMS", "QUANT_SF_ONLY"]
+    meta_required = ["ORGANISMS", "QUANT_SF_ONLY", "SVD_ALGORITHM"]
   }
 
   group "jobs" {
@@ -54,7 +54,7 @@ job "CREATE_COMPENDIA" {
         RUNNING_IN_CLOUD = "${{RUNNING_IN_CLOUD}}"
 
         USE_S3 = "${{USE_S3}}"
-        S3_COMPENDIA_BUCKET_NAME = "${{S3_COMPENDIA_BUCKET_NAME}}"
+        S3_BUCKET_NAME = "${{S3_BUCKET_NAME}}"
         LOCAL_ROOT_DIR = "${{LOCAL_ROOT_DIR}}"
         MAX_DOWNLOADER_JOBS_PER_NODE = "${{MAX_DOWNLOADER_JOBS_PER_NODE}}"
 
@@ -90,6 +90,7 @@ job "CREATE_COMPENDIA" {
           "create_compendia",
           "--organisms", "${NOMAD_META_ORGANISMS}",
           "--quant-sf-only", "${NOMAD_META_QUANT_SF_ONLY}",
+          "--svd-algorithm", "${NOMAD_META_SVD_ALGORITHM}",
         ]
         ${{EXTRA_HOSTS}}
         volumes = ["${{VOLUME_DIR}}:/home/user/data_store"]

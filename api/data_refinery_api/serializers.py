@@ -118,6 +118,7 @@ class ComputedFileSerializer(serializers.ModelSerializer):
             'is_qc',
             'is_compendia',
             'quant_sf_only',
+            'svd_algorithm',
             'sha1',
             's3_bucket',
             's3_key',
@@ -138,6 +139,7 @@ class ComputedFileWithUrlSerializer(serializers.ModelSerializer):
             'is_qc',
             'is_compendia',
             'quant_sf_only',
+            'svd_algorithm',
             'sha1',
             's3_bucket',
             's3_key',
@@ -656,6 +658,7 @@ class DatasetSerializer(serializers.ModelSerializer):
                     'download_url',
                     'quantile_normalize',
                     'quant_sf_only',
+                    'svd_algorithm',
                     'worker_version'
             )
         extra_kwargs = {
@@ -775,6 +778,7 @@ class CompendiaSerializer(serializers.ModelSerializer):
                     'filename',
                     'size_in_bytes',
                     'is_compendia',
+                    'quant_sf_only',
                     'compendia_version',
                     'organism_name',
                     'sha1',

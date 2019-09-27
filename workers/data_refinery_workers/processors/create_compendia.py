@@ -6,6 +6,7 @@ import subprocess
 import time
 import warnings
 import psutil
+import logging
 
 import numpy as np
 import pandas as pd
@@ -32,20 +33,25 @@ from data_refinery_workers.processors import utils, smasher#, visualize
 
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
-S3_COMPENDIA_BUCKET_NAME = get_env_variable("S3_COMPENDIA_BUCKET_NAME", "data-refinery-compendia")
 logger = get_and_configure_logger(__name__)
+### DEBUG ###
+logger.setLevel(logging.getLevelName('DEBUG'))
 
 
-def log_state(message):
-    # get ram usage
-    ram = psutil.virtual_memory().percent
-    # get cpu usage
-    cpu = psutil.cpu_percent()
-
-    logger.debug("cpu:%s - ram:%s - %s", cpu, ram, message)
+def log_state(message, start_time=False):
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug("%s: cpu:%s - ram:%s" % (
+            message,
+            psutil.cpu_percent(),
+            psutil.virtual_memory().percent,
+        ))
+        if start_time:
+            logger.debug('Duration: %s' % (time.time() - start_time))
+        else:
+            return time.time()
 
 def _prepare_input(job_context: Dict) -> Dict:
-    log_state("start prepare input")
+    start_time = log_state("prepare input")
     # We're going to use the smasher outside of the smasher.
     # I'm not crazy about this yet. Maybe refactor later,
     # but I need the data now.
@@ -77,7 +83,7 @@ def _prepare_input(job_context: Dict) -> Dict:
     job_context['smashed_file'] = outfile
     job_context['target_file'] = outfile_base + '_target.tsv'
 
-    log_state("end prepare input")
+    log_state("prepare input done", start_time)
     return job_context
 
 def _perform_imputation(job_context: Dict) -> Dict:
@@ -99,14 +105,14 @@ def _perform_imputation(job_context: Dict) -> Dict:
      - "Reset" zero values that were set to NA in RNA-seq samples (i.e., make these zero again) in combined_matrix
      - Transpose combined_matrix; transposed_matrix
      - Perform imputation of missing values with IterativeSVD (rank=10) on the transposed_matrix; imputed_matrix
+        -- with specified svd algorithm or skip
      - Untranspose imputed_matrix (genes are now rows, samples are now columns)
      - Quantile normalize imputed_matrix where genes are rows and samples are columns
 
     """
-    log_state("start perform imputation")
+    imputation_start = log_state("start perform imputation")
     job_context['time_start'] = timezone.now()
 
-    log_state("platform imputation")
     # Combine all microarray samples with a full join to form a microarray_expression_matrix (this may end up being a DataFrame)
     microarray_expression_matrix = job_context['microarray_inputs']
 
@@ -119,7 +125,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # Calculate the 10th percentile of rnaseq_row_sums
     rnaseq_tenth_percentile = np.percentile(rnaseq_row_sums, 10)
 
-    log_state("drop all rows")
+    drop_start = log_state("drop all rows")
     # Drop all rows in rnaseq_expression_matrix with a row sum < 10th percentile of rnaseq_row_sums; this is now filtered_rnaseq_matrix
     # TODO: This is probably a better way to do this with `np.where`
     rows_to_filter = []
@@ -128,10 +134,13 @@ def _perform_imputation(job_context: Dict) -> Dict:
             rows_to_filter.append(x)
 
     filtered_rnaseq_matrix = rnaseq_expression_matrix.drop(rows_to_filter)
+    log_state("end drop all rows", drop_start)
+
 
     # log2(x + 1) transform filtered_rnaseq_matrix; this is now log2_rnaseq_matrix
     filtered_rnaseq_matrix_plus_one = filtered_rnaseq_matrix + 1
     log2_rnaseq_matrix = np.log2(filtered_rnaseq_matrix_plus_one)
+    del filtered_rnaseq_matrix_plus_one
 
     # Cache our RNA-Seq zero values
     cached_zeroes = {}
@@ -143,6 +152,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # Perform a full outer join of microarray_expression_matrix and log2_rnaseq_matrix; combined_matrix
     combined_matrix = microarray_expression_matrix.merge(log2_rnaseq_matrix, how='outer', left_index=True, right_index=True)
+    del microarray_expression_matrix
 
     # # Visualize Prefiltered
     # output_path = job_context['output_dir'] + "pre_filtered_" + str(time.time()) + ".png"
@@ -160,6 +170,11 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # XXX: Find better test data for this!
     col_thresh = row_filtered_combined_matrix.shape[0] * .5
     row_col_filtered_combined_matrix_samples = row_filtered_combined_matrix.dropna(axis='columns', thresh=col_thresh)
+    row_col_filtered_combined_matrix_samples_index = row_col_filtered_combined_matrix_samples.index
+    row_col_filtered_combined_matrix_samples_columns = row_col_filtered_combined_matrix_samples.columns
+
+    del combined_matrix
+    del row_filtered_combined_matrix
 
     # # Visualize Row and Column Filtered
     # output_path = job_context['output_dir'] + "row_col_filtered_" + str(time.time()) + ".png"
@@ -178,7 +193,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
             # This generates a warning, so use loc[] instead
             #row_col_filtered_combined_matrix_samples[column].replace(zeroes, 0.0, inplace=True)
             zeroes_list = zeroes.tolist()
-            new_index_list = row_col_filtered_combined_matrix_samples.index.tolist()
+            new_index_list = row_col_filtered_combined_matrix_samples_index.tolist()
             new_zeroes = list(set(new_index_list) & set(zeroes_list))
             row_col_filtered_combined_matrix_samples[column].loc[new_zeroes] = 0.0
         except Exception as e:
@@ -187,13 +202,19 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # Label our new replaced data
     combined_matrix_zero = row_col_filtered_combined_matrix_samples
+    del row_col_filtered_combined_matrix_samples
 
     # Transpose combined_matrix; transposed_matrix
-    transposed_matrix = combined_matrix_zero.transpose() #  row_col_filtered_combined_matrix_samples.transpose()
+    # We originally thought we were going to use KNN imputation and
+    # it may have expected standardize features, hence the transpose.
+    # Transpose may no longer be needed, but leaving until we can evaluate.
+    transposed_matrix_with_zeros = combined_matrix_zero.transpose() #  row_col_filtered_combined_matrix_samples.transpose()
+    del combined_matrix_zero
 
     # Remove -inf and inf
     # This should never happen, but make sure it doesn't!
-    transposed_matrix = transposed_matrix.replace([np.inf, -np.inf], np.nan)
+    transposed_matrix = transposed_matrix_with_zeros.replace([np.inf, -np.inf], np.nan)
+    del transposed_matrix_with_zeros
 
     # Store the absolute/percentages of imputed values
     total = transposed_matrix.isnull().sum().sort_values(ascending=False)
@@ -203,16 +224,27 @@ def _perform_imputation(job_context: Dict) -> Dict:
     logger.info("Total percentage of data to impute!", total_percent_imputed=total_percent_imputed)
 
     # Perform imputation of missing values with IterativeSVD (rank=10) on the transposed_matrix; imputed_matrix
-    imputed_matrix = IterativeSVD(rank=10).fit_transform(transposed_matrix)
+    svd_algorithm = job_context['dataset'].svd_algorithm
+    if svd_algorithm != 'NONE':
+        svd_start = time.time()
+        logger.info("IterativeSVD algorithm: %s" % svd_algorithm)
+        svd_algorithm = str.lower(svd_algorithm)
+        imputed_matrix = IterativeSVD(rank=10, svd_algorithm=svd_algorithm).fit_transform(transposed_matrix)
+    else:
+        imputed_matrix = transposed_matrix
+        logger.info("Skipping IterativeSVD")
+    del transposed_matrix
 
     # Untranspose imputed_matrix (genes are now rows, samples are now columns)
     untransposed_imputed_matrix = imputed_matrix.transpose()
+    del imputed_matrix
 
     # Convert back to Pandas
     untransposed_imputed_matrix_df = pd.DataFrame.from_records(untransposed_imputed_matrix)
-    untransposed_imputed_matrix_df.index = row_col_filtered_combined_matrix_samples.index
-    untransposed_imputed_matrix_df.columns = row_col_filtered_combined_matrix_samples.columns
-
+    untransposed_imputed_matrix_df.index = row_col_filtered_combined_matrix_samples_index
+    untransposed_imputed_matrix_df.columns = row_col_filtered_combined_matrix_samples_columns
+    del row_col_filtered_combined_matrix_samples_index
+    del row_col_filtered_combined_matrix_samples_columns
     # Quantile normalize imputed_matrix where genes are rows and samples are columns
     # XXX: Refactor QN target acquisition and application before doing this
     job_context['organism'] = Organism.get_object_for_name(list(job_context['input_files'].keys())[0])
@@ -229,7 +261,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     job_context['time_end'] = timezone.now()
     job_context['formatted_command'] = "create_compendia.py"
-    log_state("end prepart imputation")
+    log_state("end prepare imputation", imputation_start)
     return job_context
 
 
@@ -237,7 +269,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     """
     Store and host the result as a ComputationalResult object.
     """
-    log_state("start create result object")
+    result_start = log_state("start create result object")
     result = ComputationalResult()
     result.commands.append(" ".join(job_context['formatted_command']))
     result.is_ccdl = True
@@ -292,8 +324,13 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
     # Create the resulting archive
     final_zip_base = "/home/user/data_store/smashed/" + str(job_context["dataset"].pk) + "_compendia"
-    # Copy LICENSE.txt and README.md files
-    shutil.copy("/home/user/README_COMPENDIUM.md", job_context["output_dir"] + "/README.md")
+    # Copy LICENSE.txt and correct README.md files.
+    if job_context["dataset"].quant_sf_only:
+        readme_file = "/home/user/README_QUANT.md"
+    else:
+        readme_file = "/home/user/README_NORMALIZED.md"
+
+    shutil.copy(readme_file, job_context["output_dir"] + "/README.md")
     shutil.copy("/home/user/LICENSE_DATASET.txt", job_context["output_dir"] + "/LICENSE.TXT")
     archive_path = shutil.make_archive(final_zip_base, 'zip', job_context["output_dir"])
 
@@ -319,6 +356,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     archive_computed_file.result = result
     archive_computed_file.is_compendia = True
     archive_computed_file.quant_sf_only = job_context["dataset"].quant_sf_only
+    archive_computed_file.svd_algorithm = job_context["dataset"].svd_algorithm
     archive_computed_file.compendia_organism = job_context['samples'][organism_key][0].organism
     archive_computed_file.compendia_version = compendia_version
     archive_computed_file.save()
@@ -330,11 +368,13 @@ def _create_result_objects(job_context: Dict) -> Dict:
 
     # Upload the result to S3
     key = job_context['samples'][organism_key][0].organism.name + "_" + str(compendia_version) + "_" + str(int(time.time())) + ".zip"
-    archive_computed_file.sync_to_s3(S3_COMPENDIA_BUCKET_NAME, key)
+    archive_computed_file.sync_to_s3(S3_BUCKET_NAME, key)
 
     job_context['result'] = result
     job_context['computed_files'] = [compendia_tsv_computed_file, metadata_computed_file, archive_computed_file]
     job_context['success'] = True
+
+    log_state("end create result object", result_start)
 
     return job_context
 
