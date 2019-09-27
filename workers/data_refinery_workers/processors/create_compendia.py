@@ -226,10 +226,11 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # Perform imputation of missing values with IterativeSVD (rank=10) on the transposed_matrix; imputed_matrix
     svd_algorithm = job_context['dataset'].svd_algorithm
     if svd_algorithm != 'NONE':
-        svd_start = time.time()
+        svd_start = log_state("Start SVD")
         logger.info("IterativeSVD algorithm: %s" % svd_algorithm)
         svd_algorithm = str.lower(svd_algorithm)
         imputed_matrix = IterativeSVD(rank=10, svd_algorithm=svd_algorithm).fit_transform(transposed_matrix)
+        log_state("Fit SVD", svd_start)
     else:
         imputed_matrix = transposed_matrix
         logger.info("Skipping IterativeSVD")
