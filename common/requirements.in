@@ -10,4 +10,3 @@ raven
 elasticsearch-dsl
 django-elasticsearch-dsl
 django-elasticsearch-dsl-drf
-rpy2
