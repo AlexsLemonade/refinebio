@@ -7,7 +7,7 @@ import traceback
 
 from django.conf import settings
 #from django.core.paginator import Paginator
-from data_refinery_foreman.foreman.performant_pagination.pagination import PerformantPaginator as Paginator
+from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 from django.db import transaction
 from django.db.models.expressions import Q
 from django.utils import timezone
