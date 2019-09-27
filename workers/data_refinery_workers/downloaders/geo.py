@@ -8,7 +8,7 @@ import urllib.request
 import re
 
 from contextlib import closing
-from typing import List, Dict
+from typing import List
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
@@ -221,7 +221,7 @@ class ArchivedFile:
         except Exception as e:
             logger.exception("While extracting %s caught exception %s", self.file_path, str(e), file_path=self.file_path)
             raise FileExtractionError(self.file_path, e)
-        
+
         raise FileExtractionError(self.file_path, 'Unknown archive file format.')
 
     def _get_absolute_path(self):
@@ -248,7 +248,7 @@ class ArchivedFile:
     def _extract_tgz(self) -> List[str]:
         """Extract tgz and return a list of the raw files."""
         abs_with_code_raw = self._get_absolute_path()
-        
+
         extracted_filepath = self.file_path.replace('.tgz', '.tar')
 
         with gzip.open(self.file_path, 'rb') as f_in:
@@ -329,7 +329,7 @@ def download_geo(job_id: int) -> None:
 
         if not sample and (not og_file.is_processable() or og_file.experiment_accession_code() != accession_code):
             # skip the files that we know are not processable and can't be associated with a sample
-            # also skip the files were we couldn't find a sample and they don't mention the current experiment            
+            # also skip the files were we couldn't find a sample and they don't mention the current experiment
             continue
 
         potential_existing_file = OriginalFile.objects.filter(

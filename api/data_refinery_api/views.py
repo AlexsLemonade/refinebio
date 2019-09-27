@@ -2,8 +2,6 @@ from datetime import timedelta, datetime
 import requests
 import nomad
 from typing import Dict
-from itertools import groupby
-from re import match
 from django.conf import settings
 from django.views.decorators.cache import cache_page
 from django.db.models import Count, Prefetch, DateTimeField
