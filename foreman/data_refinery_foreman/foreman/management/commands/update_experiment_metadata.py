@@ -5,7 +5,7 @@ import time
 
 from data_refinery_common.models import Experiment
 from data_refinery_common.logging import get_and_configure_logger
-from data_refinery_foreman.foreman.performant_pagination.pagination import PerformantPaginator
+from data_refinery_common.performant_pagination.pagination import PerformantPaginator
 from data_refinery_foreman.surveyor import utils
 from data_refinery_foreman.surveyor.sra import SraSurveyor
 from data_refinery_foreman.surveyor.geo import GeoSurveyor

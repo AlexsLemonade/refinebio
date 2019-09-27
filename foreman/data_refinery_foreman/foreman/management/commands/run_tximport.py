@@ -31,7 +31,7 @@ from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
 from data_refinery_common.rna_seq import get_quant_results_for_experiment, should_run_tximport
 from data_refinery_common.utils import get_env_variable, get_active_volumes
-from data_refinery_foreman.foreman.performant_pagination.pagination import PerformantPaginator as Paginator
+from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 
 
 logger = get_and_configure_logger(__name__)

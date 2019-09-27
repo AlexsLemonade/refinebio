@@ -8,7 +8,7 @@ from typing import List
 
 from django.core.management.base import BaseCommand
 
-from data_refinery_foreman.foreman.performant_pagination.pagination import PerformantPaginator as Paginator
+from data_refinery_common.performant_pagination.pagination import PerformantPaginator as Paginator
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import  ProcessorJob
 
