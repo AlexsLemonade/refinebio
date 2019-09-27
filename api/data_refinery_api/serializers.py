@@ -778,6 +778,7 @@ class CompendiaSerializer(serializers.ModelSerializer):
                     'filename',
                     'size_in_bytes',
                     'is_compendia',
+                    'quant_sf_only',
                     'compendia_version',
                     'organism_name',
                     'sha1',
