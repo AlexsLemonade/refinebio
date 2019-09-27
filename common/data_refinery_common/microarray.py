@@ -1,7 +1,7 @@
 import string
 import re
 import rpy2.robjects as ro
-from rpy2.rinterface import embedded
+from rpy2.rinterface import RRuntimeError
 from typing import Dict
 from data_refinery_common.logging import get_and_configure_logger
 
@@ -20,7 +20,7 @@ def get_platform_from_CEL(cel_file_path: str) -> str:
     """
     try:
         header = ro.r['::']('affyio', 'read.celfile.header')(cel_file_path)
-    except embedded.RRuntimeError as e:
+    except RRuntimeError as e:
         error_template = ("Unable to read Affy header in input file {0}"
                           " while running AFFY_TO_PCL due to error: {1}")
         logger.info(error_template.format(cel_file_path, str(e)))
