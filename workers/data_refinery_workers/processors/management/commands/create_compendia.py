@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
+from data_refinery_common.performant_pagination.pagination import PerformantPaginator
 
 from data_refinery_common.models import (
     Experiment,
@@ -19,6 +20,8 @@ from data_refinery_workers.processors import create_compendia
 
 logger = get_and_configure_logger(__name__)
 
+PAGE_SIZE = 2000
+
 
 def create_job_for_organism(organism=Organism, quant_sf_only=False, svd_algorithm='ARPACK'):
     """Returns a compendia job for the provided organism.
@@ -27,8 +30,16 @@ def create_job_for_organism(organism=Organism, quant_sf_only=False, svd_algorith
     """
     data = {}
     experiments = Experiment.objects.filter(organisms=organism).prefetch_related('samples')
-    for experiment in experiments:
-        data[experiment.accession_code] = list(experiment.samples.filter(organism=organism).values_list('accession_code', flat=True))
+    paginator = PerformantPaginator(experiments, PAGE_SIZE)
+    page = paginator.page()
+    while True:
+        for experiment in page.object_list:
+            data[experiment.accession_code] = list(experiment.samples.filter(organism=organism).values_list('accession_code', flat=True))
+
+        if not page.has_next():
+            break
+        else:
+            page = paginator.page(page.next_page_number())
 
     job = ProcessorJob()
     job.pipeline_applied = "COMPENDIA"
