@@ -95,7 +95,6 @@ from data_refinery_common.models.documents import (
     ExperimentDocument
 )
 from data_refinery_common.utils import (
-    get_env_variable,
     get_active_volumes,
     get_nomad_jobs_breakdown,
 )
