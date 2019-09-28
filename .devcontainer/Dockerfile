@@ -3,14 +3,13 @@ FROM ubuntu:16.04
 # Avoid warnings by switching to noninteractive
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update -qq
-RUN apt-get install -y software-properties-common
-RUN add-apt-repository ppa:apt-fast/stable
-RUN apt-get update -qq
-RUN apt-get -y install apt-fast
+RUN apt-get update -qq &&\
+    apt-get install -y software-properties-common && \
+    add-apt-repository ppa:apt-fast/stable && \
+    apt-get update -qq && \
+    apt-get -y install apt-fast
 
 # The packages related to R are somewhat weird, see the README for more details.
-
 COPY workers/CRAN.gpg /var/tmp
 RUN \
   apt-fast update -qq && \
@@ -36,22 +35,33 @@ RUN \
   libssl-dev \
   libcurl4-openssl-dev \
   curl \
-  wget
+  wget \
+  procps \
+  unzip \
+  jq \
+  iproute2
 
 # Create a folder to host the project
 RUN mkdir /workspace
 WORKDIR /workspace
 
-RUN apt-get update \
-    && apt-get -y install procps unzip jq iproute2
-RUN pip3 install --upgrade pip
-RUN pip3 install -U pip-tools setuptools pylint==2.3.1 pylint-django==2.0.11 pytest==5.0.1 pytest-django pytest-pythonpath pytest-env autopep8
+RUN pip3 install --upgrade pip\
+    pip3 install -U && \
+        pip-tools \
+        setuptools \
+        pylint==2.3.1 \
+        pylint-django==2.0.11 \
+        pytest==5.0.1 \
+        pytest-django \
+        pytest-pythonpath \
+        pytest-env \
+        autopep8
 
 # install git-crypt
 RUN curl -L https://github.com/AGWA/git-crypt/archive/0.6.0.tar.gz | tar zxv -C /var/tmp
 RUN cd /var/tmp/git-crypt-0.6.0 && make && make install PREFIX=/usr/local
 
-# Install R packages (these are required to run all common tests)
+# Install R packages (these are required to run some tests in common, however it's slow to install them)
 ENV R_LIBS "/usr/local/lib/R/site-library"
 COPY common/install_devtools.R /var/tmp
 COPY workers/install_affy_only.R /var/tmp
@@ -68,12 +78,6 @@ RUN pip3 install rpy2==2.9.5
 #   && unzip terraform_0.12.9_darwin_amd64.zip \
 #   && mv terraform /usr/bin \
 #   && rm terraform_0.12.9_darwin_amd64.zip
-
-# install Nomad (running it might be the issue)
-# RUN wget --quiet "https://releases.hashicorp.com/nomad/0.8.3/nomad_0.8.3_linux_amd64.zip"\
-#   && unzip -d /usr/bin "nomad_0.8.3_linux_amd64.zip" \
-#   && chmod a+rx /usr/bin/nomad \
-#   && rm "nomad_0.8.3_linux_amd64.zip"
 
 # Install API project requirements
 COPY api/requirements.txt /var/tmp
