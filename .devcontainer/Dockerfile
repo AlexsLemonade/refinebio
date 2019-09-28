@@ -41,6 +41,20 @@ RUN \
   jq \
   iproute2
 
+# Docker on Docker
+RUN apt-get update \
+    #
+    # Install Docker CE CLI
+    && apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common lsb-release \
+    && curl -fsSL https://download.docker.com/linux/$(lsb_release -is | tr '[:upper:]' '[:lower:]')/gpg | apt-key add - 2>/dev/null \
+    && add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/$(lsb_release -is | tr '[:upper:]' '[:lower:]') $(lsb_release -cs) stable" \
+    && apt-get update \
+    && apt-get install -y docker-ce-cli \
+    #
+    # Install Docker Compose
+    && curl -sSL "https://github.com/docker/compose/releases/download/1.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose \
+    && chmod +x /usr/local/bin/docker-compose
+
 # Create a folder to host the project
 RUN mkdir /workspace
 WORKDIR /workspace
@@ -52,17 +66,17 @@ RUN pip3 install -U pip-tools setuptools pylint==2.3.1 pylint-django==2.0.11 pyt
 RUN curl -L https://github.com/AGWA/git-crypt/archive/0.6.0.tar.gz | tar zxv -C /var/tmp
 RUN cd /var/tmp/git-crypt-0.6.0 && make && make install PREFIX=/usr/local
 
-# Install R packages (these are required to run some tests in common, however it's slow to install them)
-ENV R_LIBS "/usr/local/lib/R/site-library"
-COPY common/install_devtools.R /var/tmp
-COPY workers/install_affy_only.R /var/tmp
-RUN Rscript /var/tmp/install_devtools.R \
-    && Rscript /var/tmp/install_affy_only.R
+# # Install R packages (these are required to run some tests in common, however it's slow to install them)
+# ENV R_LIBS "/usr/local/lib/R/site-library"
+# COPY common/install_devtools.R /var/tmp
+# COPY workers/install_affy_only.R /var/tmp
+# RUN Rscript /var/tmp/install_devtools.R \
+#     && Rscript /var/tmp/install_affy_only.R
 
-# Install this rpy2 here instead of via requirements.txt because
-# pip-compile throws an error for it (got this from common/dockerfiles/Dockerfile.common_tests)
-# rpy2 is required to run that code
-RUN pip3 install rpy2==2.9.5
+# # Install this rpy2 here instead of via requirements.txt because
+# # pip-compile throws an error for it (got this from common/dockerfiles/Dockerfile.common_tests)
+# # rpy2 is required to run that code
+# RUN pip3 install rpy2==2.9.5
 
 # install terraform
 # RUN wget --quiet https://releases.hashicorp.com/terraform/0.12.9/terraform_0.12.9_darwin_amd64.zip \

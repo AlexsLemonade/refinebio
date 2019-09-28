@@ -10,6 +10,7 @@ services:
     volumes:
       - ..:/workspace
       - ~/.ssh:/root/.ssh-localhost:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       SYSTEM_VERSION: local
     # Overrides default command so things don't shut down after the process ends.

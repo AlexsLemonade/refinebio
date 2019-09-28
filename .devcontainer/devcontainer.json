@@ -16,7 +16,10 @@
 		"python.linting.pylintUseMinimalCheckers": true,
 		"python.linting.pylintArgs": ["--load-plugins", "pylint_django"],
 		"python.testing.pytestEnabled": true,
-		"python.testing.pytestArgs": []
+		"python.testing.pytestArgs": ["-c", ".devcontainer/pytest.cfg"],
+		"remote.extensionKind": {
+			"ms-azuretools.vscode-docker": "workspace"
+		}
 	},
 
 	// Uncomment the next line if you want start specific services in your Docker Compose config.
@@ -28,6 +31,7 @@
 	"extensions": [
 		"ms-python.python",
 		"donjayamanne.python-extension-pack",
-		"VisualStudioExptTeam.vscodeintellicode"
+		"VisualStudioExptTeam.vscodeintellicode",
+		"ms-azuretools.vscode-docker"
 	]
 }
