@@ -20,6 +20,7 @@ services:
       - elasticsearch
 
   elasticsearch:
+    container_name: dres
     image: docker.elastic.co/elasticsearch/elasticsearch:6.5.4
     restart: unless-stopped
     ports:
@@ -29,6 +30,7 @@ services:
       discovery.type: single-node
 
   database:
+    container_name: drdb
     image: postgres:9.6.6
     restart: unless-stopped
     ports:
