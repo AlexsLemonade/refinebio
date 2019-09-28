@@ -19,6 +19,7 @@ from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.utils import timezone
+from django.db import connections
 from pathlib import Path
 from rpy2.robjects import pandas2ri
 from rpy2.robjects import r as rlang
@@ -585,6 +586,9 @@ def process_frame(inputs) -> Dict:
         if computed_file_path and os.path.exists(computed_file_path):
             os.remove(computed_file_path)
 
+    # close db connections
+    connections.close_all()
+
     return smashable(data)
 
 def _smash(job_context: Dict, how="inner") -> Dict:
@@ -634,6 +638,10 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 continue
 
             start_frames = log_state("build frames for species or experiment")
+
+            # close connections before spawning new threads
+            connections.close_all()
+
             # Merge all the frames into one
             cpus = max(1, psutil.cpu_count()/2)
             with multiprocessing.Pool(int(cpus)) as pool:
