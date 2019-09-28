@@ -12,12 +12,9 @@ services:
       - ~/.ssh:/root/.ssh-localhost:ro
     environment:
       SYSTEM_VERSION: local
-
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
-
     env_file: ../api/environments/local
-
     depends_on:
       - database
       - elasticsearch
