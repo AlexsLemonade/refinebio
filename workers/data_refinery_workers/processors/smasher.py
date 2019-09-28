@@ -635,19 +635,18 @@ def _smash(job_context: Dict, how="inner") -> Dict:
 
             start_frames = log_state("build frames for species or experiment")
             # Merge all the frames into one
-            #cpus = max(1, psutil.cpu_count()/2)
-            #with multiprocessing.Pool(int(cpus)) as pool:
-            #    processed_frames = pool.map(
-            mapped_frames = map(
-                process_frame,
-                [(
-                    job_context,
-                    computed_file,
-                    sample,
-                    i
-                ) for i, (computed_file, sample) in enumerate(input_files)
+            cpus = max(1, psutil.cpu_count()/2)
+            with multiprocessing.Pool(int(cpus)) as pool:
+                processed_frames = pool.map(
+                    process_frame,
+                    [(
+                        job_context,
+                        computed_file,
+                        sample,
+                        i
+                    ) for i, (computed_file, sample) in enumerate(input_files)
             ])
-            processed_frames = list(mapped_frames)
+
             all_frames = [f['data'] for f in processed_frames if f['data'] is not None]
             num_samples = num_samples + len([x for x in all_frames])
             unsmashable_files = unsmashable_files + [f['unsmashable_file'] for f in processed_frames if f['unsmashable']]
