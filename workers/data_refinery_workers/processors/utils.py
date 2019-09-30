@@ -218,7 +218,7 @@ def start_job(job_context: Dict):
         # Some jobs take OriginalFiles, other take Datasets
         if job.pipeline_applied not in [ProcessorPipeline.SMASHER.value,
                                         ProcessorPipeline.QN_REFERENCE.value,
-                                        ProcessorPipeline.CREATEC_OMPENDIA.value]:
+                                        ProcessorPipeline.CREATE_COMPENDIA.value]:
             job_context = prepare_original_files(job_context)
             if not job_context.get("success", True):
                 return job_context
