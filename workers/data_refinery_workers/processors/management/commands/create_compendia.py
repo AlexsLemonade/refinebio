@@ -1,27 +1,16 @@
 import sys
 
 from django.core.management.base import BaseCommand
+
 from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.message_queue import send_job
-from data_refinery_common.performant_pagination.pagination import PerformantPaginator
-
-from data_refinery_common.models import (
-    Experiment,
-    Sample,
-    Organism,
-    ProcessorJob,
-    Dataset,
-    ProcessorJobDatasetAssociation,
-    ExperimentOrganismAssociation,
-    ExperimentSampleAssociation
-)
-from data_refinery_workers.processors import create_compendia
+from data_refinery_common.models import (Dataset, Experiment, Organism,
+                                         ProcessorJob,
+                                         ProcessorJobDatasetAssociation)
+from data_refinery_common.utils import queryset_iterator
 
 logger = get_and_configure_logger(__name__)
-
-PAGE_SIZE = 2000
-
 
 def create_job_for_organism(organism=Organism, quant_sf_only=False, svd_algorithm='ARPACK'):
     """Returns a compendia job for the provided organism.
@@ -30,19 +19,12 @@ def create_job_for_organism(organism=Organism, quant_sf_only=False, svd_algorith
     """
     data = {}
     experiments = Experiment.objects.filter(organisms=organism).prefetch_related('samples')
-    paginator = PerformantPaginator(experiments, PAGE_SIZE)
-    page = paginator.page()
-    while True:
-        for experiment in page.object_list:
-            data[experiment.accession_code] = list(experiment.samples.filter(organism=organism).values_list('accession_code', flat=True))
 
-        if not page.has_next():
-            break
-        else:
-            page = paginator.page(page.next_page_number())
+    for experiment in queryset_iterator(experiments):
+        data[experiment.accession_code] = list(experiment.samples.filter(organism=organism).values_list('accession_code', flat=True))
 
     job = ProcessorJob()
-    job.pipeline_applied = "COMPENDIA"
+    job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
     job.save()
 
     dset = Dataset()
@@ -105,16 +87,12 @@ class Command(BaseCommand):
         if options["svd_algorithm"] in ['ARPACK', 'RANDOMIZED', 'NONE']:
             svd_algorithm = options["svd_algorithm"]
 
-        logger.error(all_organisms)
+        logger.debug(all_organisms)
 
-        if all_organisms.count() > 1:
-            for organism in all_organisms:
-                logger.error(organism)
-                job = create_job_for_organism(organism, quant_sf_only, svd_algorithm)
-                logger.info("Sending CREATE_COMPENDIA for Organism", job_id=str(job.pk), organism=str(organism))
-                send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
-        else:
-            job = create_job_for_organism(all_organisms[0], quant_sf_only, svd_algorithm)
-            create_compendia.create_compendia(job.id)
+        for organism in all_organisms:
+            logger.debug(organism)
+            job = create_job_for_organism(organism, quant_sf_only, svd_algorithm)
+            logger.info("Sending CREATE_COMPENDIA for Organism", job_id=str(job.pk), organism=str(organism))
+            send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
 
         sys.exit(0)

@@ -11,7 +11,7 @@ import string
 import warnings
 import requests
 import psutil
-import multiprocessing 
+import multiprocessing
 import logging
 import time
 
@@ -46,6 +46,7 @@ RESULTS_BUCKET = get_env_variable("S3_RESULTS_BUCKET_NAME", "refinebio-results-b
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
 BODY_HTML = Path('data_refinery_workers/processors/smasher_email.min.html').read_text().replace('\n', '')
 BODY_ERROR_HTML = Path('data_refinery_workers/processors/smasher_email_error.min.html').read_text().replace('\n', '')
+BYTES_IN_GB = 1024 * 1024 * 1024
 logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
@@ -53,15 +54,18 @@ logger.setLevel(logging.getLevelName('DEBUG'))
 
 def log_state(message, start_time=False):
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("%s: cpu:%s - ram:%s" % (
+        process = psutil.Process(os.getpid())
+        ram_in_GB = process.memory_info().rss / BYTES_IN_GB
+        logger.debug("%s: total-cpu:%s - process-ram:%s" % (
             message,
             psutil.cpu_percent(),
-            psutil.virtual_memory().percent,
+            ram_in_GB,
         ))
         if start_time:
             logger.debug('Duration: %s' % (time.time() - start_time))
         else:
             return time.time()
+
 
 def _prepare_files(job_context: Dict) -> Dict:
     """
@@ -90,7 +94,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         error_message = "Couldn't get any files to smash for Smash job!!"
         logger.error(error_message,
                      dataset_id=job_context['dataset'].id,
-                     samples=job_context["samples"])
+                     num_samples=len(job_context["samples"]))
 
         # Delay failing this pipeline until the failure notify has been sent
         job_context['dataset'].failure_reason = error_message
@@ -517,12 +521,12 @@ def process_frame(inputs) -> Dict:
 
         # Bail appropriately if this isn't a real file.
         if not computed_file_path or not os.path.exists(computed_file_path):
-            logger.error("Smasher received non-existent file path.",
+            logger.warning("Smasher received non-existent file path.",
                 computed_file_path=computed_file_path,
                 computed_file=computed_file,
                 dataset_id=job_context['dataset'].id,
             )
-            return unsmashable(computed_file_path) 
+            return unsmashable(computed_file_path)
 
         data = _load_and_sanitize_file(computed_file_path)
 
@@ -559,15 +563,17 @@ def process_frame(inputs) -> Dict:
         except ValueError as e:
             # This sample might have multiple channels, or something else.
             # Don't mess with it.
-            logger.exception("Smasher found multi-channel column (probably) - skipping!",
-                computed_file_path=computed_file_path,
+            logger.warn("Smasher found multi-channel column (probably) - skipping!",
+                        exc_info=1,
+                        computed_file_path=computed_file_path,
             )
             return unsmashable(computed_file.filename)
         except Exception as e:
             # Okay, somebody probably forgot to create a SampleComputedFileAssociation
             # Don't mess with it.
-            logger.exception("Smasher found very bad column title - skipping!",
-                computed_file_path=computed_file_path
+            logger.warn("Smasher found very bad column title - skipping!",
+                        exc_info=1,
+                        computed_file_path=computed_file_path
             )
             return unsmashable(computed_file.filename)
 
@@ -820,7 +826,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         metadata['num_samples'] = num_samples
         metadata['num_experiments'] = job_context["experiments"].count()
         metadata['quant_sf_only'] = job_context['dataset'].quant_sf_only
-        
+
         if not job_context['dataset'].quant_sf_only:
             metadata['aggregate_by'] = job_context["dataset"].aggregate_by
             metadata['scale_by'] = job_context["dataset"].scale_by
@@ -865,7 +871,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         logger.exception("Could not smash dataset.",
                         dataset_id=job_context['dataset'].id,
                         processor_job_id=job_context['job_id'],
-                        input_files=len(job_context['input_files']))
+                        num_input_files=len(job_context['input_files']))
         job_context['dataset'].success = False
         job_context['job'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].failure_reason = "Failure reason: " + str(e)
@@ -1014,7 +1020,7 @@ def _notify(job_context: Dict) -> Dict:
                     timeout=10
                 )
             except Exception as e:
-                logger.error(e) # It doens't really matter if this didn't work
+                logger.warn(e) # It doens't really matter if this didn't work
                 pass
 
         # Don't send an email if we don't have address.
@@ -1081,13 +1087,13 @@ def _notify(job_context: Dict) -> Dict:
                 )
             # Display an error if something goes wrong.
             except ClientError as e:
-                logger.exception("ClientError while notifying.", client_error_message=e.response['Error']['Message'])
+                logger.warn("ClientError while notifying.", exc_info=1, client_error_message=e.response['Error']['Message'])
                 job_context['job'].success = False
                 job_context['job'].failure_reason = e.response['Error']['Message']
                 job_context['success'] = False
                 return job_context
             except Exception as e:
-                logger.exception("General failure when trying to send email.", result_url=job_context["result_url"])
+                logger.warn("General failure when trying to send email.", exc_info=1, result_url=job_context["result_url"])
                 job_context['job'].success = False
                 job_context['job'].failure_reason = str(e)
                 job_context['success'] = False
