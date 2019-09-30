@@ -214,9 +214,11 @@ def start_job(job_context: Dict):
     # Janitor jobs don't operate on file objects.
     # Tximport jobs don't need to download the original file, they
     # just need it to know what experiment to process.
-    if job.pipeline_applied not in ["JANITOR", "TXIMPORT"]:
+    if job.pipeline_applied not in [ProcessorPipeline.JANITOR.value, ProcessorPipeline.TXIMPORT.value]:
         # Some jobs take OriginalFiles, other take Datasets
-        if job.pipeline_applied not in ["SMASHER", "QN_REFERENCE", "COMPENDIA"]:
+        if job.pipeline_applied not in [ProcessorPipeline.SMASHER.value,
+                                        ProcessorPipeline.QN_REFERENCE.value,
+                                        ProcessorPipeline.CREATEC_OMPENDIA.value]:
             job_context = prepare_original_files(job_context)
             if not job_context.get("success", True):
                 return job_context
@@ -276,8 +278,11 @@ def end_job(job_context: Dict, abort=False):
                 computed_file.delete()
 
     if not abort:
-        if job_context.get("success", False) and not (job_context["job"].pipeline_applied in ["SMASHER", "QN_REFERENCE", "COMPENDIA", "JANITOR"]):
-
+        if job_context.get("success", False) \
+           and not (job_context["job"].pipeline_applied in [ProcessorPipeline.SMASHER.value,
+                                                            ProcessorPipeline.QN_REFERENCE.value,
+                                                            ProcessorPipeline.CREATE_COMPENDIA.value,
+                                                            ProcessorPipeline.JANITOR.value]):
             # Salmon requires the final `tximport` step to be fully `is_processed`.
             mark_as_processed = True
             if (job_context["job"].pipeline_applied == "SALMON" and not job_context.get('tximported', False)):

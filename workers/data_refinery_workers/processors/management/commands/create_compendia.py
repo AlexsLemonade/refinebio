@@ -42,7 +42,7 @@ def create_job_for_organism(organism=Organism, quant_sf_only=False, svd_algorith
             page = paginator.page(page.next_page_number())
 
     job = ProcessorJob()
-    job.pipeline_applied = "COMPENDIA"
+    job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
     job.save()
 
     dset = Dataset()

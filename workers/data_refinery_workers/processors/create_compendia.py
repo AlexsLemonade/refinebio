@@ -277,7 +277,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
     try:
-        processor_key = "COMPENDIA"
+        processor_key = "CREATE_COMPENDIA"
         result.processor = utils.find_processor(processor_key)
     except Exception as e:
         return utils.handle_processor_exception(job_context, processor_key, e)
@@ -379,7 +379,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 def create_compendia(job_id: int) -> None:
-    pipeline = Pipeline(name=PipelineEnum.COMPENDIA.value)
+    pipeline = Pipeline(name=PipelineEnum.CREATE_COMPENDIA.value)
     job_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _prepare_input,
