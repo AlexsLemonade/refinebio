@@ -16,7 +16,7 @@
 		"python.linting.pylintUseMinimalCheckers": true,
 		"python.linting.pylintArgs": ["--load-plugins", "pylint_django"],
 		"python.testing.pytestEnabled": true,
-		"python.testing.pytestArgs": ["-c", ".devcontainer/pytest.cfg"],
+		"python.testing.pytestArgs": [],
 		"remote.extensionKind": {
 			"ms-azuretools.vscode-docker": "workspace"
 		}
