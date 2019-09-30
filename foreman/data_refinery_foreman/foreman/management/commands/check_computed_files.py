@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import ComputedFile
-from data_refinery_common.utils import iterate_queryset
+from data_refinery_common.utils import queryset_iterator
 
 # We have to set the signature_version to v4 since us-east-1 buckets require
 # v4 authentication.
@@ -26,7 +26,7 @@ class Command(BaseCommand):
         total_files = 0
         missing_file_ids = []
 
-        for computed_file in iterate_queryset(computed_files_queryset, PAGE_SIZE):
+        for computed_file in queryset_iterator(computed_files_queryset, PAGE_SIZE):
             total_files += 1
             # check that file is present in S3, no need to download the entire object
             # https://stackoverflow.com/a/38376288/763705

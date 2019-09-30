@@ -1,19 +1,17 @@
-from itertools import groupby
-from typing import Dict, Set, List
-from urllib.parse import urlparse
 import csv
-import nomad
+import hashlib
 import io
 import os
 import re
+from functools import partial
+from itertools import groupby
+from typing import Dict, Set
+from urllib.parse import urlparse
+import nomad
 import requests
-
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from retrying import retry
-
-import hashlib
-from functools import partial
 
 from data_refinery_common.performant_pagination.pagination import PerformantPaginator
 
@@ -443,7 +441,7 @@ def _aggregate_nomad_jobs(aggregated_jobs):
 
     return nomad_pending_jobs, nomad_running_jobs
 
-def iterate_queryset(queryset, page_size):
+def queryset_iterator(queryset, page_size):
     """ use the performant paginator to iterate over a queryset """
     paginator = PerformantPaginator(queryset, page_size)
     page = paginator.page()
