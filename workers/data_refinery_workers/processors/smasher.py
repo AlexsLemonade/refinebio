@@ -11,7 +11,7 @@ import string
 import warnings
 import requests
 import psutil
-import multiprocessing 
+import multiprocessing
 import logging
 import time
 
@@ -19,6 +19,7 @@ from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.utils import timezone
+from django.db import connections, close_old_connections
 from pathlib import Path
 from rpy2.robjects import pandas2ri
 from rpy2.robjects import r as rlang
@@ -522,7 +523,7 @@ def process_frame(inputs) -> Dict:
                 computed_file=computed_file,
                 dataset_id=job_context['dataset'].id,
             )
-            return unsmashable(computed_file_path) 
+            return unsmashable(computed_file_path)
 
         data = _load_and_sanitize_file(computed_file_path)
 
@@ -635,19 +636,20 @@ def _smash(job_context: Dict, how="inner") -> Dict:
 
             start_frames = log_state("build frames for species or experiment")
             # Merge all the frames into one
-            #cpus = max(1, psutil.cpu_count()/2)
-            #with multiprocessing.Pool(int(cpus)) as pool:
-            #    processed_frames = pool.map(
-            mapped_frames = map(
-                process_frame,
-                [(
-                    job_context,
-                    computed_file,
-                    sample,
-                    i
-                ) for i, (computed_file, sample) in enumerate(input_files)
-            ])
-            processed_frames = list(mapped_frames)
+            # Determine Processor pool Size
+            connections.close_all()
+            cpus = max(1, psutil.cpu_count()/2)
+            with multiprocessing.Pool(int(cpus)) as pool:
+                processed_frames = pool.map(
+                    process_frame,
+                    [(
+                        job_context,
+                        computed_file,
+                        sample,
+                        i
+                    ) for i, (computed_file, sample) in enumerate(input_files)
+                ])
+            close_old_connections()
             all_frames = [f['data'] for f in processed_frames if f['data'] is not None]
             num_samples = num_samples + len([x for x in all_frames])
             unsmashable_files = unsmashable_files + [f['unsmashable_file'] for f in processed_frames if f['unsmashable']]
@@ -820,7 +822,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         metadata['num_samples'] = num_samples
         metadata['num_experiments'] = job_context["experiments"].count()
         metadata['quant_sf_only'] = job_context['dataset'].quant_sf_only
-        
+
         if not job_context['dataset'].quant_sf_only:
             metadata['aggregate_by'] = job_context["dataset"].aggregate_by
             metadata['scale_by'] = job_context["dataset"].scale_by
