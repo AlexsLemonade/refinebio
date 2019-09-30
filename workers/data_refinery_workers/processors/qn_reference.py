@@ -69,21 +69,22 @@ def _build_qn_target(job_context: Dict) -> Dict:
             input_filepath = file.get_synced_file_path()
             input_frame = smasher._load_and_sanitize_file(input_filepath)
         except Exception as e:
-            logger.exception("No file loaded for input file",
-                bad_file=file,
-                num_valid_inputs_so_far=num_valid_inputs
-                )
+            logger.warn("No file loaded for input file",
+                        exc_info=1
+                        bad_file=file,
+                        num_valid_inputs_so_far=num_valid_inputs
+            )
             continue
 
         # If this input doesn't have the same geneset, we don't want it!
         if set(input_frame.index.values) != geneset:
-            logger.error("Input frame doesn't match target geneset, skipping!",
-                bad_file=file,
-                target_geneset_len=len(geneset),
-                bad_geneset_len=len(input_frame.index.values),
-                geneset_difference=list(geneset ^ set(input_frame.index.values))[:3],
-                num_valid_inputs_so_far=num_valid_inputs
-                )
+            logger.warn("Input frame doesn't match target geneset, skipping!",
+                        bad_file=file,
+                        target_geneset_len=len(geneset),
+                        bad_geneset_len=len(input_frame.index.values),
+                        geneset_difference=list(geneset ^ set(input_frame.index.values))[:3],
+                        num_valid_inputs_so_far=num_valid_inputs
+            )
             continue
 
         # Sort the input
@@ -132,7 +133,7 @@ def _quantile_normalize(job_context: Dict) -> Dict:
         error_template = ("Encountered error in R code while running qn_reference.R"
                           " pipeline during processing of {0}: {1}")
         error_message = error_template.format(job_context['smashed_file'], str(e))
-        logger.error(error_message, processor_job=job_context["job_id"])
+        logger.warn(error_message, processor_job=job_context["job_id"])
         job_context["job"].failure_reason = error_message
         job_context["success"] = False
 

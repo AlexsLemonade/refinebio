@@ -62,7 +62,7 @@ def _prepare_input(job_context: Dict) -> Dict:
     job_context = smasher._smash(job_context, how="outer")
 
     if not 'final_frame' in job_context.keys():
-        logger.error("Unable to prepare files for creating compendia.",
+        logger.warn("Unable to prepare files for creating compendia.",
             job_id=job_context['job'].id)
         job_context["job"].failure_reason = "Couldn't prepare files creating compendia."
         job_context['success'] = False
@@ -200,7 +200,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
             new_zeroes = list(set(new_index_list) & set(zeroes_list))
             row_col_filtered_combined_matrix_samples[column].loc[new_zeroes] = 0.0
         except Exception as e:
-            logger.exception("Error when replacing zero")
+            logger.warn("Error when replacing zero")
             continue
 
     # Label our new replaced data
