@@ -70,7 +70,7 @@ def _build_qn_target(job_context: Dict) -> Dict:
             input_frame = smasher._load_and_sanitize_file(input_filepath)
         except Exception as e:
             logger.warn("No file loaded for input file",
-                        exc_info=1
+                        exc_info=1,
                         bad_file=file,
                         num_valid_inputs_so_far=num_valid_inputs
             )
