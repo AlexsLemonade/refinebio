@@ -33,6 +33,7 @@ from data_refinery_workers.processors import utils, smasher#, visualize
 
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
+BYTES_IN_GB = 1024 * 1024 * 1024
 logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
@@ -40,10 +41,12 @@ logger.setLevel(logging.getLevelName('DEBUG'))
 
 def log_state(message, start_time=False):
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("%s: cpu:%s - ram:%s" % (
+        process = psutil.Process(os.getpid())
+        ram_in_GB = process.memory_info().rss / BYTES_IN_GB
+        logger.debug("%s: total-cpu:%s - ram:%s" % (
             message,
             psutil.cpu_percent(),
-            psutil.virtual_memory().percent,
+            ram_in_GB,
         ))
         if start_time:
             logger.debug('Duration: %s' % (time.time() - start_time))
@@ -59,7 +62,7 @@ def _prepare_input(job_context: Dict) -> Dict:
     job_context = smasher._smash(job_context, how="outer")
 
     if not 'final_frame' in job_context.keys():
-        logger.error("Unable to prepare files for creating compendia.",
+        logger.warn("Unable to prepare files for creating compendia.",
             job_id=job_context['job'].id)
         job_context["job"].failure_reason = "Couldn't prepare files creating compendia."
         job_context['success'] = False
@@ -197,7 +200,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
             new_zeroes = list(set(new_index_list) & set(zeroes_list))
             row_col_filtered_combined_matrix_samples[column].loc[new_zeroes] = 0.0
         except Exception as e:
-            logger.exception("Error when replacing zero")
+            logger.warn("Error when replacing zero")
             continue
 
     # Label our new replaced data
