@@ -33,6 +33,7 @@ from data_refinery_workers.processors import utils, smasher#, visualize
 
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
+BYTES_IN_GB = 1024 * 1024 * 1024
 logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
@@ -40,10 +41,12 @@ logger.setLevel(logging.getLevelName('DEBUG'))
 
 def log_state(message, start_time=False):
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("%s: cpu:%s - ram:%s" % (
+        process = psutil.Process(os.getpid())
+        ram_in_GB = process.memory_info().rss / BYTES_IN_GB
+        logger.debug("%s: total-cpu:%s - ram:%s" % (
             message,
             psutil.cpu_percent(),
-            psutil.virtual_memory().percent,
+            ram_in_GB,
         ))
         if start_time:
             logger.debug('Duration: %s' % (time.time() - start_time))

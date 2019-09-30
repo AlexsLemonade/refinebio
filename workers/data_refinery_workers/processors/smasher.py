@@ -11,7 +11,7 @@ import string
 import warnings
 import requests
 import psutil
-import multiprocessing 
+import multiprocessing
 import logging
 import time
 
@@ -53,15 +53,18 @@ logger.setLevel(logging.getLevelName('DEBUG'))
 
 def log_state(message, start_time=False):
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("%s: cpu:%s - ram:%s" % (
+        process = psutil.Process(os.getpid())
+        ram_in_GB = process.memory_info().rss / BYTES_IN_GB
+        logger.debug("%s: total-cpu:%s - process-ram:%s" % (
             message,
             psutil.cpu_percent(),
-            psutil.virtual_memory().percent,
+            ram_in_GB,
         ))
         if start_time:
             logger.debug('Duration: %s' % (time.time() - start_time))
         else:
             return time.time()
+
 
 def _prepare_files(job_context: Dict) -> Dict:
     """
@@ -90,7 +93,7 @@ def _prepare_files(job_context: Dict) -> Dict:
         error_message = "Couldn't get any files to smash for Smash job!!"
         logger.error(error_message,
                      dataset_id=job_context['dataset'].id,
-                     samples=job_context["samples"])
+                     num_samples=len(job_context["samples"]))
 
         # Delay failing this pipeline until the failure notify has been sent
         job_context['dataset'].failure_reason = error_message
@@ -522,7 +525,7 @@ def process_frame(inputs) -> Dict:
                 computed_file=computed_file,
                 dataset_id=job_context['dataset'].id,
             )
-            return unsmashable(computed_file_path) 
+            return unsmashable(computed_file_path)
 
         data = _load_and_sanitize_file(computed_file_path)
 
@@ -820,7 +823,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         metadata['num_samples'] = num_samples
         metadata['num_experiments'] = job_context["experiments"].count()
         metadata['quant_sf_only'] = job_context['dataset'].quant_sf_only
-        
+
         if not job_context['dataset'].quant_sf_only:
             metadata['aggregate_by'] = job_context["dataset"].aggregate_by
             metadata['scale_by'] = job_context["dataset"].scale_by
@@ -865,7 +868,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         logger.exception("Could not smash dataset.",
                         dataset_id=job_context['dataset'].id,
                         processor_job_id=job_context['job_id'],
-                        input_files=len(job_context['input_files']))
+                        num_input_files=len(job_context['input_files']))
         job_context['dataset'].success = False
         job_context['job'].failure_reason = "Failure reason: " + str(e)
         job_context['dataset'].failure_reason = "Failure reason: " + str(e)

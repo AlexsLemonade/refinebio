@@ -81,7 +81,7 @@ def _build_qn_target(job_context: Dict) -> Dict:
                 bad_file=file,
                 target_geneset_len=len(geneset),
                 bad_geneset_len=len(input_frame.index.values),
-                difference=list(geneset ^ set(input_frame.index.values)),
+                geneset_difference=list(geneset ^ set(input_frame.index.values))[:3],
                 num_valid_inputs_so_far=num_valid_inputs
                 )
             continue
@@ -218,7 +218,7 @@ def _update_caches(job_context: Dict) -> Dict:
     """ Experiments have a cached value with the number of samples that have QN targets
         generated, this value should be updated after generating new QN targets. """
     organism_name = job_context['samples']['ALL'][0].organism.name
-    
+
     if job_context['result']:
         # Associate the organism with the latest qn target that was generated for it
         organism = Organism.get_object_for_name(organism_name)
@@ -226,7 +226,7 @@ def _update_caches(job_context: Dict) -> Dict:
         organism.save()
 
     unique_experiments = Experiment.objects.all().filter(organism_names__contains=[organism_name])
-    
+
     for experiment in unique_experiments:
         experiment.update_num_samples()
 
