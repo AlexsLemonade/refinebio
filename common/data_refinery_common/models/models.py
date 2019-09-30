@@ -960,11 +960,13 @@ class ComputedFile(models.Model):
                     )
             self.save()
         except Exception as e:
-            logger.exception(e,
+            logger.exception('Error uploading computed file to S3',
                 computed_file_id=self.pk,
                 s3_key=self.s3_key,
                 s3_bucket=self.s3_bucket
             )
+            self.s3_bucket = None
+            self.s3_key = None
             return False
 
         return True
