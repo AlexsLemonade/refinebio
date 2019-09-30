@@ -3,6 +3,7 @@ import shutil
 from contextlib import closing
 from django.test import TransactionTestCase, TestCase, tag
 from unittest.mock import MagicMock
+from data_refinery_common.job_lookup import ProcessorPipeline
 from data_refinery_common.models import (
     SurveyJob,
     ProcessorJob,
@@ -33,7 +34,7 @@ class CompendiaTestCase(TransactionTestCase):
     @tag('compendia')
     def test_create_compendia(self):
         job = ProcessorJob()
-        job.pipeline_applied = "COMPENDIA"
+        job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
         job.save()
 
         # MICROARRAY TECH
@@ -131,12 +132,12 @@ class CompendiaTestCase(TransactionTestCase):
         final_context = create_compendia.create_compendia(job.id)
 
         self.assertFalse(job.success)
- 
+
 
     @tag('compendia')
     def test_create_compendia_danio(self):
         job = ProcessorJob()
-        job.pipeline_applied = "COMPENDIA"
+        job.pipeline_applied = ProcessorPipeline.CREATE_COMPENDIA.value
         job.save()
 
         # MICROARRAY TECH
@@ -149,7 +150,7 @@ class CompendiaTestCase(TransactionTestCase):
 
         danio_rerio = Organism.get_object_for_name("DANIO_RERIO")
 
-        micros = [] 
+        micros = []
         for file in os.listdir('/home/user/data_store/raw/TEST/MICROARRAY/'):
 
             if 'microarray.txt' in file:
