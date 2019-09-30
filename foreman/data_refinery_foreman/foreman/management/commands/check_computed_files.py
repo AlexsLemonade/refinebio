@@ -23,7 +23,7 @@ class Command(BaseCommand):
         """
         computed_files_queryset = ComputedFile.objects.filter(s3_key__isnull=False, s3_bucket__isnull=False)
         total_files = 0
-        modified_files = 0
+        missing_file_ids = []
 
         # iterate over all computed files without loading them in memory
         # https://docs.djangoproject.com/en/dev/ref/models/querysets/#iterator
@@ -36,12 +36,13 @@ class Command(BaseCommand):
                 S3.head_object(Bucket=computed_file.s3_bucket, Key=computed_file.s3_key)
             except ClientError:
                 # Not found
-                modified_files += 1
-                logger.debug('Computed file not found on S3. Removing s3 fields.', computed_file=computed_file)
-                computed_file.s3_key = None
-                computed_file.s3_bucket = None
-                computed_file.save()
+                logger.debug('Computed file not found on S3 - will remove S3 fields.', computed_file=computed_file)
+                missing_file_ids.append(computed_file.pk)
 
             # provide some info while the command is running.
             if total_files % PAGE_SIZE == 0:
-                logger.info('Checked %i computed files to see if they are in S3, so far found %i' % (total_files, modified_files))
+                logger.info('Checked %i computed files to see if they are in S3, so far found %i' % (total_files, len(missing_file_ids)))
+
+        # Update all computed files in one query
+        logger.info('Found %i files that were missing in S3, clearing s3_key and s3_bucket now.' % len(missing_file_ids))
+        ComputedFile.objects.filter(id__in=missing_file_ids).update(s3_key=None, s3_bucket=None)
