@@ -441,7 +441,7 @@ def _aggregate_nomad_jobs(aggregated_jobs):
 
     return nomad_pending_jobs, nomad_running_jobs
 
-def queryset_iterator(queryset, page_size):
+def queryset_iterator(queryset, page_size = 2000):
     """ use the performant paginator to iterate over a queryset """
     paginator = PerformantPaginator(queryset, page_size)
     page = paginator.page()
