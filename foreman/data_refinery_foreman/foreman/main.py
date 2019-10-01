@@ -1,5 +1,6 @@
 import datetime
 import nomad
+import random
 import socket
 import sys
 import time
@@ -20,6 +21,7 @@ from data_refinery_common.job_lookup import (
     Downloaders,
     ProcessorPipeline,
     SurveyJobTypes,
+    SMASHER_JOB_TYPES,
     does_processor_job_have_samples,
     is_file_rnaseq,
 )
@@ -708,10 +710,19 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
             elif new_ram_amount == 4096:
                 new_ram_amount = 8192
 
+    volume_index = last_job.volume_index
+    if ProcessorPipeline[last_job.pipeline_applied] not in SMASHER_JOB_TYPES \
+       and (not volume_index or volume_index == "-1"):
+        active_volumes = get_active_volumes()
+        if len(active_volumes) < 1 or not settings.RUNNING_IN_CLOUD::
+            logger.debug("No active volumes to requeue processor job.", job_id=last_job.id)
+        else:
+            volume_index = random.choice(active_volumes)
+
     new_job = ProcessorJob(num_retries=num_retries,
                            pipeline_applied=last_job.pipeline_applied,
                            ram_amount=new_ram_amount,
-                           volume_index=last_job.volume_index)
+                           volume_index=volume_index)
     new_job.save()
 
     for original_file in last_job.original_files.all():
