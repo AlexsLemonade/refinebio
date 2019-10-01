@@ -392,6 +392,63 @@ class ForemanTestCase(TestCase):
 
     @patch('data_refinery_foreman.foreman.main.get_active_volumes')
     @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_requeuing_processor_job_no_volume(self, mock_send_job, mock_get_active_volumes):
+        mock_send_job.return_value = True
+        mock_get_active_volumes.return_value = {"1", "2", "3"}
+
+        job = self.create_processor_job()
+        job.volume_index = None
+        job.save()
+
+        self.env = EnvironmentVarGuard()
+        self.env.set('RUNING_IN_CLOUD', 'True')
+
+        with self.settings(RUNNING_IN_CLOUD=True):
+            main.requeue_processor_job(job)
+
+        self.assertEqual(len(mock_send_job.mock_calls), 1)
+
+        jobs = ProcessorJob.objects.order_by('id')
+        original_job = jobs[0]
+        self.assertTrue(original_job.retried)
+        self.assertEqual(original_job.num_retries, 0)
+        self.assertFalse(original_job.success)
+
+        retried_job = jobs[1]
+        self.assertEqual(retried_job.num_retries, 1)
+        self.assertIn(retried_job.volume_index, ["1", "2", "3"])
+
+    @patch('data_refinery_foreman.foreman.main.get_active_volumes')
+    @patch('data_refinery_foreman.foreman.main.send_job')
+    def test_requeuing_compendia_job_no_volume(self, mock_send_job, mock_get_active_volumes):
+        mock_send_job.return_value = True
+        mock_get_active_volumes.return_value = {"1", "2", "3"}
+
+        job = self.create_processor_job()
+        job.volume_index = None
+        job.pipeline_applied = "CREATE_COMPENDIA"
+        job.save()
+
+        self.env = EnvironmentVarGuard()
+        self.env.set('RUNING_IN_CLOUD', 'True')
+
+        with self.settings(RUNNING_IN_CLOUD=True):
+            main.requeue_processor_job(job)
+
+        self.assertEqual(len(mock_send_job.mock_calls), 1)
+
+        jobs = ProcessorJob.objects.order_by('id')
+        original_job = jobs[0]
+        self.assertTrue(original_job.retried)
+        self.assertEqual(original_job.num_retries, 0)
+        self.assertFalse(original_job.success)
+
+        retried_job = jobs[1]
+        self.assertEqual(retried_job.num_retries, 1)
+        self.assertEqual(retried_job.volume_index, None)
+
+    @patch('data_refinery_foreman.foreman.main.get_active_volumes')
+    @patch('data_refinery_foreman.foreman.main.send_job')
     def test_requeuing_processor_job_w_more_ram(self, mock_send_job, mock_get_active_volumes):
         mock_send_job.return_value = True
         mock_get_active_volumes.return_value = {"1", "2", "3"}

@@ -85,7 +85,7 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
 
         # Smasher doesn't need to be on a specific instance since it will
         # download all the data to its instance anyway.
-        if isinstance(job, ProcessorJob) and job_type not in [ProcessorPipeline.SMASHER, ProcessorPipeline.QN_REFERENCE]:
+        if isinstance(job, ProcessorJob) and job_type not in SMASHER_JOB_TYPES:
             # Make sure this job goes to the correct EBS resource.
             # If this is being dispatched for the first time, make sure that
             # we store the currently attached index.
