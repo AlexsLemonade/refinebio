@@ -719,6 +719,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
         active_volumes = get_active_volumes()
         if len(active_volumes) < 1 or not settings.RUNNING_IN_CLOUD:
             logger.debug("No active volumes to requeue processor job.", job_id=last_job.id)
+            return
         else:
             volume_index = random.choice(list(active_volumes))
 
