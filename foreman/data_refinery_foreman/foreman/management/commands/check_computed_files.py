@@ -38,10 +38,14 @@ class Command(BaseCommand):
                 logger.debug('Computed file not found on S3 - will remove S3 fields.', computed_file=computed_file)
                 missing_file_ids.append(computed_file.pk)
 
-            # provide some info while the command is running.
+            # provide some info while the command is running and incrementally update the computed files.
             if total_files % PAGE_SIZE == 0:
-                logger.info('Checked %i computed files to see if they are in S3, so far found %i' % (total_files, len(missing_file_ids)))
+                logger.info('Checked %i computed files to see if they are in S3, so far found %i. clearing s3_key and s3_bucket now.' % (total_files, len(missing_file_ids)))
+                ComputedFile.objects.filter(id__in=missing_file_ids).update(s3_key=None, s3_bucket=None)
+                missing_file_ids = []
 
         # Update all computed files in one query
-        logger.info('Found %i files that were missing in S3, clearing s3_key and s3_bucket now.' % len(missing_file_ids))
+        logger.info('Found %i files that were missing in S3.' % len(missing_file_ids))
+
+        # Do this one last time to get the last page.
         ComputedFile.objects.filter(id__in=missing_file_ids).update(s3_key=None, s3_bucket=None)
