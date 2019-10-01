@@ -711,13 +711,16 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
                 new_ram_amount = 8192
 
     volume_index = last_job.volume_index
-    if ProcessorPipeline[last_job.pipeline_applied] not in SMASHER_JOB_TYPES \
-       and (not volume_index or volume_index == "-1"):
+    # Make sure volume_index is set to something, unless it's a
+    # smasher job type because the smasher instance doesn't have a
+    # volume_index.
+    if (not volume_index or volume_index == "-1") \
+       and ProcessorPipeline[last_job.pipeline_applied] not in SMASHER_JOB_TYPES:
         active_volumes = get_active_volumes()
         if len(active_volumes) < 1 or not settings.RUNNING_IN_CLOUD:
             logger.debug("No active volumes to requeue processor job.", job_id=last_job.id)
         else:
-            volume_index = random.choice(active_volumes)
+            volume_index = random.choice(list(active_volumes))
 
     new_job = ProcessorJob(num_retries=num_retries,
                            pipeline_applied=last_job.pipeline_applied,
