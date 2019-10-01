@@ -133,6 +133,13 @@ class ProcessorPipeline(Enum):
     CREATE_COMPENDIA = "CREATE_COMPENDIA"
 
 
+SMASHER_JOB_TYPES = [
+    ProcessorPipeline.SMASHER,
+    ProcessorPipeline.QN_REFERENCE,
+    ProcessorPipeline.CREATE_COMPENDIA,
+]
+
+
 def does_processor_job_have_samples(job: ProcessorJob):
     return not (job.pipeline_applied == ProcessorPipeline.SMASHER.value \
                 or job.pipeline_applied == ProcessorPipeline.JANITOR.value \
