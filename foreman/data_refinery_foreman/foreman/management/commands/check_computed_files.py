@@ -26,7 +26,7 @@ def check_item(computed_file):
         S3.head_object(Bucket=computed_file.s3_bucket, Key=computed_file.s3_key)
     except ClientError:
         # Not found
-        logger.info('Computed file not found on S3 - will remove S3 fields.', computed_file=computed_file, filename=computed_file.filename)
+        logger.info('Computed file not found on S3 - will remove S3 fields.', computed_file=computed_file.id, file_name=computed_file.filename)
         return computed_file.pk
     return None
 
