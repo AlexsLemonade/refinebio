@@ -1169,6 +1169,7 @@ class CompendiaDetail(APIView):
     A very simple modified ComputedFile endpoint which only shows Compendia results.
     """
 
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     @swagger_auto_schema(deprecated=True)
     def get(self, request, version, format=None):
 
