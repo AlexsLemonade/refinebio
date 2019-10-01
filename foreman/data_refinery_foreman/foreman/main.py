@@ -714,7 +714,7 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
     if ProcessorPipeline[last_job.pipeline_applied] not in SMASHER_JOB_TYPES \
        and (not volume_index or volume_index == "-1"):
         active_volumes = get_active_volumes()
-        if len(active_volumes) < 1 or not settings.RUNNING_IN_CLOUD::
+        if len(active_volumes) < 1 or not settings.RUNNING_IN_CLOUD:
             logger.debug("No active volumes to requeue processor job.", job_id=last_job.id)
         else:
             volume_index = random.choice(active_volumes)
