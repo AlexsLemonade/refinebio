@@ -456,5 +456,5 @@ def queryset_page_iterator(queryset, page_size = 2000):
 def queryset_iterator(queryset, page_size = 2000):
     """ use the performant paginator to iterate over a queryset """
     for page in queryset_page_iterator(queryset, page_size):
-        for item in page.object_list:
+        for item in page:
             yield item

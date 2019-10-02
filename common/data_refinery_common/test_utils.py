@@ -1,6 +1,7 @@
 from unittest.mock import Mock, patch
 from django.test import TestCase
 from data_refinery_common import utils
+from data_refinery_common.models import Pipeline
 
 
 class UtilsTestCase(TestCase):
@@ -102,3 +103,22 @@ class UtilsTestCase(TestCase):
     def test_load_blacklist(self):
         blacklist = utils.load_blacklist()
         self.assertEqual(len(blacklist), 239449)
+
+    def test_queryset_iterator(self):
+        """Test that the queryset iterator by using it to actually iterate over a queryset.
+
+        Uses Pipeline just because it's easy to init."""
+        # Page size defaults to 2000, so use something bigger than
+        # that so there's more than one page.
+        for i in range(3000):
+            Pipeline(name=str(i)).save()
+
+        pipelines = Pipeline.objects.all()
+
+        # Build a list of the names just to do something with the data
+        # so we know the query actually resolved.
+        names = []
+        for pipeline in utils.queryset_iterator(pipelines):
+            names.append(pipeline.name)
+
+        self.assertEqual(len(names), 3000)
