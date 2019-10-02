@@ -120,3 +120,5 @@ class UtilsTestCase(TestCase):
         names = []
         for pipeline in utils.queryset_iterator(pipelines):
             names.append(pipeline.name)
+
+        self.assertEqual(len(names), 3000)
