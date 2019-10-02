@@ -13,6 +13,7 @@ from data_refinery_common.utils import (
     get_env_variable,
     get_env_variable_gracefully,
     get_instance_id,
+    get_volume_index,
 )
 from data_refinery_common.job_lookup import determine_processor_pipeline, determine_ram_amount, ProcessorEnum, ProcessorPipeline, Downloaders
 from data_refinery_common.message_queue import send_job
@@ -201,6 +202,10 @@ def create_processor_jobs_for_original_files(original_files: List[OriginalFile],
 
             if volume_index:
                 processor_job.volume_index = volume_index
+            elif downloader_job.volume_index:
+                processor_job.volume_index = downloader_job.volume_index
+            else:
+                processor_job.volume_index = get_volume_index()
 
             processor_job.save()
 
@@ -257,6 +262,10 @@ def create_processor_job_for_original_files(original_files: List[OriginalFile],
 
         if volume_index:
             processor_job.volume_index = volume_index
+        elif downloader_job.volume_index:
+            processor_job.volume_index = downloader_job.volume_index
+        else:
+            processor_job.volume_index = get_volume_index()
 
         processor_job.save()
 
