@@ -751,9 +751,9 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
             new_job.delete()
     except:
         logger.warn("Failed to requeue Processor Job which had ID %d with a new Processor Job with ID %d.",
-                    exc_info=1,
                     last_job.id,
-                    new_job.id,)
+                    new_job.id,
+                    exc_info=1)
         # Can't communicate with nomad just now, leave the job for a later loop.
         new_job.delete()
 
