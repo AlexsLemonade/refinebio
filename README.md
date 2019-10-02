@@ -580,7 +580,7 @@ or for a list of organisms:
 or for all organisms with sufficient data:
 
 ```bash
-./run_management_commands.sh create_compendia --organisms= --quant-sf-only=False --svd-algorithm=ARPACK
+./run_management_commands.sh create_compendia --quant-sf-only=False --svd-algorithm=ARPACK
 ```
 
 Alternatively a compendium can be created which only includes quant.sf files by specifying the nomad meta field `QUANT_SF_ONLY=True` like so:
