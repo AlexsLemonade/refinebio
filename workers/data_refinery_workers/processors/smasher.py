@@ -14,6 +14,7 @@ import psutil
 import multiprocessing
 import logging
 import time
+from multiprocessing import Pool
 
 from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
@@ -51,7 +52,7 @@ logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
 
-PROCESS_POOL_SIZE = max(1, psutil.cpu_count()/2)
+PROCESS_POOL_SIZE = max(1, int(psutil.cpu_count()/2))
 
 def log_state(message, start_time=False):
     if logger.isEnabledFor(logging.DEBUG):
@@ -506,7 +507,7 @@ def sync_quant_files(output_path, files_sample_tuple, job_context: Dict):
             for sample in sample_page:
                 latest_computed_file = sample.get_most_recent_quant_sf_file()
                 if not latest_computed_file: continue
-                output_file_path = output_path + accession_code + "_quant.sf"
+                output_file_path = output_path + sample.accession_code + "_quant.sf"
                 sample_and_computed_files.append((output_file_path, latest_computed_file))
 
             # download this set of files, this will take a few seconds that should also help the db recover
