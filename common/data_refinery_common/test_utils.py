@@ -118,5 +118,5 @@ class UtilsTestCase(TestCase):
         # Build a list of the names just to do something with the data
         # so we know the query actually resolved.
         names = []
-        for pipeline in queryset_iterator(pipelines):
+        for pipeline in utils.queryset_iterator(pipelines):
             names.append(pipeline.name)
