@@ -1337,7 +1337,8 @@ def cleanup_the_queue():
             continue
 
         # ensure the job is one of the indexed_job_types
-        job_type = next(job_type.value for job_type in indexed_job_types if job["ParentID"].startswith(job_type.value), None)
+        possible_job_types = (job_type.value for job_type in indexed_job_types if job["ParentID"].startswith(job_type.value))
+        job_type = next(possible_job_types, None)
         if not job_type:
             continue
 
