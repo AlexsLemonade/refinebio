@@ -1,5 +1,6 @@
 import datetime
 import nomad
+import random
 import socket
 import sys
 import time
@@ -20,6 +21,7 @@ from data_refinery_common.job_lookup import (
     Downloaders,
     ProcessorPipeline,
     SurveyJobTypes,
+    SMASHER_JOB_TYPES,
     does_processor_job_have_samples,
     is_file_rnaseq,
 )
@@ -708,10 +710,23 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
             elif new_ram_amount == 4096:
                 new_ram_amount = 8192
 
+    volume_index = last_job.volume_index
+    # Make sure volume_index is set to something, unless it's a
+    # smasher job type because the smasher instance doesn't have a
+    # volume_index.
+    if (not volume_index or volume_index == "-1") \
+       and ProcessorPipeline[last_job.pipeline_applied] not in SMASHER_JOB_TYPES:
+        active_volumes = get_active_volumes()
+        if len(active_volumes) < 1 or not settings.RUNNING_IN_CLOUD:
+            logger.debug("No active volumes to requeue processor job.", job_id=last_job.id)
+            return
+        else:
+            volume_index = random.choice(list(active_volumes))
+
     new_job = ProcessorJob(num_retries=num_retries,
                            pipeline_applied=last_job.pipeline_applied,
                            ram_amount=new_ram_amount,
-                           volume_index=last_job.volume_index)
+                           volume_index=volume_index)
     new_job.save()
 
     for original_file in last_job.original_files.all():
@@ -735,9 +750,10 @@ def requeue_processor_job(last_job: ProcessorJob) -> None:
             # Can't communicate with nomad just now, leave the job for a later loop.
             new_job.delete()
     except:
-        logger.error("Failed to requeue Processor Job which had ID %d with a new Processor Job with ID %d.",
-                     last_job.id,
-                     new_job.id)
+        logger.warn("Failed to requeue Processor Job which had ID %d with a new Processor Job with ID %d.",
+                    last_job.id,
+                    new_job.id,
+                    exc_info=1)
         # Can't communicate with nomad just now, leave the job for a later loop.
         new_job.delete()
 

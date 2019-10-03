@@ -1,19 +1,19 @@
-from itertools import groupby
-from typing import Dict, Set, List
-from urllib.parse import urlparse
 import csv
-import nomad
+import hashlib
 import io
 import os
 import re
+from functools import partial
+from itertools import groupby
+from typing import Dict, Set
+from urllib.parse import urlparse
+import nomad
 import requests
-
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from retrying import retry
 
-import hashlib
-from functools import partial
+from data_refinery_common.performant_pagination.pagination import PerformantPaginator
 
 # Found: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html
 METADATA_URL = "http://169.254.169.254/latest/meta-data"
@@ -440,3 +440,21 @@ def _aggregate_nomad_jobs(aggregated_jobs):
         nomad_running_jobs[aggregate_key] = running_jobs_count
 
     return nomad_pending_jobs, nomad_running_jobs
+
+def queryset_page_iterator(queryset, page_size = 2000):
+    """ use the performant paginator to iterate over each page in a queryset """
+    paginator = PerformantPaginator(queryset, page_size)
+    page = paginator.page()
+    while True:
+        yield page.object_list
+
+        if not page.has_next():
+            break
+        else:
+            page = paginator.page(page.next_page_number())
+
+def queryset_iterator(queryset, page_size = 2000):
+    """ use the performant paginator to iterate over a queryset """
+    for page in queryset_page_iterator(queryset, page_size):
+        for item in page:
+            yield item

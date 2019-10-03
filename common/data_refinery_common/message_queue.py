@@ -9,7 +9,7 @@ from nomad.api.exceptions import URLNotFoundNomadException
 
 from data_refinery_common.utils import get_env_variable, get_env_variable_gracefully, get_volume_index
 from data_refinery_common.models import ProcessorJob, SurveyJob, DownloaderJob
-from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders, SurveyJobTypes
+from data_refinery_common.job_lookup import ProcessorPipeline, Downloaders, SurveyJobTypes, SMASHER_JOB_TYPES
 from data_refinery_common.logging import get_and_configure_logger
 
 logger = get_and_configure_logger(__name__)
@@ -85,7 +85,7 @@ def send_job(job_type: Enum, job, is_dispatch=False) -> bool:
 
         # Smasher doesn't need to be on a specific instance since it will
         # download all the data to its instance anyway.
-        if isinstance(job, ProcessorJob) and job_type not in [ProcessorPipeline.SMASHER, ProcessorPipeline.QN_REFERENCE]:
+        if isinstance(job, ProcessorJob) and job_type not in SMASHER_JOB_TYPES:
             # Make sure this job goes to the correct EBS resource.
             # If this is being dispatched for the first time, make sure that
             # we store the currently attached index.

@@ -33,6 +33,7 @@ from data_refinery_workers.processors import utils, smasher#, visualize
 
 
 S3_BUCKET_NAME = get_env_variable("S3_BUCKET_NAME", "data-refinery")
+BYTES_IN_GB = 1024 * 1024 * 1024
 logger = get_and_configure_logger(__name__)
 ### DEBUG ###
 logger.setLevel(logging.getLevelName('DEBUG'))
@@ -40,10 +41,12 @@ logger.setLevel(logging.getLevelName('DEBUG'))
 
 def log_state(message, start_time=False):
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("%s: cpu:%s - ram:%s" % (
+        process = psutil.Process(os.getpid())
+        ram_in_GB = process.memory_info().rss / BYTES_IN_GB
+        logger.debug("%s: total-cpu:%s - ram:%s" % (
             message,
             psutil.cpu_percent(),
-            psutil.virtual_memory().percent,
+            ram_in_GB,
         ))
         if start_time:
             logger.debug('Duration: %s' % (time.time() - start_time))
@@ -59,9 +62,10 @@ def _prepare_input(job_context: Dict) -> Dict:
     job_context = smasher._smash(job_context, how="outer")
 
     if not 'final_frame' in job_context.keys():
-        logger.error("Unable to prepare files for creating compendia.",
+        logger.warn("Unable to prepare files for creating compendia.",
             job_id=job_context['job'].id)
-        job_context["job"].failure_reason = "Couldn't prepare files creating compendia."
+        if not job_context["job"].failure_reason:
+            job_context["job"].failure_reason = "Couldn't prepare files creating compendia."
         job_context['success'] = False
         return job_context
 
@@ -197,7 +201,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
             new_zeroes = list(set(new_index_list) & set(zeroes_list))
             row_col_filtered_combined_matrix_samples[column].loc[new_zeroes] = 0.0
         except Exception as e:
-            logger.exception("Error when replacing zero")
+            logger.warn("Error when replacing zero")
             continue
 
     # Label our new replaced data
@@ -277,7 +281,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     result.time_start = job_context['time_start']
     result.time_end = job_context['time_end']
     try:
-        processor_key = "COMPENDIA"
+        processor_key = "CREATE_COMPENDIA"
         result.processor = utils.find_processor(processor_key)
     except Exception as e:
         return utils.handle_processor_exception(job_context, processor_key, e)
@@ -379,7 +383,7 @@ def _create_result_objects(job_context: Dict) -> Dict:
     return job_context
 
 def create_compendia(job_id: int) -> None:
-    pipeline = Pipeline(name=PipelineEnum.COMPENDIA.value)
+    pipeline = Pipeline(name=PipelineEnum.CREATE_COMPENDIA.value)
     job_context = utils.run_pipeline({"job_id": job_id, "pipeline": pipeline},
                        [utils.start_job,
                         _prepare_input,
