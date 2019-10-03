@@ -1340,7 +1340,7 @@ def cleanup_the_queue():
             continue
 
         # ensure the job is one of the indexed_job_types
-        job_type = next(possible_job_types, None)
+        job_type = None
         for pipeline in indexed_job_types:
             if job["ParentID"].startswith(pipeline):
                 job_type = pipeline
