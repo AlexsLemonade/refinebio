@@ -1354,8 +1354,8 @@ def cleanup_the_queue():
                 # will be incremented when it is requeued).
                 try:
                     nomad_client.job.deregister_job(job["ID"], purge=True)
-                    logger.info('Foreman Killed nomad job because it did not have a volume assigned',
-                                nomad_job_id=job['ID'], job_type=job_type)
+                    logger.debug('Foreman Killed nomad job because it had a volume that was not active',
+                                  nomad_job_id=job['ID'], job_type=job_type)
                     processor_job = ProcessorJob.objects.filter(nomad_job_id=job["ID"]).first()
 
                     if not processor_job:
