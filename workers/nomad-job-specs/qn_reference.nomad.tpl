@@ -1,4 +1,4 @@
-job "RUN_QN_JOB" {
+job "QN_REFERENCE" {
   datacenters = ["dc1"]
 
   type = "batch"
