@@ -1356,7 +1356,8 @@ def cleanup_the_queue():
             # `num_retries` will be decremented when the job receives the SIGKILL
             try:
                 nomad_client.job.deregister_job(job["ID"], purge=True)
-                logger.info('Foreman Killed nomad job', nomad_job_id=job['ID'], job_type=job_type)
+                logger.info('Foreman Killed nomad job because it did not have a volume assigned',
+                            nomad_job_id=job['ID'], job_type=job_type)
                 num_jobs_killed += 1
             except:
                 logger.exception("Could not remove Nomad job from the Nomad queue.",
