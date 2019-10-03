@@ -1305,9 +1305,12 @@ def cleanup_the_queue():
     our queue is dedicated to jobs that can actually be placed.
     """
     logger.info("Removing all jobs from Nomad queue whose volumes are not mounted.")
-
+    DOWNLOADER = "DOWNLOADER"
     # Smasher and QN Reference jobs aren't tied to a specific EBS volume.
-    indexed_job_types = [pipeline for pipeline in ProcessorPipeline if pipeline not in SMASHER_JOB_TYPES]
+    indexed_job_types = [pipeline.value for pipeline in ProcessorPipeline if pipeline not in SMASHER_JOB_TYPES]
+    # Special case for downloader jobs because they only have one
+    # nomad job type for all downloader tasks.
+    indexed_job_types.append(DOWNLOADER)
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
@@ -1318,7 +1321,7 @@ def cleanup_the_queue():
         jobs = nomad_client.jobs.get_jobs()
     except:
         # If we cannot reach Nomad now then we can wait until a later loop.
-        logger.exception("Couldn't query Nomad about current jobs.")
+        logger.warn("Couldn't query Nomad about current jobs.", exc_info=1)
         return
 
     logger.info(("These are the currently active volumes. Jobs for "
@@ -1337,8 +1340,11 @@ def cleanup_the_queue():
             continue
 
         # ensure the job is one of the indexed_job_types
-        possible_job_types = (job_type.value for job_type in indexed_job_types if job["ParentID"].startswith(job_type.value))
         job_type = next(possible_job_types, None)
+        for pipeline in indexed_job_types:
+            if job["ParentID"].startswith(pipeline):
+                job_type = pipeline
+                break
         if not job_type:
             continue
 
@@ -1356,6 +1362,15 @@ def cleanup_the_queue():
             # `num_retries` will be decremented when the job receives the SIGKILL
             try:
                 nomad_client.job.deregister_job(job["ID"], purge=True)
+
+                if job_type == DOWNLOADER:
+                    job_record = DownloaderJob.objects.filter(nomad_job_id=job["ID"]).first()
+                    # If it's a downloader job, then it doesn't
+                    # have to run on the volume it was assigned
+                    # to. We can let the foreman reassign it.
+                    job_record.volume_index = None
+                    job_record.save()
+
                 logger.info('Foreman Killed nomad job because it did not have a volume assigned',
                             nomad_job_id=job['ID'], job_type=job_type)
                 num_jobs_killed += 1
