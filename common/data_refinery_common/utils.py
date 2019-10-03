@@ -441,6 +441,7 @@ def _aggregate_nomad_jobs(aggregated_jobs):
 
     return nomad_pending_jobs, nomad_running_jobs
 
+
 def queryset_page_iterator(queryset, page_size = 2000):
     """ use the performant paginator to iterate over each page in a queryset """
     paginator = PerformantPaginator(queryset, page_size)
@@ -453,8 +454,25 @@ def queryset_page_iterator(queryset, page_size = 2000):
         else:
             page = paginator.page(page.next_page_number())
 
+
 def queryset_iterator(queryset, page_size = 2000):
     """ use the performant paginator to iterate over a queryset """
     for page in queryset_page_iterator(queryset, page_size):
         for item in page:
             yield item
+
+
+def get_most_recent_qn_target_for_organism(organism):
+    """ Returns a ComputedFile for QN run for an Organism """
+
+    try:
+        annotation = ComputationalResultAnnotation.objects.filter(
+            data__organism_id=organism.id,
+            data__is_qn=True
+        ).order_by(
+            '-created_at'
+        ).first()
+        file = annotation.result.computedfile_set.first()
+        return file
+    except Exception:
+        return None

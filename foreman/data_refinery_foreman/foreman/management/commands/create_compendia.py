@@ -8,7 +8,7 @@ from data_refinery_common.message_queue import send_job
 from data_refinery_common.models import (Dataset, Experiment, Organism,
                                          ProcessorJob,
                                          ProcessorJobDatasetAssociation)
-from data_refinery_common.utils import queryset_iterator
+from data_refinery_common.utils import queryset_iterator, get_most_recent_qn_target_for_organism
 
 logger = get_and_configure_logger(__name__)
 
@@ -90,9 +90,12 @@ class Command(BaseCommand):
         logger.debug(all_organisms)
 
         for organism in all_organisms:
-            logger.debug(organism)
-            job = create_job_for_organism(organism, quant_sf_only, svd_algorithm)
-            logger.info("Sending CREATE_COMPENDIA for Organism", job_id=str(job.pk), organism=str(organism))
-            send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
+            if get_most_recent_qn_target_for_organism(organism):
+                job = create_job_for_organism(organism, quant_sf_only, svd_algorithm)
+                logger.info("Sending CREATE_COMPENDIA for Organism", job_id=str(job.pk), organism=str(organism))
+                send_job(ProcessorPipeline.CREATE_COMPENDIA, job)
+            else:
+                logger.debug("Could not create compendia for organism because it did not have a QN target.",
+                             organism=organism.name)
 
         sys.exit(0)

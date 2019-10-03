@@ -37,7 +37,12 @@ from data_refinery_common.models import (
     Pipeline,
     SampleResultAssociation,
 )
-from data_refinery_common.utils import get_env_variable, calculate_file_size, calculate_sha1
+from data_refinery_common.utils import (
+    get_env_variable,
+    calculate_file_size,
+    calculate_sha1,
+    get_most_recent_qn_target_for_organism
+)
 from data_refinery_workers.processors import utils
 from urllib.parse import quote
 
@@ -361,7 +366,7 @@ def _quantile_normalize(job_context: Dict, ks_check=True, ks_stat=0.001) -> Dict
     """
     # Prepare our QN target file
     organism = job_context['organism']
-    qn_target = utils.get_most_recent_qn_target_for_organism(organism)
+    qn_target = get_most_recent_qn_target_for_organism(organism)
 
     if not qn_target:
         logger.error("Could not find QN target for Organism!",
