@@ -11,7 +11,7 @@ from django.conf import settings
 from django.utils import timezone
 from typing import List, Dict, Callable
 
-from data_refinery_common.job_lookup import ProcessorEnum, ProcessorPipeline
+from data_refinery_common.job_lookup import ProcessorEnum, ProcessorPipeline, SMASHER_JOB_TYPES
 from data_refinery_common.job_management import create_downloader_job
 from data_refinery_common.logging import get_and_configure_logger
 from data_refinery_common.models import (
@@ -48,15 +48,13 @@ CURRENT_JOB = None
 def signal_handler(sig, frame):
     """Signal Handler, works for both SIGTERM and SIGINT"""
     global CURRENT_JOB
-    if not CURRENT_JOB:
-        sys.exit(0)
-    else:
-        CURRENT_JOB.start_time = None
+    if CURRENT_JOB:
+        CURRENT_JOB.end_time = timezone.now()
         CURRENT_JOB.num_retries = CURRENT_JOB.num_retries - 1
-        CURRENT_JOB.failure_reason = "Caught either a SIGTERM or SIGINT signal."
-        CURRENT_JOB.success = False
+        CURRENT_JOB.failure_reason = "Interruped by SIGTERM/SIGINT: " + str(sig)
         CURRENT_JOB.save()
-        sys.exit(0)
+
+    sys.exit(0)
 
 def prepare_original_files(job_context):
     """ Provision in the Job context for OriginalFile-driven processors
@@ -216,9 +214,7 @@ def start_job(job_context: Dict):
     # just need it to know what experiment to process.
     if job.pipeline_applied not in [ProcessorPipeline.JANITOR.value, ProcessorPipeline.TXIMPORT.value]:
         # Some jobs take OriginalFiles, other take Datasets
-        if job.pipeline_applied not in [ProcessorPipeline.SMASHER.value,
-                                        ProcessorPipeline.QN_REFERENCE.value,
-                                        ProcessorPipeline.CREATE_COMPENDIA.value]:
+        if ProcessorPipeline[job.pipeline_applied] not in SMASHER_JOB_TYPES:
             job_context = prepare_original_files(job_context)
             if not job_context.get("success", True):
                 return job_context
