@@ -1307,10 +1307,7 @@ def cleanup_the_queue():
     logger.info("Removing all jobs from Nomad queue whose volumes are not mounted.")
 
     # Smasher and QN Reference jobs aren't tied to a specific EBS volume.
-    indexed_job_types = [e.value for e in ProcessorPipeline if e.value not in ["SMASHER", "QN_REFERENCE"]]
-    # Special case for downloader jobs because they only have one
-    # nomad job type for all downloader tasks.
-    indexed_job_types.append("DOWNLOADER")
+    indexed_job_types = [pipeline for pipeline in ProcessorPipeline if pipeline not in SMASHER_JOB_TYPES]
 
     nomad_host = get_env_variable("NOMAD_HOST")
     nomad_port = get_env_variable("NOMAD_PORT", "4646")
@@ -1321,6 +1318,7 @@ def cleanup_the_queue():
         jobs = nomad_client.jobs.get_jobs()
     except:
         # If we cannot reach Nomad now then we can wait until a later loop.
+        logger.exception("Couldn't query Nomad about current jobs.")
         return
 
     logger.info(("These are the currently active volumes. Jobs for "
@@ -1334,48 +1332,37 @@ def cleanup_the_queue():
         if "ParameterizedJob" not in job or job["ParameterizedJob"]:
             continue
 
-        for job_type in indexed_job_types:
-            # We're only concerned with jobs that have to be tied to a volume index.
-            if "ParentID" not in job or not job["ParentID"].startswith(job_type):
-                continue
+        # We're only concerned with jobs that have to be tied to a volume index.
+        if "ParentID" not in job:
+            continue
 
-            # If this job has an index, then its ParentID will
-            # have the pattern of <job-type>_<index>_<RAM-amount>
-            # and we want to check the value of <index>:
-            split_parent_id = job["ParentID"].split("_")
-            if len(split_parent_id) < 2:
-                continue
-            else:
-                index = split_parent_id[-2]
+        # ensure the job is one of the indexed_job_types
+        job_type = next(job_type.value for job_type in indexed_job_types if job["ParentID"].startswith(job_type.value), None)
+        if not job_type:
+            continue
 
-            if index not in active_volumes:
-                # The index for this job isn't currently mounted, kill
-                # the job and decrement the retry counter (since it
-                # will be incremented when it is requeued).
-                try:
-                    nomad_client.job.deregister_job(job["ID"], purge=True)
-                    processor_jobs = ProcessorJob.objects.filter(nomad_job_id=job["ID"])
+        # If this job has an index, then its ParentID will
+        # have the pattern of <job-type>_<index>_<RAM-amount>
+        # and we want to check the value of <index>:
+        split_parent_id = job["ParentID"].split("_")
+        if len(split_parent_id) < 2:
+            continue
+        else:
+            index = split_parent_id[-2]
 
-                    if processor_jobs.count() > 0:
-                        job_record = processor_jobs[0]
-                    else:
-                        # If it's not a processor job, it's probably a downloader job.
-                        job_record = DownloaderJob.objects.filter(nomad_job_id=job["ID"])[0]
-
-                        # If it's a downloader job, then it doesn't
-                        # have to run on the volume it was assigned
-                        # to. We can let the foreman reassign it.
-                        job_record.volume_index = None
-
-                    job_record.num_retries = job_record.num_retries - 1
-                    job_record.save()
-                    num_jobs_killed += 1
-                except:
-                    logger.exception("Could not remove Nomad job from the Nomad queue.",
-                                     nomad_job_id=job["ID"],
-                                     job_type=job_type)
-                    # If we can't do this for some reason, we'll get it next loop.
-                    pass
+        if index not in active_volumes:
+            # The index for this job isn't currently mounted, kill the job
+            # `num_retries` will be decremented when the job receives the SIGKILL
+            try:
+                nomad_client.job.deregister_job(job["ID"], purge=True)
+                logger.info('Foreman Killed nomad job', nomad_job_id=job['ID'], job_type=job_type)
+                num_jobs_killed += 1
+            except:
+                logger.exception("Could not remove Nomad job from the Nomad queue.",
+                                    nomad_job_id=job["ID"],
+                                    job_type=job_type)
+                # If we can't do this for some reason, we'll get it next loop.
+                pass
 
     logger.info("Removed %d jobs from the Nomad queue.", num_jobs_killed)
 
