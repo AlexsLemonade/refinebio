@@ -64,7 +64,8 @@ def _prepare_input(job_context: Dict) -> Dict:
     if not 'final_frame' in job_context.keys():
         logger.warn("Unable to prepare files for creating compendia.",
             job_id=job_context['job'].id)
-        job_context["job"].failure_reason = "Couldn't prepare files creating compendia."
+        if not job_context["job"].failure_reason:
+            job_context["job"].failure_reason = "Couldn't prepare files creating compendia."
         job_context['success'] = False
         return job_context
 
