@@ -734,7 +734,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
 
             job_context['original_merged'] = merged
             log_state("end build frames", job_context["job"], start_frames)
-            start_qn = log_state("start qn", , job_context["job"], start_frames)
+            start_qn = log_state("start qn", job_context["job"], start_frames)
             # Quantile Normalization
             if job_context['dataset'].quantile_normalize:
                 try:
