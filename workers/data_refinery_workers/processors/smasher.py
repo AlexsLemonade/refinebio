@@ -493,7 +493,7 @@ def sync_quant_files(output_path, files_sample_tuple, job_context: Dict):
 
 def process_frame(inputs) -> Dict:
     (job_context, computed_file, sample, index) = inputs
-    log_state('processing frame %s'.format(index), job_context["job"])
+    log_state('processing frame {}'.format(index), job_context["job"])
     frame = {
         "unsmashable": False,
         "unsmashable_file": None,
