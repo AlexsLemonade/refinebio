@@ -137,14 +137,16 @@ def _perform_imputation(job_context: Dict) -> Dict:
         if sum_val < rnaseq_tenth_percentile:
             rows_to_filter.append(x)
 
+    del rnaseq_row_sums
+
     filtered_rnaseq_matrix = rnaseq_expression_matrix.drop(rows_to_filter)
     log_state("end drop all rows", drop_start)
-
 
     # log2(x + 1) transform filtered_rnaseq_matrix; this is now log2_rnaseq_matrix
     filtered_rnaseq_matrix_plus_one = filtered_rnaseq_matrix + 1
     log2_rnaseq_matrix = np.log2(filtered_rnaseq_matrix_plus_one)
     del filtered_rnaseq_matrix_plus_one
+    del filtered_rnaseq_matrix
 
     # Cache our RNA-Seq zero values
     cached_zeroes = {}
@@ -165,6 +167,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     # Remove genes (rows) with <=70% present values in combined_matrix
     thresh = combined_matrix.shape[1] * .7 # (Rows, Columns)
     row_filtered_combined_matrix = combined_matrix.dropna(axis='index', thresh=thresh) # Everything below `thresh` is dropped
+    del thresh
 
     # # Visualize Row Filtered
     # output_path = job_context['output_dir'] + "row_filtered_" + str(time.time()) + ".png"
