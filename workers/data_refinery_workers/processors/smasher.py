@@ -52,17 +52,17 @@ logger = get_and_configure_logger(__name__)
 logger.setLevel(logging.getLevelName('DEBUG'))
 
 
-def log_state(message, start_time=False):
+def log_state(message, job, start_time=False):
     if logger.isEnabledFor(logging.DEBUG):
         process = psutil.Process(os.getpid())
         ram_in_GB = process.memory_info().rss / BYTES_IN_GB
-        logger.debug("%s: total-cpu:%s - process-ram:%s" % (
-            message,
-            psutil.cpu_percent(),
-            ram_in_GB,
-        ))
+        logger.debug(message,
+                     total_cpu=psutil.cpu_percent(),
+                     process_ram=ram_in_GB,
+                     job_id=job.id)
+
         if start_time:
-            logger.debug('Duration: %s' % (time.time() - start_time))
+            logger.debug('Duration: %s' % (time.time() - start_time), job_id=job.id)
         else:
             return time.time()
 
@@ -71,7 +71,7 @@ def _prepare_files(job_context: Dict) -> Dict:
     """
     Fetches and prepares the files to smash.
     """
-    start_prepare_files = log_state("start prepare files")
+    start_prepare_files = log_state("start prepare files", job_context["job"])
     all_sample_files = []
     job_context['input_files'] = {}
     # `key` can either be the species name or experiment accession.
@@ -111,7 +111,7 @@ def _prepare_files(job_context: Dict) -> Dict:
 
     job_context["output_dir"] = job_context["work_dir"] + "output/"
     os.makedirs(job_context["output_dir"])
-    log_state("end prepare files", start_prepare_files)
+    log_state("end prepare files", job_context["job"], start_prepare_files)
     return job_context
 
 
@@ -124,14 +124,14 @@ def _add_annotation_column(annotation_columns, column_name):
         annotation_columns.add(column_name)
 
 
-def _get_tsv_columns(samples_metadata):
+def _get_tsv_columns(job_context, samples_metadata):
     """Returns an array of strings that will be written as a TSV file's
     header. The columns are based on fields found in samples_metadata.
 
     Some nested annotation fields are taken out as separate columns
     because they are more important than the others.
     """
-    tsv_start = log_state("start get tsv columns")
+    tsv_start = log_state("start get tsv columns", job_context["job"])
     refinebio_columns = set()
     annotation_columns = set()
     for sample_metadata in samples_metadata.values():
@@ -177,7 +177,7 @@ def _get_tsv_columns(samples_metadata):
     # always first, followed by the other refinebio columns (in alphabetic order), and
     # annotation columns (in alphabetic order) at the end.
     refinebio_columns.discard('refinebio_accession_code')
-    log_state("end get tsv columns", tsv_start)
+    log_state("end get tsv columns", job_context["job"], tsv_start)
     return ['refinebio_accession_code', 'experiment_accession'] + sorted(refinebio_columns) \
         + sorted(annotation_columns)
 
@@ -187,7 +187,6 @@ def _add_annotation_value(row_data, col_name, col_value, sample_accession_code):
     If col_name already exists in row_data with different value, print
     out a warning message.
     """
-    annotation_start = log_state("start add annotation value")
     # Generate a warning message if annotation field name starts with
     # "refinebio_".  This should rarely (if ever) happen.
     if col_name.startswith("refinebio_"):
@@ -207,7 +206,6 @@ def _add_annotation_value(row_data, col_name, col_value, sample_accession_code):
                 col_name, row_data[col_name], col_value),
             sample_accession_code=sample_accession_code
         )
-    log_state("end add annotation value", annotation_start)
 
 
 def _get_experiment_accession(sample_accession_code, dataset_data):
@@ -292,7 +290,7 @@ def _write_tsv_json(job_context, metadata, smash_path):
     """
 
     # Uniform TSV header per dataset
-    columns = _get_tsv_columns(metadata['samples'])
+    columns = _get_tsv_columns(job_context, metadata['samples'])
 
     # Per-Experiment Metadata
     if job_context["dataset"].aggregate_by == "EXPERIMENT":
@@ -495,7 +493,7 @@ def sync_quant_files(output_path, files_sample_tuple, job_context: Dict):
 
 def process_frame(inputs) -> Dict:
     (job_context, computed_file, sample, index) = inputs
-    logger.debug('processing frame %s', index)
+    log_state('processing frame {}'.format(index), job_context["job"])
     frame = {
         "unsmashable": False,
         "unsmashable_file": None,
@@ -603,7 +601,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
         Scale features with sci-kit learn
         Transpose again such that samples are columns and genes are rows
     """
-    start_smash = log_state("start smash")
+    start_smash = log_state("start smash", job_context["job"])
     # We have already failed - return now so we can send our fail email.
     if job_context['dataset'].failure_reason not in ['', None]:
         return job_context
@@ -639,7 +637,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 # we ONLY want to give quant sf files to the user if that's what they requested
                 continue
 
-            start_frames = log_state("build frames for species or experiment")
+            start_frames = log_state("build frames for species or experiment", job_context["job"])
             # Merge all the frames into one
             #cpus = max(1, psutil.cpu_count()/2)
             #with multiprocessing.Pool(int(cpus)) as pool:
@@ -662,7 +660,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 'microarray': [f['data'].columns for f in processed_frames if f['column_type'] is 'microarray'],
                 'rnaseq': [f['data'].columns for f in processed_frames if f['column_type'] is 'rnaseq']
             }
-            log_state("set all frames", start_frames)
+            log_state("set all frames", job_context["job"], start_frames)
             if len(all_frames) < 1:
                 logger.warning("Was told to smash a frame with no frames!",
                     key=key
@@ -735,8 +733,8 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                 merged = pd.concat(all_frames, axis=1, keys=None, join='outer', copy=False, sort=True)
 
             job_context['original_merged'] = merged
-            log_state("end build frames", start_frames)
-            start_qn = log_state("start qn", start_frames)
+            log_state("end build frames", job_context["job"], start_frames)
+            start_qn = log_state("start qn", job_context["job"], start_frames)
             # Quantile Normalization
             if job_context['dataset'].quantile_normalize:
                 try:
@@ -774,13 +772,13 @@ def _smash(job_context: Dict, how="inner") -> Dict:
                     job_context['failure_reason'] = str(e)
                     return job_context
             # End QN
-            log_state("end qn", start_qn)
+            log_state("end qn", job_context["job"], start_qn)
             # Transpose before scaling
             # Do this even if we don't want to scale in case transpose
             # modifies the data in any way. (Which it shouldn't but
             # we're paranoid.)
             transposed = merged.transpose()
-            start_scaler = log_state("starting scaler")
+            start_scaler = log_state("starting scaler", job_context["job"])
             # Scaler
             if job_context['dataset'].scale_by != "NONE":
                 scale_funtion = scalers[job_context['dataset'].scale_by]
@@ -795,7 +793,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
             else:
                 # Wheeeeeeeeeee
                 untransposed = transposed.transpose()
-            log_state("end scaler", start_scaler)
+            log_state("end scaler", job_context["job"], start_scaler)
 
             # This is just for quality assurance in tests.
             job_context['final_frame'] = untransposed
@@ -888,7 +886,7 @@ def _smash(job_context: Dict, how="inner") -> Dict:
     logger.debug("Created smash output!",
         archive_location=job_context["output_file"])
 
-    log_state("end smash", start_smash);
+    log_state("end smash", job_context["job"], start_smash);
     return job_context
 
 def _load_and_sanitize_file(computed_file_path):
