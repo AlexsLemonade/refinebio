@@ -137,7 +137,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
         if sum_val < rnaseq_tenth_percentile:
             rows_to_filter.append(x)
 
-    del rnaseq_row_sums
+    del rnaseq_row_sums, job_context['rnaseq_inputs']
 
     filtered_rnaseq_matrix = rnaseq_expression_matrix.drop(rows_to_filter)
     log_state("end drop all rows", drop_start)
@@ -250,6 +250,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
     untransposed_imputed_matrix_df = pd.DataFrame.from_records(untransposed_imputed_matrix)
     untransposed_imputed_matrix_df.index = row_col_filtered_combined_matrix_samples_index
     untransposed_imputed_matrix_df.columns = row_col_filtered_combined_matrix_samples_columns
+    del untransposed_imputed_matrix
     del row_col_filtered_combined_matrix_samples_index
     del row_col_filtered_combined_matrix_samples_columns
     # Quantile normalize imputed_matrix where genes are rows and samples are columns
