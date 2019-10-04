@@ -158,7 +158,7 @@ def _perform_imputation(job_context: Dict) -> Dict:
 
     # Perform a full outer join of microarray_expression_matrix and log2_rnaseq_matrix; combined_matrix
     combined_matrix = microarray_expression_matrix.merge(log2_rnaseq_matrix, how='outer', left_index=True, right_index=True)
-    del microarray_expression_matrix
+    del microarray_expression_matrix, job_context['microarray_inputs']
 
     # # Visualize Prefiltered
     # output_path = job_context['output_dir'] + "pre_filtered_" + str(time.time()) + ".png"
