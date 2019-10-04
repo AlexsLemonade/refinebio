@@ -139,6 +139,7 @@ def download_array_express(job_id: int) -> None:
                 original_file.calculate_size()
                 original_file.calculate_sha1()
                 original_file.save()
+                
                 og_files.append(original_file)
             else:
                 # Clear out the files we don't actually need.

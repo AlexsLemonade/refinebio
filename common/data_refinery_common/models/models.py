@@ -761,20 +761,7 @@ class OriginalFile(models.Model):
         self.is_downloaded = False
         self.save()
 
-
-    def needs_processing(self, own_processor_id=None) -> bool:
-        """Returns True if original_file has been or is being processed.
-
-        Returns False otherwise.
-
-        If own_processor_id is supplied then it will be ignored so
-        that processor jobs can use this function without their job
-        being counted as currently processing this file.
-        """
-        sample = self.samples.first()
-        if not sample:
-            return True
-
+    def has_blocking_jobs(self, own_processor_id=None) -> bool:
         # If the file has a processor job that should not have been
         # retried, then it still shouldn't be retried.
         no_retry_processor_jobs = self.processor_jobs.filter(no_retry=True)
@@ -793,7 +780,23 @@ class OriginalFile(models.Model):
         # Check if there's any jobs which should block another
         # processing attempt.
         blocking_jobs = no_retry_processor_jobs | incomplete_processor_jobs
-        if blocking_jobs.count() > 0:
+
+        return blocking_jobs.first() is None
+
+    def needs_processing(self, own_processor_id=None) -> bool:
+        """Returns True if original_file has been or is being processed.
+
+        Returns False otherwise.
+
+        If own_processor_id is supplied then it will be ignored so
+        that processor jobs can use this function without their job
+        being counted as currently processing this file.
+        """
+        sample = self.samples.first()
+        if not sample:
+            return True
+
+        if self.has_blocking_jobs(own_processor_id):
             return False
 
         if sample.source_database == "SRA":
@@ -826,9 +829,10 @@ class OriginalFile(models.Model):
                 computed_file = sample.get_most_recent_smashable_result_file()
                 if not computed_file:
                     return True
-                if not sample.is_processed \
-                   or computed_file.s3_bucket is None \
-                   or computed_file.s3_key is None:
+                if not sample.is_processed:
+                    return True
+                if not settings.RUNNING_IN_CLOUD \
+                    and (computed_file.s3_bucket is None or computed_file.s3_key is None):
                     return True
 
             return False

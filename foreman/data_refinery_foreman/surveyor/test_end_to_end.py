@@ -170,7 +170,7 @@ class ArrayexpressRedownloadingTestCase(TransactionTestCase):
             self.assertTrue(downloader_job.success)
 
             # Now we're going to delete one of the extracted files but not the other.
-            deleted_file = OriginalFile.objects.filter(is_archive=False)[0]
+            deleted_file = OriginalFile.objects.filter(is_archive=False).first()
             deleted_file.delete_local_file()
 
             # The one downloader job should have extracted all the files
